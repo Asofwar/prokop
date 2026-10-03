@@ -110,8 +110,11 @@ grep -Fq 'runtime-list-cache-active' "$LIFECYCLE_UC" ||
   fail "service reload must preserve a newer RAM-only list generation"
 grep -Fq 'function prepare_list_downloads(sections, proxy_address, unlocked)' "$UPDATES_UC" ||
   fail "all remote list sources must pass preflight before active state changes"
-grep -Fq 'function restore_list_nft_snapshot()' "$UPDATES_UC" ||
-  fail "an aborted list transaction must restore the active nftables table"
+# An aborted list transaction leaves the active nftables table as it was: the
+# nft mutations only go to the candidate batch (behaviour:
+# list_transaction_failures.sh).
+grep -Fq 'PROKOP_NFT_BATCH_FILE: list_nft_candidate_file' "$UPDATES_UC" ||
+  fail "list updates must record nft mutations in the candidate batch, not in the active table"
 grep -Fq 'current_list_update_signature() != list_update_signature_at_start' "$UPDATES_UC" ||
   fail "a concurrent source edit must discard the stale downloaded generation"
 grep -Fq 'module_background(UPDATES_UC, [ "list-update-after-start" ])' "$LIFECYCLE_UC" ||

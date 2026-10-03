@@ -6,10 +6,10 @@ let durable = require("core.durable");
 let core_ip = require("core.ip");
 let uci_core = require("core.uci");
 let rule_config = require("config.rule");
-let domain_config = require("config.domain");
 let connections = require("config.connections");
 let routing_rulesets = require("routing.rulesets");
 let runtime_constants = require("singbox.constants");
+let provider_marks = require("providers.marks");
 let legacy = require("core.legacy_forkop");
 const CONFIG_NAME = getenv("PROKOP_CONFIG_NAME") || "prokop";
 const DNS_SOURCE_SET = "prokop_dns_sources";
@@ -213,11 +213,6 @@ function log_fatal(message) {
     run_args([ "logger", "-t", "prokop", "[fatal] " + as_string(message) ]);
 }
 
-function strip_list_comment(line) {
-    line = replace(as_string(line), /[[:space:]]*\/\/.*$/, "");
-    return replace(line, /[[:space:]]*#.*$/, "");
-}
-
 function print_csv(values) {
     for (let i = 0; i < length(values); i++) {
         if (i > 0)
@@ -228,28 +223,8 @@ function print_csv(values) {
         print("\n");
 }
 
-function text_list_values(value, separator_mode) {
-    let result = [];
-    separator_mode = as_string(separator_mode);
-
-    for (let line in split(as_string(value), "\n")) {
-        line = strip_list_comment(line);
-        line = separator_mode == "comma-space"
-            ? replace(line, /[ ,]/g, "\n")
-            : replace(line, /,/g, "\n");
-
-        for (let item in split(line, "\n")) {
-            item = trim(replace(item, /\r/g, ""));
-            if (item != "")
-                push(result, item);
-        }
-    }
-
-    return result;
-}
-
 function text_list_to_csv(value, separator_mode) {
-    print_csv(text_list_values(value, separator_mode));
+    print_csv(rule_config.text_list_values(value, separator_mode));
 }
 
 function csv_to_json_array(value) {
@@ -311,35 +286,9 @@ function domain_subnet_line_values(data) {
     let result = [];
 
     for (let line in split(as_string(data), "\n")) {
-        line = trim(replace(strip_list_comment(line), /\r/g, ""));
+        line = trim(replace(rule_config.strip_list_comment(line), /\r/g, ""));
         if (line != "")
             push(result, line);
-    }
-
-    return result;
-}
-
-function normalize_domain_subnet_value(value, kind) {
-    kind = as_string(kind);
-    if (kind == "domains")
-        return domain_config.suffix_to_ascii(value);
-    if (kind == "subnets")
-        return core_ip.valid_ip_or_cidr(value) ? value : null;
-
-    exit(1);
-}
-
-function filter_domain_subnet_values(values, kind) {
-    let result = [];
-    kind = as_string(kind);
-
-    if (kind != "domains" && kind != "subnets")
-        exit(1);
-
-    for (let value in values) {
-        let normalized = normalize_domain_subnet_value(value, kind);
-        if (normalized != null)
-            push(result, normalized);
     }
 
     return result;
@@ -385,7 +334,7 @@ function legacy_condition_csv(kind, text_mode, conditions_text_mode, text_value,
 }
 
 function domain_subnet_text_csv(value, kind) {
-    print_csv(filter_domain_subnet_values(text_list_values(value, "comma-space"), kind));
+    print_csv(rule_config.filter_domain_subnet_values(rule_config.text_list_values(value, "comma-space"), kind));
 }
 
 function domain_subnet_file_csv(path, kind) {
@@ -393,7 +342,7 @@ function domain_subnet_file_csv(path, kind) {
     if (data == null)
         exit(1);
 
-    print_csv(filter_domain_subnet_values(domain_subnet_line_values(data), kind));
+    print_csv(rule_config.filter_domain_subnet_values(domain_subnet_line_values(data), kind));
 }
 
 function split_domain_subnet_file(path, domains_path, subnets_path) {
@@ -405,7 +354,7 @@ function split_domain_subnet_file(path, domains_path, subnets_path) {
     let subnets = [];
 
     for (let value in domain_subnet_line_values(data)) {
-        let domain = normalize_domain_subnet_value(value, "domains");
+        let domain = rule_config.normalize_domain_subnet_value(value, "domains");
         if (domain != null)
             push(domains, domain);
         else if (core_ip.valid_ip_or_cidr(value))
@@ -932,34 +881,6 @@ function nft_add_section_priority_rules_from_sections(sections, table, interface
     return true;
 }
 
-function hex_digit_value(value) {
-    let pos = index("0123456789abcdef", lc(as_string(value)));
-    return pos >= 0 ? pos : null;
-}
-
-function parse_mark_number(value) {
-    value = lc(trim(as_string(value)));
-    if (value == "")
-        return null;
-
-    if (substr(value, 0, 2) == "0x") {
-        value = substr(value, 2);
-        if (value == "")
-            return null;
-
-        let result = 0;
-        for (let i = 0; i < length(value); i++) {
-            let digit = hex_digit_value(substr(value, i, 1));
-            if (digit == null)
-                return null;
-            result = result * 16 + digit;
-        }
-        return result;
-    }
-
-    return match(value, /^[0-9]+$/) == null ? null : int(value);
-}
-
 // Prokop's own mark bits: the top byte (outbound, FakeIP, provider route
 // marks) and the low byte of the provider index. Other output hooks of the
 // same priority (fw4, pbr, mwan3, Tailscale) set bits in between; registered
@@ -972,16 +893,18 @@ function parse_mark_number(value) {
 const PROKOP_MARK_BITS = 0xff0000ff;
 
 function nft_prokop_mark_match_args(mark) {
-    let value = parse_mark_number(mark);
+    let value = provider_marks.parse_number(mark);
     if (value == null)
         return null;
     return [ "meta", "mark", "&", sprintf("0x%08x", PROKOP_MARK_BITS | value), "==", sprintf("0x%08x", value) ];
 }
 
+// common_set, port_set, ip_port_set, common6_set and ip_port6_set name the
+// shared capture sets of the releases before the per-rule sets: nothing
+// filled them, and the rules matching them never matched (UC-170). The
+// arguments stay so the callers' argument positions do not change.
 function nft_create_runtime_base(table, localv4_set, common_set, port_set, ip_port_set, interface_set, source_interfaces, fakeip_mark, outbound_mark, fakeip_range, tproxy_port, exclude_ntp, localv6_set, common6_set, ip_port6_set, fakeip6_range, tproxy6_address) {
     localv6_set = default_arg(localv6_set, "localv6");
-    common6_set = default_arg(common6_set, "prokop_subnets6");
-    ip_port6_set = default_arg(ip_port6_set, "prokop_ip6_ports");
     fakeip6_range = default_arg(fakeip6_range, "fc00::/18");
     tproxy6_address = default_arg(tproxy6_address, "::1");
 
@@ -990,11 +913,6 @@ function nft_create_runtime_base(table, localv4_set, common_set, port_set, ip_po
         !nft_add_set_elements(table, localv4_set, join(",", LOCALV4_RANGES)) ||
         !nft_create_ipv6_set(table, localv6_set) ||
         !nft_add_set_elements(table, localv6_set, join(",", LOCALV6_RANGES)) ||
-        !nft_create_ipv4_set(table, common_set) ||
-        !nft_create_ipv6_set(table, common6_set) ||
-        !nft_create_inet_service_set(table, port_set) ||
-        !nft_create_ipv4_port_set(table, ip_port_set) ||
-        !nft_create_ipv6_port_set(table, ip_port6_set) ||
         !nft_create_ipv4_set(table, DNS_SOURCE_SET) ||
         !nft_create_ipv6_set(table, DNS_SOURCE6_SET) ||
         !nft_create_ifname_set(table, interface_set))
@@ -1019,18 +937,6 @@ function nft_create_runtime_base(table, localv4_set, common_set, port_set, ip_po
         !nft_add_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), "ip", "daddr", "@" + as_string(localv4_set), "return" ]) ||
         !nft_add_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), "ip6", "daddr", "@" + as_string(localv6_set), "ip6", "daddr", "!=", fakeip6_range, "return" ]) ||
         !nft_add_rule(table, "mangle", [ "jump", "priority_rules" ]) ||
-        !nft_add_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), "ip", "daddr", "@" + as_string(common_set), "meta", "l4proto", "tcp", "meta", "mark", "set", fakeip_mark, "counter" ]) ||
-        !nft_add_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), "ip", "daddr", "@" + as_string(common_set), "meta", "l4proto", "udp", "meta", "mark", "set", fakeip_mark, "counter" ]) ||
-        !nft_add_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), "ip6", "daddr", "@" + as_string(common6_set), "meta", "l4proto", "tcp", "meta", "mark", "set", fakeip_mark, "counter" ]) ||
-        !nft_add_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), "ip6", "daddr", "@" + as_string(common6_set), "meta", "l4proto", "udp", "meta", "mark", "set", fakeip_mark, "counter" ]) ||
-        !nft_add_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), "ip", "daddr", ".", "tcp", "dport", "@" + as_string(ip_port_set), "meta", "mark", "set", fakeip_mark, "counter" ]) ||
-        !nft_add_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), "ip", "daddr", ".", "udp", "dport", "@" + as_string(ip_port_set), "meta", "mark", "set", fakeip_mark, "counter" ]) ||
-        !nft_add_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), "ip6", "daddr", ".", "tcp", "dport", "@" + as_string(ip_port6_set), "meta", "mark", "set", fakeip_mark, "counter" ]) ||
-        !nft_add_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), "ip6", "daddr", ".", "udp", "dport", "@" + as_string(ip_port6_set), "meta", "mark", "set", fakeip_mark, "counter" ]) ||
-        !nft_add_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), "ip", "daddr", "!=", "@" + as_string(localv4_set), "tcp", "dport", "@" + as_string(port_set), "meta", "mark", "set", fakeip_mark, "counter" ]) ||
-        !nft_add_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), "ip", "daddr", "!=", "@" + as_string(localv4_set), "udp", "dport", "@" + as_string(port_set), "meta", "mark", "set", fakeip_mark, "counter" ]) ||
-        !nft_add_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), "ip6", "daddr", "!=", "@" + as_string(localv6_set), "tcp", "dport", "@" + as_string(port_set), "meta", "mark", "set", fakeip_mark, "counter" ]) ||
-        !nft_add_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), "ip6", "daddr", "!=", "@" + as_string(localv6_set), "udp", "dport", "@" + as_string(port_set), "meta", "mark", "set", fakeip_mark, "counter" ]) ||
         !nft_add_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), "ip", "daddr", fakeip_range, "meta", "l4proto", "tcp", "meta", "mark", "set", fakeip_mark, "counter" ]) ||
         !nft_add_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), "ip", "daddr", fakeip_range, "meta", "l4proto", "udp", "meta", "mark", "set", fakeip_mark, "counter" ]) ||
         !nft_add_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), "ip6", "daddr", fakeip6_range, "meta", "l4proto", "tcp", "meta", "mark", "set", fakeip_mark, "counter" ]) ||
@@ -1076,37 +982,18 @@ function nft_create_runtime_base_from_uci(table, localv4_set, common_set, port_s
     );
 }
 
+// The shared capture set arguments are ignored, as in
+// nft_create_runtime_base().
 function nft_create_runtime_output_rules(table, localv4_set, common_set, port_set, ip_port_set, fakeip_mark, fakeip_range, localv6_set, common6_set, ip_port6_set, fakeip6_range) {
     localv6_set = default_arg(localv6_set, "localv6");
-    common6_set = default_arg(common6_set, "prokop_subnets6");
-    ip_port6_set = default_arg(ip_port6_set, "prokop_ip6_ports");
     fakeip6_range = default_arg(fakeip6_range, "fc00::/18");
 
     return (
-        nft_add_rule(table, "mangle_output", [ "ip", "daddr", "@" + as_string(common_set), "meta", "l4proto", "tcp", "meta", "mark", "set", fakeip_mark, "counter" ]) &&
-        nft_add_rule(table, "mangle_output", [ "ip", "daddr", "@" + as_string(common_set), "meta", "l4proto", "udp", "meta", "mark", "set", fakeip_mark, "counter" ]) &&
-        nft_add_rule(table, "mangle_output", [ "ip6", "daddr", "@" + as_string(common6_set), "meta", "l4proto", "tcp", "meta", "mark", "set", fakeip_mark, "counter" ]) &&
-        nft_add_rule(table, "mangle_output", [ "ip6", "daddr", "@" + as_string(common6_set), "meta", "l4proto", "udp", "meta", "mark", "set", fakeip_mark, "counter" ]) &&
-        nft_add_rule(table, "mangle_output", [ "ip", "daddr", ".", "tcp", "dport", "@" + as_string(ip_port_set), "meta", "mark", "set", fakeip_mark, "counter" ]) &&
-        nft_add_rule(table, "mangle_output", [ "ip", "daddr", ".", "udp", "dport", "@" + as_string(ip_port_set), "meta", "mark", "set", fakeip_mark, "counter" ]) &&
-        nft_add_rule(table, "mangle_output", [ "ip6", "daddr", ".", "tcp", "dport", "@" + as_string(ip_port6_set), "meta", "mark", "set", fakeip_mark, "counter" ]) &&
-        nft_add_rule(table, "mangle_output", [ "ip6", "daddr", ".", "udp", "dport", "@" + as_string(ip_port6_set), "meta", "mark", "set", fakeip_mark, "counter" ]) &&
-        nft_add_rule(table, "mangle_output", [ "tcp", "dport", "@" + as_string(port_set), "meta", "mark", "set", fakeip_mark, "counter" ]) &&
-        nft_add_rule(table, "mangle_output", [ "udp", "dport", "@" + as_string(port_set), "meta", "mark", "set", fakeip_mark, "counter" ]) &&
         nft_add_rule(table, "mangle_output", [ "ip", "daddr", fakeip_range, "meta", "l4proto", "tcp", "meta", "mark", "set", fakeip_mark, "counter" ]) &&
         nft_add_rule(table, "mangle_output", [ "ip", "daddr", fakeip_range, "meta", "l4proto", "udp", "meta", "mark", "set", fakeip_mark, "counter" ]) &&
         nft_add_rule(table, "mangle_output", [ "ip6", "daddr", fakeip6_range, "meta", "l4proto", "tcp", "meta", "mark", "set", fakeip_mark, "counter" ]) &&
         nft_add_rule(table, "mangle_output", [ "ip6", "daddr", fakeip6_range, "meta", "l4proto", "udp", "meta", "mark", "set", fakeip_mark, "counter" ])
     );
-}
-
-function nft_provider_mark_hex(route_mark_base, index) {
-    let base = parse_mark_number(route_mark_base);
-    index = int(index || 0);
-    if (base == null || index < 1)
-        return "";
-
-    return sprintf("0x%08x", base + index);
 }
 
 function nft_create_provider_output_rules_from_sections(sections, table, action, provider_bin, route_mark_base, queue_base, desync_mark, desync_mark_postnat) {
@@ -1122,8 +1009,8 @@ function nft_create_provider_output_rules_from_sections(sections, table, action,
             continue;
 
         index++;
-        let mark_hex = nft_provider_mark_hex(route_mark_base, index);
-        let queue_number = int(queue_base || 0) + index - 1;
+        let mark_hex = provider_marks.route_mark_hex(route_mark_base, index);
+        let queue_number = provider_marks.queue_number(queue_base, index);
         if (mark_hex == "" || queue_number < 0)
             return false;
 
@@ -1432,7 +1319,7 @@ function rule_line_has_fwmark(fields, expected_mark) {
         if (length(parts) != 2)
             continue;
 
-        if (parse_mark_number(parts[0]) == expected_mark && parse_mark_number(parts[1]) == expected_mark)
+        if (provider_marks.parse_number(parts[0]) == expected_mark && provider_marks.parse_number(parts[1]) == expected_mark)
             return true;
     }
 
@@ -1443,7 +1330,7 @@ function rule_line_has_fwmark(fields, expected_mark) {
 // with its priority, from all, the fwmark/mask and the lookup of its table
 // (UC-163). A lookup and a fwmark on two different lines are two other rules.
 function has_tproxy_marking_rule_text(rule_list, table, mark) {
-    let expected_mark = parse_mark_number(mark);
+    let expected_mark = provider_marks.parse_number(mark);
 
     if (expected_mark == null)
         return false;

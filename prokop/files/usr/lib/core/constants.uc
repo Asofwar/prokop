@@ -1,5 +1,7 @@
 #!/usr/bin/env ucode
 
+let dns_inbound = require("core.dns_inbound");
+
 function as_string(value) {
     return value == null ? "" : "" + value;
 }
@@ -50,7 +52,6 @@ function constants_map() {
     c.PROKOP_LUCI_VIEW_DIR = env("PROKOP_LUCI_VIEW_DIR", "/www/luci-static/resources/view/" + c.PROKOP_LUCI_VIEW_NAMESPACE);
     c.PROKOP_LUCI_I18N_DOMAIN = env("PROKOP_LUCI_I18N_DOMAIN", "prokop");
 
-    c.RESOLV_CONF = env("RESOLV_CONF", "/etc/resolv.conf");
     c.CHECK_PROXY_IP_DOMAIN = env("CHECK_PROXY_IP_DOMAIN", "ip.podkop.fyi");
     c.FAKEIP_TEST_DOMAIN = env("FAKEIP_TEST_DOMAIN", "fakeip.podkop.fyi");
     c.TMP_SING_BOX_FOLDER = env("TMP_SING_BOX_FOLDER", "/tmp/sing-box");
@@ -98,13 +99,11 @@ function constants_map() {
     c.SB_FAKEIP_RULESET_DNS_RULE_TAG = env("SB_FAKEIP_RULESET_DNS_RULE_TAG", "fakeip-ruleset-dns-rule-tag");
     c.SB_SERVICE_FAKEIP_DNS_RULE_TAG = env("SB_SERVICE_FAKEIP_DNS_RULE_TAG", "service-fakeip-dns-rule-tag");
     c.SB_TPROXY_INBOUND_TAG = env("SB_TPROXY_INBOUND_TAG", "tproxy-in");
-    c.SB_TPROXY_INBOUND_ADDRESS = env("SB_TPROXY_INBOUND_ADDRESS", "0.0.0.0");
     c.SB_TPROXY_INBOUND6_TAG = env("SB_TPROXY_INBOUND6_TAG", "tproxy6-in");
     c.SB_TPROXY_INBOUND6_ADDRESS = env("SB_TPROXY_INBOUND6_ADDRESS", "::1");
     c.SB_TPROXY_INBOUND_PORT = env("SB_TPROXY_INBOUND_PORT", "1602");
     c.SB_DNS_INBOUND_TAG = env("SB_DNS_INBOUND_TAG", "dns-in");
-    c.SB_DNS_INBOUND_ADDRESS = env("SB_DNS_INBOUND_ADDRESS", "127.0.0.42");
-    c.SB_DNS_INBOUND_PORT = env("SB_DNS_INBOUND_PORT", "53");
+    c.SB_DNS_INBOUND_ADDRESS = dns_inbound.ADDRESS;
     c.SB_SERVICE_MIXED_INBOUND_TAG = env("SB_SERVICE_MIXED_INBOUND_TAG", "service-mixed-in");
     c.SB_SERVICE_MIXED_INBOUND_ADDRESS = env("SB_SERVICE_MIXED_INBOUND_ADDRESS", "127.0.0.1");
     c.SB_SERVICE_MIXED_INBOUND_PORT = env("SB_SERVICE_MIXED_INBOUND_PORT", "4534");

@@ -57,8 +57,11 @@ grep -Fq 'function stop_runtime' "$NFQUEUE_RUNTIME" ||
   fail "providers/nfqueue/runtime.uc must own NFQUEUE stop"
 grep -Fq 'function status_json' "$NFQUEUE_RUNTIME" ||
   fail "providers/nfqueue/runtime.uc must own NFQUEUE status"
-grep -Fq 'function create_nft_rules' "$NFQUEUE_RUNTIME" ||
-  fail "providers/nfqueue/runtime.uc must own NFQUEUE nft rules"
+# nft/apply.uc writes the queue rules into the candidate batch; the runtime
+# has no second, non-atomic writer of them.
+if grep -n -E 'create_nft_rules|create-nft-rules|"nft", "add"' "$NFQUEUE_RUNTIME" >/dev/null 2>&1; then
+  fail "providers/nfqueue/runtime.uc must not write nft rules"
+fi
 grep -Fq 'function validate_strategy' "$NFQUEUE_VALIDATOR" ||
   fail "providers/nfqueue/validator.uc must own shared NFQUEUE strategy validation"
 grep -Fq 'function nft_queue_overlap' "$NFQUEUE_CHECK" ||
@@ -91,7 +94,6 @@ grep -Fq 'runtime_constants.tag(base, postfix)' "$NFQUEUE_RUNTIME" ||
 for mode in \
   'mode == "start-runtime"' \
   'mode == "stop-runtime"' \
-  'mode == "create-nft-rules"' \
   'mode == "status"' \
   'mode == "check"' \
   'mode == "supervisor"'

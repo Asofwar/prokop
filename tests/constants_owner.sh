@@ -66,4 +66,28 @@ grep -Fq "export const FAKEIP_CHECK_DOMAIN = 'fakeip.podkop.fyi';" "$FRONTEND_CO
 grep -Fq "export const IP_CHECK_DOMAIN = 'ip.podkop.fyi';" "$FRONTEND_CONSTANTS" ||
   fail "LuCI diagnostics must use the deployed public IP endpoint"
 
+# The DNS inbound address has one owner, core/dns_inbound.uc: sing-box
+# listens on it and dnsmasq forwards to it, so an override moves both
+# (UC-183). Not core/constants.uc: the 1 Hz UI poll (service/ui.uc,
+# service/state.uc) must not load the UCI config that module reads.
+[ "$(grep -RFl '127.0.0.42' "$ROOT_DIR/prokop/files/usr/bin" "$PROKOP_LIB")" = "$PROKOP_LIB/core/dns_inbound.uc" ] ||
+  fail "only core/dns_inbound.uc may name the DNS inbound address"
+dns_probe="$(mktemp)"
+trap 'rm -f "$dns_probe"' EXIT
+cat >"$dns_probe" <<'UC'
+print(require("singbox.constants").DNS_INBOUND_ADDRESS, " ", require("core.constants").SB_DNS_INBOUND_ADDRESS, "\n");
+UC
+for address in "" 127.0.0.53; do
+  dns_addresses="$(SB_DNS_INBOUND_ADDRESS="$address" ucode -L "$PROKOP_LIB" "$dns_probe")"
+  expected="${address:-127.0.0.42}"
+  [ "$dns_addresses" = "$expected $expected" ] ||
+    fail "SB_DNS_INBOUND_ADDRESS='$address' gave the sing-box listen and the dnsmasq target '$dns_addresses'"
+done
+
+# Constants nothing reads.
+for unused in RESOLV_CONF SB_TPROXY_INBOUND_ADDRESS SB_DNS_INBOUND_PORT; do
+  source_refute "unused constant $unused must stay removed" "-w -F" "$unused" "$CONSTANTS_UC"
+done
+
 printf 'constants ownership checks passed\n'
+

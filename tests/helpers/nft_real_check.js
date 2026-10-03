@@ -186,13 +186,16 @@ const modes = {
     }
   },
 
-  // empty-set <json> <table> <set>...
-  'empty-set'() {
+  // absent-set <json> <table> <set>...: neither the set nor a rule matching
+  // it is in the table.
+  'absent-set'() {
     const [table, ...names] = args;
+    const rules = objects('rule').filter((r) => r.family === 'inet' && r.table === table);
     for (const name of names) {
-      const set = setOf(table, name);
-      assert.ok(set, `set ${table}/${name} is missing`);
-      assert.deepEqual((set.elem || []).map(text), [], `set ${name} must be empty`);
+      assert.equal(setOf(table, name), undefined, `set ${table}/${name} must not exist`);
+      for (const rule of rules)
+        assert.ok(!JSON.stringify(rule.expr).includes(JSON.stringify(`@${name}`)),
+          `rule in ${table}/${rule.chain} matches the set ${name}`);
     }
   },
 

@@ -109,7 +109,6 @@ let routing_rulesets_module_value = null;
 let singbox_rulesets_module_value = null;
 let list_mirror_download_state = {};
 let list_ruleset_snapshot_dir = "";
-let list_nft_snapshot_file = "";
 let list_nft_candidate_file = "";
 let list_download_staging_dir = "";
 let list_download_cache = {};
@@ -3923,21 +3922,13 @@ function begin_list_nft_snapshot() {
     return true;
 }
 
-function restore_list_nft_snapshot() {
-    // Candidate preparation has not touched the active table, so rollback is
-    // only disposal of the uncommitted batch.
-    return true;
-}
-
-function finish_list_nft_snapshot(commit) {
-    // Preflight can fail before a candidate is created. In that case the
-    // active nft table was never touched and there is nothing to roll back.
-    let ok = true;
+// The list update records its nft mutations in a candidate batch and never
+// touches the active table (nft_module_success); lifecycle rebuilds the
+// table from the committed generation. Ending the transaction, committed or
+// aborted, only disposes of the batch.
+function finish_list_nft_snapshot() {
     remove_file(list_nft_candidate_file);
     list_nft_candidate_file = "";
-    remove_file(list_nft_snapshot_file);
-    list_nft_snapshot_file = "";
-    return ok;
 }
 
 function finish_list_ruleset_snapshot(commit) {
@@ -4053,7 +4044,7 @@ function finish_list_update(status, applied, generation_changed) {
     if (generation_changed == null)
         generation_changed = applied;
     let rulesets_changed = finish_list_ruleset_snapshot(applied);
-    let nft_restored = finish_list_nft_snapshot(applied);
+    finish_list_nft_snapshot();
     cleanup_list_downloads();
     // Startup owns the lifecycle lock. Prepare a complete generation without
     // applying any live nft policy or recursively requesting a service reload.
@@ -4101,8 +4092,6 @@ function finish_list_update(status, applied, generation_changed) {
     let pending_reload = applied ? fs.readfile(PENDING_RELOAD_FILE) : null;
     if (!applied)
         service_state_success([ "run-pending-reload-if-requested", PENDING_RELOAD_FILE, SERVICE_INIT ]);
-    if (!applied && !nft_restored)
-        log_message("Failed to restore nftables after an aborted list update", "fatal");
     // nft list mutations were only candidate data. Publish the committed
     // generation through lifecycle, which rebuilds the full nft table in one
     // transaction; never append those elements to the active table here.
