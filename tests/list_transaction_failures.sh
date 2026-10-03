@@ -23,7 +23,7 @@ while [ "$#" -gt 0 ]; do
     *) shift ;;
   esac
 done
-printf 'new.example\n' >"$output"
+printf '%s\n' "${CURL_BODY:-new.example}" >"$output"
 SH
 cat >"$WORK_DIR/bin/cp" <<'SH'
 #!/bin/sh
@@ -43,6 +43,10 @@ if [ "$*" = '-j list table inet prokop' ]; then
 fi
 # None of these aborted transactions is allowed to mutate nftables.
 exit 1
+SH
+cat >"$WORK_DIR/bin/logger" <<'SH'
+#!/bin/sh
+printf '%s\n' "$*" >>"$CASE_DIR/syslog"
 SH
 cat >"$WORK_DIR/bin/init-prokop" <<'SH'
 #!/bin/sh
@@ -97,5 +101,50 @@ UCI
   fi
   [ ! -s "$case_dir/nft.log" ] || fail "$phase preparation failure reached live nftables"
 done
+
+# An abort after the downloaded subnets went into the candidate batch: the
+# active table is still untouched, and the batch is disposed of.
+case_dir="$WORK_DIR/commit"
+mkdir -p "$case_dir/run" "$case_dir/cache" "$case_dir/rulesets" "$case_dir/tmp"
+cat >"$case_dir/uci.state" <<'UCI'
+prokop.settings=settings
+prokop.settings.update_interval=1d
+prokop.alpha=section
+prokop.alpha.enabled=1
+prokop.alpha.action=connection
+prokop.alpha.remote_subnet_lists=https://lists.test/subnets.txt
+UCI
+status=0
+env PATH="$WORK_DIR/bin:$PATH" TMPDIR="$case_dir/tmp" \
+  CURL_BODY=$'198.51.100.0/24\n2001:db8::/32' \
+  PROKOP_LIST_GENERATION_FAIL_PHASE=runtime-stage-create \
+  PROKOP_RUNTIME_LIST_GENERATION_DIR="$case_dir/generation" \
+  PROKOP_RULESET_CACHE_DIR="$case_dir/ruleset-cache" \
+  PROKOP_NFT_SUBNET_CACHE_DIR="$case_dir/nft-subnet-cache" \
+  CASE_DIR="$case_dir" FAIL_PHASE=commit \
+  PROKOP_LIB="$PROKOP_LIB" \
+  PROKOP_UCI_STATE_FILE="$case_dir/uci.state" \
+  TMP_RULESET_FOLDER="$case_dir/rulesets" \
+  PROKOP_RUNTIME_STATE_DIR="$case_dir/run" \
+  PROKOP_RELOAD_LOCK_DIR="$case_dir/run/reload.lock" \
+  PROKOP_LIST_UPDATE_PID_FILE="$case_dir/run/list.pid" \
+  PROKOP_PERSISTENT_LIST_CACHE_DIR="$case_dir/cache" \
+  PROKOP_SERVICE_INIT="$WORK_DIR/bin/init-prokop" \
+  NFT_TABLE_NAME=prokop \
+  ucode -L "$PROKOP_LIB" "$PROKOP_LIB/components/updates.uc" list-update >"$case_dir/output.log" 2>&1 || status="$?"
+[ "$status" -eq 1 ] || fail "a failed generation commit must abort the update"
+if grep -Eq '^(-f|add|insert|delete|flush|replace|create)( |$)' "$case_dir/nft.log" 2>/dev/null; then
+  fail "the aborted list update changed live nftables: $(cat "$case_dir/nft.log")"
+fi
+grep -Fq 'Adding 1 elements to nft set prokop_rule_alpha_subnets6' "$case_dir/syslog" ||
+  fail "the downloaded subnets did not reach the candidate batch: $(cat "$case_dir/syslog")"
+if grep -RlEq '^add element ' "$case_dir/tmp" 2>/dev/null; then
+  fail "the aborted list update left its candidate batch behind"
+fi
+[ ! -s "$case_dir/reload.log" ] || fail "the aborted list update reloaded the service"
+grep -Fq 'Lists update failed' "$case_dir/syslog" || fail "the abort was not logged"
+if grep -Fq 'fatal' "$case_dir/syslog"; then
+  fail "an aborted list update is not fatal: $(cat "$case_dir/syslog")"
+fi
 
 printf 'list transaction failure checks passed\n'
