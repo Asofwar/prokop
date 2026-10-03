@@ -616,7 +616,8 @@ async function handleViewLogs() {
         _('View logs'),
         renderModal(viewLogs.data as string, 'view_logs', {
           getText: getLatestLogs,
-          refreshMs: 250,
+          // Each refresh runs check_logs on the router (UC-126).
+          refreshMs: 2000,
           initialAutoRefresh: true,
           showAutoRefreshToggle: true,
           startAtEnd: true,

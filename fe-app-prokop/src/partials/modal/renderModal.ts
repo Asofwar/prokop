@@ -61,6 +61,20 @@ export function renderModal(
     }
   };
 
+  const isPageHidden = () =>
+    typeof document !== 'undefined' && document.hidden === true;
+
+  // A hidden tab skips the timed refreshes and catches up when it is shown
+  // again (UC-126).
+  const handleVisibilityChange = () => {
+    if (!body.isConnected) {
+      destroyLiveRefresh();
+      return;
+    }
+
+    requestRefresh();
+  };
+
   const destroyLiveRefresh = () => {
     refreshSessionId += 1;
     pendingRefresh = false;
@@ -69,6 +83,10 @@ export function renderModal(
 
     observer?.disconnect();
     observer = undefined;
+
+    if (typeof document !== 'undefined') {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }
   };
 
   const scrollToBottom = () => {
@@ -168,13 +186,15 @@ export function renderModal(
     }
   };
 
+  // Timed refreshes run at most once per refreshMs: a tick that finds the
+  // previous request still running is skipped rather than queued (UC-126).
   const requestRefresh = () => {
-    if (!options?.getText || !autoRefreshEnabled) {
-      return;
-    }
-
-    if (refreshInFlight) {
-      pendingRefresh = true;
+    if (
+      !options?.getText ||
+      !autoRefreshEnabled ||
+      refreshInFlight ||
+      isPageHidden()
+    ) {
       return;
     }
 
@@ -343,6 +363,7 @@ export function renderModal(
   }
 
   if (options?.getText && typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     startRefreshTimer();
     requestRefresh();
   }
