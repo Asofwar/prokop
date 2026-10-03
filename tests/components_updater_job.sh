@@ -9,8 +9,11 @@ UPDATER="$ROOT_DIR/prokop/files/usr/lib/components/updater.uc"
 UPDATES_UC="$ROOT_DIR/prokop/files/usr/lib/components/updates.uc"
 ACTION_UC="$ROOT_DIR/prokop/files/usr/lib/components/action.uc"
 WORK_DIR="$(mktemp -d)"
+# shellcheck source=tests/helpers/owned_processes.sh
+. "$ROOT_DIR/tests/helpers/owned_processes.sh"
 
 cleanup() {
+  [ -z "${alive_pid:-}" ] || owned_kill KILL "$alive_pid" || true
   rm -rf "$WORK_DIR"
 }
 trap cleanup EXIT
@@ -27,35 +30,6 @@ assert_eq() {
 
   [ "$actual" = "$expected" ] || fail "$label: expected '$expected', got '$actual'"
 }
-
-write_state() {
-  local name="$1"
-  local content="$2"
-
-  printf '%s\n' "$content" >"$WORK_DIR/$name.json"
-  printf '%s\n' "$WORK_DIR/$name.json"
-}
-
-assert_eq "/tmp/jobs/abc-1_2.json" \
-  "$(ucode "$UPDATER" updates-job-state-path /tmp/jobs abc-1_2)" \
-  "valid job state path"
-
-if ucode "$UPDATER" updates-job-state-path /tmp/jobs '../bad' >/dev/null 2>&1; then
-  fail "invalid job id should be rejected"
-fi
-
-assert_eq outdated \
-  "$(ucode -- "$UPDATER" updates-status-from-compare -1)" \
-  "outdated compare status"
-assert_eq latest \
-  "$(ucode -- "$UPDATER" updates-status-from-compare 0)" \
-  "latest compare status"
-assert_eq dev \
-  "$(ucode -- "$UPDATER" updates-status-from-compare 1)" \
-  "dev compare status"
-if ucode -- "$UPDATER" updates-status-from-compare invalid >/dev/null 2>&1; then
-  fail "invalid compare status should be rejected"
-fi
 
 assert_eq "$(printf 'Latest version is installed\tcomponent is up to date (1.0)')" \
   "$(ucode "$UPDATER" updates-check-result-row component 1.0 1.0 latest)" \
@@ -468,32 +442,58 @@ assert_eq "$(printf 'mipsel_24kc\tzapret_v70.1_mipsel_24kc.zip\thttps://example.
 [ -z "$(printf '%s' "$zapret_release_json" | ucode "$UPDATER" release-select-arch-suffix-asset zip 'arm_cortex-a7')" ] ||
   fail "release arch suffix selector should be empty for missing arch"
 
-running="$(write_state running '{"running":true,"pid":"123","started_at":100}')"
-assert_eq "$(printf 'pid\t123\t0')" \
-  "$(ucode "$UPDATER" updates-job-refresh-plan "$running" 105 15)" \
-  "alive candidate within grace"
-assert_eq "$(printf 'pid\t123\t1')" \
-  "$(ucode "$UPDATER" updates-job-refresh-plan "$running" 120 15)" \
-  "alive candidate after grace"
+# A running component job whose worker is gone becomes stale, on the
+# production path (components/updates.uc component-action-status ->
+# refresh_component_running_job_state; UC-179 moved these cases off the
+# unused copy in components/updater.uc): a job without a valid pid only
+# after the grace period, a job with a pid only when that process is gone
+# or is another process that reused the pid.
+refresh_dir="$WORK_DIR/refresh-jobs"
+mkdir -p "$refresh_dir"
+now="$(date +%s)"
+refresh_status() {
+  PROKOP_LIB="$fake_lib" UPDATES_JOB_DIR="$refresh_dir" UPDATES_JOB_STALE_GRACE_SECONDS=15 \
+    ucode -L "$PROKOP_LIB" "$UPDATES_UC" component-action-status "$1" |
+    node -e 'const v = JSON.parse(require("fs").readFileSync(0, "utf8")); console.log(v.running === true ? "running" : v.reason || "finished")'
+}
+refresh_job() {
+  printf '{"success":true,"running":%s,"kind":"component","component":"sing_box","action":"check_update","message":"running","started_at":%s%s}\n' \
+    "$2" "$3" "${4:-}" >"$refresh_dir/$1.json"
+}
+sleep 600 &
+alive_pid=$!
+sh -c 'exit 0' &
+gone_pid=$!
+wait "$gone_pid" || true
+alive_ticks="$(ucode -L "$PROKOP_LIB" -e 'print(require("core.process_identity").start_ticks(ARGV[0]))' "$alive_pid")"
 
-invalid_pid="$(write_state invalid-pid '{"running":true,"pid":"","started_at":100}')"
-assert_eq "skip" \
-  "$(ucode "$UPDATER" updates-job-refresh-plan "$invalid_pid" 105 15)" \
-  "invalid pid within grace"
-assert_eq "stale" \
-  "$(ucode "$UPDATER" updates-job-refresh-plan "$invalid_pid" 120 15)" \
-  "invalid pid after grace"
+refresh_job no-pid-grace true "$now"
+assert_eq running "$(refresh_status no-pid-grace)" "a job without a pid within the grace period"
+refresh_job no-pid-late true $((now - 120))
+assert_eq stale "$(refresh_status no-pid-late)" "a job without a pid after the grace period"
+refresh_job alive-late true $((now - 120)) ",\"pid\":\"$alive_pid\""
+assert_eq running "$(refresh_status alive-late)" "a job whose worker runs"
+refresh_job alive-ticks true $((now - 120)) ",\"pid\":\"$alive_pid\",\"pid_ticks\":\"$alive_ticks\""
+assert_eq running "$(refresh_status alive-ticks)" "a job whose worker runs with its start time"
+refresh_job reused-pid true $((now - 120)) ",\"pid\":\"$alive_pid\",\"pid_ticks\":\"1\""
+assert_eq stale "$(refresh_status reused-pid)" "a job whose pid another process reused"
+refresh_job gone-grace true "$now" ",\"pid\":\"$gone_pid\""
+assert_eq running "$(refresh_status gone-grace)" "a job whose worker just exited, within the grace period"
+refresh_job gone-late true $((now - 120)) ",\"pid\":\"$gone_pid\""
+assert_eq stale "$(refresh_status gone-late)" "a job whose worker exited"
+refresh_job finished false $((now - 120))
+assert_eq finished "$(refresh_status finished)" "a finished job"
+owned_kill KILL "$alive_pid" || true
+wait "$alive_pid" 2>/dev/null || true
+alive_pid=""
 
-finished="$(write_state finished '{"running":false,"pid":"123","started_at":100}')"
-assert_eq "skip" \
-  "$(ucode "$UPDATER" updates-job-refresh-plan "$finished" 120 15)" \
-  "finished job refresh"
-
-stale_json="$(ucode "$UPDATER" updates-mark-stale-job-state "$invalid_pid")"
+# The stale state says the outcome is unknown.
+stale_json="$(PROKOP_LIB="$fake_lib" UPDATES_JOB_DIR="$refresh_dir" \
+  ucode -L "$PROKOP_LIB" "$UPDATES_UC" component-action-status no-pid-late)"
 JSON_VALUE="$stale_json" node - <<'NODE'
 const value = JSON.parse(process.env.JSON_VALUE);
-if (value.running !== false || value.success !== false || value.exit_code !== null) {
-  console.error("stale state shape mismatch");
+if (value.running !== false || value.success !== false || value.exit_code !== null || value.reason !== "stale") {
+  console.error("stale state shape mismatch: " + JSON.stringify(value));
   process.exit(1);
 }
 NODE

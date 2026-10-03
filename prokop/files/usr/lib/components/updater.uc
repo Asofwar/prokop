@@ -6,19 +6,6 @@ function as_string(value) {
     return value == null ? "" : "" + value;
 }
 
-function read_json_file(path) {
-    let data = fs.readfile(path);
-    if (data == null)
-        return null;
-
-    try {
-        return json(data);
-    }
-    catch (e) {
-        return null;
-    }
-}
-
 function read_stdin() {
     let input = fs.open("/dev/stdin", "r");
     if (!input)
@@ -38,17 +25,6 @@ function read_stdin_json() {
     }
 }
 
-function write_json(value) {
-    print(sprintf("%J", value), "\n");
-}
-
-function stdin_contains_ci(needle) {
-    needle = lc(as_string(needle));
-    if (needle == "")
-        return false;
-    return index(lc(read_stdin()), needle) >= 0;
-}
-
 function stdin_first_line_last_field() {
     let data = read_stdin();
     let newline = index(data, "\n");
@@ -57,23 +33,6 @@ function stdin_first_line_last_field() {
 
     if (length(fields) > 0)
         print(as_string(fields[length(fields) - 1]), "\n");
-}
-
-function file_first_line(path) {
-    let data = fs.readfile(path);
-    if (data == null)
-        exit(1);
-
-    let newline = index(data, "\n");
-    print(newline >= 0 ? substr(data, 0, newline) : data, "\n");
-}
-
-function json_file_field(path, key, fallback) {
-    let value = read_json_file(path);
-    if (type(value) == "object" && value[key] != null)
-        print(as_string(value[key]), "\n");
-    else
-        print(as_string(fallback), "\n");
 }
 
 function object_get_default(key, fallback) {
@@ -127,17 +86,6 @@ function arg_bool(value) {
     return value === true || value == "true" || value == "1" || value == 1;
 }
 
-function arg_number(value) {
-    value = as_string(value);
-    if (value == "" || match(value, /[^0-9-]/))
-        return 0;
-    return int(value);
-}
-
-function file_json_valid(path) {
-    return read_json_file(path) != null;
-}
-
 function github_response_ok() {
     let response = read_stdin_json();
     if (response == null)
@@ -152,54 +100,6 @@ function github_response_ok() {
     return true;
 }
 
-function release_by_tag(tag) {
-    for (let release in array_or_empty(read_stdin_json())) {
-        if (type(release) != "object")
-            continue;
-        if (release.draft === true || release.prerelease === true)
-            continue;
-        if (as_string(release.tag_name || "") == tag) {
-            write_json(release);
-            return;
-        }
-    }
-}
-
-function release_asset_name(prefix, ext) {
-    let release = object_or_empty(read_stdin_json());
-    for (let asset in array_or_empty(release.assets)) {
-        if (type(asset) != "object")
-            continue;
-        let name = as_string(asset.name || "");
-        if ((str_startswith(name, prefix + "_") || str_startswith(name, prefix + "-")) &&
-            str_endswith(name, "." + ext)) {
-            print(name, "\n");
-            return;
-        }
-    }
-}
-
-function release_asset_url(name) {
-    let release = object_or_empty(read_stdin_json());
-    for (let asset in array_or_empty(release.assets)) {
-        if (type(asset) == "object" && as_string(asset.name || "") == name) {
-            print(as_string(asset.browser_download_url || ""), "\n");
-            return;
-        }
-    }
-}
-
-function release_asset_name_by_suffix(suffix) {
-    let release = object_or_empty(read_stdin_json());
-    for (let asset in array_or_empty(release.assets)) {
-        let name = type(asset) == "object" ? as_string(asset.name || "") : "";
-        if (str_endswith(name, suffix)) {
-            print(name, "\n");
-            return;
-        }
-    }
-}
-
 function release_asset_url_by_suffix_from_release(release, suffix) {
     suffix = as_string(suffix);
     for (let asset in array_or_empty(release.assets)) {
@@ -211,13 +111,6 @@ function release_asset_url_by_suffix_from_release(release, suffix) {
     }
 
     return "";
-}
-
-function release_asset_url_by_suffix(suffix) {
-    let release = object_or_empty(read_stdin_json());
-    let url = release_asset_url_by_suffix_from_release(release, suffix);
-    if (url != "")
-        print(url, "\n");
 }
 
 function release_asset_pair(release, expected_name) {
@@ -723,18 +616,6 @@ function sing_box_extended_package_asset_url(distrib_arch, asset_ext) {
     exit(1);
 }
 
-function updates_opkg_package_installed(package_name) {
-    package_name = as_string(package_name);
-
-    for (let line in split(read_stdin(), "\n")) {
-        let fields = split(trim(as_string(line)), /[ \t]+/);
-        if (length(fields) >= 1 && as_string(fields[0]) == package_name)
-            exit(0);
-    }
-
-    exit(1);
-}
-
 function updates_opkg_package_version(package_name) {
     package_name = as_string(package_name);
 
@@ -744,48 +625,6 @@ function updates_opkg_package_version(package_name) {
             print(as_string(fields[2]), "\n");
             return;
         }
-    }
-}
-
-function updates_apk_manifest_package_version(package_name) {
-    package_name = as_string(package_name);
-
-    for (let line in split(read_stdin(), "\n")) {
-        let fields = split(trim(as_string(line)), /[ \t]+/);
-        if (length(fields) >= 2 && as_string(fields[0]) == package_name) {
-            print(as_string(fields[1]), "\n");
-            return;
-        }
-    }
-}
-
-function updates_apk_info_package_version(package_name) {
-    package_name = as_string(package_name);
-    let prefix = package_name + "-";
-    let first = split(read_stdin(), "\n")[0];
-    first = as_string(first);
-
-    if (!str_startswith(first, prefix))
-        return;
-
-    let version = substr(first, length(prefix));
-    version = replace(version, /[ \t].*$/, "");
-    if (version != "")
-        print(version, "\n");
-}
-
-function updates_apk_policy_version() {
-    for (let line in split(read_stdin(), "\n")) {
-        line = as_string(line);
-        if (match(line, /^  [^ \t][^ \t]*:/) == null)
-            continue;
-
-        let fields = split(trim(line), /[ \t]+/);
-        if (length(fields) == 0)
-            return;
-
-        print(str_remove_suffix(as_string(fields[0]), ":"), "\n");
-        return;
     }
 }
 
@@ -900,101 +739,6 @@ function byedpi_select_asset(series, asset_ext, arch_candidates) {
     }
 }
 
-function sing_box_extended_release_tag() {
-    for (let release in array_or_empty(read_stdin_json())) {
-        if (type(release) != "object")
-            continue;
-        if (release.draft === true || release.prerelease === true)
-            continue;
-        let tag = as_string(release.tag_name || "");
-        let lowered = lc(tag);
-        if (tag != "" && !str_contains(lowered, "alpha") && !str_contains(lowered, "beta") && !str_contains(lowered, "rc")) {
-            print(tag, "\n");
-            return;
-        }
-    }
-}
-
-function text_first_chars(value, max_chars) {
-    value = as_string(value);
-    max_chars = int(max_chars || "0", 10) || 0;
-    return max_chars > 0 && length(value) > max_chars ? substr(value, 0, max_chars) : value;
-}
-
-function file_last_nonblank_line(path, fallback, max_chars) {
-    let data = fs.readfile(path);
-    let result = "";
-
-    if (data != null) {
-        for (let line in split(as_string(data), "\n"))
-            if (match(line, /^[[:space:]]*$/) == null)
-                result = line;
-    }
-
-    if (result == "")
-        result = as_string(fallback);
-
-    print(text_first_chars(result, max_chars), "\n");
-}
-
-function file_flat_snippet(path, max_chars) {
-    let data = fs.readfile(path);
-    if (data == null)
-        return;
-
-    print(text_first_chars(replace(as_string(data), /\n/g, " "), max_chars), "\n");
-}
-
-function file_tail_json_object(path) {
-    let data = fs.readfile(path);
-    let result = "";
-
-    if (data != null) {
-        for (let line in split(as_string(data), "\n")) {
-            let start = index(line, "{");
-            if (start >= 0)
-                result = substr(line, start);
-        }
-    }
-
-    if (result != "")
-        print(result, "\n");
-}
-
-function job_running_is(path, expected) {
-    let value = read_json_file(path);
-    let running = type(value) == "object" && value.running === true;
-    return running == arg_bool(expected);
-}
-
-function updates_json_response(success, component, action, message, current_version, latest_version, changed, status, release_url) {
-    write_json({
-        success: arg_bool(success),
-        kind: "component",
-        component: as_string(component),
-        action: as_string(action),
-        message: as_string(message),
-        current_version: as_string(current_version),
-        latest_version: as_string(latest_version),
-        changed: arg_number(changed),
-        status: as_string(status),
-        release_url: as_string(release_url)
-    });
-}
-
-function updates_status_from_compare(compare_result) {
-    compare_result = as_string(compare_result);
-
-    if (compare_result == "-1")
-        print("outdated\n");
-    else if (compare_result == "0")
-        print("latest\n");
-    else if (compare_result == "1")
-        print("dev\n");
-    else
-        exit(1);
-}
-
 function updates_check_result_row(component, current_version, latest_version, status) {
     component = as_string(component);
     current_version = as_string(current_version);
@@ -1019,150 +763,14 @@ function updates_check_result_row(component, current_version, latest_version, st
     exit(1);
 }
 
-function updates_job_json_response(success, job_id, message) {
-    write_json({
-        success: arg_bool(success),
-        job_id: as_string(job_id),
-        message: as_string(message)
-    });
-}
-
-function updates_job_state_path(job_dir, job_id) {
-    job_dir = as_string(job_dir);
-    job_id = as_string(job_id);
-
-    if (job_id == "" || job_id == "." || job_id == ".." || match(job_id, /[^A-Za-z0-9._-]/) != null)
-        exit(1);
-
-    print(job_dir, "/", job_id, ".json\n");
-}
-
-function updates_running_job_state(component, action, pid, started_at) {
-    pid = as_string(pid);
-    write_json({
-        success: true,
-        running: true,
-        kind: "component",
-        component: as_string(component),
-        action: as_string(action),
-        message: "Component action is running",
-        pid: pid != "" ? pid : null,
-        started_at: arg_number(started_at),
-        updated_at: null,
-        current_version: "",
-        latest_version: "",
-        changed: 0,
-        status: "",
-        exit_code: null
-    });
-}
-
-function job_started_at_within_grace(value, now, grace_seconds) {
-    let started_at = arg_number(value);
-    now = arg_number(now);
-    grace_seconds = arg_number(grace_seconds);
-
-    if (started_at <= 0 || now <= 0)
-        return false;
-
-    return now - started_at < grace_seconds;
-}
-
-function job_pid_valid(pid) {
-    pid = as_string(pid);
-    return pid != "" && match(pid, /^[0-9]+$/) != null;
-}
-
-function updates_job_refresh_plan(path, now, grace_seconds) {
-    let value = read_json_file(path);
-    if (type(value) != "object" || value.running !== true) {
-        print("skip\n");
-        return;
-    }
-
-    let within_grace = job_started_at_within_grace(value.started_at, now, grace_seconds);
-    let pid = as_string(value.pid || "");
-    if (!job_pid_valid(pid)) {
-        print(within_grace ? "skip\n" : "stale\n");
-        return;
-    }
-
-    print("pid\t", pid, "\t", within_grace ? "0" : "1", "\n");
-}
-
-function updates_set_running_job_pid(path, pid) {
-    let value = object_or_empty(read_json_file(path));
-    if (value.running === true)
-        value.pid = as_string(pid);
-    write_json(value);
-}
-
-function updates_mark_stale_job_state(path) {
-    let value = object_or_empty(read_json_file(path));
-    if (value.running === true) {
-        value.success = false;
-        value.running = false;
-        value.message = "Component action job is stale or the worker process exited unexpectedly";
-        value.changed = 0;
-        value.status = "";
-        value.exit_code = null;
-    }
-    write_json(value);
-}
-
-function updates_finish_job_state(path, exit_code, updated_at) {
-    let value = read_json_file(path);
-    if (value == null)
-        exit(1);
-
-    value.running = false;
-    value.kind = "component";
-    value.exit_code = arg_number(exit_code);
-    value.updated_at = arg_number(updated_at);
-    write_json(value);
-}
-
-function updates_fallback_job_state(component, action, message, exit_code, updated_at) {
-    write_json({
-        success: false,
-        running: false,
-        kind: "component",
-        component: as_string(component),
-        action: as_string(action),
-        message: as_string(message),
-        current_version: "",
-        latest_version: "",
-        changed: 0,
-        status: "",
-        exit_code: arg_number(exit_code),
-        updated_at: arg_number(updated_at)
-    });
-}
-
 let mode = ARGV[0] || "";
 
-if (mode == "file-json-valid")
-    exit(file_json_valid(ARGV[1]) ? 0 : 1);
-else if (mode == "file-first-line")
-    file_first_line(ARGV[1]);
-else if (mode == "json-file-field")
-    json_file_field(ARGV[1], ARGV[2], ARGV[3]);
-else if (mode == "object-get-default")
+if (mode == "object-get-default")
     object_get_default(ARGV[1], ARGV[2]);
 else if (mode == "string-remove-suffix")
     string_remove_suffix(ARGV[1], ARGV[2]);
 else if (mode == "github-response-ok")
     exit(github_response_ok() ? 0 : 1);
-else if (mode == "release-by-tag")
-    release_by_tag(ARGV[1]);
-else if (mode == "release-asset-name")
-    release_asset_name(ARGV[1], ARGV[2]);
-else if (mode == "release-asset-url")
-    release_asset_url(ARGV[1]);
-else if (mode == "release-asset-name-by-suffix")
-    release_asset_name_by_suffix(ARGV[1]);
-else if (mode == "release-asset-url-by-suffix")
-    release_asset_url_by_suffix(ARGV[1]);
 else if (mode == "prokop-release-plan")
     prokop_release_plan(ARGV[1], ARGV[2], ARGV[3]);
 else if (mode == "release-metadata-tsv")
@@ -1171,8 +779,6 @@ else if (mode == "openwrt-release-value")
     openwrt_release_value(ARGV[1], ARGV[2]);
 else if (mode == "openwrt-release-series")
     openwrt_release_series(ARGV[1]);
-else if (mode == "stdin-contains-ci")
-    exit(stdin_contains_ci(ARGV[1]) ? 0 : 1);
 else if (mode == "stdin-first-line-last-field")
     stdin_first_line_last_field();
 else if (mode == "updates-arch-package-version")
@@ -1207,54 +813,16 @@ else if (mode == "sing-box-extended-asset-url")
     sing_box_extended_asset_url(ARGV[1], ARGV[2], ARGV[3]);
 else if (mode == "sing-box-extended-package-asset-url")
     sing_box_extended_package_asset_url(ARGV[1], ARGV[2]);
-else if (mode == "updates-opkg-package-installed")
-    updates_opkg_package_installed(ARGV[1]);
 else if (mode == "updates-opkg-package-version")
     updates_opkg_package_version(ARGV[1]);
-else if (mode == "updates-apk-manifest-package-version")
-    updates_apk_manifest_package_version(ARGV[1]);
-else if (mode == "updates-apk-info-package-version")
-    updates_apk_info_package_version(ARGV[1]);
-else if (mode == "updates-apk-policy-version")
-    updates_apk_policy_version();
 else if (mode == "named-release-select-asset")
     named_release_select_asset(ARGV[1], ARGV[2], ARGV[3], ARGV[4]);
 else if (mode == "release-select-arch-suffix-asset")
     release_select_arch_suffix_asset(ARGV[1], ARGV[2]);
 else if (mode == "byedpi-select-asset")
     byedpi_select_asset(ARGV[1], ARGV[2], ARGV[3]);
-else if (mode == "sing-box-extended-release-tag")
-    sing_box_extended_release_tag();
-else if (mode == "file-last-nonblank-line")
-    file_last_nonblank_line(ARGV[1], ARGV[2], ARGV[3]);
-else if (mode == "file-flat-snippet")
-    file_flat_snippet(ARGV[1], ARGV[2]);
-else if (mode == "file-tail-json-object")
-    file_tail_json_object(ARGV[1]);
-else if (mode == "job-running-is")
-    exit(job_running_is(ARGV[1], ARGV[2]) ? 0 : 1);
-else if (mode == "updates-json-response")
-    updates_json_response(ARGV[1], ARGV[2], ARGV[3], ARGV[4], ARGV[5], ARGV[6], ARGV[7], ARGV[8], ARGV[9]);
-else if (mode == "updates-status-from-compare")
-    updates_status_from_compare(ARGV[1]);
 else if (mode == "updates-check-result-row")
     updates_check_result_row(ARGV[1], ARGV[2], ARGV[3], ARGV[4]);
-else if (mode == "updates-job-json-response")
-    updates_job_json_response(ARGV[1], ARGV[2], ARGV[3]);
-else if (mode == "updates-job-state-path")
-    updates_job_state_path(ARGV[1], ARGV[2]);
-else if (mode == "updates-running-job-state")
-    updates_running_job_state(ARGV[1], ARGV[2], ARGV[3], ARGV[4]);
-else if (mode == "updates-job-refresh-plan")
-    updates_job_refresh_plan(ARGV[1], ARGV[2], ARGV[3]);
-else if (mode == "updates-set-running-job-pid")
-    updates_set_running_job_pid(ARGV[1], ARGV[2]);
-else if (mode == "updates-mark-stale-job-state")
-    updates_mark_stale_job_state(ARGV[1]);
-else if (mode == "updates-finish-job-state")
-    updates_finish_job_state(ARGV[1], ARGV[2], ARGV[3]);
-else if (mode == "updates-fallback-job-state")
-    updates_fallback_job_state(ARGV[1], ARGV[2], ARGV[3], ARGV[4], ARGV[5]);
 else {
     warn("Usage: components/updater.uc <operation> ...\n");
     exit(1);
