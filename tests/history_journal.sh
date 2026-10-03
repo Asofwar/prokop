@@ -21,6 +21,8 @@ ucode -L "$ROOT/prokop/files/usr/lib" "$HEALTH" record start success
 ucode -L "$ROOT/prokop/files/usr/lib" "$HEALTH" record autotune_apply recovered
 ucode -L "$ROOT/prokop/files/usr/lib" "$HEALTH" record snapshot_create success
 if ucode -L "$ROOT/prokop/files/usr/lib" "$HEALTH" record probe success; then fail "unknown event kinds must be refused"; fi
+# Nothing ever recorded a recovery event; the kind is gone (UC-173).
+if ucode -L "$ROOT/prokop/files/usr/lib" "$HEALTH" record recovery success; then fail "the retired recovery kind must be refused"; fi
 [ "$(wc -l < "$PROKOP_HISTORY_FILE")" -eq 3 ] || fail "each recorded event must append exactly one journal line"
 
 ucode -L "$ROOT/prokop/files/usr/lib" "$HEALTH" history > "$TEST_DIR/history.json"

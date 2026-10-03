@@ -76,7 +76,6 @@ const EXPLICIT_START = getenv("PROKOP_EXPLICIT_START_FILE") ||
 const UCI_SAVEDIR = getenv("PROKOP_AUTOTUNE_UCI_SAVEDIR") || "/tmp/.uci";
 const TMP_DIR = getenv("PROKOP_AUTOTUNE_TMPDIR") || "/tmp";
 const HOLD_SECONDS = 5;
-const DIG = getenv("PROKOP_AUTOTUNE_DIG") || "dig";
 const CURL = getenv("PROKOP_AUTOTUNE_CURL") || "curl";
 const PROD_TABLE = constants.NFT_TABLE_NAME;
 // What an empty nfqws_opt runs (providers/zapret/common.uc).
@@ -137,11 +136,9 @@ function sha_text(text) {
     fs.unlink(path);
     return hash;
 }
-function words(value) {
-    value = trim(replace(as_string(value), /[ \t\r\n]+/g, " "));
-    return value == "" ? [] : split(value, " ");
-}
-function normalize(opt) { return join(" ", words(opt)); }
+// Strategy text compared and split the one way core/dpi_strategy.uc does.
+function words(value) { return dpi_strategy.words(value); }
+function normalize(opt) { return dpi_strategy.normalize(opt); }
 function valid_hash(v) { return match(as_string(v), /^[0-9a-f]{64}$/) != null; }
 // Releases before UC-160 rewrote option shutdown_correctly on every stop and
 // start; the user configuration is the file without it
@@ -348,15 +345,6 @@ function queue_rule_counter(owner) {
         if (mark_ok && tcp && queue_ok) return packets;
     }
     return null;
-}
-// How production resolves the target: the system resolver, as every client
-// and the verification probes do. FakeIP when every answer is in 198.18/15.
-function production_dns(host) {
-    let out = capture([ DIG, "+short", "+time=2", "+tries=1", host, "A" ]);
-    let answers = [];
-    for (let line in split(out.output, "\n")) { line = trim(line); if (probe_module.valid_ipv4(line)) push(answers, line); }
-    let fake = filter(answers, (a) => is_fakeip(a));
-    return { fakeip: length(answers) > 0 && length(fake) == length(answers), answers: length(answers) };
 }
 function uncommitted_changes() {
     let st = fs.stat(UCI_SAVEDIR + "/prokop");
@@ -620,7 +608,7 @@ function plan(selection_file, resolver) {
     let sections = parse_config(text);
     // Clients reach the target as production DNS answers it; verification
     // can only prove the sing-box path of a FakeIP-routed target.
-    let dns = production_dns(sel.target.host);
+    let dns = probe_module.production_dns(sel.target.host);
     result.production_dns = dns.fakeip ? "fakeip" : dns.answers > 0 ? "real_address" : "no_answer";
     let owner = owner_of(sections, sel.target.host, sel.target.ip, dns.fakeip);
     result.owner = owner;
@@ -768,7 +756,7 @@ function stale_reason(p, resolver) {
     let sections = parse_config(text);
     let section = find_section(sections, p.owner.section);
     if (section == null || normalize(section.options.nfqws_opt) != p.changes[0].from) return "strategy_changed";
-    if (!production_dns(p.target.host).fakeip) return "target_not_fakeip_routed";
+    if (!probe_module.production_dns(p.target.host).fakeip) return "target_not_fakeip_routed";
     let owner = owner_of(sections, p.target.host, p.target.ip, true);
     if (!owner.decided || owner.kind != "zapret" || owner.section != p.owner.section || owner.queue != p.owner.queue) return "rule_owner_changed";
     if (!verify_production(p, p.changes[0].from, false).ok) return "runtime_not_on_planned_strategy";
@@ -1115,7 +1103,7 @@ function status() {
 // ---- entry ----------------------------------------------------------------------
 
 if (sourcepath(1) != null && sourcepath(1) != "")
-    return { parse_config, route_owner, tcp443_profile, plan };
+    return { parse_config, route_owner, plan };
 
 if (type(signal) == "function")
     for (let name in [ "SIGINT", "SIGTERM", "SIGHUP" ])
@@ -1140,7 +1128,7 @@ else if (mode == "path") {
     if (!probe_module.valid_host(ARGV[1])) output = { status: "failed", reason: "invalid_host" };
     else {
         let sections = parse_config(fs.readfile(CONFIG_FILE));
-        let dns = production_dns(ARGV[1]);
+        let dns = probe_module.production_dns(ARGV[1]);
         let seen = dns.fakeip ? path_probe(ARGV[1], singbox_config(sections)) : { ok: false, reason: "target_not_fakeip_routed", chains: null };
         output = { status: seen.ok ? "observed" : "failed", host: ARGV[1], production_dns: dns.fakeip ? "fakeip" : dns.answers > 0 ? "real_address" : "no_answer",
             chains: seen.chains, network: seen.network || null, reason: seen.reason };

@@ -1923,10 +1923,6 @@ function sing_box_compressed_marker_set(ctx) {
     return sing_box_variant_marker(ctx, "extended-compressed");
 }
 
-function sing_box_extended_marker_set(ctx) {
-    return sing_box_variant_marker(ctx, "extended");
-}
-
 function sing_box_version_state(ctx) {
     let path = as_string(ctx.sing_box_version_state_file);
     if (path == "")
@@ -1938,53 +1934,6 @@ function sing_box_version_state(ctx) {
 
     let newline = index(data, "\n");
     return newline >= 0 ? substr(data, 0, newline) : as_string(data);
-}
-
-function get_sing_box_version(ctx) {
-    if (!command_exists("sing-box"))
-        return "";
-
-    if (sing_box_compressed_marker_set(ctx))
-        return sing_box_version_state(ctx);
-
-    return first_line_last_field(command_output_from_args([ "sing-box", "version" ]));
-}
-
-function sing_box_version_is_extended(version) {
-    return index(as_string(version), "extended") >= 0;
-}
-
-function sing_box_is_extended(ctx, version) {
-    if (as_string(version) == "" && command_exists("sing-box") &&
-        (sing_box_compressed_marker_set(ctx) || sing_box_extended_marker_set(ctx)))
-        return true;
-
-    return sing_box_version_is_extended(version != null ? version : get_sing_box_version(ctx));
-}
-
-function sing_box_output_has_build_tag(output, tag) {
-    tag = as_string(tag);
-    if (tag == "")
-        return false;
-
-    for (let token in split(replace(as_string(output), /[,: \t\r\n]+/g, " "), " "))
-        if (token == tag)
-            return true;
-
-    return false;
-}
-
-function sing_box_supports_tailscale(ctx, version, version_output) {
-    if (command_exists("sing-box") && sing_box_compressed_marker_set(ctx))
-        return true;
-
-    if (sing_box_is_extended(ctx, version))
-        return true;
-
-    if (as_string(version_output) == "")
-        version_output = command_output_from_args([ "sing-box", "version" ]);
-
-    return sing_box_output_has_build_tag(version_output, "with_tailscale");
 }
 
 // The script of singbox/managed_service.uc, the one every writer installs

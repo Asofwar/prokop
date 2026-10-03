@@ -7,6 +7,7 @@
 let fs = require("fs");
 let constants = require("core.constants");
 let zapret_validator = require("providers.zapret.validator");
+let dpi_strategy = require("core.dpi_strategy");
 
 const QUEUE = getenv("PROKOP_AUTOTUNE_QUEUE") || "4600";
 const NFQWS = getenv("ZAPRET_NFQWS_BIN") || constants.ZAPRET_NFQWS_BIN;
@@ -47,10 +48,6 @@ const ENTRIES = [
 
 function as_string(value) { return value == null ? "" : "" + value; }
 function quote(value) { return "'" + replace(as_string(value), /'/g, "'\\''") + "'"; }
-function words(value) {
-    value = trim(replace(as_string(value), /[ \t\r\n]+/g, " "));
-    return value == "" ? [] : split(value, " ");
-}
 
 function entries() {
     let result = [];
@@ -74,7 +71,7 @@ function binary_available() {
 // without binding a queue or touching packets.
 function dry_run(opt) {
     let args = [ NFQWS, "--dry-run", "--qnum=" + QUEUE, "--dpi-desync-fwmark=" + DESYNC_MARK ];
-    for (let word in words(opt)) push(args, word);
+    for (let word in dpi_strategy.words(opt)) push(args, word);
     let parts = [];
     for (let arg in args) push(parts, quote(arg));
     return system(join(" ", parts) + " >/dev/null 2>&1") == 0;
@@ -124,7 +121,7 @@ function validate_all() {
 }
 
 if (sourcepath(1) != null && sourcepath(1) != "")
-    return { entries, find, validate_entry, validate_all, words };
+    return { entries, find, validate_entry, validate_all, words: dpi_strategy.words };
 
 let mode = ARGV[0] || "";
 if (mode == "list")

@@ -85,6 +85,22 @@ function resolve(host, resolver) {
     return result;
 }
 
+// How production resolves the target: the system resolver, as every client,
+// the group classification (manager.uc) and the apply plan and verification
+// (apply.uc) do. FakeIP when every answer is in the FakeIP range
+// (routing/resolve.uc is_fakeip).
+function production_dns(host) {
+    let is_fakeip = require("routing.resolve").is_fakeip;
+    let answers = [];
+    for (let line in split(capture([ DIG, "+short", "+time=2", "+tries=1", host, "A" ]).output, "\n")) {
+        line = trim(line);
+        if (valid_ipv4(line)) push(answers, line);
+    }
+    let fake = filter(answers, (a) => is_fakeip(a));
+    return { answers: length(answers), ip: length(answers) > 0 ? answers[0] : null,
+        fakeip: length(answers) > 0 && length(fake) == length(answers) };
+}
+
 function seconds(v) {
     v = trim(as_string(v));
     return match(v, /^[0-9]+(\.[0-9]+)?$/) != null ? +v : 0;
@@ -194,7 +210,7 @@ function probe(options) {
 }
 
 if (sourcepath(1) != null && sourcepath(1) != "")
-    return { resolve, probe, classify, valid_host, valid_ipv4, public_ipv4 };
+    return { resolve, production_dns, probe, classify, valid_host, valid_ipv4, public_ipv4 };
 
 let mode = ARGV[0] || "";
 if (mode == "resolve")

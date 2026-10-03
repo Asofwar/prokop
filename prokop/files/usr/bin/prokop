@@ -45,7 +45,7 @@ function restore_dnsmasq_failsafe() {
 function restore_dnsmasq_failsafe_on_loader_failure(command) {
     command = as_string(command);
     if (command == "start" || command == "main" || command == "stop" || command == "restart" ||
-        command == "reload" || command == "uninstall" ||
+        command == "reload" ||
         command == "dnsmasq_restore" || command == "restore_dnsmasq")
         restore_dnsmasq_failsafe();
 }
@@ -59,7 +59,7 @@ function show_help() {
     print("    restart                 Restart Prokop service\n");
     print("    enable                  Enable Prokop autostart\n");
     print("    disable                 Disable Prokop autostart\n");
-    print("    uninstall               Remove Prokop files installed outside opkg/apk\n");
+    print("    uninstall               Alias of full_uninstall\n");
     print("    full_uninstall          Remove Prokop and sing-box and restore original repositories\n");
     print("    main                    Compatibility alias of start\n");
     print("    list_update             Update remote lists\n");
@@ -156,7 +156,10 @@ function command_spec(command) {
         restart: [ "service/lifecycle.uc", "restart", 0 ],
         enable: [ "service/lifecycle.uc", "enable", 0 ],
         disable: [ "service/lifecycle.uc", "disable", 0 ],
-        uninstall: [ "service/lifecycle.uc", "uninstall", 0 ],
+        // A compatibility alias of full_uninstall (UC-169): it once removed
+        // the files by hand, past the package manager, and left the package
+        // registered.
+        uninstall: [ "components/uninstall.uc", "start", 0 ],
         full_uninstall: [ "components/uninstall.uc", "start", 0 ],
         dnsmasq_restore: [ "service/lifecycle.uc", "dnsmasq-restore", 0 ],
         restore_dnsmasq: [ "service/lifecycle.uc", "dnsmasq-restore", 0 ],
@@ -276,7 +279,7 @@ const ALLOWED_DURING_FULL_UNINSTALL = [
     // The removal's own steps: init.d stop, the kill-switch removal, the
     // dnsmasq restore, the package's prerm; a second removal answers itself.
     "stop", "disable", "killswitch_disable", "dnsmasq_restore", "restore_dnsmasq", "package_prerm",
-    "full_uninstall",
+    "full_uninstall", "uninstall",
     // What only reads.
     "killswitch_status", "show_config", "show_version", "show_sing_box_config", "show_sing_box_version",
     "check_proxy", "check_nft", "check_nft_rules", "check_sing_box", "check_logs", "check_sing_box_logs",

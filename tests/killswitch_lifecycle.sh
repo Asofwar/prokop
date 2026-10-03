@@ -71,11 +71,9 @@ if (warned != 1 || calls[0] != "killswitch:sync,start,reload-lock-held")
 UCODE
 ucode "$WORK_DIR/sync.uc" || fail "kill-switch sync failure must only warn"
 
-# Uninstall paths lift the protection; an upgrade keeps it.
-function_body "$LIFECYCLE" uninstall | awk '/KILLSWITCH_UC, \[ "release"/ { d = NR } /rm", "-rf", "\/usr\/lib\/prokop"/ { r = NR } END { exit !(d && r && d < r) }' ||
-  fail "uninstall must lift the kill-switch before removing the libraries"
-# Package removal, upgrades, downgrades and full uninstall run behaviourally
-# in tests/killswitch_owner_package.sh.
+# Package removal, upgrades, downgrades and full uninstall (also reached as
+# `prokop uninstall`) lift or keep the protection; they run behaviourally in
+# tests/killswitch_owner_package.sh.
 for command in killswitch_status killswitch_sync killswitch_disable; do
   grep -Fq "$command: [ \"killswitch/runtime.uc\"" "$PROKOP_BIN" || fail "CLI must dispatch $command"
 done

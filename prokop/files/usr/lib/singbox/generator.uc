@@ -1260,16 +1260,6 @@ function remember_group_outbounds(group_outbounds, group_name, outbounds) {
     group_outbounds[group_name] = unique_string_array(combined);
 }
 
-function selector_group_for_outbound(selector_tags, state, outbound_tag_name) {
-    let urltest_groups = object_or_empty(object_or_empty(state).urltestGroups);
-    for (let group_tag in array_or_empty(selector_tags)) {
-        let group = object_or_empty(urltest_groups[group_tag]);
-        if (array_contains(group.outbounds, outbound_tag_name))
-            return group_tag;
-    }
-    return "";
-}
-
 function grouped_selector_outbounds(section, selector_tags, group_outbounds, state) {
     let configured_groups = [
         ...connections.urltests(section),
@@ -2929,10 +2919,6 @@ function add_dns_action_rules_for_section(config, section) {
         runtime_generate_unsupported("DNS action '" + section_name + "' has no domain matchers");
 }
 
-function normalize_port_number_value(value) {
-    return rule_config.normalize_port_number_value(value);
-}
-
 function add_port_matchers(rule, section) {
     let values = [];
     for (let value in list_option(section, "ports"))
@@ -2949,22 +2935,16 @@ function add_port_matchers(rule, section) {
             continue;
         seen[value] = true;
 
-        let dash = index(value, "-");
-        if (dash < 0) {
-            let port = normalize_port_number_value(value);
-            if (port != null)
-                push(ports, port);
+        // The port or range the way config/rule.uc reads it for nft and the
+        // validator; a single-port range is the port: sing-box refuses a
+        // range item without ':' (UC-098).
+        let condition = rule_config.normalize_port_condition_value(value);
+        if (condition == null)
             continue;
-        }
-
-        let start = normalize_port_number_value(substr(value, 0, dash));
-        let end = normalize_port_number_value(substr(value, dash + 1));
-        // A single-port range is the port: sing-box refuses a range
-        // item without ':' (UC-098).
-        if (start != null && end != null && start == end)
-            push(ports, start);
-        else if (start != null && end != null && start < end)
-            push(port_ranges, sprintf("%d:%d", start, end));
+        if (index(condition, "-") < 0)
+            push(ports, int(condition));
+        else
+            push(port_ranges, replace(condition, "-", ":"));
     }
     ports = uniq(ports);
 
@@ -3266,14 +3246,6 @@ function enabled_sections(deferred_sections) {
             push(result, rejected);
     });
     return result;
-}
-
-function section_by_name(sections, name) {
-    name = as_string(name);
-    for (let section in sections)
-        if (as_string(section[".name"]) == name)
-            return section;
-    return null;
 }
 
 function generate_config(output_path, service_address, mwan3_active, supports_xhttp, deferred_sections, sing_box_version) {

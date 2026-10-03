@@ -525,7 +525,7 @@ export namespace Prokop {
   // restart                 Restart prokop service
   // enable                  Enable prokop autostart
   // disable                 Disable prokop autostart
-  // uninstall               Remove prokop files installed outside opkg/apk
+  // uninstall               Alias of full_uninstall
   // main                    Run main prokop process
   // list_update             Update domain lists
   // check_proxy             Check proxy connectivity

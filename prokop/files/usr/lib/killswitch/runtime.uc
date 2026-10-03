@@ -152,7 +152,7 @@ const LEGACY_SERVICE_INIT = legacy.path(legacy.KILLSWITCH_INIT);
 // protection while the old package is still installed: a rollback of an
 // unfinished migration leaves it to the old product. An explicit disable
 // lifts it whenever the old product is not active.
-const STRICT_LEGACY_REASONS = { "package removal": true, "uninstall": true };
+const STRICT_LEGACY_REASONS = { "package removal": true };
 // Test-only bounds for the watcher loop; production runs it forever.
 const WATCH_ITERATIONS = int(getenv("PROKOP_KILLSWITCH_WATCH_ITERATIONS") || "0");
 const WATCH_INTERVAL_MS = int(getenv("PROKOP_KILLSWITCH_WATCH_INTERVAL_MS") || "2000");

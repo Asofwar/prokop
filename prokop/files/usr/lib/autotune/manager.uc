@@ -54,7 +54,6 @@ const SINGBOX_CONFIG = getenv("PROKOP_AUTOTUNE_SINGBOX_CONFIG") || "";
 const UCI = getenv("PROKOP_AUTOTUNE_UCI") || "uci";
 const UCI_SAVEDIR = getenv("PROKOP_AUTOTUNE_UCI_SAVEDIR") || "/tmp/.uci";
 const TMP_DIR = getenv("PROKOP_AUTOTUNE_TMPDIR") || "/tmp";
-const DIG = getenv("PROKOP_AUTOTUNE_DIG") || "dig";
 const STATE_DIR = getenv("PROKOP_AUTOTUNE_STATE_DIR") || "/var/run/prokop/autotune";
 const WORKER_LOCK = STATE_DIR + "/worker.lock";
 // The phase of the running tune (autotune/isolation.uc progress), tmpfs.
@@ -303,19 +302,6 @@ function target(id) {
 
 // ---- groups ----------------------------------------------------------------
 
-// How production resolves the target: the system resolver, as clients and
-// autotune apply do. FakeIP when every answer is in the FakeIP range.
-function production_dns(host) {
-    let answers = [];
-    for (let line in split(capture([ DIG, "+short", "+time=2", "+tries=1", host, "A" ]).output, "\n")) {
-        line = trim(line);
-        if (probe_module.valid_ipv4(line)) push(answers, line);
-    }
-    let fake = filter(answers, (a) => resolver.is_fakeip(a));
-    return { answers: length(answers), ip: length(answers) > 0 ? answers[0] : null,
-        fakeip: length(answers) > 0 && length(fake) == length(answers) };
-}
-
 // Targets classified into groups and the group results from the cached
 // target summaries. Strategy identities only, never raw strategies.
 // A recommendation autotune could never apply is "not_applicable" before
@@ -339,7 +325,7 @@ function compute_groups(sections, targets, state) {
     for (let t in targets) {
         if (t.list_error != null) { push(outside, { id: t.id, host: t.host, reason: t.list_error, detail: null }); continue; }
         if (!t.enabled) { push(outside, { id: t.id, host: t.host, reason: "target_disabled", detail: null }); continue; }
-        let dns = production_dns(t.host);
+        let dns = probe_module.production_dns(t.host);
         // A target names no device: a rule limited to devices owns it for
         // those devices, and the group says so (source_scoped).
         let r = resolver.resolve(config, sections, resolver.target(t.host, dns.ip, { fakeip: dns.fakeip, assume_rule_source: true }));

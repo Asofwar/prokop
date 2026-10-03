@@ -615,14 +615,9 @@ function subscription_user_agent(section, value) {
     return subscription_auto_user_agent(section, value) ? "" : subscription_configured_user_agent(section, value);
 }
 
+// Always generated (subscription_auto_hwid): a configured hwid is never sent.
 function subscription_hwid(section, value) {
-    if (subscription_auto_hwid(section, value))
-        return "";
-
-    let child = child_item_by_value(section, "subscription_url", "url", value);
-    if (child != null)
-        return child_option(child, "hwid", "");
-    return item_option(section, "subscription_url_settings", value, "hwid", "");
+    return "";
 }
 
 function subscription_download_section(section, value) {
@@ -868,19 +863,24 @@ function priority_level_filter_mode(group_id, value) {
     return child != null ? child_option(child, "filter_mode", "include") : "include";
 }
 
+// A priority level's include filters are country, server_name and regex,
+// the names the Settings page writes (UC-175). Nothing writes the
+// include_countries, include_outbounds and include_regex names of a URLTest
+// group here; a hand-edited one is still read, but no longer shadows what
+// the page wrote.
 function priority_level_include_countries(group_id, value) {
     let child = priority_level_child(group_id, value);
-    return child != null ? child_list_alias(child, [ "include_countries", "country" ], []) : [];
+    return child != null ? child_list_alias(child, [ "country", "include_countries" ], []) : [];
 }
 
 function priority_level_include_outbounds(group_id, value) {
     let child = priority_level_child(group_id, value);
-    return child != null ? child_list_alias(child, [ "include_outbounds", "server_name" ], []) : [];
+    return child != null ? child_list_alias(child, [ "server_name", "include_outbounds" ], []) : [];
 }
 
 function priority_level_include_regex(group_id, value) {
     let child = priority_level_child(group_id, value);
-    return child != null ? child_list_alias(child, [ "include_regex", "regex" ], []) : [];
+    return child != null ? child_list_alias(child, [ "regex", "include_regex" ], []) : [];
 }
 
 function priority_level_include_proxy_parameters(group_id, value) {

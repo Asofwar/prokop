@@ -61,7 +61,7 @@ dns_failover_apply             | rc            | 0 applied, 1 failed, 2 reload.l
 restart                        | rc            | covered: initd_state
 enable                         | rc            | judged by the autostart read back (serviceControl.ts)
 disable                        | rc            | judged by the autostart read back
-uninstall                      | rc            | manual
+uninstall                      | json-success  | alias of full_uninstall (UC-169); covered: cli_uninstall_alias
 full_uninstall                 | json-success  | {success, status_url} / {success:false, message}; covered: full_uninstall_*
 dnsmasq_restore                | rc            | covered: package_lifecycle
 restore_dnsmasq                | rc            | alias of dnsmasq_restore

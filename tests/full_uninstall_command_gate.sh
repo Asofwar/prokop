@@ -76,9 +76,10 @@ fail() {
 
 # What may run during a removal: the commands that only read, and the
 # removal's own steps (init.d stop, the kill-switch removal, the dnsmasq
-# restore, the package's prerm; a second full_uninstall answers itself).
+# restore, the package's prerm; a second full_uninstall, or its alias
+# uninstall, answers itself).
 ALLOWED="
-stop disable killswitch_disable dnsmasq_restore restore_dnsmasq package_prerm full_uninstall
+stop disable killswitch_disable dnsmasq_restore restore_dnsmasq package_prerm full_uninstall uninstall
 killswitch_status show_config show_version show_sing_box_config show_sing_box_version
 check_proxy check_nft check_nft_rules check_sing_box check_logs check_sing_box_logs check_fakeip
 check_zapret_runtime check_zapret2_runtime check_byedpi_runtime check_dns_available
@@ -94,7 +95,7 @@ validate_nfqws2_strategy_json validate_byedpi_strategy_json
 # Everything that changes Prokop's configuration, snapshots, scheduled jobs,
 # packages or runtime.
 REFUSED="
-start main restart reload enable uninstall dns_failover_apply
+start main restart reload enable dns_failover_apply
 list_update list_update_if_due subscription_update subscription_update_async subscription_update_if_due
 service_action_async latency_test_async ui_action_ack neutralize_zapret_defaults
 component_action component_action_async component_updates_if_due package_postinst luci_postinst

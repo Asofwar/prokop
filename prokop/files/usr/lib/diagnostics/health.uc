@@ -32,7 +32,7 @@ const HISTORY_KEEP = 150;
 // package upgrade migrated the configuration and changed what it does in a
 // way the user should know about; its notices say how
 // (config/migration.uc).
-const EVENT_KINDS = [ "start", "reload", "restore", "recovery", "autotune_apply", "autotune_rollback", "snapshot_create",
+const EVENT_KINDS = [ "start", "reload", "restore", "autotune_apply", "autotune_rollback", "snapshot_create",
     "snapshot_delete", "autotune_mode", "autotune_recommendation", "autotune_run", "cron_refresh",
     "config_migration" ];
 // The notices of a config_migration event, in the shape the History page
