@@ -1,4 +1,5 @@
 import { onMount, preserveScrollForPage } from '../../../helpers';
+import { replaceChildrenKeepingFocus } from '../../../helpers/replaceChildrenKeepingFocus';
 import { showToast } from '../../../helpers/showToast';
 import { openProkopPage } from '../../helpers/navigation';
 import { createDomainPicker } from './domainPicker';
@@ -105,7 +106,9 @@ function locked() {
 function replace(id: string, ...nodes: Node[]) {
   const container = document.getElementById(id);
   if (container)
-    preserveScrollForPage(() => container.replaceChildren(...nodes));
+    preserveScrollForPage(() =>
+      replaceChildrenKeepingFocus(container, ...nodes),
+    );
 }
 
 function formatTime(timestamp: number) {

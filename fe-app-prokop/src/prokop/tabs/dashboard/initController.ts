@@ -46,6 +46,7 @@ import { renderOverview } from './overviewCards';
 import { runOverviewServiceAction } from './serviceActionFlow';
 import { runUrlTestChange } from './serviceReload';
 import { renderUrlTestEditorRow } from './urlTestEditorRow';
+import { replaceChildrenKeepingFocus } from '../../../helpers/replaceChildrenKeepingFocus';
 import { latencyJobFailure } from './latencyJob';
 import {
   subscriptionUpdateErrorMessage,
@@ -237,7 +238,7 @@ function renderOverviewCards() {
 
   // Keep an open service menu open across data refreshes.
   if (container.querySelector('.fkp-menu[open]')) return;
-  preserveScrollForPage(() => container.replaceChildren(view));
+  preserveScrollForPage(() => replaceChildrenKeepingFocus(container, view));
 }
 let sectionsRefreshPromise: Promise<boolean> | null = null;
 let sectionsStoppedRendered = false;
@@ -1954,7 +1955,7 @@ async function renderSectionsWidget() {
   );
 
   return preserveScrollForPage(() => {
-    container.replaceChildren(...renderedWidgets);
+    replaceChildrenKeepingFocus(container, ...renderedWidgets);
   });
 }
 
