@@ -13,6 +13,17 @@ status_ucode() {
   ucode -L "$PROKOP_LIB" "$DIAGNOSTICS" "$@"
 }
 
+# The modes of diagnostics/status.uc that nothing ran (service-status-json,
+# the server exposure and firewall checks, public-host-flags, ...) are gone
+# (UC-179); diagnostics/runtime.uc is its only caller.
+for mode in service-status-json server-listen-requires-firewall firewall-required-protocols-open \
+  public-host-flags server-required-ports-listening server-required-port-conflict-owners; do
+  if status_ucode "$mode" >/dev/null 2>&1 </dev/null; then
+    printf 'FAIL: diagnostics/status.uc still runs %s\n' "$mode" >&2
+    exit 1
+  fi
+done
+
 cleanup() {
   rm -rf "$WORK_DIR"
 }
@@ -22,30 +33,6 @@ fail() {
   printf 'FAIL: %s\n' "$1" >&2
   exit 1
 }
-
-assert_status() {
-  local running="$1"
-  local enabled="$2"
-  local dns="$3"
-  local expected="$4"
-  local json
-
-  json="$(status_ucode service-status-json "$running" "$enabled" "$dns")"
-  JSON_VALUE="$json" node - "$expected" "$dns" <<'NODE'
-const expected = process.argv[2];
-const expectedDns = Number(process.argv[3]);
-const value = JSON.parse(process.env.JSON_VALUE);
-if (value.status !== expected || value.dns_configured !== expectedDns) {
-  console.error(`expected ${expected}/${expectedDns}, got ${value.status}/${value.dns_configured}`);
-  process.exit(1);
-}
-NODE
-}
-
-assert_status 1 1 1 "running & enabled"
-assert_status 1 0 0 "running but disabled"
-assert_status 0 1 1 "stopped but enabled"
-assert_status 0 0 0 "stopped & disabled"
 
 [ ! -e "$PROKOP_LIB/status_diagnostics.sh" ] ||
   fail "status_diagnostics.sh shell owner must be removed"
@@ -99,15 +86,6 @@ case "$wan_output" in
   *"option private_key 'MASKED'"*) ;;
   *) fail "masked WAN config must preserve a masked WireGuard private key option" ;;
 esac
-
-legacy_json="$(status_ucode service-status-json 1 0 ignored 1)"
-JSON_VALUE="$legacy_json" node - <<'NODE'
-const value = JSON.parse(process.env.JSON_VALUE);
-if (value.status !== "running but disabled" || value.dns_configured !== 1) {
-  console.error("legacy service-status-json call shape changed");
-  process.exit(1);
-}
-NODE
 
 {
   printf 'Tue Jun 30 11:00:00 2026 user.notice prokop: [info] Starting Prokop\n'
@@ -217,93 +195,6 @@ if grep -Fq '/group/urltest/delay' "$WORK_DIR/fake-curl-automatic-latencies.log"
   fail "automatic latency test must leave URLTest groups to their own scheduler"
 fi
 
-firewall_rules="$(cat <<'EOF'
-firewall.@rule[0]=rule
-firewall.@rule[0].enabled='1'
-firewall.@rule[0].target='ACCEPT'
-firewall.@rule[0].src='wan'
-firewall.@rule[0].proto='tcp udp'
-firewall.@rule[0].dest_port='443'
-EOF
-)"
-
-printf '%s\n' "$firewall_rules" |
-  status_ucode firewall-required-protocols-open 443 "tcp udp" >/dev/null ||
-  fail "tcp+udp firewall rule should satisfy required protocols"
-if printf '%s\n' "$firewall_rules" |
-  status_ucode firewall-required-protocols-open 8443 "tcp" >/dev/null 2>&1; then
-  fail "wrong firewall port should not satisfy required protocols"
-fi
-
-firewall_src_port_rule="$(cat <<'EOF'
-firewall.@rule[0]=rule
-firewall.@rule[0].enabled='1'
-firewall.@rule[0].target='ACCEPT'
-firewall.@rule[0].src='wan'
-firewall.@rule[0].proto='tcp'
-firewall.@rule[0].src_port='12345'
-firewall.@rule[0].dest_port='443'
-EOF
-)"
-if printf '%s\n' "$firewall_src_port_rule" |
-  status_ucode firewall-required-protocols-open 443 "tcp" >/dev/null 2>&1; then
-  fail "firewall rule limited by source port should not satisfy public inbound diagnostic"
-fi
-
-status_ucode server-listen-requires-firewall 0.0.0.0 "" 0 >/dev/null ||
-  fail "wildcard listen should require firewall"
-status_ucode server-listen-requires-firewall :: "" 0 >/dev/null ||
-  fail "IPv6 wildcard listen should require firewall"
-status_ucode server-listen-requires-firewall 198.51.100.2 198.51.100.2 0 >/dev/null ||
-  fail "WAN listen address should require firewall"
-status_ucode server-listen-requires-firewall 2001:db8::2 "198.51.100.2 2001:db8::2" 0 >/dev/null ||
-  fail "IPv6 WAN listen address should require firewall"
-status_ucode server-listen-requires-firewall 203.0.113.2 "" 1 >/dev/null ||
-  fail "public listen address should require firewall"
-if status_ucode server-listen-requires-firewall 192.168.1.2 198.51.100.2 0 >/dev/null 2>&1; then
-  fail "private non-WAN listen address should not require firewall"
-fi
-
-[ "$(status_ucode public-host-flags '' '' 8.8.8.8 1)" = "-1 -1 -1" ] ||
-  fail "empty public host flags changed"
-[ "$(status_ucode public-host-flags example.com '' 8.8.8.8 1)" = "0 -1 -1" ] ||
-  fail "unresolved public host flags changed"
-[ "$(status_ucode public-host-flags example.com '1.1.1.1 8.8.8.8' 8.8.8.8 1)" = "1 1 1" ] ||
-  fail "public host WAN match flags changed"
-[ "$(status_ucode public-host-flags example.com '192.168.1.10' 8.8.8.8 1)" = "1 0 0" ] ||
-  fail "private public host flags changed"
-[ "$(status_ucode public-host-flags example.com '8.8.8.8' 8.8.8.8 0)" = "1 1 -1" ] ||
-  fail "non-public WAN host match flags changed"
-[ "$(status_ucode public-host-flags example.com '2606:4700:4700::1111' '198.51.100.2 2606:4700:4700::1111' 1)" = "1 1 1" ] ||
-  fail "IPv6 public host flags changed"
-
-netstat_listening="$(cat <<'EOF'
-Active Internet connections (only servers)
-Proto Recv-Q Send-Q Local Address           Foreign Address         State
-tcp        0      0 0.0.0.0:443             0.0.0.0:*               LISTEN
-udp        0      0 0.0.0.0:443             0.0.0.0:*
-EOF
-)"
-
-printf '%s\n' "$netstat_listening" |
-  status_ucode server-required-ports-listening 0.0.0.0 443 "tcp udp" >/dev/null ||
-  fail "tcp+udp netstat listeners should satisfy required protocols"
-if printf '%s\n' "$netstat_listening" |
-  status_ucode server-required-ports-listening 0.0.0.0 8443 "tcp" >/dev/null 2>&1; then
-  fail "missing netstat listener should fail"
-fi
-
-netstat_listening6="$(cat <<'EOF'
-Active Internet connections (only servers)
-Proto Recv-Q Send-Q Local Address           Foreign Address         State
-tcp        0      0 ::1:8443                :::*                    LISTEN
-EOF
-)"
-
-printf '%s\n' "$netstat_listening6" |
-  status_ucode server-required-ports-listening ::1 8443 "tcp" >/dev/null ||
-  fail "IPv6 tcp netstat listener should satisfy required protocols"
-
 sing_box_netstat="$(cat <<'EOF'
 Active Internet connections (only servers)
 Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
@@ -323,19 +214,5 @@ if printf '%s\n' "$sing_box_netstat" | sed '/0.0.0.0:1602/d' |
   PROKOP_LIB="$PROKOP_LIB" ucode -L "$PROKOP_LIB" "$DIAGNOSTICS_RUNTIME" sing-box-standard-ports-listening-fixture >/dev/null 2>&1; then
   fail "missing sing-box tproxy listener should fail diagnostics"
 fi
-
-netstat_owners="$(cat <<'EOF'
-Active Internet connections (only servers)
-Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
-tcp        0      0 0.0.0.0:443             0.0.0.0:*               LISTEN      111/nginx
-udp        0      0 0.0.0.0:443             0.0.0.0:*                           222/dnsmasq
-tcp        0      0 0.0.0.0:443             0.0.0.0:*               LISTEN      333/sing-box
-EOF
-)"
-
-owners="$(printf '%s\n' "$netstat_owners" |
-  status_ucode server-required-port-conflict-owners 0.0.0.0 443 "tcp udp")"
-[ "$owners" = "111/nginx 222/dnsmasq" ] ||
-  fail "unexpected conflict owners: $owners"
 
 printf 'diagnostics status checks passed\n'
