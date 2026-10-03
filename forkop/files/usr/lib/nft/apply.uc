@@ -722,6 +722,12 @@ function section_needs_priority_sets(section) {
         (section_has_fully_routed_ips(section) || section_has_nft_ip_matchers(section) || section_has_nft_port_only_matchers(section));
 }
 
+// Router-originated capture skips every marked packet, not only Forkop's
+// marks: a socket marked by another daemon (WireGuard, Tailscale, another
+// proxy) uses its mark to stay out of policy routing, and capturing it
+// would loop a tunnel's own traffic through sing-box. A foreign output hook
+// of the same priority that marks an unmarked packet before this chain still
+// makes it skip capture (UC-104 remaining risk).
 function nft_create_priority_chains(table) {
     return nft_create_chain(table, "priority_rules", "{ }") &&
         nft_create_chain(table, "priority_output_rules", "{ }") &&
@@ -958,7 +964,10 @@ function parse_mark_number(value) {
 // same priority (fw4, pbr, mwan3, Tailscale) set bits in between; registered
 // after Forkop, they run first, so an exact mark match would miss a packet
 // they touched (UC-104). The mask is never contiguous from the top bit, so
-// every nft version lists it in the same `&` form.
+// every nft version lists it in the same `&` form: nft before 1.1.0 lists
+// `& 0xff000000` as the prefix `meta mark 0x08000000/8`, which the autotune
+// contract's mark matcher does not read. The low byte is kept in the mask
+// for that reason even where the mark has no low-byte bits.
 const FORKOP_MARK_BITS = 0xff0000ff;
 
 function nft_forkop_mark_match_args(mark) {
