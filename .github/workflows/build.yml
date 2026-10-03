@@ -105,8 +105,14 @@ jobs:
           VERSION="${{ needs.preparation.outputs.version }}"
           ./build.sh "$VERSION" "$PWD/filtered-bin/release"
 
-      - name: Prepare Timeweb upload bundle
+      # The same channel bundle GitHub Pages serves, for any other static
+      # host; Pages itself is rebuilt from the releases by pages.yml.
+      - name: Prepare static hosting bundle
         shell: bash
+        env:
+          FORKOP_RELEASE_BASE_URL: https://asofwar.github.io/forkop
+          FORKOP_RELEASE_REPO: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           VERSION="${{ needs.preparation.outputs.version }}"
           ./ops/hosting/prepare-release.sh "$VERSION" "$PWD/filtered-bin/release" "$PWD/filtered-bin/hosting"
@@ -119,7 +125,7 @@ jobs:
           retention-days: 1
           if-no-files-found: error
 
-      - name: Upload Timeweb bundle
+      - name: Upload static hosting bundle
         uses: actions/upload-artifact@v4.6.2
         with:
           name: timeweb-files-${{ needs.preparation.outputs.version }}
@@ -139,7 +145,12 @@ jobs:
       - backend-checks
       - frontend-checks
     steps:
+      # install.sh is attached from the commit the release is built from, so
+      # .../releases/latest/download/install.sh and the Pages channel serve
+      # the installer that matches the packages.
       - uses: actions/checkout@v5.0.0
+        with:
+          ref: ${{ needs.preparation.outputs.commitish }}
       - name: Create release dirs
         run: mkdir -p ./filtered-bin/release ./filtered-bin/hosting
 
@@ -149,7 +160,7 @@ jobs:
           name: release-files-${{ needs.preparation.outputs.version }}
           path: ./filtered-bin/release
 
-      - name: Download Timeweb bundle
+      - name: Download static hosting bundle
         uses: actions/download-artifact@v4
         with:
           name: timeweb-files-${{ needs.preparation.outputs.version }}
@@ -161,6 +172,8 @@ jobs:
           files: |
             ./filtered-bin/release/*.*
             ./filtered-bin/hosting/*.tar.gz
+            ./install.sh
+          fail_on_unmatched_files: true
           draft: false
           prerelease: false
           make_latest: true

@@ -34,15 +34,19 @@ const fs = require('fs');
 const assert = require('assert/strict');
 const before = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
 const out = JSON.parse(fs.readFileSync(process.argv[3], 'utf8'));
-assert.equal(out.config.settings.mirror_base_url, 'https://mirror.infotechtg.ru');
+// The former upstream mirror is dropped, not replaced: the mirror is opt-in.
+assert.equal(out.config.settings.mirror_base_url, '');
+assert(!JSON.stringify(out.config).includes('infotechtg'), 'no upstream mirror may be written');
+assert(!JSON.stringify(out.config).includes('51343.ru/forkop'), 'former mirror list URLs must be moved');
 assert.deepEqual(out.config.subscription_url, before.subscription_url);
 assert.deepEqual(out.config.section[0].rule_set_with_subnets,
-  ['https://mirror.infotechtg.ru/forkop/lists/b4geoip-forkop/srs/valve.srs',
+  ['https://raw.githubusercontent.com/Greeg0ry/b4geoip-forkop/main/srs/valve.srs',
     'https://custom.example/rules.srs', '/etc/forkop/local.srs']);
 assert.deepEqual(out.config.section[0].remote_domain_lists,
-  ['https://mirror.infotechtg.ru/forkop/lists/allow-domains/Russia/inside-raw.lst']);
+  ['https://raw.githubusercontent.com/itdoginfo/allow-domains/main/Russia/inside-raw.lst']);
 assert.deepEqual(out.config.section[0].remote_subnet_lists, before.section[0].remote_subnet_lists);
 assert(out.config.settings.applied_migrations.includes('own_dependency_mirror_v1'));
+assert(out.config.settings.applied_migrations.includes('fork_mirror_opt_in_v1'));
 fs.writeFileSync(process.argv[4], JSON.stringify(out.config));
 NODE
 
@@ -64,6 +68,9 @@ const fs = require('fs');
 const assert = require('assert/strict');
 const out = JSON.parse(fs.readFileSync(process.argv[2], 'utf8')).config;
 assert.equal(out.settings.mirror_base_url, 'https://custom-mirror.example/');
-assert(out.section[0].rule_set_with_subnets[0].startsWith('https://custom-mirror.example/'));
+assert.equal(out.section[0].rule_set_with_subnets[0],
+  'https://custom-mirror.example/forkop/lists/b4geoip-forkop/srs/valve.srs');
+assert.equal(out.section[0].remote_domain_lists[0],
+  'https://custom-mirror.example/forkop/lists/allow-domains/Russia/inside-raw.lst');
 NODE
 printf 'Own mirror migration and unrestricted subscription preservation passed\n'

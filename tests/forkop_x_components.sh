@@ -15,21 +15,37 @@ fail() {
 # shellcheck source=tests/helpers/source_checks.sh
 source "$ROOT_DIR/tests/helpers/source_checks.sh"
 
-grep -Fq '/forkop/sing-box-extended/latest.json' "$ACTION_UC" ||
-  fail "sing-box Extended metadata must come from the Forkop mirror"
-source_refute_text "sing-box Extended resolver must not fall back to GitHub" \
-  -F 'fetch_github' "$(source_function "$ACTION_UC" resolve_sing_box_extended_release)"
-
-grep -Fq '"slayer326/forkop"' "$CONSTANTS_UC" ||
-  fail "Forkop releases must default to slayer326/forkop"
-grep -Fq '"https://fold8.ru/forkop"' "$CONSTANTS_UC" ||
-  fail "Forkop releases must default to the public fold8.ru release channel"
-grep -Fq 'release_base_url + "/updates/latest.json"' "$ACTION_UC" ||
-  fail "Forkop updates must query fold8.ru before GitHub"
-grep -Fq 'return fetch_github_release_json(parts[0], parts[1]);' "$ACTION_UC" ||
-  fail "Forkop updates must retain GitHub Releases as a fallback"
+extended_resolver="$(source_function "$ACTION_UC" resolve_sing_box_extended_release)" || exit 1
+printf '%s\n' "$extended_resolver" | grep -Fq '/forkop/sing-box-extended/latest.json' ||
+  fail "a configured mirror must keep serving sing-box Extended metadata"
+printf '%s\n' "$extended_resolver" | grep -Fq 'fetch_github_release_json("shtorm-7", "sing-box-extended")' ||
+  fail "without a mirror sing-box Extended metadata must come from its GitHub releases"
 grep -Fq 'asset_url: forkop_mirror_url(asset_url)' "$ACTION_UC" ||
   fail "sing-box Extended relative assets must stay on the dependency mirror"
+
+# The fork's own release channel is the default; upstream's is never baked in.
+grep -Fq 'env("FORKOP_RELEASE_REPO", "Asofwar/forkop")' "$CONSTANTS_UC" ||
+  fail "Forkop releases must default to Asofwar/forkop"
+grep -Fq 'env("FORKOP_RELEASE_BASE_URL", "https://asofwar.github.io/forkop")' "$CONSTANTS_UC" ||
+  fail "Forkop releases must default to the fork's GitHub Pages release channel"
+for source in "$ACTION_UC" "$ROOT_DIR/forkop/files/usr/lib/diagnostics/runtime.uc"; do
+  grep -Fq 'getenv("FORKOP_RELEASE_REPO") || constants.FORKOP_RELEASE_REPO || ""' "$source" ||
+    fail "$source must take the release repository from core.constants"
+  source_refute "$source must not carry an upstream release default" \
+    -E 'slayer326|fold8[.]ru' "$source"
+done
+grep -Fq 'getenv("FORKOP_RELEASE_BASE_URL") || constants.FORKOP_RELEASE_BASE_URL || ""' "$ACTION_UC" ||
+  fail "the release channel URL must come from core.constants"
+source_refute "the dependency mirror must be opt-in in the component actions" \
+  -E 'infotechtg|51343' "$ACTION_UC"
+grep -Fq 'release_base_url + "/updates/latest.json"' "$ACTION_UC" ||
+  fail "Forkop updates must query the static release channel before GitHub"
+grep -Fq 'return fetch_github_release_json(parts[0], parts[1]);' "$ACTION_UC" ||
+  fail "Forkop updates must retain GitHub Releases as a fallback"
+source_refute "LuCI must link to the fork, not upstream" \
+  -F 'github.com/slayer326/forkop' "$ROOT_DIR/fe-app-forkop/src"
+source_refute "runtime errors must send reports to the fork" \
+  -F 'github.com/slayer326/forkop' "$ROOT_DIR/forkop/files/usr/lib/singbox/runtime.uc"
 
 grep -Fq "text: _('Install Tiny build')" "$UPDATES_TS" || fail "Tiny switch is missing"
 grep -Fq "text: _('Install Extended build')" "$UPDATES_TS" || fail "Extended switch is missing"

@@ -13,19 +13,26 @@ function shell_quote(value) {
     return "'" + replace(as_string(value), /'/g, "'\\''") + "'";
 }
 
+// The dependency mirror is opt-in. FORKOP_MIRROR_BASE_URL wins whenever it is
+// set, even to the empty string; otherwise forkop.settings.mirror_base_url
+// applies. An empty or missing value means no mirror: every dependency is
+// downloaded from its own upstream source.
 function configured_mirror_base_url() {
-    const default_mirror = "https://mirror.infotechtg.ru";
-    try {
-        let cursor = require("uci").cursor();
-        cursor.load("forkop");
-        let value = as_string(cursor.get("forkop", "settings", "mirror_base_url"));
-        while (length(value) > 0 && substr(value, length(value) - 1) == "/")
-            value = substr(value, 0, length(value) - 1);
-        return value != "" ? value : default_mirror;
+    let value = getenv("FORKOP_MIRROR_BASE_URL");
+    if (value == null) {
+        try {
+            let cursor = require("uci").cursor();
+            cursor.load("forkop");
+            value = cursor.get("forkop", "settings", "mirror_base_url");
+        }
+        catch (e) {
+            value = null;
+        }
     }
-    catch (e) {
-        return default_mirror;
-    }
+    value = type(value) == "string" ? value : "";
+    while (length(value) > 0 && substr(value, length(value) - 1) == "/")
+        value = substr(value, 0, length(value) - 1);
+    return value;
 }
 
 function constants_map() {
@@ -37,8 +44,8 @@ function constants_map() {
     c.FORKOP_BIN = env("FORKOP_BIN", "/usr/bin/forkop");
     c.FORKOP_SERVICE_NAME = env("FORKOP_SERVICE_NAME", "forkop");
     c.FORKOP_SERVICE_INIT = env("FORKOP_SERVICE_INIT", "/etc/init.d/forkop");
-    c.FORKOP_RELEASE_REPO = env("FORKOP_RELEASE_REPO", "slayer326/forkop");
-    c.FORKOP_RELEASE_BASE_URL = env("FORKOP_RELEASE_BASE_URL", "https://fold8.ru/forkop");
+    c.FORKOP_RELEASE_REPO = env("FORKOP_RELEASE_REPO", "Asofwar/forkop");
+    c.FORKOP_RELEASE_BASE_URL = env("FORKOP_RELEASE_BASE_URL", "https://asofwar.github.io/forkop");
     c.FORKOP_LUCI_VIEW_NAMESPACE = env("FORKOP_LUCI_VIEW_NAMESPACE", "forkop");
     c.FORKOP_LUCI_VIEW_DIR = env("FORKOP_LUCI_VIEW_DIR", "/www/luci-static/resources/view/" + c.FORKOP_LUCI_VIEW_NAMESPACE);
     c.FORKOP_LUCI_I18N_DOMAIN = env("FORKOP_LUCI_I18N_DOMAIN", "forkop");
@@ -101,7 +108,7 @@ function constants_map() {
     c.SB_VARIANT_STATE_FILE = env("SB_VARIANT_STATE_FILE", "/etc/forkop/sing-box-variant");
     c.SB_VERSION_STATE_FILE = env("SB_VERSION_STATE_FILE", "/etc/forkop/sing-box-version");
 
-    c.FORKOP_MIRROR_BASE_URL = env("FORKOP_MIRROR_BASE_URL", configured_mirror_base_url());
+    c.FORKOP_MIRROR_BASE_URL = configured_mirror_base_url();
     let mirror_lists = c.FORKOP_MIRROR_BASE_URL != "" ? c.FORKOP_MIRROR_BASE_URL + "/forkop/lists" : "";
     c.GITHUB_RAW_URL = env("GITHUB_RAW_URL", mirror_lists != "" ? mirror_lists + "/allow-domains" : "https://raw.githubusercontent.com/itdoginfo/allow-domains/main");
     c.SRS_MAIN_URL = env("SRS_MAIN_URL", mirror_lists != "" ? mirror_lists + "/rulesets/community" : "https://github.com/itdoginfo/allow-domains/releases/latest/download");

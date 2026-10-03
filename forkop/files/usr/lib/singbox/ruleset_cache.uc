@@ -140,6 +140,32 @@ function append_unique(values, value) {
     push(values, value);
 }
 
+// Former upstream mirrors. Older configurations may still take rule sets from
+// them; those keep their direct fallbacks whatever mirror is configured now.
+const LEGACY_MIRROR_BASES = [
+    "https://mirror.infotechtg.ru", "http://mirror.infotechtg.ru",
+    "https://mirror.51343.ru", "http://mirror.51343.ru"
+];
+
+// The path of a URL under the list tree of the configured or a former
+// upstream mirror; null for any other URL.
+function mirror_list_path(url) {
+    let bases = [];
+    append_unique(bases, as_string(constants.FORKOP_MIRROR_BASE_URL));
+    for (let base in LEGACY_MIRROR_BASES)
+        append_unique(bases, base);
+    for (let base in bases) {
+        let prefix = base + "/forkop/lists/";
+        if (substr(url, 0, length(prefix)) == prefix)
+            return substr(url, length(prefix));
+    }
+    return null;
+}
+
+// Built-in rule sets #2 (b4geoip-forkop) as jsDelivr and raw GitHub serve them.
+const SECONDARY_CDN_PREFIX = "https://cdn.jsdelivr.net/gh/Greeg0ry/b4geoip-forkop@main/";
+const SECONDARY_RAW_PREFIX = "https://raw.githubusercontent.com/Greeg0ry/b4geoip-forkop/main/";
+
 function fallback_urls(url) {
     url = as_string(url);
     let result = [];
@@ -149,17 +175,29 @@ function fallback_urls(url) {
     // Plain list downloads already fall back off the mirror; binary rule sets
     // did not, so a secondary list stopped resolving whenever the mirror was
     // unavailable or had not yet picked a newly added set up.
-    let mirror_base = as_string(constants.FORKOP_MIRROR_BASE_URL);
-    let secondary_mirror_prefix = mirror_base != "" ? mirror_base + "/forkop/lists/b4geoip-forkop/" : "";
-    let secondary_cdn_prefix = "https://cdn.jsdelivr.net/gh/Greeg0ry/b4geoip-forkop@main/";
-    let secondary_raw_prefix = "https://raw.githubusercontent.com/Greeg0ry/b4geoip-forkop/main/";
-    if (secondary_mirror_prefix != "" && substr(url, 0, length(secondary_mirror_prefix)) == secondary_mirror_prefix) {
-        let suffix = substr(url, length(secondary_mirror_prefix));
-        append_unique(result, secondary_cdn_prefix + suffix);
-        append_unique(result, secondary_raw_prefix + suffix);
+    let mirror_path = mirror_list_path(url);
+    if (mirror_path != null) {
+        let sources = [
+            [ "b4geoip-forkop/", SECONDARY_CDN_PREFIX ],
+            [ "b4geoip-forkop/", SECONDARY_RAW_PREFIX ],
+            [ "allow-domains/", "https://cdn.jsdelivr.net/gh/itdoginfo/allow-domains@main/" ],
+            [ "allow-domains/", "https://raw.githubusercontent.com/itdoginfo/allow-domains/main/" ],
+            [ "rulesets/community/", as_string(constants.SRS_FALLBACK_MAIN_URL) + "/" ],
+            [ "rulesets/adlist.srs", constants.SRS_FALLBACK_ADS_HAGEZI_PRO_URL ],
+            [ "rulesets/supercell.srs", constants.SRS_FALLBACK_SUPERCELL_URL ],
+            [ "rulesets/github.srs", constants.SRS_FALLBACK_GITHUB_URL ]
+        ];
+        for (let source in sources)
+            if (substr(mirror_path, 0, length(source[0])) == source[0])
+                append_unique(result, as_string(source[1]) + substr(mirror_path, length(source[0])));
     }
-    else if (substr(url, 0, length(secondary_cdn_prefix)) == secondary_cdn_prefix)
-        append_unique(result, secondary_raw_prefix + substr(url, length(secondary_cdn_prefix)));
+    else if (substr(url, 0, length(SECONDARY_CDN_PREFIX)) == SECONDARY_CDN_PREFIX)
+        append_unique(result, SECONDARY_RAW_PREFIX + substr(url, length(SECONDARY_CDN_PREFIX)));
+    // Raw GitHub is where a rule keeps a secondary list (a configured mirror
+    // is asked first, candidate_urls); jsDelivr serves it when raw GitHub is
+    // unreachable.
+    else if (substr(url, 0, length(SECONDARY_RAW_PREFIX)) == SECONDARY_RAW_PREFIX)
+        append_unique(result, SECONDARY_CDN_PREFIX + substr(url, length(SECONDARY_RAW_PREFIX)));
     if (url == as_string(constants.SRS_ADS_HAGEZI_PRO_URL))
         append_unique(result, constants.SRS_FALLBACK_ADS_HAGEZI_PRO_URL);
     if (url == as_string(constants.SRS_SUPERCELL_URL))
@@ -169,8 +207,16 @@ function fallback_urls(url) {
     return result;
 }
 
+// A configured mirror serves a secondary list kept as its raw GitHub URL
+// before raw GitHub and jsDelivr do. Only the order of the downloads changes:
+// the cache entry is still named by the URL's first fallback (identity_url),
+// so turning the mirror on or off downloads nothing again.
 function candidate_urls(url) {
+    url = as_string(url);
     let result = [];
+    let mirror_base = as_string(constants.FORKOP_MIRROR_BASE_URL);
+    if (mirror_base != "" && substr(url, 0, length(SECONDARY_RAW_PREFIX)) == SECONDARY_RAW_PREFIX)
+        append_unique(result, mirror_base + "/forkop/lists/b4geoip-forkop/" + substr(url, length(SECONDARY_RAW_PREFIX)));
     append_unique(result, url);
     for (let fallback in fallback_urls(url))
         append_unique(result, fallback);

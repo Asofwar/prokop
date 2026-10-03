@@ -141,8 +141,31 @@ grep -Fq "list applied_migrations 'secondary_rulesets_mirror_v1'" "$FORKOP_CONFI
   fail "new installations must mark the secondary rule set mirror migration as applied"
 grep -Fq "list applied_migrations 'own_dependency_mirror_v1'" "$FORKOP_CONFIG" ||
   fail "new installations must mark the own dependency mirror migration as applied"
-grep -Fq "list applied_migrations 'mirror_infotechtg_ru_v1'" "$FORKOP_CONFIG" ||
-  fail "new installations must mark the own package mirror migration as applied"
+grep -Fq "list applied_migrations 'fork_mirror_opt_in_v1'" "$FORKOP_CONFIG" ||
+  fail "new installations must mark the mirror opt-in migration as applied"
+grep -Eq "^[[:space:]]+option mirror_base_url ''$" "$FORKOP_CONFIG" ||
+  fail "new installations must ship the dependency mirror disabled"
+if grep -Eq 'infotechtg|51343' "$FORKOP_CONFIG"; then
+  fail "the shipped configuration must not name a former upstream mirror"
+fi
+fork_identity='Asofwar <7397608+Asofwar@users.noreply.github.com>'
+grep -Fxq "MAINTAINER=\"$fork_identity\"" "$BUILD_SCRIPT" ||
+  fail "manually built packages must name the fork maintainer"
+grep -Fxq 'PROJECT_URL="https://github.com/Asofwar/forkop"' "$BUILD_SCRIPT" ||
+  fail "manually built packages must link the fork project"
+grep -Fxq "PKG_MAINTAINER:=$fork_identity" "$FORKOP_MAKEFILE" ||
+  fail "forkop/Makefile must name the fork maintainer"
+grep -Fq 'URL:=https://github.com/Asofwar/forkop' "$FORKOP_MAKEFILE" ||
+  fail "forkop/Makefile must link the fork project"
+grep -Fxq "LUCI_MAINTAINER:=$fork_identity" "$ROOT_DIR/luci-app-forkop/Makefile" ||
+  fail "luci-app-forkop/Makefile must name the fork maintainer"
+if grep -Fq 'slayer326' "$BUILD_SCRIPT" "$FORKOP_MAKEFILE" "$ROOT_DIR/luci-app-forkop/Makefile"; then
+  fail "package metadata must not name the upstream maintainer"
+fi
+# The mirror step is best effort: tests/fork_mirror_postinst.sh runs the chains.
+if grep -Eq 'mirror-migration\.sh (\|\| exit|&&)' "$FORKOP_MAKEFILE" "$BUILD_SCRIPT"; then
+  fail "a mirror reconciliation failure must not skip package_postinst"
+fi
 grep -Fq '/usr/lib/forkop/config/migration.uc migrate' "$FORKOP_MAKEFILE" ||
   fail "OpenWrt package postinst must run configuration migrations"
 [ "$(grep -Fc '/usr/lib/forkop/config/migration.uc migrate' "$BUILD_SCRIPT")" -ge 3 ] ||

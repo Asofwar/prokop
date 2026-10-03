@@ -11,8 +11,10 @@ on:
       - 'install.sh'
       - 'ops/hosting/**'
       - 'ops/mirror/**'
+      - 'ops/pages/**'
       - 'tests/**'
       - '.github/workflows/build.yml'
+      - '.github/workflows/pages.yml'
       - '.github/workflows/backend-ci.yml'
   push:
     branches:
@@ -24,8 +26,10 @@ on:
       - 'install.sh'
       - 'ops/hosting/**'
       - 'ops/mirror/**'
+      - 'ops/pages/**'
       - 'tests/**'
       - '.github/workflows/build.yml'
+      - '.github/workflows/pages.yml'
       - '.github/workflows/backend-ci.yml'
 
 jobs:

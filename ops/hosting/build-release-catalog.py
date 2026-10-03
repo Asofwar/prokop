@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
 """Build the release catalog the LuCI version picker reads.
 
-The Timeweb document root is updated by extracting one bundle per release, so
-earlier versions stay on the host and can be reinstalled. Nothing on that host
-can generate an index, and its directory listing is closed, so the catalog is
-written here, at build time, and shipped inside the bundle.
+A plain static host is updated by extracting one bundle per release, so
+earlier versions stay on the host and can be reinstalled. Nothing on such a
+host can generate an index, and its directory listing may be closed, so the
+catalog is written here, at build time, and shipped inside the bundle. The
+GitHub Pages channel (ops/pages/build-site.py) imports these functions and
+writes the same catalog for the whole site.
 
 The release being built is always listed: its packages travel in the same
 bundle. Earlier releases come from the GitHub releases of this repository and
-are listed only once every package has been confirmed present on the mirror --
+are listed only once every package has been confirmed present on the host --
 a version whose bundle was never uploaded must not be offered for rollback.
+With --offline (or FORKOP_RELEASE_CATALOG_OFFLINE=1) only the release being
+built is listed and nothing is fetched.
 """
 import argparse
 import hashlib
@@ -22,6 +26,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+FORK_REPO = "Asofwar/forkop"
 VERSION = re.compile(r"^\d+\.\d+\.\d+$")
 PACKAGES = ("forkop", "luci-app-forkop", "luci-i18n-forkop-ru")
 EXTENSIONS = ("ipk", "apk")
@@ -115,7 +120,7 @@ def previous_releases(repository, base_url, current, limit):
             print(f"Skipping {version}: {error}", file=sys.stderr)
             continue
         if not mirror_has_every_package(base_url, version):
-            print(f"Skipping {version}: not published on the mirror yet", file=sys.stderr)
+            print(f"Skipping {version}: not published on the host yet", file=sys.stderr)
             continue
         entries.append(entry)
     return entries
@@ -125,6 +130,24 @@ def version_key(entry):
     return tuple(int(part) for part in entry["tag_name"].split("."))
 
 
+def write_catalog(output, releases):
+    """Write the format-1 catalog atomically, newest release first."""
+    releases = sorted(releases, key=version_key, reverse=True)
+    catalog = {"format": 1, "releases": releases}
+    handle, temporary = tempfile.mkstemp(prefix=".releases-", suffix=".json",
+                                         dir=output.parent)
+    try:
+        with os.fdopen(handle, "w", encoding="utf-8") as stream:
+            json.dump(catalog, stream, ensure_ascii=False, indent=2)
+            stream.write("\n")
+        os.chmod(temporary, 0o644)
+        os.replace(temporary, output)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+    return len(releases)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("version")
@@ -132,8 +155,11 @@ def main():
     parser.add_argument("output", type=Path)
     parser.add_argument("--base-url", required=True)
     parser.add_argument("--repository", default=os.environ.get(
-        "FORKOP_RELEASE_REPO", "slayer326/forkop"))
+        "FORKOP_RELEASE_REPO", FORK_REPO))
     parser.add_argument("--limit", type=int, default=10)
+    parser.add_argument("--offline", action="store_true",
+                        default=os.environ.get("FORKOP_RELEASE_CATALOG_OFFLINE") == "1",
+                        help="list only the release being built; fetch nothing")
     arguments = parser.parse_args()
 
     if not VERSION.fullmatch(arguments.version):
@@ -142,23 +168,12 @@ def main():
 
     releases = [release_entry(arguments.version, base_url,
                               current_digests(arguments.release_dir, arguments.version))]
-    releases.extend(previous_releases(arguments.repository, base_url,
-                                      arguments.version, arguments.limit))
-    releases.sort(key=version_key, reverse=True)
+    if not arguments.offline:
+        releases.extend(previous_releases(arguments.repository, base_url,
+                                          arguments.version, arguments.limit))
 
-    catalog = {"format": 1, "releases": releases}
-    handle, temporary = tempfile.mkstemp(prefix=".releases-", suffix=".json",
-                                         dir=arguments.output.parent)
-    try:
-        with os.fdopen(handle, "w", encoding="utf-8") as output:
-            json.dump(catalog, output, ensure_ascii=False, indent=2)
-            output.write("\n")
-        os.chmod(temporary, 0o644)
-        os.replace(temporary, arguments.output)
-    finally:
-        if os.path.exists(temporary):
-            os.unlink(temporary)
-    print(f"Release catalog: {len(releases)} version(s)")
+    count = write_catalog(arguments.output, releases)
+    print(f"Release catalog: {count} version(s)")
 
 
 if __name__ == "__main__":

@@ -9526,7 +9526,7 @@ function renderDpiValidator() {
     ])
   ];
 }
-var HELP_URL = "https://github.com/slayer326/forkop#readme";
+var HELP_URL = "https://github.com/Asofwar/forkop#readme";
 function renderSiteCheck() {
   return card2(
     "site-check",
