@@ -8,7 +8,9 @@ set -euo pipefail
 #     rules" of another program;
 #   - the router-originated capture counters of mangle_output count only the
 #     rules that mark traffic for sing-box, not the 'meta mark ... counter
-#     return' bypass of sing-box's own egress, which counts all of it;
+#     return' bypass of sing-box's own egress, which counts all of it, and
+#     include the per-rule capture of priority_output_rules that mangle_output
+#     jumps to;
 #   - the set statistics show the per-rule sets (forkop_rule_*) that hold the
 #     data, not only the shared sets nothing fills.
 
@@ -46,7 +48,7 @@ state() { # name content
   printf '%s\n' "$2" >"$WORK/nft/$1"
 }
 
-scenario() { # mangle_output_counter_packets other_table
+scenario() { # mangle_output_counter_packets other_table [priority_output_rules_counter_packets]
   rm -f "$WORK/nft/"*
   state "list_table_inet_ForkopTable" "table inet ForkopTable {}"
   state "list_chain_inet_ForkopTable_mangle" "chain mangle {
@@ -57,6 +59,9 @@ scenario() { # mangle_output_counter_packets other_table
     meta mark 0x08000000 counter packets 5000 bytes 500000 return
     jump priority_output_rules
     ip daddr 198.18.0.0/15 meta l4proto tcp meta mark set 0x00100000 counter packets $1 bytes 0
+}"
+  [ -n "${3:-}" ] && state "list_chain_inet_ForkopTable_priority_output_rules" "chain priority_output_rules {
+    ip daddr @forkop_rule_vpn_subnets meta mark set 0x00100000 counter packets $3 bytes 0
 }"
   state "list_chain_inet_ForkopTable_proxy" "chain proxy {
     meta mark & 0x00100000 == 0x00100000 meta l4proto tcp tproxy ip to 127.0.0.1:1602 counter packets 9 bytes 900
@@ -93,12 +98,17 @@ scenario 0 ""
 check >"$WORK/idle.json" || fail "check-nft-rules failed"
 scenario 7 "fw4mark"
 check >"$WORK/foreign.json" || fail "check-nft-rules failed"
+scenario 0 "" 4
+check >"$WORK/per_rule.json" || fail "check-nft-rules failed"
+scenario 0 "" 0
+check >"$WORK/per_rule_idle.json" || fail "check-nft-rules failed"
 
 node - "$WORK" <<'NODE' || failures=$((failures + 1))
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const read = (n) => JSON.parse(fs.readFileSync(`${process.argv[2]}/${n}.json`, 'utf8'));
 const own = read('own'), idle = read('idle'), foreign = read('foreign');
+const perRule = read('per_rule'), perRuleIdle = read('per_rule_idle');
 assert.equal(own.rules_other_mark_exist, 0, 'Forkop tables are not foreign marking');
 assert.equal(foreign.rules_other_mark_exist, 1, 'a foreign table that sets marks is reported');
 assert.equal(own.rules_mangle_output_exist, 1);
@@ -106,6 +116,8 @@ assert.equal(own.rules_mangle_output_counters, 1, 'a capture rule that counted p
 assert.equal(idle.rules_mangle_output_exist, 1, 'capture rules exist');
 assert.equal(idle.rules_mangle_output_counters, 0, 'the egress bypass counter alone does not pass the capture counters');
 assert.equal(own.rules_proxy_counters, 1);
+assert.equal(perRule.rules_mangle_output_counters, 1, 'per-rule capture in priority_output_rules counts');
+assert.equal(perRuleIdle.rules_mangle_output_counters, 0, 'idle per-rule capture does not pass');
 NODE
 
 # The ruleset excerpt shown under the warning lists foreign tables only.

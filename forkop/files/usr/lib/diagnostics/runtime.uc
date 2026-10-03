@@ -1530,6 +1530,13 @@ function check_nft_rules() {
             let status = nft_chain_counter_status("mangle_output", true);
             rules_mangle_output_exist = status[0];
             rules_mangle_output_counters = status[1];
+            // mangle_output jumps to the per-rule capture of
+            // priority_output_rules: its mark-set rules count as well (UC-107).
+            if (command_success_from_args([ "nft", "list", "chain", "inet", NFT_TABLE_NAME, "priority_output_rules" ])) {
+                let per_rule = nft_chain_counter_status("priority_output_rules", true);
+                if (per_rule[0]) rules_mangle_output_exist = 1;
+                if (per_rule[1]) rules_mangle_output_counters = 1;
+            }
         }
         if (command_success_from_args([ "nft", "list", "chain", "inet", NFT_TABLE_NAME, "proxy" ])) {
             let status = nft_chain_counter_status("proxy");
