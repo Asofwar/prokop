@@ -323,7 +323,7 @@ const ipCases = {
   R8_not_with_other_selector: [rule({ not: null, fwmark: '0x8000000', ipproto: 'udp', table: '100' }), false],
   R9_ipproto_dport: [rule({ ipproto: 'tcp', dport: 443, table: '100' }), false],
   R10_uidrange_root: [rule({ uidrange: '0-0', table: '100' }), false],
-  R11_sport_range: [rule({ sport: '61000-61031', table: 'prokop' }), false],
+  R11_sport_range: [rule({ sport: '61000-61063', table: 'prokop' }), false],
   R12_to_target: [rule({ dst: '172.217.0.0', dstlen: 16, table: 'prokop' }), false],
   R13_to_other_ok: [rule({ dst: '10.0.0.0', dstlen: 8, table: '100' }), true],
   R14_from_wan_address: [rule({ src: '203.0.113.10', srclen: 32, table: '100' }), false],

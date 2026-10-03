@@ -403,7 +403,7 @@ function evaluate(listing, ip_rules, options) {
     let own_priority = int(options.own_priority != null ? options.own_priority : -151);
     let prod_table = options.prod_table || constants.NFT_TABLE_NAME;
     let reply = { dev: options.reply_dev || null, sets: type(options.sets) == "object" ? options.sets : {},
-        saddr: options.target || null, sport: options.dport || 443, dport: options.sport_range || [ 61000, 61031 ] };
+        saddr: options.target || null, sport: options.dport || 443, dport: options.sport_range || [ 61000, 61063 ] };
     let violations = [], bypass = [], foreign = [], caveats = [];
     let result = { ok: false, reason: null, probe_mark: hex(probe_mark), violations, bypass, foreign_chains: foreign, caveats };
     let violation = (code, detail) => push(violations, { code, detail: detail || null });
@@ -550,7 +550,7 @@ function evaluate(listing, ip_rules, options) {
     // the probe chains, but must not be blocked before they get there.
     if (ip_rules != null) {
         let desync_marks = [ mark_number(constants.ZAPRET_DESYNC_MARK), mark_number(constants.ZAPRET_DESYNC_MARK) | probe_mark ];
-        let probe = { marks: [ probe_mark ], sport: options.sport_range || [ 61000, 61031 ], dport: options.dport || 443,
+        let probe = { marks: [ probe_mark ], sport: options.sport_range || [ 61000, 61063 ], dport: options.dport || 443,
             uids: options.uids || [ 0 ], target: options.target || null, saddr: options.probe_saddr || null };
         let first = { ...probe, marks: [ 0, ...desync_marks ] };
         if (type(ip_rules) != "array") violation("ip_rules_unavailable");

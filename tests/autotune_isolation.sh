@@ -89,7 +89,7 @@ a.ok(!JSON.stringify(r).match(/cookie|authorization|set-cookie/i));
 ' "$WORK/out.json"
 args="$(cat "$STUB_LOG/curl.args")"
 grep -qx -- '--local-port' <<<"$args" || fail "curl without dedicated source ports"
-grep -qx -- '61000-61031' <<<"$args" || fail "curl without the dedicated source-port range"
+grep -qx -- '61000-61063' <<<"$args" || fail "curl without the dedicated source-port range"
 grep -qx -- 'example.com:443:93.184.216.34' <<<"$args" || fail "curl without pinned address"
 grep -qx -- '/dev/null' <<<"$args" || fail "curl keeps the body"
 ! grep -qxE -- '-b|-c|-D|-H|-u|--cookie|--cookie-jar|--dump-header|-i|-v' <<<"$args" || fail "curl records headers or cookies"
@@ -98,7 +98,7 @@ batch="$(cat "$NFT_STATE/last.nft")"
 grep -qx 'create table inet ProkopAutotuneProbe' <<<"$batch" || fail "table not created atomically"
 grep -q 'type route hook output priority -151; policy accept;' <<<"$batch" || fail "wrong hook/priority"
 [ "$(grep -c '^add rule' <<<"$batch")" = 5 ] || fail "unexpected rule count"
-T='ip daddr 93.184.216.34 tcp dport 443 tcp sport 61000-61031'
+T='ip daddr 93.184.216.34 tcp dport 443 tcp sport 61000-61063'
 expect_line() { sed -n "$1p" "$NFT_STATE/last.nft" | grep -qxF -- "$2" || fail "batch line $1: $(sed -n "$1p" "$NFT_STATE/last.nft")"; }
 expect_line 2 'add chain inet ProkopAutotuneProbe premark { type route hook output priority -152; policy accept; }'
 expect_line 3 "add rule inet ProkopAutotuneProbe premark $T meta mark 0x00000000 meta mark set 0x08000000 counter accept comment \"probe_mark\""

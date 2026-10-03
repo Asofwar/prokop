@@ -2337,6 +2337,9 @@ function reload(reason) {
             log_message("Reload skipped: runtime-relevant configuration is unchanged", "info");
             // Only a subscription section's kill-switch is in the plan.
             killswitch_sync("reload");
+            // Nor is the autotune schedule (UC-115): a change of only
+            // autotune.mode plans nothing else.
+            sync_autotune_cron("cron-sync");
         }
         return finish_reload_status(status, reload_config_fingerprint);
     }
@@ -2548,6 +2551,12 @@ function reload(reason) {
         if (status != 0)
             return abort_reload(status, false);
     }
+    // The autotune schedule is outside the cron signature: a restored
+    // snapshot or `uci set ...autotune.mode` with a reload changes it too
+    // (UC-115). cron-sync writes the crontab only when its line changes;
+    // refresh_cron above runs it as well.
+    else
+        sync_autotune_cron("cron-sync");
 
     status = finish_reload_status(module_status(STATE_UC, [
         "write-captured-reload-state",

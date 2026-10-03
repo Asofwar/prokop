@@ -88,7 +88,7 @@ const VERIFY_PROBES = 3;
 // one rule for the probe tuple (the pinned target, the dedicated source
 // ports of autotune probes), removed as soon as the probes are done.
 const VERIFY_TABLE = "ProkopAutotuneVerify";
-const VERIFY_PORT_FIRST = 61000, VERIFY_PORT_LAST = 61031;
+const VERIFY_PORT_FIRST = 61000, VERIFY_PORT_LAST = 61063;
 const VERIFY_SETTLE = int(getenv("PROKOP_AUTOTUNE_VERIFY_SETTLE") || "10");
 const PORT_RANGE_FILE = getenv("PROKOP_AUTOTUNE_PORT_RANGE_FILE") || "/proc/sys/net/ipv4/ip_local_port_range";
 const PROC_NET = getenv("PROKOP_AUTOTUNE_PROC_NET") || "/proc/net";

@@ -18,10 +18,11 @@ let rec = (candidate, confidence, fp) => ({ status: "recommendation", candidate,
 function run(steps, p) {
   let g = null, out = [];
   for (let i = 0; i < length(steps); i++) {
-    let r = h.observe(g, steps[i], p || policy, 1000 + i);
+    let r = h.observe(g, steps[i], p || policy, 1000 + i, steps[i].manual ? "manual" : "schedule");
     g = r.group;
     push(out, { events: map(r.events, (e) => e.event), count: g.pending ? g.pending.count : 0,
-      candidate: g.pending ? g.pending.candidate : null, ready: r.ready });
+      candidate: g.pending ? g.pending.candidate : null, ready: r.ready, ready_auto: r.ready_auto,
+      scheduled: g.pending ? g.pending.scheduled : 0 });
   }
   return { steps: out, group: g };
 }
@@ -34,7 +35,11 @@ let out = {
   rule_changed: run([ rec("multisplit", "high", "a"), rec("multisplit", "high", "a"), rec("multisplit", "high", "b") ]),
   resets: run([ rec("multisplit"), { status: "conflict", fingerprint: "fp1" }, rec("multisplit"),
     { status: "direct_stable" }, rec("multisplit"), { status: "no_change" } ]),
-  medium_policy: run([ rec("fake", "medium"), rec("fake", "medium") ], { confirmations: 2, min_confidence: "medium" })
+  medium_policy: run([ rec("fake", "medium"), rec("fake", "medium") ], { confirmations: 2, min_confidence: "medium" }),
+  // D-11a: "Check now" three times in a row is ready for a manual apply,
+  // never for an automatic one; scheduled runs add their own count.
+  manual: run([ { ...rec("multisplit"), manual: true }, { ...rec("multisplit"), manual: true },
+    { ...rec("multisplit"), manual: true }, rec("multisplit"), rec("multisplit"), rec("multisplit") ])
 };
 let g = h.start_cooldown(h.empty_group(), "multisplit", 3600, 100);
 g = h.start_cooldown(g, "fake", 60, 100);
@@ -66,7 +71,14 @@ assert.deepEqual(brief(r.rule_changed), [['started', 1, false], ['confirmed', 2,
 assert.equal(r.rule_changed.group.fingerprint, 'b');
 assert.deepEqual(brief(r.resets).map((s) => s[0]),
   ['started', 'reset_conflict', 'started', 'reset_direct_stable', 'started', 'reset_already_active']);
-assert.deepEqual(r.resets.group.last, { status: 'no_change', candidate: null, confidence: null, reason: null, at: 1005 });
+assert.deepEqual(r.resets.group.last, { status: 'no_change', candidate: null, confidence: null, reason: null, at: 1005,
+  trigger: 'schedule' });
+assert.deepEqual(r.confirm.steps.map((s) => [s.scheduled, s.ready_auto]), [[1, false], [2, false], [3, true], [3, true]],
+  'scheduled runs make a group ready for an automatic apply');
+assert.deepEqual(r.manual.steps.map((s) => [s.count, s.ready, s.scheduled, s.ready_auto]),
+  [[1, false, 0, false], [2, false, 0, false], [3, true, 0, false], [3, true, 1, false], [3, true, 2, false], [3, true, 3, true]],
+  'manual checks never count toward an automatic apply');
+assert.equal(r.manual.steps.length, 6);
 assert.deepEqual(brief(r.medium_policy), [['started', 1, false], ['ready', 2, true]]);
 
 assert.deepEqual([r.cooldown.active, r.cooldown.other, r.cooldown.expired, r.cooldown.until], [true, false, false, 3700]);

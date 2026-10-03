@@ -257,6 +257,9 @@ export namespace Prokop {
     pending: {
       candidate: string;
       count: number;
+      // Confirmations of scheduled runs only: what autonomous apply needs
+      // (D-11a).
+      scheduled?: number;
       confidence?: string | null;
       first_seen?: number;
       last_seen?: number;
@@ -275,6 +278,8 @@ export namespace Prokop {
     targets?: string[];
     current?: string | null;
     ready?: boolean;
+    // Confirmed by scheduled runs: ready for an autonomous apply (D-11a).
+    ready_auto?: boolean;
     required?: number;
     result?: AutotuneGroupResult | null;
     decision?: { reason: string | null; at: number } | null;

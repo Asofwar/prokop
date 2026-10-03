@@ -54,7 +54,9 @@ const QUEUE = int(getenv("PROKOP_AUTOTUNE_QUEUE") || "4600");
 const MAX_QUEUES = 8;
 const QUEUE_LAST = QUEUE + MAX_QUEUES - 1;
 const PORT_FIRST = 61000;
-const PORT_LAST = 61031;
+// 64 source ports (D-4a): the largest catalog (8 TCP candidates) at the
+// policy's highest probe count (7) fits without lowering the probes.
+const PORT_LAST = 61063;
 const PORT_RANGE = PORT_FIRST + "-" + PORT_LAST;
 const PROD_TABLE = constants.NFT_TABLE_NAME;
 const PROBE_MARK = constants.NFT_OUTBOUND_MARK;
@@ -74,7 +76,7 @@ const TRACE = getenv("PROKOP_AUTOTUNE_TRACE") == "1";
 const NFQWS_DEBUG = getenv("PROKOP_AUTOTUNE_NFQWS_DEBUG") == "1";
 const MAX_PROBES = 5;
 // A tuning run never uses more probe connections than source ports.
-const MAX_TUNE_PROBES_TOTAL = 32;
+const MAX_TUNE_PROBES_TOTAL = PORT_LAST - PORT_FIRST + 1;
 // Seconds the teardown waits, with the isolation intact, for the probe
 // connections to finish closing and for queued packets to get a verdict.
 const DRAIN_TIMEOUT = int(getenv("PROKOP_AUTOTUNE_DRAIN_TIMEOUT") || "3");

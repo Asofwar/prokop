@@ -77,6 +77,13 @@ function tcp443_splice(current, candidate) {
     return { opt: join(" --new ", out), profile: at, before: join(" ", ps[at]), after: join(" ", replaced) };
 }
 
+// The strategy a zapret rule runs: its option, or the provider default when
+// the option is empty (autotune/apply.uc writes the default out explicitly).
+function effective(opt) {
+    let n = normalize(opt);
+    return n != "" ? n : normalize(getenv("ZAPRET_DEFAULT_NFQWS_OPT") || constants.ZAPRET_DEFAULT_NFQWS_OPT);
+}
+
 function is_dpi_action(action) {
     return STRATEGY_OPTIONS[as_string(action)] != null;
 }
@@ -118,4 +125,4 @@ function view(section) {
     return { dpi_provider: provider, dpi_strategy: strategy, dpi_strategy_custom: strategy == "" };
 }
 
-return { is_dpi_action, view, profiles, tcp443_scope, tcp443_splice };
+return { is_dpi_action, view, profiles, tcp443_scope, tcp443_splice, effective };

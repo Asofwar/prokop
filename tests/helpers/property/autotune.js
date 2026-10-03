@@ -53,10 +53,10 @@ function evaluate(input) {
     let group = null, steps = [];
     for (let i = 0; i < length(input.observations); i++) {
         let obs = input.observations[i], now = 1000 + i;
-        let observed = h.observe(group, obs, input.policy, now);
+        let observed = h.observe(group, obs, input.policy, now, "schedule");
         group = observed.group;
         let decision = autoapply.decide({ policy: input.policy, trigger: "schedule",
-            group: { ...observed.group, ready: observed.ready }, result: obs, custom: false,
+            group: { ...observed.group, ready: observed.ready, ready_auto: observed.ready_auto }, result: obs, custom: false,
             applies: [], now, cooldown_until: null, recovered_at: null });
         push(steps, { pending: group.pending, ready: observed.ready, required: observed.required,
             events: map(observed.events, (e) => e.event), apply: decision.apply });

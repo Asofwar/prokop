@@ -318,6 +318,21 @@ function production_dns(host) {
 
 // Targets classified into groups and the group results from the cached
 // target summaries. Strategy identities only, never raw strategies.
+// A recommendation autotune could never apply is "not_applicable" before
+// hysteresis, autonomous apply and the page see it (UC-032, D-7a): apply.uc
+// replaces only the TCP/443 profile of the rule's strategy, so a strategy
+// without exactly one such profile of its own cannot take the candidate.
+// The reason is the one apply.uc plan would give. The raw strategy never
+// leaves this function: group views reach the read-only role.
+function applicable(aggregate, sections, name) {
+    if (aggregate.status != "recommendation" || !aggregate.candidate || aggregate.candidate == "direct") return aggregate;
+    let entry = catalog.find(aggregate.candidate);
+    let section = resolver.find_section(sections, name);
+    if (entry == null || section == null) return aggregate;
+    let splice = dpi_strategy.tcp443_splice(dpi_strategy.effective(section.options.nfqws_opt), entry.nfqws_opt);
+    return splice.error ? { ...aggregate, status: "not_applicable", reason: splice.error } : aggregate;
+}
+
 function compute_groups(sections, targets, state) {
     let config = singbox_config(sections);
     let groups = {}, outside = [];
@@ -341,7 +356,7 @@ function compute_groups(sections, targets, state) {
         push(g.targets, t.id);
     }
     for (let name, g in groups)
-        g.result = groups_module.aggregate(map(g.targets, (id) => ({ id, summary: summary_of(state, filter(targets, (t) => t.id == id)[0]) })), g.current);
+        g.result = applicable(groups_module.aggregate(map(g.targets, (id) => ({ id, summary: summary_of(state, filter(targets, (t) => t.id == id)[0]) })), g.current), sections, name);
     return { groups, outside };
 }
 
@@ -496,8 +511,19 @@ function history(kind, status, trigger, candidate) {
 
 // Set/delete UCI values with a private save directory, so the commit carries
 // exactly these changes and never anything staged by someone else.
+//
+// An apply that is changing or checking production (scheduled or manual)
+// verifies that the configuration stays exactly the candidate: a policy or
+// target commit meanwhile would end it as needs_attention, counted and
+// cooled down (UC-113). The write waits for it to finish instead.
 function uci_apply(ops) {
     if (uncommitted_changes()) return { status: "refused", reason: "uncommitted_uci_changes" };
+    // A worker that crashed while applying holds no lock: it blocks nothing.
+    let worker = worker_view(state_module.read().worker);
+    let running = apply_summary();
+    if ((running != null && running.in_progress) ||
+        (type(worker) == "object" && worker.state == "running" && worker.phase == "applying"))
+        return { status: "refused", reason: "apply_in_progress" };
     let dir = trim(capture([ "mktemp", "-d", TMP_DIR + "/prokop-autotune-policy.XXXXXX" ]).output);
     if (dir == "") return { status: "failed", reason: "tempdir_unavailable" };
     let base = [ UCI, "-c", fs.dirname(CONFIG_FILE), "-t", dir ];
@@ -752,6 +778,7 @@ function begin_run(trigger, scope, started, policy, extra) {
                 g = hysteresis.start_cooldown(g, crashed.candidate, policy.cooldown_seconds, now());
                 g.pending = null;
                 g.ready = false;
+                g.ready_auto = false;
                 state.groups[crashed.group] = g;
             }
         }
@@ -859,12 +886,13 @@ function run_locked(scope, trigger) {
             if (stop != null) break;
             // Only what this run measured counts: a cached result never
             // confirms a recommendation a second time.
-            let aggregate = groups_module.aggregate(map(g.targets, (id) => ({ id, summary: updates.targets[id] || null })), g.current);
-            let observed = hysteresis.observe(local.groups[name], { ...aggregate, fingerprint: g.fingerprint }, policy, now());
+            let aggregate = applicable(groups_module.aggregate(map(g.targets, (id) => ({ id, summary: updates.targets[id] || null })), g.current), sections, name);
+            let observed = hysteresis.observe(local.groups[name], { ...aggregate, fingerprint: g.fingerprint }, policy, now(), trigger);
             let was_ready = type(local.groups[name]) == "object" && local.groups[name].ready === true;
             if (observed.ready && !was_ready) history("autotune_recommendation", "success");
             let group = { ...observed.group, label: g.label, targets: g.targets, current: g.current, source_scoped: g.source_scoped,
-                events: observed.events, ready: observed.ready, required: observed.required, result: aggregate };
+                events: observed.events, ready: observed.ready, ready_auto: observed.ready_auto, required: observed.required,
+                result: aggregate };
             // At most one production change per run.
             let decision = applied != null ? { apply: false, reason: "one_apply_per_run" } : autoapply.decide({
                 policy, trigger, group, result: aggregate, custom: g.custom, applies: local.applies, now: now(),
@@ -877,7 +905,7 @@ function run_locked(scope, trigger) {
                 group.last_apply = applied;
                 if (applied.outcome != null && applied.outcome.cooldown)
                     group = hysteresis.start_cooldown(group, aggregate.candidate, policy.cooldown_seconds, now());
-                if (applied.outcome != null && applied.outcome.reset) { group.pending = null; group.ready = false; }
+                if (applied.outcome != null && applied.outcome.reset) { group.pending = null; group.ready = false; group.ready_auto = false; }
                 push(local.applies, applied);
                 push(updates.applies, applied);
             }
@@ -952,6 +980,7 @@ function manual_recommendation(state, name, policy, at) {
     let r = g.result;
     if (r.status == "conflict") return { reason: "conflict" };
     if (r.status == "direct_stable" || r.candidate == "direct") return { reason: "direct_not_applicable" };
+    if (r.status == "not_applicable") return { reason: "plan_not_applicable:" + as_string(r.reason) };
     if (r.status != "recommendation" || !r.candidate) return { reason: "no_recommendation" };
     if (g.ready !== true || type(g.pending) != "object" || g.pending.candidate != r.candidate) return { reason: "not_confirmed" };
     if (!policy_module.confidence_at_least(r.confidence, policy.min_confidence)) return { reason: "confidence_too_low" };
@@ -1031,7 +1060,7 @@ function manual_apply_locked(name, job) {
         g.last_apply = record;
         if (record.outcome != null && record.outcome.cooldown)
             g = hysteresis.start_cooldown(g, candidate, policy.cooldown_seconds, now());
-        if (record.outcome != null && record.outcome.reset) { g.pending = null; g.ready = false; }
+        if (record.outcome != null && record.outcome.reset) { g.pending = null; g.ready = false; g.ready_auto = false; }
         s.groups[name] = g;
         push(s.applies, record);
     });
@@ -1085,6 +1114,7 @@ function operator_rollback() {
             g = hysteresis.start_cooldown(g, candidate, policy.cooldown_seconds, now());
             g.pending = null;
             g.ready = false;
+            g.ready_auto = false;
             state.groups[group] = g;
         });
     }

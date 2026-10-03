@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   applyConfirmation,
+  applyRunning,
   applyPhaseLabel,
   applyOutcomeView,
   applyResultView,
@@ -17,6 +18,7 @@ import {
   rollbackResultView,
   strategyLabel,
   targetIdFor,
+  targetReasonText,
   targetRows,
   ruleListName,
   ruleListLabel,
@@ -1374,5 +1376,98 @@ describe('runProgressView', () => {
   it('has nothing to show without progress', () => {
     expect(runProgressView({ state: 'running' }, 0)).toBeNull();
     expect(runProgressView({ state: 'finished' }, 0)).toBeNull();
+  });
+});
+
+describe('S9 autotune texts', () => {
+  it('shows a recommendation the rule strategy cannot take as not applicable (UC-032)', () => {
+    const notApplicable = groupState({
+      pending: null,
+      ready: false,
+      result: {
+        ...recommendation,
+        status: 'not_applicable',
+        reason: 'tcp443_profile_shared',
+      },
+    });
+    const [card] = groupCards(
+      status({ groups: { youtube: notApplicable } }),
+      live(),
+    );
+    expect(card.badge).toEqual({ label: 'Cannot be applied', tone: 'neutral' });
+    expect(card.applyCandidate).toBeNull();
+    expect(card.progress).toBeNull();
+    expect(card.explanation.join(' ')).toContain('--filter-tcp=443');
+  });
+
+  it('explains an invalid measurement and the probe budget (UC-111, UC-031)', () => {
+    expect(targetReasonText('candidate_bypassed')).toContain(
+      'The check was invalid',
+    );
+    expect(targetReasonText('too_many_probes')).toContain('lower the number');
+  });
+
+  it('labels failed and unconfirmed applies by what happened (UC-112)', () => {
+    expect(
+      applyOutcomeView('failed', 'apply_failed:snapshot_retention_full'),
+    ).toEqual({
+      label: 'Not applied, the previous configuration is kept',
+      tone: 'warning',
+    });
+    expect(applyOutcomeView('failed', 'reload_failed_recovered').label).toBe(
+      'Service reload failed, previous configuration restored',
+    );
+    for (const reason of [
+      'lkg_confirm_failed',
+      'config_changed_during_verification',
+    ])
+      expect(applyOutcomeView('needs_attention', reason).label).toBe(
+        'Applied and checked, but not confirmed as the working configuration',
+      );
+    expect(applyOutcomeView('needs_attention', 'rollback_failed').label).toBe(
+      'Rollback did not finish',
+    );
+  });
+
+  it('locks the page while any apply runs, also a scheduled one (UC-113)', () => {
+    const base = status();
+    expect(applyRunning(null)).toBe(false);
+    expect(
+      applyRunning({
+        ...base,
+        worker: { state: 'running', trigger: 'schedule', phase: 'applying' },
+      }),
+    ).toBe(true);
+    expect(
+      applyRunning({
+        ...base,
+        worker: { state: 'running', trigger: 'schedule', phase: 'measuring' },
+      }),
+    ).toBe(false);
+    expect(mutationErrorText('apply_in_progress')).toContain('being applied');
+  });
+
+  it('counts only scheduled confirmations in automatic mode (D-11a)', () => {
+    const manualOnly = groupState({
+      pending: { candidate: 'multisplit', count: 3, scheduled: 1 },
+      ready: true,
+      ready_auto: false,
+    });
+    const [auto] = groupCards(
+      status({
+        policy: policy({ mode: 'auto' }),
+        groups: { youtube: manualOnly },
+      }),
+      live(),
+    );
+    expect(auto.badge.label).toBe('Confirming');
+    expect(auto.progress).toEqual({ count: 1, required: 3 });
+    expect(auto.explanation.join(' ')).toContain('only scheduled checks count');
+    const [recommend] = groupCards(
+      status({ groups: { youtube: manualOnly } }),
+      live(),
+    );
+    expect(recommend.badge.label).toBe('Recommendation confirmed');
+    expect(recommend.applyCandidate).toBe('multisplit');
   });
 });

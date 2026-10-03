@@ -112,7 +112,8 @@ manager policy-set mode auto >/dev/null
 manager run youtube >/dev/null
 manager run youtube >/dev/null
 [ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" groups.youtube.ready)" = true ] || fail "fixture: youtube not confirmed"
-state_edit 's.next_run_at=1; s.rotation=1'
+# One earlier scheduled confirmation (D-11a): the due run is the second.
+state_edit 's.next_run_at=1; s.rotation=1; s.groups.youtube.pending.scheduled=1'
 SYNC_FAIL_GLOB="$STATE_TMP" SYNC_FAIL_MATCH='"phase": "applying"' manager if-due >"$WORK/unmarked.json"
 [ "$(json_get "$WORK/unmarked.json" applied.reason)" = '"state_write_failed"' ] ||
   fail "an apply whose crash marker cannot be written: $(cat "$WORK/unmarked.json")"

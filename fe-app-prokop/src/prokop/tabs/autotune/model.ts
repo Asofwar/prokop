@@ -103,8 +103,16 @@ export function targetReasonText(reason: string | null | undefined) {
       return _(
         'Several strategies are stable with similar latency; the simplest one was chosen.',
       );
+    // A strategy queue did not take every probe packet: the measurement is
+    // invalid, not a finding about the target (UC-111).
     case 'candidate_bypassed':
-      return _('The target is reachable only through a bypass strategy.');
+      return _(
+        'The check was invalid: a strategy did not process every packet. It will be repeated.',
+      );
+    case 'too_many_probes':
+      return _(
+        'The check needs more probe connections than one run can make; lower the number of probes.',
+      );
     case 'no_stable_candidate':
       return _('No strategy is stable. The current strategy is kept.');
     case 'all_failed':
@@ -266,7 +274,31 @@ export function applyOutcomeView(
     case 'stale':
     case 'busy':
       return { label: _('Not applied'), tone: 'neutral' };
+    // Proven before or by the transaction: the previous configuration runs
+    // (autotune/apply.uc refuse "failed", reload_failed_recovered).
+    case 'failed':
+      if (reason === 'reload_failed_recovered')
+        return {
+          label: _('Service reload failed, previous configuration restored'),
+          tone: 'warning',
+        };
+      return {
+        label: _('Not applied, the previous configuration is kept'),
+        tone: 'warning',
+      };
     case 'needs_attention':
+      // The candidate passed its check and runs, but it was not confirmed as
+      // the last known working configuration: no rollback was due (UC-112).
+      if (
+        reason === 'lkg_confirm_failed' ||
+        reason === 'config_changed_during_verification'
+      )
+        return {
+          label: _(
+            'Applied and checked, but not confirmed as the working configuration',
+          ),
+          tone: 'warning',
+        };
       if (reason === CONFIG_EDITED_DURING_CHECK)
         return {
           label: _('Check failed, not rolled back: configuration edited'),
@@ -375,7 +407,13 @@ export function groupCards(
     const result = state?.result ?? now?.result ?? null;
     const required = state?.required ?? status.policy.confirmations;
     const pending = state?.pending ?? null;
-    const ready = state?.ready === true;
+    // In mode "auto" only scheduled checks confirm (D-11a); a manual apply
+    // ("recommend") counts every check.
+    const auto = status.policy.mode === 'auto';
+    const ready = auto ? state?.ready_auto === true : state?.ready === true;
+    const confirmations = auto
+      ? (pending?.scheduled ?? 0)
+      : (pending?.count ?? 0);
     const explanation: string[] = [];
     let badge: GroupCard['badge'];
     let recommended: string | null = null;
@@ -395,6 +433,13 @@ export function groupCards(
           _(
             'The strategy is changed only after %d checks in a row with the same result.',
           ).replace('%d', String(required)),
+          ...(auto
+            ? [
+                _(
+                  'In automatic mode only scheduled checks count; "Check now" does not.',
+                ),
+              ]
+            : []),
         );
     } else if (result.status === 'no_change') {
       badge = { label: _('No change needed'), tone: 'success' };
@@ -406,6 +451,15 @@ export function groupCards(
         _(
           'Prokop never turns DPI bypass off by itself; remove the targets from the rule manually if you want.',
         ),
+      );
+    } else if (result.status === 'not_applicable') {
+      // Measured, but the rule strategy cannot take it (UC-032): no
+      // confirmations, no Apply.
+      recommended = result.candidate;
+      badge = { label: _('Cannot be applied'), tone: 'neutral' };
+      explanation.push(
+        strategyShapeText(result.reason ?? '') ??
+          _('Autotune cannot change the strategy of this rule.'),
       );
     } else if (result.status === 'conflict') {
       badge = { label: _('Conflict'), tone: 'warning' };
@@ -455,7 +509,7 @@ export function groupCards(
       explanation,
       progress:
         pending && result?.status === 'recommendation'
-          ? { count: Math.min(pending.count, required), required }
+          ? { count: Math.min(confirmations, required), required }
           : null,
       checkedAt: state?.last?.at ?? null,
       lastApply:
@@ -867,6 +921,17 @@ export function stateNotSavedText() {
   );
 }
 
+// A strategy is being applied and checked, by this page or on schedule
+// (manager.uc sets the worker phase "applying").
+export function applyRunning(status: Prokop.AutotuneStatus | null) {
+  const worker = status?.worker;
+  return Boolean(
+    worker &&
+      worker.state === 'running' &&
+      (worker.phase === 'applying' || worker.kind === 'apply'),
+  );
+}
+
 // Why a run did not measure (manager.uc blocker()).
 export function blockerText(reason: string | null | undefined) {
   switch (reason) {
@@ -895,6 +960,10 @@ export function mutationErrorText(reason: string | undefined) {
     case 'uncommitted_uci_changes':
       return _(
         'There are unsaved configuration changes. Save or reset them in Settings first.',
+      );
+    case 'apply_in_progress':
+      return _(
+        'A strategy is being applied and checked; change the settings when it finishes.',
       );
     case 'autotune_worker_running':
       return _('A check is already running.');

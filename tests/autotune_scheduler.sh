@@ -146,6 +146,29 @@ kill "$lock_holder"
 wait "$lock_holder" || true
 wait_until 30 worker_lock_free || fail "the worker lock was not released"
 
+# ---- no policy or target commit while an apply is checked (UC-113) ----------
+# A commit during the check would end the verified candidate as
+# needs_attention; the write is refused instead. A worker that crashed while
+# applying holds no lock and blocks nothing.
+cp "$PROKOP_AUTOTUNE_STATE_FILE" "$WORK/state.before-applying"
+node -e 'const f=process.argv[1],s=require(f);s.worker={state:"running",pid:"1",ticks:"1",trigger:"schedule",scope:"auto",started_at:1,phase:"applying",group:"youtube",candidate:"fake"};require("fs").writeFileSync(f,JSON.stringify(s)+"\n")' \
+  "$PROKOP_AUTOTUNE_STATE_FILE"
+( flock 9 && exec sleep 60 ) 9>>"$WORKER_LOCK" &
+lock_holder=$!
+BG_PIDS+=("$lock_holder")
+wait_until 30 lock_held "$WORKER_LOCK" || fail "the worker lock holder did not take the lock"
+config_before="$(cat "$PROKOP_CONFIG_FILE")"
+if manager policy-set interval 12h >"$WORK/applying.json"; then fail "a policy write during an apply succeeded"; fi
+[ "$(json_get "$WORK/applying.json" reason)" = '"apply_in_progress"' ] || fail "apply in progress: $(cat "$WORK/applying.json")"
+if manager target-set ytimg img.youtube.com >"$WORK/applying-target.json"; then fail "a target write during an apply succeeded"; fi
+[ "$(cat "$PROKOP_CONFIG_FILE")" = "$config_before" ] || fail "a refused write changed the configuration"
+kill "$lock_holder"
+wait "$lock_holder" || true
+wait_until 30 worker_lock_free || fail "the worker lock was not released"
+manager policy-set interval 12h >"$WORK/crashed-applying.json" || fail "a crashed apply blocked a policy write: $(cat "$WORK/crashed-applying.json")"
+manager policy-set interval 6h >/dev/null
+cp "$WORK/state.before-applying" "$PROKOP_AUTOTUNE_STATE_FILE"
+
 # ---- a target edited during the run keeps the edit -------------------------
 printf '%s\n' "PROKOP_LIB='$LIB' ucode -L '$LIB' '$LIB/autotune/manager.uc' target-set ytimg img.youtube.com >/dev/null" >"$WORK/tune/www.youtube.com.hook"
 manager run youtube >"$WORK/edited.json"

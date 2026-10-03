@@ -605,7 +605,7 @@ supported queue && probe_rule="probe:queue:$PROBE_QUEUE"
 check isolation "$WORK_DIR/probe.json" ProkopAutotuneProbe "$(hex_to_dec "$OUTBOUND_MARK")" "$TABLE" "$probe_rule"
 
 # The bypass contract (autotune/contract.uc) on the ruleset the kernel holds.
-printf '{"ip_rules":%s,"options":{"target":"%s","probe_saddr":"203.0.113.10","reply_dev":"pppoe-wan","sets":{"%s":["br-lan"]},"sport_range":[61000,61031],"dport":443,"uids":[0,2147483647],"legacy_tables":[]}}\n' \
+printf '{"ip_rules":%s,"options":{"target":"%s","probe_saddr":"203.0.113.10","reply_dev":"pppoe-wan","sets":{"%s":["br-lan"]},"sport_range":[61000,61063],"dport":443,"uids":[0,2147483647],"legacy_tables":[]}}\n' \
   "$(cat "$ROOT_DIR/tests/fixtures/autotune/iprule.json")" "$TARGET" "$INTERFACES" >"$WORK_DIR/contract-context.json"
 ucode -L "$PROKOP_LIB" "$PROKOP_LIB/autotune/contract.uc" evaluate "$WORK_DIR/probe.json" "$WORK_DIR/contract-context.json" \
   >"$WORK_DIR/contract.json" || fail "the bypass contract rejects the real ruleset: $(cat "$WORK_DIR/contract.json")"

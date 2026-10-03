@@ -204,27 +204,25 @@ ok "15 isolation unavailable -> no probes and no selection"
 # Input validation.
 reset_state; tune 2 192.0.2.53 multisplit; json 'a.equal(r.status, "refused"); a.equal(r.reason, "invalid_probe_count");' "$WORK/out.json"
 tune 8 192.0.2.53 multisplit; json 'a.equal(r.status, "refused"); a.equal(r.reason, "invalid_probe_count");' "$WORK/out.json"
-tune 5 192.0.2.53; json 'a.equal(r.status, "refused"); a.equal(r.reason, "too_many_probes");' "$WORK/out.json"
 tune max:2 192.0.2.53 multisplit; json 'a.equal(r.status, "refused"); a.equal(r.reason, "invalid_probe_count");' "$WORK/out.json"
 tune 3 192.0.2.53 udp_fake; json 'a.equal(r.status, "refused"); a.equal(r.reason, "no_supported_dpi_candidate");' "$WORK/out.json"
 [ ! -e "$NFT_STATE/last.nft" ] || fail "refused run created nft state"
-ok "probe count 3..7, bounded probe total, at least one DPI candidate"
+ok "probe count 3..7, at least one DPI candidate"
 }
 
 cases_5() {
-# "max:<n>" (the manager's policy value): the whole catalog with the default
-# policy does not fit the source ports of one run; the count per candidate is
-# lowered instead of refusing the run.
-reset_state; tune max:5 192.0.2.53
-json 'a.notEqual(r.reason, "too_many_probes", r.reason); a.equal(r.probes_requested, 5);
-const n = r.candidates.length; a.ok(n * 5 > 32, "the fixture catalog exceeds the ports with 5 probes");
-a.equal(r.probes_per_candidate, Math.floor(32 / n)); a.ok(r.probes_per_candidate >= 3);
-a.equal(r.probes.length, n * r.probes_per_candidate);
-for (const c of r.candidates) a.equal(c.attempted, r.probes_per_candidate, c.id);' "$WORK/out.json"
+# The source ports of one run (61000-61063, D-4a) hold the whole catalog at
+# the policy's highest probe count: neither a plain count nor the manager's
+# "max:<n>" is refused or lowered (UC-031).
+reset_state; tune 7 192.0.2.53
+json 'a.notEqual(r.reason, "too_many_probes", r.reason); a.equal(r.probes_requested, 7);
+const n = r.candidates.length; a.ok(n >= 8, "the fixture is the whole catalog: " + n); a.ok(n * 7 <= 64);
+a.equal(r.probes_per_candidate, 7); a.equal(r.probes.length, n * 7);
+for (const c of r.candidates) a.equal(c.attempted, 7, c.id);' "$WORK/out.json"
 assert_clean "max probes"
 reset_state; tune max:5 192.0.2.53 multisplit,fake
 json 'a.equal(r.probes_per_candidate, 5, "nothing is lowered when the run fits"); a.equal(r.probes.length, 15);' "$WORK/out.json"
-ok "max:<n> lowers the probes per candidate to fit the run, never below 3"
+ok "the whole catalog at 7 probes fits the source ports of one run"
 }
 
 cases_6() {

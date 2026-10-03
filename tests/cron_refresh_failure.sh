@@ -260,6 +260,7 @@ sed -i 's/^cron_signature=.*/cron_signature=before/' "$STATE_DIR/reload-state"
 CRON_FAILS=1 reload_real
 [ "$STATUS" = 0 ] || fail "the reload with changed cron settings failed (status $STATUS)"
 refreshed || fail "the reload with changed cron settings did not refresh the jobs"
+has_event 'autotune/manager.uc cron-sync' || fail "the reload did not sync the autotune schedule"
 cron_failure_reported "the reload with changed cron settings"
 CRON_FAILS=0 reload_real
 [ "$STATUS" = 0 ] || fail "the reload after a failed cron refresh failed (status $STATUS)"
@@ -268,6 +269,8 @@ CRON_FAILS=0 reload_real
 [ "$STATUS" = 0 ] || fail "the reload after a cron refresh failed (status $STATUS)"
 refreshed && fail "a reload with unchanged cron settings refreshed the jobs although the last refresh succeeded"
 grep -q 'Reload skipped' "$WORK_DIR/syslog" || fail "a reload with nothing to apply was not skipped"
+has_event 'autotune/manager.uc cron-sync' ||
+  fail "a skipped reload did not sync the autotune schedule (a restore may change only autotune.mode, UC-115)"
 ok "the next reload refreshes the jobs that a reload could not write"
 
 CRON_FAILS=1 start

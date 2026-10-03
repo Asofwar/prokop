@@ -1453,9 +1453,9 @@ json 'a.equal(r.status, "applied"); a.equal(r.applied, true); a.equal(r.verifica
   for (const n of ["verify_path_available", "verify_path_created", "traffic_transport", "traffic_rule_mark", "traffic_dpi_queue", "verify_path_removed"])
     a.ok(r.verification.checks.find((c) => c.name === n).ok, n);
   a.ok(!names.includes("traffic_rule_path") && !names.includes("traffic_sing_box_path"), "no sing-box path claim for a device-limited rule");' "$WORK/out.json"
-grep -qx 'add rule inet ProkopAutotuneVerify premark ip daddr 93.184.216.34 tcp dport 443 tcp sport 61000-61031 meta mark 0x00000000 meta mark set 0x01000001 counter accept comment "rule_mark"' "$STATE/verify.nft" ||
+grep -qx 'add rule inet ProkopAutotuneVerify premark ip daddr 93.184.216.34 tcp dport 443 tcp sport 61000-61063 meta mark 0x00000000 meta mark set 0x01000001 counter accept comment "rule_mark"' "$STATE/verify.nft" ||
   fail "the marking rule is not confined to the probe tuple: $(cat "$STATE/verify.nft")"
-grep -q -- '--resolve' "$STUB_LOG/curl.args" && grep -qx -- '61000-61031' "$STUB_LOG/curl.args" || fail "marked probes must pin the address and the source ports"
+grep -q -- '--resolve' "$STUB_LOG/curl.args" && grep -qx -- '61000-61063' "$STUB_LOG/curl.args" || fail "marked probes must pin the address and the source ports"
 case "$(dpi_args)" in *multisplit*) ;; *) fail "the candidate was not started for the device-limited rule";; esac
 [ "$(lkg)" != "$PRE_LKG" ] || fail "the verified candidate of a device-limited rule was not confirmed"
 no_verify_table "applied"

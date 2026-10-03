@@ -75,7 +75,9 @@ manager run youtube >"$WORK/after-reboot.json"
 # ---- a crash while applying ---------------------------------------------------
 manager policy-set mode auto >/dev/null
 manager run youtube >/dev/null; manager run youtube >/dev/null
-state_edit 's.next_run_at=1; s.rotation=1'
+# An automatic apply needs scheduled confirmations (D-11a): one earlier
+# scheduled run is recorded, the due run below is the second.
+state_edit 's.next_run_at=1; s.rotation=1; s.groups.youtube.pending.scheduled=1'
 mkdir -p "$WORK/tmp/prokop-autotune-apply.leftover"
 STUB_APPLY_SLEEP=5 ucode -L "$LIB" "$LIB/autotune/manager.uc" if-due >/dev/null &
 run_pid=$!
@@ -92,7 +94,7 @@ manager run youtube >"$WORK/after-apply-crash.json"
 [ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" groups.youtube.cooldowns.fake)" -gt "$(date +%s)" ] || fail "its candidate cools down"
 if find "$WORK/tmp" -maxdepth 1 -name 'prokop-autotune-apply.*' | grep -q .; then fail "stale apply directories are removed"; fi
 manager run youtube >/dev/null
-state_edit 's.next_run_at=1; s.rotation=1'
+state_edit 's.next_run_at=1; s.rotation=1; s.groups.youtube.pending.scheduled=1'
 manager if-due >"$WORK/after-apply-crash-due.json"
 [ "$(json_get "$WORK/after-apply-crash-due.json" groups.youtube.decision)" = '"candidate_in_cooldown"' ] ||
   fail "no apply of the crashed candidate: $(cat "$WORK/after-apply-crash-due.json")"
@@ -107,7 +109,7 @@ recovered="$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" recovered_at)"
 [ "$recovered" != null ] && [ "$recovered" -le "$(date +%s)" ] || fail "recovered_at recorded: $recovered"
 manager run youtube >/dev/null
 [ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" groups.youtube.ready)" = true ] || fail "fixture: youtube confirmed again"
-state_edit 's.next_run_at=1; s.rotation=1'
+state_edit 's.next_run_at=1; s.rotation=1; s.groups.youtube.pending.scheduled=1'
 manager if-due >"$WORK/recovered-due.json"
 [ "$(json_get "$WORK/recovered-due.json" groups.youtube.decision)" = '"state_recovered"' ] ||
   fail "no autonomous apply right after a state recovery: $(cat "$WORK/recovered-due.json")"

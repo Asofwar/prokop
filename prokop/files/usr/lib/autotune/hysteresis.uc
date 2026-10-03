@@ -17,7 +17,11 @@
 //  - another candidate restarts the count at 1 for it;
 //  - an inconclusive run keeps the count; two in a row reset it;
 //  - a changed rule configuration (fingerprint) resets it;
-//  - a conflict, "direct works" or "already active" result resets it.
+//  - a conflict, "direct works" or "already active" result resets it;
+//  - autonomous apply needs the confirmations of scheduled runs (D-11a):
+//    pending.scheduled counts only those, so "Check now" pressed a few times
+//    updates the result and the count a manual apply uses, but never makes
+//    a group ready for an automatic change (ready_auto).
 // Every step returns an event code the UI and the history explain.
 let policy_module = require("autotune.policy");
 
@@ -28,8 +32,9 @@ function empty_group() {
 }
 
 // observation: aggregate() of autotune/groups.uc plus the rule fingerprint:
-// { status, candidate, confidence, reason, fingerprint }.
-function observe(group, observation, policy, now) {
+// { status, candidate, confidence, reason, fingerprint }. trigger: "schedule"
+// for a scheduled run; anything else is a manual one.
+function observe(group, observation, policy, now, trigger) {
     group = type(group) == "object" ? { ...empty_group(), ...group } : empty_group();
     let obs = type(observation) == "object" ? observation : { status: "inconclusive" };
     let pending = group.pending, events = [];
@@ -41,14 +46,19 @@ function observe(group, observation, policy, now) {
     }
     if (obs.fingerprint != null) group.fingerprint = obs.fingerprint;
 
-    let start = (candidate) => ({ candidate, count: 1, confidence: obs.confidence, first_seen: now, last_seen: now,
-        inconclusive_streak: 0 });
+    let scheduled = trigger == "schedule";
+    let start = (candidate) => ({ candidate, count: 1, scheduled: scheduled ? 1 : 0, confidence: obs.confidence,
+        first_seen: now, last_seen: now, inconclusive_streak: 0 });
 
     if (obs.status == "recommendation" && obs.candidate) {
         let confident = policy_module.confidence_at_least(obs.confidence, policy.min_confidence);
         if (pending != null && pending.candidate == obs.candidate) {
             if (confident) {
+                // A pending count from before D-11a has no scheduled count:
+                // it starts at 0, never at the full count.
+                let counted = int(pending.scheduled) + (scheduled ? 1 : 0);
                 pending = { ...pending, count: pending.count >= required ? required : pending.count + 1,
+                    scheduled: counted >= required ? required : counted,
                     confidence: obs.confidence, last_seen: now, inconclusive_streak: 0 };
                 push(events, { event: pending.count >= required ? "ready" : "confirmed", candidate: obs.candidate, count: pending.count });
             }
@@ -80,8 +90,9 @@ function observe(group, observation, policy, now) {
 
     group.pending = pending;
     group.last = { status: obs.status, candidate: obs.candidate || null, confidence: obs.confidence || null,
-        reason: obs.reason || null, at: now };
-    return { group, events, ready: pending != null && pending.count >= required, required };
+        reason: obs.reason || null, at: now, trigger: scheduled ? "schedule" : "manual" };
+    return { group, events, ready: pending != null && pending.count >= required,
+        ready_auto: pending != null && int(pending.scheduled) >= required, required };
 }
 
 // A candidate rolled back recently is not applied again before the cooldown

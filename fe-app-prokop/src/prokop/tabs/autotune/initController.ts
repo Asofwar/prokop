@@ -44,6 +44,7 @@ import {
   runProgressView,
   type RunProgressView,
   workerView,
+  applyRunning,
   stateNotSavedText,
   type ApplyResultView,
   type GroupCard,
@@ -88,9 +89,17 @@ let applyNotice: { group: string; view: ApplyResultView } | null = null;
 // The administrator's rollback of the recorded apply is running.
 let rollingBack = false;
 
-// No other change while a change, a check, an apply or a rollback runs.
+// No other change while a change, a check, an apply or a rollback runs, also
+// a scheduled apply this page did not start: a policy or target change during
+// its check would end it as needs_attention (UC-113).
 function locked() {
-  return busy || Boolean(runningScope) || Boolean(applying) || rollingBack;
+  return (
+    busy ||
+    Boolean(runningScope) ||
+    Boolean(applying) ||
+    rollingBack ||
+    applyRunning(status)
+  );
 }
 
 function replace(id: string, ...nodes: Node[]) {

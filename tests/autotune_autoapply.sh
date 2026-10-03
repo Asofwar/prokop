@@ -15,10 +15,15 @@ source "$ROOT_DIR/tests/helpers/autotune_scheduler/setup.sh"
 state_edit() { node -e 'const f=process.argv[1],s=require(f);(new Function("s",process.argv[2]))(s);require("fs").writeFileSync(f,JSON.stringify(s)+"\n")' "$PROKOP_AUTOTUNE_STATE_FILE" "$1"; }
 # The next scheduled run is due and its turn is the youtube group.
 scheduled_youtube() { state_edit 's.next_run_at=1; s.rotation=1'; manager if-due >"$WORK/$1.json"; }
+# Two manual checks confirm the recommendation for a manual apply. An
+# automatic apply also needs scheduled confirmations (D-11a): one earlier
+# scheduled run is recorded, so the next scheduled run that agrees makes it
+# ready and applies it.
 confirm_youtube() {
   manager run youtube >/dev/null
   manager run youtube >"$WORK/confirm.json"
   [ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" groups.youtube.ready)" = true ] || fail "youtube not confirmed: $(cat "$WORK/confirm.json")"
+  state_edit 's.groups.youtube.pending.scheduled=1'
 }
 applies() { if [ -e "$WORK/tune/apply.log" ]; then grep -c '^apply ' "$WORK/tune/apply.log" || true; else echo 0; fi; }
 plans() { if [ -e "$WORK/tune/apply.log" ]; then grep -c '^plan ' "$WORK/tune/apply.log" || true; else echo 0; fi; }
@@ -30,13 +35,15 @@ cat >"$WORK/pure.uc" <<'UC'
 let a = require("autotune.autoapply");
 let policy = { mode: "auto", apply_min_confidence: "high", max_applies_per_day: 1 };
 let ok = { status: "recommendation", candidate: "fake", confidence: "high" };
-let base = { policy, trigger: "schedule", group: { ready: true }, result: ok, custom: false, applies: [], now: 100000, cooldown_until: null };
+let base = { policy, trigger: "schedule", group: { ready: true, ready_auto: true }, result: ok, custom: false, applies: [], now: 100000, cooldown_until: null };
 let d = (over) => a.decide({ ...base, ...over }).reason;
 print(sprintf("%J\n", {
   ok: a.decide(base),
   recommend: d({ policy: { ...policy, mode: "recommend" } }),
   manual: d({ trigger: "manual" }),
   unconfirmed: d({ group: { ready: false } }),
+  manual_only: d({ group: { ready: true, ready_auto: false } }),
+  not_applicable: d({ result: { ...ok, status: "not_applicable", reason: "tcp443_profile_shared" } }),
   conflict: d({ result: { status: "conflict" } }),
   direct: d({ result: { ...ok, candidate: "direct" } }),
   medium: d({ result: { ...ok, confidence: "medium" } }),
@@ -56,6 +63,8 @@ node - "$WORK/pure.json" <<'NODE'
 const assert = require('node:assert/strict');
 const p = require(process.argv[2]);
 assert.deepEqual(p.ok, { apply: true, reason: null });
+assert.equal(p.manual_only, 'not_confirmed', 'manual confirmations never allow an automatic apply (D-11a)');
+assert.equal(p.not_applicable, 'plan_not_applicable:tcp443_profile_shared');
 assert.deepEqual([p.recommend, p.manual, p.unconfirmed, p.conflict, p.direct, p.medium, p.custom, p.cooldown],
   ['mode_not_auto', 'manual_run', 'not_confirmed', 'no_recommendation', 'direct_not_applicable', 'confidence_too_low',
    'custom_strategy_kept', 'candidate_in_cooldown']);
@@ -86,6 +95,14 @@ manager policy-set mode auto >/dev/null
 confirm_youtube
 [ "$(json_get "$WORK/confirm.json" groups.youtube.decision)" = '"manual_run"' ] || fail "manual run: $(cat "$WORK/confirm.json")"
 [ "$(plans)" = 0 ] || fail "manual runs never plan"
+# Confirmations of manual checks alone: the next scheduled run is the first
+# scheduled confirmation and applies nothing (D-11a).
+state_edit 's.groups.youtube.pending=null; s.groups.youtube.ready=false; s.groups.youtube.ready_auto=false'
+manager run youtube >/dev/null
+manager run youtube >/dev/null
+scheduled_youtube manual_only
+[ "$(decision manual_only)" = '"not_confirmed"' ] || fail "manual confirmations allowed an automatic apply: $(cat "$WORK/manual_only.json")"
+[ "$(plans)" = 0 ] || fail "manual confirmations planned an automatic apply"
 
 # ---- a custom strategy is never replaced ------------------------------------
 manager groups >"$WORK/groups.json"

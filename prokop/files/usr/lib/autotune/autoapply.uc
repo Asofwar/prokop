@@ -7,7 +7,8 @@
 //
 // A recommendation is applied only when every one of these holds:
 //   - the mode is "auto" and the run is a scheduled one;
-//   - hysteresis confirmed it (policy.confirmations runs in a row);
+//   - hysteresis confirmed it (policy.confirmations scheduled runs in a row;
+//     manual checks do not count, D-11a);
 //   - the group result is a recommendation with at least
 //     policy.apply_min_confidence (always "high");
 //   - the rule does not carry a custom strategy of the user;
@@ -35,12 +36,14 @@ function decide(ctx) {
     let p = ctx.policy, r = ctx.result || {};
     if (p.mode != "auto") return { apply: false, reason: "mode_not_auto" };
     if (ctx.trigger != "schedule") return { apply: false, reason: "manual_run" };
+    if (r.status == "not_applicable") return { apply: false, reason: "plan_not_applicable:" + as_string(r.reason) };
     if (r.status != "recommendation" || !r.candidate) return { apply: false, reason: "no_recommendation" };
     if (r.candidate == "direct") return { apply: false, reason: "direct_not_applicable" };
-    if (ctx.group == null || ctx.group.ready !== true) return { apply: false, reason: "not_confirmed" };
+    // A custom strategy is kept whatever the confirmations say.
+    if (ctx.custom === true) return { apply: false, reason: "custom_strategy_kept" };
+    if (ctx.group == null || ctx.group.ready_auto !== true) return { apply: false, reason: "not_confirmed" };
     if (!policy_module.confidence_at_least(r.confidence, p.apply_min_confidence || "high"))
         return { apply: false, reason: "confidence_too_low" };
-    if (ctx.custom === true) return { apply: false, reason: "custom_strategy_kept" };
     if (ctx.cooldown_until != null && ctx.now < ctx.cooldown_until) return { apply: false, reason: "candidate_in_cooldown" };
     if (type(ctx.recovered_at) == "int" && ctx.now < ctx.recovered_at + int(p.cooldown_seconds))
         return { apply: false, reason: "state_recovered" };

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-03 20:14+0000\n"
-"PO-Revision-Date: 2026-10-03 20:14+0000\n"
+"POT-Creation-Date: 2026-10-03 20:47+0000\n"
+"PO-Revision-Date: 2026-10-03 20:47+0000\n"
 "Last-Translator: Asofwar\n"
 "Language-Team: none\n"
 "Language: ru\n"
@@ -184,6 +184,9 @@ msgstr "Сайт или сервис, который проверяется че
 
 msgid "a snapshot operation is in progress"
 msgstr "идёт операция со снимком"
+
+msgid "A strategy is being applied and checked; change the settings when it finishes."
+msgstr "Сейчас применяется и проверяется стратегия; измените настройки, когда это закончится."
 
 msgid "A strategy is set for the whole rule, so Prokop does not change it. You can split the targets into separate rules."
 msgstr "Стратегия задаётся на всё правило, поэтому Prokop её не меняет. Можно разнести цели по разным правилам вручную."
@@ -389,6 +392,9 @@ msgstr "Ответ DNS роутера"
 msgid "Any device"
 msgstr "Любое устройство"
 
+msgid "Applied and checked, but not confirmed as the working configuration"
+msgstr "Применена и проверена, но не подтверждена как рабочая конфигурация"
+
 msgid "Applied by reload"
 msgstr "Применённая перезагрузкой"
 
@@ -490,6 +496,9 @@ msgstr "Автоподбор"
 
 msgid "Autotune apply"
 msgstr "Применение автоподбора"
+
+msgid "Autotune cannot change the strategy of this rule."
+msgstr "Автоподбор не может менять стратегию этого правила."
 
 msgid "Autotune checks only the sites listed here."
 msgstr "Автоподбор проверяет только перечисленные здесь сайты."
@@ -685,6 +694,9 @@ msgstr "Отмена"
 
 msgid "Cancelled"
 msgstr "Отменено"
+
+msgid "Cannot be applied"
+msgstr "Применить нельзя"
 
 msgid "Cannot receive checks result"
 msgstr "Не удалось получить результаты проверки"
@@ -1769,6 +1781,9 @@ msgstr "Добавлять URLTest группы из подписки"
 msgid "Import URLTest groups returned by this subscription provider"
 msgstr "Импортировать URLTest группы, если провайдер подписки возвращает их"
 
+msgid "In automatic mode only scheduled checks count; \"Check now\" does not."
+msgstr "В автоматическом режиме учитываются только плановые проверки; «Проверить сейчас» не считается."
+
 msgid "In progress"
 msgstr "Выполняется"
 
@@ -2479,6 +2494,9 @@ msgstr "Обычный режим"
 
 msgid "Not applied"
 msgstr "Не применено"
+
+msgid "Not applied, the previous configuration is kept"
+msgstr "Не применена, прежняя конфигурация сохранена"
 
 msgid "Not attached: dnsmasq uses another servers file"
 msgstr "Не подключена: dnsmasq использует другой servers-файл"
@@ -3470,6 +3488,9 @@ msgstr "Действия со службой"
 msgid "Service list"
 msgstr "Список сервисов"
 
+msgid "Service reload failed, previous configuration restored"
+msgstr "Перезагрузка службы не удалась, прежняя конфигурация восстановлена"
+
 msgid "Service settings"
 msgstr "Служебные"
 
@@ -3848,8 +3869,14 @@ msgstr "Проверка не завершилась"
 msgid "The check gave no usable result."
 msgstr "Проверка не дала пригодного результата."
 
+msgid "The check needs more probe connections than one run can make; lower the number of probes."
+msgstr "Проверке нужно больше пробных соединений, чем допускает один прогон; уменьшите число проб."
+
 msgid "The check stopped unexpectedly"
 msgstr "Проверка неожиданно остановилась"
+
+msgid "The check was invalid: a strategy did not process every packet. It will be repeated."
+msgstr "Проверка недействительна: стратегия обработала не все пакеты. Она будет повторена."
 
 msgid "The check was postponed. See the state above."
 msgstr "Проверка отложена. Причина — в состоянии выше."
@@ -4219,9 +4246,6 @@ msgstr "Во время проверки не удалось надёжно оп
 
 msgid "The target is disabled."
 msgstr "Цель выключена."
-
-msgid "The target is reachable only through a bypass strategy."
-msgstr "Цель доступна только со стратегией обхода."
 
 msgid "The target is unreachable in every way; the problem may not be DPI."
 msgstr "Цель недоступна ни одним способом; возможно, проблема не в DPI."
