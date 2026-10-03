@@ -1,80 +1,33 @@
 #!/bin/sh
-set -eu
+# Reconciles the OpenWrt package feeds with the Forkop dependency mirror
+# setting. Every package install and upgrade runs it from postinst; the
+# installer runs it once more after it saved an opted-in mirror.
+#
+# The mirror is opt-in: FORKOP_MIRROR_BASE_URL wins whenever it is set, even
+# to the empty string; otherwise forkop.settings.mirror_base_url applies, and
+# an empty value means no mirror. A mirror problem never fails the package:
+# each one only prints a warning, leaves the feeds as they were and exits 0.
+set -u
 
-MIGRATION_ID="mirror_infotechtg_ru_v1"
 SETTINGS_SECTION="forkop.settings"
 MIGRATION_ROOT="${FORKOP_MIGRATION_ROOT:-}"
 APK_BIN="${FORKOP_MIGRATION_APK_BIN:-apk}"
 OPKG_BIN="${FORKOP_MIGRATION_OPKG_BIN:-opkg}"
 CURL_BIN="${FORKOP_MIGRATION_CURL_BIN:-curl}"
 UCI_BIN="${FORKOP_MIGRATION_UCI_BIN:-uci}"
+OFFICIAL_RELEASES_URL="https://downloads.openwrt.org/releases/"
+OFFICIAL_RELEASES_REGEX='https://downloads\.openwrt\.org/releases/'
+# Former upstream mirrors. They are recognised only to move feeds off them
+# and are never used unless configured explicitly.
+LEGACY_MIRROR_REGEX='https?://mirror\.(infotechtg|51343)\.ru/'
 
-# Preserve an explicitly configured custom mirror on package upgrades.
-MIRROR_BASE_URL="${FORKOP_MIRROR_BASE_URL:-}"
-if [ -z "$MIRROR_BASE_URL" ]; then
-    MIRROR_BASE_URL="$("$UCI_BIN" -q get "$SETTINGS_SECTION.mirror_base_url" 2>/dev/null || true)"
-    MIRROR_BASE_URL="${MIRROR_BASE_URL%/}"
-    case "$MIRROR_BASE_URL" in
-        ''|https://mirror.51343.ru|http://mirror.51343.ru)
-            MIRROR_BASE_URL="https://mirror.infotechtg.ru" ;;
-    esac
-fi
-MIRROR_BASE_URL="${MIRROR_BASE_URL%/}"
-
-PACKAGE_MANAGER=""
-if command -v "$APK_BIN" >/dev/null 2>&1; then
-    PACKAGE_MANAGER="apk"
-elif command -v "$OPKG_BIN" >/dev/null 2>&1; then
-    PACKAGE_MANAGER="opkg"
-else
-    exit 0
-fi
-
-case "$MIRROR_BASE_URL" in
-    https://*|http://*) ;;
-    *) echo "Invalid Forkop mirror URL: $MIRROR_BASE_URL" >&2; exit 1 ;;
-esac
+warn() {
+    echo "Forkop mirror: $*" >&2
+}
 
 root_path() {
     printf '%s%s\n' "$MIGRATION_ROOT" "$1"
 }
-
-migration_applied() {
-    "$UCI_BIN" -q get "$SETTINGS_SECTION.applied_migrations" 2>/dev/null |
-        tr ' ' '\n' | grep -Fxq "$MIGRATION_ID"
-}
-
-retired_mirror_in_feeds() {
-    for feed in "$(root_path /etc/apk/repositories)" \
-        "$(root_path /etc/apk/repositories.d/distfeeds.list)" \
-        "$(root_path /etc/opkg/distfeeds.conf)"; do
-        [ -f "$feed" ] && grep -Eq 'https?://mirror\.51343\.ru/' "$feed" && return 0
-    done
-    return 1
-}
-
-# The package feeds move to the mirror once (D-3 (a), UC-081): every package
-# change runs this script, and a recorded migration leaves the feeds, the
-# mirror key and the Forkop feed as they are, also official feeds the user
-# put back, without asking the mirror. Only a feed on the retired mirror,
-# which serves nothing, still moves. The configuration the package ships
-# has no record: a first install moves the feeds and records it. A mirror
-# chosen explicitly for this change (install.sh FORKOP_MIRROR_BASE_URL) is
-# still the one saved for Forkop's own downloads.
-if migration_applied && ! retired_mirror_in_feeds; then
-    if [ -n "${FORKOP_MIRROR_BASE_URL:-}" ] &&
-        [ "$("$UCI_BIN" -q get "$SETTINGS_SECTION.mirror_base_url" 2>/dev/null || true)" != "$MIRROR_BASE_URL" ]; then
-        "$UCI_BIN" -q set "$SETTINGS_SECTION.mirror_base_url=$MIRROR_BASE_URL"
-        "$UCI_BIN" -q commit forkop
-    fi
-    exit 0
-fi
-
-TRANSACTION_DIR="$(mktemp -d "${TMPDIR:-/tmp}/forkop-mirror-migration.XXXXXX")"
-TRANSACTION_MANIFEST="$TRANSACTION_DIR/manifest"
-TRANSACTION_ACTIVE=0
-TRANSACTION_COUNT=0
-: > "$TRANSACTION_MANIFEST"
 
 # The content of source becomes destination: a copy next to it, read back,
 # renamed over it. Feeds and keys are never truncated and rewritten in
@@ -101,6 +54,53 @@ replace_file() {
     return 1
 }
 
+if [ "${FORKOP_MIRROR_BASE_URL+set}" = set ]; then
+    MIRROR_BASE_URL="$FORKOP_MIRROR_BASE_URL"
+else
+    MIRROR_BASE_URL="$("$UCI_BIN" -q get "$SETTINGS_SECTION.mirror_base_url" 2>/dev/null || true)"
+fi
+while [ "${MIRROR_BASE_URL%/}" != "$MIRROR_BASE_URL" ]; do
+    MIRROR_BASE_URL="${MIRROR_BASE_URL%/}"
+done
+
+repositories="$(root_path /etc/apk/repositories)"
+repositories_dir="$(root_path /etc/apk/repositories.d)"
+keys_dir="$(root_path /etc/apk/keys)"
+opkg_distfeeds="$(root_path /etc/opkg/distfeeds.conf)"
+opkg_customfeeds="$(root_path /etc/opkg/customfeeds.conf)"
+
+# apk trusts every key in /etc/apk/keys for every repository, and the former
+# upstream mirror feed carries upstream Forkop builds that would replace this
+# one. Forkop never installs either any more; remove what older releases left.
+for upstream_file in "$repositories_dir/forkop.list" "$keys_dir/forkop-mirror.pem"; do
+    [ -e "$upstream_file" ] || [ -L "$upstream_file" ] || continue
+    if rm -f "$upstream_file"; then
+        echo "Removed the former upstream Forkop package source $upstream_file"
+    else
+        warn "could not remove $upstream_file"
+    fi
+done
+
+PACKAGE_MANAGER=""
+if command -v "$APK_BIN" >/dev/null 2>&1; then
+    PACKAGE_MANAGER="apk"
+elif command -v "$OPKG_BIN" >/dev/null 2>&1; then
+    PACKAGE_MANAGER="opkg"
+else
+    exit 0
+fi
+
+TRANSACTION_DIR="$(mktemp -d "${TMPDIR:-/tmp}/forkop-mirror-migration.XXXXXX" 2>/dev/null)" || {
+    warn "no temporary directory; package feeds were not changed"
+    exit 0
+}
+TRANSACTION_MANIFEST="$TRANSACTION_DIR/manifest"
+TRANSACTION_ACTIVE=0
+TRANSACTION_COUNT=0
+USED_BACKUPS="$TRANSACTION_DIR/used-backups"
+: > "$TRANSACTION_MANIFEST"
+: > "$USED_BACKUPS"
+
 # Files the rollback could not restore (UC-076).
 ROLLBACK_FAILED=""
 
@@ -119,20 +119,14 @@ rollback_transaction() {
     TRANSACTION_ACTIVE=0
 }
 
-cleanup() {
-    status=$?
-    if [ "$status" -ne 0 ]; then
-        rollback_transaction
-        if [ -n "$ROLLBACK_FAILED" ]; then
-            echo "Forkop mirror migration failed and could not restore:$ROLLBACK_FAILED" >&2
-        else
-            echo "Forkop mirror migration failed; package feeds and keys were restored" >&2
-        fi
-    fi
+# An interrupted run restores the feeds it had already changed; files it
+# could not restore are named rather than reported as restored.
+finish() {
+    rollback_transaction
+    [ -z "$ROLLBACK_FAILED" ] || warn "could not restore:$ROLLBACK_FAILED"
     rm -rf "$TRANSACTION_DIR"
-    exit "$status"
 }
-trap cleanup EXIT
+trap finish EXIT
 trap 'exit 129' HUP
 trap 'exit 130' INT
 trap 'exit 143' TERM
@@ -142,7 +136,7 @@ backup_transaction_file() {
     backup="$TRANSACTION_DIR/original.$TRANSACTION_COUNT"
 
     if [ -e "$destination" ]; then
-        cp "$destination" "$backup"
+        cp "$destination" "$backup" || return 1
         printf '%s|%s|present\n' "$destination" "$backup" >> "$TRANSACTION_MANIFEST"
     else
         printf '%s||absent\n' "$destination" >> "$TRANSACTION_MANIFEST"
@@ -150,35 +144,97 @@ backup_transaction_file() {
     TRANSACTION_COUNT=$((TRANSACTION_COUNT + 1))
 }
 
-rewrite_repository_file() {
+replace_repository_file() {
+    destination="$1"
+    replacement="$2"
+
+    if cmp -s "$destination" "$replacement"; then
+        rm -f "$replacement"
+        return 0
+    fi
+    backup_transaction_file "$destination" || return 1
+    replace_file "$replacement" "$destination" || return 1
+    rm -f "$replacement"
+}
+
+# Writes $1 to $2 with every OpenWrt release feed moved to the release tree
+# $3 (a URL ending in /releases/, $4 is the same as an ERE). The remaining
+# arguments are sed expressions that move a feed host to that tree. Older
+# mirrors served a vNN.x/vX.Y.Z/<target>/<subtarget> layout; it becomes the
+# standard OpenWrt layout under the new tree.
+rewrite_release_feeds() {
+    input="$1"
+    output="$2"
+    tree="$3"
+    tree_regex="$4"
+    shift 4
+
+    sed -E "$@" \
+        -e "s#${tree_regex}v[0-9]+\\.x/v?([0-9]+\\.[0-9]+\\.[0-9]+)/([^/]+)/([^/]+)/?([[:space:]]|$)#${tree}\\1/targets/\\2/\\3/packages\\4#" \
+        -e "s#${tree_regex}v[0-9]+\\.x/v([0-9]+\\.[0-9]+\\.[0-9]+)/([^/]+)/([^/]+)/packages/packages\\.adb#${tree}\\1/targets/\\2/\\3/packages/packages.adb#" \
+        -e "s#${tree_regex}v[0-9]+\\.x/v([0-9]+\\.[0-9]+\\.[0-9]+)/([^/]+)/([^/]+)/packages\\.adb#${tree}\\1/packages/\\2/\\3/packages.adb#" \
+        "$input" > "$output"
+}
+
+mirror_repository_file() {
     repository_file="$1"
     [ -e "$repository_file" ] || return 0
 
     temporary="$TRANSACTION_DIR/repository.$TRANSACTION_COUNT.new"
-    sed -E \
-        -e "s#https?://mirror\\.51343\\.ru/openwrt/releases/#${MIRROR_BASE_URL}/openwrt/releases/#" \
+    rewrite_release_feeds "$repository_file" "$temporary" \
+        "$MIRROR_BASE_URL/openwrt/releases/" "$MIRROR_REGEX/openwrt/releases/" \
+        -e "s#${LEGACY_MIRROR_REGEX}openwrt/releases/#${MIRROR_BASE_URL}/openwrt/releases/#" \
         -e "s#https?://(downloads|archive)\\.openwrt\\.org/releases/#${MIRROR_BASE_URL}/openwrt/releases/#" \
-        -e "s#https?://[^/]+/pub/software/openwrt/releases/#${MIRROR_BASE_URL}/openwrt/releases/#" \
-        -e "s#${MIRROR_BASE_URL}/openwrt/releases/v[0-9]+\\.x/v?([0-9]+\\.[0-9]+\\.[0-9]+)/([^/]+)/([^/]+)/?([[:space:]]|$)#${MIRROR_BASE_URL}/openwrt/releases/\\1/targets/\\2/\\3/packages\\4#" \
-        -e "s#${MIRROR_BASE_URL}/openwrt/releases/v[0-9]+\\.x/v([0-9]+\\.[0-9]+\\.[0-9]+)/([^/]+)/([^/]+)/packages/packages\\.adb#${MIRROR_BASE_URL}/openwrt/releases/\\1/targets/\\2/\\3/packages/packages.adb#" \
-        -e "s#${MIRROR_BASE_URL}/openwrt/releases/v[0-9]+\\.x/v([0-9]+\\.[0-9]+\\.[0-9]+)/([^/]+)/([^/]+)/packages\\.adb#${MIRROR_BASE_URL}/openwrt/releases/\\1/packages/\\2/\\3/packages.adb#" \
-        "$repository_file" > "$temporary"
+        -e "s#https?://[^/]+/pub/software/openwrt/releases/#${MIRROR_BASE_URL}/openwrt/releases/#" ||
+        return 1
 
     if grep -E 'https?://(downloads|archive)\.openwrt\.org/releases/|https?://[^/]+/pub/software/openwrt/releases/' "$temporary" >/dev/null; then
-        echo "Forkop mirror migration could not rewrite every official OpenWrt URL in $repository_file" >&2
+        warn "could not move every official OpenWrt feed in $repository_file to $MIRROR_BASE_URL"
         return 1
     fi
+    cmp -s "$repository_file" "$temporary" && { rm -f "$temporary"; return 0; }
 
-    if cmp -s "$repository_file" "$temporary"; then
-        rm -f "$temporary"
-        return 0
+    persistent_backup="${repository_file}.pre-forkop-mirror"
+    [ -e "$persistent_backup" ] || replace_file "$repository_file" "$persistent_backup" || return 1
+    replace_repository_file "$repository_file" "$temporary"
+}
+
+# Puts back a feed file that still points at a former upstream mirror: its
+# release feeds move to downloads.openwrt.org in the current file, so edits
+# made since the mirror was applied stay. Only when former-mirror lines would
+# remain elsewhere does the copy saved before the mirror was first applied
+# replace the file, and only when that copy is free of them.
+restore_repository_file() {
+    repository_file="$1"
+    [ -f "$repository_file" ] || return 0
+    grep -Eq "$LEGACY_MIRROR_REGEX" "$repository_file" || return 0
+
+    temporary="$TRANSACTION_DIR/repository.$TRANSACTION_COUNT.new"
+    persistent_backup="${repository_file}.pre-forkop-mirror"
+    rewrite_release_feeds "$repository_file" "$temporary" \
+        "$OFFICIAL_RELEASES_URL" "$OFFICIAL_RELEASES_REGEX" \
+        -e "s#${LEGACY_MIRROR_REGEX}openwrt/releases/#${OFFICIAL_RELEASES_URL}#" || return 1
+    if grep -Eq "$LEGACY_MIRROR_REGEX" "$temporary" &&
+        [ -f "$persistent_backup" ] && ! grep -Eq "$LEGACY_MIRROR_REGEX" "$persistent_backup"; then
+        cp "$persistent_backup" "$temporary" || return 1
     fi
 
-    backup_transaction_file "$repository_file"
-    persistent_backup="${repository_file}.pre-forkop-mirror"
-    [ -e "$persistent_backup" ] || replace_file "$repository_file" "$persistent_backup"
-    replace_file "$temporary" "$repository_file"
-    rm -f "$temporary"
+    if grep -Eq "$LEGACY_MIRROR_REGEX" "$temporary"; then
+        warn "$repository_file still names a former upstream mirror outside its OpenWrt release feeds; those lines were left unchanged"
+    elif [ -f "$persistent_backup" ]; then
+        # The restored file supersedes the saved copy: neither a later
+        # restore nor the full uninstall may put that older copy back.
+        printf '%s\n' "$persistent_backup" >> "$USED_BACKUPS"
+    fi
+    replace_repository_file "$repository_file" "$temporary"
+}
+
+update_package_index() {
+    if [ "$PACKAGE_MANAGER" = "apk" ]; then
+        "$APK_BIN" update </dev/null
+    else
+        "$OPKG_BIN" update </dev/null
+    fi
 }
 
 read_release_value() {
@@ -189,7 +245,8 @@ read_release_value() {
     sed -n "s/^${key}='\(.*\)'/\1/p" "$release_file" 2>/dev/null | head -n 1
 }
 
-check_platform_index() {
+# The mirror must carry this exact OpenWrt platform before any feed moves.
+mirror_has_platform() {
     release="$(read_release_value DISTRIB_RELEASE)"
     target="$(read_release_value DISTRIB_TARGET)"
     architecture="$(read_release_value DISTRIB_ARCH)"
@@ -200,12 +257,8 @@ check_platform_index() {
     platform_index="$TRANSACTION_DIR/forkop-platforms.tsv"
     if ! "$CURL_BIN" -fsSL --connect-timeout 15 --max-time 60 \
         "$MIRROR_BASE_URL/openwrt/forkop-platforms.tsv" -o "$platform_index"; then
-        rm -f "$platform_index"
-        if [ "$MIRROR_BASE_URL" = "https://mirror.infotechtg.ru" ]; then
-            echo "The mirror platform index is unavailable; package feeds were not changed" >&2
-            return 1
-        fi
-        return 0
+        warn "the platform index of $MIRROR_BASE_URL is unavailable; package feeds were not changed"
+        return 1
     fi
 
     if awk -v target="$target" -v architecture="$architecture" \
@@ -217,71 +270,87 @@ check_platform_index() {
         return 0
     fi
 
-    echo "The Forkop mirror does not yet contain $target / $architecture for OpenWrt $release ($format)" >&2
+    warn "$MIRROR_BASE_URL does not carry $target / $architecture for OpenWrt $release ($format); package feeds were not changed"
     return 1
 }
 
-update_package_index() {
+use_mirror() {
+    case "$MIRROR_BASE_URL" in
+        http://?*|https://?*) ;;
+        *) warn "invalid mirror URL '$MIRROR_BASE_URL'; package feeds were not changed"; return 0 ;;
+    esac
+    # The URL lands in sed expressions; a narrow character set keeps it literal.
+    case "$MIRROR_BASE_URL" in
+        *[!A-Za-z0-9._~:/%-]*)
+            warn "unsupported characters in mirror URL '$MIRROR_BASE_URL'; package feeds were not changed"
+            return 0 ;;
+    esac
+    MIRROR_REGEX="$(printf '%s\n' "$MIRROR_BASE_URL" | sed 's/\./\\./g')"
+    mirror_has_platform || return 0
+
+    TRANSACTION_ACTIVE=1
     if [ "$PACKAGE_MANAGER" = "apk" ]; then
-        "$APK_BIN" update </dev/null
+        mirror_repository_file "$repositories" &&
+            mirror_repository_file "$repositories_dir/distfeeds.list"
     else
-        "$OPKG_BIN" update </dev/null
+        mirror_repository_file "$opkg_distfeeds"
+    fi || {
+        rollback_transaction
+        [ -n "$ROLLBACK_FAILED" ] || warn "package feeds were left unchanged"
+        return 0
+    }
+
+    # Package managers hold their database lock while package scripts run:
+    # never call apk/opkg from postinst. Elsewhere the new index is checked
+    # before the change is kept.
+    if [ "$TRANSACTION_COUNT" -gt 0 ] && [ "${FORKOP_PACKAGE_POSTINST:-0}" != "1" ] &&
+        ! update_package_index; then
+        rollback_transaction
+        if [ -n "$ROLLBACK_FAILED" ]; then
+            warn "the package index of $MIRROR_BASE_URL could not be loaded"
+        else
+            warn "the package index of $MIRROR_BASE_URL could not be loaded; the previous feeds were restored"
+        fi
+        return 0
+    fi
+    TRANSACTION_ACTIVE=0
+    [ "$TRANSACTION_COUNT" -eq 0 ] || echo "OpenWrt package feeds now use $MIRROR_BASE_URL"
+}
+
+# Without a mirror only feeds that still point at a former upstream mirror
+# are restored; feeds on any other host are left alone. The file set matches
+# the full uninstall.
+restore_official_feeds() {
+    TRANSACTION_ACTIVE=1
+    for repository_file in "$opkg_distfeeds" "$opkg_customfeeds" "$repositories" \
+        "$repositories_dir"/*.list; do
+        restore_repository_file "$repository_file" || {
+            rollback_transaction
+            if [ -n "$ROLLBACK_FAILED" ]; then
+                warn "could not restore $repository_file"
+            else
+                warn "could not restore $repository_file; package feeds were left unchanged"
+            fi
+            return 0
+        }
+    done
+    TRANSACTION_ACTIVE=0
+    [ "$TRANSACTION_COUNT" -gt 0 ] || return 0
+
+    # The restored feeds supersede their saved originals; a later opt-in
+    # saves fresh ones.
+    while IFS= read -r used_backup; do
+        rm -f "$used_backup"
+    done < "$USED_BACKUPS"
+    echo "OpenWrt package feeds no longer use the former upstream mirror"
+    if [ "${FORKOP_PACKAGE_POSTINST:-0}" != "1" ] && ! update_package_index; then
+        warn "the package index could not be refreshed; run '$PACKAGE_MANAGER update' later"
     fi
 }
 
-check_platform_index
-TRANSACTION_ACTIVE=1
-
-repositories="$(root_path /etc/apk/repositories)"
-repositories_dir="$(root_path /etc/apk/repositories.d)"
-keys_dir="$(root_path /etc/apk/keys)"
-opkg_distfeeds="$(root_path /etc/opkg/distfeeds.conf)"
-
-if [ "$PACKAGE_MANAGER" = "apk" ]; then
-    rewrite_repository_file "$repositories"
-    rewrite_repository_file "$repositories_dir/distfeeds.list"
-
-    mkdir -p "$keys_dir" "$repositories_dir"
-    key_file="$keys_dir/forkop-mirror.pem"
-    # A syntactically valid key may still belong to the previous mirror.
-    # Fetch the selected mirror's key and roll it back with the feeds on failure.
-    key_tmp="$TRANSACTION_DIR/forkop-mirror.pem"
-    "$CURL_BIN" -fsSL --connect-timeout 15 --max-time 60 \
-        "$MIRROR_BASE_URL/forkop/forkop-apk.pem" -o "$key_tmp"
-    grep -Fq 'BEGIN PUBLIC KEY' "$key_tmp" || {
-        echo "The downloaded Forkop mirror APK key is invalid" >&2
-        exit 1
-    }
-    if ! cmp -s "$key_tmp" "$key_file"; then
-        backup_transaction_file "$key_file"
-        replace_file "$key_tmp" "$key_file"
-    fi
-
-    forkop_repository="$repositories_dir/forkop.list"
-    forkop_repository_tmp="$TRANSACTION_DIR/forkop.list.new"
-    printf '%s\n' "$MIRROR_BASE_URL/forkop/mirror/current/packages.adb" > "$forkop_repository_tmp"
-    if ! cmp -s "$forkop_repository_tmp" "$forkop_repository"; then
-        backup_transaction_file "$forkop_repository"
-        replace_file "$forkop_repository_tmp" "$forkop_repository"
-    fi
+if [ -n "$MIRROR_BASE_URL" ]; then
+    use_mirror
 else
-    rewrite_repository_file "$opkg_distfeeds"
+    restore_official_feeds
 fi
-
-# Package managers hold their database lock while package post-install/upgrade
-# scripts run. Never invoke apk/opkg recursively from that context. The
-# platform readiness check above still validates that the selected mirror
-# contains the exact OpenWrt target before repository changes are committed.
-if [ "$TRANSACTION_COUNT" -gt 0 ] && [ "${FORKOP_PACKAGE_POSTINST:-0}" != "1" ]; then
-    update_package_index
-fi
-
-"$UCI_BIN" -q set "$SETTINGS_SECTION.mirror_base_url=$MIRROR_BASE_URL"
-if ! "$UCI_BIN" -q get "$SETTINGS_SECTION.applied_migrations" 2>/dev/null |
-    tr ' ' '\n' | grep -Fxq "$MIGRATION_ID"; then
-    "$UCI_BIN" -q add_list "$SETTINGS_SECTION.applied_migrations=$MIGRATION_ID"
-fi
-"$UCI_BIN" -q commit forkop
-
-TRANSACTION_ACTIVE=0
 exit 0

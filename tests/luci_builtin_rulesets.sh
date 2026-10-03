@@ -59,13 +59,24 @@ if (JSON.stringify(actualSecondaryOptions) !== JSON.stringify([...currentSeconda
 
 for (const required of [
   '`${_("Built-in rule sets")} #2`',
-  "mirror.infotechtg.ru/forkop/lists/b4geoip-forkop/srs/",
+  // Former upstream mirror URLs in existing configs are still recognised.
+  "https://mirror.infotechtg.ru/forkop/lists/b4geoip-forkop/srs/",
+  "https://mirror.51343.ru/forkop/lists/b4geoip-forkop/srs/",
   "Greeg0ry/b4geoip-forkop/main/srs/",
   "SECONDARY_RULESET_OPTIONS",
 ]) {
   if (!section.includes(required)) {
     fail(`secondary built-in rule set integration is missing: ${required}`);
   }
+}
+
+// The dependency mirror is opt-in: new selections are saved with the direct
+// raw GitHub URL, never with a mirror prefix.
+if (!/function secondaryRulesetUrl\(value\) \{\s*return `\$\{SECONDARY_RULESET_RAW_PREFIX\}\$\{value\}\.srs`;/.test(section)) {
+  fail("built-in rule sets #2 must be saved with the direct raw GitHub URL");
+}
+if (/SECONDARY_RULESET_MIRROR_PREFIX\b/.test(section)) {
+  fail("built-in rule sets #2 must not keep a default mirror prefix");
 }
 
 for (const removed of [

@@ -58,8 +58,8 @@ APK_SDK_URL="${APK_SDK_URL:-https://downloads.openwrt.org/releases/25.12.3/targe
 BACKEND_DESCRIPTION="Rule-based Forkop backend with hybrid sing-box + zapret orchestration"
 APP_DESCRIPTION="Rule-based Forkop LuCI app with hybrid sing-box + zapret orchestration"
 I18N_DESCRIPTION="Translation for luci-app-forkop - Русский (Russian)"
-MAINTAINER="slayer326 <34569426+slayer326@users.noreply.github.com>"
-PROJECT_URL="https://github.com/slayer326/forkop"
+MAINTAINER="Asofwar <7397608+Asofwar@users.noreply.github.com>"
+PROJECT_URL="https://github.com/Asofwar/forkop"
 BACKEND_DEPENDS_IPK="libc, ca-bundle, kmod-inet-diag, kmod-tun, curl, ucode, ucode-mod-fs, ucode-mod-uci, conntrack, kmod-nft-tproxy, coreutils-base64, bind-dig, nftables-json, kmod-nft-nat, ip-full"
 BACKEND_DEPENDS_APK="bind-dig ca-bundle coreutils-base64 curl ip-full kmod-inet-diag kmod-nft-nat kmod-nft-tproxy kmod-tun libc nftables-json ucode ucode-mod-fs ucode-mod-uci conntrack !https-dns-proxy !nextdns !luci-app-passwall !luci-app-passwall2"
 BACKEND_CONFLICTS_IPK="https-dns-proxy, nextdns, luci-app-passwall, luci-app-passwall2"
@@ -293,11 +293,9 @@ installed_size_bytes() {
 #
 # The configuration comes first: a missing or empty one is restored from
 # the packaged defaults before the migrations, which fail without it
-# (UC-077). The mirror migration of the package feeds is best effort: an
-# unreachable mirror, or one that does not list this platform yet, must not
-# keep Forkop stopped; the script puts the feeds back itself and runs again
-# on the next package change, until the migration is recorded (it moves the
-# feeds once, D-3 (a)). package_postinst always runs: it brings back
+# (UC-077). Reconciling the package feeds with the opt-in dependency mirror
+# is best effort: a mirror problem must not keep Forkop stopped; the script
+# leaves the feeds as they were and warns. package_postinst always runs: it brings back
 # the service state from before the upgrade and starts Forkop only on a
 # configuration this release has migrated (fail closed). The script ends
 # with the first failure of the migration and package_postinst (UC-026).

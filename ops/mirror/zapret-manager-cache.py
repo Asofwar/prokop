@@ -231,6 +231,9 @@ class BoundedServer(HTTPServer):
 
 
 if __name__ == '__main__':
+    # The public URL this cache serves is the operator's own; never assume one.
+    if not os.environ.get('ZAPRET_MANAGER_MIRROR'):
+        raise SystemExit('Set ZAPRET_MANAGER_MIRROR to the public URL of this mirror')
     parsed = urlsplit(MIRROR)
     if (parsed.scheme != 'https' or not parsed.hostname or parsed.username or parsed.password
             or parsed.query or parsed.fragment or re.search(r'[^a-zA-Z0-9:/._-]', MIRROR)):

@@ -62,12 +62,14 @@ JSON
 
 ucode -L "$FORKOP_LIB" "$MIGRATION" migrate-fixture "$WORK_DIR/fixture.json" >"$WORK_DIR/out.json"
 
-node - "$WORK_DIR/out.json" "$MIRROR" <<'NODE'
+# The dependency mirror is opt-in (fork_mirror_opt_in_v1): a kept rule set
+# that named the former mirror is read from its direct source.
+node - "$WORK_DIR/out.json" "$RAW" <<'NODE'
 const assert = require('node:assert/strict');
 const out = JSON.parse(require('fs').readFileSync(process.argv[2], 'utf8'));
-const mirror = process.argv[3];
+const raw = process.argv[3];
 const [games, plain] = out.config.section;
-assert.deepEqual(games.rule_set_with_subnets, [`${mirror}/valve.srs`, 'https://example.com/own.srs'],
+assert.deepEqual(games.rule_set_with_subnets, [`${raw}/valve.srs`, 'https://example.com/own.srs'],
   'retired rule sets are removed, the others kept');
 assert.deepEqual(games.community_lists, ['hetzner'], 'the migration must not add matches');
 assert.deepEqual(games.retired_rule_sets, ['cloudflare', 'amazon', 'hetzner'],

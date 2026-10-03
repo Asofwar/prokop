@@ -15,7 +15,7 @@ const LIB_DIR = getenv("FORKOP_LIB") || "/usr/lib/forkop";
 const FORKOP_VERSION = getenv("FORKOP_VERSION") || constants.FORKOP_VERSION || "";
 const FORKOP_CONFIG = getenv("FORKOP_CONFIG") || constants.FORKOP_CONFIG || "/etc/config/" + CONFIG_NAME;
 const FORKOP_SERVICE_NAME = getenv("FORKOP_SERVICE_NAME") || constants.FORKOP_SERVICE_NAME || "forkop";
-const FORKOP_RELEASE_REPO = getenv("FORKOP_RELEASE_REPO") || constants.FORKOP_RELEASE_REPO || "slayer326/forkop";
+const FORKOP_RELEASE_REPO = getenv("FORKOP_RELEASE_REPO") || constants.FORKOP_RELEASE_REPO || "";
 const FORKOP_LUCI_VIEW_DIR = getenv("FORKOP_LUCI_VIEW_DIR") || constants.FORKOP_LUCI_VIEW_DIR || "/www/luci-static/resources/view/forkop";
 const RUNTIME_STATE_DIR = getenv("FORKOP_RUNTIME_STATE_DIR") || "/var/run/forkop";
 const SYSTEM_INFO_CACHE_FILE = getenv("FORKOP_SYSTEM_INFO_CACHE_FILE") || RUNTIME_STATE_DIR + "/system-info.json";
@@ -988,6 +988,18 @@ function sing_box_installed_package_name() {
     return sing_box_package_from_manifest(command_output_from_args([ "opkg", "list-installed" ]));
 }
 
+// The launchers components/action.uc writes carry its marker line; those from
+// older releases always went through the mirror proxy path.
+function managed_zapret_manager_launcher(path) {
+    let source = as_string(fs.readfile(path));
+    return file_executable(path) && (index(source, "# Forkop X Zapret-Manager launcher") >= 0 ||
+        index(source, "/zapret-manager/proxy/") >= 0);
+}
+
+function zapret_manager_launchers_installed() {
+    return managed_zapret_manager_launcher("/usr/bin/zms") && managed_zapret_manager_launcher("/usr/bin/zmsA") ? 1 : 0;
+}
+
 function system_info_cache_is_valid() {
     let cache = read_json_file(SYSTEM_INFO_CACHE_FILE);
     if (type(cache) != "object")
@@ -1003,12 +1015,7 @@ function system_info_cache_is_valid() {
     if (cache.forkop_version != FORKOP_VERSION || cache.luci_app_version != get_luci_app_version())
         return false;
 
-    let zms_source = as_string(fs.readfile("/usr/bin/zms"));
-    let zmsa_source = as_string(fs.readfile("/usr/bin/zmsA"));
-    let zapret_manager_installed = 0;
-    if (file_executable("/usr/bin/zms") && file_executable("/usr/bin/zmsA") &&
-        index(zms_source, "/zapret-manager/proxy/") >= 0 && index(zmsa_source, "/zapret-manager/proxy/") >= 0)
-        zapret_manager_installed = 1;
+    let zapret_manager_installed = zapret_manager_launchers_installed();
 
     let zapret_installed = 0;
     let zapret2_installed = 0;
@@ -1146,10 +1153,7 @@ function build_system_info() {
     let zapret2_version = zapret2_installed ? provider_version(ZAPRET2_RUNTIME_UC) : "not installed";
     let byedpi_installed = provider_installed(BYEDPI_RUNTIME_UC) ? 1 : 0;
     let byedpi_version = byedpi_installed ? provider_version(BYEDPI_RUNTIME_UC) : "not installed";
-    let zms_source = as_string(fs.readfile("/usr/bin/zms"));
-    let zmsa_source = as_string(fs.readfile("/usr/bin/zmsA"));
-    let zapret_manager_installed = file_executable("/usr/bin/zms") && file_executable("/usr/bin/zmsA") &&
-        index(zms_source, "/zapret-manager/proxy/") >= 0 && index(zmsa_source, "/zapret-manager/proxy/") >= 0 ? 1 : 0;
+    let zapret_manager_installed = zapret_manager_launchers_installed();
     let device_model = first_line_value("/tmp/sysinfo/model", "unknown");
     let packet_steering_mode = trim(uci_core.get("network.@globals[0].packet_steering"));
     let direct_proxy_enabled = bool_option(settings(), "direct_proxy_enabled", false) ? 1 : 0;

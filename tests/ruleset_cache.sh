@@ -262,6 +262,38 @@ fallback="$({
 [ "$fallback" = 'https://upstream.test/community/youtube.srs' ] ||
   fail "community rule-set fallback must preserve the asset name"
 
+# The dependency mirror is opt-in. Rule sets an older configuration still takes
+# from a former upstream mirror keep direct fallbacks with no mirror or with
+# another one, and a direct raw GitHub source falls back to jsDelivr.
+fallback_urls() {
+  FORKOP_MIRROR_BASE_URL="$1" ucode -L "$FORKOP_LIB" "$RULESET_CACHE_UC" fallback-urls "$2"
+}
+B4_RAW='https://raw.githubusercontent.com/Greeg0ry/b4geoip-forkop/main/srs/valve.srs'
+B4_CDN='https://cdn.jsdelivr.net/gh/Greeg0ry/b4geoip-forkop@main/srs/valve.srs'
+for mirror in '' 'https://own-mirror.test'; do
+  for legacy in 'https://mirror.infotechtg.ru' 'http://mirror.51343.ru'; do
+    [ "$(fallback_urls "$mirror" "$legacy/forkop/lists/b4geoip-forkop/srs/valve.srs")" = "$B4_CDN"$'\n'"$B4_RAW" ] ||
+      fail "former mirror b4geoip rule set lost its fallbacks (mirror '$mirror')"
+  done
+  [ "$(fallback_urls "$mirror" 'https://mirror.infotechtg.ru/forkop/lists/rulesets/community/youtube.srs')" = \
+    'https://github.com/itdoginfo/allow-domains/releases/latest/download/youtube.srs' ] ||
+    fail "former mirror community rule set lost its fallback (mirror '$mirror')"
+  [ "$(fallback_urls "$mirror" 'https://mirror.infotechtg.ru/forkop/lists/rulesets/adlist.srs')" = \
+    'https://github.com/zxc-rv/ad-filter/releases/latest/download/adlist.srs' ] ||
+    fail "former mirror ad list lost its fallback (mirror '$mirror')"
+  [ "$(fallback_urls "$mirror" "$B4_RAW")" = "$B4_CDN" ] ||
+    fail "a direct b4geoip rule set must fall back to jsDelivr (mirror '$mirror')"
+done
+[ "$(fallback_urls 'https://own-mirror.test' 'https://own-mirror.test/forkop/lists/b4geoip-forkop/srs/valve.srs')" = \
+  "$B4_CDN"$'\n'"$B4_RAW" ] || fail "an opted-in mirror b4geoip rule set lost its fallbacks"
+# The first fallback names the cache entry: a rule set moved off the former
+# mirror to raw GitHub keeps its cached copy.
+[ "$(fallback_urls '' "$B4_RAW" | head -n 1)" = \
+  "$(fallback_urls '' 'https://mirror.infotechtg.ru/forkop/lists/b4geoip-forkop/srs/valve.srs' | head -n 1)" ] ||
+  fail "moving a b4geoip rule set off the former mirror must keep its cache identity"
+[ -z "$(fallback_urls '' 'https://custom.test/forkop/lists/b4geoip-forkop/srs/valve.srs')" ] ||
+  fail "a custom host that is not the configured mirror must not get b4geoip fallbacks"
+
 before="$(find "$WORK_DIR/cache" -maxdepth 1 -type f -name '*.srs' -exec md5sum {} \;)"
 PATH="$WORK_DIR/bin:$PATH" \
 RULESET_TEST_SOURCE_JSON="$WORK_DIR/source.json" \
@@ -353,5 +385,69 @@ FORKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=33554432 \
 grep -Fq 'quota-new.test' "$persistent_path" ||
   fail "runtime rule-set was not promoted when flash space became available"
 [ ! -e "$runtime_path" ] || fail "promoted runtime rule-set copy was not removed"
+
+# A built-in rule set #2 is kept as its raw GitHub URL. With a mirror it is
+# downloaded from the mirror first, then raw GitHub, then jsDelivr; without
+# one from raw GitHub, then jsDelivr. The mirror changes only that order: the
+# cache entry stays the same, so turning it on or off downloads nothing again.
+B4_MIRROR='https://own-mirror.test/forkop/lists/b4geoip-forkop/srs/valve.srs'
+cat >"$WORK_DIR/bin/curl" <<'EOF'
+#!/bin/sh
+output=''
+url=''
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --output) output="$2"; shift 2 ;;
+    --proxy|--connect-timeout|--max-time) shift 2 ;;
+    --fail|--location|--silent|--show-error) shift ;;
+    *) url="$1"; shift ;;
+  esac
+done
+printf '%s\n' "$url" >>"$RULESET_TEST_CURL_CALLS"
+case "$url" in
+  "$RULESET_TEST_SERVED_PREFIX"*) cp "$RULESET_TEST_SOURCE_SRS" "$output" ;;
+  *) exit 22 ;;
+esac
+EOF
+chmod +x "$WORK_DIR/bin/curl"
+# b4_start MIRROR SERVED_PREFIX CACHE_DIR: one start with the rule set; prints
+# the local file it was given. The URLs curl was asked for land in b4.calls.
+b4_start() {
+  local cache="$3"
+  mkdir -p "$cache"
+  printf '{"route":{"rule_set":[{"type":"remote","tag":"valve","format":"binary","url":"%s"}]}}\n' \
+    "$B4_RAW" >"$cache/config.json"
+  : >"$WORK_DIR/b4.calls"
+  PATH="$WORK_DIR/bin:$PATH" \
+  FORKOP_MIRROR_BASE_URL="$1" \
+  RULESET_TEST_SERVED_PREFIX="$2" \
+  RULESET_TEST_CURL_CALLS="$WORK_DIR/b4.calls" \
+  RULESET_TEST_SOURCE_JSON="$WORK_DIR/source.json" \
+  RULESET_TEST_SOURCE_SRS="$WORK_DIR/source.srs" \
+  FORKOP_RULESET_CACHE_DIR="$cache/persistent" \
+  FORKOP_RULESET_CACHE_MANIFEST="$cache/persistent/manifest.json" \
+  FORKOP_RULESET_RUNTIME_CACHE_DIR="$cache/runtime" \
+  FORKOP_RULESET_RUNTIME_MANIFEST="$cache/runtime.json" \
+    ucode -L "$FORKOP_LIB" "$RULESET_CACHE_UC" materialize-config "$cache/config.json" 2>/dev/null
+  ucode -e 'let fs = require("fs"); print(json(fs.readfile(ARGV[0])).route.rule_set[0].path, "\n");' \
+    "$cache/config.json"
+}
+b4_start 'https://own-mirror.test/' 'unserved://' "$WORK_DIR/b4-order-mirror" >/dev/null
+[ "$(cat "$WORK_DIR/b4.calls")" = "$B4_MIRROR"$'\n'"$B4_RAW"$'\n'"$B4_CDN" ] ||
+  fail "with a mirror a raw GitHub b4geoip rule set must try the mirror, raw GitHub, then jsDelivr: $(cat "$WORK_DIR/b4.calls")"
+b4_start '' 'unserved://' "$WORK_DIR/b4-order-direct" >/dev/null
+[ "$(cat "$WORK_DIR/b4.calls")" = "$B4_RAW"$'\n'"$B4_CDN" ] ||
+  fail "without a mirror a raw GitHub b4geoip rule set must try raw GitHub, then jsDelivr: $(cat "$WORK_DIR/b4.calls")"
+mirrored_path="$(b4_start 'https://own-mirror.test' 'https://own-mirror.test/' "$WORK_DIR/b4-mirror")"
+[ "$(cat "$WORK_DIR/b4.calls")" = "$B4_MIRROR" ] ||
+  fail "a mirror serving the b4geoip rule set must be the only download: $(cat "$WORK_DIR/b4.calls")"
+direct_path="$(b4_start '' 'https://raw.githubusercontent.com/' "$WORK_DIR/b4-direct")"
+case "$mirrored_path" in */empty-*) fail "the mirrored b4geoip rule set was not cached: $mirrored_path" ;; esac
+[ "${mirrored_path##*/}" = "${direct_path##*/}" ] ||
+  fail "the mirror changed the b4geoip cache entry: $mirrored_path vs $direct_path"
+[ "$(b4_start '' 'unserved://' "$WORK_DIR/b4-mirror")" = "$mirrored_path" ] && [ ! -s "$WORK_DIR/b4.calls" ] ||
+  fail "turning the mirror off downloaded a cached b4geoip rule set again: $(cat "$WORK_DIR/b4.calls")"
+[ "$(b4_start 'https://own-mirror.test' 'unserved://' "$WORK_DIR/b4-direct")" = "$direct_path" ] && [ ! -s "$WORK_DIR/b4.calls" ] ||
+  fail "turning the mirror on downloaded a cached b4geoip rule set again: $(cat "$WORK_DIR/b4.calls")"
 
 printf 'ruleset cache checks passed\n'

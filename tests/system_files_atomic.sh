@@ -9,9 +9,9 @@ set -euo pipefail
 # overlay in between lost every entry or broke package management. Now each
 # is written to a copy next to it and renamed over it, so a reader (and a
 # reboot) sees the previous file or the new one, never a part of one; the
-# mode stays, no copy is left behind. When the mirror migration fails, its
-# rollback of the feeds and keys says which files it could not restore
-# instead of claiming that all were.
+# mode stays, no copy is left behind. When the mirror reconciliation fails,
+# its rollback of the feeds says which files it could not restore instead of
+# claiming that all were.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LIB="$ROOT_DIR/forkop/files/usr/lib"
@@ -148,14 +148,12 @@ done
 case "$url" in
   */openwrt/forkop-platforms.tsv)
     printf '%s\n' 'rockchip/armv8 aarch64_generic 25.12.4 apk' 'mediatek/filogic aarch64_cortex-a53 24.10.5 ipk' >"$output" ;;
-  */forkop/forkop-apk.pem)
-    printf '%s\n' '-----BEGIN PUBLIC KEY-----' 'new-key' '-----END PUBLIC KEY-----' >"$output" ;;
   *) exit 22 ;;
 esac
 SH
 # The package index update fails when MIGRATION_UPDATE_FAILS is set; with
-# MIGRATION_BREAK_ROLLBACK the feeds directory turns unrestorable first (the
-# new Forkop feed file becomes a directory with content).
+# MIGRATION_BREAK_ROLLBACK the named feed file turns unrestorable first (it
+# becomes a directory with content).
 cat >"$WORK/bin/apk" <<'SH'
 #!/bin/sh
 [ "$1" = update ] || exit 0
@@ -169,6 +167,9 @@ SH
 cp "$WORK/bin/apk" "$WORK/bin/opkg"
 printf '#!/bin/sh\nexit 0\n' >"$WORK/bin/uci"
 chmod 0755 "$WORK/bin/"*
+
+# The dependency mirror is opt-in: these cases opt in to this one.
+MIRROR_URL="https://mirror.example.test"
 
 migrate() {
   local root="$1" manager="$2"
@@ -189,8 +190,8 @@ FEEDS="$OPKG_ROOT/etc/opkg/distfeeds.conf"
 printf '%s\n' 'src/gz openwrt_core https://downloads.openwrt.org/releases/24.10.5/targets/mediatek/filogic/packages' \
   'src/gz vendor https://packages.vendor.example/24.10/base' >"$FEEDS"
 chmod 0600 "$FEEDS"
-replaced_whole "$FEEDS" "the opkg mirror migration" migrate "$OPKG_ROOT" opkg
-grep -Fq 'https://mirror.infotechtg.ru/openwrt/releases/24.10.5/targets/mediatek/filogic/packages' "$FEEDS" &&
+replaced_whole "$FEEDS" "the opkg mirror migration" migrate "$OPKG_ROOT" opkg FORKOP_MIRROR_BASE_URL="$MIRROR_URL"
+grep -Fq "$MIRROR_URL/openwrt/releases/24.10.5/targets/mediatek/filogic/packages" "$FEEDS" &&
   grep -Fxq 'src/gz vendor https://packages.vendor.example/24.10/base' "$FEEDS" ||
   fail "the opkg mirror migration did not rewrite the feeds: $(cat "$FEEDS")"
 
@@ -199,43 +200,31 @@ mkdir -p "$APK_ROOT/etc/apk/repositories.d" "$APK_ROOT/etc/apk/keys"
 printf '%s\n' "DISTRIB_RELEASE='25.12.4'" "DISTRIB_TARGET='rockchip/armv8'" "DISTRIB_ARCH='aarch64_generic'" \
   >"$APK_ROOT/etc/openwrt_release"
 REPOS="$APK_ROOT/etc/apk/repositories"
-KEY="$APK_ROOT/etc/apk/keys/forkop-mirror.pem"
-LIST="$APK_ROOT/etc/apk/repositories.d/forkop.list"
-printf '%s\n' 'https://downloads.openwrt.org/releases/25.12.4/targets/rockchip/armv8/packages/packages.adb' >"$REPOS"
-printf '%s\n' '-----BEGIN PUBLIC KEY-----' 'old-key' '-----END PUBLIC KEY-----' >"$KEY"
-printf '%s\n' 'https://mirror.51343.ru/forkop/mirror/current/packages.adb' >"$LIST"
-chmod 0644 "$REPOS" "$KEY" "$LIST"
-for file in "$REPOS" "$KEY" "$LIST"; do
-  replaced_whole "$file" "the apk mirror migration" migrate "$APK_ROOT" apk
-  # The next round migrates the same file again.
-  [ "$file" != "$REPOS" ] || printf '%s\n' 'https://downloads.openwrt.org/releases/25.12.4/targets/rockchip/armv8/packages/packages.adb' >"$REPOS"
-  [ "$file" != "$REPOS" ] || printf '%s\n' '-----BEGIN PUBLIC KEY-----' 'old-key' '-----END PUBLIC KEY-----' >"$KEY"
-  [ "$file" != "$KEY" ] || printf '%s\n' 'https://mirror.51343.ru/forkop/mirror/current/packages.adb' >"$LIST"
-done
-grep -Fxq new-key "$KEY" && grep -Fq 'mirror.infotechtg.ru/forkop/mirror/current' "$LIST" ||
-  fail "the apk mirror migration did not install its key and feed"
-ok "the mirror migration replaces feeds and keys whole by a rename, their mode kept"
+OFFICIAL_REPOS='https://downloads.openwrt.org/releases/25.12.4/targets/rockchip/armv8/packages/packages.adb'
+printf '%s\n' "$OFFICIAL_REPOS" >"$REPOS"
+chmod 0644 "$REPOS"
+replaced_whole "$REPOS" "the apk mirror migration" migrate "$APK_ROOT" apk FORKOP_MIRROR_BASE_URL="$MIRROR_URL"
+grep -Fq "$MIRROR_URL/openwrt/releases/25.12.4/targets/rockchip/armv8/packages/packages.adb" "$REPOS" ||
+  fail "the apk mirror migration did not rewrite the feeds: $(cat "$REPOS")"
+ok "the mirror migration replaces feeds whole by a rename, their mode kept"
 
 # ---- 3. a rollback that cannot restore says so ----------------------------------
 
-# Control: a failed migration restores the feeds and says so.
-printf '%s\n' 'https://downloads.openwrt.org/releases/25.12.4/targets/rockchip/armv8/packages/packages.adb' >"$REPOS"
-rm -f "$KEY" "$LIST"
+# Control: a migration whose index update fails restores the feeds and says so.
+printf '%s\n' "$OFFICIAL_REPOS" >"$REPOS"
 cp "$REPOS" "$WORK/repos.orig"
-status=0
-migrate "$APK_ROOT" apk MIGRATION_UPDATE_FAILS=1 2>"$WORK/rollback.err" || status=$?
-[ "$status" != 0 ] || fail "a migration whose index update failed reported success"
-cmp -s "$WORK/repos.orig" "$REPOS" && [ ! -e "$KEY" ] && [ ! -e "$LIST" ] || fail "the failed migration was not rolled back"
-grep -q 'were restored' "$WORK/rollback.err" || fail "a complete rollback did not say so: $(cat "$WORK/rollback.err")"
+migrate "$APK_ROOT" apk FORKOP_MIRROR_BASE_URL="$MIRROR_URL" MIGRATION_UPDATE_FAILS=1 2>"$WORK/rollback.err" ||
+  fail "a failed mirror reconciliation failed the package: $(cat "$WORK/rollback.err")"
+cmp -s "$WORK/repos.orig" "$REPOS" || fail "the failed migration was not rolled back"
+grep -q 'the previous feeds were restored' "$WORK/rollback.err" || fail "a complete rollback did not say so: $(cat "$WORK/rollback.err")"
 
-# The new Forkop feed file cannot be removed again.
-status=0
-migrate "$APK_ROOT" apk MIGRATION_UPDATE_FAILS=1 MIGRATION_BREAK_ROLLBACK="$LIST" 2>"$WORK/rollback.err" || status=$?
-[ "$status" != 0 ] || fail "a migration whose rollback failed reported success"
-grep -q 'were restored' "$WORK/rollback.err" && fail "a rollback that could not remove the new feed claimed success: $(cat "$WORK/rollback.err")"
-grep -Fq "$LIST" "$WORK/rollback.err" || fail "a rollback that failed did not name the file: $(cat "$WORK/rollback.err")"
-cmp -s "$WORK/repos.orig" "$REPOS" || fail "a rollback that failed for one file did not restore the others"
-rm -rf "$LIST"
+# The feed file cannot be restored: it became a directory with content.
+migrate "$APK_ROOT" apk FORKOP_MIRROR_BASE_URL="$MIRROR_URL" MIGRATION_UPDATE_FAILS=1 MIGRATION_BREAK_ROLLBACK="$REPOS" \
+  2>"$WORK/rollback.err" || fail "a failed mirror reconciliation failed the package: $(cat "$WORK/rollback.err")"
+grep -q 'restored' "$WORK/rollback.err" && fail "a rollback that could not restore the feed claimed success: $(cat "$WORK/rollback.err")"
+grep -Fq "could not restore: $REPOS" "$WORK/rollback.err" || fail "a rollback that failed did not name the file: $(cat "$WORK/rollback.err")"
+rm -rf "$REPOS"
+printf '%s\n' "$OFFICIAL_REPOS" >"$REPOS"
 
 # A read-only overlay: nothing can be restored, and the rollback says so.
 if unshare -rm true 2>/dev/null; then
@@ -249,16 +238,16 @@ SH
   status=0
   # shellcheck disable=SC2016 # expanded by the sh that runs it
   unshare -rm sh -c 'cp "$1" "$2" && shift 2 && exec "$@"' sh "$WORK/bin/apk-ro" "$WORK/bin/apk" \
-    env FORKOP_MIGRATION_ROOT="$APK_ROOT" FORKOP_MIGRATION_APK_BIN="$WORK/bin/apk" \
+    env FORKOP_MIGRATION_ROOT="$APK_ROOT" FORKOP_MIGRATION_APK_BIN="$WORK/bin/apk" FORKOP_MIRROR_BASE_URL="$MIRROR_URL" \
     FORKOP_MIGRATION_CURL_BIN="$WORK/bin/curl" FORKOP_MIGRATION_UCI_BIN="$WORK/bin/uci" \
     MIGRATION_RO_DIR="$APK_ROOT/etc/apk" sh "$MIGRATION" 2>"$WORK/rollback.err" || status=$?
   cp "$WORK/bin/opkg" "$WORK/bin/apk"
-  [ "$status" != 0 ] || fail "a migration on a read-only overlay reported success"
-  grep -q 'were restored' "$WORK/rollback.err" && fail "a rollback on a read-only overlay claimed success: $(cat "$WORK/rollback.err")"
+  [ "$status" = 0 ] || fail "a failed mirror reconciliation on a read-only overlay failed the package ($status)"
+  grep -q 'restored' "$WORK/rollback.err" && fail "a rollback on a read-only overlay claimed success: $(cat "$WORK/rollback.err")"
   grep -Fq "$REPOS" "$WORK/rollback.err" || fail "a rollback on a read-only overlay did not name the feed it left: $(cat "$WORK/rollback.err")"
 else
   printf 'NOTE: no user and mount namespaces; the read-only overlay check is skipped\n'
 fi
-ok "a rollback that cannot restore every feed and key says which and fails"
+ok "a rollback that cannot restore every feed says which"
 
 printf 'system file replacement checks passed\n'

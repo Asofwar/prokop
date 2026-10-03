@@ -90,20 +90,33 @@ assert_eq "0 * * * * /usr/bin/forkop list_update_if_due # list" \
 assert_eq "0 */2 * * * /usr/bin/forkop list_update_if_due # list" \
   "$(updates_ucode list-update-cron-job 2h /usr/bin/forkop '# list')" \
   "list update cron job of two hours"
-assert_eq $'https://mirror.infotechtg.ru/forkop/lists/allow-domains/Subnets/IPv4/telegram.lst\nhttps://mirror.infotechtg.ru/forkop/lists/allow-domains/Subnets/IPv6/telegram.lst' \
-  "$(updates_ucode builtin-subnet-urls telegram)" \
+# The dependency mirror is opt-in: without one, lists come from their sources.
+assert_eq $'https://raw.githubusercontent.com/itdoginfo/allow-domains/main/Subnets/IPv4/telegram.lst\nhttps://raw.githubusercontent.com/itdoginfo/allow-domains/main/Subnets/IPv6/telegram.lst' \
+  "$(FORKOP_MIRROR_BASE_URL='' updates_ucode builtin-subnet-urls telegram)" \
   "Telegram built-in subnet families"
-assert_eq 'https://mirror.infotechtg.ru/forkop/lists/allow-domains/Subnets/IPv4/roblox.lst' \
-  "$(updates_ucode builtin-subnet-urls roblox)" \
+assert_eq 'https://raw.githubusercontent.com/itdoginfo/allow-domains/main/Subnets/IPv4/roblox.lst' \
+  "$(FORKOP_MIRROR_BASE_URL='' updates_ucode builtin-subnet-urls roblox)" \
   "Roblox available subnet family"
+assert_eq $'https://own-mirror.example/forkop/lists/allow-domains/Subnets/IPv4/telegram.lst\nhttps://own-mirror.example/forkop/lists/allow-domains/Subnets/IPv6/telegram.lst' \
+  "$(FORKOP_MIRROR_BASE_URL='https://own-mirror.example/' updates_ucode builtin-subnet-urls telegram)" \
+  "opted-in mirror built-in subnet families"
+assert_eq 'https://cdn.jsdelivr.net/gh/itdoginfo/allow-domains@main/Subnets/IPv4/telegram.lst' \
+  "$(FORKOP_MIRROR_BASE_URL='https://own-mirror.example' updates_ucode jsdelivr-fallback-url https://own-mirror.example/forkop/lists/allow-domains/Subnets/IPv4/telegram.lst)" \
+  "opted-in mirror jsDelivr fallback"
+assert_eq 'https://raw.githubusercontent.com/Greeg0ry/b4geoip-forkop/main/srs/valve.srs' \
+  "$(FORKOP_MIRROR_BASE_URL='' updates_ucode github-raw-fallback-url http://mirror.51343.ru/forkop/lists/b4geoip-forkop/srs/valve.srs)" \
+  "former mirror raw GitHub fallback without a mirror"
+assert_eq 'https://cdn.jsdelivr.net/gh/itdoginfo/allow-domains@main/Subnets/IPv4/telegram.lst' \
+  "$(FORKOP_MIRROR_BASE_URL='https://own-mirror.example' updates_ucode jsdelivr-fallback-url https://mirror.infotechtg.ru/forkop/lists/allow-domains/Subnets/IPv4/telegram.lst)" \
+  "former mirror jsDelivr fallback with another mirror"
 assert_eq 'https://cdn.jsdelivr.net/gh/itdoginfo/allow-domains@main/Subnets/IPv4/telegram.lst' \
   "$(updates_ucode jsdelivr-fallback-url https://raw.githubusercontent.com/itdoginfo/allow-domains/main/Subnets/IPv4/telegram.lst)" \
   "allow-domains jsDelivr fallback"
 assert_eq 'https://cdn.jsdelivr.net/gh/itdoginfo/allow-domains@main/Subnets/IPv4/telegram.lst' \
-  "$(updates_ucode jsdelivr-fallback-url https://mirror.infotechtg.ru/forkop/lists/allow-domains/Subnets/IPv4/telegram.lst)" \
+  "$(FORKOP_MIRROR_BASE_URL='' updates_ucode jsdelivr-fallback-url https://mirror.infotechtg.ru/forkop/lists/allow-domains/Subnets/IPv4/telegram.lst)" \
   "allow-domains mirror jsDelivr fallback"
 assert_eq 'https://raw.githubusercontent.com/itdoginfo/allow-domains/main/Subnets/IPv4/telegram.lst' \
-  "$(updates_ucode github-raw-fallback-url https://mirror.infotechtg.ru/forkop/lists/allow-domains/Subnets/IPv4/telegram.lst)" \
+  "$(FORKOP_MIRROR_BASE_URL='' updates_ucode github-raw-fallback-url https://mirror.infotechtg.ru/forkop/lists/allow-domains/Subnets/IPv4/telegram.lst)" \
   "allow-domains mirror raw GitHub fallback"
 assert_eq 'https://raw.githubusercontent.com/itdoginfo/allow-domains/main/Subnets/IPv4/telegram.lst' \
   "$(updates_ucode github-raw-fallback-url https://cdn.jsdelivr.net/gh/itdoginfo/allow-domains@main/Subnets/IPv4/telegram.lst)" \
@@ -112,10 +125,10 @@ assert_eq 'https://cdn.jsdelivr.net/gh/Greeg0ry/b4geoip-forkop@main/srs/valve.sr
   "$(updates_ucode jsdelivr-fallback-url https://raw.githubusercontent.com/Greeg0ry/b4geoip-forkop/main/srs/valve.srs)" \
   "b4geoip-forkop jsDelivr fallback"
 assert_eq 'https://cdn.jsdelivr.net/gh/Greeg0ry/b4geoip-forkop@main/srs/valve.srs' \
-  "$(updates_ucode jsdelivr-fallback-url https://mirror.infotechtg.ru/forkop/lists/b4geoip-forkop/srs/valve.srs)" \
+  "$(FORKOP_MIRROR_BASE_URL='' updates_ucode jsdelivr-fallback-url https://mirror.infotechtg.ru/forkop/lists/b4geoip-forkop/srs/valve.srs)" \
   "b4geoip-forkop mirror jsDelivr fallback"
 assert_eq 'https://raw.githubusercontent.com/Greeg0ry/b4geoip-forkop/main/srs/valve.srs' \
-  "$(updates_ucode github-raw-fallback-url https://mirror.infotechtg.ru/forkop/lists/b4geoip-forkop/srs/valve.srs)" \
+  "$(FORKOP_MIRROR_BASE_URL='' updates_ucode github-raw-fallback-url https://mirror.infotechtg.ru/forkop/lists/b4geoip-forkop/srs/valve.srs)" \
   "b4geoip-forkop mirror raw GitHub fallback"
 assert_eq 'https://raw.githubusercontent.com/Greeg0ry/b4geoip-forkop/main/srs/valve.srs' \
   "$(updates_ucode github-raw-fallback-url https://cdn.jsdelivr.net/gh/Greeg0ry/b4geoip-forkop@main/srs/valve.srs)" \

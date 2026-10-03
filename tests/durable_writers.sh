@@ -222,7 +222,8 @@ flushed "$RT" "rt_tables the package removal writes"
 [ -z "$(leftovers "$WORK/etc/iproute2")" ] || fail "rt_tables writers left: $(leftovers "$WORK/etc/iproute2")"
 ok "rt_tables is flushed before and after the rename"
 
-# The package feeds the mirror migration rewrites.
+# The package feeds the mirror migration rewrites for a mirror the user opted
+# in to (the dependency mirror is opt-in).
 cat >"$WORK/bin/curl" <<'CURL'
 #!/bin/sh
 output=""
@@ -249,9 +250,10 @@ printf '%s\n' 'src/gz openwrt_core https://downloads.openwrt.org/releases/24.10.
 watch "$OPKG_ROOT/etc/opkg"
 FORKOP_MIGRATION_ROOT="$OPKG_ROOT" FORKOP_MIGRATION_APK_BIN="$WORK/bin/missing-apk" \
   FORKOP_MIGRATION_OPKG_BIN="$WORK/bin/opkg" FORKOP_MIGRATION_CURL_BIN="$WORK/bin/curl" \
-  FORKOP_MIGRATION_UCI_BIN="$WORK/bin/uci-stub" sh "$ROOT_DIR/forkop/files/usr/share/forkop/mirror-migration.sh" ||
+  FORKOP_MIGRATION_UCI_BIN="$WORK/bin/uci-stub" FORKOP_MIRROR_BASE_URL="https://mirror.example.test" \
+  sh "$ROOT_DIR/forkop/files/usr/share/forkop/mirror-migration.sh" ||
   fail "the mirror migration failed"
-grep -Fq 'mirror.infotechtg.ru' "$FEEDS" || fail "the mirror migration did not rewrite the feeds: $(cat "$FEEDS")"
+grep -Fq 'mirror.example.test' "$FEEDS" || fail "the mirror migration did not rewrite the feeds: $(cat "$FEEDS")"
 flushed "$FEEDS" "the feeds the mirror migration rewrites"
 ok "the mirror migration flushes the feeds before and after the rename"
 

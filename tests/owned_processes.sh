@@ -436,9 +436,10 @@ while IFS= read -r file; do
   case "${file#"$ROOT_DIR"/}" in
     # The helper itself, this check, the runner, which signals the process
     # group of a test it started only while its pidfile says that the test
-    # still runs, and a regression run alone on a router against the
-    # installed Forkop, without this repository.
-    tests/helpers/owned_processes.sh | tests/owned_processes.sh | tests/run.sh | \
+    # still runs, the local lane runner, which signals only jobs of its own
+    # shell before it reaps them, and a regression run alone on a router
+    # against the installed Forkop, without this repository.
+    tests/helpers/owned_processes.sh | tests/owned_processes.sh | tests/run.sh | tests/runner/run.sh | \
       tests/router/singbox_single_process.sh) continue ;;
   esac
   TEST_FILES+=("$file")

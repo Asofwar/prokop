@@ -22,7 +22,10 @@ node - "$ROOT_DIR/tests/helpers/luci_form_harness.js" <<'NODE'
 const assert = require('node:assert/strict');
 const { createEnvironment } = require(process.argv[2]);
 
-const B4 = 'https://mirror.infotechtg.ru/forkop/lists/b4geoip-forkop/srs';
+// Built-in rule sets #2 are saved with their direct URL (the mirror is opt-in);
+// URLs on the former upstream mirror are still read from older configs.
+const B4 = 'https://raw.githubusercontent.com/Greeg0ry/b4geoip-forkop/main/srs';
+const LEGACY_B4 = 'https://mirror.infotechtg.ru/forkop/lists/b4geoip-forkop/srs';
 const VALVE = `${B4}/valve.srs`;
 const GOOGLE = `${B4}/google.srs`;
 const CUSTOM = 'https://example.com/custom.srs';
@@ -156,6 +159,20 @@ async function check(label, fn) {
         await (await env.openRules()).save();
         assert.deepEqual(env.uci.data.rule, fixture, 'an unchanged Rules page save changed UCI');
       });
+
+    // A Built-in rule set #2 picked in the editor is saved with its direct URL,
+    // and one stored on the former upstream mirror is read as the same choice.
+    await check(`${version} Built-in rule sets #2 use direct URLs`, async () => {
+      const env = createEnvironment({ version, config: { rule: rule({ action: 'connection', ...routed,
+        rule_set_with_subnets: [`${LEGACY_B4}/valve.srs`, CUSTOM_SUBNETS] }) } });
+      const modal = await env.openRule('rule');
+      const field = modal.option('secondary_rule_sets').getUIElement('rule');
+      assert.deepEqual(field.getValue(), ['valve'], 'a former mirror URL must be read as a built-in choice');
+      field.setValue(['valve', 'google']);
+      await modal.save();
+      assert.deepEqual(env.uci.data.rule.rule_set_with_subnets, [CUSTOM_SUBNETS, VALVE, GOOGLE]);
+      assert(!JSON.stringify(env.uci.data.rule).includes('mirror.'), 'no mirror URL may be written');
+    });
 
     // UC-008: a DPI rule whose provider is not installed keeps its action and
     // strategy; Save is refused until another action is chosen explicitly.

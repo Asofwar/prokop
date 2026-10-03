@@ -924,7 +924,7 @@ function getComponentCards(): ComponentCard[] {
     singBoxTiny || singBoxExtended,
   );
 
-  // Forkop X exposes only the two mirror-backed sing-box variants.
+  // Forkop X exposes only the Tiny and Extended sing-box variants.
   if (!singBoxTiny) {
     singBoxActions.push({
       key: 'singBoxInstallTiny',

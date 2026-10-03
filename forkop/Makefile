@@ -16,7 +16,7 @@ endif
 PKG_VERSION:=$(or $(firstword $(subst -, ,$(FORKOP_HAS_RELEASE_VERSION))),0.0.0)
 PKG_RELEASE:=$(word 2,$(subst -, ,$(FORKOP_HAS_RELEASE_VERSION)))
 
-PKG_MAINTAINER:=slayer326 <34569426+slayer326@users.noreply.github.com>
+PKG_MAINTAINER:=Asofwar <7397608+Asofwar@users.noreply.github.com>
 PKG_LICENSE:=GPL-2.0-or-later
 
 include $(INCLUDE_DIR)/package.mk
@@ -27,7 +27,7 @@ define Package/forkop
 	DEPENDS:=+ca-bundle +kmod-inet-diag +kmod-tun +curl +ucode +ucode-mod-fs +ucode-mod-uci +conntrack +kmod-nft-tproxy +coreutils-base64 +bind-dig +nftables-json +kmod-nft-nat +ip-full
 	CONFLICTS:=https-dns-proxy nextdns luci-app-passwall luci-app-passwall2
 	TITLE:=Forkop backend service
-	URL:=https://github.com/slayer326/forkop
+	URL:=https://github.com/Asofwar/forkop
 	PKGARCH:=all
 endef
 

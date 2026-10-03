@@ -1,15 +1,24 @@
 #!/bin/sh
 # shellcheck shell=dash
 
-REPO_OWNER="slayer326"
-REPO_NAME="forkop"
-RELEASE_BASE_URL="${FORKOP_RELEASE_BASE_URL:-https://fold8.ru/forkop}"
-DEFAULT_MIRROR_BASE_URL="https://mirror.infotechtg.ru"
-MIRROR_BASE_URL="${FORKOP_MIRROR_BASE_URL:-$DEFAULT_MIRROR_BASE_URL}"
-# The record of the move of the package feeds to the mirror
-# (mirror-migration.sh); whether they stay as they are (package_feeds_stay).
-MIRROR_MIGRATION_ID="mirror_infotechtg_ru_v1"
-PACKAGE_FEEDS_STAY=""
+RELEASE_REPO="${FORKOP_RELEASE_REPO:-Asofwar/forkop}"
+RELEASE_BASE_URL="${FORKOP_RELEASE_BASE_URL:-https://asofwar.github.io/forkop}"
+# The dependency mirror is opt-in (--mirror URL or FORKOP_MIRROR_BASE_URL).
+# Empty keeps the official OpenWrt feeds and the direct download sources.
+MIRROR_BASE_URL="${FORKOP_MIRROR_BASE_URL:-}"
+MIRROR_MIGRATION_SCRIPT="/usr/share/forkop/mirror-migration.sh"
+APK_REPOSITORIES_FILE="/etc/apk/repositories"
+APK_DISTFEEDS_FILE="/etc/apk/repositories.d/distfeeds.list"
+# Upstream installations leave a feed of upstream Forkop builds and its key;
+# apk trusts every key in /etc/apk/keys for every repository.
+UPSTREAM_APK_REPOSITORY_FILE="/etc/apk/repositories.d/forkop.list"
+UPSTREAM_APK_KEY_FILE="/etc/apk/keys/forkop-mirror.pem"
+# Former upstream mirrors. Without an opted-in mirror the OpenWrt release feeds
+# an upstream installation moved there go back to the official release tree,
+# as /usr/share/forkop/mirror-migration.sh restores them.
+LEGACY_MIRROR_REGEX='https?://mirror\.(infotechtg|51343)\.ru/'
+OFFICIAL_RELEASES_URL="https://downloads.openwrt.org/releases/"
+OFFICIAL_RELEASES_REGEX='https://downloads\.openwrt\.org/releases/'
 
 FLASH_RESERVE_KB=1024
 PACKAGE_INSTALL_OVERHEAD_KB=512
@@ -25,6 +34,7 @@ PKG_IS_APK=0
 MIRROR_TRANSACTION_ACTIVE=0
 MIRROR_BACKUP_COUNT=0
 MIRROR_BACKUP_MANIFEST=""
+MIRROR_SETTING_SAVED=0
 OPENWRT_RELEASE=""
 OPENWRT_TARGET=""
 OPENWRT_ARCHITECTURE=""
@@ -48,6 +58,7 @@ ALLOW_LOW_SPACE_TINY=0
 CONFIRM_LEGACY_MIGRATION=0
 
 FORKOP_RELEASE_JSON=""
+FORKOP_RELEASE_SOURCE=""
 FORKOP_RELEASE_TAG=""
 FORKOP_BACKEND_URL=""
 FORKOP_BACKEND_SHA256=""
@@ -117,6 +128,20 @@ Automation options (must be explicitly requested):
                                with tiny when no interactive terminal exists
   --confirm-legacy-migration   Confirm removal and migration of a detected
                                legacy installation without an interactive terminal
+
+Dependency mirror (off by default):
+  --mirror URL                 Use a dependency mirror for the OpenWrt package
+                               feeds, lists, rule sets and sing-box downloads.
+                               It is saved as forkop.settings.mirror_base_url.
+                               Without it the official OpenWrt feeds and the
+                               direct download sources are used.
+
+Environment:
+  FORKOP_MIRROR_BASE_URL       Same as --mirror (the option takes precedence)
+  FORKOP_RELEASE_BASE_URL      Release channel (default: $RELEASE_BASE_URL)
+  FORKOP_RELEASE_REPO          GitHub owner/name whose releases are used when
+                               the release channel is unavailable
+                               (default: $RELEASE_REPO)
 EOF
 }
 
@@ -183,12 +208,77 @@ parse_args() {
                         ;;
                 esac
                 ;;
+            --mirror)
+                if [ "$#" -lt 2 ] || [ -z "$2" ]; then
+                    fail "$1 requires a mirror URL"
+                fi
+                MIRROR_BASE_URL="$2"
+                shift
+                ;;
+            --mirror=*)
+                MIRROR_BASE_URL="${1#*=}"
+                [ -n "$MIRROR_BASE_URL" ] || fail "--mirror requires a mirror URL"
+                ;;
             *)
                 fail "Unknown installer option: $1"
                 ;;
         esac
         shift
     done
+}
+
+strip_trailing_slashes() {
+    stripped_value="$1"
+    while :; do
+        case "$stripped_value" in
+            */) stripped_value="${stripped_value%/}" ;;
+            *) break ;;
+        esac
+    done
+    printf '%s\n' "$stripped_value"
+}
+
+validate_installer_settings() {
+    release_owner=""
+    release_name=""
+    case "$RELEASE_REPO" in
+        */*)
+            release_owner="${RELEASE_REPO%%/*}"
+            release_name="${RELEASE_REPO#*/}"
+            ;;
+    esac
+    case "$release_owner" in
+        ''|*[!A-Za-z0-9-]*) fail "FORKOP_RELEASE_REPO must be a GitHub owner/name: $RELEASE_REPO" ;;
+    esac
+    case "$release_name" in
+        ''|.|..|*[!A-Za-z0-9._-]*) fail "FORKOP_RELEASE_REPO must be a GitHub owner/name: $RELEASE_REPO" ;;
+    esac
+
+    RELEASE_BASE_URL="$(strip_trailing_slashes "$RELEASE_BASE_URL")"
+    case "$RELEASE_BASE_URL" in
+        https://?*|http://?*) ;;
+        *) fail "FORKOP_RELEASE_BASE_URL must use http:// or https://: $RELEASE_BASE_URL" ;;
+    esac
+
+    MIRROR_BASE_URL="$(strip_trailing_slashes "$MIRROR_BASE_URL")"
+    [ -n "$MIRROR_BASE_URL" ] || return 0
+    case "$MIRROR_BASE_URL" in
+        https://?*|http://?*) ;;
+        *)
+            fail "Invalid dependency mirror URL: $MIRROR_BASE_URL (expected http:// or https://)"
+            ;;
+    esac
+    # The URL lands in sed expressions here and in mirror-migration.sh; both
+    # accept the same narrow character set, which keeps it literal there.
+    case "$MIRROR_BASE_URL" in
+        *[!A-Za-z0-9._~:/%-]*)
+            fail "Invalid dependency mirror URL: $MIRROR_BASE_URL (only letters, digits and . _ ~ : / % - are supported)"
+            ;;
+    esac
+    # Package scripts and the Forkop backend resolve the mirror from this
+    # variable first, so they follow the same opt-in during the installation.
+    FORKOP_MIRROR_BASE_URL="$MIRROR_BASE_URL"
+    export FORKOP_MIRROR_BASE_URL
 }
 
 cleanup() {
@@ -1369,6 +1459,29 @@ function installer_restore_previous_service() {
     return true;
 }
 
+// Saves a mirror the user opted in to. It runs after the package postinst so
+// the one-shot configuration migrations cannot reset it.
+function installer_persist_mirror(value) {
+    value = as_string(value);
+    if (match(value, /^https?:\/\/[^\/ \t\r\n]/) == null)
+        return false;
+
+    let c = uci_cursor();
+    if (c == null || !uci_load("forkop") || c.get("forkop", "settings") != "settings")
+        return false;
+
+    try {
+        if (!c.set("forkop", "settings", "mirror_base_url", value) || !c.commit("forkop"))
+            return false;
+    }
+    catch (e) {
+        return false;
+    }
+
+    uci_cursor_state = false;
+    return uci_get("forkop.settings.mirror_base_url") == value;
+}
+
 function list_has(values, needle) {
     for (let value in words(values))
         if (value == needle)
@@ -1586,6 +1699,8 @@ else if (mode == "installer-post-install")
     exit(installer_post_install() ? 0 : 1);
 else if (mode == "installer-restore-previous-service")
     exit(installer_restore_previous_service() ? 0 : 1);
+else if (mode == "installer-persist-mirror")
+    exit(installer_persist_mirror(ARGV[1]) ? 0 : 1);
 else
     exit(1);
 EOF
@@ -1714,7 +1829,7 @@ rewrite_package_repository_file() {
 
     rewritten="$TMP_DIR/repository.$MIRROR_BACKUP_COUNT.rewritten"
     sed -E \
-        -e "s#https?://mirror\\.51343\\.ru/openwrt/releases/#${MIRROR_BASE_URL}/openwrt/releases/#" \
+        -e "s#https?://mirror\\.(51343|infotechtg)\\.ru/openwrt/releases/#${MIRROR_BASE_URL}/openwrt/releases/#" \
         -e "s#https?://(downloads|archive)\\.openwrt\\.org/releases/#${MIRROR_BASE_URL}/openwrt/releases/#" \
         -e "s#https?://[^/]+/pub/software/openwrt/releases/#${MIRROR_BASE_URL}/openwrt/releases/#" \
         -e "s#${MIRROR_BASE_URL}/openwrt/releases/v[0-9]+\\.x/v?([0-9]+\\.[0-9]+\\.[0-9]+)/([^/]+)/([^/]+)/?([[:space:]]|$)#${MIRROR_BASE_URL}/openwrt/releases/\\1/targets/\\2/\\3/packages\\4#" \
@@ -1738,40 +1853,68 @@ rewrite_package_repository_file() {
     cp "$rewritten" "$repository_file" || fail "Failed to update $repository_file"
 }
 
+# Moves the OpenWrt release feeds that an upstream installation left on a former
+# upstream mirror back to downloads.openwrt.org, with the mapping of
+# mirror-migration.sh: their vNN.x/vX.Y.Z/<target>/<subtarget> layout becomes
+# the standard OpenWrt layout. Lines on any other host stay as they are.
+restore_legacy_mirror_repository_file() {
+    repository_file="$1"
+    [ -f "$repository_file" ] || return 0
+    grep -Eq "$LEGACY_MIRROR_REGEX" "$repository_file" || return 0
+
+    restored="$TMP_DIR/repository.$MIRROR_BACKUP_COUNT.restored"
+    sed -E \
+        -e "\\#${LEGACY_MIRROR_REGEX}#{" \
+        -e "s#${LEGACY_MIRROR_REGEX}openwrt/releases/#${OFFICIAL_RELEASES_URL}#" \
+        -e "s#${OFFICIAL_RELEASES_REGEX}v[0-9]+\\.x/v?([0-9]+\\.[0-9]+\\.[0-9]+)/([^/]+)/([^/]+)/?([[:space:]]|$)#${OFFICIAL_RELEASES_URL}\\1/targets/\\2/\\3/packages\\4#" \
+        -e "s#${OFFICIAL_RELEASES_REGEX}v[0-9]+\\.x/v([0-9]+\\.[0-9]+\\.[0-9]+)/([^/]+)/([^/]+)/packages/packages\\.adb#${OFFICIAL_RELEASES_URL}\\1/targets/\\2/\\3/packages/packages.adb#" \
+        -e "s#${OFFICIAL_RELEASES_REGEX}v[0-9]+\\.x/v([0-9]+\\.[0-9]+\\.[0-9]+)/([^/]+)/([^/]+)/packages\\.adb#${OFFICIAL_RELEASES_URL}\\1/packages/\\2/\\3/packages.adb#" \
+        -e '}' \
+        "$repository_file" > "$restored" || fail "Failed to prepare $repository_file"
+
+    if grep -Eq "$LEGACY_MIRROR_REGEX" "$restored"; then
+        warn "$repository_file still names a former upstream mirror outside its OpenWrt release feeds; those lines were left unchanged"
+    fi
+    if cmp -s "$repository_file" "$restored"; then
+        return 0
+    fi
+
+    backup_package_mirror_file "$repository_file"
+    cp "$restored" "$repository_file" || fail "Failed to update $repository_file"
+}
+
+# The file set of mirror-migration.sh and the full uninstall.
+restore_legacy_mirror_feeds() {
+    for repository_file in "$OPKG_DISTFEEDS_FILE" "${OPKG_DISTFEEDS_FILE%/*}/customfeeds.conf" \
+        "$APK_REPOSITORIES_FILE" "${APK_DISTFEEDS_FILE%/*}"/*.list; do
+        restore_legacy_mirror_repository_file "$repository_file"
+    done
+}
+
 commit_package_mirror_transaction() {
     MIRROR_TRANSACTION_ACTIVE=0
 }
 
+remove_upstream_forkop_repository() {
+    # The upstream feed would replace the fork's packages, and apk would trust
+    # its key for every repository. Neither is ever installed by this installer.
+    for upstream_file in "$UPSTREAM_APK_REPOSITORY_FILE" "$UPSTREAM_APK_KEY_FILE"; do
+        [ -e "$upstream_file" ] || [ -L "$upstream_file" ] || continue
+        backup_package_mirror_file "$upstream_file"
+        rm -f "$upstream_file" || fail "Failed to remove $upstream_file"
+        warn "Removed $upstream_file left by an upstream Forkop installation"
+    done
+}
+
 configure_apk_mirror() {
-    distfeeds="/etc/apk/repositories.d/distfeeds.list"
-    mirror_key="/etc/apk/keys/forkop-mirror.pem"
+    distfeeds="$APK_DISTFEEDS_FILE"
 
     [ "$PKG_IS_APK" -eq 1 ] || return 0
     [ -s "$distfeeds" ] || fail "$distfeeds is missing or empty"
 
-    case "$MIRROR_BASE_URL" in
-        https://*|http://*) ;;
-        *) fail "Invalid Forkop mirror URL: $MIRROR_BASE_URL" ;;
-    esac
-    MIRROR_BASE_URL="${MIRROR_BASE_URL%/}"
-
-    mkdir -p /etc/apk/keys /etc/apk/repositories.d || fail "Failed to create APK repository directories"
-    mirror_key_tmp="$TMP_DIR/forkop-mirror.pem"
-    download_with_retry "$MIRROR_BASE_URL/forkop/forkop-apk.pem" "$mirror_key_tmp" "Forkop mirror APK key" ||
-        fail "Unable to download the Forkop mirror APK key"
-    grep -Fq 'BEGIN PUBLIC KEY' "$mirror_key_tmp" ||
-        fail "The downloaded Forkop mirror APK key is invalid"
-    begin_package_mirror_transaction
-    backup_package_mirror_file "$mirror_key"
-    cp "$mirror_key_tmp" "$mirror_key" || fail "Failed to install the Forkop mirror APK key"
-    chmod 0644 "$mirror_key" || fail "Failed to set permissions on the Forkop mirror APK key"
-    for repository_file in /etc/apk/repositories "$distfeeds"; do
+    for repository_file in "$APK_REPOSITORIES_FILE" "$distfeeds"; do
         rewrite_package_repository_file "$repository_file"
     done
-    forkop_repository="/etc/apk/repositories.d/forkop.list"
-    backup_package_mirror_file "$forkop_repository"
-    printf '%s\n' "$MIRROR_BASE_URL/forkop/mirror/current/packages.adb" > "$forkop_repository" ||
-        fail "Failed to configure the Forkop APK repository"
     pkg_list_update || {
         rollback_package_mirror
         fail "Failed to update APK package lists from $MIRROR_BASE_URL; original feeds were restored"
@@ -1787,16 +1930,9 @@ configure_opkg_mirror() {
     command_exists opkg || fail "OpenWrt opkg package manager is required"
     [ -s "$distfeeds" ] || fail "$distfeeds is missing or empty"
 
-    case "$MIRROR_BASE_URL" in
-        https://*|http://*) ;;
-        *) fail "Invalid Forkop mirror URL: $MIRROR_BASE_URL" ;;
-    esac
-    MIRROR_BASE_URL="${MIRROR_BASE_URL%/}"
-
-    begin_package_mirror_transaction
+    backups_before_rewrite="$MIRROR_BACKUP_COUNT"
     rewrite_package_repository_file "$distfeeds"
-    if [ "$MIRROR_BACKUP_COUNT" -eq 0 ]; then
-        commit_package_mirror_transaction
+    if [ "$MIRROR_BACKUP_COUNT" -eq "$backups_before_rewrite" ]; then
         msg "No official OpenWrt OPKG feeds were changed; vendor and custom feeds remain unchanged"
         return 0
     fi
@@ -1810,40 +1946,24 @@ configure_opkg_mirror() {
     msg "OpenWrt package feeds now use $MIRROR_BASE_URL"
 }
 
-# Feeds on the retired mirror, which serves nothing.
-retired_mirror_in_package_feeds() {
-    for repository_file in /etc/apk/repositories /etc/apk/repositories.d/distfeeds.list "$OPKG_DISTFEEDS_FILE"; do
-        [ -f "$repository_file" ] && grep -Eq 'https?://mirror\.51343\.ru/' "$repository_file" && return 0
-    done
-    return 1
-}
-
-# The package feeds move to the mirror once (D-3 (a), UC-081): the Forkop
-# package records the move in forkop.settings.applied_migrations
-# (mirror-migration.sh), and after it they stay as they are, also official
-# feeds the user put back. Only feeds on the retired mirror move again, as
-# in mirror-migration.sh. A mirror named for this run
-# (FORKOP_MIRROR_BASE_URL) is the user's request to move them to it. The
-# record is read through the installer's UCI helper; without ucode there is
-# no Forkop to have recorded it.
-package_feeds_stay() {
-    if [ -z "$PACKAGE_FEEDS_STAY" ]; then
-        PACKAGE_FEEDS_STAY=0
-        if [ -z "${FORKOP_MIRROR_BASE_URL:-}" ] && command_exists ucode &&
-            install_json_ucode uci-get forkop.settings.applied_migrations 2>/dev/null |
-                tr ' ' '\n' | grep -Fxq "$MIRROR_MIGRATION_ID" &&
-            ! retired_mirror_in_package_feeds; then
-            PACKAGE_FEEDS_STAY=1
-        fi
-    fi
-    [ "$PACKAGE_FEEDS_STAY" -eq 1 ]
-}
-
 configure_package_mirror() {
-    if package_feeds_stay; then
-        msg "OpenWrt package feeds were moved to the mirror by an earlier Forkop installation and are left as they are; set FORKOP_MIRROR_BASE_URL to move them to a mirror again"
+    # Feed changes stay revertible until the package lists were updated.
+    begin_package_mirror_transaction
+    remove_upstream_forkop_repository
+
+    if [ -z "$MIRROR_BASE_URL" ]; then
+        # Package lists, bootstrap and dependencies must not depend on the
+        # former upstream mirror; a failed list update restores its feeds.
+        backups_before_restore="$MIRROR_BACKUP_COUNT"
+        restore_legacy_mirror_feeds
+        if [ "$MIRROR_BACKUP_COUNT" -eq "$backups_before_restore" ]; then
+            msg "No dependency mirror was requested; OpenWrt package feeds remain unchanged"
+        else
+            msg "No dependency mirror was requested; OpenWrt feeds left on the former upstream mirror now use downloads.openwrt.org"
+        fi
         return 0
     fi
+
     if [ "$PKG_IS_APK" -eq 1 ]; then
         configure_apk_mirror
     else
@@ -1866,6 +1986,29 @@ pkg_install_files() {
         apk add --allow-untrusted "$@" </dev/null
     else
         opkg install --force-overwrite --force-downgrade "$@" </dev/null
+    fi
+}
+
+opkg_installed_version() {
+    opkg list-installed 2>/dev/null | awk -v pkg="$1" '$1 == pkg && $2 == "-" { print $3; exit }'
+}
+
+# Installs a Forkop package file. opkg calls an installed package of the same
+# version up to date and keeps it, even when it is another build of that version
+# such as an upstream release: --force-reinstall replaces it. opkg runs that as
+# a removal of the installed package (prerm "remove") before the installation,
+# so it is used only when the versions match. apk pins a package file by its
+# hash and replaces another build of the same version by itself.
+pkg_install_forkop_file() {
+    forkop_package_name="$1"
+    forkop_package_file="$2"
+
+    if [ "$PKG_IS_APK" -eq 0 ] && [ -n "$FORKOP_PACKAGE_VERSION" ] &&
+        [ "$(opkg_installed_version "$forkop_package_name")" = "$FORKOP_PACKAGE_VERSION" ]; then
+        msg "Reinstalling $forkop_package_name $FORKOP_PACKAGE_VERSION from the Forkop release"
+        opkg install --force-reinstall --force-overwrite --force-downgrade "$forkop_package_file" </dev/null
+    else
+        pkg_install_files "$forkop_package_file"
     fi
 }
 
@@ -1935,18 +2078,12 @@ mirror_host_name() {
 }
 
 check_mirror_platform_support() {
-    # The feeds stay as they are: the mirror is not asked.
-    ! package_feeds_stay || return 0
+    # Only an opted-in mirror publishes a platform index worth consulting.
+    [ -n "$MIRROR_BASE_URL" ] || return 0
 
     platform_index="$TMP_DIR/forkop-platforms.tsv"
     platform_format="ipk"
     [ "$PKG_IS_APK" -eq 0 ] || platform_format="apk"
-
-    case "$MIRROR_BASE_URL" in
-        https://*|http://*) ;;
-        *) fail "Invalid Forkop mirror URL: $MIRROR_BASE_URL" ;;
-    esac
-    MIRROR_BASE_URL="${MIRROR_BASE_URL%/}"
 
     platform_index_url="$MIRROR_BASE_URL/openwrt/forkop-platforms.tsv"
     platform_index_error="$TMP_DIR/forkop-platforms.err"
@@ -1960,12 +2097,11 @@ check_mirror_platform_support() {
         # The deadline helper kills a stalled fetch without a message of its own.
         [ -n "$platform_index_reason" ] || platform_index_reason="$FETCHER produced no output; the request timed out or was interrupted"
 
-        if [ "$MIRROR_BASE_URL" = "$DEFAULT_MIRROR_BASE_URL" ]; then
-            fail "Could not download $platform_index_url: $platform_index_reason
+        # The package list update against the mirror decides; it restores the
+        # original feeds when the mirror cannot serve this router.
+        warn "Could not download $platform_index_url: $platform_index_reason; package feeds will be verified before installation
 Check that this router resolves $(mirror_host_name) and can reach it over HTTPS. If your mirror answers with a private address, DNS rebind protection drops that answer: allow it with
     uci add_list dhcp.@dnsmasq[0].rebind_domain='$(mirror_host_name)' && uci commit dhcp && /etc/init.d/dnsmasq restart"
-        fi
-        warn "Could not download $platform_index_url: $platform_index_reason; package feeds will be verified before installation"
         return 0
     fi
 
@@ -1980,7 +2116,7 @@ Check that this router resolves $(mirror_host_name) and can reach it over HTTPS.
         return 0
     fi
 
-    fail "The mirror does not yet contain $OPENWRT_TARGET / $OPENWRT_ARCHITECTURE for OpenWrt $OPENWRT_RELEASE ($platform_format)"
+    fail "The dependency mirror $MIRROR_BASE_URL does not yet contain $OPENWRT_TARGET / $OPENWRT_ARCHITECTURE for OpenWrt $OPENWRT_RELEASE ($platform_format). Run the installer without --mirror or FORKOP_MIRROR_BASE_URL to use the official OpenWrt feeds."
 }
 
 check_system() {
@@ -2009,7 +2145,7 @@ check_system() {
             [ "$PKG_IS_APK" -eq 0 ] || fail "OpenWrt $release must use opkg/IPK packages"
             ;;
         24.*)
-            fail "The mirror supports OpenWrt 24.10.x, but not $release"
+            fail "Forkop supports OpenWrt 24.10.x, but not $release"
             ;;
         *)
             [ "$PKG_IS_APK" -eq 1 ] || fail "OpenWrt $release is expected to use apk packages"
@@ -2476,39 +2612,44 @@ get_luci_main_lang() {
 }
 
 fetch_github_latest_release_json() {
-    owner="$1"
-    repo="$2"
+    repo="$1"
     response=""
     message=""
-    url="https://api.github.com/repos/${owner}/${repo}/releases/latest"
+    url="https://api.github.com/repos/${repo}/releases/latest"
 
     response="$(http_get "$url" 2>/dev/null || true)"
-    [ -n "$response" ] || fail "Failed to query GitHub latest release metadata for ${owner}/${repo}"
+    [ -n "$response" ] || fail "Failed to query GitHub latest release metadata for ${repo}"
 
     message="$(printf '%s' "$response" | install_json_ucode github-message 2>/dev/null)" ||
-        fail "GitHub returned an invalid latest release response for ${owner}/${repo}"
+        fail "GitHub returned an invalid latest release response for ${repo}"
     case "$message" in
         *"API rate limit"*|*"rate limit exceeded"*)
             fail "GitHub API rate limit reached. Try again later."
             ;;
         "Not Found")
-            fail "No published latest release found for ${owner}/${repo}"
+            fail "No published latest release found for ${repo}"
             ;;
     esac
 
     printf '%s' "$response"
 }
 
+# Sets FORKOP_RELEASE_JSON and FORKOP_RELEASE_SOURCE: the release channel
+# first, the GitHub Releases of RELEASE_REPO when the channel is unavailable.
 fetch_forkop_latest_release_json() {
     release_url="${RELEASE_BASE_URL%/}/updates/latest.json"
     response="$(http_get "$release_url" 2>/dev/null || true)"
     if [ -n "$response" ] &&
         [ -n "$(printf '%s' "$response" | install_json_ucode release-tag 2>/dev/null)" ]; then
-        printf '%s' "$response"
+        FORKOP_RELEASE_JSON="$response"
+        FORKOP_RELEASE_SOURCE="${RELEASE_BASE_URL%/}"
         return 0
     fi
 
-    fetch_github_latest_release_json "$REPO_OWNER" "$REPO_NAME"
+    warn "The release channel $release_url is unavailable; using the GitHub Releases of $RELEASE_REPO"
+    FORKOP_RELEASE_JSON="$(fetch_github_latest_release_json "$RELEASE_REPO")" ||
+        fail "Failed to resolve the latest Forkop release"
+    FORKOP_RELEASE_SOURCE="GitHub Releases of $RELEASE_REPO"
 }
 
 release_asset_url() {
@@ -2524,9 +2665,10 @@ resolve_forkop_release() {
 
     [ "$PKG_IS_APK" -eq 1 ] && asset_ext="apk"
 
-    FORKOP_RELEASE_JSON="$(fetch_forkop_latest_release_json)"
+    fetch_forkop_latest_release_json
     FORKOP_RELEASE_TAG="$(printf '%s' "$FORKOP_RELEASE_JSON" | install_json_ucode release-tag 2>/dev/null)"
     [ -n "$FORKOP_RELEASE_TAG" ] || fail "Failed to detect the Forkop release tag"
+    msg "Forkop release $FORKOP_RELEASE_TAG from $FORKOP_RELEASE_SOURCE"
 
     FORKOP_BACKEND_URL="$(printf '%s' "$FORKOP_RELEASE_JSON" | install_json_ucode release-asset-url backend "$asset_ext" 2>/dev/null)"
     [ -n "$FORKOP_BACKEND_URL" ] || fail "The Forkop release does not contain a forkop .$asset_ext package"
@@ -2817,7 +2959,7 @@ download_forkop_packages() {
 }
 
 install_backend_package() {
-    pkg_install_files "$FORKOP_BACKEND_FILE" || fail "forkop installation failed"
+    pkg_install_forkop_file forkop "$FORKOP_BACKEND_FILE" || fail "forkop installation failed"
 
     [ -x /usr/bin/forkop ] || fail "forkop executable is missing after package installation"
     /usr/bin/forkop package_postinst ||
@@ -2841,14 +2983,6 @@ migrate_legacy_configuration() {
             cp "$LEGACY_CONFIG_BACKUP" /etc/config/forkop 2>/dev/null || true
             fail "Legacy configuration migration failed; the original configuration was restored"
         fi
-        # The package moves the feeds to the mirror once and records it in
-        # its configuration (D-3 (a), UC-081), which the migrated one has
-        # just replaced. Its mirror migration runs again on this one while
-        # the feeds are still as configure_package_mirror left them, so the
-        # record is not lost and the next package change does not move
-        # official feeds the user may put back.
-        /usr/share/forkop/mirror-migration.sh ||
-            warn "The migrated configuration does not record the move of the package feeds to the mirror; the next Forkop package change may move them again"
     else
         warn "The legacy package had no readable configuration; Forkop defaults will be used"
     fi
@@ -2876,11 +3010,33 @@ validate_installed_configuration() {
 }
 
 install_ui_packages() {
-    pkg_install_files "$FORKOP_APP_FILE" || fail "luci-app-forkop installation failed"
+    pkg_install_forkop_file luci-app-forkop "$FORKOP_APP_FILE" || fail "luci-app-forkop installation failed"
 
     if [ -n "$FORKOP_I18N_FILE" ]; then
-        pkg_install_files "$FORKOP_I18N_FILE" || fail "luci-i18n-forkop-ru installation failed"
+        pkg_install_forkop_file luci-i18n-forkop-ru "$FORKOP_I18N_FILE" || fail "luci-i18n-forkop-ru installation failed"
     fi
+}
+
+persist_mirror_setting() {
+    # Without an opt-in the configured forkop.settings.mirror_base_url stays as
+    # it is; the package postinst already reconciled the feeds with it.
+    [ -n "$MIRROR_BASE_URL" ] || return 0
+
+    # The package postinst ran its one-shot configuration migrations already,
+    # so the opted-in mirror is saved only now.
+    if install_json_ucode installer-persist-mirror "$MIRROR_BASE_URL"; then
+        MIRROR_SETTING_SAVED=1
+        msg "Dependency mirror saved in forkop.settings.mirror_base_url: $MIRROR_BASE_URL"
+    else
+        warn "Failed to save the dependency mirror; set forkop.settings.mirror_base_url to $MIRROR_BASE_URL in LuCI or with uci"
+    fi
+
+    if [ ! -x "$MIRROR_MIGRATION_SCRIPT" ]; then
+        warn "$MIRROR_MIGRATION_SCRIPT is missing; package feeds were not reconciled with the mirror setting"
+        return 0
+    fi
+    "$MIRROR_MIGRATION_SCRIPT" </dev/null ||
+        warn "Failed to reconcile package feeds with the mirror setting; run $MIRROR_MIGRATION_SCRIPT again later"
 }
 
 post_install() {
@@ -2890,6 +3046,18 @@ post_install() {
         fail "Failed to complete Forkop post-install actions"
 }
 
+print_installation_summary() {
+    msg "Forkop $FORKOP_PACKAGE_VERSION has been installed successfully"
+    msg "Forkop release source: $FORKOP_RELEASE_SOURCE ($FORKOP_RELEASE_TAG)"
+    if [ -z "$MIRROR_BASE_URL" ]; then
+        msg "Dependency mirror: not requested; forkop.settings.mirror_base_url was left unchanged (opt in with --mirror URL)"
+    elif [ "$MIRROR_SETTING_SAVED" -eq 1 ]; then
+        msg "Dependency mirror: $MIRROR_BASE_URL"
+    else
+        warn "Dependency mirror: $MIRROR_BASE_URL was used for this installation but is not saved in forkop.settings.mirror_base_url"
+    fi
+}
+
 main() {
     trap cleanup EXIT
     trap 'exit 129' HUP
@@ -2897,6 +3065,7 @@ main() {
     trap 'exit 143' TERM
 
     parse_args "$@"
+    validate_installer_settings
     check_root
     init_tmp_dir
     detect_fetcher
@@ -2910,6 +3079,7 @@ main() {
     select_sing_box_installation || fail "sing-box selection was cancelled"
 
     pkg_list_update || fail "Failed to update package lists"
+    commit_package_mirror_transaction
     ensure_bootstrap_ucode_runtime
 
     resolve_forkop_release
@@ -2929,18 +3099,13 @@ main() {
         install_backend_package
     fi
     install_ui_packages
+    persist_mirror_setting
     install_selected_sing_box
     validate_installed_configuration
     post_install
     remove_legacy_backup
 
-    msg "Forkop $FORKOP_PACKAGE_VERSION has been installed successfully"
-    msg "Forkop release source: ${RELEASE_BASE_URL%/} (${FORKOP_RELEASE_TAG})"
-    if package_feeds_stay; then
-        msg "Package feeds: left as configured"
-    else
-        msg "Dependency mirror: ${MIRROR_BASE_URL}"
-    fi
+    print_installation_summary
     if [ "$FORKOP_CONFIG_READY" -eq 1 ]; then
         warn "Open LuCI and review your rules before enabling Forkop"
     else

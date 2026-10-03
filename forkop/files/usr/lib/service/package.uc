@@ -614,6 +614,16 @@ function configuration_migrated() {
     return command_success_from_args([ "ucode", "-L", LIB_DIR, LIB_DIR + "/config/migration.uc", "migrated" ]);
 }
 
+// Zapret-Manager launchers that Forkop wrote for another mirror, a former
+// upstream one among them, would keep running the script from that host:
+// they follow the current mirror setting again (components/action.uc).
+function reconcile_zapret_manager_launchers() {
+    let module = LIB_DIR + "/components/action.uc";
+    if (path_exists(module) &&
+        !command_success_from_args([ "ucode", "-L", LIB_DIR, module, "reconcile-zapret-manager-launchers" ]))
+        warn("Unable to update the Zapret-Manager launchers for the current mirror setting.\n");
+}
+
 function postinst_restore() {
     if (env("IPKG_INSTROOT", "") != "")
         return true;
@@ -624,6 +634,7 @@ function postinst_restore() {
     // the policy only this package's loader loads (UC-191).
     if (path_exists(KILLSWITCH_UC))
         command_success_from_args([ "ucode", "-L", LIB_DIR, KILLSWITCH_UC, "postinst" ]);
+    reconcile_zapret_manager_launchers();
 
     if (!restore_missing_config())
         return false;

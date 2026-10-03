@@ -10,8 +10,8 @@
 # that starts again a Forkop that the upgrade stopped. Forkop stayed down
 # and the package manager reported a broken package.
 #
-# Now the mirror step is best effort with a log line (it puts the feeds back
-# itself), package_postinst always runs, and the script ends with the first
+# Now the mirror step is best effort (the dependency mirror is opt-in; a
+# mirror problem only warns and leaves the feeds as they were), package_postinst always runs, and the script ends with the first
 # failure of the migration and package_postinst. package_postinst starts
 # Forkop only on a configuration that the migrations of this release have
 # migrated: when the migration could not be saved (a read-only overlay) it
@@ -238,6 +238,9 @@ start_failure_recorded() {
 
 # ---- the mirror is unreachable: Forkop that ran comes back ----------------
 
+# The mirror cases run with a mirror the user opted in to.
+export FORKOP_MIRROR_BASE_URL="https://mirror.example.test"
+
 for script in ipk/postinst apk/backend-post-upgrade.sh; do
   label="$script, mirror unreachable"
   configure migrated
@@ -245,18 +248,18 @@ for script in ipk/postinst apk/backend-post-upgrade.sh; do
   [ "${script%%/*}" != apk ] || apk="$WORK_DIR/bin/apk"
   FORKOP_MIGRATION_APK_BIN="$apk" MIRROR_INDEX=unreachable run_case "$script" "$LIB" 1
   [ "$STATUS" -eq 0 ] || fail "$label: the script exited $STATUS"
-  grep -Fq 'mirror platform index is unavailable' "$WORK_DIR/stderr" || fail "$label: the mirror step did not fail as it does without its mirror"
+  grep -Fq 'platform index of https://mirror.example.test is unavailable; package feeds were not changed' "$WORK_DIR/stderr" ||
+    fail "$label: the mirror step did not report its unreachable mirror"
   postinst_ran || fail "$label: package_postinst did not run"
   started || fail "$label: Forkop that ran before the upgrade was not started again"
   handoff_consumed || fail "$label: the running state handed over by prerm was not consumed"
-  grep -q '^logger .*mirror migration failed' "$EVENTS" || fail "$label: the mirror failure was not logged"
 done
 
 label="ipk, platform not in the mirror's index"
 configure migrated
 MIRROR_INDEX=other run_case ipk/postinst "$LIB" 1
 [ "$STATUS" -eq 0 ] || fail "$label: the script exited $STATUS"
-grep -Fq 'does not yet contain' "$WORK_DIR/stderr" || fail "$label: the mirror step did not refuse the platform"
+grep -Fq 'does not carry x86/64' "$WORK_DIR/stderr" || fail "$label: the mirror step did not refuse the platform"
 started || fail "$label: Forkop that ran before the upgrade was not started again"
 
 label="apk install, mirror unreachable"
@@ -272,8 +275,9 @@ MIRROR_INDEX=listed run_case ipk/postinst "$LIB" 1
 [ "$STATUS" -eq 0 ] || fail "$label: the script exited $STATUS"
 started || fail "$label: Forkop was not started again"
 grep -q '^logger .*mirror migration failed' "$EVENTS" && fail "$label: a mirror migration that worked was logged as failed"
-grep -q "^uci -q add_list forkop.settings.applied_migrations" "$EVENTS" ||
-  grep -q '^uci -q set forkop.settings.mirror_base_url=' "$EVENTS" || fail "$label: the mirror migration did not run to its end"
+grep -Fq 'https://mirror.example.test/openwrt/releases/' "$WORK_DIR/mroot/etc/opkg/distfeeds.conf" ||
+  fail "$label: the mirror migration did not run to its end"
+unset FORKOP_MIRROR_BASE_URL
 
 # ---- the migration fails: package_postinst runs and fails closed ----------
 

@@ -8300,26 +8300,31 @@ function hideSelectedRulesetChoices(option, choices) {
   };
 }
 
-const SECONDARY_RULESET_MIRROR_PREFIX =
-  "https://mirror.infotechtg.ru/forkop/lists/b4geoip-forkop/srs/";
-const LEGACY_SECONDARY_RULESET_MIRROR_PREFIX =
-  "https://mirror.51343.ru/forkop/lists/b4geoip-forkop/srs/";
+// Built-in rule sets #2 are saved with their direct raw GitHub URL: the
+// dependency mirror is opt-in, and the backend falls back to jsDelivr. URLs on
+// the former upstream mirrors are still read from existing configurations and
+// become direct ones on the next save.
 const SECONDARY_RULESET_RAW_PREFIX =
   "https://raw.githubusercontent.com/Greeg0ry/b4geoip-forkop/main/srs/";
 const SECONDARY_RULESET_CDN_PREFIX =
   "https://cdn.jsdelivr.net/gh/Greeg0ry/b4geoip-forkop@main/srs/";
+const LEGACY_SECONDARY_RULESET_MIRROR_PREFIXES = [
+  "https://mirror.infotechtg.ru/forkop/lists/b4geoip-forkop/srs/",
+  "http://mirror.infotechtg.ru/forkop/lists/b4geoip-forkop/srs/",
+  "https://mirror.51343.ru/forkop/lists/b4geoip-forkop/srs/",
+  "http://mirror.51343.ru/forkop/lists/b4geoip-forkop/srs/",
+];
 
 function secondaryRulesetUrl(value) {
-  return `${SECONDARY_RULESET_MIRROR_PREFIX}${value}.srs`;
+  return `${SECONDARY_RULESET_RAW_PREFIX}${value}.srs`;
 }
 
 function secondaryRulesetId(reference) {
   const value = `${reference || ""}`;
   const prefix = [
-    SECONDARY_RULESET_MIRROR_PREFIX,
-    LEGACY_SECONDARY_RULESET_MIRROR_PREFIX,
     SECONDARY_RULESET_RAW_PREFIX,
     SECONDARY_RULESET_CDN_PREFIX,
+    ...LEGACY_SECONDARY_RULESET_MIRROR_PREFIXES,
   ].find((candidate) => value.startsWith(candidate));
   if (!prefix || !value.endsWith(".srs")) return "";
   const id = value.slice(prefix.length, -4);

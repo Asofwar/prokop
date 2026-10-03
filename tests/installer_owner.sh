@@ -70,14 +70,16 @@ wait "$zombie_parent" 2>/dev/null || true
 
 [ -r "$INSTALLER" ] || fail "install.sh is missing"
 
-grep -Fq 'REPO_OWNER="slayer326"' "$INSTALLER" ||
-  fail "installer must use releases from slayer326/forkop"
-grep -Fq 'RELEASE_BASE_URL="${FORKOP_RELEASE_BASE_URL:-https://fold8.ru/forkop}"' "$INSTALLER" ||
-  fail "installer must default to the public fold8.ru release channel"
+grep -Fxq 'RELEASE_REPO="${FORKOP_RELEASE_REPO:-Asofwar/forkop}"' "$INSTALLER" ||
+  fail "installer must default to the releases of the Asofwar/forkop fork"
+grep -Fxq 'RELEASE_BASE_URL="${FORKOP_RELEASE_BASE_URL:-https://asofwar.github.io/forkop}"' "$INSTALLER" ||
+  fail "installer must default to the fork's GitHub Pages release channel"
 grep -Fq '"${RELEASE_BASE_URL%/}/updates/latest.json"' "$INSTALLER" ||
-  fail "installer must resolve Forkop packages through fold8.ru first"
-grep -Fq 'fetch_github_latest_release_json "$REPO_OWNER" "$REPO_NAME"' "$INSTALLER" ||
-  fail "installer must retain GitHub Releases as a fallback"
+  fail "installer must resolve Forkop packages through the release channel first"
+grep -Fq 'fetch_github_latest_release_json "$RELEASE_REPO"' "$INSTALLER" ||
+  fail "installer must retain the fork's GitHub Releases as a fallback"
+source_refute "installer must not depend on upstream release hosts" -E \
+  'slayer326|fold8\.ru|REPO_OWNER|REPO_NAME' "$INSTALLER"
 
 grep -Fq 'trap cleanup EXIT' "$INSTALLER" ||
   fail "installer cleanup must run on every exit"
@@ -262,6 +264,34 @@ awk '
   }
 ' "$INSTALLER" || fail "install.sh must download, back up legacy config, and preflight before destructive migration"
 
+# Settings are validated before anything runs; feed changes stay revertible
+# until the package lists were updated; an opted-in mirror is saved after
+# the Forkop packages (and their postinst migrations) and before sing-box.
+awk '
+  /^[[:space:]]*main\(\)[[:space:]]*\{/ { in_main = 1 }
+  in_main && /parse_args/ { parse = NR }
+  in_main && /validate_installer_settings/ { settings = NR }
+  in_main && /check_system/ { system_check = NR }
+  in_main && /configure_package_mirror/ { feeds = NR }
+  in_main && /pkg_list_update/ { update = NR }
+  in_main && /commit_package_mirror_transaction/ { feeds_commit = NR }
+  in_main && /ensure_bootstrap_ucode_runtime/ { ensure = NR }
+  in_main && /migrate_legacy_configuration/ { migration = NR }
+  in_main && /install_ui_packages/ { ui = NR }
+  in_main && /persist_mirror_setting/ { persist_mirror = NR }
+  in_main && /install_selected_sing_box/ { sing_box = NR }
+  in_main && /^[[:space:]]*\}/ { in_main = 0 }
+  END {
+    if (parse > 0 && settings == parse + 1 && system_check > settings &&
+        feeds > system_check && update > feeds &&
+        feeds_commit == update + 1 && ensure > feeds_commit &&
+        persist_mirror > ui && persist_mirror > migration &&
+        sing_box == persist_mirror + 1)
+      exit 0
+    exit 1
+  }
+' "$INSTALLER" || fail "install.sh must validate settings first, commit feed changes after the list update and save the mirror between the Forkop packages and sing-box"
+
 helper="$WORK_DIR/install-json.uc"
 awk '
   /cat > "\$helper_path" <<'\''EOF'\''/ { capture = 1; next }
@@ -297,6 +327,87 @@ printf '%s' "{\"tag_name\":\"0.0.1\",\"assets\":[{\"name\":\"forkop_0.0.1.ipk\",
 if printf '%s' '{"tag_name":"0.0.1","assets":[{"name":"forkop_0.0.1_all.ipk","browser_download_url":"https://example.com/old.ipk"}]}' |
   ucode "$helper" release-asset-url backend ipk | grep -q .; then
   fail "embedded helper must reject package names outside the Forkop release format"
+fi
+
+# installer-persist-mirror saves an opted-in mirror through the UCI cursor.
+# The fake module keeps the configuration as JSON and, like libuci, refuses
+# to set an option of a missing section.
+fake_uci_dir="$WORK_DIR/fake-uci"
+mkdir -p "$fake_uci_dir"
+cat >"$fake_uci_dir/uci.uc" <<'UC'
+let fs = require("fs");
+let state_path = getenv("FAKE_UCI_STATE");
+
+function read_state() {
+    let handle = fs.open(state_path, "r");
+    if (!handle)
+        return {};
+    let data = json(handle.read("all"));
+    handle.close();
+    return data;
+}
+
+return {
+    cursor: function() {
+        let state = read_state();
+        return {
+            load: function(conf) {
+                state = read_state();
+                return state[conf] != null;
+            },
+            get: function(conf, section, option) {
+                let values = state[conf]?.[section];
+                if (values == null)
+                    return null;
+                return option == null ? values[".type"] : values[option];
+            },
+            get_all: function(conf, section) {
+                return state[conf]?.[section];
+            },
+            set: function(conf, section, option, value) {
+                if (state[conf]?.[section] == null)
+                    return null;
+                state[conf][section][option] = value;
+                return true;
+            },
+            delete: function(conf, section, option) {
+                return true;
+            },
+            commit: function(conf) {
+                let handle = fs.open(state_path, "w");
+                handle.write(sprintf("%J", state));
+                handle.close();
+                return true;
+            }
+        };
+    }
+};
+UC
+uci_state="$WORK_DIR/fake-uci.json"
+mirror_value() {
+  ucode -e 'let s = json(require("fs").readfile(getenv("FAKE_UCI_STATE"))); print(s.forkop.settings.mirror_base_url, "\n");'
+}
+printf '%s\n' '{"forkop":{"settings":{".type":"settings","mirror_base_url":""}}}' >"$uci_state"
+FAKE_UCI_STATE="$uci_state" ucode -L "$fake_uci_dir" "$helper" installer-persist-mirror 'https://mirror.example/base' ||
+  fail "installer-persist-mirror must save an opted-in mirror"
+[ "$(FAKE_UCI_STATE="$uci_state" mirror_value)" = 'https://mirror.example/base' ] ||
+  fail "installer-persist-mirror did not commit forkop.settings.mirror_base_url"
+for rejected_mirror in '' 'mirror.example' 'ftp://mirror.example' 'https:///path'; do
+  printf '%s\n' '{"forkop":{"settings":{".type":"settings","mirror_base_url":""}}}' >"$uci_state"
+  if FAKE_UCI_STATE="$uci_state" ucode -L "$fake_uci_dir" "$helper" installer-persist-mirror "$rejected_mirror"; then
+    fail "installer-persist-mirror must reject an invalid mirror URL: '$rejected_mirror'"
+  fi
+  [ -z "$(FAKE_UCI_STATE="$uci_state" mirror_value)" ] ||
+    fail "installer-persist-mirror changed the configuration for an invalid URL: '$rejected_mirror'"
+done
+printf '%s\n' '{"forkop":{"main":{".type":"section"}}}' >"$uci_state"
+if FAKE_UCI_STATE="$uci_state" ucode -L "$fake_uci_dir" "$helper" installer-persist-mirror 'https://mirror.example'; then
+  fail "installer-persist-mirror must fail without the forkop settings section"
+fi
+if ucode -e 'require("uci")' >/dev/null 2>&1; then
+  :
+elif ucode "$helper" installer-persist-mirror 'https://mirror.example' 2>/dev/null; then
+  fail "installer-persist-mirror must fail when UCI is unavailable"
 fi
 
 cat >"$WORK_DIR/opkg" <<'SH'

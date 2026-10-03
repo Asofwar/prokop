@@ -146,7 +146,7 @@ config section 'main'
 	list selector_proxy_links 'socks5://10.0.0.1:1080'
 	list rule_set_with_subnets 'https://raw.githubusercontent.com/Greeg0ry/b4geoip-forkop/main/srs/hetzner.srs'
 	list rule_set_with_subnets 'https://raw.githubusercontent.com/Greeg0ry/b4geoip-forkop/main/srs/google.srs'
-	list remote_domain_lists 'https://mirror.51343.ru/forkop/lists/russia_inside.lst'
+	list remote_domain_lists 'https://mirror.51343.ru/forkop/lists/allow-domains/Russia/inside-raw.lst'
 
 config urltest
 	option section 'main'
@@ -180,15 +180,17 @@ before_count="$(count)"
 restore older
 [ "$(json status)" = success ] || fail "older snapshot: not restored"
 has_line "	option marker 'older'" || fail "older snapshot: the snapshot configuration was not restored"
-has_line "	option mirror_base_url 'https://mirror.infotechtg.ru'" || fail "the retired mirror came back"
+# The dependency mirror is opt-in (fork_mirror_opt_in_v1): the migrated
+# snapshot names no former upstream mirror.
+! grep -Eq "mirror_base_url '.*(infotechtg|51343)" "$FORKOP_CONFIG_FILE" || fail "the retired mirror came back"
 ! grep -q 'mirror\.51343\.ru' "$FORKOP_CONFIG_FILE" || fail "a URL of the retired mirror came back"
 ! grep -q 'hetzner\.srs' "$FORKOP_CONFIG_FILE" || fail "a retired rule set came back"
 # D-13 (b): the rule keeps the id for the rule editor's notice.
 has_line "	list retired_rule_sets 'hetzner'" || fail "the rule lost the notice of its retired rule set"
-has_line "	list rule_set_with_subnets 'https://mirror.infotechtg.ru/forkop/lists/b4geoip-forkop/srs/google.srs'" ||
-  fail "a current rule set was not moved to the mirror"
-has_line "	list remote_domain_lists 'https://mirror.infotechtg.ru/forkop/lists/russia_inside.lst'" ||
-  fail "a list of the retired mirror was not moved"
+has_line "	list rule_set_with_subnets 'https://raw.githubusercontent.com/Greeg0ry/b4geoip-forkop/main/srs/google.srs'" ||
+  fail "a current rule set was not moved to its direct source"
+has_line "	list remote_domain_lists 'https://raw.githubusercontent.com/itdoginfo/allow-domains/main/Russia/inside-raw.lst'" ||
+  fail "a list of the retired mirror was not moved to its direct source"
 has_line "	option config_version '1.0.5'" || fail "config_version was not kept"
 for id in $IDS; do
   has_line "	list applied_migrations '$id'" || fail "applied_migrations lost $id"
@@ -312,7 +314,8 @@ restore older
 rm -f "$STATE/stopped"
 [ "$(json status)" = restored_not_started ] && [ "$(json runtime)" = "" ] || fail "stopped: status"
 [ "$(json migration.from)" = 1.0.23 ] || fail "stopped: migration not reported"
-has_line "	option marker 'older'" && has_line "	option mirror_base_url 'https://mirror.infotechtg.ru'" ||
+has_line "	option marker 'older'" &&
+  has_line "	list remote_domain_lists 'https://raw.githubusercontent.com/itdoginfo/allow-domains/main/Russia/inside-raw.lst'" ||
   fail "stopped: the migrated copy was not kept"
 [ "$(lkg)" = stale ] || fail "stopped: last-known-working moved"
 grep -qx 'health:restore:not_started' "$STATE/events" || fail "stopped: history"
@@ -342,7 +345,7 @@ working="$(lkg)"
 node -e '
   const s = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
   if (s.content.includes("UNVERIFIED-EDIT") || !s.content.includes("option marker \x27older\x27") ||
-    !s.content.includes("mirror.infotechtg.ru") || s.content.includes("mirror.51343.ru")) process.exit(1);
+    !s.content.includes("raw.githubusercontent.com/itdoginfo") || s.content.includes("mirror.51343.ru")) process.exit(1);
 ' "$FORKOP_SNAPSHOT_DIR/$working.json" || fail "edit during guard release: last-known-working holds an unverified edit"
 ok "edit during the guard release -> last-known-working holds the migrated copy the reload proved"
 

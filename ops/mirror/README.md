@@ -1,4 +1,39 @@
-# OpenWrt dependency mirror
+# Optional dependency mirror
+
+Forkop does not need a mirror. Releases come from the fork's own channel
+(`https://asofwar.github.io/forkop`, falling back to the GitHub releases of
+`Asofwar/forkop`), and without a mirror every router uses the official OpenWrt
+feeds and the original list, rule-set, sing-box-extended and Zapret-Manager
+sources. The scripts here let the fork owner (or anyone) run a self-hosted
+accelerator for those dependencies, for networks where the original hosts are
+slow or unreachable.
+
+A router uses a mirror only after an explicit opt-in:
+
+```sh
+wget -qO- https://asofwar.github.io/forkop/install.sh | sh -s -- --mirror https://mirror.example.org
+# or, on an installed router:
+uci set forkop.settings.mirror_base_url=https://mirror.example.org && uci commit forkop
+/usr/share/forkop/mirror-migration.sh
+```
+
+`router-bootstrap.sh MIRROR_URL` is a wrapper around the first command. There
+is no default mirror: an empty `mirror_base_url` means "disabled", and the
+installer and packages never substitute a host. The legacy upstream mirrors
+(`mirror.infotechtg.ru`, `mirror.51343.ru`) are recognised only to clean them
+out of existing configurations and package feeds.
+
+The router does not trust anything signed by a mirror. Neither the installer
+nor the packages download `<mirror>/forkop/forkop-apk.pem` into
+`/etc/apk/keys` or write `/etc/apk/repositories.d/forkop.list`, and both remove
+`/etc/apk/keys/forkop-mirror.pem` and that feed when they find them: apk trusts
+every key in `/etc/apk/keys` for every repository, and a mirror's Forkop feed
+would replace the fork's packages with whatever the mirror builds. A mirror
+only ever serves OpenWrt packages, lists and third-party components; Forkop
+packages always come from the release channel, verified against its SHA-256
+metadata.
+
+## OpenWrt feeds
 
 `sync-openwrt.sh` mirrors the OpenWrt target, kernel, and package feeds needed by
 Forkop. Supported platforms are configured with one target/architecture pair per
@@ -32,34 +67,38 @@ After every completely successful run, the script atomically publishes
 target<TAB>architecture<TAB>release<TAB>format
 ```
 
-The installer uses this endpoint to reject unavailable combinations before
-changing package feeds. If the endpoint is absent (for compatibility with an
-older mirror), it falls back to changing the feeds transactionally and checking
-them with `opkg update` or `apk update`. The default dependency mirror in this
-fork is `https://mirror.infotechtg.ru`: its readiness index is mandatory, so a
-missing index never starts a feed migration. Forkop releases still come from
-`https://fold8.ru/forkop`, not from the upstream author's release repository.
+When a mirror is enabled, the installer and the package scripts read this index
+before they change any package feed, and leave the feeds untouched when the
+index is unreachable or does not list the router's release and architecture.
+The exact release and kernel ABI in an existing feed URL are preserved, and
+third-party firmware feeds are not replaced. When the mirror is disabled again,
+feeds that point at a legacy upstream mirror are restored to
+`https://downloads.openwrt.org`; feeds on any other host are left alone.
 
-The own-mirror synchronization configuration includes OpenWrt **24.10.0,
-24.10.1, 24.10.5 and 25.12.5** for Filogic and Rockchip. These are planned
-combinations, not a promise that all files have already finished downloading;
-consult the live platform index before installation. The exact release and
-kernel ABI in an existing feed URL are preserved. Third-party firmware feeds
-are not replaced. The previous built-in `mirror.51343.ru` URLs are migrated to
-the own mirror; an APK key replacement is rolled back with the feeds if package
-index validation fails.
+The synchronization configuration in this directory includes OpenWrt
+**24.10.0, 24.10.1, 24.10.5 and 25.12.5** for Filogic and Rockchip. These are
+planned combinations, not a promise that all files have already finished
+downloading; consult the live platform index before pointing routers at it.
 
 Adding a line can require substantial storage: every target has its own package
 and kernel ABI trees, while package feeds are downloaded once per unique
-architecture. A merged code change does not enable a platform on the public
-mirror; the mirror operator must update the production configuration and finish
-a full successful synchronization first.
+architecture. A merged code change does not enable a platform on a mirror; the
+mirror operator must update the production configuration and finish a full
+successful synchronization first.
 
-`sync-forkop-release.py` checks the latest stable GitHub release assets, verifies
-their declared size and SHA-256 digest, and calls `publish-forkop-feed.sh` to
-create the signed APK repository under `/forkop/mirror/current/`. Run it with
-`forkop-release-sync.service` after placing the OpenWrt host `apk` tool at the
-configured path. The release service does not build packages on the mirror host.
+## Forkop release copies
+
+`sync-forkop.sh` and `sync-forkop-release.py` copy the latest stable release of
+`FORKOP_GITHUB_REPOSITORY` (default `Asofwar/forkop`); the latter verifies the
+declared size and SHA-256 digest of every asset and calls
+`publish-forkop-feed.sh` to build a signed APK repository under
+`/forkop/mirror/current/`. `update-forkop-from-git.sh` rebuilds a tag from Git
+and refuses sources that do not follow releases of that repository. These
+copies are for browsing or manual use only: Forkop routers never add that feed
+or its key (see above), and the release channel is not served from a mirror.
+Run the release service with `forkop-release-sync.service` after placing the
+OpenWrt host `apk` tool at the configured path; it does not build packages on
+the mirror host.
 
 ## Zapret-Manager cache (home mirror)
 
@@ -74,22 +113,31 @@ the home LAN resolver can return Fake-IP addresses. Host and other containers'
 DNS settings are not changed.
 
 The entry script served from Screamshow/Zapret-Manager is adapted to default to
-`https://mirror.infotechtg.ru`, including after it recreates its own launchers.
-This is a download cache, not validation or endorsement of every optional action
-in the third-party manager. Some optional tools still use their original external
-URLs; do not claim the manager is completely offline or install it unattended.
+the mirror's own public URL, including after it recreates its own launchers.
+Set it in `ZAPRET_MANAGER_MIRROR` (for example in an `.env` file next to the
+compose file); the service refuses to start without it. Routers without a
+configured mirror run Zapret-Manager directly from GitHub and never see this
+cache. This is a download cache, not validation or endorsement of every
+optional action in the third-party manager. Some optional tools still use their
+original external URLs; do not claim the manager is completely offline or
+install it unattended.
 
-On the existing home deployment, use the pinned, locally available Python image
+On a home deployment, use the pinned, locally available Python image
 in `home/zapret-compose.yml`. Install the script/config under
 `/mnt/storage/forkop-mirror/config/` and create only
 `/mnt/storage/forkop-mirror/data/cache/zapret-manager` owned by 65534:65534.
 Start the separate compose project, warm the manager endpoint, and validate
 `home/web-with-zapret.Caddyfile` before applying it to the mirror's own web service.
-Back up its old Caddyfile first. Never restart the shared edge Caddy or other
+Back up its old Caddyfile first. Never restart a shared edge Caddy or other
 projects. Rollback: restore that Caddyfile, restart only
 `forkop-mirror-web.service`, then stop only the cache compose project.
 
-Release branches `codex/release-*` build downloadable candidate artifacts without
-publishing. Tag publication is gated by backend and frontend tests. A real OpenWrt
-router smoke test (upgrade, arbitrary HTTPS subscription, URLTest/Priority, latency,
-reload and reboot recovery) is still required before tagging a stable release.
+## Releases
+
+Releases are not published through a mirror. Release branches `codex/release-*`
+build downloadable candidate artifacts without publishing; a strict `X.Y.Z` tag
+builds and publishes a GitHub release, and the Pages workflow republishes the
+channel (see `ops/hosting/README.md`). Tag publication is gated by backend and
+frontend tests. A real OpenWrt router smoke test (upgrade, arbitrary HTTPS
+subscription, URLTest/Priority, latency, reload and reboot recovery) is still
+required before tagging a stable release.

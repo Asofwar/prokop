@@ -70,7 +70,9 @@ for pm in apk opkg; do
     for refusal in github_down download_fail_1.0.0 preflight_fail df_avail inconsistent; do
         upgrade_harness_reset "$pm"
         case "$refusal" in
-            github_down) expected="Previous Forkop release packages are unavailable" ;;
+            # The channel cannot name the installed release (components/action.uc
+            # unpublished_forkop_release_error); the upgrade is refused all the same.
+            github_down) expected="cannot be staged for rollback; automatic upgrade refused" ;;
             download_fail_1.0.0) expected="Failed to stage previous Forkop release packages" ;;
             preflight_fail) expected="preflight failed" ;;
             df_avail) expected="Not enough free space" ;;
@@ -98,7 +100,7 @@ for pm in apk opkg; do
     upgrade_harness_flag github_down
     case="$pm down before refusal"
     upgrade_harness_run && fail "$case: the refused upgrade was reported as installed"
-    expect_message "$case" "Previous Forkop release packages are unavailable"
+    expect_message "$case" "cannot be staged for rollback; automatic upgrade refused"
     if grep -Eq '^(start|restart)' "$UPGRADE_STATE/init.log" ||
         grep -q '^start-and-wait' "$UPGRADE_STATE/initd.log"; then
         fail "$case: the refused upgrade started the Forkop it never stopped"

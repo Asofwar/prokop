@@ -175,7 +175,10 @@ assert(JSON.stringify(config.settings.dns_server) === JSON.stringify(['9.9.9.9']
 assert(JSON.stringify(config.settings.bootstrap_dns_server) === JSON.stringify(['1.1.1.1']), 'legacy Bootstrap DNS scalar migrated to ordered list');
 assert(config.settings.config_version === '1.0.5', 'legacy config should be marked at the current schema version');
 assert(config.settings.component_update_check_enabled === '1', 'component update checks should be enabled during migration');
-assert(JSON.stringify(config.settings.applied_migrations) === JSON.stringify(['interface_sections', 'enable_component_checks', 'http_connection_urls', 'flintnet_urltest_default', 'retired_secondary_rulesets', 'retired_secondary_rulesets_v2', 'secondary_rulesets_mirror_v1', 'own_dependency_mirror_v1', 'clash_api_secret_v1', 'urltest_section_names_v1', 'vpn_guard_kill_switch_v1', 'output_network_interface_switch_v1', 'update_interval_minimum_v1', 'subscription_ignored_options_v1']), 'legacy config should record named migrations');
+assert(JSON.stringify(config.settings.applied_migrations) === JSON.stringify(['interface_sections', 'enable_component_checks', 'http_connection_urls', 'flintnet_urltest_default', 'retired_secondary_rulesets', 'retired_secondary_rulesets_v2', 'secondary_rulesets_mirror_v1', 'own_dependency_mirror_v1', 'clash_api_secret_v1', 'urltest_section_names_v1', 'vpn_guard_kill_switch_v1', 'output_network_interface_switch_v1', 'update_interval_minimum_v1', 'subscription_ignored_options_v1', 'fork_mirror_opt_in_v1']), 'legacy config should record named migrations');
+// The dependency mirror is opt-in: migrating an old podkop/forkop config never enables one.
+assert(!config.settings.mirror_base_url, 'legacy config migration must not enable a dependency mirror');
+assert(!JSON.stringify(config).includes('mirror.infotechtg.ru'), 'legacy config migration must not write the upstream mirror');
 
 function assert(condition, message) {
   if (!condition) {
@@ -394,7 +397,7 @@ function assert(condition, message) {
 assert(out.changed === true, '1.0.1 config should require migration');
 assert(out.config.settings.config_version === '1.0.5', 'config schema version should advance to 1.0.5');
 assert(out.config.settings.component_update_check_enabled === '1', 'updates from 1.0.1 and below should enable component update checks');
-assert(JSON.stringify(out.config.settings.applied_migrations) === JSON.stringify(['interface_sections', 'enable_component_checks', 'http_connection_urls', 'flintnet_urltest_default', 'retired_secondary_rulesets', 'retired_secondary_rulesets_v2', 'secondary_rulesets_mirror_v1', 'own_dependency_mirror_v1', 'clash_api_secret_v1', 'urltest_section_names_v1', 'vpn_guard_kill_switch_v1', 'output_network_interface_switch_v1', 'update_interval_minimum_v1', 'subscription_ignored_options_v1']), 'named migrations should be recorded');
+assert(JSON.stringify(out.config.settings.applied_migrations) === JSON.stringify(['interface_sections', 'enable_component_checks', 'http_connection_urls', 'flintnet_urltest_default', 'retired_secondary_rulesets', 'retired_secondary_rulesets_v2', 'secondary_rulesets_mirror_v1', 'own_dependency_mirror_v1', 'clash_api_secret_v1', 'urltest_section_names_v1', 'vpn_guard_kill_switch_v1', 'output_network_interface_switch_v1', 'update_interval_minimum_v1', 'subscription_ignored_options_v1', 'fork_mirror_opt_in_v1']), 'named migrations should be recorded');
 assert(!Object.prototype.hasOwnProperty.call(section, 'interfaces'), 'parent interface list should be removed');
 assert(JSON.stringify(interfaces.map(item => item.name)) === JSON.stringify(['awg0', 'tun0']), 'interfaces should keep their order');
 for (const item of interfaces) {
@@ -432,7 +435,7 @@ function assert(condition, message) {
 
 assert(out.config.settings.component_update_check_enabled === '0', '1.0.2 config must preserve an explicitly disabled component check');
 assert(out.config.settings.config_version === '1.0.5', '1.0.2 config should advance through the HTTP URL migration schema');
-assert(JSON.stringify(out.config.settings.applied_migrations) === JSON.stringify(['interface_sections', 'enable_component_checks', 'http_connection_urls', 'flintnet_urltest_default', 'retired_secondary_rulesets', 'retired_secondary_rulesets_v2', 'secondary_rulesets_mirror_v1', 'own_dependency_mirror_v1', 'clash_api_secret_v1', 'urltest_section_names_v1', 'vpn_guard_kill_switch_v1', 'output_network_interface_switch_v1', 'update_interval_minimum_v1', 'subscription_ignored_options_v1']), 'newer configs should mark skipped migrations');
+assert(JSON.stringify(out.config.settings.applied_migrations) === JSON.stringify(['interface_sections', 'enable_component_checks', 'http_connection_urls', 'flintnet_urltest_default', 'retired_secondary_rulesets', 'retired_secondary_rulesets_v2', 'secondary_rulesets_mirror_v1', 'own_dependency_mirror_v1', 'clash_api_secret_v1', 'urltest_section_names_v1', 'vpn_guard_kill_switch_v1', 'output_network_interface_switch_v1', 'update_interval_minimum_v1', 'subscription_ignored_options_v1', 'fork_mirror_opt_in_v1']), 'newer configs should mark skipped migrations');
 NODE
 
 cat >"$WORK_DIR/forkop-1.0.4-http.json" <<'JSON'
@@ -498,7 +501,7 @@ assert(JSON.stringify(jsonOutbounds[1]) === JSON.stringify({
   server_port: 8080,
 }), 'unnamed HTTP URL should receive a unique http tag');
 assert(jsonOutbounds[2].type === 'direct' && jsonOutbounds[2].tag === 'http', 'existing JSON outbounds should remain unchanged');
-assert(JSON.stringify(out.config.settings.applied_migrations) === JSON.stringify(['interface_sections', 'enable_component_checks', 'http_connection_urls', 'flintnet_urltest_default', 'retired_secondary_rulesets', 'retired_secondary_rulesets_v2', 'secondary_rulesets_mirror_v1', 'own_dependency_mirror_v1', 'clash_api_secret_v1', 'urltest_section_names_v1', 'vpn_guard_kill_switch_v1', 'output_network_interface_switch_v1', 'update_interval_minimum_v1', 'subscription_ignored_options_v1']), 'HTTP URL migration should be recorded');
+assert(JSON.stringify(out.config.settings.applied_migrations) === JSON.stringify(['interface_sections', 'enable_component_checks', 'http_connection_urls', 'flintnet_urltest_default', 'retired_secondary_rulesets', 'retired_secondary_rulesets_v2', 'secondary_rulesets_mirror_v1', 'own_dependency_mirror_v1', 'clash_api_secret_v1', 'urltest_section_names_v1', 'vpn_guard_kill_switch_v1', 'output_network_interface_switch_v1', 'update_interval_minimum_v1', 'subscription_ignored_options_v1', 'fork_mirror_opt_in_v1']), 'HTTP URL migration should be recorded');
 NODE
 
 cat >"$WORK_DIR/forkop-1.0.5-http.json" <<'JSON'
@@ -763,9 +766,10 @@ if (values.includes('https://raw.githubusercontent.com/Greeg0ry/b4geoip-forkop/m
   console.error('retired b4geoip SRS URLs must be removed during migration');
   process.exit(1);
 }
-if (!values.includes('https://mirror.infotechtg.ru/forkop/lists/b4geoip-forkop/srs/valve.srs') ||
-    !values.includes('https://example.com/custom.srs')) {
-  console.error('the b4geoip migration must move current SRS URLs to mirror and preserve custom URLs');
+if (!values.includes('https://raw.githubusercontent.com/Greeg0ry/b4geoip-forkop/main/srs/valve.srs') ||
+    !values.includes('https://example.com/custom.srs') ||
+    values.some((value) => value.includes('mirror.'))) {
+  console.error('the b4geoip migration must keep current SRS URLs direct (no mirror) and preserve custom URLs');
   process.exit(1);
 }
 if (!out.config.settings.applied_migrations.includes('retired_secondary_rulesets') ||
