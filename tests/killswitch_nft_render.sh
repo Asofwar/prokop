@@ -116,7 +116,9 @@ assert_contains "$OUT" "add counter $T ks_domains_only" "domain-only protected s
 zapret_rule="add rule $T priority_rules iifname @ks_interfaces ip daddr != @localv4 ip daddr @forkop_rule_zapret_first_subnets return"
 vpn_rule="add rule $T priority_rules iifname @ks_interfaces ip daddr != @localv4 ip daddr @forkop_rule_vpn_main_subnets counter name ks_vpn_main jump ks_reject"
 assert_contains "$OUT" "$zapret_rule" "earlier zapret returns"
-assert_contains "$OUT" "add rule $T priority_rules iifname @ks_interfaces ip daddr != @localv4 ip daddr @forkop_rule_bypass_x_subnets return" "earlier bypass returns"
+# A bypass rule never matches FakeIP addresses (UC-029); ks_forward rejects
+# them before the policy chain anyway.
+assert_contains "$OUT" "add rule $T priority_rules iifname @ks_interfaces ip daddr != @localv4 ip daddr != 198.18.0.0/15 ip daddr @forkop_rule_bypass_x_subnets return" "earlier bypass returns"
 assert_contains "$OUT" "$vpn_rule" "protected section rejects"
 assert_before "$OUT" "$zapret_rule" "$vpn_rule" "zapret before protected section"
 assert_contains "$OUT" "add rule $T priority_rules iifname @ks_interfaces ip daddr != @localv4 ip daddr @forkop_rule_vpn_plain_subnets return" "unprotected connection between protected ones returns"

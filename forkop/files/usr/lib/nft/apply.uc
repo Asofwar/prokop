@@ -876,6 +876,16 @@ function nft_add_section_priority_rules(table, section, interface_set, localv4_s
     let match_port6_tcp = [ "tcp", "dport", "@" + as_string(sets.ports) ];
     let match_port6_udp = [ "udp", "dport", "@" + as_string(sets.ports) ];
 
+    // A FakeIP address only means something to sing-box: a bypass rule
+    // never fast-paths it, sing-box applies the rule to the real address in
+    // UCI order (UC-029), as for fully routed devices above.
+    if (section_priority_action(section) == "bypass") {
+        for (let match4 in [ match_ip4, match_ip_port4_tcp, match_ip_port4_udp, match_udp_ip_port4, match_port4_tcp, match_port4_udp ])
+            splice(match4, 0, 0, "ip", "daddr", "!=", fakeip_range);
+        for (let match6 in [ match_ip6, match_ip_port6_tcp, match_ip_port6_udp, match_udp_ip_port6, match_port6_tcp, match_port6_udp ])
+            splice(match6, 0, 0, "ip6", "daddr", "!=", fakeip6_range);
+    }
+
     if (needs_plain_ip_rules &&
         (!nft_add_priority_rule_pair(table, "priority_rules", section, interface_set, localv4_set, localv6_set, match_ip4, match_ip6, mark) ||
             !add_output_pair(match_ip4, match_ip6)))

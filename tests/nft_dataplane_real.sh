@@ -228,4 +228,51 @@ expect direct local 104.21.32.1 tcp 444
 expect direct local 104.21.32.1 tcp 443 "$OUTBOUND_MARK"
 ok "byedpi domain + port-only VPN rule: ciadpi's unmarked upstream is still captured by the VPN rule (known risk UC-185)"
 
+# ---- UC-029: bypass priority rules and FakeIP addresses ------------------------
+
+# A FakeIP address (here for youtube.com of the 'yt' rule) only means
+# something to sing-box. A bypass rule by ports, by device and ports, or by a
+# subnet covering the FakeIP range must still hand it to sing-box, which then
+# applies the bypass rule in UCI order to the real address; accepted without
+# the mark, the connection would be lost. Real addresses keep the bypass
+# fast path.
+cat >"$WORK_DIR/bypass.uci" <<'EOF'
+forkop.settings=settings
+forkop.yt=section
+forkop.yt.action=connection
+forkop.yt.domain_suffix=youtube.com
+forkop.tv=section
+forkop.tv.action=bypass
+forkop.tv.source_ip_cidr=192.168.1.50/32
+forkop.tv.ports=443
+forkop.pb=section
+forkop.pb.action=bypass
+forkop.pb.ports=8443
+forkop.all=section
+forkop.all.action=bypass
+forkop.all.source_ip_cidr=192.168.1.70/32
+forkop.all.ip_cidr=0.0.0.0/0
+forkop.allports=section
+forkop.allports.action=bypass
+forkop.allports.source_ip_cidr=192.168.1.80/32
+forkop.allports.ip_cidr=0.0.0.0/0
+forkop.allports.ports=443
+EOF
+apply_config "$WORK_DIR/bypass.uci"
+FAKE_ADDRESS="${FAKEIP_RANGE%/*}"
+FAKE_ADDRESS="${FAKE_ADDRESS%.*}.5"
+expect captured lan 192.168.1.50 "$FAKE_ADDRESS" tcp 443
+expect captured lan 192.168.1.50 "$FAKE_ADDRESS" udp 443
+expect captured lan 192.168.1.60 "$FAKE_ADDRESS" tcp 8443
+expect captured lan 192.168.1.70 "$FAKE_ADDRESS" tcp 443
+expect captured lan 192.168.1.80 "$FAKE_ADDRESS" tcp 443
+expect captured local "$FAKE_ADDRESS" tcp 8443
+expect captured local "$FAKE_ADDRESS" udp 8443
+expect direct lan 192.168.1.50 93.184.216.34 tcp 443
+expect direct lan 192.168.1.60 93.184.216.34 tcp 8443
+expect direct lan 192.168.1.70 93.184.216.34 tcp 443
+expect direct lan 192.168.1.80 93.184.216.34 tcp 443
+expect direct local 93.184.216.34 tcp 8443
+ok "bypass rules by ports, device and ports, and subnets: FakeIP addresses still reach sing-box, real addresses bypass (UC-029)"
+
 printf 'real nft dataplane checks passed\n'

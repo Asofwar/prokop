@@ -346,11 +346,18 @@ assert_contains "$NFT_LOG" $'nft\tadd\tset\tinet\tForkopTable\tforkop_rule_bypas
 assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tForkopTable\tpriority_rules\tiifname\t@forkop_interfaces\tip\tsaddr\t@forkop_rule_bypass_first_fully_sources\tip\tdaddr\t!=\t@localv4\tip\tdaddr\t!=\t198.18.0.0/15\tcounter\taccept' "bypass fully routed real IP fast path"
 assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tForkopTable\tpriority_rules\tiifname\t@forkop_interfaces\tip6\tsaddr\t@forkop_rule_bypass_first_fully_sources6\tip6\tdaddr\t!=\t@localv6\tip6\tdaddr\t!=\tfc00::/18\tcounter\taccept' "bypass fully routed6 real IP fast path"
 assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tForkopTable\tpriority_rules\tiifname\t@forkop_interfaces\tip\tsaddr\t@forkop_rule_wide_proxy_fully_sources\tip\tdaddr\t!=\t@localv4\tmeta\tl4proto\ttcp\tmeta\tmark\tset\t0x00100000\tcounter\taccept' "proxy fully routed capture path"
-assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tForkopTable\tpriority_rules\tiifname\t@forkop_interfaces\tip\tdaddr\t!=\t@localv4\tip\tdaddr\t@forkop_rule_bypass_first_subnets\tcounter\taccept' "bypass priority accept rule"
+assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tForkopTable\tpriority_rules\tiifname\t@forkop_interfaces\tip\tdaddr\t!=\t@localv4\tip\tdaddr\t!=\t198.18.0.0/15\tip\tdaddr\t@forkop_rule_bypass_first_subnets\tcounter\taccept' "bypass priority accept rule"
 assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tForkopTable\tpriority_rules\tiifname\t@forkop_interfaces\tip\tdaddr\t!=\t@localv4\tip\tdaddr\t@forkop_rule_wide_proxy_subnets\tmeta\tmark\tset\t0x00100000\tcounter\taccept' "proxy priority capture rule"
-assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tForkopTable\tpriority_rules\tiifname\t@forkop_interfaces\tip\tdaddr\t!=\t@localv4\ttcp\tdport\t@forkop_rule_port_bypass_ports\tcounter\taccept' "port-only bypass priority rule"
+assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tForkopTable\tpriority_rules\tiifname\t@forkop_interfaces\tip\tdaddr\t!=\t@localv4\tip\tdaddr\t!=\t198.18.0.0/15\ttcp\tdport\t@forkop_rule_port_bypass_ports\tcounter\taccept' "port-only bypass priority rule"
+# FakeIP addresses are never fast-pathed by a bypass rule (UC-029), in both
+# chains and families; capture rules keep matching them.
+assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tForkopTable\tpriority_output_rules\tip6\tdaddr\t!=\t@localv6\tip6\tdaddr\t!=\tfc00::/18\tudp\tdport\t@forkop_rule_port_bypass_ports\tcounter\taccept' "port-only bypass output rule6 excludes FakeIP"
+assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tForkopTable\tpriority_output_rules\tip\tdaddr\t!=\t@localv4\tip\tdaddr\t!=\t198.18.0.0/15\tip\tdaddr\t@forkop_rule_bypass_first_subnets\tcounter\taccept' "bypass output rule excludes FakeIP"
+if grep -F $'\tmeta\tmark\tset\t' "$NFT_LOG" | grep -Fv 'fully_sources' | grep -Fq '198.18.0.0/15'; then
+  fail "a capture priority rule must not exclude FakeIP addresses"
+fi
 assert_line_before "$NFT_LOG" \
-  $'nft\tadd\trule\tinet\tForkopTable\tpriority_rules\tiifname\t@forkop_interfaces\tip\tdaddr\t!=\t@localv4\tip\tdaddr\t@forkop_rule_bypass_first_subnets\tcounter\taccept' \
+  $'nft\tadd\trule\tinet\tForkopTable\tpriority_rules\tiifname\t@forkop_interfaces\tip\tdaddr\t!=\t@localv4\tip\tdaddr\t!=\t198.18.0.0/15\tip\tdaddr\t@forkop_rule_bypass_first_subnets\tcounter\taccept' \
   $'nft\tadd\trule\tinet\tForkopTable\tpriority_rules\tiifname\t@forkop_interfaces\tip\tdaddr\t!=\t@localv4\tip\tdaddr\t@forkop_rule_wide_proxy_subnets\tmeta\tmark\tset\t0x00100000\tcounter\taccept' \
   "bypass priority order"
 assert_line_before "$NFT_LOG" \
