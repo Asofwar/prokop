@@ -15,7 +15,8 @@ set -euo pipefail
 # UC-110: the worker read torrserver_direct_enabled through core.uci, which
 # loads a package once per process; a snapshot restore or `uci set ...=0`
 # never reached the long-running worker, and its rule stayed. Now every
-# check reads the setting afresh: the worker ends and removes the rule.
+# check reads the setting afresh: off removes the rule and on applies it
+# again, and the worker keeps running (procd would respawn it if it ended).
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LIB="$ROOT_DIR/forkop/files/usr/lib"
@@ -34,7 +35,7 @@ REAL_SLEEP="$(command -v sleep)"
 mkdir -p "$WORK/bin" "$WORK/modules" "$WORK/tmp" "$WORK/proc/4242" "$WORK/cgroup/services/torrserver"
 export PATH="$WORK/bin:$PATH" TMPDIR="$WORK/tmp" NFT_LOG="$WORK/nft.log" NFT_STATE="$WORK/nft.applied"
 export FORKOP_PROC_DIR="$WORK/proc" FORKOP_CGROUP_DIR="$WORK/cgroup" STUB_STATE="$WORK/uci.json"
-export SLEEP_COUNT="$WORK/sleep.count" REAL_SLEEP
+export SLEEP_COUNT="$WORK/sleep.count" POLL_LOG="$WORK/poll.log" POLL_DONE="$WORK/poll.done" REAL_SLEEP
 unset FORKOP_UCI_STATE_FILE
 
 # A TorrServer in a cgroup of its own.
@@ -69,18 +70,21 @@ OUT
 esac
 exit 0
 SH
-# The worker's poll: its first round turns the setting off, as a snapshot
-# restore or `uci set` + commit by another process does. A worker that does
-# not notice keeps polling; it is left hanging there for timeout to end.
+# The worker's poll. After the first round the setting goes off, as a
+# snapshot restore or `uci set` + commit by another process does; after the
+# second it goes on again. Each round records whether the rule is there. The
+# third round marks the end and waits for the test to stop the worker.
 cat >"$WORK/bin/sleep" <<'SH'
 #!/bin/sh
 count=$(($(cat "$SLEEP_COUNT" 2>/dev/null || echo 0) + 1))
 echo "$count" >"$SLEEP_COUNT"
-if [ "$count" = 1 ]; then
-  printf '{"forkop":{"settings":{".name":"settings",".type":"settings","torrserver_direct_enabled":"0"}}}' >"$STUB_STATE"
-  exit 0
-fi
-exec "$REAL_SLEEP" 60
+if [ -e "$NFT_STATE" ]; then echo "$count:rule" >>"$POLL_LOG"; else echo "$count:none" >>"$POLL_LOG"; fi
+case "$count" in
+  1) value=0 ;;
+  2) value=1 ;;
+  *) echo $$ >"$POLL_DONE"; exec "$REAL_SLEEP" 60 ;;
+esac
+printf '{"forkop":{"settings":{".name":"settings",".type":"settings","torrserver_direct_enabled":"%s"}}}' "$value" >"$STUB_STATE"
 SH
 chmod +x "$WORK/bin/nft" "$WORK/bin/sleep"
 
@@ -113,7 +117,7 @@ set_enabled() {
   printf '{"forkop":{"settings":{".name":"settings",".type":"settings","torrserver_direct_enabled":"%s"}}}' "$1" >"$STUB_STATE"
 }
 direct() { ucode -L "$WORK/modules" -L "$LIB" "$DIRECT_UC" "$@"; }
-reset() { : >"$NFT_LOG"; rm -f "$NFT_STATE" "$SLEEP_COUNT"; }
+reset() { : >"$NFT_LOG"; rm -f "$NFT_STATE" "$SLEEP_COUNT" "$POLL_LOG" "$POLL_DONE"; }
 
 # ---- UC-108: one transaction --------------------------------------------------
 set_enabled 1
@@ -153,14 +157,22 @@ printf 'ok - a re-apply is one nft transaction from a fresh temporary file\n'
 # ---- UC-110: the worker sees the setting change ----------------------------------
 reset
 set_enabled 1
-rc=0
-timeout 20 ucode -L "$WORK/modules" -L "$LIB" "$DIRECT_UC" worker || rc=$?
-[ "$rc" = 0 ] || fail "the worker did not notice that TorrServer Direct was turned off (rc $rc, polls $(cat "$SLEEP_COUNT"))"
-[ "$(cat "$SLEEP_COUNT")" = 1 ] || fail "the worker polled $(cat "$SLEEP_COUNT") times after it was turned off"
-grep -q '^call:-f' "$NFT_LOG" || fail "the worker never applied the rule"
-[ "$(tail -n 1 "$NFT_LOG")" = 'call:delete table inet ForkopTorrServerDirect' ] ||
-  fail "the worker did not remove the rule when it was turned off"
-[ ! -e "$NFT_STATE" ] || fail "the rule stayed after TorrServer Direct was turned off"
-printf 'ok - the worker reads the setting afresh and removes the rule when it is off\n'
+# In a process group of its own, which the test stops as a whole.
+setsid ucode -L "$WORK/modules" -L "$LIB" "$DIRECT_UC" worker &
+worker_pid=$!
+for _ in $(seq 200); do
+  [ -s "$POLL_DONE" ] && break
+  kill -0 "$worker_pid" 2>/dev/null || break
+  "$REAL_SLEEP" 0.1
+done
+worker_alive=0
+kill -0 "$worker_pid" 2>/dev/null && worker_alive=1
+{ kill -TERM -- "-$worker_pid"; wait "$worker_pid"; } 2>/dev/null || true
+polls="$(tr '\n' ' ' <"$POLL_LOG" 2>/dev/null || true)"
+[ -s "$POLL_DONE" ] || fail "the worker did not reach its third poll (polls: $polls)"
+[ "$worker_alive" = 1 ] || fail "the worker exited, which procd would respawn into a crash loop (polls: $polls)"
+[ "$polls" = "1:rule 2:none 3:rule " ] ||
+  fail "the worker did not follow the setting off and on again (polls: $polls)"
+printf 'ok - the worker reads the setting afresh: off removes the rule, on applies it again, it keeps running\n'
 
 printf 'TorrServer Direct re-apply checks passed\n'

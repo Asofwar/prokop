@@ -133,20 +133,24 @@ function reconcile() {
     if (!info.available) { remove_rule(); return 1; }
     return apply_rule(info) ? 0 : 1;
 }
+// The worker never exits on its own: procd respawns an instance that ends, so
+// a worker that ended once the setting went off (a snapshot restore, `uci
+// set` + commit) would be respawned into a crash loop. While the setting is
+// off, or cannot be read, it keeps no rule and waits; when it is on again, it
+// applies the rule again (UC-110).
 function worker() {
     let last_cgroup = "";
-    while (enabled()) {
-        let info = discover();
-        if (info.available && (info.cgroup != last_cgroup || !active(info))) {
-            if (apply_rule(info)) last_cgroup = info.cgroup;
-        }
-        else if (!info.available) {
+    while (true) {
+        let info = enabled() ? discover() : null;
+        if (info == null || !info.available) {
             remove_rule();
             last_cgroup = "";
         }
+        else if (info.cgroup != last_cgroup || !active(info)) {
+            if (apply_rule(info)) last_cgroup = info.cgroup;
+        }
         system("sleep 60");
     }
-    remove_rule();
 }
 
 let mode = ARGV[0] || "status";
