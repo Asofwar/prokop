@@ -307,20 +307,31 @@ def query(name, src, dst, qname, dport=53):
     fd = open_tun(name)
     sport = random.randint(20000, 60000)
     ident = random.randint(0, 0xFFFF)
-    os.write(fd, udp_packet(src, dst, sport, dport, build_query(qname, ident)))
+    packet = udp_packet(src, dst, sport, dport, build_query(qname, ident))
+    os.write(fd, packet)
     # A reply normally comes within milliseconds; a test that expects one
     # waits longer (DNS_TUN_DEADLINE) so a loaded host does not read as
     # "noreply", while a test that expects silence keeps the short wait.
-    deadline = time.time() + float(os.environ.get("DNS_TUN_DEADLINE", "2"))
+    # Like a real client, the query is sent again every second: on a loaded
+    # host a reply can be lost although the resolver answered.
+    start = time.time()
+    deadline = start + float(os.environ.get("DNS_TUN_DEADLINE", "2"))
+    resend = start + 1
+    sent = 1
     while time.time() < deadline:
-        ready, _, _ = select.select([fd], [], [], max(0, deadline - time.time()))
+        ready, _, _ = select.select([fd], [], [], max(0, min(deadline, resend) - time.time()))
         if not ready:
-            break
+            if time.time() >= resend and time.time() < deadline:
+                os.write(fd, packet)
+                sent += 1
+                resend = time.time() + 1
+            continue
         found = reply_to(os.read(fd, 65535), src, sport)
         if found:
             rcode, answers = parse_response(found[0])
             print(f"rcode={rcode} answer={','.join(answers)} sport={found[1]}")
             return 0
+    print(f"dns_tun: no reply from {dst}:{dport} for {qname} after {sent} queries in {time.time() - start:.1f}s", file=sys.stderr)
     print("noreply")
     return 0
 
