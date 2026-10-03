@@ -45,7 +45,10 @@ function text(node: unknown): string {
 import { renderSections } from '../partials/renderSections';
 import type { Prokop } from '../../../types';
 
-function render(readonly: boolean) {
+function render(
+  readonly: boolean,
+  extra: Partial<Parameters<typeof renderSections>[0]> = {},
+) {
   const handlers = {
     onTestLatency: vi.fn(),
     onChooseOutbound: vi.fn(),
@@ -86,6 +89,7 @@ function render(readonly: boolean) {
     isPriorityMembersExpanded: () => false,
     onPriorityMembersToggle: vi.fn(),
     readonly,
+    ...extra,
   });
   return { node, handlers };
 }
@@ -131,5 +135,91 @@ describe('dashboard sections in a read-only session', () => {
       'main-out',
       'b',
     );
+  });
+
+  it('lets the keyboard choose a node with Enter or Space', () => {
+    const { node, handlers } = render(false);
+    const tiles = find(node, (n) =>
+      String(n.attrs.class || '').includes('outbound-grid__item '),
+    );
+    const selectable = tiles.find((tile) =>
+      String(tile.attrs.class).includes('--selectable'),
+    ) as FakeNode;
+    const active = tiles.find((tile) =>
+      String(tile.attrs.class).includes('--active'),
+    ) as FakeNode;
+
+    expect(selectable.attrs.role).toBe('button');
+    expect(selectable.attrs.tabIndex).toBe(0);
+    expect(selectable.attrs['aria-pressed']).toBe('false');
+    expect(active.attrs['aria-pressed']).toBe('true');
+    expect(active.attrs.tabIndex).toBeUndefined();
+
+    const press = (key: string, target?: unknown) => {
+      const event = { key, preventDefault: vi.fn() } as unknown as {
+        key: string;
+        target: unknown;
+        currentTarget: unknown;
+        preventDefault: () => void;
+      };
+      event.currentTarget = selectable;
+      event.target = target ?? selectable;
+      (selectable.attrs.keydown as (event: unknown) => void)(event);
+      return event;
+    };
+
+    press('Tab');
+    press('Enter', {});
+    expect(handlers.onChooseOutbound).not.toHaveBeenCalled();
+
+    expect(press('Enter').preventDefault).toHaveBeenCalled();
+    press(' ');
+    expect(handlers.onChooseOutbound).toHaveBeenCalledTimes(2);
+    expect(handlers.onChooseOutbound).toHaveBeenCalledWith(
+      'main',
+      'main-out',
+      'b',
+    );
+  });
+
+  it('keeps read-only node cards out of the tab order', () => {
+    const { node } = render(true);
+    const tiles = find(node, (n) =>
+      String(n.attrs.class || '').includes('outbound-grid__item '),
+    );
+
+    expect(tiles.length).toBeGreaterThan(0);
+    for (const tile of tiles) {
+      expect(tile.attrs.role).toBeUndefined();
+      expect(tile.attrs.tabIndex).toBeUndefined();
+    }
+  });
+});
+
+describe('dashboard sections while Prokop is stopped', () => {
+  it('says the service is stopped instead of showing the skeleton', () => {
+    const { node } = render(false, {
+      loading: true,
+      stopped: true,
+      stoppedActions: ['start-button' as unknown as HTMLElement],
+    });
+
+    expect(
+      find(node, (n) => n.attrs.id === 'dashboard-sections-grid-skeleton'),
+    ).toHaveLength(0);
+    expect(text(node)).toContain(
+      'Prokop service is stopped. Start the service to display nodes and groups.',
+    );
+    expect(text(node)).toContain('start-button');
+  });
+
+  it('hides stale node cards once the service stops', () => {
+    const { node } = render(false, { stopped: true });
+
+    expect(
+      find(node, (n) =>
+        String(n.attrs.class || '').includes('outbound-grid__item '),
+      ),
+    ).toHaveLength(0);
   });
 });

@@ -13,6 +13,7 @@ type HtmlAttributes<T extends HtmlTag = 'div'> = Partial<
     'data-latency-section'?: string;
     'data-view'?: string;
     click?: (event: MouseEvent) => void;
+    keydown?: (event: KeyboardEvent) => void;
     onclick?: (event: MouseEvent) => void;
   }
 >;

@@ -26,6 +26,10 @@ interface IRenderSectionsProps {
   onPriorityMembersToggle: (outbound: Prokop.Outbound, open: boolean) => void;
   // Read-only sessions see the runtime state but get no runtime controls.
   readonly?: boolean;
+  // Prokop is stopped: the nodes cannot be fetched, so say so instead of
+  // showing a skeleton or stale cards. stoppedActions offers to start it.
+  stopped?: boolean;
+  stoppedActions?: HTMLElement[];
 }
 
 function renderFailedState() {
@@ -36,6 +40,26 @@ function renderFailedState() {
       style: 'height: 127px',
     },
     E('span', {}, [E('span', {}, _('Dashboard currently unavailable'))]),
+  );
+}
+
+function renderStoppedState(actions: HTMLElement[] = []) {
+  return E(
+    'div',
+    {
+      class: 'fkp_dashboard-page__outbound-section centered',
+      style: 'min-height: 127px',
+    },
+    E('div', { class: 'fkp_dashboard-page__stopped' }, [
+      E(
+        'span',
+        {},
+        _(
+          'Prokop service is stopped. Start the service to display nodes and groups.',
+        ),
+      ),
+      ...actions,
+    ]),
   );
 }
 
@@ -403,16 +427,30 @@ function renderDefaultState({
     ]
       .filter(Boolean)
       .join(' ');
+    const chooseOutbound = () =>
+      canChooseOutbound &&
+      onChooseOutbound(section.sectionName, section.code, outbound.code);
+    // Selector cards act as toggle buttons: reachable with Tab and operable
+    // with Enter or Space, like the click.
     return E(
       'div',
       {
         class: className,
+        role: withTagSelect ? 'button' : undefined,
+        tabIndex: canChooseOutbound ? 0 : undefined,
+        'aria-pressed': withTagSelect
+          ? String(Boolean(outbound.selected))
+          : undefined,
         'aria-busy': outboundSwitching ? 'true' : undefined,
         'aria-disabled':
           withTagSelect && !canChooseOutbound ? 'true' : undefined,
-        click: () =>
-          canChooseOutbound &&
-          onChooseOutbound(section.sectionName, section.code, outbound.code),
+        click: chooseOutbound,
+        keydown: (event: KeyboardEvent) => {
+          if (event.target !== event.currentTarget) return;
+          if (event.key !== 'Enter' && event.key !== ' ') return;
+          event.preventDefault();
+          chooseOutbound();
+        },
       },
       [
         ...(outboundSwitching
@@ -574,6 +612,10 @@ function renderDefaultState({
 }
 
 export function renderSections(props: IRenderSectionsProps) {
+  if (props.stopped) {
+    return renderStoppedState(props.stoppedActions);
+  }
+
   if (props.failed) {
     return renderFailedState();
   }

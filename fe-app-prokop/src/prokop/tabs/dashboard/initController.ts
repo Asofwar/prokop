@@ -66,6 +66,7 @@ import {
   setProkopAutostart,
   type ProkopServiceAction,
 } from '../shared/serviceControl';
+import { renderStartServiceAction } from '../shared/startService';
 import {
   ConnectionsSample,
   sampleFromConnections,
@@ -238,6 +239,7 @@ function renderOverviewCards() {
   preserveScrollForPage(() => container.replaceChildren(view));
 }
 let sectionsRefreshPromise: Promise<boolean> | null = null;
+let sectionsStoppedRendered = false;
 let sectionsRefreshQueued = false;
 let actionStateUnsubscribe: (() => void) | null = null;
 let dashboardMounted = false;
@@ -908,9 +910,12 @@ function startDashboardDataUpdates() {
 function syncDashboardServiceAvailability() {
   const availability = getDashboardServiceAvailability();
   const stopped = availability === 'stopped';
-  const container = document.getElementById('dashboard-status');
 
-  container?.classList.toggle('fkp_dashboard-page--service-stopped', stopped);
+  // The nodes grid shows its own stopped state; re-render it only when that
+  // flips so service polls do not replace the cards.
+  if (stopped !== sectionsStoppedRendered) {
+    void renderSectionsWidget();
+  }
 
   if (stopped || availability === 'loading') {
     stopDashboardDataUpdates();
@@ -1857,10 +1862,15 @@ async function renderSectionsWidget() {
     return;
   }
 
-  if (sectionsWidget.loading || sectionsWidget.failed) {
+  const stopped = getDashboardServiceAvailability() === 'stopped';
+  sectionsStoppedRendered = stopped;
+
+  if (stopped || sectionsWidget.loading || sectionsWidget.failed) {
     const renderedWidget = renderSections({
       loading: sectionsWidget.loading,
       failed: sectionsWidget.failed,
+      stopped,
+      stoppedActions: stopped ? renderStartServiceAction() : undefined,
       section: {
         code: '',
         sectionName: '',

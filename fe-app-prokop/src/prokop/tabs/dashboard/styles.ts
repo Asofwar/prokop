@@ -34,9 +34,15 @@ export const styles = `
     --dashboard-grid-min-width: 180px;
 }
 
-/* Overview: summary cards; the nodes section hides while Prokop is stopped. */
-.fkp_dashboard-page--service-stopped .fkp_dashboard-page__content {
-    display: none;
+/* Nodes and groups while Prokop is stopped: a notice and a Start button. */
+.fkp_dashboard-page__stopped {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--fkp-space-3);
+    padding: var(--fkp-space-4);
+    text-align: center;
 }
 
 .fkp-overview__warning {
@@ -320,6 +326,12 @@ export const styles = `
 
 .fkp_dashboard-page__outbound-grid__item--selectable:hover {
     border-color: var(--primary-color-high, dodgerblue);
+}
+
+.fkp_dashboard-page__outbound-grid__item--selectable:focus-visible {
+    border-color: var(--primary-color-high, dodgerblue);
+    outline: 2px solid var(--primary-color-high, dodgerblue);
+    outline-offset: 2px;
 }
 
 .fkp_dashboard-page__outbound-grid__item--active {
