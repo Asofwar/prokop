@@ -33,7 +33,7 @@ assert.match(start, /void connectToClashSockets\(dataUpdatesId\);/,
 const sockets = functionBody(dashboard, 'async function connectToClashSockets(dataUpdatesId: number)');
 // UC-035, D-1: direct sockets need the Clash secret, which read-only
 // sessions never receive; they poll through rpcd instead.
-assert.match(sockets, /if \(!canUseDirectClashApi\(clashApiSecret\)\) \{\s*startClashRpcPolling\(dataUpdatesId\);\s*return;/,
+assert.match(sockets, /if \(!canUseDirectClashApi\(clashApiSecret, clashControllerHosts\)\) \{\s*startClashRpcPolling\(dataUpdatesId\);\s*return;/,
   'dashboard must poll through rpcd when the controller socket is not reachable or there is no secret');
 assert.doesNotMatch(sockets, /token=\$\{/, 'the secret must be URL-encoded by getClashWsStreamUrl');
 assert.equal((sockets.match(/fallBackToClashRpcPolling\(dataUpdatesId\)/g) || []).length, 2,
@@ -54,7 +54,7 @@ assert.match(functionBody(dashboard, 'function stopDashboardDataUpdates()'),
 
 const monitoring = read('fe-app-prokop/src/prokop/tabs/monitoring/initController.ts');
 const monitoringSocket = functionBody(monitoring, 'async function connectToConnectionsSocket(updatesId: number)');
-assert.match(monitoringSocket, /if \(!canUseDirectClashApi\(clashApiSecret\)\) \{\s*startConnectionsPolling\(\);\s*return;/,
+assert.match(monitoringSocket, /if \(!canUseDirectClashApi\(clashApiSecret, clashControllerHosts\)\) \{\s*startConnectionsPolling\(\);\s*return;/,
   'monitoring must poll through rpcd when the controller socket is not reachable or there is no secret');
 assert.doesNotMatch(monitoringSocket, /token=\$\{/, 'the secret must be URL-encoded by getClashWsStreamUrl');
 assert.match(monitoringSocket, /socket\.disconnect\(connectionsSocketUrl\);[\s\S]*startConnectionsPolling\(\);/,
