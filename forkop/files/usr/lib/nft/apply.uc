@@ -1589,16 +1589,18 @@ function ensure_tproxy_route_rule(table, mark, rt_tables_path) {
     return true;
 }
 
+// br_netfilter's iptables hooks: off while Forkop runs, put back at stop
+// (nft/bridge_netfilter.uc; D-19, UC-109).
+function bridge_netfilter_log(message, level) {
+    run_args([ "logger", "-t", "forkop", "[" + as_string(level) + "] " + as_string(message) ]);
+}
+
 function ensure_bridge_netfilter_disabled() {
-    if (index(command_output_from_args([ "lsmod" ]), "br_netfilter") < 0)
-        return true;
+    return require("nft.bridge_netfilter").turn_off(bridge_netfilter_log);
+}
 
-    if (trim(command_output_from_args([ "sysctl", "-n", "net.bridge.bridge-nf-call-iptables" ])) != "1")
-        return true;
-
-    log_debug("br_netfilter is enabled; disabling it for transparent proxy routing");
-    return run_args([ "sysctl", "-w", "net.bridge.bridge-nf-call-iptables=0" ]) &&
-        run_args([ "sysctl", "-w", "net.bridge.bridge-nf-call-ip6tables=0" ]);
+function restore_bridge_netfilter() {
+    return require("nft.bridge_netfilter").restore(bridge_netfilter_log);
 }
 
 function community_service_has_subnet_list(value) {
@@ -2658,6 +2660,8 @@ else if (mode == "killswitch-render-fixture")
     exit(nft_killswitch_render_fixture(ARGV[1], ARGV[2], ARGV[3], ARGV[4], ARGV[5], ARGV[6]) ? 0 : 1);
 else if (mode == "ensure-bridge-netfilter-disabled")
     exit(ensure_bridge_netfilter_disabled() ? 0 : 1);
+else if (mode == "restore-bridge-netfilter")
+    exit(restore_bridge_netfilter() ? 0 : 1);
 else {
     warn("Usage: nft/apply.uc <operation> ...\n");
     exit(1);

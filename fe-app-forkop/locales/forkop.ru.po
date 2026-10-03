@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-03 17:19+0000\n"
-"PO-Revision-Date: 2026-10-03 17:19+0000\n"
+"POT-Creation-Date: 2026-10-03 18:06+0000\n"
+"PO-Revision-Date: 2026-10-03 18:06+0000\n"
 "Last-Translator: Asofwar\n"
 "Language-Team: none\n"
 "Language: ru\n"
@@ -595,6 +595,9 @@ msgstr "Резервный DNS должен быть адресом IPv4 или 
 
 msgid "Bootstrap DNS Servers"
 msgstr "Bootstrap DNS-серверы"
+
+msgid "br_netfilter is loaded"
+msgstr "Загружен модуль br_netfilter"
 
 msgid "Browser FakeIP check could not be completed"
 msgstr "Не удалось выполнить проверку FakeIP в браузере"
@@ -1690,6 +1693,9 @@ msgstr "Forkop X не смог применить изменение; подро
 
 msgid "Forkop X does not apply recommendations in this mode."
 msgstr "В этом режиме Forkop X не применяет рекомендации."
+
+msgid "Forkop X has turned off the iptables hooks of br_netfilter (net.bridge.bridge-nf-call-iptables and -ip6tables) for transparent proxying: iptables rules do not filter bridged traffic while it runs. Stopping Forkop X restores the previous values unless another program has changed them since."
+msgstr "Forkop X отключил хуки iptables модуля br_netfilter (net.bridge.bridge-nf-call-iptables и -ip6tables) для прозрачного проксирования: пока он работает, правила iptables не фильтруют трафик через мост. Остановка Forkop X вернёт прежние значения, если их с тех пор не изменила другая программа."
 
 msgid "Forkop X is busy with another operation: the change applies when it finishes."
 msgstr "Forkop X занят другой операцией: изменение применится, когда она завершится."
@@ -4654,6 +4660,9 @@ msgstr "Какие домены проверять"
 
 msgid "While Forkop is stopped, the kill-switch answers this rule's names with NXDOMAIN for every device, the devices excluded from this rule included: DNS is shared by all devices. With this option the excluded devices of this rule resolve its names through a separate resolver of their own; every other device stays blocked and the firewall part of the kill-switch does not change. While Forkop is stopped, all DNS of these devices goes through that resolver, past the router's own DNS settings: host names without the local domain, address overrides, blocking lists and rebind protection of the router do not apply to them. Each group of excluded devices with different blocked names gets its own resolver with a copy of the block list in memory, at most 4; the devices of further groups stay blocked. Applies from the next successful Forkop start or reload."
 msgstr "Пока Forkop остановлен, kill-switch отвечает NXDOMAIN на имена этого правила всем устройствам, в том числе исключённым из этого правила: DNS общий для всех устройств. С этой опцией исключённые устройства этого правила разрешают его имена через отдельный собственный резолвер; для остальных устройств блокировка остаётся, а правила файрвола kill-switch не меняются. Пока Forkop остановлен, весь DNS этих устройств идёт через этот резолвер в обход DNS-настроек роутера: имена хостов без локального домена, переопределения адресов, списки блокировки и защита от DNS rebinding роутера на них не действуют. Каждая группа исключённых устройств с разными заблокированными именами получает свой резолвер с копией списка блокировки в памяти, не больше 4; устройства остальных групп остаются заблокированными. Действует со следующего успешного запуска или перезагрузки Forkop."
+
+msgid "While Forkop X runs, it turns off the iptables hooks of br_netfilter (net.bridge.bridge-nf-call-iptables and -ip6tables) that are on, for transparent proxying, so iptables rules do not filter bridged traffic. Their current values were not set by Forkop X, and stopping it does not change them."
+msgstr "Пока Forkop X работает, он отключает включённые хуки iptables модуля br_netfilter (net.bridge.bridge-nf-call-iptables и -ip6tables) для прозрачного проксирования, поэтому правила iptables не фильтруют трафик через мост. Их текущие значения установлены не Forkop X, и его остановка их не меняет."
 
 msgid "Will be"
 msgstr "Будет"

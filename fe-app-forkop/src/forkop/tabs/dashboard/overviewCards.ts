@@ -87,7 +87,13 @@ function renderWarning(warning: OverviewWarning) {
   return E('section', { class: 'fkp-overview__warning', role: 'alert' }, [
     E('strong', {}, warning.title),
     E('p', {}, warning.text),
-    linkButton(warning.link.label, () => openForkopPage(warning.link.page)),
+    ...(warning.link
+      ? [
+          linkButton(warning.link.label, () =>
+            openForkopPage(warning.link!.page),
+          ),
+        ]
+      : []),
   ]);
 }
 

@@ -334,6 +334,19 @@ function load(package_name) {
     }
 }
 
+// Forgets what is loaded of a package: the next read loads it again from
+// /etc/config. libuci keeps a loaded package in memory, and load() above
+// loads it once per process; a long-running reader that must see the
+// commits of other processes refreshes before it reads (UC-110).
+function refresh(package_name) {
+    package_name = as_string(package_name);
+    if (fixture_enabled() || !loaded_packages[package_name])
+        return;
+    delete loaded_packages[package_name];
+    if (runtime_cursor)
+        try { runtime_cursor.unload(package_name); } catch (e) {}
+}
+
 function value_to_string(value) {
     if (value == null)
         return "";
@@ -1056,6 +1069,7 @@ function session(package_name, config_file, cli) {
 return {
     available,
     load,
+    refresh,
     get,
     get_all,
     exists,

@@ -55,6 +55,13 @@ export namespace Forkop {
     // busy: a reload runs, or the list update that ends in one; the newest
     // reload event may then belong to an earlier change (configform.js).
     reload?: { busy: boolean };
+    // br_netfilter is loaded; disabled_by_forkop: Forkop turned its
+    // iptables hooks off and puts them back at stop (D-19, UC-109).
+    bridge_netfilter?: {
+      status: HealthLevel;
+      loaded: boolean;
+      disabled_by_forkop: boolean;
+    };
     recent_activity: Array<{ kind: string; status: string; timestamp: number }>;
   }
 

@@ -8,7 +8,6 @@ WORK_DIR="$(mktemp -d)"
 NFT_LOG="$WORK_DIR/nft.log"
 LOGGER_LOG="$WORK_DIR/logger.log"
 IP_LOG="$WORK_DIR/ip.log"
-SYSCTL_LOG="$WORK_DIR/sysctl.log"
 # The subnet cache of nft/apply.uc stays in the test's directory, not in the
 # host's /var/run/forkop.
 export FORKOP_NFT_SUBNET_CACHE_DIR="$WORK_DIR/nft-subnet-cache"
@@ -142,32 +141,9 @@ exit 0
 IP
 chmod 0755 "$WORK_DIR/bin/ip"
 
-cat >"$WORK_DIR/bin/lsmod" <<'LSMOD'
-#!/usr/bin/env bash
-set -eo pipefail
-printf '%s\n' "${LSMOD_OUTPUT:-}"
-LSMOD
-chmod 0755 "$WORK_DIR/bin/lsmod"
-
-cat >"$WORK_DIR/bin/sysctl" <<'SYSCTL'
-#!/usr/bin/env bash
-set -eo pipefail
-{
-  printf 'sysctl'
-  for arg in "$@"; do
-    printf '\t%s' "$arg"
-  done
-  printf '\n'
-} >> "${SYSCTL_LOG:?}"
-
-if [ "$#" -eq 2 ] && [ "$1" = "-n" ] && [ "$2" = "net.bridge.bridge-nf-call-iptables" ]; then
-  printf '%s\n' "${SYSCTL_BRIDGE_NF_CALL_IPTABLES:-0}"
-  exit 0
-fi
-
-exit 0
-SYSCTL
-chmod 0755 "$WORK_DIR/bin/sysctl"
+# br_netfilter's hooks live in a fake /proc/sys (nft/bridge_netfilter.uc),
+# its record in the test's runtime directory.
+export FORKOP_PROC_SYS_DIR="$WORK_DIR/proc-sys" FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/run"
 
 cat >"$WORK_DIR/bin/logger" <<'LOGGER'
 #!/usr/bin/env bash
@@ -180,7 +156,6 @@ export PATH="$WORK_DIR/bin:$PATH"
 export NFT_LOG
 export LOGGER_LOG
 export IP_LOG
-export SYSCTL_LOG
 
 assert_eq "/tmp/forkop-cache/condition_rule_1_domain_domains" \
   "$(nft_ucode cache-path 1 /tmp/forkop-cache condition rule_1 domain domains)" \
@@ -410,19 +385,20 @@ if IP_ROUTE_OUTPUT='local default dev lo scope host' \
   fail "tproxy route/rule presence should require matching lookup table"
 fi
 
-: > "$SYSCTL_LOG"
 : > "$LOGGER_LOG"
-LSMOD_OUTPUT='br_netfilter 32768 0' SYSCTL_BRIDGE_NF_CALL_IPTABLES=1 nft_ucode ensure-bridge-netfilter-disabled
-assert_contains "$SYSCTL_LOG" $'sysctl\t-n\tnet.bridge.bridge-nf-call-iptables' "bridge netfilter sysctl check"
-assert_contains "$SYSCTL_LOG" $'sysctl\t-w\tnet.bridge.bridge-nf-call-iptables=0' "bridge netfilter ipv4 disable"
-assert_contains "$SYSCTL_LOG" $'sysctl\t-w\tnet.bridge.bridge-nf-call-ip6tables=0' "bridge netfilter ipv6 disable"
+mkdir -p "$FORKOP_PROC_SYS_DIR/net/bridge"
+printf '1\n' >"$FORKOP_PROC_SYS_DIR/net/bridge/bridge-nf-call-iptables"
+printf '1\n' >"$FORKOP_PROC_SYS_DIR/net/bridge/bridge-nf-call-ip6tables"
+nft_ucode ensure-bridge-netfilter-disabled || fail "bridge netfilter disable failed"
+[ "$(cat "$FORKOP_PROC_SYS_DIR/net/bridge/bridge-nf-call-iptables")" = 0 ] || fail "bridge netfilter ipv4 disable"
+[ "$(cat "$FORKOP_PROC_SYS_DIR/net/bridge/bridge-nf-call-ip6tables")" = 0 ] || fail "bridge netfilter ipv6 disable"
 assert_contains "$LOGGER_LOG" "[debug] br_netfilter is enabled; disabling it for transparent proxy routing" "bridge netfilter disable log"
+nft_ucode restore-bridge-netfilter || fail "bridge netfilter restore failed"
+[ "$(cat "$FORKOP_PROC_SYS_DIR/net/bridge/bridge-nf-call-iptables")" = 1 ] || fail "bridge netfilter ipv4 restore"
 
-: > "$SYSCTL_LOG"
-LSMOD_OUTPUT='' SYSCTL_BRIDGE_NF_CALL_IPTABLES=1 nft_ucode ensure-bridge-netfilter-disabled
-if [ -s "$SYSCTL_LOG" ]; then
-  fail "bridge netfilter absent should not call sysctl"
-fi
+rm -rf "$FORKOP_PROC_SYS_DIR"
+nft_ucode ensure-bridge-netfilter-disabled || fail "bridge netfilter absent should succeed"
+[ ! -e "$FORKOP_PROC_SYS_DIR" ] || fail "bridge netfilter absent should not write hooks"
 
 input="$WORK_DIR/ips.txt"
 cat >"$input" <<'EOF_INPUT'

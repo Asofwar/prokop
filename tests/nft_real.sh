@@ -563,6 +563,12 @@ if [ "$CGROUP_MOUNTED" = 1 ]; then
   torrserver_cgroup=-
   supported socket && torrserver_cgroup=services/torrserver
   check torrserver "$WORK_DIR/torrserver.json" ForkopTorrServerDirect "$(hex_to_dec "$OUTBOUND_MARK")" "$torrserver_cgroup"
+  # A re-apply over the live table replaces it in the same transaction
+  # (UC-108): still exactly one rule.
+  commit_batch "$WORK_DIR/torrserver-again.json" "TorrServer Direct re-apply"
+  check torrserver "$WORK_DIR/torrserver-again.json" ForkopTorrServerDirect "$(hex_to_dec "$OUTBOUND_MARK")" "$torrserver_cgroup"
+  [ "$(nft list chain inet ForkopTorrServerDirect output | grep -c 'Forkop TorrServer Direct')" = 1 ] ||
+    fail "a TorrServer Direct re-apply did not replace the rule"
   if supported socket; then
     nft list chain inet ForkopTorrServerDirect output |
       ucode -L "$FORKOP_LIB" "$FORKOP_LIB/torrserver/direct.uc" rule-output-active /services/torrserver ||
@@ -571,7 +577,7 @@ if [ "$CGROUP_MOUNTED" = 1 ]; then
   ucode -L "$FORKOP_LIB" "$FORKOP_LIB/torrserver/direct.uc" remove
   nft -j list ruleset >"$WORK_DIR/torrserver-removed.json"
   check tables "$WORK_DIR/torrserver-removed.json" "$TABLE"
-  ok "TorrServer Direct: batch checked, applied, recognised and removed"
+  ok "TorrServer Direct: batch checked, applied, re-applied, recognised and removed"
 fi
 
 # ---- autotune isolation ----------------------------------------------------------------
