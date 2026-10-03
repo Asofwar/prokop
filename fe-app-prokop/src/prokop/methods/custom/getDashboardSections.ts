@@ -11,6 +11,7 @@ import { ProkopShellMethods } from '../shell';
 import { parseClashControllerHosts } from './getClashControllerHosts';
 import { isReadonlyMode } from '../../services/accessMode.service';
 import { isSectionEnabled } from '../../helpers/sectionEnabled';
+import { uciListValues } from '../../helpers/uciList';
 
 interface IGetDashboardSectionsResponse {
   success: boolean;
@@ -185,21 +186,6 @@ async function getClashApiProxies(
   return ProkopShellMethods.getClashApiProxies();
 }
 
-function getListValues(value?: string[] | string) {
-  if (!value) {
-    return [];
-  }
-
-  if (Array.isArray(value)) {
-    return value.map((item) => `${item}`.trim()).filter(Boolean);
-  }
-
-  return `${value}`
-    .split(/\s+/)
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
 function childSections(
   configSections: Prokop.ConfigSection[],
   type: ChildType,
@@ -316,12 +302,12 @@ function hydrateConfigSections(configSections: Prokop.ConfigSection[]) {
               direct: level.direct === '1',
               filterMode: level.filter_mode || 'include',
               detectServerCountry: level.detect_server_country || 'flag_emoji',
-              country: getListValues(level.country),
-              serverName: getListValues(level.server_name),
-              regex: getListValues(level.regex),
-              excludeCountries: getListValues(level.exclude_countries),
-              excludeOutbounds: getListValues(level.exclude_outbounds),
-              excludeRegex: getListValues(level.exclude_regex),
+              country: uciListValues(level.country),
+              serverName: uciListValues(level.server_name),
+              regex: uciListValues(level.regex),
+              excludeCountries: uciListValues(level.exclude_countries),
+              excludeOutbounds: uciListValues(level.exclude_outbounds),
+              excludeRegex: uciListValues(level.exclude_regex),
             }),
           )
           .sort((left, right) =>
@@ -352,17 +338,17 @@ function hydrateConfigSections(configSections: Prokop.ConfigSection[]) {
 }
 
 function getManualProxyLinks(section: Prokop.ConfigSection) {
-  return getListValues(section.selector_proxy_links);
+  return uciListValues(section.selector_proxy_links);
 }
 
 function getConnectionInterfaces(section: Prokop.ConfigSection) {
-  const values = getListValues(section.interfaces);
-  return values.length ? values : getListValues(section.interface);
+  const values = uciListValues(section.interfaces);
+  return values.length ? values : uciListValues(section.interface);
 }
 
 function getJsonOutbounds(section: Prokop.ConfigSection) {
-  const values = getListValues(section.outbound_jsons);
-  return values.length ? values : getListValues(section.outbound_json);
+  const values = uciListValues(section.outbound_jsons);
+  return values.length ? values : uciListValues(section.outbound_json);
 }
 
 function isConnectionAction(action?: string) {
@@ -376,7 +362,7 @@ function hasSubscriptionSources(section: Prokop.ConfigSection) {
 }
 
 function getSubscriptionSourceCount(section: Prokop.ConfigSection) {
-  return getListValues(section.subscription_urls).length;
+  return uciListValues(section.subscription_urls).length;
 }
 
 function shouldSortByLatency(section: Prokop.ConfigSection) {
@@ -384,15 +370,15 @@ function shouldSortByLatency(section: Prokop.ConfigSection) {
 }
 
 function hasConfiguredUrlTestList(section: Prokop.ConfigSection) {
-  return getListValues(section.urltests).length > 0;
+  return uciListValues(section.urltests).length > 0;
 }
 
 function hasConfiguredPriorityList(section: Prokop.ConfigSection) {
-  return getListValues(section.priority_groups).length > 0;
+  return uciListValues(section.priority_groups).length > 0;
 }
 
 function getUrlTestIds(section: Prokop.ConfigSection) {
-  const values = getListValues(section.urltests);
+  const values = uciListValues(section.urltests);
   return values.length
     ? values
     : section.urltest_enabled === '1'
@@ -715,17 +701,17 @@ function priorityLevelConfigsFromSettings(
           filterMode: `${level.filterMode || 'include'}` || 'include',
           detectServerCountry:
             `${level.detectServerCountry || 'flag_emoji'}` || 'flag_emoji',
-          country: getListValues(level.country as string[] | string),
-          serverName: getListValues(level.serverName as string[] | string),
-          regex: getListValues(level.regex as string[] | string),
-          excludeCountries: getListValues(
+          country: uciListValues(level.country as string[] | string),
+          serverName: uciListValues(level.serverName as string[] | string),
+          regex: uciListValues(level.regex as string[] | string),
+          excludeCountries: uciListValues(
             level.excludeCountries as string[] | string,
           ),
-          excludeOutbounds: getListValues(
+          excludeOutbounds: uciListValues(
             level.excludeOutbounds as string[] | string,
           ),
-          excludeRegex: getListValues(level.excludeRegex as string[] | string),
-          outbounds: getListValues(level.outbounds as string[] | string),
+          excludeRegex: uciListValues(level.excludeRegex as string[] | string),
+          outbounds: uciListValues(level.outbounds as string[] | string),
         },
       ];
     })
@@ -737,7 +723,7 @@ function priorityLevelConfigsFromSettings(
 }
 
 function getPriorityGroupIds(section: Prokop.ConfigSection) {
-  return getListValues(section.priority_groups);
+  return uciListValues(section.priority_groups);
 }
 
 function getPriorityConfigs(section: Prokop.ConfigSection): PriorityConfig[] {
@@ -1348,7 +1334,7 @@ function isSubscriptionMetadataVisible(
     return true;
   }
 
-  const sourceEntry = getListValues(section.subscription_urls)[sourceIndex - 1];
+  const sourceEntry = uciListValues(section.subscription_urls)[sourceIndex - 1];
   const settings = itemSettingsMap(section.subscription_url_settings)[
     sourceEntry
   ];
