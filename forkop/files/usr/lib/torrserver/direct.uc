@@ -6,6 +6,9 @@ let uci = require("core.uci");
 const CONFIG_NAME = getenv("FORKOP_CONFIG_NAME") || "forkop";
 const TABLE = "ForkopTorrServerDirect";
 const OUTBOUND_MARK = getenv("NFT_OUTBOUND_MARK") || "0x08000000";
+// Where processes and cgroups are read (tests point them at a fake tree).
+const PROC_DIR = getenv("FORKOP_PROC_DIR") || "/proc";
+const CGROUP_DIR = getenv("FORKOP_CGROUP_DIR") || "/sys/fs/cgroup";
 
 function text(value) { return value == null ? "" : "" + value; }
 function quote(value) { return "'" + replace(text(value), /'/g, "'\\''") + "'"; }
@@ -28,12 +31,11 @@ function is_torrserver_cmdline(value) {
     return match(value, /(^|[/ ])torrserver([^/ ]*)?( |$)/) != null;
 }
 function numeric_pid(path) {
-    let parts = split(path, "/");
-    let pid = length(parts) > 2 ? parts[2] : "";
-    return match(pid, /^[0-9]+$/) != null ? pid : "";
+    let m = match(path, /\/([0-9]+)\/cmdline$/);
+    return m != null ? m[1] : "";
 }
 function process_cgroup(pid) {
-    for (let line in split(read("/proc/" + pid + "/cgroup"), "\n")) {
+    for (let line in split(read(PROC_DIR + "/" + pid + "/cgroup"), "\n")) {
         let match_value = match(line, /^[0-9]+::(\/.+)$/);
         if (match_value != null) return match_value[1];
     }
@@ -45,17 +47,17 @@ function valid_cgroup(path) {
     return path != "/services" && path != "/system.slice" && path != "/user.slice";
 }
 function dedicated_cgroup(path) {
-    let pids = split(replace(read("/sys/fs/cgroup" + path + "/cgroup.procs"), /[\r\n]+$/g, ""), /[\r\n]+/);
+    let pids = split(replace(read(CGROUP_DIR + path + "/cgroup.procs"), /[\r\n]+$/g, ""), /[\r\n]+/);
     let found = 0;
     for (let pid in pids) {
         if (pid == "") continue;
         found++;
-        if (!is_torrserver_cmdline(read("/proc/" + pid + "/cmdline"))) return false;
+        if (!is_torrserver_cmdline(read(PROC_DIR + "/" + pid + "/cmdline"))) return false;
     }
     return found > 0;
 }
 function discover() {
-    for (let cmdline_path in fs.glob("/proc/[0-9]*/cmdline")) {
+    for (let cmdline_path in fs.glob(PROC_DIR + "/[0-9]*/cmdline")) {
         let pid = numeric_pid(cmdline_path);
         if (pid == "" || !is_torrserver_cmdline(read(cmdline_path))) continue;
         let path = process_cgroup(pid);
@@ -65,7 +67,13 @@ function discover() {
     }
     return { running: 0, available: 0, pid: "", cgroup: "" };
 }
-function enabled() { return trim(uci.get(CONFIG_NAME + ".settings.torrserver_direct_enabled")) == "1"; }
+// Read afresh on every check: the worker runs for days, and core.uci keeps a
+// package loaded for the life of the process, so a snapshot restore or a
+// `uci set` + commit would never reach it (UC-110).
+function enabled() {
+    uci.refresh(CONFIG_NAME);
+    return trim(uci.get(CONFIG_NAME + ".settings.torrserver_direct_enabled")) == "1";
+}
 function rule_output_active(output, info) {
     if (!info.available) return false;
     let path = substr(info.cgroup, 1);
@@ -82,25 +90,30 @@ function active(info) {
     return rule_output_active(command_output([ "nft", "list", "chain", "inet", TABLE, "output" ]), info);
 }
 function remove_rule() { success([ "nft", "delete", "table", "inet", TABLE ]); }
-// The nft batch for a dedicated cgroup (an absolute cgroup v2 path).
+// The nft batch for a dedicated cgroup (an absolute cgroup v2 path). It
+// replaces the table in one transaction: the add makes the delete valid when
+// there is no table yet, and TorrServer's sockets are never left unmarked
+// between an old rule and a new one (UC-108).
 function rule_batch(cgroup) {
     let path = substr(cgroup, 1);
     let parts = split(path, "/");
     // Match the exact dedicated group, not a shared parent of nested services.
     let level = length(parts);
     return "add table inet " + TABLE + "\n" +
+        "delete table inet " + TABLE + "\n" +
+        "add table inet " + TABLE + "\n" +
         "add chain inet " + TABLE + " output { type route hook output priority -151; policy accept; }\n" +
         "add rule inet " + TABLE + " output socket cgroupv2 level " + level + " \"" + path +
         "\" meta mark set " + OUTBOUND_MARK + " counter comment \"Forkop TorrServer Direct\"\n";
 }
 function apply_rule(info) {
     if (!info.available) return false;
-    remove_rule();
-    let ruleset_path = "/tmp/forkop-torrserver-direct.nft";
-    let ruleset = rule_batch(info.cgroup);
-    if (fs.writefile(ruleset_path, ruleset) == null)
-        return false;
-    let applied = success([ "nft", "-f", ruleset_path ]);
+    // A fresh file of mktemp (TMPDIR or /tmp), never a fixed path that a
+    // symlink could point elsewhere.
+    let ruleset_path = trim(command_output([ "mktemp" ]));
+    if (ruleset_path == "") return false;
+    let applied = fs.writefile(ruleset_path, rule_batch(info.cgroup)) != null &&
+        success([ "nft", "-f", ruleset_path ]);
     try { fs.unlink(ruleset_path); } catch (e) { }
     if (!applied || !active(info)) {
         remove_rule();
