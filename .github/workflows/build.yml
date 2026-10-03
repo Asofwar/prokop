@@ -24,6 +24,13 @@ on:
 permissions:
   contents: read
 
+# Pushes to a codex/release-* branch supersede each other; tag pushes and
+# manual runs (which may publish a release) get a group of their own and are
+# never cancelled.
+concurrency:
+  group: ${{ github.workflow }}-${{ (github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref_type == 'branch' && github.ref != 'refs/heads/main')) && (github.event.pull_request.number || github.ref) || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   backend-checks:
     name: Verify release backend
@@ -36,6 +43,7 @@ jobs:
   preparation:
     name: Setup build version
     runs-on: ubuntu-24.04
+    timeout-minutes: 5
     outputs:
       version: ${{ steps.version.outputs.version }}
       commitish: ${{ steps.version.outputs.commitish }}
@@ -89,6 +97,7 @@ jobs:
   build:
     name: Build Forkop release packages
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
     needs: preparation
     steps:
       - uses: actions/checkout@v5.0.0
@@ -99,11 +108,36 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential curl fakeroot file gawk git patch perl tar unzip util-linux xz-utils zstd
 
+      # The SDK archives (~500 MB) only change with the URLs in build.sh.
+      # Tag runs restore the entry the default branch keeps warm
+      # (sdk-cache.yml); only the downloads are cached, never build output.
+      - name: Resolve OpenWrt SDK cache
+        id: sdk
+        shell: bash
+        run: bash .github/scripts/openwrt-sdk-cache.sh outputs "$RUNNER_TEMP/openwrt-sdk"
+
+      - name: Restore OpenWrt SDK archives
+        id: sdk-cache
+        if: steps.sdk.outputs.enabled == 'true'
+        uses: actions/cache/restore@v6.1.0
+        with:
+          path: ${{ steps.sdk.outputs.paths }}
+          key: ${{ steps.sdk.outputs.key }}
+
       - name: Build release artifacts
         shell: bash
+        env:
+          SDK_CACHE_DIR: ${{ steps.sdk.outputs.dir }}
         run: |
           VERSION="${{ needs.preparation.outputs.version }}"
           ./build.sh "$VERSION" "$PWD/filtered-bin/release"
+
+      - name: Save OpenWrt SDK archives
+        if: steps.sdk.outputs.enabled == 'true' && steps.sdk-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6.1.0
+        with:
+          path: ${{ steps.sdk.outputs.paths }}
+          key: ${{ steps.sdk.outputs.key }}
 
       # The same channel bundle GitHub Pages serves, for any other static
       # host; Pages itself is rebuilt from the releases by pages.yml.
@@ -137,6 +171,7 @@ jobs:
     name: Create Release
     if: startsWith(github.ref, 'refs/tags/') || inputs.publish_release
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     permissions:
       contents: write
     needs:
