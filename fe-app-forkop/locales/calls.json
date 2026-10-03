@@ -626,7 +626,7 @@
     "call": "Additional marking rules found",
     "key": "Additional marking rules found",
     "places": [
-      "src/forkop/tabs/diagnostic/checks/runNftCheck.ts:106"
+      "src/forkop/tabs/diagnostic/checks/runNftCheck.ts:108"
     ]
   },
   {
@@ -6208,7 +6208,7 @@
     "call": "No other marking rules found",
     "key": "No other marking rules found",
     "places": [
-      "src/forkop/tabs/diagnostic/checks/runNftCheck.ts:105"
+      "src/forkop/tabs/diagnostic/checks/runNftCheck.ts:107"
     ]
   },
   {
@@ -8040,7 +8040,7 @@
     "call": "Rules mangle output counters",
     "key": "Rules mangle output counters",
     "places": [
-      "src/forkop/tabs/diagnostic/checks/runNftCheck.ts:89"
+      "src/forkop/tabs/diagnostic/checks/runNftCheck.ts:91"
     ]
   },
   {
@@ -8054,14 +8054,14 @@
     "call": "Rules proxy counters",
     "key": "Rules proxy counters",
     "places": [
-      "src/forkop/tabs/diagnostic/checks/runNftCheck.ts:99"
+      "src/forkop/tabs/diagnostic/checks/runNftCheck.ts:101"
     ]
   },
   {
     "call": "Rules proxy exist",
     "key": "Rules proxy exist",
     "places": [
-      "src/forkop/tabs/diagnostic/checks/runNftCheck.ts:94"
+      "src/forkop/tabs/diagnostic/checks/runNftCheck.ts:96"
     ]
   },
   {

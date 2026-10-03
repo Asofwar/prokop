@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-03 16:55+0000\n"
-"PO-Revision-Date: 2026-10-03 16:55+0000\n"
+"POT-Creation-Date: 2026-10-03 17:01+0000\n"
+"PO-Revision-Date: 2026-10-03 17:01+0000\n"
 "Last-Translator: Asofwar <7397608+Asofwar@users.noreply.github.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -381,7 +381,7 @@ msgstr ""
 msgid "Add…"
 msgstr ""
 
-#: src/forkop/tabs/diagnostic/checks/runNftCheck.ts:106
+#: src/forkop/tabs/diagnostic/checks/runNftCheck.ts:108
 msgid "Additional marking rules found"
 msgstr ""
 
@@ -3680,7 +3680,7 @@ msgstr ""
 msgid "No new connections yet. Open the site or app you want to check."
 msgstr ""
 
-#: src/forkop/tabs/diagnostic/checks/runNftCheck.ts:105
+#: src/forkop/tabs/diagnostic/checks/runNftCheck.ts:107
 msgid "No other marking rules found"
 msgstr ""
 
@@ -4771,7 +4771,7 @@ msgstr ""
 msgid "Rules mangle exist"
 msgstr ""
 
-#: src/forkop/tabs/diagnostic/checks/runNftCheck.ts:89
+#: src/forkop/tabs/diagnostic/checks/runNftCheck.ts:91
 msgid "Rules mangle output counters"
 msgstr ""
 
@@ -4779,11 +4779,11 @@ msgstr ""
 msgid "Rules mangle output exist"
 msgstr ""
 
-#: src/forkop/tabs/diagnostic/checks/runNftCheck.ts:99
+#: src/forkop/tabs/diagnostic/checks/runNftCheck.ts:101
 msgid "Rules proxy counters"
 msgstr ""
 
-#: src/forkop/tabs/diagnostic/checks/runNftCheck.ts:94
+#: src/forkop/tabs/diagnostic/checks/runNftCheck.ts:96
 msgid "Rules proxy exist"
 msgstr ""
 

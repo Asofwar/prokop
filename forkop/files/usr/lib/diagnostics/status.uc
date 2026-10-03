@@ -958,13 +958,16 @@ function render_nft_chain_config_blocks() {
     }
 }
 
-function nft_chain_counter_status() {
+// filter "mark-set": only the rules that set a mark (UC-107).
+function nft_chain_counter_status(filter) {
     let rules_exist = 0;
     let counters = 0;
 
     for (let line in split(read_stdin(), "\n")) {
         line = as_string(line);
         if (index(line, "counter") < 0)
+            continue;
+        if (filter == "mark-set" && index(line, "mark set") < 0)
             continue;
 
         rules_exist = 1;
@@ -1327,13 +1330,13 @@ function nft_ruleset_other_mark_lines(table_name) {
 
     for (let line in split(read_stdin(), "\n")) {
         line = as_string(line);
-        if (index(line, "table inet " + table_name) >= 0) {
-            in_forkop_table = true;
+        // The main table and Forkop's other tables (TorrServer Direct, the
+        // autotune probe, the DPI guard, the kill-switch) are Forkop's own.
+        let table = match(line, /^table[ \t]+[a-z0-9]+[ \t]+([A-Za-z0-9_]+)/);
+        if (table != null) {
+            in_forkop_table = table[1] == table_name || substr(table[1], 0, 6) == "Forkop";
             continue;
         }
-
-        if (match(line, /^table/) != null)
-            in_forkop_table = false;
 
         if (!in_forkop_table && (index(line, "mark set") >= 0 || index(line, "meta mark") >= 0))
             print_line(line);
@@ -1836,7 +1839,7 @@ else if (mode == "nft-set-element-count")
 else if (mode == "nft-chain-config-blocks")
     render_nft_chain_config_blocks();
 else if (mode == "nft-chain-counter-status")
-    nft_chain_counter_status();
+    nft_chain_counter_status(ARGV[1]);
 else if (mode == "forkop-logs")
     render_forkop_logs();
 else if (mode == "matching-log-tail")

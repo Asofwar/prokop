@@ -763,6 +763,32 @@ function domain_lists_contain_cloud_provider() {
     return false;
 }
 
+// Element counts of the sets that hold the data: the per-rule sets
+// (forkop_rule_*) and the shared ones; a shared set nothing filled is left
+// out (UC-107).
+function print_nft_set_statistics() {
+    let names = [];
+    let listed = null;
+    try { listed = json(command_output_from_args([ "nft", "-j", "list", "sets", "inet" ])); } catch (e) { listed = null; }
+    for (let item in (type(listed) == "object" && type(listed.nftables) == "array") ? listed.nftables : [])
+        if (type(item) == "object" && type(item.set) == "object" && item.set.table == NFT_TABLE_NAME &&
+            substr(as_string(item.set.name), 0, 12) == "forkop_rule_")
+            push(names, as_string(item.set.name));
+    let shared = [ NFT_COMMON_SET_NAME, NFT_PORT_SET_NAME, NFT_IP_PORT_SET_NAME, NFT_INTERFACE_SET_NAME,
+        NFT_DISCORD_SET_NAME, NFT_LOCALV4_SET_NAME ];
+    for (let set_name in [ ...names, ...shared ]) {
+        if (!command_success_from_args([ "nft", "list", "set", "inet", NFT_TABLE_NAME, set_name ]))
+            continue;
+        let count = replace(status_output(
+            [ "nft-set-element-count" ],
+            command_output_from_args([ "nft", "-j", "list", "set", "inet", NFT_TABLE_NAME, set_name ])
+        ), /[\r\n]+$/g, "");
+        if (count == "0" && index(shared, set_name) >= 0 && index([ NFT_INTERFACE_SET_NAME, NFT_LOCALV4_SET_NAME ], set_name) < 0)
+            continue;
+        print("- ", set_name, ": ", count, " elements\n");
+    }
+}
+
 function check_nft() {
     if (!command_exists("nft")) {
         nolog_failure("nft is not installed");
@@ -777,22 +803,7 @@ function check_nft() {
 
     if (domain_lists_contain_cloud_provider()) {
         nolog("Sets statistics:");
-        for (let set_name in [
-            NFT_COMMON_SET_NAME,
-            NFT_PORT_SET_NAME,
-            NFT_IP_PORT_SET_NAME,
-            NFT_INTERFACE_SET_NAME,
-            NFT_DISCORD_SET_NAME,
-            NFT_LOCALV4_SET_NAME
-        ]) {
-            if (!command_success_from_args([ "nft", "list", "set", "inet", NFT_TABLE_NAME, set_name ]))
-                continue;
-            let count = replace(status_output(
-                [ "nft-set-element-count" ],
-                command_output_from_args([ "nft", "-j", "list", "set", "inet", NFT_TABLE_NAME, set_name ])
-            ), /[\r\n]+$/g, "");
-            print("- ", set_name, ": ", count, " elements\n");
-        }
+        print_nft_set_statistics();
 
         nolog("Chain configurations:");
         print(status_output(
@@ -1476,9 +1487,12 @@ function check_dns_available() {
     return 0;
 }
 
-function nft_chain_counter_status(chain) {
+// mark_set_only: count only the rules that mark traffic for sing-box; in
+// mangle_output a 'meta mark <outbound> counter return' counts all of
+// sing-box's own egress and would pass the check vacuously (UC-107).
+function nft_chain_counter_status(chain, mark_set_only) {
     let output = command_output_from_args([ "nft", "list", "chain", "inet", NFT_TABLE_NAME, chain ]);
-    let status = words(status_output([ "nft-chain-counter-status" ], output));
+    let status = words(status_output(mark_set_only ? [ "nft-chain-counter-status", "mark-set" ] : [ "nft-chain-counter-status" ], output));
     while (length(status) < 2)
         push(status, "0");
     return [ arg_number(status[0]), arg_number(status[1]) ];
@@ -1513,7 +1527,7 @@ function check_nft_rules() {
             rules_mangle_counters = status[1];
         }
         if (command_success_from_args([ "nft", "list", "chain", "inet", NFT_TABLE_NAME, "mangle_output" ])) {
-            let status = nft_chain_counter_status("mangle_output");
+            let status = nft_chain_counter_status("mangle_output", true);
             rules_mangle_output_exist = status[0];
             rules_mangle_output_counters = status[1];
         }
@@ -1530,7 +1544,9 @@ function check_nft_rules() {
             continue;
         let family = fields[1];
         let table_name = fields[2];
-        if (table_name == NFT_TABLE_NAME)
+        // Forkop's own tables (TorrServer Direct, the autotune probe, the DPI
+        // guard, the kill-switch) mark traffic too: not another program's.
+        if (table_name == NFT_TABLE_NAME || substr(table_name, 0, 6) == "Forkop")
             continue;
         if (nft_table_has_other_mark_rules(family, table_name)) {
             rules_other_mark_exist = 1;
@@ -2579,6 +2595,8 @@ if (mode == "check-proxy")
     exit(check_proxy());
 else if (mode == "check-nft")
     exit(check_nft());
+else if (mode == "nft-rule-set-statistics")
+    print_nft_set_statistics();
 else if (mode == "check-nft-rules")
     exit(check_nft_rules());
 else if (mode == "check-sing-box")

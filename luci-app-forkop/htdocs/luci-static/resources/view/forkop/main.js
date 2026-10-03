@@ -10116,7 +10116,9 @@ async function runNftCheck() {
         value: ""
       },
       {
-        state: data.rules_mangle_output_counters ? "success" : "error",
+        // Only the router's own connections marked for sing-box count here
+        // (UC-107); none may have been made yet, as for the mangle counters.
+        state: data.rules_mangle_output_counters ? "success" : "warning",
         key: _("Rules mangle output counters"),
         value: ""
       },
