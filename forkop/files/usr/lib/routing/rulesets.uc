@@ -331,6 +331,59 @@ function intersect_port_filters(first, second) {
     return normalize_port_intervals(result);
 }
 
+function union_port_filters(first, second) {
+    if (first == null || second == null)
+        return null;
+
+    let result = [];
+    for (let item in first)
+        push(result, item);
+    for (let item in second)
+        push(result, item);
+
+    return normalize_port_intervals(result);
+}
+
+function extract_port_filter(rule) {
+    if (type(rule) != "object")
+        return null;
+
+    let own_filter = direct_port_filter(rule);
+    if (rule.type != "logical" || type(rule.rules) != "array")
+        return own_filter;
+
+    let mode = as_string(rule.mode);
+    if (mode == "or") {
+        let result = null;
+        let initialized = false;
+
+        for (let child in rule.rules) {
+            let child_filter = extract_port_filter(child);
+            if (!initialized) {
+                result = child_filter;
+                initialized = true;
+            }
+            else {
+                result = union_port_filters(result, child_filter);
+            }
+
+            if (result == null)
+                break;
+        }
+
+        return intersect_port_filters(own_filter, result);
+    }
+
+    let result = own_filter;
+    for (let child in rule.rules) {
+        result = intersect_port_filters(result, extract_port_filter(child));
+        if (filter_is_empty(result))
+            return result;
+    }
+
+    return result;
+}
+
 function nft_port_value(interval) {
     return interval.start == interval.end ? "" + interval.start : interval.start + "-" + interval.end;
 }
@@ -446,6 +499,40 @@ function collect_ip_cidr_nft_outputs(rule, inherited_filter, unscoped_lines, sco
     add_ip_cidr_values_to_nft_outputs(rule, filter, unscoped_lines, scoped_lines);
 }
 
+// A capture section only sends traffic to sing-box, which then applies the
+// section's rule itself, so taking too many addresses is harmless and taking
+// too few lets traffic sing-box should route leave directly: every ip_cidr
+// of every rule and child is taken, limited by the ports the rule needs.
+function collect_ip_cidr_nft_capture_outputs(rule, inherited_filter, unscoped_lines, scoped_lines) {
+    if (type(rule) != "object")
+        return;
+
+    let own_filter = direct_port_filter(rule);
+    let filter = intersect_port_filters(inherited_filter, own_filter);
+
+    if (filter_is_empty(filter))
+        return;
+
+    if (rule.type == "logical" && type(rule.rules) == "array") {
+        if (as_string(rule.mode) == "and") {
+            for (let child in rule.rules) {
+                filter = intersect_port_filters(filter, extract_port_filter(child));
+                if (filter_is_empty(filter))
+                    return;
+            }
+        }
+
+        add_ip_cidr_values_to_nft_outputs(rule, filter, unscoped_lines, scoped_lines);
+
+        for (let child in rule.rules)
+            collect_ip_cidr_nft_capture_outputs(child, filter, unscoped_lines, scoped_lines);
+
+        return;
+    }
+
+    add_ip_cidr_values_to_nft_outputs(rule, filter, unscoped_lines, scoped_lines);
+}
+
 function write_lines(path, lines_object) {
     let lines = keys(lines_object);
     sort(lines, function(first, second) {
@@ -456,8 +543,10 @@ function write_lines(path, lines_object) {
 }
 
 // False when an output file could not be written whole: an empty one is
-// not a rule set without subnets.
-function extract_ip_cidr_nft_elements(json_path, unscoped_output_path, scoped_output_path, ports_text, port_ranges_text) {
+// not a rule set without subnets. A bypass section takes only the addresses
+// nft may decide without sing-box; any other section captures every address
+// the rule-set may route (UC-101).
+function extract_ip_cidr_nft_elements(json_path, unscoped_output_path, scoped_output_path, ports_text, port_ranges_text, bypass) {
     let ruleset = object_or_empty(read_json_file(json_path));
     let unscoped_lines = {};
     let scoped_lines = {};
@@ -466,8 +555,9 @@ function extract_ip_cidr_nft_elements(json_path, unscoped_output_path, scoped_ou
         port_range: array_or_empty(json_decode_text(port_ranges_text))
     });
 
+    let collect = bypass ? collect_ip_cidr_nft_outputs : collect_ip_cidr_nft_capture_outputs;
     for (let rule in array_or_empty(ruleset.rules))
-        collect_ip_cidr_nft_outputs(rule, outer_filter, unscoped_lines, scoped_lines);
+        collect(rule, outer_filter, unscoped_lines, scoped_lines);
 
     return write_lines(unscoped_output_path, unscoped_lines) && write_lines(scoped_output_path, scoped_lines);
 }
@@ -569,7 +659,7 @@ else if (mode == "import-plain-list")
 else if (mode == "extract-ip-cidr")
     extract_ip_cidr(ARGV[1], ARGV[2]);
 else if (mode == "extract-ip-cidr-nft")
-    exit(extract_ip_cidr_nft_elements(ARGV[1], ARGV[2], ARGV[3], ARGV[4] || "[]", ARGV[5] || "[]") ? 0 : 1);
+    exit(extract_ip_cidr_nft_elements(ARGV[1], ARGV[2], ARGV[3], ARGV[4] || "[]", ARGV[5] || "[]", ARGV[6] == "bypass") ? 0 : 1);
 else if (mode == "has-domain-matchers")
     exit(has_domain_matchers(ARGV[1]) ? 0 : 1);
 else if (mode == "has-rules")

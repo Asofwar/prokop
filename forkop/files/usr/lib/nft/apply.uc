@@ -19,7 +19,7 @@ const NFT_BATCH_FILE = getenv("FORKOP_NFT_BATCH_FILE") || "";
 // update, import the same rule sets again, and preparing thousands of subnets
 // is most of an import on the router. The version changes with the format.
 const SUBNET_CACHE_DIR = getenv("FORKOP_NFT_SUBNET_CACHE_DIR") || "/var/run/forkop/nft-subnet-cache";
-const SUBNET_CACHE_VERSION = "2";
+const SUBNET_CACHE_VERSION = "3";
 // Bounded by entries and by size: the tmpfs is RAM and holds the candidate
 // batch, config.json and the list downloads too (UC-222). An entry is about
 // the size of its rule set's JSON (100k subnets: 1.7 MB).
@@ -2275,13 +2275,14 @@ function file_nonempty(path) {
 
 // The cache file name of a prepared import, or null when it cannot be
 // named safely (no checksum, or an unusual port filter).
-function nft_subnet_cache_key(json_path, ports, chunk_size_text) {
+function nft_subnet_cache_key(json_path, ports, chunk_size_text, bypass) {
     let line = trim(command_output_from_args([ "md5sum", json_path ]));
     let sum = length(line) >= 32 ? substr(line, 0, 32) : "";
     let filter = replace(as_string(ports), /[^0-9,-]/g, "_");
     if (match(sum, /^[0-9a-f]{32}$/) == null || length(filter) > 64)
         return null;
-    return "v" + SUBNET_CACHE_VERSION + "-" + sum + "-" + nft_chunk_size(chunk_size_text) + "-" + (filter == "" ? "all" : filter);
+    return "v" + SUBNET_CACHE_VERSION + "-" + (bypass ? "bypass" : "capture") + "-" + sum + "-" +
+        nft_chunk_size(chunk_size_text) + "-" + (filter == "" ? "all" : filter);
 }
 
 function nft_prepared_family_valid(p) {
@@ -2374,7 +2375,10 @@ function nft_add_json_ruleset_subnets_for_section(section, json_path, label, tab
     if (!section_needs_priority_sets(section))
         return true;
 
-    let key = nft_subnet_cache_key(json_path, ports, chunk_size_text);
+    // A bypass section takes only the addresses nft may decide without
+    // sing-box (UC-101); a capture section every address it may route.
+    let bypass = section_priority_action(section) == "bypass";
+    let key = nft_subnet_cache_key(json_path, ports, chunk_size_text, bypass);
     let prepared = key != null ? nft_subnet_cache_read(key) : null;
     if (prepared == null) {
         // An extraction lost on a full tmpfs is not a rule set without
@@ -2384,7 +2388,8 @@ function nft_add_json_ruleset_subnets_for_section(section, json_path, label, tab
             unscoped_path,
             scoped_path,
             sprintf("%J", rule_port_values(ports)),
-            sprintf("%J", rule_port_ranges(ports))
+            sprintf("%J", rule_port_ranges(ports)),
+            bypass
         )) {
             run_args([ "logger", "-t", "forkop", "[error] Could not extract the subnets of " + as_string(label) + " for nftables" ]);
             return false;

@@ -79,7 +79,7 @@ for i in $(seq 1 40); do printf '{"version":3,"rules":[{"ip_cidr":["10.0.%d.0/24
 [ "$(entries)" -le 32 ] || fail "the cache is bounded: $(entries)"
 
 # entry JSON: the cache file of an import of the rule set JSON without ports.
-entry() { printf '%s/v2-%s-5000-all.json' "$WORK/cache" "$(md5sum "$1" | cut -c1-32)"; }
+entry() { printf '%s/v3-capture-%s-5000-all.json' "$WORK/cache" "$(md5sum "$1" | cut -c1-32)"; }
 
 # A hit counts as use (UC-222): an entry that a reload keeps importing is not
 # the first to go because it was prepared long ago, a superseded one is.
