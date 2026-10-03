@@ -280,8 +280,11 @@ function snapshot_operation_active() {
 // snapshot operation is running, whose own guard that may be (UC-019,
 // UC-066). reload_busy: a reload runs, or the list worker that ends in one
 // (reload_running); until it ends, the newest reload event may belong to an
-// earlier change than the one just applied (configform.js).
-function health(ui, guards, package_pending, events, reload_busy) {
+// earlier change than the one just applied (configform.js). bridge: the
+// state of br_netfilter (nft/bridge_netfilter.uc status()); while it is
+// loaded Forkop turns its iptables hooks off for the whole system, which
+// health shows as a warning (D-19, UC-109).
+function health(ui, guards, package_pending, events, reload_busy, bridge) {
     let guard = guards.active === true || guards.runtime === true || guards.restore === true;
     let service = type(ui.service) == "object" ? ui.service : {};
     let forkop = type(service.forkop) == "object" ? service.forkop : {};
@@ -334,6 +337,11 @@ function health(ui, guards, package_pending, events, reload_busy) {
         package_recovery: { pending: package_pending },
         last_reload,
         reload: { busy: reload_busy === true },
+        bridge_netfilter: {
+            status: type(bridge) != "object" ? "unknown" : bridge.loaded === true ? "warning" : "ok",
+            loaded: type(bridge) == "object" && bridge.loaded === true,
+            disabled_by_forkop: type(bridge) == "object" && bridge.disabled_by_forkop === true
+        },
         recent_activity: events
     };
 }
@@ -362,7 +370,7 @@ if (mode == "fixture") {
     print(sprintf("%J\n", health(input.ui || {}, { active: input.guard === true,
         runtime: input.runtime_guard === true, restore: input.restore_guard === true,
         transaction: input.transaction === true }, input.package_pending === true, input.events || [],
-        input.reload_busy === true)));
+        input.reload_busy === true, input.bridge_netfilter)));
     exit(0);
 }
 if (mode != "get")
@@ -381,4 +389,6 @@ let guards = {
 if (guards.restore)
     guards.transaction = snapshot_operation_active();
 let package_pending = fs.stat(PACKAGE_PENDING + "/pending") != null;
-print(sprintf("%J\n", health(ui, guards, package_pending, event_state(), reload_running())));
+let bridge = null;
+try { bridge = require("nft.bridge_netfilter").status(); } catch (e) {}
+print(sprintf("%J\n", health(ui, guards, package_pending, event_state(), reload_running(), bridge)));

@@ -208,6 +208,16 @@ grep -Fxq 'dns/apply.uc failsafe-restore' "$EVENTS" && fail "a clean stop ran th
 [ "$(cat "$RECORD" 2>/dev/null)" = 1 ] || fail "the stop did not record a clean stop"
 grep -q 'shutdown_correctly' "$FORKOP_UCI_STATE_FILE" && fail "the stop wrote shutdown_correctly into the configuration"
 ok "stop records the clean stop outside the configuration and succeeds on a read-only overlay"
+# br_netfilter's hooks go back at the stop, not at the start (D-19, UC-109).
+grep -Fxq 'nft/apply.uc restore-bridge-netfilter' "$EVENTS" || fail "the stop did not restore br_netfilter's hooks"
+lifecycle start
+grep -Fxq 'nft/apply.uc restore-bridge-netfilter' "$EVENTS" && fail "the start restored br_netfilter's hooks"
+grep -Fxq 'nft/apply.uc ensure-bridge-netfilter-disabled' "$EVENTS" || fail "the start did not turn br_netfilter's hooks off"
+lifecycle restart
+grep -Fxq 'nft/apply.uc ensure-bridge-netfilter-disabled' "$EVENTS" || fail "the restart did not start again"
+grep -Fxq 'nft/apply.uc restore-bridge-netfilter' "$EVENTS" && fail "a restart put br_netfilter's hooks back between its stop and start"
+lifecycle stop
+ok "stop puts br_netfilter's hooks back, start and restart do not"
 rmdir "$FORKOP_UCI_LOG_FILE"
 
 # 2b. Neither writes the configuration, also where it can be written.
