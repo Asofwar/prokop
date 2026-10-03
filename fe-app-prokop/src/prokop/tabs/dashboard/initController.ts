@@ -45,6 +45,7 @@ import {
 import { renderOverview } from './overviewCards';
 import { runOverviewServiceAction } from './serviceActionFlow';
 import { runUrlTestChange } from './serviceReload';
+import { renderUrlTestEditorRow } from './urlTestEditorRow';
 import { latencyJobFailure } from './latencyJob';
 import {
   subscriptionUpdateErrorMessage,
@@ -1354,11 +1355,7 @@ function renderUrlTestEditorModal(outbound: Prokop.Outbound) {
       activeButton.textContent = busy ? _('Applying…') : activeButtonLabel;
     }
   };
-  const row = (label: string, control: HTMLElement) =>
-    E('div', { class: 'fkp_dashboard-page__urltest-details__param' }, [
-      E('label', {}, label),
-      control,
-    ]);
+  const row = renderUrlTestEditorRow;
 
   // A reload that init.d only queued, or skipped for a stopped Prokop, is
   // not reported as applied (UC-061); one that failed or was refused keeps
