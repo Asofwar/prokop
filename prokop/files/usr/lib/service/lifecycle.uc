@@ -23,8 +23,6 @@ const LIB_DIR = getenv("PROKOP_LIB") || "/usr/lib/prokop";
 const BIN_PATH = getenv("PROKOP_BIN") || constant_value("PROKOP_BIN", "/usr/bin/prokop");
 const SERVICE_INIT = getenv("PROKOP_SERVICE_INIT") || constant_value("PROKOP_SERVICE_INIT", "/etc/init.d/prokop");
 const SERVICE_NAME = getenv("PROKOP_SERVICE_NAME") || constant_value("PROKOP_SERVICE_NAME", "prokop");
-const LUCI_VIEW_DIR = getenv("PROKOP_LUCI_VIEW_DIR") || constant_value("PROKOP_LUCI_VIEW_DIR", "/www/luci-static/resources/view/prokop");
-const LUCI_I18N_DOMAIN = getenv("PROKOP_LUCI_I18N_DOMAIN") || constant_value("PROKOP_LUCI_I18N_DOMAIN", "prokop");
 // The one-line installer that migrates a router from the product before the
 // rename (core/legacy_forkop.uc).
 const INSTALL_COMMAND = "wget -qO- " + constant_value("PROKOP_RELEASE_BASE_URL", "https://asofwar.github.io/prokop") + "/install.sh | sh";
@@ -148,7 +146,6 @@ const DIAGNOSTICS_UC = LIB_DIR + "/diagnostics/runtime.uc";
 const ZAPRET_UC = LIB_DIR + "/providers/zapret/runtime.uc";
 const ZAPRET2_UC = LIB_DIR + "/providers/zapret2/runtime.uc";
 const BYEDPI_UC = LIB_DIR + "/providers/byedpi/runtime.uc";
-const PACKAGES_UC = LIB_DIR + "/core/packages.uc";
 const KILLSWITCH_UC = LIB_DIR + "/killswitch/runtime.uc";
 
 let start_subscription_update_lock_held = false;
@@ -230,10 +227,6 @@ function read_json_file(path) {
 
 function write_json(value) {
     print(sprintf("%J", value), "\n");
-}
-
-function command_success(command) {
-    return command_status(command + " >/dev/null 2>&1") == 0;
 }
 
 function command_status_from_args(args) {
@@ -2707,64 +2700,6 @@ function restart() {
     return 1;
 }
 
-function package_manager_remove_if_installed(package_name) {
-    package_name = as_string(package_name);
-    if (command_success_from_args([ "sh", "-c", "command -v apk" ])) {
-        if (command_success_from_args([ "apk", "info", "-e", package_name ]))
-            command_success_from_args([ "apk", "del", package_name ]);
-        return;
-    }
-
-    if (module_success(PACKAGES_UC, [ "opkg-installed", package_name ]))
-        command_success_from_args([ "opkg", "remove", "--force-depends", package_name ]);
-}
-
-function uninstall() {
-    log_message("Uninstalling Prokop", "info");
-
-    if (fs.stat(SERVICE_INIT) != null) {
-        stop();
-        command_success_from_args([ SERVICE_INIT, "disable" ]);
-    }
-
-    module_success(KILLSWITCH_UC, [ "release", "uninstall" ]);
-    dnsmasq_restore_fail_safe();
-
-    if (fs.stat("/etc/init.d/prokop") != null) {
-        command_success_from_args([ "/etc/init.d/prokop", "stop" ]);
-        command_success_from_args([ "/etc/init.d/prokop", "disable" ]);
-    }
-
-    package_manager_remove_if_installed("luci-i18n-prokop-ru");
-    package_manager_remove_if_installed("luci-app-prokop");
-
-    // While the product before the rename is installed, the managed sing-box
-    // may still be its own.
-    if (!legacy.installed() && module_success(SINGBOX_UC, [ "managed-service-installed" ])) {
-        module_success(SINGBOX_UC, [ "remove-managed-service-script" ]);
-        remove_file("/usr/bin/sing-box");
-        remove_file("/usr/lib/libcronet.so");
-    }
-
-    command_success_from_args([ "rm", "-rf", "/usr/lib/prokop" ]);
-    command_success_from_args([ "rm", "-rf", LUCI_VIEW_DIR ]);
-    remove_file(SERVICE_INIT);
-    remove_file("/etc/init.d/prokop-killswitch");
-    remove_file(BIN_PATH);
-    remove_file("/usr/share/luci/menu.d/luci-app-prokop.json");
-    remove_file("/usr/share/rpcd/acl.d/luci-app-prokop.json");
-    remove_file("/etc/uci-defaults/50_luci-prokop");
-    command_success_from_args([ "find", "/usr/lib/lua/luci/i18n", "-maxdepth", "1", "-type", "f", "-name", LUCI_I18N_DOMAIN + ".*.lmo", "-delete" ]);
-    remove_file("/usr/lib/lua/luci/i18n/" + LUCI_I18N_DOMAIN + ".ru.lua");
-    remove_file("/usr/lib/lua/luci/i18n/" + LUCI_I18N_DOMAIN + ".en.lua");
-    command_success("rm -f /var/luci-indexcache* /tmp/luci-indexcache* 2>/dev/null");
-    if (fs.stat("/etc/init.d/rpcd") != null)
-        command_success_from_args([ "/etc/init.d/rpcd", "reload" ]);
-
-    print("{\"removed\":true}\n");
-    return 0;
-}
-
 function enable_service() {
     return command_status_from_args([ SERVICE_INIT, "enable" ]);
 }
@@ -2819,8 +2754,6 @@ else if (mode == "selector-restore-pairs-fixture") {
 }
 else if (mode == "dnsmasq-restore" || mode == "restore-dnsmasq")
     status = dnsmasq_restore_fail_safe();
-else if (mode == "uninstall")
-    status = uninstall();
 else {
     warn("Usage: service/lifecycle.uc <start|stop|reload|restart|main|enable|disable|dnsmasq-restore|uninstall> ...\n");
     status = 1;
