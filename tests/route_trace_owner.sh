@@ -51,7 +51,10 @@ trace() {
 write_config ',{"action":"route","inbound":"tproxy-in","rule_set":["main-community"],"outbound":"main-urltest-out"}'
 trace youtube.com '' 198.18.0.5 >"$WORK/youtube.json"
 trace doubleclick.net '' 198.18.0.6 >"$WORK/block.json"
-trace gosuslugi.ru '' 213.59.254.7 >"$WORK/bypass.json"
+trace gosuslugi.ru '' 198.18.0.8 >"$WORK/bypass.json"
+# A real address reaches sing-box only through nft; no rule here proves the
+# capture, so the domain rule cannot be named (UC-100).
+trace gosuslugi.ru '' 213.59.254.7 >"$WORK/bypass-real.json"
 trace discord.com '' 198.18.0.7 >"$WORK/discord-any.json"
 trace discord.com 192.168.1.40 198.18.0.7 >"$WORK/discord-dev.json"
 trace discord.com 192.168.1.50 198.18.0.7 >"$WORK/discord-other.json"
@@ -76,6 +79,8 @@ assert.deepEqual([yt.dpi.value, yt.dpi.strategy, yt.dpi.strategy_custom, yt.dpi.
 
 assert.deepEqual(brief(read('block')), [null, 'block', 'block', null]);
 assert.deepEqual(brief(read('bypass')), [null, 'bypass', 'bypass', 'bypass-out']);
+assert.deepEqual([read('bypass-real').rule.provenance, read('bypass-real').rule.reason, read('bypass-real').rule.status],
+  ['unknown', 'real_address_interception_unknown', 'undecidable']);
 
 const any = read('discord-any');
 assert.deepEqual([any.rule.provenance, any.rule.reason, any.rule.status], ['unknown', 'source_scoped_rule', 'undecidable']);

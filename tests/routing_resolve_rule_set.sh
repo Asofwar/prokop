@@ -106,15 +106,20 @@ expect static_hit "{ \"host\": \"youtube.com\", \"rule_set\": $sets, \"rules\": 
 [ ! -s "$WORK/calls" ] || fail "static_hit: a list was asked although a static matcher decided"
 
 # A real-address connection is matched by the address as well as the host.
+# Whether it reaches sing-box at all depends on nft, which holds a list's
+# addresses only with subnet extraction (not shown in the sing-box config):
+# undecidable unless a rule's ip_cidr proves the capture (UC-100).
 addr='{ "action": "route", "inbound": [ "tproxy-in" ], "rule_set": "addresses", "outbound": "youtube-out" }'
-expect address_hit "{ \"host\": \"plain.test\", \"ip\": \"203.0.113.7\", \"fakeip\": false, \"rule_set\": $sets, \"rules\": [ $addr ] }" "$zapret"
+capture='{ "action": "route", "inbound": [ "tproxy-in" ], "ip_cidr": [ "203.0.113.0/24" ], "outbound": "main-out" }'
+expect address_hit "{ \"host\": \"plain.test\", \"ip\": \"203.0.113.7\", \"fakeip\": false, \"rule_set\": $sets, \"rules\": [ $addr ] }" \
+    '{ "status": "undecidable", "reason": "real_address_interception_unknown", "rule": 0, "section": null, "kind": null }'
 grep -qx "rule-set match -f source $WORK/addresses.json 203.0.113.7" "$WORK/calls" || fail "address_hit: the address was not asked"
-# An IPv6 address is asked as it is (the stand-in matches IPv6 prefixes as
-# the real binary does: routing_resolve_rule_set_real.sh).
-expect address6_hit "{ \"host\": \"plain.test\", \"ip\": \"2001:db8::7\", \"fakeip\": false, \"rule_set\": $sets, \"rules\": [ $addr ] }" "$zapret"
-grep -qx "rule-set match -f source $WORK/addresses.json 2001:db8::7" "$WORK/calls" || fail "address6_hit: the address was not asked"
-expect address6_miss "{ \"host\": \"plain.test\", \"ip\": \"2001:dead::7\", \"fakeip\": false, \"rule_set\": $sets, \"rules\": [ $addr ] }" \
-    '{ "status": "decided", "reason": null, "rule": null, "section": null, "kind": "direct" }'
+expect address_hit_captured "{ \"host\": \"plain.test\", \"ip\": \"203.0.113.7\", \"fakeip\": false, \"rule_set\": $sets, \"rules\": [ $addr, $capture ] }" "$zapret"
+# An IPv6 address is outside the resolver's model (UC-096); the stand-in
+# still matches IPv6 prefixes as the real binary does
+# (routing_resolve_rule_set_real.sh).
+expect address6_hit "{ \"host\": \"plain.test\", \"ip\": \"2001:db8::7\", \"fakeip\": false, \"rule_set\": $sets, \"rules\": [ $addr ] }" \
+    '{ "status": "undecidable", "reason": "ipv6_not_modelled", "rule": null, "section": null, "kind": null }'
 # A FakeIP connection reaches sing-box as the name: its address is not asked.
 expect fakeip_address "{ \"host\": \"plain.test\", \"ip\": \"198.18.0.9\", \"rule_set\": $sets, \"rules\": [ $addr ] }" \
     '{ "status": "decided", "reason": null, "rule": null, "section": null, "kind": "direct" }'

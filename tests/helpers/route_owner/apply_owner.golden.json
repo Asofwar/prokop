@@ -82,15 +82,9 @@
   "rule": 0
  },
  "resolve_above_owner_real": {
-  "decided": true,
-  "kind": "zapret",
-  "rule": 1,
-  "outbound": "youtube-out",
-  "section": "youtube",
-  "index": 1,
-  "mark": "0x01000001",
-  "mark_value": 16777217,
-  "queue": 4000
+  "decided": false,
+  "reason": "real_address_interception_unknown",
+  "rule": 1
  },
  "udp_only_rule": {
   "decided": true,

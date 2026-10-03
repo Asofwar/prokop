@@ -30,14 +30,29 @@ export function undecidedReasonText(reason?: string | null) {
       return _(
         'the sing-box configuration is not available; is Forkop X running?',
       );
-    // Reason codes of routing/resolve.uc (shared with autotune apply).
+    // Reason codes of routing/resolve.uc (shared with autotune apply). The
+    // rule may be the one that would own the site (UC-103).
     case 'undecidable_matcher':
       return _(
-        'an earlier rule uses a list or pattern whose contents cannot be checked here',
+        'a rule on the way uses a list or pattern whose contents cannot be checked here',
       );
     case 'resolve_rule':
       return _(
-        'an earlier rule re-resolves the address, so the route depends on its answer',
+        'a rule on the way re-resolves the address, so the route depends on its answer',
+      );
+    case 'ipv6_not_modelled':
+      return _('the route of an IPv6 address is not calculated');
+    case 'fakeip_domain_unknown':
+      return _(
+        'a FakeIP address is routed by its domain; check the site by its name',
+      );
+    case 'dns_hijack':
+      return _(
+        'connections to the DNS port are answered by the sing-box DNS, not routed by a rule',
+      );
+    case 'real_address_interception_unknown':
+      return _(
+        'the site has a real address; whether Forkop intercepts it depends on the address lists of the rules',
       );
     case 'source_scoped_rule':
       return _('a rule applies to selected devices only; choose a device');
