@@ -67,10 +67,6 @@ function command_success_from_args(args) {
     return system(command_from_args(args) + " >/dev/null 2>&1") == 0;
 }
 
-function command_exists(name) {
-    return command_success_from_args([ "command", "-v", name ]);
-}
-
 function log_message(message, level) {
     level = as_string(level || "info");
     command_success_from_args([ "logger", "-t", "prokop", "[" + level + "] " + as_string(message) ]);

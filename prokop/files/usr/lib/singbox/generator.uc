@@ -1260,16 +1260,6 @@ function remember_group_outbounds(group_outbounds, group_name, outbounds) {
     group_outbounds[group_name] = unique_string_array(combined);
 }
 
-function selector_group_for_outbound(selector_tags, state, outbound_tag_name) {
-    let urltest_groups = object_or_empty(object_or_empty(state).urltestGroups);
-    for (let group_tag in array_or_empty(selector_tags)) {
-        let group = object_or_empty(urltest_groups[group_tag]);
-        if (array_contains(group.outbounds, outbound_tag_name))
-            return group_tag;
-    }
-    return "";
-}
-
 function grouped_selector_outbounds(section, selector_tags, group_outbounds, state) {
     let configured_groups = [
         ...connections.urltests(section),
@@ -3256,14 +3246,6 @@ function enabled_sections(deferred_sections) {
             push(result, rejected);
     });
     return result;
-}
-
-function section_by_name(sections, name) {
-    name = as_string(name);
-    for (let section in sections)
-        if (as_string(section[".name"]) == name)
-            return section;
-    return null;
 }
 
 function generate_config(output_path, service_address, mwan3_active, supports_xhttp, deferred_sections, sing_box_version) {

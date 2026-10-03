@@ -83,6 +83,14 @@ do
 done
 source_refute_shell "sing-box helper/state shell symbols must not remain" \
   -E 'get_sing_box_version\(|sing_box_version_from_output\(|sing_box_version_output\(|sing_box_output_has_build_tag\(|sing_box_has_build_tag\(|is_sing_box_extended\(|is_sing_box_tiny_package_installed\(|is_sing_box_full_package_installed\(|is_sing_box_compressed_marker_set\(|is_sing_box_extended_marker_set\(|read_sing_box_version_state\(|is_sing_box_tiny_marker_set\(|is_sing_box_tiny\(|sing_box_supports_tailscale\(|get_sing_box_variant\(|updates_(write|read|clear|restore)_sing_box_(variant_marker|version_state)\(' "$PROKOP_BIN" "$PROKOP_LIB"
+# The ucode owner of the sing-box variant is singbox/runtime.uc: no other
+# module keeps its own copy (config/validator.uc and core/helpers.uc did,
+# without a caller: UC-180).
+variant_copies="$(grep -rnE --include='*.uc' \
+  '^function (sing_box_version_is_extended|sing_box_is_extended|sing_box_output_has_build_tag|sing_box_supports_tailscale|sing_box_extended_marker_set|sing_box_variant)\(' \
+  "$PROKOP_LIB" | grep -v "^$SINGBOX_RUNTIME_UC:" || true)"
+[ -z "$variant_copies" ] ||
+  fail "sing-box variant helpers outside singbox/runtime.uc: $variant_copies"
 
 if ucode -L "$PROKOP_LIB" "$PACKAGES_UC" installed prokop-definitely-missing >/dev/null 2>&1; then
   fail "missing package must not be reported installed"

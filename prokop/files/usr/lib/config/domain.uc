@@ -477,15 +477,10 @@ function regex_to_ascii(value) {
     return flush_label() ? result : null;
 }
 
-function valid_suffix(value) {
-    return suffix_to_ascii(value) != null;
-}
-
 return {
     ascii_lower,
     label_to_ascii,
     suffix_to_ascii,
     keyword_to_ascii,
-    regex_to_ascii,
-    valid_suffix
+    regex_to_ascii
 };

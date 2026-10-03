@@ -241,10 +241,6 @@ function command_success_from_args(args) {
     return command_status(command_from_args(args) + " >/dev/null 2>&1") == 0;
 }
 
-function command_start_without_procd_lock(args) {
-    return command_status(command_from_args(args) + " >/dev/null 2>&1 1000>&- &") == 0;
-}
-
 function external_config_fingerprint() {
     let data = fs.readfile(CONFIG_FILE);
     if (data == null)
