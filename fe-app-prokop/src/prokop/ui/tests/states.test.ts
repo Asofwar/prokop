@@ -142,7 +142,32 @@ describe('confirmAction', () => {
     await expect(result).resolves.toBe(false);
   });
 
-  it('treats a modal closed from outside as cancel', async () => {
+  // LuCI's cancelModal: Escape clicks the first '.right > button'.
+  function pressEscape(content: FakeNode) {
+    const [right] = find(content, (n) =>
+      String(n.attrs.class ?? '')
+        .split(' ')
+        .includes('right'),
+    );
+    const button = (right?.children as FakeNode[] | undefined)?.find(
+      (child) => child?.tag === 'button',
+    );
+    (button?.attrs.click as (() => void) | undefined)?.();
+  }
+
+  it('cancels on Escape', async () => {
+    const result = confirmAction({
+      title: 't',
+      message: 'm',
+      confirmLabel: 'Go',
+      danger: true,
+    });
+    pressEscape(shown!.content);
+
+    await expect(result).resolves.toBe(false);
+  });
+
+  it('treats a dialog replaced by another one as cancel', async () => {
     let notify: () => void = () => undefined;
     g.MutationObserver = class {
       constructor(callback: () => void) {

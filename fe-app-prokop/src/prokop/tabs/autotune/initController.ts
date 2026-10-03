@@ -17,6 +17,7 @@ import {
 } from '../../ui/states';
 import { formatRelativeTime } from '../../ui/time';
 import { historyItems } from '../history/model';
+import { field, modalActions } from './dialog';
 import {
   applyConfirmation,
   applyPhaseLabel,
@@ -204,7 +205,8 @@ async function setMode(mode: Prokop.AutotuneMode) {
         _(
           'It never creates or deletes rules, never turns DPI bypass off and never moves targets between rules.',
         ),
-        _('At most %d change(s) per day; a rolled back strategy waits %s.')
+        // 'Label: value' keeps the Russian agreement right for any number.
+        _('Changes per day: at most %d; a rolled back strategy waits %s.')
           .replace('%d', String(status.policy.max_applies_per_day))
           .replace('%s', durationLabel(status.policy.cooldown)),
         _('Changes are made only by scheduled checks, one group at a time.'),
@@ -409,14 +411,6 @@ async function runCheck(scope: string) {
   if (mounted) await loadAll();
 }
 
-function field(label: string, control: HTMLElement, hint?: string) {
-  return [
-    E('label', {}, label),
-    control,
-    ...(hint ? [E('div', { class: 'fkp-autotune__field-hint' }, hint)] : []),
-  ];
-}
-
 function select(name: string, choices: [string, string][], value: string) {
   return E(
     'select',
@@ -441,21 +435,6 @@ function numberInput(name: string, value: number, min: number, max: number) {
     step: '1',
     value: String(value),
   }) as HTMLInputElement;
-}
-
-function modalActions(onSave: () => void, saveLabel: string) {
-  return E('div', { class: 'fkp-confirm__actions' }, [
-    E(
-      'button',
-      { type: 'button', class: 'btn cbi-button', click: () => ui.hideModal() },
-      _('Cancel'),
-    ),
-    E(
-      'button',
-      { type: 'button', class: 'btn cbi-button-action', click: onSave },
-      saveLabel,
-    ),
-  ]);
 }
 
 function showPolicyEditor() {
@@ -819,9 +798,10 @@ function showCandidates(target: Prokop.AutotuneTarget) {
 
 function policySummary(policy: Prokop.AutotunePolicy) {
   return [
-    _('every %s').replace('%s', durationLabel(policy.interval)),
+    // 'Label: value' keeps the Russian agreement right for any number.
+    _('check interval: %s').replace('%s', durationLabel(policy.interval)),
     _('%d confirmations').replace('%d', String(policy.confirmations)),
-    _('up to %d automatic change(s) per day').replace(
+    _('automatic changes per day: up to %d').replace(
       '%d',
       String(policy.max_applies_per_day),
     ),

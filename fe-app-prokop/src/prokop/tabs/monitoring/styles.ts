@@ -1,3 +1,5 @@
+import { BREAKPOINTS } from '../../ui/styles';
+
 // language=CSS
 import { PROKOP_UCI_PACKAGE as PROKOP_CBI_PREFIX } from '../../../constants';
 
@@ -670,7 +672,7 @@ export const styles = `
     white-space: nowrap;
 }
 
-@media (max-width: 900px) {
+@media (max-width: ${BREAKPOINTS.narrow}px) {
     .fkp_monitoring-page__controls {
         align-items: center;
     }
@@ -759,7 +761,7 @@ export const styles = `
     }
 }
 
-@media (max-width: 520px) {
+@media (max-width: ${BREAKPOINTS.phone}px) {
     .fkp_monitoring-page__controls,
     .fkp_monitoring-page__filters {
         align-items: stretch;

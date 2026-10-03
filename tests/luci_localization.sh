@@ -101,6 +101,18 @@ fi
 if grep -rn --include='*.ts' "'N/A'" "$ROOT_DIR/fe-app-prokop/src" | grep -v '/tests/' | grep -q .; then
   fail "N/A is shown untranslated"
 fi
+VALIDATORS_DIR="$ROOT_DIR/fe-app-prokop/src/validators"
+if grep -nE "message:[[:space:]]*['\"]" "$VALIDATORS_DIR"/*.ts | grep -q . ||
+  grep -A1 -E "message:[[:space:]]*$" "$VALIDATORS_DIR"/*.ts | grep -Eq "^[^:]*-[[:space:]]*['\"]"; then
+  fail "validator messages must be translatable"
+fi
+if grep -rn --include='*.ts' "showToast(result.message" "$ROOT_DIR/fe-app-prokop/src" | grep -q .; then
+  fail "component toasts must not show backend prose"
+fi
+# Russian plural agreement: a number goes after a label, never into '(s)'.
+if grep -rnE --include='*.ts' "_\('[^']*\(s\)" "$ROOT_DIR/fe-app-prokop/src" | grep -v '/tests/' | grep -q .; then
+  fail "plural-sensitive msgids must use the 'Label: value' pattern"
+fi
 
 # Manual autotune apply (6.9.1): the texts the operator relies on.
 for pair in \

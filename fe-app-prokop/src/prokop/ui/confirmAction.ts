@@ -51,14 +51,18 @@ export function confirmAction(options: ConfirmActionOptions): Promise<boolean> {
           ]
         : []),
       ...(options.notes ?? []).map((line) => E('p', {}, line)),
-      E('div', { class: 'fkp-confirm__actions' }, [
+      // LuCI's Escape handler clicks the first '.right > button' of the
+      // modal, so Cancel must stay first in a '.right' container (UC-134).
+      E('div', { class: 'right fkp-confirm__actions' }, [
         cancelButton,
         confirmButton,
       ]),
     ]);
 
     ui.showModal(options.title, content);
-    // A modal closed by LuCI itself (Escape, navigation) counts as cancel.
+    // Another dialog replacing this one detaches the content; that counts
+    // as cancel. LuCI's hideModal() only hides the overlay and never
+    // detaches it, so Escape is handled by the Cancel button above.
     if (typeof MutationObserver === 'function') {
       observer = new MutationObserver(() => {
         if (!content.isConnected) finish(false, false);

@@ -1,3 +1,5 @@
+import { BREAKPOINTS } from '../../ui/styles';
+
 // language=CSS
 export const styles = `
 .fkp-history {
@@ -66,7 +68,7 @@ export const styles = `
 .fkp-history__diff { width: 100%; }
 .fkp-history__diff td { overflow-wrap: anywhere; vertical-align: top; }
 
-@media (max-width: 599px) {
+@media (max-width: ${BREAKPOINTS.phone}px) {
     .fkp-history__facts { grid-template-columns: minmax(0, 1fr); }
     .fkp-history__facts dd { margin-bottom: var(--fkp-space-2); }
 }

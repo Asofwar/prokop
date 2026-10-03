@@ -10,7 +10,7 @@ import {
 
 let removing = false;
 
-function confirmRemoval() {
+export function confirmRemoval() {
   if (removing) return;
   const progress = E('p', { role: 'status' });
   const cancel = renderButton({
@@ -118,6 +118,8 @@ function confirmRemoval() {
       E('div', { class: 'right' }, [cancel, confirm]),
     ]),
   );
+  // Cancel is the default focus, as in confirmAction (UC-133).
+  cancel.focus();
 }
 
 export function renderFullUninstall(disabled: boolean) {

@@ -1,3 +1,5 @@
+import { BREAKPOINTS } from '../../ui/styles';
+
 // language=CSS
 import { PROKOP_UCI_PACKAGE as PROKOP_CBI_PREFIX } from '../../../constants';
 
@@ -351,7 +353,7 @@ export const styles = `
 .fkp-conn__actions { display: flex; gap: 4px; }
 .fkp-conn__actions .btn { margin: 0; white-space: nowrap; }
 
-@media (max-width: 860px) {
+@media (max-width: ${BREAKPOINTS.narrow}px) {
     .fkp-conn { display: block; }
     .fkp-conn__head { display: none; }
     .fkp-conn__row {
@@ -394,7 +396,7 @@ export const styles = `
 .fkp-route__facts dd { margin: 0; display: grid; gap: 2px; }
 .fkp-route__facts small { color: var(--text-color-medium, gray); }
 
-@media (max-width: 560px) {
+@media (max-width: ${BREAKPOINTS.phone}px) {
     .fkp-diag-facts, .fkp-route__facts, .fkp-check__advice { grid-template-columns: minmax(0, 1fr); }
     .fkp-diag-checks { grid-template-columns: minmax(0, 1fr); }
 }
