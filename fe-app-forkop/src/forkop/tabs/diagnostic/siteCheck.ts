@@ -54,6 +54,10 @@ export function undecidedReasonText(reason?: string | null) {
       return _(
         'the site has a real address; whether Forkop intercepts it depends on the address lists of the rules',
       );
+    case 'local_address_not_intercepted':
+      return _(
+        'the address is local or reserved; Forkop does not intercept it, the connection goes directly',
+      );
     case 'source_scoped_rule':
       return _('a rule applies to selected devices only; choose a device');
     default:

@@ -23,6 +23,10 @@ const DIRECT_OUTBOUND = constants.SB_DIRECT_OUTBOUND_TAG || "direct-out";
 const BYPASS_OUTBOUND = constants.SB_BYPASS_OUTBOUND_TAG || "bypass-out";
 const DEFAULT_SINGBOX_CONFIG = "/etc/sing-box/config.json";
 const FAKEIP_PREFIX = [ "198.18.0.0", 15 ];
+// The local and reserved IPv4 ranges nft returns early for, before any rule
+// chain (nft/apply.uc LOCALV4_RANGES, 240.0.0.0-255.255.255.255 written as
+// its prefix): such a destination never reaches sing-box.
+const LOCALV4_RANGES = [ "0.0.0.0/8", "10.0.0.0/8", "127.0.0.0/8", "169.254.0.0/16", "172.16.0.0/12", "192.0.0.0/24", "192.0.2.0/24", "192.88.99.0/24", "192.168.0.0/16", "198.51.100.0/24", "203.0.113.0/24", "224.0.0.0/4", "240.0.0.0/4" ];
 const LEGACY_CONNECTION_ACTIONS = [ "proxy", "outbound", "vpn" ];
 const RULESET_MATCH_BIN = getenv("FORKOP_RULESET_MATCH_BIN") || "/usr/bin/sing-box";
 function seconds_setting(value, fallback) {
@@ -162,6 +166,10 @@ function cidr_contains(cidr, ip) {
 }
 function is_fakeip(ip) {
     return in_prefix(ip, FAKEIP_PREFIX[0], FAKEIP_PREFIX[1]);
+}
+function is_localv4(ip) {
+    for (let c in LOCALV4_RANGES) if (cidr_contains(c, ip)) return true;
+    return false;
 }
 
 // The connection being asked about. fakeip: the target reaches sing-box as
@@ -512,6 +520,10 @@ function route_owner(config, t) {
         if (m == "no") continue;
         if (type(m) == "object")
             return { decided: false, reason: m.reason, rule: i, sources: m.reason == "source_scoped_rule" ? list_of(r.source_ip_cidr) : null };
+        // A local or reserved real address: nft returns it before any rule
+        // chain, whatever rule names it; the connection goes directly
+        // (nft/apply.uc mangle, mangle_output).
+        if (!t.fakeip && is_localv4(t.ip)) return { decided: false, reason: "local_address_not_intercepted", rule: i };
         // A real address taken by its domain: sing-box sees it only when nft
         // intercepts the address (UC-100).
         if (!t.fakeip && address_match(r, t, lists) != "match") {

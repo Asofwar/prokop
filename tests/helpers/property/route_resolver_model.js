@@ -32,7 +32,9 @@ const SUFFIXES = ["youtube.com", "ytimg.com", "discord.com", "example.org", ".ex
 const KEYWORDS = ["tube", "disc", "exam", "Tube", "YouTube"];
 const CIDRS = ["142.250.0.0/16", "93.184.216.0/24", "10.0.0.0/8", "93.184.216.34/32"];
 const OUTBOUNDS = ["main-out", "youtube-out", "discord-out", "bypass-out"];
-const REAL = ["142.250.1.1", "93.184.216.34", "1.1.1.1"];
+const REAL = ["142.250.1.1", "93.184.216.34", "1.1.1.1", "10.1.2.3"];
+// nft returns a local or reserved destination before any rule chain.
+const LOCAL = ["10.0.0.0/8"];
 
 function destination() {
   const rule = {};
@@ -172,6 +174,7 @@ function singbox(rulesList, t) {
 // nft: the first rule whose sets take the address (ip_cidr, or ports when
 // the rule has no destination matcher); bypass leaves it direct.
 function captured(rulesList, t) {
+  if (LOCAL.some((c) => inCidr(t.ip, c))) return false;
   for (const r of rulesList) {
     if (!takes(r) || !["route", "reject"].includes(r.action || "route") || r.protocol !== undefined) continue;
     const dest = ["domain", "domain_suffix", "domain_keyword", "ip_cidr"].some((k) => r[k] !== undefined);

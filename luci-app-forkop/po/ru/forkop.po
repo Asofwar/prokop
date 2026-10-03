@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-03 17:01+0000\n"
-"PO-Revision-Date: 2026-10-03 17:01+0000\n"
+"POT-Creation-Date: 2026-10-03 17:19+0000\n"
+"PO-Revision-Date: 2026-10-03 17:19+0000\n"
 "Last-Translator: Asofwar\n"
 "Language-Team: none\n"
 "Language: ru\n"
@@ -3796,6 +3796,9 @@ msgstr "Действие не найдено; возможно, оно уже з
 
 msgid "The address is blocked by a rule"
 msgstr "Адрес блокируется правилом"
+
+msgid "the address is local or reserved; Forkop does not intercept it, the connection goes directly"
+msgstr "адрес локальный или зарезервированный; Forkop его не перехватывает, соединение идёт напрямую"
 
 msgid "The autotune state could not be saved. Check the free space on the router."
 msgstr "Не удалось сохранить состояние автоподбора. Проверьте свободное место на роутере."

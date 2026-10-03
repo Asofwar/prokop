@@ -354,21 +354,21 @@
     "call": "a rule applies to selected devices only; choose a device",
     "key": "a rule applies to selected devices only; choose a device",
     "places": [
-      "src/forkop/tabs/diagnostic/siteCheck.ts:58"
+      "src/forkop/tabs/diagnostic/siteCheck.ts:62"
     ]
   },
   {
     "call": "A rule blocks this address. This is intended for ads and trackers.",
     "key": "A rule blocks this address. This is intended for ads and trackers.",
     "places": [
-      "src/forkop/tabs/diagnostic/siteCheck.ts:160"
+      "src/forkop/tabs/diagnostic/siteCheck.ts:164"
     ]
   },
   {
     "call": "a rule is too complex to calculate",
     "key": "a rule is too complex to calculate",
     "places": [
-      "src/forkop/tabs/diagnostic/siteCheck.ts:60"
+      "src/forkop/tabs/diagnostic/siteCheck.ts:64"
     ]
   },
   {
@@ -651,7 +651,7 @@
     "places": [
       "src/forkop/tabs/diagnostic/connectivityMatrix.ts:250",
       "src/forkop/tabs/diagnostic/connectivityMatrix.ts:297",
-      "src/forkop/tabs/diagnostic/siteCheck.ts:118"
+      "src/forkop/tabs/diagnostic/siteCheck.ts:122"
     ]
   },
   {
@@ -815,7 +815,7 @@
     "call": "An IP address needs no DNS",
     "key": "An IP address needs no DNS",
     "places": [
-      "src/forkop/tabs/diagnostic/siteCheck.ts:120"
+      "src/forkop/tabs/diagnostic/siteCheck.ts:124"
     ]
   },
   {
@@ -887,7 +887,7 @@
     "call": "Answer of the router DNS",
     "key": "Answer of the router DNS",
     "places": [
-      "src/forkop/tabs/diagnostic/siteCheck.ts:135"
+      "src/forkop/tabs/diagnostic/siteCheck.ts:139"
     ]
   },
   {
@@ -1801,7 +1801,7 @@
     "call": "Check the node of the rule in Monitoring → Nodes and groups.",
     "key": "Check the node of the rule in Monitoring → Nodes and groups.",
     "places": [
-      "src/forkop/tabs/diagnostic/siteCheck.ts:174"
+      "src/forkop/tabs/diagnostic/siteCheck.ts:178"
     ]
   },
   {
@@ -1903,7 +1903,7 @@
       "src/forkop/tabs/dashboard/overview.ts:242",
       "src/forkop/tabs/diagnostic/connectivityMatrix.ts:104",
       "src/forkop/tabs/diagnostic/dpiPlayground.ts:48",
-      "src/forkop/tabs/diagnostic/siteCheck.ts:258",
+      "src/forkop/tabs/diagnostic/siteCheck.ts:262",
       "src/forkop/tabs/diagnostic/statusLabels.ts:28"
     ]
   },
@@ -2895,8 +2895,8 @@
     "key": "DNS",
     "places": [
       "../luci-app-forkop/htdocs/luci-static/resources/view/forkop/page/settings.js:32",
-      "src/forkop/tabs/diagnostic/siteCheck.ts:126",
-      "src/forkop/tabs/diagnostic/siteCheck.ts:133"
+      "src/forkop/tabs/diagnostic/siteCheck.ts:130",
+      "src/forkop/tabs/diagnostic/siteCheck.ts:137"
     ]
   },
   {
@@ -3587,7 +3587,7 @@
     "call": "Enter a domain or IP address",
     "key": "Enter a domain or IP address",
     "places": [
-      "src/forkop/tabs/diagnostic/siteCheck.ts:254"
+      "src/forkop/tabs/diagnostic/siteCheck.ts:258"
     ]
   },
   {
@@ -3623,7 +3623,7 @@
     "call": "Enter a valid domain or IP address",
     "key": "Enter a valid domain or IP address",
     "places": [
-      "src/forkop/tabs/diagnostic/siteCheck.ts:215"
+      "src/forkop/tabs/diagnostic/siteCheck.ts:219"
     ]
   },
   {
@@ -3990,7 +3990,7 @@
     "call": "For a DPI rule this can mean the strategy does not work with your provider.",
     "key": "For a DPI rule this can mean the strategy does not work with your provider.",
     "places": [
-      "src/forkop/tabs/diagnostic/siteCheck.ts:170"
+      "src/forkop/tabs/diagnostic/siteCheck.ts:174"
     ]
   },
   {
@@ -4371,7 +4371,7 @@
     "call": "From the router",
     "key": "From the router",
     "places": [
-      "src/forkop/tabs/diagnostic/siteCheck.ts:144"
+      "src/forkop/tabs/diagnostic/siteCheck.ts:148"
     ]
   },
   {
@@ -4544,7 +4544,7 @@
     "call": "HTTPS request made by the router itself",
     "key": "HTTPS request made by the router itself",
     "places": [
-      "src/forkop/tabs/diagnostic/siteCheck.ts:146"
+      "src/forkop/tabs/diagnostic/siteCheck.ts:150"
     ]
   },
   {
@@ -6230,14 +6230,14 @@
     "call": "No rule handles it; it may need to be added to a rule.",
     "key": "No rule handles it; it may need to be added to a rule.",
     "places": [
-      "src/forkop/tabs/diagnostic/siteCheck.ts:176"
+      "src/forkop/tabs/diagnostic/siteCheck.ts:180"
     ]
   },
   {
     "call": "No rule matched",
     "key": "No rule matched",
     "places": [
-      "src/forkop/tabs/diagnostic/siteCheck.ts:105",
+      "src/forkop/tabs/diagnostic/siteCheck.ts:109",
       "src/forkop/tabs/monitoring/connectionView.ts:168"
     ]
   },
@@ -6467,7 +6467,7 @@
     "call": "Not resolved",
     "key": "Not resolved",
     "places": [
-      "src/forkop/tabs/diagnostic/siteCheck.ts:127"
+      "src/forkop/tabs/diagnostic/siteCheck.ts:131"
     ]
   },
   {
@@ -7866,8 +7866,8 @@
     "call": "Route",
     "key": "Route",
     "places": [
-      "src/forkop/tabs/diagnostic/siteCheck.ts:76",
-      "src/forkop/tabs/diagnostic/siteCheck.ts:101",
+      "src/forkop/tabs/diagnostic/siteCheck.ts:80",
+      "src/forkop/tabs/diagnostic/siteCheck.ts:105",
       "src/forkop/tabs/monitoring/initController.ts:1108"
     ]
   },
@@ -7903,7 +7903,7 @@
     "call": "Router kernel route",
     "key": "Router kernel route",
     "places": [
-      "src/forkop/tabs/diagnostic/siteCheck.ts:293"
+      "src/forkop/tabs/diagnostic/siteCheck.ts:297"
     ]
   },
   {
@@ -7931,7 +7931,7 @@
     "call": "rule",
     "key": "rule",
     "places": [
-      "src/forkop/tabs/diagnostic/siteCheck.ts:84"
+      "src/forkop/tabs/diagnostic/siteCheck.ts:88"
     ]
   },
   {
@@ -7975,7 +7975,7 @@
     "call": "Rule not calculated",
     "key": "Rule not calculated",
     "places": [
-      "src/forkop/tabs/diagnostic/siteCheck.ts:77"
+      "src/forkop/tabs/diagnostic/siteCheck.ts:81"
     ]
   },
   {
@@ -8190,7 +8190,7 @@
     "call": "See connections to this address",
     "key": "See connections to this address",
     "places": [
-      "src/forkop/tabs/diagnostic/siteCheck.ts:285"
+      "src/forkop/tabs/diagnostic/siteCheck.ts:289"
     ]
   },
   {
@@ -9230,7 +9230,14 @@
     "call": "The address is blocked by a rule",
     "key": "The address is blocked by a rule",
     "places": [
-      "src/forkop/tabs/diagnostic/siteCheck.ts:107"
+      "src/forkop/tabs/diagnostic/siteCheck.ts:111"
+    ]
+  },
+  {
+    "call": "the address is local or reserved; Forkop does not intercept it, the connection goes directly",
+    "key": "the address is local or reserved; Forkop does not intercept it, the connection goes directly",
+    "places": [
+      "src/forkop/tabs/diagnostic/siteCheck.ts:58"
     ]
   },
   {
@@ -9707,7 +9714,7 @@
     "call": "The name does not resolve on the router, so no rule can open it. Check the DNS results above.",
     "key": "The name does not resolve on the router, so no rule can open it. Check the DNS results above.",
     "places": [
-      "src/forkop/tabs/diagnostic/siteCheck.ts:156"
+      "src/forkop/tabs/diagnostic/siteCheck.ts:160"
     ]
   },
   {
@@ -9849,7 +9856,7 @@
     "call": "The route check did not complete. Try again.",
     "key": "The route check did not complete. Try again.",
     "places": [
-      "src/forkop/tabs/diagnostic/siteCheck.ts:218"
+      "src/forkop/tabs/diagnostic/siteCheck.ts:222"
     ]
   },
   {
@@ -9898,7 +9905,7 @@
     "call": "The router DNS returned no address",
     "key": "The router DNS returned no address",
     "places": [
-      "src/forkop/tabs/diagnostic/siteCheck.ts:128"
+      "src/forkop/tabs/diagnostic/siteCheck.ts:132"
     ]
   },
   {
@@ -10078,7 +10085,7 @@
     "call": "The site did not open from the router. The router may take a different path than devices.",
     "key": "The site did not open from the router. The router may take a different path than devices.",
     "places": [
-      "src/forkop/tabs/diagnostic/siteCheck.ts:179"
+      "src/forkop/tabs/diagnostic/siteCheck.ts:183"
     ]
   },
   {
@@ -10092,7 +10099,7 @@
     "call": "The site opens from the router. If it does not open on a device, look at its real connections.",
     "key": "The site opens from the router. If it does not open on a device, look at its real connections.",
     "places": [
-      "src/forkop/tabs/diagnostic/siteCheck.ts:165"
+      "src/forkop/tabs/diagnostic/siteCheck.ts:169"
     ]
   },
   {

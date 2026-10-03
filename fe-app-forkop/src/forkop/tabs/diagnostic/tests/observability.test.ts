@@ -357,6 +357,7 @@ describe('route check', () => {
     expect(note('fakeip_domain_unknown')).toContain('by its name');
     expect(note('dns_hijack')).toContain('DNS port');
     expect(note('real_address_interception_unknown')).toContain('real address');
+    expect(note('local_address_not_intercepted')).toContain('goes directly');
     expect(note('real_address_interception_unknown')).not.toBe(
       note('some_new_reason'),
     );

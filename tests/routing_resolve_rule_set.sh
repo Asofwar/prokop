@@ -33,7 +33,7 @@ binary_list() {
 }
 binary_list youtube.srs '{ "version": 3, "rules": [ { "domain_suffix": [ "youtube.com" ] } ] }'
 binary_list other.srs '{ "version": 3, "rules": [ { "domain": [ "example.org" ] } ] }'
-printf '%s\n' '{ "version": 3, "rules": [ { "ip_cidr": [ "203.0.113.7/32", "2001:db8::/32" ] } ] }' >"$WORK/addresses.json"
+printf '%s\n' '{ "version": 3, "rules": [ { "ip_cidr": [ "93.184.216.7/32", "2001:db8::/32" ] } ] }' >"$WORK/addresses.json"
 printf 'not a rule-set\n' >"$WORK/broken.srs"
 
 cat >"$WORK/forkop" <<'EOF'
@@ -110,11 +110,11 @@ expect static_hit "{ \"host\": \"youtube.com\", \"rule_set\": $sets, \"rules\": 
 # addresses only with subnet extraction (not shown in the sing-box config):
 # undecidable unless a rule's ip_cidr proves the capture (UC-100).
 addr='{ "action": "route", "inbound": [ "tproxy-in" ], "rule_set": "addresses", "outbound": "youtube-out" }'
-capture='{ "action": "route", "inbound": [ "tproxy-in" ], "ip_cidr": [ "203.0.113.0/24" ], "outbound": "main-out" }'
-expect address_hit "{ \"host\": \"plain.test\", \"ip\": \"203.0.113.7\", \"fakeip\": false, \"rule_set\": $sets, \"rules\": [ $addr ] }" \
+capture='{ "action": "route", "inbound": [ "tproxy-in" ], "ip_cidr": [ "93.184.216.0/24" ], "outbound": "main-out" }'
+expect address_hit "{ \"host\": \"plain.test\", \"ip\": \"93.184.216.7\", \"fakeip\": false, \"rule_set\": $sets, \"rules\": [ $addr ] }" \
     '{ "status": "undecidable", "reason": "real_address_interception_unknown", "rule": 0, "section": null, "kind": null }'
-grep -qx "rule-set match -f source $WORK/addresses.json 203.0.113.7" "$WORK/calls" || fail "address_hit: the address was not asked"
-expect address_hit_captured "{ \"host\": \"plain.test\", \"ip\": \"203.0.113.7\", \"fakeip\": false, \"rule_set\": $sets, \"rules\": [ $addr, $capture ] }" "$zapret"
+grep -qx "rule-set match -f source $WORK/addresses.json 93.184.216.7" "$WORK/calls" || fail "address_hit: the address was not asked"
+expect address_hit_captured "{ \"host\": \"plain.test\", \"ip\": \"93.184.216.7\", \"fakeip\": false, \"rule_set\": $sets, \"rules\": [ $addr, $capture ] }" "$zapret"
 # An IPv6 address is outside the resolver's model (UC-096); the stand-in
 # still matches IPv6 prefixes as the real binary does
 # (routing_resolve_rule_set_real.sh).

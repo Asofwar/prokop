@@ -14,6 +14,10 @@ set -euo pipefail
 #     address: a domain decision holds only when the first rule that takes
 #     the address itself captures it; a bypass address is never intercepted;
 #     otherwise undecidable (UC-100);
+#   - nft returns a local or reserved IPv4 destination (localv4) before any
+#     rule chain: it never reaches sing-box, whatever rule names it (UC-100);
+#   - a list (rule_set) that may hold the address counts both ways for nft:
+#     only an outcome shared with and without it is proven (UC-100);
 #   - sing-box compares a domain value as written with the lower-cased host:
 #     an upper-case keyword never matches (UC-099).
 
@@ -55,6 +59,9 @@ const OTHER_RES = { inbound: T, domain_suffix: [ "example.com", "example.net" ],
 const V_DOMAIN = { action: "route", inbound: T, domain_suffix: [ "example.com" ], outbound: "v-out" };
 const W_IP = { action: "route", inbound: T, ip_cidr: [ "93.184.216.0/24" ], outbound: "w-out" };
 const BYPASS_IP = { action: "route", inbound: T, ip_cidr: [ "93.184.216.0/24" ], outbound: "bypass-out" };
+const LOCAL_IP = { action: "route", inbound: T, ip_cidr: [ "10.0.0.0/8" ], outbound: "w-out" };
+const BYPASS_SET = { action: "route", inbound: T, rule_set: [ "bypass-list" ], outbound: "bypass-out" };
+const W_SET = { action: "route", inbound: T, rule_set: [ "w-list" ], outbound: "w-out" };
 const PORTS = { action: "route", inbound: T, port: [ 443 ], outbound: "w-out" };
 
 let cases = {
@@ -76,6 +83,14 @@ let cases = {
     real_domain_bypassed: ask([ V_DOMAIN, BYPASS_IP ], "www.example.com", "93.184.216.34", { fakeip: false }),
     real_domain_port_capture: ask([ V_DOMAIN, PORTS ], "www.example.com", "93.184.216.34", { fakeip: false }),
     real_ip_rule: ask([ W_IP, V_DOMAIN ], "www.example.com", "93.184.216.34", { fakeip: false }),
+    local_domain: ask([ { ...V_DOMAIN, domain_suffix: [ "corp.example" ] }, LOCAL_IP ], "app.corp.example", "10.1.2.3", { fakeip: false }),
+    local_ip_rule: ask([ LOCAL_IP ], "", "10.1.2.3", { fakeip: false }),
+    local_reserved: ask([ { action: "route", inbound: T, ip_cidr: [ "240.0.0.0/4" ], outbound: "w-out" } ], "", "250.1.1.1", { fakeip: false }),
+    local_dns_port: ask([ LOCAL_IP ], "", "10.1.2.3", { fakeip: false, port: 53 }),
+    real_set_bypass_then_capture: ask([ V_DOMAIN, BYPASS_SET, W_IP ], "www.example.com", "93.184.216.34", { fakeip: false }),
+    real_set_capture_then_capture: ask([ V_DOMAIN, W_SET, W_IP ], "www.example.com", "93.184.216.34", { fakeip: false }),
+    real_set_bypass_then_bypass: ask([ V_DOMAIN, BYPASS_SET, BYPASS_IP ], "www.example.com", "93.184.216.34", { fakeip: false }),
+    real_set_capture_then_bypass: ask([ V_DOMAIN, W_SET, BYPASS_IP ], "www.example.com", "93.184.216.34", { fakeip: false }),
     real_no_rule: ask([ V_DOMAIN ], "other.org", "1.1.1.1", { fakeip: false }),
     keyword_upper: ask([ { action: "route", inbound: T, domain_keyword: [ "YouTube" ], outbound: "v-out" }, YT ], "www.youtube.com", "198.18.0.5"),
     keyword_lower: ask([ { action: "route", inbound: T, domain_keyword: [ "youtube" ], outbound: "v-out" }, YT ], "www.youtube.com", "198.18.0.5")
@@ -120,9 +135,31 @@ decided('real_domain_captured', 0, 'v-out');
 decided('real_domain_bypassed', 1, 'bypass-out');
 decided('real_domain_port_capture', 0, 'v-out');
 decided('real_ip_rule', 0, 'w-out');
+undecided('local_domain', 'local_address_not_intercepted');
+undecided('local_ip_rule', 'local_address_not_intercepted');
+undecided('local_reserved', 'local_address_not_intercepted');
+undecided('local_dns_port', 'dns_hijack');
+undecided('real_set_bypass_then_capture', 'real_address_interception_unknown');
+decided('real_set_capture_then_capture', 0, 'v-out');
+assert.equal(c.real_set_bypass_then_bypass.status, 'decided', 'real_set_bypass_then_bypass: bypassed either way');
+assert.equal(c.real_set_bypass_then_bypass.outbound, 'bypass-out', 'real_set_bypass_then_bypass: outbound');
+undecided('real_set_capture_then_bypass', 'real_address_interception_unknown');
 decided('real_no_rule', null, 'direct-out');
 
 decided('keyword_upper', 1, 'y-out');
 decided('keyword_lower', 0, 'v-out');
 console.log('routing_resolve_edges: PASS');
+NODE
+
+# The resolver's local ranges are the ones nft returns early for.
+node - "$LIB/nft/apply.uc" "$LIB/routing/resolve.uc" <<'NODE'
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const ranges = (file, name) => {
+  const m = fs.readFileSync(file, 'utf8').match(new RegExp(`${name} = \\[([^\\]]*)\\]`));
+  assert.ok(m, `${name} in ${file}`);
+  return [...m[1].matchAll(/"([^"]+)"/g)].map((x) => x[1] === '240.0.0.0-255.255.255.255' ? '240.0.0.0/4' : x[1]);
+};
+assert.deepEqual(ranges(process.argv[3], 'LOCALV4_RANGES'), ranges(process.argv[2], 'LOCALV4_RANGES'));
+console.log('routing_resolve_edges: local ranges PASS');
 NODE
