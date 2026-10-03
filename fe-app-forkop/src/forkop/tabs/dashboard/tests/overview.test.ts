@@ -180,6 +180,43 @@ describe('overview warning', () => {
   });
 });
 
+describe('overview br_netfilter warning', () => {
+  const bridge = (loaded: boolean, disabled: boolean) =>
+    health({
+      bridge_netfilter: {
+        status: loaded ? 'warning' : 'ok',
+        loaded,
+        disabled_by_forkop: disabled,
+      },
+    });
+
+  it('warns while br_netfilter is loaded and says whether Forkop holds its hooks off', () => {
+    expect(overviewWarning(bridge(false, false))).toBeNull();
+    const held = overviewWarning(bridge(true, true));
+    expect(held?.title).toBe('br_netfilter is loaded');
+    expect(held?.text).toMatch(/has turned off/);
+    expect(held?.link).toBeUndefined();
+    expect(overviewWarning(bridge(true, false))?.text).toMatch(
+      /While Forkop X runs/,
+    );
+  });
+
+  it('comes after the recovery warnings', () => {
+    expect(
+      overviewWarning(
+        health({
+          guard: { active: true },
+          bridge_netfilter: {
+            status: 'warning',
+            loaded: true,
+            disabled_by_forkop: true,
+          },
+        }),
+      )?.title,
+    ).toBe('DPI protection is holding traffic');
+  });
+});
+
 describe('overview state', () => {
   it('reports a running system with only reliable signals', () => {
     const state = overviewState(input());
@@ -559,6 +596,38 @@ describe('overview cards', () => {
       event: overviewLastEvent(value),
     };
   };
+
+  it('renders a warning without a link', () => {
+    const node = renderOverview(
+      vm({
+        health: health({
+          bridge_netfilter: {
+            status: 'warning',
+            loaded: true,
+            disabled_by_forkop: true,
+          },
+        }),
+      }),
+      { ...actions, readonly: true },
+    );
+
+    const find = (n: unknown): FakeNode | null => {
+      if (!n || typeof n !== 'object') return null;
+      const fake = n as FakeNode;
+      if (fake.attrs?.class === 'fkp-overview__warning') return fake;
+      for (const child of fake.children || []) {
+        const found = find(child);
+        if (found) return found;
+      }
+      return null;
+    };
+    const warning = find(node);
+    expect(text(warning)).toContain('br_netfilter is loaded');
+    expect(warning?.children.map((child) => (child as FakeNode).tag)).toEqual([
+      'strong',
+      'p',
+    ]);
+  });
 
   it('offers service control and rules to administrators', () => {
     const node = renderOverview(vm({ availability: 'stopped' }), {

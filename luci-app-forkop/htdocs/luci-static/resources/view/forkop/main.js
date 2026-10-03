@@ -6110,6 +6110,16 @@ function overviewWarning(health2) {
       link: details
     };
   }
+  if (health2.bridge_netfilter?.loaded) {
+    return {
+      title: _("br_netfilter is loaded"),
+      text: health2.bridge_netfilter.disabled_by_forkop ? _(
+        "Forkop X has turned off the iptables hooks of br_netfilter (net.bridge.bridge-nf-call-iptables and -ip6tables) for transparent proxying: iptables rules do not filter bridged traffic while it runs. Stopping Forkop X restores the previous values unless another program has changed them since."
+      ) : _(
+        "While Forkop X runs, it turns off the iptables hooks of br_netfilter (net.bridge.bridge-nf-call-iptables and -ip6tables) for transparent proxying, so iptables rules do not filter bridged traffic. Stopping Forkop X restores them."
+      )
+    };
+  }
   return null;
 }
 var KILL_SWITCH_STOPPED_LINE = () => _(
@@ -6464,7 +6474,12 @@ function renderWarning(warning) {
   return E("section", { class: "fkp-overview__warning", role: "alert" }, [
     E("strong", {}, warning.title),
     E("p", {}, warning.text),
-    linkButton(warning.link.label, () => openForkopPage(warning.link.page))
+    ...warning.link ? [
+      linkButton(
+        warning.link.label,
+        () => openForkopPage(warning.link.page)
+      )
+    ] : []
   ]);
 }
 function renderStateCard(state, actions, restartRequired) {

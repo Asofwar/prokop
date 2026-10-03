@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-03 15:52+0000\n"
-"PO-Revision-Date: 2026-10-03 15:52+0000\n"
+"POT-Creation-Date: 2026-10-03 16:38+0000\n"
+"PO-Revision-Date: 2026-10-03 16:38+0000\n"
 "Last-Translator: Asofwar <7397608+Asofwar@users.noreply.github.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -29,7 +29,7 @@ msgstr ""
 msgid "%d confirmations"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overview.ts:329
+#: src/forkop/tabs/dashboard/overview.ts:343
 msgid "%d connections now"
 msgstr ""
 
@@ -53,7 +53,7 @@ msgstr ""
 msgid "%d min ago"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overviewCards.ts:243
+#: src/forkop/tabs/dashboard/overviewCards.ts:249
 msgid "%d more groups"
 msgstr ""
 
@@ -68,15 +68,15 @@ msgstr ""
 msgid "%d ms"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overview.ts:322
+#: src/forkop/tabs/dashboard/overview.ts:336
 msgid "%d node groups"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overview.ts:320
+#: src/forkop/tabs/dashboard/overview.ts:334
 msgid "%d rules"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overview.ts:316
+#: src/forkop/tabs/dashboard/overview.ts:330
 msgid "%d rules · %d node groups"
 msgstr ""
 
@@ -175,7 +175,7 @@ msgstr ""
 msgid "A configuration change was not confirmed. Traffic that needs DPI bypass may be blocked; see the recovery details for the next step."
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overview.ts:414
+#: src/forkop/tabs/dashboard/overview.ts:428
 msgid "A configuration restore did not finish: restore the last known good snapshot to finish it."
 msgstr ""
 
@@ -195,7 +195,7 @@ msgstr ""
 msgid "a failed change left the DPI guard in place; restart Forkop X"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overview.ts:400
+#: src/forkop/tabs/dashboard/overview.ts:414
 msgid "A failed change left the DPI guard in place: restart Forkop X to remove it."
 msgstr ""
 
@@ -424,7 +424,7 @@ msgid "All devices"
 msgstr ""
 
 #: src/forkop/tabs/autotune/initController.ts:1501
-#: src/forkop/tabs/dashboard/overviewCards.ts:312
+#: src/forkop/tabs/dashboard/overviewCards.ts:318
 msgid "All events"
 msgstr ""
 
@@ -571,8 +571,8 @@ msgstr ""
 msgid "Applying a strategy"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overview.ts:195
-#: src/forkop/tabs/dashboard/overview.ts:248
+#: src/forkop/tabs/dashboard/overview.ts:209
+#: src/forkop/tabs/dashboard/overview.ts:262
 msgid "Applying changes…"
 msgstr ""
 
@@ -662,11 +662,11 @@ msgstr ""
 msgid "Automatically select the fastest node in the current level"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overview.ts:288
+#: src/forkop/tabs/dashboard/overview.ts:302
 msgid "Autostart is off"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overview.ts:288
+#: src/forkop/tabs/dashboard/overview.ts:302
 msgid "Autostart is on"
 msgstr ""
 
@@ -825,6 +825,10 @@ msgstr ""
 msgid "Bootstrap DNS Servers"
 msgstr ""
 
+#: src/forkop/tabs/dashboard/overview.ts:173
+msgid "br_netfilter is loaded"
+msgstr ""
+
 #: src/forkop/tabs/diagnostic/checkCards.ts:75
 #: src/forkop/tabs/diagnostic/checks/runFakeIPCheck.ts:51
 #: src/forkop/tabs/diagnostic/checks/runFakeIPCheck.ts:79
@@ -981,7 +985,7 @@ msgstr ""
 msgid "Cascade connection"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overview.ts:422
+#: src/forkop/tabs/dashboard/overview.ts:436
 msgid "Change in progress"
 msgstr ""
 
@@ -1132,7 +1136,7 @@ msgstr ""
 #: src/forkop/ui/status.ts:140
 #: src/forkop/tabs/autotune/initController.ts:993
 #: src/forkop/tabs/autotune/initController.ts:1215
-#: src/forkop/tabs/dashboard/overview.ts:242
+#: src/forkop/tabs/dashboard/overview.ts:256
 #: src/forkop/tabs/diagnostic/connectivityMatrix.ts:104
 #: src/forkop/tabs/diagnostic/dpiPlayground.ts:48
 #: src/forkop/tabs/diagnostic/siteCheck.ts:243
@@ -1386,7 +1390,7 @@ msgstr ""
 msgid "Connection URL"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overviewCards.ts:252
+#: src/forkop/tabs/dashboard/overviewCards.ts:258
 #: src/forkop/tabs/monitoring/render.ts:14
 msgid "Connections"
 msgstr ""
@@ -1658,11 +1662,11 @@ msgid "DHCP is managed manually"
 msgstr ""
 
 #: ../luci-app-forkop/htdocs/luci-static/resources/view/forkop/page/diagnostics.js:18
-#: src/forkop/tabs/dashboard/overviewCards.ts:201
+#: src/forkop/tabs/dashboard/overviewCards.ts:207
 msgid "Diagnostics"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overview.ts:296
+#: src/forkop/tabs/dashboard/overview.ts:310
 msgid "Diagnostics has not been run yet"
 msgstr ""
 
@@ -1687,7 +1691,7 @@ msgstr ""
 msgid "Disable"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overviewCards.ts:182
+#: src/forkop/tabs/dashboard/overviewCards.ts:188
 msgid "Disable autostart"
 msgstr ""
 
@@ -2067,7 +2071,7 @@ msgstr ""
 msgid "Enable automatic updates for remote lists and rule sets"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overviewCards.ts:183
+#: src/forkop/tabs/dashboard/overviewCards.ts:189
 msgid "Enable autostart"
 msgstr ""
 
@@ -2433,6 +2437,10 @@ msgstr ""
 msgid "Forkop X does not apply recommendations in this mode."
 msgstr ""
 
+#: src/forkop/tabs/dashboard/overview.ts:175
+msgid "Forkop X has turned off the iptables hooks of br_netfilter (net.bridge.bridge-nf-call-iptables and -ip6tables) for transparent proxying: iptables rules do not filter bridged traffic while it runs. Stopping Forkop X restores the previous values unless another program has changed them since."
+msgstr ""
+
 #: src/forkop/helpers/actionReason.ts:55
 #: src/forkop/tabs/dashboard/serviceReload.ts:48
 msgid "Forkop X is busy with another operation: the change applies when it finishes."
@@ -2442,7 +2450,7 @@ msgstr ""
 msgid "Forkop X is busy with another service action, so the change is not applied yet; apply it again when that action finishes."
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overview.ts:264
+#: src/forkop/tabs/dashboard/overview.ts:278
 msgid "Forkop X is running"
 msgstr ""
 
@@ -2475,7 +2483,7 @@ msgid "Forkop X is stopped. Start it to run the checks."
 msgstr ""
 
 #: src/forkop/tabs/dashboard/overview.ts:165
-#: src/forkop/tabs/dashboard/overview.ts:444
+#: src/forkop/tabs/dashboard/overview.ts:458
 msgid "Forkop X kept or restored the previous configuration."
 msgstr ""
 
@@ -2487,7 +2495,7 @@ msgstr ""
 msgid "Forkop X measures the targets on schedule and shows recommendations. It does not change rules."
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overview.ts:251
+#: src/forkop/tabs/dashboard/overview.ts:265
 msgid "Forkop X needs attention"
 msgstr ""
 
@@ -2512,7 +2520,7 @@ msgstr ""
 msgid "Forkop X restores the last known working configuration if the current one differs from it, and reloads the service."
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overview.ts:201
+#: src/forkop/tabs/dashboard/overview.ts:215
 msgid "Forkop X stays stopped until you start it: reloads, restores and updates do not start it."
 msgstr ""
 
@@ -2520,11 +2528,11 @@ msgstr ""
 msgid "Forkop X stops handling traffic until it is started again."
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overview.ts:213
+#: src/forkop/tabs/dashboard/overview.ts:227
 msgid "Forkop X was not started since the router booted: reloads, restores and updates do not start it."
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overview.ts:230
+#: src/forkop/tabs/dashboard/overview.ts:244
 msgid "Forkop X was not stopped by the user: its start failed or it stopped unexpectedly."
 msgstr ""
 
@@ -2617,7 +2625,7 @@ msgstr ""
 msgid "has no effect"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overview.ts:271
+#: src/forkop/tabs/dashboard/overview.ts:285
 msgid "Health state unavailable"
 msgstr ""
 
@@ -2699,7 +2707,7 @@ msgstr ""
 msgid "Idle timeout"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overview.ts:176
+#: src/forkop/tabs/dashboard/overview.ts:190
 msgid "If the VPN kill-switch is enabled, its sections stay blocked until Forkop X is started."
 msgstr ""
 
@@ -3221,7 +3229,7 @@ msgstr ""
 msgid "Last check postponed"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overview.ts:292
+#: src/forkop/tabs/dashboard/overview.ts:306
 msgid "Last diagnostics: %s"
 msgstr ""
 
@@ -3229,7 +3237,7 @@ msgstr ""
 msgid "Last error"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overviewCards.ts:298
+#: src/forkop/tabs/dashboard/overviewCards.ts:304
 msgid "Last important event"
 msgstr ""
 
@@ -3250,7 +3258,7 @@ msgstr ""
 msgid "Last reload"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overview.ts:364
+#: src/forkop/tabs/dashboard/overview.ts:378
 msgid "Last reload: %s"
 msgstr ""
 
@@ -3480,7 +3488,7 @@ msgstr ""
 msgid "ms"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overviewCards.ts:110
+#: src/forkop/tabs/dashboard/overviewCards.ts:116
 msgid "Multiple sing-box processes were found or their ownership is unclear. Restart is unavailable; traffic routing was not changed. Stop Forkop X ends Forkop's traffic interception and stops the sing-box processes that Forkop runs; then start Forkop X again. A sing-box of another program is not stopped, and Forkop X starts only after it has exited."
 msgstr ""
 
@@ -3623,7 +3631,7 @@ msgstr ""
 msgid "No connections match the filters"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overview.ts:345
+#: src/forkop/tabs/dashboard/overview.ts:359
 msgid "no data"
 msgstr ""
 
@@ -3654,7 +3662,7 @@ msgstr ""
 msgid "No events of this kind"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overviewCards.ts:311
+#: src/forkop/tabs/dashboard/overviewCards.ts:317
 #: src/forkop/tabs/history/initController.ts:183
 msgid "No events recorded yet"
 msgstr ""
@@ -3676,11 +3684,11 @@ msgstr ""
 msgid "No other marking rules found"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overview.ts:450
+#: src/forkop/tabs/dashboard/overview.ts:464
 msgid "No recovery needed"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overview.ts:371
+#: src/forkop/tabs/dashboard/overview.ts:385
 #: src/forkop/tabs/history/model.ts:156
 msgid "No reload recorded yet"
 msgstr ""
@@ -3752,7 +3760,7 @@ msgstr ""
 msgid "Nodes"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overviewCards.ts:249
+#: src/forkop/tabs/dashboard/overviewCards.ts:255
 #: src/forkop/tabs/monitoring/render.ts:15
 #: src/forkop/tabs/diagnostic/partials/renderCheckSection.ts:97
 msgid "Nodes and groups"
@@ -3844,7 +3852,7 @@ msgid "Not responding"
 msgstr ""
 
 #: ../luci-app-forkop/htdocs/luci-static/resources/view/forkop/killswitch.js:143
-#: src/forkop/tabs/dashboard/overview.ts:227
+#: src/forkop/tabs/dashboard/overview.ts:241
 #: src/forkop/tabs/diagnostic/diagnostic.store.ts:131
 #: src/forkop/tabs/diagnostic/initController.ts:106
 #: src/forkop/tabs/diagnostic/initController.ts:330
@@ -3859,7 +3867,7 @@ msgid "not set"
 msgstr ""
 
 #: src/forkop/ui/status.ts:137
-#: src/forkop/tabs/dashboard/overview.ts:211
+#: src/forkop/tabs/dashboard/overview.ts:225
 msgid "Not started"
 msgstr ""
 
@@ -3980,7 +3988,7 @@ msgstr ""
 
 #: src/helpers/withTimeout.ts:7
 #: src/forkop/methods/shell/index.ts:643
-#: src/forkop/methods/shell/index.ts:732
+#: src/forkop/methods/shell/index.ts:733
 msgid "Operation timed out"
 msgstr ""
 
@@ -4008,8 +4016,8 @@ msgstr ""
 msgid "OS"
 msgstr ""
 
-#: src/forkop/tabs/history/model.ts:341
 #: src/forkop/tabs/monitoring/connectionView.ts:122
+#: src/forkop/tabs/history/model.ts:341
 msgid "Other"
 msgstr ""
 
@@ -4051,7 +4059,7 @@ msgid "Package recovery"
 msgstr ""
 
 #: src/forkop/tabs/dashboard/overview.ts:155
-#: src/forkop/tabs/dashboard/overview.ts:434
+#: src/forkop/tabs/dashboard/overview.ts:448
 msgid "Package recovery has not finished"
 msgstr ""
 
@@ -4267,7 +4275,7 @@ msgstr ""
 msgid "Protection and recovery"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overview.ts:426
+#: src/forkop/tabs/dashboard/overview.ts:440
 msgid "Protection is active"
 msgstr ""
 
@@ -4321,12 +4329,12 @@ msgid "Recovered"
 msgstr ""
 
 #: src/forkop/ui/status.ts:280
-#: src/forkop/tabs/dashboard/overviewCards.ts:282
+#: src/forkop/tabs/dashboard/overviewCards.ts:288
 msgid "Recovery"
 msgstr ""
 
 #: src/forkop/tabs/dashboard/overview.ts:143
-#: src/forkop/tabs/dashboard/overviewCards.ts:291
+#: src/forkop/tabs/dashboard/overviewCards.ts:297
 msgid "Recovery details"
 msgstr ""
 
@@ -4459,9 +4467,9 @@ msgstr ""
 msgid "Resource selection by IP or CIDR inside nfqws2 is not supported here; sing-box selects resources before NFQUEUE."
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overviewCards.ts:142
-#: src/forkop/tabs/dashboard/overviewCards.ts:164
-#: src/forkop/tabs/dashboard/overviewCards.ts:277
+#: src/forkop/tabs/dashboard/overviewCards.ts:148
+#: src/forkop/tabs/dashboard/overviewCards.ts:170
+#: src/forkop/tabs/dashboard/overviewCards.ts:283
 msgid "Restart Forkop X"
 msgstr ""
 
@@ -4477,7 +4485,7 @@ msgstr ""
 msgid "Restart Forkop X. If another add-on marks traffic, make sure it does not conflict."
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overview.ts:396
+#: src/forkop/tabs/dashboard/overview.ts:410
 msgid "Restart required"
 msgstr ""
 
@@ -4517,7 +4525,7 @@ msgstr ""
 msgid "Restore normal mode"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overview.ts:410
+#: src/forkop/tabs/dashboard/overview.ts:424
 msgid "Restore required"
 msgstr ""
 
@@ -4679,7 +4687,7 @@ msgstr ""
 msgid "Router DNS"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overview.ts:282
+#: src/forkop/tabs/dashboard/overview.ts:296
 msgid "Router DNS is not pointed to Forkop X"
 msgstr ""
 
@@ -4687,11 +4695,11 @@ msgstr ""
 msgid "Router kernel route"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overviewCards.ts:209
+#: src/forkop/tabs/dashboard/overviewCards.ts:215
 msgid "Routing"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overview.ts:327
+#: src/forkop/tabs/dashboard/overview.ts:341
 msgid "Routing is paused while Forkop X is stopped."
 msgstr ""
 
@@ -4747,7 +4755,7 @@ msgid "Rule sets"
 msgstr ""
 
 #: ../luci-app-forkop/htdocs/luci-static/resources/view/forkop/page/rules.js:16
-#: src/forkop/tabs/dashboard/overviewCards.ts:255
+#: src/forkop/tabs/dashboard/overviewCards.ts:261
 msgid "Rules"
 msgstr ""
 
@@ -4985,7 +4993,7 @@ msgstr ""
 msgid "Service action failed"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overviewCards.ts:160
+#: src/forkop/tabs/dashboard/overviewCards.ts:166
 msgid "Service actions"
 msgstr ""
 
@@ -5052,11 +5060,11 @@ msgstr ""
 msgid "Sing-box installed"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overview.ts:278
+#: src/forkop/tabs/dashboard/overview.ts:292
 msgid "sing-box is not running"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overview.ts:277
+#: src/forkop/tabs/dashboard/overview.ts:291
 msgid "sing-box is running"
 msgstr ""
 
@@ -5125,7 +5133,7 @@ msgstr ""
 msgid "Snapshot storage is full: delete a manual snapshot in History and recovery. Changes were not applied."
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overview.ts:375
+#: src/forkop/tabs/dashboard/overview.ts:389
 msgid "Snapshots: %d"
 msgstr ""
 
@@ -5213,7 +5221,7 @@ msgstr ""
 msgid "Standby DNS for a failed sing-box"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overviewCards.ts:155
+#: src/forkop/tabs/dashboard/overviewCards.ts:161
 #: src/forkop/tabs/shared/startService.ts:37
 #: src/forkop/tabs/shared/startService.ts:41
 msgid "Start Forkop X"
@@ -5231,8 +5239,8 @@ msgstr ""
 msgid "starting"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overview.ts:196
-#: src/forkop/tabs/dashboard/overviewCards.ts:155
+#: src/forkop/tabs/dashboard/overview.ts:210
+#: src/forkop/tabs/dashboard/overviewCards.ts:161
 #: src/forkop/tabs/shared/startService.ts:28
 #: src/forkop/tabs/shared/startService.ts:41
 msgid "Starting…"
@@ -5241,13 +5249,13 @@ msgstr ""
 #: src/forkop/tabs/autotune/initController.ts:879
 #: src/forkop/tabs/autotune/initController.ts:887
 #: src/forkop/tabs/autotune/initController.ts:893
-#: src/forkop/tabs/dashboard/overviewCards.ts:192
+#: src/forkop/tabs/dashboard/overviewCards.ts:198
 msgid "State"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overview.ts:245
-#: src/forkop/tabs/dashboard/overview.ts:356
-#: src/forkop/tabs/dashboard/overview.ts:382
+#: src/forkop/tabs/dashboard/overview.ts:259
+#: src/forkop/tabs/dashboard/overview.ts:370
+#: src/forkop/tabs/dashboard/overview.ts:396
 msgid "State unavailable"
 msgstr ""
 
@@ -5271,13 +5279,13 @@ msgstr ""
 msgid "Stop Forkop X?"
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overviewCards.ts:126
-#: src/forkop/tabs/dashboard/overviewCards.ts:173
+#: src/forkop/tabs/dashboard/overviewCards.ts:132
+#: src/forkop/tabs/dashboard/overviewCards.ts:179
 msgid "Stop Forkop X…"
 msgstr ""
 
 #: src/forkop/ui/status.ts:136
-#: src/forkop/tabs/dashboard/overview.ts:199
+#: src/forkop/tabs/dashboard/overview.ts:213
 msgid "Stopped by user"
 msgstr ""
 
@@ -5306,8 +5314,8 @@ msgstr ""
 msgid "Subscription info:"
 msgstr ""
 
-#: src/forkop/methods/shell/index.ts:936
-#: src/forkop/methods/shell/index.ts:956
+#: src/forkop/methods/shell/index.ts:938
+#: src/forkop/methods/shell/index.ts:958
 msgid "Subscription update failed"
 msgstr ""
 
@@ -5654,7 +5662,7 @@ msgstr ""
 msgid "The last change (%s) was not confirmed by its check, and the configuration was changed since; the rule still uses that strategy. Until you choose another strategy for the rule, turn the rule off or restore a snapshot in History and recovery, Forkop X does not record this configuration as the last known working one, and autotune applies nothing."
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overview.ts:267
+#: src/forkop/tabs/dashboard/overview.ts:281
 msgid "The last change was rolled back automatically."
 msgstr ""
 
@@ -5673,7 +5681,7 @@ msgid "The last check was interrupted"
 msgstr ""
 
 #: src/forkop/tabs/dashboard/overview.ts:164
-#: src/forkop/tabs/dashboard/overview.ts:441
+#: src/forkop/tabs/dashboard/overview.ts:455
 msgid "The last configuration change failed"
 msgstr ""
 
@@ -6249,9 +6257,9 @@ msgstr ""
 msgid "Traffic for this level goes directly."
 msgstr ""
 
-#: src/forkop/tabs/dashboard/overview.ts:206
-#: src/forkop/tabs/dashboard/overview.ts:218
-#: src/forkop/tabs/dashboard/overview.ts:237
+#: src/forkop/tabs/dashboard/overview.ts:220
+#: src/forkop/tabs/dashboard/overview.ts:232
+#: src/forkop/tabs/dashboard/overview.ts:251
 msgid "Traffic goes through the router without Forkop X."
 msgstr ""
 
@@ -6678,6 +6686,10 @@ msgstr ""
 
 #: ../luci-app-forkop/htdocs/luci-static/resources/view/forkop/section.js:9438
 msgid "While Forkop is stopped, the kill-switch answers this rule's names with NXDOMAIN for every device, the devices excluded from this rule included: DNS is shared by all devices. With this option the excluded devices of this rule resolve its names through a separate resolver of their own; every other device stays blocked and the firewall part of the kill-switch does not change. While Forkop is stopped, all DNS of these devices goes through that resolver, past the router's own DNS settings: host names without the local domain, address overrides, blocking lists and rebind protection of the router do not apply to them. Each group of excluded devices with different blocked names gets its own resolver with a copy of the block list in memory, at most 4; the devices of further groups stay blocked. Applies from the next successful Forkop start or reload."
+msgstr ""
+
+#: src/forkop/tabs/dashboard/overview.ts:178
+msgid "While Forkop X runs, it turns off the iptables hooks of br_netfilter (net.bridge.bridge-nf-call-iptables and -ip6tables) for transparent proxying, so iptables rules do not filter bridged traffic. Stopping Forkop X restores them."
 msgstr ""
 
 #: src/forkop/tabs/autotune/model.ts:966
