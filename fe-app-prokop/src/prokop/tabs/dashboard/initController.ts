@@ -42,6 +42,7 @@ import {
 } from './sectionsRefresh';
 import {
   overviewLastEvent,
+  overviewAutotune,
   overviewRecovery,
   overviewRouting,
   overviewState,
@@ -51,6 +52,8 @@ import {
 import { renderOverview } from './overviewCards';
 import { runOverviewServiceAction } from './serviceActionFlow';
 import { runUrlTestChange } from './serviceReload';
+import { renderUrlTestEditorRow } from './urlTestEditorRow';
+import { replaceChildrenKeepingFocus } from '../../../helpers/replaceChildrenKeepingFocus';
 import { latencyJobFailure } from './latencyJob';
 import {
   subscriptionUpdateErrorMessage,
@@ -72,6 +75,7 @@ import {
   setProkopAutostart,
   type ProkopServiceAction,
 } from '../shared/serviceControl';
+import { renderStartServiceAction } from '../shared/startService';
 import {
   ConnectionsSample,
   sampleFromConnections,
@@ -92,6 +96,8 @@ let overviewHealth: Prokop.HealthStatus | null = null;
 let overviewHealthStale = false;
 let overviewRuleCount: number | null = null;
 let overviewSnapshotCount: number | null = null;
+let overviewAutotuneStatus: Prokop.AutotuneStatus | null = null;
+let overviewAutotuneFailed = false;
 let overviewServiceBusy = false;
 // The controller runs on two pages: Overview (summary cards, live traffic)
 // and Monitoring → Nodes (node selection only). Summary data, the health
@@ -110,6 +116,29 @@ async function refreshHealth(mountId: number) {
   } else {
     overviewHealthStale = true;
   }
+  renderOverviewCards();
+}
+
+// The autotune card: the same status call as the Autotune page, which a
+// read-only session may make too. It changes on the scale of checks, so it
+// is read with the health poll at a slower pace.
+const AUTOTUNE_REFRESH_INTERVAL_MS = 30000;
+let autotuneLoadedAt = 0;
+
+async function refreshAutotune(mountId: number) {
+  autotuneLoadedAt = Date.now();
+  let next: Prokop.AutotuneStatus | null = null;
+  try {
+    const response = await ProkopShellMethods.autotuneStatus();
+    const data = response.success ? response.data : null;
+    next = data && data.status === 'ok' && data.policy ? data : null;
+  } catch (error) {
+    logger.error('[DASHBOARD]', 'autotune status failed', error);
+  }
+  if (!dashboardMounted || mountId !== dashboardMountId) return;
+  // A failed poll keeps the last known state, like the health card.
+  if (next) overviewAutotuneStatus = next;
+  overviewAutotuneFailed = !next && !overviewAutotuneStatus;
   renderOverviewCards();
 }
 
@@ -168,6 +197,8 @@ function overviewInput(): OverviewInput {
     snapshotCount: overviewSnapshotCount,
     lastDiagnosticRun: readLastRun(localStorage),
     nowMs: Date.now(),
+    autotune: overviewAutotuneStatus,
+    autotuneFailed: overviewAutotuneFailed,
   };
 }
 
@@ -219,6 +250,7 @@ function renderOverviewCards() {
       warning: overviewWarning(input.health),
       state: overviewState(input),
       routing: overviewRouting(input),
+      autotune: overviewAutotune(input),
       recovery: overviewRecovery(input),
       event: overviewLastEvent(input),
     },
@@ -241,9 +273,10 @@ function renderOverviewCards() {
 
   // Keep an open service menu open across data refreshes.
   if (container.querySelector('.fkp-menu[open]')) return;
-  preserveScrollForPage(() => container.replaceChildren(view));
+  preserveScrollForPage(() => replaceChildrenKeepingFocus(container, view));
 }
 let sectionsRefreshPromise: Promise<boolean> | null = null;
+let sectionsStoppedRendered = false;
 let sectionsRefreshQueued = false;
 let actionStateUnsubscribe: (() => void) | null = null;
 let dashboardMounted = false;
@@ -903,9 +936,12 @@ function startDashboardDataUpdates() {
 function syncDashboardServiceAvailability() {
   const availability = getDashboardServiceAvailability();
   const stopped = availability === 'stopped';
-  const container = document.getElementById('dashboard-status');
 
-  container?.classList.toggle('fkp_dashboard-page--service-stopped', stopped);
+  // The nodes grid shows its own stopped state; re-render it only when that
+  // flips so service polls do not replace the cards.
+  if (stopped !== sectionsStoppedRendered) {
+    void renderSectionsWidget();
+  }
 
   if (stopped || availability === 'loading') {
     stopDashboardDataUpdates();
@@ -1346,11 +1382,7 @@ function renderUrlTestEditorModal(outbound: Prokop.Outbound) {
       activeButton.textContent = busy ? _('Applying…') : activeButtonLabel;
     }
   };
-  const row = (label: string, control: HTMLElement) =>
-    E('div', { class: 'fkp_dashboard-page__urltest-details__param' }, [
-      E('label', {}, label),
-      control,
-    ]);
+  const row = renderUrlTestEditorRow;
 
   // A reload that init.d only queued, or skipped for a stopped Prokop, is
   // not reported as applied (UC-061); one that failed or was refused keeps
@@ -1856,10 +1888,15 @@ async function renderSectionsWidget() {
     return;
   }
 
-  if (sectionsWidget.loading || sectionsWidget.failed) {
+  const stopped = getDashboardServiceAvailability() === 'stopped';
+  sectionsStoppedRendered = stopped;
+
+  if (stopped || sectionsWidget.loading || sectionsWidget.failed) {
     const renderedWidget = renderSections({
       loading: sectionsWidget.loading,
       failed: sectionsWidget.failed,
+      stopped,
+      stoppedActions: stopped ? renderStartServiceAction() : undefined,
       section: {
         code: '',
         sectionName: '',
@@ -1947,7 +1984,8 @@ async function renderSectionsWidget() {
 
   return preserveScrollForPage(() => {
     const staleNotice = renderSectionsStaleNotice(sectionsWidget);
-    container.replaceChildren(
+    replaceChildrenKeepingFocus(
+      container,
       ...(staleNotice ? [staleNotice] : []),
       ...renderedWidgets,
     );
@@ -1995,7 +2033,12 @@ async function onPageMount() {
   overviewHost = Boolean(document.getElementById('dashboard-overview'));
   if (overviewHost) {
     void refreshHealth(mountId);
-    healthRefreshTimer = setInterval(() => void refreshHealth(mountId), 10000);
+    void refreshAutotune(mountId);
+    healthRefreshTimer = setInterval(() => {
+      void refreshHealth(mountId);
+      if (Date.now() - autotuneLoadedAt >= AUTOTUNE_REFRESH_INTERVAL_MS)
+        void refreshAutotune(mountId);
+    }, 10000);
   }
   const hasRuntimeSnapshot = Boolean(getCachedRuntimeUiState());
 

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { Prokop } from '../../../../types';
 import { getOutboundFooterLabel } from '../getOutboundFooterLabel';
@@ -51,5 +51,22 @@ describe('getOutboundFooterLabel', () => {
       getOutboundFooterLabel(outbound({ description: 'Upstream Tube' })),
     ).toBe('Upstream Tube');
     expect(getOutboundFooterLabel(outbound({}))).toBe('VLESS');
+  });
+
+  it('translates Clash routing types instead of showing the raw enum', () => {
+    const translate = vi
+      .spyOn(globalThis as unknown as { _: (key: string) => string }, '_')
+      .mockImplementation((key: string) => `tr:${key}`);
+    try {
+      expect(getOutboundFooterLabel(outbound({ type: 'Direct' }))).toBe(
+        'tr:Direct',
+      );
+      expect(getOutboundFooterLabel(outbound({ type: 'Selector' }))).toBe(
+        'tr:Manual selection',
+      );
+      expect(getOutboundFooterLabel(outbound({ type: 'VLESS' }))).toBe('VLESS');
+    } finally {
+      translate.mockRestore();
+    }
   });
 });

@@ -1,5 +1,5 @@
 import { Prokop } from '../../types';
-import { prettyBytes } from '../../../helpers/prettyBytes';
+import { prettyBytesRate } from '../../../helpers/prettyBytes';
 import {
   eventKindLabel,
   eventOutcomeView,
@@ -8,6 +8,7 @@ import {
   type StatusTone,
 } from '../../ui/status';
 import { formatRelativeTime } from '../../ui/time';
+import { modeLabel, recordedApplyView, workerView } from '../autotune/model';
 
 // View model of the overview page: short answers, each with a link to the
 // page that has the details. Pure, so every state is covered by tests.
@@ -43,6 +44,10 @@ export interface OverviewInput {
   snapshotCount: number | null;
   lastDiagnosticRun: number | null;
   nowMs: number;
+  // autotune_status (also readable in a read-only session); null until it
+  // is loaded, autotuneFailed when it could not be read.
+  autotune?: Prokop.AutotuneStatus | null;
+  autotuneFailed?: boolean;
 }
 
 export interface OverviewWarning {
@@ -84,6 +89,12 @@ export interface OverviewRecovery {
   // The step that ends a DPI guard that is left (UC-019): the card offers
   // the restart itself, the restore is on the History page.
   step?: 'restart' | 'restore';
+}
+
+export interface OverviewAutotune {
+  status: SemanticStatus;
+  title: string;
+  lines: OverviewLine[];
 }
 
 export interface OverviewEvent {
@@ -343,7 +354,7 @@ export function overviewRouting(input: OverviewInput): OverviewRouting {
   } else if (input.connections !== null) {
     live = _('%d connections now').replace('%d', String(input.connections));
     if (input.traffic) {
-      live += ` · ↓ ${prettyBytes(input.traffic.down)}/s ↑ ${prettyBytes(input.traffic.up)}/s`;
+      live += ` · ↓ ${prettyBytesRate(input.traffic.down)} ↑ ${prettyBytesRate(input.traffic.up)}`;
     }
   }
 
@@ -357,7 +368,9 @@ export function overviewRouting(input: OverviewInput): OverviewRouting {
       return {
         name: group.displayName,
         node: selected.displayName,
-        latency: selected.latency ? `${selected.latency} ms` : _('no data'),
+        latency: selected.latency
+          ? _('%d ms').replace('%d', String(selected.latency))
+          : _('no data'),
         tone: latencyTone(selected.latency),
       };
     }),
@@ -473,5 +486,92 @@ export function overviewLastEvent(input: OverviewInput): OverviewEvent | null {
     title: eventKindLabel(event.kind),
     outcome: eventOutcomeView(toEventOutcome(event.status)),
     time: formatRelativeTime(event.timestamp, input.nowMs),
+  };
+}
+
+// The DPI autotune card (design G.1): mode, what it watches, recommendations
+// that wait for a decision, the last and the next check, and a recorded
+// change that needs attention. The Autotune page has the details.
+export function overviewAutotune(input: OverviewInput): OverviewAutotune {
+  const status = input.autotune;
+  if (!status) {
+    return input.autotuneFailed
+      ? {
+          status: 'unknown',
+          title: _('Autotune state is unavailable'),
+          lines: [],
+        }
+      : { status: 'unknown', title: _('Loading…'), lines: [] };
+  }
+
+  const mode = status.policy.mode;
+  const auto = mode === 'auto';
+  const groups = Object.values(status.groups || {});
+  const lines: OverviewLine[] = [
+    {
+      text: _('Groups: %d · targets: %d')
+        .replace('%d', String(groups.length))
+        .replace(
+          '%d',
+          String(status.targets.filter((target) => target.enabled).length),
+        ),
+    },
+  ];
+  let semantic: SemanticStatus = mode === 'off' ? 'off' : 'healthy';
+
+  // In automatic mode a confirmed recommendation is applied by Prokop;
+  // otherwise it waits for an administrator.
+  const waiting = auto
+    ? 0
+    : groups.filter(
+        (group) =>
+          group.result?.status === 'recommendation' && group.ready === true,
+      ).length;
+  if (waiting) {
+    semantic = 'warning';
+    lines.push({
+      text: _('Recommendations waiting for a decision: %d').replace(
+        '%d',
+        String(waiting),
+      ),
+      tone: 'warning',
+    });
+  }
+
+  const recorded = recordedApplyView(status.apply, null);
+  if (recorded?.attention) {
+    semantic = 'needs_attention';
+    lines.push({
+      text: _('The last autotune change needs attention.'),
+      tone: recorded.tone,
+    });
+  }
+
+  const worker = workerView(status.worker);
+  if (status.worker?.state === 'running') {
+    if (semantic !== 'needs_attention') semantic = 'busy';
+    lines.push({ text: worker!.label, tone: worker!.tone });
+  } else if (worker) {
+    lines.push({
+      text: status.worker?.finished_at
+        ? `${worker.label} · ${formatRelativeTime(status.worker.finished_at, input.nowMs)}`
+        : worker.label,
+      tone: worker.tone,
+    });
+  } else {
+    lines.push({ text: `${_('Last check')}: ${_('Not checked yet')}` });
+  }
+  if (mode !== 'off' && status.next_run_at) {
+    lines.push({
+      text: `${_('Next scheduled check')}: ${new Date(
+        status.next_run_at * 1000,
+      ).toLocaleString()}`,
+    });
+  }
+
+  return {
+    status: semantic,
+    title: `${_('Mode')}: ${modeLabel(mode)}`,
+    lines,
   };
 }

@@ -8,9 +8,11 @@ export function render() {
       class: 'fkp_dashboard-page',
     },
     [
+      // No live region here: the cards hold controls and refresh with every
+      // traffic tick. The warning inside announces itself (role=alert).
       E(
         'div',
-        { id: 'dashboard-overview', role: 'status' },
+        { id: 'dashboard-overview' },
         E('p', { class: 'fkp-overview__hint' }, _('Loading…')),
       ),
     ],

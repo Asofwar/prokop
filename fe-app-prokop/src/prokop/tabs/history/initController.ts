@@ -1,4 +1,5 @@
 import { onMount, preserveScrollForPage } from '../../../helpers';
+import { replaceChildrenKeepingFocus } from '../../../helpers/replaceChildrenKeepingFocus';
 import { showToast } from '../../../helpers/showToast';
 import { ProkopShellMethods } from '../../methods';
 import { logger, store, StoreType } from '../../services';
@@ -79,7 +80,9 @@ async function loadAll() {
 function replace(id: string, ...nodes: Node[]) {
   const container = document.getElementById(id);
   if (container)
-    preserveScrollForPage(() => container.replaceChildren(...nodes));
+    preserveScrollForPage(() =>
+      replaceChildrenKeepingFocus(container, ...nodes),
+    );
 }
 
 function renderState() {

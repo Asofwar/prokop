@@ -1042,8 +1042,8 @@ function connectionDetails(connection: MonitoredConnection) {
         .join(' · '),
     ],
     [_('Duration'), formatConnectionDuration(connection)],
-    [_('Download'), formatBytes(connection.download)],
-    [_('Upload'), formatBytes(connection.upload)],
+    [_('Received'), formatBytes(connection.download)],
+    [_('Sent'), formatBytes(connection.upload)],
     ...connectionTechnicalDetails(connection),
   ];
 }

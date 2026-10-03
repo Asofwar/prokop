@@ -10,7 +10,7 @@ export function render() {
 
   return E('div', { id: 'history-status', class: 'fkp-history' }, [
     card(_('Protection and recovery'), [
-      E('div', { id: 'history-state', role: 'status' }, _('Loading…')),
+      E('div', { id: 'history-state' }, _('Loading…')),
     ]),
     card(_('History'), [
       E('div', { id: 'history-filter', class: 'fkp-history__filter' }),

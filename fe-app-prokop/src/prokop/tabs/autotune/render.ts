@@ -11,7 +11,7 @@ export function render() {
   return E('div', { id: 'autotune-status', class: 'fkp-autotune' }, [
     card(
       _('Mode and state'),
-      [E('div', { id: 'autotune-state', role: 'status' }, _('Loading…'))],
+      [E('div', { id: 'autotune-state' }, _('Loading…'))],
       E('div', { id: 'autotune-state-actions', class: 'fkp-actions' }),
     ),
     card(_('DPI rule groups'), [
