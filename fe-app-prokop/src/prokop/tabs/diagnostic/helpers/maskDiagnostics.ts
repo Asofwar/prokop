@@ -482,15 +482,3 @@ export function maskGlobalCheckText(text: string = '') {
 
   return result.join('\n');
 }
-
-export function maskSupportReportText(text: string = '') {
-  return maskGlobalCheckText(text)
-    .replace(
-      /\b(?:vless|vmess|trojan|ss|ssr|hysteria2|hy2|tuic|socks4a?|socks5):\/\/\S+/gi,
-      MASKED_VALUE,
-    )
-    .replace(
-      /(https?:\/\/\S*[?&](?:token|key|uuid|password|secret)=)\S+/gi,
-      '$1' + MASKED_VALUE,
-    );
-}

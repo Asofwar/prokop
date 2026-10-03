@@ -70,8 +70,8 @@ fi
 if grep -Fq 'addDashboardServerFilterOptions' "$SECTION_JS"; then
   fail "legacy dashboard filters must not return to section settings"
 fi
-grep -Fq 'const liveValues = currentLiveDynamicListValues(section_id, typeName);' "$SECTION_JS" ||
-  fail "dashboard group choices must read live uncommitted DynamicList values"
+grep -Fq 'const liveValues = currentLiveDynamicListValues(section_id, optionName);' "$SECTION_JS" ||
+  fail "dashboard source choices must read live uncommitted DynamicList values"
 grep -Fq 'o.onListChange = refreshDashboardFilterChoiceWidgets;' "$SECTION_JS" ||
   fail "new servers and groups must refresh dashboard selectors immediately"
 grep -Fq 'const widget = new ui.DynamicList(values, labels, {' <<<"$live_choices" ||
@@ -92,8 +92,8 @@ grep -Fq 'node.addEventListener("mousedown", refreshBeforeOpening, true);' <<<"$
   fail "dashboard selectors must refresh choices before opening"
 grep -Fq 'if (currentSignature === choiceSignature)' "$SECTION_JS" ||
   fail "dashboard selectors must not rebuild unchanged choices while selecting an item"
-grep -Fq 'result.push({ value: name, label: name });' "$SECTION_JS" ||
-  fail "dashboard group selector values must use display names"
+grep -Fq 'result.push({ value, label: value });' <<<"$(sed -n '/^function currentOutboundNameChoices(/,/^}/p' "$SECTION_JS")" ||
+  fail "dashboard outbound selector values must be the shown names"
 if grep -Fq 'label: `${typeLabel}: ${name}`' "$SECTION_JS"; then
   fail "dashboard group labels must not include URLTest/Priority prefixes"
 fi

@@ -142,17 +142,11 @@ export interface IDiagnosticsChecksStoreItem {
 export interface StoreType {
   tabService: {
     current: string;
-    all: string[];
   };
   bandwidthWidget: {
     loading: boolean;
     failed: boolean;
     data: { up: number; down: number };
-  };
-  trafficTotalWidget: {
-    loading: boolean;
-    failed: boolean;
-    data: { downloadTotal: number; uploadTotal: number };
   };
   systemInfoWidget: {
     loading: boolean;
@@ -273,17 +267,11 @@ export interface StoreType {
 const initialStore: StoreType = {
   tabService: {
     current: '',
-    all: [],
   },
   bandwidthWidget: {
     loading: true,
     failed: false,
     data: { up: 0, down: 0 },
-  },
-  trafficTotalWidget: {
-    loading: true,
-    failed: false,
-    data: { downloadTotal: 0, uploadTotal: 0 },
   },
   systemInfoWidget: {
     loading: true,

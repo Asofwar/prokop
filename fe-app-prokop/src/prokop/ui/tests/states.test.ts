@@ -40,9 +40,9 @@ g.E = (
 
 import { confirmAction } from '../confirmAction';
 import {
-  renderAsyncState,
   renderEmptyState,
   renderErrorState,
+  renderLoadingState,
 } from '../states';
 
 describe('state blocks', () => {
@@ -71,24 +71,14 @@ describe('state blocks', () => {
     expect(retry).toHaveBeenCalledOnce();
   });
 
-  it('keeps showing the last data while refreshing', () => {
-    const renderReady = vi.fn(() => 'ready-view' as unknown as Node);
+  it('announces loading with the default or a given label', () => {
+    const node = renderLoadingState() as unknown as FakeNode;
 
-    expect(
-      renderAsyncState({ phase: 'loading', data: 'x' }, { renderReady }),
-    ).toBe('ready-view');
-    expect(
-      text(renderAsyncState({ phase: 'loading' }, { renderReady })),
-    ).toContain('Loading…');
-  });
-
-  it('names the timeout in seconds', () => {
-    const node = renderAsyncState(
-      { phase: 'timeout' },
-      { renderReady: () => 'x' as unknown as Node, timeoutMs: 15000 },
+    expect(node.attrs.role).toBe('status');
+    expect(text(node)).toContain('Loading…');
+    expect(text(renderLoadingState('Loading snapshots…'))).toContain(
+      'Loading snapshots…',
     );
-
-    expect(text(node)).toContain('The router did not respond in 15 s');
   });
 });
 

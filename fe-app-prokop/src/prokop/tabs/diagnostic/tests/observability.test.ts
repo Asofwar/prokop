@@ -85,7 +85,7 @@ import {
   siteConclusion,
 } from '../siteCheck';
 import { validationView } from '../dpiPlayground';
-import { checkStatus, eventStatus, healthStatus } from '../statusLabels';
+import { checkStatus } from '../statusLabels';
 import {
   diagnosticActionSummary,
   renderCheckRow,
@@ -466,16 +466,21 @@ describe('route check failures', () => {
 });
 
 describe('statuses', () => {
-  it('uses the shared status vocabulary', () => {
-    expect(eventStatus('success').text).toBe('Succeeded');
-    expect(eventStatus('failure').text).toBe('Failed');
-    expect(eventStatus('recovered').text).toBe('Recovered');
-    expect(eventStatus('needs_attention').text).toBe('Needs attention');
-    expect(healthStatus('ok').text).toBe('Healthy');
-    expect(healthStatus('unknown').text).toBe('Not available for checking');
+  it('gives every check state its own label', () => {
     expect(checkStatus('skipped').text).toBe('Not checked');
     expect(checkStatus('loading').text).toBe('Checking…');
     expect(checkStatus('warning').text).toBe('Needs attention');
+
+    const states = [
+      'success',
+      'warning',
+      'error',
+      'loading',
+      'unsupported',
+      'skipped',
+    ] as const;
+    const labels = states.map((state) => checkStatus(state).text);
+    expect(new Set(labels).size).toBe(states.length);
   });
 });
 
@@ -684,7 +689,7 @@ describe('unsupported checks and responsive layout', () => {
     );
     expect(styles).toMatch(/\.fkp-check__head \{[^}]*flex-wrap: wrap;/);
     expect(styles).toMatch(
-      /\.fkp-diag-facts \.fkp-diag-badge[\s\S]*?white-space: normal/,
+      /\.fkp-check__head \.fkp-diag-badge \{ flex: 0 0 auto; \}/,
     );
   });
 });

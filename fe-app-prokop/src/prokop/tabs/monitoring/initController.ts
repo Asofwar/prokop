@@ -55,6 +55,7 @@ import {
   type ServiceAvailability,
 } from '../../helpers/serviceAvailability';
 import { isSectionEnabled } from '../../helpers/sectionEnabled';
+import { uciListValues } from '../../helpers/uciList';
 import { createRouteNamesRefresher } from './routeNamesRefresh';
 
 type MonitoringTabId = 'active' | 'closed';
@@ -157,23 +158,8 @@ function normalizeString(value?: string | number | null): string {
   return value == null ? '' : String(value).trim();
 }
 
-function getListValues(value?: string[] | string) {
-  if (!value) {
-    return [];
-  }
-
-  if (Array.isArray(value)) {
-    return value.map((item) => normalizeString(item)).filter(Boolean);
-  }
-
-  return normalizeString(value)
-    .split(/\s+/)
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
 function getUrlTestIds(section: Prokop.ConfigSection) {
-  const values = getListValues(section.urltests);
+  const values = uciListValues(section.urltests);
   return values.length
     ? values
     : section.urltest_enabled === '1'

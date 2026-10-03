@@ -24,7 +24,6 @@ vi.mock('../../../../helpers', () => ({
   getClashHttpUrl: () => 'http://router.example:9090',
   getProxyUrlName: (link?: string) =>
     link?.includes('#') ? decodeURIComponent(link.split('#').pop() || '') : '',
-  isCopyableProxyLink: (link?: string) => Boolean(link),
 }));
 
 import { getDashboardSections } from '../getDashboardSections';

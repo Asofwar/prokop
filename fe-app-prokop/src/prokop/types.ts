@@ -554,7 +554,6 @@ export namespace Prokop {
     CHECK_ZAPRET2_RUNTIME = 'check_zapret2_runtime',
     CHECK_BYEDPI_RUNTIME = 'check_byedpi_runtime',
     GET_STATUS = 'get_status',
-    GET_SUBSCRIPTION_METADATA = 'get_subscription_metadata',
     CHECK_SING_BOX = 'check_sing_box',
     GET_SING_BOX_STATUS = 'get_sing_box_status',
     GET_ZAPRET_STATUS = 'get_zapret_status',
@@ -610,7 +609,6 @@ export namespace Prokop {
     GET_PROXIES = 'get_proxies',
     GET_CONNECTIONS = 'get_connections',
     GET_PROXY_LATENCY = 'get_proxy_latency',
-    GET_PROXY_LATENCIES = 'get_proxy_latencies',
     GET_GROUP_LATENCY = 'get_group_latency',
     SET_GROUP_PROXY = 'set_group_proxy',
     CLOSE_CONNECTION = 'close_connection',
@@ -1196,12 +1194,6 @@ export namespace Prokop {
   export interface GetClashApiProxyLatency {
     delay: number;
     message?: string;
-  }
-
-  export interface GetClashApiProxyLatencies {
-    success: boolean;
-    count: number;
-    failed: boolean;
   }
 
   export type GetClashApiGroupLatency = Record<string, number>;

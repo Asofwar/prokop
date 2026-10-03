@@ -540,15 +540,21 @@ const ANNOTATED_TEXTAREA_STYLE_ID = "fkp-annotated-textarea-styles";
 const CONNECTIONS_DYNLIST_STYLE_ID = "fkp-connections-dynlist-styles";
 const NFQWS_REMOTE_VALIDATION_DEBOUNCE_MS = 500;
 const NFQWS_VALIDATION_COMMAND = "/usr/bin/prokop";
-const nfqwsRemoteValidationCache = new Map();
-const nfqwsRemoteValidationInflight = new Map();
-const nfqwsRemoteValidationUnavailable = new Map();
-const nfqws2RemoteValidationCache = new Map();
-const nfqws2RemoteValidationInflight = new Map();
-const nfqws2RemoteValidationUnavailable = new Map();
-const byedpiRemoteValidationCache = new Map();
-const byedpiRemoteValidationInflight = new Map();
-const byedpiRemoteValidationUnavailable = new Map();
+const nfqwsRemoteValidator = createStrategyRemoteValidator(
+  "validate_nfqws_strategy_json",
+  normalizeNfqwsStrategyValue,
+  () => _("Unable to validate the NFQWS strategy through the backend parser."),
+);
+const nfqws2RemoteValidator = createStrategyRemoteValidator(
+  "validate_nfqws2_strategy_json",
+  normalizeNfqws2StrategyValue,
+  () => _("Unable to validate the NFQWS2 strategy through the backend parser."),
+);
+const byedpiRemoteValidator = createStrategyRemoteValidator(
+  "validate_byedpi_strategy_json",
+  normalizeByedpiStrategyValue,
+  () => _("Unable to validate the ByeDPI strategy through the backend parser."),
+);
 const BYEDPI_LONG_VALUE_OPTIONS = new Set([
   "--max-conn",
   "--conn-ip",
@@ -808,7 +814,6 @@ let actionProvidersAvailabilityLoader = null;
 const outboundNameChoicesCache = new Map();
 const outboundNameChoicesInflight = new Map();
 const outboundNameSourceOptions = new Map();
-const sectionGroupSourceOptions = new Map();
 const dashboardFilterChoiceRefreshers = new Map();
 const SECTION_CACHE_DIR = "/var/run/prokop/section-cache";
 const COUNTRY_CODES =
@@ -2084,77 +2089,6 @@ function currentDraftOutboundNames(section_id) {
   });
 
   return names;
-}
-
-function currentSectionGroupValues(section_id, typeName) {
-  const liveValues = currentLiveDynamicListValues(section_id, typeName);
-  if (liveValues != null) {
-    return liveValues;
-  }
-
-  const option = sectionGroupSourceOptions.get(typeName);
-  if (option && typeof option.formvalue === "function") {
-    try {
-      const value = option.formvalue(section_id);
-      if (value != null) {
-        return normalizeDynamicListItems(value);
-      }
-    } catch (_error) {
-      // Fall back to the child sections when the widget is not mounted.
-    }
-  }
-
-  return getChildItemIds(section_id, typeName);
-}
-
-function sectionGroupDisplayName(section_id, typeName, value) {
-  const itemId = `${value || ""}`.trim();
-  if (isExistingChildItem(section_id, itemId, typeName)) {
-    return `${uci.get(UCI_PACKAGE, itemId, "name") || itemId}`.trim();
-  }
-
-  const option = sectionGroupSourceOptions.get(typeName);
-  const pending =
-    option && option.pendingChildSettings
-      ? option.pendingChildSettings[section_id]
-      : null;
-  const settings = pending && pending[itemId];
-  return `${(settings && settings.name) || itemId}`.trim();
-}
-
-function currentSectionGroupChoices(section_id, selectedValues = []) {
-  const seen = new Set();
-  const result = [];
-  const append = (typeName, value) => {
-    value = `${value || ""}`.trim();
-    if (!value) {
-      return;
-    }
-
-    const name = sectionGroupDisplayName(section_id, typeName, value) || value;
-    if (seen.has(name)) {
-      return;
-    }
-
-    seen.add(name);
-    result.push({ value: name, label: name });
-  };
-
-  currentSectionGroupValues(section_id, "urltest").forEach((value) =>
-    append("urltest", value),
-  );
-  currentSectionGroupValues(section_id, "priority_group").forEach((value) =>
-    append("priority_group", value),
-  );
-  normalizeDynamicListItems(selectedValues).forEach((value) => {
-    value = `${value || ""}`.trim();
-    if (value && !seen.has(value)) {
-      seen.add(value);
-      result.push({ value, label: value });
-    }
-  });
-
-  return result.sort((left, right) => left.label.localeCompare(right.label));
 }
 
 function refreshDashboardFilterChoiceWidgets(section_id) {
@@ -5680,19 +5614,6 @@ function isSingBoxDuration(value) {
   return /^(?=.*[1-9])([0-9]+(?:\.[0-9]+)?(?:ns|us|ms|s|m|h|d))+$/.test(value);
 }
 
-function writeOptionalDurationOption(section_id, key, value) {
-  const normalized = value ? `${value}`.trim() : "";
-  const disabledKey = `${key}_disabled`;
-
-  if (normalized.length) {
-    uci.set(UCI_PACKAGE, section_id, key, normalized);
-    uci.unset(UCI_PACKAGE, section_id, disabledKey);
-  } else {
-    uci.unset(UCI_PACKAGE, section_id, key);
-    uci.set(UCI_PACKAGE, section_id, disabledKey, "1");
-  }
-}
-
 function validateOptionalSingBoxDuration(value) {
   const normalized = value ? `${value}`.trim() : "";
 
@@ -5754,26 +5675,6 @@ function validateSubscriptionUrlEntry(_section_id, value) {
   }
 
   return true;
-}
-
-function getDuplicateTextListErrors(values, normalizeValue, duplicateMessage) {
-  const seen = new Set();
-  const duplicates = [];
-
-  values.forEach((item) => {
-    const normalized = normalizeValue ? normalizeValue(item) : item;
-
-    if (seen.has(normalized)) {
-      if (!duplicates.includes(item)) {
-        duplicates.push(item);
-      }
-      return;
-    }
-
-    seen.add(normalized);
-  });
-
-  return duplicates.map((item) => `${item}: ${duplicateMessage}`);
 }
 
 function getValidationHeaderText() {
@@ -6119,7 +6020,7 @@ function attachNfqwsRemoteValidation(option, section_id, textarea) {
       (textarea.__prokopNfqwsRemoteValidationRequestId || 0) + 1;
     textarea.__prokopNfqwsRemoteValidationRequestId = requestId;
 
-    validateNfqwsStrategyRemotely(value).then(() => {
+    nfqwsRemoteValidator.validate(value).then(() => {
       if (textarea.__prokopNfqwsRemoteValidationRequestId !== requestId) {
         return;
       }
@@ -6167,7 +6068,7 @@ function attachNfqws2RemoteValidation(option, section_id, textarea) {
       (textarea.__prokopNfqws2RemoteValidationRequestId || 0) + 1;
     textarea.__prokopNfqws2RemoteValidationRequestId = requestId;
 
-    validateNfqws2StrategyRemotely(value).then(() => {
+    nfqws2RemoteValidator.validate(value).then(() => {
       if (textarea.__prokopNfqws2RemoteValidationRequestId !== requestId) {
         return;
       }
@@ -6522,6 +6423,99 @@ function parseNfqwsRuntimeTokens(value) {
 
   return tokens;
 }
+// One backend client for the three strategy validators. A verdict of the
+// backend parser is cached for the session; a failed call is not a verdict:
+// it is not cached, so the next validation or Save asks the backend again
+// (UC-040). Until then the field says the check is unavailable.
+function createStrategyRemoteValidator(method, normalize, unavailableText) {
+  const verdicts = new Map();
+  const inflight = new Map();
+  const unavailable = new Map();
+
+  function unavailableResult(error) {
+    const message =
+      error && error.message ? `${error.message}` : unavailableText();
+
+    return {
+      valid: false,
+      message: _(
+        "Backend validation unavailable: %s. Save again to retry.",
+      ).format(message.replace(/[.\s]+$/, "")),
+      needle: "",
+      needles: [],
+    };
+  }
+
+  return {
+    getCached(value) {
+      const normalized = normalize(value);
+      return normalized.length
+        ? verdicts.get(normalized) || unavailable.get(normalized) || null
+        : null;
+    },
+
+    validate(value) {
+      const normalized = normalize(value);
+
+      if (!normalized.length) {
+        return Promise.resolve({
+          valid: true,
+          message: "",
+          needle: "",
+          needles: [],
+        });
+      }
+
+      if (verdicts.has(normalized)) {
+        return Promise.resolve(verdicts.get(normalized));
+      }
+
+      if (inflight.has(normalized)) {
+        return inflight.get(normalized);
+      }
+
+      const validationTask = fs
+        .exec(NFQWS_VALIDATION_COMMAND, [method, normalized])
+        .then((result) => {
+          const payload = JSON.parse(
+            (result && result.stdout ? result.stdout : "{}").trim() || "{}",
+          );
+          if (typeof payload.valid !== "boolean") {
+            throw new Error();
+          }
+          const verdict = {
+            valid: payload.valid === true,
+            message: payload.message ? `${payload.message}` : "",
+            needle: payload.needle ? `${payload.needle}` : "",
+            needles: Array.isArray(payload.needles)
+              ? payload.needles.filter(Boolean).map((item) => `${item}`)
+              : payload.needle
+                ? [`${payload.needle}`]
+                : [],
+          };
+          unavailable.delete(normalized);
+          verdicts.set(normalized, verdict);
+          return verdict;
+        })
+        .catch((error) => {
+          const fallback = unavailableResult(error);
+          unavailable.set(normalized, fallback);
+          return fallback;
+        })
+        .finally(() => {
+          inflight.delete(normalized);
+        });
+
+      inflight.set(normalized, validationTask);
+      return validationTask;
+    },
+
+    forgetUnavailable() {
+      unavailable.clear();
+    },
+  };
+}
+
 function normalizeNfqwsStrategyValue(value) {
   const normalized = normalizeNfqwsStrategyWhitespace(value);
   if (!normalized.length) {
@@ -6531,113 +6525,6 @@ function normalizeNfqwsStrategyValue(value) {
   return normalized === ZAPRET_LEGACY_DEFAULT_NFQWS_OPT
     ? ZAPRET_DEFAULT_NFQWS_OPT
     : normalized;
-}
-
-function getCachedNfqwsRemoteValidation(value) {
-  const normalized = normalizeNfqwsStrategyValue(value);
-  return normalized.length
-    ? nfqwsRemoteValidationCache.get(normalized) ||
-        nfqwsRemoteValidationUnavailable.get(normalized) ||
-        null
-    : null;
-}
-
-function cacheNfqwsRemoteValidation(value, result) {
-  const normalized = normalizeNfqwsStrategyValue(value);
-  if (!normalized.length) {
-    return result;
-  }
-
-  const cached = {
-    valid: result && result.valid === true,
-    message: result && result.message ? `${result.message}` : "",
-    needle: result && result.needle ? `${result.needle}` : "",
-    needles:
-      result && Array.isArray(result.needles)
-        ? result.needles.filter(Boolean).map((item) => `${item}`)
-        : result && result.needle
-          ? [`${result.needle}`]
-          : [],
-  };
-
-  nfqwsRemoteValidationCache.set(normalized, cached);
-  return cached;
-}
-
-function buildNfqwsRemoteValidationFallback(error) {
-  const message =
-    error && error.message
-      ? `${error.message}`
-      : _("Unable to validate the NFQWS strategy through the backend parser.");
-
-  return {
-    valid: false,
-    message: _(
-      "Backend validation unavailable: %s. Save again to retry.",
-    ).format(message.replace(/[.\s]+$/, "")),
-    needle: "",
-    needles: [],
-  };
-}
-
-function validateNfqwsStrategyRemotely(value) {
-  const normalized = normalizeNfqwsStrategyValue(value);
-
-  if (!normalized.length) {
-    return Promise.resolve({
-      valid: true,
-      message: "",
-      needle: "",
-      needles: [],
-    });
-  }
-
-  if (nfqwsRemoteValidationCache.has(normalized)) {
-    return Promise.resolve(nfqwsRemoteValidationCache.get(normalized));
-  }
-
-  if (nfqwsRemoteValidationInflight.has(normalized)) {
-    return nfqwsRemoteValidationInflight.get(normalized);
-  }
-
-  const validationTask = fs
-    .exec(NFQWS_VALIDATION_COMMAND, [
-      "validate_nfqws_strategy_json",
-      normalized,
-    ])
-    .then((result) => {
-      const payload = JSON.parse(
-        (result && result.stdout ? result.stdout : "{}").trim() || "{}",
-      );
-      if (typeof payload.valid !== "boolean") {
-        throw new Error();
-      }
-      nfqwsRemoteValidationUnavailable.delete(normalized);
-      return cacheNfqwsRemoteValidation(normalized, {
-        valid: payload.valid === true,
-        message: payload.message || "",
-        needle: payload.needle || "",
-        needles: Array.isArray(payload.needles)
-          ? payload.needles.filter(Boolean)
-          : payload.needle
-            ? [payload.needle]
-            : [],
-      });
-    })
-    // A failed call is not a verdict: it is not cached, so the next
-    // validation or Save asks the backend again (UC-040). Until then the
-    // field says the check is unavailable.
-    .catch((error) => {
-      const fallback = buildNfqwsRemoteValidationFallback(error);
-      nfqwsRemoteValidationUnavailable.set(normalized, fallback);
-      return fallback;
-    })
-    .finally(() => {
-      nfqwsRemoteValidationInflight.delete(normalized);
-    });
-
-  nfqwsRemoteValidationInflight.set(normalized, validationTask);
-  return validationTask;
 }
 
 function getNfqwsForbiddenTokenInfo(token, index) {
@@ -6962,7 +6849,7 @@ function analyzeNfqwsStrategy(value) {
     return localAnalysis;
   }
 
-  const remoteValidation = getCachedNfqwsRemoteValidation(value);
+  const remoteValidation = nfqwsRemoteValidator.getCached(value);
   if (!remoteValidation || remoteValidation.valid) {
     return localAnalysis;
   }
@@ -6986,113 +6873,6 @@ function analyzeNfqwsStrategy(value) {
 function normalizeNfqws2StrategyValue(value) {
   const normalized = normalizeNfqwsStrategyWhitespace(value);
   return normalized.length ? normalized : ZAPRET2_DEFAULT_NFQWS2_OPT;
-}
-
-function getCachedNfqws2RemoteValidation(value) {
-  const normalized = normalizeNfqws2StrategyValue(value);
-  return normalized.length
-    ? nfqws2RemoteValidationCache.get(normalized) ||
-        nfqws2RemoteValidationUnavailable.get(normalized) ||
-        null
-    : null;
-}
-
-function cacheNfqws2RemoteValidation(value, result) {
-  const normalized = normalizeNfqws2StrategyValue(value);
-  if (!normalized.length) {
-    return result;
-  }
-
-  const cached = {
-    valid: result && result.valid === true,
-    message: result && result.message ? `${result.message}` : "",
-    needle: result && result.needle ? `${result.needle}` : "",
-    needles:
-      result && Array.isArray(result.needles)
-        ? result.needles.filter(Boolean).map((item) => `${item}`)
-        : result && result.needle
-          ? [`${result.needle}`]
-          : [],
-  };
-
-  nfqws2RemoteValidationCache.set(normalized, cached);
-  return cached;
-}
-
-function buildNfqws2RemoteValidationFallback(error) {
-  const message =
-    error && error.message
-      ? `${error.message}`
-      : _("Unable to validate the NFQWS2 strategy through the backend parser.");
-
-  return {
-    valid: false,
-    message: _(
-      "Backend validation unavailable: %s. Save again to retry.",
-    ).format(message.replace(/[.\s]+$/, "")),
-    needle: "",
-    needles: [],
-  };
-}
-
-function validateNfqws2StrategyRemotely(value) {
-  const normalized = normalizeNfqws2StrategyValue(value);
-
-  if (!normalized.length) {
-    return Promise.resolve({
-      valid: true,
-      message: "",
-      needle: "",
-      needles: [],
-    });
-  }
-
-  if (nfqws2RemoteValidationCache.has(normalized)) {
-    return Promise.resolve(nfqws2RemoteValidationCache.get(normalized));
-  }
-
-  if (nfqws2RemoteValidationInflight.has(normalized)) {
-    return nfqws2RemoteValidationInflight.get(normalized);
-  }
-
-  const validationTask = fs
-    .exec(NFQWS_VALIDATION_COMMAND, [
-      "validate_nfqws2_strategy_json",
-      normalized,
-    ])
-    .then((result) => {
-      const payload = JSON.parse(
-        (result && result.stdout ? result.stdout : "{}").trim() || "{}",
-      );
-      if (typeof payload.valid !== "boolean") {
-        throw new Error();
-      }
-      nfqws2RemoteValidationUnavailable.delete(normalized);
-      return cacheNfqws2RemoteValidation(normalized, {
-        valid: payload.valid === true,
-        message: payload.message || "",
-        needle: payload.needle || "",
-        needles: Array.isArray(payload.needles)
-          ? payload.needles.filter(Boolean)
-          : payload.needle
-            ? [payload.needle]
-            : [],
-      });
-    })
-    // A failed call is not a verdict: it is not cached, so the next
-    // validation or Save asks the backend again (UC-040). Until then the
-    // field says the check is unavailable.
-    .catch((error) => {
-      const fallback = buildNfqws2RemoteValidationFallback(error);
-      nfqws2RemoteValidationUnavailable.set(normalized, fallback);
-      return fallback;
-    })
-    .finally(() => {
-      nfqws2RemoteValidationInflight.delete(normalized);
-    });
-
-  nfqws2RemoteValidationInflight.set(normalized, validationTask);
-  return validationTask;
 }
 
 function getNfqws2ForbiddenTokenInfo(token, index, nextToken) {
@@ -7380,7 +7160,7 @@ function analyzeNfqws2Strategy(value) {
     return localAnalysis;
   }
 
-  const remoteValidation = getCachedNfqws2RemoteValidation(value);
+  const remoteValidation = nfqws2RemoteValidator.getCached(value);
   if (!remoteValidation || remoteValidation.valid) {
     return localAnalysis;
   }
@@ -7408,113 +7188,6 @@ function normalizeByedpiStrategyWhitespace(value) {
 function normalizeByedpiStrategyValue(value) {
   const normalized = normalizeByedpiStrategyWhitespace(value);
   return normalized.length ? normalized : BYEDPI_DEFAULT_CMD_OPTS;
-}
-
-function getCachedByedpiRemoteValidation(value) {
-  const normalized = normalizeByedpiStrategyValue(value);
-  return normalized.length
-    ? byedpiRemoteValidationCache.get(normalized) ||
-        byedpiRemoteValidationUnavailable.get(normalized) ||
-        null
-    : null;
-}
-
-function cacheByedpiRemoteValidation(value, result) {
-  const normalized = normalizeByedpiStrategyValue(value);
-  if (!normalized.length) {
-    return result;
-  }
-
-  const cached = {
-    valid: result && result.valid === true,
-    message: result && result.message ? `${result.message}` : "",
-    needle: result && result.needle ? `${result.needle}` : "",
-    needles:
-      result && Array.isArray(result.needles)
-        ? result.needles.filter(Boolean).map((item) => `${item}`)
-        : result && result.needle
-          ? [`${result.needle}`]
-          : [],
-  };
-
-  byedpiRemoteValidationCache.set(normalized, cached);
-  return cached;
-}
-
-function buildByedpiRemoteValidationFallback(error) {
-  const message =
-    error && error.message
-      ? `${error.message}`
-      : _("Unable to validate the ByeDPI strategy through the backend parser.");
-
-  return {
-    valid: false,
-    message: _(
-      "Backend validation unavailable: %s. Save again to retry.",
-    ).format(message.replace(/[.\s]+$/, "")),
-    needle: "",
-    needles: [],
-  };
-}
-
-function validateByedpiStrategyRemotely(value) {
-  const normalized = normalizeByedpiStrategyValue(value);
-
-  if (!normalized.length) {
-    return Promise.resolve({
-      valid: true,
-      message: "",
-      needle: "",
-      needles: [],
-    });
-  }
-
-  if (byedpiRemoteValidationCache.has(normalized)) {
-    return Promise.resolve(byedpiRemoteValidationCache.get(normalized));
-  }
-
-  if (byedpiRemoteValidationInflight.has(normalized)) {
-    return byedpiRemoteValidationInflight.get(normalized);
-  }
-
-  const validationTask = fs
-    .exec(NFQWS_VALIDATION_COMMAND, [
-      "validate_byedpi_strategy_json",
-      normalized,
-    ])
-    .then((result) => {
-      const payload = JSON.parse(
-        (result && result.stdout ? result.stdout : "{}").trim() || "{}",
-      );
-      if (typeof payload.valid !== "boolean") {
-        throw new Error();
-      }
-      byedpiRemoteValidationUnavailable.delete(normalized);
-      return cacheByedpiRemoteValidation(normalized, {
-        valid: payload.valid === true,
-        message: payload.message || "",
-        needle: payload.needle || "",
-        needles: Array.isArray(payload.needles)
-          ? payload.needles.filter(Boolean)
-          : payload.needle
-            ? [payload.needle]
-            : [],
-      });
-    })
-    // A failed call is not a verdict: it is not cached, so the next
-    // validation or Save asks the backend again (UC-040). Until then the
-    // field says the check is unavailable.
-    .catch((error) => {
-      const fallback = buildByedpiRemoteValidationFallback(error);
-      byedpiRemoteValidationUnavailable.set(normalized, fallback);
-      return fallback;
-    })
-    .finally(() => {
-      byedpiRemoteValidationInflight.delete(normalized);
-    });
-
-  byedpiRemoteValidationInflight.set(normalized, validationTask);
-  return validationTask;
 }
 
 function getByedpiShortOptionName(token) {
@@ -7786,7 +7459,7 @@ function analyzeByedpiStrategy(value) {
     return localAnalysis;
   }
 
-  const remoteValidation = getCachedByedpiRemoteValidation(value);
+  const remoteValidation = byedpiRemoteValidator.getCached(value);
   if (!remoteValidation || remoteValidation.valid) {
     return localAnalysis;
   }
@@ -7942,9 +7615,9 @@ function parseStrategyWithRemoteValidation(section_id, config) {
 // A failed backend check is shown on the strategy field until the next Save,
 // which asks the backend again instead of refusing on the old failure.
 function forgetUnavailableStrategyValidations() {
-  nfqwsRemoteValidationUnavailable.clear();
-  nfqws2RemoteValidationUnavailable.clear();
-  byedpiRemoteValidationUnavailable.clear();
+  nfqwsRemoteValidator.forgetUnavailable();
+  nfqws2RemoteValidator.forgetUnavailable();
+  byedpiRemoteValidator.forgetUnavailable();
 }
 
 // The backend check of a changed strategy runs inside parse, after the other
@@ -7979,7 +7652,7 @@ function checkStrategyBeforeSave(section_id, config) {
 
 function nfqwsStrategyValidation() {
   return {
-    remoteValidate: validateNfqwsStrategyRemotely,
+    remoteValidate: nfqwsRemoteValidator.validate,
     invalidMessage: _(
       "Unable to validate the NFQWS strategy through the backend parser.",
     ),
@@ -7988,7 +7661,7 @@ function nfqwsStrategyValidation() {
 
 function nfqws2StrategyValidation() {
   return {
-    remoteValidate: validateNfqws2StrategyRemotely,
+    remoteValidate: nfqws2RemoteValidator.validate,
     invalidMessage: _(
       "Unable to validate the NFQWS2 strategy through the backend parser.",
     ),
@@ -8908,7 +8581,7 @@ function createSectionContent(section) {
         ? ZAPRET_DEFAULT_NFQWS_OPT
         : normalized;
 
-    return validateNfqwsStrategyRemotely(nextValue).then((result) => {
+    return nfqwsRemoteValidator.validate(nextValue).then((result) => {
       if (!result || result.valid !== true) {
         throw new TypeError(
           result && result.message
@@ -8956,7 +8629,7 @@ function createSectionContent(section) {
   o.write = function (section_id, value) {
     const normalized = normalizeNfqws2StrategyValue(value);
 
-    return validateNfqws2StrategyRemotely(normalized).then((result) => {
+    return nfqws2RemoteValidator.validate(normalized).then((result) => {
       if (!result || result.valid !== true) {
         throw new TypeError(
           result && result.message
@@ -9006,7 +8679,7 @@ function createSectionContent(section) {
   o.write = function (section_id, value) {
     const normalized = normalizeByedpiStrategyValue(value);
 
-    return validateByedpiStrategyRemotely(normalized).then((result) => {
+    return byedpiRemoteValidator.validate(normalized).then((result) => {
       if (!result || result.valid !== true) {
         throw new TypeError(
           result && result.message
@@ -9024,7 +8697,7 @@ function createSectionContent(section) {
   };
   o.checkBeforeSave = function (section_id) {
     return checkStrategyBeforeSave.call(this, section_id, {
-      remoteValidate: validateByedpiStrategyRemotely,
+      remoteValidate: byedpiRemoteValidator.validate,
       invalidMessage: _("Invalid ByeDPI strategy"),
     });
   };
@@ -9242,7 +8915,6 @@ function createSectionContent(section) {
     );
   };
   o.onListChange = refreshDashboardFilterChoiceWidgets;
-  sectionGroupSourceOptions.set("urltest", o);
 
   o = section.taboption(
     "target",
@@ -9281,7 +8953,6 @@ function createSectionContent(section) {
     );
   };
   o.onListChange = refreshDashboardFilterChoiceWidgets;
-  sectionGroupSourceOptions.set("priority_group", o);
 
   o = section.taboption(
     "target",

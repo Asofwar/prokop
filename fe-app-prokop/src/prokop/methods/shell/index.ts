@@ -257,11 +257,6 @@ export const ProkopShellMethods = {
       urltestGroups: Record<string, unknown>;
       clashControllerHosts?: unknown;
     }>(Prokop.AvailableMethods.GET_DASHBOARD_RUNTIME_METADATA),
-  getSubscriptionMetadata: async (section: string) =>
-    callBaseMethod<Prokop.SubscriptionMetadata | Prokop.SubscriptionMetadata[]>(
-      Prokop.AvailableMethods.GET_SUBSCRIPTION_METADATA,
-      [section],
-    ),
   checkSingBox: async () =>
     callBaseMethod<Prokop.SingBoxCheckResult>(
       Prokop.AvailableMethods.CHECK_SING_BOX,
@@ -294,15 +289,6 @@ export const ProkopShellMethods = {
     callBaseMethod<Prokop.GetClashApiProxyLatency>(
       Prokop.AvailableMethods.CLASH_API,
       [Prokop.AvailableClashAPIMethods.GET_PROXY_LATENCY, tag, timeout],
-    ),
-  getClashApiProxyLatencies: async (tags: string[]) =>
-    callBaseMethod<Prokop.GetClashApiProxyLatencies>(
-      Prokop.AvailableMethods.CLASH_API,
-      [
-        Prokop.AvailableClashAPIMethods.GET_PROXY_LATENCIES,
-        JSON.stringify(tags),
-        '5000',
-      ],
     ),
   getClashApiGroupLatency: async (tag: string) =>
     callBaseMethod<Prokop.GetClashApiGroupLatency>(
@@ -780,23 +766,6 @@ export const ProkopShellMethods = {
       success: true,
       data: parsedResponse,
     } as Prokop.MethodSuccessResponse<Prokop.ComponentActionStartResult>;
-  },
-  componentActionStatus: async (jobId: string) => {
-    const response = await executeShellCommand({
-      command: '/usr/bin/prokop',
-      args: [Prokop.AvailableMethods.COMPONENT_ACTION_STATUS, jobId],
-      timeout: COMPONENT_ACTION_RPC_TIMEOUT_MS,
-    });
-    const parsedResponse = parseComponentActionResult(response);
-
-    if ((response.code ?? 0) !== 0 || !parsedResponse) {
-      return componentActionFailure(response, parsedResponse);
-    }
-
-    return {
-      success: true,
-      data: parsedResponse,
-    } as Prokop.MethodSuccessResponse<Prokop.ComponentActionResult>;
   },
   componentUpdateCheckCache: async () =>
     callBaseMethod<Prokop.ComponentUpdateCheckCache>(
