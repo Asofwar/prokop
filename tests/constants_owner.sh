@@ -66,13 +66,12 @@ grep -Fq "export const FAKEIP_CHECK_DOMAIN = 'fakeip.podkop.fyi';" "$FRONTEND_CO
 grep -Fq "export const IP_CHECK_DOMAIN = 'ip.podkop.fyi';" "$FRONTEND_CONSTANTS" ||
   fail "LuCI diagnostics must use the deployed public IP endpoint"
 
-# The DNS inbound address has one owner, singbox/constants.uc: sing-box
+# The DNS inbound address has one owner, core/dns_inbound.uc: sing-box
 # listens on it and dnsmasq forwards to it, so an override moves both
-# (UC-183). singbox/constants.uc, not core/constants.uc: the 1 Hz UI poll
-# (service/ui.uc, service/state.uc) must not load the UCI config that
-# core/constants.uc reads.
-[ "$(grep -RFl '127.0.0.42' "$ROOT_DIR/prokop/files/usr/bin" "$PROKOP_LIB")" = "$SINGBOX_CONSTANTS_UC" ] ||
-  fail "only singbox/constants.uc may name the DNS inbound address"
+# (UC-183). Not core/constants.uc: the 1 Hz UI poll (service/ui.uc,
+# service/state.uc) must not load the UCI config that module reads.
+[ "$(grep -RFl '127.0.0.42' "$ROOT_DIR/prokop/files/usr/bin" "$PROKOP_LIB")" = "$PROKOP_LIB/core/dns_inbound.uc" ] ||
+  fail "only core/dns_inbound.uc may name the DNS inbound address"
 dns_probe="$(mktemp)"
 trap 'rm -f "$dns_probe"' EXIT
 cat >"$dns_probe" <<'UC'

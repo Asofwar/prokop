@@ -1,6 +1,6 @@
 function sing_box_standard_ports_listening(netstat, dns_address, tproxy_port, tproxy6_address) {
     netstat = netstat == null ? "" : "" + netstat;
-    dns_address = dns_address == null ? require("singbox.constants").DNS_INBOUND_ADDRESS : "" + dns_address;
+    dns_address = dns_address == null ? require("core.dns_inbound").ADDRESS : "" + dns_address;
     tproxy_port = tproxy_port == null ? "1602" : "" + tproxy_port;
     tproxy6_address = tproxy6_address == null ? "::1" : "" + tproxy6_address;
 

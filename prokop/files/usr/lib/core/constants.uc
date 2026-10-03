@@ -1,6 +1,6 @@
 #!/usr/bin/env ucode
 
-let runtime_constants = require("singbox.constants");
+let dns_inbound = require("core.dns_inbound");
 
 function as_string(value) {
     return value == null ? "" : "" + value;
@@ -103,7 +103,7 @@ function constants_map() {
     c.SB_TPROXY_INBOUND6_ADDRESS = env("SB_TPROXY_INBOUND6_ADDRESS", "::1");
     c.SB_TPROXY_INBOUND_PORT = env("SB_TPROXY_INBOUND_PORT", "1602");
     c.SB_DNS_INBOUND_TAG = env("SB_DNS_INBOUND_TAG", "dns-in");
-    c.SB_DNS_INBOUND_ADDRESS = runtime_constants.DNS_INBOUND_ADDRESS;
+    c.SB_DNS_INBOUND_ADDRESS = dns_inbound.ADDRESS;
     c.SB_SERVICE_MIXED_INBOUND_TAG = env("SB_SERVICE_MIXED_INBOUND_TAG", "service-mixed-in");
     c.SB_SERVICE_MIXED_INBOUND_ADDRESS = env("SB_SERVICE_MIXED_INBOUND_ADDRESS", "127.0.0.1");
     c.SB_SERVICE_MIXED_INBOUND_PORT = env("SB_SERVICE_MIXED_INBOUND_PORT", "4534");

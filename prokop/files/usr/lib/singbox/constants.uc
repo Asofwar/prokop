@@ -14,10 +14,7 @@ const TPROXY_INBOUND6_TAG = "tproxy6-in";
 const TPROXY_INBOUND6_ADDRESS = "::1";
 const TPROXY_INBOUND_PORT = 1602;
 const DNS_INBOUND_TAG = "dns-in";
-// The one owner of the address of the DNS inbound: sing-box listens on it
-// and dnsmasq forwards to it, so every module takes it from here and an
-// SB_DNS_INBOUND_ADDRESS override moves both together (UC-183).
-const DNS_INBOUND_ADDRESS = getenv("SB_DNS_INBOUND_ADDRESS") || "127.0.0.42";
+const DNS_INBOUND_ADDRESS = require("core.dns_inbound").ADDRESS;
 const DNS_INBOUND_PORT = 53;
 const SOURCE_DNS_INBOUND_TAG = "source-dns-in";
 const SOURCE_DNS_INBOUND_ADDRESS = "::";
