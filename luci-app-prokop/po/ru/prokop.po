@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-03 21:31+0000\n"
-"PO-Revision-Date: 2026-10-03 21:31+0000\n"
+"POT-Creation-Date: 2026-10-03 22:36+0000\n"
+"PO-Revision-Date: 2026-10-03 22:36+0000\n"
 "Last-Translator: Asofwar\n"
 "Language-Team: none\n"
 "Language: ru\n"
@@ -3902,9 +3902,6 @@ msgstr "Поддержка"
 msgid "Support report contains confidential information. Do not share it in public chats."
 msgstr "Отчёт содержит конфиденциальную информацию. Не публикуйте его в открытых чатах."
 
-msgid "Switching"
-msgstr "Переключается"
-
 msgid "Syntax check is unavailable"
 msgstr "Проверка синтаксиса недоступна"
 
@@ -4282,12 +4279,6 @@ msgstr "Роутер не смог определить адрес."
 
 msgid "The router did not report the outcome of the rollback; it may still be running. This page shows it once the rollback ends."
 msgstr "Роутер не сообщил, чем закончился откат; возможно, он ещё выполняется. Эта страница покажет исход, когда откат закончится."
-
-msgid "The router did not respond"
-msgstr "Роутер не ответил"
-
-msgid "The router did not respond in %d s"
-msgstr "Роутер не ответил за %d с"
 
 msgid "The router DNS returned no address"
 msgstr "DNS роутера не вернул адрес"

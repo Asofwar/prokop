@@ -259,15 +259,6 @@ function validateSubnet(value) {
   return { valid: true, message: _("Valid") };
 }
 
-// src/validators/bulkValidate.ts
-function bulkValidate(values, validate) {
-  const results = values.map((value) => ({ ...validate(value), value }));
-  return {
-    valid: results.every((r) => r.valid),
-    results
-  };
-}
-
 // src/validators/validateOutboundJson.ts
 var SERVER_OUTBOUND_TYPES = /* @__PURE__ */ new Set([
   "vless",
@@ -2491,7 +2482,6 @@ var Prokop;
     AvailableMethods2["CHECK_ZAPRET2_RUNTIME"] = "check_zapret2_runtime";
     AvailableMethods2["CHECK_BYEDPI_RUNTIME"] = "check_byedpi_runtime";
     AvailableMethods2["GET_STATUS"] = "get_status";
-    AvailableMethods2["GET_SUBSCRIPTION_METADATA"] = "get_subscription_metadata";
     AvailableMethods2["CHECK_SING_BOX"] = "check_sing_box";
     AvailableMethods2["GET_SING_BOX_STATUS"] = "get_sing_box_status";
     AvailableMethods2["GET_ZAPRET_STATUS"] = "get_zapret_status";
@@ -2547,7 +2537,6 @@ var Prokop;
     AvailableClashAPIMethods2["GET_PROXIES"] = "get_proxies";
     AvailableClashAPIMethods2["GET_CONNECTIONS"] = "get_connections";
     AvailableClashAPIMethods2["GET_PROXY_LATENCY"] = "get_proxy_latency";
-    AvailableClashAPIMethods2["GET_PROXY_LATENCIES"] = "get_proxy_latencies";
     AvailableClashAPIMethods2["GET_GROUP_LATENCY"] = "get_group_latency";
     AvailableClashAPIMethods2["SET_GROUP_PROXY"] = "set_group_proxy";
     AvailableClashAPIMethods2["CLOSE_CONNECTION"] = "close_connection";
@@ -2830,10 +2819,6 @@ var ProkopShellMethods = {
     Prokop.AvailableMethods.GET_READONLY_CONFIG_SECTIONS
   ),
   getDashboardRuntimeMetadata: async () => callBaseMethod(Prokop.AvailableMethods.GET_DASHBOARD_RUNTIME_METADATA),
-  getSubscriptionMetadata: async (section) => callBaseMethod(
-    Prokop.AvailableMethods.GET_SUBSCRIPTION_METADATA,
-    [section]
-  ),
   checkSingBox: async () => callBaseMethod(
     Prokop.AvailableMethods.CHECK_SING_BOX
   ),
@@ -2858,14 +2843,6 @@ var ProkopShellMethods = {
   getClashApiProxyLatency: async (tag, timeout = "5000") => callBaseMethod(
     Prokop.AvailableMethods.CLASH_API,
     [Prokop.AvailableClashAPIMethods.GET_PROXY_LATENCY, tag, timeout]
-  ),
-  getClashApiProxyLatencies: async (tags) => callBaseMethod(
-    Prokop.AvailableMethods.CLASH_API,
-    [
-      Prokop.AvailableClashAPIMethods.GET_PROXY_LATENCIES,
-      JSON.stringify(tags),
-      "5000"
-    ]
   ),
   getClashApiGroupLatency: async (tag) => callBaseMethod(
     Prokop.AvailableMethods.CLASH_API,
@@ -3232,21 +3209,6 @@ var ProkopShellMethods = {
       data: parsedResponse
     };
   },
-  componentActionStatus: async (jobId) => {
-    const response = await executeShellCommand({
-      command: "/usr/bin/prokop",
-      args: [Prokop.AvailableMethods.COMPONENT_ACTION_STATUS, jobId],
-      timeout: COMPONENT_ACTION_RPC_TIMEOUT_MS
-    });
-    const parsedResponse = parseComponentActionResult(response);
-    if ((response.code ?? 0) !== 0 || !parsedResponse) {
-      return componentActionFailure(response, parsedResponse);
-    }
-    return {
-      success: true,
-      data: parsedResponse
-    };
-  },
   componentUpdateCheckCache: async () => callBaseMethod(
     Prokop.AvailableMethods.COMPONENT_UPDATE_CHECK_CACHE
   ),
@@ -3457,6 +3419,15 @@ function isSectionEnabled(value) {
   return ["1", "true", "yes", "on"].includes(String(value).toLowerCase());
 }
 
+// src/prokop/helpers/uciList.ts
+function uciListValues(value) {
+  if (!value) {
+    return [];
+  }
+  const items = Array.isArray(value) ? value : String(value).split(/\s+/);
+  return items.map((item) => item == null ? "" : String(item).trim()).filter(Boolean);
+}
+
 // src/prokop/methods/custom/getDashboardSections.ts
 var DASHBOARD_SECTION_CACHE_DIR = "/var/run/prokop/section-cache";
 var CLASH_API_FETCH_TIMEOUT_MS = 5e3;
@@ -3497,15 +3468,6 @@ async function getClashApiProxies(configSections, routerHosts) {
     }
   }
   return ProkopShellMethods.getClashApiProxies();
-}
-function getListValues(value) {
-  if (!value) {
-    return [];
-  }
-  if (Array.isArray(value)) {
-    return value.map((item) => `${item}`.trim()).filter(Boolean);
-  }
-  return `${value}`.split(/\s+/).map((item) => item.trim()).filter(Boolean);
 }
 function childSections(configSections, type) {
   return configSections.filter((section) => section[".type"] === type);
@@ -3597,12 +3559,12 @@ function hydrateConfigSections(configSections) {
             direct: level.direct === "1",
             filterMode: level.filter_mode || "include",
             detectServerCountry: level.detect_server_country || "flag_emoji",
-            country: getListValues(level.country),
-            serverName: getListValues(level.server_name),
-            regex: getListValues(level.regex),
-            excludeCountries: getListValues(level.exclude_countries),
-            excludeOutbounds: getListValues(level.exclude_outbounds),
-            excludeRegex: getListValues(level.exclude_regex)
+            country: uciListValues(level.country),
+            serverName: uciListValues(level.server_name),
+            regex: uciListValues(level.regex),
+            excludeCountries: uciListValues(level.exclude_countries),
+            excludeOutbounds: uciListValues(level.exclude_outbounds),
+            excludeRegex: uciListValues(level.exclude_regex)
           })
         ).sort(
           (left, right) => left.order === right.order ? left.id.localeCompare(right.id) : left.order - right.order
@@ -3627,15 +3589,15 @@ function hydrateConfigSections(configSections) {
   });
 }
 function getManualProxyLinks(section) {
-  return getListValues(section.selector_proxy_links);
+  return uciListValues(section.selector_proxy_links);
 }
 function getConnectionInterfaces(section) {
-  const values = getListValues(section.interfaces);
-  return values.length ? values : getListValues(section.interface);
+  const values = uciListValues(section.interfaces);
+  return values.length ? values : uciListValues(section.interface);
 }
 function getJsonOutbounds(section) {
-  const values = getListValues(section.outbound_jsons);
-  return values.length ? values : getListValues(section.outbound_json);
+  const values = uciListValues(section.outbound_jsons);
+  return values.length ? values : uciListValues(section.outbound_json);
 }
 function isConnectionAction(action) {
   return Boolean(
@@ -3646,19 +3608,19 @@ function hasSubscriptionSources(section) {
   return getSubscriptionSourceCount(section) > 0;
 }
 function getSubscriptionSourceCount(section) {
-  return getListValues(section.subscription_urls).length;
+  return uciListValues(section.subscription_urls).length;
 }
 function shouldSortByLatency(section) {
   return section.sort_by_latency === "1";
 }
 function hasConfiguredUrlTestList(section) {
-  return getListValues(section.urltests).length > 0;
+  return uciListValues(section.urltests).length > 0;
 }
 function hasConfiguredPriorityList(section) {
-  return getListValues(section.priority_groups).length > 0;
+  return uciListValues(section.priority_groups).length > 0;
 }
 function getUrlTestIds(section) {
-  const values = getListValues(section.urltests);
+  const values = uciListValues(section.urltests);
   return values.length ? values : section.urltest_enabled === "1" ? ["urltest"] : [];
 }
 function isUrlTestEnabled(section) {
@@ -3866,17 +3828,17 @@ function priorityLevelConfigsFromSettings(settings) {
         direct: Boolean(level.direct),
         filterMode: `${level.filterMode || "include"}` || "include",
         detectServerCountry: `${level.detectServerCountry || "flag_emoji"}` || "flag_emoji",
-        country: getListValues(level.country),
-        serverName: getListValues(level.serverName),
-        regex: getListValues(level.regex),
-        excludeCountries: getListValues(
+        country: uciListValues(level.country),
+        serverName: uciListValues(level.serverName),
+        regex: uciListValues(level.regex),
+        excludeCountries: uciListValues(
           level.excludeCountries
         ),
-        excludeOutbounds: getListValues(
+        excludeOutbounds: uciListValues(
           level.excludeOutbounds
         ),
-        excludeRegex: getListValues(level.excludeRegex),
-        outbounds: getListValues(level.outbounds)
+        excludeRegex: uciListValues(level.excludeRegex),
+        outbounds: uciListValues(level.outbounds)
       }
     ];
   }).sort(
@@ -3884,7 +3846,7 @@ function priorityLevelConfigsFromSettings(settings) {
   );
 }
 function getPriorityGroupIds(section) {
-  return getListValues(section.priority_groups);
+  return uciListValues(section.priority_groups);
 }
 function getPriorityConfigs(section) {
   const settingsMap = itemSettingsMap(section.priority_group_settings);
@@ -4301,7 +4263,7 @@ function isSubscriptionMetadataVisible(section, sourceCount, metadata) {
   if (!sourceIndex || sourceIndex < 1 || sourceIndex > sourceCount) {
     return true;
   }
-  const sourceEntry = getListValues(section.subscription_urls)[sourceIndex - 1];
+  const sourceEntry = uciListValues(section.subscription_urls)[sourceIndex - 1];
   const settings = itemSettingsMap(section.subscription_url_settings)[sourceEntry];
   return settings?.show_dashboard_metadata !== "0";
 }
@@ -4911,18 +4873,12 @@ var StoreService = class {
 };
 var initialStore = {
   tabService: {
-    current: "",
-    all: []
+    current: ""
   },
   bandwidthWidget: {
     loading: true,
     failed: false,
     data: { up: 0, down: 0 }
-  },
-  trafficTotalWidget: {
-    loading: true,
-    failed: false,
-    data: { downloadTotal: 0, uploadTotal: 0 }
   },
   systemInfoWidget: {
     loading: true,
@@ -5765,12 +5721,11 @@ function showLogNotification(notification) {
   );
 }
 function coreService(options = {}) {
-  TabServiceInstance.onChange((activeId, tabs) => {
+  TabServiceInstance.onChange((activeId) => {
     logger.info("[TAB]", activeId);
     store.set({
       tabService: {
-        current: activeId || "",
-        all: tabs.map((tab) => tab.id)
+        current: activeId || ""
       }
     });
   });
@@ -6177,8 +6132,6 @@ function eventKindLabel(kind) {
       return _("Configuration reload");
     case "restore":
       return _("Snapshot restore");
-    case "recovery":
-      return _("Recovery");
     case "autotune_apply":
       return _("Autotune apply");
     case "autotune_rollback":
@@ -9456,14 +9409,6 @@ async function connectToClashSockets(dataUpdatesId) {
       }
       const parsedMsg = JSON.parse(msg);
       store.set({
-        trafficTotalWidget: {
-          loading: false,
-          failed: false,
-          data: {
-            downloadTotal: parsedMsg.downloadTotal,
-            uploadTotal: parsedMsg.uploadTotal
-          }
-        },
         systemInfoWidget: {
           loading: false,
           failed: false,
@@ -9489,11 +9434,6 @@ async function connectToClashSockets(dataUpdatesId) {
 function setClashWidgetsFailed() {
   store.set({
     bandwidthWidget: { loading: false, failed: true, data: { up: 0, down: 0 } },
-    trafficTotalWidget: {
-      loading: false,
-      failed: true,
-      data: { downloadTotal: 0, uploadTotal: 0 }
-    },
     systemInfoWidget: {
       loading: false,
       failed: true,
@@ -9521,14 +9461,6 @@ async function pollClashConnections(dataUpdatesId) {
     lastConnectionsSample = sample;
     store.set({
       ...speed ? { bandwidthWidget: { loading: false, failed: false, data: speed } } : {},
-      trafficTotalWidget: {
-        loading: false,
-        failed: false,
-        data: {
-          downloadTotal: sample.downloadTotal,
-          uploadTotal: sample.uploadTotal
-        }
-      },
       systemInfoWidget: {
         loading: false,
         failed: false,
@@ -10538,7 +10470,7 @@ function onPageUnmount() {
   sectionsRefreshQueued = false;
   sectionsRefreshPromise = null;
   store.unsubscribe(onStoreUpdate);
-  store.reset(["bandwidthWidget", "trafficTotalWidget", "systemInfoWidget"]);
+  store.reset(["bandwidthWidget", "systemInfoWidget"]);
 }
 var dashboardLifecycleRegistered = false;
 var dashboardControllerInitialized = false;
@@ -10813,7 +10745,6 @@ var styles4 = `
 .fkp-overview__group-name { font-weight: 600; overflow-wrap: anywhere; }
 .fkp-overview__group-node { overflow-wrap: anywhere; }
 .fkp-overview__footer { margin-top: auto; padding-top: var(--fkp-space-1); }
-.fkp-overview__section-title { margin: var(--fkp-space-5) 0 0; }
 
 @media (max-width: ${BREAKPOINTS.narrow}px) {
     .fkp_dashboard-page {
@@ -11397,30 +11328,6 @@ var styles4 = `
 .fkp_dashboard-page__urltest-details__row-meta {
     justify-content: flex-end;
     white-space: nowrap;
-}
-
-.fkp_dashboard-page__urltest-details__copy-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: 0 0 20px;
-    width: 20px;
-    min-width: 20px;
-    height: 20px;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-.fkp_dashboard-page__urltest-details__copy-button svg {
-    width: 12px;
-    height: 12px;
-}
-
-.fkp_dashboard-page__urltest-details__copy-placeholder {
-    display: block;
-    width: 20px;
-    min-width: 20px;
-    height: 1px;
 }
 
 .fkp_dashboard-page__urltest-details__empty {
@@ -15006,13 +14913,8 @@ var styles5 = `
     gap: 8px 16px;
 }
 
-.fkp-diag-card__title,
-.fkp-diag-section-title {
+.fkp-diag-card__title {
     margin: 0 0 4px;
-}
-
-.fkp-diag-section-title {
-    margin-top: 8px;
 }
 
 .fkp-diag-hint {
@@ -15091,27 +14993,6 @@ var styles5 = `
 .fkp-diag-badge--error, .fkp-diag-text--error { color: var(--error-color-medium, red); }
 .fkp-diag-badge--loading, .fkp-diag-text--loading { color: var(--primary-color-high, dodgerblue); }
 .fkp-diag-badge--neutral, .fkp-diag-text--neutral { color: var(--text-color-medium, gray); }
-
-.fkp-diag-facts {
-    display: grid;
-    grid-template-columns: max-content minmax(0, 1fr);
-    gap: 6px 16px;
-    margin: 0;
-}
-
-.fkp-diag-facts dt { font-weight: bold; }
-.fkp-diag-facts dd { margin: 0; min-width: 0; }
-.fkp-diag-facts .fkp-diag-badge,
-.fkp-diag-events .fkp-diag-badge { white-space: normal; overflow-wrap: break-word; }
-
-.fkp-diag-events {
-    border-collapse: collapse;
-}
-
-.fkp-diag-events td {
-    padding: 3px 16px 3px 0;
-    vertical-align: top;
-}
 
 /* System checks: problems first as full-width cards, then one-line rows;
    passed checks fold into one group. */
@@ -15359,7 +15240,7 @@ var styles5 = `
 .fkp-route__facts small { color: var(--text-color-medium, gray); }
 
 @media (max-width: ${BREAKPOINTS.phone}px) {
-    .fkp-diag-facts, .fkp-route__facts, .fkp-check__advice { grid-template-columns: minmax(0, 1fr); }
+    .fkp-route__facts, .fkp-check__advice { grid-template-columns: minmax(0, 1fr); }
     .fkp-diag-checks { grid-template-columns: minmax(0, 1fr); }
 }
 
@@ -15748,17 +15629,8 @@ var closingConnectionIds = /* @__PURE__ */ new Set();
 function normalizeString(value) {
   return value == null ? "" : String(value).trim();
 }
-function getListValues2(value) {
-  if (!value) {
-    return [];
-  }
-  if (Array.isArray(value)) {
-    return value.map((item) => normalizeString(item)).filter(Boolean);
-  }
-  return normalizeString(value).split(/\s+/).map((item) => item.trim()).filter(Boolean);
-}
 function getUrlTestIds2(section) {
-  const values = getListValues2(section.urltests);
+  const values = uciListValues(section.urltests);
   return values.length ? values : section.urltest_enabled === "1" ? ["urltest"] : [];
 }
 function getUrlTestTag2(sectionName, id) {
@@ -17764,19 +17636,6 @@ var styles6 = `
     color: var(--text-color-high);
 }
 
-.fkp_monitoring-page__cell-main {
-    color: var(--text-color-high);
-    font-weight: 600;
-    line-height: 1.25;
-}
-
-.fkp_monitoring-page__cell-secondary {
-    margin-top: 2px;
-    color: var(--text-color-medium);
-    font-size: 12px;
-    line-height: 1.25;
-}
-
 .fkp_monitoring-page__route {
     display: inline-block;
     width: auto;
@@ -17786,16 +17645,6 @@ var styles6 = `
     color: var(--text-color-high, #eee);
     font-size: 11px;
     font-weight: 500;
-}
-
-.fkp_monitoring-page__network {
-    background: transparent;
-    border: 0;
-    padding: 0;
-    color: var(--text-color-medium, #bbb);
-    font-family: inherit;
-    font-size: 13px;
-    text-transform: lowercase;
 }
 
 .fkp_monitoring-page .btn.fkp_monitoring-page__row-action {
@@ -19992,7 +19841,7 @@ function lastRecoveryEvent(health2) {
     ...health2.recent_activity,
     ...health2.recovery.last_event ? [health2.recovery.last_event] : []
   ].filter(
-    (event) => event.kind === "restore" || event.kind === "autotune_rollback" || event.kind === "recovery" || event.status === "recovered"
+    (event) => event.kind === "restore" || event.kind === "autotune_rollback" || event.status === "recovered"
   );
   return events.sort((a, b) => b.timestamp - a.timestamp)[0] ?? null;
 }
@@ -22601,19 +22450,9 @@ ${AutotuneTab.styles}
 ${PartialStyles}
 
 
-/* Hide extra H3 for settings tab */
-#cbi-${PROKOP_UCI_PACKAGE}-settings > h3 {
-    display: none;
-}
-
 /* Hide extra H3 for rules tab */
 #cbi-${PROKOP_UCI_PACKAGE}-section > h3:nth-child(1) {
     display: none;
-}
-
-/* Vertical align for remove rule action button */
-#cbi-${PROKOP_UCI_PACKAGE}-section > .cbi-section-remove {
-    margin-bottom: -32px;
 }
 
 #cbi-${PROKOP_UCI_PACKAGE}-section .cbi-section-actions > div {
@@ -22814,8 +22653,6 @@ return baseclass.extend({
   SECONDARY_RULESET_OPTIONS,
   UpdatesTab,
   applyUiStateToStore,
-  bulkValidate,
-  confirmAction,
   coreService,
   domainListLabel,
   getClashUIUrl,
@@ -22824,7 +22661,6 @@ return baseclass.extend({
   parseValueList,
   setProkopPage,
   setReadonlyMode,
-  showToast,
   store,
   validateBootstrapDNS,
   validateDNS,
