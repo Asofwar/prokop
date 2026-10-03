@@ -24,6 +24,8 @@ DIRECT_UC="$LIB/torrserver/direct.uc"
 WORK="$(mktemp -d)"
 trap 'rm -rf "${WORK:?}"' EXIT
 trap 'exit 1' HUP INT TERM
+# shellcheck source=tests/helpers/owned_processes.sh
+. "$ROOT_DIR/tests/helpers/owned_processes.sh"
 
 fail() {
   printf 'FAIL: %s\n' "$1" >&2
@@ -167,7 +169,7 @@ for _ in $(seq 200); do
 done
 worker_alive=0
 kill -0 "$worker_pid" 2>/dev/null && worker_alive=1
-{ kill -TERM -- "-$worker_pid"; wait "$worker_pid"; } 2>/dev/null || true
+{ owned_kill TERM "$worker_pid"; wait "$worker_pid"; } 2>/dev/null || true
 polls="$(tr '\n' ' ' <"$POLL_LOG" 2>/dev/null || true)"
 [ -s "$POLL_DONE" ] || fail "the worker did not reach its third poll (polls: $polls)"
 [ "$worker_alive" = 1 ] || fail "the worker exited, which procd would respawn into a crash loop (polls: $polls)"

@@ -98,7 +98,7 @@ assert.deepEqual(marks, expected, 'sing-box: enabled Zapret rules a(On), b(1), d
 const batch = fs.readFileSync(batchFile, 'utf8');
 for (const [name, index] of Object.entries(expected)) {
   const mark = `0x${(base + index).toString(16).padStart(8, '0')}`;
-  assert.match(batch, new RegExp(`meta mark ${mark} meta l4proto tcp counter queue num ${4000 + index - 1} bypass`),
+  assert.match(batch, new RegExp(`meta mark & 0xff0000ff == ${mark} meta l4proto tcp counter queue num ${4000 + index - 1} bypass`),
     `nft: rule ${name} has mark ${mark} and queue ${4000 + index - 1}`);
 }
 assert.doesNotMatch(batch, /0x01000004/, 'nft: no fourth Zapret rule');
