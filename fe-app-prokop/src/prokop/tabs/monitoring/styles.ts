@@ -417,19 +417,6 @@ export const styles = `
     color: var(--text-color-high);
 }
 
-.fkp_monitoring-page__cell-main {
-    color: var(--text-color-high);
-    font-weight: 600;
-    line-height: 1.25;
-}
-
-.fkp_monitoring-page__cell-secondary {
-    margin-top: 2px;
-    color: var(--text-color-medium);
-    font-size: 12px;
-    line-height: 1.25;
-}
-
 .fkp_monitoring-page__route {
     display: inline-block;
     width: auto;
@@ -439,16 +426,6 @@ export const styles = `
     color: var(--text-color-high, #eee);
     font-size: 11px;
     font-weight: 500;
-}
-
-.fkp_monitoring-page__network {
-    background: transparent;
-    border: 0;
-    padding: 0;
-    color: var(--text-color-medium, #bbb);
-    font-family: inherit;
-    font-size: 13px;
-    text-transform: lowercase;
 }
 
 .fkp_monitoring-page .btn.fkp_monitoring-page__row-action {

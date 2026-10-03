@@ -59,13 +59,8 @@ export const styles = `
     gap: 8px 16px;
 }
 
-.fkp-diag-card__title,
-.fkp-diag-section-title {
+.fkp-diag-card__title {
     margin: 0 0 4px;
-}
-
-.fkp-diag-section-title {
-    margin-top: 8px;
 }
 
 .fkp-diag-hint {
@@ -144,27 +139,6 @@ export const styles = `
 .fkp-diag-badge--error, .fkp-diag-text--error { color: var(--error-color-medium, red); }
 .fkp-diag-badge--loading, .fkp-diag-text--loading { color: var(--primary-color-high, dodgerblue); }
 .fkp-diag-badge--neutral, .fkp-diag-text--neutral { color: var(--text-color-medium, gray); }
-
-.fkp-diag-facts {
-    display: grid;
-    grid-template-columns: max-content minmax(0, 1fr);
-    gap: 6px 16px;
-    margin: 0;
-}
-
-.fkp-diag-facts dt { font-weight: bold; }
-.fkp-diag-facts dd { margin: 0; min-width: 0; }
-.fkp-diag-facts .fkp-diag-badge,
-.fkp-diag-events .fkp-diag-badge { white-space: normal; overflow-wrap: break-word; }
-
-.fkp-diag-events {
-    border-collapse: collapse;
-}
-
-.fkp-diag-events td {
-    padding: 3px 16px 3px 0;
-    vertical-align: top;
-}
 
 /* System checks: problems first as full-width cards, then one-line rows;
    passed checks fold into one group. */
@@ -412,7 +386,7 @@ export const styles = `
 .fkp-route__facts small { color: var(--text-color-medium, gray); }
 
 @media (max-width: ${BREAKPOINTS.phone}px) {
-    .fkp-diag-facts, .fkp-route__facts, .fkp-check__advice { grid-template-columns: minmax(0, 1fr); }
+    .fkp-route__facts, .fkp-check__advice { grid-template-columns: minmax(0, 1fr); }
     .fkp-diag-checks { grid-template-columns: minmax(0, 1fr); }
 }
 

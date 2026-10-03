@@ -96,7 +96,6 @@ export const styles = `
 .fkp-overview__group-name { font-weight: 600; overflow-wrap: anywhere; }
 .fkp-overview__group-node { overflow-wrap: anywhere; }
 .fkp-overview__footer { margin-top: auto; padding-top: var(--fkp-space-1); }
-.fkp-overview__section-title { margin: var(--fkp-space-5) 0 0; }
 
 @media (max-width: ${BREAKPOINTS.narrow}px) {
     .fkp_dashboard-page {
@@ -680,30 +679,6 @@ export const styles = `
 .fkp_dashboard-page__urltest-details__row-meta {
     justify-content: flex-end;
     white-space: nowrap;
-}
-
-.fkp_dashboard-page__urltest-details__copy-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: 0 0 20px;
-    width: 20px;
-    min-width: 20px;
-    height: 20px;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-.fkp_dashboard-page__urltest-details__copy-button svg {
-    width: 12px;
-    height: 12px;
-}
-
-.fkp_dashboard-page__urltest-details__copy-placeholder {
-    display: block;
-    width: 20px;
-    min-width: 20px;
-    height: 1px;
 }
 
 .fkp_dashboard-page__urltest-details__empty {

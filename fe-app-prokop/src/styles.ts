@@ -20,19 +20,9 @@ ${AutotuneTab.styles}
 ${PartialStyles}
 
 
-/* Hide extra H3 for settings tab */
-#cbi-${PROKOP_CBI_PREFIX}-settings > h3 {
-    display: none;
-}
-
 /* Hide extra H3 for rules tab */
 #cbi-${PROKOP_CBI_PREFIX}-section > h3:nth-child(1) {
     display: none;
-}
-
-/* Vertical align for remove rule action button */
-#cbi-${PROKOP_CBI_PREFIX}-section > .cbi-section-remove {
-    margin-bottom: -32px;
 }
 
 #cbi-${PROKOP_CBI_PREFIX}-section .cbi-section-actions > div {

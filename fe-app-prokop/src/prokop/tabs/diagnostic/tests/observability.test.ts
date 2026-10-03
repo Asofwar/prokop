@@ -689,7 +689,7 @@ describe('unsupported checks and responsive layout', () => {
     );
     expect(styles).toMatch(/\.fkp-check__head \{[^}]*flex-wrap: wrap;/);
     expect(styles).toMatch(
-      /\.fkp-diag-facts \.fkp-diag-badge[\s\S]*?white-space: normal/,
+      /\.fkp-check__head \.fkp-diag-badge \{ flex: 0 0 auto; \}/,
     );
   });
 });
