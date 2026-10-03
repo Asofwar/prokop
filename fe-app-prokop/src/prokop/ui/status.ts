@@ -1,6 +1,5 @@
-// One status vocabulary for every Prokop page. Backend modules report many
-// raw values (ok, success, latest, stable, needs_attention, ...); pages map
-// them here to a small semantic set and take the label and tone from one
+// Shared status words and tones: a page maps the raw values of its backend
+// module to this small semantic set and takes the label and tone from one
 // place, so the same state never reads differently on two pages.
 
 export type SemanticStatus =
@@ -21,136 +20,6 @@ export type StatusTone =
   | 'loading'
   | 'neutral'
   | 'muted';
-
-export type StatusDomain =
-  // diagnostics/health.uc levels
-  | 'health'
-  // diagnostic check card and check item states
-  | 'check'
-  // connectivity_test result status and matrix row state
-  | 'connectivity'
-  // get_ui_state service status strings
-  | 'service'
-  // getServiceAvailability()
-  | 'availability'
-  // component check_update result status
-  | 'component'
-  // config/snapshots.uc mutation results
-  | 'snapshot'
-  // autotune select.uc stability and catalog candidate state
-  | 'autotune_candidate'
-  // autotune apply.uc phases and results
-  | 'autotune_apply';
-
-const DOMAIN_MAP: Record<StatusDomain, Record<string, SemanticStatus>> = {
-  health: {
-    ok: 'healthy',
-    warning: 'warning',
-    error: 'error',
-    transitioning: 'busy',
-    recovered: 'warning',
-    stopped: 'off',
-    not_started: 'off',
-    unknown: 'unknown',
-  },
-  check: {
-    success: 'healthy',
-    warning: 'warning',
-    error: 'error',
-    loading: 'busy',
-    skipped: 'not_checked',
-    unsupported: 'unsupported',
-  },
-  connectivity: {
-    ok: 'healthy',
-    timeout: 'warning',
-    error: 'error',
-    idle: 'not_checked',
-    running: 'busy',
-    invalid: 'error',
-  },
-  service: {
-    'running & enabled': 'healthy',
-    'running but disabled': 'healthy',
-    'stopped but enabled': 'error',
-    'stopped & disabled': 'off',
-    starting: 'busy',
-    stopping: 'busy',
-    restarting: 'busy',
-    reloading: 'busy',
-  },
-  availability: {
-    running: 'healthy',
-    stopped: 'off',
-    loading: 'busy',
-    unavailable: 'unknown',
-  },
-  component: {
-    latest: 'healthy',
-    outdated: 'warning',
-    dev: 'warning',
-    recovered: 'warning',
-    '': 'not_checked',
-  },
-  snapshot: {
-    created: 'healthy',
-    existing: 'healthy',
-    deleted: 'healthy',
-    success: 'healthy',
-    confirmed: 'healthy',
-    no_change: 'healthy',
-    recovered: 'warning',
-    restored_not_started: 'warning',
-    stale: 'warning',
-    busy: 'busy',
-    failed: 'error',
-    needs_attention: 'needs_attention',
-  },
-  autotune_candidate: {
-    stable: 'healthy',
-    unstable: 'warning',
-    failed: 'error',
-    supported: 'not_checked',
-    unsupported: 'unsupported',
-  },
-  autotune_apply: {
-    applied: 'healthy',
-    no_change_required: 'healthy',
-    checking: 'busy',
-    applying: 'busy',
-    verifying: 'busy',
-    rolling_back: 'busy',
-    rolled_back: 'warning',
-    stale: 'not_checked',
-    failed: 'error',
-    needs_attention: 'needs_attention',
-  },
-};
-
-// Labels that say more than the generic semantic label for a raw value.
-const CONTEXT_LABELS: Partial<
-  Record<StatusDomain, Record<string, () => string>>
-> = {
-  health: {
-    recovered: () => _('Recovered'),
-    stopped: () => _('Stopped by user'),
-    not_started: () => _('Not started'),
-  },
-  check: {
-    loading: () => _('Checking…'),
-  },
-  snapshot: {
-    recovered: () => _('Recovered'),
-  },
-  autotune_apply: {
-    rolled_back: () => _('Rolled back'),
-  },
-};
-
-export function toSemantic(domain: StatusDomain, raw: unknown): SemanticStatus {
-  const key = raw == null ? '' : String(raw);
-  return DOMAIN_MAP[domain][key] ?? 'unknown';
-}
 
 export function statusLabel(status: SemanticStatus): string {
   switch (status) {
@@ -192,23 +61,6 @@ export function statusTone(status: SemanticStatus): StatusTone {
     default:
       return 'neutral';
   }
-}
-
-export interface StatusView {
-  status: SemanticStatus;
-  label: string;
-  tone: StatusTone;
-}
-
-export function describeStatus(domain: StatusDomain, raw: unknown): StatusView {
-  const status = toSemantic(domain, raw);
-  const contextLabel = CONTEXT_LABELS[domain]?.[raw == null ? '' : String(raw)];
-
-  return {
-    status,
-    label: contextLabel ? contextLabel() : statusLabel(status),
-    tone: statusTone(status),
-  };
 }
 
 // Outcomes of recorded events (history, recent activity) are not states:

@@ -1,119 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  describeStatus,
+  eventKindLabel,
   eventOutcomeView,
   provenanceLabel,
   statusLabel,
   statusTone,
   toEventOutcome,
-  toSemantic,
+  type EventOutcome,
   type SemanticStatus,
-  type StatusDomain,
 } from '../status';
-
-// Every raw value the backend or the current UI produces today.
-const RAW_VALUES: Record<StatusDomain, Record<string, SemanticStatus>> = {
-  health: {
-    ok: 'healthy',
-    warning: 'warning',
-    error: 'error',
-    transitioning: 'busy',
-    recovered: 'warning',
-    unknown: 'unknown',
-  },
-  check: {
-    success: 'healthy',
-    warning: 'warning',
-    error: 'error',
-    loading: 'busy',
-    skipped: 'not_checked',
-    unsupported: 'unsupported',
-  },
-  connectivity: {
-    ok: 'healthy',
-    timeout: 'warning',
-    error: 'error',
-    idle: 'not_checked',
-    running: 'busy',
-    invalid: 'error',
-  },
-  service: {
-    'running & enabled': 'healthy',
-    'running but disabled': 'healthy',
-    'stopped but enabled': 'error',
-    'stopped & disabled': 'off',
-    starting: 'busy',
-    stopping: 'busy',
-    restarting: 'busy',
-    reloading: 'busy',
-  },
-  availability: {
-    running: 'healthy',
-    stopped: 'off',
-    loading: 'busy',
-    unavailable: 'unknown',
-  },
-  component: {
-    latest: 'healthy',
-    outdated: 'warning',
-    dev: 'warning',
-    recovered: 'warning',
-    '': 'not_checked',
-  },
-  snapshot: {
-    created: 'healthy',
-    existing: 'healthy',
-    deleted: 'healthy',
-    success: 'healthy',
-    confirmed: 'healthy',
-    no_change: 'healthy',
-    recovered: 'warning',
-    stale: 'warning',
-    busy: 'busy',
-    failed: 'error',
-    needs_attention: 'needs_attention',
-  },
-  autotune_candidate: {
-    stable: 'healthy',
-    unstable: 'warning',
-    failed: 'error',
-    supported: 'not_checked',
-    unsupported: 'unsupported',
-  },
-  autotune_apply: {
-    applied: 'healthy',
-    no_change_required: 'healthy',
-    checking: 'busy',
-    applying: 'busy',
-    verifying: 'busy',
-    rolling_back: 'busy',
-    rolled_back: 'warning',
-    stale: 'not_checked',
-    failed: 'error',
-    needs_attention: 'needs_attention',
-  },
-};
-
-describe('toSemantic', () => {
-  for (const [domain, values] of Object.entries(RAW_VALUES)) {
-    for (const [raw, expected] of Object.entries(values)) {
-      it(`${domain}: ${raw || '(empty)'} → ${expected}`, () => {
-        expect(toSemantic(domain as StatusDomain, raw)).toBe(expected);
-      });
-    }
-  }
-
-  it('maps unknown raw values and null to unknown, never to healthy', () => {
-    expect(toSemantic('health', 'bogus')).toBe('unknown');
-    expect(toSemantic('check', null)).toBe('unknown');
-    expect(toSemantic('snapshot', undefined)).toBe('unknown');
-  });
-
-  it('treats a missing component check as not checked', () => {
-    expect(toSemantic('component', undefined)).toBe('not_checked');
-  });
-});
 
 describe('labels and tones', () => {
   const all: SemanticStatus[] = [
@@ -128,43 +24,28 @@ describe('labels and tones', () => {
     'unknown',
   ];
 
-  it('gives every semantic status a label and a tone', () => {
-    for (const status of all) {
-      expect(statusLabel(status)).toBeTruthy();
-      expect(statusTone(status)).toBeTruthy();
-    }
+  // A status that loses its case falls back to the Unknown label, so every
+  // known status must read differently from Unknown and from each other.
+  it('gives every semantic status its own label', () => {
+    const known = all.filter((status) => status !== 'unknown');
+    const labels = known.map(statusLabel);
+
+    for (const label of labels) expect(label).not.toBe(statusLabel('unknown'));
+    expect(new Set(labels).size).toBe(known.length);
   });
 
-  it('colours needs_attention as an error and not-applicable states as muted', () => {
-    expect(statusTone('needs_attention')).toBe('error');
-    expect(statusTone('unsupported')).toBe('muted');
-    expect(statusTone('off')).toBe('muted');
-    expect(statusTone('not_checked')).toBe('neutral');
-  });
-
-  it('keeps contextual labels for results that are more than a state', () => {
-    expect(describeStatus('health', 'recovered')).toEqual({
-      status: 'warning',
-      label: 'Recovered',
-      tone: 'warning',
-    });
-    expect(describeStatus('autotune_apply', 'rolled_back').label).toBe(
-      'Rolled back',
-    );
-    expect(describeStatus('check', 'loading').label).toBe('Checking…');
-    expect(describeStatus('health', 'ok').label).toBe('Healthy');
-    // Stopped by the user is not a failure (D-15).
-    expect(describeStatus('health', 'stopped')).toEqual({
-      status: 'off',
-      label: 'Stopped by user',
-      tone: 'muted',
-    });
-    // Nor is Prokop not started since boot (D-15).
-    expect(describeStatus('health', 'not_started')).toEqual({
-      status: 'off',
-      label: 'Not started',
-      tone: 'muted',
-    });
+  it('gives every semantic status its tone', () => {
+    expect(all.map(statusTone)).toEqual([
+      'success',
+      'warning',
+      'error',
+      'error',
+      'loading',
+      'neutral',
+      'muted',
+      'muted',
+      'neutral',
+    ]);
   });
 });
 
@@ -189,6 +70,46 @@ describe('event outcomes', () => {
     });
     expect(eventOutcomeView('needs_attention').tone).toBe('error');
     expect(eventOutcomeView('rolled_back').tone).toBe('warning');
+  });
+});
+
+describe('event labels', () => {
+  it('gives every event outcome its own label', () => {
+    const outcomes: EventOutcome[] = [
+      'succeeded',
+      'recovered',
+      'rolled_back',
+      'failed',
+      'needs_attention',
+      'cancelled',
+      'not_started',
+    ];
+    const labels = outcomes.map((outcome) => eventOutcomeView(outcome).label);
+
+    for (const label of labels)
+      expect(label).not.toBe(eventOutcomeView('unknown').label);
+    expect(new Set(labels).size).toBe(outcomes.length);
+  });
+
+  it('names every recorded event kind', () => {
+    const kinds = [
+      'start',
+      'reload',
+      'restore',
+      'autotune_apply',
+      'autotune_rollback',
+      'autotune_mode',
+      'autotune_recommendation',
+      'autotune_run',
+      'snapshot_create',
+      'snapshot_delete',
+      'cron_refresh',
+      'config_migration',
+    ];
+    const labels = kinds.map(eventKindLabel);
+
+    for (const label of labels) expect(label).not.toBe(eventKindLabel('?'));
+    expect(new Set(labels).size).toBe(kinds.length);
   });
 });
 

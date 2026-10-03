@@ -15,8 +15,10 @@ describe('whole translatable phrases', () => {
   it('gives every built-in list a name', () => {
     expect(domainListLabel('russia_inside')).toBe('Russia: blocked inside');
     expect(domainListLabel('youtube')).toBe('Youtube');
+    // Unknown keys fall back to the key itself, so a built-in list that
+    // loses its name would show the raw key.
     for (const key of Object.keys(DOMAIN_LIST_OPTIONS))
-      expect(domainListLabel(key)).toBeTruthy();
+      expect(domainListLabel(key)).not.toBe(key);
     expect(domainListLabel('custom_list')).toBe('custom_list');
   });
 });
