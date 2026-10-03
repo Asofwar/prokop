@@ -782,7 +782,7 @@ function showCandidates(target: Prokop.AutotuneTarget) {
           ]),
         ])
       : E('p', {}, _('No strategies were measured')),
-    E('div', { class: 'fkp-confirm__actions' }, [
+    E('div', { class: 'right fkp-confirm__actions' }, [
       E(
         'button',
         {

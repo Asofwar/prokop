@@ -231,7 +231,7 @@ async function showChanges(id: string) {
 
   ui.showModal(_('Changes since this snapshot'), [
     renderDiffTable(diff),
-    E('div', { class: 'fkp-confirm__actions' }, [
+    E('div', { class: 'right fkp-confirm__actions' }, [
       E(
         'button',
         {

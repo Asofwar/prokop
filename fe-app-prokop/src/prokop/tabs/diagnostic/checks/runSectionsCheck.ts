@@ -150,7 +150,7 @@ export async function runSectionsCheck() {
       if (success) {
         return {
           state: 'success',
-          latency: `${latencyProxy.data.delay} ms`,
+          latency: _('%d ms').replace('%d', String(latencyProxy.data.delay)),
         };
       }
 

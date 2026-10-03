@@ -7,7 +7,7 @@ import {
   type SemanticStatus,
   type StatusTone,
 } from '../../ui/status';
-import { formatRelativeTime } from '../../ui/time';
+import { formatDateTime, formatRelativeTime } from '../../ui/time';
 import { modeLabel, recordedApplyView, workerView } from '../autotune/model';
 
 // View model of the overview page: short answers, each with a link to the
@@ -563,9 +563,7 @@ export function overviewAutotune(input: OverviewInput): OverviewAutotune {
   }
   if (mode !== 'off' && status.next_run_at) {
     lines.push({
-      text: `${_('Next scheduled check')}: ${new Date(
-        status.next_run_at * 1000,
-      ).toLocaleString()}`,
+      text: `${_('Next scheduled check')}: ${formatDateTime(status.next_run_at)}`,
     });
   }
 
