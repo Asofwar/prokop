@@ -1914,7 +1914,9 @@ function stop() {
     remove_file(PENDING_RELOAD_FILE);
     // The runtime is down: br_netfilter's iptables hooks go back to what
     // they were before Forkop's start, where nothing else has set them
-    // since (D-19, UC-109). A restart and a reload keep them off.
+    // since (D-19, UC-109). Lifecycle's own restart and a reload keep them
+    // off; /etc/init.d/forkop restart is a stop and a start, so it puts
+    // them back while TPROXY is down and its start turns them off again.
     if (status == 0 && !module_success(NFT_UC, [ "restore-bridge-netfilter" ]))
         log_message("Could not restore the br_netfilter settings", "warn");
     return status;

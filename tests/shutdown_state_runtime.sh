@@ -215,9 +215,11 @@ grep -Fxq 'nft/apply.uc restore-bridge-netfilter' "$EVENTS" && fail "the start r
 grep -Fxq 'nft/apply.uc ensure-bridge-netfilter-disabled' "$EVENTS" || fail "the start did not turn br_netfilter's hooks off"
 lifecycle restart
 grep -Fxq 'nft/apply.uc ensure-bridge-netfilter-disabled' "$EVENTS" || fail "the restart did not start again"
-grep -Fxq 'nft/apply.uc restore-bridge-netfilter' "$EVENTS" && fail "a restart put br_netfilter's hooks back between its stop and start"
+grep -Fxq 'nft/apply.uc restore-bridge-netfilter' "$EVENTS" && fail "lifecycle's restart put br_netfilter's hooks back between its stop and start"
 lifecycle stop
-ok "stop puts br_netfilter's hooks back, start and restart do not"
+# (/etc/init.d/forkop restart is a stop and a start: it puts them back and
+# turns them off again.)
+ok "stop puts br_netfilter's hooks back, start and lifecycle's restart do not"
 rmdir "$FORKOP_UCI_LOG_FILE"
 
 # 2b. Neither writes the configuration, also where it can be written.
