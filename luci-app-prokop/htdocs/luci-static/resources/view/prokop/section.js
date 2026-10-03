@@ -814,7 +814,6 @@ let actionProvidersAvailabilityLoader = null;
 const outboundNameChoicesCache = new Map();
 const outboundNameChoicesInflight = new Map();
 const outboundNameSourceOptions = new Map();
-const sectionGroupSourceOptions = new Map();
 const dashboardFilterChoiceRefreshers = new Map();
 const SECTION_CACHE_DIR = "/var/run/prokop/section-cache";
 const COUNTRY_CODES =
@@ -2090,77 +2089,6 @@ function currentDraftOutboundNames(section_id) {
   });
 
   return names;
-}
-
-function currentSectionGroupValues(section_id, typeName) {
-  const liveValues = currentLiveDynamicListValues(section_id, typeName);
-  if (liveValues != null) {
-    return liveValues;
-  }
-
-  const option = sectionGroupSourceOptions.get(typeName);
-  if (option && typeof option.formvalue === "function") {
-    try {
-      const value = option.formvalue(section_id);
-      if (value != null) {
-        return normalizeDynamicListItems(value);
-      }
-    } catch (_error) {
-      // Fall back to the child sections when the widget is not mounted.
-    }
-  }
-
-  return getChildItemIds(section_id, typeName);
-}
-
-function sectionGroupDisplayName(section_id, typeName, value) {
-  const itemId = `${value || ""}`.trim();
-  if (isExistingChildItem(section_id, itemId, typeName)) {
-    return `${uci.get(UCI_PACKAGE, itemId, "name") || itemId}`.trim();
-  }
-
-  const option = sectionGroupSourceOptions.get(typeName);
-  const pending =
-    option && option.pendingChildSettings
-      ? option.pendingChildSettings[section_id]
-      : null;
-  const settings = pending && pending[itemId];
-  return `${(settings && settings.name) || itemId}`.trim();
-}
-
-function currentSectionGroupChoices(section_id, selectedValues = []) {
-  const seen = new Set();
-  const result = [];
-  const append = (typeName, value) => {
-    value = `${value || ""}`.trim();
-    if (!value) {
-      return;
-    }
-
-    const name = sectionGroupDisplayName(section_id, typeName, value) || value;
-    if (seen.has(name)) {
-      return;
-    }
-
-    seen.add(name);
-    result.push({ value: name, label: name });
-  };
-
-  currentSectionGroupValues(section_id, "urltest").forEach((value) =>
-    append("urltest", value),
-  );
-  currentSectionGroupValues(section_id, "priority_group").forEach((value) =>
-    append("priority_group", value),
-  );
-  normalizeDynamicListItems(selectedValues).forEach((value) => {
-    value = `${value || ""}`.trim();
-    if (value && !seen.has(value)) {
-      seen.add(value);
-      result.push({ value, label: value });
-    }
-  });
-
-  return result.sort((left, right) => left.label.localeCompare(right.label));
 }
 
 function refreshDashboardFilterChoiceWidgets(section_id) {
@@ -5686,19 +5614,6 @@ function isSingBoxDuration(value) {
   return /^(?=.*[1-9])([0-9]+(?:\.[0-9]+)?(?:ns|us|ms|s|m|h|d))+$/.test(value);
 }
 
-function writeOptionalDurationOption(section_id, key, value) {
-  const normalized = value ? `${value}`.trim() : "";
-  const disabledKey = `${key}_disabled`;
-
-  if (normalized.length) {
-    uci.set(UCI_PACKAGE, section_id, key, normalized);
-    uci.unset(UCI_PACKAGE, section_id, disabledKey);
-  } else {
-    uci.unset(UCI_PACKAGE, section_id, key);
-    uci.set(UCI_PACKAGE, section_id, disabledKey, "1");
-  }
-}
-
 function validateOptionalSingBoxDuration(value) {
   const normalized = value ? `${value}`.trim() : "";
 
@@ -5760,26 +5675,6 @@ function validateSubscriptionUrlEntry(_section_id, value) {
   }
 
   return true;
-}
-
-function getDuplicateTextListErrors(values, normalizeValue, duplicateMessage) {
-  const seen = new Set();
-  const duplicates = [];
-
-  values.forEach((item) => {
-    const normalized = normalizeValue ? normalizeValue(item) : item;
-
-    if (seen.has(normalized)) {
-      if (!duplicates.includes(item)) {
-        duplicates.push(item);
-      }
-      return;
-    }
-
-    seen.add(normalized);
-  });
-
-  return duplicates.map((item) => `${item}: ${duplicateMessage}`);
 }
 
 function getValidationHeaderText() {
@@ -9020,7 +8915,6 @@ function createSectionContent(section) {
     );
   };
   o.onListChange = refreshDashboardFilterChoiceWidgets;
-  sectionGroupSourceOptions.set("urltest", o);
 
   o = section.taboption(
     "target",
@@ -9059,7 +8953,6 @@ function createSectionContent(section) {
     );
   };
   o.onListChange = refreshDashboardFilterChoiceWidgets;
-  sectionGroupSourceOptions.set("priority_group", o);
 
   o = section.taboption(
     "target",
