@@ -658,7 +658,7 @@ describe('unsupported checks and responsive layout', () => {
   it('keeps the reachability field labels as accessible names on wide screens', () => {
     const desktop = styles.slice(
       styles.indexOf('.fkp-conn__cell-label {'),
-      styles.indexOf('@media (max-width: 860px)'),
+      styles.indexOf('@media (max-width: 899px)'),
     );
     expect(desktop).not.toMatch(/display:\s*none/);
     expect(desktop).toMatch(/clip: rect\(0 0 0 0\)/);
