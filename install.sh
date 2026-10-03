@@ -3929,11 +3929,23 @@ legacy_forkop_cleanup() {
     legacy_forkop_remove_state
     legacy_forkop_ucode installer-legacy-forkop-cleanup-uci >"$TMP_DIR/legacy-forkop-cleanup.env" ||
         warn "Failed to update the rpcd login grants and the LuCI caches"
+    # Prokop's postinst skips its legacy cleanup while the old init script
+    # exists; it is gone now, so run it once instead of waiting for an upgrade.
+    if [ -r "$PROKOP_TARGET_LIB/service/package.uc" ]; then
+        ucode -L "$PROKOP_TARGET_LIB" "$PROKOP_TARGET_LIB/service/package.uc" legacy-cleanup >/dev/null 2>&1 ||
+            warn "Failed to clean up what the old $LEGACY_FORKOP_BRAND guard left behind"
+    fi
 }
 
 legacy_forkop_finish() {
     install_ui_packages
     persist_mirror_setting
+    # Zapret-Manager launchers written by the old installation still point at
+    # its mirror; regenerate them for the mirror setting saved above.
+    if [ -r "$PROKOP_TARGET_LIB/components/action.uc" ]; then
+        ucode -L "$PROKOP_TARGET_LIB" "$PROKOP_TARGET_LIB/components/action.uc" reconcile-zapret-manager-launchers >/dev/null 2>&1 ||
+            warn "Failed to update the Zapret-Manager launchers"
+    fi
     if [ "$LEGACY_FORKOP_MANAGED_SING_BOX" -eq 1 ] &&
         { [ ! -x "$SING_BOX_BINARY" ] || [ ! -x "$SING_BOX_INIT_SCRIPT" ]; }; then
         warn "$(installer_text legacy_forkop_sing_box_lost)"
