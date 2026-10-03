@@ -6,7 +6,6 @@ let durable = require("core.durable");
 let core_ip = require("core.ip");
 let uci_core = require("core.uci");
 let rule_config = require("config.rule");
-let domain_config = require("config.domain");
 let connections = require("config.connections");
 let routing_rulesets = require("routing.rulesets");
 let runtime_constants = require("singbox.constants");
@@ -214,11 +213,6 @@ function log_fatal(message) {
     run_args([ "logger", "-t", "prokop", "[fatal] " + as_string(message) ]);
 }
 
-function strip_list_comment(line) {
-    line = replace(as_string(line), /[[:space:]]*\/\/.*$/, "");
-    return replace(line, /[[:space:]]*#.*$/, "");
-}
-
 function print_csv(values) {
     for (let i = 0; i < length(values); i++) {
         if (i > 0)
@@ -229,28 +223,8 @@ function print_csv(values) {
         print("\n");
 }
 
-function text_list_values(value, separator_mode) {
-    let result = [];
-    separator_mode = as_string(separator_mode);
-
-    for (let line in split(as_string(value), "\n")) {
-        line = strip_list_comment(line);
-        line = separator_mode == "comma-space"
-            ? replace(line, /[ ,]/g, "\n")
-            : replace(line, /,/g, "\n");
-
-        for (let item in split(line, "\n")) {
-            item = trim(replace(item, /\r/g, ""));
-            if (item != "")
-                push(result, item);
-        }
-    }
-
-    return result;
-}
-
 function text_list_to_csv(value, separator_mode) {
-    print_csv(text_list_values(value, separator_mode));
+    print_csv(rule_config.text_list_values(value, separator_mode));
 }
 
 function csv_to_json_array(value) {
@@ -312,35 +286,9 @@ function domain_subnet_line_values(data) {
     let result = [];
 
     for (let line in split(as_string(data), "\n")) {
-        line = trim(replace(strip_list_comment(line), /\r/g, ""));
+        line = trim(replace(rule_config.strip_list_comment(line), /\r/g, ""));
         if (line != "")
             push(result, line);
-    }
-
-    return result;
-}
-
-function normalize_domain_subnet_value(value, kind) {
-    kind = as_string(kind);
-    if (kind == "domains")
-        return domain_config.suffix_to_ascii(value);
-    if (kind == "subnets")
-        return core_ip.valid_ip_or_cidr(value) ? value : null;
-
-    exit(1);
-}
-
-function filter_domain_subnet_values(values, kind) {
-    let result = [];
-    kind = as_string(kind);
-
-    if (kind != "domains" && kind != "subnets")
-        exit(1);
-
-    for (let value in values) {
-        let normalized = normalize_domain_subnet_value(value, kind);
-        if (normalized != null)
-            push(result, normalized);
     }
 
     return result;
@@ -386,7 +334,7 @@ function legacy_condition_csv(kind, text_mode, conditions_text_mode, text_value,
 }
 
 function domain_subnet_text_csv(value, kind) {
-    print_csv(filter_domain_subnet_values(text_list_values(value, "comma-space"), kind));
+    print_csv(rule_config.filter_domain_subnet_values(rule_config.text_list_values(value, "comma-space"), kind));
 }
 
 function domain_subnet_file_csv(path, kind) {
@@ -394,7 +342,7 @@ function domain_subnet_file_csv(path, kind) {
     if (data == null)
         exit(1);
 
-    print_csv(filter_domain_subnet_values(domain_subnet_line_values(data), kind));
+    print_csv(rule_config.filter_domain_subnet_values(domain_subnet_line_values(data), kind));
 }
 
 function split_domain_subnet_file(path, domains_path, subnets_path) {
@@ -406,7 +354,7 @@ function split_domain_subnet_file(path, domains_path, subnets_path) {
     let subnets = [];
 
     for (let value in domain_subnet_line_values(data)) {
-        let domain = normalize_domain_subnet_value(value, "domains");
+        let domain = rule_config.normalize_domain_subnet_value(value, "domains");
         if (domain != null)
             push(domains, domain);
         else if (core_ip.valid_ip_or_cidr(value))

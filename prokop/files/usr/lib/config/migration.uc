@@ -955,6 +955,9 @@ function migrate_connection_section(ctx, section, constants, legacy_connection_k
     delete_option(ctx, section, "enable_udp_over_tcp");
 }
 
+// Frozen copy of the list parser of config/rule.uc: a migration reads the
+// lists the old releases stored, with the parsing they were written for, and
+// must not follow later changes to the current parser (UC-182).
 function strip_list_comment(line) {
     line = replace(as_string(line), /[[:space:]]*\/\/.*$/, "");
     return replace(line, /[[:space:]]*#.*$/, "");

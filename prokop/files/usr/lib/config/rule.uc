@@ -320,6 +320,7 @@ function has_community_subnet_list(value) {
 }
 
 return {
+    strip_list_comment,
     text_list_values,
     normalize_port_number_value,
     normalize_port_condition_value,
@@ -330,6 +331,7 @@ return {
     prefixed_domain_value,
     domain_value_for_key,
     normalize_domain_subnet_value,
+    filter_domain_subnet_values,
     legacy_condition_csv_value,
     rule_condition_csv_value,
     rule_ports_csv_value,
