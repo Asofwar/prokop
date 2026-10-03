@@ -4,9 +4,10 @@ let fs = require("fs");
 let uci = require("core.uci");
 let durable = require("core.durable");
 let legacy = require("core.legacy_forkop");
+let runtime_constants = require("singbox.constants");
 
 const CONFIG_NAME = getenv("PROKOP_CONFIG_NAME") || "prokop";
-const SB_DNS_INBOUND_ADDRESS = getenv("SB_DNS_INBOUND_ADDRESS") || "127.0.0.42";
+const SB_DNS_INBOUND_ADDRESS = runtime_constants.DNS_INBOUND_ADDRESS;
 const DNSMASQ_INIT = getenv("DNSMASQ_INIT") || "/etc/init.d/dnsmasq";
 const KILLSWITCH_STATE_DIR = getenv("KILLSWITCH_STATE_DIR") || "/etc/prokop/killswitch";
 const KILLSWITCH_DNS_BLOCKED_FILE = KILLSWITCH_STATE_DIR + "/dns-blocked.servers";

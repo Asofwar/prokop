@@ -13,7 +13,7 @@ let option = common.option;
 let read_json_file = common.read_json_file;
 
 const DNS_FAILOVER_STATE_FILE = getenv("PROKOP_DNS_FAILOVER_STATE_FILE") || "/var/run/prokop/dns-failover.json";
-const DNS_HEALTH_ADDRESS = getenv("PROKOP_DNS_HEALTH_ADDRESS") || "127.0.0.42";
+const DNS_HEALTH_ADDRESS = getenv("PROKOP_DNS_HEALTH_ADDRESS") || runtime_constants.DNS_INBOUND_ADDRESS;
 const DNS_HEALTH_PORT_BASE = int(getenv("PROKOP_DNS_HEALTH_PORT_BASE") || "10053");
 
 function server_list(settings, key, fallback) {
