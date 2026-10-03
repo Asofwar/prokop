@@ -125,4 +125,4 @@ function view(section) {
     return { dpi_provider: provider, dpi_strategy: strategy, dpi_strategy_custom: strategy == "" };
 }
 
-return { is_dpi_action, view, profiles, tcp443_scope, tcp443_splice, effective };
+return { is_dpi_action, view, profiles, tcp443_scope, tcp443_splice, effective, normalize, words };
