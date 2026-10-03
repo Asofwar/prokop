@@ -13,6 +13,7 @@ on:
       - 'prokop/files/etc/init.d/**'
       - 'luci-app-prokop/root/etc/uci-defaults/**'
       - 'tests/**/*.sh'
+      - '.github/**/*.sh'
       - '.github/workflows/shellcheck.yml'
   pull_request:
     branches:
@@ -25,24 +26,36 @@ on:
       - 'prokop/files/etc/init.d/**'
       - 'luci-app-prokop/root/etc/uci-defaults/**'
       - 'tests/**/*.sh'
+      - '.github/**/*.sh'
       - '.github/workflows/shellcheck.yml'
 
 permissions:
   contents: read
 
+# A newer pull-request or branch push supersedes the running check; main and
+# manual runs get a group of their own and always finish.
+concurrency:
+  group: shellcheck-${{ github.workflow }}-${{ (github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref_type == 'branch' && github.ref != 'refs/heads/main')) && (github.event.pull_request.number || github.ref) || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   shellcheck:
     name: Differential ShellCheck
     runs-on: ubuntu-24.04
-    
+    timeout-minutes: 10
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v5.0.0
 
-      - name: Install ShellCheck
+      # The hosted image ships ShellCheck; install it only if an image ever drops it.
+      - name: Check ShellCheck
         run: |
-          sudo apt-get update
-          sudo apt-get install -y shellcheck
+          if ! command -v shellcheck >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y shellcheck
+          fi
+          shellcheck --version
 
       - name: ShellCheck
         shell: bash

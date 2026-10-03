@@ -5,12 +5,34 @@ on:
   pull_request:
     paths:
       - 'fe-app-prokop/**'
+      - 'luci-app-prokop/htdocs/luci-static/resources/view/prokop/main.js'
       - '.github/workflows/frontend-ci.yml'
+  # Runs on main as well, so the yarn cache lives in the default branch's
+  # scope, where pull requests and tag builds can restore it.
+  push:
+    branches:
+      - main
+    paths:
+      - 'fe-app-prokop/**'
+      - 'luci-app-prokop/htdocs/luci-static/resources/view/prokop/main.js'
+      - '.github/workflows/frontend-ci.yml'
+
+permissions:
+  contents: read
+
+# A newer pull-request or branch push supersedes the running checks; main,
+# tags and manual or release runs get a group of their own and always finish.
+# The literal prefix keeps this group apart from the caller's when
+# build.yml runs these checks as a reusable workflow.
+concurrency:
+  group: frontend-ci-${{ github.workflow }}-${{ (github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref_type == 'branch' && github.ref != 'refs/heads/main')) && (github.event.pull_request.number || github.ref) || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
   frontend-checks:
     name: Frontend Quality Checks
     runs-on: ubuntu-24.04
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: fe-app-prokop
@@ -19,29 +41,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5.0.0
 
+      # The project has no packageManager field, so it uses the Yarn 1 the
+      # hosted image ships; setup-node caches Yarn's download cache by lockfile.
       - name: Setup Node.js
         uses: actions/setup-node@v5.0.0
         with:
           node-version: '22'
-
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Get yarn cache directory path
-        id: yarn-cache-dir-path
-        working-directory: fe-app-prokop
-        run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
-
-      - name: Cache yarn dependencies
-        uses: actions/cache@v4.3.0
-        with:
-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: ${{ runner.os }}-yarn-${{ hashFiles('fe-app-prokop/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-
+          cache: yarn
+          cache-dependency-path: fe-app-prokop/yarn.lock
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn install --frozen-lockfile --prefer-offline
 
       - name: Check formatting
         id: format
@@ -53,9 +63,11 @@ jobs:
           fi
 
       - name: Run linter
+        id: lint
         run: yarn lint --max-warnings=0
 
       - name: Run tests
+        id: test
         run: yarn test --run
 
       - name: Build project
@@ -69,11 +81,25 @@ jobs:
 
       - name: Summary
         if: always()
+        env:
+          FORMAT: ${{ steps.format.outcome }}
+          LINT: ${{ steps.lint.outcome }}
+          TESTS: ${{ steps.test.outcome }}
+          BUILD: ${{ steps.build.outcome }}
         run: |
-          echo "## Frontend CI Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Format check: ${{ steps.format.outcome }}" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Lint check: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Tests: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Build: ${{ steps.build.outcome }}" >> $GITHUB_STEP_SUMMARY
-          echo "![Success](https://cdn2.combot.org/boratbrat/webp/6xf09f988f.webp)" >> $GITHUB_STEP_SUMMARY
+          line() {
+            case "$2" in
+              success) mark='✅' ;;
+              skipped) mark='⏭️' ;;
+              *) mark='❌' ;;
+            esac
+            printf -- '- %s %s: %s\n' "$mark" "$1" "$2"
+          }
+          {
+            echo "## Frontend CI Results"
+            echo ""
+            line "Format check" "$FORMAT"
+            line "Lint check" "$LINT"
+            line "Tests" "$TESTS"
+            line "Build" "$BUILD"
+          } >>"$GITHUB_STEP_SUMMARY"

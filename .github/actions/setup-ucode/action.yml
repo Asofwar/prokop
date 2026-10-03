@@ -1,0 +1,79 @@
+name: Set up ucode
+description: >-
+  Puts the ucode interpreter the backend tests run on into /usr/local: the
+  build cached for this runner image when there is one, otherwise a fresh
+  build of the pinned tag.
+
+inputs:
+  ref:
+    description: ucode tag to build
+    required: false
+    default: v0.0.20250529
+  save-cache:
+    description: Save a fresh build to the Actions cache (one job per run, so parallel jobs do not race for the key)
+    required: false
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - name: Resolve ucode cache key
+      id: key
+      shell: bash
+      env:
+        UCODE_REF: ${{ inputs.ref }}
+      run: |
+        # The build links the image's json-c and libc, so the image is part of the key.
+        echo "key=ucode-${UCODE_REF}-ubus0-uci0-uloop0-${ImageOS:-unknown}-${ImageVersion:-unknown}-$(uname -m)" >>"$GITHUB_OUTPUT"
+        echo "root=$HOME/.cache/prokop-ci/ucode-root" >>"$GITHUB_OUTPUT"
+
+    - name: Restore ucode build
+      id: cache
+      uses: actions/cache/restore@v6.1.0
+      with:
+        path: ${{ steps.key.outputs.root }}
+        key: ${{ steps.key.outputs.key }}
+
+    - name: Build ucode
+      if: steps.cache.outputs.cache-hit != 'true'
+      shell: bash
+      env:
+        UCODE_REF: ${{ inputs.ref }}
+        UCODE_ROOT: ${{ steps.key.outputs.root }}
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake git libjson-c-dev pkg-config
+        src="$RUNNER_TEMP/ucode-src"
+        rm -rf "$src" "$UCODE_ROOT"
+        git clone --depth 1 --branch "$UCODE_REF" https://github.com/jow-/ucode.git "$src"
+        cmake -S "$src" -B "$src/build" \
+          -DUBUS_SUPPORT=OFF \
+          -DUCI_SUPPORT=OFF \
+          -DULOOP_SUPPORT=OFF
+        cmake --build "$src/build" --parallel
+        # Staged under a private root: that tree is what the cache stores.
+        DESTDIR="$UCODE_ROOT" cmake --install "$src/build"
+
+    - name: Save ucode build
+      if: steps.cache.outputs.cache-hit != 'true' && inputs.save-cache == 'true'
+      uses: actions/cache/save@v6.1.0
+      with:
+        path: ${{ steps.key.outputs.root }}
+        key: ${{ steps.key.outputs.key }}
+
+    - name: Install ucode
+      shell: bash
+      env:
+        UCODE_ROOT: ${{ steps.key.outputs.root }}
+      run: |
+        # Merge into / without touching the owner or mode of existing directories.
+        tar -C "$UCODE_ROOT" -cf - . | sudo tar -C / -xf - --no-same-owner --no-overwrite-dir
+        sudo ldconfig
+        if ! ucode -e 'print("ucode ready\n")' 2>/dev/null; then
+          # A cached build on an image without the json-c runtime.
+          sudo apt-get update
+          sudo apt-get install -y libjson-c5
+          sudo ldconfig
+        fi
+        command -v ucode
+        ucode -e 'print("ucode ready\n")'
