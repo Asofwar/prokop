@@ -1,6 +1,7 @@
 #!/usr/bin/env ucode
 
 let fs = require("fs");
+let common = require("core.common");
 let uci_core = require("core.uci");
 let runtime_constants = require("singbox.constants");
 let runtime_snapshot = require("providers.runtime_snapshot");
@@ -24,11 +25,6 @@ const SB_TPROXY_INBOUND_TAG = getenv("SB_TPROXY_INBOUND_TAG") || "tproxy-in";
 
 function as_string(value) {
     return value == null ? "" : "" + value;
-}
-
-function bool_value(value) {
-    value = lc(as_string(value));
-    return value == "1" || value == "true" || value == "yes" || value == "on";
 }
 
 function write_json(value) {
@@ -100,11 +96,6 @@ function option(section, key, fallback) {
     return as_string(value);
 }
 
-function bool_option(section, key, fallback) {
-    let value = object_or_empty(section)[key];
-    return value == null ? !!fallback : bool_value(value);
-}
-
 function section_name(section) {
     return as_string(object_or_empty(section)[".name"]);
 }
@@ -138,7 +129,7 @@ function strategy_words(value) {
 function enabled_byedpi_sections() {
     let result = [];
     for (let section in uci_sections("section"))
-        if (bool_option(section, "enabled", true) && option(section, "action", "") == "byedpi")
+        if (common.section_enabled(section) && option(section, "action", "") == "byedpi")
             push(result, section);
     return result;
 }

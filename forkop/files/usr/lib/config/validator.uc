@@ -133,11 +133,7 @@ function list_option(section, key) {
 }
 
 function bool_option(section, key, fallback) {
-    if (fallback == null)
-        fallback = false;
-
-    let value = option(section, key, fallback ? "1" : "0");
-    return value == "1" || value == "true" || value == "yes" || value == "on";
+    return common.bool_option(section, key, fallback);
 }
 
 function file_executable(path) {

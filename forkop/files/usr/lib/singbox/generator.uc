@@ -181,7 +181,7 @@ function valid_section_name(name) {
 }
 
 function section_enabled(section) {
-    return bool_option(section, "enabled", true);
+    return common.section_enabled(section);
 }
 
 function runtime_settings() {

@@ -47,6 +47,7 @@ import {
   getServiceAvailability,
   type ServiceAvailability,
 } from '../../helpers/serviceAvailability';
+import { isSectionEnabled } from '../../helpers/sectionEnabled';
 
 type MonitoringTabId = 'active' | 'closed';
 
@@ -235,7 +236,7 @@ function buildRouteDisplayNames(sections: Forkop.ConfigSection[]) {
 
   sections
     .filter((section) => section['.type'] === 'section')
-    .filter((section) => section.enabled !== '0')
+    .filter((section) => isSectionEnabled(section.enabled))
     .forEach((section) => {
       const sectionName = section['.name'];
       const displayName = getDisplayName(section);

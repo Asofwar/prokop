@@ -24,6 +24,7 @@
 // A missing section means the defaults (mode off): nothing is migrated or
 // written. The DPI group of a target is never stored; it is calculated from
 // the routing (routing/resolve.uc). Pure: reads parsed sections only.
+let common = require("core.common");
 let probe_module = require("autotune.probe");
 let lists_module = require("autotune.lists");
 
@@ -114,7 +115,7 @@ function read(sections) {
         let host = lc(as_string(s.options.host)), resolver = as_string(s.options.resolver);
         let rule_set = as_string(s.options.rule_set), sample = as_string(s.options.sample);
         let pins = map(type(s.options.pin) == "array" ? s.options.pin : s.options.pin != null ? [ s.options.pin ] : [], (p) => lc(as_string(p)));
-        let enabled = s.options.enabled == null || index([ "1", "true", "yes", "on" ], lc(as_string(s.options.enabled))) >= 0;
+        let enabled = common.section_enabled(s.options);
         let list = rule_set != "";
         let problem = !valid_target_id(s.name) ? "invalid_target_id"
             : list && host != "" ? "host_and_rule_set"

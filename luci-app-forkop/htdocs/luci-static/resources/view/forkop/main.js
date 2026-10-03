@@ -3327,6 +3327,12 @@ function getOutboundTagBySection(sectionName) {
   return allocateRuntimeTag(sectionName, "out");
 }
 
+// src/forkop/helpers/sectionEnabled.ts
+function isSectionEnabled(value) {
+  if (value === void 0 || value === null) return true;
+  return ["1", "true", "yes", "on"].includes(String(value).toLowerCase());
+}
+
 // src/forkop/methods/custom/getDashboardSections.ts
 var DASHBOARD_SECTION_CACHE_DIR = "/var/run/forkop/section-cache";
 var CLASH_API_FETCH_TIMEOUT_MS = 5e3;
@@ -4217,7 +4223,7 @@ async function getDashboardSections() {
   );
   const data = await Promise.all(
     configSections.filter(
-      (section) => section.enabled !== "0" && isConnectionAction(section.action)
+      (section) => isSectionEnabled(section.enabled) && isConnectionAction(section.action)
     ).map(async (section) => {
       const displayName = getDisplayName(section);
       const sectionName = section[".name"];
@@ -7390,7 +7396,7 @@ async function loadOverviewCounts(mountId3) {
   ]);
   if (!dashboardMounted || mountId3 !== dashboardMountId) return;
   overviewRuleCount = sections.status === "fulfilled" ? sections.value.filter(
-    (section) => section[".type"] === "section" && section.enabled !== "0"
+    (section) => section[".type"] === "section" && isSectionEnabled(section.enabled)
   ).length : null;
   overviewSnapshotCount = snapshots2.status === "fulfilled" && snapshots2.value.success && Array.isArray(snapshots2.value.data) ? snapshots2.value.data.length : null;
   renderOverviewCards();
@@ -13964,7 +13970,7 @@ function buildRouteDisplayNames(sections) {
       id
     ]);
   });
-  sections.filter((section) => section[".type"] === "section").filter((section) => section.enabled !== "0").forEach((section) => {
+  sections.filter((section) => section[".type"] === "section").filter((section) => isSectionEnabled(section.enabled)).forEach((section) => {
     const sectionName = section[".name"];
     const displayName = getDisplayName2(section);
     if (!sectionName || !displayName) {

@@ -72,6 +72,7 @@ import {
   trafficSpeed,
 } from './clashTraffic';
 import { isReadonlyMode } from '../../services/accessMode.service';
+import { isSectionEnabled } from '../../helpers/sectionEnabled';
 
 const SECTIONS_REFRESH_INTERVAL_MS = 10000;
 const CLASH_RPC_POLL_INTERVAL_MS = 2000;
@@ -118,7 +119,7 @@ async function loadOverviewCounts(mountId: number) {
     sections.status === 'fulfilled'
       ? sections.value.filter(
           (section) =>
-            section['.type'] === 'section' && section.enabled !== '0',
+            section['.type'] === 'section' && isSectionEnabled(section.enabled),
         ).length
       : null;
   overviewSnapshotCount =

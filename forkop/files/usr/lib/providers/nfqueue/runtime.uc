@@ -1,6 +1,7 @@
 #!/usr/bin/env ucode
 
 let fs = require("fs");
+let common = require("core.common");
 let constants = require("core.constants");
 let uci_core = require("core.uci");
 let runtime_constants = require("singbox.constants");
@@ -14,11 +15,6 @@ const NFT_TABLE_NAME = getenv("NFT_TABLE_NAME") || constants.NFT_TABLE_NAME || "
 
 function as_string(value) {
     return value == null ? "" : "" + value;
-}
-
-function bool_value(value) {
-    value = lc(as_string(value));
-    return value == "1" || value == "true" || value == "yes" || value == "on";
 }
 
 function write_json(value) {
@@ -101,11 +97,6 @@ function option(section, key, fallback) {
     return as_string(value);
 }
 
-function bool_option(section, key, fallback) {
-    let value = object_or_empty(section)[key];
-    return value == null ? !!fallback : bool_value(value);
-}
-
 function section_name(section) {
     return as_string(object_or_empty(section)[".name"]);
 }
@@ -149,7 +140,7 @@ function strategy_words(value) {
 function enabled_sections(cfg) {
     let result = [];
     for (let section in uci_sections("section"))
-        if (bool_option(section, "enabled", true) && option(section, "action", "") == cfg.action)
+        if (common.section_enabled(section) && option(section, "action", "") == cfg.action)
             push(result, section);
     return result;
 }

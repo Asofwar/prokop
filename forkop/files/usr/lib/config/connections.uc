@@ -30,8 +30,7 @@ function bool_value(value, fallback) {
     if (value == null || value == "")
         return !!fallback;
 
-    value = as_string(value);
-    return value == "1" || value == "true" || value == "yes" || value == "on";
+    return common.bool_value(value);
 }
 
 function bool_option(section, key, fallback) {

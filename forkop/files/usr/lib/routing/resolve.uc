@@ -105,9 +105,10 @@ function parse_config(text) {
     return sections;
 }
 
+// The shared reading of the flag (core/common, UC-105): the generator and nft
+// count the same enabled rules.
 function enabled(section) {
-    let v = section.options.enabled;
-    return v == null || index([ "1", "true", "yes", "on" ], lc(as_string(v))) >= 0;
+    return common.section_enabled(section.options);
 }
 function find_section(sections, name) {
     for (let s in sections) if (s.type == "section" && s.name == name) return s;
