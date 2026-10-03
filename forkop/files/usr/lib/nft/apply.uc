@@ -925,6 +925,49 @@ function nft_add_section_priority_rules_from_sections(sections, table, interface
     return true;
 }
 
+function hex_digit_value(value) {
+    let pos = index("0123456789abcdef", lc(as_string(value)));
+    return pos >= 0 ? pos : null;
+}
+
+function parse_mark_number(value) {
+    value = lc(trim(as_string(value)));
+    if (value == "")
+        return null;
+
+    if (substr(value, 0, 2) == "0x") {
+        value = substr(value, 2);
+        if (value == "")
+            return null;
+
+        let result = 0;
+        for (let i = 0; i < length(value); i++) {
+            let digit = hex_digit_value(substr(value, i, 1));
+            if (digit == null)
+                return null;
+            result = result * 16 + digit;
+        }
+        return result;
+    }
+
+    return match(value, /^[0-9]+$/) == null ? null : int(value);
+}
+
+// Forkop's own mark bits: the top byte (outbound, FakeIP, provider route
+// marks) and the low byte of the provider index. Other output hooks of the
+// same priority (fw4, pbr, mwan3, Tailscale) set bits in between; registered
+// after Forkop, they run first, so an exact mark match would miss a packet
+// they touched (UC-104). The mask is never contiguous from the top bit, so
+// every nft version lists it in the same `&` form.
+const FORKOP_MARK_BITS = 0xff0000ff;
+
+function nft_forkop_mark_match_args(mark) {
+    let value = parse_mark_number(mark);
+    if (value == null)
+        return null;
+    return [ "meta", "mark", "&", sprintf("0x%08x", FORKOP_MARK_BITS | value), "==", sprintf("0x%08x", value) ];
+}
+
 function nft_create_runtime_base(table, localv4_set, common_set, port_set, ip_port_set, interface_set, source_interfaces, fakeip_mark, outbound_mark, fakeip_range, tproxy_port, exclude_ntp, localv6_set, common6_set, ip_port6_set, fakeip6_range, tproxy6_address) {
     localv6_set = default_arg(localv6_set, "localv6");
     common6_set = default_arg(common6_set, "forkop_subnets6");
@@ -988,7 +1031,8 @@ function nft_create_runtime_base(table, localv4_set, common_set, port_set, ip_po
         !nft_add_rule(table, "proxy", [ "meta", "mark", "&", fakeip_mark, "==", fakeip_mark, "meta", "l4proto", "udp", "tproxy", "ip6", "to", core_ip.format_ipv6_tproxy_target(tproxy6_address, tproxy_port), "counter" ]) ||
         !nft_add_rule(table, "mangle_output", [ "ip", "daddr", "@" + as_string(localv4_set), "return" ]) ||
         !nft_add_rule(table, "mangle_output", [ "ip6", "daddr", "@" + as_string(localv6_set), "ip6", "daddr", "!=", fakeip6_range, "return" ]) ||
-        !nft_add_rule(table, "mangle_output", [ "meta", "mark", outbound_mark, "counter", "return" ]) ||
+        nft_forkop_mark_match_args(outbound_mark) == null ||
+        !nft_add_rule(table, "mangle_output", [ ...nft_forkop_mark_match_args(outbound_mark), "counter", "return" ]) ||
         !nft_add_rule(table, "mangle_output", [ "jump", "priority_output_rules" ]))
         return false;
 
@@ -1046,34 +1090,6 @@ function nft_create_runtime_output_rules(table, localv4_set, common_set, port_se
     );
 }
 
-function hex_digit_value(value) {
-    let pos = index("0123456789abcdef", lc(as_string(value)));
-    return pos >= 0 ? pos : null;
-}
-
-function parse_mark_number(value) {
-    value = lc(trim(as_string(value)));
-    if (value == "")
-        return null;
-
-    if (substr(value, 0, 2) == "0x") {
-        value = substr(value, 2);
-        if (value == "")
-            return null;
-
-        let result = 0;
-        for (let i = 0; i < length(value); i++) {
-            let digit = hex_digit_value(substr(value, i, 1));
-            if (digit == null)
-                return null;
-            result = result * 16 + digit;
-        }
-        return result;
-    }
-
-    return match(value, /^[0-9]+$/) == null ? null : int(value);
-}
-
 function nft_provider_mark_hex(route_mark_base, index) {
     let base = parse_mark_number(route_mark_base);
     index = int(index || 0);
@@ -1108,8 +1124,9 @@ function nft_create_provider_output_rules_from_sections(sections, table, action,
             added = true;
         }
 
-        if (!nft_add_rule(table, "mangle_output", [ "meta", "mark", mark_hex, "meta", "l4proto", "tcp", "counter", "queue", "num", queue_number, "bypass" ]) ||
-            !nft_add_rule(table, "mangle_output", [ "meta", "mark", mark_hex, "meta", "l4proto", "udp", "counter", "queue", "num", queue_number, "bypass" ]))
+        let mark_match = nft_forkop_mark_match_args(mark_hex);
+        if (!nft_add_rule(table, "mangle_output", [ ...mark_match, "meta", "l4proto", "tcp", "counter", "queue", "num", queue_number, "bypass" ]) ||
+            !nft_add_rule(table, "mangle_output", [ ...mark_match, "meta", "l4proto", "udp", "counter", "queue", "num", queue_number, "bypass" ]))
             return false;
     }
 

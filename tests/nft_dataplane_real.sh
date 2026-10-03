@@ -275,4 +275,27 @@ expect direct lan 192.168.1.80 93.184.216.34 tcp 443
 expect direct local 93.184.216.34 tcp 8443
 ok "bypass rules by ports, device and ports, and subnets: FakeIP addresses still reach sing-box, real addresses bypass (UC-029)"
 
+# ---- UC-104: other output hooks of the same priority ---------------------------
+
+# Another output hook at -150 (fw4's mangle_output, pbr, mwan3) registered
+# after Forkop's runs before it and may OR its own bits into the mark. sing-box
+# sockets (the outbound mark) must still leave mangle_output at once: here
+# to a FakeIP address, which the generic output rules would otherwise
+# capture back into sing-box.
+apply_config "$WORK_DIR/bypass.uci"
+expect direct local "$FAKE_ADDRESS" udp 444 "$OUTBOUND_MARK"
+nft -f - <<'EOF' || fail "the foreign output hook was not applied"
+table inet ForkopTestForeign {
+  chain mangle_output {
+    type route hook output priority -150; policy accept;
+    meta mark set meta mark | 0x00010000
+  }
+}
+EOF
+expect direct local "$FAKE_ADDRESS" udp 443 "$OUTBOUND_MARK"
+expect direct local "$FAKE_ADDRESS" tcp 443 "$OUTBOUND_MARK"
+expect captured local "$FAKE_ADDRESS" udp 443
+nft delete table inet ForkopTestForeign
+ok "a foreign output hook ORing its bits into sing-box's mark does not send sing-box's own traffic back to it (UC-104)"
+
 printf 'real nft dataplane checks passed\n'

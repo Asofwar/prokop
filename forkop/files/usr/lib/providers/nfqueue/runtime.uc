@@ -710,9 +710,11 @@ function create_nft_rules(cfg) {
     let index_value = 1;
     for (let section in sections) {
         let mark = route_mark_hex(cfg, index_value);
+        // On Forkop's own mark bits, as nft/apply.uc matches it (UC-104).
+        let mask = sprintf("0x%08x", 0xff0000ff | route_mark_value(cfg, index_value));
         let queue = "" + queue_number(cfg, index_value);
-        command_success_from_args([ "nft", "add", "rule", "inet", NFT_TABLE_NAME, "mangle_output", "meta", "mark", mark, "meta", "l4proto", "tcp", "counter", "queue", "num", queue, "bypass" ]);
-        command_success_from_args([ "nft", "add", "rule", "inet", NFT_TABLE_NAME, "mangle_output", "meta", "mark", mark, "meta", "l4proto", "udp", "counter", "queue", "num", queue, "bypass" ]);
+        command_success_from_args([ "nft", "add", "rule", "inet", NFT_TABLE_NAME, "mangle_output", "meta", "mark", "&", mask, "==", mark, "meta", "l4proto", "tcp", "counter", "queue", "num", queue, "bypass" ]);
+        command_success_from_args([ "nft", "add", "rule", "inet", NFT_TABLE_NAME, "mangle_output", "meta", "mark", "&", mask, "==", mark, "meta", "l4proto", "udp", "counter", "queue", "num", queue, "bypass" ]);
         index_value++;
     }
 }

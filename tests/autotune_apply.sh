@@ -64,7 +64,8 @@ printf '#!/bin/sh\necho 1.0.26-test\n' > "$WORK/bin/forkop"
 # sync (core/durable.uc) fails while a file of $SYNC_FAIL_GLOB exists.
 printf '#!/bin/sh\nfor f in ${SYNC_FAIL_GLOB:-}; do [ ! -e "$f" ] || exit 1; done\nexit 0\n' > "$WORK/bin/sync"
 
-# nft: tables and the production queue rule of the Dpi rule (mark 0x01000001, queue 4000).
+# nft: tables and the production queue rule of the Dpi rule (mark 0x01000001 on
+# Forkop's own mark bits 0xff0000ff, UC-104; queue 4000).
 cat > "$WORK/bin/nft" <<'SH'
 #!/usr/bin/env bash
 echo "nft $*" >> "$STUB_LOG/nft.log"
@@ -87,7 +88,7 @@ case "$*" in
     printf '{"nftables":[{"rule":{"family":"inet","table":"ForkopAutotuneVerify","chain":"premark","handle":2,"comment":"rule_mark","expr":[{"counter":{"packets":%s,"bytes":0}},{"accept":null}]}}]}\n' "$p"; exit 0 ;;
   "-j list chain inet ForkopTable mangle_output")
     read -r p < "$STATE/prod.counter"
-    printf '{"nftables":[{"rule":{"family":"inet","table":"ForkopTable","chain":"mangle_output","handle":119,"expr":[{"match":{"op":"==","left":{"meta":{"key":"mark"}},"right":16777217}},{"match":{"op":"==","left":{"meta":{"key":"l4proto"}},"right":"tcp"}},{"counter":{"packets":%s,"bytes":0}},{"queue":{"num":4000,"flags":["bypass"]}}]}}]}\n' "$p"; exit 0 ;;
+    printf '{"nftables":[{"rule":{"family":"inet","table":"ForkopTable","chain":"mangle_output","handle":119,"expr":[{"match":{"op":"==","left":{"&":[{"meta":{"key":"mark"}},4278190335]},"right":16777217}},{"match":{"op":"==","left":{"meta":{"key":"l4proto"}},"right":"tcp"}},{"counter":{"packets":%s,"bytes":0}},{"queue":{"num":4000,"flags":["bypass"]}}]}}]}\n' "$p"; exit 0 ;;
 esac
 exit 1
 SH

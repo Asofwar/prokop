@@ -331,9 +331,16 @@ function queue_rule_counter(owner) {
         if (type(r) != "object") continue;
         let mark_ok = false, tcp = false, queue_ok = false, packets = null;
         for (let e in r.expr || []) {
-            if (type(e.match) == "object" && type(e.match.left) == "object" && type(e.match.left.meta) == "object") {
-                if (e.match.left.meta.key == "mark" && int(e.match.right) == owner.mark_value) mark_ok = true;
-                if (e.match.left.meta.key == "l4proto" && e.match.right == "tcp") tcp = true;
+            // The route mark on Forkop's own mark bits (`meta mark & M == V`,
+            // nft/apply.uc, UC-104) or, from an older release, exact.
+            let left = type(e.match) == "object" ? e.match.left : null;
+            if (type(left) == "object" && type(left["&"]) == "array" && length(left["&"]) == 2 &&
+                type(left["&"][0]) == "object" && type(left["&"][0].meta) == "object" && left["&"][0].meta.key == "mark" &&
+                (int(left["&"][1]) & owner.mark_value) == owner.mark_value && int(e.match.right) == owner.mark_value)
+                mark_ok = true;
+            if (type(left) == "object" && type(left.meta) == "object") {
+                if (left.meta.key == "mark" && int(e.match.right) == owner.mark_value) mark_ok = true;
+                if (left.meta.key == "l4proto" && e.match.right == "tcp") tcp = true;
             }
             if (type(e.queue) == "object" && int(e.queue.num) == owner.queue) queue_ok = true;
             if (type(e.counter) == "object") packets = int(e.counter.packets);

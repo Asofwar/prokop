@@ -66,6 +66,15 @@ function maskedMark(rule) {
   }
   return null;
 }
+// A match on Forkop's own mark bits (UC-104): `meta mark & M == V` with a
+// mask that leaves out the bits other output hooks of the same priority use
+// (pbr, mwan3, Tailscale: 0x00ffff00). An exact `meta mark V` fails as soon
+// as such a hook ORs a bit into the mark first.
+const FOREIGN_MARK_BITS = 0x00ffff00;
+function forkopMark(rule) {
+  const m = maskedMark(rule);
+  return m && (m.mask & FOREIGN_MARK_BITS) === 0 && (m.value & ~m.mask) === 0 && m.mask !== m.value ? m.value : null;
+}
 function setsMark(rule) {
   const s = statementOf(rule, 'mangle');
   return s && isMeta(s.mangle.key, 'mark') ? s.mangle.value : null;
@@ -96,17 +105,18 @@ const modes = {
     // The outbound (autotune probe) mark leaves mangle_output before anything
     // can re-mark, jump or queue it.
     const out = rulesOf(table, 'mangle_output');
-    const bypass = out.findIndex((r) => exactMark(r) === outbound && verdict(r) === 'return');
-    assert.ok(bypass >= 0, 'mangle_output has no outbound mark bypass');
+    const bypass = out.findIndex((r) => forkopMark(r) === outbound && verdict(r) === 'return');
+    assert.ok(bypass >= 0, 'mangle_output has no outbound mark bypass on Forkop\'s own mark bits');
     out.forEach((r, i) => {
-      if (setsMark(r) !== null || statementOf(r, 'jump') || statementOf(r, 'queue') || (exactMark(r) !== null && exactMark(r) !== outbound))
+      assert.equal(exactMark(r), null, `mangle_output rule ${i} matches an exact mark: ${JSON.stringify(r.expr)}`);
+      if (setsMark(r) !== null || statementOf(r, 'jump') || statementOf(r, 'queue') || (forkopMark(r) !== null && forkopMark(r) !== outbound))
         assert.ok(i > bypass, `mangle_output rule ${i} (${JSON.stringify(r.expr)}) precedes the outbound mark bypass`);
     });
 
     // Provider rules: route mark -> NFQUEUE, after the desync returns.
     const found = [];
     out.forEach((r, i) => {
-      const mark = exactMark(r);
+      const mark = forkopMark(r);
       if (mark === null || mark === outbound) return;
       const q = statementOf(r, 'queue');
       if (queueSupported === 'yes') {
@@ -133,7 +143,7 @@ const modes = {
   'batch-queues'() {
     const [table, ...providers] = args;
     const found = input.split('\n').filter((l) => l.startsWith(`add rule inet ${table} `) && / queue /.test(l)).map((l) => {
-      const m = l.match(/^add rule inet \S+ mangle_output meta mark (0x[0-9a-f]+) meta l4proto (tcp|udp) counter queue num (\d+) bypass$/);
+      const m = l.match(/^add rule inet \S+ mangle_output meta mark & 0x[0-9a-f]+ == (0x[0-9a-f]+) meta l4proto (tcp|udp) counter queue num (\d+) bypass$/);
       assert.ok(m, `unexpected queue rule in the batch: ${l}`);
       return `${Number(m[1])}:${m[2]}:${m[3]}`;
     });
