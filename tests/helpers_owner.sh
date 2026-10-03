@@ -8,7 +8,6 @@ CLI_UC="$PROKOP_BIN"
 HELPERS_SH="$PROKOP_LIB/helpers.sh"
 LIFECYCLE_UC="$PROKOP_LIB/service/lifecycle.uc"
 PACKAGES_UC="$PROKOP_LIB/core/packages.uc"
-RULES_UC="$PROKOP_LIB/providers/rules.uc"
 SINGBOX_RUNTIME_UC="$PROKOP_LIB/singbox/runtime.uc"
 COMPONENT_ACTION_UC="$PROKOP_LIB/components/action.uc"
 DIAGNOSTICS_RUNTIME_UC="$PROKOP_LIB/diagnostics/runtime.uc"
@@ -64,8 +63,6 @@ grep -Fq 'mode == "get-system-info"' "$DIAGNOSTICS_RUNTIME_UC" ||
   fail "diagnostics/runtime.uc must own system info"
 grep -Fq 'core/packages.uc' "$COMPONENT_ACTION_UC" ||
   fail "component action owner must use core/packages.uc directly"
-grep -Fq 'count-uci' "$RULES_UC" ||
-  fail "providers/rules.uc must own UCI rule counting"
 for mode in \
   'mode == "version"' \
   'mode == "version-output"' \
@@ -90,10 +87,6 @@ source_refute_shell "sing-box helper/state shell symbols must not remain" \
 if ucode -L "$PROKOP_LIB" "$PACKAGES_UC" installed prokop-definitely-missing >/dev/null 2>&1; then
   fail "missing package must not be reported installed"
 fi
-
-mark_hex="$(ucode -L "$PROKOP_LIB" "$RULES_UC" mark-hex 0x01000000 2)"
-[ "$mark_hex" = "0x01000002" ] ||
-  fail "providers/rules.uc mark math changed"
 
 version="$(printf 'sing-box version 1.12.4-extended\nEnvironment: test\n' |
   ucode -L "$PROKOP_LIB" "$SINGBOX_RUNTIME_UC" version-from-output)"

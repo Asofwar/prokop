@@ -10,6 +10,7 @@ let domain_config = require("config.domain");
 let connections = require("config.connections");
 let routing_rulesets = require("routing.rulesets");
 let runtime_constants = require("singbox.constants");
+let provider_marks = require("providers.marks");
 let legacy = require("core.legacy_forkop");
 const CONFIG_NAME = getenv("PROKOP_CONFIG_NAME") || "prokop";
 const DNS_SOURCE_SET = "prokop_dns_sources";
@@ -932,34 +933,6 @@ function nft_add_section_priority_rules_from_sections(sections, table, interface
     return true;
 }
 
-function hex_digit_value(value) {
-    let pos = index("0123456789abcdef", lc(as_string(value)));
-    return pos >= 0 ? pos : null;
-}
-
-function parse_mark_number(value) {
-    value = lc(trim(as_string(value)));
-    if (value == "")
-        return null;
-
-    if (substr(value, 0, 2) == "0x") {
-        value = substr(value, 2);
-        if (value == "")
-            return null;
-
-        let result = 0;
-        for (let i = 0; i < length(value); i++) {
-            let digit = hex_digit_value(substr(value, i, 1));
-            if (digit == null)
-                return null;
-            result = result * 16 + digit;
-        }
-        return result;
-    }
-
-    return match(value, /^[0-9]+$/) == null ? null : int(value);
-}
-
 // Prokop's own mark bits: the top byte (outbound, FakeIP, provider route
 // marks) and the low byte of the provider index. Other output hooks of the
 // same priority (fw4, pbr, mwan3, Tailscale) set bits in between; registered
@@ -972,7 +945,7 @@ function parse_mark_number(value) {
 const PROKOP_MARK_BITS = 0xff0000ff;
 
 function nft_prokop_mark_match_args(mark) {
-    let value = parse_mark_number(mark);
+    let value = provider_marks.parse_number(mark);
     if (value == null)
         return null;
     return [ "meta", "mark", "&", sprintf("0x%08x", PROKOP_MARK_BITS | value), "==", sprintf("0x%08x", value) ];
@@ -1100,15 +1073,6 @@ function nft_create_runtime_output_rules(table, localv4_set, common_set, port_se
     );
 }
 
-function nft_provider_mark_hex(route_mark_base, index) {
-    let base = parse_mark_number(route_mark_base);
-    index = int(index || 0);
-    if (base == null || index < 1)
-        return "";
-
-    return sprintf("0x%08x", base + index);
-}
-
 function nft_create_provider_output_rules_from_sections(sections, table, action, provider_bin, route_mark_base, queue_base, desync_mark, desync_mark_postnat) {
     if (!file_executable(provider_bin))
         return true;
@@ -1122,8 +1086,8 @@ function nft_create_provider_output_rules_from_sections(sections, table, action,
             continue;
 
         index++;
-        let mark_hex = nft_provider_mark_hex(route_mark_base, index);
-        let queue_number = int(queue_base || 0) + index - 1;
+        let mark_hex = provider_marks.route_mark_hex(route_mark_base, index);
+        let queue_number = provider_marks.queue_number(queue_base, index);
         if (mark_hex == "" || queue_number < 0)
             return false;
 
@@ -1432,7 +1396,7 @@ function rule_line_has_fwmark(fields, expected_mark) {
         if (length(parts) != 2)
             continue;
 
-        if (parse_mark_number(parts[0]) == expected_mark && parse_mark_number(parts[1]) == expected_mark)
+        if (provider_marks.parse_number(parts[0]) == expected_mark && provider_marks.parse_number(parts[1]) == expected_mark)
             return true;
     }
 
@@ -1443,7 +1407,7 @@ function rule_line_has_fwmark(fields, expected_mark) {
 // with its priority, from all, the fwmark/mask and the lookup of its table
 // (UC-163). A lookup and a fwmark on two different lines are two other rules.
 function has_tproxy_marking_rule_text(rule_list, table, mark) {
-    let expected_mark = parse_mark_number(mark);
+    let expected_mark = provider_marks.parse_number(mark);
 
     if (expected_mark == null)
         return false;

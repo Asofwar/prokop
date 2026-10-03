@@ -6,6 +6,7 @@ let constants = require("core.constants");
 let uci_core = require("core.uci");
 let runtime_constants = require("singbox.constants");
 let runtime_snapshot = require("providers.runtime_snapshot");
+let provider_marks = require("providers.marks");
 let process_identity = require("core.process_identity");
 
 const CONFIG_NAME = getenv("PROKOP_CONFIG_NAME") || constants.PROKOP_CONFIG_NAME || "prokop";
@@ -145,39 +146,16 @@ function enabled_sections(cfg) {
     return result;
 }
 
-function hex_digit_value(value) {
-    let pos = index("0123456789abcdef", lc(as_string(value)));
-    return pos >= 0 ? pos : null;
-}
-
-function parse_number(value) {
-    value = lc(trim(as_string(value)));
-    if (value == "")
-        return null;
-    if (substr(value, 0, 2) == "0x") {
-        value = substr(value, 2);
-        let result = 0;
-        for (let i = 0; i < length(value); i++) {
-            let digit = hex_digit_value(substr(value, i, 1));
-            if (digit == null)
-                return null;
-            result = result * 16 + digit;
-        }
-        return result;
-    }
-    return match(value, /^[0-9]+$/) == null ? null : int(value);
-}
-
 function route_mark_value(cfg, index_value) {
-    return parse_number(cfg.route_mark_base) + int(index_value);
+    return provider_marks.route_mark_value(cfg.route_mark_base, index_value);
 }
 
 function route_mark_hex(cfg, index_value) {
-    return sprintf("0x%08x", route_mark_value(cfg, index_value));
+    return provider_marks.route_mark_hex(cfg.route_mark_base, index_value);
 }
 
 function queue_number(cfg, index_value) {
-    return int(cfg.queue_base) + int(index_value) - 1;
+    return provider_marks.queue_number(cfg.queue_base, index_value);
 }
 
 function queue_range_end(cfg) {
@@ -690,26 +668,6 @@ function check_json(cfg) {
     write_json(value);
 }
 
-function create_nft_rules(cfg) {
-    let sections = enabled_sections(cfg);
-    if (length(sections) == 0 || !provider_available(cfg))
-        return;
-
-    command_success_from_args([ "nft", "add", "rule", "inet", NFT_TABLE_NAME, "mangle_output", "meta", "mark", "&", cfg.desync_mark, "==", cfg.desync_mark, "return" ]);
-    command_success_from_args([ "nft", "add", "rule", "inet", NFT_TABLE_NAME, "mangle_output", "meta", "mark", "&", cfg.desync_mark_postnat, "==", cfg.desync_mark_postnat, "return" ]);
-
-    let index_value = 1;
-    for (let section in sections) {
-        let mark = route_mark_hex(cfg, index_value);
-        // On Prokop's own mark bits, as nft/apply.uc matches it (UC-104).
-        let mask = sprintf("0x%08x", 0xff0000ff | route_mark_value(cfg, index_value));
-        let queue = "" + queue_number(cfg, index_value);
-        command_success_from_args([ "nft", "add", "rule", "inet", NFT_TABLE_NAME, "mangle_output", "meta", "mark", "&", mask, "==", mark, "meta", "l4proto", "tcp", "counter", "queue", "num", queue, "bypass" ]);
-        command_success_from_args([ "nft", "add", "rule", "inet", NFT_TABLE_NAME, "mangle_output", "meta", "mark", "&", mask, "==", mark, "meta", "l4proto", "udp", "counter", "queue", "num", queue, "bypass" ]);
-        index_value++;
-    }
-}
-
 function run(provider, argv) {
     argv = type(argv) == "array" ? argv : [];
     let mode = argv[0] || "";
@@ -733,8 +691,6 @@ function run(provider, argv) {
         exit(runtime_snapshot.restore(argv[1], cfg.pid_dir, cfg.child_pid_dir, cfg.log_dir,
             cfg.runtime_path, LIB_DIR, cfg.binary, [ cfg.binary ]) ? 0 : 1);
     }
-    else if (mode == "create-nft-rules")
-        create_nft_rules(cfg);
     else if (mode == "status")
         status_json(cfg);
     else if (mode == "check")
@@ -748,7 +704,7 @@ function run(provider, argv) {
     else if (mode == "enabled-rule-count")
         print(length(enabled_sections(cfg)), "\n");
     else {
-        warn("Usage: providers/" + kind + "/runtime.uc <start-runtime|stop-runtime|create-nft-rules|status|check|installed|package-installed|package-version|enabled-rule-count>\n");
+        warn("Usage: providers/" + kind + "/runtime.uc <start-runtime|stop-runtime|status|check|installed|package-installed|package-version|enabled-rule-count>\n");
         exit(1);
     }
 }
