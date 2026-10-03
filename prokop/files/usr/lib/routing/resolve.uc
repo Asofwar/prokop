@@ -135,6 +135,11 @@ function load_json(path) {
 
 // What the rule's strategy applies to: matcher names and sizes, no values of
 // secrets (matchers are never secrets, but only counts and list names are kept).
+// The counts are informational (the autotune plan JSON). A string value is
+// counted by whitespace, unlike the generator and nft, which split the
+// *_text options at commas too (config/rule.uc text_list_values
+// "comma-space"): "a.com,b.com" counts as one here. Not unified (UC-172):
+// it would change the plan JSON.
 function rule_scope(section) {
     let scope = {};
     for (let key in [ "domain", "domain_suffix", "domain_keyword", "domain_regex", "ip_cidr", "community_lists",

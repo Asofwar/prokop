@@ -2929,10 +2929,6 @@ function add_dns_action_rules_for_section(config, section) {
         runtime_generate_unsupported("DNS action '" + section_name + "' has no domain matchers");
 }
 
-function normalize_port_number_value(value) {
-    return rule_config.normalize_port_number_value(value);
-}
-
 function add_port_matchers(rule, section) {
     let values = [];
     for (let value in list_option(section, "ports"))
@@ -2949,22 +2945,16 @@ function add_port_matchers(rule, section) {
             continue;
         seen[value] = true;
 
-        let dash = index(value, "-");
-        if (dash < 0) {
-            let port = normalize_port_number_value(value);
-            if (port != null)
-                push(ports, port);
+        // The port or range the way config/rule.uc reads it for nft and the
+        // validator; a single-port range is the port: sing-box refuses a
+        // range item without ':' (UC-098).
+        let condition = rule_config.normalize_port_condition_value(value);
+        if (condition == null)
             continue;
-        }
-
-        let start = normalize_port_number_value(substr(value, 0, dash));
-        let end = normalize_port_number_value(substr(value, dash + 1));
-        // A single-port range is the port: sing-box refuses a range
-        // item without ':' (UC-098).
-        if (start != null && end != null && start == end)
-            push(ports, start);
-        else if (start != null && end != null && start < end)
-            push(port_ranges, sprintf("%d:%d", start, end));
+        if (index(condition, "-") < 0)
+            push(ports, int(condition));
+        else
+            push(port_ranges, replace(condition, "-", ":"));
     }
     ports = uniq(ports);
 
