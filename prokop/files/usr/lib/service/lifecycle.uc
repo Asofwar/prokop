@@ -6,6 +6,7 @@ let uci_core = require("core.uci");
 let common = require("core.common");
 let process_identity = require("core.process_identity");
 let refresh_worker = require("core.refresh_worker");
+let legacy = require("core.legacy_forkop");
 
 function as_string(value) {
     return value == null ? "" : "" + value;
@@ -24,6 +25,9 @@ const SERVICE_INIT = getenv("PROKOP_SERVICE_INIT") || constant_value("PROKOP_SER
 const SERVICE_NAME = getenv("PROKOP_SERVICE_NAME") || constant_value("PROKOP_SERVICE_NAME", "prokop");
 const LUCI_VIEW_DIR = getenv("PROKOP_LUCI_VIEW_DIR") || constant_value("PROKOP_LUCI_VIEW_DIR", "/www/luci-static/resources/view/prokop");
 const LUCI_I18N_DOMAIN = getenv("PROKOP_LUCI_I18N_DOMAIN") || constant_value("PROKOP_LUCI_I18N_DOMAIN", "prokop");
+// The one-line installer that migrates a router from the product before the
+// rename (core/legacy_forkop.uc).
+const INSTALL_COMMAND = "wget -qO- " + constant_value("PROKOP_RELEASE_BASE_URL", "https://asofwar.github.io/prokop") + "/install.sh | sh";
 
 const RUNTIME_STATE_DIR = getenv("PROKOP_RUNTIME_STATE_DIR") || "/var/run/prokop";
 const SYSTEM_INFO_CACHE_FILE = getenv("PROKOP_SYSTEM_INFO_CACHE_FILE") || RUNTIME_STATE_DIR + "/system-info.json";
@@ -65,7 +69,7 @@ const RULE_CONDITION_CACHE_DIR = getenv("PROKOP_RULE_CONDITION_CACHE_DIR") || RU
 const RUNTIME_CACHE_FORMAT_FILE = getenv("PROKOP_RUNTIME_CACHE_FORMAT_FILE") || RUNTIME_STATE_DIR + "/cache-format";
 const PERSISTENT_SUBSCRIPTION_CACHE_DIR = getenv("PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR") || "/etc/prokop/subscription-cache";
 const PERSISTENT_SUBSCRIPTION_CACHE_FORMAT_FILE = getenv("PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_FORMAT_FILE") || PERSISTENT_SUBSCRIPTION_CACHE_DIR + "/cache-format";
-const PERSISTENT_SUBSCRIPTION_CACHE_FORMAT = getenv("PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_FORMAT") || "9";
+const PERSISTENT_SUBSCRIPTION_CACHE_FORMAT = getenv("PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_FORMAT") || "10";
 const LIFECYCLE_UC = LIB_DIR + "/service/lifecycle.uc";
 const SUBSCRIPTION_BOOTSTRAP_RETRY_PID_FILE = getenv("PROKOP_SUBSCRIPTION_BOOTSTRAP_RETRY_PID_FILE") || RUNTIME_STATE_DIR + "/subscription-bootstrap-retry.pid";
 const DNS_FAILOVER_STATE_FILE = getenv("PROKOP_DNS_FAILOVER_STATE_FILE") || RUNTIME_STATE_DIR + "/dns-failover.json";
@@ -79,7 +83,7 @@ const LIST_UPDATE_CRON_MARKER = getenv("PROKOP_LIST_UPDATE_CRON_MARKER") || "# p
 const SUBSCRIPTION_UPDATE_CRON_MARKER = getenv("PROKOP_SUBSCRIPTION_UPDATE_CRON_MARKER") || "# prokop-subscription-update";
 const COMPONENT_UPDATE_CHECK_CRON_MARKER = getenv("PROKOP_COMPONENT_UPDATE_CHECK_CRON_MARKER") || "# prokop-component-update-check";
 const RELOAD_STATE_FORMAT = int(getenv("PROKOP_RELOAD_STATE_FORMAT") || "1");
-const RUNTIME_CACHE_FORMAT = int(getenv("PROKOP_RUNTIME_CACHE_FORMAT") || "10");
+const RUNTIME_CACHE_FORMAT = int(getenv("PROKOP_RUNTIME_CACHE_FORMAT") || "11");
 const RUNTIME_STABLE_MIN_AGE = int(getenv("PROKOP_RUNTIME_STABLE_MIN_AGE") || "2");
 const SING_BOX_START_STABLE_MIN_AGE = int(getenv("PROKOP_SING_BOX_START_STABLE_MIN_AGE") || "8");
 const SING_BOX_START_VERIFY_TIMEOUT = int(getenv("PROKOP_SING_BOX_START_VERIFY_TIMEOUT") || "10");
@@ -634,6 +638,29 @@ function clear_start_failure() {
 // The next start clears the mark (start_inner, start_main).
 function mark_start_failure_not_retryable(reason) {
     write_file(START_FAILURE_FILE, "reason=" + as_string(reason) + "\n");
+}
+
+// Prokop never runs next to the product before the rename while that one is
+// active: both drive the same sing-box service, dnsmasq and policy routing
+// table. Only the installer's migration hands the router over; until then a
+// start, restart or reload-restart is refused, and not retried.
+function legacy_start_refused(action) {
+    let reason = legacy.active_reason();
+    if (reason == null)
+        return false;
+    log_message("Refusing Prokop " + as_string(action) + ": " + legacy.PRODUCT + " is still active (" + reason +
+        "). Run the Prokop installer to migrate: " + INSTALL_COMMAND, "fatal");
+    mark_start_failure_not_retryable("legacy_runtime_active");
+    return true;
+}
+
+// The product before the rename runs here (a migration in progress or rolled
+// back) and Prokop has no runtime of its own: a stop then touches nothing the
+// two share (the sing-box service, dnsmasq, policy routing table 105). A
+// stopped or removed old product never takes this path.
+function legacy_runtime_owns_router() {
+    return legacy.installed() && legacy.active() &&
+        !command_success_from_args([ "nft", "list", "table", "inet", NFT_TABLE_NAME ]);
 }
 
 function dns_apply_status(args) {
@@ -1775,6 +1802,9 @@ function mark_explicit_start() {
 }
 
 function start() {
+    // Neither recorded as an explicit start nor ending an explicit stop.
+    if (legacy_start_refused("start"))
+        return 1;
     // The init.d UI action can fail to register when a stop has only just
     // completed. Track the actual lifecycle worker independently of UI jobs.
     mark_start_in_progress();
@@ -1789,6 +1819,11 @@ function start() {
 
 function stop_impl(explicit_stop) {
     let status = 0;
+
+    if (legacy_runtime_owns_router()) {
+        log_message("Prokop has no runtime to stop; the running " + legacy.PRODUCT + " and its DNS settings are left alone", "info");
+        return 0;
+    }
 
     // A refused stop changes nothing, and DNS stays with the runtime that
     // still serves traffic: refuse before DNS is restored (UC-215).
@@ -1927,6 +1962,8 @@ function stop() {
 
 function restart_runtime_for_reload() {
     let status;
+    if (legacy_start_refused("reload restart"))
+        return 1;
     let selector_state = capture_selector_state();
 
     log_message("Reload requires a full Prokop runtime restart", "info");
@@ -2612,6 +2649,8 @@ function reload_reason_fixture(reason) {
 }
 
 function restart() {
+    if (legacy_start_refused("restart"))
+        return 1;
     log_message("Restarting Prokop", "info");
 
     // Do not let any restart caller bypass the same ownership check as cold
@@ -2684,7 +2723,9 @@ function uninstall() {
     package_manager_remove_if_installed("luci-i18n-prokop-ru");
     package_manager_remove_if_installed("luci-app-prokop");
 
-    if (module_success(SINGBOX_UC, [ "managed-service-installed" ])) {
+    // While the product before the rename is installed, the managed sing-box
+    // may still be its own.
+    if (!legacy.installed() && module_success(SINGBOX_UC, [ "managed-service-installed" ])) {
         module_success(SINGBOX_UC, [ "remove-managed-service-script" ]);
         remove_file("/usr/bin/sing-box");
         remove_file("/usr/lib/libcronet.so");

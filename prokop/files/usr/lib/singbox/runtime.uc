@@ -6,6 +6,7 @@ let common = require("core.common");
 let durable = require("core.durable");
 let runtime_dns = require("singbox.dns");
 let managed_service = require("singbox.managed_service");
+let legacy_forkop = require("core.legacy_forkop");
 
 const CONFIG_NAME = getenv("PROKOP_CONFIG_NAME") || "prokop";
 // Test-only config preparation failure injection. Empty in production.
@@ -21,11 +22,11 @@ const SUBSCRIPTION_METADATA_DIR = getenv("PROKOP_SUBSCRIPTION_METADATA_DIR") || 
 const OUTBOUND_METADATA_DIR = getenv("PROKOP_OUTBOUND_METADATA_DIR") || RUNTIME_STATE_DIR + "/outbound-metadata";
 const SECTION_CACHE_DIR = getenv("PROKOP_SECTION_CACHE_DIR") || RUNTIME_STATE_DIR + "/section-cache";
 const RUNTIME_CACHE_FORMAT_FILE = getenv("PROKOP_RUNTIME_CACHE_FORMAT_FILE") || RUNTIME_STATE_DIR + "/cache-format";
-const RUNTIME_CACHE_FORMAT = getenv("PROKOP_RUNTIME_CACHE_FORMAT") || "10";
+const RUNTIME_CACHE_FORMAT = getenv("PROKOP_RUNTIME_CACHE_FORMAT") || "11";
 const PERSISTENT_SUBSCRIPTION_CACHE_DIR = getenv("PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR") || "/etc/prokop/subscription-cache";
 const PERSISTENT_SUBSCRIPTION_CACHE_FORMAT_FILE = getenv("PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_FORMAT_FILE") || PERSISTENT_SUBSCRIPTION_CACHE_DIR + "/cache-format";
 const RULESET_CACHE_UC = LIB_DIR + "/singbox/ruleset_cache.uc";
-const PERSISTENT_SUBSCRIPTION_CACHE_FORMAT = getenv("PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_FORMAT") || "9";
+const PERSISTENT_SUBSCRIPTION_CACHE_FORMAT = getenv("PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_FORMAT") || "10";
 const PENDING_RELOAD_FILE = getenv("PROKOP_PENDING_RELOAD_FILE") || RUNTIME_STATE_DIR + "/reload.pending";
 const SERVICE_INIT = getenv("PROKOP_SERVICE_INIT") || "/etc/init.d/prokop";
 const NFT_TABLE_NAME = getenv("NFT_TABLE_NAME") || "ProkopTable";
@@ -43,6 +44,9 @@ const SB_SERVICE_MIXED_INBOUND_PORT = getenv("SB_SERVICE_MIXED_INBOUND_PORT") ||
 const SB_VARIANT_STATE_FILE = getenv("SB_VARIANT_STATE_FILE") || "/etc/prokop/sing-box-variant";
 const SB_VERSION_STATE_FILE = getenv("SB_VERSION_STATE_FILE") || "/etc/prokop/sing-box-version";
 const SB_MANAGED_SERVICE_MARKER = getenv("SB_MANAGED_SERVICE_MARKER") || "Prokop managed sing-box service for binary variants";
+// The marker Forkop wrote into the same service: such a service is Prokop's
+// once Forkop's package is gone (components/action.uc, service/package.uc).
+const SB_LEGACY_MANAGED_SERVICE_MARKER = legacy_forkop.SING_BOX_MANAGED_MARKER;
 
 function as_string(value) {
     return value == null ? "" : "" + value;
@@ -390,7 +394,8 @@ function uci_commit(config) {
 
 function managed_service_installed() {
     let data = fs.readfile("/etc/init.d/sing-box");
-    return data != null && index(as_string(data), SB_MANAGED_SERVICE_MARKER) >= 0;
+    return data != null && (index(as_string(data), SB_MANAGED_SERVICE_MARKER) >= 0 ||
+        (index(as_string(data), SB_LEGACY_MANAGED_SERVICE_MARKER) >= 0 && !legacy_forkop.installed()));
 }
 
 function sing_box_compressed_marker_set() {

@@ -185,6 +185,7 @@ cp "$PROKOP_LIB/core/netstat.uc" "$package_runtime_lib/core/netstat.uc"
 cp "$PROKOP_LIB/core/runtime_lock.uc" "$package_runtime_lib/core/runtime_lock.uc"
 cp "$PROKOP_LIB/core/process_identity.uc" "$package_runtime_lib/core/process_identity.uc"
 cp "$PROKOP_LIB/core/durable.uc" "$package_runtime_lib/core/durable.uc"
+cp "$PROKOP_LIB/core/legacy_forkop.uc" "$package_runtime_lib/core/legacy_forkop.uc"
 cp "$UPDATER" "$package_runtime_lib/components/updater.uc"
 cat >"$package_runtime_lib/core/constants.uc" <<'UCODE'
 function module_exports() {

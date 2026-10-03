@@ -7,6 +7,7 @@ let netstat = require("core.netstat");
 let runtime_lock = require("core.runtime_lock");
 let process_identity = require("core.process_identity");
 let durable = require("core.durable");
+let legacy_forkop = require("core.legacy_forkop");
 
 const LIB_DIR = getenv("PROKOP_LIB") || "/usr/lib/prokop";
 const CONFIG_NAME = getenv("PROKOP_CONFIG_NAME") || constants.PROKOP_CONFIG_NAME || "prokop";
@@ -28,6 +29,11 @@ const PROKOP_OPKG_RECOVERY_DIR = getenv("PROKOP_OPKG_RECOVERY_DIR") || "/etc/pro
 const TMP_STALE_TTL_MINUTES = getenv("UPDATES_TMP_STALE_TTL_MINUTES") || "30";
 const TMP_FILE_STALE_TTL_MINUTES = getenv("UPDATES_TMP_FILE_STALE_TTL_MINUTES") || "10";
 const SB_MANAGED_SERVICE_MARKER = getenv("SB_MANAGED_SERVICE_MARKER") || constants.SB_MANAGED_SERVICE_MARKER || "Prokop managed sing-box service for binary variants";
+// Forkop wrote the same service under its own marker. The migrating installer
+// rewrites it to SB_MANAGED_SERVICE_MARKER before Forkop's prerm runs; once
+// Forkop's package is gone, a service that still carries it is Prokop's all
+// the same (as for service/package.uc).
+const SB_LEGACY_MANAGED_SERVICE_MARKER = legacy_forkop.SING_BOX_MANAGED_MARKER;
 const TORRSERVER_DIRECT_INIT = getenv("PROKOP_TORRSERVER_DIRECT_INIT") || "/etc/init.d/prokop-torrserver-direct";
 const TORRSERVER_DIRECT_UC = LIB_DIR + "/torrserver/direct.uc";
 
@@ -1054,8 +1060,14 @@ function clear_version_caches() {
     remove_file("/tmp/prokop/system-info.json");
 }
 
+function managed_sing_box_service_source(source) {
+    source = as_string(source);
+    return index(source, SB_MANAGED_SERVICE_MARKER) >= 0 ||
+        (index(source, SB_LEGACY_MANAGED_SERVICE_MARKER) >= 0 && !legacy_forkop.installed());
+}
+
 function managed_sing_box_service_installed() {
-    return file_exists("/etc/init.d/sing-box") && index(read_file("/etc/init.d/sing-box"), SB_MANAGED_SERVICE_MARKER) >= 0;
+    return file_exists("/etc/init.d/sing-box") && managed_sing_box_service_source(read_file("/etc/init.d/sing-box"));
 }
 
 // The script of singbox/managed_service.uc, the one every writer installs
@@ -1478,16 +1490,23 @@ function install_byedpi(action) {
 }
 
 const ZAPRET_MANAGER_SOURCE = "raw.githubusercontent.com/Screamshow/Zapret-Manager/main/Zapret-Manager.sh";
-// Every launcher Prokop writes carries this line. Launchers written by older
-// releases always went through the mirror and are known by its proxy path.
+// Every launcher Prokop writes carries this line. Forkop wrote its launchers
+// under its own marker line, and launchers written by still older releases
+// always went through the mirror and are known by its proxy path. Those are
+// Prokop's once Forkop's package is gone, never while a migration can still
+// roll back to it.
 const ZAPRET_MANAGER_LAUNCHER_MARKER = "# Prokop Zapret-Manager launcher";
+const ZAPRET_MANAGER_FORKOP_MARKER = legacy_forkop.ZAPRET_MANAGER_MARKER;
 const ZAPRET_MANAGER_LEGACY_MARKER = "/zapret-manager/proxy/";
 // Where zms and zmsA live; tests point it elsewhere.
 const ZAPRET_MANAGER_BIN_DIR = getenv("PROKOP_ZAPRET_MANAGER_BIN_DIR") || "/usr/bin";
 
 function zapret_manager_launcher_managed(source) {
     source = as_string(source);
-    return index(source, ZAPRET_MANAGER_LAUNCHER_MARKER) >= 0 || index(source, ZAPRET_MANAGER_LEGACY_MARKER) >= 0;
+    if (index(source, ZAPRET_MANAGER_LAUNCHER_MARKER) >= 0)
+        return true;
+    return (index(source, ZAPRET_MANAGER_FORKOP_MARKER) >= 0 || index(source, ZAPRET_MANAGER_LEGACY_MARKER) >= 0) &&
+        !legacy_forkop.installed();
 }
 
 // A configured mirror proxies the script and the downloads it makes;

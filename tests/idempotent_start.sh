@@ -62,6 +62,8 @@ let retry_stop_requested = false;
 let start_marker_present = false;
 let stop_marker_present = false;
 let explicit_start_recorded = false;
+let legacy_active = false;
+let legacy_checks = 0;
 function as_string(value) { return value == null ? "" : "" + value; }
 function bool_text(value) { return value == "1"; }
 function die(message) { warn("FAIL: " + message + "\n"); exit(1); }
@@ -98,6 +100,13 @@ function module_success(path, args) {
     die("unexpected state helper");
 }
 function log_message(message, level) { push(logs, level + ":" + message); }
+// The product before the rename is active: a start is refused before it
+// records anything (tests/prokop_from_forkop_runtime_start_guard.sh).
+function legacy_start_refused(action) {
+    check(action == "start", "unexpected refusal check");
+    legacy_checks++;
+    return legacy_active;
+}
 function release_start_subscription_update_lock() { released++; }
 // The not-retryable mark of a refused start: tests/runtime_guard_lifecycle.sh.
 function clear_start_failure() { }
@@ -166,12 +175,25 @@ function reset_probe() {
     start_marker_present = false;
     stop_marker_present = true;
     explicit_start_recorded = false;
+    legacy_active = false;
+    legacy_checks = 0;
 }
 '''
 cases = r'''
+// While the product before the rename is active, a start is refused before
+// any runtime check, and it neither ends an explicit stop nor counts as an
+// explicit start.
+reset_probe();
+legacy_active = true;
+check(start() == 1, "a start next to the active product before the rename was accepted");
+check(legacy_checks == 1 && length(calls) == 0, "a refused start reached the runtime checks");
+check(!start_marker_present && stop_marker_present && !explicit_start_recorded,
+    "a refused start changed the start or stop records");
+check(released == 0 && cold_starts == 0 && cleanups == 0, "a refused start touched the runtime");
+
 reset_probe();
 check(start() == 0, "duplicate stable start was not successful");
-check(join(",", calls) == "sing-box-process-conflict,prokop-stably-running",
+check(join(",", calls) == "sing-box-process-conflict,prokop-stably-running" && legacy_checks == 1,
     "stable check bypassed ownership guard");
 check(released == 1 && cold_starts == 0 && cleanups == 0,
     "duplicate stable start changed existing runtime or leaked subscription lock");

@@ -72,10 +72,10 @@ digest="$(printf '%s\n' "${urls[@]}" | sha256sum | cut -c1-24)"
   echo "enabled=true"
   echo "dir=$DIR"
   echo "key=openwrt-sdk-archives-$digest"
-  echo "paths<<FORKOP_SDK_PATHS"
+  echo "paths<<PROKOP_SDK_PATHS"
   for url in "${urls[@]}"; do
     echo "$DIR/$(basename "$url")"
   done
-  echo "FORKOP_SDK_PATHS"
+  echo "PROKOP_SDK_PATHS"
 } | emit
 printf 'SDK archives: %s\n' "${urls[@]}"

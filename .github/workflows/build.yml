@@ -95,7 +95,7 @@ jobs:
           PY
 
   build:
-    name: Build Forkop release packages
+    name: Build Prokop release packages
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     needs: preparation
@@ -144,8 +144,8 @@ jobs:
       - name: Prepare static hosting bundle
         shell: bash
         env:
-          FORKOP_RELEASE_BASE_URL: https://asofwar.github.io/forkop
-          FORKOP_RELEASE_REPO: ${{ github.repository }}
+          PROKOP_RELEASE_BASE_URL: https://asofwar.github.io/prokop
+          PROKOP_RELEASE_REPO: ${{ github.repository }}
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           VERSION="${{ needs.preparation.outputs.version }}"
@@ -163,7 +163,7 @@ jobs:
         uses: actions/upload-artifact@v4.6.2
         with:
           name: timeweb-files-${{ needs.preparation.outputs.version }}
-          path: ./filtered-bin/hosting/forkop-timeweb-${{ needs.preparation.outputs.version }}.tar.gz
+          path: ./filtered-bin/hosting/prokop-timeweb-${{ needs.preparation.outputs.version }}.tar.gz
           retention-days: 7
           if-no-files-found: error
 

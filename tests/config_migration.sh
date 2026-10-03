@@ -8,6 +8,8 @@ INSTALLER="$ROOT_DIR/install.sh"
 WORK_DIR="$(mktemp -d)"
 MIGRATION="$RUNTIME_MIGRATION"
 MIGRATIONS_DIR="$PROKOP_LIB/config/migrations"
+# No Forkop package on this "router" (core/legacy_forkop.uc).
+export PROKOP_LEGACY_FORKOP_ROOT="$WORK_DIR/no-forkop"
 
 cleanup() {
   rm -rf "$WORK_DIR"
@@ -175,7 +177,7 @@ assert(JSON.stringify(config.settings.dns_server) === JSON.stringify(['9.9.9.9']
 assert(JSON.stringify(config.settings.bootstrap_dns_server) === JSON.stringify(['1.1.1.1']), 'legacy Bootstrap DNS scalar migrated to ordered list');
 assert(config.settings.config_version === '1.0.5', 'legacy config should be marked at the current schema version');
 assert(config.settings.component_update_check_enabled === '1', 'component update checks should be enabled during migration');
-assert(JSON.stringify(config.settings.applied_migrations) === JSON.stringify(['interface_sections', 'enable_component_checks', 'http_connection_urls', 'flintnet_urltest_default', 'retired_secondary_rulesets', 'retired_secondary_rulesets_v2', 'secondary_rulesets_mirror_v1', 'own_dependency_mirror_v1', 'clash_api_secret_v1', 'urltest_section_names_v1', 'vpn_guard_kill_switch_v1', 'output_network_interface_switch_v1', 'update_interval_minimum_v1', 'subscription_ignored_options_v1', 'fork_mirror_opt_in_v1']), 'legacy config should record named migrations');
+assert(JSON.stringify(config.settings.applied_migrations) === JSON.stringify(['interface_sections', 'enable_component_checks', 'http_connection_urls', 'flintnet_urltest_default', 'retired_secondary_rulesets', 'retired_secondary_rulesets_v2', 'secondary_rulesets_mirror_v1', 'own_dependency_mirror_v1', 'clash_api_secret_v1', 'urltest_section_names_v1', 'vpn_guard_kill_switch_v1', 'output_network_interface_switch_v1', 'update_interval_minimum_v1', 'subscription_ignored_options_v1', 'prokop_state_paths_v1', 'fork_mirror_opt_in_v1']), 'legacy config should record named migrations');
 // The dependency mirror is opt-in: migrating an old podkop/prokop config never enables one.
 assert(!config.settings.mirror_base_url, 'legacy config migration must not enable a dependency mirror');
 assert(!JSON.stringify(config).includes('mirror.infotechtg.ru'), 'legacy config migration must not write the upstream mirror');
@@ -397,7 +399,7 @@ function assert(condition, message) {
 assert(out.changed === true, '1.0.1 config should require migration');
 assert(out.config.settings.config_version === '1.0.5', 'config schema version should advance to 1.0.5');
 assert(out.config.settings.component_update_check_enabled === '1', 'updates from 1.0.1 and below should enable component update checks');
-assert(JSON.stringify(out.config.settings.applied_migrations) === JSON.stringify(['interface_sections', 'enable_component_checks', 'http_connection_urls', 'flintnet_urltest_default', 'retired_secondary_rulesets', 'retired_secondary_rulesets_v2', 'secondary_rulesets_mirror_v1', 'own_dependency_mirror_v1', 'clash_api_secret_v1', 'urltest_section_names_v1', 'vpn_guard_kill_switch_v1', 'output_network_interface_switch_v1', 'update_interval_minimum_v1', 'subscription_ignored_options_v1', 'fork_mirror_opt_in_v1']), 'named migrations should be recorded');
+assert(JSON.stringify(out.config.settings.applied_migrations) === JSON.stringify(['interface_sections', 'enable_component_checks', 'http_connection_urls', 'flintnet_urltest_default', 'retired_secondary_rulesets', 'retired_secondary_rulesets_v2', 'secondary_rulesets_mirror_v1', 'own_dependency_mirror_v1', 'clash_api_secret_v1', 'urltest_section_names_v1', 'vpn_guard_kill_switch_v1', 'output_network_interface_switch_v1', 'update_interval_minimum_v1', 'subscription_ignored_options_v1', 'prokop_state_paths_v1', 'fork_mirror_opt_in_v1']), 'named migrations should be recorded');
 assert(!Object.prototype.hasOwnProperty.call(section, 'interfaces'), 'parent interface list should be removed');
 assert(JSON.stringify(interfaces.map(item => item.name)) === JSON.stringify(['awg0', 'tun0']), 'interfaces should keep their order');
 for (const item of interfaces) {
@@ -435,7 +437,7 @@ function assert(condition, message) {
 
 assert(out.config.settings.component_update_check_enabled === '0', '1.0.2 config must preserve an explicitly disabled component check');
 assert(out.config.settings.config_version === '1.0.5', '1.0.2 config should advance through the HTTP URL migration schema');
-assert(JSON.stringify(out.config.settings.applied_migrations) === JSON.stringify(['interface_sections', 'enable_component_checks', 'http_connection_urls', 'flintnet_urltest_default', 'retired_secondary_rulesets', 'retired_secondary_rulesets_v2', 'secondary_rulesets_mirror_v1', 'own_dependency_mirror_v1', 'clash_api_secret_v1', 'urltest_section_names_v1', 'vpn_guard_kill_switch_v1', 'output_network_interface_switch_v1', 'update_interval_minimum_v1', 'subscription_ignored_options_v1', 'fork_mirror_opt_in_v1']), 'newer configs should mark skipped migrations');
+assert(JSON.stringify(out.config.settings.applied_migrations) === JSON.stringify(['interface_sections', 'enable_component_checks', 'http_connection_urls', 'flintnet_urltest_default', 'retired_secondary_rulesets', 'retired_secondary_rulesets_v2', 'secondary_rulesets_mirror_v1', 'own_dependency_mirror_v1', 'clash_api_secret_v1', 'urltest_section_names_v1', 'vpn_guard_kill_switch_v1', 'output_network_interface_switch_v1', 'update_interval_minimum_v1', 'subscription_ignored_options_v1', 'prokop_state_paths_v1', 'fork_mirror_opt_in_v1']), 'newer configs should mark skipped migrations');
 NODE
 
 cat >"$WORK_DIR/prokop-1.0.4-http.json" <<'JSON'
@@ -501,7 +503,7 @@ assert(JSON.stringify(jsonOutbounds[1]) === JSON.stringify({
   server_port: 8080,
 }), 'unnamed HTTP URL should receive a unique http tag');
 assert(jsonOutbounds[2].type === 'direct' && jsonOutbounds[2].tag === 'http', 'existing JSON outbounds should remain unchanged');
-assert(JSON.stringify(out.config.settings.applied_migrations) === JSON.stringify(['interface_sections', 'enable_component_checks', 'http_connection_urls', 'flintnet_urltest_default', 'retired_secondary_rulesets', 'retired_secondary_rulesets_v2', 'secondary_rulesets_mirror_v1', 'own_dependency_mirror_v1', 'clash_api_secret_v1', 'urltest_section_names_v1', 'vpn_guard_kill_switch_v1', 'output_network_interface_switch_v1', 'update_interval_minimum_v1', 'subscription_ignored_options_v1', 'fork_mirror_opt_in_v1']), 'HTTP URL migration should be recorded');
+assert(JSON.stringify(out.config.settings.applied_migrations) === JSON.stringify(['interface_sections', 'enable_component_checks', 'http_connection_urls', 'flintnet_urltest_default', 'retired_secondary_rulesets', 'retired_secondary_rulesets_v2', 'secondary_rulesets_mirror_v1', 'own_dependency_mirror_v1', 'clash_api_secret_v1', 'urltest_section_names_v1', 'vpn_guard_kill_switch_v1', 'output_network_interface_switch_v1', 'update_interval_minimum_v1', 'subscription_ignored_options_v1', 'prokop_state_paths_v1', 'fork_mirror_opt_in_v1']), 'HTTP URL migration should be recorded');
 NODE
 
 cat >"$WORK_DIR/prokop-1.0.5-http.json" <<'JSON'
@@ -695,7 +697,7 @@ mkdir -p \
 printf '7\n' >"$WORK_DIR/cache-migration/runtime/cache-format"
 printf 'stale\n' >"$WORK_DIR/cache-migration/runtime/section-cache/stale.json"
 printf 'stale\n' >"$WORK_DIR/cache-migration/runtime/subscription-links/stale.json"
-printf '9\n' >"$WORK_DIR/cache-migration/persistent/cache-format"
+printf '10\n' >"$WORK_DIR/cache-migration/persistent/cache-format"
 cat >"$WORK_DIR/cache-migration/persistent/proxy-subscription-1.json" <<'JSON'
 {
   "version": 1,
@@ -721,7 +723,7 @@ PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR="$WORK_DIR/cache-migration/persistent" 
 PROKOP_INTERNAL_CONFIG_TRIGGER_GUARD="$WORK_DIR/internal-config-change" \
 ucode -L "$PROKOP_LIB" "$MIGRATION" migrate
 
-[ "$(sed -n '1p' "$WORK_DIR/cache-migration/runtime/cache-format")" = "10" ] ||
+[ "$(sed -n '1p' "$WORK_DIR/cache-migration/runtime/cache-format")" = "11" ] ||
   fail "package migration must advance the runtime cache format"
 [ ! -e "$WORK_DIR/cache-migration/runtime/section-cache/stale.json" ] ||
   fail "package migration must clear the legacy section cache"
@@ -736,6 +738,42 @@ if (outbound.server !== 'stable.example' || !outbound.share_link?.startsWith('vl
   process.exit(1);
 }
 NODE
+
+# A subscription cache Forkop wrote (persistent format 9, __forkop_* keys) and
+# the installer copied to /etc/prokop is discarded, never loaded.
+mkdir -p "$WORK_DIR/forkop-cache/runtime" "$WORK_DIR/forkop-cache/persistent"
+printf '9\n' >"$WORK_DIR/forkop-cache/persistent/cache-format"
+cat >"$WORK_DIR/forkop-cache/persistent/proxy-subscription-1.json" <<'JSON'
+{
+  "version": 1,
+  "format": "sing-box-json",
+  "outbounds": [
+    {
+      "type": "vless",
+      "tag": "forkop-cache-node",
+      "server": "forkop.example",
+      "server_port": 443,
+      "uuid": "00000000-0000-4000-8000-000000000002",
+      "__forkop_hidden": true,
+      "__forkop_description": "cached by Forkop"
+    }
+  ]
+}
+JSON
+PROKOP_UCI_STATE_FILE="$WORK_DIR/runtime-version.state" \
+PROKOP_UCI_LOG_FILE="$WORK_DIR/runtime-version.log" \
+PROKOP_CONFIG_NAME="prokop" \
+TMP_SUBSCRIPTION_FOLDER="$WORK_DIR/forkop-cache/tmp-subscriptions" \
+PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/forkop-cache/runtime" \
+PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR="$WORK_DIR/forkop-cache/persistent" \
+PROKOP_INTERNAL_CONFIG_TRIGGER_GUARD="$WORK_DIR/internal-config-change" \
+ucode -L "$PROKOP_LIB" "$MIGRATION" migrate
+[ ! -e "$WORK_DIR/forkop-cache/persistent/proxy-subscription-1.json" ] ||
+  fail "a subscription cache Forkop wrote must be discarded"
+[ ! -e "$WORK_DIR/forkop-cache/tmp-subscriptions/proxy-subscription-1.json" ] ||
+  fail "a subscription cache Forkop wrote must not be loaded into the runtime"
+[ "$(sed -n '1p' "$WORK_DIR/forkop-cache/persistent/cache-format")" = "10" ] ||
+  fail "the persistent subscription cache must be rebuilt in the current format"
 
 : >"$WORK_DIR/uci-commit.log"
 : >"$WORK_DIR/uci-commit.state"

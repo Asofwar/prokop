@@ -211,6 +211,9 @@ URLTEST_START_SEED="prokop-test"
 # least rotation: it compares equal with the same nodes in the same cyclic
 # order, whichever node it starts at. Its three nodes keep that order
 # meaningful; with two, every order is a rotation.
+# The baseline reads the same sections from the pre-rename config name.
+sed 's/^prokop\./forkop./' "$WORK_DIR/existing.state" >"$WORK_DIR/existing-forkop.state"
+
 generate() {
   local lib="$1" dir="$WORK_DIR/$2"
   mkdir -p "$dir/subscriptions" "$dir/config.json.section-cache"
@@ -218,10 +221,14 @@ generate() {
     "$WORK_DIR/subscription.json" "$dir/subscriptions/subs-subscription-1.json"
   printf '%s\n' 'https://singbox.example/sub' >"$dir/subscriptions/subs-subscription-1.url"
   : >"$dir/subscriptions/subs-subscription-1.user_agent"
+  # The baseline predates the Forkop -> Prokop rename and reads FORKOP_*.
   PROKOP_UCI_STATE_FILE="$WORK_DIR/existing.state" \
+    FORKOP_UCI_STATE_FILE="$WORK_DIR/existing-forkop.state" \
     PROKOP_URLTEST_START_SEED="$URLTEST_START_SEED" \
+    FORKOP_URLTEST_START_SEED="$URLTEST_START_SEED" \
     TMP_SUBSCRIPTION_FOLDER="$dir/subscriptions" \
     PROKOP_SUBSCRIPTION_METADATA_DIR="$dir/metadata" \
+    FORKOP_SUBSCRIPTION_METADATA_DIR="$dir/metadata" \
     ucode -L "$lib" "$lib/singbox/generator.uc" generate-config-fixture \
     "$WORK_DIR/existing.json" "$dir/config.json" 127.0.0.1 ||
     fail "$2: the config must be generated"
@@ -254,9 +261,11 @@ JS
 
 if git -C "$ROOT_DIR" rev-parse --verify --quiet "$BASELINE_REF^{commit}" >/dev/null; then
   mkdir -p "$WORK_DIR/baseline-tree"
-  git -C "$ROOT_DIR" archive "$BASELINE_REF" prokop/files/usr/lib | tar -x -C "$WORK_DIR/baseline-tree" ||
+  baseline_package=prokop
+  git -C "$ROOT_DIR" cat-file -e "$BASELINE_REF:prokop/files/usr/lib" 2>/dev/null || baseline_package=forkop
+  git -C "$ROOT_DIR" archive "$BASELINE_REF" "$baseline_package/files/usr/lib" | tar -x -C "$WORK_DIR/baseline-tree" ||
     fail "failed to materialize $BASELINE_REF"
-  generate "$WORK_DIR/baseline-tree/prokop/files/usr/lib" baseline
+  generate "$WORK_DIR/baseline-tree/$baseline_package/files/usr/lib" baseline
   # Every group and every field as the baseline generated it. The only
   # difference allowed is where a provider group (from the subscription)
   # starts: its nodes keep their cyclic order, and a URLTest the rule

@@ -19,6 +19,35 @@ LOCK="$ROOT/tmp/prokop-full-uninstall.lock"
 COMPONENT_LOCK="$ROOT/var/run/prokop/component-action.lock"
 PACKAGES="luci-i18n-prokop-ru luci-app-prokop prokop sing-box sing-box-tiny sing-box-extended"
 PHASE=preflight
+# Live router state (nft, UCI, procd, cron) is changed only on the router
+# itself; the isolated regression tests opt in with stubbed commands.
+if [ -z "$ROOT" ] || [ "${PROKOP_UNINSTALL_LIVE:-}" = 1 ]; then LIVE=1; else LIVE=0; fi
+
+# Legacy Forkop names: what Forkop 1.0.x, the product before the rename,
+# leaves on a router. An interrupted migration may leave any of it behind; a
+# full removal sweeps it by these explicit names only, never by a name scan.
+LEGACY_PACKAGES="luci-i18n-forkop-ru luci-app-forkop forkop"
+LEGACY_SERVICES="forkop forkop-killswitch forkop-torrserver-direct"
+LEGACY_INIT=/etc/init.d/forkop
+LEGACY_BIN=/usr/bin/forkop
+LEGACY_NFT_TABLES="ForkopTable ForkopTableDpiGuard ForkopConfigRestore ForkopConfigRestoreDpiGuard
+    ForkopAutotuneProbe ForkopAutotuneVerify ForkopTorrServerDirect ForkopKillswitch ForkopVpnGuard"
+LEGACY_KILLSWITCH_INCLUDE=/usr/share/nftables.d/ruleset-post/90-forkop-killswitch.nft
+LEGACY_KILLSWITCH_KEEP=/lib/upgrade/keep.d/forkop-killswitch
+LEGACY_STATE_DIR=/etc/forkop
+LEGACY_KILLSWITCH_DIR=/etc/forkop/killswitch
+LEGACY_KILLSWITCH_SERVERSFILE=/etc/forkop/killswitch/dnsmasq.servers
+LEGACY_DIRECTORIES="/etc/forkop-backups /usr/lib/forkop /usr/share/forkop /www/luci-static/resources/view/forkop"
+LEGACY_FILES="/etc/config/forkop /etc/config/forkop.apk-new /etc/config/forkop.apk-old
+    /etc/config/forkop-opkg /etc/config/forkop.opkg-new /etc/config/forkop.opkg-old /etc/config/forkop.opkg-dist
+    /usr/bin/forkop /usr/libexec/forkop-ro /etc/init.d/forkop /etc/init.d/forkop-killswitch
+    /etc/init.d/forkop-torrserver-direct /etc/uci-defaults/50_luci-forkop
+    /usr/share/luci/menu.d/luci-app-forkop.json /usr/share/rpcd/acl.d/luci-app-forkop.json
+    /etc/init.d/forkop-guard /etc/hotplug.d/iface/95-forkop-guard /lib/upgrade/keep.d/forkop-guard"
+LEGACY_PATH_PREFIXES="/tmp/forkop /var/run/forkop /usr/lib/lua/luci/i18n/forkop."
+LEGACY_CRON_MARKER="# forkop-"
+LEGACY_RT_TABLE_ID=105
+LEGACY_RT_TABLE_NAME=forkop
 
 # detach_servers_file: dnsmasq no longer reads the kill-switch block list.
 # 0: it was detached; 1: dhcp could not be changed; 2: dnsmasq did not read
@@ -217,6 +246,100 @@ remove_backups() {
     rmdir "$ROOT$UNINSTALL_BACKUP_DIR" 2>/dev/null || true
 }
 
+# The product before the rename is stopped with its own code while it is
+# still installed: its stop restores dnsmasq and its kill-switch lifts its own
+# policy. A half-removed installation may fail at that; the sweep after the
+# package removal takes what is left.
+legacy_stop() {
+    if [ -x "$ROOT$LEGACY_INIT" ]; then
+        "$ROOT$LEGACY_INIT" stop || echo "Could not stop $LEGACY_INIT" >&2
+        "$ROOT$LEGACY_INIT" disable || true
+    fi
+    if [ -x "$ROOT$LEGACY_BIN" ]; then "$ROOT$LEGACY_BIN" killswitch_disable || true; fi
+    for service in $LEGACY_SERVICES; do
+        [ "/etc/init.d/$service" != "$LEGACY_INIT" ] || continue
+        if [ -x "$ROOT/etc/init.d/$service" ]; then
+            "$ROOT/etc/init.d/$service" stop || true
+            "$ROOT/etc/init.d/$service" disable || true
+        fi
+    done
+    if [ -x "$ROOT$LEGACY_BIN" ]; then "$ROOT$LEGACY_BIN" dnsmasq_restore || true; fi
+}
+
+legacy_rc_d_link() {
+    name="${1##*/}"
+    rest="${name#[SK]}"
+    [ "$rest" != "$name" ] || return 1
+    digits="${rest%%[!0-9]*}"
+    [ -n "$digits" ] || return 1
+    case " $LEGACY_SERVICES " in *" ${rest#"$digits"} "*) return 0;; esac
+    return 1
+}
+
+# Everything else the product before the rename left, after its packages are
+# gone. Its kill-switch state directory stays while dnsmasq still reads the
+# servers file in it.
+legacy_sweep() {
+    # The include goes before the table, or a firewall reload loads it again.
+    rm -f "$ROOT$LEGACY_KILLSWITCH_INCLUDE" "$ROOT$LEGACY_KILLSWITCH_KEEP"
+    keep_killswitch=0
+    if [ "$LIVE" = 1 ]; then
+        for service in $LEGACY_SERVICES; do
+            ubus call service delete "{\"name\":\"$service\"}" >/dev/null 2>&1 || true
+        done
+        for table in $LEGACY_NFT_TABLES; do
+            nft delete table inet "$table" 2>/dev/null || true
+        done
+        if [ "$(uci -q get dhcp.@dnsmasq[0].serversfile 2>/dev/null || true)" = "$LEGACY_KILLSWITCH_SERVERSFILE" ]; then
+            if uci -q delete dhcp.@dnsmasq[0].serversfile && uci -q commit dhcp; then
+                [ ! -x "$ROOT/etc/init.d/dnsmasq" ] || "$ROOT/etc/init.d/dnsmasq" restart || true
+            else
+                keep_killswitch=1
+                echo "dnsmasq still uses $LEGACY_KILLSWITCH_SERVERSFILE; keeping $LEGACY_KILLSWITCH_DIR" >&2
+            fi
+        fi
+    fi
+    if [ "$keep_killswitch" = 1 ]; then
+        for item in "$ROOT$LEGACY_STATE_DIR"/* "$ROOT$LEGACY_STATE_DIR"/.[!.]*; do
+            [ -e "$item" ] || [ -L "$item" ] || continue
+            [ "$item" = "$ROOT$LEGACY_KILLSWITCH_DIR" ] || rm -rf "$item"
+        done
+    else
+        rm -rf "$ROOT$LEGACY_STATE_DIR"
+    fi
+    for directory in $LEGACY_DIRECTORIES; do
+        rm -rf "$ROOT$directory"
+    done
+    for file in $LEGACY_FILES; do
+        rm -f "$ROOT$file"
+    done
+    for link in "$ROOT"/etc/rc.d/*; do
+        if { [ -e "$link" ] || [ -L "$link" ]; } && legacy_rc_d_link "$link"; then rm -f "$link"; fi
+    done
+    for prefix in $LEGACY_PATH_PREFIXES; do
+        for item in "$ROOT$prefix"*; do
+            [ ! -e "$item" ] && [ ! -L "$item" ] || rm -rf "$item"
+        done
+    done
+    crontab="$ROOT/etc/crontabs/root"
+    if [ -f "$crontab" ] && grep -Fq "$LEGACY_CRON_MARKER" "$crontab"; then
+        grep -Fv "$LEGACY_CRON_MARKER" "$crontab" > "$JOB/crontab" || true
+        cat "$JOB/crontab" > "$crontab"
+        if [ "$LIVE" = 1 ] && [ -x "$ROOT/etc/init.d/cron" ]; then "$ROOT/etc/init.d/cron" reload || true; fi
+    fi
+    rt_tables="$ROOT/etc/iproute2/rt_tables"
+    rt_pattern="^[[:space:]]*${LEGACY_RT_TABLE_ID}[[:space:]]+${LEGACY_RT_TABLE_NAME}([[:space:]]|\$)"
+    if [ -f "$rt_tables" ] && grep -Eq "$rt_pattern" "$rt_tables"; then
+        # Replaced whole (UC-076): a cut-short write must not lose the
+        # routing tables of the system.
+        grep -Ev "$rt_pattern" "$rt_tables" > "$rt_tables.prokop-new" || true
+        if ! { chmod 644 "$rt_tables.prokop-new" && sync && mv -f "$rt_tables.prokop-new" "$rt_tables"; }; then
+            rm -f "$rt_tables.prokop-new"
+            echo "Could not remove the $LEGACY_RT_TABLE_NAME entry from /etc/iproute2/rt_tables" >&2
+        fi
+    fi
+}
+
 state() {
     if [ -n "$LEFT_CODES" ]; then
         printf '{"state":"%s","phase":"%s","left":"%s"}\n' "$1" "$PHASE" "$LEFT_CODES" > "$STATUS.new"
@@ -288,6 +411,7 @@ run() {
     PHASE=stop
     state running
     stop_status=0
+    legacy_stop
     if [ -x "$ROOT/etc/init.d/prokop" ]; then
         "$ROOT/etc/init.d/prokop" stop || stop_status=$?
     fi
@@ -339,14 +463,14 @@ run() {
     PHASE=packages
     state running
     set --
-    for package in $PACKAGES; do
+    for package in $LEGACY_PACKAGES $PACKAGES; do
         if installed "$package"; then set -- "$@" "$package"; fi
     done
     if [ "$#" -gt 0 ]; then
         if [ "$MANAGER" = apk ]; then apk del "$@"
         else opkg remove "$@"; fi
     fi
-    for package in $PACKAGES; do
+    for package in $LEGACY_PACKAGES $PACKAGES; do
         if installed "$package"; then echo "Package was not removed: $package" >&2; return 1; fi
     done
 
@@ -390,7 +514,7 @@ run() {
     # does it the same way in shell, so what someone staged for dhcp in
     # /tmp/.uci stays staged and is not committed (S5: a uci commit of dhcp
     # wrote it too).
-    if [ -z "$ROOT" ]; then nft delete table inet ProkopKillswitch 2>/dev/null || true; fi
+    if [ "$LIVE" = 1 ]; then nft delete table inet ProkopKillswitch 2>/dev/null || true; fi
     detached=0
     detach_servers_file || detached=$?
     if [ "$detached" -eq 0 ] && [ -x "$ROOT/etc/init.d/dnsmasq" ]; then
@@ -408,6 +532,7 @@ run() {
             nft delete table inet "$table" 2>/dev/null || true
         fi
     done
+    legacy_sweep
     for file in "$ROOT"/usr/lib/lua/luci/i18n/prokop.* \
         "$ROOT"/tmp/luci-indexcache* "$ROOT"/tmp/luci-modulecache/*; do
         [ ! -f "$file" ] || rm -f "$file"

@@ -38,9 +38,7 @@ export function actionReasonText(reason?: string | null): string | null {
         'Another action of this kind is already running. Try again when it finishes.',
       );
     case 'startup_in_progress':
-      return _(
-        'Prokop is still starting. Try again when the start finishes.',
-      );
+      return _('Prokop is still starting. Try again when the start finishes.');
     case 'invalid_input':
       return _('The request was refused: invalid input.');
     case 'not_found':

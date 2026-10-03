@@ -4,8 +4,8 @@ on:
   workflow_call:
   pull_request:
     paths:
-      - 'fe-app-forkop/**'
-      - 'luci-app-forkop/htdocs/luci-static/resources/view/forkop/main.js'
+      - 'fe-app-prokop/**'
+      - 'luci-app-prokop/htdocs/luci-static/resources/view/prokop/main.js'
       - '.github/workflows/frontend-ci.yml'
   # Runs on main as well, so the yarn cache lives in the default branch's
   # scope, where pull requests and tag builds can restore it.
@@ -13,8 +13,8 @@ on:
     branches:
       - main
     paths:
-      - 'fe-app-forkop/**'
-      - 'luci-app-forkop/htdocs/luci-static/resources/view/forkop/main.js'
+      - 'fe-app-prokop/**'
+      - 'luci-app-prokop/htdocs/luci-static/resources/view/prokop/main.js'
       - '.github/workflows/frontend-ci.yml'
 
 permissions:
@@ -35,7 +35,7 @@ jobs:
     timeout-minutes: 15
     defaults:
       run:
-        working-directory: fe-app-forkop
+        working-directory: fe-app-prokop
 
     steps:
       - name: Checkout code
@@ -48,7 +48,7 @@ jobs:
         with:
           node-version: '22'
           cache: yarn
-          cache-dependency-path: fe-app-forkop/yarn.lock
+          cache-dependency-path: fe-app-prokop/yarn.lock
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile --prefer-offline

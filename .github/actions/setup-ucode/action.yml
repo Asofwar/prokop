@@ -25,7 +25,7 @@ runs:
       run: |
         # The build links the image's json-c and libc, so the image is part of the key.
         echo "key=ucode-${UCODE_REF}-ubus0-uci0-uloop0-${ImageOS:-unknown}-${ImageVersion:-unknown}-$(uname -m)" >>"$GITHUB_OUTPUT"
-        echo "root=$HOME/.cache/forkop-ci/ucode-root" >>"$GITHUB_OUTPUT"
+        echo "root=$HOME/.cache/prokop-ci/ucode-root" >>"$GITHUB_OUTPUT"
 
     - name: Restore ucode build
       id: cache

@@ -2483,9 +2483,7 @@ function actionReasonText(reason) {
         "Another action of this kind is already running. Try again when it finishes."
       );
     case "startup_in_progress":
-      return _(
-        "Prokop is still starting. Try again when the start finishes."
-      );
+      return _("Prokop is still starting. Try again when the start finishes.");
     case "invalid_input":
       return _("The request was refused: invalid input.");
     case "not_found":
@@ -7206,6 +7204,39 @@ ${styles}
 ${styles2}
 `;
 
+// src/prokop/helpers/legacyStorage.ts
+var MONITORING_PREFERENCES_KEY = "prokop.monitoring.preferences";
+var CONNECTIVITY_TARGETS_KEY = "prokop.connectivity.targets";
+var DIAGNOSTIC_LAST_RUN_KEY = "prokop.diagnostic.lastRun";
+var LEGACY_FORKOP_STORAGE_KEYS = {
+  [MONITORING_PREFERENCES_KEY]: "forkop.monitoring.preferences",
+  [CONNECTIVITY_TARGETS_KEY]: "forkop.connectivity.targets",
+  [DIAGNOSTIC_LAST_RUN_KEY]: "forkop.diagnostic.lastRun"
+};
+function legacyKeyFor(key) {
+  return Object.prototype.hasOwnProperty.call(LEGACY_FORKOP_STORAGE_KEYS, key) ? LEGACY_FORKOP_STORAGE_KEYS[key] : null;
+}
+function readStorageItem(storage, key) {
+  const value = storage.getItem(key);
+  const legacyKey = legacyKeyFor(key);
+  if (value !== null || !legacyKey) return value;
+  const legacyValue = storage.getItem(legacyKey);
+  if (legacyValue === null) return null;
+  if (storage.setItem) {
+    try {
+      storage.setItem(key, legacyValue);
+      storage.removeItem?.(legacyKey);
+    } catch (_error) {
+    }
+  }
+  return legacyValue;
+}
+function writeStorageItem(storage, key, value) {
+  storage.setItem(key, value);
+  const legacyKey = legacyKeyFor(key);
+  if (legacyKey) storage.removeItem?.(legacyKey);
+}
+
 // src/prokop/tabs/diagnostic/partials/renderRunAction.ts
 function renderRunAction({
   loading: loading2,
@@ -7223,17 +7254,16 @@ function renderRunAction({
     })
   ]);
 }
-var LAST_RUN_KEY = "prokop.diagnostic.lastRun";
 function saveLastRun(storage, now = Date.now()) {
   try {
-    storage.setItem(LAST_RUN_KEY, String(now));
+    writeStorageItem(storage, DIAGNOSTIC_LAST_RUN_KEY, String(now));
   } catch (_error) {
   }
 }
 function readLastRun(storage) {
   let value = 0;
   try {
-    value = Number(storage.getItem(LAST_RUN_KEY) || 0);
+    value = Number(readStorageItem(storage, DIAGNOSTIC_LAST_RUN_KEY) || 0);
   } catch (_error) {
     value = 0;
   }
@@ -11265,7 +11295,6 @@ function connectionActions(active, readonly = false) {
 }
 
 // src/prokop/tabs/diagnostic/connectivityMatrix.ts
-var KEY = "prokop.connectivity.targets";
 var TYPES = ["DNS", "TCP", "HTTP", "HTTPS"];
 var DEFAULT_PORTS = {
   DNS: "",
@@ -11280,7 +11309,9 @@ var DEFAULTS = [
 var MAX_TARGETS = 10;
 function loadTargets(storage) {
   try {
-    const value = JSON.parse(storage.getItem(KEY) || "null");
+    const value = JSON.parse(
+      readStorageItem(storage, CONNECTIVITY_TARGETS_KEY) || "null"
+    );
     if (Array.isArray(value))
       return value.slice(0, MAX_TARGETS).map(
         (item) => item && item.type === "TLS" ? { ...item, type: "HTTPS" } : item
@@ -11378,7 +11409,11 @@ function initConnectivityMatrix() {
     result: { state: "idle" }
   }));
   let runningAll = false;
-  const save = () => localStorage.setItem(KEY, JSON.stringify(rows.map((row) => row.target)));
+  const save = () => writeStorageItem(
+    localStorage,
+    CONNECTIVITY_TARGETS_KEY,
+    JSON.stringify(rows.map((row) => row.target))
+  );
   const busy2 = () => rows.some((row) => row.result.state === "running");
   const updateButtons = () => {
     run.disabled = runningAll || busy2() || rows.length === 0;
@@ -13928,7 +13963,6 @@ var pathFilter = ALL_FILTER_VALUE;
 var followBaseline = null;
 var selectedConnectionId = null;
 var sortMode = "start";
-var MONITORING_PREFS_KEY = "prokop.monitoring.preferences";
 var localDeviceChoices = {};
 var routeDisplayNames = {};
 var routeSections = [];
@@ -14782,8 +14816,9 @@ function showConnectionDetails(connection) {
   document.getElementById("monitoring-connection-details")?.scrollIntoView?.({ block: "nearest" });
 }
 function saveMonitoringPreferences() {
-  localStorage.setItem(
-    MONITORING_PREFS_KEY,
+  writeStorageItem(
+    localStorage,
+    MONITORING_PREFERENCES_KEY,
     JSON.stringify({
       selectedDeviceFilter,
       pathFilter,
@@ -14794,7 +14829,7 @@ function saveMonitoringPreferences() {
 function loadMonitoringPreferences() {
   try {
     const value = JSON.parse(
-      localStorage.getItem(MONITORING_PREFS_KEY) || "{}"
+      readStorageItem(localStorage, MONITORING_PREFERENCES_KEY) || "{}"
     );
     if (typeof value.selectedDeviceFilter === "string")
       selectedDeviceFilter = value.selectedDeviceFilter;
