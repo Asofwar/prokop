@@ -9,6 +9,7 @@ let domain_config = require("config.domain");
 let connections = require("config.connections");
 let routing_rulesets = require("routing.rulesets");
 let runtime_constants = require("singbox.constants");
+let legacy = require("core.legacy_forkop");
 const CONFIG_NAME = getenv("PROKOP_CONFIG_NAME") || "prokop";
 const DNS_SOURCE_SET = "prokop_dns_sources";
 const DNS_SOURCE6_SET = "prokop_dns_sources6";
@@ -1420,16 +1421,57 @@ function rt_table_has_entry(text, table_id, table_name) {
     return false;
 }
 
+function legacy_rt_table_line(fields, table_id) {
+    return length(fields) >= 2 && fields[0] == as_string(table_id) &&
+        fields[0] == legacy.RT_TABLE_ID && fields[1] == legacy.RT_TABLE_NAME;
+}
+
+// iproute2 names a table id by the first entry for it. An entry the product
+// before the rename left for the same id (core/legacy_forkop.uc) would make
+// `ip rule` show Prokop's rule under the old name, and Prokop would never find
+// its own rule. It goes once that package is gone; while it is installed,
+// Prokop's entry is placed before it.
 function ensure_rt_table_entry(path, table_id, table_name) {
     let data = fs.readfile(path);
-    if (data != null && rt_table_has_entry(data, table_id, table_name))
-        return true;
-
     data = data == null ? "" : as_string(data);
-    if (data != "" && substr(data, length(data) - 1, 1) != "\n")
-        data += "\n";
+    let own = as_string(table_id) + " " + as_string(table_name);
+    let lines = split(data, "\n");
+    if (length(lines) > 0 && lines[length(lines) - 1] == "")
+        pop(lines);
 
-    return write_text_file(path, data + as_string(table_id) + " " + as_string(table_name) + "\n");
+    let legacy_at = -1;
+    let own_at = -1;
+    for (let i = 0; i < length(lines); i++) {
+        let fields = normalized_fields(lines[i]);
+        if (legacy_at < 0 && legacy_rt_table_line(fields, table_id))
+            legacy_at = i;
+        if (own_at < 0 && length(fields) >= 2 && fields[0] == as_string(table_id) && fields[1] == as_string(table_name))
+            own_at = i;
+    }
+    if (legacy_at < 0) {
+        if (own_at >= 0)
+            return true;
+        push(lines, own);
+        return write_text_file(path, join("\n", lines) + "\n");
+    }
+
+    let result = [];
+    let strip_legacy = !legacy.installed();
+    if (!strip_legacy && own_at >= 0 && own_at < legacy_at)
+        return true;
+    for (let i = 0; i < length(lines); i++) {
+        let fields = normalized_fields(lines[i]);
+        if (length(fields) >= 2 && fields[0] == as_string(table_id) && fields[1] == as_string(table_name))
+            continue;
+        if (legacy_rt_table_line(fields, table_id)) {
+            if (i == legacy_at)
+                push(result, own);
+            if (strip_legacy)
+                continue;
+        }
+        push(result, lines[i]);
+    }
+    return write_text_file(path, join("\n", result) + "\n");
 }
 
 function tproxy_route4_present(table) {

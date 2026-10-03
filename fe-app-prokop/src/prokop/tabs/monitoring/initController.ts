@@ -10,6 +10,11 @@ import { renderStartServiceAction } from '../shared/startService';
 import { isReadonlyMode } from '../../services/accessMode.service';
 import { prokopPageUrl, readPageParams } from '../../helpers/navigation';
 import { isActiveLuciTab } from '../../helpers/isActiveLuciTab';
+import {
+  MONITORING_PREFERENCES_KEY,
+  readStorageItem,
+  writeStorageItem,
+} from '../../helpers/legacyStorage';
 import { copyToClipboard } from '../../../helpers/copyToClipboard';
 import {
   renderInfoIcon24,
@@ -124,7 +129,6 @@ let pathFilter = ALL_FILTER_VALUE;
 let followBaseline: Set<string> | null = null;
 let selectedConnectionId: string | null = null;
 let sortMode = 'start';
-const MONITORING_PREFS_KEY = 'prokop.monitoring.preferences';
 let localDeviceChoices: LocalDeviceChoices = {};
 let routeDisplayNames: Record<string, string> = {};
 let routeSections: Array<{ sectionName: string; displayName: string }> = [];
@@ -1206,8 +1210,9 @@ function showConnectionDetails(connection: MonitoredConnection) {
 }
 
 function saveMonitoringPreferences() {
-  localStorage.setItem(
-    MONITORING_PREFS_KEY,
+  writeStorageItem(
+    localStorage,
+    MONITORING_PREFERENCES_KEY,
     JSON.stringify({
       selectedDeviceFilter,
       pathFilter,
@@ -1219,7 +1224,7 @@ function saveMonitoringPreferences() {
 function loadMonitoringPreferences() {
   try {
     const value = JSON.parse(
-      localStorage.getItem(MONITORING_PREFS_KEY) || '{}',
+      readStorageItem(localStorage, MONITORING_PREFERENCES_KEY) || '{}',
     );
     if (typeof value.selectedDeviceFilter === 'string')
       selectedDeviceFilter = value.selectedDeviceFilter;

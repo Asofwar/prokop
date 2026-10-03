@@ -4,6 +4,7 @@ let fs = require("fs");
 let identity = require("core.process_identity");
 let runtime_lock = require("core.runtime_lock");
 let list_worker = require("core.list_worker");
+let legacy_forkop = require("core.legacy_forkop");
 
 const CONFIG = getenv("PROKOP_CONFIG_FILE") || "/etc/config/prokop";
 const ROOT = getenv("PROKOP_SNAPSHOT_DIR") || "/etc/prokop/config-snapshots";
@@ -156,12 +157,20 @@ function read_snapshot(id, verify) {
     }
     catch (e) { return null; }
 }
+function valid_version(v) { return match(value(v), /^[A-Za-z0-9._-]{1,64}$/) != null; }
+// Snapshots taken before the rename to Prokop record the version under
+// Forkop's key; they are read, never written, that way.
+function snapshot_version(snapshot) {
+    if (valid_version(snapshot.prokop_version)) return snapshot.prokop_version;
+    let legacy = snapshot[legacy_forkop.SNAPSHOT_VERSION_KEY];
+    return valid_version(legacy) ? legacy : "unknown";
+}
 function metadata(snapshot) {
     return { id: snapshot.id, created_at: snapshot.created_at,
         kind: index([ "manual", "automatic" ], snapshot.kind) >= 0 ? snapshot.kind : "unknown",
         reason: index([ "manual", "before-reload", "pre-restore", "last-known-working", "before-autotune", "concurrent-change" ], snapshot.reason) >= 0 ? snapshot.reason : "unknown",
         config_hash: snapshot.config_hash,
-        prokop_version: match(value(snapshot.prokop_version), /^[A-Za-z0-9._-]{1,64}$/) != null ? snapshot.prokop_version : "unknown" };
+        prokop_version: snapshot_version(snapshot) };
 }
 // Hash of the configuration the last-known-working snapshot holds.
 function lkg_hash() {
@@ -221,7 +230,7 @@ function create(kind, reason, dedupe, keep) {
     let id = sprintf("%d_%d", clock()[0], clock()[1]);
     let version = trim(capture([ BIN, "show_version" ]));
     let snapshot = { id, created_at: int(clock()[0]), kind, reason,
-        config_hash: hash, prokop_version: match(version, /^[A-Za-z0-9._-]{1,64}$/) != null ? version : "unknown", content };
+        config_hash: hash, prokop_version: valid_version(version) ? version : "unknown", content };
     if (fs.stat(snapshot_path(id)) != null ||
         !atomic(snapshot_path(id), sprintf("%J\n", snapshot)))
         return { status: "failed", reason: "write_failed" };

@@ -19,6 +19,14 @@
 // Only a successful Prokop start/reload refreshes the policy. A failed one,
 // a stop or a missing runtime keep the last applied protection. Removing it
 // takes an explicit "disable" or unchecking the option on every section.
+//
+// A router migrated from the product before the rename (core/legacy_forkop.uc)
+// keeps that product's kill-switch until this one takes over: its nft table
+// and fw4 include, and dnsmasq's servers file under its state directory. The
+// first successful sync after the old package is gone (armed, or definitively
+// nothing to protect) removes them, switches the servers file in the same
+// dhcp commit and dnsmasq restart, and only then deletes the old state
+// directory. "disable" lifts them too.
 
 let fs = require("fs");
 let common = require("core.common");
@@ -26,6 +34,7 @@ let uci_core = require("core.uci");
 let connections = require("config.connections");
 let singbox_constants = require("singbox.constants");
 let constants = require("core.constants");
+let legacy = require("core.legacy_forkop");
 
 let as_string = common.as_string;
 let array_or_empty = common.array_or_empty;
@@ -62,6 +71,21 @@ const DNS_CHAIN = "ks_dns";
 const RELOAD_LOCK_DIR = getenv("PROKOP_RELOAD_LOCK_DIR") || "/var/run/prokop.reload.lock";
 const INTERFACE_SET = "ks_interfaces";
 const STATE_FORMAT = 1;
+// The pre-rename kill-switch (core/legacy_forkop.uc).
+const LEGACY_TABLE = legacy.KILLSWITCH_TABLE;
+const LEGACY_DNS_CHAIN = legacy.KILLSWITCH_DNS_CHAIN;
+const LEGACY_INCLUDE = legacy.path(legacy.KILLSWITCH_INCLUDE);
+const LEGACY_KEEP = legacy.path(legacy.KILLSWITCH_KEEP);
+const LEGACY_STATE_DIR = legacy.path(legacy.KILLSWITCH_STATE_DIR);
+const LEGACY_PRODUCT_STATE_DIR = legacy.path(legacy.STATE_DIR);
+const LEGACY_SERVERSFILE = legacy.path(legacy.KILLSWITCH_SERVERSFILE);
+const LEGACY_CACHE_DIR = legacy.path(legacy.KILLSWITCH_CACHE_DIR);
+const LEGACY_SERVICE_INIT = legacy.path(legacy.KILLSWITCH_INIT);
+// An automatic hand-over, and a removal of Prokop itself, never lift the old
+// protection while the old package is still installed: a rollback of an
+// unfinished migration leaves it to the old product. An explicit disable
+// lifts it whenever the old product is not active.
+const STRICT_LEGACY_REASONS = { "package removal": true, "uninstall": true };
 // Test-only bounds for the watcher loop; production runs it forever.
 const WATCH_ITERATIONS = int(getenv("PROKOP_KILLSWITCH_WATCH_ITERATIONS") || "0");
 const WATCH_INTERVAL_MS = int(getenv("PROKOP_KILLSWITCH_WATCH_INTERVAL_MS") || "2000");
@@ -657,8 +681,10 @@ function prune_ruleset_cache() {
             fs.unlink(CACHE_DIR + "/" + name);
 }
 
-function dns_refresh() {
-    return run_quiet(module_args(DNS_UC, [ "killswitch-refresh" ]));
+// With release_legacy, dns/apply.uc also takes dnsmasq off the old product's
+// servers file in the same commit (switched to this one when it is armed).
+function dns_refresh(release_legacy) {
+    return run_quiet(module_args(DNS_UC, release_legacy ? [ "killswitch-refresh", "release-legacy" ] : [ "killswitch-refresh" ]));
 }
 
 function dns_status() {
@@ -707,8 +733,21 @@ function dnsmasq_option(name) {
     return type(value) == "array" ? join(" ", value) : as_string(value);
 }
 
+// sing-box's DNS inbound, also when written with a port.
+function is_sing_box_dns(value) {
+    value = as_string(value);
+    return value == SB_DNS_ADDRESS || index(value, SB_DNS_ADDRESS + "#") == 0;
+}
+
 function dnsmasq_forwards_to_sing_box() {
-    return index(words(dnsmasq_option("server")), SB_DNS_ADDRESS) >= 0;
+    return length(filter(words(dnsmasq_option("server")), is_sing_box_dns)) > 0;
+}
+
+// The dnsmasq option backed up before dnsmasq was pointed at sing-box:
+// Prokop's own backup, or one the product before the rename left behind.
+function dnsmasq_backup_option(name) {
+    let value = dnsmasq_option("prokop_" + name);
+    return value != "" ? value : dnsmasq_option(legacy.DHCP_OPTION_PREFIX + name);
 }
 
 function standby_config_text(settings) {
@@ -728,12 +767,12 @@ function standby_config_text(settings) {
             push(lines, "interface=" + name);
 
     // The original upstream: Prokop keeps it in prokop_* backups while
-    // dnsmasq forwards to sing-box.
+    // dnsmasq forwards to sing-box. sing-box itself is never an upstream.
     let forwarding = dnsmasq_forwards_to_sing_box();
-    let servers = words(dnsmasq_option("prokop_server"));
+    let servers = filter(words(dnsmasq_backup_option("server")), (value) => !is_sing_box_dns(value));
     if (length(servers) == 0)
-        servers = filter(words(dnsmasq_option("server")), (value) => value != SB_DNS_ADDRESS);
-    let noresolv = dnsmasq_option("prokop_noresolv");
+        servers = filter(words(dnsmasq_option("server")), (value) => !is_sing_box_dns(value));
+    let noresolv = dnsmasq_backup_option("noresolv");
     if (noresolv == "" && !forwarding)
         noresolv = dnsmasq_option("noresolv");
     if (noresolv == "1")
@@ -881,10 +920,10 @@ function service_running() {
     return false;
 }
 
-function sync_dns(settings, protected_names) {
+function sync_dns(settings, protected_names, release_legacy) {
     if (bool_option(settings, "dont_touch_dhcp", false)) {
         fs.unlink(DNS_BLOCKED_FILE);
-        dns_refresh();
+        dns_refresh(release_legacy);
         return { ok: true, managed: false, warning: "dnsmasq is not managed by Prokop (dont_touch_dhcp); protected domains are guarded by nftables and FakeIP only" };
     }
 
@@ -901,7 +940,7 @@ function sync_dns(settings, protected_names) {
     if (as_string(fs.readfile(DNS_BLOCKED_FILE)) != rendered.content &&
         !write_atomic(DNS_BLOCKED_FILE, rendered.content))
         return { ok: false, error: "could not write " + DNS_BLOCKED_FILE };
-    if (!dns_refresh())
+    if (!dns_refresh(release_legacy))
         return { ok: false, error: "dnsmasq could not be refreshed" };
 
     delete rendered.content;
@@ -909,14 +948,97 @@ function sync_dns(settings, protected_names) {
     return rendered;
 }
 
+// ------------------------------------------------- pre-rename kill-switch
+
+function legacy_table_present() {
+    return legacy.nft_table_present(LEGACY_TABLE);
+}
+
+function legacy_dns_attached() {
+    return dnsmasq_option("serversfile") == LEGACY_SERVERSFILE;
+}
+
+function legacy_status() {
+    return {
+        installed: legacy.installed(),
+        active: legacy_table_present(),
+        persistent: fs.stat(LEGACY_INCLUDE) != null,
+        keep: fs.stat(LEGACY_KEEP) != null,
+        dns_attached: legacy_dns_attached(),
+        state_dir: fs.stat(LEGACY_STATE_DIR) != null
+    };
+}
+
+function legacy_present() {
+    let st = legacy_status();
+    return st.active || st.persistent || st.keep || st.dns_attached || st.state_dir;
+}
+
+// Whether the old kill-switch may be lifted now. Never while the old product
+// is active; for an automatic hand-over and Prokop's own removal, not while
+// its package is installed either (STRICT_LEGACY_REASONS).
+function legacy_release_allowed(strict) {
+    if (strict && legacy.installed())
+        return false;
+    return !legacy.active();
+}
+
+// The old nft policy. Its standby resolver goes first and client DNS is no
+// longer redirected to it; the include goes before the table, or the next
+// firewall reload would load the table again.
+function legacy_nft_release() {
+    let ok = true;
+    if (fs.stat(LEGACY_SERVICE_INIT) != null) {
+        run_quiet([ LEGACY_SERVICE_INIT, "stop" ]);
+        run_quiet([ LEGACY_SERVICE_INIT, "disable" ]);
+    }
+    else
+        run_quiet([ "ubus", "call", "service", "delete", sprintf("%J", { name: legacy.KILLSWITCH_SERVICE }) ]);
+
+    let table = legacy_table_present();
+    if (table) {
+        run_quiet([ "nft", "flush", "chain", "inet", LEGACY_TABLE, LEGACY_DNS_CHAIN ]);
+        // Existing DNS flows keep their redirect to the stopped standby.
+        run_quiet([ "conntrack", "-D", "-p", "udp", "--dport", "53" ]);
+        run_quiet([ "conntrack", "-D", "-p", "tcp", "--dport", "53" ]);
+    }
+    for (let path in [ LEGACY_INCLUDE, LEGACY_KEEP ])
+        if (fs.stat(path) != null && !fs.unlink(path))
+            ok = false;
+    if (table && !run_quiet([ "nft", "delete", "table", "inet", LEGACY_TABLE ]))
+        ok = false;
+    if (ok)
+        log_message("Kill-switch: the " + legacy.PRODUCT + " kill-switch policy " + LEGACY_TABLE + " was removed", "info");
+    return ok;
+}
+
+// The old state directory goes only once dnsmasq no longer reads its servers
+// file (dns_refresh with release_legacy switched it in one commit).
+function legacy_dir_release() {
+    if (legacy_dns_attached()) {
+        log_message("Kill-switch: dnsmasq still uses " + LEGACY_SERVERSFILE + "; keeping " + LEGACY_STATE_DIR, "warn");
+        return false;
+    }
+    if (fs.stat(LEGACY_STATE_DIR) != null && !run_quiet([ "rm", "-rf", LEGACY_STATE_DIR ]))
+        return false;
+    run_quiet([ "rm", "-rf", LEGACY_CACHE_DIR ]);
+    // Empty once everything else was migrated and cleaned up.
+    fs.rmdir(LEGACY_PRODUCT_STATE_DIR);
+    return true;
+}
+
 // ------------------------------------------------------------- operations
 
-function teardown(reason) {
+function teardown(reason, release_legacy) {
     service_control([ "stop", "disable" ]);
     let ok = remove_nft_policy();
     remove_legacy_guard_table();
+    if (release_legacy && !legacy_nft_release())
+        ok = false;
     fs.unlink(DNS_BLOCKED_FILE);
-    if (!dns_refresh())
+    if (!dns_refresh(release_legacy))
+        ok = false;
+    if (release_legacy && !legacy_dir_release())
         ok = false;
     write_state({
         active: false,
@@ -934,9 +1056,11 @@ function sync_locked(reason) {
     let sections = config_sections();
     let names = protected_section_names(sections);
     if (length(names) == 0) {
-        if (fs.stat(NFT_INCLUDE) != null || ks_table_present() || fs.stat(DNS_BLOCKED_FILE) != null ||
+        // Definitively nothing to protect: the old kill-switch goes as well.
+        let release_legacy = legacy_present() && legacy_release_allowed(true);
+        if (release_legacy || fs.stat(NFT_INCLUDE) != null || ks_table_present() || fs.stat(DNS_BLOCKED_FILE) != null ||
             read_state().active === true || run_quiet([ "nft", "list", "table", "inet", LEGACY_GUARD_TABLE ]))
-            return teardown("no section has the kill-switch enabled") ? 0 : 1;
+            return teardown("no section has the kill-switch enabled", release_legacy) ? 0 : 1;
         return 0;
     }
 
@@ -953,7 +1077,14 @@ function sync_locked(reason) {
     remove_legacy_guard_table();
 
     let warnings = [];
-    let dns_result = sync_dns(settings, names);
+    // This policy is live: it replaces the old kill-switch, whose servers file
+    // dnsmasq leaves in the commit that attaches this one.
+    let release_legacy = legacy_present() && legacy_release_allowed(true);
+    if (release_legacy && !legacy_nft_release())
+        push(warnings, "the " + legacy.PRODUCT + " kill-switch policy " + LEGACY_TABLE + " could not be removed completely");
+    let dns_result = sync_dns(settings, names, release_legacy);
+    if (release_legacy)
+        legacy_dir_release();
     if (!dns_result.ok)
         push(warnings, as_string(dns_result.error) + "; the previous DNS block list stays in place");
     else if (dns_result.warning)
@@ -968,6 +1099,9 @@ function sync_locked(reason) {
         let ds = dns_status();
         if (ds.conflict)
             push(warnings, "dnsmasq already uses servers file " + as_string(ds.serversfile) + "; DNS protection is not attached");
+        else if (ds.legacy_attached)
+            push(warnings, "dnsmasq still uses the " + legacy.PRODUCT + " kill-switch servers file " + as_string(ds.serversfile) +
+                ", kept while " + legacy.PRODUCT + " is installed or active; DNS protection is not attached");
     }
 
     let state = {
@@ -1024,7 +1158,17 @@ function sync(reason) {
 }
 
 function disable(reason) {
-    return with_lock(function() { return teardown(reason || "disabled on request") ? 0 : 1; });
+    reason = as_string(reason) || "disabled on request";
+    return with_lock(function() {
+        let release_legacy = false;
+        if (legacy_present()) {
+            release_legacy = legacy_release_allowed(STRICT_LEGACY_REASONS[reason] === true);
+            if (!release_legacy)
+                log_message("Kill-switch: the " + legacy.PRODUCT + " kill-switch stays in place: " + legacy.PRODUCT +
+                    " is still " + (legacy.active() ? "active" : "installed"), "warn");
+        }
+        return teardown(reason, release_legacy) ? 0 : 1;
+    });
 }
 
 function status() {
@@ -1043,6 +1187,9 @@ function status() {
         dns: dns_status(),
         dns_standby: table_present && dns_redirect_state() === true,
         service_running: service_running(),
+        // What the kill-switch of the product before the rename left; a
+        // disable lifts it once that product is no longer active.
+        legacy: legacy_status(),
         state
     }), "\n");
     return 0;

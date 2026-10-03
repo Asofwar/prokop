@@ -1,6 +1,12 @@
 import { ProkopShellMethods } from '../../methods';
 import type { Prokop } from '../../types';
 import type { StatusTone } from './statusLabels';
+import {
+  CONNECTIVITY_TARGETS_KEY,
+  readStorageItem,
+  writeStorageItem,
+  type ReadableStorage,
+} from '../../helpers/legacyStorage';
 
 export type ConnectivityType = 'DNS' | 'TCP' | 'HTTP' | 'HTTPS';
 export interface Target {
@@ -14,7 +20,6 @@ export type RowResult =
   | { state: 'done'; result: Prokop.ConnectivityResult }
   | { state: 'invalid'; message: string };
 
-const KEY = 'prokop.connectivity.targets';
 const TYPES: ConnectivityType[] = ['DNS', 'TCP', 'HTTP', 'HTTPS'];
 export const DEFAULT_PORTS: Record<ConnectivityType, string> = {
   DNS: '',
@@ -28,9 +33,11 @@ const DEFAULTS: Target[] = [
 ];
 const MAX_TARGETS = 10;
 
-export function loadTargets(storage: Pick<Storage, 'getItem'>): Target[] {
+export function loadTargets(storage: ReadableStorage): Target[] {
   try {
-    const value = JSON.parse(storage.getItem(KEY) || 'null');
+    const value = JSON.parse(
+      readStorageItem(storage, CONNECTIVITY_TARGETS_KEY) || 'null',
+    );
     if (Array.isArray(value))
       return value
         .slice(0, MAX_TARGETS)
@@ -165,7 +172,11 @@ export function initConnectivityMatrix() {
   }));
   let runningAll = false;
   const save = () =>
-    localStorage.setItem(KEY, JSON.stringify(rows.map((row) => row.target)));
+    writeStorageItem(
+      localStorage,
+      CONNECTIVITY_TARGETS_KEY,
+      JSON.stringify(rows.map((row) => row.target)),
+    );
   const busy = () => rows.some((row) => row.result.state === 'running');
 
   const updateButtons = () => {

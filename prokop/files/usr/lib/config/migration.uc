@@ -11,6 +11,7 @@ let constants_module = require("core.constants");
 let singbox_constants_module = require("singbox.constants");
 let domain_config = require("config.domain");
 let subscription_share_link = require("subscription.share_link");
+let legacy_forkop = require("core.legacy_forkop");
 
 let as_string = common.as_string;
 let read_json_file = common.read_json_file;
@@ -30,9 +31,9 @@ const PROKOP_SECTION_CACHE_DIR = getenv("PROKOP_SECTION_CACHE_DIR") || PROKOP_RU
 const PROKOP_RUNTIME_CACHE_FORMAT_FILE = getenv("PROKOP_RUNTIME_CACHE_FORMAT_FILE") || PROKOP_RUNTIME_STATE_DIR + "/cache-format";
 const PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR = getenv("PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR") || "/etc/prokop/subscription-cache";
 const PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_FORMAT_FILE = getenv("PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_FORMAT_FILE") || PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR + "/cache-format";
-const PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_FORMAT = getenv("PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_FORMAT") || "9";
+const PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_FORMAT = getenv("PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_FORMAT") || "10";
 const PROKOP_INTERNAL_CONFIG_TRIGGER_GUARD = getenv("PROKOP_INTERNAL_CONFIG_TRIGGER_GUARD") || "/var/run/prokop.internal-config-change";
-const PROKOP_RUNTIME_CACHE_FORMAT = getenv("PROKOP_RUNTIME_CACHE_FORMAT") || "10";
+const PROKOP_RUNTIME_CACHE_FORMAT = getenv("PROKOP_RUNTIME_CACHE_FORMAT") || "11";
 const CONFIG_VERSION_OPTION = "config_version";
 const APPLIED_MIGRATIONS_OPTION = "applied_migrations";
 const SERVER_COUNTRY_METHOD_FLAG_EMOJI = "flag_emoji";
@@ -47,6 +48,13 @@ const MODEL_SECTION_TYPES = [
     ...CHILD_ITEM_TYPES,
     "urltest_override"
 ];
+// Sections of these types are model.settings, model.rules, model.sections or
+// model[type]; a section of any other type is kept in model.other.
+const KNOWN_SECTION_TYPES = [ "settings", "rule", "section", ...MODEL_SECTION_TYPES ];
+// Forkop kept its state under /etc/forkop. The migrating installer copies it to
+// /etc/prokop before it runs this migration.
+const LEGACY_STATE_DIR = legacy_forkop.STATE_DIR;
+const PROKOP_STATE_DIR = "/etc/prokop";
 const SECONDARY_RULESET_RAW_PREFIX = "https://raw.githubusercontent.com/Greeg0ry/b4geoip-forkop/main/srs/";
 const SECONDARY_RULESET_CDN_PREFIX = "https://cdn.jsdelivr.net/gh/Greeg0ry/b4geoip-forkop@main/srs/";
 // The dependency mirror is opt-in. The former upstream mirrors are recognised
@@ -116,6 +124,18 @@ function section_name(section) {
     return option(section, ".name", "");
 }
 
+// Every section the model holds, whatever its type.
+function model_sections(model) {
+    let result = [ model.settings ];
+    for (let group in [ model.rules, model.sections ])
+        for (let section in (group || []))
+            push(result, section);
+    for (let type_name in [ ...MODEL_SECTION_TYPES, "other" ])
+        for (let section in (model[type_name] || []))
+            push(result, section);
+    return result;
+}
+
 function clone_section(section) {
     let result = {};
     for (let key in keys(object_or_empty(section)))
@@ -159,11 +179,22 @@ function model_from_fixture(path) {
 
     // Sections of every type, those the migrations do not read included.
     model.names = [];
+    model.other = [];
     for (let type_name in keys(data)) {
         let value = data[type_name];
-        for (let section in (type(value) == "array" ? value : [ value ]))
-            if (type(section) == "object" && section[".name"] != null)
-                push(model.names, as_string(section[".name"]));
+        let known = index(KNOWN_SECTION_TYPES, type_name) >= 0 ||
+            index(KNOWN_SECTION_TYPES, replace(type_name, /s$/, "")) >= 0;
+        for (let section in (type(value) == "array" ? value : [ value ])) {
+            if (type(section) != "object" || section[".name"] == null)
+                continue;
+            push(model.names, as_string(section[".name"]));
+            if (!known) {
+                section = clone_section(section);
+                if (section[".type"] == null)
+                    section[".type"] = type_name;
+                push(model.other, section);
+            }
+        }
     }
 
     return model;
@@ -191,6 +222,17 @@ function model_from_uci(cursor) {
     }
     // Sections of every type, those the migrations do not read included.
     model.names = cursor.all_sections(CONFIG_NAME);
+    let loaded = {};
+    for (let section in model_sections(model))
+        loaded[section_name(section)] = true;
+    model.other = [];
+    for (let name in model.names) {
+        if (loaded[as_string(name)])
+            continue;
+        let section = cursor.get_all(CONFIG_NAME, name);
+        if (type(section) == "object")
+            push(model.other, clone_section(section));
+    }
 
     return model;
 }
@@ -205,6 +247,11 @@ function export_model(model) {
     for (let type_name in MODEL_SECTION_TYPES)
         if (length(model[type_name] || []) > 0)
             result[type_name] = model[type_name];
+    for (let section in (model.other || [])) {
+        let type_name = as_string(section[".type"]);
+        result[type_name] = result[type_name] || [];
+        push(result[type_name], section);
+    }
     return result;
 }
 
@@ -620,7 +667,7 @@ function migrate_proxy_rule(ctx, section, proxy_config_type) {
     delete_option(ctx, section, "proxy_config_type");
 }
 
-// Podkop Plus -> Forkop source migration.
+// Podkop Plus -> Prokop source migration.
 function migrated_rule_action(section) {
     let action = option(section, "action", "");
     let proxy_config_type = option(section, "proxy_config_type", "");
@@ -1563,6 +1610,67 @@ function migrate_vpn_guard_to_kill_switch(ctx) {
     return true;
 }
 
+// Characters that can stand right before a path inside an option value, and
+// right after the name of the state directory in it.
+const STATE_PATH_BEFORE = " \t\r\n=\"',;:";
+const STATE_PATH_AFTER = "/ \t\r\n\"',;";
+
+// value with every path under Forkop's state directory moved under Prokop's,
+// or null when it names none. A path counts alone, after file://, or inside a
+// longer value such as command-line options; /etc/forkop-backups or
+// /mnt/etc/forkop are other paths.
+function prokop_state_path_value(value) {
+    value = as_string(value);
+    let result = "";
+    let from = 0;
+    let changed = false;
+    while (from < length(value)) {
+        let at = index(substr(value, from), LEGACY_STATE_DIR);
+        if (at < 0)
+            break;
+        at += from;
+        let end = at + length(LEGACY_STATE_DIR);
+        let starts = at == 0 || index(STATE_PATH_BEFORE, substr(value, at - 1, 1)) >= 0 ||
+            (at >= 7 && substr(value, at - 7, 7) == "file://");
+        let ends = end == length(value) || index(STATE_PATH_AFTER, substr(value, end, 1)) >= 0;
+        result += substr(value, from, at - from) + (starts && ends ? PROKOP_STATE_DIR : LEGACY_STATE_DIR);
+        if (starts && ends)
+            changed = true;
+        from = end;
+    }
+    return changed ? result + substr(value, from) : null;
+}
+
+// A configuration copied from /etc/config/forkop names files under /etc/forkop;
+// the installer copied them to /etc/prokop, and Forkop's directory goes away.
+function migrate_prokop_state_paths(ctx) {
+    for (let section in model_sections(ctx.model)) {
+        for (let key in keys(section)) {
+            if (substr(key, 0, 1) == ".")
+                continue;
+            let current = section[key];
+            if (type(current) == "array") {
+                let values = [];
+                let changed = false;
+                for (let item in current) {
+                    let moved = prokop_state_path_value(item);
+                    push(values, moved != null ? moved : as_string(item));
+                    if (moved != null)
+                        changed = true;
+                }
+                if (changed)
+                    set_list_option(ctx, section, key, values);
+            }
+            else if (current != null) {
+                let moved = prokop_state_path_value(current);
+                if (moved != null)
+                    set_option(ctx, section, key, moved);
+            }
+        }
+    }
+    return true;
+}
+
 const MIGRATIONS = [
     { id: "interface_sections", run: migrate_interface_sections },
     { id: "enable_component_checks", run: migrate_enable_component_checks },
@@ -1575,6 +1683,7 @@ const MIGRATIONS = [
     { id: "clash_api_secret_v1", run: migrate_clash_api_secret },
     { id: "urltest_section_names_v1", run: migrate_urltest_section_names },
     { id: "vpn_guard_kill_switch_v1", run: migrate_vpn_guard_to_kill_switch },
+    { id: "prokop_state_paths_v1", run: migrate_prokop_state_paths },
     // Routers that ran own_dependency_mirror_v1 before the mirror became
     // opt-in still name the upstream mirror.
     { id: "fork_mirror_opt_in_v1", run: migrate_off_legacy_mirror }
@@ -1680,10 +1789,15 @@ function ensure_runtime_dirs() {
     ensure_dir(PROKOP_SECTION_CACHE_DIR);
 }
 
+// The runtime subscription folder (/tmp/sing-box) is shared with Forkop. While
+// Forkop's package is installed (the migrating installer runs "migrate" before
+// it removes Forkop, which must be able to roll back to it untouched), the
+// runtime cache is left to Prokop's first start (subscription/cache.uc);
+// Prokop's own persistent cache is checked here all the same.
 function ensure_runtime_cache_format() {
     ensure_dir(PROKOP_RUNTIME_STATE_DIR);
 
-    if (first_line(PROKOP_RUNTIME_CACHE_FORMAT_FILE) != PROKOP_RUNTIME_CACHE_FORMAT) {
+    if (first_line(PROKOP_RUNTIME_CACHE_FORMAT_FILE) != PROKOP_RUNTIME_CACHE_FORMAT && !legacy_forkop.installed()) {
         if (first_line(PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_FORMAT_FILE) == PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_FORMAT)
             subscription_share_link.populate_subscription_dir(PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR);
         clear_subscription_runtime_cache();

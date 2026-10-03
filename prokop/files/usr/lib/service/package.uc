@@ -2,6 +2,7 @@
 
 let fs = require("fs");
 let uci_core = require("core.uci");
+let legacy = require("core.legacy_forkop");
 
 function as_string(value) {
     return value == null ? "" : "" + value;
@@ -127,15 +128,25 @@ function clear_component_update_check_cache() {
     unlink_if_exists(COMPONENT_UPDATE_CHECK_STATE_FILE);
 }
 
+// The entry of the product before the rename (core/legacy_forkop.uc), which
+// a migration or its old package removal may have left. It names the same
+// table id, so `ip rule` would show Prokop's rule under the old name. It is
+// the old product's own while that package is installed.
+function legacy_rt_tables_line(line) {
+    let fields = split(trim(as_string(line)), /[ \t]+/);
+    return length(fields) >= 2 && fields[0] == legacy.RT_TABLE_ID && fields[1] == legacy.RT_TABLE_NAME;
+}
+
 function remove_rt_tables_entry() {
     let data = fs.readfile(RT_TABLES_PATH);
     if (data == null)
         return true;
 
+    let strip_legacy = !legacy.installed();
     let changed = false;
     let lines = [];
     for (let line in split(data, "\n")) {
-        if (index(line, "105 prokop") >= 0) {
+        if (index(line, "105 prokop") >= 0 || (strip_legacy && legacy_rt_tables_line(line))) {
             changed = true;
             continue;
         }
@@ -171,9 +182,19 @@ function restore_dnsmasq_if_needed() {
         command_success_from_args([ "ucode", DNS_APPLY_UC, "failsafe-restore" ]);
 }
 
+// A managed service script the product before the rename wrote is Prokop's
+// once that package is gone (a migration that did not rewrite its marker).
+function managed_sing_box_script(data) {
+    if (data == null)
+        return false;
+    if (index(data, SING_BOX_MANAGED_MARKER) >= 0)
+        return true;
+    return !legacy.installed() && index(data, legacy.SING_BOX_MANAGED_MARKER) >= 0;
+}
+
 function remove_managed_sing_box() {
     let data = fs.readfile(SING_BOX_INIT);
-    if (data == null || index(data, SING_BOX_MANAGED_MARKER) < 0)
+    if (!managed_sing_box_script(data))
         return;
 
     command_success_from_args([ SING_BOX_INIT, "stop" ]);
@@ -318,12 +339,30 @@ function reconcile_zapret_manager_launchers() {
         warn("Unable to update the Zapret-Manager launchers for the current mirror setting.\n");
 }
 
+// What the product before the rename left once its package is gone: the
+// retired VPN guard and the policy routing table entry. Nothing while that
+// package is installed: Prokop's package is installed next to it during a
+// migration, which must be able to roll back to it untouched. The installer
+// runs this again after it has removed the old package.
+function legacy_cleanup() {
+    if (legacy.installed())
+        return true;
+    let ok = legacy_vpn_guard_cleanup();
+    let data = fs.readfile(RT_TABLES_PATH);
+    if (data != null) {
+        let lines = filter(split(data, "\n"), (line) => !legacy_rt_tables_line(line));
+        if (length(lines) != length(split(data, "\n")) && fs.writefile(RT_TABLES_PATH, join("\n", lines)) == null)
+            ok = false;
+    }
+    return ok;
+}
+
 function postinst_restore() {
     if (env("IPKG_INSTROOT", "") != "")
         return true;
 
     clear_component_update_check_cache();
-    legacy_vpn_guard_cleanup();
+    legacy_cleanup();
     reconcile_zapret_manager_launchers();
 
     let config = fs.readfile(CONFIG_PATH);
@@ -426,9 +465,11 @@ else if (mode == "luci-postinst")
     exit(luci_postinst() ? 0 : 1);
 else if (mode == "legacy-vpn-guard-cleanup")
     exit(legacy_vpn_guard_cleanup() ? 0 : 1);
+else if (mode == "legacy-cleanup")
+    exit(legacy_cleanup() ? 0 : 1);
 else if (mode == "sing-box-exe-path-fixture")
     exit(sing_box_exe_path(ARGV[1]) ? 0 : 1);
 else {
-    warn("Usage: service/package.uc <prerm|postinst|remove-rt-tables-entry|luci-postinst>\n");
+    warn("Usage: service/package.uc <prerm|postinst|remove-rt-tables-entry|luci-postinst|legacy-cleanup>\n");
     exit(1);
 }

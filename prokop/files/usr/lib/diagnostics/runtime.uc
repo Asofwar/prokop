@@ -8,6 +8,7 @@ let runtime_dns = require("singbox.dns");
 let netstat = require("core.netstat");
 let dpi_strategy = require("core.dpi_strategy");
 let common = require("core.common");
+let legacy_forkop = require("core.legacy_forkop");
 
 const CONFIG_NAME = getenv("PROKOP_CONFIG_NAME") || constants.PROKOP_CONFIG_NAME || "prokop";
 const LIB_DIR = getenv("PROKOP_LIB") || "/usr/lib/prokop";
@@ -952,12 +953,14 @@ function sing_box_installed_package_name() {
     return sing_box_package_from_manifest(command_output_from_args([ "opkg", "list-installed" ]));
 }
 
-// The launchers components/action.uc writes carry its marker line; those from
-// older releases always went through the mirror proxy path.
+// The launchers components/action.uc writes carry its marker line. Those
+// Forkop wrote carry Forkop's, those from older releases always went through
+// the mirror proxy path: they are Prokop's once Forkop's package is gone.
 function managed_zapret_manager_launcher(path) {
     let source = as_string(fs.readfile(path));
     return file_executable(path) && (index(source, "# Prokop Zapret-Manager launcher") >= 0 ||
-        index(source, "/zapret-manager/proxy/") >= 0);
+        ((index(source, legacy_forkop.ZAPRET_MANAGER_MARKER) >= 0 || index(source, "/zapret-manager/proxy/") >= 0) &&
+            !legacy_forkop.installed()));
 }
 
 function zapret_manager_launchers_installed() {

@@ -13,6 +13,8 @@ WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT
 # The probes read both from the environment.
 export WORK_DIR PROKOP_LIB
+# No Forkop package on this "router": launchers Forkop wrote are Prokop's.
+export PROKOP_LEGACY_FORKOP_ROOT="$WORK_DIR/no-forkop"
 
 fail() {
   printf 'FAIL: %s\n' "$1" >&2
@@ -84,7 +86,7 @@ import sys
 
 source = open(sys.argv[1], encoding='utf-8').read()
 consts = ('PROKOP_MIRROR_BASE_URL', 'ZAPRET_MANAGER_SOURCE', 'ZAPRET_MANAGER_LAUNCHER_MARKER',
-          'ZAPRET_MANAGER_LEGACY_MARKER', 'ZAPRET_MANAGER_BIN_DIR')
+          'ZAPRET_MANAGER_FORKOP_MARKER', 'ZAPRET_MANAGER_LEGACY_MARKER', 'ZAPRET_MANAGER_BIN_DIR')
 names = ('as_string', 'shell_quote', 'command_from_args', 'command_status',
          'command_success', 'command_success_from_args', 'command_output',
          'command_output_from_args', 'write_file', 'read_file', 'parse_json_object',
@@ -112,6 +114,7 @@ for name in names:
 prefix = r'''
 let fs = require("fs");
 let constants = require("core.constants");
+let legacy_forkop = require("core.legacy_forkop");
 const WORK = getenv("WORK_DIR");
 const LIB_DIR = getenv("PROKOP_LIB");
 // The launchers land here (PROKOP_ZAPRET_MANAGER_BIN_DIR) instead of /usr/bin.
@@ -282,6 +285,15 @@ fs.writefile(BIN + "/zmsA", legacy);
 outcome = run_action(() => remove_zapret_manager("remove"));
 check(outcome.success && !file_exists(BIN + "/zms"), "a launcher from an older release was not removed");
 
+// Forkop wrote its launchers, direct ones included, under its own marker.
+let forkop = "#!/bin/sh\n# Forkop X Zapret-Manager launcher\n" +
+    "exec sh <(wget -q -O - 'https://raw.githubusercontent.com/Screamshow/Zapret-Manager/main/Zapret-Manager.sh') \"$@\"\n";
+fs.writefile(BIN + "/zms", forkop);
+fs.writefile(BIN + "/zmsA", forkop);
+outcome = run_action(() => remove_zapret_manager("remove"));
+check(outcome.success && !file_exists(BIN + "/zms") && !file_exists(BIN + "/zmsA"),
+    "a launcher Forkop wrote was not removed: " + outcome.message);
+
 fs.writefile(BIN + "/zms", "#!/bin/sh\nexec /opt/zapret-manager \"$@\"\n");
 outcome = run_action(() => remove_zapret_manager("remove"));
 check(!outcome.success && file_exists(BIN + "/zms"), "a launcher Prokop did not write was removed");
@@ -314,6 +326,7 @@ for name in ('managed_zapret_manager_launcher', 'zapret_manager_launchers_instal
 
 prefix = r'''
 let fs = require("fs");
+let legacy_forkop = require("core.legacy_forkop");
 const WORK = getenv("WORK_DIR");
 const BIN = WORK + "/diag-bin";
 function as_string(value) { return value == null ? "" : "" + value; }
@@ -341,6 +354,12 @@ let legacy = "#!/bin/sh\nexec sh <(wget -q -O - 'https://mirror.infotechtg.ru/za
 install("zms", legacy, "0755");
 install("zmsA", legacy, "0755");
 check(zapret_manager_launchers_installed() == 1, "launchers from an older release are not reported as installed");
+let forkop = "#!/bin/sh\n# Forkop X Zapret-Manager launcher\n" +
+    "exec sh <(wget -q -O - 'https://raw.githubusercontent.com/Screamshow/Zapret-Manager/main/Zapret-Manager.sh') \"$@\"\n";
+install("zms", forkop, "0755");
+install("zmsA", forkop, "0755");
+check(zapret_manager_launchers_installed() == 1, "launchers Forkop wrote are not reported as installed");
+install("zms", legacy, "0755");
 install("zmsA", legacy, "0644");
 check(zapret_manager_launchers_installed() == 0, "a launcher that cannot run was reported as installed");
 install("zmsA", "#!/bin/sh\nexec /opt/zapret-manager \"$@\"\n", "0755");
@@ -350,7 +369,7 @@ print("probe: PASS\n");
 open(sys.argv[2], 'w', encoding='utf-8').write(prefix + '\n\n'.join(parts) + suffix)
 PY
 
-result="$(ucode "$WORK_DIR/diagnostics.uc")" || fail "the diagnostics probe failed"
+result="$(ucode -L "$PROKOP_LIB" "$WORK_DIR/diagnostics.uc")" || fail "the diagnostics probe failed"
 [ "$result" = "probe: PASS" ] || fail "the diagnostics probe did not finish: $result"
 
 printf 'fork updater components: PASS\n'

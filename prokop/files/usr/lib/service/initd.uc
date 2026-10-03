@@ -6,6 +6,7 @@ let uci_core = require("core.uci");
 let runtime_lock = require("core.runtime_lock");
 let process_identity = require("core.process_identity");
 let list_worker = require("core.list_worker");
+let legacy = require("core.legacy_forkop");
 
 function as_string(value) {
     return value == null ? "" : "" + value;
@@ -83,6 +84,9 @@ const STOP_ACK_REASONS = [ "config-restore", "autotune" ];
 
 const DNS_APPLY_UC = LIB_DIR + "/dns/apply.uc";
 const UI_UC = LIB_DIR + "/service/ui.uc";
+// The one-line installer that migrates a router from the product before the
+// rename (core/legacy_forkop.uc).
+const INSTALL_COMMAND = "wget -qO- " + constant_value("PROKOP_RELEASE_BASE_URL", "https://asofwar.github.io/prokop") + "/install.sh | sh";
 
 function shell_quote(value) {
     return "'" + replace(as_string(value), /'/g, "'\\''") + "'";
@@ -888,6 +892,19 @@ function start_service(reason, owner_pid) {
     print("Start Prokop\n");
     reason = as_string(reason);
     owner_pid = as_string(owner_pid) || owner_pid_value();
+    // Prokop never starts next to the active product before the rename
+    // (service/lifecycle.uc legacy_start_refused), also not when a package
+    // install starts every init script it ships. Such a start is neither an
+    // explicit start nor retried: the installer's migration starts Prokop.
+    let legacy_reason = legacy.active_reason();
+    if (legacy_reason != null) {
+        let message = "Prokop start refused: " + legacy.PRODUCT + " is still active (" + legacy_reason +
+            "). Run the Prokop installer to migrate: " + INSTALL_COMMAND;
+        command_success_from_args([ "logger", "-t", SERVICE_NAME, "[error] " + message ]);
+        warn(message + "\n");
+        report_start_result(reason, 1);
+        return 1;
+    }
     // A stop requested after this start (for the automatic retry: at all)
     // wins over it: the stop may have run while this start waited for
     // reload.lock, or runs next (UC-012). The retry of a deferred start
@@ -968,8 +985,11 @@ function start_service(reason, owner_pid) {
         drop_start_retry(status);
         // A start refused for a guard that a failed transition kept: no
         // retry succeeds before a restart removes it (service/lifecycle.uc).
-        if (index(as_string(fs.readfile(START_FAILURE_FILE)), "reason=runtime_guard_active") >= 0)
+        let failure = as_string(fs.readfile(START_FAILURE_FILE));
+        if (index(failure, "reason=runtime_guard_active") >= 0)
             command_success_from_args([ "logger", "-t", SERVICE_NAME, "[error] Prokop startup retry suppressed: a failed transition kept its fail-closed guard (runtime_guard_active); restart Prokop to recover" ]);
+        else if (index(failure, "reason=legacy_runtime_active") >= 0)
+            command_success_from_args([ "logger", "-t", SERVICE_NAME, "[error] Prokop startup retry suppressed: " + legacy.PRODUCT + " is still active; run the Prokop installer to migrate: " + INSTALL_COMMAND ]);
         else
             command_success_from_args([ "logger", "-t", SERVICE_NAME, "[error] Prokop startup retry suppressed because all rule-set download sources failed; see the fatal startup error in LuCI logs" ]);
     }

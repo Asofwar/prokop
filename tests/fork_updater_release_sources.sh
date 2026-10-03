@@ -2,7 +2,9 @@
 # The router updater follows the fork's own release channel: the rollback copy
 # of the installed release comes from the static catalog first and GitHub
 # second, every published checksum is enforced, and a router running a build
-# this channel never published is told how to switch to the fork.
+# this channel never published is told how to switch to the fork. Forkop's
+# releases (forkop_* packages), which the renamed repository and its channel
+# may still list, are never offered, installed or staged for rollback.
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -25,7 +27,7 @@ BASE_URL="https://asofwar.github.io/prokop"
 GITHUB_DOWNLOAD="https://github.com/Asofwar/prokop/releases/download"
 
 mkdir -p "$WORK_DIR/payload" "$WORK_DIR/tmp"
-for version in 1.0.29 1.0.30; do
+for version in 2.0.29 2.0.30; do
   for package in prokop luci-app-prokop luci-i18n-prokop-ru; do
     printf 'payload %s_%s.ipk\n' "$package" "$version" >"$WORK_DIR/payload/${package}_${version}.ipk"
   done
@@ -52,33 +54,63 @@ assets() {
 
 cat >"$WORK_DIR/catalog.json" <<JSON
 {"format":1,"releases":[
- {"tag_name":"1.0.30","channel":"stable","html_url":"$BASE_URL/releases/1.0.30/",
-  "assets":[$(assets 1.0.30 "$BASE_URL/releases/1.0.30/" catalog)]}
+ {"tag_name":"2.0.30","channel":"stable","html_url":"$BASE_URL/releases/2.0.30/",
+  "assets":[$(assets 2.0.30 "$BASE_URL/releases/2.0.30/" catalog)]}
 ]}
 JSON
 # The same release, rewritten to download from elsewhere: the catalog guard
 # must reject it, and the rollback lookup must then ask GitHub instead.
 cat >"$WORK_DIR/catalog-foreign.json" <<JSON
 {"format":1,"releases":[
- {"tag_name":"1.0.30","channel":"stable","html_url":"$BASE_URL/releases/1.0.30/",
-  "assets":[$(assets 1.0.30 "https://evil.test/" catalog)]}
+ {"tag_name":"2.0.30","channel":"stable","html_url":"$BASE_URL/releases/2.0.30/",
+  "assets":[$(assets 2.0.30 "https://evil.test/" catalog)]}
 ]}
 JSON
-cat >"$WORK_DIR/github-1.0.29.json" <<JSON
-{"tag_name":"1.0.29","html_url":"https://github.com/Asofwar/prokop/releases/tag/1.0.29",
- "assets":[$(assets 1.0.29 "$GITHUB_DOWNLOAD/1.0.29/" github)]}
+cat >"$WORK_DIR/github-2.0.29.json" <<JSON
+{"tag_name":"2.0.29","html_url":"https://github.com/Asofwar/prokop/releases/tag/2.0.29",
+ "assets":[$(assets 2.0.29 "$GITHUB_DOWNLOAD/2.0.29/" github)]}
 JSON
-cat >"$WORK_DIR/github-1.0.30.json" <<JSON
-{"tag_name":"1.0.30","html_url":"https://github.com/Asofwar/prokop/releases/tag/1.0.30",
- "assets":[$(assets 1.0.30 "$GITHUB_DOWNLOAD/1.0.30/" github)]}
+cat >"$WORK_DIR/github-2.0.30.json" <<JSON
+{"tag_name":"2.0.30","html_url":"https://github.com/Asofwar/prokop/releases/tag/2.0.30",
+ "assets":[$(assets 2.0.30 "$GITHUB_DOWNLOAD/2.0.30/" github)]}
 JSON
 cat >"$WORK_DIR/latest-static.json" <<JSON
-{"tag_name":"1.0.30","html_url":"$BASE_URL/releases/1.0.30/",
- "assets":[$(assets 1.0.30 "$BASE_URL/releases/1.0.30/" latest)]}
+{"tag_name":"2.0.30","html_url":"$BASE_URL/releases/2.0.30/",
+ "assets":[$(assets 2.0.30 "$BASE_URL/releases/2.0.30/" latest)]}
+JSON
+# Forkop's releases as the renamed repository and its channel may list them:
+# forkop_* packages under a Forkop version or a Prokop one.
+forkop_assets() {
+  local version="$1" prefix="$2" out="" name
+  for package in forkop luci-app-forkop luci-i18n-forkop-ru; do
+    name="${package}_${version}.ipk"
+    printf 'payload %s\n' "$name" >"$WORK_DIR/payload/$name"
+    [ -n "$out" ] && out="$out,"
+    out="$out{\"name\":\"$name\",\"browser_download_url\":\"${prefix}${name}\",\"sha256\":\"$(digest "$name")\"}"
+  done
+  printf '%s' "$out"
+}
+cat >"$WORK_DIR/catalog-forkop.json" <<JSON
+{"format":1,"releases":[
+ {"tag_name":"1.0.26","channel":"stable","html_url":"$BASE_URL/releases/1.0.26/",
+  "assets":[$(forkop_assets 1.0.26 "$BASE_URL/releases/1.0.26/")]},
+ {"tag_name":"2.0.29","channel":"stable","html_url":"$BASE_URL/releases/2.0.29/",
+  "assets":[$(forkop_assets 2.0.29 "$BASE_URL/releases/2.0.29/")]},
+ {"tag_name":"2.0.30","channel":"stable","html_url":"$BASE_URL/releases/2.0.30/",
+  "assets":[$(assets 2.0.30 "$BASE_URL/releases/2.0.30/" catalog)]}
+]}
+JSON
+cat >"$WORK_DIR/github-1.0.26.json" <<JSON
+{"tag_name":"1.0.26","html_url":"https://github.com/Asofwar/prokop/releases/tag/1.0.26",
+ "assets":[$(forkop_assets 1.0.26 "$GITHUB_DOWNLOAD/1.0.26/")]}
+JSON
+cat >"$WORK_DIR/github-forkop-2.0.29.json" <<JSON
+{"tag_name":"2.0.29","html_url":"https://github.com/Asofwar/prokop/releases/tag/2.0.29",
+ "assets":[$(forkop_assets 2.0.29 "$GITHUB_DOWNLOAD/2.0.29/")]}
 JSON
 cat >"$WORK_DIR/latest-github-nodigest.json" <<JSON
-{"tag_name":"1.0.30","html_url":"https://github.com/Asofwar/prokop/releases/tag/1.0.30",
- "assets":[$(assets 1.0.30 "$GITHUB_DOWNLOAD/1.0.30/" none)]}
+{"tag_name":"2.0.30","html_url":"https://github.com/Asofwar/prokop/releases/tag/2.0.30",
+ "assets":[$(assets 2.0.30 "$GITHUB_DOWNLOAD/2.0.30/" none)]}
 JSON
 
 python3 - "$ACTION_UC" "$WORK_DIR/probe.uc" <<'PY'
@@ -178,10 +210,10 @@ function reset(catalog) {
     events = [];
     http_bodies = {};
     http_bodies[BASE + "/updates/releases.json"] = catalog ? WORK + "/" + catalog : null;
-    http_bodies[API + "1.0.29"] = WORK + "/github-1.0.29.json";
-    http_bodies[API + "1.0.30"] = WORK + "/github-1.0.30.json";
+    http_bodies[API + "2.0.29"] = WORK + "/github-2.0.29.json";
+    http_bodies[API + "2.0.30"] = WORK + "/github-2.0.30.json";
     download_bodies = {};
-    for (let version in [ "1.0.29", "1.0.30" ])
+    for (let version in [ "2.0.29", "2.0.30" ])
         for (let package in [ "prokop", "luci-app-prokop", "luci-i18n-prokop-ru" ]) {
             let name = package + "_" + version + ".ipk";
             download_bodies[BASE + "/releases/" + version + "/" + name] = WORK + "/payload/" + name;
@@ -195,38 +227,52 @@ check(PROKOP_RELEASE_REPO == "Asofwar/prokop", "release repository default is no
 
 // --- rollback set: static catalog first ------------------------------------
 reset("catalog.json");
-let previous = previous_prokop_release("1.0.30");
+let previous = previous_prokop_release("2.0.30");
 check(previous != null, "catalog release was not found for rollback");
-check(previous.backend_url == BASE + "/releases/1.0.30/prokop_1.0.30.ipk", "rollback did not use the catalog URL: " + previous.backend_url);
-check(previous.backend_sha256 == digest("prokop_1.0.30.ipk") &&
-    previous.app_sha256 == digest("luci-app-prokop_1.0.30.ipk") &&
-    previous.i18n_sha256 == digest("luci-i18n-prokop-ru_1.0.30.ipk"), "catalog checksums were not carried");
-check(!has(http_log, API + "1.0.30"), "GitHub was asked although the catalog had the release");
+check(previous.backend_url == BASE + "/releases/2.0.30/prokop_2.0.30.ipk", "rollback did not use the catalog URL: " + previous.backend_url);
+check(previous.backend_sha256 == digest("prokop_2.0.30.ipk") &&
+    previous.app_sha256 == digest("luci-app-prokop_2.0.30.ipk") &&
+    previous.i18n_sha256 == digest("luci-i18n-prokop-ru_2.0.30.ipk"), "catalog checksums were not carried");
+check(!has(http_log, API + "2.0.30"), "GitHub was asked although the catalog had the release");
 
 // --- GitHub Releases as the fallback ---------------------------------------
 reset("catalog.json");
-previous = previous_prokop_release("1.0.29");
-check(has(http_log, BASE + "/updates/releases.json") && has(http_log, API + "1.0.29"),
+previous = previous_prokop_release("2.0.29");
+check(has(http_log, BASE + "/updates/releases.json") && has(http_log, API + "2.0.29"),
     "rollback lookup did not fall back from the catalog to GitHub");
-check(previous != null && previous.backend_url == GH + "1.0.29/prokop_1.0.29.ipk", "GitHub rollback release was not resolved");
-check(previous.backend_sha256 == digest("prokop_1.0.29.ipk"), "GitHub digest was not used as the checksum");
+check(previous != null && previous.backend_url == GH + "2.0.29/prokop_2.0.29.ipk", "GitHub rollback release was not resolved");
+check(previous.backend_sha256 == digest("prokop_2.0.29.ipk"), "GitHub digest was not used as the checksum");
 
 reset(null);
-previous = previous_prokop_release("1.0.30");
-check(previous != null && previous.backend_url == GH + "1.0.30/prokop_1.0.30.ipk",
+previous = previous_prokop_release("2.0.30");
+check(previous != null && previous.backend_url == GH + "2.0.30/prokop_2.0.30.ipk",
     "an unreachable catalog did not fall back to GitHub");
 
 reset("catalog-foreign.json");
-previous = previous_prokop_release("1.0.30");
-check(previous != null && previous.backend_url == GH + "1.0.30/prokop_1.0.30.ipk",
+previous = previous_prokop_release("2.0.30");
+check(previous != null && previous.backend_url == GH + "2.0.30/prokop_2.0.30.ipk",
     "a catalog entry pointing elsewhere was trusted for rollback");
+
+// --- Forkop's releases are never offered, installed or staged ---------------
+reset("catalog-forkop.json");
+http_bodies[API + "1.0.26"] = WORK + "/github-1.0.26.json";
+http_bodies[API + "2.0.29"] = WORK + "/github-forkop-2.0.29.json";
+let offered = map(prokop_release_catalog(), (release) => release.tag_name);
+check(join(" ", offered) == "2.0.30", "the version picker offered a Forkop release: " + join(" ", offered));
+check(selected_prokop_release("1.0.26") == null && selected_prokop_release("2.0.29") == null,
+    "a Forkop release could be selected for install");
+check(previous_prokop_release("1.0.26") == null && previous_prokop_release("2.0.29") == null,
+    "Forkop packages were staged for rollback");
+check(resolve_prokop_release_json("1.0.26", as_string(fs.readfile(WORK + "/github-1.0.26.json"))) == null,
+    "a Forkop release resolved to installable packages");
+check(index(join(" ", download_log), "forkop") < 0, "a Forkop package was downloaded: " + join(" ", download_log));
 
 // --- neither source has the installed release ------------------------------
 reset("catalog.json");
-check(previous_prokop_release("1.0.28") == null, "an unpublished release was resolved");
-PROKOP_VERSION = "1.0.28";
-let error = install_prokop_package_set("1.0.30", WORK + "/new/prokop.ipk", WORK + "/new/app.ipk", WORK + "/new/i18n.ipk");
-check(index(error, "Installed Prokop 1.0.28 is not published in this Prokop channel") == 0,
+check(previous_prokop_release("2.0.28") == null, "an unpublished release was resolved");
+PROKOP_VERSION = "2.0.28";
+let error = install_prokop_package_set("2.0.30", WORK + "/new/prokop.ipk", WORK + "/new/app.ipk", WORK + "/new/i18n.ipk");
+check(index(error, "Installed Prokop 2.0.28 is not published in this Prokop channel") == 0,
     "unpublished installed release was not explained: " + error);
 check(index(error, "automatic upgrade refused") >= 0 &&
     index(error, "wget -qO- https://asofwar.github.io/prokop/install.sh | sh") >= 0,
@@ -234,47 +280,47 @@ check(index(error, "automatic upgrade refused") >= 0 &&
 check(length(download_log) == 0 && !file_exists(PROKOP_OPKG_RECOVERY_DIR), "an unpublished release staged files");
 
 // --- staged rollback packages are held to their checksums ------------------
-PROKOP_VERSION = "1.0.30";
+PROKOP_VERSION = "2.0.30";
 reset("catalog.json");
-download_bodies[BASE + "/releases/1.0.30/luci-app-prokop_1.0.30.ipk"] = WORK + "/payload/prokop_1.0.30.ipk";
-error = install_prokop_package_set("1.0.31", WORK + "/new/prokop.ipk", WORK + "/new/app.ipk", WORK + "/new/i18n.ipk");
+download_bodies[BASE + "/releases/2.0.30/luci-app-prokop_2.0.30.ipk"] = WORK + "/payload/prokop_2.0.30.ipk";
+error = install_prokop_package_set("2.0.31", WORK + "/new/prokop.ipk", WORK + "/new/app.ipk", WORK + "/new/i18n.ipk");
 check(error == "Previous Prokop release packages failed checksum verification; automatic upgrade refused",
     "a tampered rollback package was staged: " + error);
 check(!file_exists(PROKOP_OPKG_RECOVERY_DIR), "a rejected rollback set was left behind");
 check(!has(events, "Checking new Prokop package set"), "the upgrade went on after a checksum mismatch");
 
 reset("catalog.json");
-download_bodies[BASE + "/releases/1.0.30/luci-i18n-prokop-ru_1.0.30.ipk"] = WORK + "/payload/prokop_1.0.30.ipk";
-error = install_prokop_package_set("1.0.31", WORK + "/new/prokop.ipk", WORK + "/new/app.ipk", WORK + "/new/i18n.ipk");
+download_bodies[BASE + "/releases/2.0.30/luci-i18n-prokop-ru_2.0.30.ipk"] = WORK + "/payload/prokop_2.0.30.ipk";
+error = install_prokop_package_set("2.0.31", WORK + "/new/prokop.ipk", WORK + "/new/app.ipk", WORK + "/new/i18n.ipk");
 check(index(error, "failed checksum verification") >= 0 && !file_exists(PROKOP_OPKG_RECOVERY_DIR),
     "a tampered rollback translation package was staged: " + error);
 
 reset("catalog.json");
-error = install_prokop_package_set("1.0.31", WORK + "/new/prokop.ipk", WORK + "/new/app.ipk", WORK + "/new/i18n.ipk");
+error = install_prokop_package_set("2.0.31", WORK + "/new/prokop.ipk", WORK + "/new/app.ipk", WORK + "/new/i18n.ipk");
 check(has(events, "Checking new Prokop package set") && index(error, "preflight failed") >= 0,
     "verified rollback packages were refused: " + error);
 check(!file_exists(PROKOP_OPKG_RECOVERY_DIR), "the preflight failure left the rollback set behind");
 
 // --- the latest release is held to the checksums its source publishes -----
-let latest = resolve_prokop_release_json("1.0.30", as_string(fs.readfile(WORK + "/latest-static.json")));
-check(latest != null && latest.backend_sha256 == digest("prokop_1.0.30.ipk"), "latest.json checksums were not read");
-let good = [ WORK + "/payload/prokop_1.0.30.ipk", WORK + "/payload/luci-app-prokop_1.0.30.ipk",
-    WORK + "/payload/luci-i18n-prokop-ru_1.0.30.ipk" ];
-check(failure(() => verify_latest_release_downloads(latest, good[0], good[1], good[2], "1.0.30")) == "",
+let latest = resolve_prokop_release_json("2.0.30", as_string(fs.readfile(WORK + "/latest-static.json")));
+check(latest != null && latest.backend_sha256 == digest("prokop_2.0.30.ipk"), "latest.json checksums were not read");
+let good = [ WORK + "/payload/prokop_2.0.30.ipk", WORK + "/payload/luci-app-prokop_2.0.30.ipk",
+    WORK + "/payload/luci-i18n-prokop-ru_2.0.30.ipk" ];
+check(failure(() => verify_latest_release_downloads(latest, good[0], good[1], good[2], "2.0.30")) == "",
     "matching latest packages were refused");
-check(index(failure(() => verify_latest_release_downloads(latest, good[0], good[0], good[2], "1.0.30")),
+check(index(failure(() => verify_latest_release_downloads(latest, good[0], good[0], good[2], "2.0.30")),
     "Release package checksum mismatch") >= 0, "a mismatching latest package was accepted");
-check(index(failure(() => verify_latest_release_downloads(latest, good[0], good[1], good[0], "1.0.30")),
+check(index(failure(() => verify_latest_release_downloads(latest, good[0], good[1], good[0], "2.0.30")),
     "Release package checksum mismatch") >= 0, "a mismatching latest translation package was accepted");
 
-let github_latest = resolve_prokop_release_json("1.0.30", as_string(fs.readfile(WORK + "/github-1.0.30.json")));
-check(index(failure(() => verify_latest_release_downloads(github_latest, good[1], good[1], good[2], "1.0.30")),
+let github_latest = resolve_prokop_release_json("2.0.30", as_string(fs.readfile(WORK + "/github-2.0.30.json")));
+check(index(failure(() => verify_latest_release_downloads(github_latest, good[1], good[1], good[2], "2.0.30")),
     "Release package checksum mismatch") >= 0, "a GitHub digest mismatch was accepted");
 
 // Assets without a published checksum cannot be compared, only downloaded.
-let unverified = resolve_prokop_release_json("1.0.30", as_string(fs.readfile(WORK + "/latest-github-nodigest.json")));
+let unverified = resolve_prokop_release_json("2.0.30", as_string(fs.readfile(WORK + "/latest-github-nodigest.json")));
 check(unverified != null && unverified.backend_sha256 == "", "a checksum was invented for an asset without one");
-check(failure(() => verify_latest_release_downloads(unverified, good[1], good[0], good[2], "1.0.30")) == "",
+check(failure(() => verify_latest_release_downloads(unverified, good[1], good[0], good[2], "2.0.30")) == "",
     "a release without checksums could not be installed");
 
 print("probe: PASS\n");

@@ -412,16 +412,16 @@
     "call": "Actions",
     "key": "Actions",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:984",
-      "src/prokop/tabs/monitoring/initController.ts:1286"
+      "src/prokop/tabs/monitoring/initController.ts:988",
+      "src/prokop/tabs/monitoring/initController.ts:1291"
     ]
   },
   {
     "call": "Active",
     "key": "Active",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:765",
-      "src/prokop/tabs/monitoring/initController.ts:1103",
+      "src/prokop/tabs/monitoring/initController.ts:769",
+      "src/prokop/tabs/monitoring/initController.ts:1107",
       "src/prokop/tabs/monitoring/render.ts:51"
     ]
   },
@@ -436,7 +436,7 @@
     "call": "Active connections of all devices are interrupted.",
     "key": "Active connections of all devices are interrupted.",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1672"
+      "src/prokop/tabs/monitoring/initController.ts:1677"
     ]
   },
   {
@@ -600,8 +600,8 @@
     "call": "Address",
     "key": "Address",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:250",
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:297",
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:261",
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:308",
       "src/prokop/tabs/diagnostic/siteCheck.ts:103"
     ]
   },
@@ -659,7 +659,7 @@
     "key": "All devices",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4220",
-      "src/prokop/tabs/monitoring/initController.ts:626",
+      "src/prokop/tabs/monitoring/initController.ts:630",
       "src/prokop/tabs/monitoring/render.ts:84"
     ]
   },
@@ -682,7 +682,7 @@
     "call": "All paths",
     "key": "All paths",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:663"
+      "src/prokop/tabs/monitoring/initController.ts:667"
     ]
   },
   {
@@ -938,7 +938,7 @@
     "call": "Apps reconnect on their own; downloads and calls may drop",
     "key": "Apps reconnect on their own; downloads and calls may drop",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1674"
+      "src/prokop/tabs/monitoring/initController.ts:1679"
     ]
   },
   {
@@ -1444,7 +1444,7 @@
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4139",
       "src/prokop/tabs/monitoring/connectionView.ts:116",
-      "src/prokop/tabs/monitoring/initController.ts:212"
+      "src/prokop/tabs/monitoring/initController.ts:216"
     ]
   },
   {
@@ -1578,7 +1578,7 @@
     "call": "Check",
     "key": "Check",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:272",
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:283",
       "src/prokop/tabs/diagnostic/renderDiagnostic.ts:54",
       "src/prokop/tabs/diagnostic/renderDiagnostic.ts:94"
     ]
@@ -1601,7 +1601,7 @@
     "call": "Check address in Diagnostics",
     "key": "Check address in Diagnostics",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1142"
+      "src/prokop/tabs/monitoring/initController.ts:1146"
     ]
   },
   {
@@ -1636,7 +1636,7 @@
     "call": "Check failed",
     "key": "Check failed",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:94"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:101"
     ]
   },
   {
@@ -1794,7 +1794,7 @@
       "src/prokop/tabs/autotune/initController.ts:985",
       "src/prokop/tabs/autotune/initController.ts:1207",
       "src/prokop/tabs/dashboard/overview.ts:219",
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:104",
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:111",
       "src/prokop/tabs/diagnostic/dpiPlayground.ts:48",
       "src/prokop/tabs/diagnostic/siteCheck.ts:243",
       "src/prokop/tabs/diagnostic/statusLabels.ts:28"
@@ -1923,9 +1923,9 @@
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3582",
       "src/partials/modal/renderModal.ts:263",
       "src/prokop/tabs/autotune/initController.ts:795",
+      "src/prokop/tabs/history/initController.ts:228",
       "src/prokop/tabs/dashboard/initController.ts:1306",
       "src/prokop/tabs/dashboard/initController.ts:1691",
-      "src/prokop/tabs/history/initController.ts:228",
       "src/prokop/tabs/updates/releaseSelector.ts:121"
     ]
   },
@@ -1933,7 +1933,7 @@
     "call": "Close all",
     "key": "Close all",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1676"
+      "src/prokop/tabs/monitoring/initController.ts:1681"
     ]
   },
   {
@@ -1948,7 +1948,7 @@
     "call": "Close all connections?",
     "key": "Close all connections?",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1671"
+      "src/prokop/tabs/monitoring/initController.ts:1676"
     ]
   },
   {
@@ -1956,30 +1956,30 @@
     "key": "Close connection",
     "places": [
       "src/prokop/tabs/monitoring/connectionView.ts:205",
-      "src/prokop/tabs/monitoring/initController.ts:1173"
+      "src/prokop/tabs/monitoring/initController.ts:1177"
     ]
   },
   {
     "call": "Close details",
     "key": "Close details",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1091",
-      "src/prokop/tabs/monitoring/initController.ts:1092"
+      "src/prokop/tabs/monitoring/initController.ts:1095",
+      "src/prokop/tabs/monitoring/initController.ts:1096"
     ]
   },
   {
     "call": "closed",
     "key": "closed",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:957"
+      "src/prokop/tabs/monitoring/initController.ts:961"
     ]
   },
   {
     "call": "Closed",
     "key": "Closed",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:772",
-      "src/prokop/tabs/monitoring/initController.ts:1104",
+      "src/prokop/tabs/monitoring/initController.ts:776",
+      "src/prokop/tabs/monitoring/initController.ts:1108",
       "src/prokop/tabs/monitoring/render.ts:60"
     ]
   },
@@ -2171,14 +2171,14 @@
     "call": "Connection ID",
     "key": "Connection ID",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1012"
+      "src/prokop/tabs/monitoring/initController.ts:1016"
     ]
   },
   {
     "call": "Connection refused or host unreachable",
     "key": "Connection refused or host unreachable",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:90"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:97"
     ]
   },
   {
@@ -2192,15 +2192,15 @@
     "call": "Connections",
     "key": "Connections",
     "places": [
-      "src/prokop/tabs/dashboard/overviewCards.ts:252",
-      "src/prokop/tabs/monitoring/render.ts:14"
+      "src/prokop/tabs/monitoring/render.ts:14",
+      "src/prokop/tabs/dashboard/overviewCards.ts:252"
     ]
   },
   {
     "call": "Connections are unavailable",
     "key": "Connections are unavailable",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1352"
+      "src/prokop/tabs/monitoring/initController.ts:1357"
     ]
   },
   {
@@ -2256,7 +2256,7 @@
     "call": "Copy details",
     "key": "Copy details",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1159",
+      "src/prokop/tabs/monitoring/initController.ts:1163",
       "src/prokop/tabs/diagnostic/partials/renderCheckSection.ts:153"
     ]
   },
@@ -2331,13 +2331,13 @@
     "key": "Could not load data",
     "places": [
       "src/prokop/ui/states.ts:115",
+      "src/prokop/tabs/history/initController.ts:242",
       "src/prokop/tabs/diagnostic/initController.ts:588",
       "src/prokop/tabs/diagnostic/initController.ts:592",
       "src/prokop/tabs/diagnostic/initController.ts:627",
       "src/prokop/tabs/diagnostic/initController.ts:631",
       "src/prokop/tabs/diagnostic/initController.ts:667",
-      "src/prokop/tabs/diagnostic/initController.ts:671",
-      "src/prokop/tabs/history/initController.ts:242"
+      "src/prokop/tabs/diagnostic/initController.ts:671"
     ]
   },
   {
@@ -2521,10 +2521,10 @@
     "call": "Destination",
     "key": "Destination",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:975",
-      "src/prokop/tabs/monitoring/initController.ts:1003",
-      "src/prokop/tabs/monitoring/initController.ts:1030",
-      "src/prokop/tabs/monitoring/initController.ts:1282"
+      "src/prokop/tabs/monitoring/initController.ts:979",
+      "src/prokop/tabs/monitoring/initController.ts:1007",
+      "src/prokop/tabs/monitoring/initController.ts:1034",
+      "src/prokop/tabs/monitoring/initController.ts:1287"
     ]
   },
   {
@@ -2563,13 +2563,13 @@
     "call": "Device",
     "key": "Device",
     "places": [
+      "src/prokop/tabs/monitoring/initController.ts:978",
+      "src/prokop/tabs/monitoring/initController.ts:1033",
+      "src/prokop/tabs/monitoring/initController.ts:1103",
+      "src/prokop/tabs/monitoring/initController.ts:1286",
+      "src/prokop/tabs/monitoring/render.ts:82",
       "src/prokop/tabs/diagnostic/initController.ts:793",
-      "src/prokop/tabs/diagnostic/renderDiagnostic.ts:82",
-      "src/prokop/tabs/monitoring/initController.ts:974",
-      "src/prokop/tabs/monitoring/initController.ts:1029",
-      "src/prokop/tabs/monitoring/initController.ts:1099",
-      "src/prokop/tabs/monitoring/initController.ts:1281",
-      "src/prokop/tabs/monitoring/render.ts:82"
+      "src/prokop/tabs/diagnostic/renderDiagnostic.ts:82"
     ]
   },
   {
@@ -2640,7 +2640,7 @@
     "call": "direct",
     "key": "direct",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:213"
+      "src/prokop/tabs/monitoring/initController.ts:217"
     ]
   },
   {
@@ -2739,7 +2739,7 @@
     "call": "DNS check needs a domain name",
     "key": "DNS check needs a domain name",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:76"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:83"
     ]
   },
   {
@@ -2753,7 +2753,7 @@
     "call": "DNS name did not resolve",
     "key": "DNS name did not resolve",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:89"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:96"
     ]
   },
   {
@@ -2965,7 +2965,7 @@
     "call": "Domain does not exist",
     "key": "Domain does not exist",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:87"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:94"
     ]
   },
   {
@@ -3052,7 +3052,7 @@
     "key": "Download",
     "places": [
       "src/partials/modal/renderModal.ts:253",
-      "src/prokop/tabs/monitoring/initController.ts:1038",
+      "src/prokop/tabs/monitoring/initController.ts:1042",
       "src/prokop/tabs/monitoring/render.ts:101"
     ]
   },
@@ -3195,7 +3195,7 @@
     "call": "DPI strategy",
     "key": "DPI strategy",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1119"
+      "src/prokop/tabs/monitoring/initController.ts:1123"
     ]
   },
   {
@@ -3223,7 +3223,7 @@
     "call": "Duration",
     "key": "Duration",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1037",
+      "src/prokop/tabs/monitoring/initController.ts:1041",
       "src/prokop/tabs/monitoring/render.ts:100"
     ]
   },
@@ -3414,7 +3414,7 @@
     "call": "Enter a port",
     "key": "Enter a port",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:78"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:85"
     ]
   },
   {
@@ -3442,7 +3442,7 @@
     "call": "Enter an address",
     "key": "Enter an address",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:73"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:80"
     ]
   },
   {
@@ -3619,16 +3619,16 @@
     "call": "Failed to close connection",
     "key": "Failed to close connection",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1643",
-      "src/prokop/tabs/monitoring/initController.ts:1658"
+      "src/prokop/tabs/monitoring/initController.ts:1648",
+      "src/prokop/tabs/monitoring/initController.ts:1663"
     ]
   },
   {
     "call": "Failed to close connections",
     "key": "Failed to close connections",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1690",
-      "src/prokop/tabs/monitoring/initController.ts:1703"
+      "src/prokop/tabs/monitoring/initController.ts:1695",
+      "src/prokop/tabs/monitoring/initController.ts:1708"
     ]
   },
   {
@@ -3781,7 +3781,7 @@
     "call": "Following new connections",
     "key": "Following new connections",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:706"
+      "src/prokop/tabs/monitoring/initController.ts:710"
     ]
   },
   {
@@ -3954,7 +3954,7 @@
     "call": "Host",
     "key": "Host",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1006"
+      "src/prokop/tabs/monitoring/initController.ts:1010"
     ]
   },
   {
@@ -4861,7 +4861,7 @@
       "src/prokop/tabs/autotune/initController.ts:894",
       "src/prokop/tabs/autotune/initController.ts:900",
       "src/prokop/tabs/autotune/initController.ts:901",
-      "src/prokop/tabs/diagnostic/partials/renderRunAction.ts:53"
+      "src/prokop/tabs/diagnostic/partials/renderRunAction.ts:55"
     ]
   },
   {
@@ -5063,7 +5063,7 @@
     "call": "Loading connections",
     "key": "Loading connections",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1342",
+      "src/prokop/tabs/monitoring/initController.ts:1347",
       "src/prokop/tabs/monitoring/render.ts:164"
     ]
   },
@@ -5096,11 +5096,11 @@
       "src/prokop/tabs/autotune/render.ts:25",
       "src/prokop/tabs/autotune/render.ts:29",
       "src/prokop/tabs/autotune/render.ts:33",
-      "src/prokop/tabs/dashboard/render.ts:14",
-      "src/prokop/tabs/diagnostic/initController.ts:737",
       "src/prokop/tabs/history/render.ts:13",
       "src/prokop/tabs/history/render.ts:17",
-      "src/prokop/tabs/history/render.ts:29"
+      "src/prokop/tabs/history/render.ts:29",
+      "src/prokop/tabs/dashboard/render.ts:14",
+      "src/prokop/tabs/diagnostic/initController.ts:737"
     ]
   },
   {
@@ -5304,7 +5304,7 @@
     "call": "ms",
     "key": "ms",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:109"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:116"
     ]
   },
   {
@@ -5343,11 +5343,11 @@
     "places": [
       "src/prokop/ui/status.ts:164",
       "src/prokop/ui/status.ts:260",
+      "src/prokop/tabs/history/model.ts:81",
+      "src/prokop/tabs/history/model.ts:84",
       "src/prokop/tabs/diagnostic/statusLabels.ts:24",
       "src/prokop/tabs/diagnostic/statusLabels.ts:45",
-      "src/prokop/tabs/diagnostic/statusLabels.ts:56",
-      "src/prokop/tabs/history/model.ts:81",
-      "src/prokop/tabs/history/model.ts:84"
+      "src/prokop/tabs/diagnostic/statusLabels.ts:56"
     ]
   },
   {
@@ -5473,7 +5473,7 @@
     "call": "No active connections",
     "key": "No active connections",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1389"
+      "src/prokop/tabs/monitoring/initController.ts:1394"
     ]
   },
   {
@@ -5508,14 +5508,14 @@
     "call": "No check has been run yet",
     "key": "No check has been run yet",
     "places": [
-      "src/prokop/tabs/diagnostic/partials/renderRunAction.ts:54"
+      "src/prokop/tabs/diagnostic/partials/renderRunAction.ts:56"
     ]
   },
   {
     "call": "No closed connections",
     "key": "No closed connections",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1390"
+      "src/prokop/tabs/monitoring/initController.ts:1395"
     ]
   },
   {
@@ -5529,7 +5529,7 @@
     "call": "No connections match the filters",
     "key": "No connections match the filters",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1370"
+      "src/prokop/tabs/monitoring/initController.ts:1375"
     ]
   },
   {
@@ -5553,7 +5553,7 @@
     "call": "No DNS records for this name",
     "key": "No DNS records for this name",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:88"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:95"
     ]
   },
   {
@@ -5588,8 +5588,8 @@
     "call": "No events recorded yet",
     "key": "No events recorded yet",
     "places": [
-      "src/prokop/tabs/dashboard/overviewCards.ts:311",
-      "src/prokop/tabs/history/initController.ts:172"
+      "src/prokop/tabs/history/initController.ts:172",
+      "src/prokop/tabs/dashboard/overviewCards.ts:311"
     ]
   },
   {
@@ -5611,7 +5611,7 @@
     "call": "No new connections yet. Open the site or app you want to check.",
     "key": "No new connections yet. Open the site or app you want to check.",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1385"
+      "src/prokop/tabs/monitoring/initController.ts:1390"
     ]
   },
   {
@@ -5632,8 +5632,8 @@
     "call": "No reload recorded yet",
     "key": "No reload recorded yet",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:348",
-      "src/prokop/tabs/history/model.ts:154"
+      "src/prokop/tabs/history/model.ts:154",
+      "src/prokop/tabs/dashboard/overview.ts:348"
     ]
   },
   {
@@ -5647,8 +5647,8 @@
     "call": "No rule matched",
     "key": "No rule matched",
     "places": [
-      "src/prokop/tabs/diagnostic/siteCheck.ts:90",
-      "src/prokop/tabs/monitoring/connectionView.ts:168"
+      "src/prokop/tabs/monitoring/connectionView.ts:168",
+      "src/prokop/tabs/diagnostic/siteCheck.ts:90"
     ]
   },
   {
@@ -5752,8 +5752,8 @@
     "call": "Nodes and groups",
     "key": "Nodes and groups",
     "places": [
-      "src/prokop/tabs/dashboard/overviewCards.ts:249",
       "src/prokop/tabs/monitoring/render.ts:15",
+      "src/prokop/tabs/dashboard/overviewCards.ts:249",
       "src/prokop/tabs/diagnostic/partials/renderCheckSection.ts:97"
     ]
   },
@@ -5803,7 +5803,7 @@
       "src/prokop/tabs/autotune/model.ts:384",
       "src/prokop/tabs/autotune/model.ts:627",
       "src/prokop/tabs/autotune/model.ts:666",
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:102",
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:109",
       "src/prokop/tabs/diagnostic/statusLabels.ts:32"
     ]
   },
@@ -5924,7 +5924,7 @@
     "call": "not used",
     "key": "not used",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:245"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:256"
     ]
   },
   {
@@ -6172,7 +6172,7 @@
     "call": "Outbound chain",
     "key": "Outbound chain",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1010"
+      "src/prokop/tabs/monitoring/initController.ts:1014"
     ]
   },
   {
@@ -6272,9 +6272,9 @@
     "call": "Path",
     "key": "Path",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:979",
-      "src/prokop/tabs/monitoring/initController.ts:1032",
-      "src/prokop/tabs/monitoring/initController.ts:1283",
+      "src/prokop/tabs/monitoring/initController.ts:983",
+      "src/prokop/tabs/monitoring/initController.ts:1036",
+      "src/prokop/tabs/monitoring/initController.ts:1288",
       "src/prokop/tabs/monitoring/render.ts:89"
     ]
   },
@@ -6310,7 +6310,7 @@
     "call": "Path type",
     "key": "Path type",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:666"
+      "src/prokop/tabs/monitoring/initController.ts:670"
     ]
   },
   {
@@ -6338,7 +6338,7 @@
     "call": "Pause updates",
     "key": "Pause updates",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:801",
+      "src/prokop/tabs/monitoring/initController.ts:805",
       "src/prokop/tabs/monitoring/render.ts:140",
       "src/prokop/tabs/monitoring/render.ts:141"
     ]
@@ -6404,9 +6404,9 @@
     "call": "Port",
     "key": "Port",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:244",
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:247",
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:299"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:255",
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:258",
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:310"
     ]
   },
   {
@@ -6428,7 +6428,7 @@
     "key": "Port must be between 1 and 65535",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6290",
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:81"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:88"
     ]
   },
   {
@@ -6539,7 +6539,7 @@
     "call": "Probe tool is missing on the router",
     "key": "Probe tool is missing on the router",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:93"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:100"
     ]
   },
   {
@@ -6744,7 +6744,7 @@
     "call": "Prokop service is stopped. Start the service to display connections.",
     "key": "Prokop service is stopped. Start the service to display connections.",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1330"
+      "src/prokop/tabs/monitoring/initController.ts:1335"
     ]
   },
   {
@@ -6907,7 +6907,7 @@
     "key": "Protocol",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2319",
-      "src/prokop/tabs/monitoring/initController.ts:1007"
+      "src/prokop/tabs/monitoring/initController.ts:1011"
     ]
   },
   {
@@ -6943,7 +6943,7 @@
     "call": "Reachable",
     "key": "Reachable",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:109"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:116"
     ]
   },
   {
@@ -7041,8 +7041,8 @@
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5127",
       "src/prokop/tabs/autotune/initController.ts:743",
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:279",
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:280",
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:290",
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:291",
       "src/prokop/tabs/updates/initController.ts:720",
       "src/prokop/tabs/updates/initController.ts:864",
       "src/prokop/tabs/updates/initController.ts:953"
@@ -7172,8 +7172,8 @@
     "call": "Reset filters",
     "key": "Reset filters",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:725",
-      "src/prokop/tabs/monitoring/initController.ts:1379"
+      "src/prokop/tabs/monitoring/initController.ts:729",
+      "src/prokop/tabs/monitoring/initController.ts:1384"
     ]
   },
   {
@@ -7399,15 +7399,15 @@
     "call": "Result",
     "key": "Result",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:254",
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:300"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:265",
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:311"
     ]
   },
   {
     "call": "Resume updates",
     "key": "Resume updates",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:801"
+      "src/prokop/tabs/monitoring/initController.ts:805"
     ]
   },
   {
@@ -7507,9 +7507,9 @@
     "call": "Route",
     "key": "Route",
     "places": [
+      "src/prokop/tabs/monitoring/initController.ts:1111",
       "src/prokop/tabs/diagnostic/siteCheck.ts:61",
-      "src/prokop/tabs/diagnostic/siteCheck.ts:86",
-      "src/prokop/tabs/monitoring/initController.ts:1107"
+      "src/prokop/tabs/diagnostic/siteCheck.ts:86"
     ]
   },
   {
@@ -7580,8 +7580,8 @@
     "key": "Rule",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/rules.js:27",
-      "src/prokop/tabs/monitoring/initController.ts:675",
-      "src/prokop/tabs/monitoring/initController.ts:1008"
+      "src/prokop/tabs/monitoring/initController.ts:679",
+      "src/prokop/tabs/monitoring/initController.ts:1012"
     ]
   },
   {
@@ -7595,7 +7595,7 @@
     "call": "Rule payload",
     "key": "Rule payload",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1009"
+      "src/prokop/tabs/monitoring/initController.ts:1013"
     ]
   },
   {
@@ -7688,7 +7688,7 @@
     "call": "Run full diagnostics",
     "key": "Run full diagnostics",
     "places": [
-      "src/prokop/tabs/diagnostic/partials/renderRunAction.ts:17"
+      "src/prokop/tabs/diagnostic/partials/renderRunAction.ts:24"
     ]
   },
   {
@@ -7946,7 +7946,7 @@
     "call": "Server closed the connection without a response",
     "key": "Server closed the connection without a response",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:92"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:99"
     ]
   },
   {
@@ -8086,7 +8086,7 @@
     "call": "Shown %d of %d",
     "key": "Shown %d of %d",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:708"
+      "src/prokop/tabs/monitoring/initController.ts:712"
     ]
   },
   {
@@ -8255,7 +8255,7 @@
     "call": "Source",
     "key": "Source",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1001"
+      "src/prokop/tabs/monitoring/initController.ts:1005"
     ]
   },
   {
@@ -8383,7 +8383,7 @@
     "call": "Started",
     "key": "Started",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1011"
+      "src/prokop/tabs/monitoring/initController.ts:1015"
     ]
   },
   {
@@ -8426,7 +8426,7 @@
     "call": "Status",
     "key": "Status",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1101"
+      "src/prokop/tabs/monitoring/initController.ts:1105"
     ]
   },
   {
@@ -8686,7 +8686,7 @@
     "key": "Technical details",
     "places": [
       "src/prokop/ui/states.ts:71",
-      "src/prokop/tabs/monitoring/initController.ts:1185"
+      "src/prokop/tabs/monitoring/initController.ts:1189"
     ]
   },
   {
@@ -9291,7 +9291,7 @@
     "call": "The router rejected this check",
     "key": "The router rejected this check",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:130"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:137"
     ]
   },
   {
@@ -9827,7 +9827,7 @@
     "call": "Timed out",
     "key": "Timed out",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:86"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:93"
     ]
   },
   {
@@ -9841,7 +9841,7 @@
     "call": "TLS or certificate error",
     "key": "TLS or certificate error",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:91"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:98"
     ]
   },
   {
@@ -9899,9 +9899,9 @@
     "call": "Traffic",
     "key": "Traffic",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:980",
-      "src/prokop/tabs/monitoring/initController.ts:1129",
-      "src/prokop/tabs/monitoring/initController.ts:1284",
+      "src/prokop/tabs/monitoring/initController.ts:984",
+      "src/prokop/tabs/monitoring/initController.ts:1133",
+      "src/prokop/tabs/monitoring/initController.ts:1289",
       "src/prokop/tabs/dashboard/partials/renderSections.ts:121"
     ]
   },
@@ -9988,8 +9988,8 @@
     "call": "Type",
     "key": "Type",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:251",
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:298"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:262",
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:309"
     ]
   },
   {
@@ -10229,7 +10229,7 @@
     "call": "Upload",
     "key": "Upload",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1039",
+      "src/prokop/tabs/monitoring/initController.ts:1043",
       "src/prokop/tabs/monitoring/render.ts:102"
     ]
   },

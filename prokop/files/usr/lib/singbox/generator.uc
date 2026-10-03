@@ -17,6 +17,7 @@ let rule_conditions = require("routing.rule_conditions");
 let connections = require("config.connections");
 let urltest_override = require("config.urltest_override");
 let subscription_share_link = require("subscription.share_link");
+let legacy_forkop = require("core.legacy_forkop");
 let uci = null;
 let fixture_uci_data = null;
 let runtime_settings_cache = null;
@@ -620,12 +621,18 @@ function compatible_subscription_outbounds(outbounds, section_name) {
     }
 }
 
+// Internal keys of a subscription cache Forkop wrote. Such a cache is
+// discarded by its format (subscription/cache.uc); should one still reach the
+// generator, its keys must not reach sing-box, which refuses unknown fields.
+const LEGACY_SUBSCRIPTION_KEY_PREFIX = legacy_forkop.SUBSCRIPTION_KEY_PREFIX;
+
 function copy_subscription_outbound(outbound, new_tag) {
     let copy = {};
     for (let key, value in outbound) {
         if (key != "tag" && key != "remark" && key != "share_link" &&
             key != "__prokop_hidden" && key != "__prokop_allow_group" &&
-            key != "__prokop_description" && key != "__prokop_filter_names")
+            key != "__prokop_description" && key != "__prokop_filter_names" &&
+            index(key, LEGACY_SUBSCRIPTION_KEY_PREFIX) != 0)
             copy[key] = value;
     }
     if (as_string(copy.type || "") == "hysteria2" &&

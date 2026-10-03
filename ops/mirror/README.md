@@ -33,6 +33,40 @@ only ever serves OpenWrt packages, lists and third-party components; Prokop
 packages always come from the release channel, verified against its SHA-256
 metadata.
 
+## URL layout keeps the upstream `forkop` names
+
+Prokop is the renamed Forkop, but a mirror keeps the URL layout of the
+upstream Forkop mirrors, because routers and those mirrors share it as a
+protocol: lists under `<mirror>/forkop/lists/...` (including `b4geoip-forkop`),
+sing-box-extended metadata under `<mirror>/forkop/sing-box-extended/...`, the
+release copies under `<mirror>/forkop/...` and the platform index
+`<mirror>/openwrt/forkop-platforms.tsv`. That is why the default `MIRROR_ROOT`
+of the sync scripts still ends in `/public/forkop`. Do not rename these public
+paths: Prokop routers request exactly them.
+
+## Upgrading a mirror host set up before the rename
+
+The public URLs stay the same, but the host-side names of the scripts and
+services changed from `forkop` to `prokop`. When you deploy the renamed
+scripts on an existing host, move the host configuration with them:
+
+| Before | After |
+|---|---|
+| `forkop-*.service`, `forkop-*.timer` | `prokop-*.service`, `prokop-*.timer` (disable the old units first) |
+| `sync-forkop.sh`, `sync-forkop-release.py`, `publish-forkop-feed.sh`, `update-forkop-from-git.sh`, `/usr/local/sbin/sync-forkop-mirror` | `sync-prokop.sh`, `sync-prokop-release.py`, `publish-prokop-feed.sh`, `update-prokop-from-git.sh`, `/usr/local/sbin/sync-prokop-mirror` |
+| `/etc/default/forkop-openwrt-mirror` | `/etc/default/prokop-openwrt-mirror` |
+| `/etc/forkop-mirror/platforms.conf` | `/etc/prokop-mirror/platforms.conf` |
+| `/mnt/storage/forkop-mirror`, user and group `forkop-mirror` | `/mnt/storage/prokop-mirror`, user and group `prokop-mirror` |
+| compose project and container `forkop-zapret-cache` | `prokop-zapret-cache` (also in the Caddyfile `reverse_proxy`) |
+| `FORKOP_*` environment variables (`FORKOP_GITHUB_REPOSITORY`, `FORKOP_APK_PRIVATE_KEY`, ...) | `PROKOP_*` with the same suffix |
+
+Move the platform list before the first run of the renamed `sync-openwrt.sh`:
+without `/etc/prokop-mirror/platforms.conf` (or `OPENWRT_PLATFORMS_FILE`) it
+falls back to the single-platform default and publishes an index that lists
+only that platform, so routers on the other platforms would leave their feeds
+alone. The default release repository is now `Asofwar/prokop`; GitHub
+redirects API requests for `Asofwar/forkop`, but set the new name explicitly.
+
 ## OpenWrt feeds
 
 `sync-openwrt.sh` mirrors the OpenWrt target, kernel, and package feeds needed by

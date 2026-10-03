@@ -121,11 +121,11 @@ for version in 1.10.0 1.2.1; do
   PROKOP_RELEASE_BASE_URL="$BASE_URL" PROKOP_RELEASE_REPO="$REPOSITORY" \
     "$PREPARE" "$version" "$WORK_DIR/assets/$version" "$WORK_DIR/bundle-$version" >/dev/null
 done
-cmp -s "$SITE/updates/latest.json" "$WORK_DIR/bundle-1.10.0/forkop/updates/latest.json" ||
+cmp -s "$SITE/updates/latest.json" "$WORK_DIR/bundle-1.10.0/prokop/updates/latest.json" ||
   fail "latest.json differs from the one prepare-release.sh writes"
 "$PYTHON_BIN" - "$SITE/updates/releases.json" \
-  "$WORK_DIR/bundle-1.10.0/forkop/updates/releases.json" \
-  "$WORK_DIR/bundle-1.2.1/forkop/updates/releases.json" <<'PY' ||
+  "$WORK_DIR/bundle-1.10.0/prokop/updates/releases.json" \
+  "$WORK_DIR/bundle-1.2.1/prokop/updates/releases.json" <<'PY' ||
 import json
 import sys
 

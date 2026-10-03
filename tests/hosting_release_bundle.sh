@@ -54,7 +54,7 @@ for package in "${packages[@]}"; do
 done
 
 check_metadata() {
-  "$PYTHON_BIN" - "$1/forkop/updates" "$VERSION" "$2" <<'PY'
+  "$PYTHON_BIN" - "$1/prokop/updates" "$VERSION" "$2" <<'PY'
 import json
 import hashlib
 import sys
@@ -106,7 +106,7 @@ env -u PROKOP_RELEASE_BASE_URL -u PROKOP_RELEASE_REPO \
   "$VERSION" "$WORK_DIR/artifacts" "$WORK_DIR/default" >/dev/null
 check_metadata "$WORK_DIR/default" "$FORK_BASE_URL" ||
   fail "the default release channel is not $FORK_BASE_URL"
-if grep -RFq -e 'fold8.ru' -e 'slayer326' "$WORK_DIR/default/forkop/updates"; then
+if grep -RFq -e 'fold8.ru' -e 'slayer326' "$WORK_DIR/default/prokop/updates"; then
   fail "release metadata still points at the upstream channel"
 fi
 
