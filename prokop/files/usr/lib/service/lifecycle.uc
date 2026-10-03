@@ -1817,11 +1817,17 @@ function start() {
     return status;
 }
 
+// Set by a stop that found the router run by the product before the rename:
+// nothing of Prokop was torn down, so nothing shared is put back either.
+let stop_left_to_legacy = false;
+
 function stop_impl(explicit_stop) {
     let status = 0;
 
+    stop_left_to_legacy = false;
     if (legacy_runtime_owns_router()) {
         log_message("Prokop has no runtime to stop; the running " + legacy.PRODUCT + " and its DNS settings are left alone", "info");
+        stop_left_to_legacy = true;
         return 0;
     }
 
@@ -1955,7 +1961,7 @@ function stop() {
     // since (D-19, UC-109). Lifecycle's own restart and a reload keep them
     // off; /etc/init.d/prokop restart is a stop and a start, so it puts
     // them back while TPROXY is down and its start turns them off again.
-    if (status == 0 && !module_success(NFT_UC, [ "restore-bridge-netfilter" ]))
+    if (status == 0 && !stop_left_to_legacy && !module_success(NFT_UC, [ "restore-bridge-netfilter" ]))
         log_message("Could not restore the br_netfilter settings", "warn");
     return status;
 }

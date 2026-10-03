@@ -36,7 +36,7 @@ for tool in nft ubus conntrack logger; do
   cat >"$WORK_DIR/bin/$tool" <<SH
 #!/bin/sh
 printf '%s %s\n' "$tool" "\$*" >> "$WORK_DIR/commands.log"
-if [ "$tool" = nft ] && [ "\$1 \$2" = "list table" ]; then [ -e "$WORK_DIR/guard-table" ]; exit \$?; fi
+if [ "$tool" = nft ] && { [ "\$1 \$2" = "list table" ] || [ "\$1 \$2 \$3" = "-t list table" ]; }; then [ -e "$WORK_DIR/guard-table" ]; exit \$?; fi
 exit 0
 SH
 done

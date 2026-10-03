@@ -65,7 +65,7 @@ JS
 # 2. Runtime leftovers of the retired guard are removed at postinst.
 ROOT="$WORK_DIR/root"
 mkdir -p "$ROOT/etc/forkop/vpn-guard" "$ROOT/tmp/forkop-vpn-guard" "$ROOT/etc/init.d" "$ROOT/etc/rc.d" \
-  "$ROOT/etc/hotplug.d/iface" "$ROOT/lib/upgrade/keep.d" "$ROOT/usr/share/prokop" "$WORK_DIR/bin"
+  "$ROOT/etc/hotplug.d/iface" "$ROOT/lib/upgrade/keep.d" "$ROOT/usr/share/forkop" "$WORK_DIR/bin"
 printf '{"saved_offload":{"flow_offloading":"1","flow_offloading_hw":"1"}}\n' > "$ROOT/etc/forkop/vpn-guard/policy.json"
 printf '{}\n' > "$ROOT/etc/forkop/vpn-guard/exceptions.json"
 touch "$ROOT/tmp/forkop-vpn-guard/dns-0.conf" "$ROOT/etc/init.d/forkop-guard" "$ROOT/etc/hotplug.d/iface/95-forkop-guard" \
