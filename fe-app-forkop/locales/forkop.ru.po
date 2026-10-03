@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-03 15:53+0000\n"
-"PO-Revision-Date: 2026-10-03 15:53+0000\n"
+"POT-Creation-Date: 2026-10-03 17:19+0000\n"
+"PO-Revision-Date: 2026-10-03 17:19+0000\n"
 "Last-Translator: Asofwar\n"
 "Language-Team: none\n"
 "Language: ru\n"
@@ -146,6 +146,9 @@ msgstr "Неудавшееся изменение оставило защиту 
 msgid "A failed change left the DPI guard in place. Traffic that needs DPI bypass stays blocked until you restart Forkop X."
 msgstr "Неудавшееся изменение оставило защиту DPI. Трафик, которому нужен обход DPI, блокируется, пока вы не перезапустите Forkop X."
 
+msgid "a FakeIP address is routed by its domain; check the site by its name"
+msgstr "адрес FakeIP маршрутизируется по своему домену; проверьте сайт по имени"
+
 msgid "A group is one Zapret DPI rule. Forkop X changes only the strategy of an existing rule, for all its targets at once. It never creates or deletes rules and never turns DPI bypass off."
 msgstr "Группа — это одно DPI-правило Zapret. Forkop X меняет только стратегию существующего правила, сразу для всех его целей. Он никогда не создаёт и не удаляет правила и не отключает обход DPI."
 
@@ -166,6 +169,12 @@ msgstr "Адрес блокируется правилом. Так и задум
 
 msgid "a rule is too complex to calculate"
 msgstr "правило слишком сложное для расчёта"
+
+msgid "a rule on the way re-resolves the address, so the route depends on its answer"
+msgstr "правило на пути заново определяет адрес, поэтому маршрут зависит от его ответа"
+
+msgid "a rule on the way uses a list or pattern whose contents cannot be checked here"
+msgstr "правило на пути использует список или шаблон, содержимое которого здесь проверить нельзя"
 
 msgid "A safe isolated check is not possible right now."
 msgstr "Безопасная изолированная проверка сейчас невозможна."
@@ -340,12 +349,6 @@ msgstr "Позволяет ограничить список серверов д
 
 msgid "An administrator can roll it back."
 msgstr "Откатить его может администратор."
-
-msgid "an earlier rule re-resolves the address, so the route depends on its answer"
-msgstr "раньше стоит правило, которое заново разрешает адрес, поэтому маршрут зависит от его ответа"
-
-msgid "an earlier rule uses a list or pattern whose contents cannot be checked here"
-msgstr "раньше стоит правило со списком или шаблоном, содержимое которого здесь не проверить"
 
 msgid "An interrupted package update is being recovered. Avoid changes until it completes."
 msgstr "Восстанавливается прерванное обновление пакетов. Не вносите изменений, пока оно не завершится."
@@ -970,6 +973,9 @@ msgstr "Соединения"
 
 msgid "Connections are unavailable"
 msgstr "Подключения недоступны"
+
+msgid "connections to the DNS port are answered by the sing-box DNS, not routed by a rule"
+msgstr "соединения на порт DNS обслуживает DNS sing-box, а не правило маршрутизации"
 
 msgid "Connectivity probe failed"
 msgstr "Проверка соединения не прошла"
@@ -3791,6 +3797,9 @@ msgstr "Действие не найдено; возможно, оно уже з
 msgid "The address is blocked by a rule"
 msgstr "Адрес блокируется правилом"
 
+msgid "the address is local or reserved; Forkop does not intercept it, the connection goes directly"
+msgstr "адрес локальный или зарезервированный; Forkop его не перехватывает, соединение идёт напрямую"
+
 msgid "The autotune state could not be saved. Check the free space on the router."
 msgstr "Не удалось сохранить состояние автоподбора. Проверьте свободное место на роутере."
 
@@ -4055,6 +4064,9 @@ msgstr "Проверка маршрута не завершилась. Повт�
 msgid "The route is calculated from the configuration; DNS and the HTTPS request are made by the router itself."
 msgstr "Маршрут рассчитывается по конфигурации; DNS-запрос и HTTPS-запрос выполняет сам роутер."
 
+msgid "the route of an IPv6 address is not calculated"
+msgstr "маршрут для адреса IPv6 не рассчитывается"
+
 msgid "The router could not resolve the address."
 msgstr "Роутер не смог определить адрес."
 
@@ -4144,6 +4156,9 @@ msgstr "конфигурация sing-box недоступна — Forkop X за
 
 msgid "The site did not open from the router. The router may take a different path than devices."
 msgstr "С роутера сайт не открылся. Роутер может ходить иначе, чем устройства."
+
+msgid "the site has a real address; whether Forkop intercepts it depends on the address lists of the rules"
+msgstr "у сайта реальный адрес; перехватит ли его Forkop, зависит от списков адресов правил"
 
 msgid "The site opens from the router. If it does not open on a device, look at its real connections."
 msgstr "С роутера сайт открывается. Если на устройстве он не открывается — посмотрите его реальные соединения."

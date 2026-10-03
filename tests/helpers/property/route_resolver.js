@@ -9,7 +9,12 @@
 //     before it makes the answer "undecidable" at that rule, never another
 //     decided owner;
 //   - domain, domain_suffix (leading dot: subdomains only) and domain_keyword
-//     match like an independent model, case-insensitively.
+//     match like an independent model of sing-box: the host lower-cased,
+//     the rule's value as written (an upper-case value never matches).
+// A real-address answer decided by a domain also depends on nft's capture of
+// the address by later rules (UC-100), so appending is checked on FakeIP
+// targets. tests/helpers/property/route_resolver_model.js checks the answers
+// themselves against a first-match model of sing-box and nft.
 // Usage: route_resolver.js <forkop lib> <forkop.uci fixture>
 
 const assert = require("node:assert/strict");
@@ -122,7 +127,7 @@ const variants = [];
 for (const base of decided) {
   const owner = base.result.route_rule;
   const upTo = owner === null ? base.rules.length : owner;
-  if (owner !== null)
+  if (owner !== null && base.fakeip)
     variants.push({ kind: "append", base, input: { ...base, rules: [...base.rules.slice(0, owner + 1), ...rng.array(1, 4, anyRule)] } });
   const p1 = rng.int(0, upTo);
   variants.push({ kind: "skipped", base, at: p1,
@@ -145,9 +150,9 @@ const domainCases = Array.from({ length: CASES }, () => {
   if (kind === "domain_suffix" && rng.bool(0.3)) value = "." + value;
   return { host: mixCase(host), rule: { action: "route", outbound: "main-out", [kind]: [mixCase(value)] }, kind, value };
 });
-function modelMatch({ host, kind, value }) {
+function modelMatch({ host, kind, rule }) {
   const h = host.toLowerCase();
-  let v = value.toLowerCase();
+  let v = rule[kind][0];
   if (kind === "domain") return h === v;
   if (kind === "domain_keyword") return h.includes(v);
   const subOnly = v.startsWith(".");
@@ -176,7 +181,7 @@ forAll("an undecidable matcher before the deciding rule is never guessed past", 
   assert.equal(got.provenance, "unknown");
   for (const key of ["kind", "section", "action", "outbound", "dpi", "zapret"]) assert.equal(got[key], null, key);
 });
-forAll("domain matchers follow the sing-box semantics case-insensitively", seed, domainCases, (c, i) => {
+forAll("domain matchers follow the sing-box semantics (lower-cased host, values as written)", seed, domainCases, (c, i) => {
   assert.equal(domainResults[i], modelMatch(c) ? "match" : "no");
 });
 exercised("appended variants", variants.filter((v) => v.kind === "append").length, CASES / 8);

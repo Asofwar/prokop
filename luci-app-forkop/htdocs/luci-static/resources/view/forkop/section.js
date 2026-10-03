@@ -81,7 +81,7 @@ function isOutboundDetourTargetSection(section, currentSectionId) {
   return (
     sectionName &&
     sectionName !== currentSectionId &&
-    section.enabled !== "0" &&
+    isRuleEnabled(section) &&
     ["connection", "proxy", "outbound", "vpn"].includes(action)
   );
 }
@@ -179,6 +179,7 @@ function refreshOutboundDetourSectionOptionValues(option, sectionId) {
 // (config/validator.uc validate_outbound_detours_rows()).
 const CONNECTION_RULE_ACTIONS = ["connection", "proxy", "outbound", "vpn"];
 
+// core/common.uc bool_option(): 1, true, yes or on in any letter case.
 function ruleSectionFlag(section, key, fallback) {
   const value =
     section && section[key] !== undefined && section[key] !== null
@@ -187,7 +188,12 @@ function ruleSectionFlag(section, key, fallback) {
         ? "1"
         : "0";
 
-  return ["1", "true", "yes", "on"].includes(value);
+  return ["1", "true", "yes", "on"].includes(value.toLowerCase());
+}
+
+// core/common.uc section_enabled(): unset is on (UC-105).
+function isRuleEnabled(section) {
+  return ruleSectionFlag(section, "enabled", true);
 }
 
 function isConnectionRuleSection(section) {
@@ -380,7 +386,7 @@ function isDnsDetourTargetSection(section, currentSectionId) {
   if (
     !sectionName ||
     sectionName === currentSectionId ||
-    section.enabled === "0"
+    !isRuleEnabled(section)
   ) {
     return false;
   }
@@ -463,7 +469,7 @@ function describeUnavailableSection(name) {
   }
 
   const label = getUciSectionLabel(target);
-  if (target.enabled === "0") {
+  if (!isRuleEnabled(target)) {
     return {
       label: _("%s (disabled)").format(label),
       message: _(
@@ -2047,9 +2053,7 @@ function modalRuleEnabled(option, section_id) {
 
   return enabled
     ? enabled.formvalue(section_id) !== enabled.disabled
-    : !["0", "false", "no", "off"].includes(
-        backendOptionText(uci.get(UCI_PACKAGE, section_id, "enabled")),
-      );
+    : isRuleEnabled({ enabled: uci.get(UCI_PACKAGE, section_id, "enabled") });
 }
 
 function currentDraftOutboundNames(section_id) {
@@ -2177,7 +2181,7 @@ function isDownloadThroughTargetSection(section, currentSectionId) {
   if (
     !sectionName ||
     sectionName === currentSectionId ||
-    section.enabled === "0"
+    !isRuleEnabled(section)
   ) {
     return false;
   }
@@ -4407,10 +4411,10 @@ function backendOptionText(value) {
   return Array.isArray(value) ? value.join(" ") : `${value}`;
 }
 
-// core/common.uc bool_option().
+// core/common.uc bool_option(): 1, true, yes or on in any letter case.
 function backendFlag(section_id, key) {
   return ["1", "true", "yes", "on"].includes(
-    backendOptionText(uci.get(UCI_PACKAGE, section_id, key)),
+    backendOptionText(uci.get(UCI_PACKAGE, section_id, key)).toLowerCase(),
   );
 }
 
@@ -4429,6 +4433,15 @@ function keepBackendFlagSpelling(o) {
   };
   o.write = function (section_id, formvalue) {
     if (formvalue === this.enabled && backendFlag(section_id, this.option)) {
+      return;
+    }
+    // An unchecked flag with rmempty=false writes "0": a stored value the
+    // backend already reads as off ("Off", "false") stays as it is.
+    if (
+      formvalue === this.disabled &&
+      backendOptionText(uci.get(UCI_PACKAGE, section_id, this.option)) !== "" &&
+      !backendFlag(section_id, this.option)
+    ) {
       return;
     }
 
@@ -8656,6 +8669,9 @@ function createSectionContent(section) {
   o.rmempty = false;
   o.editable = true;
   o.width = "6rem";
+  // "On", "TRUE" or "yes" enable the rule in the backend: shown checked,
+  // kept as stored by an untouched save (UC-105).
+  keepBackendFlagSpelling(o);
   // The grid row and the rule modal: a rule that Settings use stays enabled
   // (UC-199). LuCI validates a checkbox with the value it sends when
   // checked, so the state comes from formvalue(). A rule that Settings could

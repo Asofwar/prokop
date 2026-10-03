@@ -130,11 +130,25 @@ function list_option(section, key) {
     return text == "" ? [] : split(text, " ");
 }
 
+// The one reading of a UCI boolean: 1, true, yes or on in any letter case
+// is on, any other value is off (UC-105). Every reader of a rule's enabled
+// flag uses it (section_enabled): the generator, nft, the nfqws and ByeDPI
+// runtimes and the resolver count the same enabled rules, so a rule's
+// position (route mark, queue, strategy) is the same everywhere.
+function bool_value(value) {
+    value = lc(as_string(value));
+    return value == "1" || value == "true" || value == "yes" || value == "on";
+}
+
 function bool_option(section, key, fallback) {
     if (fallback == null)
         fallback = false;
-    let value = option(section, key, fallback ? "1" : "0");
-    return value == "1" || value == "true" || value == "yes" || value == "on";
+    return bool_value(option(section, key, fallback ? "1" : "0"));
+}
+
+// A rule (or any section) is enabled unless its enabled option says off.
+function section_enabled(section) {
+    return bool_option(section, "enabled", true);
 }
 
 // Clash API authentication (UC-035): the one predicate shared by the config
@@ -241,7 +255,9 @@ return {
     object_key_count,
     option,
     list_option,
+    bool_value,
     bool_option,
+    section_enabled,
     int_option,
     duration_seconds,
     automatic_update_seconds,

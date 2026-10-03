@@ -347,6 +347,22 @@ describe('route check', () => {
     ).toContain('cannot be checked here');
   });
 
+  it('names each reason of the resolver without blaming an earlier rule', () => {
+    const note = (reason: string) =>
+      routeRow(trace({ rule: { value: null, provenance: 'unknown', reason } }))
+        .note;
+    for (const reason of ['undecidable_matcher', 'resolve_rule'])
+      expect(note(reason)).not.toContain('earlier rule');
+    expect(note('ipv6_not_modelled')).toContain('IPv6');
+    expect(note('fakeip_domain_unknown')).toContain('by its name');
+    expect(note('dns_hijack')).toContain('DNS port');
+    expect(note('real_address_interception_unknown')).toContain('real address');
+    expect(note('local_address_not_intercepted')).toContain('goes directly');
+    expect(note('real_address_interception_unknown')).not.toBe(
+      note('some_new_reason'),
+    );
+  });
+
   it('marks DNS as observed and an IP literal as needing no DNS', () => {
     expect(dnsRow(trace())).toMatchObject({
       value: '93.184.216.34',

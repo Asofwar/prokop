@@ -23,6 +23,10 @@ const DIRECT_OUTBOUND = constants.SB_DIRECT_OUTBOUND_TAG || "direct-out";
 const BYPASS_OUTBOUND = constants.SB_BYPASS_OUTBOUND_TAG || "bypass-out";
 const DEFAULT_SINGBOX_CONFIG = "/etc/sing-box/config.json";
 const FAKEIP_PREFIX = [ "198.18.0.0", 15 ];
+// The local and reserved IPv4 ranges nft returns early for, before any rule
+// chain (nft/apply.uc LOCALV4_RANGES, 240.0.0.0-255.255.255.255 written as
+// its prefix): such a destination never reaches sing-box.
+const LOCALV4_RANGES = [ "0.0.0.0/8", "10.0.0.0/8", "127.0.0.0/8", "169.254.0.0/16", "172.16.0.0/12", "192.0.0.0/24", "192.0.2.0/24", "192.88.99.0/24", "192.168.0.0/16", "198.51.100.0/24", "203.0.113.0/24", "224.0.0.0/4", "240.0.0.0/4" ];
 const LEGACY_CONNECTION_ACTIONS = [ "proxy", "outbound", "vpn" ];
 const RULESET_MATCH_BIN = getenv("FORKOP_RULESET_MATCH_BIN") || "/usr/bin/sing-box";
 function seconds_setting(value, fallback) {
@@ -105,9 +109,10 @@ function parse_config(text) {
     return sections;
 }
 
+// The shared reading of the flag (core/common, UC-105): the generator and nft
+// count the same enabled rules.
 function enabled(section) {
-    let v = section.options.enabled;
-    return v == null || index([ "1", "true", "yes", "on" ], lc(as_string(v))) >= 0;
+    return common.section_enabled(section.options);
 }
 function find_section(sections, name) {
     for (let s in sections) if (s.type == "section" && s.name == name) return s;
@@ -161,6 +166,10 @@ function cidr_contains(cidr, ip) {
 }
 function is_fakeip(ip) {
     return in_prefix(ip, FAKEIP_PREFIX[0], FAKEIP_PREFIX[1]);
+}
+function is_localv4(ip) {
+    for (let c in LOCALV4_RANGES) if (cidr_contains(c, ip)) return true;
+    return false;
 }
 
 // The connection being asked about. fakeip: the target reaches sing-box as
@@ -364,17 +373,20 @@ function rule_matches(r, t, lists) {
     let host = t.host, dest_fields = 0, dest = "no";
     let hit = () => { dest = "match"; };
     let unknown = () => { if (dest != "match") dest = "unknown"; };
-    for (let d in list_of(r.domain)) { dest_fields++; if (host != "" && lc(d) == host) hit(); }
+    // sing-box lower-cases the host and compares each value as written: an
+    // upper-case value never matches (the generator writes lower case,
+    // UC-099).
+    for (let d in list_of(r.domain)) { dest_fields++; if (host != "" && d == host) hit(); }
     for (let d in list_of(r.domain_suffix)) {
         dest_fields++;
         if (host == "") continue;
         // sing-box: ".example.com" matches subdomains only, "example.com"
         // the domain itself and its subdomains.
-        let s = lc(d), sub_only = substr(s, 0, 1) == ".";
+        let s = as_string(d), sub_only = substr(s, 0, 1) == ".";
         if (sub_only) s = substr(s, 1);
         if ((!sub_only && host == s) || (length(host) > length(s) + 1 && substr(host, length(host) - length(s) - 1) == "." + s)) hit();
     }
-    for (let d in list_of(r.domain_keyword)) { dest_fields++; if (host != "" && index(host, lc(d)) >= 0) hit(); }
+    for (let d in list_of(r.domain_keyword)) { dest_fields++; if (host != "" && index(host, as_string(d)) >= 0) hit(); }
     for (let d in list_of(r.domain_regex)) { dest_fields++; unknown(); }
     for (let c in list_of(r.ip_cidr)) { dest_fields++; if (!t.fakeip && cidr_contains(c, t.ip)) hit(); }
     for (let n in list_of(r.rule_set)) {
@@ -400,29 +412,127 @@ function rule_matches(r, t, lists) {
     return "match";
 }
 
+function is_ipv4(ip) {
+    return match(as_string(ip), /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/) != null;
+}
+function takes_tproxy(r) {
+    return type(r) == "object" && (r.inbound == null || index(list_of(r.inbound), TPROXY_INBOUND) >= 0);
+}
+function same_value(a, b) {
+    return sprintf("%J", a) == sprintf("%J", b);
+}
+
+// A rule's own resolve rule (ByeDPI, resolve_real_ip_for_routing): the
+// generator puts it directly before the rule's route rule, with the same
+// matchers (singbox/route.uc resolve_rule_for_section). The route rule may
+// add ip_cidr and network; nothing else differs.
+const PAIRED_ROUTE_EXTRA_KEYS = [ "action", "outbound", "ip_cidr", "network" ];
+function paired_route_rule(resolve_rule, next) {
+    if (!takes_tproxy(next) || (next.action != null && next.action != "route" && next.action != "reject")) return false;
+    let own = filter_keys(resolve_rule, RESOLVE_KEYS), route = filter_keys(next, PAIRED_ROUTE_EXTRA_KEYS);
+    if (length(keys(own)) != length(keys(route))) return false;
+    for (let k, v in own) if (!same_value(v, route[k])) return false;
+    return true;
+}
+
+const DOMAIN_KEYS = [ "domain", "domain_suffix", "domain_keyword", "domain_regex", "rule_set" ];
+// Whether a rule takes the address itself, the way nft does from the rule's
+// sets: by ip_cidr, or by ports/devices when it has no destination matcher.
+// A list (rule_set) is no proof: nft holds its addresses only when subnet
+// extraction is on, which the sing-box config does not show.
+function address_match(r, t, lists) {
+    let has_dest = false;
+    for (let k in [ ...DOMAIN_KEYS, "ip_cidr" ]) if (r[k] != null) has_dest = true;
+    if (has_dest && r.ip_cidr == null) return "no";
+    let m = rule_matches(filter_keys(r, DOMAIN_KEYS), { ...t, host: "" }, lists);
+    return m == "match" || m == "no" ? m : "unknown";
+}
+// A real-address connection enters sing-box only when nft intercepts its
+// address: the per-rule sets nft builds from the same rules (ip_cidr, ports,
+// devices), first match in rule order; a bypass verdict leaves it on the
+// direct path (nft/apply.uc priority_rules). "capture", { bypass: i }, or
+// "unknown" when the rules do not prove it. A list that may hold the
+// address counts both ways (in nft or not): only an outcome both share is
+// proven.
+function interception(rules, t, lists, from) {
+    for (let i = from || 0; i < length(rules); i++) {
+        let r = rules[i];
+        if (!takes_tproxy(r)) continue;
+        let action = r.action || "route";
+        if (action != "route" && action != "reject") continue;
+        let verdict = action == "route" && r.outbound == BYPASS_OUTBOUND ? { bypass: i } : "capture";
+        if (r.rule_set != null) {
+            let held = rule_matches(filter_keys(r, [ "domain", "domain_suffix", "domain_keyword", "domain_regex", "ip_cidr" ]), { ...t, host: "" }, lists);
+            if (held != "no") {
+                let rest = interception(rules, t, lists, i + 1);
+                if (verdict == "capture" && rest == "capture") return "capture";
+                if (type(verdict) == "object" && type(rest) == "object") return verdict;
+                return "unknown";
+            }
+        }
+        let m = address_match(r, t, lists);
+        if (m == "no") continue;
+        return m == "match" ? verdict : "unknown";
+    }
+    return "unknown";
+}
+
 // First sing-box route rule the connection takes from the transparent proxy
 // inbound: { decided, kind: outbound|reject|final, outbound, rule, reason }.
 function route_owner(config, t) {
     let rules = type(config) == "object" && type(config.route) == "object" && type(config.route.rules) == "array" ? config.route.rules : null;
     if (rules == null) return { decided: false, reason: "singbox_config_unavailable" };
+    // Outside the model (UC-096): IPv6 (tproxy6-in, FakeIP6, IPv6 matchers)
+    // and a FakeIP address whose domain is not known (sing-box routes it by
+    // the domain).
+    if ((t.ip != "" && !is_ipv4(t.ip)) || (t.source != "" && !is_ipv4(t.source)))
+        return { decided: false, reason: "ipv6_not_modelled" };
+    if (t.fakeip && t.host == "") return { decided: false, reason: "fakeip_domain_unknown" };
     let lists = local_rule_sets(config);
     // Each pass asks about lists within a budget of its own.
     ruleset_pass_spent = 0;
     for (let i = 0; i < length(rules); i++) {
         let r = rules[i];
-        if (type(r) != "object") continue;
-        if (r.inbound != null && index(list_of(r.inbound), TPROXY_INBOUND) < 0) continue;
+        if (!takes_tproxy(r)) continue;
         let action = r.action || "route";
+        if (action == "hijack-dns") {
+            // The asked connection carries the target's own traffic, not DNS:
+            // a rule on the sniffed DNS protocol does not take it, one on the
+            // port (53) does (UC-096).
+            let dns = filter_keys(r, [ "action" ]);
+            if (dns.protocol != null && length(filter(list_of(dns.protocol), (p) => p != "dns")) == 0) delete dns.protocol;
+            if (length(keys(dns)) == 0 || (length(keys(dns)) == 1 && dns.inbound != null)) continue;
+            if (rule_matches(dns, t, lists) != "no") return { decided: false, reason: "dns_hijack", rule: i };
+            continue;
+        }
         if (action == "resolve") {
             if (!t.fakeip) continue;
-            if (rule_matches(filter_keys(r, RESOLVE_KEYS), t, lists) != "no") return { decided: false, reason: "resolve_rule", rule: i };
-            continue;
+            if (rule_matches(filter_keys(r, RESOLVE_KEYS), t, lists) == "no") continue;
+            // The rule's own resolve rule: its route rule takes the
+            // connection by the same domain after the resolve, so that rule
+            // decides; when it would not, the route depends on the answer
+            // (UC-103).
+            if (i + 1 < length(rules) && paired_route_rule(r, rules[i + 1]) && rule_matches(rules[i + 1], t, lists) != "no") continue;
+            return { decided: false, reason: "resolve_rule", rule: i };
         }
         if (action != "route" && action != "reject") continue;
         let m = rule_matches(r, t, lists);
         if (m == "no") continue;
         if (type(m) == "object")
             return { decided: false, reason: m.reason, rule: i, sources: m.reason == "source_scoped_rule" ? list_of(r.source_ip_cidr) : null };
+        // A local or reserved real address: nft returns it before any rule
+        // chain, whatever rule names it; the connection goes directly
+        // (nft/apply.uc mangle, mangle_output).
+        if (!t.fakeip && is_localv4(t.ip)) return { decided: false, reason: "local_address_not_intercepted", rule: i };
+        // A real address taken by its domain: sing-box sees it only when nft
+        // intercepts the address (UC-100).
+        if (!t.fakeip && address_match(r, t, lists) != "match") {
+            let seen = interception(rules, t, lists);
+            if (type(seen) == "object")
+                return { decided: true, kind: "outbound", outbound: rules[seen.bypass].outbound, rule: seen.bypass,
+                    source_scoped: rules[seen.bypass].source_ip_cidr != null };
+            if (seen != "capture") return { decided: false, reason: "real_address_interception_unknown", rule: i };
+        }
         if (action == "reject") return { decided: true, kind: "reject", rule: i };
         return { decided: true, kind: "outbound", outbound: r.outbound, rule: i, source_scoped: r.source_ip_cidr != null };
     }

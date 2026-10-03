@@ -9,6 +9,7 @@ import { getClashApiSecretFromSettings } from '../../../helpers/getClashApiUrl';
 import { getOutboundTagBySection } from '../../runtimeTags';
 import { ForkopShellMethods } from '../shell';
 import { isReadonlyMode } from '../../services/accessMode.service';
+import { isSectionEnabled } from '../../helpers/sectionEnabled';
 
 interface IGetDashboardSectionsResponse {
   success: boolean;
@@ -1410,7 +1411,8 @@ export async function getDashboardSections(): Promise<IGetDashboardSectionsRespo
     configSections
       .filter(
         (section) =>
-          section.enabled !== '0' && isConnectionAction(section.action),
+          isSectionEnabled(section.enabled) &&
+          isConnectionAction(section.action),
       )
       .map(async (section) => {
         const displayName = getDisplayName(section);

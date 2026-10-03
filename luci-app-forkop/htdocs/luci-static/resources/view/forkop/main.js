@@ -3327,6 +3327,12 @@ function getOutboundTagBySection(sectionName) {
   return allocateRuntimeTag(sectionName, "out");
 }
 
+// src/forkop/helpers/sectionEnabled.ts
+function isSectionEnabled(value) {
+  if (value === void 0 || value === null) return true;
+  return ["1", "true", "yes", "on"].includes(String(value).toLowerCase());
+}
+
 // src/forkop/methods/custom/getDashboardSections.ts
 var DASHBOARD_SECTION_CACHE_DIR = "/var/run/forkop/section-cache";
 var CLASH_API_FETCH_TIMEOUT_MS = 5e3;
@@ -4217,7 +4223,7 @@ async function getDashboardSections() {
   );
   const data = await Promise.all(
     configSections.filter(
-      (section) => section.enabled !== "0" && isConnectionAction(section.action)
+      (section) => isSectionEnabled(section.enabled) && isConnectionAction(section.action)
     ).map(async (section) => {
       const displayName = getDisplayName(section);
       const sectionName = section[".name"];
@@ -7390,7 +7396,7 @@ async function loadOverviewCounts(mountId3) {
   ]);
   if (!dashboardMounted || mountId3 !== dashboardMountId) return;
   overviewRuleCount = sections.status === "fulfilled" ? sections.value.filter(
-    (section) => section[".type"] === "section" && section.enabled !== "0"
+    (section) => section[".type"] === "section" && isSectionEnabled(section.enabled)
   ).length : null;
   overviewSnapshotCount = snapshots2.status === "fulfilled" && snapshots2.value.success && Array.isArray(snapshots2.value.data) ? snapshots2.value.data.length : null;
   renderOverviewCards();
@@ -10110,7 +10116,9 @@ async function runNftCheck() {
         value: ""
       },
       {
-        state: data.rules_mangle_output_counters ? "success" : "error",
+        // Only the router's own connections marked for sing-box count here
+        // (UC-107); none may have been made yet, as for the mangle counters.
+        state: data.rules_mangle_output_counters ? "success" : "warning",
         key: _("Rules mangle output counters"),
         value: ""
       },
@@ -11518,14 +11526,33 @@ function undecidedReasonText(reason) {
       return _(
         "the sing-box configuration is not available; is Forkop X running?"
       );
-    // Reason codes of routing/resolve.uc (shared with autotune apply).
+    // Reason codes of routing/resolve.uc (shared with autotune apply). The
+    // rule may be the one that would own the site (UC-103).
     case "undecidable_matcher":
       return _(
-        "an earlier rule uses a list or pattern whose contents cannot be checked here"
+        "a rule on the way uses a list or pattern whose contents cannot be checked here"
       );
     case "resolve_rule":
       return _(
-        "an earlier rule re-resolves the address, so the route depends on its answer"
+        "a rule on the way re-resolves the address, so the route depends on its answer"
+      );
+    case "ipv6_not_modelled":
+      return _("the route of an IPv6 address is not calculated");
+    case "fakeip_domain_unknown":
+      return _(
+        "a FakeIP address is routed by its domain; check the site by its name"
+      );
+    case "dns_hijack":
+      return _(
+        "connections to the DNS port are answered by the sing-box DNS, not routed by a rule"
+      );
+    case "real_address_interception_unknown":
+      return _(
+        "the site has a real address; whether Forkop intercepts it depends on the address lists of the rules"
+      );
+    case "local_address_not_intercepted":
+      return _(
+        "the address is local or reserved; Forkop does not intercept it, the connection goes directly"
       );
     case "source_scoped_rule":
       return _("a rule applies to selected devices only; choose a device");
@@ -13964,7 +13991,7 @@ function buildRouteDisplayNames(sections) {
       id
     ]);
   });
-  sections.filter((section) => section[".type"] === "section").filter((section) => section.enabled !== "0").forEach((section) => {
+  sections.filter((section) => section[".type"] === "section").filter((section) => isSectionEnabled(section.enabled)).forEach((section) => {
     const sectionName = section[".name"];
     const displayName = getDisplayName2(section);
     if (!sectionName || !displayName) {
