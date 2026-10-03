@@ -21,7 +21,8 @@ services:
       ZAPRET_CACHE_LISTEN: 0.0.0.0
       ZAPRET_CACHE_PORT: "9081"
       ZAPRET_CACHE_ROOT: /cache
-      ZAPRET_MANAGER_MIRROR: https://mirror.infotechtg.ru
+      # Public URL of this mirror, e.g. from an .env file next to this file.
+      ZAPRET_MANAGER_MIRROR: ${ZAPRET_MANAGER_MIRROR:?set ZAPRET_MANAGER_MIRROR to the public mirror URL}
     tmpfs:
       - /tmp:size=8m,mode=1777
     volumes:

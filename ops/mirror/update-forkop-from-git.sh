@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-GITHUB_REPOSITORY="${FORKOP_GITHUB_REPOSITORY:-slayer326/forkop}"
+GITHUB_REPOSITORY="${FORKOP_GITHUB_REPOSITORY:-Asofwar/forkop}"
 MIRROR_ROOT="${MIRROR_ROOT:-/srv/mirror/public/forkop}"
 BUILD_ROOT="${FORKOP_BUILD_ROOT:-/srv/mirror/build/automatic}"
 LOCK_FILE="${FORKOP_BUILD_LOCK_FILE:-/run/lock/forkop-git-build.lock}"
@@ -40,10 +40,14 @@ trap cleanup EXIT
 git clone --depth 1 --branch "$tag" \
     "https://github.com/$GITHUB_REPOSITORY.git" "$source_dir"
 
-# Keep mirrored OpenWrt dependencies and built-in lists, while Forkop itself
-# follows releases from this GitHub repository.
+# Keep the optional dependency mirror setting, while Forkop itself follows
+# releases from the repository being built (the fork by default), never from
+# another one's releases.
 grep -Fq 'mirror_base_url' "$source_dir/forkop/files/usr/lib/core/constants.uc"
-grep -Fq 'slayer326/forkop' "$source_dir/forkop/files/usr/lib/core/constants.uc"
+grep -Fq "\"$GITHUB_REPOSITORY\"" "$source_dir/forkop/files/usr/lib/core/constants.uc" || {
+    echo "Forkop $tag does not follow releases of $GITHUB_REPOSITORY" >&2
+    exit 1
+}
 
 rm -rf "$output_dir"
 "$source_dir/build.sh" "$version" "$output_dir"

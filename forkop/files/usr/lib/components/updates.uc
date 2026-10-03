@@ -2796,14 +2796,28 @@ function service_proxy_address(settings, purpose) {
         SB_SERVICE_MIXED_INBOUND_ADDRESS + ":" + service_proxy_port_for_purpose(purpose) : "";
 }
 
+// The list trees of the configured mirror and of the former upstream mirrors.
+// A list an older configuration still takes from one of those keeps its
+// direct fallbacks, also when no mirror is configured.
+function list_mirror_prefixes(tree) {
+    let prefixes = [];
+    for (let base in [ FORKOP_MIRROR_BASE_URL, "https://mirror.infotechtg.ru", "http://mirror.infotechtg.ru",
+        "https://mirror.51343.ru", "http://mirror.51343.ru" ])
+        if (base != "")
+            push(prefixes, base + "/forkop/lists/" + tree + "/");
+    return prefixes;
+}
+
 function jsdelivr_fallback_url(url) {
     url = as_string(url);
     let sources = [
         [ "https://raw.githubusercontent.com/itdoginfo/allow-domains/main/", "https://cdn.jsdelivr.net/gh/itdoginfo/allow-domains@main/" ],
-        [ FORKOP_MIRROR_BASE_URL + "/forkop/lists/allow-domains/", "https://cdn.jsdelivr.net/gh/itdoginfo/allow-domains@main/" ],
-        [ FORKOP_MIRROR_BASE_URL + "/forkop/lists/b4geoip-forkop/", "https://cdn.jsdelivr.net/gh/Greeg0ry/b4geoip-forkop@main/" ],
         [ "https://raw.githubusercontent.com/Greeg0ry/b4geoip-forkop/main/", "https://cdn.jsdelivr.net/gh/Greeg0ry/b4geoip-forkop@main/" ]
     ];
+    for (let prefix in list_mirror_prefixes("allow-domains"))
+        push(sources, [ prefix, "https://cdn.jsdelivr.net/gh/itdoginfo/allow-domains@main/" ]);
+    for (let prefix in list_mirror_prefixes("b4geoip-forkop"))
+        push(sources, [ prefix, "https://cdn.jsdelivr.net/gh/Greeg0ry/b4geoip-forkop@main/" ]);
 
     for (let source in sources) {
         let prefix = source[0];
@@ -2816,25 +2830,20 @@ function jsdelivr_fallback_url(url) {
 
 function github_raw_fallback_url(url) {
     url = as_string(url);
-    let mirror_prefix = FORKOP_MIRROR_BASE_URL != "" ?
-        FORKOP_MIRROR_BASE_URL + "/forkop/lists/allow-domains/" : "";
-    let jsdelivr_prefix = "https://cdn.jsdelivr.net/gh/itdoginfo/allow-domains@main/";
-    let b4geoip_mirror_prefix = FORKOP_MIRROR_BASE_URL != "" ?
-        FORKOP_MIRROR_BASE_URL + "/forkop/lists/b4geoip-forkop/" : "";
-    let b4geoip_jsdelivr_prefix = "https://cdn.jsdelivr.net/gh/Greeg0ry/b4geoip-forkop@main/";
+    let sources = [
+        [ "https://cdn.jsdelivr.net/gh/itdoginfo/allow-domains@main/", "https://raw.githubusercontent.com/itdoginfo/allow-domains/main/" ],
+        [ "https://cdn.jsdelivr.net/gh/Greeg0ry/b4geoip-forkop@main/", "https://raw.githubusercontent.com/Greeg0ry/b4geoip-forkop/main/" ]
+    ];
+    for (let prefix in list_mirror_prefixes("allow-domains"))
+        push(sources, [ prefix, "https://raw.githubusercontent.com/itdoginfo/allow-domains/main/" ]);
+    for (let prefix in list_mirror_prefixes("b4geoip-forkop"))
+        push(sources, [ prefix, "https://raw.githubusercontent.com/Greeg0ry/b4geoip-forkop/main/" ]);
 
-    if (mirror_prefix != "" && substr(url, 0, length(mirror_prefix)) == mirror_prefix)
-        return "https://raw.githubusercontent.com/itdoginfo/allow-domains/main/" +
-            substr(url, length(mirror_prefix));
-    if (substr(url, 0, length(jsdelivr_prefix)) == jsdelivr_prefix)
-        return "https://raw.githubusercontent.com/itdoginfo/allow-domains/main/" +
-            substr(url, length(jsdelivr_prefix));
-    if (b4geoip_mirror_prefix != "" && substr(url, 0, length(b4geoip_mirror_prefix)) == b4geoip_mirror_prefix)
-        return "https://raw.githubusercontent.com/Greeg0ry/b4geoip-forkop/main/" +
-            substr(url, length(b4geoip_mirror_prefix));
-    if (substr(url, 0, length(b4geoip_jsdelivr_prefix)) == b4geoip_jsdelivr_prefix)
-        return "https://raw.githubusercontent.com/Greeg0ry/b4geoip-forkop/main/" +
-            substr(url, length(b4geoip_jsdelivr_prefix));
+    for (let source in sources) {
+        let prefix = source[0];
+        if (substr(url, 0, length(prefix)) == prefix)
+            return source[1] + substr(url, length(prefix));
+    }
     return "";
 }
 

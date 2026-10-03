@@ -49,9 +49,23 @@ const MODEL_SECTION_TYPES = [
 ];
 const SECONDARY_RULESET_RAW_PREFIX = "https://raw.githubusercontent.com/Greeg0ry/b4geoip-forkop/main/srs/";
 const SECONDARY_RULESET_CDN_PREFIX = "https://cdn.jsdelivr.net/gh/Greeg0ry/b4geoip-forkop@main/srs/";
-const OWN_MIRROR_BASE = "https://mirror.infotechtg.ru";
-const SECONDARY_RULESET_MIRROR_PREFIX = OWN_MIRROR_BASE + "/forkop/lists/b4geoip-forkop/srs/";
-const LEGACY_SECONDARY_RULESET_MIRROR_PREFIX = "https://mirror.51343.ru/forkop/lists/b4geoip-forkop/srs/";
+// The dependency mirror is opt-in. The former upstream mirrors are recognised
+// only to move a configuration off them; none is ever written into one.
+const LEGACY_MIRROR_BASES = [
+    "https://mirror.infotechtg.ru", "http://mirror.infotechtg.ru",
+    "https://mirror.51343.ru", "http://mirror.51343.ru"
+];
+// Direct sources for what those mirrors served under /forkop/lists/: the same
+// ones the backend downloads from when no mirror is configured.
+const LEGACY_MIRROR_LIST_SOURCES = [
+    [ "b4geoip-forkop/", "https://raw.githubusercontent.com/Greeg0ry/b4geoip-forkop/main/" ],
+    [ "allow-domains/", "https://raw.githubusercontent.com/itdoginfo/allow-domains/main/" ],
+    [ "rulesets/community/", "https://github.com/itdoginfo/allow-domains/releases/latest/download/" ],
+    [ "rulesets/adlist.srs", "https://github.com/zxc-rv/ad-filter/releases/latest/download/adlist.srs" ],
+    [ "rulesets/supercell.srs", "https://raw.githubusercontent.com/ushan0v/sing-box-supercell-ruleset/main/supercell.srs" ],
+    [ "rulesets/github.srs", "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/github.srs" ]
+];
+const LIST_URL_OPTIONS = [ "rule_set", "rule_set_with_subnets", "remote_domain_lists", "remote_subnet_lists" ];
 const CURRENT_SECONDARY_RULESET_IDS = {
     adobe: true, anthropic: true, apple: true, blizzard: true, bungie: true,
     ccp: true, electronicarts: true, epicgames: true, google: true,
@@ -1342,6 +1356,18 @@ function migrate_flintnet_urltest_default(ctx) {
     }
 }
 
+// The b4geoip-forkop prefix of a rule-set URL: raw GitHub, jsDelivr or a
+// former upstream mirror; "" for any other URL.
+function secondary_ruleset_prefix(reference) {
+    let prefixes = [ SECONDARY_RULESET_RAW_PREFIX, SECONDARY_RULESET_CDN_PREFIX ];
+    for (let base in LEGACY_MIRROR_BASES)
+        push(prefixes, base + "/forkop/lists/b4geoip-forkop/srs/");
+    for (let prefix in prefixes)
+        if (index(reference, prefix) == 0)
+            return prefix;
+    return "";
+}
+
 // b4geoip-forkop removed these SRS assets in its 2026-09-02 release. Keeping
 // their URLs in a rule causes every list update to fail with a remote 404.
 function migrate_retired_secondary_rulesets(ctx) {
@@ -1350,14 +1376,7 @@ function migrate_retired_secondary_rulesets(ctx) {
         let changed = false;
         for (let reference in list_option(section, "rule_set_with_subnets")) {
             reference = as_string(reference);
-            let prefix = index(reference, SECONDARY_RULESET_RAW_PREFIX) == 0
-                ? SECONDARY_RULESET_RAW_PREFIX
-                : (index(reference, SECONDARY_RULESET_CDN_PREFIX) == 0
-                    ? SECONDARY_RULESET_CDN_PREFIX
-                    : (index(reference, SECONDARY_RULESET_MIRROR_PREFIX) == 0
-                        ? SECONDARY_RULESET_MIRROR_PREFIX
-                        : (index(reference, LEGACY_SECONDARY_RULESET_MIRROR_PREFIX) == 0
-                            ? LEGACY_SECONDARY_RULESET_MIRROR_PREFIX : "")));
+            let prefix = secondary_ruleset_prefix(reference);
             let id = prefix != "" ? replace(reference, /^.*\//, "") : "";
             id = replace(id, /\.srs$/, "");
             if (prefix != "" && match(reference, /\.srs$/) != null && RETIRED_SECONDARY_RULESET_IDS[id]) {
@@ -1376,23 +1395,21 @@ function migrate_retired_secondary_rulesets(ctx) {
     }
 }
 
-// Prefer the mirrored copy for existing b4geoip selections as well as new
-// ones. Raw GitHub and jsDelivr remain download fallbacks at runtime.
-function migrate_secondary_rulesets_to_mirror(ctx) {
+// Existing b4geoip selections use the direct raw GitHub URL the editor writes
+// for new ones; jsDelivr remains a download fallback at runtime. This once
+// moved them to the upstream mirror, which is no longer a default.
+function migrate_secondary_rulesets_direct(ctx) {
     for (let section in ctx.model.sections) {
         let migrated = [];
         let changed = false;
         for (let reference in list_option(section, "rule_set_with_subnets")) {
             reference = as_string(reference);
-            let prefix = index(reference, SECONDARY_RULESET_RAW_PREFIX) == 0
-                ? SECONDARY_RULESET_RAW_PREFIX
-                : (index(reference, SECONDARY_RULESET_CDN_PREFIX) == 0
-                    ? SECONDARY_RULESET_CDN_PREFIX
-                    : "");
+            let prefix = secondary_ruleset_prefix(reference);
             let id = prefix != "" ? replace(reference, /^.*\//, "") : "";
             id = replace(id, /\.srs$/, "");
-            if (prefix != "" && match(reference, /\.srs$/) != null && CURRENT_SECONDARY_RULESET_IDS[id]) {
-                reference = SECONDARY_RULESET_MIRROR_PREFIX + id + ".srs";
+            if (prefix != "" && prefix != SECONDARY_RULESET_RAW_PREFIX &&
+                match(reference, /\.srs$/) != null && CURRENT_SECONDARY_RULESET_IDS[id]) {
+                reference = SECONDARY_RULESET_RAW_PREFIX + id + ".srs";
                 changed = true;
             }
             push(migrated, reference);
@@ -1402,27 +1419,51 @@ function migrate_secondary_rulesets_to_mirror(ctx) {
     }
 }
 
-// Only the former built-in mirror paths are migrated. Subscription URLs,
-// local files and third-party list providers must stay untouched.
-function migrate_own_dependency_mirror(ctx) {
+// A list or rule-set URL on a former upstream mirror, moved to its direct
+// source; null for any other URL or for a path without a known source.
+function legacy_mirror_list_url(value) {
+    for (let base in LEGACY_MIRROR_BASES) {
+        let prefix = base + "/forkop/lists/";
+        if (index(value, prefix) != 0)
+            continue;
+        let path = substr(value, length(prefix));
+        for (let source in LEGACY_MIRROR_LIST_SOURCES)
+            if (index(path, source[0]) == 0)
+                return source[1] + substr(path, length(source[0]));
+        return null;
+    }
+    return null;
+}
+
+// The dependency mirror is opt-in. A configuration that names a former
+// upstream mirror (written by an older release or a podkop import) loses it,
+// and the list and rule-set URLs on such a mirror move to their direct
+// sources. A custom mirror and its URLs, subscriptions, local files and other
+// list providers stay untouched. own_dependency_mirror_v1 once set the
+// upstream mirror here; it runs this now, so older configurations never get it.
+function migrate_off_legacy_mirror(ctx) {
     let configured = replace(option(ctx.model.settings, "mirror_base_url", ""), /\/+$/, "");
-    if (configured == "" || configured == "https://mirror.51343.ru" || configured == "http://mirror.51343.ru")
-        set_option(ctx, ctx.model.settings, "mirror_base_url", OWN_MIRROR_BASE);
+    if (index(LEGACY_MIRROR_BASES, configured) >= 0)
+        set_option(ctx, ctx.model.settings, "mirror_base_url", "");
 
     for (let section in ctx.model.sections) {
-        for (let key in [ "rule_set", "rule_set_with_subnets", "remote_domain_lists", "remote_subnet_lists" ]) {
+        for (let key in LIST_URL_OPTIONS) {
             let changed = false;
             let migrated = [];
+            let seen = {};
             for (let reference in list_option(section, key)) {
                 let value = as_string(reference);
-                for (let scheme in [ "https", "http" ]) {
-                    let prefix = scheme + "://mirror.51343.ru/forkop/lists/";
-                    if (index(value, prefix) == 0) {
-                        value = OWN_MIRROR_BASE + "/forkop/lists/" + substr(value, length(prefix));
-                        changed = true;
-                        break;
-                    }
+                let direct = legacy_mirror_list_url(value);
+                if (direct != null) {
+                    value = direct;
+                    changed = true;
                 }
+                // The direct URL may already be listed next to the mirror one.
+                if (seen[value]) {
+                    changed = true;
+                    continue;
+                }
+                seen[value] = true;
                 push(migrated, value);
             }
             if (changed)
@@ -1529,11 +1570,14 @@ const MIGRATIONS = [
     { id: "flintnet_urltest_default", run: migrate_flintnet_urltest_default },
     { id: "retired_secondary_rulesets", run: migrate_retired_secondary_rulesets },
     { id: "retired_secondary_rulesets_v2", run: migrate_retired_secondary_rulesets },
-    { id: "secondary_rulesets_mirror_v1", run: migrate_secondary_rulesets_to_mirror },
-    { id: "own_dependency_mirror_v1", run: migrate_own_dependency_mirror },
+    { id: "secondary_rulesets_mirror_v1", run: migrate_secondary_rulesets_direct },
+    { id: "own_dependency_mirror_v1", run: migrate_off_legacy_mirror },
     { id: "clash_api_secret_v1", run: migrate_clash_api_secret },
     { id: "urltest_section_names_v1", run: migrate_urltest_section_names },
-    { id: "vpn_guard_kill_switch_v1", run: migrate_vpn_guard_to_kill_switch }
+    { id: "vpn_guard_kill_switch_v1", run: migrate_vpn_guard_to_kill_switch },
+    // Routers that ran own_dependency_mirror_v1 before the mirror became
+    // opt-in still name the upstream mirror.
+    { id: "fork_mirror_opt_in_v1", run: migrate_off_legacy_mirror }
 ];
 
 function apply_migrations(ctx) {

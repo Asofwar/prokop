@@ -11,8 +11,8 @@ body:
         Спасибо за создание отчета об ошибке!
         
         Перед отправкой, пожалуйста:
-        - Проверьте [существующие issues](https://github.com/slayer326/forkop/issues)
-        - Просмотрите [README проекта](https://github.com/slayer326/forkop#readme)
+        - Проверьте [существующие issues](https://github.com/Asofwar/forkop/issues)
+        - Просмотрите [README проекта](https://github.com/Asofwar/forkop#readme)
 
   - type: textarea
     id: description

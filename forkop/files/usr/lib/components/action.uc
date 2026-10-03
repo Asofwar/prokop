@@ -12,9 +12,10 @@ const CONFIG_NAME = getenv("FORKOP_CONFIG_NAME") || constants.FORKOP_CONFIG_NAME
 const BIN_PATH = getenv("FORKOP_BIN") || constants.FORKOP_BIN || "/usr/bin/forkop";
 const SERVICE_INIT = getenv("FORKOP_SERVICE_INIT") || constants.FORKOP_SERVICE_INIT || "/etc/init.d/forkop";
 const FORKOP_VERSION = getenv("FORKOP_VERSION") || constants.FORKOP_VERSION || "";
-const FORKOP_RELEASE_REPO = getenv("FORKOP_RELEASE_REPO") || constants.FORKOP_RELEASE_REPO || "slayer326/forkop";
-const FORKOP_RELEASE_BASE_URL = getenv("FORKOP_RELEASE_BASE_URL") || constants.FORKOP_RELEASE_BASE_URL || "https://fold8.ru/forkop";
-const FORKOP_MIRROR_BASE_URL = getenv("FORKOP_MIRROR_BASE_URL") || constants.FORKOP_MIRROR_BASE_URL || "";
+const FORKOP_RELEASE_REPO = getenv("FORKOP_RELEASE_REPO") || constants.FORKOP_RELEASE_REPO || "";
+const FORKOP_RELEASE_BASE_URL = getenv("FORKOP_RELEASE_BASE_URL") || constants.FORKOP_RELEASE_BASE_URL || "";
+// The dependency mirror is opt-in: an empty value means "use the sources".
+const FORKOP_MIRROR_BASE_URL = replace(getenv("FORKOP_MIRROR_BASE_URL") || constants.FORKOP_MIRROR_BASE_URL || "", /\/+$/, "");
 const RUNTIME_STATE_DIR = getenv("FORKOP_RUNTIME_STATE_DIR") || "/var/run/forkop";
 const MANAGED_UPGRADE_SING_BOX_MARKER = getenv("FORKOP_MANAGED_UPGRADE_SING_BOX_MARKER") || "/tmp/forkop-managed-upgrade-sing-box";
 const SYSTEM_INFO_CACHE_FILE = getenv("FORKOP_SYSTEM_INFO_CACHE_FILE") || RUNTIME_STATE_DIR + "/system-info.json";
@@ -683,6 +684,39 @@ function download_with_retry(url, output_path, label) {
     return false;
 }
 
+// GitHub reports an asset checksum as digest "sha256:<hex>" (older assets have
+// none); the static release channel also writes a plain sha256 field.
+function release_asset_sha256(asset) {
+    if (type(asset) != "object")
+        return "";
+    let value = lc(as_string(asset.sha256));
+    if (match(value, /^[a-f0-9]{64}$/) != null)
+        return value;
+    value = lc(as_string(asset.digest));
+    if (substr(value, 0, 7) == "sha256:" && match(substr(value, 7), /^[a-f0-9]{64}$/) != null)
+        return substr(value, 7);
+    return "";
+}
+
+// The checksum a release document publishes for the asset whose `key` field
+// equals `value`; empty when it publishes none.
+function release_json_asset_sha256(release_json, key, value) {
+    let release = parse_json_object(release_json);
+    for (let asset in (type(release.assets) == "array" ? release.assets : []))
+        if (type(asset) == "object" && as_string(asset[key]) == as_string(value))
+            return release_asset_sha256(asset);
+    return "";
+}
+
+// An empty expectation means the source published no checksum to compare.
+function download_checksum_ok(path, expected) {
+    expected = as_string(expected);
+    if (expected == "")
+        return true;
+    let actual = split(trim(command_output_from_args([ "sha256sum", path ])), /[ \t]+/)[0];
+    return lc(as_string(actual)) == expected;
+}
+
 function fetch_github_release_json(owner, repo) {
     let response = http_get("https://api.github.com/repos/" + as_string(owner) + "/" + as_string(repo) + "/releases/latest");
     if (response == "" || !helper_success_input(response, "github-response-ok", []))
@@ -740,10 +774,10 @@ function forkop_mirror_url(value) {
     return value;
 }
 
-// The catalog is an index of what the mirror actually holds, shipped with each
-// release bundle. Accept an entry only when every package it names carries a
-// checksum and a download URL under this release's own directory: a rewritten
-// catalog must not be able to point an install at some other file.
+// The catalog is an index of what the release channel actually holds, shipped
+// with each release bundle. Accept an entry only when every package it names
+// carries a checksum and a download URL under this release's own directory: a
+// rewritten catalog must not be able to point an install at some other file.
 function parse_forkop_release_catalog(response, ext) {
     let catalog;
     try { catalog = json(response); } catch (e) { return []; }
@@ -1275,43 +1309,71 @@ function install_byedpi(action) {
     action_success("byedpi", action, "ByeDPI package has been installed", current_version, pkg.version, 1, "latest", release.release_url || "");
 }
 
+const ZAPRET_MANAGER_SOURCE = "raw.githubusercontent.com/Screamshow/Zapret-Manager/main/Zapret-Manager.sh";
+// Every launcher Forkop X writes carries this line. Launchers written by older
+// releases always went through the mirror and are known by its proxy path.
+const ZAPRET_MANAGER_LAUNCHER_MARKER = "# Forkop X Zapret-Manager launcher";
+const ZAPRET_MANAGER_LEGACY_MARKER = "/zapret-manager/proxy/";
+// Where zms and zmsA live; tests point it elsewhere.
+const ZAPRET_MANAGER_BIN_DIR = getenv("FORKOP_ZAPRET_MANAGER_BIN_DIR") || "/usr/bin";
+
+function zapret_manager_launcher_managed(source) {
+    source = as_string(source);
+    return index(source, ZAPRET_MANAGER_LAUNCHER_MARKER) >= 0 || index(source, ZAPRET_MANAGER_LEGACY_MARKER) >= 0;
+}
+
+// A configured mirror proxies the script and the downloads it makes;
+// without one the launcher runs the project's own script.
+function zapret_manager_url() {
+    return FORKOP_MIRROR_BASE_URL != "" ?
+        FORKOP_MIRROR_BASE_URL + "/zapret-manager/proxy/" + ZAPRET_MANAGER_SOURCE :
+        "https://" + ZAPRET_MANAGER_SOURCE;
+}
+
+// The launcher for the current mirror setting; zms and zmsA are the same.
+function zapret_manager_launcher() {
+    return "#!/bin/sh\n" + ZAPRET_MANAGER_LAUNCHER_MARKER + "\n" +
+        (FORKOP_MIRROR_BASE_URL != "" ? "export ZAPRET_MANAGER_MIRROR=" + shell_quote(FORKOP_MIRROR_BASE_URL) + "\n" : "") +
+        "exec sh <(wget -q -O - " + shell_quote(zapret_manager_url()) + ") \"$@\"\n";
+}
+
 function install_zapret_manager(action) {
     let component = "zapret_manager";
-    let manager_url = FORKOP_MIRROR_BASE_URL + "/zapret-manager/proxy/raw.githubusercontent.com/Screamshow/Zapret-Manager/main/Zapret-Manager.sh";
+    let mirrored = FORKOP_MIRROR_BASE_URL != "";
+    let manager_url = zapret_manager_url();
     let manager_file = tmp_dir + "/Zapret-Manager.sh";
-    let current_version = file_exists("/usr/bin/zms") ? "installed" : "not installed";
+    let zms = ZAPRET_MANAGER_BIN_DIR + "/zms";
+    let zmsa = ZAPRET_MANAGER_BIN_DIR + "/zmsA";
+    let current_version = file_exists(zms) ? "installed" : "not installed";
 
-    if (FORKOP_MIRROR_BASE_URL == "")
-        action_fail(component, action, "Forkop mirror URL is not configured", current_version);
     if (!download_with_retry(manager_url, manager_file, "Zapret-Manager"))
-        action_fail(component, action, "Failed to download Zapret-Manager from the mirror", current_version);
+        action_fail(component, action, mirrored ? "Failed to download Zapret-Manager from the mirror" :
+            "Failed to download Zapret-Manager", current_version);
 
     let source = read_file(manager_file);
     let matched = match(source, /ZAPRET_MANAGER_VERSION="([^"]+)"/);
-    let latest_version = matched != null ? as_string(matched[1]) : "mirror";
-    let wrapper = "#!/bin/sh\nexport ZAPRET_MANAGER_MIRROR=" + shell_quote(FORKOP_MIRROR_BASE_URL) +
-        "\nexec sh <(wget -q -O - " + shell_quote(manager_url) + ") \"$@\"\n";
+    let latest_version = matched != null ? as_string(matched[1]) : (mirrored ? "mirror" : "unknown");
+    let wrapper = zapret_manager_launcher();
     let auto_wrapper = wrapper;
 
-    if (!write_file("/usr/bin/zms", wrapper) || !write_file("/usr/bin/zmsA", auto_wrapper) ||
-        !command_success_from_args([ "chmod", "0755", "/usr/bin/zms", "/usr/bin/zmsA" ]))
+    if (!write_file(zms, wrapper) || !write_file(zmsa, auto_wrapper) ||
+        !command_success_from_args([ "chmod", "0755", zms, zmsa ]))
         action_fail(component, action, "Failed to install Zapret-Manager launchers", current_version, latest_version);
 
     clear_version_caches();
-    action_success(component, action, "Zapret-Manager has been installed from the Forkop mirror", current_version,
-        latest_version, 1, "latest", manager_url);
+    action_success(component, action, mirrored ? "Zapret-Manager has been installed from the Forkop mirror" :
+        "Zapret-Manager has been installed", current_version, latest_version, 1, "latest", manager_url);
 }
 
 function remove_zapret_manager(action) {
     let component = "zapret_manager";
-    let managed_marker = "/zapret-manager/proxy/";
-    let paths = [ "/usr/bin/zms", "/usr/bin/zmsA" ];
+    let paths = [ ZAPRET_MANAGER_BIN_DIR + "/zms", ZAPRET_MANAGER_BIN_DIR + "/zmsA" ];
     let removed = 0;
 
     for (let path in paths) {
         if (!file_exists(path))
             continue;
-        if (index(read_file(path), managed_marker) < 0)
+        if (!zapret_manager_launcher_managed(read_file(path)))
             action_fail(component, action, "Existing " + path + " was not created by Forkop X and was not removed");
         remove_file(path);
         if (file_exists(path))
@@ -1323,6 +1385,30 @@ function remove_zapret_manager(action) {
     action_success(component, action, removed > 0 ?
         "Zapret-Manager launchers have been removed" :
         "Zapret-Manager launchers are already removed", "installed", "", 1);
+}
+
+// A launcher written for another mirror, a former upstream one among them,
+// keeps downloading and running Zapret-Manager from that host. Every package
+// install rewrites Forkop's own launchers for the current mirror setting
+// (service/package.uc); a launcher that is missing, not a regular file or not
+// written by Forkop stays as it is.
+function reconcile_zapret_manager_launchers() {
+    let launcher = zapret_manager_launcher();
+    let ok = true;
+
+    for (let path in [ ZAPRET_MANAGER_BIN_DIR + "/zms", ZAPRET_MANAGER_BIN_DIR + "/zmsA" ]) {
+        let stat = fs.lstat(path);
+        let source = read_file(path);
+        if (stat == null || stat.type != "file" || source == launcher || !zapret_manager_launcher_managed(source))
+            continue;
+        if (write_file(path, launcher))
+            print("Updated " + path + " for the current dependency mirror setting\n");
+        else {
+            warn("Failed to update " + path + " for the current dependency mirror setting\n");
+            ok = false;
+        }
+    }
+    return ok;
 }
 
 function remove_optional_component(component, package_name, label, runtime_module) {
@@ -1480,15 +1566,29 @@ function set_sing_box_extended_release_from_json(release_json, compressed) {
         tag,
         release_url: forkop_mirror_url(trim(helper_output_input(release_json, "object-get-default", [ "html_url", "" ]))),
         asset_url: forkop_mirror_url(asset_url),
-        asset_name: path_basename(asset_url)
+        asset_name: path_basename(asset_url),
+        // The mirror copies the GitHub asset records, digests included.
+        asset_sha256: release_json_asset_sha256(release_json, "browser_download_url", asset_url)
     };
 }
 
+// The mirror publishes a copy of the project's latest GitHub release with the
+// assets cut down to the OpenWrt packages; without a mirror the release comes
+// from GitHub itself. A configured mirror is never bypassed.
 function resolve_sing_box_extended_release(compressed) {
-    if (FORKOP_MIRROR_BASE_URL == "")
-        return null;
-    let release_json = http_get(FORKOP_MIRROR_BASE_URL + "/forkop/sing-box-extended/latest.json");
+    let release_json = FORKOP_MIRROR_BASE_URL != "" ?
+        http_get(FORKOP_MIRROR_BASE_URL + "/forkop/sing-box-extended/latest.json") :
+        fetch_github_release_json("shtorm-7", "sing-box-extended");
     return set_sing_box_extended_release_from_json(release_json, compressed);
+}
+
+// A download whose checksum differs from the published one is discarded.
+function sing_box_extended_download_verified(release, path) {
+    if (download_checksum_ok(path, release.asset_sha256))
+        return true;
+    updates_log("Checksum mismatch for " + as_string(release.asset_name), "error");
+    remove_file(path);
+    return false;
 }
 
 function sing_box_runtime_output(mode, args) {
@@ -1523,7 +1623,8 @@ function restore_sing_box_extended_package_variant() {
     if (release == null)
         return false;
     let package_file = tmp_dir + "/" + release.asset_name;
-    if (!download_with_retry(release.asset_url, package_file, release.asset_name))
+    if (!download_with_retry(release.asset_url, package_file, release.asset_name) ||
+        !sing_box_extended_download_verified(release, package_file))
         return false;
     prepare_sing_box_package_service_install();
     pkg_remove_sing_box_conflict("sing-box-tiny");
@@ -1675,6 +1776,8 @@ function install_sing_box_extended_package(action) {
     let package_file = tmp_dir + "/" + release.asset_name;
     if (!download_with_retry(release.asset_url, package_file, release.asset_name))
         action_fail("sing_box", action, "Failed to download sing-box-extended package", current_version, latest_version);
+    if (!sing_box_extended_download_verified(release, package_file))
+        action_fail("sing_box", action, "Downloaded sing-box-extended package failed checksum verification", current_version, latest_version);
 
     if (!run_logged("Updating package lists before sing-box-extended package installation", pkg_list_update_command()))
         action_fail("sing_box", action, "Failed to update package lists", current_version, latest_version);
@@ -1792,6 +1895,8 @@ function install_sing_box_extended(action, compressed) {
     let archive_file = tmp_dir + "/" + release.asset_name;
     if (!download_with_retry(release.asset_url, archive_file, release.asset_name))
         action_fail("sing_box", action, "Failed to download " + label, current_version, latest_version);
+    if (!sing_box_extended_download_verified(release, archive_file))
+        action_fail("sing_box", action, "Downloaded " + label + " failed checksum verification", current_version, latest_version);
 
     let binary_path = select_archive_member_path(archive_file, "sing-box");
     if (binary_path == "") {
@@ -2047,14 +2152,18 @@ function resolve_forkop_release_json(latest_version, release_json) {
     let fields = split(plan, "\t");
     if (length(fields) < 7 || as_string(fields[1]) == "" || as_string(fields[2]) == "" || as_string(fields[3]) == "" || as_string(fields[4]) == "")
         return null;
+    // Checksums are empty where the source publishes none for an asset.
     return {
         release_url: forkop_release_page_url(latest_version, fields[0]),
         backend_name: fields[1],
         backend_url: forkop_release_url(fields[2]),
+        backend_sha256: release_json_asset_sha256(release_json, "browser_download_url", fields[2]),
         app_name: fields[3],
         app_url: forkop_release_url(fields[4]),
+        app_sha256: release_json_asset_sha256(release_json, "browser_download_url", fields[4]),
         i18n_name: fields[5],
-        i18n_url: forkop_release_url(fields[6])
+        i18n_url: forkop_release_url(fields[6]),
+        i18n_sha256: as_string(fields[6]) != "" ? release_json_asset_sha256(release_json, "browser_download_url", fields[6]) : ""
     };
 }
 
@@ -2070,15 +2179,44 @@ function forkop_release_matches(package_name, version) {
         match(substr(installed, length(revision_prefix)), /^[0-9]+$/) != null);
 }
 
+// The installed release, as the rollback copy staged before an upgrade. The
+// static channel's catalog is asked first: its entries passed the same checks
+// as the version picker and carry checksums. GitHub Releases is the fallback.
 function previous_forkop_release(version) {
     if (match(version, /^[0-9]+[.][0-9]+[.][0-9]+$/) == null)
         return null;
+    let selected = selected_forkop_release(version);
+    let release = selected != null ? resolve_forkop_release_json(version, sprintf("%J", selected)) : null;
+    if (release != null)
+        return release;
     let parts = split(FORKOP_RELEASE_REPO, "/");
     if (length(parts) != 2 || match(parts[0], /^[A-Za-z0-9_.-]+$/) == null ||
         match(parts[1], /^[A-Za-z0-9_.-]+$/) == null)
         return null;
     let metadata = http_get("https://api.github.com/repos/" + parts[0] + "/" + parts[1] + "/releases/tags/" + version);
     return resolve_forkop_release_json(version, metadata);
+}
+
+// The one-line installer of this channel. It replaces the whole package set,
+// which is the way off a build this channel never published.
+function forkop_channel_installer_command() {
+    let base = replace(FORKOP_RELEASE_BASE_URL, /\/+$/, "");
+    if (base != "")
+        return "wget -qO- " + base + "/install.sh | sh";
+    let parts = split(FORKOP_RELEASE_REPO, "/");
+    if (length(parts) == 2 && match(parts[0], /^[A-Za-z0-9_.-]+$/) != null &&
+        match(parts[1], /^[A-Za-z0-9_.-]+$/) != null)
+        return "wget -qO- https://github.com/" + parts[0] + "/" + parts[1] + "/releases/latest/download/install.sh | sh";
+    return "";
+}
+
+function unpublished_forkop_release_error(version) {
+    let message = "Installed Forkop " + as_string(version) + " is not published in this Forkop channel, " +
+        "so it cannot be staged for rollback; automatic upgrade refused";
+    let installer = forkop_channel_installer_command();
+    if (installer != "")
+        message += ". Run the one-line installer to switch this router to this fork: " + installer;
+    return message;
 }
 
 function opkg_forkop_set_versions_match(version, with_i18n) {
@@ -2224,7 +2362,9 @@ function install_forkop_package_set(latest_version, backend_file, app_file, i18n
         return "Installed Forkop package versions are inconsistent; automatic upgrade refused";
 
     let previous = previous_forkop_release(FORKOP_VERSION);
-    if (previous == null || (with_i18n && previous.i18n_url == ""))
+    if (previous == null)
+        return unpublished_forkop_release_error(FORKOP_VERSION);
+    if (with_i18n && previous.i18n_url == "")
         return "Previous Forkop release packages are unavailable; automatic upgrade refused";
 
     // A directory without the marker predates every package mutation.
@@ -2245,6 +2385,16 @@ function install_forkop_package_set(latest_version, backend_file, app_file, i18n
         (with_i18n && !download_with_retry(previous.i18n_url, old_files[2], previous.i18n_name))) {
         command_success_from_args([ "rm", "-rf", FORKOP_OPKG_RECOVERY_DIR ]);
         return "Failed to stage previous Forkop release packages; automatic upgrade refused";
+    }
+    // Every staged package the source published a checksum for must match it.
+    let staged_checksums = [ [ old_files[0], previous.backend_sha256 ], [ old_files[1], previous.app_sha256 ] ];
+    if (with_i18n)
+        push(staged_checksums, [ old_files[2], previous.i18n_sha256 ]);
+    for (let staged in staged_checksums) {
+        if (staged[1] && !download_checksum_ok(staged[0], staged[1])) {
+            command_success_from_args([ "rm", "-rf", FORKOP_OPKG_RECOVERY_DIR ]);
+            return "Previous Forkop release packages failed checksum verification; automatic upgrade refused";
+        }
     }
 
     let new_files = [ backend_file, app_file ];
@@ -2450,6 +2600,15 @@ function verify_selected_release_downloads(selected, files, latest_version) {
     }
 }
 
+// The latest release is held to the checksums its source publishes:
+// latest.json lists one for every package, GitHub a digest per asset.
+function verify_latest_release_downloads(release, backend_file, app_file, i18n_file, latest_version) {
+    if (!download_checksum_ok(backend_file, release.backend_sha256) ||
+        !download_checksum_ok(app_file, release.app_sha256) ||
+        (i18n_file != "" && !download_checksum_ok(i18n_file, release.i18n_sha256)))
+        action_fail("forkop", "install", "Release package checksum mismatch", FORKOP_VERSION, latest_version);
+}
+
 function install_forkop(requested_version) {
     requested_version = as_string(requested_version);
     let selected = requested_version != "" ? selected_forkop_release(requested_version) : null;
@@ -2486,6 +2645,8 @@ function install_forkop(requested_version) {
             action_fail("forkop", "install", "Failed to back up Forkop configuration", FORKOP_VERSION, latest_version);
         updates_log("Forkop configuration backup: " + backup);
     }
+    else
+        verify_latest_release_downloads(release, backend_file, app_file, i18n_file, latest_version);
 
     // Capture the exact managed sing-box process before apk/opkg runs the
     // currently installed package's prerm.
@@ -2771,6 +2932,8 @@ else if (mode == "latest-forkop-version")
     print(latest_forkop_version(), "\n");
 else if (mode == "forkop-release-metadata")
     print(fetch_forkop_latest_release_metadata(), "\n");
+else if (mode == "reconcile-zapret-manager-launchers")
+    exit(reconcile_zapret_manager_launchers() ? 0 : 1);
 else {
     warn("Usage: components/action.uc <component-action|latest-forkop-version|forkop-release-metadata> ...\n");
     exit(1);

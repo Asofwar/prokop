@@ -58,8 +58,8 @@ APK_SDK_URL="${APK_SDK_URL:-https://downloads.openwrt.org/releases/25.12.3/targe
 BACKEND_DESCRIPTION="Rule-based Forkop backend with hybrid sing-box + zapret orchestration"
 APP_DESCRIPTION="Rule-based Forkop LuCI app with hybrid sing-box + zapret orchestration"
 I18N_DESCRIPTION="Translation for luci-app-forkop - Русский (Russian)"
-MAINTAINER="slayer326 <34569426+slayer326@users.noreply.github.com>"
-PROJECT_URL="https://github.com/slayer326/forkop"
+MAINTAINER="Asofwar <7397608+Asofwar@users.noreply.github.com>"
+PROJECT_URL="https://github.com/Asofwar/forkop"
 BACKEND_DEPENDS_IPK="libc, ca-bundle, kmod-inet-diag, kmod-tun, curl, ucode, ucode-mod-fs, ucode-mod-uci, conntrack, kmod-nft-tproxy, coreutils-base64, bind-dig, nftables-json, kmod-nft-nat, ip-full"
 BACKEND_DEPENDS_APK="bind-dig ca-bundle coreutils-base64 curl ip-full kmod-inet-diag kmod-nft-nat kmod-nft-tproxy kmod-tun libc nftables-json ucode ucode-mod-fs ucode-mod-uci conntrack !https-dns-proxy !nextdns !luci-app-passwall !luci-app-passwall2"
 BACKEND_CONFLICTS_IPK="https-dns-proxy, nextdns, luci-app-passwall, luci-app-passwall2"
@@ -305,7 +305,7 @@ EOF
 #!/bin/sh
 [ -n "${IPKG_INSTROOT}" ] && exit 0
 FORKOP_LIB=/usr/lib/forkop ucode -L /usr/lib/forkop /usr/lib/forkop/config/migration.uc migrate || exit $?
-FORKOP_PACKAGE_POSTINST=1 /usr/share/forkop/mirror-migration.sh || exit $?
+FORKOP_PACKAGE_POSTINST=1 /usr/share/forkop/mirror-migration.sh || echo "Warning: Forkop could not reconcile the package feeds with its mirror setting" >&2
 /usr/bin/forkop package_postinst
 EOF
 
@@ -442,7 +442,7 @@ EOF
   cat > "$scripts_dir/backend-post-install.sh" <<'EOF'
 #!/usr/bin/ucode
 if (getenv("IPKG_INSTROOT") == null || getenv("IPKG_INSTROOT") == "")
-    exit(system("FORKOP_LIB=/usr/lib/forkop ucode -L /usr/lib/forkop /usr/lib/forkop/config/migration.uc migrate && FORKOP_PACKAGE_POSTINST=1 /usr/share/forkop/mirror-migration.sh && /usr/bin/forkop package_postinst"));
+    exit(system("FORKOP_LIB=/usr/lib/forkop ucode -L /usr/lib/forkop /usr/lib/forkop/config/migration.uc migrate || exit $?; FORKOP_PACKAGE_POSTINST=1 /usr/share/forkop/mirror-migration.sh || echo 'Warning: Forkop could not reconcile the package feeds with its mirror setting' >&2; /usr/bin/forkop package_postinst"));
 exit(0);
 EOF
 
@@ -465,7 +465,7 @@ EOF
   cat > "$scripts_dir/backend-post-upgrade.sh" <<'EOF'
 #!/usr/bin/ucode
 if (getenv("IPKG_INSTROOT") == null || getenv("IPKG_INSTROOT") == "")
-    exit(system("FORKOP_LIB=/usr/lib/forkop ucode -L /usr/lib/forkop /usr/lib/forkop/config/migration.uc migrate && FORKOP_PACKAGE_POSTINST=1 /usr/share/forkop/mirror-migration.sh && /usr/bin/forkop package_postinst"));
+    exit(system("FORKOP_LIB=/usr/lib/forkop ucode -L /usr/lib/forkop /usr/lib/forkop/config/migration.uc migrate || exit $?; FORKOP_PACKAGE_POSTINST=1 /usr/share/forkop/mirror-migration.sh || echo 'Warning: Forkop could not reconcile the package feeds with its mirror setting' >&2; /usr/bin/forkop package_postinst"));
 exit(0);
 EOF
 

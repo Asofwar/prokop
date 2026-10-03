@@ -14,6 +14,7 @@ fail_test() {
   exit 1
 }
 
+unset FORKOP_MIRROR_BASE_URL
 sed \
   -e '/^main "\$@"$/d' \
   -e 's#\[ -f /etc/openwrt_release \]#\[ -f "$FORKOP_TEST_RELEASE_FILE" \]#' \
@@ -47,6 +48,7 @@ EOF
 
 PLATFORM_INDEX_UNAVAILABLE=0
 download_file_once() {
+  printf '%s\n' "$1" >>"$WORK_DIR/downloads.log"
   [ "$PLATFORM_INDEX_UNAVAILABLE" -eq 0 ] || return 1
   cp "$WORK_DIR/forkop-platforms.tsv" "$2"
 }
@@ -78,9 +80,38 @@ expect_rejected() {
   fi
 }
 
+# Without an opted-in mirror the installer has no platform index: it applies
+# only the release and package manager rules and downloads nothing for it.
+[ -z "$MIRROR_BASE_URL" ] ||
+  fail_test "the installer must not default to a dependency mirror"
+: >"$WORK_DIR/downloads.log"
+expect_supported 24.10.4 0
+expect_supported 24.10.2 0
+expect_supported 24.10.4 0 ramips/mt7621 aarch64_cortex-a53
+expect_supported 25.12.5 1 rockchip/armv8 aarch64_cortex-a53
+expect_supported 25.12.5 1 unlisted/target unlisted_arch
+expect_rejected 23.05.5 0
+expect_rejected 24.09.9 0
+expect_rejected 24.10.4 1
+expect_rejected 25.12.5 0
+[ ! -s "$WORK_DIR/downloads.log" ] ||
+  fail_test "the platform index must not be downloaded without a dependency mirror"
+TEST_RELEASE="24.09.9"
+PKG_IS_APK=0
+unsupported_24_message="$( (check_system) 2>&1 || true)"
+printf '%s\n' "$unsupported_24_message" | grep -Fq 'Forkop supports OpenWrt 24.10.x, but not 24.09.9' ||
+  fail_test "unsupported OpenWrt 24 releases must be reported as a Forkop limit"
+if printf '%s\n' "$unsupported_24_message" | grep -qi 'mirror'; then
+  fail_test "the OpenWrt 24 support message must not present the mirror as mandatory"
+fi
+
+# An opted-in mirror is checked against its platform index.
+MIRROR_BASE_URL="https://mirror.example"
 for release in 24.10.0 24.10.1 24.10.4 24.10.5 24.10.7 24.10.99; do
   expect_supported "$release" 0
 done
+grep -Fxq 'https://mirror.example/openwrt/forkop-platforms.tsv' "$WORK_DIR/downloads.log" ||
+  fail_test "an opted-in mirror must be checked through its platform index"
 expect_supported 25.12.5 1
 expect_supported 24.10.4 0 rockchip/armv8 aarch64_generic
 expect_supported 24.10.0 0 rockchip/armv8 aarch64_generic
@@ -102,11 +133,24 @@ expect_rejected 24.10.1 1
 expect_rejected 24.10.1 0 rockchip/armv8 aarch64_cortex-a53
 expect_rejected 24.10.2 0
 
+platform_missing_message="$( (TEST_RELEASE=24.10.2 PKG_IS_APK=0 TEST_TARGET=mediatek/filogic TEST_ARCH=aarch64_cortex-a53; check_system) 2>&1 || true)"
+printf '%s\n' "$platform_missing_message" | grep -Fq 'Run the installer without --mirror' ||
+  fail_test "a mirror without this platform must point at the installation without a mirror"
+
+# An unreachable platform index only warns, whichever mirror was chosen: the
+# package list update against the mirror decides and restores the original
+# feeds when the mirror cannot serve this router.
 PLATFORM_INDEX_UNAVAILABLE=1
-expect_rejected 25.12.5 1 rockchip/armv8 aarch64_generic
-MIRROR_BASE_URL="https://custom-legacy-mirror.example"
-expect_supported 25.12.5 1 rockchip/armv8 aarch64_generic
-MIRROR_BASE_URL="https://mirror.infotechtg.ru"
+for unavailable_mirror in https://mirror.example https://custom-legacy-mirror.example; do
+  MIRROR_BASE_URL="$unavailable_mirror"
+  expect_supported 25.12.5 1 rockchip/armv8 aarch64_generic
+  index_warning="$(check_system 2>&1)"
+  printf '%s\n' "$index_warning" | grep -Fq "Could not download $unavailable_mirror/openwrt/forkop-platforms.tsv" ||
+    fail_test "an unavailable platform index must be reported for $unavailable_mirror"
+  printf '%s\n' "$index_warning" | grep -Fq 'rebind_domain' ||
+    fail_test "an unavailable platform index must hint at DNS rebind protection"
+done
+MIRROR_BASE_URL="https://mirror.example"
 PLATFORM_INDEX_UNAVAILABLE=0
 
 interactive_terminal_available() { return 1; }

@@ -18,7 +18,7 @@ except ModuleNotFoundError:  # Static validation can run on Windows workstations
     fcntl = None
 
 
-REPOSITORY = os.environ.get("FORKOP_GITHUB_REPOSITORY", "slayer326/forkop")
+REPOSITORY = os.environ.get("FORKOP_GITHUB_REPOSITORY", "Asofwar/forkop")
 MIRROR_ROOT = Path(os.environ.get("MIRROR_ROOT", "/srv/mirror/public/forkop"))
 BUILD_ROOT = Path(os.environ.get("FORKOP_BUILD_ROOT", "/srv/mirror/build/releases"))
 LOCK_FILE = Path(os.environ.get("FORKOP_RELEASE_LOCK_FILE", "/run/lock/forkop-release-sync.lock"))

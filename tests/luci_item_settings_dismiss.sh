@@ -16,7 +16,7 @@ node - "$ROOT_DIR/tests/helpers/luci_form_harness.js" <<'NODE'
 const assert = require('node:assert/strict');
 const { createEnvironment } = require(process.argv[2]);
 
-const B4 = 'https://mirror.infotechtg.ru/forkop/lists/b4geoip-forkop/srs';
+const B4 = 'https://raw.githubusercontent.com/Greeg0ry/b4geoip-forkop/main/srs';
 const VALVE = `${B4}/valve.srs`;
 const CUSTOM = 'https://example.com/custom.srs';
 

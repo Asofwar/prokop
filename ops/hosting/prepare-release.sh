@@ -5,7 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 VERSION="${1:-}"
 ARTIFACT_DIR="${2:-$ROOT_DIR/filtered-bin/release}"
 OUTPUT_DIR="${3:-$ROOT_DIR/filtered-bin/hosting}"
-RELEASE_BASE_URL="${FORKOP_RELEASE_BASE_URL:-https://fold8.ru/forkop}"
+RELEASE_BASE_URL="${FORKOP_RELEASE_BASE_URL:-https://asofwar.github.io/forkop}"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 
 fail() {
@@ -90,12 +90,14 @@ PY
 
 # The version picker needs an index of what is installable. The host cannot
 # build one, so it ships in the bundle next to latest.json.
-FORKOP_RELEASE_REPO="${FORKOP_RELEASE_REPO:-slayer326/forkop}" \
+FORKOP_RELEASE_REPO="${FORKOP_RELEASE_REPO:-Asofwar/forkop}" \
   "$PYTHON_BIN" "$ROOT_DIR/ops/hosting/build-release-catalog.py" \
     "$VERSION" "$RELEASE_DIR" "$METADATA_DIR/releases.json" \
     --base-url "$RELEASE_BASE_URL"
 
 tar -C "$OUTPUT_DIR" -czf "$ARCHIVE_PATH" forkop
 
-printf 'Timeweb bundle: %s\n' "$ARCHIVE_PATH"
+# GitHub Pages is rebuilt from the releases by ops/pages/build-site.py; this
+# archive is for publishing the same channel on any other static host.
+printf 'Static hosting bundle: %s\n' "$ARCHIVE_PATH"
 printf 'Upload and extract it in the document root for: %s\n' "$RELEASE_BASE_URL"

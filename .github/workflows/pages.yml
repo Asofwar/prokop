@@ -1,0 +1,57 @@
+name: Publish release channel
+# Rebuilds https://asofwar.github.io/forkop (install.sh, updates/*.json and the
+# packages of the newest releases) from this repository's GitHub releases
+# after every successful "Build packages" run, or on demand.
+#
+# workflow_run always executes on the default branch, which is what the
+# default deployment branch policy of the github-pages environment allows;
+# the tag runs of "Build packages" could not deploy to Pages themselves.
+on:
+  workflow_run:
+    workflows:
+      - Build packages
+    types:
+      - completed
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build release channel
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5.0.0
+
+      - name: Build the site from GitHub releases
+        shell: bash
+        env:
+          FORKOP_RELEASE_BASE_URL: https://asofwar.github.io/forkop
+          FORKOP_RELEASE_REPO: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 ops/pages/build-site.py --output "$RUNNER_TEMP/forkop-site"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5.0.0
+        with:
+          path: ${{ runner.temp }}/forkop-site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5.0.1

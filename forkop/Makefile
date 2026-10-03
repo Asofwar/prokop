@@ -14,7 +14,7 @@ endif
 PKG_VERSION:=$(or $(FORKOP_HAS_RELEASE_VERSION),0.0.0)
 PKG_RELEASE:=
 
-PKG_MAINTAINER:=slayer326 <34569426+slayer326@users.noreply.github.com>
+PKG_MAINTAINER:=Asofwar <7397608+Asofwar@users.noreply.github.com>
 PKG_LICENSE:=GPL-2.0-or-later
 
 include $(INCLUDE_DIR)/package.mk
@@ -25,7 +25,7 @@ define Package/forkop
 	DEPENDS:=+ca-bundle +kmod-inet-diag +kmod-tun +curl +ucode +ucode-mod-fs +ucode-mod-uci +conntrack +kmod-nft-tproxy +coreutils-base64 +bind-dig +nftables-json +kmod-nft-nat +ip-full
 	CONFLICTS:=https-dns-proxy nextdns luci-app-passwall luci-app-passwall2
 	TITLE:=Forkop backend service
-	URL:=https://github.com/slayer326/forkop
+	URL:=https://github.com/Asofwar/forkop
 	PKGARCH:=all
 endef
 
@@ -53,7 +53,7 @@ define Package/forkop/postinst
 
 [ -n "$${IPKG_INSTROOT}" ] && exit 0
 FORKOP_LIB=/usr/lib/forkop ucode -L /usr/lib/forkop /usr/lib/forkop/config/migration.uc migrate || exit $$?
-FORKOP_PACKAGE_POSTINST=1 /usr/share/forkop/mirror-migration.sh || exit $$?
+FORKOP_PACKAGE_POSTINST=1 /usr/share/forkop/mirror-migration.sh || echo "Warning: Forkop could not reconcile the package feeds with its mirror setting" >&2
 /usr/bin/forkop package_postinst
 endef
 

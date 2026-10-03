@@ -5,9 +5,11 @@ umask 077
 # An optional filesystem root is used only by the isolated regression tests.
 ROOT="${FORKOP_UNINSTALL_ROOT:-}"
 if [ -n "$ROOT" ]; then ROOT="$(cd "$ROOT" && pwd -P)"; fi
-MIRROR="${FORKOP_MIRROR_BASE_URL:-}"
-if [ -z "$MIRROR" ]; then MIRROR="$(uci -q get forkop.settings.mirror_base_url 2>/dev/null || true)"; fi
-MIRROR="${MIRROR:-https://mirror.infotechtg.ru}"
+# The dependency mirror is opt-in: a set FORKOP_MIRROR_BASE_URL wins, even when
+# empty, then UCI. Feeds on the former upstream mirrors are always restored.
+if [ "${FORKOP_MIRROR_BASE_URL+set}" = set ]; then MIRROR="$FORKOP_MIRROR_BASE_URL"
+else MIRROR="$(uci -q get forkop.settings.mirror_base_url 2>/dev/null || true)"; fi
+while [ "${MIRROR%/}" != "$MIRROR" ]; do MIRROR="${MIRROR%/}"; done
 BIN="$ROOT/usr/bin/forkop"
 LOCK="$ROOT/tmp/forkop-full-uninstall.lock"
 COMPONENT_LOCK="$ROOT/var/run/forkop/component-action.lock"
@@ -15,7 +17,7 @@ PACKAGES="luci-i18n-forkop-ru luci-app-forkop forkop sing-box sing-box-tiny sing
 PHASE=preflight
 
 has_mirror() {
-    grep -Fq "${MIRROR%/}/" "$1" || grep -Fq 'mirror.51343.ru/' "$1" ||
+    { [ -n "$MIRROR" ] && grep -Fq "$MIRROR/" "$1"; } || grep -Fq 'mirror.51343.ru/' "$1" ||
         grep -Fq 'mirror.infotechtg.ru/' "$1"
 }
 
