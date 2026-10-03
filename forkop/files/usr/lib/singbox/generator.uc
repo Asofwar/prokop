@@ -2952,9 +2952,14 @@ function add_port_matchers(rule, section) {
 
         let start = normalize_port_number_value(substr(value, 0, dash));
         let end = normalize_port_number_value(substr(value, dash + 1));
-        if (start != null && end != null && start <= end)
-            push(port_ranges, start == end ? as_string(start) : sprintf("%d:%d", start, end));
+        // A single-port range is the port: sing-box refuses a range
+        // item without ':' (UC-098).
+        if (start != null && end != null && start == end)
+            push(ports, start);
+        else if (start != null && end != null && start < end)
+            push(port_ranges, sprintf("%d:%d", start, end));
     }
+    ports = uniq(ports);
 
     if (length(ports) > 0)
         rule.port = ports;
