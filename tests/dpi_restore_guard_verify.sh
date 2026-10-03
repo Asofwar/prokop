@@ -22,6 +22,8 @@ let present = false;
 let applied = "";
 let listing = "";
 let valid_listing = fs.readfile(ARGV[0] + "/valid.json");
+// What `nft -j` shows for the table the next `nft -f` creates.
+let created_listing = valid_listing;
 function as_string(value) { return value == null ? "" : "" + value; }
 function command_output_from_args(args) {
     return args[1] == "-j" ? listing : ARGV[0] + "/batch";
@@ -34,7 +36,7 @@ function run_args(args) {
     if (args[1] == "-f") {
         applied = data;
         present = index(data, "add table") >= 0;
-        listing = present ? valid_listing : "";
+        listing = present ? created_listing : "";
     }
     return true;
 }
@@ -92,6 +94,35 @@ if (nft_dpi_transition_guard_ensure("ForkopConfigRestore")) fail(13, "accepted m
 listing = "";
 if (nft_dpi_transition_guard_ensure("ForkopConfigRestore")) fail(14, "accepted empty listing");
 if (nft_dpi_transition_guard_state("Bad;Name") != "invalid") fail(15, "accepted bad table name");
+
+// 4. nft < 1.1.0 lists `meta mark & 0xff000000 == V` as a prefix of the mark
+// (UC-106): the same guard, valid in either rendering.
+let prefixed = mutated((n) => {
+    for (let i in [ 3, 4 ]) {
+        let m = n[i].rule.expr[0].match;
+        n[i].rule.expr[0].match = { op: "==", left: m.left["&"][0], right: { prefix: { addr: m.right, len: 8 } } };
+    }
+});
+present = true;
+listing = prefixed;
+if (nft_dpi_transition_guard_state("ForkopConfigRestore") != "valid") fail(16, "prefix rendering not recognised");
+let wrong_len = json(prefixed);
+wrong_len.nftables[3].rule.expr[0].match.right.prefix.len = 7;
+listing = sprintf("%J", wrong_len);
+if (nft_dpi_transition_guard_state("ForkopConfigRestore") != "invalid") fail(17, "accepted a prefix of another length");
+present = false;
+listing = "";
+created_listing = prefixed;
+if (!nft_dpi_transition_guard_ensure("ForkopConfigRestore")) fail(18, "ensure failed on the prefix rendering");
+
+// 5. A guard ensure created itself but cannot verify is removed again: it
+// must not stay behind dropping DPI traffic while ensure reports failure.
+present = false;
+listing = "";
+created_listing = mutated((n) => (n[3].rule.expr[1] = { accept: null }));
+if (nft_dpi_transition_guard_ensure("ForkopConfigRestore")) fail(19, "ensure accepted an unverifiable guard it created");
+if (present || index(applied, "delete table inet ForkopConfigRestoreDpiGuard") < 0)
+    fail(20, "ensure left the unverifiable guard it created");
 UCODE
 
 ucode "$STATE_DIR/guard.uc" "$STATE_DIR"

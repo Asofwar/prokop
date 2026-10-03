@@ -1838,6 +1838,15 @@ function dpi_guard_rule_mark(rule) {
     let test = type(expr[0]) == "object" && length(keys(expr[0])) == 1 ? expr[0].match : null;
     if (type(test) != "object" || test.op != "==" || type(test.left) != "object")
         return null;
+    // nft < 1.1.0 lists the mask contiguous from the top bit as a prefix of
+    // the mark: `meta mark 0x01000000/8` is the same rule (UC-106).
+    let prefix = type(test.right) == "object" ? test.right.prefix : null;
+    if (type(prefix) == "object") {
+        if (length(keys(test.right)) != 1 || type(test.left.meta) != "object" || length(keys(test.left)) != 1 ||
+            test.left.meta.key != "mark" || prefix.len !== 8)
+            return null;
+        return index(DPI_GUARD_PROVIDER_MARKS, prefix.addr) >= 0 ? prefix.addr : null;
+    }
     let masked = test.left["&"];
     if (type(masked) != "array" || length(masked) != 2 || type(masked[0]) != "object" ||
         type(masked[0].meta) != "object" || masked[0].meta.key != "mark" ||
@@ -1905,9 +1914,16 @@ function nft_dpi_transition_guard_state(table) {
 // a missing one, and fail closed on anything unexpected.
 function nft_dpi_transition_guard_ensure(table) {
     let state = nft_dpi_transition_guard_state(table);
-    if (state == "absent" && nft_dpi_transition_guard(table, false))
-        state = nft_dpi_transition_guard_state(table);
-    return state == "valid";
+    if (state != "absent")
+        return state == "valid";
+    if (!nft_dpi_transition_guard(table, false))
+        return false;
+    if (nft_dpi_transition_guard_state(table) == "valid")
+        return true;
+    // A guard this call created but cannot verify would stay behind dropping
+    // DPI traffic while the caller reports failure (UC-106): remove it.
+    nft_dpi_transition_guard(table, true);
+    return false;
 }
 
 function killswitch_section_enabled(section) {

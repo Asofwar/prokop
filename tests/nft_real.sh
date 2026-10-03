@@ -499,18 +499,13 @@ assert_refused "$WORK_DIR/broken-range.nft" "out-of-range queue number" "$append
 # ---- guards -----------------------------------------------------------------------
 
 guard_state() { nft_uc dpi-transition-guard-state "$1"; }
-# nft < 1.1.0 prints `meta mark & 0xff000000` as a prefix; the verifier
-# accepts only the `&` rendering (UC-106, stage S8). There it may still say
-# "invalid"; everywhere else it must recognise the guard it created.
+# nft < 1.1.0 prints `meta mark & 0xff000000` as a prefix, later versions as
+# `&`: the verifier recognises the guard it created in both (UC-106).
 expect_guard_valid() {
   local base="$1" rendering="$2" state
   state="$(guard_state "$base")"
-  if [ "$rendering" = and ]; then
-    [ "$state" = valid ] || fail "${base}DpiGuard: verifier state '$state' for a guard it created"
-  else
-    printf 'NOTE: this nft prints the guard mark as a prefix (UC-106); verifier state: %s\n' "$state"
-    [ "$state" = valid ] || [ "$state" = invalid ] || fail "${base}DpiGuard: verifier state '$state'"
-  fi
+  [ "$rendering" = and ] || printf 'NOTE: this nft prints the guard mark as a prefix\n'
+  [ "$state" = valid ] || fail "${base}DpiGuard ($rendering rendering): verifier state '$state' for a guard it created"
 }
 
 # -- DPI transition guard: a separate table, untouched by a candidate reload --
@@ -537,10 +532,8 @@ nft -j list ruleset >"$WORK_DIR/restore-guard.json"
 check tables "$WORK_DIR/restore-guard.json" "$TABLE" ForkopConfigRestoreDpiGuard
 restore_rendering="$(node "$CHECK_JS" dpi-guard "$WORK_DIR/restore-guard.json" ForkopConfigRestoreDpiGuard)" ||
   fail "the config restore guard does not have its expected structure"
-if [ "$restore_rendering" = and ]; then
-  [ "$restore_status" = 0 ] || fail "ensure-dpi-transition-guard could not verify the guard it created"
-  nft_uc ensure-dpi-transition-guard ForkopConfigRestore || fail "ensure-dpi-transition-guard is not idempotent"
-fi
+[ "$restore_status" = 0 ] || fail "ensure-dpi-transition-guard could not verify the guard it created ($restore_rendering rendering)"
+nft_uc ensure-dpi-transition-guard ForkopConfigRestore || fail "ensure-dpi-transition-guard is not idempotent"
 expect_guard_valid ForkopConfigRestore "$restore_rendering"
 nft_uc remove-dpi-transition-guard ForkopConfigRestore || fail "removing the config restore guard failed"
 [ "$(guard_state ForkopConfigRestore)" = absent ] || fail "the config restore guard was not removed"
