@@ -458,12 +458,12 @@ function validateVlessUrl(url) {
     if (!url.startsWith("vless://"))
       return {
         valid: false,
-        message: "Invalid VLESS URL: must start with vless://"
+        message: _("Invalid VLESS URL: must start with vless://")
       };
     if (/\s/.test(url))
       return {
         valid: false,
-        message: "Invalid VLESS URL: must not contain spaces"
+        message: _("Invalid VLESS URL: must not contain spaces")
       };
     const body = url.slice("vless://".length);
     const [mainPart] = body.split("#");
@@ -471,34 +471,37 @@ function validateVlessUrl(url) {
     if (!userHostPort)
       return {
         valid: false,
-        message: "Invalid VLESS URL: missing host and UUID"
+        message: _("Invalid VLESS URL: missing host and UUID")
       };
     const [userPart, hostPortPart] = userHostPort.split("@");
     if (!userPart)
-      return { valid: false, message: "Invalid VLESS URL: missing UUID" };
+      return { valid: false, message: _("Invalid VLESS URL: missing UUID") };
     if (!hostPortPart)
-      return { valid: false, message: "Invalid VLESS URL: missing server" };
+      return { valid: false, message: _("Invalid VLESS URL: missing server") };
     const parsedHostPort = parseHostPort(hostPortPart);
     if (!parsedHostPort)
       return {
         valid: false,
-        message: "Invalid VLESS URL: invalid host and port"
+        message: _("Invalid VLESS URL: invalid host and port")
       };
     const { host, port } = parsedHostPort;
     if (!host)
-      return { valid: false, message: "Invalid VLESS URL: missing hostname" };
+      return {
+        valid: false,
+        message: _("Invalid VLESS URL: missing hostname")
+      };
     if (!port)
-      return { valid: false, message: "Invalid VLESS URL: missing port" };
+      return { valid: false, message: _("Invalid VLESS URL: missing port") };
     const cleanedPort = port.replace("/", "");
     if (!isValidPort(cleanedPort))
       return {
         valid: false,
-        message: "Invalid VLESS URL: invalid port number"
+        message: _("Invalid VLESS URL: invalid port number")
       };
     if (!queryString)
       return {
         valid: false,
-        message: "Invalid VLESS URL: missing query parameters"
+        message: _("Invalid VLESS URL: missing query parameters")
       };
     const params = parseQueryString(queryString);
     const validTypes = [
@@ -517,29 +520,31 @@ function validateVlessUrl(url) {
     if (!validTypes.includes(transportType))
       return {
         valid: false,
-        message: "Invalid VLESS URL: unsupported or missing type"
+        message: _("Invalid VLESS URL: unsupported or missing type")
       };
     if (!params.security || !validSecurities.includes(params.security))
       return {
         valid: false,
-        message: "Invalid VLESS URL: unsupported or missing security"
+        message: _("Invalid VLESS URL: unsupported or missing security")
       };
     if (params.security === "reality") {
       if (!params.pbk)
         return {
           valid: false,
-          message: "Invalid VLESS URL: missing pbk for reality"
+          message: _("Invalid VLESS URL: missing pbk for reality")
         };
       if (!params.fp)
         return {
           valid: false,
-          message: "Invalid VLESS URL: missing fp for reality"
+          message: _("Invalid VLESS URL: missing fp for reality")
         };
     }
     if (params.flow === "xtls-rprx-vision-udp443") {
       return {
         valid: false,
-        message: "Invalid VLESS URL: flow xtls-rprx-vision-udp443 is not supported"
+        message: _(
+          "Invalid VLESS URL: flow xtls-rprx-vision-udp443 is not supported"
+        )
       };
     }
     return { valid: true, message: _("Valid") };
@@ -566,13 +571,13 @@ function validateVmessUrl(url) {
     if (!url.startsWith("vmess://")) {
       return {
         valid: false,
-        message: "Invalid VMess URL: must start with vmess://"
+        message: _("Invalid VMess URL: must start with vmess://")
       };
     }
     if (/\s/.test(url)) {
       return {
         valid: false,
-        message: "Invalid VMess URL: must not contain spaces"
+        message: _("Invalid VMess URL: must not contain spaces")
       };
     }
     const body = url.slice("vmess://".length);
@@ -580,25 +585,25 @@ function validateVmessUrl(url) {
     if (!encoded) {
       return {
         valid: false,
-        message: "Invalid VMess URL: missing encoded config"
+        message: _("Invalid VMess URL: missing encoded config")
       };
     }
     const config = decodeBase64Json(encoded);
     if (!config || typeof config !== "object") {
-      return { valid: false, message: "Invalid VMess URL: invalid config" };
+      return { valid: false, message: _("Invalid VMess URL: invalid config") };
     }
     const { add, port, id } = config;
     if (!add || typeof add !== "string" || !isValidHost(add)) {
-      return { valid: false, message: "Invalid VMess URL: invalid server" };
+      return { valid: false, message: _("Invalid VMess URL: invalid server") };
     }
     if (!isValidPort(port)) {
       return {
         valid: false,
-        message: "Invalid VMess URL: invalid port number"
+        message: _("Invalid VMess URL: invalid port number")
       };
     }
     if (!id || typeof id !== "string") {
-      return { valid: false, message: "Invalid VMess URL: missing UUID" };
+      return { valid: false, message: _("Invalid VMess URL: missing UUID") };
     }
     return { valid: true, message: _("Valid") };
   } catch (_e) {
@@ -628,30 +633,36 @@ function validateTrojanUrl(url) {
     if (!userHostPort)
       return {
         valid: false,
-        message: "Invalid Trojan URL: missing credentials and host"
+        message: _("Invalid Trojan URL: missing credentials and host")
       };
     if (!userPart)
-      return { valid: false, message: "Invalid Trojan URL: missing password" };
+      return {
+        valid: false,
+        message: _("Invalid Trojan URL: missing password")
+      };
     if (!hostPortPart)
       return {
         valid: false,
-        message: "Invalid Trojan URL: missing hostname and port"
+        message: _("Invalid Trojan URL: missing hostname and port")
       };
     const parsedHostPort = parseHostPort(hostPortPart);
     if (!parsedHostPort)
       return {
         valid: false,
-        message: "Invalid Trojan URL: invalid host and port"
+        message: _("Invalid Trojan URL: invalid host and port")
       };
     const { host, port } = parsedHostPort;
     if (!host)
-      return { valid: false, message: "Invalid Trojan URL: missing hostname" };
+      return {
+        valid: false,
+        message: _("Invalid Trojan URL: missing hostname")
+      };
     if (!port)
-      return { valid: false, message: "Invalid Trojan URL: missing port" };
+      return { valid: false, message: _("Invalid Trojan URL: missing port") };
     if (!isValidPort(port))
       return {
         valid: false,
-        message: "Invalid Trojan URL: invalid port number"
+        message: _("Invalid Trojan URL: invalid port number")
       };
   } catch (_e) {
     return { valid: false, message: _("Invalid Trojan URL: parsing failed") };
@@ -1230,9 +1241,16 @@ function getWindowLocation() {
 function getClashApiSecretFromSettings(settings) {
   return `${settings?.yacd_secret_key ?? ""}`.trim();
 }
-function canUseDirectClashApi(secret) {
+function normalizeHost(host) {
+  return host.trim().replace(/^\[(.*)\]$/, "$1").toLowerCase();
+}
+function canUseDirectClashApi(secret, routerHosts) {
   const location = getWindowLocation();
-  return secret.trim() !== "" && typeof location?.hostname === "string" && location.hostname !== "" && location.protocol !== "https:";
+  if (secret.trim() === "" || typeof location?.hostname !== "string" || location.hostname === "" || location.protocol === "https:") {
+    return false;
+  }
+  const hostname = normalizeHost(location.hostname);
+  return routerHosts.some((host) => normalizeHost(host) === hostname);
 }
 function getClashWsUrl() {
   const { hostname } = window.location;
@@ -1799,19 +1817,70 @@ function renderInfoIcon24() {
 
 // src/helpers/prettyBytes.ts
 function prettyBytes(n) {
-  const UNITS = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
+  const UNITS = [
+    _("B"),
+    _("KB"),
+    _("MB"),
+    _("GB"),
+    _("TB"),
+    _("PB"),
+    _("EB"),
+    _("ZB"),
+    _("YB")
+  ];
   if (n < 1e3) {
-    return n + " B";
+    return n + " " + UNITS[0];
   }
   const exponent = Math.min(Math.floor(Math.log10(n) / 3), UNITS.length - 1);
   n = Number((n / Math.pow(1e3, exponent)).toPrecision(3));
   const unit = UNITS[exponent];
   return n + " " + unit;
 }
+function prettyBytesRate(n) {
+  return _("%s/s").replace("%s", prettyBytes(n));
+}
+
+// src/prokop/ui/time.ts
+function formatRelativeTime(timestampSeconds, nowMs = Date.now()) {
+  const seconds = Math.max(0, Math.round(nowMs / 1e3 - timestampSeconds));
+  if (seconds < 60) return _("just now");
+  if (seconds < 3600) {
+    return _("%d min ago").replace("%d", String(Math.floor(seconds / 60)));
+  }
+  if (seconds < 86400) {
+    return _("%d h ago").replace("%d", String(Math.floor(seconds / 3600)));
+  }
+  return formatDateTime(timestampSeconds);
+}
+function uiLocale() {
+  const lang = typeof document === "undefined" ? "" : (document.documentElement?.lang || "").replace(/_/g, "-");
+  if (!lang) return void 0;
+  try {
+    return Intl.DateTimeFormat.supportedLocalesOf([lang])[0];
+  } catch (_error) {
+    return void 0;
+  }
+}
+function formatDateTime(timestampSeconds) {
+  return new Date(timestampSeconds * 1e3).toLocaleString(uiLocale());
+}
 
 // src/prokop/tabs/dashboard/partials/getOutboundFooterLabel.ts
+function getOutboundTypeLabel(type) {
+  switch (type) {
+    case "Direct":
+      return _("Direct");
+    case "Selector":
+      return _("Manual selection");
+    case "Reject":
+    case "RejectDrop":
+      return _("Block");
+    default:
+      return type;
+  }
+}
 function getOutboundFooterLabel(outbound) {
-  return outbound.urlTestInfo?.selectedName || outbound.priorityInfo?.selectedName || outbound.description || outbound.type;
+  return outbound.urlTestInfo?.selectedName || outbound.priorityInfo?.selectedName || outbound.description || getOutboundTypeLabel(outbound.type);
 }
 
 // src/prokop/tabs/dashboard/partials/renderSections.ts
@@ -1823,6 +1892,25 @@ function renderFailedState() {
       style: "height: 127px"
     },
     E("span", {}, [E("span", {}, _("Dashboard currently unavailable"))])
+  );
+}
+function renderStoppedState(actions = []) {
+  return E(
+    "div",
+    {
+      class: "fkp_dashboard-page__outbound-section centered",
+      style: "min-height: 127px"
+    },
+    E("div", { class: "fkp_dashboard-page__stopped" }, [
+      E(
+        "span",
+        {},
+        _(
+          "Prokop service is stopped. Start the service to display nodes and groups."
+        )
+      ),
+      ...actions
+    ])
   );
 }
 function renderLoadingState() {
@@ -1849,7 +1937,7 @@ function formatDate(seconds) {
   if (Number.isNaN(date.getTime())) {
     return void 0;
   }
-  return date.toLocaleDateString(void 0, {
+  return date.toLocaleDateString(uiLocale(), {
     year: "numeric",
     month: "2-digit",
     day: "2-digit"
@@ -2103,13 +2191,23 @@ function renderDefaultState({
       withTagSelect && !canChooseOutbound ? "fkp_dashboard-page__outbound-grid__item--disabled" : "",
       outboundSwitching ? "fkp_dashboard-page__outbound-grid__item--switching" : ""
     ].filter(Boolean).join(" ");
+    const chooseOutbound = () => canChooseOutbound && onChooseOutbound(section.sectionName, section.code, outbound.code);
     return E(
       "div",
       {
         class: className,
+        role: withTagSelect ? "button" : void 0,
+        tabIndex: canChooseOutbound ? 0 : void 0,
+        "aria-pressed": withTagSelect ? String(Boolean(outbound.selected)) : void 0,
         "aria-busy": outboundSwitching ? "true" : void 0,
         "aria-disabled": withTagSelect && !canChooseOutbound ? "true" : void 0,
-        click: () => canChooseOutbound && onChooseOutbound(section.sectionName, section.code, outbound.code)
+        click: chooseOutbound,
+        keydown: (event) => {
+          if (event.target !== event.currentTarget) return;
+          if (event.key !== "Enter" && event.key !== " ") return;
+          event.preventDefault();
+          chooseOutbound();
+        }
       },
       [
         ...outboundSwitching ? [
@@ -2247,6 +2345,9 @@ function renderDefaultState({
   ]);
 }
 function renderSections(props) {
+  if (props.stopped) {
+    return renderStoppedState(props.stoppedActions);
+  }
   if (props.failed) {
     return renderFailedState();
   }
@@ -2265,9 +2366,11 @@ function render() {
       class: "fkp_dashboard-page"
     },
     [
+      // No live region here: the cards hold controls and refresh with every
+      // traffic tick. The warning inside announces itself (role=alert).
       E(
         "div",
-        { id: "dashboard-overview", role: "status" },
+        { id: "dashboard-overview" },
         E("p", { class: "fkp-overview__hint" }, _("Loading\u2026"))
       )
     ]
@@ -2311,15 +2414,22 @@ function renderNodes() {
 }
 
 // src/helpers/showToast.ts
-function showToast(message, type, duration = 3e3) {
+var DEFAULT_DURATION_MS = 3e3;
+var ERROR_DURATION_MS = 8e3;
+function showToast(message, type, duration = type === "error" ? ERROR_DURATION_MS : DEFAULT_DURATION_MS) {
   let container = document.querySelector(".toast-container");
   if (!container) {
     container = document.createElement("div");
     container.className = "toast-container";
+    container.setAttribute("role", "status");
+    container.setAttribute("aria-live", "polite");
     document.body.appendChild(container);
   }
   const toast = document.createElement("div");
   toast.className = `toast toast-${type}`;
+  if (type === "error") {
+    toast.setAttribute("role", "alert");
+  }
   toast.textContent = message;
   container.appendChild(toast);
   setTimeout(() => toast.classList.add("visible"), 100);
@@ -2573,9 +2683,6 @@ var AUTOTUNE_GROUPS_RPC_TIMEOUT_MS = 45e3;
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
-function translate(message) {
-  return typeof _ === "function" ? _(message) : message;
-}
 function parseJsonObjectOutput(output) {
   if (!output) {
     return null;
@@ -2722,9 +2829,7 @@ var ProkopShellMethods = {
   getReadonlyConfigSections: async () => callBaseMethod(
     Prokop.AvailableMethods.GET_READONLY_CONFIG_SECTIONS
   ),
-  getDashboardRuntimeMetadata: async () => callBaseMethod(
-    Prokop.AvailableMethods.GET_DASHBOARD_RUNTIME_METADATA
-  ),
+  getDashboardRuntimeMetadata: async () => callBaseMethod(Prokop.AvailableMethods.GET_DASHBOARD_RUNTIME_METADATA),
   getSubscriptionMetadata: async (section) => callBaseMethod(
     Prokop.AvailableMethods.GET_SUBSCRIPTION_METADATA,
     [section]
@@ -2933,7 +3038,7 @@ var ProkopShellMethods = {
     Prokop.AvailableMethods.CONNECTIVITY_TEST,
     [host, type, port],
     "/usr/bin/prokop",
-    { timeout: 1e4 }
+    { allowNonZeroWithStdout: true, timeout: 1e4 }
   ),
   validateDpiStrategy: async (provider, strategy) => callBaseMethod(
     provider === "zapret" ? Prokop.AvailableMethods.VALIDATE_NFQWS_STRATEGY_JSON : provider === "zapret2" ? Prokop.AvailableMethods.VALIDATE_NFQWS2_STRATEGY_JSON : Prokop.AvailableMethods.VALIDATE_BYEDPI_STRATEGY_JSON,
@@ -3199,7 +3304,7 @@ var ProkopShellMethods = {
                   success: true,
                   component,
                   action,
-                  message: translate("Prokop has been installed"),
+                  message: _("Prokop has been installed"),
                   current_version: installedVersion,
                   latest_version: expectedLatestVersion,
                   changed: true,
@@ -3287,8 +3392,18 @@ var ProkopShellMethods = {
 };
 
 // src/prokop/methods/custom/getConfigSections.ts
+function hasLocalChanges(conf) {
+  const state = uci.state;
+  return ["changes", "creates", "deletes", "reorder"].some((key) => {
+    const value = state?.[key]?.[conf];
+    return value !== void 0 && value !== null && (typeof value !== "object" || Object.keys(value).length > 0);
+  });
+}
 async function getConfigSections() {
   try {
+    if (!hasLocalChanges(PROKOP_UCI_PACKAGE)) {
+      uci.unload?.(PROKOP_UCI_PACKAGE);
+    }
     await uci.load(PROKOP_UCI_PACKAGE);
     return await uci.sections(PROKOP_UCI_PACKAGE);
   } catch (_error) {
@@ -3325,6 +3440,17 @@ function getOutboundTagBySection(sectionName) {
   return allocateRuntimeTag(sectionName, "out");
 }
 
+// src/prokop/methods/custom/getClashControllerHosts.ts
+function parseClashControllerHosts(value) {
+  return Array.isArray(value) ? value.filter(
+    (host) => typeof host === "string" && host !== ""
+  ) : [];
+}
+async function getClashControllerHosts() {
+  const response = await ProkopShellMethods.getDashboardRuntimeMetadata();
+  return response.success ? parseClashControllerHosts(response.data.clashControllerHosts) : [];
+}
+
 // src/prokop/helpers/sectionEnabled.ts
 function isSectionEnabled(value) {
   if (value === void 0 || value === null) return true;
@@ -3343,12 +3469,12 @@ function getSettingsSection(configSections) {
 function getClashApiSecret(configSections) {
   return getClashApiSecretFromSettings(getSettingsSection(configSections));
 }
-function canFetchClashApiDirectly(secret) {
-  return canUseDirectClashApi(secret) && typeof fetch === "function";
+function canFetchClashApiDirectly(secret, routerHosts) {
+  return canUseDirectClashApi(secret, routerHosts) && typeof fetch === "function";
 }
-async function getClashApiProxies(configSections) {
+async function getClashApiProxies(configSections, routerHosts) {
   const secret = getClashApiSecret(configSections);
-  if (canFetchClashApiDirectly(secret)) {
+  if (canFetchClashApiDirectly(secret, routerHosts)) {
     const controller = new AbortController();
     const timeoutId = setTimeout(
       () => controller.abort(),
@@ -3837,7 +3963,12 @@ function getUrlTestGroups(dashboardCache) {
 }
 async function readRuntimeMetadata() {
   const response = await ProkopShellMethods.getDashboardRuntimeMetadata();
-  return response.success ? response.data : { urltestGroups: {} };
+  return response.success ? {
+    urltestGroups: response.data.urltestGroups ?? {},
+    clashControllerHosts: parseClashControllerHosts(
+      response.data.clashControllerHosts
+    )
+  } : { urltestGroups: {}, clashControllerHosts: [] };
 }
 function mergeUrlTestGroups(cachedGroups, runtimeGroups) {
   const merged = { ...cachedGroups };
@@ -4203,10 +4334,11 @@ function getOutboundMetadata(dashboardCache) {
 }
 async function getDashboardSections() {
   const configSections = hydrateConfigSections(await getConfigSections());
-  const [clashProxies, runtimeMetadata] = await Promise.all([
-    getClashApiProxies(configSections),
-    readRuntimeMetadata()
-  ]);
+  const runtimeMetadata = await readRuntimeMetadata();
+  const clashProxies = await getClashApiProxies(
+    configSections,
+    runtimeMetadata.clashControllerHosts
+  );
   if (!clashProxies.success || !clashProxies.data?.proxies) {
     return {
       success: false,
@@ -4814,6 +4946,8 @@ var initialStore = {
   sectionsWidget: {
     loading: true,
     failed: false,
+    stale: false,
+    updatedAt: null,
     latencyFetchingSections: {},
     latencyProgressSections: {},
     selectorSwitchingSections: {},
@@ -5296,7 +5430,10 @@ function applyUiStateToStore(uiState) {
 var RUNTIME_UI_STATE_REFRESH_MIN_INTERVAL_MS = 500;
 var RUNTIME_UI_STATE_IDLE_POLL_INTERVAL_MS = 1e3;
 var RUNTIME_UI_STATE_ACTIVE_POLL_INTERVAL_MS = 500;
+var RUNTIME_UI_STATE_MAX_FAILURES = 3;
 var runtimeUiStateRefreshPromise = null;
+var runtimeUiStateFollowUpPromise = null;
+var runtimeUiStateFailures = 0;
 var lastRuntimeUiStateRefreshAt = 0;
 var lastRuntimeUiState;
 var runtimeStateResumeRefreshRegistered = false;
@@ -5335,24 +5472,24 @@ function notifyRuntimeUiStateListeners(uiState) {
     }
   }
 }
-async function refreshRuntimeUiState({
-  force = false
-} = {}) {
-  if (!isDocumentVisible()) {
-    return void 0;
+function markRuntimeUiStateFailure() {
+  runtimeUiStateFailures += 1;
+  if (runtimeUiStateFailures < RUNTIME_UI_STATE_MAX_FAILURES) {
+    return;
   }
-  if (runtimeUiStateRefreshPromise) {
-    return runtimeUiStateRefreshPromise;
+  const servicesInfoWidget = store.get().servicesInfoWidget;
+  if (!servicesInfoWidget.failed && !servicesInfoWidget.loading) {
+    store.set({ servicesInfoWidget: { ...servicesInfoWidget, failed: true } });
   }
-  const now = Date.now();
-  if (!force && now - lastRuntimeUiStateRefreshAt < RUNTIME_UI_STATE_REFRESH_MIN_INTERVAL_MS) {
-    return void 0;
-  }
-  lastRuntimeUiStateRefreshAt = now;
+}
+function startRuntimeUiStateRefresh() {
+  lastRuntimeUiStateRefreshAt = Date.now();
   const promise = ProkopShellMethods.getUiState().then((response) => {
     if (!response.success) {
+      markRuntimeUiStateFailure();
       return void 0;
     }
+    runtimeUiStateFailures = 0;
     applyUiStateToStore(response.data);
     lastRuntimeUiState = response.data;
     runtimeStateHasRunningAction = hasRunningAction(response.data);
@@ -5360,6 +5497,7 @@ async function refreshRuntimeUiState({
     return response.data;
   }).catch((error) => {
     logger.error("[RUNTIME_UI_STATE]", "refresh failed", error);
+    markRuntimeUiStateFailure();
     return void 0;
   }).finally(() => {
     if (runtimeUiStateRefreshPromise === promise) {
@@ -5367,7 +5505,31 @@ async function refreshRuntimeUiState({
     }
   });
   runtimeUiStateRefreshPromise = promise;
-  return runtimeUiStateRefreshPromise;
+  return promise;
+}
+async function refreshRuntimeUiState({
+  force = false
+} = {}) {
+  if (!isDocumentVisible()) {
+    return void 0;
+  }
+  if (runtimeUiStateRefreshPromise) {
+    if (!force) {
+      return runtimeUiStateRefreshPromise;
+    }
+    if (!runtimeUiStateFollowUpPromise) {
+      const followUp = runtimeUiStateRefreshPromise.catch(() => void 0).then(() => {
+        runtimeUiStateFollowUpPromise = null;
+        return runtimeUiStateRefreshPromise ?? startRuntimeUiStateRefresh();
+      });
+      runtimeUiStateFollowUpPromise = followUp;
+    }
+    return runtimeUiStateFollowUpPromise;
+  }
+  if (!force && Date.now() - lastRuntimeUiStateRefreshAt < RUNTIME_UI_STATE_REFRESH_MIN_INTERVAL_MS) {
+    return void 0;
+  }
+  return startRuntimeUiStateRefresh();
 }
 function subscribeRuntimeUiState(listener) {
   runtimeUiStateListeners.add(listener);
@@ -5910,6 +6072,46 @@ function createPriorityMembersState() {
   };
 }
 
+// src/prokop/tabs/dashboard/sectionsRefresh.ts
+function sectionsAfterRefresh(current, data, now = Date.now()) {
+  return {
+    ...current,
+    loading: false,
+    failed: false,
+    stale: false,
+    updatedAt: now,
+    data
+  };
+}
+function sectionsAfterFailedRefresh(current) {
+  const hasData = current.data.length > 0;
+  return {
+    ...current,
+    loading: false,
+    failed: !hasData,
+    stale: hasData
+  };
+}
+function formatSectionsUpdatedAt(updatedAt) {
+  return new Date(updatedAt).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
+function renderSectionsStaleNotice(sectionsWidget) {
+  if (!sectionsWidget.stale || sectionsWidget.updatedAt === null) {
+    return null;
+  }
+  return E(
+    "div",
+    { class: "alert-message warning", role: "status" },
+    _("Could not refresh. Showing data from %s").replace(
+      "%s",
+      formatSectionsUpdatedAt(sectionsWidget.updatedAt)
+    )
+  );
+}
+
 // src/prokop/ui/status.ts
 function statusTone(status2) {
   switch (status2) {
@@ -6039,13224 +6241,6 @@ function renderProvenance(provenance) {
     },
     provenanceLabel(provenance)
   );
-}
-
-// src/prokop/ui/time.ts
-function formatRelativeTime(timestampSeconds, nowMs = Date.now()) {
-  const seconds = Math.max(0, Math.round(nowMs / 1e3 - timestampSeconds));
-  if (seconds < 60) return _("just now");
-  if (seconds < 3600) {
-    return _("%d min ago").replace("%d", String(Math.floor(seconds / 60)));
-  }
-  if (seconds < 86400) {
-    return _("%d h ago").replace("%d", String(Math.floor(seconds / 3600)));
-  }
-  return new Date(timestampSeconds * 1e3).toLocaleString();
-}
-
-// src/prokop/tabs/dashboard/overview.ts
-function lastEvent(health2) {
-  const events = health2?.recent_activity || [];
-  return events.length ? events[events.length - 1] : null;
-}
-function lastChangeEvent(health2) {
-  const events = (health2?.recent_activity || []).filter(
-    (event) => event.kind !== "cron_refresh" && event.kind !== "config_migration"
-  );
-  return events.length ? events[events.length - 1] : null;
-}
-function guardWarningText(action) {
-  switch (action) {
-    case "restart":
-      return _(
-        "A failed change left the DPI guard in place. Traffic that needs DPI bypass stays blocked until you restart Prokop."
-      );
-    case "restore":
-      return _(
-        "A configuration restore did not finish. Traffic that needs DPI bypass stays blocked until you restore the last known good snapshot."
-      );
-    case "wait":
-      return _(
-        "A configuration change is being applied. Traffic that needs DPI bypass may be blocked until it finishes."
-      );
-    default:
-      return _(
-        "A configuration change was not confirmed. Traffic that needs DPI bypass may be blocked; see the recovery details for the next step."
-      );
-  }
-}
-function overviewWarning(health2) {
-  if (!health2) return null;
-  const details = {
-    page: "history",
-    label: _("Recovery details")
-  };
-  if (health2.guard?.active) {
-    return {
-      title: _("DPI protection is holding traffic"),
-      text: guardWarningText(health2.recovery?.action),
-      link: details
-    };
-  }
-  if (health2.package_recovery?.pending) {
-    return {
-      title: _("Package recovery has not finished"),
-      text: _(
-        "An interrupted package update is being recovered. Avoid changes until it completes."
-      ),
-      link: details
-    };
-  }
-  if (lastChangeEvent(health2)?.status === "failure") {
-    return {
-      title: _("The last configuration change failed"),
-      text: _("Prokop kept or restored the previous configuration."),
-      link: details
-    };
-  }
-  if (health2.bridge_netfilter?.loaded) {
-    return {
-      title: _("br_netfilter is loaded"),
-      text: health2.bridge_netfilter.disabled_by_prokop ? _(
-        "Prokop has turned off the iptables hooks of br_netfilter (net.bridge.bridge-nf-call-iptables and -ip6tables) for transparent proxying: iptables rules do not filter bridged traffic while it runs. Stopping Prokop restores the previous values unless another program has changed them since."
-      ) : _(
-        "While Prokop runs, it turns off the iptables hooks of br_netfilter (net.bridge.bridge-nf-call-iptables and -ip6tables) that are on, for transparent proxying, so iptables rules do not filter bridged traffic. Their current values were not set by Prokop, and stopping it does not change them."
-      )
-    };
-  }
-  return null;
-}
-var KILL_SWITCH_STOPPED_LINE = () => _(
-  "If the VPN kill-switch is enabled, its sections stay blocked until Prokop is started."
-);
-function overviewState(input) {
-  const { health: health2, availability } = input;
-  const lines = [];
-  let status2;
-  let title;
-  if (availability === "stopped" && ["starting", "restarting", "reloading"].includes(input.prokopStatus)) {
-    status2 = "busy";
-    title = input.prokopStatus === "reloading" ? _("Applying changes\u2026") : _("Starting\u2026");
-  } else if (availability === "stopped" && input.prokopStoppedByUser) {
-    status2 = "off";
-    title = _("Stopped by user");
-    lines.push({
-      text: _(
-        "Prokop stays stopped until you start it: reloads, restores and updates do not start it."
-      )
-    });
-    lines.push({
-      text: _("Traffic goes through the router without Prokop.")
-    });
-    lines.push({ text: KILL_SWITCH_STOPPED_LINE() });
-  } else if (availability === "stopped" && input.prokopNotStarted === true) {
-    status2 = "off";
-    title = _("Not started");
-    lines.push({
-      text: _(
-        "Prokop was not started since the router booted: reloads, restores and updates do not start it."
-      )
-    });
-    lines.push({
-      text: _("Traffic goes through the router without Prokop.")
-    });
-    lines.push({ text: KILL_SWITCH_STOPPED_LINE() });
-  } else if (availability === "stopped") {
-    const failed2 = input.prokopNotStarted === false || input.prokopEnabled;
-    status2 = failed2 ? "error" : "off";
-    title = _("Not running");
-    if (failed2) {
-      lines.push({
-        text: _(
-          "Prokop was not stopped by the user: its start failed or it stopped unexpectedly."
-        ),
-        tone: "error"
-      });
-    }
-    lines.push({
-      text: _("Traffic goes through the router without Prokop.")
-    });
-    lines.push({ text: KILL_SWITCH_STOPPED_LINE() });
-  } else if (availability === "loading") {
-    status2 = "busy";
-    title = _("Checking\u2026");
-  } else if (availability === "unavailable") {
-    status2 = "unknown";
-    title = _("State unavailable");
-  } else if (health2?.overall === "transitioning") {
-    status2 = "busy";
-    title = _("Applying changes\u2026");
-  } else if (health2?.overall === "error") {
-    status2 = "error";
-    title = _("Prokop needs attention");
-  } else {
-    const known = !input.healthStale && (health2?.overall === "ok" || health2?.overall === "recovered");
-    status2 = health2?.overall === "recovered" ? "warning" : known ? "healthy" : "unknown";
-    title = _("Prokop is running");
-    if (health2?.overall === "recovered") {
-      lines.push({
-        text: _("The last change was rolled back automatically."),
-        tone: "warning"
-      });
-    }
-    if (!known) lines.push({ text: _("Health state unavailable") });
-  }
-  if (availability === "running") {
-    lines.push(
-      input.singBoxRunning ? { text: _("sing-box is running") } : { text: _("sing-box is not running"), tone: "error" }
-    );
-    if (health2?.dns?.status === "warning") {
-      lines.push({
-        text: _("Router DNS is not pointed to Prokop"),
-        tone: "warning"
-      });
-    }
-  }
-  lines.push({
-    text: input.prokopEnabled ? _("Autostart is on") : _("Autostart is off")
-  });
-  lines.push({
-    text: input.lastDiagnosticRun ? _("Last diagnostics: %s").replace(
-      "%s",
-      formatRelativeTime(input.lastDiagnosticRun / 1e3, input.nowMs)
-    ) : _("Diagnostics has not been run yet")
-  });
-  return { status: status2, title, lines, stopped: availability === "stopped" };
-}
-function latencyTone(latency) {
-  if (!latency) return "neutral";
-  if (latency < 800) return "success";
-  return latency < 1500 ? "warning" : "error";
-}
-var MAX_GROUPS = 3;
-function overviewRouting(input) {
-  const groups = input.groups.filter((group) => group.outbounds.length);
-  const groupsKnown = input.availability === "running" || groups.length > 0;
-  let summary = "";
-  if (input.ruleCount !== null && groupsKnown) {
-    summary = _("%d rules \xB7 %d node groups").replace("%d", String(input.ruleCount)).replace("%d", String(groups.length));
-  } else if (input.ruleCount !== null) {
-    summary = _("%d rules").replace("%d", String(input.ruleCount));
-  } else if (groupsKnown) {
-    summary = _("%d node groups").replace("%d", String(groups.length));
-  }
-  let live2 = "";
-  if (input.availability === "stopped") {
-    live2 = _("Routing is paused while Prokop is stopped.");
-  } else if (input.connections !== null) {
-    live2 = _("%d connections now").replace("%d", String(input.connections));
-    if (input.traffic) {
-      live2 += ` \xB7 \u2193 ${prettyBytes(input.traffic.down)}/s \u2191 ${prettyBytes(input.traffic.up)}/s`;
-    }
-  }
-  return {
-    summary,
-    live: live2,
-    groups: groups.slice(0, MAX_GROUPS).map((group) => {
-      const selected = group.outbounds.find((outbound) => outbound.selected) || group.outbounds[0];
-      return {
-        name: group.displayName,
-        node: selected.displayName,
-        latency: selected.latency ? `${selected.latency} ms` : _("no data"),
-        tone: latencyTone(selected.latency)
-      };
-    }),
-    more: Math.max(0, groups.length - MAX_GROUPS)
-  };
-}
-function overviewRecovery(input) {
-  const { health: health2 } = input;
-  if (!health2) {
-    return { status: "unknown", title: _("State unavailable"), lines: [] };
-  }
-  const lines = [];
-  const reload = health2.last_reload;
-  if (reload) {
-    const outcome = eventOutcomeView(toEventOutcome(reload.status));
-    lines.push({
-      text: _("Last reload: %s").replace(
-        "%s",
-        `${outcome.label} \xB7 ${formatRelativeTime(reload.timestamp, input.nowMs)}`
-      ),
-      tone: outcome.tone
-    });
-  } else {
-    lines.push({ text: _("No reload recorded yet") });
-  }
-  if (input.snapshotCount !== null) {
-    lines.push({
-      text: _("Snapshots: %d").replace("%d", String(input.snapshotCount))
-    });
-  }
-  const state = recoveryState(health2);
-  if (input.healthStale && state.status === "healthy")
-    return { status: "unknown", title: _("State unavailable"), lines };
-  return { ...state, lines: [...state.lines, ...lines] };
-}
-function recoveryState(health2) {
-  if (health2.guard?.active) {
-    switch (health2.recovery?.action) {
-      case "restart":
-        return {
-          status: "needs_attention",
-          title: _("Restart required"),
-          step: "restart",
-          lines: [
-            {
-              text: _(
-                "A failed change left the DPI guard in place: restart Prokop to remove it."
-              ),
-              tone: "error"
-            }
-          ]
-        };
-      case "restore":
-        return {
-          status: "needs_attention",
-          title: _("Restore required"),
-          step: "restore",
-          lines: [
-            {
-              text: _(
-                "A configuration restore did not finish: restore the last known good snapshot to finish it."
-              ),
-              tone: "error"
-            }
-          ]
-        };
-      case "wait":
-        return { status: "busy", title: _("Change in progress"), lines: [] };
-      default:
-        return {
-          status: "needs_attention",
-          title: _("Protection is active"),
-          lines: []
-        };
-    }
-  }
-  if (health2.package_recovery?.pending) {
-    return {
-      status: "needs_attention",
-      title: _("Package recovery has not finished"),
-      lines: []
-    };
-  }
-  if (health2.recovery?.pending) {
-    return {
-      status: "error",
-      title: _("The last configuration change failed"),
-      lines: [
-        {
-          text: _("Prokop kept or restored the previous configuration."),
-          tone: "error"
-        }
-      ]
-    };
-  }
-  return { status: "healthy", title: _("No recovery needed"), lines: [] };
-}
-function overviewLastEvent(input) {
-  const event = lastEvent(input.health);
-  if (!event) return null;
-  return {
-    title: eventKindLabel(event.kind),
-    outcome: eventOutcomeView(toEventOutcome(event.status)),
-    time: formatRelativeTime(event.timestamp, input.nowMs)
-  };
-}
-
-// src/prokop/helpers/navigation.ts
-var PROKOP_MENU_PATH = "admin/services/prokop";
-function luci() {
-  return globalThis.L;
-}
-function prokopPageUrl(page, params = {}) {
-  const base = typeof luci()?.url === "function" ? luci().url(PROKOP_MENU_PATH, page) : `/cgi-bin/luci/${PROKOP_MENU_PATH}/${page}`;
-  const query = new URLSearchParams(params).toString();
-  return query ? `${base}#${query}` : base;
-}
-function openProkopPage(page, params = {}) {
-  window.location.href = prokopPageUrl(page, params);
-}
-function readPageParams(hash = window.location.hash) {
-  return Object.fromEntries(new URLSearchParams(hash.replace(/^#/, "")));
-}
-
-// src/prokop/ui/overflowMenu.ts
-function renderOverflowMenu(label, items) {
-  const menu = E("details", { class: "fkp-menu" });
-  const close = () => {
-    menu.open = false;
-  };
-  menu.appendChild(
-    E(
-      "summary",
-      {
-        class: "btn cbi-button fkp-menu__toggle",
-        title: label,
-        "aria-label": label
-      },
-      "\u22EF"
-    )
-  );
-  menu.appendChild(
-    E(
-      "div",
-      { class: "fkp-menu__list", role: "menu" },
-      items.map(
-        (item) => E(
-          "button",
-          {
-            type: "button",
-            role: "menuitem",
-            class: `fkp-menu__item${item.danger ? " fkp-action-danger-text" : ""}`,
-            disabled: item.disabled ? true : void 0,
-            click: () => {
-              close();
-              item.onClick();
-            }
-          },
-          item.label
-        )
-      )
-    )
-  );
-  registerOutsideClose();
-  return menu;
-}
-var outsideCloseRegistered = false;
-function registerOutsideClose() {
-  if (outsideCloseRegistered || typeof document === "undefined") return;
-  if (!document.addEventListener) return;
-  outsideCloseRegistered = true;
-  document.addEventListener("click", (event) => {
-    document.querySelectorAll("details.fkp-menu[open]").forEach((menu) => {
-      if (!menu.contains(event.target)) menu.open = false;
-    });
-  });
-}
-
-// src/prokop/tabs/dashboard/overviewCards.ts
-function statusView(status2, label) {
-  return { label, tone: statusTone(status2) };
-}
-function linkButton(label, onClick) {
-  return E(
-    "button",
-    {
-      type: "button",
-      class: "btn cbi-button fkp-overview__link",
-      click: onClick
-    },
-    label
-  );
-}
-function renderLines(lines) {
-  return E(
-    "ul",
-    { class: "fkp-overview__lines" },
-    lines.map(
-      (line) => E(
-        "li",
-        { class: line.tone ? `fkp-overview__line--${line.tone}` : "" },
-        line.text
-      )
-    )
-  );
-}
-function card(title, body, footer = [], headerExtra = []) {
-  return E("section", { class: "fkp-overview__card" }, [
-    E("div", { class: "fkp-overview__head" }, [
-      E("h3", { class: "fkp-overview__title" }, title),
-      ...headerExtra
-    ]),
-    ...body,
-    ...footer.length ? [E("div", { class: "fkp-overview__footer fkp-actions" }, footer)] : []
-  ]);
-}
-function renderWarning(warning) {
-  return E("section", { class: "fkp-overview__warning", role: "alert" }, [
-    E("strong", {}, warning.title),
-    E("p", {}, warning.text),
-    ...warning.link ? [
-      linkButton(
-        warning.link.label,
-        () => openProkopPage(warning.link.page)
-      )
-    ] : []
-  ]);
-}
-function renderStateCard(state, actions, restartRequired) {
-  const footer = [];
-  const menu = [];
-  if (!actions.readonly) {
-    const stopOffered = !state.stopped || actions.stopAvailable === true;
-    const restartOffered = actions.restartBlocked !== true;
-    if (actions.restartBlocked)
-      footer.push(
-        E(
-          "p",
-          { class: "fkp-overview__hint" },
-          _(
-            "Multiple sing-box processes were found or their ownership is unclear. Restart is unavailable; traffic routing was not changed. Stop Prokop ends Prokop's traffic interception and stops the sing-box processes that Prokop runs; then start Prokop again. A sing-box of another program is not stopped, and Prokop starts only after it has exited."
-          )
-        )
-      );
-    if (state.stopped && actions.stopAvailable) {
-      footer.push(
-        E(
-          "button",
-          {
-            type: "button",
-            class: "btn cbi-button cbi-button-remove",
-            disabled: actions.serviceBusy ? true : void 0,
-            click: actions.onStop
-          },
-          _("Stop Prokop\u2026")
-        )
-      );
-    } else if (state.stopped && restartRequired && restartOffered) {
-      footer.push(
-        E(
-          "button",
-          {
-            type: "button",
-            class: "btn cbi-button cbi-button-action",
-            disabled: actions.serviceBusy ? true : void 0,
-            click: actions.onRestart
-          },
-          _("Restart Prokop")
-        )
-      );
-    } else if (state.stopped) {
-      footer.push(
-        E(
-          "button",
-          {
-            type: "button",
-            class: "btn cbi-button cbi-button-action",
-            disabled: actions.serviceBusy ? true : void 0,
-            click: actions.onStart
-          },
-          actions.serviceBusy ? _("Starting\u2026") : _("Start Prokop")
-        )
-      );
-    }
-    menu.push(
-      renderOverflowMenu(_("Service actions"), [
-        ...!state.stopped && restartOffered ? [
-          {
-            label: _("Restart Prokop"),
-            onClick: actions.onRestart,
-            disabled: actions.serviceBusy
-          }
-        ] : [],
-        ...stopOffered ? [
-          {
-            label: _("Stop Prokop\u2026"),
-            onClick: actions.onStop,
-            disabled: actions.serviceBusy,
-            danger: true
-          }
-        ] : [],
-        {
-          label: actions.autostart ? _("Disable autostart") : _("Enable autostart"),
-          onClick: actions.onToggleAutostart,
-          disabled: actions.serviceBusy
-        }
-      ])
-    );
-  }
-  return card(
-    _("State"),
-    [
-      E("div", { class: "fkp-overview__status" }, [
-        renderStatus(statusView(state.status, state.title))
-      ]),
-      renderLines(state.lines)
-    ],
-    [
-      ...footer,
-      linkButton(_("Diagnostics"), () => openProkopPage("diagnostics"))
-    ],
-    menu
-  );
-}
-function renderRoutingCard(routing, readonly) {
-  return card(
-    _("Routing"),
-    [
-      ...routing.summary ? [E("p", { class: "fkp-overview__summary" }, routing.summary)] : [],
-      ...routing.live ? [E("p", { class: "fkp-overview__hint" }, routing.live)] : [],
-      ...routing.groups.length ? [
-        E(
-          "ul",
-          { class: "fkp-overview__groups" },
-          routing.groups.map(
-            (group) => E("li", {}, [
-              E("span", { class: "fkp-overview__group-name" }, group.name),
-              E("span", { class: "fkp-overview__group-node" }, [
-                `${group.node} \xB7 `,
-                E(
-                  "span",
-                  { class: `fkp-status--${group.tone}` },
-                  group.latency
-                )
-              ])
-            ])
-          )
-        )
-      ] : [],
-      ...routing.more ? [
-        E(
-          "p",
-          { class: "fkp-overview__hint" },
-          _("%d more groups").replace("%d", String(routing.more))
-        )
-      ] : []
-    ],
-    [
-      linkButton(
-        _("Nodes and groups"),
-        () => openProkopPage("monitoring", { view: "nodes" })
-      ),
-      linkButton(_("Connections"), () => openProkopPage("monitoring")),
-      ...readonly ? [] : [linkButton(_("Rules"), () => openProkopPage("rules"))]
-    ]
-  );
-}
-function renderRecoveryCard(recovery, actions) {
-  const restart = !actions.readonly && recovery.step === "restart" ? [
-    E(
-      "button",
-      {
-        type: "button",
-        class: "btn cbi-button cbi-button-action",
-        disabled: actions.serviceBusy ? true : void 0,
-        click: actions.onRestart
-      },
-      _("Restart Prokop")
-    )
-  ] : [];
-  return card(
-    _("Recovery"),
-    [
-      E("div", { class: "fkp-overview__status" }, [
-        renderStatus(statusView(recovery.status, recovery.title))
-      ]),
-      renderLines(recovery.lines)
-    ],
-    [
-      ...restart,
-      linkButton(_("Recovery details"), () => openProkopPage("history"))
-    ]
-  );
-}
-function renderEventCard(event) {
-  return card(
-    _("Last important event"),
-    event ? [
-      E("p", { class: "fkp-overview__summary" }, [
-        `${event.title}: `,
-        E(
-          "span",
-          { class: `fkp-status--${event.outcome.tone}` },
-          event.outcome.label
-        )
-      ]),
-      E("p", { class: "fkp-overview__hint" }, event.time)
-    ] : [E("p", { class: "fkp-overview__hint" }, _("No events recorded yet"))],
-    [linkButton(_("All events"), () => openProkopPage("history"))]
-  );
-}
-function renderOverview(vm, actions) {
-  return E("div", { class: "fkp-overview" }, [
-    ...vm.warning ? [renderWarning(vm.warning)] : [],
-    E("div", { class: "fkp-overview__grid" }, [
-      renderStateCard(vm.state, actions, vm.recovery.step === "restart"),
-      renderRoutingCard(vm.routing, actions.readonly),
-      renderRecoveryCard(vm.recovery, actions),
-      renderEventCard(vm.event)
-    ])
-  ]);
-}
-
-// src/prokop/tabs/dashboard/serviceActionFlow.ts
-async function runOverviewServiceAction(steps) {
-  steps.setBusy(true);
-  try {
-    await steps.run();
-  } catch (error) {
-    steps.onError(error);
-  } finally {
-    try {
-      await steps.refreshRuntime();
-      await steps.refreshHealth();
-    } finally {
-      steps.setBusy(false);
-    }
-  }
-}
-
-// src/prokop/tabs/dashboard/serviceReload.ts
-function serviceReloadOutcome(state) {
-  if (state.outcome === "queued") return "queued";
-  if (state.outcome === "stopped") return "stopped";
-  if (state.success !== false) return "reloaded";
-  return state.reason === "timeout" ? "unconfirmed" : "failed";
-}
-function serviceReloadRefusalOutcome(error) {
-  const reason = failureReason(failureFromError(error));
-  if (reason === "busy" || reason === "startup_in_progress") return "busy";
-  if (reason === "timeout") return "unconfirmed";
-  return "failed";
-}
-function urlTestChangeToast(outcome, reset) {
-  const done = reset ? _("URLTest settings reset") : _("URLTest settings saved");
-  switch (outcome) {
-    case "queued":
-      return {
-        text: `${done}. ${_("Prokop is busy with another operation: the change applies when it finishes.")}`,
-        type: "warning",
-        duration: 8e3
-      };
-    case "stopped":
-      return {
-        text: `${done}. ${_("Prokop is stopped: the change applies when it is started.")}`,
-        type: "warning",
-        duration: 8e3
-      };
-    case "busy":
-      return {
-        text: `${done}. ${_("Prokop is busy with another service action, so the change is not applied yet; apply it again when that action finishes.")}`,
-        type: "warning",
-        duration: 1e4
-      };
-    case "unconfirmed":
-      return {
-        text: `${done}. ${_("Applying the change was not confirmed in time; check the service status.")}`,
-        type: "warning",
-        duration: 1e4
-      };
-    case "failed":
-      return {
-        text: `${done}. ${_("Prokop could not apply the change; see the Prokop log.")}`,
-        type: "error",
-        duration: 1e4
-      };
-    default:
-      return { text: done, type: "success", duration: 3e3 };
-  }
-}
-async function runUrlTestChange(steps, reset) {
-  await steps.change();
-  let outcome;
-  let finished = false;
-  try {
-    outcome = serviceReloadOutcome(await steps.reload());
-    finished = true;
-  } catch (error) {
-    outcome = serviceReloadRefusalOutcome(error);
-  }
-  if (finished) {
-    await steps.refresh().catch(() => void 0);
-  }
-  return {
-    close: outcome !== "failed" && outcome !== "busy",
-    toast: urlTestChangeToast(outcome, reset)
-  };
-}
-
-// src/prokop/tabs/dashboard/latencyJob.ts
-function latencyJobFailure(state) {
-  return new ActionFailureError(
-    _("Latency test failed"),
-    failureReason({ reason: state.reason, message: state.message })
-  );
-}
-
-// src/prokop/tabs/dashboard/subscriptionJob.ts
-function subscriptionUpdateErrorMessage(message) {
-  const detail = `${message || ""}`.trim();
-  const fallback = _("Failed to update subscriptions");
-  if (!detail || detail === fallback || detail === "Subscription update failed") {
-    return fallback;
-  }
-  return `${fallback}: ${detail}`;
-}
-function subscriptionUpdateFailureNotice(response) {
-  const failure = response.success ? { reason: response.data.reason, message: response.data.message } : { reason: response.reason, error: response.error };
-  const reason = failureReason(failure);
-  const reasonText = actionReasonText(reason);
-  if (reasonText && actionReasonIsWarning(reason)) {
-    return { text: reasonText, type: "warning" };
-  }
-  return {
-    text: subscriptionUpdateErrorMessage(
-      reasonText || failure.message || failure.error || ""
-    ),
-    type: "error"
-  };
-}
-
-// src/partials/button/styles.ts
-var styles = `
-.fkp-partial-button {
-    text-align: center;
-}
-
-.fkp-partial-button--with-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-}
-
-.fkp-partial-button--loading {
-}
-
-.fkp-partial-button--disabled {
-}
-
-.fkp-partial-button__icon {
-    flex: 0 0 auto;
-}
-
-.fkp-partial-button__icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.fkp-partial-button__icon svg {
-    width: 16px;
-    height: 16px;
-    display: block;
-    flex: 0 0 auto;
-}
-`;
-
-// src/partials/modal/styles.ts
-var styles2 = `
-
-.fkp-partial-modal__body {}
-
-.fkp-partial-modal__content {
-    max-height: 70vh;
-    overflow: scroll;
-    border-radius: 4px;
-}
-
-.fkp-partial-modal__footer {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.fkp-partial-modal__footer button {
-    margin-left: 0;
-}
-
-.fkp-partial-modal__checkbox {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    margin-right: auto;
-    cursor: pointer;
-    user-select: none;
-}
-
-.fkp-partial-modal__checkbox-text {
-    line-height: 1.2;
-}
-`;
-
-// src/partials/button/renderButton.ts
-function renderButton({
-  classNames = [],
-  disabled,
-  loading: loading2,
-  onClick,
-  text,
-  icon
-}) {
-  const hasIcon = !!loading2 || !!icon;
-  function getWrappedIcon() {
-    const iconWrap = E("span", {
-      class: "fkp-partial-button__icon"
-    });
-    if (loading2) {
-      iconWrap.appendChild(renderLoaderCircleIcon24());
-      return iconWrap;
-    }
-    if (icon) {
-      iconWrap.appendChild(icon());
-      return iconWrap;
-    }
-    return iconWrap;
-  }
-  function getClass() {
-    return [
-      "btn",
-      "fkp-partial-button",
-      ...insertIf(Boolean(disabled), ["fkp-partial-button--disabled"]),
-      ...insertIf(Boolean(loading2), ["fkp-partial-button--loading"]),
-      ...insertIf(Boolean(hasIcon), ["fkp-partial-button--with-icon"]),
-      ...classNames
-    ].filter(Boolean).join(" ");
-  }
-  function getDisabled() {
-    if (loading2 || disabled) {
-      return true;
-    }
-    return void 0;
-  }
-  return E(
-    "button",
-    {
-      type: "button",
-      class: getClass(),
-      disabled: getDisabled(),
-      click: onClick
-    },
-    [...insertIf(hasIcon, [getWrappedIcon()]), E("span", {}, text)]
-  );
-}
-
-// src/helpers/copyToClipboard.ts
-function copyToClipboard(text) {
-  const textarea = document.createElement("textarea");
-  textarea.value = text;
-  document.body.appendChild(textarea);
-  textarea.select();
-  try {
-    document.execCommand("copy");
-    showToast(_("Copied"), "success");
-  } catch (_err) {
-    showToast(_("Failed to copy!"), "error");
-    console.error("copyToClipboard - e", _err);
-  }
-  document.body.removeChild(textarea);
-}
-
-// src/partials/modal/renderModal.ts
-function renderModal(text, name, options) {
-  let rawText = text ?? "";
-  let currentText = "";
-  let refreshInFlight = false;
-  let pendingRefresh = false;
-  let pendingForcedRefresh = false;
-  let refreshSessionId = 0;
-  let timer;
-  let observer;
-  let autoRefreshEnabled = options?.initialAutoRefresh ?? Boolean(options?.getText);
-  let maskValuesEnabled = options?.initialMaskValues ?? true;
-  let shouldScrollToBottomOnMount = Boolean(options?.startAtEnd);
-  let autoRefreshInput;
-  let maskValuesInput;
-  const getDisplayText = (value) => {
-    if (maskValuesEnabled && options?.maskText) {
-      return options.maskText(value);
-    }
-    return value;
-  };
-  const codeEl = E("code", {}, "");
-  const contentEl = E(
-    "pre",
-    { class: "fkp-partial-modal__content" },
-    codeEl
-  );
-  const stopRefreshTimer = () => {
-    if (timer) {
-      clearInterval(timer);
-      timer = void 0;
-    }
-  };
-  const destroyLiveRefresh = () => {
-    refreshSessionId += 1;
-    pendingRefresh = false;
-    pendingForcedRefresh = false;
-    stopRefreshTimer();
-    observer?.disconnect();
-    observer = void 0;
-  };
-  const scrollToBottom = () => {
-    contentEl.scrollTop = contentEl.scrollHeight;
-  };
-  const scheduleInitialScrollToBottom = () => {
-    if (!shouldScrollToBottomOnMount || !body.isConnected) {
-      return;
-    }
-    shouldScrollToBottomOnMount = false;
-    requestAnimationFrame(() => {
-      scrollToBottom();
-    });
-  };
-  const updateText = (nextText) => {
-    const normalizedText = nextText ?? "";
-    const shouldStickToBottom = shouldScrollToBottomOnMount || contentEl.scrollTop + contentEl.clientHeight >= contentEl.scrollHeight - 16;
-    if (normalizedText === currentText) {
-      if (shouldStickToBottom) {
-        requestAnimationFrame(() => {
-          scrollToBottom();
-        });
-      }
-      return;
-    }
-    currentText = normalizedText;
-    codeEl.textContent = currentText;
-    if (shouldStickToBottom) {
-      requestAnimationFrame(() => {
-        scrollToBottom();
-      });
-    }
-  };
-  const updateDisplayedTextFromRaw = () => {
-    updateText(getDisplayText(rawText));
-  };
-  const refreshText = async (force = false) => {
-    if (!options?.getText || !force && !autoRefreshEnabled || refreshInFlight) {
-      return;
-    }
-    if (!body.isConnected) {
-      return;
-    }
-    refreshInFlight = true;
-    const sessionId = refreshSessionId;
-    try {
-      const nextText = await options.getText({
-        maskValues: options.maskText ? false : maskValuesEnabled
-      });
-      if (!body.isConnected || !force && !autoRefreshEnabled) {
-        return;
-      }
-      if (sessionId !== refreshSessionId) {
-        return;
-      }
-      const normalizedText = nextText ?? "";
-      rawText = normalizedText;
-      updateText(getDisplayText(normalizedText));
-    } catch (error) {
-      console.warn("[renderModal] failed to refresh modal content", error);
-    } finally {
-      refreshInFlight = false;
-      if (pendingRefresh) {
-        const shouldForceRefresh = pendingForcedRefresh;
-        pendingRefresh = false;
-        pendingForcedRefresh = false;
-        if ((shouldForceRefresh || autoRefreshEnabled) && body.isConnected) {
-          void refreshText(shouldForceRefresh);
-        }
-      }
-    }
-  };
-  const requestRefresh = () => {
-    if (!options?.getText || !autoRefreshEnabled) {
-      return;
-    }
-    if (refreshInFlight) {
-      pendingRefresh = true;
-      return;
-    }
-    void refreshText();
-  };
-  const requestForcedRefresh = () => {
-    if (!options?.getText) {
-      return;
-    }
-    if (refreshInFlight) {
-      pendingRefresh = true;
-      pendingForcedRefresh = true;
-      return;
-    }
-    void refreshText(true);
-  };
-  const startRefreshTimer = () => {
-    if (!options?.getText || !autoRefreshEnabled || timer || typeof document === "undefined") {
-      return;
-    }
-    timer = setInterval(() => {
-      requestRefresh();
-    }, options.refreshMs ?? 3e3);
-  };
-  const setAutoRefreshEnabled = (nextValue) => {
-    autoRefreshEnabled = nextValue;
-    refreshSessionId += 1;
-    pendingRefresh = false;
-    pendingForcedRefresh = false;
-    if (autoRefreshInput) {
-      autoRefreshInput.checked = nextValue;
-    }
-    if (nextValue) {
-      startRefreshTimer();
-      requestRefresh();
-      return;
-    }
-    stopRefreshTimer();
-  };
-  const setMaskValuesEnabled = (nextValue) => {
-    maskValuesEnabled = nextValue;
-    refreshSessionId += 1;
-    pendingRefresh = false;
-    pendingForcedRefresh = false;
-    if (maskValuesInput) {
-      maskValuesInput.checked = nextValue;
-    }
-    if (options?.maskText) {
-      updateDisplayedTextFromRaw();
-      return;
-    }
-    requestForcedRefresh();
-  };
-  const footerChildren = [
-    renderButton({
-      classNames: ["cbi-button-apply"],
-      text: _("Download"),
-      onClick: () => downloadAsTxt(currentText, name)
-    }),
-    renderButton({
-      classNames: ["cbi-button-apply"],
-      text: _("Copy"),
-      onClick: () => copyToClipboard(`\`\`\`${name}
-${currentText}
-\`\`\``)
-    }),
-    renderButton({
-      classNames: ["cbi-button-remove"],
-      text: _("Close"),
-      onClick: () => {
-        destroyLiveRefresh();
-        ui.hideModal();
-      }
-    })
-  ];
-  if (options?.getText && options?.showAutoRefreshToggle) {
-    autoRefreshInput = document.createElement("input");
-    autoRefreshInput.type = "checkbox";
-    autoRefreshInput.className = "cbi-input-checkbox";
-    autoRefreshInput.checked = autoRefreshEnabled;
-    autoRefreshInput.addEventListener("change", () => {
-      setAutoRefreshEnabled(autoRefreshInput.checked);
-    });
-    footerChildren.unshift(
-      E("label", { class: "fkp-partial-modal__checkbox" }, [
-        autoRefreshInput,
-        E(
-          "span",
-          { class: "fkp-partial-modal__checkbox-text" },
-          options.autoRefreshLabel ?? _("Auto refresh")
-        )
-      ])
-    );
-  }
-  if ((options?.getText || options?.maskText) && options?.showMaskValuesToggle) {
-    maskValuesInput = document.createElement("input");
-    maskValuesInput.type = "checkbox";
-    maskValuesInput.className = "cbi-input-checkbox";
-    maskValuesInput.checked = maskValuesEnabled;
-    maskValuesInput.addEventListener("change", () => {
-      setMaskValuesEnabled(maskValuesInput.checked);
-    });
-    footerChildren.unshift(
-      E("label", { class: "fkp-partial-modal__checkbox" }, [
-        maskValuesInput,
-        E(
-          "span",
-          { class: "fkp-partial-modal__checkbox-text" },
-          options.maskValuesLabel ?? _("Hide values")
-        )
-      ])
-    );
-  }
-  const body = E("div", { class: "fkp-partial-modal__body" }, [
-    E("div", {}, [
-      contentEl,
-      E("div", { class: "fkp-partial-modal__footer" }, footerChildren)
-    ])
-  ]);
-  if ((options?.getText || options?.startAtEnd) && typeof document !== "undefined") {
-    observer = new MutationObserver(() => {
-      if (!body.isConnected) {
-        destroyLiveRefresh();
-        return;
-      }
-      scheduleInitialScrollToBottom();
-    });
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
-    scheduleInitialScrollToBottom();
-  }
-  if (options?.getText && typeof document !== "undefined") {
-    startRefreshTimer();
-    requestRefresh();
-  }
-  updateDisplayedTextFromRaw();
-  return body;
-}
-
-// src/partials/index.ts
-var PartialStyles = `
-${styles}
-${styles2}
-`;
-
-// src/prokop/helpers/legacyStorage.ts
-var MONITORING_PREFERENCES_KEY = "prokop.monitoring.preferences";
-var CONNECTIVITY_TARGETS_KEY = "prokop.connectivity.targets";
-var DIAGNOSTIC_LAST_RUN_KEY = "prokop.diagnostic.lastRun";
-var LEGACY_FORKOP_STORAGE_KEYS = {
-  [MONITORING_PREFERENCES_KEY]: "forkop.monitoring.preferences",
-  [CONNECTIVITY_TARGETS_KEY]: "forkop.connectivity.targets",
-  [DIAGNOSTIC_LAST_RUN_KEY]: "forkop.diagnostic.lastRun"
-};
-function legacyKeyFor(key) {
-  return Object.prototype.hasOwnProperty.call(LEGACY_FORKOP_STORAGE_KEYS, key) ? LEGACY_FORKOP_STORAGE_KEYS[key] : null;
-}
-function readStorageItem(storage, key) {
-  const value = storage.getItem(key);
-  const legacyKey = legacyKeyFor(key);
-  if (value !== null || !legacyKey) return value;
-  const legacyValue = storage.getItem(legacyKey);
-  if (legacyValue === null) return null;
-  if (storage.setItem) {
-    try {
-      storage.setItem(key, legacyValue);
-      storage.removeItem?.(legacyKey);
-    } catch (_error) {
-    }
-  }
-  return legacyValue;
-}
-function writeStorageItem(storage, key, value) {
-  storage.setItem(key, value);
-  const legacyKey = legacyKeyFor(key);
-  if (legacyKey) storage.removeItem?.(legacyKey);
-}
-
-// src/prokop/tabs/diagnostic/partials/renderRunAction.ts
-function renderRunAction({
-  loading: loading2,
-  disabled,
-  click
-}) {
-  return E("div", { class: "fkp_diagnostic-page__run_check_wrapper" }, [
-    renderButton({
-      text: _("Run full diagnostics"),
-      onClick: click,
-      icon: renderSearchIcon24,
-      loading: loading2,
-      disabled,
-      classNames: ["cbi-button-apply"]
-    })
-  ]);
-}
-function saveLastRun(storage, now = Date.now()) {
-  try {
-    writeStorageItem(storage, DIAGNOSTIC_LAST_RUN_KEY, String(now));
-  } catch (_error) {
-  }
-}
-function readLastRun(storage) {
-  let value = 0;
-  try {
-    value = Number(readStorageItem(storage, DIAGNOSTIC_LAST_RUN_KEY) || 0);
-  } catch (_error) {
-    value = 0;
-  }
-  return value > 0 ? value : null;
-}
-function lastRunText(storage) {
-  const value = readLastRun(storage) || 0;
-  return value > 0 ? `${_("Last check")}: ${new Date(value).toLocaleString()}` : _("No check has been run yet");
-}
-
-// src/prokop/ui/confirmAction.ts
-function confirmAction(options) {
-  return new Promise((resolve) => {
-    let settled = false;
-    let observer;
-    const finish = (confirmed, closeModal = true) => {
-      if (settled) return;
-      settled = true;
-      observer?.disconnect();
-      if (closeModal) ui.hideModal();
-      resolve(confirmed);
-    };
-    const cancelButton = E(
-      "button",
-      { type: "button", class: "btn cbi-button", click: () => finish(false) },
-      _("Cancel")
-    );
-    const confirmButton = E(
-      "button",
-      {
-        type: "button",
-        class: `btn ${options.danger ? "cbi-button-negative" : "cbi-button-action"}`,
-        click: () => finish(true)
-      },
-      options.confirmLabel
-    );
-    const content = E("div", { class: "fkp-confirm" }, [
-      E("p", {}, options.message),
-      ...options.consequences?.length ? [
-        E(
-          "ul",
-          { class: "fkp-confirm__consequences" },
-          options.consequences.map((line) => E("li", {}, line))
-        )
-      ] : [],
-      ...(options.notes ?? []).map((line) => E("p", {}, line)),
-      E("div", { class: "fkp-confirm__actions" }, [
-        cancelButton,
-        confirmButton
-      ])
-    ]);
-    ui.showModal(options.title, content);
-    if (typeof MutationObserver === "function") {
-      observer = new MutationObserver(() => {
-        if (!content.isConnected) finish(false, false);
-      });
-      observer.observe(document.body, { childList: true, subtree: true });
-    }
-    cancelButton.focus?.();
-  });
-}
-
-// src/prokop/tabs/shared/serviceControl.ts
-async function runServiceActionJob(action) {
-  const start = await ProkopShellMethods.serviceActionStart(action);
-  if (!start.success) {
-    throw new ActionFailureError(start.error, failureReason(start));
-  }
-  const jobId = start.data.job_id;
-  let finished = false;
-  markUiActionOwned("service", jobId);
-  beginAwaitedServiceAction(jobId);
-  try {
-    const result = await ProkopShellMethods.waitServiceActionJob(jobId);
-    if (!result.success) {
-      throw new ActionFailureError(result.error, failureReason(result));
-    }
-    finished = true;
-    return result.data;
-  } finally {
-    endAwaitedServiceAction(jobId, finished);
-    void ProkopShellMethods.uiActionAck("service", jobId);
-  }
-}
-async function runProkopServiceAction(action) {
-  const state = await runServiceActionJob(action);
-  if (state.success === false) {
-    throw new ActionFailureError(state.message || "", state.reason);
-  }
-}
-function confirmStopProkop() {
-  return confirmAction({
-    title: _("Stop Prokop?"),
-    message: _("Prokop stops handling traffic until it is started again."),
-    consequences: [
-      _("Routing, DNS and DPI bypass rules stop applying"),
-      _("Devices keep using the router without Prokop"),
-      _(
-        "Sections with the VPN kill-switch are blocked instead of going directly"
-      )
-    ],
-    confirmLabel: _("Stop"),
-    danger: true
-  });
-}
-async function setProkopAutostart(enabled) {
-  try {
-    await (enabled ? ProkopShellMethods.enable() : ProkopShellMethods.disable());
-  } finally {
-    await refreshRuntimeUiState({ force: true });
-  }
-  return Boolean(store.get().servicesInfoWidget.data.prokopEnabled);
-}
-
-// src/prokop/tabs/dashboard/clashTraffic.ts
-function counter(value) {
-  const number = Number(value);
-  return Number.isFinite(number) && number >= 0 ? number : 0;
-}
-function sampleFromConnections(payload, at) {
-  if (!payload || typeof payload !== "object") {
-    return null;
-  }
-  const data = payload;
-  return {
-    downloadTotal: counter(data.downloadTotal),
-    uploadTotal: counter(data.uploadTotal),
-    connections: Array.isArray(data.connections) ? data.connections.length : 0,
-    memory: counter(data.memory),
-    at
-  };
-}
-function trafficSpeed(previous, next) {
-  if (!previous) {
-    return null;
-  }
-  const seconds = (next.at - previous.at) / 1e3;
-  const down = next.downloadTotal - previous.downloadTotal;
-  const up = next.uploadTotal - previous.uploadTotal;
-  if (seconds <= 0 || down < 0 || up < 0) {
-    return null;
-  }
-  return { up: Math.round(up / seconds), down: Math.round(down / seconds) };
-}
-
-// src/prokop/tabs/dashboard/initController.ts
-var SECTIONS_REFRESH_INTERVAL_MS = 1e4;
-var CLASH_RPC_POLL_INTERVAL_MS = 2e3;
-var LATENCY_TEST_BUTTON_CLASS = "dashboard-sections-grid-item-test-latency";
-var LATENCY_TEST_BUTTON_LABEL_CLASS = "dashboard-sections-grid-item-test-latency__label";
-var sectionsRefreshTimer = null;
-var healthRefreshTimer = null;
-var overviewHealth = null;
-var overviewHealthStale = false;
-var overviewRuleCount = null;
-var overviewSnapshotCount = null;
-var overviewServiceBusy = false;
-var overviewHost = false;
-var clashUpdatesStarted = false;
-async function refreshHealth(mountId3) {
-  const response = await ProkopShellMethods.getHealthStatus();
-  if (!dashboardMounted || mountId3 !== dashboardMountId) return;
-  if (response.success && response.data) {
-    overviewHealth = response.data;
-    overviewHealthStale = false;
-  } else {
-    overviewHealthStale = true;
-  }
-  renderOverviewCards();
-}
-async function loadOverviewCounts(mountId3) {
-  const [sections, snapshots2] = await Promise.allSettled([
-    CustomProkopMethods.getConfigSections(),
-    ProkopShellMethods.snapshotList()
-  ]);
-  if (!dashboardMounted || mountId3 !== dashboardMountId) return;
-  overviewRuleCount = sections.status === "fulfilled" ? sections.value.filter(
-    (section) => section[".type"] === "section" && isSectionEnabled(section.enabled)
-  ).length : null;
-  overviewSnapshotCount = snapshots2.status === "fulfilled" && snapshots2.value.success && Array.isArray(snapshots2.value.data) ? snapshots2.value.data.length : null;
-  renderOverviewCards();
-}
-function overviewInput() {
-  const state = store.get();
-  const services = state.servicesInfoWidget;
-  const bandwidth = state.bandwidthWidget;
-  const systemInfo = state.systemInfoWidget;
-  return {
-    health: overviewHealth,
-    healthStale: overviewHealthStale,
-    availability: getDashboardServiceAvailability(),
-    prokopEnabled: Boolean(services.data.prokopEnabled),
-    prokopStoppedByUser: Boolean(services.data.prokopStoppedByUser),
-    prokopNotStarted: services.data.prokopNotStarted === null ? null : Boolean(services.data.prokopNotStarted),
-    prokopStatus: services.data.prokopStatus || "",
-    singBoxRunning: Boolean(services.data.singbox),
-    groups: state.sectionsWidget.data,
-    ruleCount: overviewRuleCount,
-    traffic: !bandwidth.loading && !bandwidth.failed ? { up: bandwidth.data.up, down: bandwidth.data.down } : null,
-    connections: !systemInfo.loading && !systemInfo.failed ? systemInfo.data.connections : null,
-    snapshotCount: overviewSnapshotCount,
-    lastDiagnosticRun: readLastRun(localStorage),
-    nowMs: Date.now()
-  };
-}
-async function handleServiceAction(action) {
-  if (overviewServiceBusy) return;
-  if (action === "stop" && !await confirmStopProkop()) return;
-  const mountId3 = dashboardMountId;
-  await runOverviewServiceAction({
-    run: () => runProkopServiceAction(action),
-    onError: (error) => {
-      const notice = serviceActionNotice(error);
-      showToast(notice.text, notice.type, 6e3);
-    },
-    refreshRuntime: () => refreshRuntimeUiState({ force: true }),
-    refreshHealth: () => refreshHealth(mountId3),
-    setBusy: (busy2) => {
-      overviewServiceBusy = busy2;
-      renderOverviewCards();
-    }
-  });
-}
-async function handleToggleAutostart() {
-  if (overviewServiceBusy) return;
-  const wanted = !store.get().servicesInfoWidget.data.prokopEnabled;
-  overviewServiceBusy = true;
-  renderOverviewCards();
-  try {
-    if (await setProkopAutostart(wanted) !== wanted) {
-      showToast(_("Could not change autostart"), "error", 6e3);
-    }
-  } catch (_error) {
-    showToast(_("Could not change autostart"), "error", 6e3);
-  } finally {
-    overviewServiceBusy = false;
-    renderOverviewCards();
-  }
-}
-function renderOverviewCards() {
-  const container = document.getElementById("dashboard-overview");
-  if (!container || !dashboardMounted) return;
-  const input = overviewInput();
-  const view = renderOverview(
-    {
-      warning: overviewWarning(input.health),
-      state: overviewState(input),
-      routing: overviewRouting(input),
-      recovery: overviewRecovery(input),
-      event: overviewLastEvent(input)
-    },
-    {
-      readonly: isReadonlyMode(),
-      serviceBusy: overviewServiceBusy,
-      autostart: input.prokopEnabled,
-      restartBlocked: Boolean(
-        store.get().servicesInfoWidget.data.prokopRestartBlocked
-      ),
-      stopAvailable: Boolean(
-        store.get().servicesInfoWidget.data.prokopStopAvailable
-      ),
-      onStart: () => void handleServiceAction("start"),
-      onRestart: () => void handleServiceAction("restart"),
-      onStop: () => void handleServiceAction("stop"),
-      onToggleAutostart: () => void handleToggleAutostart()
-    }
-  );
-  if (container.querySelector(".fkp-menu[open]")) return;
-  preserveScrollForPage(() => container.replaceChildren(view));
-}
-var sectionsRefreshPromise = null;
-var sectionsRefreshQueued = false;
-var actionStateUnsubscribe = null;
-var dashboardMounted = false;
-var dashboardMountId = 0;
-var dashboardDataUpdatesStarted = false;
-var dashboardDataUpdatesId = 0;
-var pageUnloading = false;
-var clashRpcPollTimer = null;
-var clashRpcPolling = false;
-var lastConnectionsSample = null;
-var followedSubscriptionJobs = /* @__PURE__ */ new Set();
-var followedLatencyJobs = /* @__PURE__ */ new Set();
-var handledSubscriptionJobs = /* @__PURE__ */ new Set();
-var handledLatencyJobs = /* @__PURE__ */ new Set();
-var priorityMembersState = createPriorityMembersState();
-if (typeof window !== "undefined") {
-  window.addEventListener("pagehide", () => {
-    pageUnloading = true;
-  });
-  window.addEventListener("pageshow", () => {
-    pageUnloading = false;
-  });
-}
-async function fetchDashboardSectionsOnce(mountId3) {
-  if (getDashboardServiceAvailability() === "stopped") {
-    return false;
-  }
-  const prev = store.get().sectionsWidget;
-  const hasRenderedData = prev.data.length > 0;
-  store.set({
-    sectionsWidget: {
-      ...prev,
-      failed: false,
-      loading: prev.loading && !hasRenderedData
-    }
-  });
-  try {
-    const { data, success } = await CustomProkopMethods.getDashboardSections();
-    if (!dashboardMounted || mountId3 !== dashboardMountId || getDashboardServiceAvailability() === "stopped") {
-      return false;
-    }
-    if (!success) {
-      throw new Error("failed to fetch dashboard sections");
-    }
-    const current = store.get().sectionsWidget;
-    store.set({
-      sectionsWidget: {
-        ...current,
-        loading: false,
-        failed: false,
-        data
-      }
-    });
-    return true;
-  } catch (error) {
-    logger.error("[DASHBOARD]", "fetchDashboardSections: failed", error);
-    if (!dashboardMounted || mountId3 !== dashboardMountId || getDashboardServiceAvailability() === "stopped") {
-      return false;
-    }
-    const current = store.get().sectionsWidget;
-    store.set({
-      sectionsWidget: {
-        ...current,
-        loading: false,
-        failed: current.data.length === 0,
-        data: current.data
-      }
-    });
-    return false;
-  }
-}
-async function fetchDashboardSections(options = {}) {
-  if (sectionsRefreshPromise) {
-    if (options.force) {
-      sectionsRefreshQueued = true;
-    }
-    return sectionsRefreshPromise;
-  }
-  const mountId3 = dashboardMountId;
-  const promise = (async () => {
-    let success = false;
-    do {
-      sectionsRefreshQueued = false;
-      success = await fetchDashboardSectionsOnce(mountId3);
-    } while (sectionsRefreshQueued && dashboardMounted && mountId3 === dashboardMountId);
-    return success;
-  })();
-  sectionsRefreshPromise = promise;
-  try {
-    return await promise;
-  } finally {
-    if (sectionsRefreshPromise === promise) {
-      sectionsRefreshPromise = null;
-    }
-  }
-}
-function setSubscriptionUpdating(sectionName, updating, local = false) {
-  if (local || !updating) {
-    setLocalSubscriptionAction(sectionName, updating && local);
-  }
-  const sectionsWidget = store.get().sectionsWidget;
-  const subscriptionUpdatingSections = {
-    ...sectionsWidget.subscriptionUpdatingSections
-  };
-  if (updating) {
-    subscriptionUpdatingSections[sectionName] = true;
-  } else {
-    delete subscriptionUpdatingSections[sectionName];
-  }
-  store.set({
-    sectionsWidget: {
-      ...sectionsWidget,
-      subscriptionUpdatingSections
-    }
-  });
-}
-function setSelectorSwitching(sectionName, tag) {
-  const sectionsWidget = store.get().sectionsWidget;
-  const selectorSwitchingSections = {
-    ...sectionsWidget.selectorSwitchingSections
-  };
-  if (tag) {
-    selectorSwitchingSections[sectionName] = tag;
-  } else {
-    delete selectorSwitchingSections[sectionName];
-  }
-  store.set({
-    sectionsWidget: {
-      ...sectionsWidget,
-      selectorSwitchingSections
-    }
-  });
-}
-function setLatencyFetching(sectionName, fetching, local = false, progress) {
-  if (local || !fetching) {
-    setLocalLatencyAction(sectionName, fetching && local);
-  }
-  const sectionsWidget = store.get().sectionsWidget;
-  const latencyFetchingSections = {
-    ...sectionsWidget.latencyFetchingSections
-  };
-  const latencyProgressSections = {
-    ...sectionsWidget.latencyProgressSections
-  };
-  if (fetching) {
-    latencyFetchingSections[sectionName] = true;
-    if (progress) {
-      latencyProgressSections[sectionName] = progress;
-    }
-  } else {
-    delete latencyFetchingSections[sectionName];
-    delete latencyProgressSections[sectionName];
-  }
-  store.set({
-    sectionsWidget: {
-      ...sectionsWidget,
-      latencyFetchingSections,
-      latencyProgressSections
-    }
-  });
-}
-async function completeSubscriptionUpdateJob(jobId, sectionName, response) {
-  if (pageUnloading) {
-    setSubscriptionUpdating(sectionName, false);
-    return;
-  }
-  if (jobId && handledSubscriptionJobs.has(jobId)) {
-    setSubscriptionUpdating(sectionName, false);
-    return;
-  }
-  const shouldNotify = jobId ? shouldNotifyOwnedUiAction("subscription", jobId) : false;
-  const failed2 = !response.success || response.data.success === false;
-  const message = response.success ? response.data.message || _("Failed to update subscriptions") : response.error || _("Failed to update subscriptions");
-  if (failed2 && isTransientRpcError(message)) {
-    void refreshRuntimeUiState({ force: true });
-    return;
-  }
-  if (jobId) {
-    handledSubscriptionJobs.add(jobId);
-  }
-  setSubscriptionUpdating(sectionName, false);
-  if (jobId && response.success) {
-    void ProkopShellMethods.uiActionAck("subscription", jobId);
-  }
-  if (failed2) {
-    if (shouldNotify) {
-      const notice = subscriptionUpdateFailureNotice(response);
-      showToast(notice.text, notice.type);
-    }
-    return;
-  }
-  if (shouldNotify) {
-    showToast(_("Subscriptions updated"), "success");
-  }
-  void fetchDashboardSections({ force: true });
-  void fetchServicesInfo();
-}
-async function followSubscriptionUpdateState(state) {
-  const jobId = state.job_id;
-  const sectionName = state.section || "";
-  if (!jobId || !sectionName || followedSubscriptionJobs.has(jobId)) {
-    return;
-  }
-  if (!state.running && handledSubscriptionJobs.has(jobId)) {
-    return;
-  }
-  followedSubscriptionJobs.add(jobId);
-  if (shouldShowLoadingForRestoredAction(state)) {
-    setSubscriptionUpdating(sectionName, true);
-  }
-  try {
-    const response = state.running ? await ProkopShellMethods.waitSubscriptionUpdateJob(jobId) : {
-      success: true,
-      data: state
-    };
-    await completeSubscriptionUpdateJob(jobId, sectionName, response);
-  } catch (error) {
-    logger.error("[DASHBOARD]", "followSubscriptionUpdateState failed", error);
-    if (!pageUnloading) {
-      const message = error instanceof Error ? error.message : _("Failed to update subscriptions");
-      setSubscriptionUpdating(sectionName, false);
-      if (!isTransientRpcError(message)) {
-        showToast(subscriptionUpdateErrorMessage(message), "error");
-      }
-    }
-  } finally {
-    followedSubscriptionJobs.delete(jobId);
-  }
-}
-async function completeLatencyTestJob(jobId, sectionName) {
-  setLatencyFetching(sectionName, false);
-  if (pageUnloading) {
-    return;
-  }
-  if (jobId && handledLatencyJobs.has(jobId)) {
-    return;
-  }
-  if (jobId) {
-    handledLatencyJobs.add(jobId);
-  }
-  if (jobId) {
-    void ProkopShellMethods.uiActionAck("latency", jobId);
-  }
-  void fetchDashboardSections({ force: true });
-}
-async function followLatencyTestState(state) {
-  const jobId = state.job_id;
-  const sectionName = state.section || "";
-  if (!jobId || !sectionName || followedLatencyJobs.has(jobId)) {
-    return;
-  }
-  if (!state.running && handledLatencyJobs.has(jobId)) {
-    return;
-  }
-  followedLatencyJobs.add(jobId);
-  if (shouldShowLoadingForRestoredAction(state)) {
-    setLatencyFetching(sectionName, true);
-  }
-  try {
-    if (state.running) {
-      await ProkopShellMethods.waitLatencyTestJob(jobId);
-    }
-    await completeLatencyTestJob(jobId, sectionName);
-  } catch (error) {
-    logger.error("[DASHBOARD]", "followLatencyTestState failed", error);
-    if (!pageUnloading) {
-      setLatencyFetching(sectionName, false);
-    }
-  } finally {
-    followedLatencyJobs.delete(jobId);
-  }
-}
-function followDashboardActionsFromUiState(uiState) {
-  for (const state of uiState.actions.subscription || []) {
-    if (state.running || state.job_id && state.section) {
-      void followSubscriptionUpdateState(state);
-    } else if (state.job_id && !handledSubscriptionJobs.has(state.job_id)) {
-      handledSubscriptionJobs.add(state.job_id);
-      void ProkopShellMethods.uiActionAck("subscription", state.job_id);
-    }
-  }
-  for (const state of uiState.actions.latency || []) {
-    if (state.running || state.job_id && state.section) {
-      void followLatencyTestState(state);
-    } else if (state.job_id && !handledLatencyJobs.has(state.job_id)) {
-      handledLatencyJobs.add(state.job_id);
-      void ProkopShellMethods.uiActionAck("latency", state.job_id);
-    }
-  }
-}
-function startActionStateWatcher() {
-  if (actionStateUnsubscribe) {
-    return;
-  }
-  actionStateUnsubscribe = subscribeRuntimeUiState((uiState) => {
-    if (dashboardMounted) {
-      followDashboardActionsFromUiState(uiState);
-    }
-  });
-}
-function stopActionStateWatcher() {
-  if (!actionStateUnsubscribe) {
-    return;
-  }
-  actionStateUnsubscribe();
-  actionStateUnsubscribe = null;
-}
-async function connectToClashSockets(dataUpdatesId) {
-  const mountId3 = dashboardMountId;
-  const clashApiSecret = await getClashApiSecret2();
-  if (!dashboardMounted || mountId3 !== dashboardMountId || dataUpdatesId !== dashboardDataUpdatesId || getDashboardServiceAvailability() === "stopped") {
-    return;
-  }
-  if (!canUseDirectClashApi(clashApiSecret)) {
-    startClashRpcPolling(dataUpdatesId);
-    return;
-  }
-  socket.subscribe(
-    getClashWsStreamUrl("/traffic", clashApiSecret),
-    (msg) => {
-      if (dataUpdatesId !== dashboardDataUpdatesId || getDashboardServiceAvailability() === "stopped") {
-        return;
-      }
-      const parsedMsg = JSON.parse(msg);
-      store.set({
-        bandwidthWidget: {
-          loading: false,
-          failed: false,
-          data: { up: parsedMsg.up, down: parsedMsg.down }
-        }
-      });
-    },
-    (_err) => {
-      if (dataUpdatesId !== dashboardDataUpdatesId || getDashboardServiceAvailability() === "stopped") {
-        return;
-      }
-      logger.warn(
-        "[DASHBOARD]",
-        "connectToClashSockets - traffic: socket unavailable, polling instead"
-      );
-      fallBackToClashRpcPolling(dataUpdatesId);
-    }
-  );
-  socket.subscribe(
-    getClashWsStreamUrl("/connections", clashApiSecret),
-    (msg) => {
-      if (dataUpdatesId !== dashboardDataUpdatesId || getDashboardServiceAvailability() === "stopped") {
-        return;
-      }
-      const parsedMsg = JSON.parse(msg);
-      store.set({
-        trafficTotalWidget: {
-          loading: false,
-          failed: false,
-          data: {
-            downloadTotal: parsedMsg.downloadTotal,
-            uploadTotal: parsedMsg.uploadTotal
-          }
-        },
-        systemInfoWidget: {
-          loading: false,
-          failed: false,
-          data: {
-            connections: parsedMsg.connections?.length,
-            memory: parsedMsg.memory
-          }
-        }
-      });
-    },
-    (_err) => {
-      if (dataUpdatesId !== dashboardDataUpdatesId || getDashboardServiceAvailability() === "stopped") {
-        return;
-      }
-      logger.warn(
-        "[DASHBOARD]",
-        "connectToClashSockets - connections: socket unavailable, polling instead"
-      );
-      fallBackToClashRpcPolling(dataUpdatesId);
-    }
-  );
-}
-function setClashWidgetsFailed() {
-  store.set({
-    bandwidthWidget: { loading: false, failed: true, data: { up: 0, down: 0 } },
-    trafficTotalWidget: {
-      loading: false,
-      failed: true,
-      data: { downloadTotal: 0, uploadTotal: 0 }
-    },
-    systemInfoWidget: {
-      loading: false,
-      failed: true,
-      data: { connections: 0, memory: 0 }
-    }
-  });
-}
-async function pollClashConnections(dataUpdatesId) {
-  if (clashRpcPolling || dataUpdatesId !== dashboardDataUpdatesId || getDashboardServiceAvailability() === "stopped") {
-    return;
-  }
-  clashRpcPolling = true;
-  try {
-    const response = await ProkopShellMethods.getClashApiConnections();
-    if (dataUpdatesId !== dashboardDataUpdatesId) {
-      return;
-    }
-    const sample = response.success ? sampleFromConnections(response.data, Date.now()) : null;
-    if (!sample) {
-      lastConnectionsSample = null;
-      setClashWidgetsFailed();
-      return;
-    }
-    const speed = trafficSpeed(lastConnectionsSample, sample);
-    lastConnectionsSample = sample;
-    store.set({
-      ...speed ? { bandwidthWidget: { loading: false, failed: false, data: speed } } : {},
-      trafficTotalWidget: {
-        loading: false,
-        failed: false,
-        data: {
-          downloadTotal: sample.downloadTotal,
-          uploadTotal: sample.uploadTotal
-        }
-      },
-      systemInfoWidget: {
-        loading: false,
-        failed: false,
-        data: { connections: sample.connections, memory: sample.memory }
-      }
-    });
-  } catch (error) {
-    logger.error("[DASHBOARD]", "pollClashConnections: failed", error);
-    lastConnectionsSample = null;
-    setClashWidgetsFailed();
-  } finally {
-    clashRpcPolling = false;
-  }
-}
-function startClashRpcPolling(dataUpdatesId) {
-  if (clashRpcPollTimer) {
-    return;
-  }
-  lastConnectionsSample = null;
-  void pollClashConnections(dataUpdatesId);
-  clashRpcPollTimer = setInterval(() => {
-    void pollClashConnections(dataUpdatesId);
-  }, CLASH_RPC_POLL_INTERVAL_MS);
-}
-function stopClashRpcPolling() {
-  if (clashRpcPollTimer) {
-    clearInterval(clashRpcPollTimer);
-    clashRpcPollTimer = null;
-  }
-  lastConnectionsSample = null;
-}
-function fallBackToClashRpcPolling(dataUpdatesId) {
-  if (dataUpdatesId !== dashboardDataUpdatesId) {
-    return;
-  }
-  socket.resetAll();
-  startClashRpcPolling(dataUpdatesId);
-}
-function getDashboardServiceAvailability() {
-  const service = store.get().servicesInfoWidget;
-  return getServiceAvailability({
-    loading: service.loading,
-    failed: service.failed,
-    running: service.data.prokopRunning
-  });
-}
-function stopDashboardDataUpdates() {
-  dashboardDataUpdatesStarted = false;
-  dashboardDataUpdatesId += 1;
-  if (sectionsRefreshTimer) {
-    clearInterval(sectionsRefreshTimer);
-    sectionsRefreshTimer = null;
-  }
-  sectionsRefreshQueued = false;
-  stopClashRpcPolling();
-  if (clashUpdatesStarted) socket.resetAll();
-  clashUpdatesStarted = false;
-}
-function startDashboardDataUpdates() {
-  if (dashboardDataUpdatesStarted || !dashboardMounted || getDashboardServiceAvailability() === "stopped") {
-    return;
-  }
-  dashboardDataUpdatesStarted = true;
-  const dataUpdatesId = ++dashboardDataUpdatesId;
-  void fetchDashboardSections({ force: true });
-  if (overviewHost) {
-    clashUpdatesStarted = true;
-    void connectToClashSockets(dataUpdatesId);
-  }
-  sectionsRefreshTimer = setInterval(() => {
-    void fetchDashboardSections();
-  }, SECTIONS_REFRESH_INTERVAL_MS);
-}
-function syncDashboardServiceAvailability() {
-  const availability = getDashboardServiceAvailability();
-  const stopped = availability === "stopped";
-  const container = document.getElementById("dashboard-status");
-  container?.classList.toggle("fkp_dashboard-page--service-stopped", stopped);
-  if (stopped || availability === "loading") {
-    stopDashboardDataUpdates();
-    return;
-  }
-  startDashboardDataUpdates();
-}
-async function handleChooseOutbound(sectionName, selector, tag) {
-  const sectionsWidget = store.get().sectionsWidget;
-  const section = sectionsWidget.data.find(
-    (item) => item.sectionName === sectionName
-  );
-  if (!section?.withTagSelect || sectionsWidget.selectorSwitchingSections[sectionName] || section.outbounds.some(
-    (outbound) => outbound.code === tag && outbound.selected
-  )) {
-    return;
-  }
-  setSelectorSwitching(sectionName, tag);
-  try {
-    const response = await ProkopShellMethods.setClashApiGroupProxy(
-      selector,
-      tag
-    );
-    if (!response.success) {
-      showToast(_("Failed to switch the node"), "error");
-    }
-    await fetchDashboardSections({ force: true });
-  } catch (error) {
-    logger.error("[DASHBOARD]", "handleChooseOutbound: failed", error);
-    showToast(_("Failed to switch the node"), "error");
-  } finally {
-    setSelectorSwitching(sectionName);
-  }
-}
-function getInitialLatencyProgress(latencyType, tag) {
-  if (latencyType !== "proxy_list") {
-    return void 0;
-  }
-  try {
-    const tags = JSON.parse(tag);
-    if (!Array.isArray(tags)) {
-      return void 0;
-    }
-    const total = tags.filter(
-      (item) => typeof item === "string" && item.length > 0
-    ).length;
-    return total > 0 ? { completed: 0, total, failed: 0 } : void 0;
-  } catch {
-    return void 0;
-  }
-}
-async function handleTestLatency(latencyType, sectionName, tag, timeout) {
-  if (store.get().sectionsWidget.latencyFetchingSections[sectionName]) {
-    return;
-  }
-  setLatencyFetching(
-    sectionName,
-    true,
-    true,
-    getInitialLatencyProgress(latencyType, tag)
-  );
-  let jobId = "";
-  let ownsJobFollow = false;
-  let completed = false;
-  try {
-    const startResponse = await ProkopShellMethods.latencyTestStart(
-      latencyType,
-      sectionName,
-      tag,
-      timeout
-    );
-    if (!startResponse.success) {
-      throw new ActionFailureError(
-        startResponse.error,
-        failureReason(startResponse)
-      );
-    }
-    jobId = startResponse.data.job_id;
-    if (followedLatencyJobs.has(jobId)) {
-      completed = true;
-      return;
-    }
-    followedLatencyJobs.add(jobId);
-    ownsJobFollow = true;
-    const completion = await ProkopShellMethods.waitLatencyTestJob(jobId);
-    if (!completion.success) {
-      throw new ActionFailureError(completion.error, failureReason(completion));
-    }
-    if (!completion.data.success) {
-      throw latencyJobFailure(completion.data);
-    }
-    await completeLatencyTestJob(jobId, sectionName);
-    completed = true;
-  } catch (error) {
-    logger.error("[DASHBOARD]", "handleTestLatency: failed", error);
-    if (!pageUnloading) {
-      const failure = failureFromError(error);
-      showToast(
-        failureText(failure, _("Latency test failed")),
-        failureToastType(failure)
-      );
-    }
-  } finally {
-    if (ownsJobFollow) {
-      followedLatencyJobs.delete(jobId);
-    }
-    if (!completed) {
-      setLatencyFetching(sectionName, false);
-    }
-  }
-}
-function formatUrlTestModalValue(value) {
-  if (typeof value === "boolean") {
-    return value ? _("Yes") : _("No");
-  }
-  const text = `${value ?? ""}`.trim();
-  return text || _("No");
-}
-function getUrlTestLatencyClass(latency) {
-  if (!latency) {
-    return "fkp_dashboard-page__outbound-grid__item__latency--empty";
-  }
-  if (latency < 800) {
-    return "fkp_dashboard-page__outbound-grid__item__latency--green";
-  }
-  if (latency < 1500) {
-    return "fkp_dashboard-page__outbound-grid__item__latency--yellow";
-  }
-  return "fkp_dashboard-page__outbound-grid__item__latency--red";
-}
-function formatUrlTestLatency(latency) {
-  return latency ? _("%d ms").replace("%d", String(latency)) : "\u2014";
-}
-function renderDetailsUrl(value) {
-  const url = `${value ?? ""}`.trim();
-  if (!/^https?:\/\//i.test(url)) {
-    return E("span", {}, formatUrlTestModalValue(value));
-  }
-  return E(
-    "a",
-    {
-      class: "fkp_dashboard-page__urltest-details__url",
-      href: url,
-      target: "_blank",
-      rel: "noopener noreferrer"
-    },
-    url
-  );
-}
-function getDetectedCountryFlag(country) {
-  const code = `${country || ""}`.trim().toUpperCase();
-  if (!/^[A-Z]{2}$/.test(code)) {
-    return "";
-  }
-  return String.fromCodePoint(
-    ...code.split("").map((char) => 127462 + char.charCodeAt(0) - 65)
-  );
-}
-function renderDetailsMemberName(member) {
-  const countryFlag = getDetectedCountryFlag(member.country);
-  if (!countryFlag) {
-    return renderFlagEmojis(member.displayName);
-  }
-  return [
-    E(
-      "span",
-      { class: "fkp_dashboard-page__urltest-details__country-badge" },
-      countryFlag
-    ),
-    ...renderFlagEmojis(member.displayName)
-  ];
-}
-function renderUrlTestSelectedValue(info) {
-  const selectedMember = info.outbounds.find((member) => member.selected);
-  const selectedName = selectedMember?.displayName || info.selectedName || info.selectedCode || "";
-  const name = formatUrlTestModalValue(selectedName);
-  if (name === _("No")) {
-    return E("span", {}, name);
-  }
-  return E(
-    "span",
-    { class: "fkp_dashboard-page__urltest-details__selected-value" },
-    [
-      E(
-        "span",
-        { class: "fkp_dashboard-page__urltest-details__selected-name" },
-        selectedMember ? renderDetailsMemberName(selectedMember) : name
-      ),
-      ...selectedMember?.type ? [
-        E(
-          "span",
-          { class: "fkp_dashboard-page__urltest-details__selected-type" },
-          selectedMember.type
-        )
-      ] : [],
-      ...selectedMember ? [
-        E(
-          "span",
-          { class: getUrlTestLatencyClass(selectedMember.latency) },
-          formatUrlTestLatency(selectedMember.latency)
-        )
-      ] : []
-    ]
-  );
-}
-function renderUrlTestInfoModal(outbound) {
-  const info = outbound.urlTestInfo;
-  if (!info) {
-    return E("div", {}, _("URLTest details are unavailable"));
-  }
-  const fields = [
-    {
-      label: _("Selected"),
-      children: [renderUrlTestSelectedValue(info)]
-    },
-    { label: _("Testing URL"), children: [renderDetailsUrl(info.url)] },
-    { label: _("Interval"), value: info.interval },
-    { label: _("Tolerance"), value: info.tolerance },
-    { label: _("Idle timeout"), value: info.idleTimeout },
-    {
-      label: _("Interrupt connections"),
-      value: info.interruptExistConnections
-    }
-  ];
-  return E("div", { class: "fkp_dashboard-page__urltest-details" }, [
-    E(
-      "dl",
-      { class: "fkp_dashboard-page__urltest-details__params" },
-      fields.map(
-        ({ label, value, children }) => E("div", { class: "fkp_dashboard-page__urltest-details__param" }, [
-          E("dt", {}, label),
-          E(
-            "dd",
-            {},
-            children || [E("span", {}, formatUrlTestModalValue(value))]
-          )
-        ])
-      )
-    ),
-    E("div", { class: "fkp_dashboard-page__urltest-details__outbounds" }, [
-      E(
-        "div",
-        { class: "fkp_dashboard-page__urltest-details__outbounds-title" },
-        _("Nodes")
-      ),
-      E(
-        "div",
-        { class: "fkp_dashboard-page__urltest-details__table" },
-        info.outbounds.length ? info.outbounds.map(
-          (member) => E(
-            "div",
-            {
-              class: [
-                "fkp_dashboard-page__urltest-details__row",
-                member.selected ? "fkp_dashboard-page__urltest-details__row--active" : ""
-              ].filter(Boolean).join(" ")
-            },
-            [
-              E(
-                "div",
-                {
-                  class: "fkp_dashboard-page__urltest-details__row-name"
-                },
-                [
-                  E("b", {}, renderDetailsMemberName(member)),
-                  ...member.type ? [
-                    E(
-                      "span",
-                      {
-                        class: "fkp_dashboard-page__urltest-details__row-type"
-                      },
-                      member.type
-                    )
-                  ] : []
-                ]
-              ),
-              E(
-                "div",
-                {
-                  class: "fkp_dashboard-page__urltest-details__row-meta"
-                },
-                [
-                  E(
-                    "span",
-                    { class: getUrlTestLatencyClass(member.latency) },
-                    formatUrlTestLatency(member.latency)
-                  )
-                ]
-              )
-            ]
-          )
-        ) : [
-          E(
-            "div",
-            { class: "fkp_dashboard-page__urltest-details__empty" },
-            _("Node list is empty")
-          )
-        ]
-      )
-    ]),
-    E("div", { class: "fkp_dashboard-page__urltest-details__footer" }, [
-      ...isReadonlyMode() ? [] : [
-        E(
-          "button",
-          {
-            type: "button",
-            class: "btn cbi-button cbi-button-action",
-            click: () => renderUrlTestEditorModal(outbound)
-          },
-          _("Edit")
-        )
-      ],
-      E(
-        "button",
-        {
-          type: "button",
-          class: "btn cbi-button cbi-button-neutral",
-          click: () => {
-            ui.hideModal();
-          }
-        },
-        _("Close")
-      )
-    ])
-  ]);
-}
-function renderUrlTestEditorModal(outbound) {
-  const info = outbound.urlTestInfo;
-  if (!info) return;
-  const input = (value, type = "text") => E("input", { type, value: `${value ?? ""}`, class: "cbi-input-text" });
-  const url = input(info.url);
-  const interval = input(info.interval);
-  const tolerance = input(info.tolerance, "number");
-  const idleTimeout = input(info.idleTimeout);
-  const interrupt = E("input", { type: "checkbox" });
-  interrupt.checked = Boolean(info.interruptExistConnections);
-  const controls = [url, interval, tolerance, idleTimeout, interrupt];
-  const progress = E("div", {
-    class: "alert-message notice",
-    style: "display:none; margin-top:1em"
-  });
-  const actionButtons = [];
-  let activeButton = null;
-  let activeButtonLabel = "";
-  const setBusy = (busy2, message = "") => {
-    controls.forEach((control) => {
-      control.disabled = busy2;
-    });
-    actionButtons.forEach((button) => {
-      button.disabled = busy2;
-    });
-    progress.style.display = message ? "" : "none";
-    progress.textContent = message;
-    if (activeButton) {
-      activeButton.textContent = busy2 ? _("Applying\u2026") : activeButtonLabel;
-    }
-  };
-  const row = (label, control) => E("div", { class: "fkp_dashboard-page__urltest-details__param" }, [
-    E("label", {}, label),
-    control
-  ]);
-  const apply = async (change, isReset) => {
-    const result = await runUrlTestChange(
-      {
-        change,
-        reload: async () => {
-          setBusy(true, _("Applying Prokop configuration\u2026"));
-          return runServiceActionJob("reload");
-        },
-        refresh: async () => {
-          setBusy(true, _("Refreshing Dashboard\u2026"));
-          await fetchDashboardSections({ force: true });
-        }
-      },
-      isReset
-    );
-    if (result.close) {
-      ui.hideModal();
-    } else {
-      setBusy(false);
-    }
-    showToast(result.toast.text, result.toast.type, result.toast.duration);
-  };
-  const save = () => apply(async () => {
-    setBusy(true, _("Saving URLTest settings\u2026"));
-    const response = await ProkopShellMethods.saveUrlTestOverride(
-      info.sectionName || "",
-      info.code,
-      url.value.trim(),
-      interval.value.trim(),
-      tolerance.value.trim(),
-      idleTimeout.value.trim(),
-      interrupt.checked
-    );
-    if ((response.code ?? 0) !== 0)
-      throw new Error(response.stderr || "save failed");
-  }, false);
-  const reset = () => apply(async () => {
-    setBusy(true, _("Removing user settings\u2026"));
-    const response = await ProkopShellMethods.resetUrlTestOverride(
-      info.sectionName || "",
-      info.code
-    );
-    if ((response.code ?? 0) !== 0)
-      throw new Error(response.stderr || "reset failed");
-  }, true);
-  const action = (fn) => async (event) => {
-    activeButton = event.currentTarget;
-    activeButtonLabel = activeButton.textContent || "";
-    try {
-      await fn();
-    } catch (error) {
-      logger.error("[DASHBOARD]", "URLTest override failed", error);
-      setBusy(false);
-      showToast(_("Failed to save URLTest settings"), "error");
-    }
-  };
-  const resetButton = E(
-    "button",
-    {
-      type: "button",
-      class: "btn cbi-button cbi-button-negative",
-      click: action(reset)
-    },
-    _("Use source values")
-  );
-  const saveButton = E(
-    "button",
-    {
-      type: "button",
-      class: "btn cbi-button cbi-button-positive",
-      click: action(save)
-    },
-    _("Save")
-  );
-  const cancelButton = E(
-    "button",
-    { type: "button", class: "btn", click: () => ui.hideModal() },
-    _("Cancel")
-  );
-  actionButtons.push(resetButton, saveButton, cancelButton);
-  ui.showModal(
-    `${_("Edit URLTest")}: ${info.displayName}`,
-    E("div", {}, [
-      E("div", { class: "fkp_dashboard-page__urltest-details__params" }, [
-        row(_("Testing URL"), url),
-        row(_("Interval"), interval),
-        row(_("Tolerance"), tolerance),
-        row(_("Idle timeout"), idleTimeout),
-        row(_("Interrupt connections"), interrupt)
-      ]),
-      progress,
-      E("div", { class: "fkp_dashboard-page__urltest-details__footer" }, [
-        resetButton,
-        saveButton,
-        cancelButton
-      ])
-    ])
-  );
-}
-function handleShowUrlTestInfo(outbound) {
-  if (!outbound.urlTestInfo) {
-    return;
-  }
-  ui.showModal(
-    `${_("URLTest details")}: ${outbound.urlTestInfo.displayName || outbound.displayName}`,
-    renderUrlTestInfoModal(outbound)
-  );
-}
-function renderPrioritySelectedValue(info) {
-  const selectedMember = info.outbounds.find((member) => member.selected);
-  const selectedName = selectedMember?.displayName || info.selectedName || info.selectedCode || "";
-  const name = formatUrlTestModalValue(selectedName);
-  if (name === _("No")) {
-    return E("span", {}, name);
-  }
-  return E(
-    "span",
-    { class: "fkp_dashboard-page__urltest-details__selected-value" },
-    [
-      E(
-        "span",
-        {
-          class: [
-            "fkp_dashboard-page__urltest-details__selected-name",
-            selectedMember ? "fkp_dashboard-page__urltest-details__priority-name" : ""
-          ].filter(Boolean).join(" ")
-        },
-        selectedMember ? renderPriorityMemberName(selectedMember) : name
-      ),
-      ...selectedMember?.type ? [
-        E(
-          "span",
-          { class: "fkp_dashboard-page__urltest-details__selected-type" },
-          selectedMember.type
-        )
-      ] : [],
-      ...selectedMember ? [
-        E(
-          "span",
-          { class: getUrlTestLatencyClass(selectedMember.latency) },
-          formatUrlTestLatency(selectedMember.latency)
-        )
-      ] : []
-    ]
-  );
-}
-function renderPriorityMemberName(member) {
-  const levelName = member.levelName || _("Level");
-  return [
-    E(
-      "span",
-      { class: "fkp_dashboard-page__urltest-details__priority-number" },
-      `#${member.levelIndex + 1}`
-    ),
-    E(
-      "span",
-      { class: "fkp_dashboard-page__urltest-details__priority-level" },
-      levelName
-    ),
-    E(
-      "span",
-      { class: "fkp_dashboard-page__urltest-details__priority-node" },
-      renderDetailsMemberName(member)
-    )
-  ];
-}
-function renderPriorityInfoModal(outbound) {
-  const info = outbound.priorityInfo;
-  if (!info) {
-    return E("div", {}, _("Priority details are unavailable"));
-  }
-  const fields = [
-    {
-      label: _("Selected"),
-      children: [renderPrioritySelectedValue(info)]
-    },
-    { label: _("Check URL"), children: [renderDetailsUrl(info.healthUrl)] },
-    {
-      label: _("Check interval"),
-      value: info.activeCheckInterval
-    },
-    { label: _("Unavailability timeout"), value: info.checkTimeout },
-    {
-      label: _("Higher-level check interval"),
-      value: info.recoveryCheckInterval
-    },
-    {
-      label: _("Select the fastest node"),
-      value: info.pickFastest
-    },
-    {
-      label: _("Automatically select the fastest node in the current level"),
-      value: info.switchToFasterSamePriority
-    },
-    ...info.switchToFasterSamePriority ? [
-      {
-        label: _("Faster server search interval"),
-        value: info.fastestCheckInterval
-      }
-    ] : [],
-    {
-      label: _("Interrupt connections"),
-      value: info.interruptExistConnections
-    }
-  ];
-  return E("div", { class: "fkp_dashboard-page__urltest-details" }, [
-    E(
-      "dl",
-      { class: "fkp_dashboard-page__urltest-details__params" },
-      fields.map(
-        ({ label, value, children }) => E("div", { class: "fkp_dashboard-page__urltest-details__param" }, [
-          E("dt", {}, label),
-          E(
-            "dd",
-            {},
-            children || [E("span", {}, formatUrlTestModalValue(value))]
-          )
-        ])
-      )
-    ),
-    E("div", { class: "fkp_dashboard-page__urltest-details__outbounds" }, [
-      E(
-        "div",
-        { class: "fkp_dashboard-page__urltest-details__outbounds-title" },
-        _("Nodes")
-      ),
-      E(
-        "div",
-        { class: "fkp_dashboard-page__urltest-details__table" },
-        info.outbounds.length ? info.outbounds.map(
-          (member) => E(
-            "div",
-            {
-              class: [
-                "fkp_dashboard-page__urltest-details__row",
-                member.selected ? "fkp_dashboard-page__urltest-details__row--active" : ""
-              ].filter(Boolean).join(" ")
-            },
-            [
-              E(
-                "div",
-                {
-                  class: "fkp_dashboard-page__urltest-details__row-name"
-                },
-                [
-                  E(
-                    "b",
-                    {
-                      class: "fkp_dashboard-page__urltest-details__priority-name"
-                    },
-                    renderPriorityMemberName(member)
-                  ),
-                  ...member.type ? [
-                    E(
-                      "span",
-                      {
-                        class: "fkp_dashboard-page__urltest-details__row-type"
-                      },
-                      member.type
-                    )
-                  ] : []
-                ]
-              ),
-              E(
-                "div",
-                {
-                  class: "fkp_dashboard-page__urltest-details__row-meta"
-                },
-                [
-                  E(
-                    "span",
-                    { class: getUrlTestLatencyClass(member.latency) },
-                    formatUrlTestLatency(member.latency)
-                  )
-                ]
-              )
-            ]
-          )
-        ) : [
-          E(
-            "div",
-            { class: "fkp_dashboard-page__urltest-details__empty" },
-            _("Node list is empty")
-          )
-        ]
-      )
-    ]),
-    E("div", { class: "fkp_dashboard-page__urltest-details__footer" }, [
-      E(
-        "button",
-        {
-          type: "button",
-          class: "btn cbi-button cbi-button-neutral",
-          click: () => {
-            ui.hideModal();
-          }
-        },
-        _("Close")
-      )
-    ])
-  ]);
-}
-function handleShowPriorityInfo(outbound) {
-  if (!outbound.priorityInfo) {
-    return;
-  }
-  ui.showModal(
-    `${_("Priority details")}: ${outbound.priorityInfo.displayName || outbound.displayName}`,
-    renderPriorityInfoModal(outbound)
-  );
-}
-async function handleUpdateSubscription(section) {
-  if (store.get().sectionsWidget.subscriptionUpdatingSections[section.sectionName]) {
-    return;
-  }
-  setSubscriptionUpdating(section.sectionName, true, true);
-  let jobId = "";
-  let ownsJobFollow = false;
-  try {
-    const startResponse = await ProkopShellMethods.subscriptionUpdateStart(
-      section.sectionName
-    );
-    if (!startResponse.success) {
-      throw new Error(startResponse.error);
-    }
-    jobId = startResponse.data.job_id;
-    markUiActionOwned("subscription", jobId);
-    if (followedSubscriptionJobs.has(jobId)) {
-      return;
-    }
-    followedSubscriptionJobs.add(jobId);
-    ownsJobFollow = true;
-    const response = await ProkopShellMethods.waitSubscriptionUpdateJob(jobId);
-    await completeSubscriptionUpdateJob(jobId, section.sectionName, response);
-  } catch (error) {
-    logger.error("[DASHBOARD]", "handleUpdateSubscription: failed", error);
-    if (!pageUnloading) {
-      const message = error instanceof Error ? error.message : _("Failed to update subscriptions");
-      setSubscriptionUpdating(section.sectionName, false);
-      if (!isTransientRpcError(message)) {
-        showToast(subscriptionUpdateErrorMessage(message), "error");
-      }
-    }
-  } finally {
-    if (ownsJobFollow) {
-      followedSubscriptionJobs.delete(jobId);
-    }
-  }
-}
-function shallowRecordEqual(left, right) {
-  const leftKeys = Object.keys(left);
-  const rightKeys = Object.keys(right);
-  if (leftKeys.length !== rightKeys.length) {
-    return false;
-  }
-  return leftKeys.every((key) => left[key] === right[key]);
-}
-function canUpdateLatencyProgressInline(prev, next) {
-  return prev.loading === next.loading && prev.failed === next.failed && prev.data === next.data && shallowRecordEqual(
-    prev.latencyFetchingSections,
-    next.latencyFetchingSections
-  ) && shallowRecordEqual(
-    prev.subscriptionUpdatingSections,
-    next.subscriptionUpdatingSections
-  ) && shallowRecordEqual(
-    prev.selectorSwitchingSections,
-    next.selectorSwitchingSections
-  );
-}
-function findLatencyTestButton(container, sectionName) {
-  return Array.from(
-    container.querySelectorAll(
-      `.${LATENCY_TEST_BUTTON_CLASS}`
-    )
-  ).find((button) => button.dataset.latencySection === sectionName);
-}
-function updateLatencyProgressInline(sectionsWidget) {
-  const container = document.getElementById("dashboard-sections-grid");
-  if (!container) {
-    return false;
-  }
-  for (const section of sectionsWidget.data) {
-    if (!sectionsWidget.latencyFetchingSections[section.sectionName]) {
-      continue;
-    }
-    const button = findLatencyTestButton(container, section.sectionName);
-    const label = button?.querySelector(
-      `.${LATENCY_TEST_BUTTON_LABEL_CLASS}`
-    );
-    if (!label) {
-      return false;
-    }
-    const text = getLatencyTestLabel(
-      sectionsWidget.latencyProgressSections[section.sectionName]
-    );
-    if (label.textContent !== text) {
-      label.textContent = text;
-    }
-  }
-  return true;
-}
-async function renderSectionsWidget() {
-  logger.debug("[DASHBOARD]", "renderSectionsWidget");
-  const sectionsWidget = store.get().sectionsWidget;
-  const container = document.getElementById("dashboard-sections-grid");
-  if (!container) {
-    return;
-  }
-  if (sectionsWidget.loading || sectionsWidget.failed) {
-    const renderedWidget = renderSections({
-      loading: sectionsWidget.loading,
-      failed: sectionsWidget.failed,
-      section: {
-        code: "",
-        sectionName: "",
-        displayName: "",
-        outbounds: [],
-        withTagSelect: false
-      },
-      onTestLatency: () => {
-      },
-      onChooseOutbound: () => {
-      },
-      onShowUrlTestInfo: () => {
-      },
-      onShowPriorityInfo: () => {
-      },
-      onUpdateSubscription: () => {
-      },
-      latencyFetching: false,
-      latencyProgress: void 0,
-      subscriptionUpdating: false,
-      selectorSwitchingTag: void 0,
-      isPriorityMembersExpanded: () => false,
-      onPriorityMembersToggle: () => {
-      }
-    });
-    return preserveScrollForPage(() => {
-      container.replaceChildren(renderedWidget);
-    });
-  }
-  const renderedWidgets = sectionsWidget.data.map(
-    (section) => renderSections({
-      loading: sectionsWidget.loading,
-      failed: sectionsWidget.failed,
-      section,
-      latencyFetching: Boolean(
-        sectionsWidget.latencyFetchingSections[section.sectionName]
-      ),
-      latencyProgress: sectionsWidget.latencyProgressSections[section.sectionName],
-      subscriptionUpdating: Boolean(
-        sectionsWidget.subscriptionUpdatingSections[section.sectionName]
-      ),
-      selectorSwitchingTag: sectionsWidget.selectorSwitchingSections[section.sectionName],
-      readonly: isReadonlyMode(),
-      isPriorityMembersExpanded: (outbound) => priorityMembersState.isExpanded(section.sectionName, outbound.code),
-      onPriorityMembersToggle: (outbound, open) => {
-        priorityMembersState.setExpanded(
-          section.sectionName,
-          outbound.code,
-          open
-        );
-      },
-      onTestLatency: (tag) => {
-        if (section.withTagSelect) {
-          if (Array.isArray(tag)) {
-            return handleTestLatency(
-              "proxy_list",
-              section.sectionName,
-              JSON.stringify(tag)
-            );
-          }
-          return handleTestLatency("group", section.sectionName, tag);
-        }
-        return handleTestLatency(
-          "proxy",
-          section.sectionName,
-          Array.isArray(tag) ? JSON.stringify(tag) : tag,
-          section.latencyTestTimeout
-        );
-      },
-      onChooseOutbound: (sectionName, selector, tag) => {
-        void handleChooseOutbound(sectionName, selector, tag);
-      },
-      onShowUrlTestInfo: (outbound) => {
-        handleShowUrlTestInfo(outbound);
-      },
-      onShowPriorityInfo: (outbound) => {
-        handleShowPriorityInfo(outbound);
-      },
-      onUpdateSubscription: (section2) => {
-        void handleUpdateSubscription(section2);
-      }
-    })
-  );
-  return preserveScrollForPage(() => {
-    container.replaceChildren(...renderedWidgets);
-  });
-}
-async function onStoreUpdate(next, prev, diff) {
-  if (diff.sectionsWidget) {
-    const inlineUpdated = canUpdateLatencyProgressInline(
-      prev.sectionsWidget,
-      next.sectionsWidget
-    ) && updateLatencyProgressInline(next.sectionsWidget);
-    if (!inlineUpdated) {
-      renderSectionsWidget();
-    }
-  }
-  if (diff.servicesInfoWidget) {
-    syncDashboardServiceAvailability();
-  }
-  if (diff.bandwidthWidget || diff.systemInfoWidget || diff.servicesInfoWidget || diff.sectionsWidget) {
-    renderOverviewCards();
-  }
-}
-async function onPageMount() {
-  onPageUnmount();
-  dashboardMounted = true;
-  dashboardMountId += 1;
-  const mountId3 = dashboardMountId;
-  overviewHost = Boolean(document.getElementById("dashboard-overview"));
-  if (overviewHost) {
-    void refreshHealth(mountId3);
-    healthRefreshTimer = setInterval(() => void refreshHealth(mountId3), 1e4);
-  }
-  const hasRuntimeSnapshot = Boolean(getCachedRuntimeUiState());
-  if (!hasRuntimeSnapshot) {
-    const uiState = await refreshRuntimeUiState({ force: true });
-    if (!dashboardMounted || mountId3 !== dashboardMountId) {
-      return;
-    }
-    if (!uiState) {
-      void fetchServicesInfo();
-    }
-  }
-  store.subscribe(onStoreUpdate);
-  startActionStateWatcher();
-  void renderSectionsWidget();
-  if (overviewHost) void loadOverviewCounts(mountId3);
-  syncDashboardServiceAvailability();
-  renderOverviewCards();
-  if (hasRuntimeSnapshot) {
-    void refreshRuntimeUiState({ force: true });
-  }
-}
-function onPageUnmount() {
-  dashboardMounted = false;
-  dashboardMountId += 1;
-  if (healthRefreshTimer) clearInterval(healthRefreshTimer);
-  healthRefreshTimer = null;
-  stopDashboardDataUpdates();
-  stopActionStateWatcher();
-  sectionsRefreshQueued = false;
-  sectionsRefreshPromise = null;
-  store.unsubscribe(onStoreUpdate);
-  store.reset(["bandwidthWidget", "trafficTotalWidget", "systemInfoWidget"]);
-}
-var dashboardLifecycleRegistered = false;
-var dashboardControllerInitialized = false;
-function registerLifecycleListeners() {
-  if (dashboardLifecycleRegistered) {
-    return;
-  }
-  dashboardLifecycleRegistered = true;
-  store.subscribe((next, prev, diff) => {
-    if (diff.tabService && next.tabService.current !== prev.tabService.current) {
-      logger.debug(
-        "[DASHBOARD]",
-        "active tab diff event, active tab:",
-        diff.tabService.current
-      );
-      const isDashboardVisible = next.tabService.current === "dashboard";
-      if (isDashboardVisible) {
-        logger.debug(
-          "[DASHBOARD]",
-          "registerLifecycleListeners",
-          "onPageMount"
-        );
-        return onPageMount();
-      }
-      if (!isDashboardVisible) {
-        logger.debug(
-          "[DASHBOARD]",
-          "registerLifecycleListeners",
-          "onPageUnmount"
-        );
-        return onPageUnmount();
-      }
-    }
-  });
-}
-async function initController() {
-  if (dashboardControllerInitialized) {
-    return;
-  }
-  dashboardControllerInitialized = true;
-  onMount("dashboard-status").then(() => {
-    logger.debug("[DASHBOARD]", "initController", "onMount");
-    registerLifecycleListeners();
-    if (store.get().tabService.current === "dashboard" || isActiveLuciTab("dashboard")) {
-      onPageMount();
-    }
-  });
-}
-
-// src/prokop/tabs/dashboard/styles.ts
-var styles3 = `
-@font-face {
-    font-family: "Twemoji Country Flags";
-    src: url("/luci-static/resources/view/prokop/fonts/TwemojiCountryFlags.woff2") format("woff2");
-    font-display: swap;
-    font-style: normal;
-    font-weight: normal;
-    unicode-range: U+1F1E6-1F1FF, U+1F3F4, U+E0062-E0063, U+E0065, U+E0067, U+E006C, U+E006E, U+E0073-E0074, U+E0077, U+E007F;
-}
-
-#cbi-${PROKOP_UCI_PACKAGE}-dashboard-_mount_node > .cbi-value-title {
-    display: none;
-}
-
-#cbi-${PROKOP_UCI_PACKAGE}-dashboard-_mount_node > .cbi-value-field {
-    margin-left: 0;
-    width: 100%;
-}
-
-#cbi-${PROKOP_UCI_PACKAGE}-dashboard-_mount_node > div {
-    width: 100%;
-}
-
-#cbi-${PROKOP_UCI_PACKAGE}-dashboard > h3 {
-    display: none;
-}
-
-.fkp_dashboard-page {
-    width: 100%;
-    --dashboard-grid-columns: 4;
-    --dashboard-grid-min-width: 180px;
-}
-
-/* Overview: summary cards; the nodes section hides while Prokop is stopped. */
-.fkp_dashboard-page--service-stopped .fkp_dashboard-page__content {
-    display: none;
-}
-
-.fkp-overview__warning {
-    margin: 0 0 var(--fkp-space-3);
-    padding: var(--fkp-space-3) var(--fkp-space-4);
-    border: 1px solid var(--fkp-tone-error);
-    border-left-width: 4px;
-    border-radius: 6px;
-}
-.fkp-overview__warning p { margin: var(--fkp-space-1) 0 var(--fkp-space-2); }
-
-.fkp-overview__grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
-    gap: var(--fkp-space-3);
-}
-
-.fkp-overview__card {
-    display: flex;
-    flex-direction: column;
-    gap: var(--fkp-space-2);
-    min-width: 0;
-    padding: var(--fkp-space-3) var(--fkp-space-4);
-    border: 1px solid var(--fkp-border);
-    border-radius: 6px;
-}
-.fkp-overview__head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: var(--fkp-space-2);
-}
-.fkp-overview__title { margin: 0; font-size: 1.05em; overflow-wrap: anywhere; }
-.fkp-overview__summary { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
-.fkp-overview__hint { margin: 0; color: var(--fkp-tone-neutral); overflow-wrap: anywhere; }
-.fkp-overview__lines { margin: 0; padding: 0; list-style: none; }
-.fkp-overview__lines li { overflow-wrap: anywhere; }
-.fkp-overview__line--success { color: var(--fkp-tone-success); }
-.fkp-overview__line--warning { color: var(--fkp-tone-warning); }
-.fkp-overview__line--error { color: var(--fkp-tone-error); }
-.fkp-overview__groups { margin: 0; padding: 0; list-style: none; }
-.fkp-overview__groups li {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: 0 var(--fkp-space-2);
-    padding: 2px 0;
-}
-.fkp-overview__group-name { font-weight: 600; overflow-wrap: anywhere; }
-.fkp-overview__group-node { overflow-wrap: anywhere; }
-.fkp-overview__footer { margin-top: auto; padding-top: var(--fkp-space-1); }
-.fkp-overview__section-title { margin: var(--fkp-space-5) 0 0; }
-
-@media (max-width: 900px) {
-    .fkp_dashboard-page {
-        --dashboard-grid-columns: 2;
-    }
-}
-
-@media (max-width: 560px) {
-    .fkp_dashboard-page {
-        --dashboard-grid-columns: 1;
-        --dashboard-grid-min-width: 0;
-    }
-}
-
-.fkp_dashboard-page__outbound-section {
-    margin-top: 10px;
-    border: 2px var(--background-color-low, lightgray) solid;
-    border-radius: 4px;
-    padding: 10px;
-}
-
-.fkp_dashboard-page__outbound-section__title-section {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px 10px;
-    min-width: 0;
-}
-
-.fkp_dashboard-page__outbound-section__title-section__title {
-    color: var(--text-color-high);
-    font-weight: 700;
-    min-width: 0;
-    overflow-wrap: anywhere;
-}
-
-.fkp_dashboard-page__outbound-section__title-section__actions {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 6px;
-    flex: 0 0 auto;
-}
-
-.fkp_dashboard-page .btn.fkp_dashboard-page__outbound-section__subscription-update {
-    min-width: 130px;
-    min-height: 28px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-}
-
-.fkp_dashboard-page__outbound-section__subscription-update svg {
-    width: 15px;
-    height: 15px;
-    display: block;
-    flex: 0 0 auto;
-}
-
-.fkp_dashboard-page__outbound-section__subscription-update[disabled] {
-    cursor: not-allowed;
-    opacity: 0.65;
-}
-
-.fkp_dashboard-page .btn.dashboard-sections-grid-item-test-latency {
-    min-width: 99px;
-    min-height: 28px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-}
-
-.fkp_dashboard-page .btn.dashboard-sections-grid-item-test-latency svg {
-    width: 15px;
-    height: 15px;
-    display: block;
-    flex: 0 0 auto;
-}
-
-.fkp_dashboard-page .btn.dashboard-sections-grid-item-test-latency[disabled] {
-    cursor: not-allowed;
-    opacity: 0.65;
-}
-
-.fkp_dashboard-page__outbound-grid {
-    margin-top: 5px;
-    display: grid;
-    grid-template-columns: repeat(var(--dashboard-grid-columns), minmax(var(--dashboard-grid-min-width), 1fr));
-    grid-gap: 10px;
-}
-
-.fkp_dashboard-page__subscription-meta {
-    --subscription-meta-action-size: 28px;
-    --subscription-meta-action-gap: 6px;
-    grid-column: 1 / -1;
-    border: 2px var(--background-color-low, lightgray) solid;
-    border-radius: 4px;
-    padding: 8px 10px;
-    background: var(--background-color-high, transparent);
-}
-
-.fkp_dashboard-page__subscription-meta__main {
-    display: flex;
-    align-items: center;
-    gap: 6px 10px;
-    min-width: 0;
-}
-
-.fkp_dashboard-page__subscription-meta__heading {
-    flex: 0 0 auto;
-    color: var(--text-color-high);
-    font-weight: 700;
-    line-height: 1.25;
-    white-space: nowrap;
-}
-
-.fkp_dashboard-page__subscription-meta__title {
-    flex: 0 1 auto;
-    width: max-content;
-    max-width: min(28ch, 30%);
-    min-width: min-content;
-    color: var(--text-color-high);
-    font-weight: 700;
-    line-height: 1.25;
-    overflow-wrap: anywhere;
-}
-
-.fkp_dashboard-page__subscription-meta__facts {
-    flex: 1 1 auto;
-    min-width: 0;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 5px 12px;
-}
-
-.fkp_dashboard-page__subscription-meta__fact {
-    display: flex;
-    align-items: baseline;
-    gap: 4px;
-    min-width: 0;
-    line-height: 1.25;
-}
-
-.fkp_dashboard-page__subscription-meta__fact-key {
-    color: var(--text-color-medium);
-    font-size: 12px;
-    white-space: nowrap;
-}
-
-.fkp_dashboard-page__subscription-meta__fact-value {
-    color: var(--text-color-high);
-    font-weight: 600;
-    overflow-wrap: anywhere;
-}
-
-.fkp_dashboard-page__subscription-meta__actions {
-    flex: 0 0 auto;
-    margin-left: auto;
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-}
-
-.fkp_dashboard-page .btn.fkp_dashboard-page__subscription-meta__action {
-    width: auto;
-    min-width: 0;
-    min-height: 32px;
-    padding: 5px 10px;
-    box-sizing: border-box;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex: 0 0 auto;
-    line-height: 1.2;
-    margin: 0;
-}
-
-.fkp_dashboard-page__subscription-meta__announce {
-    margin: 6px 0 0;
-    border-left: 3px solid var(--primary-color-medium, dodgerblue);
-    padding: 4px 8px;
-    background: var(--background-color-low, rgba(0, 0, 0, 0.04));
-    color: var(--text-color-medium);
-    font-style: italic;
-    line-height: 1.25;
-    overflow-wrap: anywhere;
-}
-
-@media (max-width: 700px) {
-    .fkp_dashboard-page__subscription-meta__main {
-        align-items: flex-start;
-        flex-wrap: wrap;
-    }
-
-    .fkp_dashboard-page__subscription-meta__heading,
-    .fkp_dashboard-page__subscription-meta__title {
-        order: 1;
-    }
-
-    .fkp_dashboard-page__subscription-meta__actions {
-        order: 2;
-    }
-
-    .fkp_dashboard-page__subscription-meta__facts {
-        order: 3;
-        flex-basis: 100%;
-    }
-
-    .fkp_dashboard-page__subscription-meta__title {
-        max-width: calc(100% - 92px);
-    }
-}
-
-.fkp_dashboard-page__outbound-grid__item {
-    border: 2px var(--background-color-low, lightgray) solid;
-    border-radius: 4px;
-    padding: 10px;
-    transition: border 0.2s ease;
-    min-width: 0;
-    position: relative;
-}
-
-.fkp_dashboard-page__outbound-grid__item--selectable {
-    cursor: pointer;
-}
-
-.fkp_dashboard-page__outbound-grid__item--selectable:hover {
-    border-color: var(--primary-color-high, dodgerblue);
-}
-
-.fkp_dashboard-page__outbound-grid__item--active {
-    border-color: var(--success-color-medium, green);
-}
-
-.fkp_dashboard-page__outbound-grid__item--disabled {
-    cursor: default;
-}
-
-.fkp_dashboard-page__outbound-grid__item--switching {
-    border-color: transparent !important;
-    overflow: hidden;
-    cursor: wait;
-}
-
-.fkp_dashboard-page__outbound-grid__item__snake {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 9999;
-    box-sizing: border-box;
-}
-
-.fkp_dashboard-page__outbound-grid__item__snake rect {
-    stroke: var(--primary-color-high, dodgerblue);
-    stroke-width: 4;
-    animation: fkp-dashboard-selector-snake-svg 1.2s linear infinite;
-}
-
-@keyframes fkp-dashboard-selector-snake-svg {
-    0% {
-        stroke-dasharray: 30 70;
-        stroke-dashoffset: 100;
-    }
-    100% {
-        stroke-dasharray: 30 70;
-        stroke-dashoffset: 0;
-    }
-}
-
-.fkp_dashboard-page__outbound-grid__item__header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 8px;
-}
-
-.fkp_dashboard-page__outbound-grid__item__header b {
-    min-width: 0;
-    line-height: 1.25;
-    overflow-wrap: anywhere;
-}
-
-.fkp_dashboard-page .btn.fkp_dashboard-page__outbound-grid__item__copy-button {
-    width: 22px;
-    height: 22px;
-    min-width: 22px;
-    min-height: 22px;
-    padding: 1px;
-    box-sizing: border-box;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex: 0 0 auto;
-    line-height: 1;
-}
-
-.fkp_dashboard-page__outbound-grid__item__copy-button svg {
-    width: 13px;
-    height: 13px;
-    display: block;
-    flex: 0 0 auto;
-}
-
-.fkp_dashboard-page__outbound-grid__item__footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    margin-top: 10px;
-}
-
-.fkp_dashboard-page__outbound-grid__item__type {
-    min-width: 0;
-    overflow-wrap: anywhere;
-}
-
-.fkp_dashboard-page__outbound-grid__item__latency--empty {
-    color: var(--primary-color-low, lightgray);
-}
-
-.fkp_dashboard-page__outbound-grid__item__latency--green {
-    color: var(--success-color-medium, green);
-}
-
-.fkp_dashboard-page__outbound-grid__item__latency--yellow {
-    color: var(--warn-color-medium, orange);
-}
-
-.fkp_dashboard-page__outbound-grid__item__latency--red {
-    color: var(--error-color-medium, red);
-}
-
-.fkp_dashboard-page__priority-members {
-    margin-top: 10px;
-    border-top: 1px solid var(--border-color-low, #eee);
-    padding-top: 8px;
-}
-
-.fkp_dashboard-page__priority-members > summary {
-    cursor: pointer;
-    color: var(--text-color-medium, #666);
-    font-size: 13px;
-    user-select: none;
-}
-
-.fkp_dashboard-page__priority-members__list {
-    display: grid;
-    gap: 3px;
-    margin-top: 8px;
-}
-
-.fkp_dashboard-page__priority-members__level {
-    margin-top: 5px;
-    color: var(--text-color-medium, #666);
-    font-size: 12px;
-    font-weight: 600;
-}
-
-.fkp_dashboard-page__priority-members__row {
-    display: grid;
-    grid-template-columns: 20px minmax(0, 1fr) max-content;
-    align-items: center;
-    gap: 6px;
-    min-width: 0;
-    padding: 4px 5px;
-    border-radius: 3px;
-    font-size: 13px;
-}
-
-.fkp_dashboard-page__priority-members__row--selected {
-    background: rgba(54, 179, 126, 0.13);
-}
-
-.fkp_dashboard-page__priority-members__order {
-    color: var(--text-color-medium, #666);
-    font-family: monospace;
-}
-
-.fkp_dashboard-page__priority-members__name {
-    min-width: 0;
-    overflow-wrap: anywhere;
-}
-
-.fkp_dashboard-page__urltest-details {
-    box-sizing: border-box;
-    width: min(760px, calc(100vw - 56px));
-    max-width: 100%;
-    padding-top: 10px;
-}
-
-.fkp_dashboard-page__urltest-details__params {
-    display: grid;
-    grid-template-columns: minmax(120px, max-content) minmax(0, 1fr);
-    gap: 8px 16px;
-    margin: 0 0 18px;
-}
-
-.fkp_dashboard-page__urltest-details__param {
-    display: contents;
-}
-
-.fkp_dashboard-page__urltest-details__param dt {
-    color: var(--text-color-medium, #666);
-    line-height: 1.35;
-}
-
-.fkp_dashboard-page__urltest-details__param dd {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
-    margin: 0;
-}
-
-.fkp_dashboard-page__urltest-details__param dd span {
-    min-width: 0;
-    overflow-wrap: anywhere;
-}
-
-.fkp_dashboard-page__urltest-details__url {
-    min-width: 0;
-    color: var(--primary-color-high, #337ab7);
-    text-decoration: none;
-    overflow-wrap: anywhere;
-}
-
-.fkp_dashboard-page__urltest-details__url:hover {
-    text-decoration: underline;
-}
-
-.fkp_dashboard-page__urltest-details__selected-value {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-    max-width: 100%;
-    padding: 0;
-    border: 0;
-    color: inherit;
-    background: transparent;
-    box-sizing: border-box;
-    line-height: 1.3;
-}
-
-.fkp_dashboard-page__urltest-details__selected-name {
-    min-width: 0;
-    font-weight: 600;
-    overflow-wrap: anywhere;
-}
-
-.fkp_dashboard-page__urltest-details__selected-type {
-    color: var(--text-color-medium, #666);
-}
-
-.fkp_dashboard-page__urltest-details__outbounds-title {
-    margin-bottom: 8px;
-    font-weight: 600;
-}
-
-.fkp_dashboard-page__urltest-details__table {
-    display: grid;
-    gap: 6px;
-    width: calc(100% + 14px);
-    box-sizing: border-box;
-    max-height: min(46vh, 460px);
-    overflow-x: hidden;
-    overflow-y: auto;
-    padding-right: 14px;
-    scrollbar-gutter: auto;
-}
-
-.fkp_dashboard-page__urltest-details__row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(54px, max-content) 20px;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-    min-width: 0;
-    padding: 7px 8px;
-    box-sizing: border-box;
-    border: 1px solid transparent;
-    border-bottom: 1px solid var(--border-color-low, #eee);
-    border-radius: 4px;
-}
-
-.fkp_dashboard-page__urltest-details__row--active {
-    border-color: var(--success-color-low, #2d7d46);
-    background: transparent;
-}
-
-.fkp_dashboard-page__urltest-details__row-name,
-.fkp_dashboard-page__urltest-details__row-meta {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    min-width: 0;
-    line-height: 1.3;
-}
-
-.fkp_dashboard-page__urltest-details__row-name {
-    flex-wrap: wrap;
-}
-
-.fkp_dashboard-page__urltest-details__row-name b {
-    min-width: 0;
-    overflow-wrap: anywhere;
-    line-height: 1.3;
-}
-
-.fkp_dashboard-page__urltest-details__priority-name {
-    display: inline-flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 2px 0;
-}
-
-.fkp_dashboard-page__urltest-details__priority-number {
-    margin-right: 6px;
-    color: var(--text-color-medium, #aaa);
-    font-family: monospace;
-    font-size: 13px;
-    font-weight: 600;
-}
-
-.fkp_dashboard-page__urltest-details__priority-level {
-    margin-right: 8px;
-    padding: 2px 6px;
-    border-radius: 4px;
-    color: var(--text-color-medium, #aaa);
-    background: rgba(128, 128, 128, 0.15);
-    font-size: 11px;
-    font-weight: 400;
-}
-
-.fkp_dashboard-page__urltest-details__country-badge {
-    display: inline-flex;
-    align-items: center;
-    user-select: none;
-    margin-right: 6px;
-    padding: 2px 4px;
-    border: 1px solid rgba(128, 128, 128, 0.25);
-    border-radius: 4px;
-    background: rgba(128, 128, 128, 0.15);
-    line-height: 1;
-}
-
-.fkp_dashboard-page__flag-emoji,
-.fkp_dashboard-page__urltest-details__country-badge {
-    font-family: "Twemoji Country Flags";
-    font-style: normal;
-    font-weight: normal;
-}
-
-.fkp_dashboard-page__urltest-details__priority-node {
-    color: var(--text-color-high, #fff);
-    font-weight: 600;
-}
-
-.fkp_dashboard-page__urltest-details__row-type,
-.fkp_dashboard-page__urltest-details__row-meta {
-    color: var(--text-color-medium, #666);
-}
-
-.fkp_dashboard-page__urltest-details__row-type {
-    white-space: nowrap;
-    line-height: 1.3;
-}
-
-.fkp_dashboard-page__urltest-details__row-meta {
-    justify-content: flex-end;
-    white-space: nowrap;
-}
-
-.fkp_dashboard-page__urltest-details__copy-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: 0 0 20px;
-    width: 20px;
-    min-width: 20px;
-    height: 20px;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-.fkp_dashboard-page__urltest-details__copy-button svg {
-    width: 12px;
-    height: 12px;
-}
-
-.fkp_dashboard-page__urltest-details__copy-placeholder {
-    display: block;
-    width: 20px;
-    min-width: 20px;
-    height: 1px;
-}
-
-.fkp_dashboard-page__urltest-details__empty {
-    margin-top: 4px;
-    padding: 24px 0;
-    border: 1px dashed var(--border-color-high, #555);
-    border-radius: 4px;
-    color: var(--text-color-medium, #888);
-    background: rgba(128, 128, 128, 0.02);
-    font-style: italic;
-    text-align: center;
-}
-
-.fkp_dashboard-page__urltest-details__footer {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 14px;
-}
-
-@media (max-width: 560px) {
-    .fkp_dashboard-page__urltest-details__params {
-        grid-template-columns: 1fr;
-    }
-
-    .fkp_dashboard-page__urltest-details__row {
-        grid-template-columns: minmax(0, 1fr) 20px;
-    }
-
-    .fkp_dashboard-page__urltest-details__row-meta {
-        grid-column: 1 / -1;
-        justify-content: flex-start;
-    }
-}
-
-`;
-
-// src/prokop/tabs/dashboard/index.ts
-var DashboardTab = {
-  render,
-  renderNodes,
-  initController,
-  styles: styles3
-};
-
-// src/prokop/tabs/diagnostic/renderDiagnostic.ts
-function card2(id, title, hint, body) {
-  return E("section", { class: "fkp-diag-card", id }, [
-    E("h3", { class: "fkp-diag-card__title" }, title),
-    hint ? E("p", { class: "fkp-diag-hint" }, hint) : "",
-    ...body
-  ]);
-}
-function renderDpiValidator() {
-  const explanation = E(
-    "p",
-    { class: "fkp-diag-hint" },
-    _(
-      "Checks that the parameters are valid. It does not test site reachability or bypass effectiveness."
-    )
-  );
-  if (isReadonlyMode())
-    return [
-      explanation,
-      E(
-        "p",
-        { class: "fkp-diag-hint" },
-        _("Available to administrators only.")
-      )
-    ];
-  return [
-    explanation,
-    E("div", { class: "fkp-diag-form" }, [
-      E("label", { class: "fkp-diag-field" }, [
-        E("span", {}, _("Provider")),
-        E("select", { id: "dpi-provider", class: "cbi-input-select" }, [
-          E("option", { value: "zapret" }, "Zapret"),
-          E("option", { value: "zapret2" }, "Zapret2"),
-          E("option", { value: "byedpi" }, "ByeDPI")
-        ])
-      ]),
-      E("label", { class: "fkp-diag-field fkp-diag-field--wide" }, [
-        E("span", {}, _("Strategy")),
-        E("textarea", {
-          id: "dpi-strategy",
-          class: "cbi-input-textarea",
-          maxLength: 4096,
-          rows: 3,
-          spellcheck: false
-        })
-      ])
-    ]),
-    E("div", { class: "fkp-diag-actions" }, [
-      E(
-        "button",
-        { id: "dpi-validate", type: "button", class: "btn cbi-button" },
-        _("Check")
-      ),
-      E("span", { id: "dpi-playground-result", role: "status" })
-    ])
-  ];
-}
-var HELP_URL = "https://github.com/Asofwar/prokop#readme";
-function renderSiteCheck() {
-  return card2(
-    "site-check",
-    _("Check a site or app"),
-    _(
-      "The route is calculated from the configuration; DNS and the HTTPS request are made by the router itself."
-    ),
-    [
-      E("div", { class: "fkp-route__form" }, [
-        E("label", { class: "fkp-diag-field fkp-diag-field--wide" }, [
-          E("span", {}, _("Domain or IP address")),
-          E("input", {
-            id: "site-check-target",
-            class: "cbi-input-text",
-            placeholder: "youtube.com",
-            maxLength: 253
-          })
-        ]),
-        E("label", { class: "fkp-diag-field" }, [
-          E("span", {}, _("Device")),
-          E("select", { id: "site-check-device", class: "cbi-input-select" }, [
-            E("option", { value: "" }, _("Any device"))
-          ])
-        ]),
-        E(
-          "button",
-          {
-            id: "site-check-run",
-            class: "btn cbi-button cbi-button-apply",
-            type: "button"
-          },
-          _("Check")
-        )
-      ]),
-      E("div", { id: "site-check-result", role: "status" })
-    ]
-  );
-}
-function render2() {
-  return E("div", { id: "diagnostic-status", class: "fkp-diag" }, [
-    E("div", { class: "fkp-diag-help" }, [
-      E(
-        "a",
-        { href: HELP_URL, target: "_blank", rel: "noopener noreferrer" },
-        _("Help")
-      )
-    ]),
-    E("section", { class: "fkp-diag-card fkp-diag-system" }, [
-      E("div", { class: "fkp-diag-card__head" }, [
-        E("div", {}, [
-          E("h3", { class: "fkp-diag-card__title" }, _("System check")),
-          E("span", {
-            id: "fkp_diagnostic-last-run",
-            class: "fkp-diag-hint",
-            role: "status"
-          })
-        ]),
-        E("div", { id: "fkp_diagnostic-page-run-check" })
-      ]),
-      E("div", {
-        id: "fkp_diagnostic-run-reason",
-        class: "fkp-diag-run-reason",
-        role: "status"
-      }),
-      E("div", {
-        class: "fkp-diag-checks",
-        id: "fkp_diagnostic-page-checks"
-      })
-    ]),
-    renderSiteCheck(),
-    E(
-      "details",
-      { class: "fkp-diag-card fkp-diag-details", id: "connectivity-matrix" },
-      [
-        E("summary", {}, _("Address set for checking")),
-        E(
-          "p",
-          { class: "fkp-diag-hint" },
-          _(
-            "Checks run on the router and do not prove the path of a LAN client."
-          )
-        ),
-        E("div", { id: "connectivity-rows", class: "fkp-conn" }),
-        E("div", { class: "fkp-diag-actions" }, [
-          E(
-            "button",
-            { id: "connectivity-add", type: "button", class: "btn cbi-button" },
-            `+ ${_("Add address")}`
-          ),
-          E(
-            "button",
-            {
-              id: "connectivity-run",
-              type: "button",
-              class: "btn cbi-button cbi-button-apply"
-            },
-            _("Check all")
-          )
-        ])
-      ]
-    ),
-    E(
-      "details",
-      { class: "fkp-diag-card fkp-diag-details", id: "technical-data" },
-      [
-        E("summary", {}, _("Technical data")),
-        E("div", { class: "fkp-diag-row" }, [
-          E("div", { id: "fkp_diagnostic-page-actions" }),
-          E("div", { id: "fkp_diagnostic-page-system-info" })
-        ]),
-        E("div", { class: "fkp-diag-subsection", id: "dpi-playground" }, [
-          E("h4", {}, _("DPI strategy syntax check")),
-          ...renderDpiValidator()
-        ])
-      ]
-    )
-  ]);
-}
-
-// src/prokop/tabs/diagnostic/checks/updateCheckStore.ts
-function updateCheckStore(check, minified) {
-  const diagnosticsChecks = store.get().diagnosticsChecks;
-  const other = diagnosticsChecks.filter((item) => item.code !== check.code);
-  const smallCheck = {
-    ...check,
-    items: check.items.filter((item) => item.state !== "success")
-  };
-  const targetCheck = minified ? smallCheck : check;
-  store.set({
-    diagnosticsChecks: [...other, targetCheck]
-  });
-}
-
-// src/prokop/tabs/diagnostic/helpers/getMeta.ts
-function getMeta({ allGood, atLeastOneGood }) {
-  if (allGood) {
-    return {
-      state: "success",
-      description: _("Checks passed")
-    };
-  }
-  if (atLeastOneGood) {
-    return {
-      state: "warning",
-      description: _("Issues detected")
-    };
-  }
-  return {
-    state: "error",
-    description: _("Checks failed")
-  };
-}
-
-// src/prokop/tabs/diagnostic/checks/getDnsCheckPresentation.ts
-function getDnsCheckPresentation(data) {
-  const dhcpManagedManually = Boolean(data.dont_touch_dhcp);
-  const dhcpCheckOk = dhcpManagedManually || Boolean(data.dhcp_config_status);
-  const bootstrapCheckRequired = data.bootstrap_dns_required !== 0;
-  const bootstrapCheckOk = !bootstrapCheckRequired || Boolean(data.bootstrap_dns_status);
-  const allGood = Boolean(data.dns_on_router) && dhcpCheckOk && bootstrapCheckOk && Boolean(data.dns_status);
-  const atLeastOneGood = Boolean(data.dns_on_router) || dhcpCheckOk || bootstrapCheckOk || Boolean(data.dns_status);
-  const meta = getMeta({ atLeastOneGood, allGood });
-  const state = dhcpManagedManually && meta.state === "success" ? "warning" : meta.state;
-  const description = dhcpManagedManually && meta.state === "success" ? _("Checks passed with manual DHCP") : meta.description;
-  const dhcpItemState = dhcpManagedManually ? "warning" : data.dhcp_config_status ? "success" : "error";
-  const dhcpItemKey = dhcpManagedManually ? _("DHCP is managed manually") : _("DHCP has DNS server");
-  return {
-    state,
-    description,
-    dhcpItemState,
-    dhcpItemKey
-  };
-}
-
-// src/prokop/tabs/diagnostic/checks/runDnsCheck.ts
-async function runDnsCheck() {
-  const { order, title, code } = DIAGNOSTICS_CHECKS_MAP.DNS;
-  updateCheckStore({
-    order,
-    code,
-    title,
-    description: _("Checking, please wait"),
-    state: "loading",
-    items: []
-  });
-  const dnsChecks = await ProkopShellMethods.checkDNSAvailable();
-  if (!dnsChecks.success) {
-    updateCheckStore({
-      order,
-      code,
-      title,
-      description: _("Cannot receive checks result"),
-      state: "error",
-      items: []
-    });
-    throw new Error("DNS checks failed");
-  }
-  const data = dnsChecks.data;
-  const { state, description, dhcpItemState, dhcpItemKey } = getDnsCheckPresentation(data);
-  updateCheckStore({
-    order,
-    code,
-    title,
-    description,
-    state,
-    items: [
-      ...insertIf(
-        data.bootstrap_dns_required !== 0 && (data.dns_type === "doh" || data.dns_type === "dot" || data.bootstrap_dns_server_count > 1 || !data.bootstrap_dns_status),
-        [
-          {
-            state: data.bootstrap_dns_status ? "success" : "error",
-            key: data.bootstrap_dns_server_count > 1 ? _("Active Bootstrap DNS") : _("Bootstrap DNS"),
-            value: data.bootstrap_dns_server_count > 1 ? `${data.bootstrap_dns_server} (${data.bootstrap_dns_server_index + 1}/${data.bootstrap_dns_server_count})` : data.bootstrap_dns_server
-          }
-        ]
-      ),
-      {
-        state: data.dns_status ? "success" : "error",
-        key: data.dns_server_count > 1 ? _("Active Main DNS") : _("Main DNS"),
-        value: data.dns_server_count > 1 ? `${data.dns_server} [${data.dns_type}] (${data.dns_server_index + 1}/${data.dns_server_count})` : `${data.dns_server} [${data.dns_type}]`
-      },
-      {
-        state: data.dns_on_router ? "success" : "error",
-        key: _("DNS on router"),
-        value: ""
-      },
-      {
-        state: dhcpItemState,
-        key: dhcpItemKey,
-        value: ""
-      }
-    ]
-  });
-  if (state === "error") {
-    throw new Error("DNS checks failed");
-  }
-}
-
-// src/prokop/tabs/diagnostic/checks/runSingBoxCheck.ts
-async function runSingBoxCheck() {
-  const { order, title, code } = DIAGNOSTICS_CHECKS_MAP.SINGBOX;
-  updateCheckStore({
-    order,
-    code,
-    title,
-    description: _("Checking, please wait"),
-    state: "loading",
-    items: []
-  });
-  const singBoxChecks = await ProkopShellMethods.checkSingBox();
-  if (!singBoxChecks.success) {
-    updateCheckStore({
-      order,
-      code,
-      title,
-      description: _("Cannot receive checks result"),
-      state: "error",
-      items: []
-    });
-    throw new Error("Sing-box checks failed");
-  }
-  const data = singBoxChecks.data;
-  const allGood = Boolean(data.sing_box_installed) && Boolean(data.sing_box_version_ok) && Boolean(data.sing_box_service_exist) && Boolean(data.sing_box_autostart_disabled) && Boolean(data.sing_box_process_running) && Boolean(data.sing_box_ports_listening);
-  const atLeastOneGood = Boolean(data.sing_box_installed) || Boolean(data.sing_box_version_ok) || Boolean(data.sing_box_service_exist) || Boolean(data.sing_box_autostart_disabled) || Boolean(data.sing_box_process_running) || Boolean(data.sing_box_ports_listening);
-  const { state, description } = getMeta({ atLeastOneGood, allGood });
-  updateCheckStore({
-    order,
-    code,
-    title,
-    description,
-    state,
-    items: [
-      {
-        state: data.sing_box_installed ? "success" : "error",
-        key: _("Sing-box installed"),
-        value: ""
-      },
-      {
-        state: data.sing_box_version_ok ? "success" : "error",
-        key: _("Sing-box version is compatible (newer than 1.12.4)"),
-        value: ""
-      },
-      {
-        state: data.sing_box_service_exist ? "success" : "error",
-        key: _("Sing-box service exist"),
-        value: ""
-      },
-      {
-        state: data.sing_box_autostart_disabled ? "success" : "error",
-        key: _("Sing-box autostart disabled"),
-        value: ""
-      },
-      {
-        state: data.sing_box_process_running ? "success" : "error",
-        key: _("Sing-box process running"),
-        value: ""
-      },
-      {
-        state: data.sing_box_ports_listening ? "success" : "error",
-        key: _("Sing-box listening ports"),
-        value: ""
-      }
-    ]
-  });
-  if (!atLeastOneGood || !data.sing_box_process_running) {
-    throw new Error("Sing-box checks failed");
-  }
-}
-
-// src/prokop/tabs/diagnostic/checks/runNftCheck.ts
-async function runNftCheck() {
-  const { order, title, code } = DIAGNOSTICS_CHECKS_MAP.NFT;
-  updateCheckStore({
-    order,
-    code,
-    title,
-    description: _("Checking, please wait"),
-    state: "loading",
-    items: []
-  });
-  await RemoteFakeIPMethods.getFakeIpCheck();
-  await RemoteFakeIPMethods.getIpCheck();
-  const nftablesChecks = await ProkopShellMethods.checkNftRules();
-  if (!nftablesChecks.success) {
-    updateCheckStore({
-      order,
-      code,
-      title,
-      description: _("Cannot receive checks result"),
-      state: "error",
-      items: []
-    });
-    throw new Error("Nftables checks failed");
-  }
-  const data = nftablesChecks.data;
-  const allGood = Boolean(data.table_exist) && Boolean(data.rules_mangle_exist) && Boolean(data.rules_mangle_counters) && Boolean(data.rules_mangle_output_exist) && Boolean(data.rules_mangle_output_counters) && Boolean(data.rules_proxy_exist) && Boolean(data.rules_proxy_counters) && !data.rules_other_mark_exist;
-  const atLeastOneGood = Boolean(data.table_exist) || Boolean(data.rules_mangle_exist) || Boolean(data.rules_mangle_counters) || Boolean(data.rules_mangle_output_exist) || Boolean(data.rules_mangle_output_counters) || Boolean(data.rules_proxy_exist) || Boolean(data.rules_proxy_counters) || !data.rules_other_mark_exist;
-  const { state, description } = getMeta({ atLeastOneGood, allGood });
-  updateCheckStore({
-    order,
-    code,
-    title,
-    description,
-    state,
-    items: [
-      {
-        state: data.table_exist ? "success" : "error",
-        key: _("Table exist"),
-        value: ""
-      },
-      {
-        state: data.rules_mangle_exist ? "success" : "error",
-        key: _("Rules mangle exist"),
-        value: ""
-      },
-      {
-        state: data.rules_mangle_counters ? "success" : "warning",
-        key: _("Rules mangle counters"),
-        value: ""
-      },
-      {
-        state: data.rules_mangle_output_exist ? "success" : "error",
-        key: _("Rules mangle output exist"),
-        value: ""
-      },
-      {
-        // Only the router's own connections marked for sing-box count here
-        // (UC-107); none may have been made yet, as for the mangle counters.
-        state: data.rules_mangle_output_counters ? "success" : "warning",
-        key: _("Rules mangle output counters"),
-        value: ""
-      },
-      {
-        state: data.rules_proxy_exist ? "success" : "error",
-        key: _("Rules proxy exist"),
-        value: ""
-      },
-      {
-        state: data.rules_proxy_counters ? "success" : "error",
-        key: _("Rules proxy counters"),
-        value: ""
-      },
-      {
-        state: !data.rules_other_mark_exist ? "success" : "warning",
-        key: !data.rules_other_mark_exist ? _("No other marking rules found") : _("Additional marking rules found"),
-        value: ""
-      }
-    ]
-  });
-  if (!atLeastOneGood) {
-    throw new Error("Nftables checks failed");
-  }
-}
-
-// src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts
-async function runFakeIPCheck() {
-  const { order, title, code } = DIAGNOSTICS_CHECKS_MAP.FAKEIP;
-  updateCheckStore({
-    order,
-    code,
-    title,
-    description: _("Checking, please wait"),
-    state: "loading",
-    items: []
-  });
-  const routerFakeIPResponse = await ProkopShellMethods.checkFakeIP();
-  const checkFakeIPResponse = await RemoteFakeIPMethods.getFakeIpCheck();
-  const checkIPResponse = await RemoteFakeIPMethods.getIpCheck();
-  const browserFakeIPCheckUnavailable = !checkFakeIPResponse.success;
-  const browserFakeIPCheckMessage = checkFakeIPResponse.success ? "" : checkFakeIPResponse.message;
-  const checks = {
-    singBoxFakeIP: routerFakeIPResponse.success && routerFakeIPResponse.data.fakeip,
-    browserFakeIP: checkFakeIPResponse.success && checkFakeIPResponse.data.fakeip,
-    canComparePublicIP: checkFakeIPResponse.success && checkIPResponse.success,
-    differentIP: checkFakeIPResponse.success && checkIPResponse.success && checkFakeIPResponse.data.IP !== checkIPResponse.data.IP
-  };
-  const fakeIPWorks = checks.singBoxFakeIP && checks.browserFakeIP;
-  const { state, description } = fakeIPWorks ? checks.differentIP ? { state: "success", description: _("Checks passed") } : {
-    state: "warning",
-    description: _("FakeIP works; public IP comparison is inconclusive")
-  } : browserFakeIPCheckUnavailable && checks.singBoxFakeIP ? {
-    state: "warning",
-    description: _("Browser FakeIP check could not be completed")
-  } : getMeta({
-    allGood: false,
-    atLeastOneGood: checks.singBoxFakeIP || checks.browserFakeIP
-  });
-  updateCheckStore({
-    order,
-    code,
-    title,
-    description,
-    state,
-    items: [
-      {
-        state: checks.singBoxFakeIP ? "success" : "error",
-        key: checks.singBoxFakeIP ? _("Sing-box FakeIP DNS works") : _("Sing-box FakeIP DNS does not work"),
-        value: routerFakeIPResponse.success ? routerFakeIPResponse.data.IP : ""
-      },
-      {
-        state: browserFakeIPCheckUnavailable ? "warning" : checks.browserFakeIP ? "success" : "error",
-        key: browserFakeIPCheckUnavailable ? _("Browser FakeIP check could not be completed") : checks.browserFakeIP ? _("Browser is using FakeIP correctly") : _("Browser is not using FakeIP"),
-        value: browserFakeIPCheckMessage
-      },
-      ...insertIf(checks.browserFakeIP, [
-        {
-          state: checks.differentIP ? "success" : "warning",
-          key: !checks.canComparePublicIP ? _("Could not compare FakeIP and control public IPs") : checks.differentIP ? _("FakeIP and control checks use different public IPs") : _("FakeIP and control checks use the same public IP"),
-          value: ""
-        }
-      ])
-    ]
-  });
-}
-
-// src/prokop/tabs/diagnostic/checks/getCheckItemsMeta.ts
-function getCheckItemsMeta(items) {
-  if (items.some((item) => item.state === "error")) {
-    return {
-      state: "error",
-      description: _("Checks failed")
-    };
-  }
-  if (items.some((item) => item.state === "warning")) {
-    return {
-      state: "warning",
-      description: _("Issues detected")
-    };
-  }
-  return {
-    state: "success",
-    description: _("Checks passed")
-  };
-}
-
-// src/prokop/tabs/diagnostic/checks/runZapretCheck.ts
-async function runZapretCheck() {
-  const { order, title, code } = DIAGNOSTICS_CHECKS_MAP.ZAPRET;
-  updateCheckStore({
-    order,
-    code,
-    title,
-    description: _("Checking, please wait"),
-    state: "loading",
-    items: []
-  });
-  const zapretStatus = await ProkopShellMethods.getZapretStatus();
-  if (!zapretStatus.success) {
-    updateCheckStore({
-      order,
-      code,
-      title,
-      description: _("Cannot receive checks result"),
-      state: "error",
-      items: []
-    });
-    throw new Error("Zapret checks failed");
-  }
-  const data = zapretStatus.data;
-  const providerAvailable = Boolean(data.provider_available ?? data.installed);
-  const packageInstalled = Boolean(data.package_installed);
-  const hasZapretRules = Number(data.enabled_rule_count || 0) > 0;
-  const queueOverlap = Boolean(data.queue_overlap);
-  const standaloneServiceRunning = Boolean(data.standalone_service_running);
-  const standaloneConflict = hasZapretRules && standaloneServiceRunning;
-  const expectedProcesses = Number(data.expected_process_count || 0);
-  const runningProcesses = Number(data.running_process_count || 0);
-  const supervisorProcesses = Number(data.supervisor_process_count || 0);
-  const prokopRuntimeReady = !hasZapretRules || runningProcesses === expectedProcesses && supervisorProcesses === expectedProcesses;
-  const unexpectedRuntime = !hasZapretRules && (runningProcesses > 0 || supervisorProcesses > 0);
-  const outboundsConfigured = Boolean(data.outbounds_configured);
-  const items = [
-    {
-      state: providerAvailable ? "success" : hasZapretRules ? "error" : "warning",
-      key: providerAvailable ? _("Zapret provider binary is available") : _("Zapret provider binary is not available"),
-      value: data.provider_path || ""
-    },
-    {
-      state: packageInstalled ? "success" : hasZapretRules ? "error" : "warning",
-      key: packageInstalled ? _("Zapret package is installed") : _("Zapret package is not installed"),
-      value: ""
-    },
-    {
-      state: hasZapretRules && !providerAvailable ? "error" : "success",
-      key: hasZapretRules ? _("There are rules using Zapret") : _("No rules use Zapret"),
-      value: ""
-    },
-    {
-      state: unexpectedRuntime || !prokopRuntimeReady ? "error" : "success",
-      key: hasZapretRules ? prokopRuntimeReady ? _("Prokop-managed nfqws runtime is ready") : _("Prokop-managed nfqws runtime is not ready") : unexpectedRuntime ? _("Unexpected Prokop-managed nfqws runtime is running") : _("Prokop-managed nfqws runtime is not running"),
-      value: hasZapretRules ? `${runningProcesses}/${expectedProcesses}` : ""
-    },
-    {
-      state: queueOverlap ? "error" : "success",
-      key: queueOverlap ? _("NFQUEUE range overlaps with another rule") : _("NFQUEUE range is available"),
-      value: `${Number(data.queue_base || 0)}-${Number(data.queue_range_end || 0)}`
-    },
-    {
-      state: !hasZapretRules || outboundsConfigured ? "success" : "error",
-      key: outboundsConfigured ? _("Zapret sing-box outbound is configured") : _("Zapret sing-box outbound is not configured"),
-      value: ""
-    },
-    {
-      state: standaloneConflict ? "warning" : "success",
-      key: standaloneServiceRunning ? hasZapretRules ? _("Standalone Zapret is active together with Prokop Zapret rules") : _("Standalone Zapret service is active") : _("Standalone Zapret service is inactive"),
-      value: ""
-    }
-  ];
-  const { state, description } = getCheckItemsMeta(items);
-  updateCheckStore({
-    order,
-    code,
-    title,
-    description,
-    state,
-    items
-  });
-}
-
-// src/prokop/tabs/diagnostic/checks/runZapret2Check.ts
-async function runZapret2Check() {
-  const { order, title, code } = DIAGNOSTICS_CHECKS_MAP.ZAPRET2;
-  updateCheckStore({
-    order,
-    code,
-    title,
-    description: _("Checking, please wait"),
-    state: "loading",
-    items: []
-  });
-  const zapret2Status = await ProkopShellMethods.getZapret2Status();
-  if (!zapret2Status.success) {
-    updateCheckStore({
-      order,
-      code,
-      title,
-      description: _("Cannot receive checks result"),
-      state: "error",
-      items: []
-    });
-    throw new Error("Zapret2 checks failed");
-  }
-  const data = zapret2Status.data;
-  const providerAvailable = Boolean(data.provider_available ?? data.installed);
-  const packageInstalled = Boolean(data.package_installed);
-  const hasZapret2Rules = Number(data.enabled_rule_count || 0) > 0;
-  const queueOverlap = Boolean(data.queue_overlap);
-  const expectedProcesses = Number(data.expected_process_count || 0);
-  const runningProcesses = Number(data.running_process_count || 0);
-  const supervisorProcesses = Number(data.supervisor_process_count || 0);
-  const prokopRuntimeReady = !hasZapret2Rules || runningProcesses === expectedProcesses && supervisorProcesses === expectedProcesses;
-  const unexpectedRuntime = !hasZapret2Rules && (runningProcesses > 0 || supervisorProcesses > 0);
-  const outboundsConfigured = Boolean(data.outbounds_configured);
-  const standaloneServiceEnabled = Boolean(data.standalone_service_enabled);
-  const standaloneServiceRunning = Boolean(data.standalone_service_running);
-  const standaloneConflict = hasZapret2Rules && standaloneServiceRunning;
-  const standaloneAutostartRisk = hasZapret2Rules && standaloneServiceEnabled && !standaloneServiceRunning;
-  const items = [
-    {
-      state: providerAvailable ? "success" : hasZapret2Rules ? "error" : "warning",
-      key: providerAvailable ? _("Zapret2 provider binary is available") : _("Zapret2 provider binary is not available"),
-      value: data.provider_path || ""
-    },
-    {
-      state: packageInstalled ? "success" : hasZapret2Rules ? "error" : "warning",
-      key: packageInstalled ? _("Zapret2 package is installed") : _("Zapret2 package is not installed"),
-      value: ""
-    },
-    {
-      state: hasZapret2Rules && !providerAvailable ? "error" : "success",
-      key: hasZapret2Rules ? _("There are rules using Zapret2") : _("No rules use Zapret2"),
-      value: ""
-    },
-    {
-      state: unexpectedRuntime || !prokopRuntimeReady ? "error" : "success",
-      key: hasZapret2Rules ? prokopRuntimeReady ? _("Prokop-managed nfqws2 runtime is ready") : _("Prokop-managed nfqws2 runtime is not ready") : unexpectedRuntime ? _("Unexpected Prokop-managed nfqws2 runtime is running") : _("Prokop-managed nfqws2 runtime is not running"),
-      value: hasZapret2Rules ? `${runningProcesses}/${expectedProcesses}` : ""
-    },
-    {
-      state: queueOverlap ? "error" : "success",
-      key: queueOverlap ? _("NFQUEUE range overlaps with another rule") : _("NFQUEUE range is available"),
-      value: `${Number(data.queue_base || 0)}-${Number(data.queue_range_end || 0)}`
-    },
-    {
-      state: !hasZapret2Rules || outboundsConfigured ? "success" : "error",
-      key: outboundsConfigured ? _("Zapret2 sing-box outbound is configured") : _("Zapret2 sing-box outbound is not configured"),
-      value: ""
-    },
-    {
-      state: standaloneConflict ? "error" : standaloneAutostartRisk ? "warning" : "success",
-      key: standaloneServiceRunning ? hasZapret2Rules ? _("Standalone Zapret2 is active together with Prokop Zapret2 rules") : _("Standalone Zapret2 service is active") : standaloneAutostartRisk ? _("Standalone Zapret2 autostart is enabled") : _("Standalone Zapret2 service is inactive"),
-      value: ""
-    }
-  ];
-  const { state, description } = getCheckItemsMeta(items);
-  updateCheckStore({
-    order,
-    code,
-    title,
-    description,
-    state,
-    items
-  });
-}
-
-// src/prokop/tabs/diagnostic/checks/runByedpiCheck.ts
-async function runByedpiCheck() {
-  const { order, title, code } = DIAGNOSTICS_CHECKS_MAP.BYEDPI;
-  updateCheckStore({
-    order,
-    code,
-    title,
-    description: _("Checking, please wait"),
-    state: "loading",
-    items: []
-  });
-  const byedpiStatus = await ProkopShellMethods.getByedpiStatus();
-  if (!byedpiStatus.success) {
-    updateCheckStore({
-      order,
-      code,
-      title,
-      description: _("Cannot receive checks result"),
-      state: "error",
-      items: []
-    });
-    throw new Error("ByeDPI checks failed");
-  }
-  const data = byedpiStatus.data;
-  const providerAvailable = Boolean(data.provider_available ?? data.installed);
-  const packageInstalled = Boolean(data.package_installed);
-  const hasByedpiRules = Number(data.enabled_rule_count || 0) > 0;
-  const expectedProcesses = Number(data.expected_process_count || 0);
-  const runningProcesses = Number(data.running_process_count || 0);
-  const supervisorProcesses = Number(data.supervisor_process_count || 0);
-  const restartCount = Number(data.restart_count || 0);
-  const runtimeUnstable = Boolean(data.runtime_unstable);
-  const prokopRuntimeReady = !hasByedpiRules || runningProcesses === expectedProcesses && supervisorProcesses === expectedProcesses;
-  const unexpectedRuntime = !hasByedpiRules && (runningProcesses > 0 || supervisorProcesses > 0);
-  const outboundsConfigured = Boolean(data.outbounds_configured);
-  const standaloneServiceEnabled = Boolean(data.standalone_service_enabled);
-  const standaloneServiceRunning = Boolean(data.standalone_service_running);
-  const standaloneConflict = hasByedpiRules && standaloneServiceRunning;
-  const standaloneAutostartRisk = hasByedpiRules && standaloneServiceEnabled && !standaloneServiceRunning;
-  const items = [
-    {
-      state: providerAvailable ? "success" : hasByedpiRules ? "error" : "warning",
-      key: providerAvailable ? _("ByeDPI provider binary is available") : _("ByeDPI provider binary is not available"),
-      value: data.provider_path || ""
-    },
-    {
-      state: packageInstalled ? "success" : "warning",
-      key: packageInstalled ? _("ByeDPI package is installed") : _("ByeDPI package is not installed"),
-      value: ""
-    },
-    {
-      state: hasByedpiRules && !providerAvailable ? "error" : "success",
-      key: hasByedpiRules ? _("There are rules using ByeDPI") : _("No rules use ByeDPI"),
-      value: ""
-    },
-    {
-      state: unexpectedRuntime || !prokopRuntimeReady ? "error" : runtimeUnstable ? "warning" : "success",
-      key: hasByedpiRules ? runtimeUnstable ? _("Prokop-managed ciadpi runtime has restarted") : prokopRuntimeReady ? _("Prokop-managed ciadpi runtime is ready") : _("Prokop-managed ciadpi runtime is not ready") : unexpectedRuntime ? _("Unexpected Prokop-managed ciadpi runtime is running") : _("Prokop-managed ciadpi runtime is not running"),
-      value: hasByedpiRules ? runtimeUnstable ? `${restartCount}` : `${runningProcesses}/${expectedProcesses}` : ""
-    },
-    {
-      state: !hasByedpiRules || outboundsConfigured ? "success" : "error",
-      key: outboundsConfigured ? _("ByeDPI sing-box outbound is configured") : _("ByeDPI sing-box outbound is not configured"),
-      value: `${data.listen_address}:${Number(data.port_base || 0)}`
-    },
-    {
-      state: standaloneConflict ? "error" : standaloneAutostartRisk ? "warning" : "success",
-      key: standaloneServiceRunning ? hasByedpiRules ? _("Standalone ByeDPI is active together with Prokop ByeDPI rules") : _("Standalone ByeDPI service is active") : standaloneAutostartRisk ? _("Standalone ByeDPI autostart is enabled") : _("Standalone ByeDPI service is inactive"),
-      value: ""
-    }
-  ];
-  const { state, description } = getCheckItemsMeta(items);
-  updateCheckStore({
-    order,
-    code,
-    title,
-    description,
-    state,
-    items
-  });
-}
-
-// src/prokop/services/systemInfo.service.ts
-var UNKNOWN_SYSTEM_INFO = {
-  loading: false,
-  loaded: false,
-  providerInfoLoaded: false,
-  prokop_version: _("unknown"),
-  prokop_latest_version: _("unknown"),
-  luci_app_version: _("unknown"),
-  sing_box_version: _("unknown"),
-  sing_box_extended: 0,
-  sing_box_tiny: 0,
-  sing_box_compressed: 0,
-  sing_box_tailscale: 1,
-  zapret_version: _("unknown"),
-  zapret_installed: 0,
-  zapret2_version: _("unknown"),
-  zapret2_installed: 0,
-  byedpi_version: _("unknown"),
-  byedpi_installed: 0,
-  zapret_manager_installed: 0,
-  packet_steering_mode: "",
-  direct_proxy_enabled: 0,
-  direct_proxy_address: "",
-  direct_proxy_port: "2080",
-  torrserver_running: 0,
-  torrserver_direct_available: 0,
-  torrserver_direct_enabled: 0,
-  torrserver_direct_active: 0,
-  openwrt_version: _("unknown"),
-  device_model: _("unknown")
-};
-var systemInfoPromise = null;
-var latestSystemInfoRequestId = 0;
-function hasLoadedSystemInfo() {
-  const systemInfo = store.get().diagnosticsSystemInfo;
-  return Boolean(systemInfo.loaded) && !systemInfo.loading;
-}
-async function ensureSystemInfo({
-  force = false,
-  silent = false
-} = {}) {
-  if (!force && hasLoadedSystemInfo()) {
-    return store.get().diagnosticsSystemInfo;
-  }
-  if (systemInfoPromise && !force) {
-    return systemInfoPromise;
-  }
-  const requestId = ++latestSystemInfoRequestId;
-  const currentSystemInfo = store.get().diagnosticsSystemInfo;
-  if (!silent) {
-    store.set({
-      diagnosticsSystemInfo: {
-        ...currentSystemInfo,
-        loading: true
-      }
-    });
-  }
-  const promise = (async () => {
-    try {
-      const systemInfo = await ProkopShellMethods.getSystemInfo();
-      if (requestId !== latestSystemInfoRequestId) {
-        return store.get().diagnosticsSystemInfo;
-      }
-      if (systemInfo.success) {
-        const nextSystemInfo = normalizeSingBoxVariantFields({
-          ...UNKNOWN_SYSTEM_INFO,
-          loading: false,
-          loaded: true,
-          providerInfoLoaded: true,
-          ...systemInfo.data
-        });
-        store.set({
-          diagnosticsSystemInfo: nextSystemInfo
-        });
-        return nextSystemInfo;
-      }
-    } catch (error) {
-      logger.error("[SYSTEM_INFO]", "ensureSystemInfo failed", error);
-    }
-    if (requestId === latestSystemInfoRequestId && !silent) {
-      const latestSystemInfo = store.get().diagnosticsSystemInfo;
-      const nextSystemInfo = {
-        ...UNKNOWN_SYSTEM_INFO,
-        loading: false,
-        loaded: false,
-        providerInfoLoaded: latestSystemInfo.providerInfoLoaded,
-        zapret_installed: latestSystemInfo.zapret_installed,
-        zapret2_installed: latestSystemInfo.zapret2_installed,
-        byedpi_installed: latestSystemInfo.byedpi_installed
-      };
-      store.set({
-        diagnosticsSystemInfo: nextSystemInfo
-      });
-      return nextSystemInfo;
-    }
-    return store.get().diagnosticsSystemInfo;
-  })();
-  systemInfoPromise = promise;
-  try {
-    return await promise;
-  } finally {
-    if (systemInfoPromise === promise) {
-      systemInfoPromise = null;
-    }
-  }
-}
-
-// src/prokop/tabs/diagnostic/partials/renderAvailableActions.ts
-function renderAvailableActions({
-  globalCheck,
-  viewLogs,
-  showSingBoxConfig,
-  supportReport
-}) {
-  return E("div", { class: "fkp_diagnostic-page__right-bar__actions" }, [
-    ...insertIf(globalCheck.visible, [
-      renderButton({
-        onClick: globalCheck.onClick,
-        icon: renderCircleCheckBigIcon24,
-        text: _("Get global check"),
-        loading: globalCheck.loading,
-        disabled: globalCheck.disabled
-      })
-    ]),
-    ...insertIf(viewLogs.visible, [
-      renderButton({
-        onClick: viewLogs.onClick,
-        icon: renderSquareChartGanttIcon24,
-        text: _("View logs"),
-        loading: viewLogs.loading,
-        disabled: viewLogs.disabled
-      })
-    ]),
-    ...insertIf(showSingBoxConfig.visible, [
-      renderButton({
-        onClick: showSingBoxConfig.onClick,
-        icon: renderCogIcon24,
-        text: _("Show sing-box config"),
-        loading: showSingBoxConfig.loading,
-        disabled: showSingBoxConfig.disabled
-      })
-    ]),
-    ...insertIf(supportReport.visible, [
-      renderButton({
-        onClick: supportReport.onClick,
-        icon: renderDownloadIcon24,
-        text: _("Download support report"),
-        loading: supportReport.loading,
-        disabled: supportReport.disabled
-      })
-    ])
-  ]);
-}
-
-// src/prokop/tabs/diagnostic/statusLabels.ts
-function checkStatus(state) {
-  switch (state) {
-    case "success":
-      return { text: _("Healthy"), tone: "success" };
-    case "warning":
-      return { text: _("Needs attention"), tone: "warning" };
-    case "error":
-      return { text: _("Error"), tone: "error" };
-    case "loading":
-      return { text: _("Checking\u2026"), tone: "loading" };
-    case "unsupported":
-      return { text: _("Not available for checking"), tone: "neutral" };
-    default:
-      return { text: _("Not checked"), tone: "neutral" };
-  }
-}
-function renderStatusBadge(status2) {
-  return E(
-    "span",
-    { class: `fkp-diag-badge fkp-diag-badge--${status2.tone}` },
-    status2.text
-  );
-}
-
-// src/prokop/tabs/diagnostic/checkCards.ts
-function checkAdvice(check) {
-  if (check.state !== "error" && check.state !== "warning") return null;
-  switch (check.code) {
-    case "DNS" /* DNS */:
-      return {
-        meaning: _(
-          "Domains in rules may not resolve, or resolve past Prokop, so their rules do not apply."
-        ),
-        action: _(
-          "Check the DNS server addresses in Settings or choose another server."
-        ),
-        link: "settings"
-      };
-    case "SINGBOX" /* SINGBOX */:
-      return {
-        meaning: _(
-          "Traffic of the rules does not reach sing-box, so connections through rules fail."
-        ),
-        action: _(
-          "Restart Prokop on the Overview. If it repeats, open the logs under Technical data."
-        ),
-        link: "overview"
-      };
-    case "NFT" /* NFT */:
-      return {
-        meaning: _(
-          "Firewall rules that send traffic to Prokop are missing or not hit, so rules may not apply."
-        ),
-        action: _(
-          "Restart Prokop. If another add-on marks traffic, make sure it does not conflict."
-        ),
-        link: "overview"
-      };
-    case "ZAPRET" /* ZAPRET */:
-    case "ZAPRET2" /* ZAPRET2 */:
-    case "BYEDPI" /* BYEDPI */:
-      return {
-        meaning: _("DPI bypass of the rules using this provider may not work."),
-        action: _(
-          "Make sure the provider is installed and the rule strategy is valid, then restart Prokop."
-        ),
-        link: "rules"
-      };
-    case "OUTBOUNDS" /* OUTBOUNDS */:
-      return {
-        meaning: _(
-          "Some connections or nodes do not respond, so sites of their rules may not open."
-        ),
-        action: _(
-          "Test latency in Monitoring \u2192 Nodes and groups, choose a working node or update the subscription."
-        ),
-        link: "nodes"
-      };
-    case "FAKEIP" /* FAKEIP */:
-      if (check.description === _("Browser FakeIP check could not be completed"))
-        return {
-          meaning: _(
-            "This browser could not reach the check service, so FakeIP for devices is not proven either way."
-          ),
-          action: _(
-            "Retry the check when this device has internet access through the router."
-          )
-        };
-      if (check.description === _("FakeIP works; public IP comparison is inconclusive"))
-        return {
-          meaning: _(
-            "FakeIP works; only the comparison with the control address did not give an answer."
-          ),
-          action: _("Usually harmless. Retry the check later.")
-        };
-      return {
-        meaning: _(
-          "Devices may bypass the router DNS, so domain rules do not apply to them."
-        ),
-        action: _(
-          "Make sure devices use the router as DNS: turn off secure DNS (DoH, Private DNS) in browsers and phones."
-        )
-      };
-    default:
-      return {
-        meaning: _("Part of Prokop does not work as expected."),
-        action: _(
-          "Retry the check. If it repeats, open the logs under Technical data."
-        )
-      };
-  }
-}
-function provenFacts(check) {
-  const failing = check.items.filter(
-    (item) => item.state === "error" || item.state === "warning"
-  );
-  return failing.length ? failing.map(
-    (item) => item.value ? `${item.key}: ${item.value}` : item.key
-  ) : [check.description].filter(Boolean);
-}
-var RANK = { error: 0, warning: 1 };
-function groupChecks(checks) {
-  const sorted = [...checks].sort((a, b) => a.order - b.order);
-  return {
-    attention: sorted.filter((check) => check.state === "error" || check.state === "warning").sort((a, b) => RANK[a.state] - RANK[b.state] || a.order - b.order),
-    other: sorted.filter(
-      (check) => !["error", "warning", "success"].includes(check.state)
-    ),
-    passed: sorted.filter((check) => check.state === "success")
-  };
-}
-function checkSummary(checks) {
-  const count = (state) => checks.filter((check) => check.state === state).length;
-  const errors = count("error");
-  const warnings = count("warning");
-  const passed = count("success");
-  const parts = [
-    errors ? _("Errors: %d").replace("%d", String(errors)) : "",
-    warnings ? _("Warnings: %d").replace("%d", String(warnings)) : "",
-    passed ? _("Passed: %d").replace("%d", String(passed)) : ""
-  ].filter(Boolean);
-  return { errors, warnings, passed, text: parts.join(" \xB7 ") };
-}
-
-// src/prokop/tabs/diagnostic/partials/renderCheckSection.ts
-function diagnosticActionSummary(props) {
-  return [
-    props.title,
-    props.description,
-    ...props.items.map((item) => `${item.key}: ${item.value}`)
-  ].join("\n");
-}
-function itemIcon(state) {
-  const icon = E("span", { class: "fkp-check__item-icon" });
-  if (state === "success") icon.appendChild(renderCheckIcon24());
-  if (state === "warning") icon.appendChild(renderTriangleAlertIcon24());
-  if (state === "error") icon.appendChild(renderXIcon24());
-  return icon;
-}
-function stateIcon(state) {
-  switch (state) {
-    case "success":
-      return renderCircleCheckIcon24();
-    case "warning":
-      return renderCircleAlertIcon24();
-    case "error":
-      return renderCircleXIcon24();
-    case "loading":
-      return renderLoaderCircleIcon24();
-    default:
-      return renderCircleSlashIcon24();
-  }
-}
-function renderHead(props) {
-  const icon = E("span", { class: "fkp-check__icon" });
-  icon.appendChild(stateIcon(props.state));
-  return E("div", { class: "fkp-check__head" }, [
-    icon,
-    E("b", { class: "fkp-check__title" }, props.title),
-    renderStatusBadge(checkStatus(props.state))
-  ]);
-}
-function renderItems(props) {
-  return props.items.map(
-    (item) => E("div", { class: `fkp-check__item fkp-diag-text--${item.state}` }, [
-      itemIcon(item.state),
-      E("b", {}, item.key),
-      E("span", {}, item.value)
-    ])
-  );
-}
-function adviceLink(link) {
-  if (!link || isReadonlyMode() && link !== "nodes") return "";
-  const [label, open] = link === "settings" ? [_("Open settings"), () => openProkopPage("settings")] : link === "rules" ? [_("Open rules"), () => openProkopPage("rules")] : link === "nodes" ? [
-    _("Nodes and groups"),
-    () => openProkopPage("monitoring", { view: "nodes" })
-  ] : [_("Overview"), () => openProkopPage("overview")];
-  return E("button", { type: "button", class: "btn cbi-button", click: open }, [
-    label
-  ]);
-}
-function renderCheckSection(props, handlers) {
-  const status2 = checkStatus(props.state);
-  const advice = checkAdvice(props);
-  return E("div", { class: `fkp-check fkp-check--${status2.tone}` }, [
-    renderHead(props),
-    ...advice ? [
-      E("dl", { class: "fkp-check__advice" }, [
-        E("dt", {}, _("What it means")),
-        E("dd", {}, advice.meaning),
-        E("dt", {}, _("What was proven")),
-        E(
-          "dd",
-          {},
-          E(
-            "ul",
-            {},
-            provenFacts(props).map((fact) => E("li", {}, fact))
-          )
-        ),
-        E("dt", {}, _("What to do")),
-        E("dd", {}, advice.action)
-      ])
-    ] : [E("div", { class: "fkp-check__description" }, props.description)],
-    E("div", { class: "fkp-check__actions" }, [
-      E(
-        "button",
-        {
-          type: "button",
-          class: "btn cbi-button",
-          disabled: handlers.busy ? true : void 0,
-          click: () => handlers.onRetry(props.code)
-        },
-        _("Retry this check")
-      ),
-      adviceLink(advice?.link),
-      E(
-        "button",
-        {
-          type: "button",
-          class: "btn cbi-button",
-          click: () => (
-            // navigator.clipboard needs a secure context; LuCI is usually plain HTTP.
-            copyToClipboard(diagnosticActionSummary(props))
-          )
-        },
-        _("Copy details")
-      )
-    ]),
-    props.items.length ? E("details", { class: "fkp-check__details" }, [
-      E("summary", {}, _("All check results")),
-      E("div", { class: "fkp-check__description" }, props.description),
-      ...renderItems(props)
-    ]) : ""
-  ]);
-}
-function renderCheckRow(props) {
-  const status2 = checkStatus(props.state);
-  return E(
-    "div",
-    { class: `fkp-check fkp-check--compact fkp-check--${status2.tone}` },
-    [
-      renderHead(props),
-      // An unsupported check explains why instead of pretending to have run.
-      props.state === "unsupported" ? E("div", { class: "fkp-check__description" }, props.description) : "",
-      props.state === "success" && props.items.length ? E("details", { class: "fkp-check__details" }, [
-        E("summary", {}, _("Details")),
-        E("div", { class: "fkp-check__description" }, props.description),
-        ...renderItems(props)
-      ]) : ""
-    ]
-  );
-}
-function renderChecks(checks, handlers) {
-  const groups = groupChecks(checks);
-  const summary = checkSummary(checks);
-  return [
-    ...summary.text ? [E("p", { class: "fkp-diag-summary", role: "status" }, summary.text)] : [],
-    ...groups.attention.map((check) => renderCheckSection(check, handlers)),
-    ...groups.other.map(renderCheckRow),
-    ...groups.passed.length ? [
-      E("details", { class: "fkp-check-passed" }, [
-        E(
-          "summary",
-          {},
-          _("Passed checks: %d").replace(
-            "%d",
-            String(groups.passed.length)
-          )
-        ),
-        ...groups.passed.map(renderCheckRow)
-      ])
-    ] : []
-  ];
-}
-
-// src/prokop/tabs/diagnostic/partials/renderSystemInfo.ts
-function renderSystemInfo({ items }) {
-  return E("div", { class: "fkp_diagnostic-page__right-bar__system-info" }, [
-    E(
-      "b",
-      { class: "fkp_diagnostic-page__right-bar__system-info__title" },
-      _("System information")
-    ),
-    ...items.map((item) => {
-      const tagClass = [
-        "fkp_diagnostic-page__right-bar__system-info__row__tag",
-        ...insertIf(item.tag?.kind === "neutral", [
-          "fkp_diagnostic-page__right-bar__system-info__row__tag--neutral"
-        ]),
-        ...insertIf(item.tag?.kind === "warning", [
-          "fkp_diagnostic-page__right-bar__system-info__row__tag--warning"
-        ]),
-        ...insertIf(item.tag?.kind === "success", [
-          "fkp_diagnostic-page__right-bar__system-info__row__tag--success"
-        ])
-      ].filter(Boolean).join(" ");
-      return E(
-        "div",
-        { class: "fkp_diagnostic-page__right-bar__system-info__row" },
-        [
-          E("b", {}, item.key),
-          E("div", {}, [
-            E("span", {}, item.value),
-            E("span", { class: tagClass }, item?.tag?.label)
-          ])
-        ]
-      );
-    })
-  ]);
-}
-
-// src/helpers/normalizeCompiledVersion.ts
-function normalizeCompiledVersion(version) {
-  if (version.includes("COMPILED")) {
-    return "dev";
-  }
-  return version;
-}
-
-// src/prokop/tabs/diagnostic/checks/runSectionsCheck.ts
-function getSubscriptionLatencyState(latencyValues) {
-  const hasAvailableLatency = latencyValues.some((item) => Boolean(item));
-  const hasUnavailableLatency = latencyValues.some((item) => !item);
-  if (!hasAvailableLatency) {
-    return "error";
-  }
-  if (hasUnavailableLatency) {
-    return "warning";
-  }
-  return "success";
-}
-async function runSectionsCheck() {
-  const { order, title, code } = DIAGNOSTICS_CHECKS_MAP.OUTBOUNDS;
-  updateCheckStore({
-    order,
-    code,
-    title,
-    description: _("Checking, please wait"),
-    state: "loading",
-    items: []
-  });
-  if (isReadonlyMode()) {
-    updateCheckStore({
-      order,
-      code,
-      title,
-      description: _(
-        "Outbound checks need access to the Prokop configuration, which this role does not have."
-      ),
-      state: "unsupported",
-      items: []
-    });
-    return;
-  }
-  const sections = await getDashboardSections();
-  if (!sections.success) {
-    updateCheckStore({
-      order,
-      code,
-      title,
-      description: _("Cannot receive checks result"),
-      state: "error",
-      items: []
-    });
-    throw new Error("Rule outbounds checks failed");
-  }
-  const items = [];
-  for (const section of sections.data) {
-    async function getLatency() {
-      if (section.withTagSelect) {
-        const selectedOutbound2 = section.outbounds.find((item) => item.selected) ?? section.outbounds.find(
-          (item) => item.type?.toLowerCase() === "urltest"
-        ) ?? section.outbounds[0];
-        const isSubscription = section.proxyConfigType === "subscription";
-        if (selectedOutbound2?.code) {
-          const latencyProxy2 = await ProkopShellMethods.getClashApiProxyLatency(
-            selectedOutbound2.code,
-            section.latencyTestTimeout
-          );
-          const proxySuccess = latencyProxy2.success && !latencyProxy2.data.message;
-          if (proxySuccess) {
-            return {
-              state: "success",
-              latency: `[${selectedOutbound2.displayName ?? ""}] ${latencyProxy2.data.delay}ms`
-            };
-          }
-          return {
-            state: "error",
-            latency: `[${selectedOutbound2.displayName ?? ""}] ${_("Not responding")}`
-          };
-        }
-        const latencyGroup = await ProkopShellMethods.getClashApiGroupLatency(
-          section.code
-        );
-        const success2 = latencyGroup.success && !latencyGroup.data.message;
-        if (success2) {
-          const latencyValues = Object.values(latencyGroup.data);
-          const sectionState = isSubscription ? getSubscriptionLatencyState(latencyValues) : "success";
-          const selectedProxyDelay = latencyGroup.data?.[selectedOutbound2?.code ?? ""];
-          if (selectedProxyDelay) {
-            return {
-              state: sectionState,
-              latency: `[${selectedOutbound2?.displayName ?? ""}] ${selectedProxyDelay}ms`
-            };
-          }
-          return {
-            state: "error",
-            latency: `[${selectedOutbound2?.displayName ?? ""}] ${_("Not responding")}`
-          };
-        }
-        return {
-          state: "error",
-          latency: _("Not responding")
-        };
-      }
-      const selectedOutbound = section.outbounds[0];
-      const latencyProxy = await ProkopShellMethods.getClashApiProxyLatency(
-        section.code,
-        section.latencyTestTimeout
-      );
-      const success = latencyProxy.success && !latencyProxy.data.message;
-      if (success) {
-        return {
-          state: "success",
-          latency: `${latencyProxy.data.delay} ms`
-        };
-      }
-      if (section.action === "vpn" && selectedOutbound?.runtimeAvailable) {
-        return {
-          state: "warning",
-          latency: `[${selectedOutbound.displayName || section.code}] ${_("Connectivity probe failed")}`
-        };
-      }
-      return {
-        state: "error",
-        latency: _("Not responding")
-      };
-    }
-    const { latency, state: state2 } = await getLatency();
-    items.push({
-      state: state2,
-      key: section.displayName,
-      value: latency
-    });
-  }
-  const allGood = items.every((item) => item.state === "success");
-  const atLeastOneGood = items.some((item) => item.state !== "error");
-  const { state, description } = getMeta({ atLeastOneGood, allGood });
-  updateCheckStore({
-    order,
-    code,
-    title,
-    description,
-    state,
-    items
-  });
-  if (!atLeastOneGood) {
-    throw new Error("Rule outbounds checks failed");
-  }
-}
-
-// src/prokop/tabs/monitoring/connectionView.ts
-function trafficSortValue(connection, mode) {
-  if (mode === "download") return connection.download || 0;
-  if (mode === "upload") return connection.upload || 0;
-  if (mode === "total")
-    return (connection.download || 0) + (connection.upload || 0);
-  return null;
-}
-var BYPASS_TAG = "bypass-out";
-var DIRECT_TAG = "direct-out";
-function routeTagFromRule(rule) {
-  const match = String(rule || "").match(/=>\s*route\(([^)]+)\)/);
-  return String(match?.[1] || "").trim().replace(/^['"]|['"]$/g, "");
-}
-function kindForAction(action) {
-  switch (action) {
-    case "zapret":
-    case "zapret2":
-    case "byedpi":
-      return "dpi";
-    case "connection":
-    case "proxy":
-    case "outbound":
-    case "vpn":
-      return "connection";
-    case "bypass":
-      return "bypass";
-    case "block":
-      return "block";
-    default:
-      return "unknown";
-  }
-}
-function connectionPath(chains, rule, ruleByTag) {
-  const list = (Array.isArray(chains) ? chains : []).filter(Boolean);
-  const routeTag = routeTagFromRule(rule);
-  for (let index = list.length - 1; index >= 0; index--) {
-    const owner2 = ruleByTag(list[index]);
-    if (owner2)
-      return {
-        kind: kindForAction(owner2.action),
-        rule: owner2,
-        node: index > 0 ? list[0] : "",
-        tag: ""
-      };
-  }
-  const owner = routeTag ? ruleByTag(routeTag) : null;
-  if (owner)
-    return {
-      kind: kindForAction(owner.action),
-      rule: owner,
-      node: list[0] && list[0] !== routeTag ? list[0] : "",
-      tag: ""
-    };
-  const tag = list[list.length - 1] || routeTag;
-  if (list.includes(BYPASS_TAG) || routeTag === BYPASS_TAG)
-    return { kind: "bypass", rule: null, node: "", tag: "" };
-  if (/\breject\b/.test(String(rule || "")))
-    return { kind: "block", rule: null, node: "", tag: "" };
-  if (!tag || tag === DIRECT_TAG)
-    return { kind: "direct", rule: null, node: "", tag: "" };
-  return { kind: "unknown", rule: null, node: "", tag };
-}
-function pathKindLabel(kind) {
-  switch (kind) {
-    case "dpi":
-      return _("DPI");
-    case "connection":
-      return _("Connection");
-    case "bypass":
-      return _("Bypass");
-    case "direct":
-      return _("Direct");
-    case "block":
-      return _("Block");
-    default:
-      return _("Other");
-  }
-}
-function dpiProviderLabel(provider) {
-  switch (provider) {
-    case "zapret":
-      return "Zapret";
-    case "zapret2":
-      return "Zapret2";
-    case "byedpi":
-      return "ByeDPI";
-    default:
-      return _("DPI");
-  }
-}
-function dpiStrategyLabel(rule) {
-  if (rule.dpiCustom) return _("custom strategy");
-  if (rule.dpiStrategy === "default") return _("default strategy");
-  return rule.dpiStrategy || "";
-}
-function pathSummary(path) {
-  const base = { kind: path.kind, kindLabel: pathKindLabel(path.kind) };
-  if (path.rule && path.kind === "dpi") {
-    const strategy = dpiStrategyLabel(path.rule);
-    return {
-      ...base,
-      primary: path.rule.label,
-      secondary: [dpiProviderLabel(path.rule.dpiProvider), strategy].filter(Boolean).join(" \xB7 ")
-    };
-  }
-  if (path.rule)
-    return { ...base, primary: path.rule.label, secondary: path.node };
-  if (path.kind === "direct")
-    return { ...base, primary: "", secondary: _("No rule matched") };
-  return { ...base, primary: path.tag, secondary: "" };
-}
-function matchesPathFilter(path, filter2) {
-  if (!filter2 || filter2 === "all") return true;
-  if (filter2.startsWith("kind:")) return path.kind === filter2.slice(5);
-  if (filter2.startsWith("rule:")) return path.rule?.name === filter2.slice(5);
-  return true;
-}
-function connectionActions(active, readonly = false) {
-  const actions = [
-    {
-      kind: "details",
-      label: _("Details"),
-      className: "fkp-monitoring-details"
-    }
-  ];
-  if (active && !readonly)
-    actions.push({
-      kind: "close",
-      label: _("Close connection"),
-      className: "fkp_monitoring-page__row-action"
-    });
-  return actions;
-}
-
-// src/prokop/tabs/diagnostic/connectivityMatrix.ts
-var TYPES = ["DNS", "TCP", "HTTP", "HTTPS"];
-var DEFAULT_PORTS = {
-  DNS: "",
-  TCP: "",
-  HTTP: "80",
-  HTTPS: "443"
-};
-var DEFAULTS = [
-  { host: "cloudflare.com", type: "HTTPS", port: "443" },
-  { host: "telegram.org", type: "HTTPS", port: "443" }
-];
-var MAX_TARGETS = 10;
-function loadTargets(storage) {
-  try {
-    const value = JSON.parse(
-      readStorageItem(storage, CONNECTIVITY_TARGETS_KEY) || "null"
-    );
-    if (Array.isArray(value))
-      return value.slice(0, MAX_TARGETS).map(
-        (item) => item && item.type === "TLS" ? { ...item, type: "HTTPS" } : item
-      ).filter(
-        (item) => item && typeof item.host === "string" && item.host.length <= 253 && TYPES.includes(item.type) && typeof item.port === "string" && item.port.length <= 5
-      );
-  } catch (_error) {
-  }
-  return DEFAULTS.map((target) => ({ ...target }));
-}
-function changeType(target, type) {
-  if (type === "DNS") return { ...target, type, port: "" };
-  if (type === "TCP") return { ...target, type, port: target.port };
-  const wasDefault = target.port === "" || Object.values(DEFAULT_PORTS).includes(target.port);
-  return {
-    ...target,
-    type,
-    port: wasDefault ? DEFAULT_PORTS[type] : target.port
-  };
-}
-var IPV4 = /^(\d{1,3}\.){3}\d{1,3}$/;
-function validateTarget(target) {
-  const host = target.host.trim();
-  if (!host) return _("Enter an address");
-  if (target.type === "DNS")
-    return IPV4.test(host) || host.includes(":") ? _("DNS check needs a domain name") : null;
-  if (!target.port) return _("Enter a port");
-  const port = Number(target.port);
-  if (!Number.isInteger(port) || port < 1 || port > 65535)
-    return _("Port must be between 1 and 65535");
-  return null;
-}
-var ERROR_TEXT = {
-  timeout: () => _("Timed out"),
-  nxdomain: () => _("Domain does not exist"),
-  no_answer: () => _("No DNS records for this name"),
-  dns_failed: () => _("DNS name did not resolve"),
-  connect_failed: () => _("Connection refused or host unreachable"),
-  tls_failed: () => _("TLS or certificate error"),
-  no_response: () => _("Server closed the connection without a response"),
-  tool_missing: () => _("Probe tool is missing on the router"),
-  failed: () => _("Check failed")
-};
-function resultView(result) {
-  if (result.state === "idle")
-    return { text: _("Not checked"), tone: "neutral" };
-  if (result.state === "running")
-    return { text: _("Checking\u2026"), tone: "loading" };
-  if (result.state === "invalid")
-    return { text: result.message, tone: "error" };
-  const data = result.result;
-  if (data.status === "ok") {
-    const parts = [`\u2713 ${_("Reachable")}`, `${data.latency_ms} ${_("ms")}`];
-    if (data.address) parts.push(data.address);
-    if (data.http_code) parts.push(`HTTP ${data.http_code}`);
-    return { text: parts.join(" \xB7 "), tone: "success" };
-  }
-  const reason = (ERROR_TEXT[data.error || ""] || ERROR_TEXT.failed)();
-  return {
-    text: `\u2715 ${reason}`,
-    tone: data.status === "timeout" ? "warning" : "error"
-  };
-}
-async function probe(target) {
-  const invalid2 = validateTarget(target);
-  if (invalid2) return { state: "invalid", message: invalid2 };
-  const response = await ProkopShellMethods.connectivityTest(
-    target.host.trim(),
-    target.type,
-    target.type === "DNS" ? "" : target.port
-  );
-  if (!response.success || !response.data?.status)
-    return { state: "invalid", message: _("The router rejected this check") };
-  if (response.data.type !== target.type || target.type !== "DNS" && String(response.data.port) !== target.port)
-    return { state: "idle" };
-  return { state: "done", result: response.data };
-}
-function field(label, control, extraClass = "") {
-  return E("label", { class: `fkp-conn__cell ${extraClass}`.trim() }, [
-    E("span", { class: "fkp-conn__cell-label" }, label),
-    control
-  ]);
-}
-function initConnectivityMatrix() {
-  const root = document.getElementById("connectivity-rows");
-  const add = document.getElementById(
-    "connectivity-add"
-  );
-  const run = document.getElementById(
-    "connectivity-run"
-  );
-  if (!root || !add || !run || add.onclick) return;
-  const rows = loadTargets(localStorage).map((target) => ({
-    target,
-    result: { state: "idle" }
-  }));
-  let runningAll = false;
-  const save = () => writeStorageItem(
-    localStorage,
-    CONNECTIVITY_TARGETS_KEY,
-    JSON.stringify(rows.map((row) => row.target))
-  );
-  const busy2 = () => rows.some((row) => row.result.state === "running");
-  const updateButtons = () => {
-    run.disabled = runningAll || busy2() || rows.length === 0;
-    add.disabled = rows.length >= MAX_TARGETS;
-    for (const row of rows) {
-      const retry = row.element?.querySelector(".fkp-conn__retry");
-      if (retry) retry.disabled = runningAll || row.result.state === "running";
-    }
-  };
-  const paintResult = (row) => {
-    const cell = row.element?.querySelector(".fkp-conn__result");
-    if (!cell) return;
-    const view = resultView(row.result);
-    cell.className = `fkp-conn__result fkp-diag-text--${view.tone}`;
-    cell.textContent = view.text;
-    updateButtons();
-  };
-  const invalidate = (row) => {
-    row.result = { state: "idle" };
-    save();
-    paintResult(row);
-  };
-  const check = async (row) => {
-    row.result = { state: "running" };
-    paintResult(row);
-    const requested = { ...row.target };
-    const result = await probe(requested);
-    if (JSON.stringify(requested) !== JSON.stringify(row.target)) return;
-    row.result = result;
-    paintResult(row);
-  };
-  const renderRow2 = (row) => {
-    const host = E("input", {
-      class: "cbi-input-text",
-      value: row.target.host,
-      placeholder: "example.com",
-      maxLength: 253
-    });
-    const type = E(
-      "select",
-      { class: "cbi-input-select" },
-      TYPES.map(
-        (kind) => E("option", { value: kind, selected: row.target.type === kind }, kind)
-      )
-    );
-    const port = E("input", {
-      class: "cbi-input-text",
-      value: row.target.port,
-      type: "number",
-      min: "1",
-      max: "65535",
-      placeholder: row.target.type === "TCP" ? "443" : ""
-    });
-    host.oninput = () => {
-      row.target.host = host.value;
-      invalidate(row);
-    };
-    port.oninput = () => {
-      row.target.port = port.value.trim();
-      invalidate(row);
-    };
-    type.onchange = () => {
-      row.target = changeType(row.target, type.value);
-      row.result = { state: "idle" };
-      save();
-      row.element?.replaceWith(renderRow2(row));
-      updateButtons();
-    };
-    const portCell = row.target.type === "DNS" ? E("div", { class: "fkp-conn__cell fkp-conn__cell--muted" }, [
-      E("span", { class: "fkp-conn__cell-label" }, _("Port")),
-      E("span", {}, _("not used"))
-    ]) : field(_("Port"), port);
-    const view = resultView(row.result);
-    row.element = E("div", { class: "fkp-conn__row" }, [
-      field(_("Address"), host),
-      field(_("Type"), type),
-      portCell,
-      E("div", { class: "fkp-conn__cell" }, [
-        E("span", { class: "fkp-conn__cell-label" }, _("Result")),
-        E(
-          "span",
-          {
-            class: `fkp-conn__result fkp-diag-text--${view.tone}`,
-            role: "status"
-          },
-          view.text
-        )
-      ]),
-      E("div", { class: "fkp-conn__actions" }, [
-        E(
-          "button",
-          {
-            type: "button",
-            class: "btn cbi-button fkp-conn__retry",
-            click: () => void check(row)
-          },
-          _("Check")
-        ),
-        E(
-          "button",
-          {
-            type: "button",
-            class: "btn cbi-button fkp-conn__remove",
-            title: _("Remove"),
-            "aria-label": _("Remove"),
-            click: () => {
-              rows.splice(rows.indexOf(row), 1);
-              save();
-              render7();
-            }
-          },
-          "\u2715"
-        )
-      ])
-    ]);
-    return row.element;
-  };
-  const render7 = () => {
-    root.replaceChildren(
-      E("div", { class: "fkp-conn__head", role: "presentation" }, [
-        E("span", {}, _("Address")),
-        E("span", {}, _("Type")),
-        E("span", {}, _("Port")),
-        E("span", {}, _("Result")),
-        E("span", {}, "")
-      ]),
-      ...rows.map(renderRow2)
-    );
-    updateButtons();
-  };
-  add.onclick = () => {
-    if (rows.length >= MAX_TARGETS) return;
-    rows.push({
-      target: { host: "", type: "HTTPS", port: "443" },
-      result: { state: "idle" }
-    });
-    save();
-    render7();
-    rows[rows.length - 1].element?.querySelector("input")?.focus();
-  };
-  run.onclick = async () => {
-    if (runningAll || busy2()) return;
-    runningAll = true;
-    updateButtons();
-    try {
-      for (const row of [...rows]) if (rows.includes(row)) await check(row);
-    } finally {
-      runningAll = false;
-      updateButtons();
-    }
-  };
-  render7();
-}
-
-// src/prokop/tabs/diagnostic/siteCheck.ts
-function undecidedReasonText(reason) {
-  switch (reason) {
-    case "singbox_config_unavailable":
-    case "config_unavailable":
-      return _(
-        "the sing-box configuration is not available; is Prokop running?"
-      );
-    // Reason codes of routing/resolve.uc (shared with autotune apply). The
-    // rule may be the one that would own the site (UC-103).
-    case "undecidable_matcher":
-      return _(
-        "a rule on the way uses a list or pattern whose contents cannot be checked here"
-      );
-    case "resolve_rule":
-      return _(
-        "a rule on the way re-resolves the address, so the route depends on its answer"
-      );
-    case "ipv6_not_modelled":
-      return _("the route of an IPv6 address is not calculated");
-    case "fakeip_domain_unknown":
-      return _(
-        "a FakeIP address is routed by its domain; check the site by its name"
-      );
-    case "dns_hijack":
-      return _(
-        "connections to the DNS port are answered by the sing-box DNS, not routed by a rule"
-      );
-    case "real_address_interception_unknown":
-      return _(
-        "the site has a real address; whether Prokop intercepts it depends on the address lists of the rules"
-      );
-    case "local_address_not_intercepted":
-      return _(
-        "the address is local or reserved; Prokop does not intercept it, the connection goes directly"
-      );
-    case "source_scoped_rule":
-      return _("a rule applies to selected devices only; choose a device");
-    default:
-      return _("a rule is too complex to calculate");
-  }
-}
-function kindOf(action) {
-  if (action === "zapret" || action === "zapret2" || action === "byedpi")
-    return "dpi";
-  if (["connection", "bypass", "block", "direct"].includes(action))
-    return action;
-  return "unknown";
-}
-function routeRow(trace) {
-  const action = String(trace.action.value || "");
-  if (trace.action.provenance === "unknown" || !action)
-    return {
-      label: _("Route"),
-      value: _("Rule not calculated"),
-      note: undecidedReasonText(trace.rule.reason),
-      provenance: "unknown",
-      tone: "neutral"
-    };
-  const kind = kindOf(action);
-  const parts = [pathKindLabel(kind)];
-  if (trace.rule.value) parts.push(`${_("rule")} \xAB${trace.rule.value}\xBB`);
-  if (kind === "dpi")
-    parts.push(
-      [
-        dpiProviderLabel(String(trace.dpi.value || action)),
-        dpiStrategyLabel({
-          name: "",
-          label: "",
-          action,
-          dpiStrategy: trace.dpi.strategy,
-          dpiCustom: trace.dpi.strategy_custom
-        })
-      ].filter(Boolean).join(" \xB7 ")
-    );
-  return {
-    label: _("Route"),
-    value: parts.join(" \xB7 "),
-    note: kind === "direct" ? _("No rule matched") : kind === "block" ? _("The address is blocked by a rule") : "",
-    provenance: "simulated",
-    tone: "neutral"
-  };
-}
-function dnsRow(trace) {
-  const address = trace.dns.address || "";
-  if (trace.dns.provenance === "simulated")
-    return {
-      label: _("Address"),
-      value: address,
-      note: _("An IP address needs no DNS"),
-      provenance: "simulated",
-      tone: "neutral"
-    };
-  if (!address)
-    return {
-      label: _("DNS"),
-      value: _("Not resolved"),
-      note: _("The router DNS returned no address"),
-      provenance: "observed",
-      tone: "error"
-    };
-  return {
-    label: _("DNS"),
-    value: /^198\.1[89]\./.test(address) ? `${address} (FakeIP)` : address,
-    note: _("Answer of the router DNS"),
-    provenance: "observed",
-    tone: "success"
-  };
-}
-function probeRow(result) {
-  const view = resultView(result);
-  return {
-    label: _("From the router"),
-    value: view.text,
-    note: _("HTTPS request made by the router itself"),
-    provenance: result.state === "done" ? "observed" : "unknown",
-    tone: view.tone
-  };
-}
-function siteConclusion(trace, result) {
-  const action = String(trace.action.value || "");
-  if (!trace.dns.address)
-    return _(
-      "The name does not resolve on the router, so no rule can open it. Check the DNS results above."
-    );
-  if (action === "block")
-    return _(
-      "A rule blocks this address. This is intended for ads and trackers."
-    );
-  const reachable = result.state === "done" && result.result.status === "ok";
-  if (reachable)
-    return _(
-      "The site opens from the router. If it does not open on a device, look at its real connections."
-    );
-  const hint = kindOf(action) === "dpi" ? _(
-    "For a DPI rule this can mean the strategy does not work with your provider."
-  ) : action === "connection" ? _("Check the node of the rule in Monitoring \u2192 Nodes and groups.") : action === "direct" ? _("No rule handles it; it may need to be added to a rule.") : "";
-  return [
-    _(
-      "The site did not open from the router. The router may take a different path than devices."
-    ),
-    hint
-  ].filter(Boolean).join(" ");
-}
-function renderRow(row) {
-  return [
-    E("dt", {}, row.label),
-    E("dd", {}, [
-      // Value and its provenance on one line; neutral values keep the text colour.
-      E("span", { class: "fkp-site__value" }, [
-        E(
-          "span",
-          row.tone === "neutral" ? {} : { class: `fkp-diag-text--${row.tone}` },
-          row.value
-        ),
-        " ",
-        renderProvenance(row.provenance)
-      ]),
-      row.note ? E("small", {}, row.note) : ""
-    ])
-  ];
-}
-function routeTraceFailureText(response) {
-  const data = response.data;
-  if (response.success && data?.error === "invalid_input") {
-    return _("Enter a valid domain or IP address");
-  }
-  return _("The route check did not complete. Try again.");
-}
-function initSiteCheck(loadDevices) {
-  const button = document.getElementById(
-    "site-check-run"
-  );
-  const input = document.getElementById(
-    "site-check-target"
-  );
-  const device = document.getElementById(
-    "site-check-device"
-  );
-  const container = document.getElementById("site-check-result");
-  if (!button || !input || !container || button.onclick) return;
-  void loadDevices?.().then((devices) => {
-    if (!device) return;
-    for (const [ip, name] of Object.entries(devices || {}))
-      device.appendChild(E("option", { value: ip }, `${name || ip} (${ip})`));
-  }).catch(() => {
-  });
-  input.onkeydown = (event) => {
-    if (event.key === "Enter") button.click();
-  };
-  input.oninput = () => container.replaceChildren();
-  button.onclick = async () => {
-    const target = input.value.trim();
-    if (!target) {
-      container.textContent = _("Enter a domain or IP address");
-      return;
-    }
-    const source = device?.value || "";
-    container.textContent = _("Checking\u2026");
-    button.disabled = true;
-    try {
-      const [trace, reach] = await Promise.all([
-        ProkopShellMethods.routeTrace(target, source, "TCP", "443"),
-        probe({ host: target, type: "HTTPS", port: "443" })
-      ]);
-      if (input.value.trim() !== target) return;
-      if (!trace.success || !trace.data?.target) {
-        container.textContent = routeTraceFailureText(trace);
-        return;
-      }
-      const rows = [routeRow(trace.data), dnsRow(trace.data), probeRow(reach)];
-      container.replaceChildren(
-        E("dl", { class: "fkp-route__facts" }, rows.flatMap(renderRow)),
-        E(
-          "p",
-          { class: "fkp-site__conclusion" },
-          siteConclusion(trace.data, reach)
-        ),
-        E("div", { class: "fkp-diag-actions" }, [
-          E(
-            "a",
-            {
-              class: "btn cbi-button",
-              href: prokopPageUrl("monitoring", { search: target })
-            },
-            _("See connections to this address")
-          )
-        ]),
-        ...trace.data.interface.value ? [
-          E(
-            "p",
-            { class: "fkp-diag-hint" },
-            `${_("Router kernel route")}: ${trace.data.interface.value}`
-          )
-        ] : []
-      );
-    } catch (_error) {
-      if (input.value.trim() === target)
-        container.textContent = routeTraceFailureText({ success: false });
-    } finally {
-      button.disabled = false;
-    }
-  };
-  const host = readPageParams().host;
-  if (host && !input.value) {
-    input.value = host.slice(0, 253);
-    button.click();
-  }
-}
-
-// src/prokop/tabs/shared/startService.ts
-var starting = false;
-function renderStartServiceAction() {
-  if (isReadonlyMode()) {
-    return [];
-  }
-  const button = E(
-    "button",
-    {
-      type: "button",
-      class: "btn cbi-button cbi-button-action fkp-start-service",
-      disabled: starting ? true : void 0,
-      click: async () => {
-        if (starting) {
-          return;
-        }
-        starting = true;
-        button.disabled = true;
-        button.textContent = _("Starting\u2026");
-        try {
-          await runProkopServiceAction("start");
-        } catch (error) {
-          const notice = serviceActionNotice(error);
-          showToast(notice.text, notice.type, 6e3);
-        } finally {
-          starting = false;
-          button.disabled = false;
-          button.textContent = _("Start Prokop");
-        }
-      }
-    },
-    starting ? _("Starting\u2026") : _("Start Prokop")
-  );
-  return [button];
-}
-
-// src/prokop/tabs/diagnostic/dpiPlayground.ts
-function validationView(response) {
-  const data = response.data;
-  if (!response.success || typeof data?.valid !== "boolean")
-    return { text: _("Syntax check is unavailable"), tone: "error" };
-  if (data.valid)
-    return { text: `\u2713 ${_("Syntax is correct")}`, tone: "success" };
-  const message = typeof data.message === "string" ? data.message.trim() : "";
-  return {
-    text: `\u2715 ${message || _("The strategy contains an error")}`,
-    tone: "error"
-  };
-}
-function initDpiPlayground() {
-  const button = document.getElementById(
-    "dpi-validate"
-  );
-  const input = document.getElementById(
-    "dpi-strategy"
-  );
-  const provider = document.getElementById(
-    "dpi-provider"
-  );
-  const result = document.getElementById("dpi-playground-result");
-  if (!button || !input || !provider || !result || button.onclick) return;
-  const clear = () => result.replaceChildren();
-  input.oninput = clear;
-  provider.onchange = clear;
-  button.onclick = async () => {
-    const strategy = input.value.trim();
-    if (!strategy) {
-      result.className = "fkp-diag-text--error";
-      result.textContent = _("Enter a strategy");
-      return;
-    }
-    button.disabled = true;
-    result.className = "fkp-diag-text--loading";
-    result.textContent = _("Checking\u2026");
-    try {
-      const response = await ProkopShellMethods.validateDpiStrategy(
-        provider.value,
-        strategy
-      );
-      if (input.value.trim() !== strategy) return;
-      const view = validationView(response);
-      result.className = `fkp-diag-text--${view.tone}`;
-      result.textContent = view.text;
-    } catch (_error) {
-      if (input.value.trim() !== strategy) return;
-      const view = validationView({ success: false });
-      result.className = `fkp-diag-text--${view.tone}`;
-      result.textContent = view.text;
-    } finally {
-      button.disabled = false;
-    }
-  };
-}
-
-// src/prokop/tabs/diagnostic/serviceTransition.ts
-function isServiceTransitionStatus(status2) {
-  return ["starting", "stopping", "restarting", "reloading"].includes(status2);
-}
-function hasLocalMutatingServiceActionLoading(actions) {
-  return actions.restart.loading || actions.start.loading || actions.stop.loading || actions.enable.loading || actions.disable.loading;
-}
-function shouldSkipServicesInfoAutoRefresh({
-  force,
-  localMutatingActionLoading
-}) {
-  return !force && localMutatingActionLoading;
-}
-function shouldResetDiagnosticsChecks({
-  resetChecks,
-  diagnosticsRunLoading
-}) {
-  return resetChecks && !diagnosticsRunLoading;
-}
-function shouldDisableDiagnosticRunAction({
-  providerInfoLoaded,
-  servicesInfoLoading,
-  prokopRunning,
-  mutatingServiceActionLoading
-}) {
-  return !providerInfoLoaded || servicesInfoLoading || !prokopRunning || mutatingServiceActionLoading;
-}
-function hasComponentActionLoading(actions) {
-  return Object.values(actions).some((action) => action.loading);
-}
-function getAvailableActionsDisabledState({
-  servicesInfoLoading,
-  mutatingServiceActionLoading,
-  componentActionLoading
-}) {
-  return {
-    serviceControlsDisabled: servicesInfoLoading || mutatingServiceActionLoading || componentActionLoading,
-    utilityActionsDisabled: mutatingServiceActionLoading || componentActionLoading,
-    viewLogsDisabled: false
-  };
-}
-
-// src/prokop/tabs/diagnostic/diagnosticRunPersistence.ts
-var DIAGNOSTIC_RUN_STORAGE_KEY = "prokop:diagnostic-run:v1";
-var DIAGNOSTIC_RUN_TTL_MS = 30 * 60 * 1e3;
-var CHECK_STATES = [
-  "loading",
-  "warning",
-  "success",
-  "error",
-  "skipped",
-  "unsupported"
-];
-var CHECK_ITEM_STATES = ["error", "warning", "success"];
-function getSessionStorage3() {
-  if (typeof window === "undefined") {
-    return null;
-  }
-  try {
-    return window.sessionStorage;
-  } catch {
-    return null;
-  }
-}
-function isRecord(value) {
-  return Boolean(value) && typeof value === "object";
-}
-function isOptionalBoolean(value) {
-  return value === void 0 || typeof value === "boolean";
-}
-function isDiagnosticsProviderOptions(value) {
-  if (!isRecord(value)) {
-    return false;
-  }
-  return isOptionalBoolean(value.includeZapret) && isOptionalBoolean(value.includeZapret2) && isOptionalBoolean(value.includeByedpi);
-}
-function isDiagnosticCheckItem(value) {
-  return isRecord(value) && CHECK_ITEM_STATES.includes(String(value.state)) && typeof value.key === "string" && typeof value.value === "string";
-}
-function isDiagnosticCheck(value) {
-  return isRecord(value) && Number.isFinite(value.order) && Object.values(DIAGNOSTICS_CHECKS).includes(
-    value.code
-  ) && typeof value.title === "string" && typeof value.description === "string" && CHECK_STATES.includes(String(value.state)) && Array.isArray(value.items) && value.items.every(isDiagnosticCheckItem);
-}
-function isPersistedDiagnosticRun(value) {
-  if (!isRecord(value)) {
-    return false;
-  }
-  return typeof value.nextRunnerIndex === "number" && Number.isInteger(value.nextRunnerIndex) && value.nextRunnerIndex >= 0 && isDiagnosticsProviderOptions(value.providerOptions) && Array.isArray(value.diagnosticsChecks) && value.diagnosticsChecks.every(isDiagnosticCheck) && Number.isFinite(value.updatedAt);
-}
-function isExpired(run, now = Date.now()) {
-  return now - run.updatedAt > DIAGNOSTIC_RUN_TTL_MS;
-}
-function readPersistedDiagnosticRun(storage = getSessionStorage3()) {
-  if (!storage) {
-    return null;
-  }
-  try {
-    const parsed = JSON.parse(
-      storage.getItem(DIAGNOSTIC_RUN_STORAGE_KEY) || "null"
-    );
-    if (!isPersistedDiagnosticRun(parsed) || isExpired(parsed)) {
-      storage.removeItem(DIAGNOSTIC_RUN_STORAGE_KEY);
-      return null;
-    }
-    return parsed;
-  } catch {
-    storage.removeItem(DIAGNOSTIC_RUN_STORAGE_KEY);
-    return null;
-  }
-}
-function savePersistedDiagnosticRun(run, storage = getSessionStorage3()) {
-  if (!storage) {
-    return;
-  }
-  try {
-    storage.setItem(
-      DIAGNOSTIC_RUN_STORAGE_KEY,
-      JSON.stringify({
-        ...run,
-        updatedAt: Date.now()
-      })
-    );
-  } catch {
-  }
-}
-function clearPersistedDiagnosticRun(storage = getSessionStorage3()) {
-  if (!storage) {
-    return;
-  }
-  try {
-    storage.removeItem(DIAGNOSTIC_RUN_STORAGE_KEY);
-  } catch {
-  }
-}
-
-// src/prokop/tabs/diagnostic/helpers/maskDiagnostics.ts
-var MASKED_VALUE = "MASKED";
-var SING_BOX_MASKED_KEYS = /* @__PURE__ */ new Set([
-  "access_key_id",
-  "address",
-  "advertise_routes",
-  "api_token",
-  "auth",
-  "auth_key",
-  "auth_str",
-  "client_key",
-  "control_url",
-  "domain",
-  "domain_keyword",
-  "domain_regex",
-  "domain_suffix",
-  "email",
-  "excluded_source_ip_cidr",
-  "exit_node",
-  "extra_headers",
-  "fingerprint",
-  "headers",
-  "host",
-  "hostname",
-  "ip_cidr",
-  "key",
-  "key_id",
-  "listen",
-  "listen_port",
-  "local_address",
-  "mac_key",
-  "obfs",
-  "password",
-  "path",
-  "peer_public_key",
-  "plugin_opts",
-  "pre_shared_key",
-  "private_key",
-  "private_key_passphrase",
-  "public_key",
-  "secret",
-  "secret_access_key",
-  "server",
-  "server_name",
-  "server_port",
-  "server_ports",
-  "service_name",
-  "short_id",
-  "source_ip_cidr",
-  "torrc",
-  "user",
-  "username",
-  "uuid"
-]);
-var UCI_SAFE_OPTIONS = /* @__PURE__ */ new Set([
-  "action",
-  "active_check_interval",
-  "applied_migrations",
-  "auto_hwid",
-  "auto_user_agent",
-  "badwan_monitored_interfaces",
-  "badwan_reload_delay",
-  "cache_path",
-  "check_interval",
-  "check_timeout",
-  "community_lists",
-  "component_update_check_enabled",
-  "component_update_check_interval",
-  "conditions_text_mode",
-  "config_path",
-  "config_version",
-  "connection_type",
-  "detect_server_country",
-  "direct_proxy_enabled",
-  "direct_proxy_port",
-  "disable_quic",
-  "dns_check_interval",
-  "dns_check_timeout",
-  "dns_detour_enabled",
-  "dns_detour_section",
-  "dns_failover_failure_threshold",
-  "dns_recovery_check_interval",
-  "dns_rewrite_ttl",
-  "dns_strategy",
-  "dns_type",
-  "domain_resolver_dns_type",
-  "domain_resolver_enabled",
-  "dont_touch_dhcp",
-  "download_components_via_proxy",
-  "download_components_via_proxy_section",
-  "download_lists_via_proxy",
-  "download_lists_via_proxy_section",
-  "download_subscriptions_via_proxy",
-  "download_via_proxy_enabled",
-  "download_via_proxy_section",
-  "enable_badwan_interface_monitoring",
-  "enable_output_network_interface",
-  "enable_yacd",
-  "enable_yacd_wan_access",
-  "enabled",
-  "exclude_countries",
-  "exclude_ntp",
-  "exclude_outbounds",
-  "exclude_regex",
-  "fastest_check_interval",
-  "filter_mode",
-  "group",
-  "hide_detour_outbounds",
-  "hide_urltest_group_outbounds",
-  "idle_timeout",
-  "include_countries",
-  "include_outbounds",
-  "include_regex",
-  "include_subnets",
-  "include_urltest_groups",
-  "interface",
-  "interfaces",
-  "interrupt_exist_connections",
-  "label",
-  "list_update_enabled",
-  "log_level",
-  "mixed_proxy_auth_enabled",
-  "mixed_proxy_enabled",
-  "mixed_proxy_port",
-  "name",
-  "node_prefix",
-  "order",
-  "outbound_detour_enabled",
-  "outbound_detour_section",
-  "output_network_interface",
-  "pick_fastest",
-  "pin_dashboard",
-  "ports",
-  "prefix_nodes",
-  "priority_groups",
-  "proxy_config_type",
-  "recovery_check_interval",
-  "resolve_real_ip_for_routing",
-  "rule",
-  "secondary_rule_sets",
-  "section",
-  "show_dashboard_metadata",
-  "shutdown_correctly",
-  "sort_by_latency",
-  "source_network_interfaces",
-  "subscription_update_enabled",
-  "subscription_update_interval",
-  "switch_to_faster_same_priority",
-  "tag",
-  "tolerance",
-  "torrserver_direct_enabled",
-  "update_interval",
-  "urltest_check_interval",
-  "urltest_enabled",
-  "urltest_exclude_countries",
-  "urltest_filter_mode",
-  "urltest_include_countries",
-  "urltest_tolerance",
-  "urltests",
-  "user_domain_list_type"
-]);
-var UCI_SAFE_SECTION_OPTIONS = {
-  interface: /* @__PURE__ */ new Set([
-    "auto",
-    "defaultroute",
-    "delegate",
-    "demand",
-    "device",
-    "disabled",
-    "force_link",
-    "ifname",
-    "ip6assign",
-    "ipv6",
-    "keepalive",
-    "metric",
-    "mtu",
-    "multipath",
-    "norelease",
-    "peerdns",
-    "proto",
-    "reqaddress",
-    "reqprefix",
-    "type"
-  ]),
-  dnsmasq: /* @__PURE__ */ new Set([
-    "allservers",
-    "authoritative",
-    "boguspriv",
-    "cachesize",
-    "confdir",
-    "dnsforwardmax",
-    "domain",
-    "domainneeded",
-    "ednspacket_max",
-    "expandhosts",
-    "filter_a",
-    "filter_aaaa",
-    "filterwin2k",
-    "leasefile",
-    "local",
-    "localise_queries",
-    "localservice",
-    "localuse",
-    "logqueries",
-    "nonegcache",
-    "nonwildcard",
-    "noresolv",
-    "port",
-    "readethers",
-    "rebind_localhost",
-    "rebind_protection",
-    "resolvfile",
-    "sequential_ip",
-    "server",
-    "strictorder"
-  ])
-};
-var UCI_URL_OPTIONS = /* @__PURE__ */ new Set([
-  "domain_ip_lists",
-  "health_url",
-  "latency_test_url",
-  "local_domain_lists",
-  "local_subnet_lists",
-  "mirror_base_url",
-  "remote_domain_lists",
-  "remote_subnet_lists",
-  "rule_set",
-  "rule_set_with_subnets",
-  "testing_url",
-  "urltest_testing_url"
-]);
-var URL_PARTS = /^([A-Za-z][A-Za-z0-9+.-]*:\/\/)?([^/?#]*)([^?#]*)(\?[^#]*)?(#.*)?$/;
-var URL_SCHEME = /^([A-Za-z][A-Za-z0-9+.-]*):\/\//;
-var UCI_HEADER = /^[ \t]*(#[ \t#]*)?config[ \t]+([A-Za-z0-9_-]+)([ \t]+['"]?[A-Za-z0-9_-]+['"]?)?[ \t]*$/;
-var UCI_OPTION = /^([ \t]*(#[ \t#]*)?(option|list)[ \t]+([A-Za-z0-9_-]+)[ \t]*)(.*)$/;
-function isRecord2(value) {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
-}
-function maskUrlValue(value, maskPath = false) {
-  const parts = `${value}`.match(URL_PARTS);
-  if (!parts) {
-    return MASKED_VALUE;
-  }
-  const scheme = parts[1] ?? "";
-  let authority = parts[2] ?? "";
-  let path = parts[3] ?? "";
-  if (scheme === "" && (`${value}`.startsWith("//") || `${value}`.includes("@"))) {
-    return MASKED_VALUE;
-  }
-  const at = authority.lastIndexOf("@");
-  if (at >= 0) {
-    authority = `${MASKED_VALUE}@${authority.slice(at + 1)}`;
-  }
-  if (maskPath && path !== "" && path !== "/") {
-    path = `/${MASKED_VALUE}`;
-  }
-  return `${scheme}${authority}${path}${parts[4] !== void 0 ? `?${MASKED_VALUE}` : ""}${parts[5] !== void 0 ? `#${MASKED_VALUE}` : ""}`;
-}
-function maskHttpUrlValue(value) {
-  const scheme = `${value}`.match(URL_SCHEME);
-  if (scheme && !["http", "https"].includes(scheme[1].toLowerCase())) {
-    return MASKED_VALUE;
-  }
-  return maskUrlValue(value, false);
-}
-function uciValueScan(text, initialQuote) {
-  let quote = initialQuote;
-  let value = "";
-  let comment = false;
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    if (quote === "'") {
-      if (c === "'") quote = null;
-      else value += c;
-    } else if (quote === '"') {
-      if (c === "\\" && i + 1 < text.length) value += text[++i];
-      else if (c === '"') quote = null;
-      else value += c;
-    } else if (c === "'" || c === '"') quote = c;
-    else if (c === "\\" && i + 1 < text.length) value += text[++i];
-    else if (c === "#") {
-      comment = true;
-      break;
-    } else if (c !== " " && c !== "	" && c !== "\r") value += c;
-  }
-  return { quote, value, comment };
-}
-function uciOptionSafe(state, name) {
-  return UCI_SAFE_OPTIONS.has(name) || Boolean(UCI_SAFE_SECTION_OPTIONS[state.sectionType]?.has(name));
-}
-function uciQuotedLine(prefix, value) {
-  return `${prefix}'${value.replace(/'/g, "'\\''")}'`;
-}
-function maskUciLine(state, line) {
-  const indent = line.match(/^[ \t]*/)?.[0] ?? "";
-  if (state.quote !== null) {
-    const closing = state.quote;
-    state.quote = uciValueScan(line, state.quote).quote;
-    return `${indent}${MASKED_VALUE}${state.quote === null ? closing : ""}`;
-  }
-  const header = line.match(UCI_HEADER);
-  if (header) {
-    if (header[1] === void 0) {
-      state.sectionType = header[2];
-    }
-    return line;
-  }
-  const option = line.match(UCI_OPTION);
-  if (option) {
-    const name = option[4];
-    const scan = uciValueScan(option[5], null);
-    if (scan.quote === null && uciOptionSafe(state, name)) {
-      return scan.comment ? uciQuotedLine(option[1], scan.value) : line;
-    }
-    if (scan.quote === null && UCI_URL_OPTIONS.has(name)) {
-      return uciQuotedLine(option[1], maskHttpUrlValue(scan.value));
-    }
-    state.quote = scan.quote;
-    return `${option[1]}'${MASKED_VALUE}${scan.quote === null ? "'" : ""}`;
-  }
-  if (/^[ \t]*$/.test(line)) {
-    return line;
-  }
-  if (/^[ \t]*#/.test(line)) {
-    return `${indent}# ${MASKED_VALUE}`;
-  }
-  return null;
-}
-function maskSingBoxConfigValue(value) {
-  if (Array.isArray(value)) {
-    return value.map((item) => maskSingBoxConfigValue(item));
-  }
-  if (isRecord2(value)) {
-    return Object.fromEntries(
-      Object.entries(value).map(([key, item]) => [
-        key,
-        SING_BOX_MASKED_KEYS.has(key) || key === "port" && value.address !== void 0 && value.address !== null ? MASKED_VALUE : maskSingBoxConfigValue(item)
-      ])
-    );
-  }
-  if (typeof value === "string" && URL_SCHEME.test(value)) {
-    return maskHttpUrlValue(value);
-  }
-  return value;
-}
-function stringifySingBoxConfig(value) {
-  return typeof value === "string" ? value : JSON.stringify(value, null, 2);
-}
-function formatMaskedSingBoxConfig(value) {
-  if (typeof value === "string") {
-    try {
-      return JSON.stringify(maskSingBoxConfigValue(JSON.parse(value)), null, 2);
-    } catch (_error) {
-      return value;
-    }
-  }
-  return JSON.stringify(maskSingBoxConfigValue(value), null, 2);
-}
-var VALIDATION_HEADER = "\u{1F9EA} Prokop configuration validation";
-var VALIDATION_FAILED = "\u274C Prokop configuration validation failed";
-var SECTION_SEPARATOR = /^━+$/;
-function maskGlobalCheckText(text = "") {
-  const state = { quote: null, sectionType: "" };
-  let inValidation = false;
-  const result = [];
-  for (const line of `${text}`.split("\n")) {
-    if (line === VALIDATION_HEADER) {
-      inValidation = true;
-      result.push(line);
-      continue;
-    }
-    if (inValidation && !SECTION_SEPARATOR.test(line)) {
-      if (line.startsWith("\u2705")) {
-        result.push(line);
-      } else if (line.startsWith("\u274C")) {
-        result.push(VALIDATION_FAILED);
-      }
-      continue;
-    }
-    inValidation = false;
-    result.push(maskUciLine(state, line) ?? line);
-  }
-  return result.join("\n");
-}
-
-// src/prokop/tabs/diagnostic/initController.ts
-var latestProviderInfoRequestId = 0;
-var diagnosticLifecycleRegistered = false;
-var diagnosticControllerInitialized = false;
-var diagnosticMounted = false;
-var diagnosticMountId = 0;
-var diagnosticCompletedWhileHidden = false;
-var servicesInfoStateUnsubscribe = null;
-var servicesInfoRefreshPromise = null;
-var followedServiceActionJobs = /* @__PURE__ */ new Set();
-var handledServiceActionJobs = /* @__PURE__ */ new Set();
-function getDiagnosticsProviderOptions(systemInfo = store.get().diagnosticsSystemInfo) {
-  return {
-    includeZapret: Boolean(systemInfo.zapret_installed),
-    includeZapret2: Boolean(systemInfo.zapret2_installed),
-    includeByedpi: Boolean(systemInfo.byedpi_installed)
-  };
-}
-function getNotRunningDiagnosticsChecks() {
-  return getDiagnosticsChecks(
-    _("Not running"),
-    getDiagnosticsProviderOptions()
-  );
-}
-function resetDiagnosticsChecks() {
-  store.set({
-    diagnosticsChecks: getNotRunningDiagnosticsChecks()
-  });
-}
-function setDiagnosticActionLoading(action, loading2, local = false) {
-  if (local || !loading2) {
-    setLocalServiceAction(action, loading2 && local);
-  }
-  const diagnosticsActions = store.get().diagnosticsActions;
-  store.set({
-    diagnosticsActions: {
-      ...diagnosticsActions,
-      [action]: { loading: loading2 }
-    }
-  });
-}
-function isDiagnosticMountActive(mountId3 = diagnosticMountId) {
-  return diagnosticMounted && diagnosticMountId === mountId3;
-}
-function isLocalMutatingServiceActionLoading() {
-  const actions = store.get().diagnosticsActions;
-  return hasLocalMutatingServiceActionLoading(actions);
-}
-function isMutatingServiceActionLoading() {
-  return isLocalMutatingServiceActionLoading() || isServiceTransitionStatus(store.get().servicesInfoWidget.data.prokopStatus);
-}
-function downloadSupportReport(text) {
-  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  const stamp = (/* @__PURE__ */ new Date()).toISOString().replace(/[:.]/g, "-");
-  link.href = url;
-  link.download = `prokop-support-report-${stamp}.txt`;
-  link.style.display = "none";
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
-}
-async function handleDownloadSupportReport() {
-  setDiagnosticActionLoading("supportReport", true);
-  try {
-    const report = await ProkopShellMethods.supportReport();
-    if (!report.success) {
-      throw new Error(report.error || "Support report collection failed");
-    }
-    downloadSupportReport(String(report.data ?? ""));
-    showToast(
-      _(
-        "Support report contains confidential information. Do not share it in public chats."
-      ),
-      "warning",
-      1e4
-    );
-  } catch (error) {
-    logger.error("[DIAGNOSTIC]", "handleDownloadSupportReport - e", error);
-    showToast(_("Failed to create support report"), "error");
-  } finally {
-    setDiagnosticActionLoading("supportReport", false);
-  }
-}
-async function refreshDiagnosticServicesInfo({
-  force = false,
-  mountId: mountId3 = diagnosticMountId,
-  allowInactive = false
-} = {}) {
-  if (!allowInactive && !isDiagnosticMountActive(mountId3)) {
-    return;
-  }
-  if (shouldSkipServicesInfoAutoRefresh({
-    force,
-    localMutatingActionLoading: isLocalMutatingServiceActionLoading()
-  })) {
-    return;
-  }
-  if (servicesInfoRefreshPromise) {
-    return servicesInfoRefreshPromise;
-  }
-  const promise = fetchServicesInfo().then((uiState) => {
-    followServiceActionsFromUiState(uiState);
-  }).catch((error) => {
-    logger.error(
-      "[DIAGNOSTIC]",
-      "refreshDiagnosticServicesInfo failed",
-      error
-    );
-  }).finally(() => {
-    if (servicesInfoRefreshPromise === promise) {
-      servicesInfoRefreshPromise = null;
-    }
-  });
-  servicesInfoRefreshPromise = promise;
-  return promise;
-}
-function startServiceActionStateWatcher() {
-  if (servicesInfoStateUnsubscribe) {
-    return;
-  }
-  servicesInfoStateUnsubscribe = subscribeRuntimeUiState((uiState) => {
-    if (diagnosticMounted) {
-      followServiceActionsFromUiState(uiState);
-    }
-  });
-}
-function stopServiceActionStateWatcher() {
-  if (!servicesInfoStateUnsubscribe) {
-    return;
-  }
-  servicesInfoStateUnsubscribe();
-  servicesInfoStateUnsubscribe = null;
-}
-function isVisibleServiceRuntimeAction(action) {
-  return action === "restart" || action === "start" || action === "stop";
-}
-function setServiceActionStateLoading(state, loading2) {
-  if (!isVisibleServiceRuntimeAction(state.action)) {
-    return;
-  }
-  setDiagnosticActionLoading(state.action, loading2);
-}
-async function followServiceActionState(state) {
-  const jobId = state.job_id;
-  if (!jobId || followedServiceActionJobs.has(jobId)) {
-    return;
-  }
-  if (!state.running && handledServiceActionJobs.has(jobId)) {
-    return;
-  }
-  followedServiceActionJobs.add(jobId);
-  if (state.running) {
-    setServiceActionStateLoading(state, true);
-  }
-  try {
-    if (state.running) {
-      await ProkopShellMethods.waitServiceActionJob(jobId);
-    }
-  } catch (error) {
-    logger.error("[DIAGNOSTIC]", "followServiceActionState failed", error);
-  } finally {
-    handledServiceActionJobs.add(jobId);
-    setServiceActionStateLoading(state, false);
-    await refreshDiagnosticServicesInfo({ force: true, allowInactive: true });
-    void ProkopShellMethods.uiActionAck("service", jobId);
-    followedServiceActionJobs.delete(jobId);
-    resetDiagnosticsChecks();
-  }
-}
-function followServiceActionsFromUiState(uiState) {
-  if (!uiState) {
-    return;
-  }
-  for (const action of uiState.actions.service || []) {
-    if (action.job_id) {
-      void followServiceActionState(action);
-    }
-  }
-}
-async function fetchSystemInfo() {
-  const systemInfo = await ensureSystemInfo();
-  if (store.get().diagnosticsRunAction.loading) {
-    return;
-  }
-  store.set({
-    diagnosticsChecks: getDiagnosticsChecks(
-      _("Not running"),
-      getDiagnosticsProviderOptions(systemInfo)
-    )
-  });
-}
-async function fetchDiagnosticsProviderInfo({
-  resetChecks = true
-} = {}) {
-  const requestId = ++latestProviderInfoRequestId;
-  try {
-    const uiState = await refreshRuntimeUiState({ force: true });
-    if (requestId !== latestProviderInfoRequestId) {
-      return;
-    }
-    if (uiState) {
-      const currentSystemInfo2 = store.get().diagnosticsSystemInfo;
-      const nextSystemInfo2 = normalizeSingBoxVariantFields({
-        ...currentSystemInfo2,
-        providerInfoLoaded: true,
-        sing_box_extended: uiState.capabilities.sing_box_extended,
-        sing_box_tiny: uiState.capabilities.sing_box_tiny,
-        sing_box_compressed: uiState.capabilities.sing_box_compressed,
-        sing_box_tailscale: uiState.capabilities.sing_box_tailscale,
-        zapret_installed: uiState.capabilities.zapret_installed,
-        zapret2_installed: uiState.capabilities.zapret2_installed,
-        byedpi_installed: uiState.capabilities.byedpi_installed
-      });
-      if (!nextSystemInfo2.zapret_installed) {
-        nextSystemInfo2.zapret_version = "not installed";
-      }
-      if (!nextSystemInfo2.zapret2_installed) {
-        nextSystemInfo2.zapret2_version = "not installed";
-      }
-      if (!nextSystemInfo2.byedpi_installed) {
-        nextSystemInfo2.byedpi_version = "not installed";
-      }
-      const nextState2 = {
-        diagnosticsSystemInfo: nextSystemInfo2
-      };
-      if (shouldResetDiagnosticsChecks({
-        resetChecks,
-        diagnosticsRunLoading: store.get().diagnosticsRunAction.loading
-      })) {
-        nextState2.diagnosticsChecks = getDiagnosticsChecks(
-          _("Not running"),
-          getDiagnosticsProviderOptions(nextSystemInfo2)
-        );
-      }
-      store.set(nextState2);
-      return;
-    }
-    const [zapretRuntime, zapret2Runtime, byedpiRuntime] = await Promise.all([
-      ProkopShellMethods.checkZapretRuntime(),
-      ProkopShellMethods.checkZapret2Runtime(),
-      ProkopShellMethods.checkByedpiRuntime()
-    ]);
-    if (requestId !== latestProviderInfoRequestId) {
-      return;
-    }
-    const currentSystemInfo = store.get().diagnosticsSystemInfo;
-    const nextSystemInfo = {
-      ...currentSystemInfo,
-      providerInfoLoaded: true,
-      zapret_installed: zapretRuntime.success ? zapretRuntime.data.zapret_installed : currentSystemInfo.zapret_installed,
-      zapret2_installed: zapret2Runtime.success ? zapret2Runtime.data.zapret2_installed : currentSystemInfo.zapret2_installed,
-      byedpi_installed: byedpiRuntime.success ? byedpiRuntime.data.byedpi_installed : currentSystemInfo.byedpi_installed
-    };
-    if (!zapretRuntime.success) {
-      logger.error("[DIAGNOSTIC]", "fetchZapretRuntime failed", zapretRuntime);
-    }
-    if (!zapret2Runtime.success) {
-      logger.error(
-        "[DIAGNOSTIC]",
-        "fetchZapret2Runtime failed",
-        zapret2Runtime
-      );
-    }
-    if (!byedpiRuntime.success) {
-      logger.error("[DIAGNOSTIC]", "fetchByedpiRuntime failed", byedpiRuntime);
-    }
-    if (!nextSystemInfo.zapret_installed) {
-      nextSystemInfo.zapret_version = "not installed";
-    }
-    if (!nextSystemInfo.zapret2_installed) {
-      nextSystemInfo.zapret2_version = "not installed";
-    }
-    if (!nextSystemInfo.byedpi_installed) {
-      nextSystemInfo.byedpi_version = "not installed";
-    }
-    const nextState = {
-      diagnosticsSystemInfo: nextSystemInfo
-    };
-    if (shouldResetDiagnosticsChecks({
-      resetChecks,
-      diagnosticsRunLoading: store.get().diagnosticsRunAction.loading
-    })) {
-      nextState.diagnosticsChecks = getDiagnosticsChecks(
-        _("Not running"),
-        getDiagnosticsProviderOptions(nextSystemInfo)
-      );
-    }
-    store.set(nextState);
-  } catch (error) {
-    logger.error("[DIAGNOSTIC]", "fetchDiagnosticsProviderInfo failed", error);
-    if (requestId === latestProviderInfoRequestId) {
-      const currentSystemInfo = store.get().diagnosticsSystemInfo;
-      store.set({
-        diagnosticsSystemInfo: {
-          ...currentSystemInfo,
-          providerInfoLoaded: true
-        }
-      });
-    }
-  }
-}
-var retryingCheck = null;
-function renderDiagnosticsChecks() {
-  logger.debug("[DIAGNOSTIC]", "renderDiagnosticsChecks");
-  const container = document.getElementById("fkp_diagnostic-page-checks");
-  if (!container) return;
-  const rendered = renderChecks(store.get().diagnosticsChecks, {
-    onRetry: (code) => void retryCheck(code),
-    busy: store.get().diagnosticsRunAction.loading || retryingCheck !== null
-  });
-  return preserveScrollForPage(() => {
-    container.replaceChildren(...rendered);
-  });
-}
-async function retryCheck(code) {
-  if (store.get().diagnosticsRunAction.loading || retryingCheck) return;
-  const runner = getDiagnosticRunners(getDiagnosticsProviderOptions()).find(
-    (item) => item.code === code
-  );
-  if (!runner) return;
-  retryingCheck = code;
-  setDiagnosticCheckLoading(code);
-  try {
-    await runner.run();
-  } catch (e) {
-    logger.error("[DIAGNOSTIC]", `retryCheck - ${code} failed`, e);
-  } finally {
-    retryingCheck = null;
-    renderDiagnosticsChecks();
-  }
-}
-function renderDiagnosticRunActionWidget() {
-  logger.debug("[DIAGNOSTIC]", "renderDiagnosticRunActionWidget");
-  const { loading: loading2 } = store.get().diagnosticsRunAction;
-  const providerInfoLoaded = store.get().diagnosticsSystemInfo.providerInfoLoaded;
-  const servicesInfoWidget = store.get().servicesInfoWidget;
-  const prokopRunning = Boolean(servicesInfoWidget.data.prokopRunning);
-  const container = document.getElementById("fkp_diagnostic-page-run-check");
-  const renderedAction = renderRunAction({
-    loading: loading2,
-    disabled: shouldDisableDiagnosticRunAction({
-      providerInfoLoaded,
-      servicesInfoLoading: servicesInfoWidget.loading,
-      prokopRunning,
-      mutatingServiceActionLoading: isMutatingServiceActionLoading()
-    }),
-    click: () => runChecks()
-  });
-  const lastRun = document.getElementById("fkp_diagnostic-last-run");
-  const reason = document.getElementById("fkp_diagnostic-run-reason");
-  const blocked = servicesInfoWidget.loading || loading2 ? null : !prokopRunning ? {
-    text: _("Prokop is stopped. Start it to run the checks."),
-    actions: renderStartServiceAction()
-  } : isMutatingServiceActionLoading() ? {
-    text: _("Waiting for the service action to finish."),
-    actions: []
-  } : null;
-  return preserveScrollForPage(() => {
-    container.replaceChildren(renderedAction);
-    if (lastRun) lastRun.textContent = lastRunText(localStorage);
-    reason?.replaceChildren(
-      ...blocked ? [E("span", {}, blocked.text), ...blocked.actions] : []
-    );
-  });
-}
-async function handleShowGlobalCheck() {
-  setDiagnosticActionLoading("globalCheck", true);
-  try {
-    const readonly = isReadonlyMode();
-    const globalCheck = await ProkopShellMethods.globalCheck(readonly);
-    if (globalCheck.success) {
-      const rawGlobalCheckText = globalCheck.data ?? "";
-      const maskedGlobalCheckText = maskGlobalCheckText(rawGlobalCheckText);
-      ui.showModal(
-        _("Global check"),
-        renderModal(rawGlobalCheckText, "global_check", {
-          maskText: () => maskedGlobalCheckText,
-          initialAutoRefresh: false,
-          showMaskValuesToggle: !readonly
-        })
-      );
-    } else {
-      logger.error("[DIAGNOSTIC]", "handleShowGlobalCheck - e", globalCheck);
-      showToast(_("Could not load data"), "error");
-    }
-  } catch (e) {
-    logger.error("[DIAGNOSTIC]", "handleShowGlobalCheck - e", e);
-    showToast(_("Could not load data"), "error");
-  } finally {
-    setDiagnosticActionLoading("globalCheck", false);
-  }
-}
-async function handleViewLogs() {
-  setDiagnosticActionLoading("viewLogs", true);
-  try {
-    const viewLogs = await ProkopShellMethods.checkLogs();
-    if (viewLogs.success) {
-      const getLatestLogs = async () => {
-        const latestLogs = await ProkopShellMethods.checkLogs();
-        if (!latestLogs.success) {
-          throw latestLogs;
-        }
-        return latestLogs.data ?? "";
-      };
-      ui.showModal(
-        _("View logs"),
-        renderModal(viewLogs.data, "view_logs", {
-          getText: getLatestLogs,
-          refreshMs: 250,
-          initialAutoRefresh: true,
-          showAutoRefreshToggle: true,
-          startAtEnd: true
-        })
-      );
-    } else {
-      logger.error("[DIAGNOSTIC]", "handleViewLogs - e", viewLogs);
-      showToast(_("Could not load data"), "error");
-    }
-  } catch (e) {
-    logger.error("[DIAGNOSTIC]", "handleViewLogs - e", e);
-    showToast(_("Could not load data"), "error");
-  } finally {
-    setDiagnosticActionLoading("viewLogs", false);
-  }
-}
-async function handleShowSingBoxConfig() {
-  setDiagnosticActionLoading("showSingBoxConfig", true);
-  try {
-    const readonly = isReadonlyMode();
-    const showSingBoxConfig = await ProkopShellMethods.showSingBoxConfig(readonly);
-    if (showSingBoxConfig.success) {
-      const rawSingBoxConfigText = stringifySingBoxConfig(
-        showSingBoxConfig.data
-      );
-      const maskedSingBoxConfigText = formatMaskedSingBoxConfig(
-        showSingBoxConfig.data
-      );
-      ui.showModal(
-        _("Show sing-box config"),
-        renderModal(rawSingBoxConfigText, "show_sing_box_config", {
-          maskText: () => maskedSingBoxConfigText,
-          initialAutoRefresh: false,
-          showMaskValuesToggle: !readonly
-        })
-      );
-    } else {
-      logger.error(
-        "[DIAGNOSTIC]",
-        "handleShowSingBoxConfig - e",
-        showSingBoxConfig
-      );
-      showToast(_("Could not load data"), "error");
-    }
-  } catch (e) {
-    logger.error("[DIAGNOSTIC]", "handleShowSingBoxConfig - e", e);
-    showToast(_("Could not load data"), "error");
-  } finally {
-    setDiagnosticActionLoading("showSingBoxConfig", false);
-  }
-}
-function renderDiagnosticAvailableActionsWidget() {
-  const diagnosticsActions = store.get().diagnosticsActions;
-  const updatesActions = store.get().updatesActions;
-  const servicesInfoWidget = store.get().servicesInfoWidget;
-  logger.debug("[DIAGNOSTIC]", "renderDiagnosticAvailableActionsWidget");
-  const { utilityActionsDisabled, viewLogsDisabled } = getAvailableActionsDisabledState({
-    servicesInfoLoading: servicesInfoWidget.loading,
-    mutatingServiceActionLoading: isMutatingServiceActionLoading(),
-    componentActionLoading: hasComponentActionLoading(updatesActions)
-  });
-  const container = document.getElementById("fkp_diagnostic-page-actions");
-  const readonly = isReadonlyMode();
-  const renderedActions = renderAvailableActions({
-    globalCheck: {
-      loading: diagnosticsActions.globalCheck.loading,
-      visible: true,
-      onClick: handleShowGlobalCheck,
-      disabled: utilityActionsDisabled
-    },
-    viewLogs: {
-      loading: diagnosticsActions.viewLogs.loading,
-      visible: true,
-      onClick: handleViewLogs,
-      disabled: viewLogsDisabled
-    },
-    showSingBoxConfig: {
-      loading: diagnosticsActions.showSingBoxConfig.loading,
-      visible: true,
-      onClick: handleShowSingBoxConfig,
-      disabled: utilityActionsDisabled
-    },
-    supportReport: {
-      loading: diagnosticsActions.supportReport.loading,
-      visible: !readonly,
-      onClick: () => void handleDownloadSupportReport(),
-      disabled: utilityActionsDisabled
-    }
-  });
-  return preserveScrollForPage(() => {
-    container?.replaceChildren(renderedActions);
-  });
-}
-function displayValue(value) {
-  switch (String(value ?? "").trim().toLowerCase()) {
-    case "":
-    case "unknown":
-      return _("unknown");
-    case "loading":
-      return _("Loading\u2026");
-    case "not installed":
-      return _("Not installed");
-    default:
-      return value;
-  }
-}
-function renderDiagnosticSystemInfoWidget() {
-  logger.debug("[DIAGNOSTIC]", "renderDiagnosticSystemInfoWidget");
-  const diagnosticsSystemInfo = store.get().diagnosticsSystemInfo;
-  const container = document.getElementById("fkp_diagnostic-page-system-info");
-  const items = [
-    {
-      key: "Prokop",
-      value: normalizeCompiledVersion(diagnosticsSystemInfo.prokop_version)
-    },
-    {
-      key: _("LuCI app"),
-      value: normalizeCompiledVersion(PROKOP_LUCI_APP_VERSION)
-    },
-    {
-      key: "sing-box",
-      value: formatSingBoxVersion(diagnosticsSystemInfo)
-    }
-  ];
-  if (diagnosticsSystemInfo.zapret_installed) {
-    items.push({
-      key: "Zapret",
-      value: diagnosticsSystemInfo.zapret_version
-    });
-  }
-  if (diagnosticsSystemInfo.zapret2_installed) {
-    items.push({
-      key: "Zapret2",
-      value: diagnosticsSystemInfo.zapret2_version
-    });
-  }
-  if (diagnosticsSystemInfo.byedpi_installed) {
-    items.push({
-      key: "ByeDPI",
-      value: diagnosticsSystemInfo.byedpi_version
-    });
-  }
-  items.push(
-    {
-      key: _("OS"),
-      value: diagnosticsSystemInfo.openwrt_version
-    },
-    {
-      key: _("Device"),
-      value: diagnosticsSystemInfo.device_model
-    }
-  );
-  const renderedSystemInfo = renderSystemInfo({
-    items: items.map((item) => ({ ...item, value: displayValue(item.value) }))
-  });
-  return preserveScrollForPage(() => {
-    container.replaceChildren(renderedSystemInfo);
-  });
-}
-async function onStoreUpdate2(_next, _prev, diff) {
-  if (diff.diagnosticsChecks || diff.diagnosticsRunAction) {
-    renderDiagnosticsChecks();
-  }
-  if (diff.diagnosticsRunAction) {
-    renderDiagnosticRunActionWidget();
-  }
-  if (diff.diagnosticsActions || diff.servicesInfoWidget || diff.updatesActions) {
-    renderDiagnosticAvailableActionsWidget();
-  }
-  if (diff.diagnosticsActions || diff.servicesInfoWidget) {
-    renderDiagnosticRunActionWidget();
-  }
-  if (diff.diagnosticsSystemInfo) {
-    renderDiagnosticSystemInfoWidget();
-    renderDiagnosticRunActionWidget();
-  }
-}
-function persistDiagnosticRunProgress({
-  providerOptions,
-  nextRunnerIndex
-}) {
-  savePersistedDiagnosticRun({
-    providerOptions,
-    nextRunnerIndex,
-    diagnosticsChecks: store.get().diagnosticsChecks
-  });
-}
-function setDiagnosticCheckLoading(code) {
-  const meta = DIAGNOSTICS_CHECKS_MAP[code];
-  const diagnosticsChecks = store.get().diagnosticsChecks;
-  const other = diagnosticsChecks.filter((item) => item.code !== code);
-  store.set({
-    diagnosticsChecks: [
-      ...other,
-      {
-        order: meta.order,
-        code: meta.code,
-        title: meta.title,
-        description: _("Checking, please wait"),
-        state: "loading",
-        items: []
-      }
-    ]
-  });
-}
-function getDiagnosticRunners(providerOptions) {
-  return [
-    { code: "DNS" /* DNS */, run: runDnsCheck },
-    { code: "SINGBOX" /* SINGBOX */, run: runSingBoxCheck },
-    { code: "NFT" /* NFT */, run: runNftCheck },
-    ...providerOptions.includeZapret ? [{ code: "ZAPRET" /* ZAPRET */, run: runZapretCheck }] : [],
-    ...providerOptions.includeZapret2 ? [{ code: "ZAPRET2" /* ZAPRET2 */, run: runZapret2Check }] : [],
-    ...providerOptions.includeByedpi ? [{ code: "BYEDPI" /* BYEDPI */, run: runByedpiCheck }] : [],
-    { code: "OUTBOUNDS" /* OUTBOUNDS */, run: runSectionsCheck },
-    { code: "FAKEIP" /* FAKEIP */, run: runFakeIPCheck }
-  ];
-}
-async function runChecks({ resume } = {}) {
-  if (store.get().diagnosticsRunAction.loading && !resume) {
-    return;
-  }
-  let providerOptions = resume?.providerOptions ?? getDiagnosticsProviderOptions();
-  let nextRunnerIndex = resume?.nextRunnerIndex ?? 0;
-  store.set({
-    diagnosticsRunAction: { loading: true },
-    diagnosticsChecks: resume?.diagnosticsChecks ?? getLoadingDiagnosticsChecks(providerOptions).diagnosticsChecks
-  });
-  persistDiagnosticRunProgress({
-    providerOptions,
-    nextRunnerIndex
-  });
-  try {
-    if (!resume) {
-      await fetchDiagnosticsProviderInfo({ resetChecks: false });
-      providerOptions = getDiagnosticsProviderOptions();
-      nextRunnerIndex = 0;
-      store.set({
-        diagnosticsChecks: getLoadingDiagnosticsChecks(providerOptions).diagnosticsChecks
-      });
-      persistDiagnosticRunProgress({
-        providerOptions,
-        nextRunnerIndex
-      });
-    }
-    const runners = getDiagnosticRunners(providerOptions);
-    for (let index = nextRunnerIndex; index < runners.length; index += 1) {
-      const runner = runners[index];
-      setDiagnosticCheckLoading(runner.code);
-      persistDiagnosticRunProgress({
-        providerOptions,
-        nextRunnerIndex: index
-      });
-      try {
-        await runner.run();
-      } catch (e) {
-        logger.error(
-          "[DIAGNOSTIC]",
-          `runChecks - ${runner.run.name} failed`,
-          e
-        );
-      }
-      persistDiagnosticRunProgress({
-        providerOptions,
-        nextRunnerIndex: index + 1
-      });
-    }
-    saveLastRun(localStorage);
-  } catch (e) {
-    logger.error("[DIAGNOSTIC]", "runChecks - e", e);
-  } finally {
-    clearPersistedDiagnosticRun();
-    store.set({ diagnosticsRunAction: { loading: false } });
-    if (!diagnosticMounted) {
-      diagnosticCompletedWhileHidden = true;
-    }
-  }
-}
-async function loadInitialDiagnosticData() {
-  const diagnosticStatus = document.getElementById("diagnostic-status");
-  if (diagnosticStatus?.isConnected && diagnosticStatus.offsetParent !== null) {
-    if (store.get().diagnosticsRunAction.loading) {
-      return;
-    }
-    await fetchSystemInfo();
-    await fetchDiagnosticsProviderInfo();
-  }
-}
-function restorePersistedDiagnosticRun() {
-  const persistedRun = readPersistedDiagnosticRun();
-  if (!persistedRun) {
-    return false;
-  }
-  store.set({
-    diagnosticsRunAction: { loading: true },
-    diagnosticsChecks: persistedRun.diagnosticsChecks
-  });
-  void runChecks({ resume: persistedRun });
-  return true;
-}
-async function onPageMount2() {
-  const preserveHiddenResult = diagnosticCompletedWhileHidden;
-  onPageUnmount2({
-    preserveCompletedResult: preserveHiddenResult,
-    preservePersistedRun: true
-  });
-  diagnosticMounted = true;
-  diagnosticMountId += 1;
-  const mountId3 = diagnosticMountId;
-  const hasRuntimeSnapshot = Boolean(getCachedRuntimeUiState());
-  if (!hasRuntimeSnapshot) {
-    const uiState = await refreshRuntimeUiState({ force: true });
-    if (!diagnosticMounted || mountId3 !== diagnosticMountId) {
-      return;
-    }
-    if (!uiState) {
-      void refreshDiagnosticServicesInfo({ force: true });
-    }
-  }
-  const restoredPersistedRun = !preserveHiddenResult && restorePersistedDiagnosticRun();
-  if (preserveHiddenResult) {
-    diagnosticCompletedWhileHidden = false;
-  } else if (!restoredPersistedRun && !store.get().diagnosticsRunAction.loading) {
-    store.reset(["diagnosticsRunAction"]);
-    resetDiagnosticsChecks();
-  }
-  store.subscribe(onStoreUpdate2);
-  startServiceActionStateWatcher();
-  renderDiagnosticsChecks();
-  renderDiagnosticRunActionWidget();
-  renderDiagnosticAvailableActionsWidget();
-  renderDiagnosticSystemInfoWidget();
-  if (hasRuntimeSnapshot) {
-    void refreshRuntimeUiState({ force: true });
-  }
-  if (!preserveHiddenResult && !restoredPersistedRun) {
-    void loadInitialDiagnosticData();
-  }
-}
-function onPageUnmount2({
-  preserveCompletedResult = false,
-  preservePersistedRun = false
-} = {}) {
-  diagnosticMounted = false;
-  diagnosticMountId += 1;
-  stopServiceActionStateWatcher();
-  servicesInfoRefreshPromise = null;
-  store.unsubscribe(onStoreUpdate2);
-  if (!preserveCompletedResult && !store.get().diagnosticsRunAction.loading) {
-    if (!preservePersistedRun) {
-      clearPersistedDiagnosticRun();
-    }
-    store.reset(["diagnosticsRunAction"]);
-    resetDiagnosticsChecks();
-    diagnosticCompletedWhileHidden = false;
-  }
-}
-function registerLifecycleListeners2() {
-  if (diagnosticLifecycleRegistered) {
-    return;
-  }
-  diagnosticLifecycleRegistered = true;
-  store.subscribe((next, prev, diff) => {
-    if (diff.tabService && next.tabService.current !== prev.tabService.current) {
-      logger.debug(
-        "[DIAGNOSTIC]",
-        "active tab diff event, active tab:",
-        diff.tabService.current
-      );
-      const isDIAGNOSTICVisible = next.tabService.current === "diagnostic";
-      if (isDIAGNOSTICVisible) {
-        logger.debug(
-          "[DIAGNOSTIC]",
-          "registerLifecycleListeners",
-          "onPageMount"
-        );
-        return onPageMount2();
-      }
-      if (!isDIAGNOSTICVisible) {
-        logger.debug(
-          "[DIAGNOSTIC]",
-          "registerLifecycleListeners",
-          "onPageUnmount"
-        );
-        return onPageUnmount2();
-      }
-    }
-  });
-}
-async function initController2(dependencies2 = {}) {
-  if (diagnosticControllerInitialized) {
-    return;
-  }
-  diagnosticControllerInitialized = true;
-  onMount("diagnostic-status").then(() => {
-    initSiteCheck(dependencies2.loadLocalDeviceChoices);
-    initConnectivityMatrix();
-    initDpiPlayground();
-    logger.debug("[DIAGNOSTIC]", "initController", "onMount");
-    registerLifecycleListeners2();
-    if (store.get().tabService.current === "diagnostic" || isActiveLuciTab("diagnostic")) {
-      onPageMount2();
-    }
-  });
-}
-
-// src/prokop/tabs/diagnostic/styles.ts
-var styles4 = `
-#cbi-${PROKOP_UCI_PACKAGE}-diagnostic-_mount_node > div {
-    width: 100%;
-}
-
-#cbi-${PROKOP_UCI_PACKAGE}-diagnostic > h3 {
-    display: none;
-}
-
-.fkp-diag {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 12px;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.fkp-diag * {
-    text-align: left;
-}
-
-/* Service actions: a wrapping row of buttons instead of a tall column. */
-.fkp-diag .fkp_diagnostic-page__right-bar__actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-content: flex-start;
-    gap: 6px;
-}
-
-.fkp-diag .fkp_diagnostic-page__right-bar__actions > b,
-.fkp-diag .fkp_diagnostic-page__right-bar__actions > p {
-    flex-basis: 100%;
-    margin: 0;
-}
-
-.fkp-diag .fkp_diagnostic-page__right-bar__actions > .fkp-partial-button {
-    width: auto;
-    margin: 0;
-}
-
-.fkp-diag-card {
-    border: 1px solid var(--border-color-medium, #777);
-    border-radius: 6px;
-    padding: 12px 14px;
-    min-width: 0;
-    overflow-wrap: break-word;
-}
-
-.fkp-diag-card__head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px 16px;
-}
-
-.fkp-diag-card__title,
-.fkp-diag-section-title {
-    margin: 0 0 4px;
-}
-
-.fkp-diag-section-title {
-    margin-top: 8px;
-}
-
-.fkp-diag-hint {
-    display: block;
-    margin: 4px 0;
-    color: var(--text-color-medium, gray);
-}
-
-.fkp-diag-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 12px;
-    align-items: start;
-}
-
-.fkp-diag-actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px 10px;
-    margin-top: 10px;
-}
-
-.fkp-diag-actions .btn {
-    margin: 0;
-}
-
-.fkp-diag-form {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.fkp-diag-field {
-    display: grid;
-    gap: 4px;
-    min-width: 0;
-}
-
-.fkp-diag-field--wide {
-    flex: 1 1 280px;
-}
-
-.fkp-diag-field input,
-.fkp-diag-field select,
-.fkp-diag-field textarea {
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-    margin: 0;
-}
-
-.fkp-diag-details > summary {
-    cursor: pointer;
-    font-weight: bold;
-    font-size: 1.1em;
-}
-
-.fkp-diag-details[open] > summary {
-    margin-bottom: 8px;
-}
-
-.fkp-diag-badge {
-    display: inline-block;
-    max-width: 100%;
-    box-sizing: border-box;
-    padding: 1px 8px;
-    border-radius: 10px;
-    border: 1px solid currentColor;
-    font-size: 0.9em;
-    white-space: nowrap;
-}
-
-.fkp-diag-badge--success, .fkp-diag-text--success { color: var(--success-color-medium, green); }
-.fkp-diag-badge--warning, .fkp-diag-text--warning { color: var(--warn-color-medium, orange); }
-.fkp-diag-badge--error, .fkp-diag-text--error { color: var(--error-color-medium, red); }
-.fkp-diag-badge--loading, .fkp-diag-text--loading { color: var(--primary-color-high, dodgerblue); }
-.fkp-diag-badge--neutral, .fkp-diag-text--neutral { color: var(--text-color-medium, gray); }
-
-.fkp-diag-facts {
-    display: grid;
-    grid-template-columns: max-content minmax(0, 1fr);
-    gap: 6px 16px;
-    margin: 0;
-}
-
-.fkp-diag-facts dt { font-weight: bold; }
-.fkp-diag-facts dd { margin: 0; min-width: 0; }
-.fkp-diag-facts .fkp-diag-badge,
-.fkp-diag-events .fkp-diag-badge { white-space: normal; overflow-wrap: break-word; }
-
-.fkp-diag-events {
-    border-collapse: collapse;
-}
-
-.fkp-diag-events td {
-    padding: 3px 16px 3px 0;
-    vertical-align: top;
-}
-
-/* System checks: problems first as full-width cards, then one-line rows;
-   passed checks fold into one group. */
-.fkp-diag-checks {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 8px;
-    margin-top: 10px;
-}
-
-.fkp-diag-summary {
-    margin: 0;
-    font-weight: 600;
-}
-
-.fkp-diag-run-reason:empty {
-    display: none;
-}
-
-.fkp-diag-run-reason {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px 10px;
-    margin-top: 8px;
-    color: var(--text-color-medium, gray);
-}
-
-.fkp-diag-run-reason .btn {
-    margin: 0;
-}
-
-.fkp-check-passed > summary {
-    cursor: pointer;
-    color: var(--success-color-medium, green);
-}
-
-.fkp-check-passed[open] {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    align-items: start;
-    gap: 8px;
-}
-
-.fkp-check-passed[open] > summary {
-    grid-column: 1 / -1;
-}
-
-.fkp-check__advice {
-    display: grid;
-    grid-template-columns: max-content minmax(0, 1fr);
-    gap: 4px 12px;
-    margin: 8px 0 0;
-}
-
-.fkp-check__advice dt {
-    font-weight: 600;
-    color: var(--text-color-medium, gray);
-}
-
-.fkp-check__advice dd {
-    margin: 0;
-}
-
-.fkp-check__advice ul {
-    margin: 0;
-    padding-left: 1.2em;
-}
-
-.fkp-diag-help {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: -4px;
-}
-
-.fkp-diag-subsection h4 {
-    margin: 12px 0 4px;
-}
-
-.fkp-site__value {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 4px 8px;
-}
-
-.fkp-site__conclusion {
-    margin: 10px 0 0;
-    font-weight: 600;
-}
-
-.fkp-check {
-    border: 1px solid var(--border-color-low, lightgray);
-    border-radius: 6px;
-    padding: 8px 10px;
-    min-width: 0;
-}
-
-.fkp-check--success { border-color: var(--success-color-medium, green); }
-.fkp-check--warning { border-color: var(--warn-color-medium, orange); }
-.fkp-check--error { border-color: var(--error-color-medium, red); }
-.fkp-check--loading { border-color: var(--primary-color-high, dodgerblue); }
-
-.fkp-check__head {
-    /* Flex-wrap: the badge moves below a long title instead of squeezing it. */
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 4px 8px;
-}
-
-.fkp-check__head .fkp-check__title { flex: 1 1 8em; }
-.fkp-check__head .fkp-diag-badge { flex: 0 0 auto; }
-
-.fkp-check__icon svg { width: 20px; height: 20px; }
-
-.fkp-check__details { margin-top: 6px; }
-.fkp-check__details > summary { cursor: pointer; }
-.fkp-check__description { margin: 4px 0; }
-
-.fkp-check__item {
-    display: grid;
-    /* Name and value on separate lines, so a long name never squeezes the
-       value into one character per line. */
-    grid-template-columns: 16px minmax(0, 1fr);
-    column-gap: 6px;
-    align-items: start;
-    overflow-wrap: break-word;
-}
-
-.fkp-check__item > :nth-child(3) { grid-column: 2; }
-
-.fkp-check, .fkp-check__head, .fkp-check__details { min-width: 0; }
-.fkp-check__title { min-width: 0; overflow-wrap: break-word; }
-
-.fkp-check__item-icon svg { width: 16px; height: 16px; }
-
-.fkp-check__actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin-top: 6px;
-}
-
-.fkp_diagnostic-page__run_check_wrapper button { margin: 0; }
-
-/* Reachability table: header and rows share one grid, so the action column can
-   size to the real (translated) button labels; stacked cards on narrow screens. */
-.fkp-conn {
-    display: grid;
-    grid-template-columns: minmax(140px, 2fr) minmax(90px, 110px) minmax(80px, 100px) minmax(140px, 2fr) max-content;
-    column-gap: 8px;
-    align-items: center;
-}
-
-.fkp-conn__head,
-.fkp-conn__row {
-    display: contents;
-}
-
-.fkp-conn__head > span {
-    font-weight: bold;
-    padding: 4px 0;
-    border-bottom: 1px solid var(--border-color-low, lightgray);
-    text-align: left;
-}
-
-.fkp-conn__row > * {
-    padding: 6px 0;
-    border-bottom: 1px solid var(--border-color-low, lightgray);
-    min-width: 0;
-    text-align: left;
-}
-
-.fkp-conn__cell { display: block; margin: 0; }
-.fkp-conn__cell input, .fkp-conn__cell select {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    box-sizing: border-box;
-    margin: 0;
-}
-.fkp-conn__cell-label { display: none; }
-.fkp-conn__cell--muted { color: var(--text-color-medium, gray); }
-.fkp-conn__result { overflow-wrap: break-word; }
-.fkp-conn__actions { display: flex; gap: 4px; }
-.fkp-conn__actions .btn { margin: 0; white-space: nowrap; }
-
-@media (max-width: 860px) {
-    .fkp-conn { display: block; }
-    .fkp-conn__head { display: none; }
-    .fkp-conn__row {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-        gap: 6px 8px;
-        border: 1px solid var(--border-color-low, lightgray);
-        border-radius: 6px;
-        padding: 8px;
-        margin-top: 8px;
-    }
-    .fkp-conn__row > * { padding: 0; border-bottom: 0; }
-    .fkp-conn__row > :first-child,
-    .fkp-conn__row > :nth-child(4) { grid-column: 1 / -1; }
-    .fkp-conn__cell-label {
-        display: block;
-        font-size: 0.85em;
-        color: var(--text-color-medium, gray);
-    }
-    .fkp-conn__actions { grid-column: 1 / -1; flex-wrap: wrap; }
-}
-
-.fkp-route__form {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: end;
-    gap: 10px;
-}
-
-.fkp-route__form .btn { margin: 0; }
-
-.fkp-route__facts {
-    display: grid;
-    grid-template-columns: max-content minmax(0, 1fr);
-    gap: 6px 16px;
-    margin: 12px 0 0;
-}
-
-.fkp-route__facts dt { font-weight: bold; }
-.fkp-route__facts dd { margin: 0; display: grid; gap: 2px; }
-.fkp-route__facts small { color: var(--text-color-medium, gray); }
-
-@media (max-width: 560px) {
-    .fkp-diag-facts, .fkp-route__facts, .fkp-check__advice { grid-template-columns: minmax(0, 1fr); }
-    .fkp-diag-checks { grid-template-columns: minmax(0, 1fr); }
-}
-
-.fkp_diagnostic-page__right-bar__actions {
-    border: 2px var(--background-color-low, lightgray) solid;
-    border-radius: 4px;
-    padding: 10px;
-
-    display: grid;
-    grid-template-columns: auto;
-    grid-row-gap: 10px;
-
-}
-
-.fkp_diagnostic-page__right-bar__actions > .fkp-partial-button {
-    width: 100%;
-    min-width: 0;
-    margin-left: 0;
-}
-
-.fkp_diagnostic-page__right-bar__system-info {
-    border: 2px var(--background-color-low, lightgray) solid;
-    border-radius: 4px;
-    padding: 10px;
-
-    display: grid;
-    grid-template-columns: auto;
-    grid-row-gap: 10px;
-}
-
-.fkp_diagnostic-page__right-bar__system-info__title {
-
-}
-
-.fkp_diagnostic-page__right-bar__system-info__row {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    grid-column-gap: 5px;
-}
-
-.fkp_diagnostic-page__right-bar__system-info__row__tag {
-    padding: 2px 4px;
-    border: 1px transparent solid;
-    border-radius: 4px;
-    margin-left: 5px;
-}
-
-.fkp_diagnostic-page__right-bar__system-info__row__tag--neutral {
-    border: 1px var(--background-color-high, gray) solid;
-    color: var(--text-color-medium, gray);
-}
-
-.fkp_diagnostic-page__right-bar__system-info__row__tag--warning {
-    border: 1px var(--warn-color-medium, orange) solid;
-    color: var(--warn-color-medium, orange);
-}
-
-.fkp_diagnostic-page__right-bar__system-info__row__tag--success {
-    border: 1px var(--success-color-medium, green) solid;
-    color: var(--success-color-medium, green);
-}
-
-`;
-
-// src/prokop/tabs/diagnostic/index.ts
-var DiagnosticTab = {
-  render: render2,
-  initController: initController2,
-  styles: styles4
-};
-
-// src/prokop/tabs/monitoring/views.ts
-function readMonitoringView(hash) {
-  return readPageParams(hash).view === "nodes" ? "nodes" : "connections";
-}
-function controllerForView(view) {
-  return view === "nodes" ? "dashboard" : "monitoring";
-}
-function showMonitoringView(view, updateUrl = true) {
-  const connections = document.getElementById("monitoring-view-connections");
-  const nodes = document.getElementById("monitoring-view-nodes");
-  if (connections) connections.hidden = view !== "connections";
-  if (nodes) nodes.hidden = view !== "nodes";
-  document.querySelectorAll(".fkp_monitoring-page__view").forEach((button) => {
-    const selected = button.dataset.view === view;
-    button.setAttribute("aria-pressed", selected ? "true" : "false");
-    button.classList.toggle("fkp_monitoring-page__tab--active", selected);
-  });
-  if (updateUrl && typeof history !== "undefined" && history.replaceState) {
-    const url = `${window.location.pathname}${window.location.search}`;
-    history.replaceState(
-      null,
-      "",
-      view === "nodes" ? `${url}#view=nodes` : url
-    );
-  }
-  setProkopPage(controllerForView(view));
-}
-
-// src/prokop/tabs/monitoring/render.ts
-function renderViewSwitch(current) {
-  return E(
-    "div",
-    {
-      class: "fkp_monitoring-page__views",
-      role: "group",
-      "aria-label": _("Monitoring view")
-    },
-    [
-      ["connections", _("Connections")],
-      ["nodes", _("Nodes and groups")]
-    ].map(
-      ([view, label]) => E(
-        "button",
-        {
-          type: "button",
-          class: `btn cbi-button fkp_monitoring-page__tab fkp_monitoring-page__view${current === view ? " fkp_monitoring-page__tab--active" : ""}`,
-          "data-view": view,
-          "aria-pressed": current === view ? "true" : "false",
-          click: () => showMonitoringView(view)
-        },
-        label
-      )
-    )
-  );
-}
-function renderConnectionsView(hidden) {
-  return E(
-    "div",
-    {
-      id: "monitoring-view-connections",
-      class: "fkp_monitoring-page__panel",
-      ...hidden ? { hidden: true } : {}
-    },
-    [
-      E("div", { class: "fkp_monitoring-page__controls" }, [
-        E("div", { class: "fkp_monitoring-page__tabs" }, [
-          E(
-            "button",
-            {
-              id: "monitoring-tab-active",
-              class: "btn cbi-button fkp_monitoring-page__tab fkp_monitoring-page__tab--active",
-              type: "button"
-            },
-            `${_("Active")} 0`
-          ),
-          E(
-            "button",
-            {
-              id: "monitoring-tab-closed",
-              class: "btn cbi-button fkp_monitoring-page__tab",
-              type: "button"
-            },
-            `${_("Closed")} 0`
-          ),
-          E(
-            "button",
-            {
-              id: "monitoring-follow-toggle",
-              class: "btn cbi-button fkp_monitoring-page__tab",
-              type: "button",
-              "aria-pressed": "false",
-              title: _(
-                "Show only connections that start from now on, active and closed"
-              )
-            },
-            _("Follow new")
-          )
-        ]),
-        E("div", { class: "fkp_monitoring-page__filters" }, [
-          E(
-            "select",
-            {
-              id: "monitoring-device-filter",
-              class: "cbi-input-select fkp_monitoring-page__device-filter",
-              "aria-label": _("Device")
-            },
-            [E("option", { value: "all" }, _("All devices"))]
-          ),
-          E("select", {
-            id: "monitoring-path-filter",
-            class: "cbi-input-select",
-            "aria-label": _("Path")
-          }),
-          E(
-            "select",
-            {
-              id: "monitoring-sort",
-              class: "cbi-input-select",
-              "aria-label": _("Sort connections")
-            },
-            [
-              E("option", { value: "start" }, _("Start time")),
-              E("option", { value: "duration" }, _("Duration")),
-              E("option", { value: "download" }, _("Download")),
-              E("option", { value: "upload" }, _("Upload")),
-              E("option", { value: "total" }, _("Total traffic"))
-            ]
-          ),
-          E("label", { class: "fkp_monitoring-page__search" }, [
-            E("span", { class: "fkp_monitoring-page__search-icon" }, []),
-            E("input", {
-              id: "monitoring-search",
-              class: "cbi-input-text fkp_monitoring-page__search-input",
-              type: "search",
-              placeholder: _("Site, IP, device or rule"),
-              "aria-label": _("Search"),
-              autocomplete: "off"
-            })
-          ])
-        ]),
-        E("div", { class: "fkp_monitoring-page__actions" }, [
-          ...isReadonlyMode() ? [] : [
-            E(
-              "button",
-              {
-                id: "monitoring-close-all",
-                class: "btn cbi-button fkp_monitoring-page__icon-button",
-                title: _("Close all connections"),
-                "aria-label": _("Close all connections"),
-                type: "button",
-                disabled: true
-              },
-              []
-            )
-          ],
-          E(
-            "button",
-            {
-              id: "monitoring-pause-toggle",
-              class: "btn cbi-button fkp_monitoring-page__icon-button",
-              title: _("Pause updates"),
-              "aria-label": _("Pause updates"),
-              type: "button"
-            },
-            []
-          )
-        ])
-      ]),
-      E("div", {
-        id: "monitoring-filter-bar",
-        class: "fkp_monitoring-page__filter-bar",
-        role: "status",
-        hidden: true
-      }),
-      E(
-        "div",
-        { id: "monitoring-connections", class: "fkp_monitoring-page__body" },
-        [
-          E(
-            "div",
-            {
-              class: "fkp_monitoring-page__state fkp_monitoring-page__state--loading"
-            },
-            _("Loading connections")
-          )
-        ]
-      ),
-      E("div", { id: "monitoring-connection-details", role: "region" })
-    ]
-  );
-}
-function render3() {
-  const view = readMonitoringView();
-  return E(
-    "div",
-    {
-      id: "monitoring-status",
-      class: "fkp_monitoring-page"
-    },
-    [
-      renderViewSwitch(view),
-      renderConnectionsView(view !== "connections"),
-      E(
-        "div",
-        {
-          id: "monitoring-view-nodes",
-          class: "fkp_monitoring-page__nodes",
-          ...view !== "nodes" ? { hidden: true } : {}
-        },
-        [renderNodes()]
-      )
-    ]
-  );
-}
-
-// src/prokop/tabs/monitoring/initController.ts
-function normalizeConnectionsPayload(value) {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return {};
-  }
-  return value;
-}
-var RENDER_INTERVAL_MS = 500;
-var CONNECTIONS_RPC_POLL_INTERVAL_MS = 1500;
-var CLOSED_CONNECTION_LIMIT = 300;
-var ALL_FILTER_VALUE = "all";
-var dependencies = {};
-var monitoringMounted = false;
-var monitoringMountId = 0;
-var monitoringLifecycleRegistered = false;
-var monitoringControllerInitialized = false;
-var serviceStateUnsubscribe = null;
-var renderTimer = null;
-var connectionsPollTimer = null;
-var connectionsSocketUrl = "";
-var connectionsUpdatesId = 0;
-var renderSkippedForSelection = false;
-var pendingConnectionsPayload = null;
-var pollingConnections = false;
-var activeTab = "active";
-var selectedDeviceFilter = ALL_FILTER_VALUE;
-var searchQuery = "";
-var pathFilter = ALL_FILTER_VALUE;
-var followBaseline = null;
-var selectedConnectionId = null;
-var sortMode = "start";
-var localDeviceChoices = {};
-var routeDisplayNames = {};
-var routeSections = [];
-var routeRulesByTag = {};
-var nodeDisplayNames = {};
-var routeRules = [];
-var lastDeviceFilterSignature = "";
-var loading = true;
-var failed = false;
-var closingAll = false;
-var monitoringPaused = false;
-var monitoringPausedAt = null;
-var serviceAvailability = "loading";
-var activeConnections = /* @__PURE__ */ new Map();
-var closedConnections = /* @__PURE__ */ new Map();
-var closingConnectionIds = /* @__PURE__ */ new Set();
-function normalizeString(value) {
-  return value == null ? "" : String(value).trim();
-}
-function getListValues2(value) {
-  if (!value) {
-    return [];
-  }
-  if (Array.isArray(value)) {
-    return value.map((item) => normalizeString(item)).filter(Boolean);
-  }
-  return normalizeString(value).split(/\s+/).map((item) => item.trim()).filter(Boolean);
-}
-function getUrlTestIds2(section) {
-  const values = getListValues2(section.urltests);
-  return values.length ? values : section.urltest_enabled === "1" ? ["urltest"] : [];
-}
-function getUrlTestTag2(sectionName, id) {
-  return getOutboundTagBySection(
-    id === "urltest" ? `${sectionName}-urltest` : `${sectionName}-urltest-${id}`
-  );
-}
-function formatEndpoint(address, port) {
-  const normalizedAddress = normalizeString(address);
-  const normalizedPort = normalizeString(port);
-  if (!normalizedAddress) {
-    return "-";
-  }
-  if (!normalizedPort) {
-    return normalizedAddress;
-  }
-  if (normalizedPort === "443") {
-    return normalizedAddress;
-  }
-  if (normalizedAddress.includes(":") && !normalizedAddress.startsWith("[")) {
-    return `[${normalizedAddress}]:${normalizedPort}`;
-  }
-  return `${normalizedAddress}:${normalizedPort}`;
-}
-function getDisplayName2(section) {
-  return normalizeString(section.label) || section[".name"];
-}
-function buildRouteDisplayNames(sections) {
-  const map = {
-    "bypass-out": _("Bypass"),
-    "direct-out": _("direct")
-  };
-  const routeSectionItems = [];
-  const rulesByTag = {};
-  const rules = [];
-  const urltestsBySection = /* @__PURE__ */ new Map();
-  sections.filter((section) => section[".type"] === "urltest").forEach((section) => {
-    const owner = normalizeString(section.section);
-    const id = normalizeString(section.id) || section[".name"];
-    if (!owner || !id) {
-      return;
-    }
-    urltestsBySection.set(owner, [
-      ...urltestsBySection.get(owner) || [],
-      id
-    ]);
-  });
-  sections.filter((section) => section[".type"] === "section").filter((section) => isSectionEnabled(section.enabled)).forEach((section) => {
-    const sectionName = section[".name"];
-    const displayName = getDisplayName2(section);
-    if (!sectionName || !displayName) {
-      return;
-    }
-    const rule = {
-      name: sectionName,
-      label: displayName,
-      action: normalizeString(section.action),
-      dpiProvider: section.dpi_provider,
-      dpiStrategy: section.dpi_strategy,
-      dpiCustom: section.dpi_strategy_custom
-    };
-    rules.push(rule);
-    routeSectionItems.push({ sectionName, displayName });
-    map[getOutboundTagBySection(sectionName)] = displayName;
-    rulesByTag[getOutboundTagBySection(sectionName)] = rule;
-    const urltestIds = urltestsBySection.get(sectionName) || getUrlTestIds2(section);
-    urltestIds.forEach((id) => {
-      map[getUrlTestTag2(sectionName, id)] = displayName;
-      rulesByTag[getUrlTestTag2(sectionName, id)] = rule;
-    });
-  });
-  routeDisplayNames = map;
-  routeRulesByTag = rulesByTag;
-  routeRules = rules;
-  routeSections = routeSectionItems.sort(
-    (a, b) => b.sectionName.length - a.sectionName.length
-  );
-}
-function getRouteDisplayNameByTag(tag) {
-  if (!tag) {
-    return "";
-  }
-  if (routeDisplayNames[tag]) {
-    return routeDisplayNames[tag];
-  }
-  const manualSection = routeSections.find(({ sectionName }) => {
-    if (!tag.startsWith(`${sectionName}-`) || !tag.endsWith("-out")) {
-      return false;
-    }
-    const middle = tag.slice(sectionName.length + 1, -4);
-    return /^\d+(?:-\d+)?$/.test(middle);
-  });
-  return manualSection?.displayName || "";
-}
-function getRuleByTag(tag) {
-  if (routeRulesByTag[tag]) return routeRulesByTag[tag];
-  const name = getRouteDisplayNameByTag(tag) ? routeSections.find(({ sectionName }) => tag.startsWith(`${sectionName}-`))?.sectionName : "";
-  return routeRules.find((rule) => rule.name === name) || null;
-}
-function parseStartedAt(connection) {
-  const startedAt = Date.parse(connection.start || "");
-  return Number.isFinite(startedAt) ? startedAt : connection.lastSeenAt;
-}
-function formatDuration(ms) {
-  const totalSeconds = Math.max(0, Math.floor(ms / 1e3));
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor(totalSeconds % 3600 / 60);
-  const seconds = totalSeconds % 60;
-  const pad = (value) => String(value).padStart(2, "0");
-  if (hours > 0) {
-    return `${hours}:${pad(minutes)}:${pad(seconds)}`;
-  }
-  return `${minutes}:${pad(seconds)}`;
-}
-function formatConnectionDuration(connection) {
-  const startedAt = parseStartedAt(connection);
-  const finishedAt = connection.closedAt || monitoringPausedAt || Date.now();
-  return formatDuration(finishedAt - startedAt);
-}
-function formatBytes2(value) {
-  return prettyBytes(Number.isFinite(value) ? Number(value) : 0);
-}
-function getConnectionSourceIp(connection) {
-  return normalizeString(connection.metadata?.sourceIP);
-}
-function getDeviceName(ip) {
-  return normalizeString(localDeviceChoices[ip]);
-}
-function getDeviceFilterLabel(ip) {
-  const deviceName = getDeviceName(ip);
-  return deviceName || ip;
-}
-function getSourceCellParts(connection) {
-  const ip = getConnectionSourceIp(connection);
-  const deviceName = getDeviceName(ip);
-  if (deviceName) {
-    return {
-      primary: deviceName,
-      ip,
-      copyValue: ip ? `${deviceName} (${ip})` : deviceName,
-      searchValue: `${deviceName} ${ip}`
-    };
-  }
-  return {
-    primary: ip || "-",
-    ip: "",
-    copyValue: ip || "-",
-    searchValue: ip
-  };
-}
-function getTargetCellParts(connection) {
-  const metadata = connection.metadata || {};
-  const host = normalizeString(metadata.host);
-  const destinationIp = normalizeString(metadata.destinationIP);
-  const port = metadata.destinationPort;
-  const primaryTarget = host || destinationIp;
-  const primary = primaryTarget ? formatEndpoint(primaryTarget, port) : "-";
-  return {
-    primary,
-    searchValue: [primary, host, destinationIp].filter(Boolean).join(" ")
-  };
-}
-function getPath(connection) {
-  const path = connectionPath(connection.chains, connection.rule, getRuleByTag);
-  return path.node ? { ...path, node: nodeDisplayNames[path.node] || path.node } : path;
-}
-function getNetwork(connection) {
-  return normalizeString(connection.metadata?.network).toLowerCase() || "-";
-}
-function sortConnections(connections, tab) {
-  return [...connections].sort((a, b) => {
-    const aTraffic = trafficSortValue(a, sortMode);
-    const bTraffic = trafficSortValue(b, sortMode);
-    if (aTraffic != null && bTraffic != null) return bTraffic - aTraffic;
-    if (sortMode === "duration") return parseStartedAt(a) - parseStartedAt(b);
-    if (tab === "closed") {
-      return (b.closedAt || 0) - (a.closedAt || 0);
-    }
-    return parseStartedAt(b) - parseStartedAt(a);
-  });
-}
-function getConnectionsForActiveTab() {
-  if (followBaseline) {
-    const baseline = followBaseline;
-    return [...activeConnections.values(), ...closedConnections.values()].filter((connection) => !baseline.has(connection.id)).sort((a, b) => parseStartedAt(b) - parseStartedAt(a));
-  }
-  const source = activeTab === "active" ? Array.from(activeConnections.values()) : Array.from(closedConnections.values());
-  return sortConnections(source, activeTab);
-}
-function normalizeSearchValue(value) {
-  return value.toLowerCase().replace(/\s+/g, " ").trim();
-}
-function getSearchValues(connection) {
-  const target = getTargetCellParts(connection);
-  const source = getSourceCellParts(connection);
-  const path = pathSummary(getPath(connection));
-  return [
-    connection.id,
-    target.searchValue,
-    getNetwork(connection),
-    path.kindLabel,
-    path.primary,
-    path.secondary,
-    normalizeString(connection.rule),
-    ...connection.chains || [],
-    source.searchValue
-  ].filter(Boolean);
-}
-function getVisibleConnections() {
-  const normalizedSearch = normalizeSearchValue(searchQuery);
-  return getConnectionsForActiveTab().filter((connection) => {
-    const sourceIp = getConnectionSourceIp(connection);
-    if (selectedDeviceFilter !== ALL_FILTER_VALUE && sourceIp !== selectedDeviceFilter) {
-      return false;
-    }
-    if (!matchesPathFilter(getPath(connection), pathFilter)) return false;
-    if (!normalizedSearch) {
-      return true;
-    }
-    return getSearchValues(connection).some(
-      (value) => normalizeSearchValue(value).includes(normalizedSearch)
-    );
-  });
-}
-function filtersActive() {
-  return selectedDeviceFilter !== ALL_FILTER_VALUE || pathFilter !== ALL_FILTER_VALUE || normalizeSearchValue(searchQuery) !== "";
-}
-function resetFilters() {
-  selectedDeviceFilter = ALL_FILTER_VALUE;
-  pathFilter = ALL_FILTER_VALUE;
-  searchQuery = "";
-  const search = document.getElementById(
-    "monitoring-search"
-  );
-  if (search) search.value = "";
-  saveMonitoringPreferences();
-  renderControls();
-  renderConnections({ force: true });
-}
-function moveConnectionToClosed(connection, now) {
-  closedConnections.set(connection.id, {
-    ...connection,
-    closedAt: now,
-    lastSeenAt: now
-  });
-}
-function trimClosedConnections() {
-  const sorted = sortConnections(
-    Array.from(closedConnections.values()),
-    "closed"
-  );
-  sorted.slice(CLOSED_CONNECTION_LIMIT).forEach((connection) => {
-    closedConnections.delete(connection.id);
-  });
-}
-function applyConnectionsPayload(payload) {
-  if (monitoringPaused) {
-    pendingConnectionsPayload = payload;
-    return;
-  }
-  const mountId3 = monitoringMountId;
-  const now = Date.now();
-  const incomingIds = /* @__PURE__ */ new Set();
-  const rawConnections = Array.isArray(payload.connections) ? payload.connections : [];
-  rawConnections.forEach((rawConnection) => {
-    const id = normalizeString(rawConnection.id);
-    if (!id) {
-      return;
-    }
-    incomingIds.add(id);
-    closedConnections.delete(id);
-    activeConnections.set(id, {
-      ...rawConnection,
-      id,
-      lastSeenAt: now
-    });
-  });
-  Array.from(activeConnections.entries()).forEach(([id, connection]) => {
-    if (!incomingIds.has(id)) {
-      activeConnections.delete(id);
-      moveConnectionToClosed(connection, now);
-    }
-  });
-  trimClosedConnections();
-  loading = false;
-  failed = false;
-  if (monitoringMounted && mountId3 === monitoringMountId) {
-    renderControls();
-    renderConnections();
-  }
-}
-function setTab(tab) {
-  if (activeTab === tab) {
-    return;
-  }
-  activeTab = tab;
-  renderControls();
-  renderConnections();
-}
-function getKnownSourceIps() {
-  const ips = /* @__PURE__ */ new Set();
-  activeConnections.forEach((connection) => {
-    const ip = getConnectionSourceIp(connection);
-    if (ip) {
-      ips.add(ip);
-    }
-  });
-  closedConnections.forEach((connection) => {
-    const ip = getConnectionSourceIp(connection);
-    if (ip) {
-      ips.add(ip);
-    }
-  });
-  return Array.from(ips).sort((a, b) => {
-    const byLabel = getDeviceFilterLabel(a).localeCompare(
-      getDeviceFilterLabel(b)
-    );
-    return byLabel || a.localeCompare(b);
-  });
-}
-function renderDeviceFilterOptions() {
-  const select2 = document.getElementById(
-    "monitoring-device-filter"
-  );
-  if (!select2) {
-    return;
-  }
-  const sourceIps = getKnownSourceIps();
-  if (selectedDeviceFilter !== ALL_FILTER_VALUE && !sourceIps.includes(selectedDeviceFilter)) {
-    selectedDeviceFilter = ALL_FILTER_VALUE;
-  }
-  const signature = [
-    selectedDeviceFilter,
-    ...sourceIps.map((ip) => `${ip}:${getDeviceFilterLabel(ip)}`)
-  ].join("|");
-  if (signature === lastDeviceFilterSignature) {
-    select2.value = selectedDeviceFilter;
-    return;
-  }
-  lastDeviceFilterSignature = signature;
-  const options = [
-    E("option", { value: ALL_FILTER_VALUE }, _("All devices")),
-    ...sourceIps.map(
-      (ip) => E("option", { value: ip }, getDeviceFilterLabel(ip))
-    )
-  ];
-  select2.replaceChildren(...options);
-  select2.value = selectedDeviceFilter;
-}
-var PATH_KINDS = [
-  "dpi",
-  "connection",
-  "bypass",
-  "direct",
-  "block"
-];
-var lastPathFilterSignature = "";
-function renderPathFilterOptions() {
-  const select2 = document.getElementById(
-    "monitoring-path-filter"
-  );
-  if (!select2) return;
-  const rules = [...routeRules].sort((a, b) => a.label.localeCompare(b.label));
-  const known = [
-    ALL_FILTER_VALUE,
-    ...PATH_KINDS.map((kind) => `kind:${kind}`),
-    ...rules.map((rule) => `rule:${rule.name}`)
-  ];
-  if (!known.includes(pathFilter)) pathFilter = ALL_FILTER_VALUE;
-  const signature = rules.map((rule) => `${rule.name}:${rule.label}`).join("|");
-  if (signature !== lastPathFilterSignature || !select2.options.length) {
-    lastPathFilterSignature = signature;
-    select2.replaceChildren(
-      E("option", { value: ALL_FILTER_VALUE }, _("All paths")),
-      E(
-        "optgroup",
-        { label: _("Path type") },
-        PATH_KINDS.map(
-          (kind) => E("option", { value: `kind:${kind}` }, pathKindLabel(kind))
-        )
-      ),
-      ...rules.length ? [
-        E(
-          "optgroup",
-          { label: _("Rule") },
-          rules.map(
-            (rule) => E("option", { value: `rule:${rule.name}` }, rule.label)
-          )
-        )
-      ] : []
-    );
-  }
-  select2.value = pathFilter;
-}
-function renderFilterBar() {
-  const bar = document.getElementById("monitoring-filter-bar");
-  if (!bar) return;
-  const active = filtersActive();
-  const following = followBaseline !== null;
-  if (!active && !following) {
-    bar.replaceChildren();
-    bar.hidden = true;
-    return;
-  }
-  const total = getConnectionsForActiveTab().length;
-  const shown = active ? getVisibleConnections().length : total;
-  bar.hidden = false;
-  bar.replaceChildren(
-    E(
-      "span",
-      {},
-      [
-        following ? _("Following new connections") : "",
-        active ? _("Shown %d of %d").replace("%d", String(shown)).replace("%d", String(total)) : ""
-      ].filter(Boolean).join(" \xB7 ")
-    ),
-    ...active ? [
-      E(
-        "button",
-        {
-          type: "button",
-          class: "btn cbi-button fkp_monitoring-page__reset",
-          click: () => resetFilters()
-        },
-        _("Reset filters")
-      )
-    ] : []
-  );
-}
-function setButtonActive(button, active) {
-  if (!button) {
-    return;
-  }
-  button.classList.toggle("fkp_monitoring-page__tab--active", active);
-}
-function renderTabButtonContent(label, count) {
-  return [
-    E("span", { class: "fkp_monitoring-page__tab-label" }, label),
-    E("span", { class: "fkp_monitoring-page__tab-badge" }, String(count))
-  ];
-}
-function renderControls() {
-  const activeButton = document.getElementById(
-    "monitoring-tab-active"
-  );
-  const closedButton = document.getElementById(
-    "monitoring-tab-closed"
-  );
-  const closeAllButton = document.getElementById(
-    "monitoring-close-all"
-  );
-  const pauseToggleButton = document.getElementById(
-    "monitoring-pause-toggle"
-  );
-  const following = followBaseline !== null;
-  if (activeButton) {
-    activeButton.replaceChildren(
-      ...renderTabButtonContent(_("Active"), activeConnections.size)
-    );
-    activeButton.disabled = serviceAvailability === "stopped" || following;
-  }
-  if (closedButton) {
-    closedButton.replaceChildren(
-      ...renderTabButtonContent(_("Closed"), closedConnections.size)
-    );
-    closedButton.disabled = serviceAvailability === "stopped" || following;
-  }
-  setButtonActive(activeButton, !following && activeTab === "active");
-  setButtonActive(closedButton, !following && activeTab === "closed");
-  const followButton = document.getElementById(
-    "monitoring-follow-toggle"
-  );
-  if (followButton) {
-    followButton.disabled = serviceAvailability === "stopped";
-    followButton.setAttribute("aria-pressed", following ? "true" : "false");
-    followButton.classList.toggle(
-      "fkp_monitoring-page__tab--active",
-      following
-    );
-  }
-  if (closeAllButton) {
-    closeAllButton.replaceChildren(renderXIcon24());
-    closeAllButton.disabled = serviceAvailability === "stopped" || activeConnections.size === 0 || closingAll;
-  }
-  if (pauseToggleButton) {
-    const title = monitoringPaused ? _("Resume updates") : _("Pause updates");
-    pauseToggleButton.replaceChildren(
-      monitoringPaused ? renderPlayIcon24() : renderPauseIcon24()
-    );
-    pauseToggleButton.title = title;
-    pauseToggleButton.setAttribute("aria-label", title);
-    pauseToggleButton.disabled = serviceAvailability === "stopped";
-    pauseToggleButton.classList.toggle(
-      "fkp_monitoring-page__icon-button--active",
-      monitoringPaused
-    );
-  }
-  const searchIcon = document.querySelector(
-    ".fkp_monitoring-page__search-icon"
-  );
-  if (searchIcon && searchIcon.childNodes.length === 0) {
-    searchIcon.replaceChildren(renderSearchIcon24());
-  }
-  renderDeviceFilterOptions();
-  renderPathFilterOptions();
-  renderFilterBar();
-  const pathSelect = document.getElementById(
-    "monitoring-path-filter"
-  );
-  if (pathSelect) pathSelect.disabled = serviceAvailability === "stopped";
-  const select2 = document.getElementById(
-    "monitoring-device-filter"
-  );
-  const searchInput = document.getElementById(
-    "monitoring-search"
-  );
-  if (select2) {
-    select2.disabled = serviceAvailability === "stopped";
-  }
-  if (searchInput) {
-    searchInput.disabled = serviceAvailability === "stopped";
-  }
-}
-function renderValue(value, className = "") {
-  const text = value || "-";
-  const element = E(
-    "span",
-    {
-      class: ["fkp_monitoring-page__value", className].filter(Boolean).join(" "),
-      title: text
-    },
-    text
-  );
-  element.setAttribute("data-copy-value", text);
-  return element;
-}
-function renderSourceValue(source) {
-  const fullText = source.copyValue || source.primary || "-";
-  if (!source.ip) {
-    const element2 = E(
-      "span",
-      {
-        class: "fkp_monitoring-page__value fkp_monitoring-page__source-value fkp_monitoring-page__source-value--ip-only",
-        title: fullText
-      },
-      source.primary || "-"
-    );
-    element2.setAttribute("data-copy-value", fullText);
-    return element2;
-  }
-  const element = E(
-    "span",
-    {
-      class: "fkp_monitoring-page__value fkp_monitoring-page__source-value",
-      title: fullText
-    },
-    [
-      E("span", { class: "fkp_monitoring-page__source-name" }, source.primary),
-      E("span", { class: "fkp_monitoring-page__source-ip" }, source.ip)
-    ]
-  );
-  element.setAttribute("data-copy-value", fullText);
-  return element;
-}
-function renderTableCell(label, children) {
-  const cell = E("td", {}, [
-    E("div", { class: "fkp_monitoring-page__cell" }, children)
-  ]);
-  cell.setAttribute("data-label", label);
-  return cell;
-}
-function renderSecondary(text) {
-  return E("span", { class: "fkp_monitoring-page__secondary" }, text);
-}
-function renderPathCell(path) {
-  const summary = pathSummary(path);
-  return [
-    E(
-      "span",
-      {
-        class: `fkp_monitoring-page__path-kind fkp_monitoring-page__path-kind--${summary.kind}`
-      },
-      summary.kindLabel
-    ),
-    ...summary.primary ? [renderValue(summary.primary, "fkp_monitoring-page__route")] : [],
-    ...summary.secondary ? [renderSecondary(summary.secondary)] : []
-  ];
-}
-function renderConnectionRow(connection) {
-  const target = getTargetCellParts(connection);
-  const source = getSourceCellParts(connection);
-  const isActive = activeConnections.has(connection.id);
-  const isClosing = closingConnectionIds.has(connection.id);
-  const icons = { details: renderInfoIcon24, close: renderXIcon24 };
-  const actions = E(
-    "div",
-    { class: "fkp_monitoring-page__actions" },
-    connectionActions(isActive, isReadonlyMode()).map(
-      (action) => E(
-        "button",
-        {
-          class: `btn cbi-button fkp_monitoring-page__icon-action ${action.className}`,
-          title: action.label,
-          "aria-label": action.label,
-          type: "button",
-          value: connection.id,
-          ...action.kind === "close" && isClosing ? { disabled: true } : {}
-        },
-        [icons[action.kind]()]
-      )
-    )
-  );
-  const destinationMeta = [
-    getNetwork(connection).toUpperCase(),
-    formatConnectionDuration(connection),
-    ...isActive ? [] : [_("closed")]
-  ].join(" \xB7 ");
-  return E(
-    "tr",
-    {
-      class: [
-        isClosing ? "fkp_monitoring-page__row--closing" : "",
-        !isActive ? "fkp_monitoring-page__row--closed" : "",
-        selectedConnectionId === connection.id ? "fkp_monitoring-page__row--selected" : ""
-      ].filter(Boolean).join(" ")
-    },
-    [
-      renderTableCell(_("Device"), [renderSourceValue(source)]),
-      renderTableCell(_("Destination"), [
-        renderValue(target.primary),
-        renderSecondary(destinationMeta)
-      ]),
-      renderTableCell(_("Path"), renderPathCell(getPath(connection))),
-      renderTableCell(_("Traffic"), [
-        renderValue(`\u2193 ${formatBytes2(connection.download)}`),
-        renderSecondary(`\u2191 ${formatBytes2(connection.upload)}`)
-      ]),
-      renderTableCell(_("Actions"), [actions])
-    ]
-  );
-}
-function safeText(value) {
-  return normalizeString(value == null ? "" : String(value)).replace(/\b(?:https?:\/\/)?[^\s@]+@/g, "***@").replace(
-    /(?:token|secret|password|uuid|authorization)=([^&\s]+)/gi,
-    "$1=***"
-  );
-}
-function connectionTechnicalDetails(connection) {
-  const metadata = connection.metadata || {};
-  return [
-    [_("Source"), formatEndpoint(metadata.sourceIP, metadata.sourcePort)],
-    [
-      _("Destination"),
-      formatEndpoint(metadata.destinationIP, metadata.destinationPort)
-    ],
-    [_("Host"), safeText(metadata.host)],
-    [_("Protocol"), getNetwork(connection)],
-    [_("Rule"), safeText(connection.rule)],
-    [_("Rule payload"), safeText(connection.rulePayload)],
-    [_("Outbound chain"), safeText((connection.chains || []).join(" \u2192 "))],
-    [_("Started"), formatStarted(connection.start)],
-    [_("Connection ID"), connection.id]
-  ];
-}
-function formatStarted(start) {
-  const time = Date.parse(start || "");
-  return Number.isFinite(time) ? new Date(time).toLocaleString() : safeText(start);
-}
-function connectionDetails(connection) {
-  const target = getTargetCellParts(connection);
-  const source = getSourceCellParts(connection);
-  const path = pathSummary(getPath(connection));
-  return [
-    [_("Device"), source.copyValue],
-    [_("Destination"), target.primary],
-    [
-      _("Path"),
-      [path.kindLabel, path.primary, path.secondary].filter(Boolean).join(" \xB7 ")
-    ],
-    [_("Duration"), formatConnectionDuration(connection)],
-    [_("Download"), formatBytes2(connection.download)],
-    [_("Upload"), formatBytes2(connection.upload)],
-    ...connectionTechnicalDetails(connection)
-  ];
-}
-function detailRow(label, value) {
-  return E("div", { class: "fkp_monitoring-page__detail-row" }, [
-    E("dt", {}, label),
-    E("dd", {}, value)
-  ]);
-}
-function closeConnectionDetails() {
-  selectedConnectionId = null;
-  document.getElementById("monitoring-connection-details")?.replaceChildren();
-  renderConnections({ force: true });
-}
-function renderConnectionDetailsPanel() {
-  const container = document.getElementById("monitoring-connection-details");
-  if (!container) return;
-  const connection = selectedConnectionId ? activeConnections.get(selectedConnectionId) || closedConnections.get(selectedConnectionId) : void 0;
-  if (!connection) {
-    container.replaceChildren();
-    return;
-  }
-  const technicalOpen = Boolean(
-    container.querySelector("details")?.open
-  );
-  const isActive = activeConnections.has(connection.id);
-  const target = getTargetCellParts(connection);
-  const host = normalizeString(connection.metadata?.host) || normalizeString(connection.metadata?.destinationIP);
-  const rawPath = getPath(connection);
-  const path = pathSummary(rawPath);
-  const source = getSourceCellParts(connection);
-  container.replaceChildren(
-    E("div", { class: "fkp_monitoring-page__details" }, [
-      E("div", { class: "fkp_monitoring-page__details-head" }, [
-        E("h3", {}, target.primary),
-        E(
-          "button",
-          {
-            type: "button",
-            class: "btn cbi-button fkp_monitoring-page__details-close",
-            "aria-label": _("Close details"),
-            title: _("Close details"),
-            click: () => closeConnectionDetails()
-          },
-          "\xD7"
-        )
-      ]),
-      E("dl", { class: "fkp_monitoring-page__detail-list" }, [
-        detailRow(_("Device"), source.copyValue),
-        detailRow(
-          _("Status"),
-          isActive ? `${_("Active")} \xB7 ${formatConnectionDuration(connection)}` : `${_("Closed")} \xB7 ${formatConnectionDuration(connection)}`
-        ),
-        detailRow(
-          _("Route"),
-          E("span", {}, [
-            [path.kindLabel, path.primary, rawPath.node].filter(Boolean).join(" \xB7 "),
-            " ",
-            renderProvenance("observed")
-          ])
-        ),
-        ...rawPath.kind === "dpi" && path.secondary ? [
-          detailRow(
-            _("DPI strategy"),
-            E("span", {}, [
-              path.secondary,
-              " ",
-              renderProvenance("configured")
-            ])
-          )
-        ] : [],
-        detailRow(
-          _("Traffic"),
-          `\u2193 ${formatBytes2(connection.download)} \xB7 \u2191 ${formatBytes2(connection.upload)}`
-        )
-      ]),
-      E("div", { class: "fkp_monitoring-page__details-actions" }, [
-        ...host ? [
-          E(
-            "a",
-            {
-              class: "btn cbi-button",
-              href: prokopPageUrl("diagnostics", { host })
-            },
-            _("Check address in Diagnostics")
-          )
-        ] : [],
-        E(
-          "button",
-          {
-            type: "button",
-            class: "btn cbi-button",
-            click: () => (
-              // navigator.clipboard needs a secure context; LuCI is usually plain HTTP.
-              copyToClipboard(
-                connectionDetails(connection).map(([key, value]) => `${key}: ${value}`).join("\n")
-              )
-            )
-          },
-          _("Copy details")
-        ),
-        ...isActive && !isReadonlyMode() ? [
-          E(
-            "button",
-            {
-              type: "button",
-              class: "btn cbi-button cbi-button-negative",
-              disabled: closingConnectionIds.has(connection.id) ? true : void 0,
-              click: () => void closeConnection(connection.id)
-            },
-            _("Close connection")
-          )
-        ] : []
-      ]),
-      E(
-        "details",
-        {
-          class: "fkp_monitoring-page__technical",
-          ...technicalOpen ? { open: true } : {}
-        },
-        [
-          E("summary", {}, _("Technical details")),
-          E(
-            "dl",
-            { class: "fkp_monitoring-page__detail-list" },
-            connectionTechnicalDetails(connection).map(
-              ([label, value]) => detailRow(label, value || "\u2014")
-            )
-          )
-        ]
-      )
-    ])
-  );
-}
-function showConnectionDetails(connection) {
-  selectedConnectionId = connection.id;
-  renderConnectionDetailsPanel();
-  renderConnections({ force: true });
-  document.getElementById("monitoring-connection-details")?.scrollIntoView?.({ block: "nearest" });
-}
-function saveMonitoringPreferences() {
-  writeStorageItem(
-    localStorage,
-    MONITORING_PREFERENCES_KEY,
-    JSON.stringify({
-      selectedDeviceFilter,
-      pathFilter,
-      sortMode
-    })
-  );
-}
-function loadMonitoringPreferences() {
-  try {
-    const value = JSON.parse(
-      readStorageItem(localStorage, MONITORING_PREFERENCES_KEY) || "{}"
-    );
-    if (typeof value.selectedDeviceFilter === "string")
-      selectedDeviceFilter = value.selectedDeviceFilter;
-    if (["start", "duration", "download", "upload", "total"].includes(
-      value.sortMode
-    ))
-      sortMode = value.sortMode;
-    if (typeof value.pathFilter === "string")
-      pathFilter = value.pathFilter.slice(0, 100);
-  } catch (_error) {
-  }
-}
-function renderStateRow(text, className = "", actions = []) {
-  return E("tr", { class: "fkp_monitoring-page__state-row" }, [
-    E(
-      "td",
-      {
-        class: "fkp_monitoring-page__state-cell",
-        colSpan: 5
-      },
-      [
-        E(
-          "div",
-          {
-            class: ["fkp_monitoring-page__state", className].filter(Boolean).join(" ")
-          },
-          actions.length ? [E("span", {}, text), ...actions] : text
-        )
-      ]
-    )
-  ]);
-}
-function renderConnectionsTable(connections, state) {
-  const rows = state ? [renderStateRow(state.text, state.className, state.actions)] : connections.map(renderConnectionRow);
-  return E("div", { class: "fkp_monitoring-page__table-wrap" }, [
-    E(
-      "table",
-      { class: "table cbi-section-table fkp_monitoring-page__table" },
-      [
-        E("thead", {}, [
-          E("tr", {}, [
-            E("th", {}, _("Device")),
-            E("th", {}, _("Destination")),
-            E("th", {}, _("Path")),
-            E("th", {}, _("Traffic")),
-            E("th", { class: "fkp_monitoring-page__actions-head" }, [
-              E("span", { class: "fkp-visually-hidden" }, _("Actions"))
-            ])
-          ])
-        ]),
-        E("tbody", {}, rows)
-      ]
-    )
-  ]);
-}
-function isNodeInsideMonitoring(node) {
-  const root = document.getElementById("monitoring-status");
-  return Boolean(root && node && root.contains(node));
-}
-function isTextSelectionInsideMonitoring() {
-  const selection = window.getSelection?.();
-  if (!selection || selection.isCollapsed) {
-    return false;
-  }
-  return isNodeInsideMonitoring(selection.anchorNode) || isNodeInsideMonitoring(selection.focusNode);
-}
-function renderConnections(options = {}) {
-  const container = document.getElementById("monitoring-connections");
-  if (!container) {
-    return;
-  }
-  if (!options.force && isTextSelectionInsideMonitoring()) {
-    renderSkippedForSelection = true;
-    return;
-  }
-  renderSkippedForSelection = false;
-  const previousScrollLeft = container.scrollLeft;
-  if (serviceAvailability === "stopped") {
-    container.replaceChildren(
-      renderConnectionsTable([], {
-        text: _(
-          "Prokop service is stopped. Start the service to display connections."
-        ),
-        actions: renderStartServiceAction()
-      })
-    );
-    return;
-  }
-  if (loading) {
-    container.replaceChildren(
-      renderConnectionsTable([], {
-        text: _("Loading connections"),
-        className: "fkp_monitoring-page__state--loading"
-      })
-    );
-    return;
-  }
-  if (failed) {
-    container.replaceChildren(
-      renderConnectionsTable([], {
-        text: _("Connections are unavailable"),
-        className: "fkp_monitoring-page__state--error"
-      })
-    );
-    return;
-  }
-  const visibleConnections = getVisibleConnections();
-  renderFilterBar();
-  renderConnectionDetailsPanel();
-  if (visibleConnections.length === 0) {
-    const anyConnections = getConnectionsForActiveTab().length > 0;
-    container.replaceChildren(
-      renderConnectionsTable(
-        [],
-        anyConnections && filtersActive() ? {
-          text: _("No connections match the filters"),
-          actions: [
-            E(
-              "button",
-              {
-                type: "button",
-                class: "btn cbi-button",
-                click: () => resetFilters()
-              },
-              _("Reset filters")
-            )
-          ]
-        } : {
-          text: followBaseline ? _(
-            "No new connections yet. Open the site or app you want to check."
-          ) : activeTab === "active" ? _("No active connections") : _("No closed connections")
-        }
-      )
-    );
-    return;
-  }
-  container.replaceChildren(renderConnectionsTable(visibleConnections));
-  container.scrollLeft = previousScrollLeft;
-}
-function flushRenderAfterSelection() {
-  if (!renderSkippedForSelection || isTextSelectionInsideMonitoring()) {
-    return;
-  }
-  renderConnections({ force: true });
-}
-function setMonitoringPaused(paused) {
-  if (monitoringPaused === paused) {
-    return;
-  }
-  monitoringPaused = paused;
-  monitoringPausedAt = paused ? Date.now() : null;
-  renderSkippedForSelection = false;
-  renderControls();
-  if (!paused) {
-    const payload = pendingConnectionsPayload;
-    pendingConnectionsPayload = null;
-    if (payload) {
-      applyConnectionsPayload(payload);
-      return;
-    }
-    if (connectionsPollTimer) {
-      void pollConnectionsSnapshot();
-      return;
-    }
-  }
-  renderConnections();
-}
-function isElementOverflowing(element) {
-  return element.scrollWidth > element.clientWidth + 1;
-}
-function getMonitoringValueOverflowElements(element) {
-  return [
-    element,
-    ...Array.from(element.querySelectorAll("*"))
-  ].filter(isElementOverflowing);
-}
-function getElementCopyText(element, fallback) {
-  return element.getAttribute("data-copy-value") || element.textContent || fallback;
-}
-function compactMonitoringText(value) {
-  return value.replace(/\u2026/g, "").trim().replace(/\s+/g, "");
-}
-function getMonitoringValueTextElements(element) {
-  const children = Array.from(element.children).filter(
-    (child) => child instanceof HTMLElement
-  );
-  if (children.length === 0) {
-    return [element];
-  }
-  const textElements = children.flatMap(getMonitoringValueTextElements).filter((child) => compactMonitoringText(getElementCopyText(child, "")));
-  return textElements.length > 0 ? textElements : [element];
-}
-function estimateVisibleMonitoringTextLength(element, fallbackText) {
-  const text = compactMonitoringText(getElementCopyText(element, fallbackText));
-  if (!text) {
-    return 0;
-  }
-  if (!isElementOverflowing(element)) {
-    return text.length;
-  }
-  return Math.floor(
-    element.clientWidth / Math.max(element.scrollWidth, 1) * text.length
-  );
-}
-function getEstimatedVisibleMonitoringTextLength(element, fallbackText) {
-  const textElements = getMonitoringValueTextElements(element);
-  if (textElements.length === 1 && textElements[0] === element) {
-    return estimateVisibleMonitoringTextLength(element, fallbackText);
-  }
-  return textElements.reduce(
-    (total, textElement) => total + estimateVisibleMonitoringTextLength(textElement, fallbackText),
-    0
-  );
-}
-function isCompactTextSubsequence(needle, haystack) {
-  let haystackIndex = 0;
-  for (let needleIndex = 0; needleIndex < needle.length; needleIndex += 1) {
-    haystackIndex = haystack.indexOf(needle[needleIndex], haystackIndex);
-    if (haystackIndex === -1) {
-      return false;
-    }
-    haystackIndex += 1;
-  }
-  return true;
-}
-function getSelectionValueElements(selection) {
-  const root = document.getElementById("monitoring-status");
-  if (!root) {
-    return [];
-  }
-  return Array.from(
-    root.querySelectorAll(
-      ".fkp_monitoring-page__value[data-copy-value]"
-    )
-  ).filter((element) => {
-    for (let index = 0; index < selection.rangeCount; index += 1) {
-      try {
-        if (selection.getRangeAt(index).intersectsNode(element)) {
-          return true;
-        }
-      } catch (_error) {
-        return false;
-      }
-    }
-    return false;
-  });
-}
-function shouldCopyFullMonitoringValue(element, selectedText, fullText) {
-  const normalizedSelectedText = selectedText.replace(/\u2026/g, "").trim();
-  const normalizedFullText = fullText.trim();
-  const compactSelectedText = compactMonitoringText(selectedText);
-  const compactFullText = compactMonitoringText(fullText);
-  const overflowElements = getMonitoringValueOverflowElements(element);
-  const hasCompositeText = getMonitoringValueTextElements(element).length > 1;
-  if (!normalizedSelectedText || !normalizedFullText) {
-    return false;
-  }
-  if (normalizedSelectedText === normalizedFullText) {
-    return true;
-  }
-  if (overflowElements.length === 0) {
-    return false;
-  }
-  if (hasCompositeText) {
-    const selectedPrefix = compactSelectedText.slice(
-      0,
-      Math.min(4, compactSelectedText.length)
-    );
-    if (!compactFullText.startsWith(selectedPrefix) || !isCompactTextSubsequence(compactSelectedText, compactFullText)) {
-      return false;
-    }
-  } else if (!compactFullText.startsWith(compactSelectedText)) {
-    return false;
-  }
-  const estimatedVisibleChars = getEstimatedVisibleMonitoringTextLength(
-    element,
-    normalizedFullText
-  );
-  return compactSelectedText.length >= Math.max(4, estimatedVisibleChars - 2);
-}
-function handleMonitoringValueCopy(event) {
-  const selection = window.getSelection?.();
-  if (!selection || selection.isCollapsed) {
-    return;
-  }
-  const valueElements = getSelectionValueElements(selection);
-  if (valueElements.length !== 1) {
-    return;
-  }
-  const valueElement = valueElements[0];
-  const fullText = valueElement.getAttribute("data-copy-value") || valueElement.textContent || "";
-  const selectedText = selection.toString();
-  if (!shouldCopyFullMonitoringValue(valueElement, selectedText, fullText)) {
-    return;
-  }
-  event.clipboardData?.setData("text/plain", fullText);
-  event.preventDefault();
-}
-async function closeConnection(connectionId) {
-  if (!connectionId || closingConnectionIds.has(connectionId)) {
-    return;
-  }
-  closingConnectionIds.add(connectionId);
-  renderConnections();
-  try {
-    const response = await ProkopShellMethods.closeClashApiConnection(connectionId);
-    if (!response.success) {
-      showToast(_("Failed to close connection"), "error");
-      return;
-    }
-    const now = Date.now();
-    const connection = activeConnections.get(connectionId);
-    if (connection) {
-      activeConnections.delete(connectionId);
-      moveConnectionToClosed(connection, now);
-      trimClosedConnections();
-      pendingConnectionsPayload = null;
-      renderControls();
-    }
-  } catch (error) {
-    logger.error("[MONITORING]", "closeConnection: failed", error);
-    showToast(_("Failed to close connection"), "error");
-  } finally {
-    closingConnectionIds.delete(connectionId);
-    renderConnections();
-  }
-}
-async function closeAllConnections() {
-  if (activeConnections.size === 0 || closingAll) {
-    return;
-  }
-  const confirmed = await confirmAction({
-    title: _("Close all connections?"),
-    message: _("Active connections of all devices are interrupted."),
-    consequences: [
-      _("Apps reconnect on their own; downloads and calls may drop")
-    ],
-    confirmLabel: _("Close all"),
-    danger: true
-  });
-  if (!confirmed || closingAll) {
-    return;
-  }
-  closingAll = true;
-  renderControls();
-  try {
-    const response = await ProkopShellMethods.closeAllClashApiConnections();
-    if (!response.success) {
-      showToast(_("Failed to close connections"), "error");
-      return;
-    }
-    const now = Date.now();
-    activeConnections.forEach((connection) => {
-      moveConnectionToClosed(connection, now);
-    });
-    activeConnections.clear();
-    pendingConnectionsPayload = null;
-    trimClosedConnections();
-  } catch (error) {
-    logger.error("[MONITORING]", "closeAllConnections: failed", error);
-    showToast(_("Failed to close connections"), "error");
-  } finally {
-    closingAll = false;
-    renderControls();
-    renderConnections();
-  }
-}
-function bindControls() {
-  const activeButton = document.getElementById("monitoring-tab-active");
-  const closedButton = document.getElementById("monitoring-tab-closed");
-  const select2 = document.getElementById(
-    "monitoring-device-filter"
-  );
-  const searchInput = document.getElementById(
-    "monitoring-search"
-  );
-  const closeAllButton = document.getElementById("monitoring-close-all");
-  const pauseToggleButton = document.getElementById("monitoring-pause-toggle");
-  const connectionsContainer = document.getElementById(
-    "monitoring-connections"
-  );
-  if (activeButton) {
-    activeButton.onclick = () => setTab("active");
-  }
-  if (closedButton) {
-    closedButton.onclick = () => setTab("closed");
-  }
-  if (closeAllButton) {
-    closeAllButton.onclick = () => {
-      void closeAllConnections();
-    };
-  }
-  if (pauseToggleButton) {
-    pauseToggleButton.onclick = () => {
-      setMonitoringPaused(!monitoringPaused);
-      pauseToggleButton.blur();
-    };
-  }
-  if (select2) {
-    select2.onchange = () => {
-      selectedDeviceFilter = select2.value || ALL_FILTER_VALUE;
-      saveMonitoringPreferences();
-      renderConnections();
-    };
-  }
-  const pathSelect = document.getElementById(
-    "monitoring-path-filter"
-  );
-  if (pathSelect) {
-    pathSelect.onchange = () => {
-      pathFilter = pathSelect.value || ALL_FILTER_VALUE;
-      saveMonitoringPreferences();
-      renderConnections({ force: true });
-    };
-  }
-  const followButton = document.getElementById("monitoring-follow-toggle");
-  if (followButton) {
-    followButton.onclick = () => {
-      followBaseline = followBaseline ? null : /* @__PURE__ */ new Set([...activeConnections.keys(), ...closedConnections.keys()]);
-      renderControls();
-      renderConnections({ force: true });
-    };
-  }
-  const sort = document.getElementById(
-    "monitoring-sort"
-  );
-  if (sort) {
-    sort.value = sortMode;
-    sort.onchange = () => {
-      sortMode = sort.value;
-      saveMonitoringPreferences();
-      renderConnections();
-    };
-  }
-  if (searchInput) {
-    searchInput.oninput = () => {
-      searchQuery = searchInput.value;
-      renderConnections();
-    };
-  }
-  if (connectionsContainer) {
-    connectionsContainer.onclick = (event) => {
-      const target = event.target;
-      const action = target?.closest(
-        ".fkp-monitoring-details"
-      );
-      if (action?.value) {
-        const connection = activeConnections.get(action.value) || closedConnections.get(action.value);
-        if (connection) showConnectionDetails(connection);
-        return;
-      }
-      const button = target?.closest(
-        ".fkp_monitoring-page__row-action"
-      );
-      if (button?.value) {
-        void closeConnection(button.value);
-      }
-    };
-  }
-}
-async function loadNodeDisplayNames() {
-  try {
-    const response = await CustomProkopMethods.getDashboardSections();
-    const names = {};
-    for (const group of response.success ? response.data : [])
-      for (const outbound of group.outbounds)
-        if (outbound.displayName && outbound.displayName !== outbound.code)
-          names[outbound.code] = outbound.displayName;
-    nodeDisplayNames = names;
-  } catch (error) {
-    logger.warn("[MONITORING]", "loadNodeDisplayNames: failed", error);
-  } finally {
-    renderConnections();
-  }
-}
-async function loadLocalDevices() {
-  try {
-    localDeviceChoices = await dependencies.loadLocalDeviceChoices?.() || {};
-  } catch (error) {
-    logger.warn("[MONITORING]", "loadLocalDevices: failed", error);
-    localDeviceChoices = {};
-  } finally {
-    renderControls();
-    renderConnections();
-  }
-}
-async function loadRouteDisplayNames() {
-  try {
-    const response = await ProkopShellMethods.getReadonlyConfigSections();
-    buildRouteDisplayNames(response.success ? response.data : []);
-  } catch (error) {
-    logger.warn("[MONITORING]", "loadRouteDisplayNames: failed", error);
-    buildRouteDisplayNames([]);
-  } finally {
-    renderControls();
-    renderConnections();
-  }
-}
-async function pollConnectionsSnapshot() {
-  if (pollingConnections || !monitoringMounted || monitoringPaused || serviceAvailability !== "running") {
-    return;
-  }
-  const mountId3 = monitoringMountId;
-  pollingConnections = true;
-  try {
-    const response = await ProkopShellMethods.getClashApiConnections();
-    if (!monitoringMounted || mountId3 !== monitoringMountId || serviceAvailability !== "running") {
-      return;
-    }
-    if (!response.success) {
-      failed = true;
-      loading = false;
-      renderConnections();
-      return;
-    }
-    applyConnectionsPayload(normalizeConnectionsPayload(response.data));
-  } catch (error) {
-    if (!monitoringMounted || mountId3 !== monitoringMountId || serviceAvailability !== "running") {
-      return;
-    }
-    logger.error("[MONITORING]", "connections polling failed", error);
-    failed = true;
-    loading = false;
-    renderConnections();
-  } finally {
-    pollingConnections = false;
-  }
-}
-function startConnectionsPolling() {
-  if (connectionsPollTimer) {
-    return;
-  }
-  void pollConnectionsSnapshot();
-  connectionsPollTimer = setInterval(() => {
-    void pollConnectionsSnapshot();
-  }, CONNECTIONS_RPC_POLL_INTERVAL_MS);
-}
-async function connectToConnectionsSocket(updatesId) {
-  const mountId3 = monitoringMountId;
-  const clashApiSecret = await getClashApiSecret2();
-  if (!monitoringMounted || mountId3 !== monitoringMountId || updatesId !== connectionsUpdatesId || serviceAvailability !== "running") {
-    return;
-  }
-  if (!canUseDirectClashApi(clashApiSecret)) {
-    startConnectionsPolling();
-    return;
-  }
-  connectionsSocketUrl = getClashWsStreamUrl("/connections", clashApiSecret);
-  socket.subscribe(
-    connectionsSocketUrl,
-    (msg) => {
-      if (updatesId !== connectionsUpdatesId || serviceAvailability !== "running") {
-        return;
-      }
-      try {
-        applyConnectionsPayload(JSON.parse(msg));
-      } catch (error) {
-        logger.error("[MONITORING]", "connections socket parse failed", error);
-      }
-    },
-    (_err) => {
-      if (!monitoringMounted || mountId3 !== monitoringMountId || updatesId !== connectionsUpdatesId || serviceAvailability !== "running") {
-        return;
-      }
-      logger.warn("[MONITORING]", "connections socket unavailable, polling");
-      if (connectionsSocketUrl) {
-        socket.disconnect(connectionsSocketUrl);
-        connectionsSocketUrl = "";
-      }
-      startConnectionsPolling();
-    }
-  );
-}
-function startConnectionsUpdates() {
-  if (serviceAvailability !== "running") {
-    return;
-  }
-  const updatesId = ++connectionsUpdatesId;
-  void connectToConnectionsSocket(updatesId);
-}
-function stopConnectionsUpdates() {
-  connectionsUpdatesId += 1;
-  if (connectionsPollTimer) {
-    clearInterval(connectionsPollTimer);
-    connectionsPollTimer = null;
-  }
-  if (connectionsSocketUrl) {
-    socket.disconnect(connectionsSocketUrl);
-    connectionsSocketUrl = "";
-  }
-}
-function setServiceAvailability(next) {
-  if (serviceAvailability === next) {
-    return;
-  }
-  serviceAvailability = next;
-  if (next === "running") {
-    loading = true;
-    failed = false;
-    startConnectionsUpdates();
-  } else {
-    stopConnectionsUpdates();
-    pendingConnectionsPayload = null;
-    if (next === "stopped") {
-      loading = false;
-      failed = false;
-      activeConnections.clear();
-      closedConnections.clear();
-      closingConnectionIds.clear();
-    } else if (next === "unavailable") {
-      loading = false;
-      failed = true;
-    }
-  }
-  renderControls();
-  renderConnections();
-}
-function watchServiceState() {
-  serviceStateUnsubscribe?.();
-  serviceStateUnsubscribe = subscribeRuntimeUiState((uiState) => {
-    if (!monitoringMounted) {
-      return;
-    }
-    setServiceAvailability(
-      getServiceAvailability({
-        loading: false,
-        failed: false,
-        running: uiState.service.prokop.running
-      })
-    );
-  });
-}
-function resetMonitoringState() {
-  activeTab = "active";
-  selectedDeviceFilter = ALL_FILTER_VALUE;
-  searchQuery = readPageParams().search || "";
-  pathFilter = ALL_FILTER_VALUE;
-  followBaseline = null;
-  selectedConnectionId = null;
-  lastPathFilterSignature = "";
-  lastDeviceFilterSignature = "";
-  loading = true;
-  failed = false;
-  closingAll = false;
-  monitoringPaused = false;
-  monitoringPausedAt = null;
-  serviceAvailability = "loading";
-  pendingConnectionsPayload = null;
-  activeConnections.clear();
-  closedConnections.clear();
-  closingConnectionIds.clear();
-  const searchInput = document.getElementById(
-    "monitoring-search"
-  );
-  if (searchInput) {
-    searchInput.value = searchQuery;
-  }
-}
-async function onPageMount3() {
-  onPageUnmount3();
-  monitoringMounted = true;
-  monitoringMountId += 1;
-  const mountId3 = monitoringMountId;
-  resetMonitoringState();
-  loadMonitoringPreferences();
-  bindControls();
-  renderControls();
-  renderConnections();
-  watchServiceState();
-  void loadLocalDevices();
-  void loadRouteDisplayNames();
-  void loadNodeDisplayNames();
-  if (getCachedRuntimeUiState()) {
-    void refreshRuntimeUiState({ force: true });
-  } else {
-    const uiState = await refreshRuntimeUiState({ force: true });
-    if (!monitoringMounted || mountId3 !== monitoringMountId) {
-      return;
-    }
-    if (!uiState && serviceAvailability === "loading") {
-      setServiceAvailability("unavailable");
-    }
-  }
-  document.addEventListener("selectionchange", flushRenderAfterSelection);
-  document.addEventListener("copy", handleMonitoringValueCopy);
-  renderTimer = setInterval(() => {
-    if (monitoringPaused) {
-      return;
-    }
-    renderConnections();
-  }, RENDER_INTERVAL_MS);
-}
-function onPageUnmount3() {
-  monitoringMounted = false;
-  monitoringMountId += 1;
-  if (renderTimer) {
-    clearInterval(renderTimer);
-    renderTimer = null;
-  }
-  stopConnectionsUpdates();
-  serviceStateUnsubscribe?.();
-  serviceStateUnsubscribe = null;
-  document.removeEventListener("selectionchange", flushRenderAfterSelection);
-  document.removeEventListener("copy", handleMonitoringValueCopy);
-}
-function registerLifecycleListeners3() {
-  if (monitoringLifecycleRegistered) {
-    return;
-  }
-  monitoringLifecycleRegistered = true;
-  store.subscribe(
-    (next, prev, diff) => {
-      if (diff.tabService && next.tabService.current !== prev.tabService.current) {
-        const isMonitoringVisible = next.tabService.current === "monitoring";
-        if (isMonitoringVisible) {
-          return onPageMount3();
-        }
-        if (!isMonitoringVisible) {
-          return onPageUnmount3();
-        }
-      }
-    }
-  );
-}
-async function initController3(controllerDependencies = {}) {
-  dependencies = {
-    ...dependencies,
-    ...controllerDependencies
-  };
-  if (monitoringControllerInitialized) {
-    return;
-  }
-  monitoringControllerInitialized = true;
-  if (getProkopPage() === "monitoring")
-    setProkopPage(controllerForView(readMonitoringView()));
-  onMount("monitoring-status").then(() => {
-    registerLifecycleListeners3();
-    if (store.get().tabService.current === "monitoring" || isActiveLuciTab("monitoring")) {
-      onPageMount3();
-    }
-  });
-}
-
-// src/prokop/tabs/monitoring/styles.ts
-var styles5 = `
-#cbi-${PROKOP_UCI_PACKAGE}-monitoring-_mount_node {
-    margin: 16px 0 22px;
-    padding: 0;
-}
-
-#cbi-${PROKOP_UCI_PACKAGE}-monitoring-_mount_node > .cbi-value-title {
-    display: none;
-}
-
-#cbi-${PROKOP_UCI_PACKAGE}-monitoring-_mount_node > .cbi-value-field {
-    margin-left: 0;
-    width: 100%;
-}
-
-#cbi-${PROKOP_UCI_PACKAGE}-monitoring-_mount_node > div {
-    width: 100%;
-}
-
-#cbi-${PROKOP_UCI_PACKAGE}-monitoring > h3 {
-    display: none;
-}
-
-.fkp_monitoring-page {
-    --fkp-monitoring-control-height: 34px;
-    --fkp-monitoring-row-action-size: 24px;
-    --fkp-monitoring-divider-color: rgba(127, 127, 127, 0.22);
-    --fkp-monitoring-soft-bg: rgba(127, 127, 127, 0.08);
-    --fkp-monitoring-soft-bg-hover: rgba(127, 127, 127, 0.14);
-    --fkp-monitoring-danger-color: var(--error-color-medium, #d32f2f);
-    --fkp-monitoring-success-color: var(--success-color-medium, #2e7d32);
-    --fkp-monitoring-paused-color: var(--primary-color-high, #1976d2);
-
-    width: 100%;
-    min-width: 0;
-}
-
-.fkp_monitoring-page__panel {
-    margin-top: 0;
-    border: 0;
-    border-radius: 0;
-    padding: 0;
-    background: transparent;
-    box-sizing: border-box;
-    width: 100%;
-    min-width: 0;
-}
-
-.fkp_monitoring-page .btn.fkp_monitoring-page__icon-button {
-    width: 32px;
-    height: 32px;
-    min-width: 32px;
-    min-height: 32px;
-    padding: 0;
-    box-sizing: border-box;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex: 0 0 auto;
-    line-height: 1;
-    margin: 0;
-    border: 1px solid var(--fkp-monitoring-divider-color) !important;
-    border-radius: 6px;
-    background: var(--fkp-monitoring-soft-bg) !important;
-    color: var(--text-color-medium) !important;
-    box-shadow: none;
-}
-
-.fkp_monitoring-page .btn.fkp_monitoring-page__icon-button:hover:not(:disabled) {
-    background: var(--fkp-monitoring-soft-bg-hover) !important;
-    color: var(--text-color-high) !important;
-}
-
-.fkp_monitoring-page .btn.fkp_monitoring-page__icon-button--active {
-    background: rgba(25, 118, 210, 0.16) !important;
-    color: var(--primary-color-high, #1976d2) !important;
-}
-
-.fkp_monitoring-page .btn.fkp_monitoring-page__icon-button:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-}
-
-.fkp_monitoring-page #monitoring-close-all.btn.fkp_monitoring-page__icon-button {
-    order: 2;
-    border-color: rgba(217, 83, 79, 0.4) !important;
-    background: transparent !important;
-    color: var(--fkp-monitoring-danger-color) !important;
-}
-
-.fkp_monitoring-page #monitoring-close-all.btn.fkp_monitoring-page__icon-button:hover:not(:disabled) {
-    border-color: rgba(217, 83, 79, 0.6) !important;
-    background: transparent !important;
-    color: color-mix(in srgb, var(--fkp-monitoring-danger-color) 70%, white) !important;
-}
-
-.fkp_monitoring-page #monitoring-pause-toggle.btn.fkp_monitoring-page__icon-button,
-.fkp_monitoring-page #monitoring-pause-toggle.btn.fkp_monitoring-page__icon-button--active {
-    order: 1;
-    border-color: rgba(128, 128, 128, 0.3) !important;
-    background: transparent !important;
-    color: var(--text-color-medium, #888) !important;
-}
-
-.fkp_monitoring-page #monitoring-pause-toggle.btn.fkp_monitoring-page__icon-button:hover:not(:disabled),
-.fkp_monitoring-page #monitoring-pause-toggle.btn.fkp_monitoring-page__icon-button--active:hover:not(:disabled) {
-    border-color: rgba(128, 128, 128, 0.6) !important;
-    background: transparent !important;
-    color: var(--text-color-high, #eee) !important;
-}
-
-.fkp_monitoring-page__icon-button svg,
-.fkp_monitoring-page__row-action svg {
-    width: 16px;
-    height: 16px;
-    display: block;
-    flex: 0 0 auto;
-}
-
-.fkp_monitoring-page__controls {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    margin-bottom: 12px;
-    width: 100%;
-    min-width: 0;
-}
-
-.fkp_monitoring-page__actions {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 8px;
-    min-width: 0;
-}
-
-.fkp_monitoring-page__tabs {
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-    width: max-content;
-    padding: 2px;
-    border: 1px solid var(--fkp-monitoring-divider-color);
-    border-radius: 6px;
-    background: var(--fkp-monitoring-soft-bg);
-    box-sizing: border-box;
-}
-
-.fkp_monitoring-page .btn.fkp_monitoring-page__tab {
-    height: calc(var(--fkp-monitoring-control-height) - 6px);
-    min-height: calc(var(--fkp-monitoring-control-height) - 6px);
-    margin: 0;
-    padding: 0 12px;
-    border: 0 !important;
-    border-radius: 4px;
-    background: transparent !important;
-    color: var(--text-color-medium) !important;
-    box-shadow: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    font-weight: 600;
-    line-height: 1;
-}
-
-.fkp_monitoring-page .btn.fkp_monitoring-page__tab:hover {
-    background: var(--fkp-monitoring-soft-bg-hover) !important;
-    color: var(--text-color-high) !important;
-}
-
-.fkp_monitoring-page .btn.fkp_monitoring-page__tab--active,
-.fkp_monitoring-page .btn.fkp_monitoring-page__tab--active:hover {
-    background: rgba(25, 118, 210, 0.16) !important;
-    color: var(--primary-color-high, #1976d2) !important;
-    font-weight: 700;
-}
-
-.fkp_monitoring-page__tab-label {
-    display: inline-block;
-}
-
-.fkp_monitoring-page__tab-badge {
-    min-width: 18px;
-    height: 18px;
-    padding: 0 6px;
-    border-radius: 999px;
-    background: rgba(127, 127, 127, 0.22);
-    color: var(--text-color-medium);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    box-sizing: border-box;
-    font-size: 12px;
-    font-weight: 700;
-    line-height: 1;
-}
-
-.fkp_monitoring-page__tab--active .fkp_monitoring-page__tab-badge {
-    background: rgba(25, 118, 210, 0.22);
-    color: var(--primary-color-high, #1976d2);
-}
-
-.fkp_monitoring-page__filters {
-    display: flex;
-    flex: 1 1 auto;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 12px;
-    min-width: 0;
-}
-
-.fkp_monitoring-page__device-filter {
-    width: min(220px, 100%);
-    min-width: 0;
-    height: var(--fkp-monitoring-control-height) !important;
-    min-height: var(--fkp-monitoring-control-height) !important;
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-    margin: 0 !important;
-    box-sizing: border-box;
-    line-height: calc(var(--fkp-monitoring-control-height) - 2px) !important;
-}
-
-.fkp_monitoring-page__search {
-    position: relative;
-    display: flex;
-    align-items: center;
-    width: min(320px, 100%);
-    min-width: 0;
-    height: var(--fkp-monitoring-control-height);
-    margin: 0;
-}
-
-.fkp_monitoring-page__search-icon {
-    position: absolute;
-    left: 8px;
-    width: 16px;
-    height: 16px;
-    color: var(--text-color-medium);
-    pointer-events: none;
-}
-
-.fkp_monitoring-page__search-icon svg {
-    width: 16px;
-    height: 16px;
-    display: block;
-}
-
-.fkp_monitoring-page__search-input {
-    width: 100%;
-    height: var(--fkp-monitoring-control-height) !important;
-    min-height: var(--fkp-monitoring-control-height) !important;
-    padding-left: 30px !important;
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-    margin: 0 !important;
-    box-sizing: border-box;
-    line-height: calc(var(--fkp-monitoring-control-height) - 2px) !important;
-}
-
-.fkp_monitoring-page__body {
-    margin-top: 0;
-    width: 100%;
-    min-width: 0;
-}
-
-/* width: 0 + min-width: 100% keeps the wide table from widening the page
-   (flex layouts such as OpenWrt2020 size the content to its min-content);
-   the wrapper still fills its parent and scrolls the table inside. */
-.fkp_monitoring-page__table-wrap {
-    width: 0;
-    min-width: 100%;
-    overflow-x: auto;
-    margin-bottom: 0;
-}
-
-.fkp_monitoring-page__table {
-    width: 100%;
-    min-width: 680px;
-    table-layout: fixed;
-    border-collapse: collapse;
-    border-spacing: 0;
-    margin-bottom: 0;
-}
-
-.fkp_monitoring-page__table th,
-.fkp_monitoring-page__table td {
-    padding: 8px 6px;
-    border-bottom: 1px solid var(--fkp-monitoring-divider-color);
-    box-sizing: border-box;
-    text-align: left;
-    vertical-align: middle;
-    overflow: hidden;
-    white-space: nowrap;
-}
-
-.fkp_monitoring-page__table th {
-    color: var(--text-color-medium);
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    white-space: nowrap;
-    border-bottom-color: rgba(127, 127, 127, 0.32);
-}
-
-.fkp_monitoring-page__table th:nth-child(1) {
-    width: 20%;
-}
-
-.fkp_monitoring-page__table th:nth-child(2) {
-    width: 32%;
-}
-
-.fkp_monitoring-page__table th:nth-child(3) {
-    width: 30%;
-}
-
-.fkp_monitoring-page__table th:nth-child(4) {
-    width: 14%;
-}
-
-.fkp_monitoring-page__table th:nth-child(5) {
-    /* Two 28px icon actions plus gaps; px so it never shrinks below them. */
-    width: 72px;
-}
-
-.fkp_monitoring-page__table tbody tr:last-child td {
-    border-bottom: 0;
-}
-
-.fkp_monitoring-page__table td:last-child {
-    padding-top: 0;
-    padding-bottom: 0;
-    overflow: visible;
-    white-space: normal;
-}
-
-.fkp_monitoring-page__actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-}
-
-.fkp_monitoring-page .btn.fkp_monitoring-page__icon-action {
-    width: 28px;
-    height: 28px;
-    min-width: 28px;
-    padding: 0;
-    margin: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-}
-
-.fkp_monitoring-page__icon-action svg {
-    width: 16px;
-    height: 16px;
-    display: block;
-}
-
-.fkp_monitoring-page__table th:last-child,
-.fkp_monitoring-page__table td:last-child {
-    text-align: center;
-}
-
-.fkp_monitoring-page__value {
-    display: block;
-    max-width: 100%;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    text-align: left;
-    line-height: 1.3;
-    color: var(--text-color-high);
-    font-size: 13px;
-    user-select: text;
-}
-
-.fkp_monitoring-page__source-value {
-    display: flex;
-    align-items: baseline;
-    justify-content: flex-start;
-    gap: 5px;
-}
-
-.fkp_monitoring-page__source-name {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.fkp_monitoring-page__source-ip {
-    flex: 0 1 auto;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    color: var(--text-color-medium);
-    font-size: 12px;
-}
-
-.fkp_monitoring-page__source-value--ip-only {
-    color: var(--text-color-high);
-}
-
-.fkp_monitoring-page__cell-main {
-    color: var(--text-color-high);
-    font-weight: 600;
-    line-height: 1.25;
-}
-
-.fkp_monitoring-page__cell-secondary {
-    margin-top: 2px;
-    color: var(--text-color-medium);
-    font-size: 12px;
-    line-height: 1.25;
-}
-
-.fkp_monitoring-page__route {
-    display: inline-block;
-    width: auto;
-    padding: 2px 6px;
-    border-radius: 4px;
-    background: rgba(128, 128, 128, 0.15);
-    color: var(--text-color-high, #eee);
-    font-size: 11px;
-    font-weight: 500;
-}
-
-.fkp_monitoring-page__network {
-    background: transparent;
-    border: 0;
-    padding: 0;
-    color: var(--text-color-medium, #bbb);
-    font-family: inherit;
-    font-size: 13px;
-    text-transform: lowercase;
-}
-
-.fkp_monitoring-page .btn.fkp_monitoring-page__row-action {
-    width: var(--fkp-monitoring-row-action-size);
-    height: var(--fkp-monitoring-row-action-size);
-    min-width: var(--fkp-monitoring-row-action-size);
-    min-height: var(--fkp-monitoring-row-action-size);
-    padding: 0;
-    box-sizing: border-box;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-    margin: 0;
-    border: 0 !important;
-    border-radius: 999px;
-    background: transparent !important;
-    color: var(--fkp-monitoring-danger-color) !important;
-    box-shadow: none;
-    cursor: pointer;
-}
-
-.fkp_monitoring-page__row-action svg {
-    width: 14px;
-    height: 14px;
-}
-
-.fkp_monitoring-page .btn.fkp_monitoring-page__row-action:hover:not(:disabled) {
-    background: var(--fkp-monitoring-soft-bg-hover) !important;
-    color: var(--fkp-monitoring-danger-color) !important;
-}
-
-.fkp_monitoring-page .btn.fkp_monitoring-page__row-action:disabled {
-    opacity: 0.45;
-    cursor: wait;
-}
-
-.fkp_monitoring-page__row--closing {
-    opacity: 0.55;
-}
-
-.fkp_monitoring-page__state {
-    min-height: 90px;
-    width: 100%;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-color-medium);
-    text-align: center;
-    box-sizing: border-box;
-}
-
-.fkp_monitoring-page__state-cell {
-    padding: 0 !important;
-}
-
-.fkp_monitoring-page__state--error {
-    color: var(--error-color-medium, #d32f2f);
-}
-
-/* Views: Connections | Nodes and groups */
-.fkp_monitoring-page__views {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 12px;
-}
-
-.fkp_monitoring-page__nodes .fkp_dashboard-page {
-    margin-top: 0;
-}
-
-.fkp_monitoring-page__secondary {
-    display: block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    margin-top: 2px;
-    color: var(--text-color-medium);
-    font-size: 12px;
-    line-height: 1.25;
-}
-
-.fkp_monitoring-page__path-kind {
-    display: inline-block;
-    margin-right: 6px;
-    padding: 1px 6px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 600;
-    line-height: 1.5;
-    vertical-align: middle;
-    background: rgba(128, 128, 128, 0.15);
-    color: var(--text-color-high);
-}
-
-.fkp_monitoring-page__path-kind--dpi {
-    background: rgba(156, 39, 176, 0.16);
-}
-
-.fkp_monitoring-page__path-kind--connection {
-    background: rgba(33, 150, 243, 0.16);
-}
-
-.fkp_monitoring-page__path-kind--bypass,
-.fkp_monitoring-page__path-kind--direct {
-    background: rgba(76, 175, 80, 0.16);
-}
-
-.fkp_monitoring-page__path-kind--block {
-    background: rgba(244, 67, 54, 0.16);
-}
-
-.fkp_monitoring-page__table td .fkp_monitoring-page__route {
-    display: inline;
-    padding: 0;
-    background: transparent;
-    font-size: 13px;
-    vertical-align: middle;
-}
-
-.fkp_monitoring-page__row--closed td {
-    opacity: 0.65;
-}
-
-.fkp_monitoring-page__row--selected td {
-    background: rgba(33, 150, 243, 0.08);
-}
-
-.fkp_monitoring-page__filter-bar {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px 12px;
-    margin: 0 0 8px;
-    padding: 6px 10px;
-    border-radius: 4px;
-    background: rgba(33, 150, 243, 0.08);
-    font-size: 13px;
-}
-
-.fkp_monitoring-page__filter-bar[hidden] {
-    display: none;
-}
-
-.fkp_monitoring-page__details {
-    margin-top: 12px;
-    padding: 12px;
-    border: 1px solid var(--fkp-monitoring-divider-color);
-    border-radius: 6px;
-}
-
-.fkp_monitoring-page__details-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-}
-
-.fkp_monitoring-page__details-head h3 {
-    margin: 0;
-    overflow-wrap: anywhere;
-}
-
-.fkp_monitoring-page .btn.fkp_monitoring-page__details-close {
-    min-width: 32px;
-    padding: 0 8px;
-    font-size: 18px;
-    line-height: 1;
-}
-
-.fkp_monitoring-page__detail-list {
-    margin: 10px 0 0;
-}
-
-.fkp_monitoring-page__detail-row {
-    display: grid;
-    grid-template-columns: minmax(120px, 28%) minmax(0, 1fr);
-    gap: 8px;
-    padding: 3px 0;
-}
-
-.fkp_monitoring-page__detail-row dt {
-    color: var(--text-color-medium);
-    font-weight: 600;
-}
-
-.fkp_monitoring-page__detail-row dd {
-    margin: 0;
-    overflow-wrap: anywhere;
-}
-
-.fkp_monitoring-page__details-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 12px;
-}
-
-.fkp_monitoring-page__technical {
-    margin-top: 12px;
-}
-
-.fkp_monitoring-page__technical summary {
-    cursor: pointer;
-    color: var(--text-color-medium);
-}
-
-.fkp_monitoring-page__cell {
-    min-width: 0;
-}
-
-.fkp-visually-hidden {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
-}
-
-@media (max-width: 900px) {
-    .fkp_monitoring-page__controls {
-        align-items: center;
-    }
-
-    .fkp_monitoring-page__tabs {
-        flex: 1 0 100%;
-    }
-
-    .fkp_monitoring-page__filters {
-        flex: 1 1 0;
-    }
-
-    .fkp_monitoring-page__device-filter,
-    .fkp_monitoring-page__search {
-        max-width: none;
-    }
-
-    .fkp_monitoring-page__table {
-        min-width: 0;
-    }
-
-    .fkp_monitoring-page__table thead {
-        display: none;
-    }
-
-    .fkp_monitoring-page__table,
-    .fkp_monitoring-page__table tbody,
-    .fkp_monitoring-page__table tr,
-    .fkp_monitoring-page__table td {
-        display: block;
-        width: 100%;
-    }
-
-    .fkp_monitoring-page__table tr {
-        border: 1px var(--background-color-low, lightgray) solid;
-        border-radius: 4px;
-        padding: 8px;
-        box-sizing: border-box;
-        margin-bottom: 8px;
-    }
-
-    .fkp_monitoring-page__table td {
-        display: grid;
-        grid-template-columns: minmax(92px, 34%) minmax(0, 1fr);
-        gap: 8px;
-        border: 0;
-        border-bottom: 1px solid var(--fkp-monitoring-divider-color);
-        padding: 4px 0;
-        box-sizing: border-box;
-        text-align: left;
-    }
-
-    .fkp_monitoring-page__table td::before {
-        content: attr(data-label);
-        color: var(--text-color-medium);
-        font-weight: 700;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    /* Row actions sit at the end of the card without a label line. */
-    .fkp_monitoring-page__table td:last-child {
-        display: flex;
-        justify-content: flex-end;
-        border-bottom: 0;
-        min-height: var(--fkp-monitoring-row-action-size);
-        padding: 4px 0 0;
-    }
-
-    .fkp_monitoring-page__table td:last-child::before {
-        display: none;
-    }
-
-    .fkp_monitoring-page__value,
-    .fkp_monitoring-page__secondary {
-        text-align: left;
-    }
-
-    .fkp_monitoring-page__source-value {
-        justify-content: flex-end;
-    }
-
-    .fkp_monitoring-page__state-row td::before {
-        display: none;
-    }
-}
-
-@media (max-width: 520px) {
-    .fkp_monitoring-page__controls,
-    .fkp_monitoring-page__filters {
-        align-items: stretch;
-    }
-
-    .fkp_monitoring-page__tabs,
-    .fkp_monitoring-page__filters,
-    .fkp_monitoring-page__device-filter,
-    .fkp_monitoring-page__search {
-        width: 100%;
-    }
-
-    .fkp_monitoring-page__controls,
-    .fkp_monitoring-page__filters {
-        flex-direction: column;
-    }
-
-    .fkp_monitoring-page__actions {
-        align-self: flex-end;
-    }
-
-    .fkp_monitoring-page__tabs {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-        width: 100%;
-    }
-
-    .fkp_monitoring-page__table td {
-        grid-template-columns: 1fr;
-        gap: 2px;
-    }
-
-    .fkp_monitoring-page__value {
-        text-align: left;
-    }
-
-    .fkp_monitoring-page__source-value {
-        justify-content: flex-start;
-    }
-}
-`;
-
-// src/prokop/tabs/monitoring/index.ts
-var MonitoringTab = {
-  render: render3,
-  initController: initController3,
-  styles: styles5
-};
-
-// src/prokop/tabs/updates/render.ts
-function render4() {
-  return E("div", { id: "updates-status", class: "fkp_updates-page" }, [
-    E("div", {
-      id: "fkp_updates-components",
-      class: "fkp_updates-page__components"
-    })
-  ]);
-}
-
-// src/prokop/tabs/updates/componentActionCompletion.ts
-function shouldApplyCompletedComponentActionResult(result, notify) {
-  return result.action !== "check_update" || notify;
-}
-
-// src/prokop/tabs/updates/killSwitchRelease.ts
-var LAST_RELEASE_WITHOUT_KILL_SWITCH = [1, 0, 31];
-function releaseLacksKillSwitch(version) {
-  const parts = /^(\d+)\.(\d+)\.(\d+)/.exec(`${version}`);
-  if (!parts) {
-    return false;
-  }
-  for (let i = 0; i < 3; i++) {
-    const value = Number(parts[i + 1]);
-    if (value !== LAST_RELEASE_WITHOUT_KILL_SWITCH[i]) {
-      return value < LAST_RELEASE_WITHOUT_KILL_SWITCH[i];
-    }
-  }
-  return true;
-}
-
-// src/prokop/tabs/updates/releaseSelector.ts
-var RELEASE_VERSION = /^\d+\.\d+\.\d+$/;
-var RELEASES_TIMEOUT_MS = 75e3;
-async function loadReleases() {
-  const response = await executeShellCommand({
-    command: "/usr/bin/prokop",
-    args: ["prokop_releases"],
-    timeout: RELEASES_TIMEOUT_MS
-  });
-  const result = JSON.parse(response.stdout || "{}");
-  if ((response.code ?? 0) !== 0 || !result.success || !Array.isArray(result.releases)) {
-    throw new Error(_("Could not load available versions"));
-  }
-  return result.releases.filter(
-    (release) => RELEASE_VERSION.test(`${release?.version}`)
-  );
-}
-function confirmVersionChange(currentVersion, version, install) {
-  ui.showModal(
-    _("Confirm version change"),
-    E("div", {}, [
-      E("p", {}, `${currentVersion} \u2192 ${version}`),
-      E(
-        "p",
-        {},
-        _(
-          "A configuration backup will be saved in /etc/prokop-backups. Older versions may not support all current settings."
-        )
-      ),
-      ...releaseLacksKillSwitch(version) ? [
-        E(
-          "p",
-          {},
-          _(
-            "Prokop 1.0.31 and older have no VPN kill-switch. If it is enabled, the installation removes its protection, and protected traffic is no longer blocked while Prokop is stopped."
-          )
-        )
-      ] : [],
-      E("div", { class: "right" }, [
-        renderButton({ text: _("Cancel"), onClick: () => ui.hideModal() }),
-        renderButton({
-          text: _("Install"),
-          classNames: ["cbi-button-save"],
-          onClick: () => {
-            ui.hideModal();
-            install(version);
-          }
-        })
-      ])
-    ])
-  );
-}
-async function showReleaseSelector(currentVersion, install) {
-  const status2 = E("p", { role: "status" }, _("Loading available versions\u2026"));
-  const content = E("div", {}, [status2]);
-  ui.showModal(_("Choose Prokop version"), content);
-  try {
-    const releases = await loadReleases();
-    const select2 = E("select", {
-      class: "cbi-input-select",
-      "aria-label": _("Choose Prokop version")
-    });
-    for (const release of releases) {
-      const installed = release.version === currentVersion;
-      select2.appendChild(
-        E(
-          "option",
-          { value: release.version },
-          `${release.version}${installed ? ` \u2014 ${_("Installed")}` : ""}`
-        )
-      );
-    }
-    if (!select2.options.length) {
-      throw new Error(_("No compatible releases available"));
-    }
-    const confirm = renderButton({
-      text: _("Install selected version"),
-      classNames: ["cbi-button-save"],
-      onClick: () => confirmVersionChange(currentVersion, select2.value, install)
-    });
-    const update = () => {
-      confirm.disabled = select2.value === currentVersion;
-    };
-    select2.addEventListener("change", update);
-    update();
-    content.replaceChildren(
-      select2,
-      E("div", { class: "right" }, [
-        renderButton({ text: _("Cancel"), onClick: () => ui.hideModal() }),
-        confirm
-      ])
-    );
-  } catch (error) {
-    status2.textContent = error instanceof Error ? error.message : _("Could not load available versions");
-    content.appendChild(
-      renderButton({ text: _("Close"), onClick: () => ui.hideModal() })
-    );
-  }
-}
-
-// src/prokop/tabs/updates/checkResultLifecycle.ts
-function shouldPreserveCompletedCheckResultOnNextMount({
-  action,
-  mounted: mounted3
-}) {
-  return action === "check_update" && !mounted3;
-}
-function shouldResetCheckResultsOnMount({
-  anyActionLoading,
-  preserveCheckResultsOnNextMount: preserveCheckResultsOnNextMount2,
-  persistentCacheEnabled = false
-}) {
-  return !persistentCacheEnabled && !anyActionLoading && !preserveCheckResultsOnNextMount2;
-}
-function shouldRefreshComponentStateBeforeRender(uiState) {
-  return Boolean(
-    uiState?.actions.component.some((state) => state.running === true)
-  );
-}
-function shouldExposeCheckResults({
-  mounted: mounted3,
-  cacheResolved
-}) {
-  return mounted3 && cacheResolved;
-}
-
-// src/prokop/tabs/updates/fullUninstallStatus.ts
-function describeLeftItem(item) {
-  if (item.startsWith("table:")) {
-    const table = item.slice("table:".length);
-    return _("nft table %s").replace("%s", () => table);
-  }
-  switch (item) {
-    case "rule:4":
-      return _("IPv4 routing rule at priority 105");
-    case "rule:6":
-      return _("IPv6 routing rule at priority 105");
-    case "cron":
-      return _('the lines marked "# prokop-" in /etc/crontabs/root');
-    case "loader":
-      return _("the kill-switch loader in /usr/share/nftables.d/ruleset-post");
-    case "backup":
-      return _("the configuration backup in /etc/prokop-backups");
-    default:
-      return item;
-  }
-}
-function describeLeftItems(left) {
-  return left.split(",").map((item) => item.trim()).filter((item) => item !== "").map(describeLeftItem).join(", ");
-}
-var REMOVAL_WAIT_MS = 18e4;
-var TRANSACTIONS_WAIT_MS = 12e4;
-function startRemovalWait(now) {
-  return { deadline: now + REMOVAL_WAIT_MS, waitingForChanges: false };
-}
-function followRemoval(wait, status2, now) {
-  const waitingForChanges = status2.state === "running" && status2.phase === "transactions";
-  if (waitingForChanges === wait.waitingForChanges) return wait;
-  return {
-    deadline: now + (waitingForChanges ? TRANSACTIONS_WAIT_MS : REMOVAL_WAIT_MS),
-    waitingForChanges
-  };
-}
-function describeFailedRemoval(status2) {
-  const left = typeof status2.left === "string" ? describeLeftItems(status2.left) : "";
-  if (status2.phase === "preflight") {
-    return _(
-      "Original repositories could not be restored. Removal was cancelled before deleting packages."
-    );
-  }
-  if (status2.phase === "transactions") {
-    return _(
-      "Prokop is still changing its configuration (a snapshot restore, an autotune run or another change), so nothing was removed. Try again once it has finished."
-    );
-  }
-  if (status2.phase === "stop" && left) {
-    return _(
-      "Prokop is still active after its stop, so nothing was removed. Still in place: %s. Stop Prokop or restart the router, then try again."
-    ).replace("%s", () => left);
-  }
-  if (left) {
-    return _(
-      "Prokop was removed, but this is still in place: %s. See the removal log in /tmp/prokop-uninstall.*/output.log."
-    ).replace("%s", () => left);
-  }
-  return _(
-    "Removal did not finish. See the removal log in /tmp/prokop-uninstall.*/output.log."
-  );
-}
-
-// src/prokop/tabs/updates/fullUninstall.ts
-var removing = false;
-function confirmRemoval() {
-  if (removing) return;
-  const progress = E("p", { role: "status" });
-  const cancel = renderButton({
-    text: _("Cancel"),
-    onClick: () => ui.hideModal()
-  });
-  const confirm = renderButton({
-    text: _("Remove permanently"),
-    classNames: ["cbi-button-negative"],
-    onClick: () => {
-      removing = true;
-      confirm.disabled = true;
-      cancel.disabled = true;
-      progress.textContent = _("Removing Prokop\u2026");
-      void (async () => {
-        try {
-          const response = await executeShellCommand({
-            command: "/usr/bin/prokop",
-            args: ["full_uninstall"],
-            timeout: 15e3
-          });
-          const result = JSON.parse(response.stdout || "{}");
-          if (response.code || !result.success || !/^\/prokop-uninstall\.[A-Za-z0-9]+\.json$/.test(
-            result.status_url || ""
-          )) {
-            throw new Error(
-              _(
-                "Could not start removal. Another component action may be running."
-              )
-            );
-          }
-          let wait = startRemovalWait(Date.now());
-          while (Date.now() < wait.deadline) {
-            await new Promise((resolve) => setTimeout(resolve, 1500));
-            let status2;
-            try {
-              const reply = await fetch(result.status_url, {
-                cache: "no-store"
-              });
-              if (!reply.ok) continue;
-              status2 = await reply.json();
-            } catch {
-              continue;
-            }
-            const waited = wait.waitingForChanges;
-            wait = followRemoval(wait, status2, Date.now());
-            if (wait.waitingForChanges !== waited) {
-              progress.textContent = wait.waitingForChanges ? _(
-                "Waiting for a configuration change of Prokop to finish before removing it\u2026"
-              ) : _("Removing Prokop\u2026");
-            }
-            if (status2.state === "complete") {
-              progress.textContent = _(
-                "Prokop and sing-box have been removed. Original repositories have been restored."
-              );
-              cancel.textContent = _("Open LuCI");
-              cancel.disabled = false;
-              cancel.onclick = () => window.location.assign("/cgi-bin/luci/");
-              return;
-            }
-            if (status2.state === "failed") {
-              throw new Error(describeFailedRemoval(status2));
-            }
-          }
-          throw new Error(
-            _(
-              "Could not confirm completion. Check the removal log before retrying."
-            )
-          );
-        } catch (error) {
-          progress.textContent = error instanceof Error ? error.message : String(error);
-          cancel.disabled = false;
-          cancel.onclick = () => window.location.assign("/cgi-bin/luci/");
-          cancel.textContent = _("Open LuCI");
-        }
-      })();
-    }
-  });
-  ui.showModal(
-    _("Full removal"),
-    E("div", {}, [
-      E(
-        "p",
-        {},
-        _(
-          "Remove Prokop, sing-box, their settings and cache, and restore the original device repositories?"
-        )
-      ),
-      E(
-        "p",
-        {},
-        _(
-          "This permanently deletes saved sections and subscriptions. Other components remain installed."
-        )
-      ),
-      progress,
-      E("div", { class: "right" }, [cancel, confirm])
-    ])
-  );
-}
-function renderFullUninstall(disabled) {
-  return E("div", { class: "fkp_updates-page__component" }, [
-    E("div", { class: "fkp_updates-page__component__header" }, [
-      E(
-        "b",
-        { class: "fkp_updates-page__component__title" },
-        _("Full removal")
-      )
-    ]),
-    E(
-      "p",
-      {},
-      _(
-        "Remove Prokop and sing-box with their settings and restore the original device repositories."
-      )
-    ),
-    renderButton({
-      text: _("Remove Prokop completely"),
-      icon: renderXIcon24,
-      classNames: ["cbi-button-negative"],
-      disabled: disabled || removing,
-      onClick: confirmRemoval
-    })
-  ]);
-}
-
-// src/prokop/tabs/updates/initController.ts
-var updatesLifecycleRegistered = false;
-var updatesControllerInitialized = false;
-var updatesMounted = false;
-var updatesMountId = 0;
-var pageUnloading2 = false;
-var preserveCheckResultsOnNextMount = false;
-var componentUpdateCheckCacheResolved = false;
-var componentUpdateCheckCacheSnapshot = null;
-var componentUpdateCheckCachePromise = null;
-var componentActionStateUnsubscribe = null;
-var componentActionStateRefreshPromise = null;
-var followedComponentJobs = /* @__PURE__ */ new Set();
-var handledComponentJobs = /* @__PURE__ */ new Set();
-if (typeof window !== "undefined") {
-  window.addEventListener("pagehide", () => {
-    pageUnloading2 = true;
-  });
-  window.addEventListener("pageshow", () => {
-    pageUnloading2 = false;
-  });
-}
-function shouldShowInstallAfterCheck(component) {
-  const status2 = getVisibleCheckResult(component)?.status;
-  return status2 === "outdated" || status2 === "dev";
-}
-function getVisibleCheckResult(component) {
-  if (!shouldExposeCheckResults({
-    mounted: updatesMounted,
-    cacheResolved: componentUpdateCheckCacheResolved
-  })) {
-    return null;
-  }
-  return store.get().updatesChecks[component];
-}
-function getLatestVersion(component) {
-  const checkResult = getVisibleCheckResult(component);
-  if (!checkResult || !shouldShowInstallAfterCheck(component)) {
-    return void 0;
-  }
-  return checkResult.latest_version || void 0;
-}
-function getGitHubReleaseUrl(component) {
-  const checkResult = getVisibleCheckResult(component);
-  if (!checkResult || !shouldShowInstallAfterCheck(component) || !checkResult.release_url) {
-    return void 0;
-  }
-  return checkResult.release_url;
-}
-function isAnyActionLoading() {
-  return Object.values(store.get().updatesActions).some((item) => item.loading);
-}
-function isServiceRuntimeActionLoading() {
-  const state = store.get();
-  return hasLocalMutatingServiceActionLoading(state.diagnosticsActions) || isServiceTransitionStatus(state.servicesInfoWidget.data.prokopStatus);
-}
-function isSystemInfoLoading() {
-  const systemInfo = store.get().diagnosticsSystemInfo;
-  return systemInfo.loading || !systemInfo.loaded;
-}
-function setActionLoading(action, loading2, local = false) {
-  if (local || !loading2) {
-    setLocalComponentAction(action, loading2 && local);
-  }
-  const updatesActions = store.get().updatesActions;
-  store.set({
-    updatesActions: {
-      ...updatesActions,
-      [action]: { loading: loading2 }
-    }
-  });
-}
-function beginComponentAction(button) {
-  if (isAnyActionLoading()) {
-    return false;
-  }
-  setActionLoading(button.key, true, true);
-  return true;
-}
-function setCheckResult(component, status2, latestVersion, releaseUrl = "") {
-  const updatesChecks = store.get().updatesChecks;
-  store.set({
-    updatesChecks: {
-      ...updatesChecks,
-      [component]: {
-        status: status2,
-        latest_version: latestVersion,
-        release_url: releaseUrl
-      }
-    }
-  });
-}
-function resetCheckResult(component) {
-  setCheckResult(component, null, "");
-}
-function applyCachedCheckResults(results) {
-  results.forEach((result) => {
-    const status2 = result.status || null;
-    if (status2 === "latest" || status2 === "outdated" || status2 === "dev") {
-      setCheckResult(
-        result.component,
-        status2,
-        result.latest_version || "",
-        result.release_url || ""
-      );
-    }
-  });
-}
-function loadComponentUpdateCheckCache({ force = false } = {}) {
-  if (!force && componentUpdateCheckCacheSnapshot) {
-    return Promise.resolve(componentUpdateCheckCacheSnapshot);
-  }
-  if (componentUpdateCheckCachePromise) {
-    return componentUpdateCheckCachePromise;
-  }
-  const promise = ProkopShellMethods.componentUpdateCheckCache().then(
-    (response) => response.success ? response.data : {
-      enabled: false,
-      results: []
-    }
-  ).then((cache) => {
-    componentUpdateCheckCacheSnapshot = cache;
-    return cache;
-  }).finally(() => {
-    if (componentUpdateCheckCachePromise === promise) {
-      componentUpdateCheckCachePromise = null;
-    }
-  });
-  componentUpdateCheckCachePromise = promise;
-  return promise;
-}
-function getErrorMessage(error, fallback) {
-  return error instanceof Error && error.message ? error.message : fallback;
-}
-async function ackComponentActionJob(jobId) {
-  try {
-    const response = await ProkopShellMethods.uiActionAck("component", jobId);
-    if (!response.success) {
-      logger.debug("[UPDATES]", "component action ack failed", response.error);
-    }
-  } catch (error) {
-    logger.debug("[UPDATES]", "component action ack failed", error);
-  }
-}
-function getExpectedLatestVersionForAction(button) {
-  if (button.component !== "prokop" || button.action !== "install") {
-    return void 0;
-  }
-  return store.get().updatesChecks[button.component].latest_version || void 0;
-}
-function getCheckToastMessage(status2) {
-  if (status2 === "outdated") {
-    return _("Update is available");
-  }
-  if (status2 === "dev") {
-    return _("Installed version is newer than release");
-  }
-  return _("Latest version is installed");
-}
-async function refreshSystemInfoAfterMutation() {
-  await ensureSystemInfo({ force: true, silent: true });
-}
-function notifyActionProvidersAvailabilityChanged(systemInfo) {
-  if (typeof window === "undefined" || typeof CustomEvent === "undefined") {
-    return;
-  }
-  window.dispatchEvent(
-    new CustomEvent(PROKOP_ACTION_PROVIDERS_AVAILABILITY_EVENT, {
-      detail: {
-        zapretInstalled: Boolean(systemInfo.zapret_installed),
-        zapret2Installed: Boolean(systemInfo.zapret2_installed),
-        byedpiInstalled: Boolean(systemInfo.byedpi_installed)
-      }
-    })
-  );
-}
-function reloadPageAfterProkopUpdate() {
-  window.setTimeout(() => {
-    window.location.reload();
-  }, 1200);
-}
-function patchSystemInfoAfterMutation(result) {
-  const systemInfo = store.get().diagnosticsSystemInfo;
-  const nextSystemInfo = { ...systemInfo, loading: false, loaded: true };
-  const version = result.current_version || result.latest_version || _("unknown");
-  if (result.component === "prokop" && result.action === "install") {
-    nextSystemInfo.prokop_version = version;
-  }
-  if (result.component === "sing_box") {
-    nextSystemInfo.sing_box_version = version;
-    if (result.action === "install_extended") {
-      nextSystemInfo.sing_box_extended = 1;
-      nextSystemInfo.sing_box_tiny = 0;
-      nextSystemInfo.sing_box_compressed = 0;
-      nextSystemInfo.sing_box_tailscale = 1;
-    }
-    if (result.action === "install_extended_compressed") {
-      nextSystemInfo.sing_box_extended = 1;
-      nextSystemInfo.sing_box_tiny = 0;
-      nextSystemInfo.sing_box_compressed = 1;
-      nextSystemInfo.sing_box_tailscale = 1;
-    }
-    if (result.action === "install_stable") {
-      nextSystemInfo.sing_box_extended = 0;
-      nextSystemInfo.sing_box_tiny = 0;
-      nextSystemInfo.sing_box_compressed = 0;
-      nextSystemInfo.sing_box_tailscale = 1;
-    }
-    if (result.action === "install_tiny") {
-      nextSystemInfo.sing_box_extended = 0;
-      nextSystemInfo.sing_box_tiny = 1;
-      nextSystemInfo.sing_box_compressed = 0;
-      nextSystemInfo.sing_box_tailscale = 0;
-    }
-  }
-  if (result.component === "zapret") {
-    nextSystemInfo.providerInfoLoaded = true;
-    if (result.action === "remove") {
-      nextSystemInfo.zapret_installed = 0;
-      nextSystemInfo.zapret_version = "not installed";
-    } else {
-      nextSystemInfo.zapret_installed = 1;
-      nextSystemInfo.zapret_version = version;
-    }
-  }
-  if (result.component === "zapret2") {
-    nextSystemInfo.providerInfoLoaded = true;
-    if (result.action === "remove") {
-      nextSystemInfo.zapret2_installed = 0;
-      nextSystemInfo.zapret2_version = "not installed";
-    } else {
-      nextSystemInfo.zapret2_installed = 1;
-      nextSystemInfo.zapret2_version = version;
-    }
-  }
-  if (result.component === "byedpi") {
-    nextSystemInfo.providerInfoLoaded = true;
-    if (result.action === "remove") {
-      nextSystemInfo.byedpi_installed = 0;
-      nextSystemInfo.byedpi_version = "not installed";
-    } else {
-      nextSystemInfo.byedpi_installed = 1;
-      nextSystemInfo.byedpi_version = version;
-    }
-  }
-  if (result.component === "zapret_manager") {
-    nextSystemInfo.zapret_manager_installed = result.action === "remove" ? 0 : 1;
-  }
-  if (result.component === "direct_proxy") {
-    nextSystemInfo.direct_proxy_enabled = result.action === "enable" ? 1 : 0;
-  }
-  if (result.component === "torrserver_direct") {
-    nextSystemInfo.torrserver_direct_enabled = result.action === "enable" ? 1 : 0;
-    nextSystemInfo.torrserver_direct_active = result.action === "enable" ? 1 : 0;
-  }
-  const normalizedSystemInfo = normalizeSingBoxVariantFields(nextSystemInfo);
-  store.set({
-    diagnosticsSystemInfo: normalizedSystemInfo
-  });
-  if (result.component === "zapret" || result.component === "zapret2" || result.component === "byedpi") {
-    notifyActionProvidersAvailabilityChanged(normalizedSystemInfo);
-  }
-}
-async function applyCompletedComponentAction({
-  key,
-  result,
-  notify
-}) {
-  if (result.action === "check_update") {
-    setActionLoading(key, false);
-    if (!shouldApplyCompletedComponentActionResult(result, notify)) {
-      return;
-    }
-    if (shouldPreserveCompletedCheckResultOnNextMount({
-      action: result.action,
-      mounted: updatesMounted
-    })) {
-      preserveCheckResultsOnNextMount = true;
-    }
-    const status2 = result.status === "recovered" ? null : result.status || null;
-    if (status2 === "latest" || status2 === "outdated" || status2 === "dev") {
-      setCheckResult(
-        result.component,
-        status2,
-        result.latest_version || "",
-        result.release_url || ""
-      );
-    }
-    if (notify) {
-      showToast(getCheckToastMessage(status2), "success");
-    }
-    return;
-  }
-  if (result.component === "prokop" && result.action === "install" && result.status === "recovered") {
-    resetCheckResult(result.component);
-    setActionLoading(key, false);
-    if (notify) {
-      showToast(result.message, "success", 5e3);
-      window.setTimeout(() => window.location.reload(), 5e3);
-    }
-    return;
-  }
-  if (result.action === "install" || result.action.startsWith("install_")) {
-    setCheckResult(result.component, "latest", result.latest_version || "");
-  } else {
-    resetCheckResult(result.component);
-  }
-  patchSystemInfoAfterMutation(result);
-  setActionLoading(key, false);
-  if (result.component === "prokop" && result.action === "install") {
-    if (notify && result.message) {
-      showToast(result.message, "success", 1200);
-    }
-    if (notify) {
-      reloadPageAfterProkopUpdate();
-    }
-    return;
-  }
-  if (notify && result.message) {
-    showToast(result.message, "success");
-  }
-  void refreshSystemInfoAfterMutation();
-}
-async function completeComponentActionJob(key, jobId, response) {
-  if (pageUnloading2) {
-    setActionLoading(key, false);
-    return;
-  }
-  const alreadyHandled = handledComponentJobs.has(jobId);
-  if (alreadyHandled) {
-    setActionLoading(key, false);
-    return;
-  }
-  const shouldNotify = shouldNotifyOwnedUiAction("component", jobId);
-  if (!response.success || response.data.success === false) {
-    const failure = response.success ? { reason: response.data.reason, error: response.data.message } : response;
-    const message = failure.error || _("Failed to execute");
-    if (isTransientRpcError(message)) {
-      setActionLoading(key, false);
-      void refreshComponentActionState();
-      return;
-    }
-    handledComponentJobs.add(jobId);
-    setActionLoading(key, false);
-    if (shouldNotify) {
-      showToast(
-        failureText(failure, _("Failed to execute")),
-        failureToastType(failure)
-      );
-    }
-    await ackComponentActionJob(jobId);
-    return;
-  }
-  handledComponentJobs.add(jobId);
-  await ackComponentActionJob(jobId);
-  await applyCompletedComponentAction({
-    key,
-    result: response.data,
-    notify: shouldNotify
-  });
-}
-async function followComponentActionState(state) {
-  const jobId = state.job_id;
-  const key = getComponentActionKey(state.component, state.action);
-  if (!jobId || !key || followedComponentJobs.has(jobId)) {
-    return;
-  }
-  if (!state.running && handledComponentJobs.has(jobId)) {
-    return;
-  }
-  followedComponentJobs.add(jobId);
-  if (shouldShowLoadingForRestoredAction(state)) {
-    setActionLoading(key, true);
-  }
-  try {
-    const response = state.running ? await ProkopShellMethods.waitComponentActionJob(
-      jobId,
-      state.component,
-      state.action,
-      state.latest_version || void 0
-    ) : {
-      success: true,
-      data: state
-    };
-    await completeComponentActionJob(key, jobId, response);
-  } catch (error) {
-    logger.error("[UPDATES]", "followComponentActionState failed", error);
-    if (!pageUnloading2) {
-      const message = getErrorMessage(error, _("Failed to execute"));
-      setActionLoading(key, false);
-      if (!isTransientRpcError(message)) {
-        showToast(message, "error");
-      }
-    }
-  } finally {
-    followedComponentJobs.delete(jobId);
-  }
-}
-async function followAlreadyRunningComponentAction(button) {
-  const uiState = await refreshRuntimeUiState({ force: true });
-  if (!uiState) {
-    return false;
-  }
-  const state = uiState.actions.component.find(
-    (item) => item.running && item.component === button.component && item.action === button.action
-  );
-  if (!state) {
-    return false;
-  }
-  if (state.job_id) {
-    markUiActionOwned("component", state.job_id);
-  }
-  await followComponentActionState(state);
-  return true;
-}
-function isComponentActionAlreadyRunningError(failure) {
-  return failureReason(failure) === "busy";
-}
-function handleComponentUiState(uiState) {
-  for (const state of uiState.actions.component || []) {
-    void followComponentActionState(state);
-  }
-}
-async function refreshComponentActionState() {
-  if (componentActionStateRefreshPromise) {
-    return componentActionStateRefreshPromise;
-  }
-  componentActionStateRefreshPromise = (async () => {
-    if (!updatesMounted) {
-      return;
-    }
-    const state = await refreshRuntimeUiState({ force: true });
-    if (!state) {
-      return;
-    }
-    handleComponentUiState(state);
-  })().finally(() => {
-    componentActionStateRefreshPromise = null;
-  });
-  return componentActionStateRefreshPromise;
-}
-function startComponentActionStateWatcher() {
-  if (componentActionStateUnsubscribe) {
-    return;
-  }
-  componentActionStateUnsubscribe = subscribeRuntimeUiState((uiState) => {
-    if (updatesMounted) {
-      handleComponentUiState(uiState);
-    }
-  });
-}
-function stopComponentActionStateWatcher() {
-  if (!componentActionStateUnsubscribe) {
-    return;
-  }
-  componentActionStateUnsubscribe();
-  componentActionStateUnsubscribe = null;
-}
-var REMOVABLE_COMPONENT_TITLES = {
-  zapret: "Zapret",
-  zapret2: "Zapret2",
-  byedpi: "ByeDPI",
-  zapret_manager: "Zapret-Manager-Stressozz"
-};
-function confirmComponentRemoval(button) {
-  const title = REMOVABLE_COMPONENT_TITLES[button.component] || button.component;
-  const isDpiProvider = ["zapret", "zapret2", "byedpi"].includes(
-    button.component
-  );
-  return confirmAction({
-    title: _("Remove %s?").replace("%s", title),
-    message: _("The package is removed from the router."),
-    consequences: isDpiProvider ? [_("Rules that use this provider stop bypassing DPI")] : void 0,
-    confirmLabel: _("Remove"),
-    danger: true
-  });
-}
-async function handleComponentAction(button) {
-  if (button.action === "remove" && !await confirmComponentRemoval(button)) {
-    return;
-  }
-  if (!beginComponentAction(button)) {
-    return;
-  }
-  let jobId = "";
-  let ownsJobFollow = false;
-  try {
-    const startResponse = await ProkopShellMethods.componentActionStart(
-      button.component,
-      button.action,
-      button.version
-    );
-    if (!startResponse.success) {
-      if (isComponentActionAlreadyRunningError(startResponse)) {
-        setActionLoading(button.key, false);
-        if (!await followAlreadyRunningComponentAction(button)) {
-          showToast(
-            actionReasonText("busy") || startResponse.error,
-            "warning",
-            6e3
-          );
-          await refreshComponentActionState();
-        }
-        return;
-      }
-      if (isTransientRpcError(startResponse.error)) {
-        if (!await followAlreadyRunningComponentAction(button)) {
-          setActionLoading(button.key, false);
-          await refreshComponentActionState();
-        }
-        return;
-      }
-      throw new Error(startResponse.error);
-    }
-    jobId = startResponse.data.job_id;
-    markUiActionOwned("component", jobId);
-    if (followedComponentJobs.has(jobId)) {
-      return;
-    }
-    followedComponentJobs.add(jobId);
-    ownsJobFollow = true;
-    const response = await ProkopShellMethods.waitComponentActionJob(
-      jobId,
-      button.component,
-      button.action,
-      button.version || getExpectedLatestVersionForAction(button)
-    );
-    await completeComponentActionJob(button.key, jobId, response);
-  } catch (error) {
-    logger.error("[UPDATES]", "handleComponentAction failed", error);
-    if (!pageUnloading2) {
-      const message = getErrorMessage(error, _("Failed to execute"));
-      setActionLoading(button.key, false);
-      if (!isTransientRpcError(message)) {
-        showToast(message, "error");
-      }
-      void refreshComponentActionState();
-    }
-  } finally {
-    if (ownsJobFollow) {
-      followedComponentJobs.delete(jobId);
-    }
-  }
-}
-function getCheckAction(component, key) {
-  return {
-    key,
-    text: _("Check update"),
-    icon: renderSearchIcon24,
-    component,
-    action: "check_update"
-  };
-}
-function getInstallAction(component, key, installed) {
-  return {
-    key,
-    text: installed ? _("Update") : _("Install"),
-    icon: installed ? renderRotateCcwIcon24 : renderDownloadIcon24,
-    component,
-    action: "install"
-  };
-}
-function getInstalledUpdateActions(component, checkKey, installKey, installed = true) {
-  if (!installed) {
-    return [];
-  }
-  const actions = [getCheckAction(component, checkKey)];
-  if (shouldShowInstallAfterCheck(component)) {
-    actions.push(getInstallAction(component, installKey, true));
-  }
-  return actions;
-}
-function getOptionalComponentActions({
-  component,
-  installed,
-  checkKey,
-  installKey,
-  removeKey
-}) {
-  if (!installed) {
-    return [getInstallAction(component, installKey, false)];
-  }
-  return [
-    ...getInstalledUpdateActions(component, checkKey, installKey),
-    {
-      key: removeKey,
-      text: _("Remove"),
-      icon: renderXIcon24,
-      component,
-      action: "remove"
-    }
-  ];
-}
-function getComponentCards() {
-  const systemInfo = normalizeSingBoxVariantFields(
-    store.get().diagnosticsSystemInfo
-  );
-  const systemInfoLoading = isSystemInfoLoading();
-  const zapretInstalled = Boolean(systemInfo.zapret_installed);
-  const zapret2Installed = Boolean(systemInfo.zapret2_installed);
-  const byedpiInstalled = Boolean(systemInfo.byedpi_installed);
-  const zapretManagerInstalled = Boolean(systemInfo.zapret_manager_installed);
-  const packetSteeringEnabled = systemInfo.packet_steering_mode === "2";
-  const directProxyEnabled = Boolean(systemInfo.direct_proxy_enabled);
-  const directProxyEndpoint = systemInfo.direct_proxy_address ? `${systemInfo.direct_proxy_address}:${systemInfo.direct_proxy_port || "2080"}` : "";
-  const torrserverRunning = Boolean(systemInfo.torrserver_running);
-  const torrserverDirectAvailable = Boolean(
-    systemInfo.torrserver_direct_available
-  );
-  const torrserverDirectEnabled = Boolean(systemInfo.torrserver_direct_enabled);
-  const torrserverDirectActive = Boolean(systemInfo.torrserver_direct_active);
-  const singBoxExtended = Boolean(systemInfo.sing_box_extended) && !systemInfo.sing_box_compressed;
-  const singBoxTiny = Boolean(systemInfo.sing_box_tiny);
-  const prokopActions = getInstalledUpdateActions(
-    "prokop",
-    "prokopCheck",
-    "prokopInstall"
-  );
-  const singBoxActions = getInstalledUpdateActions(
-    "sing_box",
-    "singBoxCheck",
-    "singBoxInstall",
-    singBoxTiny || singBoxExtended
-  );
-  if (!singBoxTiny) {
-    singBoxActions.push({
-      key: "singBoxInstallTiny",
-      text: _("Install Tiny build"),
-      icon: renderDownloadIcon24,
-      component: "sing_box",
-      action: "install_tiny"
-    });
-  }
-  if (!singBoxExtended) {
-    singBoxActions.push({
-      key: "singBoxInstallExtended",
-      text: _("Install Extended build"),
-      icon: renderDownloadIcon24,
-      component: "sing_box",
-      action: "install_extended"
-    });
-  }
-  const zapretActions = getOptionalComponentActions({
-    component: "zapret",
-    installed: zapretInstalled,
-    checkKey: "zapretCheck",
-    installKey: "zapretInstall",
-    removeKey: "zapretRemove"
-  });
-  const zapret2Actions = getOptionalComponentActions({
-    component: "zapret2",
-    installed: zapret2Installed,
-    checkKey: "zapret2Check",
-    installKey: "zapret2Install",
-    removeKey: "zapret2Remove"
-  });
-  const byedpiActions = getOptionalComponentActions({
-    component: "byedpi",
-    installed: byedpiInstalled,
-    checkKey: "byedpiCheck",
-    installKey: "byedpiInstall",
-    removeKey: "byedpiRemove"
-  });
-  const zapretManagerActions = zapretManagerInstalled ? [
-    {
-      key: "zapretManagerRemove",
-      text: _("Remove"),
-      icon: renderXIcon24,
-      component: "zapret_manager",
-      action: "remove"
-    }
-  ] : [
-    {
-      key: "zapretManagerInstall",
-      text: _("Install"),
-      icon: renderDownloadIcon24,
-      component: "zapret_manager",
-      action: "install"
-    }
-  ];
-  return [
-    {
-      component: "prokop",
-      column: 0,
-      title: "Prokop",
-      version: systemInfoLoading ? _("Loading...") : normalizeCompiledVersion(systemInfo.prokop_version),
-      latestVersion: getLatestVersion("prokop"),
-      releaseUrl: getGitHubReleaseUrl("prokop"),
-      actions: prokopActions
-    },
-    {
-      component: "sing_box",
-      column: 0,
-      title: "Sing-box",
-      version: systemInfoLoading ? _("Loading...") : formatSingBoxVersion(systemInfo),
-      latestVersion: getLatestVersion("sing_box"),
-      releaseUrl: getGitHubReleaseUrl("sing_box"),
-      actions: singBoxActions
-    },
-    {
-      component: "zapret",
-      column: 1,
-      title: "Zapret",
-      version: systemInfoLoading ? _("Loading...") : zapretInstalled ? systemInfo.zapret_version : _("Not installed"),
-      latestVersion: getLatestVersion("zapret"),
-      releaseUrl: getGitHubReleaseUrl("zapret"),
-      actions: zapretActions
-    },
-    {
-      component: "zapret2",
-      column: 1,
-      title: "Zapret2",
-      version: systemInfoLoading ? _("Loading...") : zapret2Installed ? systemInfo.zapret2_version : _("Not installed"),
-      latestVersion: getLatestVersion("zapret2"),
-      releaseUrl: getGitHubReleaseUrl("zapret2"),
-      actions: zapret2Actions
-    },
-    {
-      component: "byedpi",
-      column: 1,
-      title: "ByeDPI",
-      version: systemInfoLoading ? _("Loading...") : byedpiInstalled ? systemInfo.byedpi_version : _("Not installed"),
-      latestVersion: getLatestVersion("byedpi"),
-      releaseUrl: getGitHubReleaseUrl("byedpi"),
-      actions: byedpiActions
-    },
-    {
-      component: "zapret_manager",
-      column: 1,
-      title: "Zapret-Manager-Stressozz",
-      version: zapretManagerInstalled ? _("Installed (Mirror edition)") : _("Not installed"),
-      latestVersion: "",
-      releaseUrl: "https://github.com/Screamshow/Zapret-Manager",
-      actions: zapretManagerActions
-    },
-    {
-      component: "packet_steering",
-      column: 2,
-      title: "Packet Steering",
-      version: packetSteeringEnabled ? _("Mode 2 enabled") : _("Normal mode"),
-      actions: [
-        packetSteeringEnabled ? {
-          key: "packetSteeringRestore",
-          text: _("Restore normal mode"),
-          icon: renderRotateCcwIcon24,
-          component: "packet_steering",
-          action: "restore"
-        } : {
-          key: "packetSteeringEnable",
-          text: _("Enable mode 2"),
-          icon: renderRotateCcwIcon24,
-          component: "packet_steering",
-          action: "enable"
-        }
-      ]
-    },
-    {
-      component: "direct_proxy",
-      column: 2,
-      title: _("Direct Proxy"),
-      version: directProxyEnabled ? `HTTP/SOCKS5 \xB7 ${directProxyEndpoint || _("Enabled")}` : _("Disabled"),
-      copyValue: directProxyEnabled ? directProxyEndpoint : void 0,
-      actions: [
-        directProxyEnabled ? {
-          key: "directProxyDisable",
-          text: _("Disable"),
-          icon: renderXIcon24,
-          component: "direct_proxy",
-          action: "disable"
-        } : {
-          key: "directProxyEnable",
-          text: _("Enable"),
-          icon: renderRotateCcwIcon24,
-          component: "direct_proxy",
-          action: "enable"
-        }
-      ]
-    },
-    {
-      component: "torrserver_direct",
-      column: 2,
-      title: _("TorrServer Direct"),
-      version: !torrserverRunning ? _("TorrServer not found") : !torrserverDirectAvailable ? _("Dedicated cgroup unavailable") : torrserverDirectEnabled && torrserverDirectActive ? _("Enabled") : torrserverDirectEnabled ? _("Waiting for TorrServer") : _("Disabled"),
-      actions: [
-        torrserverDirectEnabled ? {
-          key: "torrserverDirectDisable",
-          text: _("Disable"),
-          icon: renderXIcon24,
-          component: "torrserver_direct",
-          action: "disable"
-        } : {
-          key: "torrserverDirectEnable",
-          text: _("Enable"),
-          icon: renderRotateCcwIcon24,
-          component: "torrserver_direct",
-          action: "enable",
-          disabled: !torrserverDirectAvailable
-        }
-      ]
-    }
-  ];
-}
-function renderComponentCard(card3) {
-  const updatesActions = store.get().updatesActions;
-  const anyActionLoading = isAnyActionLoading();
-  const serviceRuntimeActionLoading = isServiceRuntimeActionLoading();
-  const systemInfoLoading = isSystemInfoLoading();
-  const headerChildren = [
-    E("b", { class: "fkp_updates-page__component__title" }, card3.title),
-    E(
-      "span",
-      { class: "fkp_updates-page__component__header-version" },
-      card3.version
-    )
-  ];
-  const header = E(
-    "div",
-    { class: "fkp_updates-page__component__header" },
-    headerChildren
-  );
-  const detailsChildren = [];
-  const checkResult = getVisibleCheckResult(card3.component);
-  if (checkResult && checkResult.status) {
-    let labelText = "";
-    const latestValueNodes = [];
-    if (checkResult.status === "outdated") {
-      labelText = _("Update is available:");
-      const versionToShow = checkResult.latest_version || card3.latestVersion || card3.version;
-      if (checkResult.release_url) {
-        latestValueNodes.push(
-          E(
-            "a",
-            {
-              class: "fkp_updates-page__component__release-version-link",
-              href: checkResult.release_url,
-              target: "_blank",
-              rel: "noopener noreferrer"
-            },
-            versionToShow || _("Open")
-          )
-        );
-      } else if (versionToShow) {
-        latestValueNodes.push(document.createTextNode(versionToShow));
-      }
-    } else if (checkResult.status === "latest") {
-      labelText = _("Latest version is installed");
-    } else if (checkResult.status === "dev") {
-      labelText = `${_("Installed version is newer than release")}. ${_("Latest version:")}`;
-      const versionToShow = checkResult.latest_version || card3.latestVersion;
-      if (checkResult.release_url) {
-        latestValueNodes.push(
-          E(
-            "a",
-            {
-              class: "fkp_updates-page__component__release-version-link",
-              href: checkResult.release_url,
-              target: "_blank",
-              rel: "noopener noreferrer"
-            },
-            versionToShow || _("Open")
-          )
-        );
-      } else if (versionToShow) {
-        latestValueNodes.push(document.createTextNode(versionToShow));
-      }
-    }
-    if (labelText) {
-      const rowChildren = [
-        E(
-          "span",
-          { class: "fkp_updates-page__component__info-label" },
-          labelText
-        )
-      ];
-      if (latestValueNodes.length > 0) {
-        rowChildren.push(
-          E(
-            "span",
-            {
-              class: "fkp_updates-page__component__info-value fkp_updates-page__component__info-value--latest"
-            },
-            latestValueNodes
-          )
-        );
-      }
-      detailsChildren.push(
-        E(
-          "div",
-          { class: "fkp_updates-page__component__info-row" },
-          rowChildren
-        )
-      );
-    }
-  }
-  const detailsContainer = detailsChildren.length > 0 ? E(
-    "div",
-    { class: "fkp_updates-page__component__details" },
-    detailsChildren
-  ) : null;
-  const primaryActions = [];
-  const dangerActions = [];
-  const variantActions = [];
-  card3.actions.forEach((action) => {
-    if (action.action === "remove") {
-      dangerActions.push(action);
-    } else if (action.action.startsWith("install_")) {
-      variantActions.push(action);
-    } else {
-      primaryActions.push(action);
-    }
-  });
-  const actionElements = [];
-  const primaryButtons = primaryActions.map((action) => {
-    const loading2 = updatesActions[action.key].loading;
-    const isUpdateOrInstall = action.action === "install";
-    return renderButton({
-      classNames: isUpdateOrInstall ? ["cbi-button-save"] : [],
-      text: action.text,
-      icon: action.icon,
-      loading: loading2,
-      disabled: action.disabled || systemInfoLoading || serviceRuntimeActionLoading || anyActionLoading && !loading2,
-      onClick: () => void handleComponentAction(action)
-    });
-  });
-  if (card3.component === "prokop") {
-    primaryButtons.push(
-      renderButton({
-        text: _("Choose version"),
-        disabled: systemInfoLoading || serviceRuntimeActionLoading || anyActionLoading,
-        onClick: () => void showReleaseSelector(card3.version, (version) => {
-          void handleComponentAction({
-            key: "prokopInstall",
-            text: _("Install"),
-            icon: renderDownloadIcon24,
-            component: "prokop",
-            action: "install",
-            version
-          });
-        })
-      })
-    );
-  }
-  const dangerButtons = dangerActions.map((action) => {
-    const loading2 = updatesActions[action.key].loading;
-    return renderButton({
-      classNames: ["cbi-button-remove"],
-      text: action.text,
-      icon: action.icon,
-      loading: loading2,
-      disabled: systemInfoLoading || serviceRuntimeActionLoading || anyActionLoading && !loading2,
-      onClick: () => void handleComponentAction(action)
-    });
-  });
-  if (primaryButtons.length > 0 || dangerButtons.length > 0) {
-    actionElements.push(
-      E("div", { class: "fkp_updates-page__component__actions-main" }, [
-        ...primaryButtons,
-        ...dangerButtons
-      ])
-    );
-  }
-  if (card3.copyValue) {
-    actionElements.push(
-      E("div", { class: "fkp_updates-page__component__actions-main" }, [
-        renderButton({
-          text: _("Copy address"),
-          icon: renderCopyIcon24,
-          disabled: anyActionLoading || serviceRuntimeActionLoading,
-          onClick: () => copyToClipboard(card3.copyValue || "")
-        })
-      ])
-    );
-  }
-  if (variantActions.length > 0) {
-    const variantButtons = variantActions.map((action) => {
-      const loading2 = updatesActions[action.key].loading;
-      return renderButton({
-        text: action.text,
-        icon: action.icon,
-        loading: loading2,
-        disabled: systemInfoLoading || serviceRuntimeActionLoading || anyActionLoading && !loading2,
-        onClick: () => void handleComponentAction(action)
-      });
-    });
-    actionElements.push(
-      E("div", { class: "fkp_updates-page__component__variants" }, [
-        E(
-          "div",
-          { class: "fkp_updates-page__component__variants-title" },
-          _("Install another build:")
-        ),
-        E(
-          "div",
-          { class: "fkp_updates-page__component__variants-buttons" },
-          variantButtons
-        )
-      ])
-    );
-  }
-  const actionsContainer = E(
-    "div",
-    {
-      class: [
-        "fkp_updates-page__component__actions",
-        detailsContainer ? "fkp_updates-page__component__actions--with-details" : ""
-      ].filter(Boolean).join(" ")
-    },
-    actionElements
-  );
-  const cardChildren = [header];
-  if (detailsContainer) {
-    cardChildren.push(detailsContainer);
-  }
-  cardChildren.push(actionsContainer);
-  return E("div", { class: "fkp_updates-page__component" }, cardChildren);
-}
-function renderUpdatesComponents() {
-  const container = document.getElementById("fkp_updates-components");
-  if (!container) {
-    return;
-  }
-  const columns = [[], [], []];
-  getComponentCards().forEach((card3) => {
-    columns[card3.column].push(renderComponentCard(card3));
-  });
-  columns[2].push(
-    renderFullUninstall(
-      isAnyActionLoading() || isServiceRuntimeActionLoading()
-    )
-  );
-  return preserveScrollForPage(() => {
-    container.replaceChildren(
-      E("div", { class: "fkp_updates-page__components-column" }, columns[0]),
-      E("div", { class: "fkp_updates-page__components-column" }, columns[1]),
-      E("div", { class: "fkp_updates-page__components-column" }, columns[2])
-    );
-  });
-}
-function onStoreUpdate3(_next, _prev, diff) {
-  if (diff.diagnosticsSystemInfo || diff.updatesActions || diff.updatesChecks || diff.diagnosticsActions || diff.servicesInfoWidget) {
-    renderUpdatesComponents();
-  }
-}
-function applyComponentUpdateCheckCache(componentUpdateCheckCache) {
-  componentUpdateCheckCacheResolved = true;
-  if (componentUpdateCheckCache.enabled) {
-    store.reset(["updatesChecks"]);
-    applyCachedCheckResults(componentUpdateCheckCache.results);
-  }
-  if (shouldResetCheckResultsOnMount({
-    anyActionLoading: isAnyActionLoading(),
-    preserveCheckResultsOnNextMount,
-    persistentCacheEnabled: componentUpdateCheckCache.enabled
-  })) {
-    store.reset(["updatesChecks"]);
-  }
-}
-async function onPageMount4() {
-  onPageUnmount4();
-  updatesMounted = true;
-  updatesMountId += 1;
-  const mountId3 = updatesMountId;
-  const cachedRuntimeState = getCachedRuntimeUiState();
-  const hasRuntimeSnapshot = Boolean(cachedRuntimeState);
-  const needsFreshStateBeforeRender = shouldRefreshComponentStateBeforeRender(cachedRuntimeState);
-  const runtimeStateRefreshPromise = !hasRuntimeSnapshot || needsFreshStateBeforeRender ? refreshRuntimeUiState({ force: true }) : null;
-  const prefetchedComponentUpdateCheckCache = componentUpdateCheckCacheSnapshot;
-  if (prefetchedComponentUpdateCheckCache) {
-    applyComponentUpdateCheckCache(prefetchedComponentUpdateCheckCache);
-  }
-  renderUpdatesComponents();
-  const componentUpdateCheckCache = await loadComponentUpdateCheckCache({
-    force: Boolean(prefetchedComponentUpdateCheckCache)
-  });
-  if (!updatesMounted || mountId3 !== updatesMountId) {
-    return;
-  }
-  applyComponentUpdateCheckCache(componentUpdateCheckCache);
-  preserveCheckResultsOnNextMount = false;
-  renderUpdatesComponents();
-  if (runtimeStateRefreshPromise) {
-    await runtimeStateRefreshPromise;
-    if (!updatesMounted || mountId3 !== updatesMountId) {
-      return;
-    }
-  }
-  store.subscribe(onStoreUpdate3);
-  startComponentActionStateWatcher();
-  renderUpdatesComponents();
-  void ensureSystemInfo();
-  if (hasRuntimeSnapshot) {
-    void refreshRuntimeUiState({ force: true });
-  }
-}
-function onPageUnmount4() {
-  updatesMounted = false;
-  updatesMountId += 1;
-  stopComponentActionStateWatcher();
-  store.unsubscribe(onStoreUpdate3);
-}
-function registerLifecycleListeners4() {
-  if (updatesLifecycleRegistered) {
-    return;
-  }
-  updatesLifecycleRegistered = true;
-  store.subscribe((next, prev, diff) => {
-    if (diff.tabService && next.tabService.current !== prev.tabService.current) {
-      const isUpdatesVisible = next.tabService.current === "updates";
-      if (isUpdatesVisible) {
-        return onPageMount4();
-      }
-      if (updatesMounted) {
-        return onPageUnmount4();
-      }
-    }
-  });
-}
-async function initController4() {
-  if (updatesControllerInitialized) {
-    return;
-  }
-  updatesControllerInitialized = true;
-  void loadComponentUpdateCheckCache();
-  onMount("updates-status").then(() => {
-    logger.debug("[UPDATES]", "initController", "onMount");
-    registerLifecycleListeners4();
-    if (store.get().tabService.current === "updates" || isActiveLuciTab("updates")) {
-      onPageMount4();
-    }
-  });
-}
-
-// src/prokop/tabs/updates/styles.ts
-var styles6 = `
-#cbi-${PROKOP_UCI_PACKAGE}-updates-_mount_node > div {
-    width: 100%;
-}
-
-#cbi-${PROKOP_UCI_PACKAGE}-updates > h3 {
-    display: none;
-}
-
-.fkp_updates-page {
-    width: 100%;
-}
-
-.fkp_updates-page__components {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    align-items: flex-start;
-    gap: 10px;
-    width: 100%;
-}
-
-.fkp_updates-page__components-column {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    min-width: 0;
-    width: 100%;
-}
-
-@media (max-width: 1100px) {
-    .fkp_updates-page__components {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-
-@media (max-width: 760px) {
-    .fkp_updates-page__components {
-        grid-template-columns: minmax(0, 1fr);
-    }
-
-    .fkp_updates-page__components-column {
-        width: 100%;
-        min-width: 0;
-    }
-}
-
-.fkp_updates-page__component {
-    border: 2px var(--background-color-low, lightgray) solid;
-    border-radius: 4px;
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    min-width: 0;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.fkp_updates-page__component__header {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
-    border-bottom: 1px var(--background-color-low, lightgray) solid;
-    padding-bottom: 8px;
-    margin-bottom: 2px;
-}
-
-.fkp_updates-page__component__title {
-    color: var(--text-color-high);
-    font-size: 16px;
-    font-weight: bold;
-    line-height: 1.2;
-}
-
-.fkp_updates-page__component__header-version {
-    color: var(--text-color-medium, #888);
-    font-size: 13px;
-    font-weight: normal;
-}
-
-.fkp_updates-page__component__details {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.fkp_updates-page__component__info-row {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    min-height: 24px;
-    gap: 8px;
-    white-space: nowrap;
-}
-
-.fkp_updates-page__component__info-label {
-    color: var(--text-color-medium, #888);
-    font-size: 12px;
-}
-
-.fkp_updates-page__component__info-value {
-    color: var(--text-color-high, #000);
-    font-weight: 500;
-    font-size: 13px;
-    text-align: left;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    min-width: 0;
-    overflow-wrap: anywhere;
-}
-
-.fkp_updates-page__component__info-value--latest {
-    flex-wrap: wrap;
-    justify-content: flex-start;
-}
-
-.fkp_updates-page__component__release-version-link {
-    color: var(--link-color, #3498db) !important;
-    text-decoration: underline;
-    font-weight: bold;
-}
-
-.fkp_updates-page__component__release-version-link:hover {
-    color: var(--link-color-dark, #2980b9) !important;
-}
-
-.fkp_updates-page__component__actions {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-top: auto;
-}
-
-.fkp_updates-page__component__actions--with-details {
-    border-top: 1px var(--background-color-low, lightgray) solid;
-    padding-top: 10px;
-}
-
-.fkp_updates-page__component__actions-main {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    flex-wrap: nowrap;
-    gap: 6px;
-}
-
-.fkp_updates-page__component__variants {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-top: 4px;
-}
-
-.fkp_updates-page__component__variants-title {
-    font-size: 11px;
-    font-weight: bold;
-    color: var(--text-color-medium, gray);
-}
-
-.fkp_updates-page__component__variants-buttons {
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 6px;
-}
-`;
-
-// src/prokop/tabs/updates/index.ts
-var UpdatesTab = {
-  render: render4,
-  initController: initController4,
-  styles: styles6
-};
-
-// src/prokop/tabs/history/render.ts
-function render5() {
-  const card3 = (title, body, actions) => E("section", { class: "fkp-history__card" }, [
-    E("div", { class: "fkp-history__head" }, [
-      E("h3", { class: "fkp-history__title" }, title),
-      ...actions ? [actions] : []
-    ]),
-    ...body
-  ]);
-  return E("div", { id: "history-status", class: "fkp-history" }, [
-    card3(_("Protection and recovery"), [
-      E("div", { id: "history-state", role: "status" }, _("Loading\u2026"))
-    ]),
-    card3(_("History"), [
-      E("div", { id: "history-filter", class: "fkp-history__filter" }),
-      E("div", { id: "history-events" }, _("Loading\u2026"))
-    ]),
-    card3(
-      _("Configuration snapshots"),
-      [
-        E(
-          "p",
-          { class: "fkp-history__hint" },
-          _(
-            "Changes compare a snapshot with the saved configuration. Unsaved form edits are not included."
-          )
-        ),
-        E("div", { id: "history-snapshots" }, _("Loading\u2026"))
-      ],
-      E("div", { id: "history-snapshot-actions", class: "fkp-actions" })
-    )
-  ]);
-}
-
-// src/prokop/ui/states.ts
-function renderAction(action) {
-  if (!action) return [];
-  return [
-    E(
-      "button",
-      {
-        type: "button",
-        class: "btn cbi-button",
-        click: () => action.onClick()
-      },
-      action.label
-    )
-  ];
-}
-function renderEmptyState(title, hint, action) {
-  return E("div", { class: "fkp-state fkp-state--empty" }, [
-    E("div", { class: "fkp-state__title" }, title),
-    ...hint ? [E("div", { class: "fkp-state__hint" }, hint)] : [],
-    ...renderAction(action)
-  ]);
-}
-function renderLoadingState2(label = _("Loading\u2026")) {
-  return E(
-    "div",
-    { class: "fkp-state fkp-state--loading", role: "status" },
-    E("div", { class: "fkp-state__title" }, label)
-  );
-}
-function renderErrorState(title, onRetry, details) {
-  return E("div", { class: "fkp-state fkp-state--error", role: "alert" }, [
-    E("div", { class: "fkp-state__title" }, title),
-    ...renderAction(
-      onRetry ? { label: _("Retry"), onClick: onRetry } : void 0
-    ),
-    ...details ? [renderTechnicalDetails(details)] : []
-  ]);
-}
-function renderTechnicalDetails(text) {
-  return E("details", { class: "fkp-tech" }, [
-    E("summary", {}, _("Technical details")),
-    E("pre", { class: "fkp-tech__content" }, text)
-  ]);
-}
-
-// src/prokop/tabs/history/model.ts
-function formatTime(timestamp) {
-  return new Date(timestamp * 1e3).toLocaleString();
-}
-function lastRecoveryEvent(health2) {
-  const events = [
-    ...health2.recent_activity,
-    ...health2.recovery.last_event ? [health2.recovery.last_event] : []
-  ].filter(
-    (event) => event.kind === "restore" || event.kind === "autotune_rollback" || event.kind === "recovery" || event.status === "recovered"
-  );
-  return events.sort((a, b) => b.timestamp - a.timestamp)[0] ?? null;
-}
-function eventText(event) {
-  const outcome = eventOutcomeView(toEventOutcome(event.status));
-  return {
-    value: `${eventKindLabel(event.kind)}: ${outcome.label} \xB7 ${formatTime(event.timestamp)}`,
-    tone: outcome.tone
-  };
-}
-function guardRow(health2) {
-  if (!health2.guard.active)
-    return { value: _("Inactive"), tone: "success" };
-  switch (health2.recovery.action) {
-    case "wait":
-      return {
-        value: _("Active: a change is being applied"),
-        tone: "loading"
-      };
-    case "restart":
-      return {
-        value: _("Active: kept by a failed change"),
-        tone: "error"
-      };
-    case "restore":
-      return {
-        value: _("Active: restore not finished"),
-        tone: "error"
-      };
-    default:
-      return {
-        value: _("Active: DPI switch not confirmed"),
-        tone: "error"
-      };
-  }
-}
-function lastRecoveryRow(health2) {
-  if (health2.guard.active)
-    return health2.recovery.action === "wait" ? { value: _("In progress"), tone: "loading" } : { value: _("Needs attention"), tone: "error" };
-  const failed2 = health2.recovery.last_event;
-  if (failed2) return eventText(failed2);
-  return { value: _("Needs attention"), tone: "error" };
-}
-function nextStepRow(health2) {
-  if (!health2.guard.active) return [];
-  switch (health2.recovery.action) {
-    case "restart":
-      return [
-        {
-          label: _("Next step"),
-          value: _(
-            "Restart Prokop: the restart removes the DPI guard that a failed change left in place."
-          ),
-          tone: "warning"
-        }
-      ];
-    case "restore":
-      return [
-        {
-          label: _("Next step"),
-          value: _(
-            "Restore the last known good snapshot: the restore finishes and removes the DPI guard."
-          ),
-          tone: "warning"
-        }
-      ];
-    default:
-      return [];
-  }
-}
-function recoveryRows(health2, snapshots2) {
-  const last = lastRecoveryEvent(health2);
-  const reload = health2.last_reload;
-  const lkg = snapshots2?.find((snapshot) => snapshot.is_lkg);
-  const reloadOutcome = reload ? eventOutcomeView(toEventOutcome(reload.status)) : null;
-  return [
-    {
-      label: _("DPI guard"),
-      ...guardRow(health2)
-    },
-    {
-      label: _("Last recovery"),
-      ...health2.recovery.pending ? lastRecoveryRow(health2) : last ? eventText(last) : { value: _("Not needed"), tone: "success" }
-    },
-    ...nextStepRow(health2),
-    {
-      label: _("Package recovery"),
-      ...health2.package_recovery.pending ? { value: _("Waiting to finish"), tone: "warning" } : { value: _("Not needed"), tone: "success" }
-    },
-    {
-      label: _("Last reload"),
-      ...reload && reloadOutcome ? {
-        value: `${reloadOutcome.label} \xB7 ${formatTime(reload.timestamp)}`,
-        tone: reloadOutcome.tone
-      } : { value: _("No reload recorded yet"), tone: "neutral" }
-    },
-    {
-      label: _("Last known good configuration"),
-      ...lkg ? { value: formatTime(lkg.created_at), tone: "success" } : snapshots2 ? { value: _("Not recorded yet"), tone: "neutral" } : { value: _("Unknown"), tone: "neutral" }
-    }
-  ];
-}
-var CATEGORY = {
-  reload: "config",
-  restore: "config",
-  snapshot_create: "config",
-  snapshot_delete: "config",
-  start: "service",
-  recovery: "service",
-  cron_refresh: "service",
-  config_migration: "config",
-  autotune_apply: "autotune",
-  autotune_rollback: "autotune",
-  autotune_mode: "autotune",
-  autotune_recommendation: "autotune",
-  autotune_run: "autotune"
-};
-function historyFilterLabel(filter2) {
-  switch (filter2) {
-    case "config":
-      return _("Configuration");
-    case "service":
-      return _("Service");
-    case "autotune":
-      return _("Autotune");
-    default:
-      return _("All");
-  }
-}
-function migrationNoticeText(notice) {
-  switch (notice.code) {
-    case "retired_rule_sets": {
-      const removed = _(
-        "Rule \u201C%s\u201D: the retired rule sets %s were removed from Built-in rule sets #2, their source no longer publishes them."
-      ).replace("%s", notice.section).replace("%s", notice.values.join(", "));
-      return notice.replacements.length ? `${removed} ${_(
-        "Built-in rule sets of the same services: %s. They were not added; the rule editor offers them."
-      ).replace("%s", notice.replacements.join(", "))}` : `${removed} ${_("No built-in rule set replaces them.")}`;
-    }
-    case "subscription_options_removed":
-      return _(
-        "Rule \u201C%s\u201D: the subscription settings %s were removed. This version always generates the HWID from the router and hides nodes of imported URLTest groups and cascades."
-      ).replace("%s", notice.section).replace("%s", notice.values.join(", "));
-    // The User-Agent itself is not in the journal (D-17).
-    case "subscription_user_agent_in_effect":
-      return _(
-        "Rule \u201C%s\u201D: a subscription source now sends the User-Agent set in its settings. Earlier versions ignored it and chose one automatically; clear the field to go back to automatic selection."
-      ).replace("%s", notice.section);
-    case "update_interval_raised":
-      return (notice.values[0] === "component_update_check_interval" ? _(
-        "Component update check interval was %s, shorter than the 1 h minimum of automatic updates: set to %s."
-      ) : _(
-        "List update frequency was %s, shorter than the 1 h minimum of automatic updates: set to %s."
-      )).replace("%s", notice.from ?? "").replace("%s", notice.to ?? "");
-    default:
-      return _("Rule \u201C%s\u201D: changed by the update.").replace(
-        "%s",
-        notice.section
-      );
-  }
-}
-function eventTitle(event) {
-  if (event.kind === "autotune_rollback" && event.trigger)
-    return rollbackTitle(event.trigger === "manual", event.candidate ?? "");
-  if (event.kind !== "autotune_apply" || !event.trigger)
-    return eventKindLabel(event.kind);
-  const candidate = event.candidate ?? "";
-  const manual = event.trigger === "manual";
-  if (!candidate)
-    return manual ? _("Autotune: manual apply") : _("Autotune: automatic apply");
-  if (event.status === "success")
-    return (manual ? _("Autotune: %s applied manually") : _("Autotune: %s applied automatically")).replace("%s", candidate);
-  return (manual ? _("Autotune: manual apply of %s") : _("Autotune: automatic apply of %s")).replace("%s", candidate);
-}
-function rollbackTitle(manual, candidate) {
-  if (!candidate)
-    return manual ? _("Autotune: manual rollback") : _("Autotune: automatic rollback");
-  return (manual ? _("Autotune: manual rollback of %s") : _("Autotune: automatic rollback of %s")).replace("%s", candidate);
-}
-function historyItems(events, filter2, nowMs = Date.now()) {
-  return events.map((event, index) => ({ event, index })).filter(({ event }) => filter2 === "all" || CATEGORY[event.kind] === filter2).sort((a, b) => b.event.timestamp - a.event.timestamp || b.index - a.index).map(({ event }) => ({
-    title: eventTitle(event),
-    outcome: eventOutcomeView(toEventOutcome(event.status)),
-    time: formatTime(event.timestamp),
-    relative: formatRelativeTime(event.timestamp, nowMs),
-    details: (event.notices ?? []).map(migrationNoticeText)
-  }));
-}
-function snapshotReasonLabel(reason) {
-  switch (reason) {
-    case "manual":
-      return _("Manual");
-    // Taken when a reload starts, after the change was committed: the
-    // configuration the reload applies, possibly the one that failed
-    // (UC-067).
-    case "before-reload":
-      return _("Applied by reload");
-    // Save & Apply's snapshot of the configuration before the change.
-    case "before-apply":
-      return _("Before applying changes");
-    case "pre-restore":
-      return _("Before restore");
-    case "last-known-working":
-      return _("Last known good");
-    case "before-autotune":
-      return _("Before autotune");
-    // A configuration edited while a restore or an autotune change owned it:
-    // kept, never rolled back or taken for the restored one
-    // (config/snapshots.uc).
-    case "concurrent-change":
-      return _("Concurrent edit");
-    default:
-      return _("Other");
-  }
-}
-function snapshotRows(snapshots2) {
-  return snapshots2.slice().sort((a, b) => b.created_at - a.created_at).map((snapshot) => ({
-    id: snapshot.id,
-    time: formatTime(snapshot.created_at),
-    // The badge already says "last known good" for such snapshots.
-    reason: snapshot.is_lkg && snapshot.reason === "last-known-working" ? "" : snapshotReasonLabel(snapshot.reason),
-    lkg: Boolean(snapshot.is_lkg),
-    canDelete: !snapshot.is_lkg
-  }));
-}
-function diffValue(value) {
-  if (value === null || value === void 0) return _("not set");
-  if (Array.isArray(value)) return value.length ? value.join(", ") : "\u2014";
-  return value === "" ? "\u2014" : value;
-}
-function diffRows(changes) {
-  return changes.map((change) => ({
-    where: `${change.section} \xB7 ${change.option}`,
-    snapshot: diffValue(change.before),
-    current: diffValue(change.after)
-  }));
-}
-function isTruncation(entry) {
-  return entry.truncated === true;
-}
-function snapshotDiff(entries) {
-  const changes = entries.filter(
-    (entry) => !isTruncation(entry)
-  );
-  const marker = entries.find(isTruncation);
-  return {
-    changes,
-    total: Math.max(Number(marker?.total) || 0, changes.length)
-  };
-}
-function diffTruncatedText(diff) {
-  return _("Only the first %d changes are listed; %d changes in total.").replace("%d", String(diff.changes.length)).replace("%d", String(diff.total));
-}
-function restorePreview(diff, limit) {
-  const preview = diffRows(diff.changes.slice(0, limit)).map(
-    (row) => `${row.where}: ${row.current} \u2192 ${row.snapshot}`
-  );
-  const more = diff.total - preview.length;
-  if (more > 0) preview.push(_("and %d more").replace("%d", String(more)));
-  return preview;
-}
-function snapshotBusyText(reason) {
-  if (reason === "service_action_in_progress")
-    return _(
-      "The service is busy with another operation (list or subscription update, reload or start). Nothing was changed; try again when it finishes."
-    );
-  return _(
-    "Another snapshot operation is already in progress. Try again in a moment."
-  );
-}
-var MANUAL_SNAPSHOT_LIMIT = 8;
-function deleteSnapshotToast(result) {
-  if (result?.status === "deleted")
-    return { text: _("Snapshot deleted"), type: "success", duration: 3e3 };
-  if (result?.status === "busy")
-    return {
-      text: snapshotBusyText(result.reason),
-      type: "warning",
-      duration: 6e3
-    };
-  if (result?.reason === "lkg_protected")
-    return {
-      text: _(
-        "The last known good snapshot cannot be deleted: it is the configuration Prokop returns to after a failed change."
-      ),
-      type: "warning",
-      duration: 8e3
-    };
-  if (result?.reason === "invalid_snapshot")
-    return {
-      text: _("The snapshot was not found or cannot be read."),
-      type: "error",
-      duration: 6e3
-    };
-  return {
-    text: _("Could not delete snapshot"),
-    type: "error",
-    duration: 3e3
-  };
-}
-function createSnapshotToast(result) {
-  switch (result?.status) {
-    case "created":
-      return { text: _("Snapshot saved"), type: "success", duration: 3e3 };
-    case "busy":
-      return {
-        text: snapshotBusyText(result.reason),
-        type: "warning",
-        duration: 6e3
-      };
-    case "failed":
-      switch (result.reason) {
-        // Nothing removes a manual snapshot to make room: the user does.
-        // More than one has to go while more are left from before the
-        // limit (an upgrade): the toast says how many.
-        case "manual_limit_reached": {
-          const limit = result.limit ?? MANUAL_SNAPSHOT_LIMIT;
-          const excess = (result.manual ?? limit) - limit + 1;
-          return {
-            text: excess > 1 ? _(
-              "Snapshot not saved: at most %d manual snapshots are kept, so that the automatic snapshots taken before a restore, Save & Apply or autotune always have room. There are %d manual snapshots now: delete %d you no longer need, then try again."
-            ).replace("%d", String(limit)).replace("%d", String(result.manual)).replace("%d", String(excess)) : _(
-              "Snapshot not saved: at most %d manual snapshots are kept, so that the automatic snapshots taken before a restore, Save & Apply or autotune always have room. Delete a manual snapshot you no longer need, then try again."
-            ).replace("%d", String(limit)),
-            type: "warning",
-            duration: 12e3
-          };
-        }
-        case "config_unavailable":
-          return {
-            text: _(
-              "Snapshot not saved: the configuration file could not be read."
-            ),
-            type: "error",
-            duration: 8e3
-          };
-        case "hash_unavailable":
-        case "write_failed":
-          return {
-            text: _(
-              "Snapshot not saved: it could not be written. Check the free space on the router."
-            ),
-            type: "error",
-            duration: 8e3
-          };
-        case "lock_unavailable":
-          return {
-            text: _(
-              "Snapshot not saved: the snapshot storage could not be locked. Try again in a moment."
-            ),
-            type: "error",
-            duration: 8e3
-          };
-      }
-      break;
-  }
-  return {
-    text: _("Could not create snapshot"),
-    type: "error",
-    duration: 3e3
-  };
-}
-function restoreRefusalText(reason) {
-  switch (reason) {
-    case "pre_restore_snapshot_failed":
-      return _(
-        "Restore was not started: the current configuration could not be saved as a snapshot first. Nothing was changed. Check the free space on the router."
-      );
-    case "invalid_snapshot":
-      return _(
-        "Restore was not started: the snapshot is missing or damaged. Nothing was changed."
-      );
-    case "config_unavailable":
-      return _(
-        "Restore was not started: the current configuration could not be read. Nothing was changed."
-      );
-    case "concurrent_change":
-      return _(
-        "Restore was not started: the configuration was changed while the restore was starting. Nothing was changed; check the change and try again."
-      );
-    case "guard_unavailable":
-      return _(
-        "Restore was not started: the DPI guard that protects traffic during the restore could not be installed. Nothing was changed."
-      );
-    case "lock_unavailable":
-      return _(
-        "Restore was not started: the snapshot storage could not be locked. Nothing was changed."
-      );
-    // D-16: a snapshot of an older release whose configuration cannot be
-    // migrated to this one is never restored as it was saved.
-    case "snapshot_migration_failed":
-      return _(
-        "Restore was not started: the snapshot was saved by an older version of Prokop, and its configuration could not be migrated to this version. Nothing was changed."
-      );
-    default:
-      return null;
-  }
-}
-function unsavedChangesBlockRestore(changes, uciPackage) {
-  const pending = changes?.[uciPackage];
-  return Array.isArray(pending) && pending.length > 0;
-}
-function unsavedChangesText() {
-  return _(
-    "There are unsaved changes of Prokop in this session. Save & Apply or revert them, then restore the snapshot."
-  );
-}
-function restoreConfirmMessage(staysStopped) {
-  return staysStopped ? _(
-    "Prokop is stopped: the configuration is replaced and checked, but Prokop is not started. It takes effect when you start Prokop."
-  ) : _(
-    "Prokop reloads the configuration. If the reload fails, the previous configuration is restored automatically."
-  );
-}
-function restoreMigrationNote(migration) {
-  if (!migration) return null;
-  return migration.from && migration.from !== "unknown" ? _(
-    "This snapshot was saved by Prokop %s. Before the restore, its configuration is migrated to the current version %s, as an upgrade migrates it: settings retired since then are updated. The snapshot itself is not changed; the changes listed above compare the snapshot as it was saved."
-  ).replace("%s", migration.from).replace("%s", migration.to) : _(
-    "This snapshot was saved by an older version of Prokop. Before the restore, its configuration is migrated to the current version %s, as an upgrade migrates it: settings retired since then are updated. The snapshot itself is not changed; the changes listed above compare the snapshot as it was saved."
-  ).replace("%s", migration.to);
-}
-function withMigration(text, migration) {
-  if (!migration) return text;
-  const migrated = migration.from && migration.from !== "unknown" ? _(
-    "The configuration of the snapshot was migrated from Prokop %s to %s."
-  ).replace("%s", migration.from).replace("%s", migration.to) : _(
-    "The configuration of the snapshot was migrated to Prokop %s."
-  ).replace("%s", migration.to);
-  return `${text}${text.endsWith(".") ? "" : "."} ${migrated}`;
-}
-function restoreResultToast(result) {
-  switch (result?.status) {
-    case "busy":
-      return {
-        text: snapshotBusyText(result.reason),
-        type: "warning",
-        duration: 6e3
-      };
-    case "success":
-      return {
-        text: withMigration(
-          _("Configuration restored and reloaded"),
-          result.migration
-        ),
-        type: "success",
-        duration: result.migration ? 1e4 : 6e3
-      };
-    // Prokop was stopped by the user: only a start brings it back.
-    case "restored_not_started":
-      return {
-        text: withMigration(
-          _(
-            "Configuration restored, but Prokop is stopped: it was not started or checked. The restored configuration takes effect when Prokop is started."
-          ),
-          result.migration
-        ),
-        type: "warning",
-        duration: 1e4
-      };
-    case "recovered":
-      return {
-        text: result.reason === "target_reload_queued" ? _(
-          "Restore was not applied: the service was busy and only queued the reload. The previous configuration is kept."
-        ) : _("Restore failed; previous configuration and runtime recovered"),
-        type: "warning",
-        duration: 8e3
-      };
-    case "failed":
-      if (result.reason === "runtime_guard_active")
-        return {
-          text: _(
-            "Restore was not started: a failed change left the DPI guard in place, and nothing can be reloaded until Prokop is restarted. Restart Prokop, then restore the snapshot if it is still needed."
-          ),
-          type: "warning",
-          duration: 12e3
-        };
-      if (result.reason === "uncommitted_uci_changes")
-        return {
-          text: _(
-            'Restore was not started: the router has uncommitted uci changes of Prokop (made with "uci set" without a commit). Commit or revert them, then restore again.'
-          ),
-          type: "warning",
-          duration: 1e4
-        };
-      if (result.reason === "replace_failed")
-        return {
-          text: result.guard === "active" ? `${_("Restore was not applied: the configuration file could not be written. The previous configuration is kept.")} ${_("The DPI guard of an earlier restore stays active.")}` : _(
-            "Restore was not applied: the configuration file could not be written. The previous configuration is kept."
-          ),
-          type: "warning",
-          duration: 1e4
-        };
-      {
-        const refusal = restoreRefusalText(result.reason);
-        if (refusal)
-          return {
-            text: result.guard === "active" ? `${refusal} ${_("The DPI guard of an earlier restore stays active.")}` : refusal,
-            type: "warning",
-            duration: 1e4
-          };
-      }
-      if (result.runtime === "stopped")
-        return {
-          text: result.reason === "target_invalid" ? _(
-            "Restore was not applied: the snapshot configuration did not pass validation. The previous configuration is kept; Prokop stays stopped."
-          ) : _(
-            "Restore was not applied: Prokop was stopped during the restore. The previous configuration is kept."
-          ),
-          type: "warning",
-          duration: 1e4
-        };
-      break;
-    case "needs_attention":
-      if (result.reason === "config_changed_during_transaction") {
-        const kept = result.saved_snapshot ? _('The change is kept and saved as a snapshot ("Concurrent edit").') : _(
-          "The change is kept in the configuration, but no snapshot of it could be saved."
-        );
-        return {
-          text: (
-            // Prokop was stopped: the snapshot was not reloaded, no
-            // guard is left.
-            result.runtime === "stopped" ? `${_("Restore was not applied: Prokop was stopped, and the configuration was changed during the restore.")} ${kept}` : (
-              // The reload ran, but it may have read the change.
-              result.guard === "inactive" ? `${_("Restore did not finish: the configuration was changed while the snapshot was being applied. Prokop was reloaded, but it is not known whether with the snapshot or with the change.")} ${kept} ${_("Restore the snapshot you need to finish.")}` : `${_("Restore did not finish: the configuration was changed while the snapshot was being applied.")} ${kept} ${_("The DPI guard stays active. Restore the snapshot you need to finish.")}`
-            )
-          ),
-          type: "error",
-          duration: 12e3
-        };
-      }
-      if (result.reason === "runtime_guard_active")
-        return {
-          text: _(
-            "Restore did not finish: a failed change left the DPI guard in place, and the DPI guard stays active. Restart Prokop, then restore the snapshot again."
-          ),
-          type: "error",
-          duration: 12e3
-        };
-      if (result.reason === "rollback_reload_queued")
-        return {
-          text: _(
-            "Restore did not finish: the service was busy and only queued the reload. The DPI guard stays active; restore again when the service is idle."
-          ),
-          type: "error",
-          duration: 1e4
-        };
-      break;
-  }
-  return {
-    text: _("Restore failed; check the recovery state before retrying"),
-    type: "error",
-    duration: 8e3
-  };
-}
-
-// src/prokop/tabs/history/initController.ts
-var REFRESH_INTERVAL_MS = 15e3;
-var FILTERS = ["all", "config", "service", "autotune"];
-var MAX_RESTORE_PREVIEW = 8;
-var mounted = false;
-var mountId = 0;
-var refreshTimer = null;
-var filter = "all";
-var health = null;
-var healthFailed = false;
-var history2 = null;
-var historyFailed = false;
-var snapshots = null;
-var snapshotsFailed = false;
-var snapshotBusy = false;
-async function loadAll() {
-  const id = mountId;
-  const [healthResponse, historyResponse, snapshotResponse] = await Promise.allSettled([
-    ProkopShellMethods.getHealthStatus(),
-    ProkopShellMethods.getHistory(),
-    ProkopShellMethods.snapshotList()
-  ]);
-  if (!mounted || id !== mountId) return;
-  const value = (result) => result.status === "fulfilled" && result.value.success ? result.value.data : null;
-  health = value(healthResponse);
-  healthFailed = !health;
-  history2 = value(historyResponse);
-  historyFailed = !history2 || !Array.isArray(history2.events);
-  const list = value(snapshotResponse);
-  snapshots = Array.isArray(list) ? list : null;
-  snapshotsFailed = !snapshots;
-  renderAll();
-}
-function replace(id, ...nodes) {
-  const container = document.getElementById(id);
-  if (container)
-    preserveScrollForPage(() => container.replaceChildren(...nodes));
-}
-function renderState() {
-  if (healthFailed || !health) {
-    replace(
-      "history-state",
-      healthFailed ? renderErrorState(
-        _("Recovery state is unavailable"),
-        () => void loadAll()
-      ) : renderLoadingState2()
-    );
-    return;
-  }
-  replace(
-    "history-state",
-    E(
-      "dl",
-      { class: "fkp-history__facts" },
-      recoveryRows(health, snapshots).flatMap((row) => [
-        E("dt", {}, row.label),
-        E("dd", {}, renderStatus({ label: row.value, tone: row.tone }))
-      ])
-    )
-  );
-}
-function renderHistory() {
-  replace(
-    "history-filter",
-    ...FILTERS.map(
-      (item) => E(
-        "button",
-        {
-          type: "button",
-          class: "btn cbi-button",
-          "aria-pressed": item === filter ? "true" : "false",
-          click: () => {
-            filter = item;
-            renderHistory();
-          }
-        },
-        historyFilterLabel(item)
-      )
-    )
-  );
-  if (historyFailed || !history2) {
-    replace(
-      "history-events",
-      historyFailed ? renderErrorState(_("History is unavailable"), () => void loadAll()) : renderLoadingState2()
-    );
-    return;
-  }
-  const items = historyItems(history2.events, filter);
-  const notes = history2.persistent ? [] : [
-    E(
-      "p",
-      { class: "fkp-history__hint" },
-      _("History is kept in memory until the router restarts.")
-    )
-  ];
-  replace(
-    "history-events",
-    ...notes,
-    items.length ? E(
-      "ul",
-      { class: "fkp-history__list" },
-      items.map(
-        (item) => E("li", { class: "fkp-history__event" }, [
-          E(
-            "span",
-            { class: "fkp-history__time", title: item.time },
-            item.relative
-          ),
-          E("span", { class: "fkp-history__what" }, item.title),
-          renderStatus(item.outcome),
-          ...item.details.length ? [
-            E(
-              "ul",
-              { class: "fkp-history__details" },
-              item.details.map((line) => E("li", {}, [line]))
-            )
-          ] : []
-        ])
-      )
-    ) : renderEmptyState(
-      filter === "all" ? _("No events recorded yet") : _("No events of this kind")
-    )
-  );
-}
-function renderDiffTable(diff) {
-  const rows = diffRows(diff.changes);
-  if (!diff.total) {
-    return E("p", {}, _("No saved changes since this snapshot"));
-  }
-  return E("div", { class: "fkp-history__diff-wrap" }, [
-    // UC-062: a cut list says it is not the whole change.
-    ...diff.total > rows.length ? [E("p", {}, diffTruncatedText(diff))] : [],
-    E("table", { class: "table fkp-history__diff" }, [
-      E("tr", { class: "tr table-titles" }, [
-        E("th", { class: "th" }, _("Setting")),
-        E("th", { class: "th" }, _("In snapshot")),
-        E("th", { class: "th" }, _("Now"))
-      ]),
-      ...rows.map(
-        (row) => E("tr", { class: "tr" }, [
-          E("td", { class: "td" }, row.where),
-          E("td", { class: "td" }, row.snapshot),
-          E("td", { class: "td" }, row.current)
-        ])
-      )
-    ])
-  ]);
-}
-async function loadDiff(id) {
-  const response = await ProkopShellMethods.snapshotDiff(id);
-  return response.success && Array.isArray(response.data) ? snapshotDiff(response.data) : null;
-}
-async function showChanges(id) {
-  const diff = await loadDiff(id);
-  if (!diff) {
-    showToast(_("Could not compare configurations"), "error");
-    return;
-  }
-  ui.showModal(_("Changes since this snapshot"), [
-    renderDiffTable(diff),
-    E("div", { class: "fkp-confirm__actions" }, [
-      E(
-        "button",
-        {
-          type: "button",
-          class: "btn cbi-button",
-          click: () => ui.hideModal()
-        },
-        _("Close")
-      )
-    ])
-  ]);
-}
-async function runSnapshotAction(action) {
-  if (snapshotBusy) return;
-  snapshotBusy = true;
-  renderSnapshots();
-  try {
-    await action();
-  } catch (error) {
-    logger.error("[HISTORY]", "snapshot action failed", error);
-    showToast(_("Could not load data"), "error");
-  } finally {
-    snapshotBusy = false;
-    await loadAll();
-  }
-}
-async function restoreSnapshot(id, label) {
-  const sessionChanges = await Promise.resolve(uci.changes?.()).catch(
-    () => null
-  );
-  if (unsavedChangesBlockRestore(sessionChanges, PROKOP_UCI_PACKAGE)) {
-    showToast(unsavedChangesText(), "warning", 8e3);
-    return;
-  }
-  const diff = await loadDiff(id);
-  await refreshRuntimeUiState({ force: true }).catch(() => void 0);
-  const services = store.get().servicesInfoWidget.data;
-  const staysStopped = Boolean(
-    services.prokopStoppedByUser || services.prokopNotStarted
-  );
-  const migrationNote = restoreMigrationNote(
-    snapshots?.find((snapshot) => snapshot.id === id)?.migration
-  );
-  const confirmed = await confirmAction({
-    title: _("Restore configuration snapshot?"),
-    message: `${label}. ${restoreConfirmMessage(staysStopped)}`,
-    consequences: diff ? diff.total ? restorePreview(diff, MAX_RESTORE_PREVIEW) : [_("No saved changes since this snapshot")] : [_("Could not compare configurations")],
-    notes: migrationNote ? [migrationNote] : [],
-    confirmLabel: _("Restore"),
-    danger: true
-  });
-  if (!confirmed) return;
-  await runSnapshotAction(async () => {
-    const result = await ProkopShellMethods.snapshotRestore(id);
-    const toast = restoreResultToast(result.success ? result.data : void 0);
-    showToast(toast.text, toast.type, toast.duration);
-  });
-}
-async function deleteSnapshot(id, label) {
-  const confirmed = await confirmAction({
-    title: _("Delete snapshot?"),
-    message: `${label}. ${_("Delete this configuration snapshot?")}`,
-    confirmLabel: _("Delete"),
-    danger: true
-  });
-  if (!confirmed) return;
-  await runSnapshotAction(async () => {
-    const result = await ProkopShellMethods.snapshotDelete(id);
-    const toast = deleteSnapshotToast(result.success ? result.data : void 0);
-    showToast(toast.text, toast.type, toast.duration);
-  });
-}
-async function createSnapshot() {
-  await runSnapshotAction(async () => {
-    const result = await ProkopShellMethods.snapshotCreate("manual");
-    const toast = createSnapshotToast(result.success ? result.data : void 0);
-    showToast(toast.text, toast.type, toast.duration);
-  });
-}
-function renderSnapshots() {
-  const readonly = isReadonlyMode();
-  replace(
-    "history-snapshot-actions",
-    ...readonly ? [] : [
-      E(
-        "button",
-        {
-          type: "button",
-          class: "btn cbi-button",
-          disabled: snapshotBusy ? true : void 0,
-          click: () => void createSnapshot()
-        },
-        _("Create snapshot")
-      )
-    ]
-  );
-  if (snapshotsFailed || !snapshots) {
-    replace(
-      "history-snapshots",
-      snapshotsFailed ? renderErrorState(
-        _("Could not load configuration snapshots"),
-        () => void loadAll()
-      ) : renderLoadingState2()
-    );
-    return;
-  }
-  const rows = snapshotRows(snapshots);
-  replace(
-    "history-snapshots",
-    rows.length ? E(
-      "ul",
-      { class: "fkp-history__list" },
-      rows.map((row) => {
-        const label = row.reason ? `${row.time} \xB7 ${row.reason}` : row.time;
-        return E("li", { class: "fkp-history__snapshot" }, [
-          E("span", { class: "fkp-history__what" }, [
-            label,
-            ...row.lkg ? [
-              " ",
-              E(
-                "span",
-                { class: "fkp-history__lkg" },
-                _("Last known good")
-              )
-            ] : []
-          ]),
-          E("span", { class: "fkp-actions" }, [
-            E(
-              "button",
-              {
-                type: "button",
-                class: "btn cbi-button",
-                click: () => void showChanges(row.id)
-              },
-              _("Changes")
-            ),
-            ...readonly ? [] : [
-              renderOverflowMenu(_("Snapshot actions"), [
-                {
-                  label: _("Restore\u2026"),
-                  onClick: () => void restoreSnapshot(row.id, label),
-                  disabled: snapshotBusy,
-                  danger: true
-                },
-                {
-                  label: row.canDelete ? _("Delete\u2026") : _(
-                    "The last known good snapshot cannot be deleted"
-                  ),
-                  onClick: () => void deleteSnapshot(row.id, label),
-                  disabled: snapshotBusy || !row.canDelete,
-                  danger: row.canDelete
-                }
-              ])
-            ]
-          ])
-        ]);
-      })
-    ) : renderEmptyState(_("No snapshots yet"))
-  );
-}
-function renderAll() {
-  renderState();
-  renderHistory();
-  renderSnapshots();
-}
-function onPageMount5() {
-  onPageUnmount5();
-  mounted = true;
-  mountId += 1;
-  renderAll();
-  void loadAll();
-  refreshTimer = setInterval(() => {
-    if (!snapshotBusy) void loadAll();
-  }, REFRESH_INTERVAL_MS);
-}
-function onPageUnmount5() {
-  mounted = false;
-  mountId += 1;
-  if (refreshTimer) clearInterval(refreshTimer);
-  refreshTimer = null;
-}
-var initialized = false;
-async function initController5() {
-  if (initialized) return;
-  initialized = true;
-  onMount("history-status").then(() => {
-    store.subscribe(
-      (next, prev, diff) => {
-        if (diff.tabService && next.tabService.current !== prev.tabService.current) {
-          if (next.tabService.current === "history") onPageMount5();
-          else onPageUnmount5();
-        }
-      }
-    );
-    if (store.get().tabService.current === "history" || isActiveLuciTab("history")) {
-      onPageMount5();
-    }
-  });
-}
-
-// src/prokop/tabs/history/styles.ts
-var styles7 = `
-.fkp-history {
-    display: flex;
-    flex-direction: column;
-    gap: var(--fkp-space-3);
-    min-width: 0;
-}
-.fkp-history__card {
-    display: flex;
-    flex-direction: column;
-    gap: var(--fkp-space-2);
-    min-width: 0;
-    padding: var(--fkp-space-3) var(--fkp-space-4);
-    border: 1px solid var(--fkp-border);
-    border-radius: 6px;
-}
-.fkp-history__head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--fkp-space-2);
-}
-.fkp-history__title { margin: 0; font-size: 1.05em; }
-.fkp-history__hint { margin: 0; color: var(--fkp-tone-neutral); overflow-wrap: anywhere; }
-.fkp-history__facts {
-    display: grid;
-    grid-template-columns: max-content minmax(0, 1fr);
-    gap: var(--fkp-space-1) var(--fkp-space-4);
-    margin: 0;
-}
-.fkp-history__facts dt { font-weight: 600; }
-.fkp-history__facts dd { margin: 0; overflow-wrap: anywhere; }
-.fkp-history__filter { display: flex; flex-wrap: wrap; gap: var(--fkp-space-1); }
-.fkp-history__filter .btn[aria-pressed="true"] { font-weight: 600; border-color: var(--fkp-tone-loading); }
-.fkp-history__list { margin: 0; padding: 0; list-style: none; }
-.fkp-history__event,
-.fkp-history__snapshot {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--fkp-space-1) var(--fkp-space-3);
-    padding: var(--fkp-space-2) 0;
-    border-top: 1px solid var(--fkp-border);
-}
-.fkp-history__event:first-child,
-.fkp-history__snapshot:first-child { border-top: 0; }
-.fkp-history__time { color: var(--fkp-tone-neutral); min-width: 0; }
-.fkp-history__what { flex: 1 1 240px; min-width: 0; overflow-wrap: anywhere; }
-.fkp-history__details {
-    flex: 1 1 100%;
-    margin: 0;
-    padding-left: var(--fkp-space-3);
-    color: var(--fkp-tone-neutral);
-    overflow-wrap: anywhere;
-}
-.fkp-history__lkg {
-    padding: 0 var(--fkp-space-2);
-    border: 1px solid var(--fkp-tone-success);
-    border-radius: 999px;
-    color: var(--fkp-tone-success);
-    font-size: 0.85em;
-}
-.fkp-history__diff-wrap { width: 0; min-width: 100%; overflow-x: auto; }
-.fkp-history__diff { width: 100%; }
-.fkp-history__diff td { overflow-wrap: anywhere; vertical-align: top; }
-
-@media (max-width: 599px) {
-    .fkp-history__facts { grid-template-columns: minmax(0, 1fr); }
-    .fkp-history__facts dd { margin-bottom: var(--fkp-space-2); }
-}
-`;
-
-// src/prokop/tabs/history/index.ts
-var HistoryTab = {
-  render: render5,
-  initController: initController5,
-  styles: styles7
-};
-
-// src/prokop/tabs/autotune/render.ts
-function render6() {
-  const card3 = (title, body, actions) => E("section", { class: "fkp-autotune__card" }, [
-    E("div", { class: "fkp-autotune__head" }, [
-      E("h3", { class: "fkp-autotune__title" }, title),
-      ...actions ? [actions] : []
-    ]),
-    ...body
-  ]);
-  return E("div", { id: "autotune-status", class: "fkp-autotune" }, [
-    card3(
-      _("Mode and state"),
-      [E("div", { id: "autotune-state", role: "status" }, _("Loading\u2026"))],
-      E("div", { id: "autotune-state-actions", class: "fkp-actions" })
-    ),
-    card3(_("DPI rule groups"), [
-      E(
-        "p",
-        { class: "fkp-autotune__hint" },
-        _(
-          "A group is one Zapret DPI rule. Prokop changes only the strategy of an existing rule, for all its targets at once. It never creates or deletes rules and never turns DPI bypass off."
-        )
-      ),
-      E("div", { id: "autotune-groups" }, _("Loading\u2026"))
-    ]),
-    card3(
-      _("Targets"),
-      [E("div", { id: "autotune-targets" }, _("Loading\u2026"))],
-      E("div", { id: "autotune-target-actions", class: "fkp-actions" })
-    ),
-    card3(_("Autotune history"), [
-      E("div", { id: "autotune-history" }, _("Loading\u2026"))
-    ])
-  ]);
-}
-
-// src/prokop/tabs/autotune/domainPicker.ts
-var MAX_PINNED = 8;
-var MAX_ROWS = 300;
-function visibleDomains(domains, pinned, query, limit = MAX_ROWS) {
-  const q = query.trim().toLowerCase();
-  const matches = (d) => !q || d.includes(q);
-  const first = pinned.filter(matches);
-  const rest = domains.filter((d) => matches(d) && !pinned.includes(d));
-  const all = [...first, ...rest];
-  return {
-    shown: all.slice(0, limit),
-    hidden: Math.max(all.length - limit, 0)
-  };
-}
-function createDomainPicker(initial, load, errorText) {
-  const pinned = [...initial];
-  let domains = [];
-  let tag = null;
-  let note = "";
-  const search = E("input", {
-    class: "cbi-input-text",
-    type: "search",
-    placeholder: _("Search domains"),
-    autocomplete: "off"
-  });
-  const box = E("div", { class: "fkp-autotune__domains" });
-  const counter2 = E("div", {
-    class: "fkp-autotune__field-hint"
-  });
-  const render7 = () => {
-    const { shown, hidden } = visibleDomains(domains, pinned, search.value);
-    box.replaceChildren(
-      ...shown.map((domain) => {
-        const checked = pinned.includes(domain);
-        const check = E("input", {
-          type: "checkbox",
-          checked: checked ? true : void 0,
-          disabled: !checked && pinned.length >= MAX_PINNED ? true : void 0
-        });
-        check.addEventListener("change", () => {
-          const at = pinned.indexOf(domain);
-          if (check.checked && at < 0) pinned.push(domain);
-          if (!check.checked && at >= 0) pinned.splice(at, 1);
-          render7();
-        });
-        return E("label", { class: "fkp-autotune__domain" }, [
-          check,
-          " ",
-          domain,
-          ...checked && tag !== null && domains.length && !domains.includes(domain) ? [
-            " ",
-            E(
-              "span",
-              { class: "fkp-autotune__muted" },
-              `(${_("not in the list")})`
-            )
-          ] : []
-        ]);
-      }),
-      ...shown.length ? [] : [
-        E(
-          "div",
-          { class: "fkp-autotune__muted" },
-          note || _("Nothing found")
-        )
-      ]
-    );
-    const parts = [
-      _("Selected %d of %d").replace("%d", String(pinned.length)).replace("%d", String(MAX_PINNED))
-    ];
-    if (hidden)
-      parts.push(_("%d more: refine the search").replace("%d", String(hidden)));
-    if (note && shown.length) parts.push(note);
-    counter2.textContent = parts.join(" \xB7 ");
-  };
-  search.addEventListener("input", render7);
-  return {
-    element: E("div", {}, [search, box, counter2]),
-    selected: () => [...pinned],
-    // Load the domains of a list; choosing another list clears the choice.
-    async show(next) {
-      if (next === tag) return;
-      if (tag !== null) pinned.splice(0);
-      tag = next;
-      domains = [];
-      note = _("Loading\u2026");
-      render7();
-      const result = await load(next);
-      if (tag !== next) return;
-      domains = result.domains;
-      note = result.error ? errorText(result.error) : result.truncated ? _("The list is long: only its first 2000 domains can be chosen.") : "";
-      render7();
-    }
-  };
 }
 
 // src/prokop/tabs/autotune/model.ts
@@ -20459,6 +7443,13723 @@ function rollbackResultView(result) {
   return { tone: "error", text: _("The rollback failed."), attention: false };
 }
 
+// src/prokop/tabs/dashboard/overview.ts
+function lastEvent(health2) {
+  const events = health2?.recent_activity || [];
+  return events.length ? events[events.length - 1] : null;
+}
+function lastChangeEvent(health2) {
+  const events = (health2?.recent_activity || []).filter(
+    (event) => event.kind !== "cron_refresh" && event.kind !== "config_migration"
+  );
+  return events.length ? events[events.length - 1] : null;
+}
+function guardWarningText(action) {
+  switch (action) {
+    case "restart":
+      return _(
+        "A failed change left the DPI guard in place. Traffic that needs DPI bypass stays blocked until you restart Prokop."
+      );
+    case "restore":
+      return _(
+        "A configuration restore did not finish. Traffic that needs DPI bypass stays blocked until you restore the last known good snapshot."
+      );
+    case "wait":
+      return _(
+        "A configuration change is being applied. Traffic that needs DPI bypass may be blocked until it finishes."
+      );
+    default:
+      return _(
+        "A configuration change was not confirmed. Traffic that needs DPI bypass may be blocked; see the recovery details for the next step."
+      );
+  }
+}
+function overviewWarning(health2) {
+  if (!health2) return null;
+  const details = {
+    page: "history",
+    label: _("Recovery details")
+  };
+  if (health2.guard?.active) {
+    return {
+      title: _("DPI protection is holding traffic"),
+      text: guardWarningText(health2.recovery?.action),
+      link: details
+    };
+  }
+  if (health2.package_recovery?.pending) {
+    return {
+      title: _("Package recovery has not finished"),
+      text: _(
+        "An interrupted package update is being recovered. Avoid changes until it completes."
+      ),
+      link: details
+    };
+  }
+  if (lastChangeEvent(health2)?.status === "failure") {
+    return {
+      title: _("The last configuration change failed"),
+      text: _("Prokop kept or restored the previous configuration."),
+      link: details
+    };
+  }
+  if (health2.bridge_netfilter?.loaded) {
+    return {
+      title: _("br_netfilter is loaded"),
+      text: health2.bridge_netfilter.disabled_by_prokop ? _(
+        "Prokop has turned off the iptables hooks of br_netfilter (net.bridge.bridge-nf-call-iptables and -ip6tables) for transparent proxying: iptables rules do not filter bridged traffic while it runs. Stopping Prokop restores the previous values unless another program has changed them since."
+      ) : _(
+        "While Prokop runs, it turns off the iptables hooks of br_netfilter (net.bridge.bridge-nf-call-iptables and -ip6tables) that are on, for transparent proxying, so iptables rules do not filter bridged traffic. Their current values were not set by Prokop, and stopping it does not change them."
+      )
+    };
+  }
+  return null;
+}
+var KILL_SWITCH_STOPPED_LINE = () => _(
+  "If the VPN kill-switch is enabled, its sections stay blocked until Prokop is started."
+);
+function overviewState(input) {
+  const { health: health2, availability } = input;
+  const lines = [];
+  let status2;
+  let title;
+  if (availability === "stopped" && ["starting", "restarting", "reloading"].includes(input.prokopStatus)) {
+    status2 = "busy";
+    title = input.prokopStatus === "reloading" ? _("Applying changes\u2026") : _("Starting\u2026");
+  } else if (availability === "stopped" && input.prokopStoppedByUser) {
+    status2 = "off";
+    title = _("Stopped by user");
+    lines.push({
+      text: _(
+        "Prokop stays stopped until you start it: reloads, restores and updates do not start it."
+      )
+    });
+    lines.push({
+      text: _("Traffic goes through the router without Prokop.")
+    });
+    lines.push({ text: KILL_SWITCH_STOPPED_LINE() });
+  } else if (availability === "stopped" && input.prokopNotStarted === true) {
+    status2 = "off";
+    title = _("Not started");
+    lines.push({
+      text: _(
+        "Prokop was not started since the router booted: reloads, restores and updates do not start it."
+      )
+    });
+    lines.push({
+      text: _("Traffic goes through the router without Prokop.")
+    });
+    lines.push({ text: KILL_SWITCH_STOPPED_LINE() });
+  } else if (availability === "stopped") {
+    const failed2 = input.prokopNotStarted === false || input.prokopEnabled;
+    status2 = failed2 ? "error" : "off";
+    title = _("Not running");
+    if (failed2) {
+      lines.push({
+        text: _(
+          "Prokop was not stopped by the user: its start failed or it stopped unexpectedly."
+        ),
+        tone: "error"
+      });
+    }
+    lines.push({
+      text: _("Traffic goes through the router without Prokop.")
+    });
+    lines.push({ text: KILL_SWITCH_STOPPED_LINE() });
+  } else if (availability === "loading") {
+    status2 = "busy";
+    title = _("Checking\u2026");
+  } else if (availability === "unavailable") {
+    status2 = "unknown";
+    title = _("State unavailable");
+  } else if (health2?.overall === "transitioning") {
+    status2 = "busy";
+    title = _("Applying changes\u2026");
+  } else if (health2?.overall === "error") {
+    status2 = "error";
+    title = _("Prokop needs attention");
+  } else {
+    const known = !input.healthStale && (health2?.overall === "ok" || health2?.overall === "recovered");
+    status2 = health2?.overall === "recovered" ? "warning" : known ? "healthy" : "unknown";
+    title = _("Prokop is running");
+    if (health2?.overall === "recovered") {
+      lines.push({
+        text: _("The last change was rolled back automatically."),
+        tone: "warning"
+      });
+    }
+    if (!known) lines.push({ text: _("Health state unavailable") });
+  }
+  if (availability === "running") {
+    lines.push(
+      input.singBoxRunning ? { text: _("sing-box is running") } : { text: _("sing-box is not running"), tone: "error" }
+    );
+    if (health2?.dns?.status === "warning") {
+      lines.push({
+        text: _("Router DNS is not pointed to Prokop"),
+        tone: "warning"
+      });
+    }
+  }
+  lines.push({
+    text: input.prokopEnabled ? _("Autostart is on") : _("Autostart is off")
+  });
+  lines.push({
+    text: input.lastDiagnosticRun ? _("Last diagnostics: %s").replace(
+      "%s",
+      formatRelativeTime(input.lastDiagnosticRun / 1e3, input.nowMs)
+    ) : _("Diagnostics has not been run yet")
+  });
+  return { status: status2, title, lines, stopped: availability === "stopped" };
+}
+function latencyTone(latency) {
+  if (!latency) return "neutral";
+  if (latency < 800) return "success";
+  return latency < 1500 ? "warning" : "error";
+}
+var MAX_GROUPS = 3;
+function overviewRouting(input) {
+  const groups = input.groups.filter((group) => group.outbounds.length);
+  const groupsKnown = input.availability === "running" || groups.length > 0;
+  let summary = "";
+  if (input.ruleCount !== null && groupsKnown) {
+    summary = _("%d rules \xB7 %d node groups").replace("%d", String(input.ruleCount)).replace("%d", String(groups.length));
+  } else if (input.ruleCount !== null) {
+    summary = _("%d rules").replace("%d", String(input.ruleCount));
+  } else if (groupsKnown) {
+    summary = _("%d node groups").replace("%d", String(groups.length));
+  }
+  let live2 = "";
+  if (input.availability === "stopped") {
+    live2 = _("Routing is paused while Prokop is stopped.");
+  } else if (input.connections !== null) {
+    live2 = _("%d connections now").replace("%d", String(input.connections));
+    if (input.traffic) {
+      live2 += ` \xB7 \u2193 ${prettyBytesRate(input.traffic.down)} \u2191 ${prettyBytesRate(input.traffic.up)}`;
+    }
+  }
+  return {
+    summary,
+    live: live2,
+    groups: groups.slice(0, MAX_GROUPS).map((group) => {
+      const selected = group.outbounds.find((outbound) => outbound.selected) || group.outbounds[0];
+      return {
+        name: group.displayName,
+        node: selected.displayName,
+        latency: selected.latency ? _("%d ms").replace("%d", String(selected.latency)) : _("no data"),
+        tone: latencyTone(selected.latency)
+      };
+    }),
+    more: Math.max(0, groups.length - MAX_GROUPS)
+  };
+}
+function overviewRecovery(input) {
+  const { health: health2 } = input;
+  if (!health2) {
+    return { status: "unknown", title: _("State unavailable"), lines: [] };
+  }
+  const lines = [];
+  const reload = health2.last_reload;
+  if (reload) {
+    const outcome = eventOutcomeView(toEventOutcome(reload.status));
+    lines.push({
+      text: _("Last reload: %s").replace(
+        "%s",
+        `${outcome.label} \xB7 ${formatRelativeTime(reload.timestamp, input.nowMs)}`
+      ),
+      tone: outcome.tone
+    });
+  } else {
+    lines.push({ text: _("No reload recorded yet") });
+  }
+  if (input.snapshotCount !== null) {
+    lines.push({
+      text: _("Snapshots: %d").replace("%d", String(input.snapshotCount))
+    });
+  }
+  const state = recoveryState(health2);
+  if (input.healthStale && state.status === "healthy")
+    return { status: "unknown", title: _("State unavailable"), lines };
+  return { ...state, lines: [...state.lines, ...lines] };
+}
+function recoveryState(health2) {
+  if (health2.guard?.active) {
+    switch (health2.recovery?.action) {
+      case "restart":
+        return {
+          status: "needs_attention",
+          title: _("Restart required"),
+          step: "restart",
+          lines: [
+            {
+              text: _(
+                "A failed change left the DPI guard in place: restart Prokop to remove it."
+              ),
+              tone: "error"
+            }
+          ]
+        };
+      case "restore":
+        return {
+          status: "needs_attention",
+          title: _("Restore required"),
+          step: "restore",
+          lines: [
+            {
+              text: _(
+                "A configuration restore did not finish: restore the last known good snapshot to finish it."
+              ),
+              tone: "error"
+            }
+          ]
+        };
+      case "wait":
+        return { status: "busy", title: _("Change in progress"), lines: [] };
+      default:
+        return {
+          status: "needs_attention",
+          title: _("Protection is active"),
+          lines: []
+        };
+    }
+  }
+  if (health2.package_recovery?.pending) {
+    return {
+      status: "needs_attention",
+      title: _("Package recovery has not finished"),
+      lines: []
+    };
+  }
+  if (health2.recovery?.pending) {
+    return {
+      status: "error",
+      title: _("The last configuration change failed"),
+      lines: [
+        {
+          text: _("Prokop kept or restored the previous configuration."),
+          tone: "error"
+        }
+      ]
+    };
+  }
+  return { status: "healthy", title: _("No recovery needed"), lines: [] };
+}
+function overviewLastEvent(input) {
+  const event = lastEvent(input.health);
+  if (!event) return null;
+  return {
+    title: eventKindLabel(event.kind),
+    outcome: eventOutcomeView(toEventOutcome(event.status)),
+    time: formatRelativeTime(event.timestamp, input.nowMs)
+  };
+}
+function overviewAutotune(input) {
+  const status2 = input.autotune;
+  if (!status2) {
+    return input.autotuneFailed ? {
+      status: "unknown",
+      title: _("Autotune state is unavailable"),
+      lines: []
+    } : { status: "unknown", title: _("Loading\u2026"), lines: [] };
+  }
+  const mode = status2.policy.mode;
+  const auto = mode === "auto";
+  const groups = Object.values(status2.groups || {});
+  const lines = [
+    {
+      text: _("Groups: %d \xB7 targets: %d").replace("%d", String(groups.length)).replace(
+        "%d",
+        String(status2.targets.filter((target) => target.enabled).length)
+      )
+    }
+  ];
+  let semantic = mode === "off" ? "off" : "healthy";
+  const waiting = auto ? 0 : groups.filter(
+    (group) => group.result?.status === "recommendation" && group.ready === true
+  ).length;
+  if (waiting) {
+    semantic = "warning";
+    lines.push({
+      text: _("Recommendations waiting for a decision: %d").replace(
+        "%d",
+        String(waiting)
+      ),
+      tone: "warning"
+    });
+  }
+  const recorded = recordedApplyView(status2.apply, null);
+  if (recorded?.attention) {
+    semantic = "needs_attention";
+    lines.push({
+      text: _("The last autotune change needs attention."),
+      tone: recorded.tone
+    });
+  }
+  const worker = workerView(status2.worker);
+  if (status2.worker?.state === "running") {
+    if (semantic !== "needs_attention") semantic = "busy";
+    lines.push({ text: worker.label, tone: worker.tone });
+  } else if (worker) {
+    lines.push({
+      text: status2.worker?.finished_at ? `${worker.label} \xB7 ${formatRelativeTime(status2.worker.finished_at, input.nowMs)}` : worker.label,
+      tone: worker.tone
+    });
+  } else {
+    lines.push({ text: `${_("Last check")}: ${_("Not checked yet")}` });
+  }
+  if (mode !== "off" && status2.next_run_at) {
+    lines.push({
+      text: `${_("Next scheduled check")}: ${formatDateTime(status2.next_run_at)}`
+    });
+  }
+  return {
+    status: semantic,
+    title: `${_("Mode")}: ${modeLabel(mode)}`,
+    lines
+  };
+}
+
+// src/prokop/helpers/navigation.ts
+var PROKOP_MENU_PATH = "admin/services/prokop";
+function luci() {
+  return globalThis.L;
+}
+function prokopPageUrl(page, params = {}) {
+  const base = typeof luci()?.url === "function" ? luci().url(PROKOP_MENU_PATH, page) : `/cgi-bin/luci/${PROKOP_MENU_PATH}/${page}`;
+  const query = new URLSearchParams(params).toString();
+  return query ? `${base}#${query}` : base;
+}
+function openProkopPage(page, params = {}) {
+  window.location.href = prokopPageUrl(page, params);
+}
+function readPageParams(hash = window.location.hash) {
+  return Object.fromEntries(new URLSearchParams(hash.replace(/^#/, "")));
+}
+
+// src/prokop/ui/overflowMenu.ts
+function renderOverflowMenu(label, items) {
+  const menu = E("details", { class: "fkp-menu" });
+  const close = () => {
+    menu.open = false;
+  };
+  menu.appendChild(
+    E(
+      "summary",
+      {
+        class: "btn cbi-button fkp-menu__toggle",
+        title: label,
+        "aria-label": label
+      },
+      "\u22EF"
+    )
+  );
+  menu.appendChild(
+    E(
+      "div",
+      { class: "fkp-menu__list", role: "menu" },
+      items.map(
+        (item) => E(
+          "button",
+          {
+            type: "button",
+            role: "menuitem",
+            class: `fkp-menu__item${item.danger ? " fkp-action-danger-text" : ""}`,
+            disabled: item.disabled ? true : void 0,
+            click: () => {
+              close();
+              item.onClick();
+            }
+          },
+          item.label
+        )
+      )
+    )
+  );
+  registerOutsideClose();
+  return menu;
+}
+var outsideCloseRegistered = false;
+function registerOutsideClose() {
+  if (outsideCloseRegistered || typeof document === "undefined") return;
+  if (!document.addEventListener) return;
+  outsideCloseRegistered = true;
+  document.addEventListener("click", (event) => {
+    document.querySelectorAll("details.fkp-menu[open]").forEach((menu) => {
+      if (!menu.contains(event.target)) menu.open = false;
+    });
+  });
+}
+
+// src/prokop/tabs/dashboard/overviewCards.ts
+function statusView(status2, label) {
+  return { label, tone: statusTone(status2) };
+}
+function linkButton(label, onClick) {
+  return E(
+    "button",
+    {
+      type: "button",
+      class: "btn cbi-button fkp-overview__link",
+      click: onClick
+    },
+    label
+  );
+}
+function renderLines(lines) {
+  return E(
+    "ul",
+    { class: "fkp-overview__lines" },
+    lines.map(
+      (line) => E(
+        "li",
+        { class: line.tone ? `fkp-overview__line--${line.tone}` : "" },
+        line.text
+      )
+    )
+  );
+}
+function card(title, body, footer = [], headerExtra = []) {
+  return E("section", { class: "fkp-overview__card" }, [
+    E("div", { class: "fkp-overview__head" }, [
+      E("h3", { class: "fkp-overview__title" }, title),
+      ...headerExtra
+    ]),
+    ...body,
+    ...footer.length ? [E("div", { class: "fkp-overview__footer fkp-actions" }, footer)] : []
+  ]);
+}
+function renderWarning(warning) {
+  return E("section", { class: "fkp-overview__warning", role: "alert" }, [
+    E("strong", {}, warning.title),
+    E("p", {}, warning.text),
+    ...warning.link ? [
+      linkButton(
+        warning.link.label,
+        () => openProkopPage(warning.link.page)
+      )
+    ] : []
+  ]);
+}
+function renderStateCard(state, actions, restartRequired) {
+  const footer = [];
+  const menu = [];
+  if (!actions.readonly) {
+    const stopOffered = !state.stopped || actions.stopAvailable === true;
+    const restartOffered = actions.restartBlocked !== true;
+    if (actions.restartBlocked)
+      footer.push(
+        E(
+          "p",
+          { class: "fkp-overview__hint" },
+          _(
+            "Multiple sing-box processes were found or their ownership is unclear. Restart is unavailable; traffic routing was not changed. Stop Prokop ends Prokop's traffic interception and stops the sing-box processes that Prokop runs; then start Prokop again. A sing-box of another program is not stopped, and Prokop starts only after it has exited."
+          )
+        )
+      );
+    if (state.stopped && actions.stopAvailable) {
+      footer.push(
+        E(
+          "button",
+          {
+            type: "button",
+            class: "btn cbi-button cbi-button-remove",
+            disabled: actions.serviceBusy ? true : void 0,
+            click: actions.onStop
+          },
+          _("Stop Prokop\u2026")
+        )
+      );
+    } else if (state.stopped && restartRequired && restartOffered) {
+      footer.push(
+        E(
+          "button",
+          {
+            type: "button",
+            class: "btn cbi-button cbi-button-action",
+            disabled: actions.serviceBusy ? true : void 0,
+            click: actions.onRestart
+          },
+          _("Restart Prokop")
+        )
+      );
+    } else if (state.stopped) {
+      footer.push(
+        E(
+          "button",
+          {
+            type: "button",
+            class: "btn cbi-button cbi-button-action",
+            disabled: actions.serviceBusy ? true : void 0,
+            click: actions.onStart
+          },
+          actions.serviceBusy ? _("Starting\u2026") : _("Start Prokop")
+        )
+      );
+    }
+    menu.push(
+      renderOverflowMenu(_("Service actions"), [
+        ...!state.stopped && restartOffered ? [
+          {
+            label: _("Restart Prokop"),
+            onClick: actions.onRestart,
+            disabled: actions.serviceBusy
+          }
+        ] : [],
+        ...stopOffered ? [
+          {
+            label: _("Stop Prokop\u2026"),
+            onClick: actions.onStop,
+            disabled: actions.serviceBusy,
+            danger: true
+          }
+        ] : [],
+        {
+          label: actions.autostart ? _("Disable autostart") : _("Enable autostart"),
+          onClick: actions.onToggleAutostart,
+          disabled: actions.serviceBusy
+        }
+      ])
+    );
+  }
+  return card(
+    _("State"),
+    [
+      E("div", { class: "fkp-overview__status" }, [
+        renderStatus(statusView(state.status, state.title))
+      ]),
+      renderLines(state.lines)
+    ],
+    [
+      ...footer,
+      linkButton(_("Diagnostics"), () => openProkopPage("diagnostics"))
+    ],
+    menu
+  );
+}
+function renderRoutingCard(routing, readonly) {
+  return card(
+    _("Routing"),
+    [
+      ...routing.summary ? [E("p", { class: "fkp-overview__summary" }, routing.summary)] : [],
+      ...routing.live ? [E("p", { class: "fkp-overview__hint" }, routing.live)] : [],
+      ...routing.groups.length ? [
+        E(
+          "ul",
+          { class: "fkp-overview__groups" },
+          routing.groups.map(
+            (group) => E("li", {}, [
+              E("span", { class: "fkp-overview__group-name" }, group.name),
+              E("span", { class: "fkp-overview__group-node" }, [
+                `${group.node} \xB7 `,
+                E(
+                  "span",
+                  { class: `fkp-status--${group.tone}` },
+                  group.latency
+                )
+              ])
+            ])
+          )
+        )
+      ] : [],
+      ...routing.more ? [
+        E(
+          "p",
+          { class: "fkp-overview__hint" },
+          _("%d more groups").replace("%d", String(routing.more))
+        )
+      ] : []
+    ],
+    [
+      linkButton(
+        _("Nodes and groups"),
+        () => openProkopPage("monitoring", { view: "nodes" })
+      ),
+      linkButton(_("Connections"), () => openProkopPage("monitoring")),
+      ...readonly ? [] : [linkButton(_("Rules"), () => openProkopPage("rules"))]
+    ]
+  );
+}
+function renderAutotuneCard(autotune) {
+  return card(
+    _("DPI autotune"),
+    [
+      E("div", { class: "fkp-overview__status" }, [
+        renderStatus(statusView(autotune.status, autotune.title))
+      ]),
+      renderLines(autotune.lines)
+    ],
+    [linkButton(_("Open autotune"), () => openProkopPage("autotune"))]
+  );
+}
+function renderRecoveryCard(recovery, actions) {
+  const restart = !actions.readonly && recovery.step === "restart" ? [
+    E(
+      "button",
+      {
+        type: "button",
+        class: "btn cbi-button cbi-button-action",
+        disabled: actions.serviceBusy ? true : void 0,
+        click: actions.onRestart
+      },
+      _("Restart Prokop")
+    )
+  ] : [];
+  return card(
+    _("Recovery"),
+    [
+      E("div", { class: "fkp-overview__status" }, [
+        renderStatus(statusView(recovery.status, recovery.title))
+      ]),
+      renderLines(recovery.lines)
+    ],
+    [
+      ...restart,
+      linkButton(_("Recovery details"), () => openProkopPage("history"))
+    ]
+  );
+}
+function renderEventCard(event) {
+  return card(
+    _("Last important event"),
+    event ? [
+      E("p", { class: "fkp-overview__summary" }, [
+        `${event.title}: `,
+        E(
+          "span",
+          { class: `fkp-status--${event.outcome.tone}` },
+          event.outcome.label
+        )
+      ]),
+      E("p", { class: "fkp-overview__hint" }, event.time)
+    ] : [E("p", { class: "fkp-overview__hint" }, _("No events recorded yet"))],
+    [linkButton(_("All events"), () => openProkopPage("history"))]
+  );
+}
+function renderOverview(vm, actions) {
+  return E("div", { class: "fkp-overview" }, [
+    ...vm.warning ? [renderWarning(vm.warning)] : [],
+    E("div", { class: "fkp-overview__grid" }, [
+      renderStateCard(vm.state, actions, vm.recovery.step === "restart"),
+      renderRoutingCard(vm.routing, actions.readonly),
+      renderAutotuneCard(vm.autotune),
+      renderRecoveryCard(vm.recovery, actions),
+      renderEventCard(vm.event)
+    ])
+  ]);
+}
+
+// src/prokop/tabs/dashboard/serviceActionFlow.ts
+async function runOverviewServiceAction(steps) {
+  steps.setBusy(true);
+  try {
+    await steps.run();
+  } catch (error) {
+    steps.onError(error);
+  } finally {
+    try {
+      await steps.refreshRuntime();
+      await steps.refreshHealth();
+    } finally {
+      steps.setBusy(false);
+    }
+  }
+}
+
+// src/prokop/tabs/dashboard/serviceReload.ts
+function serviceReloadOutcome(state) {
+  if (state.outcome === "queued") return "queued";
+  if (state.outcome === "stopped") return "stopped";
+  if (state.success !== false) return "reloaded";
+  return state.reason === "timeout" ? "unconfirmed" : "failed";
+}
+function serviceReloadRefusalOutcome(error) {
+  const reason = failureReason(failureFromError(error));
+  if (reason === "busy" || reason === "startup_in_progress") return "busy";
+  if (reason === "timeout") return "unconfirmed";
+  return "failed";
+}
+function urlTestChangeToast(outcome, reset) {
+  const done = reset ? _("URLTest settings reset") : _("URLTest settings saved");
+  switch (outcome) {
+    case "queued":
+      return {
+        text: `${done}. ${_("Prokop is busy with another operation: the change applies when it finishes.")}`,
+        type: "warning",
+        duration: 8e3
+      };
+    case "stopped":
+      return {
+        text: `${done}. ${_("Prokop is stopped: the change applies when it is started.")}`,
+        type: "warning",
+        duration: 8e3
+      };
+    case "busy":
+      return {
+        text: `${done}. ${_("Prokop is busy with another service action, so the change is not applied yet; apply it again when that action finishes.")}`,
+        type: "warning",
+        duration: 1e4
+      };
+    case "unconfirmed":
+      return {
+        text: `${done}. ${_("Applying the change was not confirmed in time; check the service status.")}`,
+        type: "warning",
+        duration: 1e4
+      };
+    case "failed":
+      return {
+        text: `${done}. ${_("Prokop could not apply the change; see the Prokop log.")}`,
+        type: "error",
+        duration: 1e4
+      };
+    default:
+      return { text: done, type: "success", duration: 3e3 };
+  }
+}
+async function runUrlTestChange(steps, reset) {
+  await steps.change();
+  let outcome;
+  let finished = false;
+  try {
+    outcome = serviceReloadOutcome(await steps.reload());
+    finished = true;
+  } catch (error) {
+    outcome = serviceReloadRefusalOutcome(error);
+  }
+  if (finished) {
+    await steps.refresh().catch(() => void 0);
+  }
+  return {
+    close: outcome !== "failed" && outcome !== "busy",
+    toast: urlTestChangeToast(outcome, reset)
+  };
+}
+
+// src/prokop/tabs/dashboard/urlTestEditorRow.ts
+var nextFieldId = 0;
+function renderUrlTestEditorRow(label, control) {
+  if (!control.id) {
+    control.id = `fkp-urltest-field-${++nextFieldId}`;
+  }
+  return E("div", { class: "fkp_dashboard-page__urltest-details__param" }, [
+    E("label", { for: control.id }, label),
+    control
+  ]);
+}
+
+// src/helpers/replaceChildrenKeepingFocus.ts
+var FOCUSABLE = "a[href], button, input, select, textarea, summary, [tabindex]";
+function focusKey(element) {
+  return [
+    element.tagName,
+    element.id,
+    element.getAttribute("name") || "",
+    element.getAttribute("href") || "",
+    element.getAttribute("aria-label") || "",
+    (element.textContent || "").trim()
+  ].join("|");
+}
+function focusables(container) {
+  return Array.from(container.querySelectorAll(FOCUSABLE));
+}
+function replaceChildrenKeepingFocus(container, ...nodes) {
+  const active = container.ownerDocument?.activeElement;
+  if (!active || active === container || !container.contains(active)) {
+    container.replaceChildren(...nodes);
+    return;
+  }
+  const before = focusables(container);
+  const position = before.indexOf(active);
+  const key = focusKey(active);
+  const occurrence = before.slice(0, Math.max(position, 0)).filter((element) => focusKey(element) === key).length;
+  container.replaceChildren(...nodes);
+  const after = focusables(container);
+  const target = after.filter((element) => focusKey(element) === key)[occurrence] || (position >= 0 && after.length === before.length ? after[position] : void 0);
+  target?.focus?.({ preventScroll: true });
+}
+
+// src/prokop/tabs/dashboard/latencyJob.ts
+function latencyJobFailure(state) {
+  return new ActionFailureError(
+    _("Latency test failed"),
+    failureReason({ reason: state.reason, message: state.message })
+  );
+}
+
+// src/prokop/tabs/dashboard/subscriptionJob.ts
+function subscriptionUpdateErrorMessage(message) {
+  const detail = `${message || ""}`.trim();
+  const fallback = _("Failed to update subscriptions");
+  if (!detail || detail === fallback || detail === "Subscription update failed") {
+    return fallback;
+  }
+  return `${fallback}: ${detail}`;
+}
+function subscriptionUpdateFailureNotice(response) {
+  const failure = response.success ? { reason: response.data.reason, message: response.data.message } : { reason: response.reason, error: response.error };
+  const reason = failureReason(failure);
+  const reasonText = actionReasonText(reason);
+  if (reasonText && actionReasonIsWarning(reason)) {
+    return { text: reasonText, type: "warning" };
+  }
+  return {
+    text: subscriptionUpdateErrorMessage(
+      reasonText || failure.message || failure.error || ""
+    ),
+    type: "error"
+  };
+}
+
+// src/partials/button/styles.ts
+var styles = `
+.fkp-partial-button {
+    text-align: center;
+}
+
+.fkp-partial-button--with-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.fkp-partial-button--loading {
+}
+
+.fkp-partial-button--disabled {
+}
+
+.fkp-partial-button__icon {
+    flex: 0 0 auto;
+}
+
+.fkp-partial-button__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fkp-partial-button__icon svg {
+    width: 16px;
+    height: 16px;
+    display: block;
+    flex: 0 0 auto;
+}
+`;
+
+// src/partials/modal/styles.ts
+var styles2 = `
+
+.fkp-partial-modal__body {}
+
+.fkp-partial-modal__content {
+    max-height: 70vh;
+    overflow: scroll;
+    border-radius: 4px;
+}
+
+.fkp-partial-modal__footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.fkp-partial-modal__footer button {
+    margin-left: 0;
+}
+
+.fkp-partial-modal__checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: auto;
+    cursor: pointer;
+    user-select: none;
+}
+
+.fkp-partial-modal__checkbox-text {
+    line-height: 1.2;
+}
+`;
+
+// src/partials/button/renderButton.ts
+function renderButton({
+  classNames = [],
+  disabled,
+  loading: loading2,
+  onClick,
+  text,
+  icon
+}) {
+  const hasIcon = !!loading2 || !!icon;
+  function getWrappedIcon() {
+    const iconWrap = E("span", {
+      class: "fkp-partial-button__icon"
+    });
+    if (loading2) {
+      iconWrap.appendChild(renderLoaderCircleIcon24());
+      return iconWrap;
+    }
+    if (icon) {
+      iconWrap.appendChild(icon());
+      return iconWrap;
+    }
+    return iconWrap;
+  }
+  function getClass() {
+    return [
+      "btn",
+      "fkp-partial-button",
+      ...insertIf(Boolean(disabled), ["fkp-partial-button--disabled"]),
+      ...insertIf(Boolean(loading2), ["fkp-partial-button--loading"]),
+      ...insertIf(Boolean(hasIcon), ["fkp-partial-button--with-icon"]),
+      ...classNames
+    ].filter(Boolean).join(" ");
+  }
+  function getDisabled() {
+    if (loading2 || disabled) {
+      return true;
+    }
+    return void 0;
+  }
+  return E(
+    "button",
+    {
+      type: "button",
+      class: getClass(),
+      disabled: getDisabled(),
+      click: onClick
+    },
+    [...insertIf(hasIcon, [getWrappedIcon()]), E("span", {}, text)]
+  );
+}
+
+// src/helpers/copyToClipboard.ts
+function copyToClipboard(text) {
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  document.body.appendChild(textarea);
+  textarea.select();
+  try {
+    document.execCommand("copy");
+    showToast(_("Copied"), "success");
+  } catch (_err) {
+    showToast(_("Failed to copy!"), "error");
+    console.error("copyToClipboard - e", _err);
+  }
+  document.body.removeChild(textarea);
+}
+
+// src/partials/modal/renderModal.ts
+function renderModal(text, name, options) {
+  let rawText = text ?? "";
+  let currentText = "";
+  let refreshInFlight = false;
+  let pendingRefresh = false;
+  let pendingForcedRefresh = false;
+  let refreshSessionId = 0;
+  let timer;
+  let observer;
+  let autoRefreshEnabled = options?.initialAutoRefresh ?? Boolean(options?.getText);
+  let maskValuesEnabled = options?.initialMaskValues ?? true;
+  let shouldScrollToBottomOnMount = Boolean(options?.startAtEnd);
+  let autoRefreshInput;
+  let maskValuesInput;
+  const getDisplayText = (value) => {
+    if (maskValuesEnabled && options?.maskText) {
+      return options.maskText(value);
+    }
+    return value;
+  };
+  const codeEl = E("code", {}, "");
+  const contentEl = E(
+    "pre",
+    { class: "fkp-partial-modal__content" },
+    codeEl
+  );
+  const stopRefreshTimer = () => {
+    if (timer) {
+      clearInterval(timer);
+      timer = void 0;
+    }
+  };
+  const isPageHidden2 = () => typeof document !== "undefined" && document.hidden === true;
+  const handleVisibilityChange = () => {
+    if (!body.isConnected) {
+      destroyLiveRefresh();
+      return;
+    }
+    requestRefresh();
+  };
+  const destroyLiveRefresh = () => {
+    refreshSessionId += 1;
+    pendingRefresh = false;
+    pendingForcedRefresh = false;
+    stopRefreshTimer();
+    observer?.disconnect();
+    observer = void 0;
+    if (typeof document !== "undefined") {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    }
+  };
+  const scrollToBottom = () => {
+    contentEl.scrollTop = contentEl.scrollHeight;
+  };
+  const scheduleInitialScrollToBottom = () => {
+    if (!shouldScrollToBottomOnMount || !body.isConnected) {
+      return;
+    }
+    shouldScrollToBottomOnMount = false;
+    requestAnimationFrame(() => {
+      scrollToBottom();
+    });
+  };
+  const updateText = (nextText) => {
+    const normalizedText = nextText ?? "";
+    const shouldStickToBottom = shouldScrollToBottomOnMount || contentEl.scrollTop + contentEl.clientHeight >= contentEl.scrollHeight - 16;
+    if (normalizedText === currentText) {
+      if (shouldStickToBottom) {
+        requestAnimationFrame(() => {
+          scrollToBottom();
+        });
+      }
+      return;
+    }
+    currentText = normalizedText;
+    codeEl.textContent = currentText;
+    if (shouldStickToBottom) {
+      requestAnimationFrame(() => {
+        scrollToBottom();
+      });
+    }
+  };
+  const updateDisplayedTextFromRaw = () => {
+    updateText(getDisplayText(rawText));
+  };
+  const refreshText = async (force = false) => {
+    if (!options?.getText || !force && !autoRefreshEnabled || refreshInFlight) {
+      return;
+    }
+    if (!body.isConnected) {
+      return;
+    }
+    refreshInFlight = true;
+    const sessionId = refreshSessionId;
+    try {
+      const nextText = await options.getText({
+        maskValues: options.maskText ? false : maskValuesEnabled
+      });
+      if (!body.isConnected || !force && !autoRefreshEnabled) {
+        return;
+      }
+      if (sessionId !== refreshSessionId) {
+        return;
+      }
+      const normalizedText = nextText ?? "";
+      rawText = normalizedText;
+      updateText(getDisplayText(normalizedText));
+    } catch (error) {
+      console.warn("[renderModal] failed to refresh modal content", error);
+    } finally {
+      refreshInFlight = false;
+      if (pendingRefresh) {
+        const shouldForceRefresh = pendingForcedRefresh;
+        pendingRefresh = false;
+        pendingForcedRefresh = false;
+        if ((shouldForceRefresh || autoRefreshEnabled) && body.isConnected) {
+          void refreshText(shouldForceRefresh);
+        }
+      }
+    }
+  };
+  const requestRefresh = () => {
+    if (!options?.getText || !autoRefreshEnabled || refreshInFlight || isPageHidden2()) {
+      return;
+    }
+    void refreshText();
+  };
+  const requestForcedRefresh = () => {
+    if (!options?.getText) {
+      return;
+    }
+    if (refreshInFlight) {
+      pendingRefresh = true;
+      pendingForcedRefresh = true;
+      return;
+    }
+    void refreshText(true);
+  };
+  const startRefreshTimer = () => {
+    if (!options?.getText || !autoRefreshEnabled || timer || typeof document === "undefined") {
+      return;
+    }
+    timer = setInterval(() => {
+      requestRefresh();
+    }, options.refreshMs ?? 3e3);
+  };
+  const setAutoRefreshEnabled = (nextValue) => {
+    autoRefreshEnabled = nextValue;
+    refreshSessionId += 1;
+    pendingRefresh = false;
+    pendingForcedRefresh = false;
+    if (autoRefreshInput) {
+      autoRefreshInput.checked = nextValue;
+    }
+    if (nextValue) {
+      startRefreshTimer();
+      requestRefresh();
+      return;
+    }
+    stopRefreshTimer();
+  };
+  const setMaskValuesEnabled = (nextValue) => {
+    maskValuesEnabled = nextValue;
+    refreshSessionId += 1;
+    pendingRefresh = false;
+    pendingForcedRefresh = false;
+    if (maskValuesInput) {
+      maskValuesInput.checked = nextValue;
+    }
+    if (options?.maskText) {
+      updateDisplayedTextFromRaw();
+      return;
+    }
+    requestForcedRefresh();
+  };
+  const footerChildren = [
+    renderButton({
+      classNames: ["cbi-button-apply"],
+      text: _("Download"),
+      onClick: () => downloadAsTxt(currentText, name)
+    }),
+    renderButton({
+      classNames: ["cbi-button-apply"],
+      text: _("Copy"),
+      onClick: () => copyToClipboard(`\`\`\`${name}
+${currentText}
+\`\`\``)
+    }),
+    renderButton({
+      classNames: ["cbi-button-remove"],
+      text: _("Close"),
+      onClick: () => {
+        destroyLiveRefresh();
+        ui.hideModal();
+      }
+    })
+  ];
+  if (options?.getText && options?.showAutoRefreshToggle) {
+    autoRefreshInput = document.createElement("input");
+    autoRefreshInput.type = "checkbox";
+    autoRefreshInput.className = "cbi-input-checkbox";
+    autoRefreshInput.checked = autoRefreshEnabled;
+    autoRefreshInput.addEventListener("change", () => {
+      setAutoRefreshEnabled(autoRefreshInput.checked);
+    });
+    footerChildren.unshift(
+      E("label", { class: "fkp-partial-modal__checkbox" }, [
+        autoRefreshInput,
+        E(
+          "span",
+          { class: "fkp-partial-modal__checkbox-text" },
+          options.autoRefreshLabel ?? _("Auto refresh")
+        )
+      ])
+    );
+  }
+  if ((options?.getText || options?.maskText) && options?.showMaskValuesToggle) {
+    maskValuesInput = document.createElement("input");
+    maskValuesInput.type = "checkbox";
+    maskValuesInput.className = "cbi-input-checkbox";
+    maskValuesInput.checked = maskValuesEnabled;
+    maskValuesInput.addEventListener("change", () => {
+      setMaskValuesEnabled(maskValuesInput.checked);
+    });
+    footerChildren.unshift(
+      E("label", { class: "fkp-partial-modal__checkbox" }, [
+        maskValuesInput,
+        E(
+          "span",
+          { class: "fkp-partial-modal__checkbox-text" },
+          options.maskValuesLabel ?? _("Hide values")
+        )
+      ])
+    );
+  }
+  const body = E("div", { class: "fkp-partial-modal__body" }, [
+    E("div", {}, [
+      contentEl,
+      E("div", { class: "fkp-partial-modal__footer" }, footerChildren)
+    ])
+  ]);
+  if ((options?.getText || options?.startAtEnd) && typeof document !== "undefined") {
+    observer = new MutationObserver(() => {
+      if (!body.isConnected) {
+        destroyLiveRefresh();
+        return;
+      }
+      scheduleInitialScrollToBottom();
+    });
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+    scheduleInitialScrollToBottom();
+  }
+  if (options?.getText && typeof document !== "undefined") {
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    startRefreshTimer();
+    requestRefresh();
+  }
+  updateDisplayedTextFromRaw();
+  return body;
+}
+
+// src/partials/index.ts
+var PartialStyles = `
+${styles}
+${styles2}
+`;
+
+// src/prokop/helpers/legacyStorage.ts
+var MONITORING_PREFERENCES_KEY = "prokop.monitoring.preferences";
+var CONNECTIVITY_TARGETS_KEY = "prokop.connectivity.targets";
+var DIAGNOSTIC_LAST_RUN_KEY = "prokop.diagnostic.lastRun";
+var LEGACY_FORKOP_STORAGE_KEYS = {
+  [MONITORING_PREFERENCES_KEY]: "forkop.monitoring.preferences",
+  [CONNECTIVITY_TARGETS_KEY]: "forkop.connectivity.targets",
+  [DIAGNOSTIC_LAST_RUN_KEY]: "forkop.diagnostic.lastRun"
+};
+function legacyKeyFor(key) {
+  return Object.prototype.hasOwnProperty.call(LEGACY_FORKOP_STORAGE_KEYS, key) ? LEGACY_FORKOP_STORAGE_KEYS[key] : null;
+}
+function readStorageItem(storage, key) {
+  const value = storage.getItem(key);
+  const legacyKey = legacyKeyFor(key);
+  if (value !== null || !legacyKey) return value;
+  const legacyValue = storage.getItem(legacyKey);
+  if (legacyValue === null) return null;
+  if (storage.setItem) {
+    try {
+      storage.setItem(key, legacyValue);
+      storage.removeItem?.(legacyKey);
+    } catch (_error) {
+    }
+  }
+  return legacyValue;
+}
+function writeStorageItem(storage, key, value) {
+  storage.setItem(key, value);
+  const legacyKey = legacyKeyFor(key);
+  if (legacyKey) storage.removeItem?.(legacyKey);
+}
+
+// src/prokop/tabs/diagnostic/partials/renderRunAction.ts
+function renderRunAction({
+  loading: loading2,
+  disabled,
+  click
+}) {
+  return E("div", { class: "fkp_diagnostic-page__run_check_wrapper" }, [
+    renderButton({
+      text: _("Run full diagnostics"),
+      onClick: click,
+      icon: renderSearchIcon24,
+      loading: loading2,
+      disabled,
+      classNames: ["cbi-button-apply"]
+    })
+  ]);
+}
+function saveLastRun(storage, now = Date.now()) {
+  try {
+    writeStorageItem(storage, DIAGNOSTIC_LAST_RUN_KEY, String(now));
+  } catch (_error) {
+  }
+}
+function readLastRun(storage) {
+  let value = 0;
+  try {
+    value = Number(readStorageItem(storage, DIAGNOSTIC_LAST_RUN_KEY) || 0);
+  } catch (_error) {
+    value = 0;
+  }
+  return value > 0 ? value : null;
+}
+function lastRunText(storage) {
+  const value = readLastRun(storage) || 0;
+  return value > 0 ? `${_("Last check")}: ${formatDateTime(value / 1e3)}` : _("No check has been run yet");
+}
+
+// src/prokop/ui/confirmAction.ts
+function confirmAction(options) {
+  return new Promise((resolve) => {
+    let settled = false;
+    let observer;
+    const finish = (confirmed, closeModal = true) => {
+      if (settled) return;
+      settled = true;
+      observer?.disconnect();
+      if (closeModal) ui.hideModal();
+      resolve(confirmed);
+    };
+    const cancelButton = E(
+      "button",
+      { type: "button", class: "btn cbi-button", click: () => finish(false) },
+      _("Cancel")
+    );
+    const confirmButton = E(
+      "button",
+      {
+        type: "button",
+        class: `btn ${options.danger ? "cbi-button-negative" : "cbi-button-action"}`,
+        click: () => finish(true)
+      },
+      options.confirmLabel
+    );
+    const content = E("div", { class: "fkp-confirm" }, [
+      E("p", {}, options.message),
+      ...options.consequences?.length ? [
+        E(
+          "ul",
+          { class: "fkp-confirm__consequences" },
+          options.consequences.map((line) => E("li", {}, line))
+        )
+      ] : [],
+      ...(options.notes ?? []).map((line) => E("p", {}, line)),
+      // LuCI's Escape handler clicks the first '.right > button' of the
+      // modal, so Cancel must stay first in a '.right' container (UC-134).
+      E("div", { class: "right fkp-confirm__actions" }, [
+        cancelButton,
+        confirmButton
+      ])
+    ]);
+    ui.showModal(options.title, content);
+    if (typeof MutationObserver === "function") {
+      observer = new MutationObserver(() => {
+        if (!content.isConnected) finish(false, false);
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+    }
+    cancelButton.focus?.();
+  });
+}
+
+// src/prokop/tabs/shared/serviceControl.ts
+async function runServiceActionJob(action) {
+  const start = await ProkopShellMethods.serviceActionStart(action);
+  if (!start.success) {
+    throw new ActionFailureError(start.error, failureReason(start));
+  }
+  const jobId = start.data.job_id;
+  let finished = false;
+  markUiActionOwned("service", jobId);
+  beginAwaitedServiceAction(jobId);
+  try {
+    const result = await ProkopShellMethods.waitServiceActionJob(jobId);
+    if (!result.success) {
+      throw new ActionFailureError(result.error, failureReason(result));
+    }
+    finished = true;
+    return result.data;
+  } finally {
+    endAwaitedServiceAction(jobId, finished);
+    void ProkopShellMethods.uiActionAck("service", jobId);
+  }
+}
+async function runProkopServiceAction(action) {
+  const state = await runServiceActionJob(action);
+  if (state.success === false) {
+    throw new ActionFailureError(state.message || "", state.reason);
+  }
+}
+function confirmStopProkop() {
+  return confirmAction({
+    title: _("Stop Prokop?"),
+    message: _("Prokop stops handling traffic until it is started again."),
+    consequences: [
+      _("Routing, DNS and DPI bypass rules stop applying"),
+      _("Devices keep using the router without Prokop"),
+      _(
+        "Sections with the VPN kill-switch are blocked instead of going directly"
+      )
+    ],
+    confirmLabel: _("Stop"),
+    danger: true
+  });
+}
+async function setProkopAutostart(enabled) {
+  try {
+    await (enabled ? ProkopShellMethods.enable() : ProkopShellMethods.disable());
+  } finally {
+    await refreshRuntimeUiState({ force: true });
+  }
+  return Boolean(store.get().servicesInfoWidget.data.prokopEnabled);
+}
+
+// src/prokop/tabs/shared/startService.ts
+var starting = false;
+function renderStartServiceAction() {
+  if (isReadonlyMode()) {
+    return [];
+  }
+  const button = E(
+    "button",
+    {
+      type: "button",
+      class: "btn cbi-button cbi-button-action fkp-start-service",
+      disabled: starting ? true : void 0,
+      click: async () => {
+        if (starting) {
+          return;
+        }
+        starting = true;
+        button.disabled = true;
+        button.textContent = _("Starting\u2026");
+        try {
+          await runProkopServiceAction("start");
+        } catch (error) {
+          const notice = serviceActionNotice(error);
+          showToast(notice.text, notice.type, 6e3);
+        } finally {
+          starting = false;
+          button.disabled = false;
+          button.textContent = _("Start Prokop");
+        }
+      }
+    },
+    starting ? _("Starting\u2026") : _("Start Prokop")
+  );
+  return [button];
+}
+
+// src/prokop/tabs/dashboard/clashTraffic.ts
+function counter(value) {
+  const number = Number(value);
+  return Number.isFinite(number) && number >= 0 ? number : 0;
+}
+function sampleFromConnections(payload, at) {
+  if (!payload || typeof payload !== "object") {
+    return null;
+  }
+  const data = payload;
+  return {
+    downloadTotal: counter(data.downloadTotal),
+    uploadTotal: counter(data.uploadTotal),
+    connections: Array.isArray(data.connections) ? data.connections.length : 0,
+    memory: counter(data.memory),
+    at
+  };
+}
+function trafficSpeed(previous, next) {
+  if (!previous) {
+    return null;
+  }
+  const seconds = (next.at - previous.at) / 1e3;
+  const down = next.downloadTotal - previous.downloadTotal;
+  const up = next.uploadTotal - previous.uploadTotal;
+  if (seconds <= 0 || down < 0 || up < 0) {
+    return null;
+  }
+  return { up: Math.round(up / seconds), down: Math.round(down / seconds) };
+}
+
+// src/prokop/tabs/dashboard/initController.ts
+var SECTIONS_REFRESH_INTERVAL_MS = 1e4;
+var CLASH_RPC_POLL_INTERVAL_MS = 2e3;
+var LATENCY_TEST_BUTTON_CLASS = "dashboard-sections-grid-item-test-latency";
+var LATENCY_TEST_BUTTON_LABEL_CLASS = "dashboard-sections-grid-item-test-latency__label";
+var sectionsRefreshTimer = null;
+var healthRefreshTimer = null;
+var overviewHealth = null;
+var overviewHealthStale = false;
+var overviewRuleCount = null;
+var overviewSnapshotCount = null;
+var overviewAutotuneStatus = null;
+var overviewAutotuneFailed = false;
+var overviewServiceBusy = false;
+var overviewHost = false;
+var clashUpdatesStarted = false;
+async function refreshHealth(mountId3) {
+  const response = await ProkopShellMethods.getHealthStatus();
+  if (!dashboardMounted || mountId3 !== dashboardMountId) return;
+  if (response.success && response.data) {
+    overviewHealth = response.data;
+    overviewHealthStale = false;
+  } else {
+    overviewHealthStale = true;
+  }
+  renderOverviewCards();
+}
+var AUTOTUNE_REFRESH_INTERVAL_MS = 3e4;
+var autotuneLoadedAt = 0;
+async function refreshAutotune(mountId3) {
+  autotuneLoadedAt = Date.now();
+  let next = null;
+  try {
+    const response = await ProkopShellMethods.autotuneStatus();
+    const data = response.success ? response.data : null;
+    next = data && data.status === "ok" && data.policy ? data : null;
+  } catch (error) {
+    logger.error("[DASHBOARD]", "autotune status failed", error);
+  }
+  if (!dashboardMounted || mountId3 !== dashboardMountId) return;
+  if (next) overviewAutotuneStatus = next;
+  overviewAutotuneFailed = !next && !overviewAutotuneStatus;
+  renderOverviewCards();
+}
+async function loadOverviewCounts(mountId3) {
+  const [sections, snapshots2] = await Promise.allSettled([
+    CustomProkopMethods.getConfigSections(),
+    ProkopShellMethods.snapshotList()
+  ]);
+  if (!dashboardMounted || mountId3 !== dashboardMountId) return;
+  overviewRuleCount = sections.status === "fulfilled" ? sections.value.filter(
+    (section) => section[".type"] === "section" && isSectionEnabled(section.enabled)
+  ).length : null;
+  overviewSnapshotCount = snapshots2.status === "fulfilled" && snapshots2.value.success && Array.isArray(snapshots2.value.data) ? snapshots2.value.data.length : null;
+  renderOverviewCards();
+}
+function overviewInput() {
+  const state = store.get();
+  const services = state.servicesInfoWidget;
+  const bandwidth = state.bandwidthWidget;
+  const systemInfo = state.systemInfoWidget;
+  return {
+    health: overviewHealth,
+    healthStale: overviewHealthStale,
+    availability: getDashboardServiceAvailability(),
+    prokopEnabled: Boolean(services.data.prokopEnabled),
+    prokopStoppedByUser: Boolean(services.data.prokopStoppedByUser),
+    prokopNotStarted: services.data.prokopNotStarted === null ? null : Boolean(services.data.prokopNotStarted),
+    prokopStatus: services.data.prokopStatus || "",
+    singBoxRunning: Boolean(services.data.singbox),
+    groups: state.sectionsWidget.data,
+    ruleCount: overviewRuleCount,
+    traffic: !bandwidth.loading && !bandwidth.failed ? { up: bandwidth.data.up, down: bandwidth.data.down } : null,
+    connections: !systemInfo.loading && !systemInfo.failed ? systemInfo.data.connections : null,
+    snapshotCount: overviewSnapshotCount,
+    lastDiagnosticRun: readLastRun(localStorage),
+    nowMs: Date.now(),
+    autotune: overviewAutotuneStatus,
+    autotuneFailed: overviewAutotuneFailed
+  };
+}
+async function handleServiceAction(action) {
+  if (overviewServiceBusy) return;
+  if (action === "stop" && !await confirmStopProkop()) return;
+  const mountId3 = dashboardMountId;
+  await runOverviewServiceAction({
+    run: () => runProkopServiceAction(action),
+    onError: (error) => {
+      const notice = serviceActionNotice(error);
+      showToast(notice.text, notice.type, 6e3);
+    },
+    refreshRuntime: () => refreshRuntimeUiState({ force: true }),
+    refreshHealth: () => refreshHealth(mountId3),
+    setBusy: (busy2) => {
+      overviewServiceBusy = busy2;
+      renderOverviewCards();
+    }
+  });
+}
+async function handleToggleAutostart() {
+  if (overviewServiceBusy) return;
+  const wanted = !store.get().servicesInfoWidget.data.prokopEnabled;
+  overviewServiceBusy = true;
+  renderOverviewCards();
+  try {
+    if (await setProkopAutostart(wanted) !== wanted) {
+      showToast(_("Could not change autostart"), "error", 6e3);
+    }
+  } catch (_error) {
+    showToast(_("Could not change autostart"), "error", 6e3);
+  } finally {
+    overviewServiceBusy = false;
+    renderOverviewCards();
+  }
+}
+function renderOverviewCards() {
+  const container = document.getElementById("dashboard-overview");
+  if (!container || !dashboardMounted) return;
+  const input = overviewInput();
+  const view = renderOverview(
+    {
+      warning: overviewWarning(input.health),
+      state: overviewState(input),
+      routing: overviewRouting(input),
+      autotune: overviewAutotune(input),
+      recovery: overviewRecovery(input),
+      event: overviewLastEvent(input)
+    },
+    {
+      readonly: isReadonlyMode(),
+      serviceBusy: overviewServiceBusy,
+      autostart: input.prokopEnabled,
+      restartBlocked: Boolean(
+        store.get().servicesInfoWidget.data.prokopRestartBlocked
+      ),
+      stopAvailable: Boolean(
+        store.get().servicesInfoWidget.data.prokopStopAvailable
+      ),
+      onStart: () => void handleServiceAction("start"),
+      onRestart: () => void handleServiceAction("restart"),
+      onStop: () => void handleServiceAction("stop"),
+      onToggleAutostart: () => void handleToggleAutostart()
+    }
+  );
+  if (container.querySelector(".fkp-menu[open]")) return;
+  preserveScrollForPage(() => replaceChildrenKeepingFocus(container, view));
+}
+var sectionsRefreshPromise = null;
+var sectionsStoppedRendered = false;
+var sectionsRefreshQueued = false;
+var actionStateUnsubscribe = null;
+var dashboardMounted = false;
+var dashboardMountId = 0;
+var dashboardDataUpdatesStarted = false;
+var dashboardDataUpdatesId = 0;
+var pageUnloading = false;
+var clashRpcPollTimer = null;
+var clashRpcPolling = false;
+var lastConnectionsSample = null;
+var followedSubscriptionJobs = /* @__PURE__ */ new Set();
+var followedLatencyJobs = /* @__PURE__ */ new Set();
+var handledSubscriptionJobs = /* @__PURE__ */ new Set();
+var handledLatencyJobs = /* @__PURE__ */ new Set();
+var priorityMembersState = createPriorityMembersState();
+if (typeof window !== "undefined") {
+  window.addEventListener("pagehide", () => {
+    pageUnloading = true;
+  });
+  window.addEventListener("pageshow", () => {
+    pageUnloading = false;
+  });
+}
+async function fetchDashboardSectionsOnce(mountId3) {
+  if (getDashboardServiceAvailability() === "stopped") {
+    return false;
+  }
+  const prev = store.get().sectionsWidget;
+  const hasRenderedData = prev.data.length > 0;
+  store.set({
+    sectionsWidget: {
+      ...prev,
+      failed: false,
+      loading: prev.loading && !hasRenderedData
+    }
+  });
+  try {
+    const { data, success } = await CustomProkopMethods.getDashboardSections();
+    if (!dashboardMounted || mountId3 !== dashboardMountId || getDashboardServiceAvailability() === "stopped") {
+      return false;
+    }
+    if (!success) {
+      throw new Error("failed to fetch dashboard sections");
+    }
+    store.set({
+      sectionsWidget: sectionsAfterRefresh(store.get().sectionsWidget, data)
+    });
+    return true;
+  } catch (error) {
+    logger.error("[DASHBOARD]", "fetchDashboardSections: failed", error);
+    if (!dashboardMounted || mountId3 !== dashboardMountId || getDashboardServiceAvailability() === "stopped") {
+      return false;
+    }
+    store.set({
+      sectionsWidget: sectionsAfterFailedRefresh(store.get().sectionsWidget)
+    });
+    return false;
+  }
+}
+async function fetchDashboardSections(options = {}) {
+  if (sectionsRefreshPromise) {
+    if (options.force) {
+      sectionsRefreshQueued = true;
+    }
+    return sectionsRefreshPromise;
+  }
+  const mountId3 = dashboardMountId;
+  const promise = (async () => {
+    let success = false;
+    do {
+      sectionsRefreshQueued = false;
+      success = await fetchDashboardSectionsOnce(mountId3);
+    } while (sectionsRefreshQueued && dashboardMounted && mountId3 === dashboardMountId);
+    return success;
+  })();
+  sectionsRefreshPromise = promise;
+  try {
+    return await promise;
+  } finally {
+    if (sectionsRefreshPromise === promise) {
+      sectionsRefreshPromise = null;
+    }
+  }
+}
+function setSubscriptionUpdating(sectionName, updating, local = false) {
+  if (local || !updating) {
+    setLocalSubscriptionAction(sectionName, updating && local);
+  }
+  const sectionsWidget = store.get().sectionsWidget;
+  const subscriptionUpdatingSections = {
+    ...sectionsWidget.subscriptionUpdatingSections
+  };
+  if (updating) {
+    subscriptionUpdatingSections[sectionName] = true;
+  } else {
+    delete subscriptionUpdatingSections[sectionName];
+  }
+  store.set({
+    sectionsWidget: {
+      ...sectionsWidget,
+      subscriptionUpdatingSections
+    }
+  });
+}
+function setSelectorSwitching(sectionName, tag) {
+  const sectionsWidget = store.get().sectionsWidget;
+  const selectorSwitchingSections = {
+    ...sectionsWidget.selectorSwitchingSections
+  };
+  if (tag) {
+    selectorSwitchingSections[sectionName] = tag;
+  } else {
+    delete selectorSwitchingSections[sectionName];
+  }
+  store.set({
+    sectionsWidget: {
+      ...sectionsWidget,
+      selectorSwitchingSections
+    }
+  });
+}
+function setLatencyFetching(sectionName, fetching, local = false, progress) {
+  if (local || !fetching) {
+    setLocalLatencyAction(sectionName, fetching && local);
+  }
+  const sectionsWidget = store.get().sectionsWidget;
+  const latencyFetchingSections = {
+    ...sectionsWidget.latencyFetchingSections
+  };
+  const latencyProgressSections = {
+    ...sectionsWidget.latencyProgressSections
+  };
+  if (fetching) {
+    latencyFetchingSections[sectionName] = true;
+    if (progress) {
+      latencyProgressSections[sectionName] = progress;
+    }
+  } else {
+    delete latencyFetchingSections[sectionName];
+    delete latencyProgressSections[sectionName];
+  }
+  store.set({
+    sectionsWidget: {
+      ...sectionsWidget,
+      latencyFetchingSections,
+      latencyProgressSections
+    }
+  });
+}
+async function completeSubscriptionUpdateJob(jobId, sectionName, response) {
+  if (pageUnloading) {
+    setSubscriptionUpdating(sectionName, false);
+    return;
+  }
+  if (jobId && handledSubscriptionJobs.has(jobId)) {
+    setSubscriptionUpdating(sectionName, false);
+    return;
+  }
+  const shouldNotify = jobId ? shouldNotifyOwnedUiAction("subscription", jobId) : false;
+  const failed2 = !response.success || response.data.success === false;
+  const message = response.success ? response.data.message || _("Failed to update subscriptions") : response.error || _("Failed to update subscriptions");
+  if (failed2 && isTransientRpcError(message)) {
+    void refreshRuntimeUiState({ force: true });
+    return;
+  }
+  if (jobId) {
+    handledSubscriptionJobs.add(jobId);
+  }
+  setSubscriptionUpdating(sectionName, false);
+  if (jobId && response.success) {
+    void ProkopShellMethods.uiActionAck("subscription", jobId);
+  }
+  if (failed2) {
+    if (shouldNotify) {
+      const notice = subscriptionUpdateFailureNotice(response);
+      showToast(notice.text, notice.type);
+    }
+    return;
+  }
+  if (shouldNotify) {
+    showToast(_("Subscriptions updated"), "success");
+  }
+  void fetchDashboardSections({ force: true });
+  void fetchServicesInfo();
+}
+async function followSubscriptionUpdateState(state) {
+  const jobId = state.job_id;
+  const sectionName = state.section || "";
+  if (!jobId || !sectionName || followedSubscriptionJobs.has(jobId)) {
+    return;
+  }
+  if (!state.running && handledSubscriptionJobs.has(jobId)) {
+    return;
+  }
+  followedSubscriptionJobs.add(jobId);
+  if (shouldShowLoadingForRestoredAction(state)) {
+    setSubscriptionUpdating(sectionName, true);
+  }
+  try {
+    const response = state.running ? await ProkopShellMethods.waitSubscriptionUpdateJob(jobId) : {
+      success: true,
+      data: state
+    };
+    await completeSubscriptionUpdateJob(jobId, sectionName, response);
+  } catch (error) {
+    logger.error("[DASHBOARD]", "followSubscriptionUpdateState failed", error);
+    if (!pageUnloading) {
+      const message = error instanceof Error ? error.message : _("Failed to update subscriptions");
+      setSubscriptionUpdating(sectionName, false);
+      if (!isTransientRpcError(message)) {
+        showToast(subscriptionUpdateErrorMessage(message), "error");
+      }
+    }
+  } finally {
+    followedSubscriptionJobs.delete(jobId);
+  }
+}
+async function completeLatencyTestJob(jobId, sectionName) {
+  setLatencyFetching(sectionName, false);
+  if (pageUnloading) {
+    return;
+  }
+  if (jobId && handledLatencyJobs.has(jobId)) {
+    return;
+  }
+  if (jobId) {
+    handledLatencyJobs.add(jobId);
+  }
+  if (jobId) {
+    void ProkopShellMethods.uiActionAck("latency", jobId);
+  }
+  void fetchDashboardSections({ force: true });
+}
+async function followLatencyTestState(state) {
+  const jobId = state.job_id;
+  const sectionName = state.section || "";
+  if (!jobId || !sectionName || followedLatencyJobs.has(jobId)) {
+    return;
+  }
+  if (!state.running && handledLatencyJobs.has(jobId)) {
+    return;
+  }
+  followedLatencyJobs.add(jobId);
+  if (shouldShowLoadingForRestoredAction(state)) {
+    setLatencyFetching(sectionName, true);
+  }
+  try {
+    if (state.running) {
+      await ProkopShellMethods.waitLatencyTestJob(jobId);
+    }
+    await completeLatencyTestJob(jobId, sectionName);
+  } catch (error) {
+    logger.error("[DASHBOARD]", "followLatencyTestState failed", error);
+    if (!pageUnloading) {
+      setLatencyFetching(sectionName, false);
+    }
+  } finally {
+    followedLatencyJobs.delete(jobId);
+  }
+}
+function followDashboardActionsFromUiState(uiState) {
+  for (const state of uiState.actions.subscription || []) {
+    if (state.running || state.job_id && state.section) {
+      void followSubscriptionUpdateState(state);
+    } else if (state.job_id && !handledSubscriptionJobs.has(state.job_id)) {
+      handledSubscriptionJobs.add(state.job_id);
+      void ProkopShellMethods.uiActionAck("subscription", state.job_id);
+    }
+  }
+  for (const state of uiState.actions.latency || []) {
+    if (state.running || state.job_id && state.section) {
+      void followLatencyTestState(state);
+    } else if (state.job_id && !handledLatencyJobs.has(state.job_id)) {
+      handledLatencyJobs.add(state.job_id);
+      void ProkopShellMethods.uiActionAck("latency", state.job_id);
+    }
+  }
+}
+function startActionStateWatcher() {
+  if (actionStateUnsubscribe) {
+    return;
+  }
+  actionStateUnsubscribe = subscribeRuntimeUiState((uiState) => {
+    if (dashboardMounted) {
+      followDashboardActionsFromUiState(uiState);
+    }
+  });
+}
+function stopActionStateWatcher() {
+  if (!actionStateUnsubscribe) {
+    return;
+  }
+  actionStateUnsubscribe();
+  actionStateUnsubscribe = null;
+}
+async function connectToClashSockets(dataUpdatesId) {
+  const mountId3 = dashboardMountId;
+  const [clashApiSecret, clashControllerHosts] = await Promise.all([
+    getClashApiSecret2(),
+    getClashControllerHosts()
+  ]);
+  if (!dashboardMounted || mountId3 !== dashboardMountId || dataUpdatesId !== dashboardDataUpdatesId || getDashboardServiceAvailability() === "stopped") {
+    return;
+  }
+  if (!canUseDirectClashApi(clashApiSecret, clashControllerHosts)) {
+    startClashRpcPolling(dataUpdatesId);
+    return;
+  }
+  socket.subscribe(
+    getClashWsStreamUrl("/traffic", clashApiSecret),
+    (msg) => {
+      if (dataUpdatesId !== dashboardDataUpdatesId || getDashboardServiceAvailability() === "stopped") {
+        return;
+      }
+      const parsedMsg = JSON.parse(msg);
+      store.set({
+        bandwidthWidget: {
+          loading: false,
+          failed: false,
+          data: { up: parsedMsg.up, down: parsedMsg.down }
+        }
+      });
+    },
+    (_err) => {
+      if (dataUpdatesId !== dashboardDataUpdatesId || getDashboardServiceAvailability() === "stopped") {
+        return;
+      }
+      logger.warn(
+        "[DASHBOARD]",
+        "connectToClashSockets - traffic: socket unavailable, polling instead"
+      );
+      fallBackToClashRpcPolling(dataUpdatesId);
+    }
+  );
+  socket.subscribe(
+    getClashWsStreamUrl("/connections", clashApiSecret),
+    (msg) => {
+      if (dataUpdatesId !== dashboardDataUpdatesId || getDashboardServiceAvailability() === "stopped") {
+        return;
+      }
+      const parsedMsg = JSON.parse(msg);
+      store.set({
+        trafficTotalWidget: {
+          loading: false,
+          failed: false,
+          data: {
+            downloadTotal: parsedMsg.downloadTotal,
+            uploadTotal: parsedMsg.uploadTotal
+          }
+        },
+        systemInfoWidget: {
+          loading: false,
+          failed: false,
+          data: {
+            connections: parsedMsg.connections?.length,
+            memory: parsedMsg.memory
+          }
+        }
+      });
+    },
+    (_err) => {
+      if (dataUpdatesId !== dashboardDataUpdatesId || getDashboardServiceAvailability() === "stopped") {
+        return;
+      }
+      logger.warn(
+        "[DASHBOARD]",
+        "connectToClashSockets - connections: socket unavailable, polling instead"
+      );
+      fallBackToClashRpcPolling(dataUpdatesId);
+    }
+  );
+}
+function setClashWidgetsFailed() {
+  store.set({
+    bandwidthWidget: { loading: false, failed: true, data: { up: 0, down: 0 } },
+    trafficTotalWidget: {
+      loading: false,
+      failed: true,
+      data: { downloadTotal: 0, uploadTotal: 0 }
+    },
+    systemInfoWidget: {
+      loading: false,
+      failed: true,
+      data: { connections: 0, memory: 0 }
+    }
+  });
+}
+async function pollClashConnections(dataUpdatesId) {
+  if (clashRpcPolling || dataUpdatesId !== dashboardDataUpdatesId || getDashboardServiceAvailability() === "stopped") {
+    return;
+  }
+  clashRpcPolling = true;
+  try {
+    const response = await ProkopShellMethods.getClashApiConnections();
+    if (dataUpdatesId !== dashboardDataUpdatesId) {
+      return;
+    }
+    const sample = response.success ? sampleFromConnections(response.data, Date.now()) : null;
+    if (!sample) {
+      lastConnectionsSample = null;
+      setClashWidgetsFailed();
+      return;
+    }
+    const speed = trafficSpeed(lastConnectionsSample, sample);
+    lastConnectionsSample = sample;
+    store.set({
+      ...speed ? { bandwidthWidget: { loading: false, failed: false, data: speed } } : {},
+      trafficTotalWidget: {
+        loading: false,
+        failed: false,
+        data: {
+          downloadTotal: sample.downloadTotal,
+          uploadTotal: sample.uploadTotal
+        }
+      },
+      systemInfoWidget: {
+        loading: false,
+        failed: false,
+        data: { connections: sample.connections, memory: sample.memory }
+      }
+    });
+  } catch (error) {
+    logger.error("[DASHBOARD]", "pollClashConnections: failed", error);
+    lastConnectionsSample = null;
+    setClashWidgetsFailed();
+  } finally {
+    clashRpcPolling = false;
+  }
+}
+function startClashRpcPolling(dataUpdatesId) {
+  if (clashRpcPollTimer) {
+    return;
+  }
+  lastConnectionsSample = null;
+  void pollClashConnections(dataUpdatesId);
+  clashRpcPollTimer = setInterval(() => {
+    void pollClashConnections(dataUpdatesId);
+  }, CLASH_RPC_POLL_INTERVAL_MS);
+}
+function stopClashRpcPolling() {
+  if (clashRpcPollTimer) {
+    clearInterval(clashRpcPollTimer);
+    clashRpcPollTimer = null;
+  }
+  lastConnectionsSample = null;
+}
+function fallBackToClashRpcPolling(dataUpdatesId) {
+  if (dataUpdatesId !== dashboardDataUpdatesId) {
+    return;
+  }
+  socket.resetAll();
+  startClashRpcPolling(dataUpdatesId);
+}
+function getDashboardServiceAvailability() {
+  const service = store.get().servicesInfoWidget;
+  return getServiceAvailability({
+    loading: service.loading,
+    failed: service.failed,
+    running: service.data.prokopRunning
+  });
+}
+function stopDashboardDataUpdates() {
+  dashboardDataUpdatesStarted = false;
+  dashboardDataUpdatesId += 1;
+  if (sectionsRefreshTimer) {
+    clearInterval(sectionsRefreshTimer);
+    sectionsRefreshTimer = null;
+  }
+  sectionsRefreshQueued = false;
+  stopClashRpcPolling();
+  if (clashUpdatesStarted) socket.resetAll();
+  clashUpdatesStarted = false;
+}
+function startDashboardDataUpdates() {
+  if (dashboardDataUpdatesStarted || !dashboardMounted || getDashboardServiceAvailability() === "stopped") {
+    return;
+  }
+  dashboardDataUpdatesStarted = true;
+  const dataUpdatesId = ++dashboardDataUpdatesId;
+  void fetchDashboardSections({ force: true });
+  if (overviewHost) {
+    clashUpdatesStarted = true;
+    void connectToClashSockets(dataUpdatesId);
+  }
+  sectionsRefreshTimer = setInterval(() => {
+    void fetchDashboardSections();
+  }, SECTIONS_REFRESH_INTERVAL_MS);
+}
+function syncDashboardServiceAvailability() {
+  const availability = getDashboardServiceAvailability();
+  const stopped = availability === "stopped";
+  if (stopped !== sectionsStoppedRendered) {
+    void renderSectionsWidget();
+  }
+  if (stopped || availability === "loading") {
+    stopDashboardDataUpdates();
+    return;
+  }
+  startDashboardDataUpdates();
+}
+async function handleChooseOutbound(sectionName, selector, tag) {
+  const sectionsWidget = store.get().sectionsWidget;
+  const section = sectionsWidget.data.find(
+    (item) => item.sectionName === sectionName
+  );
+  if (!section?.withTagSelect || sectionsWidget.selectorSwitchingSections[sectionName] || section.outbounds.some(
+    (outbound) => outbound.code === tag && outbound.selected
+  )) {
+    return;
+  }
+  setSelectorSwitching(sectionName, tag);
+  try {
+    const response = await ProkopShellMethods.setClashApiGroupProxy(
+      selector,
+      tag
+    );
+    if (!response.success) {
+      showToast(_("Failed to switch the node"), "error");
+    }
+    await fetchDashboardSections({ force: true });
+  } catch (error) {
+    logger.error("[DASHBOARD]", "handleChooseOutbound: failed", error);
+    showToast(_("Failed to switch the node"), "error");
+  } finally {
+    setSelectorSwitching(sectionName);
+  }
+}
+function getInitialLatencyProgress(latencyType, tag) {
+  if (latencyType !== "proxy_list") {
+    return void 0;
+  }
+  try {
+    const tags = JSON.parse(tag);
+    if (!Array.isArray(tags)) {
+      return void 0;
+    }
+    const total = tags.filter(
+      (item) => typeof item === "string" && item.length > 0
+    ).length;
+    return total > 0 ? { completed: 0, total, failed: 0 } : void 0;
+  } catch {
+    return void 0;
+  }
+}
+async function handleTestLatency(latencyType, sectionName, tag, timeout) {
+  if (store.get().sectionsWidget.latencyFetchingSections[sectionName]) {
+    return;
+  }
+  setLatencyFetching(
+    sectionName,
+    true,
+    true,
+    getInitialLatencyProgress(latencyType, tag)
+  );
+  let jobId = "";
+  let ownsJobFollow = false;
+  let completed = false;
+  try {
+    const startResponse = await ProkopShellMethods.latencyTestStart(
+      latencyType,
+      sectionName,
+      tag,
+      timeout
+    );
+    if (!startResponse.success) {
+      throw new ActionFailureError(
+        startResponse.error,
+        failureReason(startResponse)
+      );
+    }
+    jobId = startResponse.data.job_id;
+    if (followedLatencyJobs.has(jobId)) {
+      completed = true;
+      return;
+    }
+    followedLatencyJobs.add(jobId);
+    ownsJobFollow = true;
+    const completion = await ProkopShellMethods.waitLatencyTestJob(jobId);
+    if (!completion.success) {
+      throw new ActionFailureError(completion.error, failureReason(completion));
+    }
+    if (!completion.data.success) {
+      throw latencyJobFailure(completion.data);
+    }
+    await completeLatencyTestJob(jobId, sectionName);
+    completed = true;
+  } catch (error) {
+    logger.error("[DASHBOARD]", "handleTestLatency: failed", error);
+    if (!pageUnloading) {
+      const failure = failureFromError(error);
+      showToast(
+        failureText(failure, _("Latency test failed")),
+        failureToastType(failure)
+      );
+    }
+  } finally {
+    if (ownsJobFollow) {
+      followedLatencyJobs.delete(jobId);
+    }
+    if (!completed) {
+      setLatencyFetching(sectionName, false);
+    }
+  }
+}
+function formatUrlTestModalValue(value) {
+  if (typeof value === "boolean") {
+    return value ? _("Yes") : _("No");
+  }
+  const text = `${value ?? ""}`.trim();
+  return text || _("No");
+}
+function getUrlTestLatencyClass(latency) {
+  if (!latency) {
+    return "fkp_dashboard-page__outbound-grid__item__latency--empty";
+  }
+  if (latency < 800) {
+    return "fkp_dashboard-page__outbound-grid__item__latency--green";
+  }
+  if (latency < 1500) {
+    return "fkp_dashboard-page__outbound-grid__item__latency--yellow";
+  }
+  return "fkp_dashboard-page__outbound-grid__item__latency--red";
+}
+function formatUrlTestLatency(latency) {
+  return latency ? _("%d ms").replace("%d", String(latency)) : "\u2014";
+}
+function renderDetailsUrl(value) {
+  const url = `${value ?? ""}`.trim();
+  if (!/^https?:\/\//i.test(url)) {
+    return E("span", {}, formatUrlTestModalValue(value));
+  }
+  return E(
+    "a",
+    {
+      class: "fkp_dashboard-page__urltest-details__url",
+      href: url,
+      target: "_blank",
+      rel: "noopener noreferrer"
+    },
+    url
+  );
+}
+function getDetectedCountryFlag(country) {
+  const code = `${country || ""}`.trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(code)) {
+    return "";
+  }
+  return String.fromCodePoint(
+    ...code.split("").map((char) => 127462 + char.charCodeAt(0) - 65)
+  );
+}
+function renderDetailsMemberName(member) {
+  const countryFlag = getDetectedCountryFlag(member.country);
+  if (!countryFlag) {
+    return renderFlagEmojis(member.displayName);
+  }
+  return [
+    E(
+      "span",
+      { class: "fkp_dashboard-page__urltest-details__country-badge" },
+      countryFlag
+    ),
+    ...renderFlagEmojis(member.displayName)
+  ];
+}
+function renderUrlTestSelectedValue(info) {
+  const selectedMember = info.outbounds.find((member) => member.selected);
+  const selectedName = selectedMember?.displayName || info.selectedName || info.selectedCode || "";
+  const name = formatUrlTestModalValue(selectedName);
+  if (name === _("No")) {
+    return E("span", {}, name);
+  }
+  return E(
+    "span",
+    { class: "fkp_dashboard-page__urltest-details__selected-value" },
+    [
+      E(
+        "span",
+        { class: "fkp_dashboard-page__urltest-details__selected-name" },
+        selectedMember ? renderDetailsMemberName(selectedMember) : name
+      ),
+      ...selectedMember?.type ? [
+        E(
+          "span",
+          { class: "fkp_dashboard-page__urltest-details__selected-type" },
+          selectedMember.type
+        )
+      ] : [],
+      ...selectedMember ? [
+        E(
+          "span",
+          { class: getUrlTestLatencyClass(selectedMember.latency) },
+          formatUrlTestLatency(selectedMember.latency)
+        )
+      ] : []
+    ]
+  );
+}
+function renderUrlTestInfoModal(outbound) {
+  const info = outbound.urlTestInfo;
+  if (!info) {
+    return E("div", {}, _("URLTest details are unavailable"));
+  }
+  const fields = [
+    {
+      label: _("Selected"),
+      children: [renderUrlTestSelectedValue(info)]
+    },
+    { label: _("Testing URL"), children: [renderDetailsUrl(info.url)] },
+    { label: _("Interval"), value: info.interval },
+    { label: _("Tolerance"), value: info.tolerance },
+    { label: _("Idle timeout"), value: info.idleTimeout },
+    {
+      label: _("Interrupt connections"),
+      value: info.interruptExistConnections
+    }
+  ];
+  return E("div", { class: "fkp_dashboard-page__urltest-details" }, [
+    E(
+      "dl",
+      { class: "fkp_dashboard-page__urltest-details__params" },
+      fields.map(
+        ({ label, value, children }) => E("div", { class: "fkp_dashboard-page__urltest-details__param" }, [
+          E("dt", {}, label),
+          E(
+            "dd",
+            {},
+            children || [E("span", {}, formatUrlTestModalValue(value))]
+          )
+        ])
+      )
+    ),
+    E("div", { class: "fkp_dashboard-page__urltest-details__outbounds" }, [
+      E(
+        "div",
+        { class: "fkp_dashboard-page__urltest-details__outbounds-title" },
+        _("Nodes")
+      ),
+      E(
+        "div",
+        { class: "fkp_dashboard-page__urltest-details__table" },
+        info.outbounds.length ? info.outbounds.map(
+          (member) => E(
+            "div",
+            {
+              class: [
+                "fkp_dashboard-page__urltest-details__row",
+                member.selected ? "fkp_dashboard-page__urltest-details__row--active" : ""
+              ].filter(Boolean).join(" ")
+            },
+            [
+              E(
+                "div",
+                {
+                  class: "fkp_dashboard-page__urltest-details__row-name"
+                },
+                [
+                  E("b", {}, renderDetailsMemberName(member)),
+                  ...member.type ? [
+                    E(
+                      "span",
+                      {
+                        class: "fkp_dashboard-page__urltest-details__row-type"
+                      },
+                      member.type
+                    )
+                  ] : []
+                ]
+              ),
+              E(
+                "div",
+                {
+                  class: "fkp_dashboard-page__urltest-details__row-meta"
+                },
+                [
+                  E(
+                    "span",
+                    { class: getUrlTestLatencyClass(member.latency) },
+                    formatUrlTestLatency(member.latency)
+                  )
+                ]
+              )
+            ]
+          )
+        ) : [
+          E(
+            "div",
+            { class: "fkp_dashboard-page__urltest-details__empty" },
+            _("Node list is empty")
+          )
+        ]
+      )
+    ]),
+    // Close first in '.right': LuCI's Escape clicks the first
+    // '.right > button' of the modal (UC-134).
+    E("div", { class: "right fkp_dashboard-page__urltest-details__footer" }, [
+      E(
+        "button",
+        {
+          type: "button",
+          class: "btn cbi-button cbi-button-neutral",
+          click: () => {
+            ui.hideModal();
+          }
+        },
+        _("Close")
+      ),
+      ...isReadonlyMode() ? [] : [
+        E(
+          "button",
+          {
+            type: "button",
+            class: "btn cbi-button cbi-button-action",
+            click: () => renderUrlTestEditorModal(outbound)
+          },
+          _("Edit")
+        )
+      ]
+    ])
+  ]);
+}
+function renderUrlTestEditorModal(outbound) {
+  const info = outbound.urlTestInfo;
+  if (!info) return;
+  const input = (value, type = "text") => E("input", { type, value: `${value ?? ""}`, class: "cbi-input-text" });
+  const url = input(info.url);
+  const interval = input(info.interval);
+  const tolerance = input(info.tolerance, "number");
+  const idleTimeout = input(info.idleTimeout);
+  const interrupt = E("input", { type: "checkbox" });
+  interrupt.checked = Boolean(info.interruptExistConnections);
+  const controls = [url, interval, tolerance, idleTimeout, interrupt];
+  const progress = E("div", {
+    class: "alert-message notice",
+    style: "display:none; margin-top:1em"
+  });
+  const actionButtons = [];
+  let activeButton = null;
+  let activeButtonLabel = "";
+  const setBusy = (busy2, message = "") => {
+    controls.forEach((control) => {
+      control.disabled = busy2;
+    });
+    actionButtons.forEach((button) => {
+      button.disabled = busy2;
+    });
+    progress.style.display = message ? "" : "none";
+    progress.textContent = message;
+    if (activeButton) {
+      activeButton.textContent = busy2 ? _("Applying\u2026") : activeButtonLabel;
+    }
+  };
+  const row = renderUrlTestEditorRow;
+  const apply = async (change, isReset) => {
+    const result = await runUrlTestChange(
+      {
+        change,
+        reload: async () => {
+          setBusy(true, _("Applying Prokop configuration\u2026"));
+          return runServiceActionJob("reload");
+        },
+        refresh: async () => {
+          setBusy(true, _("Refreshing Dashboard\u2026"));
+          await fetchDashboardSections({ force: true });
+        }
+      },
+      isReset
+    );
+    if (result.close) {
+      ui.hideModal();
+    } else {
+      setBusy(false);
+    }
+    showToast(result.toast.text, result.toast.type, result.toast.duration);
+  };
+  const save = () => apply(async () => {
+    setBusy(true, _("Saving URLTest settings\u2026"));
+    const response = await ProkopShellMethods.saveUrlTestOverride(
+      info.sectionName || "",
+      info.code,
+      url.value.trim(),
+      interval.value.trim(),
+      tolerance.value.trim(),
+      idleTimeout.value.trim(),
+      interrupt.checked
+    );
+    if ((response.code ?? 0) !== 0)
+      throw new Error(response.stderr || "save failed");
+  }, false);
+  const reset = () => apply(async () => {
+    setBusy(true, _("Removing user settings\u2026"));
+    const response = await ProkopShellMethods.resetUrlTestOverride(
+      info.sectionName || "",
+      info.code
+    );
+    if ((response.code ?? 0) !== 0)
+      throw new Error(response.stderr || "reset failed");
+  }, true);
+  const action = (fn) => async (event) => {
+    activeButton = event.currentTarget;
+    activeButtonLabel = activeButton.textContent || "";
+    try {
+      await fn();
+    } catch (error) {
+      logger.error("[DASHBOARD]", "URLTest override failed", error);
+      setBusy(false);
+      showToast(_("Failed to save URLTest settings"), "error");
+    }
+  };
+  const resetButton = E(
+    "button",
+    {
+      type: "button",
+      class: "btn cbi-button cbi-button-negative",
+      click: action(reset)
+    },
+    _("Use source values")
+  );
+  const saveButton = E(
+    "button",
+    {
+      type: "button",
+      class: "btn cbi-button cbi-button-positive",
+      click: action(save)
+    },
+    _("Save")
+  );
+  const cancelButton = E(
+    "button",
+    { type: "button", class: "btn", click: () => ui.hideModal() },
+    _("Cancel")
+  );
+  actionButtons.push(resetButton, saveButton, cancelButton);
+  ui.showModal(
+    `${_("Edit URLTest")}: ${info.displayName}`,
+    E("div", {}, [
+      E("div", { class: "fkp_dashboard-page__urltest-details__params" }, [
+        row(_("Testing URL"), url),
+        row(_("Interval"), interval),
+        row(_("Tolerance"), tolerance),
+        row(_("Idle timeout"), idleTimeout),
+        row(_("Interrupt connections"), interrupt)
+      ]),
+      progress,
+      // Cancel first in '.right': LuCI's Escape clicks it (UC-134).
+      E("div", { class: "right fkp_dashboard-page__urltest-details__footer" }, [
+        cancelButton,
+        resetButton,
+        saveButton
+      ])
+    ])
+  );
+}
+function handleShowUrlTestInfo(outbound) {
+  if (!outbound.urlTestInfo) {
+    return;
+  }
+  ui.showModal(
+    `${_("URLTest details")}: ${outbound.urlTestInfo.displayName || outbound.displayName}`,
+    renderUrlTestInfoModal(outbound)
+  );
+}
+function renderPrioritySelectedValue(info) {
+  const selectedMember = info.outbounds.find((member) => member.selected);
+  const selectedName = selectedMember?.displayName || info.selectedName || info.selectedCode || "";
+  const name = formatUrlTestModalValue(selectedName);
+  if (name === _("No")) {
+    return E("span", {}, name);
+  }
+  return E(
+    "span",
+    { class: "fkp_dashboard-page__urltest-details__selected-value" },
+    [
+      E(
+        "span",
+        {
+          class: [
+            "fkp_dashboard-page__urltest-details__selected-name",
+            selectedMember ? "fkp_dashboard-page__urltest-details__priority-name" : ""
+          ].filter(Boolean).join(" ")
+        },
+        selectedMember ? renderPriorityMemberName(selectedMember) : name
+      ),
+      ...selectedMember?.type ? [
+        E(
+          "span",
+          { class: "fkp_dashboard-page__urltest-details__selected-type" },
+          selectedMember.type
+        )
+      ] : [],
+      ...selectedMember ? [
+        E(
+          "span",
+          { class: getUrlTestLatencyClass(selectedMember.latency) },
+          formatUrlTestLatency(selectedMember.latency)
+        )
+      ] : []
+    ]
+  );
+}
+function renderPriorityMemberName(member) {
+  const levelName = member.levelName || _("Level");
+  return [
+    E(
+      "span",
+      { class: "fkp_dashboard-page__urltest-details__priority-number" },
+      `#${member.levelIndex + 1}`
+    ),
+    E(
+      "span",
+      { class: "fkp_dashboard-page__urltest-details__priority-level" },
+      levelName
+    ),
+    E(
+      "span",
+      { class: "fkp_dashboard-page__urltest-details__priority-node" },
+      renderDetailsMemberName(member)
+    )
+  ];
+}
+function renderPriorityInfoModal(outbound) {
+  const info = outbound.priorityInfo;
+  if (!info) {
+    return E("div", {}, _("Priority details are unavailable"));
+  }
+  const fields = [
+    {
+      label: _("Selected"),
+      children: [renderPrioritySelectedValue(info)]
+    },
+    { label: _("Check URL"), children: [renderDetailsUrl(info.healthUrl)] },
+    {
+      label: _("Check interval"),
+      value: info.activeCheckInterval
+    },
+    { label: _("Unavailability timeout"), value: info.checkTimeout },
+    {
+      label: _("Higher-level check interval"),
+      value: info.recoveryCheckInterval
+    },
+    {
+      label: _("Select the fastest node"),
+      value: info.pickFastest
+    },
+    {
+      label: _("Automatically select the fastest node in the current level"),
+      value: info.switchToFasterSamePriority
+    },
+    ...info.switchToFasterSamePriority ? [
+      {
+        label: _("Faster server search interval"),
+        value: info.fastestCheckInterval
+      }
+    ] : [],
+    {
+      label: _("Interrupt connections"),
+      value: info.interruptExistConnections
+    }
+  ];
+  return E("div", { class: "fkp_dashboard-page__urltest-details" }, [
+    E(
+      "dl",
+      { class: "fkp_dashboard-page__urltest-details__params" },
+      fields.map(
+        ({ label, value, children }) => E("div", { class: "fkp_dashboard-page__urltest-details__param" }, [
+          E("dt", {}, label),
+          E(
+            "dd",
+            {},
+            children || [E("span", {}, formatUrlTestModalValue(value))]
+          )
+        ])
+      )
+    ),
+    E("div", { class: "fkp_dashboard-page__urltest-details__outbounds" }, [
+      E(
+        "div",
+        { class: "fkp_dashboard-page__urltest-details__outbounds-title" },
+        _("Nodes")
+      ),
+      E(
+        "div",
+        { class: "fkp_dashboard-page__urltest-details__table" },
+        info.outbounds.length ? info.outbounds.map(
+          (member) => E(
+            "div",
+            {
+              class: [
+                "fkp_dashboard-page__urltest-details__row",
+                member.selected ? "fkp_dashboard-page__urltest-details__row--active" : ""
+              ].filter(Boolean).join(" ")
+            },
+            [
+              E(
+                "div",
+                {
+                  class: "fkp_dashboard-page__urltest-details__row-name"
+                },
+                [
+                  E(
+                    "b",
+                    {
+                      class: "fkp_dashboard-page__urltest-details__priority-name"
+                    },
+                    renderPriorityMemberName(member)
+                  ),
+                  ...member.type ? [
+                    E(
+                      "span",
+                      {
+                        class: "fkp_dashboard-page__urltest-details__row-type"
+                      },
+                      member.type
+                    )
+                  ] : []
+                ]
+              ),
+              E(
+                "div",
+                {
+                  class: "fkp_dashboard-page__urltest-details__row-meta"
+                },
+                [
+                  E(
+                    "span",
+                    { class: getUrlTestLatencyClass(member.latency) },
+                    formatUrlTestLatency(member.latency)
+                  )
+                ]
+              )
+            ]
+          )
+        ) : [
+          E(
+            "div",
+            { class: "fkp_dashboard-page__urltest-details__empty" },
+            _("Node list is empty")
+          )
+        ]
+      )
+    ]),
+    E("div", { class: "right fkp_dashboard-page__urltest-details__footer" }, [
+      E(
+        "button",
+        {
+          type: "button",
+          class: "btn cbi-button cbi-button-neutral",
+          click: () => {
+            ui.hideModal();
+          }
+        },
+        _("Close")
+      )
+    ])
+  ]);
+}
+function handleShowPriorityInfo(outbound) {
+  if (!outbound.priorityInfo) {
+    return;
+  }
+  ui.showModal(
+    `${_("Priority details")}: ${outbound.priorityInfo.displayName || outbound.displayName}`,
+    renderPriorityInfoModal(outbound)
+  );
+}
+async function handleUpdateSubscription(section) {
+  if (store.get().sectionsWidget.subscriptionUpdatingSections[section.sectionName]) {
+    return;
+  }
+  setSubscriptionUpdating(section.sectionName, true, true);
+  let jobId = "";
+  let ownsJobFollow = false;
+  try {
+    const startResponse = await ProkopShellMethods.subscriptionUpdateStart(
+      section.sectionName
+    );
+    if (!startResponse.success) {
+      throw new Error(startResponse.error);
+    }
+    jobId = startResponse.data.job_id;
+    markUiActionOwned("subscription", jobId);
+    if (followedSubscriptionJobs.has(jobId)) {
+      return;
+    }
+    followedSubscriptionJobs.add(jobId);
+    ownsJobFollow = true;
+    const response = await ProkopShellMethods.waitSubscriptionUpdateJob(jobId);
+    await completeSubscriptionUpdateJob(jobId, section.sectionName, response);
+  } catch (error) {
+    logger.error("[DASHBOARD]", "handleUpdateSubscription: failed", error);
+    if (!pageUnloading) {
+      const message = error instanceof Error ? error.message : _("Failed to update subscriptions");
+      setSubscriptionUpdating(section.sectionName, false);
+      if (!isTransientRpcError(message)) {
+        showToast(subscriptionUpdateErrorMessage(message), "error");
+      }
+    }
+  } finally {
+    if (ownsJobFollow) {
+      followedSubscriptionJobs.delete(jobId);
+    }
+  }
+}
+function shallowRecordEqual(left, right) {
+  const leftKeys = Object.keys(left);
+  const rightKeys = Object.keys(right);
+  if (leftKeys.length !== rightKeys.length) {
+    return false;
+  }
+  return leftKeys.every((key) => left[key] === right[key]);
+}
+function canUpdateLatencyProgressInline(prev, next) {
+  return prev.loading === next.loading && prev.failed === next.failed && prev.stale === next.stale && prev.data === next.data && shallowRecordEqual(
+    prev.latencyFetchingSections,
+    next.latencyFetchingSections
+  ) && shallowRecordEqual(
+    prev.subscriptionUpdatingSections,
+    next.subscriptionUpdatingSections
+  ) && shallowRecordEqual(
+    prev.selectorSwitchingSections,
+    next.selectorSwitchingSections
+  );
+}
+function findLatencyTestButton(container, sectionName) {
+  return Array.from(
+    container.querySelectorAll(
+      `.${LATENCY_TEST_BUTTON_CLASS}`
+    )
+  ).find((button) => button.dataset.latencySection === sectionName);
+}
+function updateLatencyProgressInline(sectionsWidget) {
+  const container = document.getElementById("dashboard-sections-grid");
+  if (!container) {
+    return false;
+  }
+  for (const section of sectionsWidget.data) {
+    if (!sectionsWidget.latencyFetchingSections[section.sectionName]) {
+      continue;
+    }
+    const button = findLatencyTestButton(container, section.sectionName);
+    const label = button?.querySelector(
+      `.${LATENCY_TEST_BUTTON_LABEL_CLASS}`
+    );
+    if (!label) {
+      return false;
+    }
+    const text = getLatencyTestLabel(
+      sectionsWidget.latencyProgressSections[section.sectionName]
+    );
+    if (label.textContent !== text) {
+      label.textContent = text;
+    }
+  }
+  return true;
+}
+async function renderSectionsWidget() {
+  logger.debug("[DASHBOARD]", "renderSectionsWidget");
+  const sectionsWidget = store.get().sectionsWidget;
+  const container = document.getElementById("dashboard-sections-grid");
+  if (!container) {
+    return;
+  }
+  const stopped = getDashboardServiceAvailability() === "stopped";
+  sectionsStoppedRendered = stopped;
+  if (stopped || sectionsWidget.loading || sectionsWidget.failed) {
+    const renderedWidget = renderSections({
+      loading: sectionsWidget.loading,
+      failed: sectionsWidget.failed,
+      stopped,
+      stoppedActions: stopped ? renderStartServiceAction() : void 0,
+      section: {
+        code: "",
+        sectionName: "",
+        displayName: "",
+        outbounds: [],
+        withTagSelect: false
+      },
+      onTestLatency: () => {
+      },
+      onChooseOutbound: () => {
+      },
+      onShowUrlTestInfo: () => {
+      },
+      onShowPriorityInfo: () => {
+      },
+      onUpdateSubscription: () => {
+      },
+      latencyFetching: false,
+      latencyProgress: void 0,
+      subscriptionUpdating: false,
+      selectorSwitchingTag: void 0,
+      isPriorityMembersExpanded: () => false,
+      onPriorityMembersToggle: () => {
+      }
+    });
+    return preserveScrollForPage(() => {
+      container.replaceChildren(renderedWidget);
+    });
+  }
+  const renderedWidgets = sectionsWidget.data.map(
+    (section) => renderSections({
+      loading: sectionsWidget.loading,
+      failed: sectionsWidget.failed,
+      section,
+      latencyFetching: Boolean(
+        sectionsWidget.latencyFetchingSections[section.sectionName]
+      ),
+      latencyProgress: sectionsWidget.latencyProgressSections[section.sectionName],
+      subscriptionUpdating: Boolean(
+        sectionsWidget.subscriptionUpdatingSections[section.sectionName]
+      ),
+      selectorSwitchingTag: sectionsWidget.selectorSwitchingSections[section.sectionName],
+      readonly: isReadonlyMode(),
+      isPriorityMembersExpanded: (outbound) => priorityMembersState.isExpanded(section.sectionName, outbound.code),
+      onPriorityMembersToggle: (outbound, open) => {
+        priorityMembersState.setExpanded(
+          section.sectionName,
+          outbound.code,
+          open
+        );
+      },
+      onTestLatency: (tag) => {
+        if (section.withTagSelect) {
+          if (Array.isArray(tag)) {
+            return handleTestLatency(
+              "proxy_list",
+              section.sectionName,
+              JSON.stringify(tag)
+            );
+          }
+          return handleTestLatency("group", section.sectionName, tag);
+        }
+        return handleTestLatency(
+          "proxy",
+          section.sectionName,
+          Array.isArray(tag) ? JSON.stringify(tag) : tag,
+          section.latencyTestTimeout
+        );
+      },
+      onChooseOutbound: (sectionName, selector, tag) => {
+        void handleChooseOutbound(sectionName, selector, tag);
+      },
+      onShowUrlTestInfo: (outbound) => {
+        handleShowUrlTestInfo(outbound);
+      },
+      onShowPriorityInfo: (outbound) => {
+        handleShowPriorityInfo(outbound);
+      },
+      onUpdateSubscription: (section2) => {
+        void handleUpdateSubscription(section2);
+      }
+    })
+  );
+  return preserveScrollForPage(() => {
+    const staleNotice = renderSectionsStaleNotice(sectionsWidget);
+    replaceChildrenKeepingFocus(
+      container,
+      ...staleNotice ? [staleNotice] : [],
+      ...renderedWidgets
+    );
+  });
+}
+async function onStoreUpdate(next, prev, diff) {
+  if (diff.sectionsWidget) {
+    const inlineUpdated = canUpdateLatencyProgressInline(
+      prev.sectionsWidget,
+      next.sectionsWidget
+    ) && updateLatencyProgressInline(next.sectionsWidget);
+    if (!inlineUpdated) {
+      renderSectionsWidget();
+    }
+  }
+  if (diff.servicesInfoWidget) {
+    syncDashboardServiceAvailability();
+  }
+  if (diff.bandwidthWidget || diff.systemInfoWidget || diff.servicesInfoWidget || diff.sectionsWidget) {
+    renderOverviewCards();
+  }
+}
+async function onPageMount() {
+  onPageUnmount();
+  dashboardMounted = true;
+  dashboardMountId += 1;
+  const mountId3 = dashboardMountId;
+  overviewHost = Boolean(document.getElementById("dashboard-overview"));
+  if (overviewHost) {
+    void refreshHealth(mountId3);
+    void refreshAutotune(mountId3);
+    healthRefreshTimer = setInterval(() => {
+      void refreshHealth(mountId3);
+      if (Date.now() - autotuneLoadedAt >= AUTOTUNE_REFRESH_INTERVAL_MS)
+        void refreshAutotune(mountId3);
+    }, 1e4);
+  }
+  const hasRuntimeSnapshot = Boolean(getCachedRuntimeUiState());
+  if (!hasRuntimeSnapshot) {
+    const uiState = await refreshRuntimeUiState({ force: true });
+    if (!dashboardMounted || mountId3 !== dashboardMountId) {
+      return;
+    }
+    if (!uiState) {
+      void fetchServicesInfo();
+    }
+  }
+  store.subscribe(onStoreUpdate);
+  startActionStateWatcher();
+  void renderSectionsWidget();
+  if (overviewHost) void loadOverviewCounts(mountId3);
+  syncDashboardServiceAvailability();
+  renderOverviewCards();
+  if (hasRuntimeSnapshot) {
+    void refreshRuntimeUiState({ force: true });
+  }
+}
+function onPageUnmount() {
+  dashboardMounted = false;
+  dashboardMountId += 1;
+  if (healthRefreshTimer) clearInterval(healthRefreshTimer);
+  healthRefreshTimer = null;
+  stopDashboardDataUpdates();
+  stopActionStateWatcher();
+  sectionsRefreshQueued = false;
+  sectionsRefreshPromise = null;
+  store.unsubscribe(onStoreUpdate);
+  store.reset(["bandwidthWidget", "trafficTotalWidget", "systemInfoWidget"]);
+}
+var dashboardLifecycleRegistered = false;
+var dashboardControllerInitialized = false;
+function registerLifecycleListeners() {
+  if (dashboardLifecycleRegistered) {
+    return;
+  }
+  dashboardLifecycleRegistered = true;
+  store.subscribe((next, prev, diff) => {
+    if (diff.tabService && next.tabService.current !== prev.tabService.current) {
+      logger.debug(
+        "[DASHBOARD]",
+        "active tab diff event, active tab:",
+        diff.tabService.current
+      );
+      const isDashboardVisible = next.tabService.current === "dashboard";
+      if (isDashboardVisible) {
+        logger.debug(
+          "[DASHBOARD]",
+          "registerLifecycleListeners",
+          "onPageMount"
+        );
+        return onPageMount();
+      }
+      if (!isDashboardVisible) {
+        logger.debug(
+          "[DASHBOARD]",
+          "registerLifecycleListeners",
+          "onPageUnmount"
+        );
+        return onPageUnmount();
+      }
+    }
+  });
+}
+async function initController() {
+  if (dashboardControllerInitialized) {
+    return;
+  }
+  dashboardControllerInitialized = true;
+  onMount("dashboard-status").then(() => {
+    logger.debug("[DASHBOARD]", "initController", "onMount");
+    registerLifecycleListeners();
+    if (store.get().tabService.current === "dashboard" || isActiveLuciTab("dashboard")) {
+      onPageMount();
+    }
+  });
+}
+
+// src/prokop/ui/styles.ts
+var BREAKPOINTS = {
+  medium: 1279,
+  narrow: 899,
+  phone: 599
+};
+var styles3 = `
+:root {
+    --fkp-space-1: 4px;
+    --fkp-space-2: 8px;
+    --fkp-space-3: 12px;
+    --fkp-space-4: 16px;
+    --fkp-space-5: 24px;
+    --fkp-tone-success: var(--success-color-medium, #2e7d32);
+    --fkp-tone-warning: var(--warn-color-medium, #b26a00);
+    --fkp-tone-error: var(--error-color-medium, #c62828);
+    --fkp-tone-loading: var(--primary-color-high, #1565c0);
+    --fkp-tone-neutral: var(--text-color-medium, #616161);
+    --fkp-tone-muted: var(--text-color-low, #9e9e9e);
+    --fkp-border: var(--border-color-medium, rgba(127, 127, 127, 0.35));
+}
+
+.fkp-status {
+    display: inline-block;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 1px var(--fkp-space-2);
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    font-size: 0.9em;
+    line-height: 1.5;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+.fkp-status--success { color: var(--fkp-tone-success); }
+.fkp-status--warning { color: var(--fkp-tone-warning); }
+.fkp-status--error { color: var(--fkp-tone-error); }
+.fkp-status--loading { color: var(--fkp-tone-loading); }
+.fkp-status--neutral { color: var(--fkp-tone-neutral); }
+.fkp-status--muted { color: var(--fkp-tone-muted); }
+
+.fkp-provenance {
+    display: inline-block;
+    padding: 0 var(--fkp-space-1);
+    border: 1px dashed var(--fkp-border);
+    border-radius: 4px;
+    font-size: 0.8em;
+    color: var(--fkp-tone-neutral);
+    white-space: normal;
+}
+
+.fkp-state {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--fkp-space-2);
+    padding: var(--fkp-space-3) 0;
+    min-width: 0;
+}
+.fkp-state__title { font-weight: 600; overflow-wrap: anywhere; }
+.fkp-state__hint { color: var(--fkp-tone-neutral); overflow-wrap: anywhere; }
+.fkp-state--error .fkp-state__title { color: var(--fkp-tone-error); }
+.fkp-state--loading .fkp-state__title { color: var(--fkp-tone-loading); font-weight: normal; }
+
+.fkp-tech { margin-top: var(--fkp-space-2); max-width: 100%; }
+.fkp-tech > summary { cursor: pointer; color: var(--fkp-tone-neutral); }
+.fkp-tech__content {
+    max-height: 320px;
+    overflow: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font-size: 0.85em;
+}
+
+.fkp-confirm__consequences { margin: var(--fkp-space-2) 0 var(--fkp-space-3) var(--fkp-space-5); }
+.fkp-confirm__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--fkp-space-2);
+}
+
+.fkp-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--fkp-space-2);
+    min-width: 0;
+}
+.fkp-menu {
+    position: relative;
+    display: inline-block;
+}
+.fkp-menu > summary {
+    list-style: none;
+    cursor: pointer;
+    min-width: 32px;
+    text-align: center;
+}
+.fkp-menu > summary::-webkit-details-marker { display: none; }
+.fkp-menu__list {
+    position: absolute;
+    right: 0;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    min-width: max-content;
+    max-width: min(320px, 90vw);
+    margin-top: var(--fkp-space-1);
+    padding: var(--fkp-space-1) 0;
+    border: 1px solid var(--fkp-border);
+    border-radius: 6px;
+    background: var(--background-color-high, #fff);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+.fkp-menu__item {
+    padding: var(--fkp-space-2) var(--fkp-space-4);
+    border: 0;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    white-space: normal;
+    cursor: pointer;
+}
+.fkp-menu__item:hover:not([disabled]) { background: var(--background-color-medium, rgba(127,127,127,0.12)); }
+.fkp-menu__item[disabled] { opacity: 0.5; cursor: default; }
+.fkp-action-danger-text {
+    color: var(--fkp-tone-error) !important;
+}
+`;
+
+// src/prokop/tabs/dashboard/styles.ts
+var styles4 = `
+@font-face {
+    font-family: "Twemoji Country Flags";
+    src: url("/luci-static/resources/view/prokop/fonts/TwemojiCountryFlags.woff2") format("woff2");
+    font-display: swap;
+    font-style: normal;
+    font-weight: normal;
+    unicode-range: U+1F1E6-1F1FF, U+1F3F4, U+E0062-E0063, U+E0065, U+E0067, U+E006C, U+E006E, U+E0073-E0074, U+E0077, U+E007F;
+}
+
+#cbi-${PROKOP_UCI_PACKAGE}-dashboard-_mount_node > .cbi-value-title {
+    display: none;
+}
+
+#cbi-${PROKOP_UCI_PACKAGE}-dashboard-_mount_node > .cbi-value-field {
+    margin-left: 0;
+    width: 100%;
+}
+
+#cbi-${PROKOP_UCI_PACKAGE}-dashboard-_mount_node > div {
+    width: 100%;
+}
+
+#cbi-${PROKOP_UCI_PACKAGE}-dashboard > h3 {
+    display: none;
+}
+
+.fkp_dashboard-page {
+    width: 100%;
+    --dashboard-grid-columns: 4;
+    --dashboard-grid-min-width: 180px;
+}
+
+/* Nodes and groups while Prokop is stopped: a notice and a Start button. */
+.fkp_dashboard-page__stopped {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--fkp-space-3);
+    padding: var(--fkp-space-4);
+    text-align: center;
+}
+
+.fkp-overview__warning {
+    margin: 0 0 var(--fkp-space-3);
+    padding: var(--fkp-space-3) var(--fkp-space-4);
+    border: 1px solid var(--fkp-tone-error);
+    border-left-width: 4px;
+    border-radius: 6px;
+}
+.fkp-overview__warning p { margin: var(--fkp-space-1) 0 var(--fkp-space-2); }
+
+.fkp-overview__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+    gap: var(--fkp-space-3);
+}
+
+.fkp-overview__card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--fkp-space-2);
+    min-width: 0;
+    padding: var(--fkp-space-3) var(--fkp-space-4);
+    border: 1px solid var(--fkp-border);
+    border-radius: 6px;
+}
+.fkp-overview__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--fkp-space-2);
+}
+.fkp-overview__title { margin: 0; font-size: 1.05em; overflow-wrap: anywhere; }
+.fkp-overview__summary { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.fkp-overview__hint { margin: 0; color: var(--fkp-tone-neutral); overflow-wrap: anywhere; }
+.fkp-overview__lines { margin: 0; padding: 0; list-style: none; }
+.fkp-overview__lines li { overflow-wrap: anywhere; }
+.fkp-overview__line--success { color: var(--fkp-tone-success); }
+.fkp-overview__line--warning { color: var(--fkp-tone-warning); }
+.fkp-overview__line--error { color: var(--fkp-tone-error); }
+.fkp-overview__groups { margin: 0; padding: 0; list-style: none; }
+.fkp-overview__groups li {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0 var(--fkp-space-2);
+    padding: 2px 0;
+}
+.fkp-overview__group-name { font-weight: 600; overflow-wrap: anywhere; }
+.fkp-overview__group-node { overflow-wrap: anywhere; }
+.fkp-overview__footer { margin-top: auto; padding-top: var(--fkp-space-1); }
+.fkp-overview__section-title { margin: var(--fkp-space-5) 0 0; }
+
+@media (max-width: ${BREAKPOINTS.narrow}px) {
+    .fkp_dashboard-page {
+        --dashboard-grid-columns: 2;
+    }
+}
+
+@media (max-width: ${BREAKPOINTS.phone}px) {
+    .fkp_dashboard-page {
+        --dashboard-grid-columns: 1;
+        --dashboard-grid-min-width: 0;
+    }
+}
+
+.fkp_dashboard-page__outbound-section {
+    margin-top: 10px;
+    border: 2px var(--background-color-low, lightgray) solid;
+    border-radius: 4px;
+    padding: 10px;
+}
+
+.fkp_dashboard-page__outbound-section__title-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 10px;
+    min-width: 0;
+}
+
+.fkp_dashboard-page__outbound-section__title-section__title {
+    color: var(--text-color-high);
+    font-weight: 700;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.fkp_dashboard-page__outbound-section__title-section__actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    flex: 0 0 auto;
+}
+
+.fkp_dashboard-page .btn.fkp_dashboard-page__outbound-section__subscription-update {
+    min-width: 130px;
+    min-height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.fkp_dashboard-page__outbound-section__subscription-update svg {
+    width: 15px;
+    height: 15px;
+    display: block;
+    flex: 0 0 auto;
+}
+
+.fkp_dashboard-page__outbound-section__subscription-update[disabled] {
+    cursor: not-allowed;
+    opacity: 0.65;
+}
+
+.fkp_dashboard-page .btn.dashboard-sections-grid-item-test-latency {
+    min-width: 99px;
+    min-height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.fkp_dashboard-page .btn.dashboard-sections-grid-item-test-latency svg {
+    width: 15px;
+    height: 15px;
+    display: block;
+    flex: 0 0 auto;
+}
+
+.fkp_dashboard-page .btn.dashboard-sections-grid-item-test-latency[disabled] {
+    cursor: not-allowed;
+    opacity: 0.65;
+}
+
+.fkp_dashboard-page__outbound-grid {
+    margin-top: 5px;
+    display: grid;
+    grid-template-columns: repeat(var(--dashboard-grid-columns), minmax(var(--dashboard-grid-min-width), 1fr));
+    grid-gap: 10px;
+}
+
+.fkp_dashboard-page__subscription-meta {
+    --subscription-meta-action-size: 28px;
+    --subscription-meta-action-gap: 6px;
+    grid-column: 1 / -1;
+    border: 2px var(--background-color-low, lightgray) solid;
+    border-radius: 4px;
+    padding: 8px 10px;
+    background: var(--background-color-high, transparent);
+}
+
+.fkp_dashboard-page__subscription-meta__main {
+    display: flex;
+    align-items: center;
+    gap: 6px 10px;
+    min-width: 0;
+}
+
+.fkp_dashboard-page__subscription-meta__heading {
+    flex: 0 0 auto;
+    color: var(--text-color-high);
+    font-weight: 700;
+    line-height: 1.25;
+    white-space: nowrap;
+}
+
+.fkp_dashboard-page__subscription-meta__title {
+    flex: 0 1 auto;
+    width: max-content;
+    max-width: min(28ch, 30%);
+    min-width: min-content;
+    color: var(--text-color-high);
+    font-weight: 700;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.fkp_dashboard-page__subscription-meta__facts {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px 12px;
+}
+
+.fkp_dashboard-page__subscription-meta__fact {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    min-width: 0;
+    line-height: 1.25;
+}
+
+.fkp_dashboard-page__subscription-meta__fact-key {
+    color: var(--text-color-medium);
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.fkp_dashboard-page__subscription-meta__fact-value {
+    color: var(--text-color-high);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.fkp_dashboard-page__subscription-meta__actions {
+    flex: 0 0 auto;
+    margin-left: auto;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.fkp_dashboard-page .btn.fkp_dashboard-page__subscription-meta__action {
+    width: auto;
+    min-width: 0;
+    min-height: 32px;
+    padding: 5px 10px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    line-height: 1.2;
+    margin: 0;
+}
+
+.fkp_dashboard-page__subscription-meta__announce {
+    margin: 6px 0 0;
+    border-left: 3px solid var(--primary-color-medium, dodgerblue);
+    padding: 4px 8px;
+    background: var(--background-color-low, rgba(0, 0, 0, 0.04));
+    color: var(--text-color-medium);
+    font-style: italic;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: ${BREAKPOINTS.narrow}px) {
+    .fkp_dashboard-page__subscription-meta__main {
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .fkp_dashboard-page__subscription-meta__heading,
+    .fkp_dashboard-page__subscription-meta__title {
+        order: 1;
+    }
+
+    .fkp_dashboard-page__subscription-meta__actions {
+        order: 2;
+    }
+
+    .fkp_dashboard-page__subscription-meta__facts {
+        order: 3;
+        flex-basis: 100%;
+    }
+
+    .fkp_dashboard-page__subscription-meta__title {
+        max-width: calc(100% - 92px);
+    }
+}
+
+.fkp_dashboard-page__outbound-grid__item {
+    border: 2px var(--background-color-low, lightgray) solid;
+    border-radius: 4px;
+    padding: 10px;
+    transition: border 0.2s ease;
+    min-width: 0;
+    position: relative;
+}
+
+.fkp_dashboard-page__outbound-grid__item--selectable {
+    cursor: pointer;
+}
+
+.fkp_dashboard-page__outbound-grid__item--selectable:hover {
+    border-color: var(--primary-color-high, dodgerblue);
+}
+
+.fkp_dashboard-page__outbound-grid__item--selectable:focus-visible {
+    border-color: var(--primary-color-high, dodgerblue);
+    outline: 2px solid var(--primary-color-high, dodgerblue);
+    outline-offset: 2px;
+}
+
+.fkp_dashboard-page__outbound-grid__item--active {
+    border-color: var(--success-color-medium, green);
+}
+
+.fkp_dashboard-page__outbound-grid__item--disabled {
+    cursor: default;
+}
+
+.fkp_dashboard-page__outbound-grid__item--switching {
+    border-color: transparent !important;
+    overflow: hidden;
+    cursor: wait;
+}
+
+.fkp_dashboard-page__outbound-grid__item__snake {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+    box-sizing: border-box;
+}
+
+.fkp_dashboard-page__outbound-grid__item__snake rect {
+    stroke: var(--primary-color-high, dodgerblue);
+    stroke-width: 4;
+    animation: fkp-dashboard-selector-snake-svg 1.2s linear infinite;
+}
+
+@keyframes fkp-dashboard-selector-snake-svg {
+    0% {
+        stroke-dasharray: 30 70;
+        stroke-dashoffset: 100;
+    }
+    100% {
+        stroke-dasharray: 30 70;
+        stroke-dashoffset: 0;
+    }
+}
+
+.fkp_dashboard-page__outbound-grid__item__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.fkp_dashboard-page__outbound-grid__item__header b {
+    min-width: 0;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.fkp_dashboard-page .btn.fkp_dashboard-page__outbound-grid__item__copy-button {
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    min-height: 22px;
+    padding: 1px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    line-height: 1;
+}
+
+.fkp_dashboard-page__outbound-grid__item__copy-button svg {
+    width: 13px;
+    height: 13px;
+    display: block;
+    flex: 0 0 auto;
+}
+
+.fkp_dashboard-page__outbound-grid__item__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.fkp_dashboard-page__outbound-grid__item__type {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.fkp_dashboard-page__outbound-grid__item__latency--empty {
+    color: var(--primary-color-low, lightgray);
+}
+
+.fkp_dashboard-page__outbound-grid__item__latency--green {
+    color: var(--success-color-medium, green);
+}
+
+.fkp_dashboard-page__outbound-grid__item__latency--yellow {
+    color: var(--warn-color-medium, orange);
+}
+
+.fkp_dashboard-page__outbound-grid__item__latency--red {
+    color: var(--error-color-medium, red);
+}
+
+.fkp_dashboard-page__priority-members {
+    margin-top: 10px;
+    border-top: 1px solid var(--border-color-low, #eee);
+    padding-top: 8px;
+}
+
+.fkp_dashboard-page__priority-members > summary {
+    cursor: pointer;
+    color: var(--text-color-medium, #666);
+    font-size: 13px;
+    user-select: none;
+}
+
+.fkp_dashboard-page__priority-members__list {
+    display: grid;
+    gap: 3px;
+    margin-top: 8px;
+}
+
+.fkp_dashboard-page__priority-members__level {
+    margin-top: 5px;
+    color: var(--text-color-medium, #666);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.fkp_dashboard-page__priority-members__row {
+    display: grid;
+    grid-template-columns: 20px minmax(0, 1fr) max-content;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    padding: 4px 5px;
+    border-radius: 3px;
+    font-size: 13px;
+}
+
+.fkp_dashboard-page__priority-members__row--selected {
+    background: rgba(54, 179, 126, 0.13);
+}
+
+.fkp_dashboard-page__priority-members__order {
+    color: var(--text-color-medium, #666);
+    font-family: monospace;
+}
+
+.fkp_dashboard-page__priority-members__name {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.fkp_dashboard-page__urltest-details {
+    box-sizing: border-box;
+    width: min(760px, calc(100vw - 56px));
+    max-width: 100%;
+    padding-top: 10px;
+}
+
+.fkp_dashboard-page__urltest-details__params {
+    display: grid;
+    grid-template-columns: minmax(120px, max-content) minmax(0, 1fr);
+    gap: 8px 16px;
+    margin: 0 0 18px;
+}
+
+.fkp_dashboard-page__urltest-details__param {
+    display: contents;
+}
+
+.fkp_dashboard-page__urltest-details__param dt {
+    color: var(--text-color-medium, #666);
+    line-height: 1.35;
+}
+
+.fkp_dashboard-page__urltest-details__param dd {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    margin: 0;
+}
+
+.fkp_dashboard-page__urltest-details__param dd span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.fkp_dashboard-page__urltest-details__url {
+    min-width: 0;
+    color: var(--primary-color-high, #337ab7);
+    text-decoration: none;
+    overflow-wrap: anywhere;
+}
+
+.fkp_dashboard-page__urltest-details__url:hover {
+    text-decoration: underline;
+}
+
+.fkp_dashboard-page__urltest-details__selected-value {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    max-width: 100%;
+    padding: 0;
+    border: 0;
+    color: inherit;
+    background: transparent;
+    box-sizing: border-box;
+    line-height: 1.3;
+}
+
+.fkp_dashboard-page__urltest-details__selected-name {
+    min-width: 0;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.fkp_dashboard-page__urltest-details__selected-type {
+    color: var(--text-color-medium, #666);
+}
+
+.fkp_dashboard-page__urltest-details__outbounds-title {
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.fkp_dashboard-page__urltest-details__table {
+    display: grid;
+    gap: 6px;
+    width: calc(100% + 14px);
+    box-sizing: border-box;
+    max-height: min(46vh, 460px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-right: 14px;
+    scrollbar-gutter: auto;
+}
+
+.fkp_dashboard-page__urltest-details__row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(54px, max-content) 20px;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+    padding: 7px 8px;
+    box-sizing: border-box;
+    border: 1px solid transparent;
+    border-bottom: 1px solid var(--border-color-low, #eee);
+    border-radius: 4px;
+}
+
+.fkp_dashboard-page__urltest-details__row--active {
+    border-color: var(--success-color-low, #2d7d46);
+    background: transparent;
+}
+
+.fkp_dashboard-page__urltest-details__row-name,
+.fkp_dashboard-page__urltest-details__row-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    line-height: 1.3;
+}
+
+.fkp_dashboard-page__urltest-details__row-name {
+    flex-wrap: wrap;
+}
+
+.fkp_dashboard-page__urltest-details__row-name b {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    line-height: 1.3;
+}
+
+.fkp_dashboard-page__urltest-details__priority-name {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 2px 0;
+}
+
+.fkp_dashboard-page__urltest-details__priority-number {
+    margin-right: 6px;
+    color: var(--text-color-medium, #aaa);
+    font-family: monospace;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.fkp_dashboard-page__urltest-details__priority-level {
+    margin-right: 8px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--text-color-medium, #aaa);
+    background: rgba(128, 128, 128, 0.15);
+    font-size: 11px;
+    font-weight: 400;
+}
+
+.fkp_dashboard-page__urltest-details__country-badge {
+    display: inline-flex;
+    align-items: center;
+    user-select: none;
+    margin-right: 6px;
+    padding: 2px 4px;
+    border: 1px solid rgba(128, 128, 128, 0.25);
+    border-radius: 4px;
+    background: rgba(128, 128, 128, 0.15);
+    line-height: 1;
+}
+
+.fkp_dashboard-page__flag-emoji,
+.fkp_dashboard-page__urltest-details__country-badge {
+    font-family: "Twemoji Country Flags";
+    font-style: normal;
+    font-weight: normal;
+}
+
+.fkp_dashboard-page__urltest-details__priority-node {
+    color: var(--text-color-high, #fff);
+    font-weight: 600;
+}
+
+.fkp_dashboard-page__urltest-details__row-type,
+.fkp_dashboard-page__urltest-details__row-meta {
+    color: var(--text-color-medium, #666);
+}
+
+.fkp_dashboard-page__urltest-details__row-type {
+    white-space: nowrap;
+    line-height: 1.3;
+}
+
+.fkp_dashboard-page__urltest-details__row-meta {
+    justify-content: flex-end;
+    white-space: nowrap;
+}
+
+.fkp_dashboard-page__urltest-details__copy-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 20px;
+    width: 20px;
+    min-width: 20px;
+    height: 20px;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.fkp_dashboard-page__urltest-details__copy-button svg {
+    width: 12px;
+    height: 12px;
+}
+
+.fkp_dashboard-page__urltest-details__copy-placeholder {
+    display: block;
+    width: 20px;
+    min-width: 20px;
+    height: 1px;
+}
+
+.fkp_dashboard-page__urltest-details__empty {
+    margin-top: 4px;
+    padding: 24px 0;
+    border: 1px dashed var(--border-color-high, #555);
+    border-radius: 4px;
+    color: var(--text-color-medium, #888);
+    background: rgba(128, 128, 128, 0.02);
+    font-style: italic;
+    text-align: center;
+}
+
+.fkp_dashboard-page__urltest-details__footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 14px;
+}
+
+@media (max-width: ${BREAKPOINTS.phone}px) {
+    .fkp_dashboard-page__urltest-details__params {
+        grid-template-columns: 1fr;
+    }
+
+    .fkp_dashboard-page__urltest-details__row {
+        grid-template-columns: minmax(0, 1fr) 20px;
+    }
+
+    .fkp_dashboard-page__urltest-details__row-meta {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
+    }
+}
+
+`;
+
+// src/prokop/tabs/dashboard/index.ts
+var DashboardTab = {
+  render,
+  renderNodes,
+  initController,
+  styles: styles4
+};
+
+// src/prokop/tabs/diagnostic/renderDiagnostic.ts
+function card2(id, title, hint, body) {
+  return E("section", { class: "fkp-diag-card", id }, [
+    E("h3", { class: "fkp-diag-card__title" }, title),
+    hint ? E("p", { class: "fkp-diag-hint" }, hint) : "",
+    ...body
+  ]);
+}
+function renderDpiValidator() {
+  const explanation = E(
+    "p",
+    { class: "fkp-diag-hint" },
+    _(
+      "Checks that the parameters are valid. It does not test site reachability or bypass effectiveness."
+    )
+  );
+  if (isReadonlyMode())
+    return [
+      explanation,
+      E(
+        "p",
+        { class: "fkp-diag-hint" },
+        _("Available to administrators only.")
+      )
+    ];
+  return [
+    explanation,
+    E("div", { class: "fkp-diag-form" }, [
+      E("label", { class: "fkp-diag-field" }, [
+        E("span", {}, _("Provider")),
+        E("select", { id: "dpi-provider", class: "cbi-input-select" }, [
+          E("option", { value: "zapret" }, "Zapret"),
+          E("option", { value: "zapret2" }, "Zapret2"),
+          E("option", { value: "byedpi" }, "ByeDPI")
+        ])
+      ]),
+      E("label", { class: "fkp-diag-field fkp-diag-field--wide" }, [
+        E("span", {}, _("Strategy")),
+        E("textarea", {
+          id: "dpi-strategy",
+          class: "cbi-input-textarea",
+          maxLength: 4096,
+          rows: 3,
+          spellcheck: false
+        })
+      ])
+    ]),
+    E("div", { class: "fkp-diag-actions" }, [
+      E(
+        "button",
+        { id: "dpi-validate", type: "button", class: "btn cbi-button" },
+        _("Check")
+      ),
+      E("span", { id: "dpi-playground-result", role: "status" })
+    ])
+  ];
+}
+var HELP_URL = "https://github.com/Asofwar/prokop#readme";
+function renderSiteCheck() {
+  return card2(
+    "site-check",
+    _("Check a site or app"),
+    _(
+      "The route is calculated from the configuration; DNS and the HTTPS request are made by the router itself."
+    ),
+    [
+      E("div", { class: "fkp-route__form" }, [
+        E("label", { class: "fkp-diag-field fkp-diag-field--wide" }, [
+          E("span", {}, _("Domain or IP address")),
+          E("input", {
+            id: "site-check-target",
+            class: "cbi-input-text",
+            placeholder: "youtube.com",
+            maxLength: 253
+          })
+        ]),
+        E("label", { class: "fkp-diag-field" }, [
+          E("span", {}, _("Device")),
+          E("select", { id: "site-check-device", class: "cbi-input-select" }, [
+            E("option", { value: "" }, _("Any device"))
+          ])
+        ]),
+        E(
+          "button",
+          {
+            id: "site-check-run",
+            class: "btn cbi-button cbi-button-apply",
+            type: "button"
+          },
+          _("Check")
+        )
+      ]),
+      E("div", { id: "site-check-result", role: "status" })
+    ]
+  );
+}
+function render2() {
+  return E("div", { id: "diagnostic-status", class: "fkp-diag" }, [
+    E("div", { class: "fkp-diag-help" }, [
+      E(
+        "a",
+        { href: HELP_URL, target: "_blank", rel: "noopener noreferrer" },
+        _("Help")
+      )
+    ]),
+    E("section", { class: "fkp-diag-card fkp-diag-system" }, [
+      E("div", { class: "fkp-diag-card__head" }, [
+        E("div", {}, [
+          E("h3", { class: "fkp-diag-card__title" }, _("System check")),
+          E("span", {
+            id: "fkp_diagnostic-last-run",
+            class: "fkp-diag-hint",
+            role: "status"
+          })
+        ]),
+        E("div", { id: "fkp_diagnostic-page-run-check" })
+      ]),
+      E("div", {
+        id: "fkp_diagnostic-run-reason",
+        class: "fkp-diag-run-reason",
+        role: "status"
+      }),
+      E("div", {
+        class: "fkp-diag-checks",
+        id: "fkp_diagnostic-page-checks"
+      })
+    ]),
+    renderSiteCheck(),
+    E(
+      "details",
+      { class: "fkp-diag-card fkp-diag-details", id: "connectivity-matrix" },
+      [
+        E("summary", {}, _("Address set for checking")),
+        E(
+          "p",
+          { class: "fkp-diag-hint" },
+          _(
+            "Checks run on the router and do not prove the path of a LAN client."
+          )
+        ),
+        E("div", { id: "connectivity-rows", class: "fkp-conn" }),
+        E("div", { class: "fkp-diag-actions" }, [
+          E(
+            "button",
+            { id: "connectivity-add", type: "button", class: "btn cbi-button" },
+            `+ ${_("Add address")}`
+          ),
+          E(
+            "button",
+            {
+              id: "connectivity-run",
+              type: "button",
+              class: "btn cbi-button cbi-button-apply"
+            },
+            _("Check all")
+          )
+        ])
+      ]
+    ),
+    E(
+      "details",
+      { class: "fkp-diag-card fkp-diag-details", id: "technical-data" },
+      [
+        E("summary", {}, _("Technical data")),
+        E("div", { class: "fkp-diag-row" }, [
+          E("div", { id: "fkp_diagnostic-page-actions" }),
+          E("div", { id: "fkp_diagnostic-page-system-info" })
+        ]),
+        E("div", { class: "fkp-diag-subsection", id: "dpi-playground" }, [
+          E("h4", {}, _("DPI strategy syntax check")),
+          ...renderDpiValidator()
+        ])
+      ]
+    )
+  ]);
+}
+
+// src/prokop/tabs/diagnostic/checks/updateCheckStore.ts
+function updateCheckStore(check, minified) {
+  const diagnosticsChecks = store.get().diagnosticsChecks;
+  const other = diagnosticsChecks.filter((item) => item.code !== check.code);
+  const smallCheck = {
+    ...check,
+    items: check.items.filter((item) => item.state !== "success")
+  };
+  const targetCheck = minified ? smallCheck : check;
+  store.set({
+    diagnosticsChecks: [...other, targetCheck]
+  });
+}
+
+// src/prokop/tabs/diagnostic/helpers/getMeta.ts
+function getMeta({ allGood, atLeastOneGood }) {
+  if (allGood) {
+    return {
+      state: "success",
+      description: _("Checks passed")
+    };
+  }
+  if (atLeastOneGood) {
+    return {
+      state: "warning",
+      description: _("Issues detected")
+    };
+  }
+  return {
+    state: "error",
+    description: _("Checks failed")
+  };
+}
+
+// src/prokop/tabs/diagnostic/checks/getDnsCheckPresentation.ts
+function getDnsCheckPresentation(data) {
+  const dhcpManagedManually = Boolean(data.dont_touch_dhcp);
+  const dhcpCheckOk = dhcpManagedManually || Boolean(data.dhcp_config_status);
+  const bootstrapCheckRequired = data.bootstrap_dns_required !== 0;
+  const bootstrapCheckOk = !bootstrapCheckRequired || Boolean(data.bootstrap_dns_status);
+  const allGood = Boolean(data.dns_on_router) && dhcpCheckOk && bootstrapCheckOk && Boolean(data.dns_status);
+  const atLeastOneGood = Boolean(data.dns_on_router) || dhcpCheckOk || bootstrapCheckOk || Boolean(data.dns_status);
+  const meta = getMeta({ atLeastOneGood, allGood });
+  const state = dhcpManagedManually && meta.state === "success" ? "warning" : meta.state;
+  const description = dhcpManagedManually && meta.state === "success" ? _("Checks passed with manual DHCP") : meta.description;
+  const dhcpItemState = dhcpManagedManually ? "warning" : data.dhcp_config_status ? "success" : "error";
+  const dhcpItemKey = dhcpManagedManually ? _("DHCP is managed manually") : _("DHCP has DNS server");
+  return {
+    state,
+    description,
+    dhcpItemState,
+    dhcpItemKey
+  };
+}
+
+// src/prokop/tabs/diagnostic/checks/runDnsCheck.ts
+async function runDnsCheck() {
+  const { order, title, code } = DIAGNOSTICS_CHECKS_MAP.DNS;
+  updateCheckStore({
+    order,
+    code,
+    title,
+    description: _("Checking, please wait"),
+    state: "loading",
+    items: []
+  });
+  const dnsChecks = await ProkopShellMethods.checkDNSAvailable();
+  if (!dnsChecks.success) {
+    updateCheckStore({
+      order,
+      code,
+      title,
+      description: _("Cannot receive checks result"),
+      state: "error",
+      items: []
+    });
+    throw new Error("DNS checks failed");
+  }
+  const data = dnsChecks.data;
+  const { state, description, dhcpItemState, dhcpItemKey } = getDnsCheckPresentation(data);
+  updateCheckStore({
+    order,
+    code,
+    title,
+    description,
+    state,
+    items: [
+      ...insertIf(
+        data.bootstrap_dns_required !== 0 && (data.dns_type === "doh" || data.dns_type === "dot" || data.bootstrap_dns_server_count > 1 || !data.bootstrap_dns_status),
+        [
+          {
+            state: data.bootstrap_dns_status ? "success" : "error",
+            key: data.bootstrap_dns_server_count > 1 ? _("Active Bootstrap DNS") : _("Bootstrap DNS"),
+            value: data.bootstrap_dns_server_count > 1 ? `${data.bootstrap_dns_server} (${data.bootstrap_dns_server_index + 1}/${data.bootstrap_dns_server_count})` : data.bootstrap_dns_server
+          }
+        ]
+      ),
+      {
+        state: data.dns_status ? "success" : "error",
+        key: data.dns_server_count > 1 ? _("Active Main DNS") : _("Main DNS"),
+        value: data.dns_server_count > 1 ? `${data.dns_server} [${data.dns_type}] (${data.dns_server_index + 1}/${data.dns_server_count})` : `${data.dns_server} [${data.dns_type}]`
+      },
+      {
+        state: data.dns_on_router ? "success" : "error",
+        key: _("DNS on router"),
+        value: ""
+      },
+      {
+        state: dhcpItemState,
+        key: dhcpItemKey,
+        value: ""
+      }
+    ]
+  });
+  if (state === "error") {
+    throw new Error("DNS checks failed");
+  }
+}
+
+// src/prokop/tabs/diagnostic/checks/runSingBoxCheck.ts
+async function runSingBoxCheck() {
+  const { order, title, code } = DIAGNOSTICS_CHECKS_MAP.SINGBOX;
+  updateCheckStore({
+    order,
+    code,
+    title,
+    description: _("Checking, please wait"),
+    state: "loading",
+    items: []
+  });
+  const singBoxChecks = await ProkopShellMethods.checkSingBox();
+  if (!singBoxChecks.success) {
+    updateCheckStore({
+      order,
+      code,
+      title,
+      description: _("Cannot receive checks result"),
+      state: "error",
+      items: []
+    });
+    throw new Error("Sing-box checks failed");
+  }
+  const data = singBoxChecks.data;
+  const allGood = Boolean(data.sing_box_installed) && Boolean(data.sing_box_version_ok) && Boolean(data.sing_box_service_exist) && Boolean(data.sing_box_autostart_disabled) && Boolean(data.sing_box_process_running) && Boolean(data.sing_box_ports_listening);
+  const atLeastOneGood = Boolean(data.sing_box_installed) || Boolean(data.sing_box_version_ok) || Boolean(data.sing_box_service_exist) || Boolean(data.sing_box_autostart_disabled) || Boolean(data.sing_box_process_running) || Boolean(data.sing_box_ports_listening);
+  const { state, description } = getMeta({ atLeastOneGood, allGood });
+  updateCheckStore({
+    order,
+    code,
+    title,
+    description,
+    state,
+    items: [
+      {
+        state: data.sing_box_installed ? "success" : "error",
+        key: _("Sing-box installed"),
+        value: ""
+      },
+      {
+        state: data.sing_box_version_ok ? "success" : "error",
+        key: _("Sing-box version is compatible (newer than 1.12.4)"),
+        value: ""
+      },
+      {
+        state: data.sing_box_service_exist ? "success" : "error",
+        key: _("Sing-box service exist"),
+        value: ""
+      },
+      {
+        state: data.sing_box_autostart_disabled ? "success" : "error",
+        key: _("Sing-box autostart disabled"),
+        value: ""
+      },
+      {
+        state: data.sing_box_process_running ? "success" : "error",
+        key: _("Sing-box process running"),
+        value: ""
+      },
+      {
+        state: data.sing_box_ports_listening ? "success" : "error",
+        key: _("Sing-box listening ports"),
+        value: ""
+      }
+    ]
+  });
+  if (!atLeastOneGood || !data.sing_box_process_running) {
+    throw new Error("Sing-box checks failed");
+  }
+}
+
+// src/prokop/tabs/diagnostic/checks/runNftCheck.ts
+async function runNftCheck() {
+  const { order, title, code } = DIAGNOSTICS_CHECKS_MAP.NFT;
+  updateCheckStore({
+    order,
+    code,
+    title,
+    description: _("Checking, please wait"),
+    state: "loading",
+    items: []
+  });
+  await RemoteFakeIPMethods.getFakeIpCheck();
+  await RemoteFakeIPMethods.getIpCheck();
+  const nftablesChecks = await ProkopShellMethods.checkNftRules();
+  if (!nftablesChecks.success) {
+    updateCheckStore({
+      order,
+      code,
+      title,
+      description: _("Cannot receive checks result"),
+      state: "error",
+      items: []
+    });
+    throw new Error("Nftables checks failed");
+  }
+  const data = nftablesChecks.data;
+  const allGood = Boolean(data.table_exist) && Boolean(data.rules_mangle_exist) && Boolean(data.rules_mangle_counters) && Boolean(data.rules_mangle_output_exist) && Boolean(data.rules_mangle_output_counters) && Boolean(data.rules_proxy_exist) && Boolean(data.rules_proxy_counters) && !data.rules_other_mark_exist;
+  const atLeastOneGood = Boolean(data.table_exist) || Boolean(data.rules_mangle_exist) || Boolean(data.rules_mangle_counters) || Boolean(data.rules_mangle_output_exist) || Boolean(data.rules_mangle_output_counters) || Boolean(data.rules_proxy_exist) || Boolean(data.rules_proxy_counters) || !data.rules_other_mark_exist;
+  const { state, description } = getMeta({ atLeastOneGood, allGood });
+  updateCheckStore({
+    order,
+    code,
+    title,
+    description,
+    state,
+    items: [
+      {
+        state: data.table_exist ? "success" : "error",
+        key: _("Table exist"),
+        value: ""
+      },
+      {
+        state: data.rules_mangle_exist ? "success" : "error",
+        key: _("Rules mangle exist"),
+        value: ""
+      },
+      {
+        state: data.rules_mangle_counters ? "success" : "warning",
+        key: _("Rules mangle counters"),
+        value: ""
+      },
+      {
+        state: data.rules_mangle_output_exist ? "success" : "error",
+        key: _("Rules mangle output exist"),
+        value: ""
+      },
+      {
+        // Only the router's own connections marked for sing-box count here
+        // (UC-107); none may have been made yet, as for the mangle counters.
+        state: data.rules_mangle_output_counters ? "success" : "warning",
+        key: _("Rules mangle output counters"),
+        value: ""
+      },
+      {
+        state: data.rules_proxy_exist ? "success" : "error",
+        key: _("Rules proxy exist"),
+        value: ""
+      },
+      {
+        state: data.rules_proxy_counters ? "success" : "error",
+        key: _("Rules proxy counters"),
+        value: ""
+      },
+      {
+        state: !data.rules_other_mark_exist ? "success" : "warning",
+        key: !data.rules_other_mark_exist ? _("No other marking rules found") : _("Additional marking rules found"),
+        value: ""
+      }
+    ]
+  });
+  if (!atLeastOneGood) {
+    throw new Error("Nftables checks failed");
+  }
+}
+
+// src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts
+async function runFakeIPCheck() {
+  const { order, title, code } = DIAGNOSTICS_CHECKS_MAP.FAKEIP;
+  updateCheckStore({
+    order,
+    code,
+    title,
+    description: _("Checking, please wait"),
+    state: "loading",
+    items: []
+  });
+  const routerFakeIPResponse = await ProkopShellMethods.checkFakeIP();
+  const checkFakeIPResponse = await RemoteFakeIPMethods.getFakeIpCheck();
+  const checkIPResponse = await RemoteFakeIPMethods.getIpCheck();
+  const routerFakeIPCheckUnavailable = !routerFakeIPResponse.success;
+  const browserFakeIPCheckUnavailable = !checkFakeIPResponse.success;
+  const browserFakeIPCheckMessage = checkFakeIPResponse.success ? "" : checkFakeIPResponse.message;
+  const checks = {
+    singBoxFakeIP: routerFakeIPResponse.success && routerFakeIPResponse.data.fakeip,
+    browserFakeIP: checkFakeIPResponse.success && checkFakeIPResponse.data.fakeip,
+    canComparePublicIP: checkFakeIPResponse.success && checkIPResponse.success,
+    differentIP: checkFakeIPResponse.success && checkIPResponse.success && checkFakeIPResponse.data.IP !== checkIPResponse.data.IP
+  };
+  const fakeIPWorks = checks.singBoxFakeIP && checks.browserFakeIP;
+  const observedFailure = !routerFakeIPCheckUnavailable && !checks.singBoxFakeIP || !browserFakeIPCheckUnavailable && !checks.browserFakeIP;
+  const { state, description } = fakeIPWorks ? checks.differentIP ? { state: "success", description: _("Checks passed") } : {
+    state: "warning",
+    description: _("FakeIP works; public IP comparison is inconclusive")
+  } : !observedFailure ? {
+    state: "warning",
+    description: routerFakeIPCheckUnavailable ? _("Router FakeIP check could not be completed") : _("Browser FakeIP check could not be completed")
+  } : getMeta({
+    allGood: false,
+    atLeastOneGood: checks.singBoxFakeIP || checks.browserFakeIP
+  });
+  updateCheckStore({
+    order,
+    code,
+    title,
+    description,
+    state,
+    items: [
+      {
+        state: routerFakeIPCheckUnavailable ? "warning" : checks.singBoxFakeIP ? "success" : "error",
+        key: routerFakeIPCheckUnavailable ? _("Router FakeIP check could not be completed") : checks.singBoxFakeIP ? _("Sing-box FakeIP DNS works") : _("Sing-box FakeIP DNS does not work"),
+        value: routerFakeIPResponse.success ? routerFakeIPResponse.data.IP : ""
+      },
+      {
+        state: browserFakeIPCheckUnavailable ? "warning" : checks.browserFakeIP ? "success" : "error",
+        key: browserFakeIPCheckUnavailable ? _("Browser FakeIP check could not be completed") : checks.browserFakeIP ? _("Browser is using FakeIP correctly") : _("Browser is not using FakeIP"),
+        value: browserFakeIPCheckMessage
+      },
+      ...insertIf(checks.browserFakeIP, [
+        {
+          state: checks.differentIP ? "success" : "warning",
+          key: !checks.canComparePublicIP ? _("Could not compare FakeIP and control public IPs") : checks.differentIP ? _("FakeIP and control checks use different public IPs") : _("FakeIP and control checks use the same public IP"),
+          value: ""
+        }
+      ])
+    ]
+  });
+}
+
+// src/prokop/tabs/diagnostic/checks/getCheckItemsMeta.ts
+function getCheckItemsMeta(items) {
+  if (items.some((item) => item.state === "error")) {
+    return {
+      state: "error",
+      description: _("Checks failed")
+    };
+  }
+  if (items.some((item) => item.state === "warning")) {
+    return {
+      state: "warning",
+      description: _("Issues detected")
+    };
+  }
+  return {
+    state: "success",
+    description: _("Checks passed")
+  };
+}
+
+// src/prokop/tabs/diagnostic/checks/runZapretCheck.ts
+async function runZapretCheck() {
+  const { order, title, code } = DIAGNOSTICS_CHECKS_MAP.ZAPRET;
+  updateCheckStore({
+    order,
+    code,
+    title,
+    description: _("Checking, please wait"),
+    state: "loading",
+    items: []
+  });
+  const zapretStatus = await ProkopShellMethods.getZapretStatus();
+  if (!zapretStatus.success) {
+    updateCheckStore({
+      order,
+      code,
+      title,
+      description: _("Cannot receive checks result"),
+      state: "error",
+      items: []
+    });
+    throw new Error("Zapret checks failed");
+  }
+  const data = zapretStatus.data;
+  const providerAvailable = Boolean(data.provider_available ?? data.installed);
+  const packageInstalled = Boolean(data.package_installed);
+  const hasZapretRules = Number(data.enabled_rule_count || 0) > 0;
+  const queueOverlap = Boolean(data.queue_overlap);
+  const standaloneServiceRunning = Boolean(data.standalone_service_running);
+  const standaloneConflict = hasZapretRules && standaloneServiceRunning;
+  const expectedProcesses = Number(data.expected_process_count || 0);
+  const runningProcesses = Number(data.running_process_count || 0);
+  const supervisorProcesses = Number(data.supervisor_process_count || 0);
+  const prokopRuntimeReady = !hasZapretRules || runningProcesses === expectedProcesses && supervisorProcesses === expectedProcesses;
+  const unexpectedRuntime = !hasZapretRules && (runningProcesses > 0 || supervisorProcesses > 0);
+  const outboundsConfigured = Boolean(data.outbounds_configured);
+  const items = [
+    {
+      state: providerAvailable ? "success" : hasZapretRules ? "error" : "warning",
+      key: providerAvailable ? _("Zapret provider binary is available") : _("Zapret provider binary is not available"),
+      value: data.provider_path || ""
+    },
+    {
+      state: packageInstalled ? "success" : hasZapretRules ? "error" : "warning",
+      key: packageInstalled ? _("Zapret package is installed") : _("Zapret package is not installed"),
+      value: ""
+    },
+    {
+      state: hasZapretRules && !providerAvailable ? "error" : "success",
+      key: hasZapretRules ? _("There are rules using Zapret") : _("No rules use Zapret"),
+      value: ""
+    },
+    {
+      state: unexpectedRuntime || !prokopRuntimeReady ? "error" : "success",
+      key: hasZapretRules ? prokopRuntimeReady ? _("Prokop-managed nfqws runtime is ready") : _("Prokop-managed nfqws runtime is not ready") : unexpectedRuntime ? _("Unexpected Prokop-managed nfqws runtime is running") : _("Prokop-managed nfqws runtime is not running"),
+      value: hasZapretRules ? `${runningProcesses}/${expectedProcesses}` : ""
+    },
+    {
+      state: queueOverlap ? "error" : "success",
+      key: queueOverlap ? _("NFQUEUE range overlaps with another rule") : _("NFQUEUE range is available"),
+      value: `${Number(data.queue_base || 0)}-${Number(data.queue_range_end || 0)}`
+    },
+    {
+      state: !hasZapretRules || outboundsConfigured ? "success" : "error",
+      key: outboundsConfigured ? _("Zapret sing-box outbound is configured") : _("Zapret sing-box outbound is not configured"),
+      value: ""
+    },
+    {
+      state: standaloneConflict ? "warning" : "success",
+      key: standaloneServiceRunning ? hasZapretRules ? _("Standalone Zapret is active together with Prokop Zapret rules") : _("Standalone Zapret service is active") : _("Standalone Zapret service is inactive"),
+      value: ""
+    }
+  ];
+  const { state, description } = getCheckItemsMeta(items);
+  updateCheckStore({
+    order,
+    code,
+    title,
+    description,
+    state,
+    items
+  });
+}
+
+// src/prokop/tabs/diagnostic/checks/runZapret2Check.ts
+async function runZapret2Check() {
+  const { order, title, code } = DIAGNOSTICS_CHECKS_MAP.ZAPRET2;
+  updateCheckStore({
+    order,
+    code,
+    title,
+    description: _("Checking, please wait"),
+    state: "loading",
+    items: []
+  });
+  const zapret2Status = await ProkopShellMethods.getZapret2Status();
+  if (!zapret2Status.success) {
+    updateCheckStore({
+      order,
+      code,
+      title,
+      description: _("Cannot receive checks result"),
+      state: "error",
+      items: []
+    });
+    throw new Error("Zapret2 checks failed");
+  }
+  const data = zapret2Status.data;
+  const providerAvailable = Boolean(data.provider_available ?? data.installed);
+  const packageInstalled = Boolean(data.package_installed);
+  const hasZapret2Rules = Number(data.enabled_rule_count || 0) > 0;
+  const queueOverlap = Boolean(data.queue_overlap);
+  const expectedProcesses = Number(data.expected_process_count || 0);
+  const runningProcesses = Number(data.running_process_count || 0);
+  const supervisorProcesses = Number(data.supervisor_process_count || 0);
+  const prokopRuntimeReady = !hasZapret2Rules || runningProcesses === expectedProcesses && supervisorProcesses === expectedProcesses;
+  const unexpectedRuntime = !hasZapret2Rules && (runningProcesses > 0 || supervisorProcesses > 0);
+  const outboundsConfigured = Boolean(data.outbounds_configured);
+  const standaloneServiceEnabled = Boolean(data.standalone_service_enabled);
+  const standaloneServiceRunning = Boolean(data.standalone_service_running);
+  const standaloneConflict = hasZapret2Rules && standaloneServiceRunning;
+  const standaloneAutostartRisk = hasZapret2Rules && standaloneServiceEnabled && !standaloneServiceRunning;
+  const items = [
+    {
+      state: providerAvailable ? "success" : hasZapret2Rules ? "error" : "warning",
+      key: providerAvailable ? _("Zapret2 provider binary is available") : _("Zapret2 provider binary is not available"),
+      value: data.provider_path || ""
+    },
+    {
+      state: packageInstalled ? "success" : hasZapret2Rules ? "error" : "warning",
+      key: packageInstalled ? _("Zapret2 package is installed") : _("Zapret2 package is not installed"),
+      value: ""
+    },
+    {
+      state: hasZapret2Rules && !providerAvailable ? "error" : "success",
+      key: hasZapret2Rules ? _("There are rules using Zapret2") : _("No rules use Zapret2"),
+      value: ""
+    },
+    {
+      state: unexpectedRuntime || !prokopRuntimeReady ? "error" : "success",
+      key: hasZapret2Rules ? prokopRuntimeReady ? _("Prokop-managed nfqws2 runtime is ready") : _("Prokop-managed nfqws2 runtime is not ready") : unexpectedRuntime ? _("Unexpected Prokop-managed nfqws2 runtime is running") : _("Prokop-managed nfqws2 runtime is not running"),
+      value: hasZapret2Rules ? `${runningProcesses}/${expectedProcesses}` : ""
+    },
+    {
+      state: queueOverlap ? "error" : "success",
+      key: queueOverlap ? _("NFQUEUE range overlaps with another rule") : _("NFQUEUE range is available"),
+      value: `${Number(data.queue_base || 0)}-${Number(data.queue_range_end || 0)}`
+    },
+    {
+      state: !hasZapret2Rules || outboundsConfigured ? "success" : "error",
+      key: outboundsConfigured ? _("Zapret2 sing-box outbound is configured") : _("Zapret2 sing-box outbound is not configured"),
+      value: ""
+    },
+    {
+      state: standaloneConflict ? "error" : standaloneAutostartRisk ? "warning" : "success",
+      key: standaloneServiceRunning ? hasZapret2Rules ? _("Standalone Zapret2 is active together with Prokop Zapret2 rules") : _("Standalone Zapret2 service is active") : standaloneAutostartRisk ? _("Standalone Zapret2 autostart is enabled") : _("Standalone Zapret2 service is inactive"),
+      value: ""
+    }
+  ];
+  const { state, description } = getCheckItemsMeta(items);
+  updateCheckStore({
+    order,
+    code,
+    title,
+    description,
+    state,
+    items
+  });
+}
+
+// src/prokop/tabs/diagnostic/checks/runByedpiCheck.ts
+async function runByedpiCheck() {
+  const { order, title, code } = DIAGNOSTICS_CHECKS_MAP.BYEDPI;
+  updateCheckStore({
+    order,
+    code,
+    title,
+    description: _("Checking, please wait"),
+    state: "loading",
+    items: []
+  });
+  const byedpiStatus = await ProkopShellMethods.getByedpiStatus();
+  if (!byedpiStatus.success) {
+    updateCheckStore({
+      order,
+      code,
+      title,
+      description: _("Cannot receive checks result"),
+      state: "error",
+      items: []
+    });
+    throw new Error("ByeDPI checks failed");
+  }
+  const data = byedpiStatus.data;
+  const providerAvailable = Boolean(data.provider_available ?? data.installed);
+  const packageInstalled = Boolean(data.package_installed);
+  const hasByedpiRules = Number(data.enabled_rule_count || 0) > 0;
+  const expectedProcesses = Number(data.expected_process_count || 0);
+  const runningProcesses = Number(data.running_process_count || 0);
+  const supervisorProcesses = Number(data.supervisor_process_count || 0);
+  const restartCount = Number(data.restart_count || 0);
+  const runtimeUnstable = Boolean(data.runtime_unstable);
+  const prokopRuntimeReady = !hasByedpiRules || runningProcesses === expectedProcesses && supervisorProcesses === expectedProcesses;
+  const unexpectedRuntime = !hasByedpiRules && (runningProcesses > 0 || supervisorProcesses > 0);
+  const outboundsConfigured = Boolean(data.outbounds_configured);
+  const standaloneServiceEnabled = Boolean(data.standalone_service_enabled);
+  const standaloneServiceRunning = Boolean(data.standalone_service_running);
+  const standaloneConflict = hasByedpiRules && standaloneServiceRunning;
+  const standaloneAutostartRisk = hasByedpiRules && standaloneServiceEnabled && !standaloneServiceRunning;
+  const items = [
+    {
+      state: providerAvailable ? "success" : hasByedpiRules ? "error" : "warning",
+      key: providerAvailable ? _("ByeDPI provider binary is available") : _("ByeDPI provider binary is not available"),
+      value: data.provider_path || ""
+    },
+    {
+      state: packageInstalled ? "success" : "warning",
+      key: packageInstalled ? _("ByeDPI package is installed") : _("ByeDPI package is not installed"),
+      value: ""
+    },
+    {
+      state: hasByedpiRules && !providerAvailable ? "error" : "success",
+      key: hasByedpiRules ? _("There are rules using ByeDPI") : _("No rules use ByeDPI"),
+      value: ""
+    },
+    {
+      state: unexpectedRuntime || !prokopRuntimeReady ? "error" : runtimeUnstable ? "warning" : "success",
+      key: hasByedpiRules ? runtimeUnstable ? _("Prokop-managed ciadpi runtime has restarted") : prokopRuntimeReady ? _("Prokop-managed ciadpi runtime is ready") : _("Prokop-managed ciadpi runtime is not ready") : unexpectedRuntime ? _("Unexpected Prokop-managed ciadpi runtime is running") : _("Prokop-managed ciadpi runtime is not running"),
+      value: hasByedpiRules ? runtimeUnstable ? `${restartCount}` : `${runningProcesses}/${expectedProcesses}` : ""
+    },
+    {
+      state: !hasByedpiRules || outboundsConfigured ? "success" : "error",
+      key: outboundsConfigured ? _("ByeDPI sing-box outbound is configured") : _("ByeDPI sing-box outbound is not configured"),
+      value: `${data.listen_address}:${Number(data.port_base || 0)}`
+    },
+    {
+      state: standaloneConflict ? "error" : standaloneAutostartRisk ? "warning" : "success",
+      key: standaloneServiceRunning ? hasByedpiRules ? _("Standalone ByeDPI is active together with Prokop ByeDPI rules") : _("Standalone ByeDPI service is active") : standaloneAutostartRisk ? _("Standalone ByeDPI autostart is enabled") : _("Standalone ByeDPI service is inactive"),
+      value: ""
+    }
+  ];
+  const { state, description } = getCheckItemsMeta(items);
+  updateCheckStore({
+    order,
+    code,
+    title,
+    description,
+    state,
+    items
+  });
+}
+
+// src/prokop/services/systemInfo.service.ts
+var UNKNOWN_SYSTEM_INFO = {
+  loading: false,
+  loaded: false,
+  providerInfoLoaded: false,
+  prokop_version: _("unknown"),
+  prokop_latest_version: _("unknown"),
+  luci_app_version: _("unknown"),
+  sing_box_version: _("unknown"),
+  sing_box_extended: 0,
+  sing_box_tiny: 0,
+  sing_box_compressed: 0,
+  sing_box_tailscale: 1,
+  zapret_version: _("unknown"),
+  zapret_installed: 0,
+  zapret2_version: _("unknown"),
+  zapret2_installed: 0,
+  byedpi_version: _("unknown"),
+  byedpi_installed: 0,
+  zapret_manager_installed: 0,
+  packet_steering_mode: "",
+  direct_proxy_enabled: 0,
+  direct_proxy_address: "",
+  direct_proxy_port: "2080",
+  torrserver_running: 0,
+  torrserver_direct_available: 0,
+  torrserver_direct_enabled: 0,
+  torrserver_direct_active: 0,
+  openwrt_version: _("unknown"),
+  device_model: _("unknown")
+};
+var systemInfoPromise = null;
+var latestSystemInfoRequestId = 0;
+function hasLoadedSystemInfo() {
+  const systemInfo = store.get().diagnosticsSystemInfo;
+  return Boolean(systemInfo.loaded) && !systemInfo.loading;
+}
+async function ensureSystemInfo({
+  force = false,
+  silent = false
+} = {}) {
+  if (!force && hasLoadedSystemInfo()) {
+    return store.get().diagnosticsSystemInfo;
+  }
+  if (systemInfoPromise && !force) {
+    return systemInfoPromise;
+  }
+  const requestId = ++latestSystemInfoRequestId;
+  const currentSystemInfo = store.get().diagnosticsSystemInfo;
+  if (!silent) {
+    store.set({
+      diagnosticsSystemInfo: {
+        ...currentSystemInfo,
+        loading: true
+      }
+    });
+  }
+  const promise = (async () => {
+    try {
+      const systemInfo = await ProkopShellMethods.getSystemInfo();
+      if (requestId !== latestSystemInfoRequestId) {
+        return store.get().diagnosticsSystemInfo;
+      }
+      if (systemInfo.success) {
+        const nextSystemInfo = normalizeSingBoxVariantFields({
+          ...UNKNOWN_SYSTEM_INFO,
+          loading: false,
+          loaded: true,
+          providerInfoLoaded: true,
+          ...systemInfo.data
+        });
+        store.set({
+          diagnosticsSystemInfo: nextSystemInfo
+        });
+        return nextSystemInfo;
+      }
+    } catch (error) {
+      logger.error("[SYSTEM_INFO]", "ensureSystemInfo failed", error);
+    }
+    if (requestId === latestSystemInfoRequestId && !silent) {
+      const latestSystemInfo = store.get().diagnosticsSystemInfo;
+      const nextSystemInfo = {
+        ...UNKNOWN_SYSTEM_INFO,
+        loading: false,
+        loaded: false,
+        providerInfoLoaded: latestSystemInfo.providerInfoLoaded,
+        zapret_installed: latestSystemInfo.zapret_installed,
+        zapret2_installed: latestSystemInfo.zapret2_installed,
+        byedpi_installed: latestSystemInfo.byedpi_installed
+      };
+      store.set({
+        diagnosticsSystemInfo: nextSystemInfo
+      });
+      return nextSystemInfo;
+    }
+    return store.get().diagnosticsSystemInfo;
+  })();
+  systemInfoPromise = promise;
+  try {
+    return await promise;
+  } finally {
+    if (systemInfoPromise === promise) {
+      systemInfoPromise = null;
+    }
+  }
+}
+
+// src/prokop/tabs/diagnostic/partials/renderAvailableActions.ts
+function renderAvailableActions({
+  globalCheck,
+  viewLogs,
+  showSingBoxConfig,
+  supportReport
+}) {
+  return E("div", { class: "fkp_diagnostic-page__right-bar__actions" }, [
+    ...insertIf(globalCheck.visible, [
+      renderButton({
+        onClick: globalCheck.onClick,
+        icon: renderCircleCheckBigIcon24,
+        text: _("Get global check"),
+        loading: globalCheck.loading,
+        disabled: globalCheck.disabled
+      })
+    ]),
+    ...insertIf(viewLogs.visible, [
+      renderButton({
+        onClick: viewLogs.onClick,
+        icon: renderSquareChartGanttIcon24,
+        text: _("View logs"),
+        loading: viewLogs.loading,
+        disabled: viewLogs.disabled
+      })
+    ]),
+    ...insertIf(showSingBoxConfig.visible, [
+      renderButton({
+        onClick: showSingBoxConfig.onClick,
+        icon: renderCogIcon24,
+        text: _("Show sing-box config"),
+        loading: showSingBoxConfig.loading,
+        disabled: showSingBoxConfig.disabled
+      })
+    ]),
+    ...insertIf(supportReport.visible, [
+      renderButton({
+        onClick: supportReport.onClick,
+        icon: renderDownloadIcon24,
+        text: _("Download support report"),
+        loading: supportReport.loading,
+        disabled: supportReport.disabled
+      })
+    ])
+  ]);
+}
+
+// src/prokop/tabs/diagnostic/statusLabels.ts
+function checkStatus(state) {
+  switch (state) {
+    case "success":
+      return { text: _("Healthy"), tone: "success" };
+    case "warning":
+      return { text: _("Needs attention"), tone: "warning" };
+    case "error":
+      return { text: _("Error"), tone: "error" };
+    case "loading":
+      return { text: _("Checking\u2026"), tone: "loading" };
+    case "unsupported":
+      return { text: _("Not available for checking"), tone: "neutral" };
+    default:
+      return { text: _("Not checked"), tone: "neutral" };
+  }
+}
+function renderStatusBadge(status2) {
+  return E(
+    "span",
+    { class: `fkp-diag-badge fkp-diag-badge--${status2.tone}` },
+    status2.text
+  );
+}
+
+// src/prokop/tabs/diagnostic/checkCards.ts
+function checkAdvice(check) {
+  if (check.state !== "error" && check.state !== "warning") return null;
+  switch (check.code) {
+    case "DNS" /* DNS */:
+      return {
+        meaning: _(
+          "Domains in rules may not resolve, or resolve past Prokop, so their rules do not apply."
+        ),
+        action: _(
+          "Check the DNS server addresses in Settings or choose another server."
+        ),
+        link: "settings"
+      };
+    case "SINGBOX" /* SINGBOX */:
+      return {
+        meaning: _(
+          "Traffic of the rules does not reach sing-box, so connections through rules fail."
+        ),
+        action: _(
+          "Restart Prokop on the Overview. If it repeats, open the logs under Technical data."
+        ),
+        link: "overview"
+      };
+    case "NFT" /* NFT */:
+      return {
+        meaning: _(
+          "Firewall rules that send traffic to Prokop are missing or not hit, so rules may not apply."
+        ),
+        action: _(
+          "Restart Prokop. If another add-on marks traffic, make sure it does not conflict."
+        ),
+        link: "overview"
+      };
+    case "ZAPRET" /* ZAPRET */:
+    case "ZAPRET2" /* ZAPRET2 */:
+    case "BYEDPI" /* BYEDPI */:
+      return {
+        meaning: _("DPI bypass of the rules using this provider may not work."),
+        action: _(
+          "Make sure the provider is installed and the rule strategy is valid, then restart Prokop."
+        ),
+        link: "rules"
+      };
+    case "OUTBOUNDS" /* OUTBOUNDS */:
+      return {
+        meaning: _(
+          "Some connections or nodes do not respond, so sites of their rules may not open."
+        ),
+        action: _(
+          "Test latency in Monitoring \u2192 Nodes and groups, choose a working node or update the subscription."
+        ),
+        link: "nodes"
+      };
+    case "FAKEIP" /* FAKEIP */:
+      if (check.description === _("Browser FakeIP check could not be completed"))
+        return {
+          meaning: _(
+            "This browser could not reach the check service, so FakeIP for devices is not proven either way."
+          ),
+          action: _(
+            "Retry the check when this device has internet access through the router."
+          )
+        };
+      if (check.description === _("FakeIP works; public IP comparison is inconclusive"))
+        return {
+          meaning: _(
+            "FakeIP works; only the comparison with the control address did not give an answer."
+          ),
+          action: _("Usually harmless. Retry the check later.")
+        };
+      return {
+        meaning: _(
+          "Devices may bypass the router DNS, so domain rules do not apply to them."
+        ),
+        action: _(
+          "Make sure devices use the router as DNS: turn off secure DNS (DoH, Private DNS) in browsers and phones."
+        )
+      };
+    default:
+      return {
+        meaning: _("Part of Prokop does not work as expected."),
+        action: _(
+          "Retry the check. If it repeats, open the logs under Technical data."
+        )
+      };
+  }
+}
+function provenFacts(check) {
+  const failing = check.items.filter(
+    (item) => item.state === "error" || item.state === "warning"
+  );
+  return failing.length ? failing.map(
+    (item) => item.value ? `${item.key}: ${item.value}` : item.key
+  ) : [check.description].filter(Boolean);
+}
+var RANK = { error: 0, warning: 1 };
+function groupChecks(checks) {
+  const sorted = [...checks].sort((a, b) => a.order - b.order);
+  return {
+    attention: sorted.filter((check) => check.state === "error" || check.state === "warning").sort((a, b) => RANK[a.state] - RANK[b.state] || a.order - b.order),
+    other: sorted.filter(
+      (check) => !["error", "warning", "success"].includes(check.state)
+    ),
+    passed: sorted.filter((check) => check.state === "success")
+  };
+}
+function checkSummary(checks) {
+  const count = (state) => checks.filter((check) => check.state === state).length;
+  const errors = count("error");
+  const warnings = count("warning");
+  const passed = count("success");
+  const parts = [
+    errors ? _("Errors: %d").replace("%d", String(errors)) : "",
+    warnings ? _("Warnings: %d").replace("%d", String(warnings)) : "",
+    passed ? _("Passed: %d").replace("%d", String(passed)) : ""
+  ].filter(Boolean);
+  return { errors, warnings, passed, text: parts.join(" \xB7 ") };
+}
+
+// src/prokop/tabs/diagnostic/partials/renderCheckSection.ts
+function diagnosticActionSummary(props) {
+  return [
+    props.title,
+    props.description,
+    ...props.items.map((item) => `${item.key}: ${item.value}`)
+  ].join("\n");
+}
+function itemIcon(state) {
+  const icon = E("span", { class: "fkp-check__item-icon" });
+  if (state === "success") icon.appendChild(renderCheckIcon24());
+  if (state === "warning") icon.appendChild(renderTriangleAlertIcon24());
+  if (state === "error") icon.appendChild(renderXIcon24());
+  return icon;
+}
+function stateIcon(state) {
+  switch (state) {
+    case "success":
+      return renderCircleCheckIcon24();
+    case "warning":
+      return renderCircleAlertIcon24();
+    case "error":
+      return renderCircleXIcon24();
+    case "loading":
+      return renderLoaderCircleIcon24();
+    default:
+      return renderCircleSlashIcon24();
+  }
+}
+function renderHead(props) {
+  const icon = E("span", { class: "fkp-check__icon" });
+  icon.appendChild(stateIcon(props.state));
+  return E("div", { class: "fkp-check__head" }, [
+    icon,
+    E("b", { class: "fkp-check__title" }, props.title),
+    renderStatusBadge(checkStatus(props.state))
+  ]);
+}
+function renderItems(props) {
+  return props.items.map(
+    (item) => E("div", { class: `fkp-check__item fkp-diag-text--${item.state}` }, [
+      itemIcon(item.state),
+      E("b", {}, item.key),
+      E("span", {}, item.value)
+    ])
+  );
+}
+function adviceLink(link) {
+  if (!link || isReadonlyMode() && link !== "nodes") return "";
+  const [label, open] = link === "settings" ? [_("Open settings"), () => openProkopPage("settings")] : link === "rules" ? [_("Open rules"), () => openProkopPage("rules")] : link === "nodes" ? [
+    _("Nodes and groups"),
+    () => openProkopPage("monitoring", { view: "nodes" })
+  ] : [_("Overview"), () => openProkopPage("overview")];
+  return E("button", { type: "button", class: "btn cbi-button", click: open }, [
+    label
+  ]);
+}
+function renderCheckSection(props, handlers) {
+  const status2 = checkStatus(props.state);
+  const advice = checkAdvice(props);
+  return E("div", { class: `fkp-check fkp-check--${status2.tone}` }, [
+    renderHead(props),
+    ...advice ? [
+      E("dl", { class: "fkp-check__advice" }, [
+        E("dt", {}, _("What it means")),
+        E("dd", {}, advice.meaning),
+        E("dt", {}, _("What was proven")),
+        E(
+          "dd",
+          {},
+          E(
+            "ul",
+            {},
+            provenFacts(props).map((fact) => E("li", {}, fact))
+          )
+        ),
+        E("dt", {}, _("What to do")),
+        E("dd", {}, advice.action)
+      ])
+    ] : [E("div", { class: "fkp-check__description" }, props.description)],
+    E("div", { class: "fkp-check__actions" }, [
+      E(
+        "button",
+        {
+          type: "button",
+          class: "btn cbi-button",
+          disabled: handlers.busy ? true : void 0,
+          click: () => handlers.onRetry(props.code)
+        },
+        _("Retry this check")
+      ),
+      adviceLink(advice?.link),
+      E(
+        "button",
+        {
+          type: "button",
+          class: "btn cbi-button",
+          click: () => (
+            // navigator.clipboard needs a secure context; LuCI is usually plain HTTP.
+            copyToClipboard(diagnosticActionSummary(props))
+          )
+        },
+        _("Copy details")
+      )
+    ]),
+    props.items.length ? E("details", { class: "fkp-check__details" }, [
+      E("summary", {}, _("All check results")),
+      E("div", { class: "fkp-check__description" }, props.description),
+      ...renderItems(props)
+    ]) : ""
+  ]);
+}
+function renderCheckRow(props) {
+  const status2 = checkStatus(props.state);
+  return E(
+    "div",
+    { class: `fkp-check fkp-check--compact fkp-check--${status2.tone}` },
+    [
+      renderHead(props),
+      // An unsupported check explains why instead of pretending to have run.
+      props.state === "unsupported" ? E("div", { class: "fkp-check__description" }, props.description) : "",
+      props.state === "success" && props.items.length ? E("details", { class: "fkp-check__details" }, [
+        E("summary", {}, _("Details")),
+        E("div", { class: "fkp-check__description" }, props.description),
+        ...renderItems(props)
+      ]) : ""
+    ]
+  );
+}
+function renderChecks(checks, handlers) {
+  const groups = groupChecks(checks);
+  const summary = checkSummary(checks);
+  return [
+    ...summary.text ? [E("p", { class: "fkp-diag-summary", role: "status" }, summary.text)] : [],
+    ...groups.attention.map((check) => renderCheckSection(check, handlers)),
+    ...groups.other.map(renderCheckRow),
+    ...groups.passed.length ? [
+      E("details", { class: "fkp-check-passed" }, [
+        E(
+          "summary",
+          {},
+          _("Passed checks: %d").replace(
+            "%d",
+            String(groups.passed.length)
+          )
+        ),
+        ...groups.passed.map(renderCheckRow)
+      ])
+    ] : []
+  ];
+}
+
+// src/prokop/tabs/diagnostic/partials/renderSystemInfo.ts
+function renderSystemInfo({ items }) {
+  return E("div", { class: "fkp_diagnostic-page__right-bar__system-info" }, [
+    E(
+      "b",
+      { class: "fkp_diagnostic-page__right-bar__system-info__title" },
+      _("System information")
+    ),
+    ...items.map((item) => {
+      const tagClass = [
+        "fkp_diagnostic-page__right-bar__system-info__row__tag",
+        ...insertIf(item.tag?.kind === "neutral", [
+          "fkp_diagnostic-page__right-bar__system-info__row__tag--neutral"
+        ]),
+        ...insertIf(item.tag?.kind === "warning", [
+          "fkp_diagnostic-page__right-bar__system-info__row__tag--warning"
+        ]),
+        ...insertIf(item.tag?.kind === "success", [
+          "fkp_diagnostic-page__right-bar__system-info__row__tag--success"
+        ])
+      ].filter(Boolean).join(" ");
+      return E(
+        "div",
+        { class: "fkp_diagnostic-page__right-bar__system-info__row" },
+        [
+          E("b", {}, item.key),
+          E("div", {}, [
+            E("span", {}, item.value),
+            E("span", { class: tagClass }, item?.tag?.label)
+          ])
+        ]
+      );
+    })
+  ]);
+}
+
+// src/helpers/normalizeCompiledVersion.ts
+function normalizeCompiledVersion(version) {
+  if (version.includes("COMPILED")) {
+    return "dev";
+  }
+  return version;
+}
+
+// src/prokop/tabs/diagnostic/checks/runSectionsCheck.ts
+function getSubscriptionLatencyState(latencyValues) {
+  const hasAvailableLatency = latencyValues.some((item) => Boolean(item));
+  const hasUnavailableLatency = latencyValues.some((item) => !item);
+  if (!hasAvailableLatency) {
+    return "error";
+  }
+  if (hasUnavailableLatency) {
+    return "warning";
+  }
+  return "success";
+}
+async function runSectionsCheck() {
+  const { order, title, code } = DIAGNOSTICS_CHECKS_MAP.OUTBOUNDS;
+  updateCheckStore({
+    order,
+    code,
+    title,
+    description: _("Checking, please wait"),
+    state: "loading",
+    items: []
+  });
+  if (isReadonlyMode()) {
+    updateCheckStore({
+      order,
+      code,
+      title,
+      description: _(
+        "Outbound checks need access to the Prokop configuration, which this role does not have."
+      ),
+      state: "unsupported",
+      items: []
+    });
+    return;
+  }
+  const sections = await getDashboardSections();
+  if (!sections.success) {
+    updateCheckStore({
+      order,
+      code,
+      title,
+      description: _("Cannot receive checks result"),
+      state: "error",
+      items: []
+    });
+    throw new Error("Rule outbounds checks failed");
+  }
+  const items = [];
+  for (const section of sections.data) {
+    async function getLatency() {
+      if (section.withTagSelect) {
+        const selectedOutbound2 = section.outbounds.find((item) => item.selected) ?? section.outbounds.find(
+          (item) => item.type?.toLowerCase() === "urltest"
+        ) ?? section.outbounds[0];
+        const isSubscription = section.proxyConfigType === "subscription";
+        if (selectedOutbound2?.code) {
+          const latencyProxy2 = await ProkopShellMethods.getClashApiProxyLatency(
+            selectedOutbound2.code,
+            section.latencyTestTimeout
+          );
+          const proxySuccess = latencyProxy2.success && !latencyProxy2.data.message;
+          if (proxySuccess) {
+            return {
+              state: "success",
+              latency: `[${selectedOutbound2.displayName ?? ""}] ${latencyProxy2.data.delay}ms`
+            };
+          }
+          return {
+            state: "error",
+            latency: `[${selectedOutbound2.displayName ?? ""}] ${_("Not responding")}`
+          };
+        }
+        const latencyGroup = await ProkopShellMethods.getClashApiGroupLatency(
+          section.code
+        );
+        const success2 = latencyGroup.success && !latencyGroup.data.message;
+        if (success2) {
+          const latencyValues = Object.values(latencyGroup.data);
+          const sectionState = isSubscription ? getSubscriptionLatencyState(latencyValues) : "success";
+          const selectedProxyDelay = latencyGroup.data?.[selectedOutbound2?.code ?? ""];
+          if (selectedProxyDelay) {
+            return {
+              state: sectionState,
+              latency: `[${selectedOutbound2?.displayName ?? ""}] ${selectedProxyDelay}ms`
+            };
+          }
+          return {
+            state: "error",
+            latency: `[${selectedOutbound2?.displayName ?? ""}] ${_("Not responding")}`
+          };
+        }
+        return {
+          state: "error",
+          latency: _("Not responding")
+        };
+      }
+      const selectedOutbound = section.outbounds[0];
+      const latencyProxy = await ProkopShellMethods.getClashApiProxyLatency(
+        section.code,
+        section.latencyTestTimeout
+      );
+      const success = latencyProxy.success && !latencyProxy.data.message;
+      if (success) {
+        return {
+          state: "success",
+          latency: _("%d ms").replace("%d", String(latencyProxy.data.delay))
+        };
+      }
+      if (section.action === "vpn" && selectedOutbound?.runtimeAvailable) {
+        return {
+          state: "warning",
+          latency: `[${selectedOutbound.displayName || section.code}] ${_("Connectivity probe failed")}`
+        };
+      }
+      return {
+        state: "error",
+        latency: _("Not responding")
+      };
+    }
+    const { latency, state: state2 } = await getLatency();
+    items.push({
+      state: state2,
+      key: section.displayName,
+      value: latency
+    });
+  }
+  const allGood = items.every((item) => item.state === "success");
+  const atLeastOneGood = items.some((item) => item.state !== "error");
+  const { state, description } = getMeta({ atLeastOneGood, allGood });
+  updateCheckStore({
+    order,
+    code,
+    title,
+    description,
+    state,
+    items
+  });
+  if (!atLeastOneGood) {
+    throw new Error("Rule outbounds checks failed");
+  }
+}
+
+// src/prokop/tabs/monitoring/connectionView.ts
+function trafficSortValue(connection, mode) {
+  if (mode === "download") return connection.download || 0;
+  if (mode === "upload") return connection.upload || 0;
+  if (mode === "total")
+    return (connection.download || 0) + (connection.upload || 0);
+  return null;
+}
+var BYPASS_TAG = "bypass-out";
+var DIRECT_TAG = "direct-out";
+function routeTagFromRule(rule) {
+  const match = String(rule || "").match(/=>\s*route\(([^)]+)\)/);
+  return String(match?.[1] || "").trim().replace(/^['"]|['"]$/g, "");
+}
+function kindForAction(action) {
+  switch (action) {
+    case "zapret":
+    case "zapret2":
+    case "byedpi":
+      return "dpi";
+    case "connection":
+    case "proxy":
+    case "outbound":
+    case "vpn":
+      return "connection";
+    case "bypass":
+      return "bypass";
+    case "block":
+      return "block";
+    default:
+      return "unknown";
+  }
+}
+function connectionPath(chains, rule, ruleByTag) {
+  const list = (Array.isArray(chains) ? chains : []).filter(Boolean);
+  const routeTag = routeTagFromRule(rule);
+  for (let index = list.length - 1; index >= 0; index--) {
+    const owner2 = ruleByTag(list[index]);
+    if (owner2)
+      return {
+        kind: kindForAction(owner2.action),
+        rule: owner2,
+        node: index > 0 ? list[0] : "",
+        tag: ""
+      };
+  }
+  const owner = routeTag ? ruleByTag(routeTag) : null;
+  if (owner)
+    return {
+      kind: kindForAction(owner.action),
+      rule: owner,
+      node: list[0] && list[0] !== routeTag ? list[0] : "",
+      tag: ""
+    };
+  const tag = list[list.length - 1] || routeTag;
+  if (list.includes(BYPASS_TAG) || routeTag === BYPASS_TAG)
+    return { kind: "bypass", rule: null, node: "", tag: "" };
+  if (/\breject\b/.test(String(rule || "")))
+    return { kind: "block", rule: null, node: "", tag: "" };
+  if (!tag || tag === DIRECT_TAG)
+    return { kind: "direct", rule: null, node: "", tag: "" };
+  return { kind: "unknown", rule: null, node: "", tag };
+}
+function pathKindLabel(kind) {
+  switch (kind) {
+    case "dpi":
+      return _("DPI");
+    case "connection":
+      return _("Connection");
+    case "bypass":
+      return _("Bypass");
+    case "direct":
+      return _("Direct");
+    case "block":
+      return _("Block");
+    default:
+      return _("Other");
+  }
+}
+function dpiProviderLabel(provider) {
+  switch (provider) {
+    case "zapret":
+      return "Zapret";
+    case "zapret2":
+      return "Zapret2";
+    case "byedpi":
+      return "ByeDPI";
+    default:
+      return _("DPI");
+  }
+}
+function dpiStrategyLabel(rule) {
+  if (rule.dpiCustom) return _("custom strategy");
+  if (rule.dpiStrategy === "default") return _("default strategy");
+  return rule.dpiStrategy || "";
+}
+function pathSummary(path) {
+  const base = { kind: path.kind, kindLabel: pathKindLabel(path.kind) };
+  if (path.rule && path.kind === "dpi") {
+    const strategy = dpiStrategyLabel(path.rule);
+    return {
+      ...base,
+      primary: path.rule.label,
+      secondary: [dpiProviderLabel(path.rule.dpiProvider), strategy].filter(Boolean).join(" \xB7 ")
+    };
+  }
+  if (path.rule)
+    return { ...base, primary: path.rule.label, secondary: path.node };
+  if (path.kind === "direct")
+    return { ...base, primary: "", secondary: _("No rule matched") };
+  return { ...base, primary: path.tag, secondary: "" };
+}
+function matchesPathFilter(path, filter2) {
+  if (!filter2 || filter2 === "all") return true;
+  if (filter2.startsWith("kind:")) return path.kind === filter2.slice(5);
+  if (filter2.startsWith("rule:")) return path.rule?.name === filter2.slice(5);
+  return true;
+}
+function connectionActions(active, readonly = false) {
+  const actions = [
+    {
+      kind: "details",
+      label: _("Details"),
+      className: "fkp-monitoring-details"
+    }
+  ];
+  if (active && !readonly)
+    actions.push({
+      kind: "close",
+      label: _("Close connection"),
+      className: "fkp_monitoring-page__row-action"
+    });
+  return actions;
+}
+
+// src/prokop/tabs/diagnostic/connectivityMatrix.ts
+var TYPES = ["DNS", "TCP", "HTTP", "HTTPS"];
+var DEFAULT_PORTS = {
+  DNS: "",
+  TCP: "",
+  HTTP: "80",
+  HTTPS: "443"
+};
+var DEFAULTS = [
+  { host: "cloudflare.com", type: "HTTPS", port: "443" },
+  { host: "telegram.org", type: "HTTPS", port: "443" }
+];
+var MAX_TARGETS = 10;
+function loadTargets(storage) {
+  try {
+    const value = JSON.parse(
+      readStorageItem(storage, CONNECTIVITY_TARGETS_KEY) || "null"
+    );
+    if (Array.isArray(value))
+      return value.slice(0, MAX_TARGETS).map(
+        (item) => item && item.type === "TLS" ? { ...item, type: "HTTPS" } : item
+      ).filter(
+        (item) => item && typeof item.host === "string" && item.host.length <= 253 && TYPES.includes(item.type) && typeof item.port === "string" && item.port.length <= 5
+      );
+  } catch (_error) {
+  }
+  return DEFAULTS.map((target) => ({ ...target }));
+}
+function changeType(target, type) {
+  if (type === "DNS") return { ...target, type, port: "" };
+  if (type === "TCP") return { ...target, type, port: target.port };
+  const wasDefault = target.port === "" || Object.values(DEFAULT_PORTS).includes(target.port);
+  return {
+    ...target,
+    type,
+    port: wasDefault ? DEFAULT_PORTS[type] : target.port
+  };
+}
+var IPV4 = /^(\d{1,3}\.){3}\d{1,3}$/;
+function validateTarget(target) {
+  const host = target.host.trim();
+  if (!host) return _("Enter an address");
+  if (target.type === "DNS")
+    return IPV4.test(host) || host.includes(":") ? _("DNS check needs a domain name") : null;
+  if (!target.port) return _("Enter a port");
+  const port = Number(target.port);
+  if (!Number.isInteger(port) || port < 1 || port > 65535)
+    return _("Port must be between 1 and 65535");
+  return null;
+}
+var ERROR_TEXT = {
+  timeout: () => _("Timed out"),
+  nxdomain: () => _("Domain does not exist"),
+  no_answer: () => _("No DNS records for this name"),
+  dns_failed: () => _("DNS name did not resolve"),
+  connect_failed: () => _("Connection refused or host unreachable"),
+  tls_failed: () => _("TLS or certificate error"),
+  no_response: () => _("Server closed the connection without a response"),
+  tool_missing: () => _("Probe tool is missing on the router"),
+  failed: () => _("Check failed")
+};
+function resultView(result) {
+  if (result.state === "idle")
+    return { text: _("Not checked"), tone: "neutral" };
+  if (result.state === "running")
+    return { text: _("Checking\u2026"), tone: "loading" };
+  if (result.state === "invalid")
+    return { text: result.message, tone: "error" };
+  if (result.state === "failed")
+    return { text: result.message, tone: "warning" };
+  const data = result.result;
+  if (data.status === "ok") {
+    const parts = [`\u2713 ${_("Reachable")}`, `${data.latency_ms} ${_("ms")}`];
+    if (data.address) parts.push(data.address);
+    if (data.http_code) parts.push(`HTTP ${data.http_code}`);
+    return { text: parts.join(" \xB7 "), tone: "success" };
+  }
+  const reason = (ERROR_TEXT[data.error || ""] || ERROR_TEXT.failed)();
+  return {
+    text: `\u2715 ${reason}`,
+    tone: data.status === "timeout" ? "warning" : "error"
+  };
+}
+async function probe(target) {
+  const invalid2 = validateTarget(target);
+  if (invalid2) return { state: "invalid", message: invalid2 };
+  const response = await ProkopShellMethods.connectivityTest(
+    target.host.trim(),
+    target.type,
+    target.type === "DNS" ? "" : target.port
+  );
+  if (response.success && response.data?.error === "invalid_input")
+    return { state: "invalid", message: _("The router rejected this check") };
+  if (!response.success || !response.data?.status)
+    return { state: "failed", message: _("The check could not run") };
+  if (response.data.type !== target.type || target.type !== "DNS" && String(response.data.port) !== target.port)
+    return { state: "idle" };
+  return { state: "done", result: response.data };
+}
+function field(label, control, extraClass = "") {
+  return E("label", { class: `fkp-conn__cell ${extraClass}`.trim() }, [
+    E("span", { class: "fkp-conn__cell-label" }, label),
+    control
+  ]);
+}
+function initConnectivityMatrix() {
+  const root = document.getElementById("connectivity-rows");
+  const add = document.getElementById(
+    "connectivity-add"
+  );
+  const run = document.getElementById(
+    "connectivity-run"
+  );
+  if (!root || !add || !run || add.onclick) return;
+  const rows = loadTargets(localStorage).map((target) => ({
+    target,
+    result: { state: "idle" }
+  }));
+  let runningAll = false;
+  const save = () => writeStorageItem(
+    localStorage,
+    CONNECTIVITY_TARGETS_KEY,
+    JSON.stringify(rows.map((row) => row.target))
+  );
+  const busy2 = () => rows.some((row) => row.result.state === "running");
+  const updateButtons = () => {
+    run.disabled = runningAll || busy2() || rows.length === 0;
+    add.disabled = rows.length >= MAX_TARGETS;
+    for (const row of rows) {
+      const retry = row.element?.querySelector(".fkp-conn__retry");
+      if (retry) retry.disabled = runningAll || row.result.state === "running";
+    }
+  };
+  const paintResult = (row) => {
+    const cell = row.element?.querySelector(".fkp-conn__result");
+    if (!cell) return;
+    const view = resultView(row.result);
+    cell.className = `fkp-conn__result fkp-diag-text--${view.tone}`;
+    cell.textContent = view.text;
+    updateButtons();
+  };
+  const invalidate = (row) => {
+    row.result = { state: "idle" };
+    save();
+    paintResult(row);
+  };
+  const check = async (row) => {
+    row.result = { state: "running" };
+    paintResult(row);
+    const requested = { ...row.target };
+    const result = await probe(requested);
+    if (JSON.stringify(requested) !== JSON.stringify(row.target)) return;
+    row.result = result;
+    paintResult(row);
+  };
+  const renderRow2 = (row) => {
+    const host = E("input", {
+      class: "cbi-input-text",
+      value: row.target.host,
+      placeholder: "example.com",
+      maxLength: 253
+    });
+    const type = E(
+      "select",
+      { class: "cbi-input-select" },
+      TYPES.map(
+        (kind) => E("option", { value: kind, selected: row.target.type === kind }, kind)
+      )
+    );
+    const port = E("input", {
+      class: "cbi-input-text",
+      value: row.target.port,
+      type: "number",
+      min: "1",
+      max: "65535",
+      placeholder: row.target.type === "TCP" ? "443" : ""
+    });
+    host.oninput = () => {
+      row.target.host = host.value;
+      invalidate(row);
+    };
+    port.oninput = () => {
+      row.target.port = port.value.trim();
+      invalidate(row);
+    };
+    type.onchange = () => {
+      row.target = changeType(row.target, type.value);
+      row.result = { state: "idle" };
+      save();
+      row.element?.replaceWith(renderRow2(row));
+      updateButtons();
+    };
+    const portCell = row.target.type === "DNS" ? E("div", { class: "fkp-conn__cell fkp-conn__cell--muted" }, [
+      E("span", { class: "fkp-conn__cell-label" }, _("Port")),
+      E("span", {}, _("not used"))
+    ]) : field(_("Port"), port);
+    const view = resultView(row.result);
+    row.element = E("div", { class: "fkp-conn__row" }, [
+      field(_("Address"), host),
+      field(_("Type"), type),
+      portCell,
+      E("div", { class: "fkp-conn__cell" }, [
+        E("span", { class: "fkp-conn__cell-label" }, _("Result")),
+        E(
+          "span",
+          {
+            class: `fkp-conn__result fkp-diag-text--${view.tone}`,
+            role: "status"
+          },
+          view.text
+        )
+      ]),
+      E("div", { class: "fkp-conn__actions" }, [
+        E(
+          "button",
+          {
+            type: "button",
+            class: "btn cbi-button fkp-conn__retry",
+            click: () => void check(row)
+          },
+          _("Check")
+        ),
+        E(
+          "button",
+          {
+            type: "button",
+            class: "btn cbi-button fkp-conn__remove",
+            title: _("Remove"),
+            "aria-label": _("Remove"),
+            click: () => {
+              rows.splice(rows.indexOf(row), 1);
+              save();
+              render7();
+            }
+          },
+          "\u2715"
+        )
+      ])
+    ]);
+    return row.element;
+  };
+  const render7 = () => {
+    root.replaceChildren(
+      E("div", { class: "fkp-conn__head", role: "presentation" }, [
+        E("span", {}, _("Address")),
+        E("span", {}, _("Type")),
+        E("span", {}, _("Port")),
+        E("span", {}, _("Result")),
+        E("span", {}, "")
+      ]),
+      ...rows.map(renderRow2)
+    );
+    updateButtons();
+  };
+  add.onclick = () => {
+    if (rows.length >= MAX_TARGETS) return;
+    rows.push({
+      target: { host: "", type: "HTTPS", port: "443" },
+      result: { state: "idle" }
+    });
+    save();
+    render7();
+    rows[rows.length - 1].element?.querySelector("input")?.focus();
+  };
+  run.onclick = async () => {
+    if (runningAll || busy2()) return;
+    runningAll = true;
+    updateButtons();
+    try {
+      for (const row of [...rows]) if (rows.includes(row)) await check(row);
+    } finally {
+      runningAll = false;
+      updateButtons();
+    }
+  };
+  render7();
+}
+
+// src/prokop/tabs/diagnostic/siteCheck.ts
+function undecidedReasonText(reason) {
+  switch (reason) {
+    case "singbox_config_unavailable":
+    case "config_unavailable":
+      return _(
+        "the sing-box configuration is not available; is Prokop running?"
+      );
+    // Reason codes of routing/resolve.uc (shared with autotune apply). The
+    // rule may be the one that would own the site (UC-103).
+    case "undecidable_matcher":
+      return _(
+        "a rule on the way uses a list or pattern whose contents cannot be checked here"
+      );
+    case "resolve_rule":
+      return _(
+        "a rule on the way re-resolves the address, so the route depends on its answer"
+      );
+    case "ipv6_not_modelled":
+      return _("the route of an IPv6 address is not calculated");
+    case "fakeip_domain_unknown":
+      return _(
+        "a FakeIP address is routed by its domain; check the site by its name"
+      );
+    case "dns_hijack":
+      return _(
+        "connections to the DNS port are answered by the sing-box DNS, not routed by a rule"
+      );
+    case "real_address_interception_unknown":
+      return _(
+        "the site has a real address; whether Prokop intercepts it depends on the address lists of the rules"
+      );
+    case "local_address_not_intercepted":
+      return _(
+        "the address is local or reserved; Prokop does not intercept it, the connection goes directly"
+      );
+    case "source_scoped_rule":
+      return _("a rule applies to selected devices only; choose a device");
+    default:
+      return _("a rule is too complex to calculate");
+  }
+}
+function kindOf(action) {
+  if (action === "zapret" || action === "zapret2" || action === "byedpi")
+    return "dpi";
+  if (["connection", "bypass", "block", "direct"].includes(action))
+    return action;
+  return "unknown";
+}
+function routeRow(trace) {
+  const action = String(trace.action.value || "");
+  if (trace.action.provenance === "unknown" || !action)
+    return {
+      label: _("Route"),
+      value: _("Rule not calculated"),
+      note: undecidedReasonText(trace.rule.reason),
+      provenance: "unknown",
+      tone: "neutral"
+    };
+  const kind = kindOf(action);
+  const parts = [pathKindLabel(kind)];
+  if (trace.rule.value) parts.push(`${_("rule")} \xAB${trace.rule.value}\xBB`);
+  if (kind === "dpi")
+    parts.push(
+      [
+        dpiProviderLabel(String(trace.dpi.value || action)),
+        dpiStrategyLabel({
+          name: "",
+          label: "",
+          action,
+          dpiStrategy: trace.dpi.strategy,
+          dpiCustom: trace.dpi.strategy_custom
+        })
+      ].filter(Boolean).join(" \xB7 ")
+    );
+  return {
+    label: _("Route"),
+    value: parts.join(" \xB7 "),
+    note: kind === "direct" ? _("No rule matched") : kind === "block" ? _("The address is blocked by a rule") : "",
+    provenance: "simulated",
+    tone: "neutral"
+  };
+}
+function dnsRow(trace) {
+  const address = trace.dns.address || "";
+  if (trace.dns.provenance === "simulated")
+    return {
+      label: _("Address"),
+      value: address,
+      note: _("An IP address needs no DNS"),
+      provenance: "simulated",
+      tone: "neutral"
+    };
+  if (!address)
+    return {
+      label: _("DNS"),
+      value: _("Not resolved"),
+      note: _("The router DNS returned no address"),
+      provenance: "observed",
+      tone: "error"
+    };
+  return {
+    label: _("DNS"),
+    value: /^198\.1[89]\./.test(address) ? `${address} (FakeIP)` : address,
+    note: _("Answer of the router DNS"),
+    provenance: "observed",
+    tone: "success"
+  };
+}
+function probeRow(result) {
+  const view = resultView(result);
+  return {
+    label: _("From the router"),
+    value: view.text,
+    note: _("HTTPS request made by the router itself"),
+    provenance: result.state === "done" ? "observed" : "unknown",
+    tone: view.tone
+  };
+}
+function siteConclusion(trace, result) {
+  const action = String(trace.action.value || "");
+  if (!trace.dns.address)
+    return _(
+      "The name does not resolve on the router, so no rule can open it. Check the DNS results above."
+    );
+  if (action === "block")
+    return _(
+      "A rule blocks this address. This is intended for ads and trackers."
+    );
+  if (result.state !== "done" || result.result.error === "tool_missing")
+    return _(
+      "The router could not check whether the site opens. Try the check again."
+    );
+  if (result.result.status === "ok")
+    return _(
+      "The site opens from the router. If it does not open on a device, look at its real connections."
+    );
+  const hint = kindOf(action) === "dpi" ? _(
+    "For a DPI rule this can mean the strategy does not work with your provider."
+  ) : action === "connection" ? _("Check the node of the rule in Monitoring \u2192 Nodes and groups.") : action === "direct" ? _("No rule handles it; it may need to be added to a rule.") : "";
+  return [
+    _(
+      "The site did not open from the router. The router may take a different path than devices."
+    ),
+    hint
+  ].filter(Boolean).join(" ");
+}
+function renderRow(row) {
+  return [
+    E("dt", {}, row.label),
+    E("dd", {}, [
+      // Value and its provenance on one line; neutral values keep the text colour.
+      E("span", { class: "fkp-site__value" }, [
+        E(
+          "span",
+          row.tone === "neutral" ? {} : { class: `fkp-diag-text--${row.tone}` },
+          row.value
+        ),
+        " ",
+        renderProvenance(row.provenance)
+      ]),
+      row.note ? E("small", {}, row.note) : ""
+    ])
+  ];
+}
+function routeTraceFailureText(response) {
+  const data = response.data;
+  if (response.success && data?.error === "invalid_input") {
+    return _("Enter a valid domain or IP address");
+  }
+  return _("The route check did not complete. Try again.");
+}
+function initSiteCheck(loadDevices) {
+  const button = document.getElementById(
+    "site-check-run"
+  );
+  const input = document.getElementById(
+    "site-check-target"
+  );
+  const device = document.getElementById(
+    "site-check-device"
+  );
+  const container = document.getElementById("site-check-result");
+  if (!button || !input || !container || button.onclick) return;
+  void loadDevices?.().then((devices) => {
+    if (!device) return;
+    for (const [ip, name] of Object.entries(devices || {}))
+      device.appendChild(E("option", { value: ip }, `${name || ip} (${ip})`));
+  }).catch(() => {
+  });
+  input.onkeydown = (event) => {
+    if (event.key === "Enter") button.click();
+  };
+  input.oninput = () => container.replaceChildren();
+  button.onclick = async () => {
+    const target = input.value.trim();
+    if (!target) {
+      container.textContent = _("Enter a domain or IP address");
+      return;
+    }
+    const source = device?.value || "";
+    container.textContent = _("Checking\u2026");
+    button.disabled = true;
+    try {
+      const [trace, reach] = await Promise.all([
+        ProkopShellMethods.routeTrace(target, source, "TCP", "443"),
+        probe({ host: target, type: "HTTPS", port: "443" })
+      ]);
+      if (input.value.trim() !== target) return;
+      if (!trace.success || !trace.data?.target) {
+        container.textContent = routeTraceFailureText(trace);
+        return;
+      }
+      const rows = [routeRow(trace.data), dnsRow(trace.data), probeRow(reach)];
+      container.replaceChildren(
+        E("dl", { class: "fkp-route__facts" }, rows.flatMap(renderRow)),
+        E(
+          "p",
+          { class: "fkp-site__conclusion" },
+          siteConclusion(trace.data, reach)
+        ),
+        E("div", { class: "fkp-diag-actions" }, [
+          E(
+            "a",
+            {
+              class: "btn cbi-button",
+              href: prokopPageUrl("monitoring", { search: target })
+            },
+            _("See connections to this address")
+          )
+        ]),
+        ...trace.data.interface.value ? [
+          E(
+            "p",
+            { class: "fkp-diag-hint" },
+            `${_("Router kernel route")}: ${trace.data.interface.value}`
+          )
+        ] : []
+      );
+    } catch (_error) {
+      if (input.value.trim() === target)
+        container.textContent = routeTraceFailureText({ success: false });
+    } finally {
+      button.disabled = false;
+    }
+  };
+  const host = readPageParams().host;
+  if (host && !input.value) input.value = host.slice(0, 253);
+}
+
+// src/prokop/tabs/diagnostic/dpiPlayground.ts
+function validationView(response) {
+  const data = response.data;
+  if (!response.success || typeof data?.valid !== "boolean")
+    return { text: _("Syntax check is unavailable"), tone: "error" };
+  if (data.valid)
+    return { text: `\u2713 ${_("Syntax is correct")}`, tone: "success" };
+  const message = typeof data.message === "string" ? data.message.trim() : "";
+  return {
+    text: `\u2715 ${message || _("The strategy contains an error")}`,
+    tone: "error"
+  };
+}
+function initDpiPlayground() {
+  const button = document.getElementById(
+    "dpi-validate"
+  );
+  const input = document.getElementById(
+    "dpi-strategy"
+  );
+  const provider = document.getElementById(
+    "dpi-provider"
+  );
+  const result = document.getElementById("dpi-playground-result");
+  if (!button || !input || !provider || !result || button.onclick) return;
+  const clear = () => result.replaceChildren();
+  input.oninput = clear;
+  provider.onchange = clear;
+  button.onclick = async () => {
+    const strategy = input.value.trim();
+    if (!strategy) {
+      result.className = "fkp-diag-text--error";
+      result.textContent = _("Enter a strategy");
+      return;
+    }
+    button.disabled = true;
+    result.className = "fkp-diag-text--loading";
+    result.textContent = _("Checking\u2026");
+    try {
+      const response = await ProkopShellMethods.validateDpiStrategy(
+        provider.value,
+        strategy
+      );
+      if (input.value.trim() !== strategy) return;
+      const view = validationView(response);
+      result.className = `fkp-diag-text--${view.tone}`;
+      result.textContent = view.text;
+    } catch (_error) {
+      if (input.value.trim() !== strategy) return;
+      const view = validationView({ success: false });
+      result.className = `fkp-diag-text--${view.tone}`;
+      result.textContent = view.text;
+    } finally {
+      button.disabled = false;
+    }
+  };
+}
+
+// src/prokop/tabs/diagnostic/serviceTransition.ts
+function isServiceTransitionStatus(status2) {
+  return ["starting", "stopping", "restarting", "reloading"].includes(status2);
+}
+function hasLocalMutatingServiceActionLoading(actions) {
+  return actions.restart.loading || actions.start.loading || actions.stop.loading || actions.enable.loading || actions.disable.loading;
+}
+function shouldSkipServicesInfoAutoRefresh({
+  force,
+  localMutatingActionLoading
+}) {
+  return !force && localMutatingActionLoading;
+}
+function shouldResetDiagnosticsChecks({
+  resetChecks,
+  diagnosticsRunLoading
+}) {
+  return resetChecks && !diagnosticsRunLoading;
+}
+function shouldDisableDiagnosticRunAction({
+  providerInfoLoaded,
+  servicesInfoLoading,
+  prokopRunning,
+  mutatingServiceActionLoading
+}) {
+  return !providerInfoLoaded || servicesInfoLoading || !prokopRunning || mutatingServiceActionLoading;
+}
+function hasComponentActionLoading(actions) {
+  return Object.values(actions).some((action) => action.loading);
+}
+function getAvailableActionsDisabledState({
+  servicesInfoLoading,
+  mutatingServiceActionLoading,
+  componentActionLoading
+}) {
+  return {
+    serviceControlsDisabled: servicesInfoLoading || mutatingServiceActionLoading || componentActionLoading,
+    utilityActionsDisabled: mutatingServiceActionLoading || componentActionLoading,
+    viewLogsDisabled: false
+  };
+}
+
+// src/prokop/tabs/diagnostic/diagnosticRunPersistence.ts
+var DIAGNOSTIC_RUN_STORAGE_KEY = "prokop:diagnostic-run:v1";
+var DIAGNOSTIC_RUN_TTL_MS = 30 * 60 * 1e3;
+var CHECK_STATES = [
+  "loading",
+  "warning",
+  "success",
+  "error",
+  "skipped",
+  "unsupported"
+];
+var CHECK_ITEM_STATES = ["error", "warning", "success"];
+function getSessionStorage3() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  try {
+    return window.sessionStorage;
+  } catch {
+    return null;
+  }
+}
+function isRecord(value) {
+  return Boolean(value) && typeof value === "object";
+}
+function isOptionalBoolean(value) {
+  return value === void 0 || typeof value === "boolean";
+}
+function isDiagnosticsProviderOptions(value) {
+  if (!isRecord(value)) {
+    return false;
+  }
+  return isOptionalBoolean(value.includeZapret) && isOptionalBoolean(value.includeZapret2) && isOptionalBoolean(value.includeByedpi);
+}
+function isDiagnosticCheckItem(value) {
+  return isRecord(value) && CHECK_ITEM_STATES.includes(String(value.state)) && typeof value.key === "string" && typeof value.value === "string";
+}
+function isDiagnosticCheck(value) {
+  return isRecord(value) && Number.isFinite(value.order) && Object.values(DIAGNOSTICS_CHECKS).includes(
+    value.code
+  ) && typeof value.title === "string" && typeof value.description === "string" && CHECK_STATES.includes(String(value.state)) && Array.isArray(value.items) && value.items.every(isDiagnosticCheckItem);
+}
+function isPersistedDiagnosticRun(value) {
+  if (!isRecord(value)) {
+    return false;
+  }
+  return typeof value.nextRunnerIndex === "number" && Number.isInteger(value.nextRunnerIndex) && value.nextRunnerIndex >= 0 && isDiagnosticsProviderOptions(value.providerOptions) && Array.isArray(value.diagnosticsChecks) && value.diagnosticsChecks.every(isDiagnosticCheck) && Number.isFinite(value.updatedAt);
+}
+function isExpired(run, now = Date.now()) {
+  return now - run.updatedAt > DIAGNOSTIC_RUN_TTL_MS;
+}
+function readPersistedDiagnosticRun(storage = getSessionStorage3()) {
+  if (!storage) {
+    return null;
+  }
+  try {
+    const parsed = JSON.parse(
+      storage.getItem(DIAGNOSTIC_RUN_STORAGE_KEY) || "null"
+    );
+    if (!isPersistedDiagnosticRun(parsed) || isExpired(parsed)) {
+      storage.removeItem(DIAGNOSTIC_RUN_STORAGE_KEY);
+      return null;
+    }
+    return parsed;
+  } catch {
+    storage.removeItem(DIAGNOSTIC_RUN_STORAGE_KEY);
+    return null;
+  }
+}
+function savePersistedDiagnosticRun(run, storage = getSessionStorage3()) {
+  if (!storage) {
+    return;
+  }
+  try {
+    storage.setItem(
+      DIAGNOSTIC_RUN_STORAGE_KEY,
+      JSON.stringify({
+        ...run,
+        updatedAt: Date.now()
+      })
+    );
+  } catch {
+  }
+}
+function clearPersistedDiagnosticRun(storage = getSessionStorage3()) {
+  if (!storage) {
+    return;
+  }
+  try {
+    storage.removeItem(DIAGNOSTIC_RUN_STORAGE_KEY);
+  } catch {
+  }
+}
+
+// src/prokop/tabs/diagnostic/helpers/maskDiagnostics.ts
+var MASKED_VALUE = "MASKED";
+var SING_BOX_MASKED_KEYS = /* @__PURE__ */ new Set([
+  "access_key_id",
+  "address",
+  "advertise_routes",
+  "api_token",
+  "auth",
+  "auth_key",
+  "auth_str",
+  "client_key",
+  "control_url",
+  "domain",
+  "domain_keyword",
+  "domain_regex",
+  "domain_suffix",
+  "email",
+  "excluded_source_ip_cidr",
+  "exit_node",
+  "extra_headers",
+  "fingerprint",
+  "headers",
+  "host",
+  "hostname",
+  "ip_cidr",
+  "key",
+  "key_id",
+  "listen",
+  "listen_port",
+  "local_address",
+  "mac_key",
+  "obfs",
+  "password",
+  "path",
+  "peer_public_key",
+  "plugin_opts",
+  "pre_shared_key",
+  "private_key",
+  "private_key_passphrase",
+  "public_key",
+  "secret",
+  "secret_access_key",
+  "server",
+  "server_name",
+  "server_port",
+  "server_ports",
+  "service_name",
+  "short_id",
+  "source_ip_cidr",
+  "torrc",
+  "user",
+  "username",
+  "uuid"
+]);
+var UCI_SAFE_OPTIONS = /* @__PURE__ */ new Set([
+  "action",
+  "active_check_interval",
+  "applied_migrations",
+  "auto_hwid",
+  "auto_user_agent",
+  "badwan_monitored_interfaces",
+  "badwan_reload_delay",
+  "cache_path",
+  "check_interval",
+  "check_timeout",
+  "community_lists",
+  "component_update_check_enabled",
+  "component_update_check_interval",
+  "conditions_text_mode",
+  "config_path",
+  "config_version",
+  "connection_type",
+  "detect_server_country",
+  "direct_proxy_enabled",
+  "direct_proxy_port",
+  "disable_quic",
+  "dns_check_interval",
+  "dns_check_timeout",
+  "dns_detour_enabled",
+  "dns_detour_section",
+  "dns_failover_failure_threshold",
+  "dns_recovery_check_interval",
+  "dns_rewrite_ttl",
+  "dns_strategy",
+  "dns_type",
+  "domain_resolver_dns_type",
+  "domain_resolver_enabled",
+  "dont_touch_dhcp",
+  "download_components_via_proxy",
+  "download_components_via_proxy_section",
+  "download_lists_via_proxy",
+  "download_lists_via_proxy_section",
+  "download_subscriptions_via_proxy",
+  "download_via_proxy_enabled",
+  "download_via_proxy_section",
+  "enable_badwan_interface_monitoring",
+  "enable_output_network_interface",
+  "enable_yacd",
+  "enable_yacd_wan_access",
+  "enabled",
+  "exclude_countries",
+  "exclude_ntp",
+  "exclude_outbounds",
+  "exclude_regex",
+  "fastest_check_interval",
+  "filter_mode",
+  "group",
+  "hide_detour_outbounds",
+  "hide_urltest_group_outbounds",
+  "idle_timeout",
+  "include_countries",
+  "include_outbounds",
+  "include_regex",
+  "include_subnets",
+  "include_urltest_groups",
+  "interface",
+  "interfaces",
+  "interrupt_exist_connections",
+  "label",
+  "list_update_enabled",
+  "log_level",
+  "mixed_proxy_auth_enabled",
+  "mixed_proxy_enabled",
+  "mixed_proxy_port",
+  "name",
+  "node_prefix",
+  "order",
+  "outbound_detour_enabled",
+  "outbound_detour_section",
+  "output_network_interface",
+  "pick_fastest",
+  "pin_dashboard",
+  "ports",
+  "prefix_nodes",
+  "priority_groups",
+  "proxy_config_type",
+  "recovery_check_interval",
+  "resolve_real_ip_for_routing",
+  "rule",
+  "secondary_rule_sets",
+  "section",
+  "show_dashboard_metadata",
+  "shutdown_correctly",
+  "sort_by_latency",
+  "source_network_interfaces",
+  "subscription_update_enabled",
+  "subscription_update_interval",
+  "switch_to_faster_same_priority",
+  "tag",
+  "tolerance",
+  "torrserver_direct_enabled",
+  "update_interval",
+  "urltest_check_interval",
+  "urltest_enabled",
+  "urltest_exclude_countries",
+  "urltest_filter_mode",
+  "urltest_include_countries",
+  "urltest_tolerance",
+  "urltests",
+  "user_domain_list_type"
+]);
+var UCI_SAFE_SECTION_OPTIONS = {
+  interface: /* @__PURE__ */ new Set([
+    "auto",
+    "defaultroute",
+    "delegate",
+    "demand",
+    "device",
+    "disabled",
+    "force_link",
+    "ifname",
+    "ip6assign",
+    "ipv6",
+    "keepalive",
+    "metric",
+    "mtu",
+    "multipath",
+    "norelease",
+    "peerdns",
+    "proto",
+    "reqaddress",
+    "reqprefix",
+    "type"
+  ]),
+  dnsmasq: /* @__PURE__ */ new Set([
+    "allservers",
+    "authoritative",
+    "boguspriv",
+    "cachesize",
+    "confdir",
+    "dnsforwardmax",
+    "domain",
+    "domainneeded",
+    "ednspacket_max",
+    "expandhosts",
+    "filter_a",
+    "filter_aaaa",
+    "filterwin2k",
+    "leasefile",
+    "local",
+    "localise_queries",
+    "localservice",
+    "localuse",
+    "logqueries",
+    "nonegcache",
+    "nonwildcard",
+    "noresolv",
+    "port",
+    "readethers",
+    "rebind_localhost",
+    "rebind_protection",
+    "resolvfile",
+    "sequential_ip",
+    "server",
+    "strictorder"
+  ])
+};
+var UCI_URL_OPTIONS = /* @__PURE__ */ new Set([
+  "domain_ip_lists",
+  "health_url",
+  "latency_test_url",
+  "local_domain_lists",
+  "local_subnet_lists",
+  "mirror_base_url",
+  "remote_domain_lists",
+  "remote_subnet_lists",
+  "rule_set",
+  "rule_set_with_subnets",
+  "testing_url",
+  "urltest_testing_url"
+]);
+var URL_PARTS = /^([A-Za-z][A-Za-z0-9+.-]*:\/\/)?([^/?#]*)([^?#]*)(\?[^#]*)?(#.*)?$/;
+var URL_SCHEME = /^([A-Za-z][A-Za-z0-9+.-]*):\/\//;
+var UCI_HEADER = /^[ \t]*(#[ \t#]*)?config[ \t]+([A-Za-z0-9_-]+)([ \t]+['"]?[A-Za-z0-9_-]+['"]?)?[ \t]*$/;
+var UCI_OPTION = /^([ \t]*(#[ \t#]*)?(option|list)[ \t]+([A-Za-z0-9_-]+)[ \t]*)(.*)$/;
+function isRecord2(value) {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+function maskUrlValue(value, maskPath = false) {
+  const parts = `${value}`.match(URL_PARTS);
+  if (!parts) {
+    return MASKED_VALUE;
+  }
+  const scheme = parts[1] ?? "";
+  let authority = parts[2] ?? "";
+  let path = parts[3] ?? "";
+  if (scheme === "" && (`${value}`.startsWith("//") || `${value}`.includes("@"))) {
+    return MASKED_VALUE;
+  }
+  const at = authority.lastIndexOf("@");
+  if (at >= 0) {
+    authority = `${MASKED_VALUE}@${authority.slice(at + 1)}`;
+  }
+  if (maskPath && path !== "" && path !== "/") {
+    path = `/${MASKED_VALUE}`;
+  }
+  return `${scheme}${authority}${path}${parts[4] !== void 0 ? `?${MASKED_VALUE}` : ""}${parts[5] !== void 0 ? `#${MASKED_VALUE}` : ""}`;
+}
+function maskHttpUrlValue(value) {
+  const scheme = `${value}`.match(URL_SCHEME);
+  if (scheme && !["http", "https"].includes(scheme[1].toLowerCase())) {
+    return MASKED_VALUE;
+  }
+  return maskUrlValue(value, false);
+}
+function uciValueScan(text, initialQuote) {
+  let quote = initialQuote;
+  let value = "";
+  let comment = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (quote === "'") {
+      if (c === "'") quote = null;
+      else value += c;
+    } else if (quote === '"') {
+      if (c === "\\" && i + 1 < text.length) value += text[++i];
+      else if (c === '"') quote = null;
+      else value += c;
+    } else if (c === "'" || c === '"') quote = c;
+    else if (c === "\\" && i + 1 < text.length) value += text[++i];
+    else if (c === "#") {
+      comment = true;
+      break;
+    } else if (c !== " " && c !== "	" && c !== "\r") value += c;
+  }
+  return { quote, value, comment };
+}
+function uciOptionSafe(state, name) {
+  return UCI_SAFE_OPTIONS.has(name) || Boolean(UCI_SAFE_SECTION_OPTIONS[state.sectionType]?.has(name));
+}
+function uciQuotedLine(prefix, value) {
+  return `${prefix}'${value.replace(/'/g, "'\\''")}'`;
+}
+function maskUciLine(state, line) {
+  const indent = line.match(/^[ \t]*/)?.[0] ?? "";
+  if (state.quote !== null) {
+    const closing = state.quote;
+    state.quote = uciValueScan(line, state.quote).quote;
+    return `${indent}${MASKED_VALUE}${state.quote === null ? closing : ""}`;
+  }
+  const header = line.match(UCI_HEADER);
+  if (header) {
+    if (header[1] === void 0) {
+      state.sectionType = header[2];
+    }
+    return line;
+  }
+  const option = line.match(UCI_OPTION);
+  if (option) {
+    const name = option[4];
+    const scan = uciValueScan(option[5], null);
+    if (scan.quote === null && uciOptionSafe(state, name)) {
+      return scan.comment ? uciQuotedLine(option[1], scan.value) : line;
+    }
+    if (scan.quote === null && UCI_URL_OPTIONS.has(name)) {
+      return uciQuotedLine(option[1], maskHttpUrlValue(scan.value));
+    }
+    state.quote = scan.quote;
+    return `${option[1]}'${MASKED_VALUE}${scan.quote === null ? "'" : ""}`;
+  }
+  if (/^[ \t]*$/.test(line)) {
+    return line;
+  }
+  if (/^[ \t]*#/.test(line)) {
+    return `${indent}# ${MASKED_VALUE}`;
+  }
+  return null;
+}
+function maskSingBoxConfigValue(value) {
+  if (Array.isArray(value)) {
+    return value.map((item) => maskSingBoxConfigValue(item));
+  }
+  if (isRecord2(value)) {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [
+        key,
+        SING_BOX_MASKED_KEYS.has(key) || key === "port" && value.address !== void 0 && value.address !== null ? MASKED_VALUE : maskSingBoxConfigValue(item)
+      ])
+    );
+  }
+  if (typeof value === "string" && URL_SCHEME.test(value)) {
+    return maskHttpUrlValue(value);
+  }
+  return value;
+}
+function stringifySingBoxConfig(value) {
+  return typeof value === "string" ? value : JSON.stringify(value, null, 2);
+}
+function formatMaskedSingBoxConfig(value) {
+  if (typeof value === "string") {
+    try {
+      return JSON.stringify(maskSingBoxConfigValue(JSON.parse(value)), null, 2);
+    } catch (_error) {
+      return value;
+    }
+  }
+  return JSON.stringify(maskSingBoxConfigValue(value), null, 2);
+}
+var VALIDATION_HEADER = "\u{1F9EA} Prokop configuration validation";
+var VALIDATION_FAILED = "\u274C Prokop configuration validation failed";
+var SECTION_SEPARATOR = /^━+$/;
+function maskGlobalCheckText(text = "") {
+  const state = { quote: null, sectionType: "" };
+  let inValidation = false;
+  const result = [];
+  for (const line of `${text}`.split("\n")) {
+    if (line === VALIDATION_HEADER) {
+      inValidation = true;
+      result.push(line);
+      continue;
+    }
+    if (inValidation && !SECTION_SEPARATOR.test(line)) {
+      if (line.startsWith("\u2705")) {
+        result.push(line);
+      } else if (line.startsWith("\u274C")) {
+        result.push(VALIDATION_FAILED);
+      }
+      continue;
+    }
+    inValidation = false;
+    result.push(maskUciLine(state, line) ?? line);
+  }
+  return result.join("\n");
+}
+
+// src/prokop/tabs/diagnostic/initController.ts
+var latestProviderInfoRequestId = 0;
+var diagnosticLifecycleRegistered = false;
+var diagnosticControllerInitialized = false;
+var diagnosticMounted = false;
+var diagnosticMountId = 0;
+var diagnosticCompletedWhileHidden = false;
+var servicesInfoStateUnsubscribe = null;
+var servicesInfoRefreshPromise = null;
+var followedServiceActionJobs = /* @__PURE__ */ new Set();
+var handledServiceActionJobs = /* @__PURE__ */ new Set();
+function getDiagnosticsProviderOptions(systemInfo = store.get().diagnosticsSystemInfo) {
+  return {
+    includeZapret: Boolean(systemInfo.zapret_installed),
+    includeZapret2: Boolean(systemInfo.zapret2_installed),
+    includeByedpi: Boolean(systemInfo.byedpi_installed)
+  };
+}
+function getNotRunningDiagnosticsChecks() {
+  return getDiagnosticsChecks(
+    _("Not running"),
+    getDiagnosticsProviderOptions()
+  );
+}
+function resetDiagnosticsChecks() {
+  store.set({
+    diagnosticsChecks: getNotRunningDiagnosticsChecks()
+  });
+}
+function setDiagnosticActionLoading(action, loading2, local = false) {
+  if (local || !loading2) {
+    setLocalServiceAction(action, loading2 && local);
+  }
+  const diagnosticsActions = store.get().diagnosticsActions;
+  store.set({
+    diagnosticsActions: {
+      ...diagnosticsActions,
+      [action]: { loading: loading2 }
+    }
+  });
+}
+function isDiagnosticMountActive(mountId3 = diagnosticMountId) {
+  return diagnosticMounted && diagnosticMountId === mountId3;
+}
+function isLocalMutatingServiceActionLoading() {
+  const actions = store.get().diagnosticsActions;
+  return hasLocalMutatingServiceActionLoading(actions);
+}
+function isMutatingServiceActionLoading() {
+  return isLocalMutatingServiceActionLoading() || isServiceTransitionStatus(store.get().servicesInfoWidget.data.prokopStatus);
+}
+function downloadSupportReport(text) {
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  const stamp = (/* @__PURE__ */ new Date()).toISOString().replace(/[:.]/g, "-");
+  link.href = url;
+  link.download = `prokop-support-report-${stamp}.txt`;
+  link.style.display = "none";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+async function handleDownloadSupportReport() {
+  setDiagnosticActionLoading("supportReport", true);
+  try {
+    const report = await ProkopShellMethods.supportReport();
+    if (!report.success) {
+      throw new Error(report.error || "Support report collection failed");
+    }
+    downloadSupportReport(String(report.data ?? ""));
+    showToast(
+      _(
+        "Support report contains confidential information. Do not share it in public chats."
+      ),
+      "warning",
+      1e4
+    );
+  } catch (error) {
+    logger.error("[DIAGNOSTIC]", "handleDownloadSupportReport - e", error);
+    showToast(_("Failed to create support report"), "error");
+  } finally {
+    setDiagnosticActionLoading("supportReport", false);
+  }
+}
+async function refreshDiagnosticServicesInfo({
+  force = false,
+  mountId: mountId3 = diagnosticMountId,
+  allowInactive = false
+} = {}) {
+  if (!allowInactive && !isDiagnosticMountActive(mountId3)) {
+    return;
+  }
+  if (shouldSkipServicesInfoAutoRefresh({
+    force,
+    localMutatingActionLoading: isLocalMutatingServiceActionLoading()
+  })) {
+    return;
+  }
+  if (servicesInfoRefreshPromise) {
+    return servicesInfoRefreshPromise;
+  }
+  const promise = fetchServicesInfo().then((uiState) => {
+    followServiceActionsFromUiState(uiState);
+  }).catch((error) => {
+    logger.error(
+      "[DIAGNOSTIC]",
+      "refreshDiagnosticServicesInfo failed",
+      error
+    );
+  }).finally(() => {
+    if (servicesInfoRefreshPromise === promise) {
+      servicesInfoRefreshPromise = null;
+    }
+  });
+  servicesInfoRefreshPromise = promise;
+  return promise;
+}
+function startServiceActionStateWatcher() {
+  if (servicesInfoStateUnsubscribe) {
+    return;
+  }
+  servicesInfoStateUnsubscribe = subscribeRuntimeUiState((uiState) => {
+    if (diagnosticMounted) {
+      followServiceActionsFromUiState(uiState);
+    }
+  });
+}
+function stopServiceActionStateWatcher() {
+  if (!servicesInfoStateUnsubscribe) {
+    return;
+  }
+  servicesInfoStateUnsubscribe();
+  servicesInfoStateUnsubscribe = null;
+}
+function isVisibleServiceRuntimeAction(action) {
+  return action === "restart" || action === "start" || action === "stop";
+}
+function setServiceActionStateLoading(state, loading2) {
+  if (!isVisibleServiceRuntimeAction(state.action)) {
+    return;
+  }
+  setDiagnosticActionLoading(state.action, loading2);
+}
+async function followServiceActionState(state) {
+  const jobId = state.job_id;
+  if (!jobId || followedServiceActionJobs.has(jobId)) {
+    return;
+  }
+  if (!state.running && handledServiceActionJobs.has(jobId)) {
+    return;
+  }
+  followedServiceActionJobs.add(jobId);
+  if (state.running) {
+    setServiceActionStateLoading(state, true);
+  }
+  try {
+    if (state.running) {
+      await ProkopShellMethods.waitServiceActionJob(jobId);
+    }
+  } catch (error) {
+    logger.error("[DIAGNOSTIC]", "followServiceActionState failed", error);
+  } finally {
+    handledServiceActionJobs.add(jobId);
+    setServiceActionStateLoading(state, false);
+    await refreshDiagnosticServicesInfo({ force: true, allowInactive: true });
+    void ProkopShellMethods.uiActionAck("service", jobId);
+    followedServiceActionJobs.delete(jobId);
+    resetDiagnosticsChecks();
+  }
+}
+function followServiceActionsFromUiState(uiState) {
+  if (!uiState) {
+    return;
+  }
+  for (const action of uiState.actions.service || []) {
+    if (action.job_id) {
+      void followServiceActionState(action);
+    }
+  }
+}
+async function fetchSystemInfo() {
+  const systemInfo = await ensureSystemInfo();
+  if (store.get().diagnosticsRunAction.loading) {
+    return;
+  }
+  store.set({
+    diagnosticsChecks: getDiagnosticsChecks(
+      _("Not running"),
+      getDiagnosticsProviderOptions(systemInfo)
+    )
+  });
+}
+async function fetchDiagnosticsProviderInfo({
+  resetChecks = true
+} = {}) {
+  const requestId = ++latestProviderInfoRequestId;
+  try {
+    const uiState = await refreshRuntimeUiState({ force: true });
+    if (requestId !== latestProviderInfoRequestId) {
+      return;
+    }
+    if (uiState) {
+      const currentSystemInfo2 = store.get().diagnosticsSystemInfo;
+      const nextSystemInfo2 = normalizeSingBoxVariantFields({
+        ...currentSystemInfo2,
+        providerInfoLoaded: true,
+        sing_box_extended: uiState.capabilities.sing_box_extended,
+        sing_box_tiny: uiState.capabilities.sing_box_tiny,
+        sing_box_compressed: uiState.capabilities.sing_box_compressed,
+        sing_box_tailscale: uiState.capabilities.sing_box_tailscale,
+        zapret_installed: uiState.capabilities.zapret_installed,
+        zapret2_installed: uiState.capabilities.zapret2_installed,
+        byedpi_installed: uiState.capabilities.byedpi_installed
+      });
+      if (!nextSystemInfo2.zapret_installed) {
+        nextSystemInfo2.zapret_version = "not installed";
+      }
+      if (!nextSystemInfo2.zapret2_installed) {
+        nextSystemInfo2.zapret2_version = "not installed";
+      }
+      if (!nextSystemInfo2.byedpi_installed) {
+        nextSystemInfo2.byedpi_version = "not installed";
+      }
+      const nextState2 = {
+        diagnosticsSystemInfo: nextSystemInfo2
+      };
+      if (shouldResetDiagnosticsChecks({
+        resetChecks,
+        diagnosticsRunLoading: store.get().diagnosticsRunAction.loading
+      })) {
+        nextState2.diagnosticsChecks = getDiagnosticsChecks(
+          _("Not running"),
+          getDiagnosticsProviderOptions(nextSystemInfo2)
+        );
+      }
+      store.set(nextState2);
+      return;
+    }
+    const [zapretRuntime, zapret2Runtime, byedpiRuntime] = await Promise.all([
+      ProkopShellMethods.checkZapretRuntime(),
+      ProkopShellMethods.checkZapret2Runtime(),
+      ProkopShellMethods.checkByedpiRuntime()
+    ]);
+    if (requestId !== latestProviderInfoRequestId) {
+      return;
+    }
+    const currentSystemInfo = store.get().diagnosticsSystemInfo;
+    const nextSystemInfo = {
+      ...currentSystemInfo,
+      providerInfoLoaded: true,
+      zapret_installed: zapretRuntime.success ? zapretRuntime.data.zapret_installed : currentSystemInfo.zapret_installed,
+      zapret2_installed: zapret2Runtime.success ? zapret2Runtime.data.zapret2_installed : currentSystemInfo.zapret2_installed,
+      byedpi_installed: byedpiRuntime.success ? byedpiRuntime.data.byedpi_installed : currentSystemInfo.byedpi_installed
+    };
+    if (!zapretRuntime.success) {
+      logger.error("[DIAGNOSTIC]", "fetchZapretRuntime failed", zapretRuntime);
+    }
+    if (!zapret2Runtime.success) {
+      logger.error(
+        "[DIAGNOSTIC]",
+        "fetchZapret2Runtime failed",
+        zapret2Runtime
+      );
+    }
+    if (!byedpiRuntime.success) {
+      logger.error("[DIAGNOSTIC]", "fetchByedpiRuntime failed", byedpiRuntime);
+    }
+    if (!nextSystemInfo.zapret_installed) {
+      nextSystemInfo.zapret_version = "not installed";
+    }
+    if (!nextSystemInfo.zapret2_installed) {
+      nextSystemInfo.zapret2_version = "not installed";
+    }
+    if (!nextSystemInfo.byedpi_installed) {
+      nextSystemInfo.byedpi_version = "not installed";
+    }
+    const nextState = {
+      diagnosticsSystemInfo: nextSystemInfo
+    };
+    if (shouldResetDiagnosticsChecks({
+      resetChecks,
+      diagnosticsRunLoading: store.get().diagnosticsRunAction.loading
+    })) {
+      nextState.diagnosticsChecks = getDiagnosticsChecks(
+        _("Not running"),
+        getDiagnosticsProviderOptions(nextSystemInfo)
+      );
+    }
+    store.set(nextState);
+  } catch (error) {
+    logger.error("[DIAGNOSTIC]", "fetchDiagnosticsProviderInfo failed", error);
+    if (requestId === latestProviderInfoRequestId) {
+      const currentSystemInfo = store.get().diagnosticsSystemInfo;
+      store.set({
+        diagnosticsSystemInfo: {
+          ...currentSystemInfo,
+          providerInfoLoaded: true
+        }
+      });
+    }
+  }
+}
+var retryingCheck = null;
+function renderDiagnosticsChecks() {
+  logger.debug("[DIAGNOSTIC]", "renderDiagnosticsChecks");
+  const container = document.getElementById("fkp_diagnostic-page-checks");
+  if (!container) return;
+  const rendered = renderChecks(store.get().diagnosticsChecks, {
+    onRetry: (code) => void retryCheck(code),
+    busy: store.get().diagnosticsRunAction.loading || retryingCheck !== null
+  });
+  return preserveScrollForPage(() => {
+    container.replaceChildren(...rendered);
+  });
+}
+async function retryCheck(code) {
+  if (store.get().diagnosticsRunAction.loading || retryingCheck) return;
+  const runner = getDiagnosticRunners(getDiagnosticsProviderOptions()).find(
+    (item) => item.code === code
+  );
+  if (!runner) return;
+  retryingCheck = code;
+  setDiagnosticCheckLoading(code);
+  try {
+    await runner.run();
+  } catch (e) {
+    logger.error("[DIAGNOSTIC]", `retryCheck - ${code} failed`, e);
+  } finally {
+    retryingCheck = null;
+    renderDiagnosticsChecks();
+  }
+}
+function renderDiagnosticRunActionWidget() {
+  logger.debug("[DIAGNOSTIC]", "renderDiagnosticRunActionWidget");
+  const { loading: loading2 } = store.get().diagnosticsRunAction;
+  const providerInfoLoaded = store.get().diagnosticsSystemInfo.providerInfoLoaded;
+  const servicesInfoWidget = store.get().servicesInfoWidget;
+  const prokopRunning = Boolean(servicesInfoWidget.data.prokopRunning);
+  const container = document.getElementById("fkp_diagnostic-page-run-check");
+  const renderedAction = renderRunAction({
+    loading: loading2,
+    disabled: shouldDisableDiagnosticRunAction({
+      providerInfoLoaded,
+      servicesInfoLoading: servicesInfoWidget.loading,
+      prokopRunning,
+      mutatingServiceActionLoading: isMutatingServiceActionLoading()
+    }),
+    click: () => runChecks()
+  });
+  const lastRun = document.getElementById("fkp_diagnostic-last-run");
+  const reason = document.getElementById("fkp_diagnostic-run-reason");
+  const blocked = servicesInfoWidget.loading || loading2 ? null : !prokopRunning ? {
+    text: _("Prokop is stopped. Start it to run the checks."),
+    actions: renderStartServiceAction()
+  } : isMutatingServiceActionLoading() ? {
+    text: _("Waiting for the service action to finish."),
+    actions: []
+  } : null;
+  return preserveScrollForPage(() => {
+    container.replaceChildren(renderedAction);
+    if (lastRun) lastRun.textContent = lastRunText(localStorage);
+    reason?.replaceChildren(
+      ...blocked ? [E("span", {}, blocked.text), ...blocked.actions] : []
+    );
+  });
+}
+async function handleShowGlobalCheck() {
+  setDiagnosticActionLoading("globalCheck", true);
+  try {
+    const readonly = isReadonlyMode();
+    const globalCheck = await ProkopShellMethods.globalCheck(readonly);
+    if (globalCheck.success) {
+      const rawGlobalCheckText = globalCheck.data ?? "";
+      const maskedGlobalCheckText = maskGlobalCheckText(rawGlobalCheckText);
+      ui.showModal(
+        _("Global check"),
+        renderModal(rawGlobalCheckText, "global_check", {
+          maskText: () => maskedGlobalCheckText,
+          initialAutoRefresh: false,
+          showMaskValuesToggle: !readonly
+        })
+      );
+    } else {
+      logger.error("[DIAGNOSTIC]", "handleShowGlobalCheck - e", globalCheck);
+      showToast(_("Could not load data"), "error");
+    }
+  } catch (e) {
+    logger.error("[DIAGNOSTIC]", "handleShowGlobalCheck - e", e);
+    showToast(_("Could not load data"), "error");
+  } finally {
+    setDiagnosticActionLoading("globalCheck", false);
+  }
+}
+async function handleViewLogs() {
+  setDiagnosticActionLoading("viewLogs", true);
+  try {
+    const viewLogs = await ProkopShellMethods.checkLogs();
+    if (viewLogs.success) {
+      const getLatestLogs = async () => {
+        const latestLogs = await ProkopShellMethods.checkLogs();
+        if (!latestLogs.success) {
+          throw latestLogs;
+        }
+        return latestLogs.data ?? "";
+      };
+      ui.showModal(
+        _("View logs"),
+        renderModal(viewLogs.data, "view_logs", {
+          getText: getLatestLogs,
+          // Each refresh runs check_logs on the router (UC-126).
+          refreshMs: 2e3,
+          initialAutoRefresh: true,
+          showAutoRefreshToggle: true,
+          startAtEnd: true
+        })
+      );
+    } else {
+      logger.error("[DIAGNOSTIC]", "handleViewLogs - e", viewLogs);
+      showToast(_("Could not load data"), "error");
+    }
+  } catch (e) {
+    logger.error("[DIAGNOSTIC]", "handleViewLogs - e", e);
+    showToast(_("Could not load data"), "error");
+  } finally {
+    setDiagnosticActionLoading("viewLogs", false);
+  }
+}
+async function handleShowSingBoxConfig() {
+  setDiagnosticActionLoading("showSingBoxConfig", true);
+  try {
+    const readonly = isReadonlyMode();
+    const showSingBoxConfig = await ProkopShellMethods.showSingBoxConfig(readonly);
+    if (showSingBoxConfig.success) {
+      const rawSingBoxConfigText = stringifySingBoxConfig(
+        showSingBoxConfig.data
+      );
+      const maskedSingBoxConfigText = formatMaskedSingBoxConfig(
+        showSingBoxConfig.data
+      );
+      ui.showModal(
+        _("Show sing-box config"),
+        renderModal(rawSingBoxConfigText, "show_sing_box_config", {
+          maskText: () => maskedSingBoxConfigText,
+          initialAutoRefresh: false,
+          showMaskValuesToggle: !readonly
+        })
+      );
+    } else {
+      logger.error(
+        "[DIAGNOSTIC]",
+        "handleShowSingBoxConfig - e",
+        showSingBoxConfig
+      );
+      showToast(_("Could not load data"), "error");
+    }
+  } catch (e) {
+    logger.error("[DIAGNOSTIC]", "handleShowSingBoxConfig - e", e);
+    showToast(_("Could not load data"), "error");
+  } finally {
+    setDiagnosticActionLoading("showSingBoxConfig", false);
+  }
+}
+function renderDiagnosticAvailableActionsWidget() {
+  const diagnosticsActions = store.get().diagnosticsActions;
+  const updatesActions = store.get().updatesActions;
+  const servicesInfoWidget = store.get().servicesInfoWidget;
+  logger.debug("[DIAGNOSTIC]", "renderDiagnosticAvailableActionsWidget");
+  const { utilityActionsDisabled, viewLogsDisabled } = getAvailableActionsDisabledState({
+    servicesInfoLoading: servicesInfoWidget.loading,
+    mutatingServiceActionLoading: isMutatingServiceActionLoading(),
+    componentActionLoading: hasComponentActionLoading(updatesActions)
+  });
+  const container = document.getElementById("fkp_diagnostic-page-actions");
+  const readonly = isReadonlyMode();
+  const renderedActions = renderAvailableActions({
+    globalCheck: {
+      loading: diagnosticsActions.globalCheck.loading,
+      visible: true,
+      onClick: handleShowGlobalCheck,
+      disabled: utilityActionsDisabled
+    },
+    viewLogs: {
+      loading: diagnosticsActions.viewLogs.loading,
+      visible: true,
+      onClick: handleViewLogs,
+      disabled: viewLogsDisabled
+    },
+    showSingBoxConfig: {
+      loading: diagnosticsActions.showSingBoxConfig.loading,
+      visible: true,
+      onClick: handleShowSingBoxConfig,
+      disabled: utilityActionsDisabled
+    },
+    supportReport: {
+      loading: diagnosticsActions.supportReport.loading,
+      visible: !readonly,
+      onClick: () => void handleDownloadSupportReport(),
+      disabled: utilityActionsDisabled
+    }
+  });
+  return preserveScrollForPage(() => {
+    container?.replaceChildren(renderedActions);
+  });
+}
+function displayValue(value) {
+  switch (String(value ?? "").trim().toLowerCase()) {
+    case "":
+    case "unknown":
+      return _("unknown");
+    case "loading":
+      return _("Loading\u2026");
+    case "not installed":
+      return _("Not installed");
+    default:
+      return value;
+  }
+}
+function renderDiagnosticSystemInfoWidget() {
+  logger.debug("[DIAGNOSTIC]", "renderDiagnosticSystemInfoWidget");
+  const diagnosticsSystemInfo = store.get().diagnosticsSystemInfo;
+  const container = document.getElementById("fkp_diagnostic-page-system-info");
+  const items = [
+    {
+      key: "Prokop",
+      value: normalizeCompiledVersion(diagnosticsSystemInfo.prokop_version)
+    },
+    {
+      key: _("LuCI app"),
+      value: normalizeCompiledVersion(PROKOP_LUCI_APP_VERSION)
+    },
+    {
+      key: "sing-box",
+      value: formatSingBoxVersion(diagnosticsSystemInfo)
+    }
+  ];
+  if (diagnosticsSystemInfo.zapret_installed) {
+    items.push({
+      key: "Zapret",
+      value: diagnosticsSystemInfo.zapret_version
+    });
+  }
+  if (diagnosticsSystemInfo.zapret2_installed) {
+    items.push({
+      key: "Zapret2",
+      value: diagnosticsSystemInfo.zapret2_version
+    });
+  }
+  if (diagnosticsSystemInfo.byedpi_installed) {
+    items.push({
+      key: "ByeDPI",
+      value: diagnosticsSystemInfo.byedpi_version
+    });
+  }
+  items.push(
+    {
+      key: _("OS"),
+      value: diagnosticsSystemInfo.openwrt_version
+    },
+    {
+      key: _("Device"),
+      value: diagnosticsSystemInfo.device_model
+    }
+  );
+  const renderedSystemInfo = renderSystemInfo({
+    items: items.map((item) => ({ ...item, value: displayValue(item.value) }))
+  });
+  return preserveScrollForPage(() => {
+    container.replaceChildren(renderedSystemInfo);
+  });
+}
+async function onStoreUpdate2(_next, _prev, diff) {
+  if (diff.diagnosticsChecks || diff.diagnosticsRunAction) {
+    renderDiagnosticsChecks();
+  }
+  if (diff.diagnosticsRunAction) {
+    renderDiagnosticRunActionWidget();
+  }
+  if (diff.diagnosticsActions || diff.servicesInfoWidget || diff.updatesActions) {
+    renderDiagnosticAvailableActionsWidget();
+  }
+  if (diff.diagnosticsActions || diff.servicesInfoWidget) {
+    renderDiagnosticRunActionWidget();
+  }
+  if (diff.diagnosticsSystemInfo) {
+    renderDiagnosticSystemInfoWidget();
+    renderDiagnosticRunActionWidget();
+  }
+}
+function persistDiagnosticRunProgress({
+  providerOptions,
+  nextRunnerIndex
+}) {
+  savePersistedDiagnosticRun({
+    providerOptions,
+    nextRunnerIndex,
+    diagnosticsChecks: store.get().diagnosticsChecks
+  });
+}
+function setDiagnosticCheckLoading(code) {
+  const meta = DIAGNOSTICS_CHECKS_MAP[code];
+  const diagnosticsChecks = store.get().diagnosticsChecks;
+  const other = diagnosticsChecks.filter((item) => item.code !== code);
+  store.set({
+    diagnosticsChecks: [
+      ...other,
+      {
+        order: meta.order,
+        code: meta.code,
+        title: meta.title,
+        description: _("Checking, please wait"),
+        state: "loading",
+        items: []
+      }
+    ]
+  });
+}
+function getDiagnosticRunners(providerOptions) {
+  return [
+    { code: "DNS" /* DNS */, run: runDnsCheck },
+    { code: "SINGBOX" /* SINGBOX */, run: runSingBoxCheck },
+    { code: "NFT" /* NFT */, run: runNftCheck },
+    ...providerOptions.includeZapret ? [{ code: "ZAPRET" /* ZAPRET */, run: runZapretCheck }] : [],
+    ...providerOptions.includeZapret2 ? [{ code: "ZAPRET2" /* ZAPRET2 */, run: runZapret2Check }] : [],
+    ...providerOptions.includeByedpi ? [{ code: "BYEDPI" /* BYEDPI */, run: runByedpiCheck }] : [],
+    { code: "OUTBOUNDS" /* OUTBOUNDS */, run: runSectionsCheck },
+    { code: "FAKEIP" /* FAKEIP */, run: runFakeIPCheck }
+  ];
+}
+async function runChecks({ resume } = {}) {
+  if (store.get().diagnosticsRunAction.loading && !resume) {
+    return;
+  }
+  let providerOptions = resume?.providerOptions ?? getDiagnosticsProviderOptions();
+  let nextRunnerIndex = resume?.nextRunnerIndex ?? 0;
+  store.set({
+    diagnosticsRunAction: { loading: true },
+    diagnosticsChecks: resume?.diagnosticsChecks ?? getLoadingDiagnosticsChecks(providerOptions).diagnosticsChecks
+  });
+  persistDiagnosticRunProgress({
+    providerOptions,
+    nextRunnerIndex
+  });
+  try {
+    if (!resume) {
+      await fetchDiagnosticsProviderInfo({ resetChecks: false });
+      providerOptions = getDiagnosticsProviderOptions();
+      nextRunnerIndex = 0;
+      store.set({
+        diagnosticsChecks: getLoadingDiagnosticsChecks(providerOptions).diagnosticsChecks
+      });
+      persistDiagnosticRunProgress({
+        providerOptions,
+        nextRunnerIndex
+      });
+    }
+    const runners = getDiagnosticRunners(providerOptions);
+    for (let index = nextRunnerIndex; index < runners.length; index += 1) {
+      const runner = runners[index];
+      setDiagnosticCheckLoading(runner.code);
+      persistDiagnosticRunProgress({
+        providerOptions,
+        nextRunnerIndex: index
+      });
+      try {
+        await runner.run();
+      } catch (e) {
+        logger.error(
+          "[DIAGNOSTIC]",
+          `runChecks - ${runner.run.name} failed`,
+          e
+        );
+      }
+      persistDiagnosticRunProgress({
+        providerOptions,
+        nextRunnerIndex: index + 1
+      });
+    }
+    saveLastRun(localStorage);
+  } catch (e) {
+    logger.error("[DIAGNOSTIC]", "runChecks - e", e);
+  } finally {
+    clearPersistedDiagnosticRun();
+    store.set({ diagnosticsRunAction: { loading: false } });
+    if (!diagnosticMounted) {
+      diagnosticCompletedWhileHidden = true;
+    }
+  }
+}
+async function loadInitialDiagnosticData() {
+  const diagnosticStatus = document.getElementById("diagnostic-status");
+  if (diagnosticStatus?.isConnected && diagnosticStatus.offsetParent !== null) {
+    if (store.get().diagnosticsRunAction.loading) {
+      return;
+    }
+    await fetchSystemInfo();
+    await fetchDiagnosticsProviderInfo();
+  }
+}
+function restorePersistedDiagnosticRun() {
+  const persistedRun = readPersistedDiagnosticRun();
+  if (!persistedRun) {
+    return false;
+  }
+  store.set({
+    diagnosticsRunAction: { loading: true },
+    diagnosticsChecks: persistedRun.diagnosticsChecks
+  });
+  void runChecks({ resume: persistedRun });
+  return true;
+}
+async function onPageMount2() {
+  const preserveHiddenResult = diagnosticCompletedWhileHidden;
+  onPageUnmount2({
+    preserveCompletedResult: preserveHiddenResult,
+    preservePersistedRun: true
+  });
+  diagnosticMounted = true;
+  diagnosticMountId += 1;
+  const mountId3 = diagnosticMountId;
+  const hasRuntimeSnapshot = Boolean(getCachedRuntimeUiState());
+  if (!hasRuntimeSnapshot) {
+    const uiState = await refreshRuntimeUiState({ force: true });
+    if (!diagnosticMounted || mountId3 !== diagnosticMountId) {
+      return;
+    }
+    if (!uiState) {
+      void refreshDiagnosticServicesInfo({ force: true });
+    }
+  }
+  const restoredPersistedRun = !preserveHiddenResult && restorePersistedDiagnosticRun();
+  if (preserveHiddenResult) {
+    diagnosticCompletedWhileHidden = false;
+  } else if (!restoredPersistedRun && !store.get().diagnosticsRunAction.loading) {
+    store.reset(["diagnosticsRunAction"]);
+    resetDiagnosticsChecks();
+  }
+  store.subscribe(onStoreUpdate2);
+  startServiceActionStateWatcher();
+  renderDiagnosticsChecks();
+  renderDiagnosticRunActionWidget();
+  renderDiagnosticAvailableActionsWidget();
+  renderDiagnosticSystemInfoWidget();
+  if (hasRuntimeSnapshot) {
+    void refreshRuntimeUiState({ force: true });
+  }
+  if (!preserveHiddenResult && !restoredPersistedRun) {
+    void loadInitialDiagnosticData();
+  }
+}
+function onPageUnmount2({
+  preserveCompletedResult = false,
+  preservePersistedRun = false
+} = {}) {
+  diagnosticMounted = false;
+  diagnosticMountId += 1;
+  stopServiceActionStateWatcher();
+  servicesInfoRefreshPromise = null;
+  store.unsubscribe(onStoreUpdate2);
+  if (!preserveCompletedResult && !store.get().diagnosticsRunAction.loading) {
+    if (!preservePersistedRun) {
+      clearPersistedDiagnosticRun();
+    }
+    store.reset(["diagnosticsRunAction"]);
+    resetDiagnosticsChecks();
+    diagnosticCompletedWhileHidden = false;
+  }
+}
+function registerLifecycleListeners2() {
+  if (diagnosticLifecycleRegistered) {
+    return;
+  }
+  diagnosticLifecycleRegistered = true;
+  store.subscribe((next, prev, diff) => {
+    if (diff.tabService && next.tabService.current !== prev.tabService.current) {
+      logger.debug(
+        "[DIAGNOSTIC]",
+        "active tab diff event, active tab:",
+        diff.tabService.current
+      );
+      const isDIAGNOSTICVisible = next.tabService.current === "diagnostic";
+      if (isDIAGNOSTICVisible) {
+        logger.debug(
+          "[DIAGNOSTIC]",
+          "registerLifecycleListeners",
+          "onPageMount"
+        );
+        return onPageMount2();
+      }
+      if (!isDIAGNOSTICVisible) {
+        logger.debug(
+          "[DIAGNOSTIC]",
+          "registerLifecycleListeners",
+          "onPageUnmount"
+        );
+        return onPageUnmount2();
+      }
+    }
+  });
+}
+async function initController2(dependencies2 = {}) {
+  if (diagnosticControllerInitialized) {
+    return;
+  }
+  diagnosticControllerInitialized = true;
+  onMount("diagnostic-status").then(() => {
+    initSiteCheck(dependencies2.loadLocalDeviceChoices);
+    initConnectivityMatrix();
+    initDpiPlayground();
+    logger.debug("[DIAGNOSTIC]", "initController", "onMount");
+    registerLifecycleListeners2();
+    if (store.get().tabService.current === "diagnostic" || isActiveLuciTab("diagnostic")) {
+      onPageMount2();
+    }
+  });
+}
+
+// src/prokop/tabs/diagnostic/styles.ts
+var styles5 = `
+#cbi-${PROKOP_UCI_PACKAGE}-diagnostic-_mount_node > div {
+    width: 100%;
+}
+
+#cbi-${PROKOP_UCI_PACKAGE}-diagnostic > h3 {
+    display: none;
+}
+
+.fkp-diag {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.fkp-diag * {
+    text-align: left;
+}
+
+/* Service actions: a wrapping row of buttons instead of a tall column. */
+.fkp-diag .fkp_diagnostic-page__right-bar__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 6px;
+}
+
+.fkp-diag .fkp_diagnostic-page__right-bar__actions > b,
+.fkp-diag .fkp_diagnostic-page__right-bar__actions > p {
+    flex-basis: 100%;
+    margin: 0;
+}
+
+.fkp-diag .fkp_diagnostic-page__right-bar__actions > .fkp-partial-button {
+    width: auto;
+    margin: 0;
+}
+
+.fkp-diag-card {
+    border: 1px solid var(--border-color-medium, #777);
+    border-radius: 6px;
+    padding: 12px 14px;
+    min-width: 0;
+    overflow-wrap: break-word;
+}
+
+.fkp-diag-card__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 16px;
+}
+
+.fkp-diag-card__title,
+.fkp-diag-section-title {
+    margin: 0 0 4px;
+}
+
+.fkp-diag-section-title {
+    margin-top: 8px;
+}
+
+.fkp-diag-hint {
+    display: block;
+    margin: 4px 0;
+    color: var(--text-color-medium, gray);
+}
+
+.fkp-diag-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 12px;
+    align-items: start;
+}
+
+.fkp-diag-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    margin-top: 10px;
+}
+
+.fkp-diag-actions .btn {
+    margin: 0;
+}
+
+.fkp-diag-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.fkp-diag-field {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+}
+
+.fkp-diag-field--wide {
+    flex: 1 1 280px;
+}
+
+.fkp-diag-field input,
+.fkp-diag-field select,
+.fkp-diag-field textarea {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+}
+
+.fkp-diag-details > summary {
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.fkp-diag-details[open] > summary {
+    margin-bottom: 8px;
+}
+
+.fkp-diag-badge {
+    display: inline-block;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 1px 8px;
+    border-radius: 10px;
+    border: 1px solid currentColor;
+    font-size: 0.9em;
+    white-space: nowrap;
+}
+
+.fkp-diag-badge--success, .fkp-diag-text--success { color: var(--success-color-medium, green); }
+.fkp-diag-badge--warning, .fkp-diag-text--warning { color: var(--warn-color-medium, orange); }
+.fkp-diag-badge--error, .fkp-diag-text--error { color: var(--error-color-medium, red); }
+.fkp-diag-badge--loading, .fkp-diag-text--loading { color: var(--primary-color-high, dodgerblue); }
+.fkp-diag-badge--neutral, .fkp-diag-text--neutral { color: var(--text-color-medium, gray); }
+
+.fkp-diag-facts {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: 6px 16px;
+    margin: 0;
+}
+
+.fkp-diag-facts dt { font-weight: bold; }
+.fkp-diag-facts dd { margin: 0; min-width: 0; }
+.fkp-diag-facts .fkp-diag-badge,
+.fkp-diag-events .fkp-diag-badge { white-space: normal; overflow-wrap: break-word; }
+
+.fkp-diag-events {
+    border-collapse: collapse;
+}
+
+.fkp-diag-events td {
+    padding: 3px 16px 3px 0;
+    vertical-align: top;
+}
+
+/* System checks: problems first as full-width cards, then one-line rows;
+   passed checks fold into one group. */
+.fkp-diag-checks {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.fkp-diag-summary {
+    margin: 0;
+    font-weight: 600;
+}
+
+.fkp-diag-run-reason:empty {
+    display: none;
+}
+
+.fkp-diag-run-reason {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    margin-top: 8px;
+    color: var(--text-color-medium, gray);
+}
+
+.fkp-diag-run-reason .btn {
+    margin: 0;
+}
+
+.fkp-check-passed > summary {
+    cursor: pointer;
+    color: var(--success-color-medium, green);
+}
+
+.fkp-check-passed[open] {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    align-items: start;
+    gap: 8px;
+}
+
+.fkp-check-passed[open] > summary {
+    grid-column: 1 / -1;
+}
+
+.fkp-check__advice {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: 4px 12px;
+    margin: 8px 0 0;
+}
+
+.fkp-check__advice dt {
+    font-weight: 600;
+    color: var(--text-color-medium, gray);
+}
+
+.fkp-check__advice dd {
+    margin: 0;
+}
+
+.fkp-check__advice ul {
+    margin: 0;
+    padding-left: 1.2em;
+}
+
+.fkp-diag-help {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: -4px;
+}
+
+.fkp-diag-subsection h4 {
+    margin: 12px 0 4px;
+}
+
+.fkp-site__value {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 8px;
+}
+
+.fkp-site__conclusion {
+    margin: 10px 0 0;
+    font-weight: 600;
+}
+
+.fkp-check {
+    border: 1px solid var(--border-color-low, lightgray);
+    border-radius: 6px;
+    padding: 8px 10px;
+    min-width: 0;
+}
+
+.fkp-check--success { border-color: var(--success-color-medium, green); }
+.fkp-check--warning { border-color: var(--warn-color-medium, orange); }
+.fkp-check--error { border-color: var(--error-color-medium, red); }
+.fkp-check--loading { border-color: var(--primary-color-high, dodgerblue); }
+
+.fkp-check__head {
+    /* Flex-wrap: the badge moves below a long title instead of squeezing it. */
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+}
+
+.fkp-check__head .fkp-check__title { flex: 1 1 8em; }
+.fkp-check__head .fkp-diag-badge { flex: 0 0 auto; }
+
+.fkp-check__icon svg { width: 20px; height: 20px; }
+
+.fkp-check__details { margin-top: 6px; }
+.fkp-check__details > summary { cursor: pointer; }
+.fkp-check__description { margin: 4px 0; }
+
+.fkp-check__item {
+    display: grid;
+    /* Name and value on separate lines, so a long name never squeezes the
+       value into one character per line. */
+    grid-template-columns: 16px minmax(0, 1fr);
+    column-gap: 6px;
+    align-items: start;
+    overflow-wrap: break-word;
+}
+
+.fkp-check__item > :nth-child(3) { grid-column: 2; }
+
+.fkp-check, .fkp-check__head, .fkp-check__details { min-width: 0; }
+.fkp-check__title { min-width: 0; overflow-wrap: break-word; }
+
+.fkp-check__item-icon svg { width: 16px; height: 16px; }
+
+.fkp-check__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+}
+
+.fkp_diagnostic-page__run_check_wrapper button { margin: 0; }
+
+/* Reachability table: header and rows share one grid, so the action column can
+   size to the real (translated) button labels; stacked cards on narrow screens. */
+.fkp-conn {
+    display: grid;
+    grid-template-columns: minmax(140px, 2fr) minmax(90px, 110px) minmax(80px, 100px) minmax(140px, 2fr) max-content;
+    column-gap: 8px;
+    align-items: center;
+}
+
+.fkp-conn__head,
+.fkp-conn__row {
+    display: contents;
+}
+
+.fkp-conn__head > span {
+    font-weight: bold;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border-color-low, lightgray);
+    text-align: left;
+}
+
+.fkp-conn__row > * {
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border-color-low, lightgray);
+    min-width: 0;
+    text-align: left;
+}
+
+.fkp-conn__cell { display: block; margin: 0; }
+.fkp-conn__cell input, .fkp-conn__cell select {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    margin: 0;
+}
+/* Visually hidden on wide screens (the column header shows it), but kept as
+   the accessible name of the control it labels. */
+.fkp-conn__cell-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+.fkp-conn__cell--muted { color: var(--text-color-medium, gray); }
+.fkp-conn__result { overflow-wrap: break-word; }
+.fkp-conn__actions { display: flex; gap: 4px; }
+.fkp-conn__actions .btn { margin: 0; white-space: nowrap; }
+
+@media (max-width: ${BREAKPOINTS.narrow}px) {
+    .fkp-conn { display: block; }
+    .fkp-conn__head { display: none; }
+    .fkp-conn__row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 6px 8px;
+        border: 1px solid var(--border-color-low, lightgray);
+        border-radius: 6px;
+        padding: 8px;
+        margin-top: 8px;
+    }
+    .fkp-conn__row > * { padding: 0; border-bottom: 0; }
+    .fkp-conn__row > :first-child,
+    .fkp-conn__row > :nth-child(4) { grid-column: 1 / -1; }
+    .fkp-conn__cell-label {
+        position: static;
+        width: auto;
+        height: auto;
+        overflow: visible;
+        clip: auto;
+        white-space: normal;
+        display: block;
+        font-size: 0.85em;
+        color: var(--text-color-medium, gray);
+    }
+    .fkp-conn__actions { grid-column: 1 / -1; flex-wrap: wrap; }
+}
+
+.fkp-route__form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 10px;
+}
+
+.fkp-route__form .btn { margin: 0; }
+
+.fkp-route__facts {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: 6px 16px;
+    margin: 12px 0 0;
+}
+
+.fkp-route__facts dt { font-weight: bold; }
+.fkp-route__facts dd { margin: 0; display: grid; gap: 2px; }
+.fkp-route__facts small { color: var(--text-color-medium, gray); }
+
+@media (max-width: ${BREAKPOINTS.phone}px) {
+    .fkp-diag-facts, .fkp-route__facts, .fkp-check__advice { grid-template-columns: minmax(0, 1fr); }
+    .fkp-diag-checks { grid-template-columns: minmax(0, 1fr); }
+}
+
+.fkp_diagnostic-page__right-bar__actions {
+    border: 2px var(--background-color-low, lightgray) solid;
+    border-radius: 4px;
+    padding: 10px;
+
+    display: grid;
+    grid-template-columns: auto;
+    grid-row-gap: 10px;
+
+}
+
+.fkp_diagnostic-page__right-bar__actions > .fkp-partial-button {
+    width: 100%;
+    min-width: 0;
+    margin-left: 0;
+}
+
+.fkp_diagnostic-page__right-bar__system-info {
+    border: 2px var(--background-color-low, lightgray) solid;
+    border-radius: 4px;
+    padding: 10px;
+
+    display: grid;
+    grid-template-columns: auto;
+    grid-row-gap: 10px;
+}
+
+.fkp_diagnostic-page__right-bar__system-info__title {
+
+}
+
+.fkp_diagnostic-page__right-bar__system-info__row {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-column-gap: 5px;
+}
+
+.fkp_diagnostic-page__right-bar__system-info__row__tag {
+    padding: 2px 4px;
+    border: 1px transparent solid;
+    border-radius: 4px;
+    margin-left: 5px;
+}
+
+.fkp_diagnostic-page__right-bar__system-info__row__tag--neutral {
+    border: 1px var(--background-color-high, gray) solid;
+    color: var(--text-color-medium, gray);
+}
+
+.fkp_diagnostic-page__right-bar__system-info__row__tag--warning {
+    border: 1px var(--warn-color-medium, orange) solid;
+    color: var(--warn-color-medium, orange);
+}
+
+.fkp_diagnostic-page__right-bar__system-info__row__tag--success {
+    border: 1px var(--success-color-medium, green) solid;
+    color: var(--success-color-medium, green);
+}
+
+`;
+
+// src/prokop/tabs/diagnostic/index.ts
+var DiagnosticTab = {
+  render: render2,
+  initController: initController2,
+  styles: styles5
+};
+
+// src/prokop/tabs/monitoring/views.ts
+function readMonitoringView(hash) {
+  return readPageParams(hash).view === "nodes" ? "nodes" : "connections";
+}
+function controllerForView(view) {
+  return view === "nodes" ? "dashboard" : "monitoring";
+}
+function showMonitoringView(view, updateUrl = true) {
+  const connections = document.getElementById("monitoring-view-connections");
+  const nodes = document.getElementById("monitoring-view-nodes");
+  if (connections) connections.hidden = view !== "connections";
+  if (nodes) nodes.hidden = view !== "nodes";
+  document.querySelectorAll(".fkp_monitoring-page__view").forEach((button) => {
+    const selected = button.dataset.view === view;
+    button.setAttribute("aria-pressed", selected ? "true" : "false");
+    button.classList.toggle("fkp_monitoring-page__tab--active", selected);
+  });
+  if (updateUrl && typeof history !== "undefined" && history.replaceState) {
+    const url = `${window.location.pathname}${window.location.search}`;
+    history.replaceState(
+      null,
+      "",
+      view === "nodes" ? `${url}#view=nodes` : url
+    );
+  }
+  setProkopPage(controllerForView(view));
+}
+
+// src/prokop/tabs/monitoring/render.ts
+function renderViewSwitch(current) {
+  return E(
+    "div",
+    {
+      class: "fkp_monitoring-page__views",
+      role: "group",
+      "aria-label": _("Monitoring view")
+    },
+    [
+      ["connections", _("Connections")],
+      ["nodes", _("Nodes and groups")]
+    ].map(
+      ([view, label]) => E(
+        "button",
+        {
+          type: "button",
+          class: `btn cbi-button fkp_monitoring-page__tab fkp_monitoring-page__view${current === view ? " fkp_monitoring-page__tab--active" : ""}`,
+          "data-view": view,
+          "aria-pressed": current === view ? "true" : "false",
+          click: () => showMonitoringView(view)
+        },
+        label
+      )
+    )
+  );
+}
+function renderConnectionsView(hidden) {
+  return E(
+    "div",
+    {
+      id: "monitoring-view-connections",
+      class: "fkp_monitoring-page__panel",
+      ...hidden ? { hidden: true } : {}
+    },
+    [
+      E("div", { class: "fkp_monitoring-page__controls" }, [
+        E("div", { class: "fkp_monitoring-page__tabs" }, [
+          E(
+            "button",
+            {
+              id: "monitoring-tab-active",
+              class: "btn cbi-button fkp_monitoring-page__tab fkp_monitoring-page__tab--active",
+              type: "button"
+            },
+            `${_("Active")} 0`
+          ),
+          E(
+            "button",
+            {
+              id: "monitoring-tab-closed",
+              class: "btn cbi-button fkp_monitoring-page__tab",
+              type: "button"
+            },
+            `${_("Closed")} 0`
+          ),
+          E(
+            "button",
+            {
+              id: "monitoring-follow-toggle",
+              class: "btn cbi-button fkp_monitoring-page__tab",
+              type: "button",
+              "aria-pressed": "false",
+              title: _(
+                "Show only connections that start from now on, active and closed"
+              )
+            },
+            _("Follow new")
+          )
+        ]),
+        E("div", { class: "fkp_monitoring-page__filters" }, [
+          E(
+            "select",
+            {
+              id: "monitoring-device-filter",
+              class: "cbi-input-select fkp_monitoring-page__device-filter",
+              "aria-label": _("Device")
+            },
+            [E("option", { value: "all" }, _("All devices"))]
+          ),
+          E("select", {
+            id: "monitoring-path-filter",
+            class: "cbi-input-select",
+            "aria-label": _("Path")
+          }),
+          E(
+            "select",
+            {
+              id: "monitoring-sort",
+              class: "cbi-input-select",
+              "aria-label": _("Sort connections")
+            },
+            [
+              E("option", { value: "start" }, _("Start time")),
+              E("option", { value: "duration" }, _("Duration")),
+              E("option", { value: "download" }, _("Received")),
+              E("option", { value: "upload" }, _("Sent")),
+              E("option", { value: "total" }, _("Total traffic"))
+            ]
+          ),
+          E("label", { class: "fkp_monitoring-page__search" }, [
+            E("span", { class: "fkp_monitoring-page__search-icon" }, []),
+            E("input", {
+              id: "monitoring-search",
+              class: "cbi-input-text fkp_monitoring-page__search-input",
+              type: "search",
+              placeholder: _("Site, IP, device or rule"),
+              "aria-label": _("Search"),
+              autocomplete: "off"
+            })
+          ])
+        ]),
+        E("div", { class: "fkp_monitoring-page__actions" }, [
+          ...isReadonlyMode() ? [] : [
+            E(
+              "button",
+              {
+                id: "monitoring-close-all",
+                class: "btn cbi-button fkp_monitoring-page__icon-button",
+                title: _("Close all connections"),
+                "aria-label": _("Close all connections"),
+                type: "button",
+                disabled: true
+              },
+              []
+            )
+          ],
+          E(
+            "button",
+            {
+              id: "monitoring-pause-toggle",
+              class: "btn cbi-button fkp_monitoring-page__icon-button",
+              title: _("Pause updates"),
+              "aria-label": _("Pause updates"),
+              type: "button"
+            },
+            []
+          )
+        ])
+      ]),
+      E("div", {
+        id: "monitoring-filter-bar",
+        class: "fkp_monitoring-page__filter-bar",
+        role: "status",
+        hidden: true
+      }),
+      E(
+        "div",
+        { id: "monitoring-connections", class: "fkp_monitoring-page__body" },
+        [
+          E(
+            "div",
+            {
+              class: "fkp_monitoring-page__state fkp_monitoring-page__state--loading"
+            },
+            _("Loading connections")
+          )
+        ]
+      ),
+      E("div", { id: "monitoring-connection-details", role: "region" })
+    ]
+  );
+}
+function render3() {
+  const view = readMonitoringView();
+  return E(
+    "div",
+    {
+      id: "monitoring-status",
+      class: "fkp_monitoring-page"
+    },
+    [
+      renderViewSwitch(view),
+      renderConnectionsView(view !== "connections"),
+      E(
+        "div",
+        {
+          id: "monitoring-view-nodes",
+          class: "fkp_monitoring-page__nodes",
+          ...view !== "nodes" ? { hidden: true } : {}
+        },
+        [renderNodes()]
+      )
+    ]
+  );
+}
+
+// src/prokop/tabs/monitoring/routeNamesRefresh.ts
+function isPageHidden() {
+  return typeof document !== "undefined" && document.hidden === true;
+}
+function createRouteNamesRefresher({
+  fetchSections,
+  apply,
+  onError,
+  intervalMs
+}) {
+  let timer = null;
+  let generation = 0;
+  let lastSignature = null;
+  const refresh = async () => {
+    const current = generation;
+    try {
+      const sections = await fetchSections();
+      const signature = JSON.stringify(sections);
+      if (current !== generation || signature === lastSignature) {
+        return;
+      }
+      lastSignature = signature;
+      apply(sections);
+    } catch (error) {
+      onError?.(error);
+      if (current === generation && lastSignature === null) {
+        lastSignature = "";
+        apply([]);
+      }
+    }
+  };
+  const stop = () => {
+    generation += 1;
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+  };
+  const start = () => {
+    stop();
+    lastSignature = null;
+    void refresh();
+    timer = setInterval(() => {
+      if (!isPageHidden()) {
+        void refresh();
+      }
+    }, intervalMs);
+  };
+  return { start, stop, refresh };
+}
+
+// src/prokop/tabs/monitoring/initController.ts
+function normalizeConnectionsPayload(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {};
+  }
+  return value;
+}
+var RENDER_INTERVAL_MS = 500;
+var ROUTE_NAMES_REFRESH_INTERVAL_MS = 15e3;
+var CONNECTIONS_RPC_POLL_INTERVAL_MS = 1500;
+var CLOSED_CONNECTION_LIMIT = 300;
+var ALL_FILTER_VALUE = "all";
+var dependencies = {};
+var monitoringMounted = false;
+var monitoringMountId = 0;
+var monitoringLifecycleRegistered = false;
+var monitoringControllerInitialized = false;
+var serviceStateUnsubscribe = null;
+var renderTimer = null;
+var connectionsPollTimer = null;
+var connectionsSocketUrl = "";
+var connectionsUpdatesId = 0;
+var renderSkippedForSelection = false;
+var pendingConnectionsPayload = null;
+var pollingConnections = false;
+var activeTab = "active";
+var selectedDeviceFilter = ALL_FILTER_VALUE;
+var searchQuery = "";
+var pathFilter = ALL_FILTER_VALUE;
+var followBaseline = null;
+var selectedConnectionId = null;
+var sortMode = "start";
+var localDeviceChoices = {};
+var routeDisplayNames = {};
+var routeSections = [];
+var routeRulesByTag = {};
+var nodeDisplayNames = {};
+var routeRules = [];
+var lastDeviceFilterSignature = "";
+var loading = true;
+var failed = false;
+var closingAll = false;
+var monitoringPaused = false;
+var monitoringPausedAt = null;
+var serviceAvailability = "loading";
+var activeConnections = /* @__PURE__ */ new Map();
+var closedConnections = /* @__PURE__ */ new Map();
+var closingConnectionIds = /* @__PURE__ */ new Set();
+function normalizeString(value) {
+  return value == null ? "" : String(value).trim();
+}
+function getListValues2(value) {
+  if (!value) {
+    return [];
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => normalizeString(item)).filter(Boolean);
+  }
+  return normalizeString(value).split(/\s+/).map((item) => item.trim()).filter(Boolean);
+}
+function getUrlTestIds2(section) {
+  const values = getListValues2(section.urltests);
+  return values.length ? values : section.urltest_enabled === "1" ? ["urltest"] : [];
+}
+function getUrlTestTag2(sectionName, id) {
+  return getOutboundTagBySection(
+    id === "urltest" ? `${sectionName}-urltest` : `${sectionName}-urltest-${id}`
+  );
+}
+function formatEndpoint(address, port) {
+  const normalizedAddress = normalizeString(address);
+  const normalizedPort = normalizeString(port);
+  if (!normalizedAddress) {
+    return "-";
+  }
+  if (!normalizedPort) {
+    return normalizedAddress;
+  }
+  if (normalizedPort === "443") {
+    return normalizedAddress;
+  }
+  if (normalizedAddress.includes(":") && !normalizedAddress.startsWith("[")) {
+    return `[${normalizedAddress}]:${normalizedPort}`;
+  }
+  return `${normalizedAddress}:${normalizedPort}`;
+}
+function getDisplayName2(section) {
+  return normalizeString(section.label) || section[".name"];
+}
+function buildRouteDisplayNames(sections) {
+  const map = {
+    "bypass-out": _("Bypass"),
+    "direct-out": _("direct")
+  };
+  const routeSectionItems = [];
+  const rulesByTag = {};
+  const rules = [];
+  const urltestsBySection = /* @__PURE__ */ new Map();
+  sections.filter((section) => section[".type"] === "urltest").forEach((section) => {
+    const owner = normalizeString(section.section);
+    const id = normalizeString(section.id) || section[".name"];
+    if (!owner || !id) {
+      return;
+    }
+    urltestsBySection.set(owner, [
+      ...urltestsBySection.get(owner) || [],
+      id
+    ]);
+  });
+  sections.filter((section) => section[".type"] === "section").filter((section) => isSectionEnabled(section.enabled)).forEach((section) => {
+    const sectionName = section[".name"];
+    const displayName = getDisplayName2(section);
+    if (!sectionName || !displayName) {
+      return;
+    }
+    const rule = {
+      name: sectionName,
+      label: displayName,
+      action: normalizeString(section.action),
+      dpiProvider: section.dpi_provider,
+      dpiStrategy: section.dpi_strategy,
+      dpiCustom: section.dpi_strategy_custom
+    };
+    rules.push(rule);
+    routeSectionItems.push({ sectionName, displayName });
+    map[getOutboundTagBySection(sectionName)] = displayName;
+    rulesByTag[getOutboundTagBySection(sectionName)] = rule;
+    const urltestIds = urltestsBySection.get(sectionName) || getUrlTestIds2(section);
+    urltestIds.forEach((id) => {
+      map[getUrlTestTag2(sectionName, id)] = displayName;
+      rulesByTag[getUrlTestTag2(sectionName, id)] = rule;
+    });
+  });
+  routeDisplayNames = map;
+  routeRulesByTag = rulesByTag;
+  routeRules = rules;
+  routeSections = routeSectionItems.sort(
+    (a, b) => b.sectionName.length - a.sectionName.length
+  );
+}
+function getRouteDisplayNameByTag(tag) {
+  if (!tag) {
+    return "";
+  }
+  if (routeDisplayNames[tag]) {
+    return routeDisplayNames[tag];
+  }
+  const manualSection = routeSections.find(({ sectionName }) => {
+    if (!tag.startsWith(`${sectionName}-`) || !tag.endsWith("-out")) {
+      return false;
+    }
+    const middle = tag.slice(sectionName.length + 1, -4);
+    return /^\d+(?:-\d+)?$/.test(middle);
+  });
+  return manualSection?.displayName || "";
+}
+function getRuleByTag(tag) {
+  if (routeRulesByTag[tag]) return routeRulesByTag[tag];
+  const name = getRouteDisplayNameByTag(tag) ? routeSections.find(({ sectionName }) => tag.startsWith(`${sectionName}-`))?.sectionName : "";
+  return routeRules.find((rule) => rule.name === name) || null;
+}
+function parseStartedAt(connection) {
+  const startedAt = Date.parse(connection.start || "");
+  return Number.isFinite(startedAt) ? startedAt : connection.lastSeenAt;
+}
+function formatDuration(ms) {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1e3));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor(totalSeconds % 3600 / 60);
+  const seconds = totalSeconds % 60;
+  const pad = (value) => String(value).padStart(2, "0");
+  if (hours > 0) {
+    return `${hours}:${pad(minutes)}:${pad(seconds)}`;
+  }
+  return `${minutes}:${pad(seconds)}`;
+}
+function formatConnectionDuration(connection) {
+  const startedAt = parseStartedAt(connection);
+  const finishedAt = connection.closedAt || monitoringPausedAt || Date.now();
+  return formatDuration(finishedAt - startedAt);
+}
+function formatBytes2(value) {
+  return prettyBytes(Number.isFinite(value) ? Number(value) : 0);
+}
+function getConnectionSourceIp(connection) {
+  return normalizeString(connection.metadata?.sourceIP);
+}
+function getDeviceName(ip) {
+  return normalizeString(localDeviceChoices[ip]);
+}
+function getDeviceFilterLabel(ip) {
+  const deviceName = getDeviceName(ip);
+  return deviceName || ip;
+}
+function getSourceCellParts(connection) {
+  const ip = getConnectionSourceIp(connection);
+  const deviceName = getDeviceName(ip);
+  if (deviceName) {
+    return {
+      primary: deviceName,
+      ip,
+      copyValue: ip ? `${deviceName} (${ip})` : deviceName,
+      searchValue: `${deviceName} ${ip}`
+    };
+  }
+  return {
+    primary: ip || "-",
+    ip: "",
+    copyValue: ip || "-",
+    searchValue: ip
+  };
+}
+function getTargetCellParts(connection) {
+  const metadata = connection.metadata || {};
+  const host = normalizeString(metadata.host);
+  const destinationIp = normalizeString(metadata.destinationIP);
+  const port = metadata.destinationPort;
+  const primaryTarget = host || destinationIp;
+  const primary = primaryTarget ? formatEndpoint(primaryTarget, port) : "-";
+  return {
+    primary,
+    searchValue: [primary, host, destinationIp].filter(Boolean).join(" ")
+  };
+}
+function getPath(connection) {
+  const path = connectionPath(connection.chains, connection.rule, getRuleByTag);
+  return path.node ? { ...path, node: nodeDisplayNames[path.node] || path.node } : path;
+}
+function getNetwork(connection) {
+  return normalizeString(connection.metadata?.network).toLowerCase() || "-";
+}
+function sortConnections(connections, tab) {
+  return [...connections].sort((a, b) => {
+    const aTraffic = trafficSortValue(a, sortMode);
+    const bTraffic = trafficSortValue(b, sortMode);
+    if (aTraffic != null && bTraffic != null) return bTraffic - aTraffic;
+    if (sortMode === "duration") return parseStartedAt(a) - parseStartedAt(b);
+    if (tab === "closed") {
+      return (b.closedAt || 0) - (a.closedAt || 0);
+    }
+    return parseStartedAt(b) - parseStartedAt(a);
+  });
+}
+function getConnectionsForActiveTab() {
+  if (followBaseline) {
+    const baseline = followBaseline;
+    return [...activeConnections.values(), ...closedConnections.values()].filter((connection) => !baseline.has(connection.id)).sort((a, b) => parseStartedAt(b) - parseStartedAt(a));
+  }
+  const source = activeTab === "active" ? Array.from(activeConnections.values()) : Array.from(closedConnections.values());
+  return sortConnections(source, activeTab);
+}
+function normalizeSearchValue(value) {
+  return value.toLowerCase().replace(/\s+/g, " ").trim();
+}
+function getSearchValues(connection) {
+  const target = getTargetCellParts(connection);
+  const source = getSourceCellParts(connection);
+  const path = pathSummary(getPath(connection));
+  return [
+    connection.id,
+    target.searchValue,
+    getNetwork(connection),
+    path.kindLabel,
+    path.primary,
+    path.secondary,
+    normalizeString(connection.rule),
+    ...connection.chains || [],
+    source.searchValue
+  ].filter(Boolean);
+}
+function getVisibleConnections() {
+  const normalizedSearch = normalizeSearchValue(searchQuery);
+  return getConnectionsForActiveTab().filter((connection) => {
+    const sourceIp = getConnectionSourceIp(connection);
+    if (selectedDeviceFilter !== ALL_FILTER_VALUE && sourceIp !== selectedDeviceFilter) {
+      return false;
+    }
+    if (!matchesPathFilter(getPath(connection), pathFilter)) return false;
+    if (!normalizedSearch) {
+      return true;
+    }
+    return getSearchValues(connection).some(
+      (value) => normalizeSearchValue(value).includes(normalizedSearch)
+    );
+  });
+}
+function filtersActive() {
+  return selectedDeviceFilter !== ALL_FILTER_VALUE || pathFilter !== ALL_FILTER_VALUE || normalizeSearchValue(searchQuery) !== "";
+}
+function resetFilters() {
+  selectedDeviceFilter = ALL_FILTER_VALUE;
+  pathFilter = ALL_FILTER_VALUE;
+  searchQuery = "";
+  const search = document.getElementById(
+    "monitoring-search"
+  );
+  if (search) search.value = "";
+  saveMonitoringPreferences();
+  renderControls();
+  renderConnections({ force: true });
+}
+function moveConnectionToClosed(connection, now) {
+  closedConnections.set(connection.id, {
+    ...connection,
+    closedAt: now,
+    lastSeenAt: now
+  });
+}
+function trimClosedConnections() {
+  const sorted = sortConnections(
+    Array.from(closedConnections.values()),
+    "closed"
+  );
+  sorted.slice(CLOSED_CONNECTION_LIMIT).forEach((connection) => {
+    closedConnections.delete(connection.id);
+  });
+}
+function applyConnectionsPayload(payload) {
+  if (monitoringPaused) {
+    pendingConnectionsPayload = payload;
+    return;
+  }
+  const mountId3 = monitoringMountId;
+  const now = Date.now();
+  const incomingIds = /* @__PURE__ */ new Set();
+  const rawConnections = Array.isArray(payload.connections) ? payload.connections : [];
+  rawConnections.forEach((rawConnection) => {
+    const id = normalizeString(rawConnection.id);
+    if (!id) {
+      return;
+    }
+    incomingIds.add(id);
+    closedConnections.delete(id);
+    activeConnections.set(id, {
+      ...rawConnection,
+      id,
+      lastSeenAt: now
+    });
+  });
+  Array.from(activeConnections.entries()).forEach(([id, connection]) => {
+    if (!incomingIds.has(id)) {
+      activeConnections.delete(id);
+      moveConnectionToClosed(connection, now);
+    }
+  });
+  trimClosedConnections();
+  loading = false;
+  failed = false;
+  if (monitoringMounted && mountId3 === monitoringMountId) {
+    renderControls();
+    renderConnections();
+  }
+}
+function setTab(tab) {
+  if (activeTab === tab) {
+    return;
+  }
+  activeTab = tab;
+  renderControls();
+  renderConnections();
+}
+function getKnownSourceIps() {
+  const ips = /* @__PURE__ */ new Set();
+  activeConnections.forEach((connection) => {
+    const ip = getConnectionSourceIp(connection);
+    if (ip) {
+      ips.add(ip);
+    }
+  });
+  closedConnections.forEach((connection) => {
+    const ip = getConnectionSourceIp(connection);
+    if (ip) {
+      ips.add(ip);
+    }
+  });
+  return Array.from(ips).sort((a, b) => {
+    const byLabel = getDeviceFilterLabel(a).localeCompare(
+      getDeviceFilterLabel(b)
+    );
+    return byLabel || a.localeCompare(b);
+  });
+}
+function renderDeviceFilterOptions() {
+  const select2 = document.getElementById(
+    "monitoring-device-filter"
+  );
+  if (!select2) {
+    return;
+  }
+  const sourceIps = getKnownSourceIps();
+  if (selectedDeviceFilter !== ALL_FILTER_VALUE && !sourceIps.includes(selectedDeviceFilter)) {
+    selectedDeviceFilter = ALL_FILTER_VALUE;
+  }
+  const signature = [
+    selectedDeviceFilter,
+    ...sourceIps.map((ip) => `${ip}:${getDeviceFilterLabel(ip)}`)
+  ].join("|");
+  if (signature === lastDeviceFilterSignature) {
+    select2.value = selectedDeviceFilter;
+    return;
+  }
+  lastDeviceFilterSignature = signature;
+  const options = [
+    E("option", { value: ALL_FILTER_VALUE }, _("All devices")),
+    ...sourceIps.map(
+      (ip) => E("option", { value: ip }, getDeviceFilterLabel(ip))
+    )
+  ];
+  select2.replaceChildren(...options);
+  select2.value = selectedDeviceFilter;
+}
+var PATH_KINDS = [
+  "dpi",
+  "connection",
+  "bypass",
+  "direct",
+  "block"
+];
+var lastPathFilterSignature = "";
+function renderPathFilterOptions() {
+  const select2 = document.getElementById(
+    "monitoring-path-filter"
+  );
+  if (!select2) return;
+  const rules = [...routeRules].sort((a, b) => a.label.localeCompare(b.label));
+  const known = [
+    ALL_FILTER_VALUE,
+    ...PATH_KINDS.map((kind) => `kind:${kind}`),
+    ...rules.map((rule) => `rule:${rule.name}`)
+  ];
+  if (!known.includes(pathFilter)) pathFilter = ALL_FILTER_VALUE;
+  const signature = rules.map((rule) => `${rule.name}:${rule.label}`).join("|");
+  if (signature !== lastPathFilterSignature || !select2.options.length) {
+    lastPathFilterSignature = signature;
+    select2.replaceChildren(
+      E("option", { value: ALL_FILTER_VALUE }, _("All paths")),
+      E(
+        "optgroup",
+        { label: _("Path type") },
+        PATH_KINDS.map(
+          (kind) => E("option", { value: `kind:${kind}` }, pathKindLabel(kind))
+        )
+      ),
+      ...rules.length ? [
+        E(
+          "optgroup",
+          { label: _("Rule") },
+          rules.map(
+            (rule) => E("option", { value: `rule:${rule.name}` }, rule.label)
+          )
+        )
+      ] : []
+    );
+  }
+  select2.value = pathFilter;
+}
+function renderFilterBar() {
+  const bar = document.getElementById("monitoring-filter-bar");
+  if (!bar) return;
+  const active = filtersActive();
+  const following = followBaseline !== null;
+  if (!active && !following) {
+    bar.replaceChildren();
+    bar.hidden = true;
+    return;
+  }
+  const total = getConnectionsForActiveTab().length;
+  const shown = active ? getVisibleConnections().length : total;
+  bar.hidden = false;
+  bar.replaceChildren(
+    E(
+      "span",
+      {},
+      [
+        following ? _("Following new connections") : "",
+        active ? _("Shown %d of %d").replace("%d", String(shown)).replace("%d", String(total)) : ""
+      ].filter(Boolean).join(" \xB7 ")
+    ),
+    ...active ? [
+      E(
+        "button",
+        {
+          type: "button",
+          class: "btn cbi-button fkp_monitoring-page__reset",
+          click: () => resetFilters()
+        },
+        _("Reset filters")
+      )
+    ] : []
+  );
+}
+function setButtonActive(button, active) {
+  if (!button) {
+    return;
+  }
+  button.classList.toggle("fkp_monitoring-page__tab--active", active);
+}
+function renderTabButtonContent(label, count) {
+  return [
+    E("span", { class: "fkp_monitoring-page__tab-label" }, label),
+    E("span", { class: "fkp_monitoring-page__tab-badge" }, String(count))
+  ];
+}
+function renderControls() {
+  const activeButton = document.getElementById(
+    "monitoring-tab-active"
+  );
+  const closedButton = document.getElementById(
+    "monitoring-tab-closed"
+  );
+  const closeAllButton = document.getElementById(
+    "monitoring-close-all"
+  );
+  const pauseToggleButton = document.getElementById(
+    "monitoring-pause-toggle"
+  );
+  const following = followBaseline !== null;
+  if (activeButton) {
+    activeButton.replaceChildren(
+      ...renderTabButtonContent(_("Active"), activeConnections.size)
+    );
+    activeButton.disabled = serviceAvailability === "stopped" || following;
+  }
+  if (closedButton) {
+    closedButton.replaceChildren(
+      ...renderTabButtonContent(_("Closed"), closedConnections.size)
+    );
+    closedButton.disabled = serviceAvailability === "stopped" || following;
+  }
+  setButtonActive(activeButton, !following && activeTab === "active");
+  setButtonActive(closedButton, !following && activeTab === "closed");
+  const followButton = document.getElementById(
+    "monitoring-follow-toggle"
+  );
+  if (followButton) {
+    followButton.disabled = serviceAvailability === "stopped";
+    followButton.setAttribute("aria-pressed", following ? "true" : "false");
+    followButton.classList.toggle(
+      "fkp_monitoring-page__tab--active",
+      following
+    );
+  }
+  if (closeAllButton) {
+    closeAllButton.replaceChildren(renderXIcon24());
+    closeAllButton.disabled = serviceAvailability === "stopped" || activeConnections.size === 0 || closingAll;
+  }
+  if (pauseToggleButton) {
+    const title = monitoringPaused ? _("Resume updates") : _("Pause updates");
+    pauseToggleButton.replaceChildren(
+      monitoringPaused ? renderPlayIcon24() : renderPauseIcon24()
+    );
+    pauseToggleButton.title = title;
+    pauseToggleButton.setAttribute("aria-label", title);
+    pauseToggleButton.disabled = serviceAvailability === "stopped";
+    pauseToggleButton.classList.toggle(
+      "fkp_monitoring-page__icon-button--active",
+      monitoringPaused
+    );
+  }
+  const searchIcon = document.querySelector(
+    ".fkp_monitoring-page__search-icon"
+  );
+  if (searchIcon && searchIcon.childNodes.length === 0) {
+    searchIcon.replaceChildren(renderSearchIcon24());
+  }
+  renderDeviceFilterOptions();
+  renderPathFilterOptions();
+  renderFilterBar();
+  const pathSelect = document.getElementById(
+    "monitoring-path-filter"
+  );
+  if (pathSelect) pathSelect.disabled = serviceAvailability === "stopped";
+  const select2 = document.getElementById(
+    "monitoring-device-filter"
+  );
+  const searchInput = document.getElementById(
+    "monitoring-search"
+  );
+  if (select2) {
+    select2.disabled = serviceAvailability === "stopped";
+  }
+  if (searchInput) {
+    searchInput.disabled = serviceAvailability === "stopped";
+  }
+}
+function renderValue(value, className = "") {
+  const text = value || "-";
+  const element = E(
+    "span",
+    {
+      class: ["fkp_monitoring-page__value", className].filter(Boolean).join(" "),
+      title: text
+    },
+    text
+  );
+  element.setAttribute("data-copy-value", text);
+  return element;
+}
+function renderSourceValue(source) {
+  const fullText = source.copyValue || source.primary || "-";
+  if (!source.ip) {
+    const element2 = E(
+      "span",
+      {
+        class: "fkp_monitoring-page__value fkp_monitoring-page__source-value fkp_monitoring-page__source-value--ip-only",
+        title: fullText
+      },
+      source.primary || "-"
+    );
+    element2.setAttribute("data-copy-value", fullText);
+    return element2;
+  }
+  const element = E(
+    "span",
+    {
+      class: "fkp_monitoring-page__value fkp_monitoring-page__source-value",
+      title: fullText
+    },
+    [
+      E("span", { class: "fkp_monitoring-page__source-name" }, source.primary),
+      E("span", { class: "fkp_monitoring-page__source-ip" }, source.ip)
+    ]
+  );
+  element.setAttribute("data-copy-value", fullText);
+  return element;
+}
+function renderTableCell(label, children) {
+  const cell = E("td", {}, [
+    E("div", { class: "fkp_monitoring-page__cell" }, children)
+  ]);
+  cell.setAttribute("data-label", label);
+  return cell;
+}
+function renderSecondary(text) {
+  return E("span", { class: "fkp_monitoring-page__secondary" }, text);
+}
+function renderPathCell(path) {
+  const summary = pathSummary(path);
+  return [
+    E(
+      "span",
+      {
+        class: `fkp_monitoring-page__path-kind fkp_monitoring-page__path-kind--${summary.kind}`
+      },
+      summary.kindLabel
+    ),
+    ...summary.primary ? [renderValue(summary.primary, "fkp_monitoring-page__route")] : [],
+    ...summary.secondary ? [renderSecondary(summary.secondary)] : []
+  ];
+}
+function renderConnectionRow(connection) {
+  const target = getTargetCellParts(connection);
+  const source = getSourceCellParts(connection);
+  const isActive = activeConnections.has(connection.id);
+  const isClosing = closingConnectionIds.has(connection.id);
+  const icons = { details: renderInfoIcon24, close: renderXIcon24 };
+  const actions = E(
+    "div",
+    { class: "fkp_monitoring-page__actions" },
+    connectionActions(isActive, isReadonlyMode()).map(
+      (action) => E(
+        "button",
+        {
+          class: `btn cbi-button fkp_monitoring-page__icon-action ${action.className}`,
+          title: action.label,
+          "aria-label": action.label,
+          type: "button",
+          value: connection.id,
+          ...action.kind === "close" && isClosing ? { disabled: true } : {}
+        },
+        [icons[action.kind]()]
+      )
+    )
+  );
+  const destinationMeta = [
+    getNetwork(connection).toUpperCase(),
+    formatConnectionDuration(connection),
+    ...isActive ? [] : [_("closed")]
+  ].join(" \xB7 ");
+  return E(
+    "tr",
+    {
+      class: [
+        isClosing ? "fkp_monitoring-page__row--closing" : "",
+        !isActive ? "fkp_monitoring-page__row--closed" : "",
+        selectedConnectionId === connection.id ? "fkp_monitoring-page__row--selected" : ""
+      ].filter(Boolean).join(" ")
+    },
+    [
+      renderTableCell(_("Device"), [renderSourceValue(source)]),
+      renderTableCell(_("Destination"), [
+        renderValue(target.primary),
+        renderSecondary(destinationMeta)
+      ]),
+      renderTableCell(_("Path"), renderPathCell(getPath(connection))),
+      renderTableCell(_("Traffic"), [
+        renderValue(`\u2193 ${formatBytes2(connection.download)}`),
+        renderSecondary(`\u2191 ${formatBytes2(connection.upload)}`)
+      ]),
+      renderTableCell(_("Actions"), [actions])
+    ]
+  );
+}
+function safeText(value) {
+  return normalizeString(value == null ? "" : String(value)).replace(/\b(?:https?:\/\/)?[^\s@]+@/g, "***@").replace(
+    /(?:token|secret|password|uuid|authorization)=([^&\s]+)/gi,
+    "$1=***"
+  );
+}
+function connectionTechnicalDetails(connection) {
+  const metadata = connection.metadata || {};
+  return [
+    [_("Source"), formatEndpoint(metadata.sourceIP, metadata.sourcePort)],
+    [
+      _("Destination"),
+      formatEndpoint(metadata.destinationIP, metadata.destinationPort)
+    ],
+    [_("Host"), safeText(metadata.host)],
+    [_("Protocol"), getNetwork(connection)],
+    [_("Rule"), safeText(connection.rule)],
+    [_("Rule payload"), safeText(connection.rulePayload)],
+    [_("Outbound chain"), safeText((connection.chains || []).join(" \u2192 "))],
+    [_("Started"), formatStarted(connection.start)],
+    [_("Connection ID"), connection.id]
+  ];
+}
+function formatStarted(start) {
+  const time = Date.parse(start || "");
+  return Number.isFinite(time) ? formatDateTime(time / 1e3) : safeText(start);
+}
+function connectionDetails(connection) {
+  const target = getTargetCellParts(connection);
+  const source = getSourceCellParts(connection);
+  const path = pathSummary(getPath(connection));
+  return [
+    [_("Device"), source.copyValue],
+    [_("Destination"), target.primary],
+    [
+      _("Path"),
+      [path.kindLabel, path.primary, path.secondary].filter(Boolean).join(" \xB7 ")
+    ],
+    [_("Duration"), formatConnectionDuration(connection)],
+    [_("Received"), formatBytes2(connection.download)],
+    [_("Sent"), formatBytes2(connection.upload)],
+    ...connectionTechnicalDetails(connection)
+  ];
+}
+function detailRow(label, value) {
+  return E("div", { class: "fkp_monitoring-page__detail-row" }, [
+    E("dt", {}, label),
+    E("dd", {}, value)
+  ]);
+}
+function closeConnectionDetails() {
+  selectedConnectionId = null;
+  document.getElementById("monitoring-connection-details")?.replaceChildren();
+  renderConnections({ force: true });
+}
+function renderConnectionDetailsPanel() {
+  const container = document.getElementById("monitoring-connection-details");
+  if (!container) return;
+  const connection = selectedConnectionId ? activeConnections.get(selectedConnectionId) || closedConnections.get(selectedConnectionId) : void 0;
+  if (!connection) {
+    container.replaceChildren();
+    return;
+  }
+  const technicalOpen = Boolean(
+    container.querySelector("details")?.open
+  );
+  const isActive = activeConnections.has(connection.id);
+  const target = getTargetCellParts(connection);
+  const host = normalizeString(connection.metadata?.host) || normalizeString(connection.metadata?.destinationIP);
+  const rawPath = getPath(connection);
+  const path = pathSummary(rawPath);
+  const source = getSourceCellParts(connection);
+  container.replaceChildren(
+    E("div", { class: "fkp_monitoring-page__details" }, [
+      E("div", { class: "fkp_monitoring-page__details-head" }, [
+        E("h3", {}, target.primary),
+        E(
+          "button",
+          {
+            type: "button",
+            class: "btn cbi-button fkp_monitoring-page__details-close",
+            "aria-label": _("Close details"),
+            title: _("Close details"),
+            click: () => closeConnectionDetails()
+          },
+          "\xD7"
+        )
+      ]),
+      E("dl", { class: "fkp_monitoring-page__detail-list" }, [
+        detailRow(_("Device"), source.copyValue),
+        detailRow(
+          _("Status"),
+          isActive ? `${_("Active")} \xB7 ${formatConnectionDuration(connection)}` : `${_("Closed")} \xB7 ${formatConnectionDuration(connection)}`
+        ),
+        detailRow(
+          _("Route"),
+          E("span", {}, [
+            [path.kindLabel, path.primary, rawPath.node].filter(Boolean).join(" \xB7 "),
+            " ",
+            renderProvenance("observed")
+          ])
+        ),
+        ...rawPath.kind === "dpi" && path.secondary ? [
+          detailRow(
+            _("DPI strategy"),
+            E("span", {}, [
+              path.secondary,
+              " ",
+              renderProvenance("configured")
+            ])
+          )
+        ] : [],
+        detailRow(
+          _("Traffic"),
+          `\u2193 ${formatBytes2(connection.download)} \xB7 \u2191 ${formatBytes2(connection.upload)}`
+        )
+      ]),
+      E("div", { class: "fkp_monitoring-page__details-actions" }, [
+        ...host ? [
+          E(
+            "a",
+            {
+              class: "btn cbi-button",
+              href: prokopPageUrl("diagnostics", { host })
+            },
+            _("Check address in Diagnostics")
+          )
+        ] : [],
+        E(
+          "button",
+          {
+            type: "button",
+            class: "btn cbi-button",
+            click: () => (
+              // navigator.clipboard needs a secure context; LuCI is usually plain HTTP.
+              copyToClipboard(
+                connectionDetails(connection).map(([key, value]) => `${key}: ${value}`).join("\n")
+              )
+            )
+          },
+          _("Copy details")
+        ),
+        ...isActive && !isReadonlyMode() ? [
+          E(
+            "button",
+            {
+              type: "button",
+              class: "btn cbi-button cbi-button-negative",
+              disabled: closingConnectionIds.has(connection.id) ? true : void 0,
+              click: () => void closeConnection(connection.id)
+            },
+            _("Close connection")
+          )
+        ] : []
+      ]),
+      E(
+        "details",
+        {
+          class: "fkp_monitoring-page__technical",
+          ...technicalOpen ? { open: true } : {}
+        },
+        [
+          E("summary", {}, _("Technical details")),
+          E(
+            "dl",
+            { class: "fkp_monitoring-page__detail-list" },
+            connectionTechnicalDetails(connection).map(
+              ([label, value]) => detailRow(label, value || "\u2014")
+            )
+          )
+        ]
+      )
+    ])
+  );
+}
+function showConnectionDetails(connection) {
+  selectedConnectionId = connection.id;
+  renderConnectionDetailsPanel();
+  renderConnections({ force: true });
+  document.getElementById("monitoring-connection-details")?.scrollIntoView?.({ block: "nearest" });
+}
+function saveMonitoringPreferences() {
+  writeStorageItem(
+    localStorage,
+    MONITORING_PREFERENCES_KEY,
+    JSON.stringify({
+      selectedDeviceFilter,
+      pathFilter,
+      sortMode
+    })
+  );
+}
+function loadMonitoringPreferences() {
+  try {
+    const value = JSON.parse(
+      readStorageItem(localStorage, MONITORING_PREFERENCES_KEY) || "{}"
+    );
+    if (typeof value.selectedDeviceFilter === "string")
+      selectedDeviceFilter = value.selectedDeviceFilter;
+    if (["start", "duration", "download", "upload", "total"].includes(
+      value.sortMode
+    ))
+      sortMode = value.sortMode;
+    if (typeof value.pathFilter === "string")
+      pathFilter = value.pathFilter.slice(0, 100);
+  } catch (_error) {
+  }
+}
+function renderStateRow(text, className = "", actions = []) {
+  return E("tr", { class: "fkp_monitoring-page__state-row" }, [
+    E(
+      "td",
+      {
+        class: "fkp_monitoring-page__state-cell",
+        colSpan: 5
+      },
+      [
+        E(
+          "div",
+          {
+            class: ["fkp_monitoring-page__state", className].filter(Boolean).join(" ")
+          },
+          actions.length ? [E("span", {}, text), ...actions] : text
+        )
+      ]
+    )
+  ]);
+}
+function renderConnectionsTable(connections, state) {
+  const rows = state ? [renderStateRow(state.text, state.className, state.actions)] : connections.map(renderConnectionRow);
+  return E("div", { class: "fkp_monitoring-page__table-wrap" }, [
+    E(
+      "table",
+      { class: "table cbi-section-table fkp_monitoring-page__table" },
+      [
+        E("thead", {}, [
+          E("tr", {}, [
+            E("th", {}, _("Device")),
+            E("th", {}, _("Destination")),
+            E("th", {}, _("Path")),
+            E("th", {}, _("Traffic")),
+            E("th", { class: "fkp_monitoring-page__actions-head" }, [
+              E("span", { class: "fkp-visually-hidden" }, _("Actions"))
+            ])
+          ])
+        ]),
+        E("tbody", {}, rows)
+      ]
+    )
+  ]);
+}
+function isNodeInsideMonitoring(node) {
+  const root = document.getElementById("monitoring-status");
+  return Boolean(root && node && root.contains(node));
+}
+function isTextSelectionInsideMonitoring() {
+  const selection = window.getSelection?.();
+  if (!selection || selection.isCollapsed) {
+    return false;
+  }
+  return isNodeInsideMonitoring(selection.anchorNode) || isNodeInsideMonitoring(selection.focusNode);
+}
+function renderConnections(options = {}) {
+  const container = document.getElementById("monitoring-connections");
+  if (!container) {
+    return;
+  }
+  if (!options.force && isTextSelectionInsideMonitoring()) {
+    renderSkippedForSelection = true;
+    return;
+  }
+  renderSkippedForSelection = false;
+  const previousScrollLeft = container.scrollLeft;
+  if (serviceAvailability === "stopped") {
+    container.replaceChildren(
+      renderConnectionsTable([], {
+        text: _(
+          "Prokop service is stopped. Start the service to display connections."
+        ),
+        actions: renderStartServiceAction()
+      })
+    );
+    return;
+  }
+  if (loading) {
+    container.replaceChildren(
+      renderConnectionsTable([], {
+        text: _("Loading connections"),
+        className: "fkp_monitoring-page__state--loading"
+      })
+    );
+    return;
+  }
+  if (failed) {
+    container.replaceChildren(
+      renderConnectionsTable([], {
+        text: _("Connections are unavailable"),
+        className: "fkp_monitoring-page__state--error"
+      })
+    );
+    return;
+  }
+  const visibleConnections = getVisibleConnections();
+  renderFilterBar();
+  renderConnectionDetailsPanel();
+  if (visibleConnections.length === 0) {
+    const anyConnections = getConnectionsForActiveTab().length > 0;
+    container.replaceChildren(
+      renderConnectionsTable(
+        [],
+        anyConnections && filtersActive() ? {
+          text: _("No connections match the filters"),
+          actions: [
+            E(
+              "button",
+              {
+                type: "button",
+                class: "btn cbi-button",
+                click: () => resetFilters()
+              },
+              _("Reset filters")
+            )
+          ]
+        } : {
+          text: followBaseline ? _(
+            "No new connections yet. Open the site or app you want to check."
+          ) : activeTab === "active" ? _("No active connections") : _("No closed connections")
+        }
+      )
+    );
+    return;
+  }
+  container.replaceChildren(renderConnectionsTable(visibleConnections));
+  container.scrollLeft = previousScrollLeft;
+}
+function flushRenderAfterSelection() {
+  if (!renderSkippedForSelection || isTextSelectionInsideMonitoring()) {
+    return;
+  }
+  renderConnections({ force: true });
+}
+function setMonitoringPaused(paused) {
+  if (monitoringPaused === paused) {
+    return;
+  }
+  monitoringPaused = paused;
+  monitoringPausedAt = paused ? Date.now() : null;
+  renderSkippedForSelection = false;
+  renderControls();
+  if (!paused) {
+    const payload = pendingConnectionsPayload;
+    pendingConnectionsPayload = null;
+    if (payload) {
+      applyConnectionsPayload(payload);
+      return;
+    }
+    if (connectionsPollTimer) {
+      void pollConnectionsSnapshot();
+      return;
+    }
+  }
+  renderConnections();
+}
+function isElementOverflowing(element) {
+  return element.scrollWidth > element.clientWidth + 1;
+}
+function getMonitoringValueOverflowElements(element) {
+  return [
+    element,
+    ...Array.from(element.querySelectorAll("*"))
+  ].filter(isElementOverflowing);
+}
+function getElementCopyText(element, fallback) {
+  return element.getAttribute("data-copy-value") || element.textContent || fallback;
+}
+function compactMonitoringText(value) {
+  return value.replace(/\u2026/g, "").trim().replace(/\s+/g, "");
+}
+function getMonitoringValueTextElements(element) {
+  const children = Array.from(element.children).filter(
+    (child) => child instanceof HTMLElement
+  );
+  if (children.length === 0) {
+    return [element];
+  }
+  const textElements = children.flatMap(getMonitoringValueTextElements).filter((child) => compactMonitoringText(getElementCopyText(child, "")));
+  return textElements.length > 0 ? textElements : [element];
+}
+function estimateVisibleMonitoringTextLength(element, fallbackText) {
+  const text = compactMonitoringText(getElementCopyText(element, fallbackText));
+  if (!text) {
+    return 0;
+  }
+  if (!isElementOverflowing(element)) {
+    return text.length;
+  }
+  return Math.floor(
+    element.clientWidth / Math.max(element.scrollWidth, 1) * text.length
+  );
+}
+function getEstimatedVisibleMonitoringTextLength(element, fallbackText) {
+  const textElements = getMonitoringValueTextElements(element);
+  if (textElements.length === 1 && textElements[0] === element) {
+    return estimateVisibleMonitoringTextLength(element, fallbackText);
+  }
+  return textElements.reduce(
+    (total, textElement) => total + estimateVisibleMonitoringTextLength(textElement, fallbackText),
+    0
+  );
+}
+function isCompactTextSubsequence(needle, haystack) {
+  let haystackIndex = 0;
+  for (let needleIndex = 0; needleIndex < needle.length; needleIndex += 1) {
+    haystackIndex = haystack.indexOf(needle[needleIndex], haystackIndex);
+    if (haystackIndex === -1) {
+      return false;
+    }
+    haystackIndex += 1;
+  }
+  return true;
+}
+function getSelectionValueElements(selection) {
+  const root = document.getElementById("monitoring-status");
+  if (!root) {
+    return [];
+  }
+  return Array.from(
+    root.querySelectorAll(
+      ".fkp_monitoring-page__value[data-copy-value]"
+    )
+  ).filter((element) => {
+    for (let index = 0; index < selection.rangeCount; index += 1) {
+      try {
+        if (selection.getRangeAt(index).intersectsNode(element)) {
+          return true;
+        }
+      } catch (_error) {
+        return false;
+      }
+    }
+    return false;
+  });
+}
+function shouldCopyFullMonitoringValue(element, selectedText, fullText) {
+  const normalizedSelectedText = selectedText.replace(/\u2026/g, "").trim();
+  const normalizedFullText = fullText.trim();
+  const compactSelectedText = compactMonitoringText(selectedText);
+  const compactFullText = compactMonitoringText(fullText);
+  const overflowElements = getMonitoringValueOverflowElements(element);
+  const hasCompositeText = getMonitoringValueTextElements(element).length > 1;
+  if (!normalizedSelectedText || !normalizedFullText) {
+    return false;
+  }
+  if (normalizedSelectedText === normalizedFullText) {
+    return true;
+  }
+  if (overflowElements.length === 0) {
+    return false;
+  }
+  if (hasCompositeText) {
+    const selectedPrefix = compactSelectedText.slice(
+      0,
+      Math.min(4, compactSelectedText.length)
+    );
+    if (!compactFullText.startsWith(selectedPrefix) || !isCompactTextSubsequence(compactSelectedText, compactFullText)) {
+      return false;
+    }
+  } else if (!compactFullText.startsWith(compactSelectedText)) {
+    return false;
+  }
+  const estimatedVisibleChars = getEstimatedVisibleMonitoringTextLength(
+    element,
+    normalizedFullText
+  );
+  return compactSelectedText.length >= Math.max(4, estimatedVisibleChars - 2);
+}
+function handleMonitoringValueCopy(event) {
+  const selection = window.getSelection?.();
+  if (!selection || selection.isCollapsed) {
+    return;
+  }
+  const valueElements = getSelectionValueElements(selection);
+  if (valueElements.length !== 1) {
+    return;
+  }
+  const valueElement = valueElements[0];
+  const fullText = valueElement.getAttribute("data-copy-value") || valueElement.textContent || "";
+  const selectedText = selection.toString();
+  if (!shouldCopyFullMonitoringValue(valueElement, selectedText, fullText)) {
+    return;
+  }
+  event.clipboardData?.setData("text/plain", fullText);
+  event.preventDefault();
+}
+async function closeConnection(connectionId) {
+  if (!connectionId || closingConnectionIds.has(connectionId)) {
+    return;
+  }
+  closingConnectionIds.add(connectionId);
+  renderConnections();
+  try {
+    const response = await ProkopShellMethods.closeClashApiConnection(connectionId);
+    if (!response.success) {
+      showToast(_("Failed to close connection"), "error");
+      return;
+    }
+    const now = Date.now();
+    const connection = activeConnections.get(connectionId);
+    if (connection) {
+      activeConnections.delete(connectionId);
+      moveConnectionToClosed(connection, now);
+      trimClosedConnections();
+      pendingConnectionsPayload = null;
+      renderControls();
+    }
+  } catch (error) {
+    logger.error("[MONITORING]", "closeConnection: failed", error);
+    showToast(_("Failed to close connection"), "error");
+  } finally {
+    closingConnectionIds.delete(connectionId);
+    renderConnections();
+  }
+}
+async function closeAllConnections() {
+  if (activeConnections.size === 0 || closingAll) {
+    return;
+  }
+  const confirmed = await confirmAction({
+    title: _("Close all connections?"),
+    message: _("Active connections of all devices are interrupted."),
+    consequences: [
+      _("Apps reconnect on their own; downloads and calls may drop")
+    ],
+    confirmLabel: _("Close all"),
+    danger: true
+  });
+  if (!confirmed || closingAll) {
+    return;
+  }
+  closingAll = true;
+  renderControls();
+  try {
+    const response = await ProkopShellMethods.closeAllClashApiConnections();
+    if (!response.success) {
+      showToast(_("Failed to close connections"), "error");
+      return;
+    }
+    const now = Date.now();
+    activeConnections.forEach((connection) => {
+      moveConnectionToClosed(connection, now);
+    });
+    activeConnections.clear();
+    pendingConnectionsPayload = null;
+    trimClosedConnections();
+  } catch (error) {
+    logger.error("[MONITORING]", "closeAllConnections: failed", error);
+    showToast(_("Failed to close connections"), "error");
+  } finally {
+    closingAll = false;
+    renderControls();
+    renderConnections();
+  }
+}
+function bindControls() {
+  const activeButton = document.getElementById("monitoring-tab-active");
+  const closedButton = document.getElementById("monitoring-tab-closed");
+  const select2 = document.getElementById(
+    "monitoring-device-filter"
+  );
+  const searchInput = document.getElementById(
+    "monitoring-search"
+  );
+  const closeAllButton = document.getElementById("monitoring-close-all");
+  const pauseToggleButton = document.getElementById("monitoring-pause-toggle");
+  const connectionsContainer = document.getElementById(
+    "monitoring-connections"
+  );
+  if (activeButton) {
+    activeButton.onclick = () => setTab("active");
+  }
+  if (closedButton) {
+    closedButton.onclick = () => setTab("closed");
+  }
+  if (closeAllButton) {
+    closeAllButton.onclick = () => {
+      void closeAllConnections();
+    };
+  }
+  if (pauseToggleButton) {
+    pauseToggleButton.onclick = () => {
+      setMonitoringPaused(!monitoringPaused);
+      pauseToggleButton.blur();
+    };
+  }
+  if (select2) {
+    select2.onchange = () => {
+      selectedDeviceFilter = select2.value || ALL_FILTER_VALUE;
+      saveMonitoringPreferences();
+      renderConnections();
+    };
+  }
+  const pathSelect = document.getElementById(
+    "monitoring-path-filter"
+  );
+  if (pathSelect) {
+    pathSelect.onchange = () => {
+      pathFilter = pathSelect.value || ALL_FILTER_VALUE;
+      saveMonitoringPreferences();
+      renderConnections({ force: true });
+    };
+  }
+  const followButton = document.getElementById("monitoring-follow-toggle");
+  if (followButton) {
+    followButton.onclick = () => {
+      followBaseline = followBaseline ? null : /* @__PURE__ */ new Set([...activeConnections.keys(), ...closedConnections.keys()]);
+      renderControls();
+      renderConnections({ force: true });
+    };
+  }
+  const sort = document.getElementById(
+    "monitoring-sort"
+  );
+  if (sort) {
+    sort.value = sortMode;
+    sort.onchange = () => {
+      sortMode = sort.value;
+      saveMonitoringPreferences();
+      renderConnections();
+    };
+  }
+  if (searchInput) {
+    searchInput.oninput = () => {
+      searchQuery = searchInput.value;
+      renderConnections();
+    };
+  }
+  if (connectionsContainer) {
+    connectionsContainer.onclick = (event) => {
+      const target = event.target;
+      const action = target?.closest(
+        ".fkp-monitoring-details"
+      );
+      if (action?.value) {
+        const connection = activeConnections.get(action.value) || closedConnections.get(action.value);
+        if (connection) showConnectionDetails(connection);
+        return;
+      }
+      const button = target?.closest(
+        ".fkp_monitoring-page__row-action"
+      );
+      if (button?.value) {
+        void closeConnection(button.value);
+      }
+    };
+  }
+}
+async function loadNodeDisplayNames() {
+  try {
+    const response = await CustomProkopMethods.getDashboardSections();
+    const names = {};
+    for (const group of response.success ? response.data : [])
+      for (const outbound of group.outbounds)
+        if (outbound.displayName && outbound.displayName !== outbound.code)
+          names[outbound.code] = outbound.displayName;
+    nodeDisplayNames = names;
+  } catch (error) {
+    logger.warn("[MONITORING]", "loadNodeDisplayNames: failed", error);
+  } finally {
+    renderConnections();
+  }
+}
+async function loadLocalDevices() {
+  try {
+    localDeviceChoices = await dependencies.loadLocalDeviceChoices?.() || {};
+  } catch (error) {
+    logger.warn("[MONITORING]", "loadLocalDevices: failed", error);
+    localDeviceChoices = {};
+  } finally {
+    renderControls();
+    renderConnections();
+  }
+}
+var routeNamesRefresher = createRouteNamesRefresher({
+  fetchSections: async () => {
+    const response = await ProkopShellMethods.getReadonlyConfigSections();
+    if (!response.success) {
+      throw new Error(response.error || "get_readonly_config_sections failed");
+    }
+    return response.data;
+  },
+  apply: (sections) => {
+    buildRouteDisplayNames(sections);
+    renderControls();
+    renderConnections();
+  },
+  onError: (error) => {
+    logger.warn("[MONITORING]", "loadRouteDisplayNames: failed", error);
+  },
+  intervalMs: ROUTE_NAMES_REFRESH_INTERVAL_MS
+});
+async function pollConnectionsSnapshot() {
+  if (pollingConnections || !monitoringMounted || monitoringPaused || serviceAvailability !== "running") {
+    return;
+  }
+  const mountId3 = monitoringMountId;
+  pollingConnections = true;
+  try {
+    const response = await ProkopShellMethods.getClashApiConnections();
+    if (!monitoringMounted || mountId3 !== monitoringMountId || serviceAvailability !== "running") {
+      return;
+    }
+    if (!response.success) {
+      failed = true;
+      loading = false;
+      renderConnections();
+      return;
+    }
+    applyConnectionsPayload(normalizeConnectionsPayload(response.data));
+  } catch (error) {
+    if (!monitoringMounted || mountId3 !== monitoringMountId || serviceAvailability !== "running") {
+      return;
+    }
+    logger.error("[MONITORING]", "connections polling failed", error);
+    failed = true;
+    loading = false;
+    renderConnections();
+  } finally {
+    pollingConnections = false;
+  }
+}
+function startConnectionsPolling() {
+  if (connectionsPollTimer) {
+    return;
+  }
+  void pollConnectionsSnapshot();
+  connectionsPollTimer = setInterval(() => {
+    void pollConnectionsSnapshot();
+  }, CONNECTIONS_RPC_POLL_INTERVAL_MS);
+}
+async function connectToConnectionsSocket(updatesId) {
+  const mountId3 = monitoringMountId;
+  const [clashApiSecret, clashControllerHosts] = await Promise.all([
+    getClashApiSecret2(),
+    getClashControllerHosts()
+  ]);
+  if (!monitoringMounted || mountId3 !== monitoringMountId || updatesId !== connectionsUpdatesId || serviceAvailability !== "running") {
+    return;
+  }
+  if (!canUseDirectClashApi(clashApiSecret, clashControllerHosts)) {
+    startConnectionsPolling();
+    return;
+  }
+  connectionsSocketUrl = getClashWsStreamUrl("/connections", clashApiSecret);
+  socket.subscribe(
+    connectionsSocketUrl,
+    (msg) => {
+      if (updatesId !== connectionsUpdatesId || serviceAvailability !== "running") {
+        return;
+      }
+      try {
+        applyConnectionsPayload(JSON.parse(msg));
+      } catch (error) {
+        logger.error("[MONITORING]", "connections socket parse failed", error);
+      }
+    },
+    (_err) => {
+      if (!monitoringMounted || mountId3 !== monitoringMountId || updatesId !== connectionsUpdatesId || serviceAvailability !== "running") {
+        return;
+      }
+      logger.warn("[MONITORING]", "connections socket unavailable, polling");
+      if (connectionsSocketUrl) {
+        socket.disconnect(connectionsSocketUrl);
+        connectionsSocketUrl = "";
+      }
+      startConnectionsPolling();
+    }
+  );
+}
+function startConnectionsUpdates() {
+  if (serviceAvailability !== "running") {
+    return;
+  }
+  const updatesId = ++connectionsUpdatesId;
+  void connectToConnectionsSocket(updatesId);
+}
+function stopConnectionsUpdates() {
+  connectionsUpdatesId += 1;
+  if (connectionsPollTimer) {
+    clearInterval(connectionsPollTimer);
+    connectionsPollTimer = null;
+  }
+  if (connectionsSocketUrl) {
+    socket.disconnect(connectionsSocketUrl);
+    connectionsSocketUrl = "";
+  }
+}
+function setServiceAvailability(next) {
+  if (serviceAvailability === next) {
+    return;
+  }
+  serviceAvailability = next;
+  if (next === "running") {
+    loading = true;
+    failed = false;
+    startConnectionsUpdates();
+  } else {
+    stopConnectionsUpdates();
+    pendingConnectionsPayload = null;
+    if (next === "stopped") {
+      loading = false;
+      failed = false;
+      activeConnections.clear();
+      closedConnections.clear();
+      closingConnectionIds.clear();
+    } else if (next === "unavailable") {
+      loading = false;
+      failed = true;
+    }
+  }
+  renderControls();
+  renderConnections();
+}
+function watchServiceState() {
+  serviceStateUnsubscribe?.();
+  serviceStateUnsubscribe = subscribeRuntimeUiState((uiState) => {
+    if (!monitoringMounted) {
+      return;
+    }
+    setServiceAvailability(
+      getServiceAvailability({
+        loading: false,
+        failed: false,
+        running: uiState.service.prokop.running
+      })
+    );
+  });
+}
+function resetMonitoringState() {
+  activeTab = "active";
+  selectedDeviceFilter = ALL_FILTER_VALUE;
+  searchQuery = readPageParams().search || "";
+  pathFilter = ALL_FILTER_VALUE;
+  followBaseline = null;
+  selectedConnectionId = null;
+  lastPathFilterSignature = "";
+  lastDeviceFilterSignature = "";
+  loading = true;
+  failed = false;
+  closingAll = false;
+  monitoringPaused = false;
+  monitoringPausedAt = null;
+  serviceAvailability = "loading";
+  pendingConnectionsPayload = null;
+  activeConnections.clear();
+  closedConnections.clear();
+  closingConnectionIds.clear();
+  const searchInput = document.getElementById(
+    "monitoring-search"
+  );
+  if (searchInput) {
+    searchInput.value = searchQuery;
+  }
+}
+async function onPageMount3() {
+  onPageUnmount3();
+  monitoringMounted = true;
+  monitoringMountId += 1;
+  const mountId3 = monitoringMountId;
+  resetMonitoringState();
+  loadMonitoringPreferences();
+  bindControls();
+  renderControls();
+  renderConnections();
+  watchServiceState();
+  void loadLocalDevices();
+  routeNamesRefresher.start();
+  void loadNodeDisplayNames();
+  if (getCachedRuntimeUiState()) {
+    void refreshRuntimeUiState({ force: true });
+  } else {
+    const uiState = await refreshRuntimeUiState({ force: true });
+    if (!monitoringMounted || mountId3 !== monitoringMountId) {
+      return;
+    }
+    if (!uiState && serviceAvailability === "loading") {
+      setServiceAvailability("unavailable");
+    }
+  }
+  document.addEventListener("selectionchange", flushRenderAfterSelection);
+  document.addEventListener("copy", handleMonitoringValueCopy);
+  renderTimer = setInterval(() => {
+    if (monitoringPaused) {
+      return;
+    }
+    renderConnections();
+  }, RENDER_INTERVAL_MS);
+}
+function onPageUnmount3() {
+  monitoringMounted = false;
+  monitoringMountId += 1;
+  if (renderTimer) {
+    clearInterval(renderTimer);
+    renderTimer = null;
+  }
+  stopConnectionsUpdates();
+  routeNamesRefresher.stop();
+  serviceStateUnsubscribe?.();
+  serviceStateUnsubscribe = null;
+  document.removeEventListener("selectionchange", flushRenderAfterSelection);
+  document.removeEventListener("copy", handleMonitoringValueCopy);
+}
+function registerLifecycleListeners3() {
+  if (monitoringLifecycleRegistered) {
+    return;
+  }
+  monitoringLifecycleRegistered = true;
+  store.subscribe(
+    (next, prev, diff) => {
+      if (diff.tabService && next.tabService.current !== prev.tabService.current) {
+        const isMonitoringVisible = next.tabService.current === "monitoring";
+        if (isMonitoringVisible) {
+          return onPageMount3();
+        }
+        if (!isMonitoringVisible) {
+          return onPageUnmount3();
+        }
+      }
+    }
+  );
+}
+async function initController3(controllerDependencies = {}) {
+  dependencies = {
+    ...dependencies,
+    ...controllerDependencies
+  };
+  if (monitoringControllerInitialized) {
+    return;
+  }
+  monitoringControllerInitialized = true;
+  if (getProkopPage() === "monitoring")
+    setProkopPage(controllerForView(readMonitoringView()));
+  onMount("monitoring-status").then(() => {
+    registerLifecycleListeners3();
+    if (store.get().tabService.current === "monitoring" || isActiveLuciTab("monitoring")) {
+      onPageMount3();
+    }
+  });
+}
+
+// src/prokop/tabs/monitoring/styles.ts
+var styles6 = `
+#cbi-${PROKOP_UCI_PACKAGE}-monitoring-_mount_node {
+    margin: 16px 0 22px;
+    padding: 0;
+}
+
+#cbi-${PROKOP_UCI_PACKAGE}-monitoring-_mount_node > .cbi-value-title {
+    display: none;
+}
+
+#cbi-${PROKOP_UCI_PACKAGE}-monitoring-_mount_node > .cbi-value-field {
+    margin-left: 0;
+    width: 100%;
+}
+
+#cbi-${PROKOP_UCI_PACKAGE}-monitoring-_mount_node > div {
+    width: 100%;
+}
+
+#cbi-${PROKOP_UCI_PACKAGE}-monitoring > h3 {
+    display: none;
+}
+
+.fkp_monitoring-page {
+    --fkp-monitoring-control-height: 34px;
+    --fkp-monitoring-row-action-size: 24px;
+    --fkp-monitoring-divider-color: rgba(127, 127, 127, 0.22);
+    --fkp-monitoring-soft-bg: rgba(127, 127, 127, 0.08);
+    --fkp-monitoring-soft-bg-hover: rgba(127, 127, 127, 0.14);
+    --fkp-monitoring-danger-color: var(--error-color-medium, #d32f2f);
+    --fkp-monitoring-success-color: var(--success-color-medium, #2e7d32);
+    --fkp-monitoring-paused-color: var(--primary-color-high, #1976d2);
+
+    width: 100%;
+    min-width: 0;
+}
+
+.fkp_monitoring-page__panel {
+    margin-top: 0;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    background: transparent;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+}
+
+.fkp_monitoring-page .btn.fkp_monitoring-page__icon-button {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    padding: 0;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    line-height: 1;
+    margin: 0;
+    border: 1px solid var(--fkp-monitoring-divider-color) !important;
+    border-radius: 6px;
+    background: var(--fkp-monitoring-soft-bg) !important;
+    color: var(--text-color-medium) !important;
+    box-shadow: none;
+}
+
+.fkp_monitoring-page .btn.fkp_monitoring-page__icon-button:hover:not(:disabled) {
+    background: var(--fkp-monitoring-soft-bg-hover) !important;
+    color: var(--text-color-high) !important;
+}
+
+.fkp_monitoring-page .btn.fkp_monitoring-page__icon-button--active {
+    background: rgba(25, 118, 210, 0.16) !important;
+    color: var(--primary-color-high, #1976d2) !important;
+}
+
+.fkp_monitoring-page .btn.fkp_monitoring-page__icon-button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.fkp_monitoring-page #monitoring-close-all.btn.fkp_monitoring-page__icon-button {
+    order: 2;
+    border-color: rgba(217, 83, 79, 0.4) !important;
+    background: transparent !important;
+    color: var(--fkp-monitoring-danger-color) !important;
+}
+
+.fkp_monitoring-page #monitoring-close-all.btn.fkp_monitoring-page__icon-button:hover:not(:disabled) {
+    border-color: rgba(217, 83, 79, 0.6) !important;
+    background: transparent !important;
+    color: color-mix(in srgb, var(--fkp-monitoring-danger-color) 70%, white) !important;
+}
+
+.fkp_monitoring-page #monitoring-pause-toggle.btn.fkp_monitoring-page__icon-button,
+.fkp_monitoring-page #monitoring-pause-toggle.btn.fkp_monitoring-page__icon-button--active {
+    order: 1;
+    border-color: rgba(128, 128, 128, 0.3) !important;
+    background: transparent !important;
+    color: var(--text-color-medium, #888) !important;
+}
+
+.fkp_monitoring-page #monitoring-pause-toggle.btn.fkp_monitoring-page__icon-button:hover:not(:disabled),
+.fkp_monitoring-page #monitoring-pause-toggle.btn.fkp_monitoring-page__icon-button--active:hover:not(:disabled) {
+    border-color: rgba(128, 128, 128, 0.6) !important;
+    background: transparent !important;
+    color: var(--text-color-high, #eee) !important;
+}
+
+.fkp_monitoring-page__icon-button svg,
+.fkp_monitoring-page__row-action svg {
+    width: 16px;
+    height: 16px;
+    display: block;
+    flex: 0 0 auto;
+}
+
+.fkp_monitoring-page__controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 12px;
+    width: 100%;
+    min-width: 0;
+}
+
+.fkp_monitoring-page__actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    min-width: 0;
+}
+
+.fkp_monitoring-page__tabs {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    width: max-content;
+    padding: 2px;
+    border: 1px solid var(--fkp-monitoring-divider-color);
+    border-radius: 6px;
+    background: var(--fkp-monitoring-soft-bg);
+    box-sizing: border-box;
+}
+
+.fkp_monitoring-page .btn.fkp_monitoring-page__tab {
+    height: calc(var(--fkp-monitoring-control-height) - 6px);
+    min-height: calc(var(--fkp-monitoring-control-height) - 6px);
+    margin: 0;
+    padding: 0 12px;
+    border: 0 !important;
+    border-radius: 4px;
+    background: transparent !important;
+    color: var(--text-color-medium) !important;
+    box-shadow: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.fkp_monitoring-page .btn.fkp_monitoring-page__tab:hover {
+    background: var(--fkp-monitoring-soft-bg-hover) !important;
+    color: var(--text-color-high) !important;
+}
+
+.fkp_monitoring-page .btn.fkp_monitoring-page__tab--active,
+.fkp_monitoring-page .btn.fkp_monitoring-page__tab--active:hover {
+    background: rgba(25, 118, 210, 0.16) !important;
+    color: var(--primary-color-high, #1976d2) !important;
+    font-weight: 700;
+}
+
+.fkp_monitoring-page__tab-label {
+    display: inline-block;
+}
+
+.fkp_monitoring-page__tab-badge {
+    min-width: 18px;
+    height: 18px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: rgba(127, 127, 127, 0.22);
+    color: var(--text-color-medium);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.fkp_monitoring-page__tab--active .fkp_monitoring-page__tab-badge {
+    background: rgba(25, 118, 210, 0.22);
+    color: var(--primary-color-high, #1976d2);
+}
+
+.fkp_monitoring-page__filters {
+    display: flex;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    min-width: 0;
+}
+
+.fkp_monitoring-page__device-filter {
+    width: min(220px, 100%);
+    min-width: 0;
+    height: var(--fkp-monitoring-control-height) !important;
+    min-height: var(--fkp-monitoring-control-height) !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box;
+    line-height: calc(var(--fkp-monitoring-control-height) - 2px) !important;
+}
+
+.fkp_monitoring-page__search {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: min(320px, 100%);
+    min-width: 0;
+    height: var(--fkp-monitoring-control-height);
+    margin: 0;
+}
+
+.fkp_monitoring-page__search-icon {
+    position: absolute;
+    left: 8px;
+    width: 16px;
+    height: 16px;
+    color: var(--text-color-medium);
+    pointer-events: none;
+}
+
+.fkp_monitoring-page__search-icon svg {
+    width: 16px;
+    height: 16px;
+    display: block;
+}
+
+.fkp_monitoring-page__search-input {
+    width: 100%;
+    height: var(--fkp-monitoring-control-height) !important;
+    min-height: var(--fkp-monitoring-control-height) !important;
+    padding-left: 30px !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box;
+    line-height: calc(var(--fkp-monitoring-control-height) - 2px) !important;
+}
+
+.fkp_monitoring-page__body {
+    margin-top: 0;
+    width: 100%;
+    min-width: 0;
+}
+
+/* width: 0 + min-width: 100% keeps the wide table from widening the page
+   (flex layouts such as OpenWrt2020 size the content to its min-content);
+   the wrapper still fills its parent and scrolls the table inside. */
+.fkp_monitoring-page__table-wrap {
+    width: 0;
+    min-width: 100%;
+    overflow-x: auto;
+    margin-bottom: 0;
+}
+
+.fkp_monitoring-page__table {
+    width: 100%;
+    min-width: 680px;
+    table-layout: fixed;
+    border-collapse: collapse;
+    border-spacing: 0;
+    margin-bottom: 0;
+}
+
+.fkp_monitoring-page__table th,
+.fkp_monitoring-page__table td {
+    padding: 8px 6px;
+    border-bottom: 1px solid var(--fkp-monitoring-divider-color);
+    box-sizing: border-box;
+    text-align: left;
+    vertical-align: middle;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.fkp_monitoring-page__table th {
+    color: var(--text-color-medium);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    white-space: nowrap;
+    border-bottom-color: rgba(127, 127, 127, 0.32);
+}
+
+.fkp_monitoring-page__table th:nth-child(1) {
+    width: 20%;
+}
+
+.fkp_monitoring-page__table th:nth-child(2) {
+    width: 32%;
+}
+
+.fkp_monitoring-page__table th:nth-child(3) {
+    width: 30%;
+}
+
+.fkp_monitoring-page__table th:nth-child(4) {
+    width: 14%;
+}
+
+.fkp_monitoring-page__table th:nth-child(5) {
+    /* Two 28px icon actions plus gaps; px so it never shrinks below them. */
+    width: 72px;
+}
+
+.fkp_monitoring-page__table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.fkp_monitoring-page__table td:last-child {
+    padding-top: 0;
+    padding-bottom: 0;
+    overflow: visible;
+    white-space: normal;
+}
+
+.fkp_monitoring-page__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.fkp_monitoring-page .btn.fkp_monitoring-page__icon-action {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    padding: 0;
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.fkp_monitoring-page__icon-action svg {
+    width: 16px;
+    height: 16px;
+    display: block;
+}
+
+.fkp_monitoring-page__table th:last-child,
+.fkp_monitoring-page__table td:last-child {
+    text-align: center;
+}
+
+.fkp_monitoring-page__value {
+    display: block;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: left;
+    line-height: 1.3;
+    color: var(--text-color-high);
+    font-size: 13px;
+    user-select: text;
+}
+
+.fkp_monitoring-page__source-value {
+    display: flex;
+    align-items: baseline;
+    justify-content: flex-start;
+    gap: 5px;
+}
+
+.fkp_monitoring-page__source-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fkp_monitoring-page__source-ip {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-color-medium);
+    font-size: 12px;
+}
+
+.fkp_monitoring-page__source-value--ip-only {
+    color: var(--text-color-high);
+}
+
+.fkp_monitoring-page__cell-main {
+    color: var(--text-color-high);
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+.fkp_monitoring-page__cell-secondary {
+    margin-top: 2px;
+    color: var(--text-color-medium);
+    font-size: 12px;
+    line-height: 1.25;
+}
+
+.fkp_monitoring-page__route {
+    display: inline-block;
+    width: auto;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(128, 128, 128, 0.15);
+    color: var(--text-color-high, #eee);
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.fkp_monitoring-page__network {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    color: var(--text-color-medium, #bbb);
+    font-family: inherit;
+    font-size: 13px;
+    text-transform: lowercase;
+}
+
+.fkp_monitoring-page .btn.fkp_monitoring-page__row-action {
+    width: var(--fkp-monitoring-row-action-size);
+    height: var(--fkp-monitoring-row-action-size);
+    min-width: var(--fkp-monitoring-row-action-size);
+    min-height: var(--fkp-monitoring-row-action-size);
+    padding: 0;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    margin: 0;
+    border: 0 !important;
+    border-radius: 999px;
+    background: transparent !important;
+    color: var(--fkp-monitoring-danger-color) !important;
+    box-shadow: none;
+    cursor: pointer;
+}
+
+.fkp_monitoring-page__row-action svg {
+    width: 14px;
+    height: 14px;
+}
+
+.fkp_monitoring-page .btn.fkp_monitoring-page__row-action:hover:not(:disabled) {
+    background: var(--fkp-monitoring-soft-bg-hover) !important;
+    color: var(--fkp-monitoring-danger-color) !important;
+}
+
+.fkp_monitoring-page .btn.fkp_monitoring-page__row-action:disabled {
+    opacity: 0.45;
+    cursor: wait;
+}
+
+.fkp_monitoring-page__row--closing {
+    opacity: 0.55;
+}
+
+.fkp_monitoring-page__state {
+    min-height: 90px;
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-color-medium);
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.fkp_monitoring-page__state-cell {
+    padding: 0 !important;
+}
+
+.fkp_monitoring-page__state--error {
+    color: var(--error-color-medium, #d32f2f);
+}
+
+/* Views: Connections | Nodes and groups */
+.fkp_monitoring-page__views {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.fkp_monitoring-page__nodes .fkp_dashboard-page {
+    margin-top: 0;
+}
+
+.fkp_monitoring-page__secondary {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-top: 2px;
+    color: var(--text-color-medium);
+    font-size: 12px;
+    line-height: 1.25;
+}
+
+.fkp_monitoring-page__path-kind {
+    display: inline-block;
+    margin-right: 6px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.5;
+    vertical-align: middle;
+    background: rgba(128, 128, 128, 0.15);
+    color: var(--text-color-high);
+}
+
+.fkp_monitoring-page__path-kind--dpi {
+    background: rgba(156, 39, 176, 0.16);
+}
+
+.fkp_monitoring-page__path-kind--connection {
+    background: rgba(33, 150, 243, 0.16);
+}
+
+.fkp_monitoring-page__path-kind--bypass,
+.fkp_monitoring-page__path-kind--direct {
+    background: rgba(76, 175, 80, 0.16);
+}
+
+.fkp_monitoring-page__path-kind--block {
+    background: rgba(244, 67, 54, 0.16);
+}
+
+.fkp_monitoring-page__table td .fkp_monitoring-page__route {
+    display: inline;
+    padding: 0;
+    background: transparent;
+    font-size: 13px;
+    vertical-align: middle;
+}
+
+.fkp_monitoring-page__row--closed td {
+    opacity: 0.65;
+}
+
+.fkp_monitoring-page__row--selected td {
+    background: rgba(33, 150, 243, 0.08);
+}
+
+.fkp_monitoring-page__filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    margin: 0 0 8px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    background: rgba(33, 150, 243, 0.08);
+    font-size: 13px;
+}
+
+.fkp_monitoring-page__filter-bar[hidden] {
+    display: none;
+}
+
+.fkp_monitoring-page__details {
+    margin-top: 12px;
+    padding: 12px;
+    border: 1px solid var(--fkp-monitoring-divider-color);
+    border-radius: 6px;
+}
+
+.fkp_monitoring-page__details-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.fkp_monitoring-page__details-head h3 {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.fkp_monitoring-page .btn.fkp_monitoring-page__details-close {
+    min-width: 32px;
+    padding: 0 8px;
+    font-size: 18px;
+    line-height: 1;
+}
+
+.fkp_monitoring-page__detail-list {
+    margin: 10px 0 0;
+}
+
+.fkp_monitoring-page__detail-row {
+    display: grid;
+    grid-template-columns: minmax(120px, 28%) minmax(0, 1fr);
+    gap: 8px;
+    padding: 3px 0;
+}
+
+.fkp_monitoring-page__detail-row dt {
+    color: var(--text-color-medium);
+    font-weight: 600;
+}
+
+.fkp_monitoring-page__detail-row dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.fkp_monitoring-page__details-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.fkp_monitoring-page__technical {
+    margin-top: 12px;
+}
+
+.fkp_monitoring-page__technical summary {
+    cursor: pointer;
+    color: var(--text-color-medium);
+}
+
+.fkp_monitoring-page__cell {
+    min-width: 0;
+}
+
+.fkp-visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+@media (max-width: ${BREAKPOINTS.narrow}px) {
+    .fkp_monitoring-page__controls {
+        align-items: center;
+    }
+
+    .fkp_monitoring-page__tabs {
+        flex: 1 0 100%;
+    }
+
+    .fkp_monitoring-page__filters {
+        flex: 1 1 0;
+    }
+
+    .fkp_monitoring-page__device-filter,
+    .fkp_monitoring-page__search {
+        max-width: none;
+    }
+
+    .fkp_monitoring-page__table {
+        min-width: 0;
+    }
+
+    .fkp_monitoring-page__table thead {
+        display: none;
+    }
+
+    .fkp_monitoring-page__table,
+    .fkp_monitoring-page__table tbody,
+    .fkp_monitoring-page__table tr,
+    .fkp_monitoring-page__table td {
+        display: block;
+        width: 100%;
+    }
+
+    .fkp_monitoring-page__table tr {
+        border: 1px var(--background-color-low, lightgray) solid;
+        border-radius: 4px;
+        padding: 8px;
+        box-sizing: border-box;
+        margin-bottom: 8px;
+    }
+
+    .fkp_monitoring-page__table td {
+        display: grid;
+        grid-template-columns: minmax(92px, 34%) minmax(0, 1fr);
+        gap: 8px;
+        border: 0;
+        border-bottom: 1px solid var(--fkp-monitoring-divider-color);
+        padding: 4px 0;
+        box-sizing: border-box;
+        text-align: left;
+    }
+
+    .fkp_monitoring-page__table td::before {
+        content: attr(data-label);
+        color: var(--text-color-medium);
+        font-weight: 700;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Row actions sit at the end of the card without a label line. */
+    .fkp_monitoring-page__table td:last-child {
+        display: flex;
+        justify-content: flex-end;
+        border-bottom: 0;
+        min-height: var(--fkp-monitoring-row-action-size);
+        padding: 4px 0 0;
+    }
+
+    .fkp_monitoring-page__table td:last-child::before {
+        display: none;
+    }
+
+    .fkp_monitoring-page__value,
+    .fkp_monitoring-page__secondary {
+        text-align: left;
+    }
+
+    .fkp_monitoring-page__source-value {
+        justify-content: flex-end;
+    }
+
+    .fkp_monitoring-page__state-row td::before {
+        display: none;
+    }
+}
+
+@media (max-width: ${BREAKPOINTS.phone}px) {
+    .fkp_monitoring-page__controls,
+    .fkp_monitoring-page__filters {
+        align-items: stretch;
+    }
+
+    .fkp_monitoring-page__tabs,
+    .fkp_monitoring-page__filters,
+    .fkp_monitoring-page__device-filter,
+    .fkp_monitoring-page__search {
+        width: 100%;
+    }
+
+    .fkp_monitoring-page__controls,
+    .fkp_monitoring-page__filters {
+        flex-direction: column;
+    }
+
+    .fkp_monitoring-page__actions {
+        align-self: flex-end;
+    }
+
+    .fkp_monitoring-page__tabs {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        width: 100%;
+    }
+
+    .fkp_monitoring-page__table td {
+        grid-template-columns: 1fr;
+        gap: 2px;
+    }
+
+    .fkp_monitoring-page__value {
+        text-align: left;
+    }
+
+    .fkp_monitoring-page__source-value {
+        justify-content: flex-start;
+    }
+}
+`;
+
+// src/prokop/tabs/monitoring/index.ts
+var MonitoringTab = {
+  render: render3,
+  initController: initController3,
+  styles: styles6
+};
+
+// src/prokop/tabs/updates/componentActionCompletion.ts
+function shouldApplyCompletedComponentActionResult(result, notify) {
+  return result.action !== "check_update" || notify;
+}
+
+// src/prokop/tabs/updates/componentActionToast.ts
+function componentName(component) {
+  switch (component) {
+    case "prokop":
+      return "Prokop";
+    case "sing_box":
+      return "sing-box";
+    case "zapret":
+      return "Zapret";
+    case "zapret2":
+      return "Zapret2";
+    case "byedpi":
+      return "ByeDPI";
+    case "zapret_manager":
+      return "Zapret-Manager";
+    case "packet_steering":
+      return "Packet Steering";
+    case "direct_proxy":
+      return _("Direct Proxy");
+    case "torrserver_direct":
+      return _("TorrServer Direct");
+    default:
+      return component;
+  }
+}
+function componentActionSuccessText(result) {
+  const { component, action } = result;
+  if (component === "prokop" && result.status === "recovered") {
+    return _(
+      "The interrupted Prokop update was rolled back; no new update was attempted"
+    );
+  }
+  if (component === "packet_steering") {
+    if (action === "enable") {
+      return _("Packet Steering mode 2 has been enabled");
+    }
+    if (action === "restore") {
+      return _("Packet Steering normal mode has been restored");
+    }
+  }
+  const name = componentName(component);
+  if (action === "install" || action.startsWith("install_")) {
+    return _("%s has been installed").replace("%s", name);
+  }
+  if (action === "remove") {
+    return _("%s has been removed").replace("%s", name);
+  }
+  if (action === "enable") {
+    return _("%s has been enabled").replace("%s", name);
+  }
+  if (action === "disable") {
+    return _("%s has been disabled").replace("%s", name);
+  }
+  return _("Action completed");
+}
+
+// src/prokop/tabs/updates/killSwitchRelease.ts
+var LAST_RELEASE_WITHOUT_KILL_SWITCH = [1, 0, 31];
+function releaseLacksKillSwitch(version) {
+  const parts = /^(\d+)\.(\d+)\.(\d+)/.exec(`${version}`);
+  if (!parts) {
+    return false;
+  }
+  for (let i = 0; i < 3; i++) {
+    const value = Number(parts[i + 1]);
+    if (value !== LAST_RELEASE_WITHOUT_KILL_SWITCH[i]) {
+      return value < LAST_RELEASE_WITHOUT_KILL_SWITCH[i];
+    }
+  }
+  return true;
+}
+
+// src/prokop/tabs/updates/releaseSelector.ts
+var RELEASE_VERSION = /^\d+\.\d+\.\d+$/;
+var RELEASES_TIMEOUT_MS = 75e3;
+async function loadReleases() {
+  const response = await executeShellCommand({
+    command: "/usr/bin/prokop",
+    args: ["prokop_releases"],
+    timeout: RELEASES_TIMEOUT_MS
+  });
+  const result = JSON.parse(response.stdout || "{}");
+  if ((response.code ?? 0) !== 0 || !result.success || !Array.isArray(result.releases)) {
+    throw new Error(_("Could not load available versions"));
+  }
+  return result.releases.filter(
+    (release) => RELEASE_VERSION.test(`${release?.version}`)
+  );
+}
+function confirmVersionChange(currentVersion, version, install) {
+  const cancel = renderButton({
+    text: _("Cancel"),
+    onClick: () => ui.hideModal()
+  });
+  ui.showModal(
+    _("Confirm version change"),
+    E("div", {}, [
+      E("p", {}, `${currentVersion} \u2192 ${version}`),
+      E(
+        "p",
+        {},
+        _(
+          "A configuration backup will be saved in /etc/prokop-backups. Older versions may not support all current settings."
+        )
+      ),
+      ...releaseLacksKillSwitch(version) ? [
+        E(
+          "p",
+          {},
+          _(
+            "Prokop 1.0.31 and older have no VPN kill-switch. If it is enabled, the installation removes its protection, and protected traffic is no longer blocked while Prokop is stopped."
+          )
+        )
+      ] : [],
+      E("div", { class: "right" }, [
+        cancel,
+        renderButton({
+          text: _("Install"),
+          classNames: ["cbi-button-save"],
+          onClick: () => {
+            ui.hideModal();
+            install(version);
+          }
+        })
+      ])
+    ])
+  );
+  cancel.focus();
+}
+async function showReleaseSelector(currentVersion, install) {
+  const status2 = E("p", { role: "status" }, _("Loading available versions\u2026"));
+  const content = E("div", {}, [
+    status2,
+    E("div", { class: "right" }, [
+      renderButton({ text: _("Cancel"), onClick: () => ui.hideModal() })
+    ])
+  ]);
+  ui.showModal(_("Choose Prokop version"), content);
+  try {
+    const releases = await loadReleases();
+    const select2 = E("select", {
+      class: "cbi-input-select",
+      "aria-label": _("Choose Prokop version")
+    });
+    for (const release of releases) {
+      const installed = release.version === currentVersion;
+      select2.appendChild(
+        E(
+          "option",
+          { value: release.version },
+          `${release.version}${installed ? ` \u2014 ${_("Installed")}` : ""}`
+        )
+      );
+    }
+    if (!select2.options.length) {
+      throw new Error(_("No compatible releases available"));
+    }
+    const confirm = renderButton({
+      text: _("Install selected version"),
+      classNames: ["cbi-button-save"],
+      onClick: () => confirmVersionChange(currentVersion, select2.value, install)
+    });
+    const update = () => {
+      confirm.disabled = select2.value === currentVersion;
+    };
+    select2.addEventListener("change", update);
+    update();
+    content.replaceChildren(
+      select2,
+      E("div", { class: "right" }, [
+        renderButton({ text: _("Cancel"), onClick: () => ui.hideModal() }),
+        confirm
+      ])
+    );
+  } catch (error) {
+    status2.textContent = error instanceof Error ? error.message : _("Could not load available versions");
+    content.replaceChildren(
+      status2,
+      E("div", { class: "right" }, [
+        renderButton({ text: _("Close"), onClick: () => ui.hideModal() })
+      ])
+    );
+  }
+}
+
+// src/prokop/tabs/updates/checkResultLifecycle.ts
+function shouldPreserveCompletedCheckResultOnNextMount({
+  action,
+  mounted: mounted3
+}) {
+  return action === "check_update" && !mounted3;
+}
+function shouldResetCheckResultsOnMount({
+  anyActionLoading,
+  preserveCheckResultsOnNextMount: preserveCheckResultsOnNextMount2,
+  persistentCacheEnabled = false
+}) {
+  return !persistentCacheEnabled && !anyActionLoading && !preserveCheckResultsOnNextMount2;
+}
+function shouldRefreshComponentStateBeforeRender(uiState) {
+  return Boolean(
+    uiState?.actions.component.some((state) => state.running === true)
+  );
+}
+function shouldExposeCheckResults({
+  mounted: mounted3,
+  cacheResolved
+}) {
+  return mounted3 && cacheResolved;
+}
+
+// src/prokop/tabs/updates/fullUninstallStatus.ts
+function describeLeftItem(item) {
+  if (item.startsWith("table:")) {
+    const table = item.slice("table:".length);
+    return _("nft table %s").replace("%s", () => table);
+  }
+  switch (item) {
+    case "rule:4":
+      return _("IPv4 routing rule at priority 105");
+    case "rule:6":
+      return _("IPv6 routing rule at priority 105");
+    case "cron":
+      return _('the lines marked "# prokop-" in /etc/crontabs/root');
+    case "loader":
+      return _("the kill-switch loader in /usr/share/nftables.d/ruleset-post");
+    case "backup":
+      return _("the configuration backup in /etc/prokop-backups");
+    default:
+      return item;
+  }
+}
+function describeLeftItems(left) {
+  return left.split(",").map((item) => item.trim()).filter((item) => item !== "").map(describeLeftItem).join(", ");
+}
+var REMOVAL_WAIT_MS = 18e4;
+var TRANSACTIONS_WAIT_MS = 12e4;
+function startRemovalWait(now) {
+  return { deadline: now + REMOVAL_WAIT_MS, waitingForChanges: false };
+}
+function followRemoval(wait, status2, now) {
+  const waitingForChanges = status2.state === "running" && status2.phase === "transactions";
+  if (waitingForChanges === wait.waitingForChanges) return wait;
+  return {
+    deadline: now + (waitingForChanges ? TRANSACTIONS_WAIT_MS : REMOVAL_WAIT_MS),
+    waitingForChanges
+  };
+}
+function describeFailedRemoval(status2) {
+  const left = typeof status2.left === "string" ? describeLeftItems(status2.left) : "";
+  if (status2.phase === "preflight") {
+    return _(
+      "Original repositories could not be restored. Removal was cancelled before deleting packages."
+    );
+  }
+  if (status2.phase === "transactions") {
+    return _(
+      "Prokop is still changing its configuration (a snapshot restore, an autotune run or another change), so nothing was removed. Try again once it has finished."
+    );
+  }
+  if (status2.phase === "stop" && left) {
+    return _(
+      "Prokop is still active after its stop, so nothing was removed. Still in place: %s. Stop Prokop or restart the router, then try again."
+    ).replace("%s", () => left);
+  }
+  if (left) {
+    return _(
+      "Prokop was removed, but this is still in place: %s. See the removal log in /tmp/prokop-uninstall.*/output.log."
+    ).replace("%s", () => left);
+  }
+  return _(
+    "Removal did not finish. See the removal log in /tmp/prokop-uninstall.*/output.log."
+  );
+}
+
+// src/prokop/tabs/updates/fullUninstall.ts
+var removing = false;
+function confirmRemoval() {
+  if (removing) return;
+  const progress = E("p", { role: "status" });
+  const cancel = renderButton({
+    text: _("Cancel"),
+    onClick: () => ui.hideModal()
+  });
+  const confirm = renderButton({
+    text: _("Remove permanently"),
+    classNames: ["cbi-button-negative"],
+    onClick: () => {
+      removing = true;
+      confirm.disabled = true;
+      cancel.disabled = true;
+      progress.textContent = _("Removing Prokop\u2026");
+      void (async () => {
+        try {
+          const response = await executeShellCommand({
+            command: "/usr/bin/prokop",
+            args: ["full_uninstall"],
+            timeout: 15e3
+          });
+          const result = JSON.parse(response.stdout || "{}");
+          if (response.code || !result.success || !/^\/prokop-uninstall\.[A-Za-z0-9]+\.json$/.test(
+            result.status_url || ""
+          )) {
+            throw new Error(
+              _(
+                "Could not start removal. Another component action may be running."
+              )
+            );
+          }
+          let wait = startRemovalWait(Date.now());
+          while (Date.now() < wait.deadline) {
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+            let status2;
+            try {
+              const reply = await fetch(result.status_url, {
+                cache: "no-store"
+              });
+              if (!reply.ok) continue;
+              status2 = await reply.json();
+            } catch {
+              continue;
+            }
+            const waited = wait.waitingForChanges;
+            wait = followRemoval(wait, status2, Date.now());
+            if (wait.waitingForChanges !== waited) {
+              progress.textContent = wait.waitingForChanges ? _(
+                "Waiting for a configuration change of Prokop to finish before removing it\u2026"
+              ) : _("Removing Prokop\u2026");
+            }
+            if (status2.state === "complete") {
+              progress.textContent = _(
+                "Prokop and sing-box have been removed. Original repositories have been restored."
+              );
+              cancel.textContent = _("Open LuCI");
+              cancel.disabled = false;
+              cancel.onclick = () => window.location.assign("/cgi-bin/luci/");
+              return;
+            }
+            if (status2.state === "failed") {
+              throw new Error(describeFailedRemoval(status2));
+            }
+          }
+          throw new Error(
+            _(
+              "Could not confirm completion. Check the removal log before retrying."
+            )
+          );
+        } catch (error) {
+          progress.textContent = error instanceof Error ? error.message : String(error);
+          cancel.disabled = false;
+          cancel.onclick = () => window.location.assign("/cgi-bin/luci/");
+          cancel.textContent = _("Open LuCI");
+        }
+      })();
+    }
+  });
+  ui.showModal(
+    _("Full removal"),
+    E("div", {}, [
+      E(
+        "p",
+        {},
+        _(
+          "Remove Prokop, sing-box, their settings and cache, and restore the original device repositories?"
+        )
+      ),
+      E(
+        "p",
+        {},
+        _(
+          "This permanently deletes saved sections and subscriptions. Other components remain installed."
+        )
+      ),
+      progress,
+      E("div", { class: "right" }, [cancel, confirm])
+    ])
+  );
+  cancel.focus();
+}
+function renderFullUninstall(disabled) {
+  return E("div", { class: "fkp_updates-page__component" }, [
+    E("div", { class: "fkp_updates-page__component__header" }, [
+      E(
+        "b",
+        { class: "fkp_updates-page__component__title" },
+        _("Full removal")
+      )
+    ]),
+    E(
+      "p",
+      {},
+      _(
+        "Remove Prokop and sing-box with their settings and restore the original device repositories."
+      )
+    ),
+    renderButton({
+      text: _("Remove Prokop completely"),
+      icon: renderXIcon24,
+      classNames: ["cbi-button-negative"],
+      disabled: disabled || removing,
+      onClick: confirmRemoval
+    })
+  ]);
+}
+
+// src/prokop/tabs/updates/render.ts
+function render4() {
+  return E("div", { id: "updates-status", class: "fkp_updates-page" }, [
+    E("div", {
+      id: "fkp_updates-components",
+      class: "fkp_updates-page__components"
+    })
+  ]);
+}
+
+// src/prokop/tabs/updates/renderOnAttach.ts
+function renderOnAttach(root, deps) {
+  if (!deps.isMounted()) {
+    return;
+  }
+  void deps.waitForAttach(root).then(() => {
+    if (deps.isMounted()) {
+      deps.renderComponents();
+    }
+  });
+}
+
+// src/prokop/tabs/updates/initController.ts
+var updatesLifecycleRegistered = false;
+var updatesControllerInitialized = false;
+var updatesMounted = false;
+var updatesMountId = 0;
+var pageUnloading2 = false;
+var preserveCheckResultsOnNextMount = false;
+var componentUpdateCheckCacheResolved = false;
+var componentUpdateCheckCacheSnapshot = null;
+var componentUpdateCheckCachePromise = null;
+var componentActionStateUnsubscribe = null;
+var componentActionStateRefreshPromise = null;
+var followedComponentJobs = /* @__PURE__ */ new Set();
+var handledComponentJobs = /* @__PURE__ */ new Set();
+if (typeof window !== "undefined") {
+  window.addEventListener("pagehide", () => {
+    pageUnloading2 = true;
+  });
+  window.addEventListener("pageshow", () => {
+    pageUnloading2 = false;
+  });
+}
+function shouldShowInstallAfterCheck(component) {
+  const status2 = getVisibleCheckResult(component)?.status;
+  return status2 === "outdated" || status2 === "dev";
+}
+function getVisibleCheckResult(component) {
+  if (!shouldExposeCheckResults({
+    mounted: updatesMounted,
+    cacheResolved: componentUpdateCheckCacheResolved
+  })) {
+    return null;
+  }
+  return store.get().updatesChecks[component];
+}
+function getLatestVersion(component) {
+  const checkResult = getVisibleCheckResult(component);
+  if (!checkResult || !shouldShowInstallAfterCheck(component)) {
+    return void 0;
+  }
+  return checkResult.latest_version || void 0;
+}
+function getGitHubReleaseUrl(component) {
+  const checkResult = getVisibleCheckResult(component);
+  if (!checkResult || !shouldShowInstallAfterCheck(component) || !checkResult.release_url) {
+    return void 0;
+  }
+  return checkResult.release_url;
+}
+function isAnyActionLoading() {
+  return Object.values(store.get().updatesActions).some((item) => item.loading);
+}
+function isServiceRuntimeActionLoading() {
+  const state = store.get();
+  return hasLocalMutatingServiceActionLoading(state.diagnosticsActions) || isServiceTransitionStatus(state.servicesInfoWidget.data.prokopStatus);
+}
+function isSystemInfoLoading() {
+  const systemInfo = store.get().diagnosticsSystemInfo;
+  return systemInfo.loading || !systemInfo.loaded;
+}
+function setActionLoading(action, loading2, local = false) {
+  if (local || !loading2) {
+    setLocalComponentAction(action, loading2 && local);
+  }
+  const updatesActions = store.get().updatesActions;
+  store.set({
+    updatesActions: {
+      ...updatesActions,
+      [action]: { loading: loading2 }
+    }
+  });
+}
+function beginComponentAction(button) {
+  if (isAnyActionLoading()) {
+    return false;
+  }
+  setActionLoading(button.key, true, true);
+  return true;
+}
+function setCheckResult(component, status2, latestVersion, releaseUrl = "") {
+  const updatesChecks = store.get().updatesChecks;
+  store.set({
+    updatesChecks: {
+      ...updatesChecks,
+      [component]: {
+        status: status2,
+        latest_version: latestVersion,
+        release_url: releaseUrl
+      }
+    }
+  });
+}
+function resetCheckResult(component) {
+  setCheckResult(component, null, "");
+}
+function applyCachedCheckResults(results) {
+  results.forEach((result) => {
+    const status2 = result.status || null;
+    if (status2 === "latest" || status2 === "outdated" || status2 === "dev") {
+      setCheckResult(
+        result.component,
+        status2,
+        result.latest_version || "",
+        result.release_url || ""
+      );
+    }
+  });
+}
+function loadComponentUpdateCheckCache({ force = false } = {}) {
+  if (!force && componentUpdateCheckCacheSnapshot) {
+    return Promise.resolve(componentUpdateCheckCacheSnapshot);
+  }
+  if (componentUpdateCheckCachePromise) {
+    return componentUpdateCheckCachePromise;
+  }
+  const promise = ProkopShellMethods.componentUpdateCheckCache().then(
+    (response) => response.success ? response.data : {
+      enabled: false,
+      results: []
+    }
+  ).then((cache) => {
+    componentUpdateCheckCacheSnapshot = cache;
+    return cache;
+  }).finally(() => {
+    if (componentUpdateCheckCachePromise === promise) {
+      componentUpdateCheckCachePromise = null;
+    }
+  });
+  componentUpdateCheckCachePromise = promise;
+  return promise;
+}
+function getErrorMessage(error, fallback) {
+  return error instanceof Error && error.message ? error.message : fallback;
+}
+async function ackComponentActionJob(jobId) {
+  try {
+    const response = await ProkopShellMethods.uiActionAck("component", jobId);
+    if (!response.success) {
+      logger.debug("[UPDATES]", "component action ack failed", response.error);
+    }
+  } catch (error) {
+    logger.debug("[UPDATES]", "component action ack failed", error);
+  }
+}
+function getExpectedLatestVersionForAction(button) {
+  if (button.component !== "prokop" || button.action !== "install") {
+    return void 0;
+  }
+  return store.get().updatesChecks[button.component].latest_version || void 0;
+}
+function getCheckToastMessage(status2) {
+  if (status2 === "outdated") {
+    return _("Update is available");
+  }
+  if (status2 === "dev") {
+    return _("Installed version is newer than release");
+  }
+  return _("Latest version is installed");
+}
+async function refreshSystemInfoAfterMutation() {
+  await ensureSystemInfo({ force: true, silent: true });
+}
+function notifyActionProvidersAvailabilityChanged(systemInfo) {
+  if (typeof window === "undefined" || typeof CustomEvent === "undefined") {
+    return;
+  }
+  window.dispatchEvent(
+    new CustomEvent(PROKOP_ACTION_PROVIDERS_AVAILABILITY_EVENT, {
+      detail: {
+        zapretInstalled: Boolean(systemInfo.zapret_installed),
+        zapret2Installed: Boolean(systemInfo.zapret2_installed),
+        byedpiInstalled: Boolean(systemInfo.byedpi_installed)
+      }
+    })
+  );
+}
+function reloadPageAfterProkopUpdate() {
+  window.setTimeout(() => {
+    window.location.reload();
+  }, 1200);
+}
+function patchSystemInfoAfterMutation(result) {
+  const systemInfo = store.get().diagnosticsSystemInfo;
+  const nextSystemInfo = { ...systemInfo, loading: false, loaded: true };
+  const version = result.current_version || result.latest_version || _("unknown");
+  if (result.component === "prokop" && result.action === "install") {
+    nextSystemInfo.prokop_version = version;
+  }
+  if (result.component === "sing_box") {
+    nextSystemInfo.sing_box_version = version;
+    if (result.action === "install_extended") {
+      nextSystemInfo.sing_box_extended = 1;
+      nextSystemInfo.sing_box_tiny = 0;
+      nextSystemInfo.sing_box_compressed = 0;
+      nextSystemInfo.sing_box_tailscale = 1;
+    }
+    if (result.action === "install_extended_compressed") {
+      nextSystemInfo.sing_box_extended = 1;
+      nextSystemInfo.sing_box_tiny = 0;
+      nextSystemInfo.sing_box_compressed = 1;
+      nextSystemInfo.sing_box_tailscale = 1;
+    }
+    if (result.action === "install_stable") {
+      nextSystemInfo.sing_box_extended = 0;
+      nextSystemInfo.sing_box_tiny = 0;
+      nextSystemInfo.sing_box_compressed = 0;
+      nextSystemInfo.sing_box_tailscale = 1;
+    }
+    if (result.action === "install_tiny") {
+      nextSystemInfo.sing_box_extended = 0;
+      nextSystemInfo.sing_box_tiny = 1;
+      nextSystemInfo.sing_box_compressed = 0;
+      nextSystemInfo.sing_box_tailscale = 0;
+    }
+  }
+  if (result.component === "zapret") {
+    nextSystemInfo.providerInfoLoaded = true;
+    if (result.action === "remove") {
+      nextSystemInfo.zapret_installed = 0;
+      nextSystemInfo.zapret_version = "not installed";
+    } else {
+      nextSystemInfo.zapret_installed = 1;
+      nextSystemInfo.zapret_version = version;
+    }
+  }
+  if (result.component === "zapret2") {
+    nextSystemInfo.providerInfoLoaded = true;
+    if (result.action === "remove") {
+      nextSystemInfo.zapret2_installed = 0;
+      nextSystemInfo.zapret2_version = "not installed";
+    } else {
+      nextSystemInfo.zapret2_installed = 1;
+      nextSystemInfo.zapret2_version = version;
+    }
+  }
+  if (result.component === "byedpi") {
+    nextSystemInfo.providerInfoLoaded = true;
+    if (result.action === "remove") {
+      nextSystemInfo.byedpi_installed = 0;
+      nextSystemInfo.byedpi_version = "not installed";
+    } else {
+      nextSystemInfo.byedpi_installed = 1;
+      nextSystemInfo.byedpi_version = version;
+    }
+  }
+  if (result.component === "zapret_manager") {
+    nextSystemInfo.zapret_manager_installed = result.action === "remove" ? 0 : 1;
+  }
+  if (result.component === "direct_proxy") {
+    nextSystemInfo.direct_proxy_enabled = result.action === "enable" ? 1 : 0;
+  }
+  if (result.component === "torrserver_direct") {
+    nextSystemInfo.torrserver_direct_enabled = result.action === "enable" ? 1 : 0;
+    nextSystemInfo.torrserver_direct_active = result.action === "enable" ? 1 : 0;
+  }
+  const normalizedSystemInfo = normalizeSingBoxVariantFields(nextSystemInfo);
+  store.set({
+    diagnosticsSystemInfo: normalizedSystemInfo
+  });
+  if (result.component === "zapret" || result.component === "zapret2" || result.component === "byedpi") {
+    notifyActionProvidersAvailabilityChanged(normalizedSystemInfo);
+  }
+}
+async function applyCompletedComponentAction({
+  key,
+  result,
+  notify
+}) {
+  if (result.action === "check_update") {
+    setActionLoading(key, false);
+    if (!shouldApplyCompletedComponentActionResult(result, notify)) {
+      return;
+    }
+    if (shouldPreserveCompletedCheckResultOnNextMount({
+      action: result.action,
+      mounted: updatesMounted
+    })) {
+      preserveCheckResultsOnNextMount = true;
+    }
+    const status2 = result.status === "recovered" ? null : result.status || null;
+    if (status2 === "latest" || status2 === "outdated" || status2 === "dev") {
+      setCheckResult(
+        result.component,
+        status2,
+        result.latest_version || "",
+        result.release_url || ""
+      );
+    }
+    if (notify) {
+      showToast(getCheckToastMessage(status2), "success");
+    }
+    return;
+  }
+  if (result.component === "prokop" && result.action === "install" && result.status === "recovered") {
+    resetCheckResult(result.component);
+    setActionLoading(key, false);
+    if (notify) {
+      showToast(componentActionSuccessText(result), "success", 5e3);
+      window.setTimeout(() => window.location.reload(), 5e3);
+    }
+    return;
+  }
+  if (result.action === "install" || result.action.startsWith("install_")) {
+    setCheckResult(result.component, "latest", result.latest_version || "");
+  } else {
+    resetCheckResult(result.component);
+  }
+  patchSystemInfoAfterMutation(result);
+  setActionLoading(key, false);
+  if (result.component === "prokop" && result.action === "install") {
+    if (notify) {
+      showToast(componentActionSuccessText(result), "success", 1200);
+    }
+    if (notify) {
+      reloadPageAfterProkopUpdate();
+    }
+    return;
+  }
+  if (notify) {
+    showToast(componentActionSuccessText(result), "success");
+  }
+  void refreshSystemInfoAfterMutation();
+}
+async function completeComponentActionJob(key, jobId, response) {
+  if (pageUnloading2) {
+    setActionLoading(key, false);
+    return;
+  }
+  const alreadyHandled = handledComponentJobs.has(jobId);
+  if (alreadyHandled) {
+    setActionLoading(key, false);
+    return;
+  }
+  const shouldNotify = shouldNotifyOwnedUiAction("component", jobId);
+  if (!response.success || response.data.success === false) {
+    const failure = response.success ? { reason: response.data.reason, error: response.data.message } : response;
+    const message = failure.error || _("Failed to execute");
+    if (isTransientRpcError(message)) {
+      setActionLoading(key, false);
+      void refreshComponentActionState();
+      return;
+    }
+    handledComponentJobs.add(jobId);
+    setActionLoading(key, false);
+    if (shouldNotify) {
+      showToast(
+        failureText(failure, _("Failed to execute")),
+        failureToastType(failure)
+      );
+    }
+    await ackComponentActionJob(jobId);
+    return;
+  }
+  handledComponentJobs.add(jobId);
+  await ackComponentActionJob(jobId);
+  await applyCompletedComponentAction({
+    key,
+    result: response.data,
+    notify: shouldNotify
+  });
+}
+async function followComponentActionState(state) {
+  const jobId = state.job_id;
+  const key = getComponentActionKey(state.component, state.action);
+  if (!jobId || !key || followedComponentJobs.has(jobId)) {
+    return;
+  }
+  if (!state.running && handledComponentJobs.has(jobId)) {
+    return;
+  }
+  followedComponentJobs.add(jobId);
+  if (shouldShowLoadingForRestoredAction(state)) {
+    setActionLoading(key, true);
+  }
+  try {
+    const response = state.running ? await ProkopShellMethods.waitComponentActionJob(
+      jobId,
+      state.component,
+      state.action,
+      state.latest_version || void 0
+    ) : {
+      success: true,
+      data: state
+    };
+    await completeComponentActionJob(key, jobId, response);
+  } catch (error) {
+    logger.error("[UPDATES]", "followComponentActionState failed", error);
+    if (!pageUnloading2) {
+      const message = getErrorMessage(error, _("Failed to execute"));
+      setActionLoading(key, false);
+      if (!isTransientRpcError(message)) {
+        showToast(message, "error");
+      }
+    }
+  } finally {
+    followedComponentJobs.delete(jobId);
+  }
+}
+async function followAlreadyRunningComponentAction(button) {
+  const uiState = await refreshRuntimeUiState({ force: true });
+  if (!uiState) {
+    return false;
+  }
+  const state = uiState.actions.component.find(
+    (item) => item.running && item.component === button.component && item.action === button.action
+  );
+  if (!state) {
+    return false;
+  }
+  if (state.job_id) {
+    markUiActionOwned("component", state.job_id);
+  }
+  await followComponentActionState(state);
+  return true;
+}
+function isComponentActionAlreadyRunningError(failure) {
+  return failureReason(failure) === "busy";
+}
+function handleComponentUiState(uiState) {
+  for (const state of uiState.actions.component || []) {
+    void followComponentActionState(state);
+  }
+}
+async function refreshComponentActionState() {
+  if (componentActionStateRefreshPromise) {
+    return componentActionStateRefreshPromise;
+  }
+  componentActionStateRefreshPromise = (async () => {
+    if (!updatesMounted) {
+      return;
+    }
+    const state = await refreshRuntimeUiState({ force: true });
+    if (!state) {
+      return;
+    }
+    handleComponentUiState(state);
+  })().finally(() => {
+    componentActionStateRefreshPromise = null;
+  });
+  return componentActionStateRefreshPromise;
+}
+function startComponentActionStateWatcher() {
+  if (componentActionStateUnsubscribe) {
+    return;
+  }
+  componentActionStateUnsubscribe = subscribeRuntimeUiState((uiState) => {
+    if (updatesMounted) {
+      handleComponentUiState(uiState);
+    }
+  });
+}
+function stopComponentActionStateWatcher() {
+  if (!componentActionStateUnsubscribe) {
+    return;
+  }
+  componentActionStateUnsubscribe();
+  componentActionStateUnsubscribe = null;
+}
+var REMOVABLE_COMPONENT_TITLES = {
+  zapret: "Zapret",
+  zapret2: "Zapret2",
+  byedpi: "ByeDPI",
+  zapret_manager: "Zapret-Manager-Stressozz"
+};
+function confirmComponentRemoval(button) {
+  const title = REMOVABLE_COMPONENT_TITLES[button.component] || button.component;
+  const isDpiProvider = ["zapret", "zapret2", "byedpi"].includes(
+    button.component
+  );
+  return confirmAction({
+    title: _("Remove %s?").replace("%s", title),
+    message: _("The package is removed from the router."),
+    consequences: isDpiProvider ? [_("Rules that use this provider stop bypassing DPI")] : void 0,
+    confirmLabel: _("Remove"),
+    danger: true
+  });
+}
+async function handleComponentAction(button) {
+  if (button.action === "remove" && !await confirmComponentRemoval(button)) {
+    return;
+  }
+  if (!beginComponentAction(button)) {
+    return;
+  }
+  let jobId = "";
+  let ownsJobFollow = false;
+  try {
+    const startResponse = await ProkopShellMethods.componentActionStart(
+      button.component,
+      button.action,
+      button.version
+    );
+    if (!startResponse.success) {
+      if (isComponentActionAlreadyRunningError(startResponse)) {
+        setActionLoading(button.key, false);
+        if (!await followAlreadyRunningComponentAction(button)) {
+          showToast(
+            actionReasonText("busy") || startResponse.error,
+            "warning",
+            6e3
+          );
+          await refreshComponentActionState();
+        }
+        return;
+      }
+      if (isTransientRpcError(startResponse.error)) {
+        if (!await followAlreadyRunningComponentAction(button)) {
+          setActionLoading(button.key, false);
+          await refreshComponentActionState();
+        }
+        return;
+      }
+      throw new Error(startResponse.error);
+    }
+    jobId = startResponse.data.job_id;
+    markUiActionOwned("component", jobId);
+    if (followedComponentJobs.has(jobId)) {
+      return;
+    }
+    followedComponentJobs.add(jobId);
+    ownsJobFollow = true;
+    const response = await ProkopShellMethods.waitComponentActionJob(
+      jobId,
+      button.component,
+      button.action,
+      button.version || getExpectedLatestVersionForAction(button)
+    );
+    await completeComponentActionJob(button.key, jobId, response);
+  } catch (error) {
+    logger.error("[UPDATES]", "handleComponentAction failed", error);
+    if (!pageUnloading2) {
+      const message = getErrorMessage(error, _("Failed to execute"));
+      setActionLoading(button.key, false);
+      if (!isTransientRpcError(message)) {
+        showToast(message, "error");
+      }
+      void refreshComponentActionState();
+    }
+  } finally {
+    if (ownsJobFollow) {
+      followedComponentJobs.delete(jobId);
+    }
+  }
+}
+function getCheckAction(component, key) {
+  return {
+    key,
+    text: _("Check update"),
+    icon: renderSearchIcon24,
+    component,
+    action: "check_update"
+  };
+}
+function getInstallAction(component, key, installed) {
+  return {
+    key,
+    text: installed ? _("Update") : _("Install"),
+    icon: installed ? renderRotateCcwIcon24 : renderDownloadIcon24,
+    component,
+    action: "install"
+  };
+}
+function getInstalledUpdateActions(component, checkKey, installKey, installed = true) {
+  if (!installed) {
+    return [];
+  }
+  const actions = [getCheckAction(component, checkKey)];
+  if (shouldShowInstallAfterCheck(component)) {
+    actions.push(getInstallAction(component, installKey, true));
+  }
+  return actions;
+}
+function getOptionalComponentActions({
+  component,
+  installed,
+  checkKey,
+  installKey,
+  removeKey
+}) {
+  if (!installed) {
+    return [getInstallAction(component, installKey, false)];
+  }
+  return [
+    ...getInstalledUpdateActions(component, checkKey, installKey),
+    {
+      key: removeKey,
+      text: _("Remove"),
+      icon: renderXIcon24,
+      component,
+      action: "remove"
+    }
+  ];
+}
+function getComponentCards() {
+  const systemInfo = normalizeSingBoxVariantFields(
+    store.get().diagnosticsSystemInfo
+  );
+  const systemInfoLoading = isSystemInfoLoading();
+  const zapretInstalled = Boolean(systemInfo.zapret_installed);
+  const zapret2Installed = Boolean(systemInfo.zapret2_installed);
+  const byedpiInstalled = Boolean(systemInfo.byedpi_installed);
+  const zapretManagerInstalled = Boolean(systemInfo.zapret_manager_installed);
+  const packetSteeringEnabled = systemInfo.packet_steering_mode === "2";
+  const directProxyEnabled = Boolean(systemInfo.direct_proxy_enabled);
+  const directProxyEndpoint = systemInfo.direct_proxy_address ? `${systemInfo.direct_proxy_address}:${systemInfo.direct_proxy_port || "2080"}` : "";
+  const torrserverRunning = Boolean(systemInfo.torrserver_running);
+  const torrserverDirectAvailable = Boolean(
+    systemInfo.torrserver_direct_available
+  );
+  const torrserverDirectEnabled = Boolean(systemInfo.torrserver_direct_enabled);
+  const torrserverDirectActive = Boolean(systemInfo.torrserver_direct_active);
+  const singBoxExtended = Boolean(systemInfo.sing_box_extended) && !systemInfo.sing_box_compressed;
+  const singBoxTiny = Boolean(systemInfo.sing_box_tiny);
+  const prokopActions = getInstalledUpdateActions(
+    "prokop",
+    "prokopCheck",
+    "prokopInstall"
+  );
+  const singBoxActions = getInstalledUpdateActions(
+    "sing_box",
+    "singBoxCheck",
+    "singBoxInstall",
+    singBoxTiny || singBoxExtended
+  );
+  if (!singBoxTiny) {
+    singBoxActions.push({
+      key: "singBoxInstallTiny",
+      text: _("Install Tiny build"),
+      icon: renderDownloadIcon24,
+      component: "sing_box",
+      action: "install_tiny"
+    });
+  }
+  if (!singBoxExtended) {
+    singBoxActions.push({
+      key: "singBoxInstallExtended",
+      text: _("Install Extended build"),
+      icon: renderDownloadIcon24,
+      component: "sing_box",
+      action: "install_extended"
+    });
+  }
+  const zapretActions = getOptionalComponentActions({
+    component: "zapret",
+    installed: zapretInstalled,
+    checkKey: "zapretCheck",
+    installKey: "zapretInstall",
+    removeKey: "zapretRemove"
+  });
+  const zapret2Actions = getOptionalComponentActions({
+    component: "zapret2",
+    installed: zapret2Installed,
+    checkKey: "zapret2Check",
+    installKey: "zapret2Install",
+    removeKey: "zapret2Remove"
+  });
+  const byedpiActions = getOptionalComponentActions({
+    component: "byedpi",
+    installed: byedpiInstalled,
+    checkKey: "byedpiCheck",
+    installKey: "byedpiInstall",
+    removeKey: "byedpiRemove"
+  });
+  const zapretManagerActions = zapretManagerInstalled ? [
+    {
+      key: "zapretManagerRemove",
+      text: _("Remove"),
+      icon: renderXIcon24,
+      component: "zapret_manager",
+      action: "remove"
+    }
+  ] : [
+    {
+      key: "zapretManagerInstall",
+      text: _("Install"),
+      icon: renderDownloadIcon24,
+      component: "zapret_manager",
+      action: "install"
+    }
+  ];
+  return [
+    {
+      component: "prokop",
+      column: 0,
+      title: "Prokop",
+      version: systemInfoLoading ? _("Loading...") : normalizeCompiledVersion(systemInfo.prokop_version),
+      latestVersion: getLatestVersion("prokop"),
+      releaseUrl: getGitHubReleaseUrl("prokop"),
+      actions: prokopActions
+    },
+    {
+      component: "sing_box",
+      column: 0,
+      title: "Sing-box",
+      version: systemInfoLoading ? _("Loading...") : formatSingBoxVersion(systemInfo),
+      latestVersion: getLatestVersion("sing_box"),
+      releaseUrl: getGitHubReleaseUrl("sing_box"),
+      actions: singBoxActions
+    },
+    {
+      component: "zapret",
+      column: 1,
+      title: "Zapret",
+      version: systemInfoLoading ? _("Loading...") : zapretInstalled ? systemInfo.zapret_version : _("Not installed"),
+      latestVersion: getLatestVersion("zapret"),
+      releaseUrl: getGitHubReleaseUrl("zapret"),
+      actions: zapretActions
+    },
+    {
+      component: "zapret2",
+      column: 1,
+      title: "Zapret2",
+      version: systemInfoLoading ? _("Loading...") : zapret2Installed ? systemInfo.zapret2_version : _("Not installed"),
+      latestVersion: getLatestVersion("zapret2"),
+      releaseUrl: getGitHubReleaseUrl("zapret2"),
+      actions: zapret2Actions
+    },
+    {
+      component: "byedpi",
+      column: 1,
+      title: "ByeDPI",
+      version: systemInfoLoading ? _("Loading...") : byedpiInstalled ? systemInfo.byedpi_version : _("Not installed"),
+      latestVersion: getLatestVersion("byedpi"),
+      releaseUrl: getGitHubReleaseUrl("byedpi"),
+      actions: byedpiActions
+    },
+    {
+      component: "zapret_manager",
+      column: 1,
+      title: "Zapret-Manager-Stressozz",
+      version: zapretManagerInstalled ? _("Installed (Mirror edition)") : _("Not installed"),
+      latestVersion: "",
+      releaseUrl: "https://github.com/Screamshow/Zapret-Manager",
+      actions: zapretManagerActions
+    },
+    {
+      component: "packet_steering",
+      column: 2,
+      title: "Packet Steering",
+      version: packetSteeringEnabled ? _("Mode 2 enabled") : _("Normal mode"),
+      actions: [
+        packetSteeringEnabled ? {
+          key: "packetSteeringRestore",
+          text: _("Restore normal mode"),
+          icon: renderRotateCcwIcon24,
+          component: "packet_steering",
+          action: "restore"
+        } : {
+          key: "packetSteeringEnable",
+          text: _("Enable mode 2"),
+          icon: renderRotateCcwIcon24,
+          component: "packet_steering",
+          action: "enable"
+        }
+      ]
+    },
+    {
+      component: "direct_proxy",
+      column: 2,
+      title: _("Direct Proxy"),
+      version: directProxyEnabled ? `HTTP/SOCKS5 \xB7 ${directProxyEndpoint || _("Enabled")}` : _("Disabled"),
+      copyValue: directProxyEnabled ? directProxyEndpoint : void 0,
+      actions: [
+        directProxyEnabled ? {
+          key: "directProxyDisable",
+          text: _("Disable"),
+          icon: renderXIcon24,
+          component: "direct_proxy",
+          action: "disable"
+        } : {
+          key: "directProxyEnable",
+          text: _("Enable"),
+          icon: renderRotateCcwIcon24,
+          component: "direct_proxy",
+          action: "enable"
+        }
+      ]
+    },
+    {
+      component: "torrserver_direct",
+      column: 2,
+      title: _("TorrServer Direct"),
+      version: !torrserverRunning ? _("TorrServer not found") : !torrserverDirectAvailable ? _("Dedicated cgroup unavailable") : torrserverDirectEnabled && torrserverDirectActive ? _("Enabled") : torrserverDirectEnabled ? _("Waiting for TorrServer") : _("Disabled"),
+      actions: [
+        torrserverDirectEnabled ? {
+          key: "torrserverDirectDisable",
+          text: _("Disable"),
+          icon: renderXIcon24,
+          component: "torrserver_direct",
+          action: "disable"
+        } : {
+          key: "torrserverDirectEnable",
+          text: _("Enable"),
+          icon: renderRotateCcwIcon24,
+          component: "torrserver_direct",
+          action: "enable",
+          disabled: !torrserverDirectAvailable
+        }
+      ]
+    }
+  ];
+}
+function renderComponentCard(card3) {
+  const updatesActions = store.get().updatesActions;
+  const anyActionLoading = isAnyActionLoading();
+  const serviceRuntimeActionLoading = isServiceRuntimeActionLoading();
+  const systemInfoLoading = isSystemInfoLoading();
+  const headerChildren = [
+    E("b", { class: "fkp_updates-page__component__title" }, card3.title),
+    E(
+      "span",
+      { class: "fkp_updates-page__component__header-version" },
+      card3.version
+    )
+  ];
+  const header = E(
+    "div",
+    { class: "fkp_updates-page__component__header" },
+    headerChildren
+  );
+  const detailsChildren = [];
+  const checkResult = getVisibleCheckResult(card3.component);
+  if (checkResult && checkResult.status) {
+    let labelText = "";
+    const latestValueNodes = [];
+    if (checkResult.status === "outdated") {
+      labelText = _("Update is available:");
+      const versionToShow = checkResult.latest_version || card3.latestVersion || card3.version;
+      if (checkResult.release_url) {
+        latestValueNodes.push(
+          E(
+            "a",
+            {
+              class: "fkp_updates-page__component__release-version-link",
+              href: checkResult.release_url,
+              target: "_blank",
+              rel: "noopener noreferrer"
+            },
+            versionToShow || _("Open")
+          )
+        );
+      } else if (versionToShow) {
+        latestValueNodes.push(document.createTextNode(versionToShow));
+      }
+    } else if (checkResult.status === "latest") {
+      labelText = _("Latest version is installed");
+    } else if (checkResult.status === "dev") {
+      labelText = `${_("Installed version is newer than release")}. ${_("Latest version:")}`;
+      const versionToShow = checkResult.latest_version || card3.latestVersion;
+      if (checkResult.release_url) {
+        latestValueNodes.push(
+          E(
+            "a",
+            {
+              class: "fkp_updates-page__component__release-version-link",
+              href: checkResult.release_url,
+              target: "_blank",
+              rel: "noopener noreferrer"
+            },
+            versionToShow || _("Open")
+          )
+        );
+      } else if (versionToShow) {
+        latestValueNodes.push(document.createTextNode(versionToShow));
+      }
+    }
+    if (labelText) {
+      const rowChildren = [
+        E(
+          "span",
+          { class: "fkp_updates-page__component__info-label" },
+          labelText
+        )
+      ];
+      if (latestValueNodes.length > 0) {
+        rowChildren.push(
+          E(
+            "span",
+            {
+              class: "fkp_updates-page__component__info-value fkp_updates-page__component__info-value--latest"
+            },
+            latestValueNodes
+          )
+        );
+      }
+      detailsChildren.push(
+        E(
+          "div",
+          { class: "fkp_updates-page__component__info-row" },
+          rowChildren
+        )
+      );
+    }
+  }
+  const detailsContainer = detailsChildren.length > 0 ? E(
+    "div",
+    { class: "fkp_updates-page__component__details" },
+    detailsChildren
+  ) : null;
+  const primaryActions = [];
+  const dangerActions = [];
+  const variantActions = [];
+  card3.actions.forEach((action) => {
+    if (action.action === "remove") {
+      dangerActions.push(action);
+    } else if (action.action.startsWith("install_")) {
+      variantActions.push(action);
+    } else {
+      primaryActions.push(action);
+    }
+  });
+  const actionElements = [];
+  const primaryButtons = primaryActions.map((action) => {
+    const loading2 = updatesActions[action.key].loading;
+    const isUpdateOrInstall = action.action === "install";
+    return renderButton({
+      classNames: isUpdateOrInstall ? ["cbi-button-save"] : [],
+      text: action.text,
+      icon: action.icon,
+      loading: loading2,
+      disabled: action.disabled || systemInfoLoading || serviceRuntimeActionLoading || anyActionLoading && !loading2,
+      onClick: () => void handleComponentAction(action)
+    });
+  });
+  if (card3.component === "prokop") {
+    primaryButtons.push(
+      renderButton({
+        text: _("Choose version"),
+        disabled: systemInfoLoading || serviceRuntimeActionLoading || anyActionLoading,
+        onClick: () => void showReleaseSelector(card3.version, (version) => {
+          void handleComponentAction({
+            key: "prokopInstall",
+            text: _("Install"),
+            icon: renderDownloadIcon24,
+            component: "prokop",
+            action: "install",
+            version
+          });
+        })
+      })
+    );
+  }
+  const dangerButtons = dangerActions.map((action) => {
+    const loading2 = updatesActions[action.key].loading;
+    return renderButton({
+      classNames: ["cbi-button-remove"],
+      text: action.text,
+      icon: action.icon,
+      loading: loading2,
+      disabled: systemInfoLoading || serviceRuntimeActionLoading || anyActionLoading && !loading2,
+      onClick: () => void handleComponentAction(action)
+    });
+  });
+  if (primaryButtons.length > 0 || dangerButtons.length > 0) {
+    actionElements.push(
+      E("div", { class: "fkp_updates-page__component__actions-main" }, [
+        ...primaryButtons,
+        ...dangerButtons
+      ])
+    );
+  }
+  if (card3.copyValue) {
+    actionElements.push(
+      E("div", { class: "fkp_updates-page__component__actions-main" }, [
+        renderButton({
+          text: _("Copy address"),
+          icon: renderCopyIcon24,
+          disabled: anyActionLoading || serviceRuntimeActionLoading,
+          onClick: () => copyToClipboard(card3.copyValue || "")
+        })
+      ])
+    );
+  }
+  if (variantActions.length > 0) {
+    const variantButtons = variantActions.map((action) => {
+      const loading2 = updatesActions[action.key].loading;
+      return renderButton({
+        text: action.text,
+        icon: action.icon,
+        loading: loading2,
+        disabled: systemInfoLoading || serviceRuntimeActionLoading || anyActionLoading && !loading2,
+        onClick: () => void handleComponentAction(action)
+      });
+    });
+    actionElements.push(
+      E("div", { class: "fkp_updates-page__component__variants" }, [
+        E(
+          "div",
+          { class: "fkp_updates-page__component__variants-title" },
+          _("Install another build:")
+        ),
+        E(
+          "div",
+          { class: "fkp_updates-page__component__variants-buttons" },
+          variantButtons
+        )
+      ])
+    );
+  }
+  const actionsContainer = E(
+    "div",
+    {
+      class: [
+        "fkp_updates-page__component__actions",
+        detailsContainer ? "fkp_updates-page__component__actions--with-details" : ""
+      ].filter(Boolean).join(" ")
+    },
+    actionElements
+  );
+  const cardChildren = [header];
+  if (detailsContainer) {
+    cardChildren.push(detailsContainer);
+  }
+  cardChildren.push(actionsContainer);
+  return E("div", { class: "fkp_updates-page__component" }, cardChildren);
+}
+function renderUpdatesComponents() {
+  const container = document.getElementById("fkp_updates-components");
+  if (!container) {
+    return;
+  }
+  const columns = [[], [], []];
+  getComponentCards().forEach((card3) => {
+    columns[card3.column].push(renderComponentCard(card3));
+  });
+  columns[2].push(
+    renderFullUninstall(
+      isAnyActionLoading() || isServiceRuntimeActionLoading()
+    )
+  );
+  return preserveScrollForPage(() => {
+    container.replaceChildren(
+      E("div", { class: "fkp_updates-page__components-column" }, columns[0]),
+      E("div", { class: "fkp_updates-page__components-column" }, columns[1]),
+      E("div", { class: "fkp_updates-page__components-column" }, columns[2])
+    );
+  });
+}
+function onStoreUpdate3(_next, _prev, diff) {
+  if (diff.diagnosticsSystemInfo || diff.updatesActions || diff.updatesChecks || diff.diagnosticsActions || diff.servicesInfoWidget) {
+    renderUpdatesComponents();
+  }
+}
+function applyComponentUpdateCheckCache(componentUpdateCheckCache) {
+  componentUpdateCheckCacheResolved = true;
+  if (componentUpdateCheckCache.enabled) {
+    store.reset(["updatesChecks"]);
+    applyCachedCheckResults(componentUpdateCheckCache.results);
+  }
+  if (shouldResetCheckResultsOnMount({
+    anyActionLoading: isAnyActionLoading(),
+    preserveCheckResultsOnNextMount,
+    persistentCacheEnabled: componentUpdateCheckCache.enabled
+  })) {
+    store.reset(["updatesChecks"]);
+  }
+}
+async function onPageMount4() {
+  onPageUnmount4();
+  updatesMounted = true;
+  updatesMountId += 1;
+  const mountId3 = updatesMountId;
+  const cachedRuntimeState = getCachedRuntimeUiState();
+  const hasRuntimeSnapshot = Boolean(cachedRuntimeState);
+  const needsFreshStateBeforeRender = shouldRefreshComponentStateBeforeRender(cachedRuntimeState);
+  const runtimeStateRefreshPromise = !hasRuntimeSnapshot || needsFreshStateBeforeRender ? refreshRuntimeUiState({ force: true }) : null;
+  const prefetchedComponentUpdateCheckCache = componentUpdateCheckCacheSnapshot;
+  if (prefetchedComponentUpdateCheckCache) {
+    applyComponentUpdateCheckCache(prefetchedComponentUpdateCheckCache);
+  }
+  renderUpdatesComponents();
+  const componentUpdateCheckCache = await loadComponentUpdateCheckCache({
+    force: Boolean(prefetchedComponentUpdateCheckCache)
+  });
+  if (!updatesMounted || mountId3 !== updatesMountId) {
+    return;
+  }
+  applyComponentUpdateCheckCache(componentUpdateCheckCache);
+  preserveCheckResultsOnNextMount = false;
+  renderUpdatesComponents();
+  if (runtimeStateRefreshPromise) {
+    await runtimeStateRefreshPromise;
+    if (!updatesMounted || mountId3 !== updatesMountId) {
+      return;
+    }
+  }
+  store.subscribe(onStoreUpdate3);
+  startComponentActionStateWatcher();
+  renderUpdatesComponents();
+  void ensureSystemInfo();
+  if (hasRuntimeSnapshot) {
+    void refreshRuntimeUiState({ force: true });
+  }
+}
+function onPageUnmount4() {
+  updatesMounted = false;
+  updatesMountId += 1;
+  stopComponentActionStateWatcher();
+  store.unsubscribe(onStoreUpdate3);
+}
+function registerLifecycleListeners4() {
+  if (updatesLifecycleRegistered) {
+    return;
+  }
+  updatesLifecycleRegistered = true;
+  store.subscribe((next, prev, diff) => {
+    if (diff.tabService && next.tabService.current !== prev.tabService.current) {
+      const isUpdatesVisible = next.tabService.current === "updates";
+      if (isUpdatesVisible) {
+        return onPageMount4();
+      }
+      if (updatesMounted) {
+        return onPageUnmount4();
+      }
+    }
+  });
+}
+function renderView() {
+  const root = render4();
+  renderOnAttach(root, {
+    isMounted: () => updatesMounted,
+    waitForAttach: onMount,
+    renderComponents: renderUpdatesComponents
+  });
+  return root;
+}
+async function initController4() {
+  if (updatesControllerInitialized) {
+    return;
+  }
+  updatesControllerInitialized = true;
+  void loadComponentUpdateCheckCache();
+  onMount("updates-status").then(() => {
+    logger.debug("[UPDATES]", "initController", "onMount");
+    registerLifecycleListeners4();
+    if (store.get().tabService.current === "updates" || isActiveLuciTab("updates")) {
+      onPageMount4();
+    }
+  });
+}
+
+// src/prokop/tabs/updates/styles.ts
+var styles7 = `
+#cbi-${PROKOP_UCI_PACKAGE}-updates-_mount_node > div {
+    width: 100%;
+}
+
+#cbi-${PROKOP_UCI_PACKAGE}-updates > h3 {
+    display: none;
+}
+
+.fkp_updates-page {
+    width: 100%;
+}
+
+.fkp_updates-page__components {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: flex-start;
+    gap: 10px;
+    width: 100%;
+}
+
+.fkp_updates-page__components-column {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+    width: 100%;
+}
+
+@media (max-width: ${BREAKPOINTS.medium}px) {
+    .fkp_updates-page__components {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: ${BREAKPOINTS.narrow}px) {
+    .fkp_updates-page__components {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .fkp_updates-page__components-column {
+        width: 100%;
+        min-width: 0;
+    }
+}
+
+.fkp_updates-page__component {
+    border: 2px var(--background-color-low, lightgray) solid;
+    border-radius: 4px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.fkp_updates-page__component__header {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    border-bottom: 1px var(--background-color-low, lightgray) solid;
+    padding-bottom: 8px;
+    margin-bottom: 2px;
+}
+
+.fkp_updates-page__component__title {
+    color: var(--text-color-high);
+    font-size: 16px;
+    font-weight: bold;
+    line-height: 1.2;
+}
+
+.fkp_updates-page__component__header-version {
+    color: var(--text-color-medium, #888);
+    font-size: 13px;
+    font-weight: normal;
+}
+
+.fkp_updates-page__component__details {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.fkp_updates-page__component__info-row {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    min-height: 24px;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.fkp_updates-page__component__info-label {
+    color: var(--text-color-medium, #888);
+    font-size: 12px;
+}
+
+.fkp_updates-page__component__info-value {
+    color: var(--text-color-high, #000);
+    font-weight: 500;
+    font-size: 13px;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.fkp_updates-page__component__info-value--latest {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+}
+
+.fkp_updates-page__component__release-version-link {
+    color: var(--link-color, #3498db) !important;
+    text-decoration: underline;
+    font-weight: bold;
+}
+
+.fkp_updates-page__component__release-version-link:hover {
+    color: var(--link-color-dark, #2980b9) !important;
+}
+
+.fkp_updates-page__component__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: auto;
+}
+
+.fkp_updates-page__component__actions--with-details {
+    border-top: 1px var(--background-color-low, lightgray) solid;
+    padding-top: 10px;
+}
+
+.fkp_updates-page__component__actions-main {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.fkp_updates-page__component__variants {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.fkp_updates-page__component__variants-title {
+    font-size: 11px;
+    font-weight: bold;
+    color: var(--text-color-medium, gray);
+}
+
+.fkp_updates-page__component__variants-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+`;
+
+// src/prokop/tabs/updates/index.ts
+var UpdatesTab = {
+  render: renderView,
+  initController: initController4,
+  styles: styles7
+};
+
+// src/prokop/tabs/history/render.ts
+function render5() {
+  const card3 = (title, body, actions) => E("section", { class: "fkp-history__card" }, [
+    E("div", { class: "fkp-history__head" }, [
+      E("h3", { class: "fkp-history__title" }, title),
+      ...actions ? [actions] : []
+    ]),
+    ...body
+  ]);
+  return E("div", { id: "history-status", class: "fkp-history" }, [
+    card3(_("Protection and recovery"), [
+      E("div", { id: "history-state" }, _("Loading\u2026"))
+    ]),
+    card3(_("History"), [
+      E("div", { id: "history-filter", class: "fkp-history__filter" }),
+      E("div", { id: "history-events" }, _("Loading\u2026"))
+    ]),
+    card3(
+      _("Configuration snapshots"),
+      [
+        E(
+          "p",
+          { class: "fkp-history__hint" },
+          _(
+            "Changes compare a snapshot with the saved configuration. Unsaved form edits are not included."
+          )
+        ),
+        E("div", { id: "history-snapshots" }, _("Loading\u2026"))
+      ],
+      E("div", { id: "history-snapshot-actions", class: "fkp-actions" })
+    )
+  ]);
+}
+
+// src/prokop/ui/states.ts
+function renderAction(action) {
+  if (!action) return [];
+  return [
+    E(
+      "button",
+      {
+        type: "button",
+        class: "btn cbi-button",
+        click: () => action.onClick()
+      },
+      action.label
+    )
+  ];
+}
+function renderEmptyState(title, hint, action) {
+  return E("div", { class: "fkp-state fkp-state--empty" }, [
+    E("div", { class: "fkp-state__title" }, title),
+    ...hint ? [E("div", { class: "fkp-state__hint" }, hint)] : [],
+    ...renderAction(action)
+  ]);
+}
+function renderLoadingState2(label = _("Loading\u2026")) {
+  return E(
+    "div",
+    { class: "fkp-state fkp-state--loading", role: "status" },
+    E("div", { class: "fkp-state__title" }, label)
+  );
+}
+function renderErrorState(title, onRetry, details) {
+  return E("div", { class: "fkp-state fkp-state--error", role: "alert" }, [
+    E("div", { class: "fkp-state__title" }, title),
+    ...renderAction(
+      onRetry ? { label: _("Retry"), onClick: onRetry } : void 0
+    ),
+    ...details ? [renderTechnicalDetails(details)] : []
+  ]);
+}
+function renderTechnicalDetails(text) {
+  return E("details", { class: "fkp-tech" }, [
+    E("summary", {}, _("Technical details")),
+    E("pre", { class: "fkp-tech__content" }, text)
+  ]);
+}
+
+// src/prokop/tabs/history/model.ts
+function lastRecoveryEvent(health2) {
+  const events = [
+    ...health2.recent_activity,
+    ...health2.recovery.last_event ? [health2.recovery.last_event] : []
+  ].filter(
+    (event) => event.kind === "restore" || event.kind === "autotune_rollback" || event.kind === "recovery" || event.status === "recovered"
+  );
+  return events.sort((a, b) => b.timestamp - a.timestamp)[0] ?? null;
+}
+function eventText(event) {
+  const outcome = eventOutcomeView(toEventOutcome(event.status));
+  return {
+    value: `${eventKindLabel(event.kind)}: ${outcome.label} \xB7 ${formatDateTime(event.timestamp)}`,
+    tone: outcome.tone
+  };
+}
+function guardRow(health2) {
+  if (!health2.guard.active)
+    return { value: _("Inactive"), tone: "success" };
+  switch (health2.recovery.action) {
+    case "wait":
+      return {
+        value: _("Active: a change is being applied"),
+        tone: "loading"
+      };
+    case "restart":
+      return {
+        value: _("Active: kept by a failed change"),
+        tone: "error"
+      };
+    case "restore":
+      return {
+        value: _("Active: restore not finished"),
+        tone: "error"
+      };
+    default:
+      return {
+        value: _("Active: DPI switch not confirmed"),
+        tone: "error"
+      };
+  }
+}
+function lastRecoveryRow(health2) {
+  if (health2.guard.active)
+    return health2.recovery.action === "wait" ? { value: _("In progress"), tone: "loading" } : { value: _("Needs attention"), tone: "error" };
+  const failed2 = health2.recovery.last_event;
+  if (failed2) return eventText(failed2);
+  return { value: _("Needs attention"), tone: "error" };
+}
+function nextStepRow(health2) {
+  if (!health2.guard.active) return [];
+  switch (health2.recovery.action) {
+    case "restart":
+      return [
+        {
+          label: _("Next step"),
+          value: _(
+            "Restart Prokop: the restart removes the DPI guard that a failed change left in place."
+          ),
+          tone: "warning"
+        }
+      ];
+    case "restore":
+      return [
+        {
+          label: _("Next step"),
+          value: _(
+            "Restore the last known good snapshot: the restore finishes and removes the DPI guard."
+          ),
+          tone: "warning"
+        }
+      ];
+    default:
+      return [];
+  }
+}
+function recoveryRows(health2, snapshots2) {
+  const last = lastRecoveryEvent(health2);
+  const reload = health2.last_reload;
+  const lkg = snapshots2?.find((snapshot) => snapshot.is_lkg);
+  const reloadOutcome = reload ? eventOutcomeView(toEventOutcome(reload.status)) : null;
+  return [
+    {
+      label: _("DPI guard"),
+      ...guardRow(health2)
+    },
+    {
+      label: _("Last recovery"),
+      ...health2.recovery.pending ? lastRecoveryRow(health2) : last ? eventText(last) : { value: _("Not needed"), tone: "success" }
+    },
+    ...nextStepRow(health2),
+    {
+      label: _("Package recovery"),
+      ...health2.package_recovery.pending ? { value: _("Waiting to finish"), tone: "warning" } : { value: _("Not needed"), tone: "success" }
+    },
+    {
+      label: _("Last reload"),
+      ...reload && reloadOutcome ? {
+        value: `${reloadOutcome.label} \xB7 ${formatDateTime(reload.timestamp)}`,
+        tone: reloadOutcome.tone
+      } : { value: _("No reload recorded yet"), tone: "neutral" }
+    },
+    {
+      label: _("Last known good configuration"),
+      ...lkg ? { value: formatDateTime(lkg.created_at), tone: "success" } : snapshots2 ? { value: _("Not recorded yet"), tone: "neutral" } : { value: _("Unknown"), tone: "neutral" }
+    }
+  ];
+}
+var CATEGORY = {
+  reload: "config",
+  restore: "config",
+  snapshot_create: "config",
+  snapshot_delete: "config",
+  start: "service",
+  recovery: "service",
+  cron_refresh: "service",
+  config_migration: "config",
+  autotune_apply: "autotune",
+  autotune_rollback: "autotune",
+  autotune_mode: "autotune",
+  autotune_recommendation: "autotune",
+  autotune_run: "autotune"
+};
+function historyFilterLabel(filter2) {
+  switch (filter2) {
+    case "config":
+      return _("Configuration");
+    case "service":
+      return _("Service");
+    case "autotune":
+      return _("Autotune");
+    default:
+      return _("All");
+  }
+}
+function migrationNoticeText(notice) {
+  switch (notice.code) {
+    case "retired_rule_sets": {
+      const removed = _(
+        "Rule \u201C%s\u201D: the retired rule sets %s were removed from Built-in rule sets #2, their source no longer publishes them."
+      ).replace("%s", notice.section).replace("%s", notice.values.join(", "));
+      return notice.replacements.length ? `${removed} ${_(
+        "Built-in rule sets of the same services: %s. They were not added; the rule editor offers them."
+      ).replace("%s", notice.replacements.join(", "))}` : `${removed} ${_("No built-in rule set replaces them.")}`;
+    }
+    case "subscription_options_removed":
+      return _(
+        "Rule \u201C%s\u201D: the subscription settings %s were removed. This version always generates the HWID from the router and hides nodes of imported URLTest groups and cascades."
+      ).replace("%s", notice.section).replace("%s", notice.values.join(", "));
+    // The User-Agent itself is not in the journal (D-17).
+    case "subscription_user_agent_in_effect":
+      return _(
+        "Rule \u201C%s\u201D: a subscription source now sends the User-Agent set in its settings. Earlier versions ignored it and chose one automatically; clear the field to go back to automatic selection."
+      ).replace("%s", notice.section);
+    case "update_interval_raised":
+      return (notice.values[0] === "component_update_check_interval" ? _(
+        "Component update check interval was %s, shorter than the 1 h minimum of automatic updates: set to %s."
+      ) : _(
+        "List update frequency was %s, shorter than the 1 h minimum of automatic updates: set to %s."
+      )).replace("%s", notice.from ?? "").replace("%s", notice.to ?? "");
+    default:
+      return _("Rule \u201C%s\u201D: changed by the update.").replace(
+        "%s",
+        notice.section
+      );
+  }
+}
+function eventTitle(event) {
+  if (event.kind === "autotune_rollback" && event.trigger)
+    return rollbackTitle(event.trigger === "manual", event.candidate ?? "");
+  if (event.kind !== "autotune_apply" || !event.trigger)
+    return eventKindLabel(event.kind);
+  const candidate = event.candidate ?? "";
+  const manual = event.trigger === "manual";
+  if (!candidate)
+    return manual ? _("Autotune: manual apply") : _("Autotune: automatic apply");
+  if (event.status === "success")
+    return (manual ? _("Autotune: %s applied manually") : _("Autotune: %s applied automatically")).replace("%s", candidate);
+  return (manual ? _("Autotune: manual apply of %s") : _("Autotune: automatic apply of %s")).replace("%s", candidate);
+}
+function rollbackTitle(manual, candidate) {
+  if (!candidate)
+    return manual ? _("Autotune: manual rollback") : _("Autotune: automatic rollback");
+  return (manual ? _("Autotune: manual rollback of %s") : _("Autotune: automatic rollback of %s")).replace("%s", candidate);
+}
+function historyItems(events, filter2, nowMs = Date.now()) {
+  return events.map((event, index) => ({ event, index })).filter(({ event }) => filter2 === "all" || CATEGORY[event.kind] === filter2).sort((a, b) => b.event.timestamp - a.event.timestamp || b.index - a.index).map(({ event }) => ({
+    title: eventTitle(event),
+    outcome: eventOutcomeView(toEventOutcome(event.status)),
+    time: formatDateTime(event.timestamp),
+    relative: formatRelativeTime(event.timestamp, nowMs),
+    details: (event.notices ?? []).map(migrationNoticeText)
+  }));
+}
+function snapshotReasonLabel(reason) {
+  switch (reason) {
+    case "manual":
+      return _("Manual");
+    // Taken when a reload starts, after the change was committed: the
+    // configuration the reload applies, possibly the one that failed
+    // (UC-067).
+    case "before-reload":
+      return _("Applied by reload");
+    // Save & Apply's snapshot of the configuration before the change.
+    case "before-apply":
+      return _("Before applying changes");
+    case "pre-restore":
+      return _("Before restore");
+    case "last-known-working":
+      return _("Last known good");
+    case "before-autotune":
+      return _("Before autotune");
+    // A configuration edited while a restore or an autotune change owned it:
+    // kept, never rolled back or taken for the restored one
+    // (config/snapshots.uc).
+    case "concurrent-change":
+      return _("Concurrent edit");
+    default:
+      return _("Other");
+  }
+}
+function snapshotRows(snapshots2) {
+  return snapshots2.slice().sort((a, b) => b.created_at - a.created_at).map((snapshot) => ({
+    id: snapshot.id,
+    time: formatDateTime(snapshot.created_at),
+    // The badge already says "last known good" for such snapshots.
+    reason: snapshot.is_lkg && snapshot.reason === "last-known-working" ? "" : snapshotReasonLabel(snapshot.reason),
+    lkg: Boolean(snapshot.is_lkg),
+    canDelete: !snapshot.is_lkg
+  }));
+}
+function diffValue(value) {
+  if (value === null || value === void 0) return _("not set");
+  if (Array.isArray(value)) return value.length ? value.join(", ") : "\u2014";
+  return value === "" ? "\u2014" : value;
+}
+function diffRows(changes) {
+  return changes.map((change) => ({
+    where: `${change.section} \xB7 ${change.option}`,
+    snapshot: diffValue(change.before),
+    current: diffValue(change.after)
+  }));
+}
+function isTruncation(entry) {
+  return entry.truncated === true;
+}
+function snapshotDiff(entries) {
+  const changes = entries.filter(
+    (entry) => !isTruncation(entry)
+  );
+  const marker = entries.find(isTruncation);
+  return {
+    changes,
+    total: Math.max(Number(marker?.total) || 0, changes.length)
+  };
+}
+function diffTruncatedText(diff) {
+  return _("Only the first %d changes are listed; %d changes in total.").replace("%d", String(diff.changes.length)).replace("%d", String(diff.total));
+}
+function restorePreview(diff, limit) {
+  const preview = diffRows(diff.changes.slice(0, limit)).map(
+    (row) => `${row.where}: ${row.current} \u2192 ${row.snapshot}`
+  );
+  const more = diff.total - preview.length;
+  if (more > 0) preview.push(_("and %d more").replace("%d", String(more)));
+  return preview;
+}
+function snapshotBusyText(reason) {
+  if (reason === "service_action_in_progress")
+    return _(
+      "The service is busy with another operation (list or subscription update, reload or start). Nothing was changed; try again when it finishes."
+    );
+  return _(
+    "Another snapshot operation is already in progress. Try again in a moment."
+  );
+}
+var MANUAL_SNAPSHOT_LIMIT = 8;
+function deleteSnapshotToast(result) {
+  if (result?.status === "deleted")
+    return { text: _("Snapshot deleted"), type: "success", duration: 3e3 };
+  if (result?.status === "busy")
+    return {
+      text: snapshotBusyText(result.reason),
+      type: "warning",
+      duration: 6e3
+    };
+  if (result?.reason === "lkg_protected")
+    return {
+      text: _(
+        "The last known good snapshot cannot be deleted: it is the configuration Prokop returns to after a failed change."
+      ),
+      type: "warning",
+      duration: 8e3
+    };
+  if (result?.reason === "invalid_snapshot")
+    return {
+      text: _("The snapshot was not found or cannot be read."),
+      type: "error",
+      duration: 6e3
+    };
+  return {
+    text: _("Could not delete snapshot"),
+    type: "error",
+    duration: 3e3
+  };
+}
+function createSnapshotToast(result) {
+  switch (result?.status) {
+    case "created":
+      return { text: _("Snapshot saved"), type: "success", duration: 3e3 };
+    case "busy":
+      return {
+        text: snapshotBusyText(result.reason),
+        type: "warning",
+        duration: 6e3
+      };
+    case "failed":
+      switch (result.reason) {
+        // Nothing removes a manual snapshot to make room: the user does.
+        // More than one has to go while more are left from before the
+        // limit (an upgrade): the toast says how many.
+        case "manual_limit_reached": {
+          const limit = result.limit ?? MANUAL_SNAPSHOT_LIMIT;
+          const excess = (result.manual ?? limit) - limit + 1;
+          return {
+            text: excess > 1 ? _(
+              "Snapshot not saved: at most %d manual snapshots are kept, so that the automatic snapshots taken before a restore, Save & Apply or autotune always have room. There are %d manual snapshots now: delete %d you no longer need, then try again."
+            ).replace("%d", String(limit)).replace("%d", String(result.manual)).replace("%d", String(excess)) : _(
+              "Snapshot not saved: at most %d manual snapshots are kept, so that the automatic snapshots taken before a restore, Save & Apply or autotune always have room. Delete a manual snapshot you no longer need, then try again."
+            ).replace("%d", String(limit)),
+            type: "warning",
+            duration: 12e3
+          };
+        }
+        case "config_unavailable":
+          return {
+            text: _(
+              "Snapshot not saved: the configuration file could not be read."
+            ),
+            type: "error",
+            duration: 8e3
+          };
+        case "hash_unavailable":
+        case "write_failed":
+          return {
+            text: _(
+              "Snapshot not saved: it could not be written. Check the free space on the router."
+            ),
+            type: "error",
+            duration: 8e3
+          };
+        case "lock_unavailable":
+          return {
+            text: _(
+              "Snapshot not saved: the snapshot storage could not be locked. Try again in a moment."
+            ),
+            type: "error",
+            duration: 8e3
+          };
+      }
+      break;
+  }
+  return {
+    text: _("Could not create snapshot"),
+    type: "error",
+    duration: 3e3
+  };
+}
+function restoreRefusalText(reason) {
+  switch (reason) {
+    case "pre_restore_snapshot_failed":
+      return _(
+        "Restore was not started: the current configuration could not be saved as a snapshot first. Nothing was changed. Check the free space on the router."
+      );
+    case "invalid_snapshot":
+      return _(
+        "Restore was not started: the snapshot is missing or damaged. Nothing was changed."
+      );
+    case "config_unavailable":
+      return _(
+        "Restore was not started: the current configuration could not be read. Nothing was changed."
+      );
+    case "concurrent_change":
+      return _(
+        "Restore was not started: the configuration was changed while the restore was starting. Nothing was changed; check the change and try again."
+      );
+    case "guard_unavailable":
+      return _(
+        "Restore was not started: the DPI guard that protects traffic during the restore could not be installed. Nothing was changed."
+      );
+    case "lock_unavailable":
+      return _(
+        "Restore was not started: the snapshot storage could not be locked. Nothing was changed."
+      );
+    // D-16: a snapshot of an older release whose configuration cannot be
+    // migrated to this one is never restored as it was saved.
+    case "snapshot_migration_failed":
+      return _(
+        "Restore was not started: the snapshot was saved by an older version of Prokop, and its configuration could not be migrated to this version. Nothing was changed."
+      );
+    default:
+      return null;
+  }
+}
+function unsavedChangesBlockRestore(changes, uciPackage) {
+  const pending = changes?.[uciPackage];
+  return Array.isArray(pending) && pending.length > 0;
+}
+function unsavedChangesText() {
+  return _(
+    "There are unsaved changes of Prokop in this session. Save & Apply or revert them, then restore the snapshot."
+  );
+}
+function restoreConfirmMessage(staysStopped) {
+  return staysStopped ? _(
+    "Prokop is stopped: the configuration is replaced and checked, but Prokop is not started. It takes effect when you start Prokop."
+  ) : _(
+    "Prokop reloads the configuration. If the reload fails, the previous configuration is restored automatically."
+  );
+}
+function restoreMigrationNote(migration) {
+  if (!migration) return null;
+  return migration.from && migration.from !== "unknown" ? _(
+    "This snapshot was saved by Prokop %s. Before the restore, its configuration is migrated to the current version %s, as an upgrade migrates it: settings retired since then are updated. The snapshot itself is not changed; the changes listed above compare the snapshot as it was saved."
+  ).replace("%s", migration.from).replace("%s", migration.to) : _(
+    "This snapshot was saved by an older version of Prokop. Before the restore, its configuration is migrated to the current version %s, as an upgrade migrates it: settings retired since then are updated. The snapshot itself is not changed; the changes listed above compare the snapshot as it was saved."
+  ).replace("%s", migration.to);
+}
+function withMigration(text, migration) {
+  if (!migration) return text;
+  const migrated = migration.from && migration.from !== "unknown" ? _(
+    "The configuration of the snapshot was migrated from Prokop %s to %s."
+  ).replace("%s", migration.from).replace("%s", migration.to) : _(
+    "The configuration of the snapshot was migrated to Prokop %s."
+  ).replace("%s", migration.to);
+  return `${text}${text.endsWith(".") ? "" : "."} ${migrated}`;
+}
+function restoreResultToast(result) {
+  switch (result?.status) {
+    case "busy":
+      return {
+        text: snapshotBusyText(result.reason),
+        type: "warning",
+        duration: 6e3
+      };
+    case "success":
+      return {
+        text: withMigration(
+          _("Configuration restored and reloaded"),
+          result.migration
+        ),
+        type: "success",
+        duration: result.migration ? 1e4 : 6e3
+      };
+    // Prokop was stopped by the user: only a start brings it back.
+    case "restored_not_started":
+      return {
+        text: withMigration(
+          _(
+            "Configuration restored, but Prokop is stopped: it was not started or checked. The restored configuration takes effect when Prokop is started."
+          ),
+          result.migration
+        ),
+        type: "warning",
+        duration: 1e4
+      };
+    case "recovered":
+      return {
+        text: result.reason === "target_reload_queued" ? _(
+          "Restore was not applied: the service was busy and only queued the reload. The previous configuration is kept."
+        ) : _("Restore failed; previous configuration and runtime recovered"),
+        type: "warning",
+        duration: 8e3
+      };
+    case "failed":
+      if (result.reason === "runtime_guard_active")
+        return {
+          text: _(
+            "Restore was not started: a failed change left the DPI guard in place, and nothing can be reloaded until Prokop is restarted. Restart Prokop, then restore the snapshot if it is still needed."
+          ),
+          type: "warning",
+          duration: 12e3
+        };
+      if (result.reason === "uncommitted_uci_changes")
+        return {
+          text: _(
+            'Restore was not started: the router has uncommitted uci changes of Prokop (made with "uci set" without a commit). Commit or revert them, then restore again.'
+          ),
+          type: "warning",
+          duration: 1e4
+        };
+      if (result.reason === "replace_failed")
+        return {
+          text: result.guard === "active" ? `${_("Restore was not applied: the configuration file could not be written. The previous configuration is kept.")} ${_("The DPI guard of an earlier restore stays active.")}` : _(
+            "Restore was not applied: the configuration file could not be written. The previous configuration is kept."
+          ),
+          type: "warning",
+          duration: 1e4
+        };
+      {
+        const refusal = restoreRefusalText(result.reason);
+        if (refusal)
+          return {
+            text: result.guard === "active" ? `${refusal} ${_("The DPI guard of an earlier restore stays active.")}` : refusal,
+            type: "warning",
+            duration: 1e4
+          };
+      }
+      if (result.runtime === "stopped")
+        return {
+          text: result.reason === "target_invalid" ? _(
+            "Restore was not applied: the snapshot configuration did not pass validation. The previous configuration is kept; Prokop stays stopped."
+          ) : _(
+            "Restore was not applied: Prokop was stopped during the restore. The previous configuration is kept."
+          ),
+          type: "warning",
+          duration: 1e4
+        };
+      break;
+    case "needs_attention":
+      if (result.reason === "config_changed_during_transaction") {
+        const kept = result.saved_snapshot ? _('The change is kept and saved as a snapshot ("Concurrent edit").') : _(
+          "The change is kept in the configuration, but no snapshot of it could be saved."
+        );
+        return {
+          text: (
+            // Prokop was stopped: the snapshot was not reloaded, no
+            // guard is left.
+            result.runtime === "stopped" ? `${_("Restore was not applied: Prokop was stopped, and the configuration was changed during the restore.")} ${kept}` : (
+              // The reload ran, but it may have read the change.
+              result.guard === "inactive" ? `${_("Restore did not finish: the configuration was changed while the snapshot was being applied. Prokop was reloaded, but it is not known whether with the snapshot or with the change.")} ${kept} ${_("Restore the snapshot you need to finish.")}` : `${_("Restore did not finish: the configuration was changed while the snapshot was being applied.")} ${kept} ${_("The DPI guard stays active. Restore the snapshot you need to finish.")}`
+            )
+          ),
+          type: "error",
+          duration: 12e3
+        };
+      }
+      if (result.reason === "runtime_guard_active")
+        return {
+          text: _(
+            "Restore did not finish: a failed change left the DPI guard in place, and the DPI guard stays active. Restart Prokop, then restore the snapshot again."
+          ),
+          type: "error",
+          duration: 12e3
+        };
+      if (result.reason === "rollback_reload_queued")
+        return {
+          text: _(
+            "Restore did not finish: the service was busy and only queued the reload. The DPI guard stays active; restore again when the service is idle."
+          ),
+          type: "error",
+          duration: 1e4
+        };
+      break;
+  }
+  return {
+    text: _("Restore failed; check the recovery state before retrying"),
+    type: "error",
+    duration: 8e3
+  };
+}
+
+// src/prokop/tabs/history/initController.ts
+var REFRESH_INTERVAL_MS = 15e3;
+var FILTERS = ["all", "config", "service", "autotune"];
+var MAX_RESTORE_PREVIEW = 8;
+var mounted = false;
+var mountId = 0;
+var refreshTimer = null;
+var filter = "all";
+var health = null;
+var healthFailed = false;
+var history2 = null;
+var historyFailed = false;
+var snapshots = null;
+var snapshotsFailed = false;
+var snapshotBusy = false;
+async function loadAll() {
+  const id = mountId;
+  const [healthResponse, historyResponse, snapshotResponse] = await Promise.allSettled([
+    ProkopShellMethods.getHealthStatus(),
+    ProkopShellMethods.getHistory(),
+    ProkopShellMethods.snapshotList()
+  ]);
+  if (!mounted || id !== mountId) return;
+  const value = (result) => result.status === "fulfilled" && result.value.success ? result.value.data : null;
+  health = value(healthResponse);
+  healthFailed = !health;
+  history2 = value(historyResponse);
+  historyFailed = !history2 || !Array.isArray(history2.events);
+  const list = value(snapshotResponse);
+  snapshots = Array.isArray(list) ? list : null;
+  snapshotsFailed = !snapshots;
+  renderAll();
+}
+function replace(id, ...nodes) {
+  const container = document.getElementById(id);
+  if (container)
+    preserveScrollForPage(
+      () => replaceChildrenKeepingFocus(container, ...nodes)
+    );
+}
+function renderState() {
+  if (healthFailed || !health) {
+    replace(
+      "history-state",
+      healthFailed ? renderErrorState(
+        _("Recovery state is unavailable"),
+        () => void loadAll()
+      ) : renderLoadingState2()
+    );
+    return;
+  }
+  replace(
+    "history-state",
+    E(
+      "dl",
+      { class: "fkp-history__facts" },
+      recoveryRows(health, snapshots).flatMap((row) => [
+        E("dt", {}, row.label),
+        E("dd", {}, renderStatus({ label: row.value, tone: row.tone }))
+      ])
+    )
+  );
+}
+function renderHistory() {
+  replace(
+    "history-filter",
+    ...FILTERS.map(
+      (item) => E(
+        "button",
+        {
+          type: "button",
+          class: "btn cbi-button",
+          "aria-pressed": item === filter ? "true" : "false",
+          click: () => {
+            filter = item;
+            renderHistory();
+          }
+        },
+        historyFilterLabel(item)
+      )
+    )
+  );
+  if (historyFailed || !history2) {
+    replace(
+      "history-events",
+      historyFailed ? renderErrorState(_("History is unavailable"), () => void loadAll()) : renderLoadingState2()
+    );
+    return;
+  }
+  const items = historyItems(history2.events, filter);
+  const notes = history2.persistent ? [] : [
+    E(
+      "p",
+      { class: "fkp-history__hint" },
+      _("History is kept in memory until the router restarts.")
+    )
+  ];
+  replace(
+    "history-events",
+    ...notes,
+    items.length ? E(
+      "ul",
+      { class: "fkp-history__list" },
+      items.map(
+        (item) => E("li", { class: "fkp-history__event" }, [
+          E(
+            "span",
+            { class: "fkp-history__time", title: item.time },
+            item.relative
+          ),
+          E("span", { class: "fkp-history__what" }, item.title),
+          renderStatus(item.outcome),
+          ...item.details.length ? [
+            E(
+              "ul",
+              { class: "fkp-history__details" },
+              item.details.map((line) => E("li", {}, [line]))
+            )
+          ] : []
+        ])
+      )
+    ) : renderEmptyState(
+      filter === "all" ? _("No events recorded yet") : _("No events of this kind")
+    )
+  );
+}
+function renderDiffTable(diff) {
+  const rows = diffRows(diff.changes);
+  if (!diff.total) {
+    return E("p", {}, _("No saved changes since this snapshot"));
+  }
+  return E("div", { class: "fkp-history__diff-wrap" }, [
+    // UC-062: a cut list says it is not the whole change.
+    ...diff.total > rows.length ? [E("p", {}, diffTruncatedText(diff))] : [],
+    E("table", { class: "table fkp-history__diff" }, [
+      E("tr", { class: "tr table-titles" }, [
+        E("th", { class: "th" }, _("Setting")),
+        E("th", { class: "th" }, _("In snapshot")),
+        E("th", { class: "th" }, _("Now"))
+      ]),
+      ...rows.map(
+        (row) => E("tr", { class: "tr" }, [
+          E("td", { class: "td" }, row.where),
+          E("td", { class: "td" }, row.snapshot),
+          E("td", { class: "td" }, row.current)
+        ])
+      )
+    ])
+  ]);
+}
+async function loadDiff(id) {
+  const response = await ProkopShellMethods.snapshotDiff(id);
+  return response.success && Array.isArray(response.data) ? snapshotDiff(response.data) : null;
+}
+async function showChanges(id) {
+  const diff = await loadDiff(id);
+  if (!diff) {
+    showToast(_("Could not compare configurations"), "error");
+    return;
+  }
+  ui.showModal(_("Changes since this snapshot"), [
+    renderDiffTable(diff),
+    E("div", { class: "right fkp-confirm__actions" }, [
+      E(
+        "button",
+        {
+          type: "button",
+          class: "btn cbi-button",
+          click: () => ui.hideModal()
+        },
+        _("Close")
+      )
+    ])
+  ]);
+}
+async function runSnapshotAction(action) {
+  if (snapshotBusy) return;
+  snapshotBusy = true;
+  renderSnapshots();
+  try {
+    await action();
+  } catch (error) {
+    logger.error("[HISTORY]", "snapshot action failed", error);
+    showToast(_("Could not load data"), "error");
+  } finally {
+    snapshotBusy = false;
+    await loadAll();
+  }
+}
+async function restoreSnapshot(id, label) {
+  const sessionChanges = await Promise.resolve(uci.changes?.()).catch(
+    () => null
+  );
+  if (unsavedChangesBlockRestore(sessionChanges, PROKOP_UCI_PACKAGE)) {
+    showToast(unsavedChangesText(), "warning", 8e3);
+    return;
+  }
+  const diff = await loadDiff(id);
+  await refreshRuntimeUiState({ force: true }).catch(() => void 0);
+  const services = store.get().servicesInfoWidget.data;
+  const staysStopped = Boolean(
+    services.prokopStoppedByUser || services.prokopNotStarted
+  );
+  const migrationNote = restoreMigrationNote(
+    snapshots?.find((snapshot) => snapshot.id === id)?.migration
+  );
+  const confirmed = await confirmAction({
+    title: _("Restore configuration snapshot?"),
+    message: `${label}. ${restoreConfirmMessage(staysStopped)}`,
+    consequences: diff ? diff.total ? restorePreview(diff, MAX_RESTORE_PREVIEW) : [_("No saved changes since this snapshot")] : [_("Could not compare configurations")],
+    notes: migrationNote ? [migrationNote] : [],
+    confirmLabel: _("Restore"),
+    danger: true
+  });
+  if (!confirmed) return;
+  await runSnapshotAction(async () => {
+    const result = await ProkopShellMethods.snapshotRestore(id);
+    const toast = restoreResultToast(result.success ? result.data : void 0);
+    showToast(toast.text, toast.type, toast.duration);
+  });
+}
+async function deleteSnapshot(id, label) {
+  const confirmed = await confirmAction({
+    title: _("Delete snapshot?"),
+    message: `${label}. ${_("Delete this configuration snapshot?")}`,
+    confirmLabel: _("Delete"),
+    danger: true
+  });
+  if (!confirmed) return;
+  await runSnapshotAction(async () => {
+    const result = await ProkopShellMethods.snapshotDelete(id);
+    const toast = deleteSnapshotToast(result.success ? result.data : void 0);
+    showToast(toast.text, toast.type, toast.duration);
+  });
+}
+async function createSnapshot() {
+  await runSnapshotAction(async () => {
+    const result = await ProkopShellMethods.snapshotCreate("manual");
+    const toast = createSnapshotToast(result.success ? result.data : void 0);
+    showToast(toast.text, toast.type, toast.duration);
+  });
+}
+function renderSnapshots() {
+  const readonly = isReadonlyMode();
+  replace(
+    "history-snapshot-actions",
+    ...readonly ? [] : [
+      E(
+        "button",
+        {
+          type: "button",
+          class: "btn cbi-button",
+          disabled: snapshotBusy ? true : void 0,
+          click: () => void createSnapshot()
+        },
+        _("Create snapshot")
+      )
+    ]
+  );
+  if (snapshotsFailed || !snapshots) {
+    replace(
+      "history-snapshots",
+      snapshotsFailed ? renderErrorState(
+        _("Could not load configuration snapshots"),
+        () => void loadAll()
+      ) : renderLoadingState2()
+    );
+    return;
+  }
+  const rows = snapshotRows(snapshots);
+  replace(
+    "history-snapshots",
+    rows.length ? E(
+      "ul",
+      { class: "fkp-history__list" },
+      rows.map((row) => {
+        const label = row.reason ? `${row.time} \xB7 ${row.reason}` : row.time;
+        return E("li", { class: "fkp-history__snapshot" }, [
+          E("span", { class: "fkp-history__what" }, [
+            label,
+            ...row.lkg ? [
+              " ",
+              E(
+                "span",
+                { class: "fkp-history__lkg" },
+                _("Last known good")
+              )
+            ] : []
+          ]),
+          E("span", { class: "fkp-actions" }, [
+            E(
+              "button",
+              {
+                type: "button",
+                class: "btn cbi-button",
+                click: () => void showChanges(row.id)
+              },
+              _("Changes")
+            ),
+            ...readonly ? [] : [
+              renderOverflowMenu(_("Snapshot actions"), [
+                {
+                  label: _("Restore\u2026"),
+                  onClick: () => void restoreSnapshot(row.id, label),
+                  disabled: snapshotBusy,
+                  danger: true
+                },
+                {
+                  label: row.canDelete ? _("Delete\u2026") : _(
+                    "The last known good snapshot cannot be deleted"
+                  ),
+                  onClick: () => void deleteSnapshot(row.id, label),
+                  disabled: snapshotBusy || !row.canDelete,
+                  danger: row.canDelete
+                }
+              ])
+            ]
+          ])
+        ]);
+      })
+    ) : renderEmptyState(_("No snapshots yet"))
+  );
+}
+function renderAll() {
+  renderState();
+  renderHistory();
+  renderSnapshots();
+}
+function onPageMount5() {
+  onPageUnmount5();
+  mounted = true;
+  mountId += 1;
+  renderAll();
+  void loadAll();
+  refreshTimer = setInterval(() => {
+    if (!snapshotBusy) void loadAll();
+  }, REFRESH_INTERVAL_MS);
+}
+function onPageUnmount5() {
+  mounted = false;
+  mountId += 1;
+  if (refreshTimer) clearInterval(refreshTimer);
+  refreshTimer = null;
+}
+var initialized = false;
+async function initController5() {
+  if (initialized) return;
+  initialized = true;
+  onMount("history-status").then(() => {
+    store.subscribe(
+      (next, prev, diff) => {
+        if (diff.tabService && next.tabService.current !== prev.tabService.current) {
+          if (next.tabService.current === "history") onPageMount5();
+          else onPageUnmount5();
+        }
+      }
+    );
+    if (store.get().tabService.current === "history" || isActiveLuciTab("history")) {
+      onPageMount5();
+    }
+  });
+}
+
+// src/prokop/tabs/history/styles.ts
+var styles8 = `
+.fkp-history {
+    display: flex;
+    flex-direction: column;
+    gap: var(--fkp-space-3);
+    min-width: 0;
+}
+.fkp-history__card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--fkp-space-2);
+    min-width: 0;
+    padding: var(--fkp-space-3) var(--fkp-space-4);
+    border: 1px solid var(--fkp-border);
+    border-radius: 6px;
+}
+.fkp-history__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--fkp-space-2);
+}
+.fkp-history__title { margin: 0; font-size: 1.05em; }
+.fkp-history__hint { margin: 0; color: var(--fkp-tone-neutral); overflow-wrap: anywhere; }
+.fkp-history__facts {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: var(--fkp-space-1) var(--fkp-space-4);
+    margin: 0;
+}
+.fkp-history__facts dt { font-weight: 600; }
+.fkp-history__facts dd { margin: 0; overflow-wrap: anywhere; }
+.fkp-history__filter { display: flex; flex-wrap: wrap; gap: var(--fkp-space-1); }
+.fkp-history__filter .btn[aria-pressed="true"] { font-weight: 600; border-color: var(--fkp-tone-loading); }
+.fkp-history__list { margin: 0; padding: 0; list-style: none; }
+.fkp-history__event,
+.fkp-history__snapshot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--fkp-space-1) var(--fkp-space-3);
+    padding: var(--fkp-space-2) 0;
+    border-top: 1px solid var(--fkp-border);
+}
+.fkp-history__event:first-child,
+.fkp-history__snapshot:first-child { border-top: 0; }
+.fkp-history__time { color: var(--fkp-tone-neutral); min-width: 0; }
+.fkp-history__what { flex: 1 1 240px; min-width: 0; overflow-wrap: anywhere; }
+.fkp-history__details {
+    flex: 1 1 100%;
+    margin: 0;
+    padding-left: var(--fkp-space-3);
+    color: var(--fkp-tone-neutral);
+    overflow-wrap: anywhere;
+}
+.fkp-history__lkg {
+    padding: 0 var(--fkp-space-2);
+    border: 1px solid var(--fkp-tone-success);
+    border-radius: 999px;
+    color: var(--fkp-tone-success);
+    font-size: 0.85em;
+}
+.fkp-history__diff-wrap { width: 0; min-width: 100%; overflow-x: auto; }
+.fkp-history__diff { width: 100%; }
+.fkp-history__diff td { overflow-wrap: anywhere; vertical-align: top; }
+
+@media (max-width: ${BREAKPOINTS.phone}px) {
+    .fkp-history__facts { grid-template-columns: minmax(0, 1fr); }
+    .fkp-history__facts dd { margin-bottom: var(--fkp-space-2); }
+}
+`;
+
+// src/prokop/tabs/history/index.ts
+var HistoryTab = {
+  render: render5,
+  initController: initController5,
+  styles: styles8
+};
+
+// src/prokop/tabs/autotune/render.ts
+function render6() {
+  const card3 = (title, body, actions) => E("section", { class: "fkp-autotune__card" }, [
+    E("div", { class: "fkp-autotune__head" }, [
+      E("h3", { class: "fkp-autotune__title" }, title),
+      ...actions ? [actions] : []
+    ]),
+    ...body
+  ]);
+  return E("div", { id: "autotune-status", class: "fkp-autotune" }, [
+    card3(
+      _("Mode and state"),
+      [E("div", { id: "autotune-state" }, _("Loading\u2026"))],
+      E("div", { id: "autotune-state-actions", class: "fkp-actions" })
+    ),
+    card3(_("DPI rule groups"), [
+      E(
+        "p",
+        { class: "fkp-autotune__hint" },
+        _(
+          "A group is one Zapret DPI rule. Prokop changes only the strategy of an existing rule, for all its targets at once. It never creates or deletes rules and never turns DPI bypass off."
+        )
+      ),
+      E("div", { id: "autotune-groups" }, _("Loading\u2026"))
+    ]),
+    card3(
+      _("Targets"),
+      [E("div", { id: "autotune-targets" }, _("Loading\u2026"))],
+      E("div", { id: "autotune-target-actions", class: "fkp-actions" })
+    ),
+    card3(_("Autotune history"), [
+      E("div", { id: "autotune-history" }, _("Loading\u2026"))
+    ])
+  ]);
+}
+
+// src/prokop/tabs/autotune/domainPicker.ts
+var MAX_PINNED = 8;
+var MAX_ROWS = 300;
+function visibleDomains(domains, pinned, query, limit = MAX_ROWS) {
+  const q = query.trim().toLowerCase();
+  const matches = (d) => !q || d.includes(q);
+  const first = pinned.filter(matches);
+  const rest = domains.filter((d) => matches(d) && !pinned.includes(d));
+  const all = [...first, ...rest];
+  return {
+    shown: all.slice(0, limit),
+    hidden: Math.max(all.length - limit, 0)
+  };
+}
+function createDomainPicker(initial, load, errorText) {
+  const pinned = [...initial];
+  let domains = [];
+  let tag = null;
+  let note = "";
+  const search = E("input", {
+    class: "cbi-input-text",
+    type: "search",
+    placeholder: _("Search domains"),
+    autocomplete: "off"
+  });
+  const box = E("div", { class: "fkp-autotune__domains" });
+  const counter2 = E("div", {
+    class: "fkp-autotune__field-hint"
+  });
+  const render7 = () => {
+    const { shown, hidden } = visibleDomains(domains, pinned, search.value);
+    box.replaceChildren(
+      ...shown.map((domain) => {
+        const checked = pinned.includes(domain);
+        const check = E("input", {
+          type: "checkbox",
+          checked: checked ? true : void 0,
+          disabled: !checked && pinned.length >= MAX_PINNED ? true : void 0
+        });
+        check.addEventListener("change", () => {
+          const at = pinned.indexOf(domain);
+          if (check.checked && at < 0) pinned.push(domain);
+          if (!check.checked && at >= 0) pinned.splice(at, 1);
+          render7();
+        });
+        return E("label", { class: "fkp-autotune__domain" }, [
+          check,
+          " ",
+          domain,
+          ...checked && tag !== null && domains.length && !domains.includes(domain) ? [
+            " ",
+            E(
+              "span",
+              { class: "fkp-autotune__muted" },
+              `(${_("not in the list")})`
+            )
+          ] : []
+        ]);
+      }),
+      ...shown.length ? [] : [
+        E(
+          "div",
+          { class: "fkp-autotune__muted" },
+          note || _("Nothing found")
+        )
+      ]
+    );
+    const parts = [
+      _("Selected %d of %d").replace("%d", String(pinned.length)).replace("%d", String(MAX_PINNED))
+    ];
+    if (hidden)
+      parts.push(_("%d more: refine the search").replace("%d", String(hidden)));
+    if (note && shown.length) parts.push(note);
+    counter2.textContent = parts.join(" \xB7 ");
+  };
+  search.addEventListener("input", render7);
+  return {
+    element: E("div", {}, [search, box, counter2]),
+    selected: () => [...pinned],
+    // Load the domains of a list; choosing another list clears the choice.
+    async show(next) {
+      if (next === tag) return;
+      if (tag !== null) pinned.splice(0);
+      tag = next;
+      domains = [];
+      note = _("Loading\u2026");
+      render7();
+      const result = await load(next);
+      if (tag !== next) return;
+      domains = result.domains;
+      note = result.error ? errorText(result.error) : result.truncated ? _("The list is long: only its first 2000 domains can be chosen.") : "";
+      render7();
+    }
+  };
+}
+
+// src/prokop/tabs/autotune/dialog.ts
+var LABELABLE = /* @__PURE__ */ new Set(["INPUT", "SELECT", "TEXTAREA"]);
+var fieldCount = 0;
+function field2(label, control, hint) {
+  fieldCount += 1;
+  const labelId = `fkp-autotune-label-${fieldCount}`;
+  const labelAttrs = { id: labelId };
+  if (LABELABLE.has(control.tagName)) {
+    if (!control.id) control.id = `fkp-autotune-field-${fieldCount}`;
+    labelAttrs.for = control.id;
+  } else {
+    control.setAttribute("role", "group");
+    control.setAttribute("aria-labelledby", labelId);
+  }
+  return [
+    E("label", labelAttrs, label),
+    control,
+    ...hint ? [E("div", { class: "fkp-autotune__field-hint" }, hint)] : []
+  ];
+}
+function modalActions(onSave, saveLabel) {
+  return E("div", { class: "right fkp-confirm__actions" }, [
+    E(
+      "button",
+      { type: "button", class: "btn cbi-button", click: () => ui.hideModal() },
+      _("Cancel")
+    ),
+    E(
+      "button",
+      { type: "button", class: "btn cbi-button-action", click: onSave },
+      saveLabel
+    )
+  ]);
+}
+
 // src/prokop/tabs/autotune/initController.ts
 var REFRESH_INTERVAL_MS2 = 15e3;
 var RUNNING_REFRESH_INTERVAL_MS = 3e3;
@@ -20489,15 +21190,14 @@ function locked() {
 function replace2(id, ...nodes) {
   const container = document.getElementById(id);
   if (container)
-    preserveScrollForPage(() => container.replaceChildren(...nodes));
-}
-function formatTime2(timestamp) {
-  return new Date(timestamp * 1e3).toLocaleString();
+    preserveScrollForPage(
+      () => replaceChildrenKeepingFocus(container, ...nodes)
+    );
 }
 function timeNode(timestamp) {
   return E(
     "span",
-    { class: "fkp-autotune__time", title: formatTime2(timestamp) },
+    { class: "fkp-autotune__time", title: formatDateTime(timestamp) },
     formatRelativeTime(timestamp)
   );
 }
@@ -20569,7 +21269,8 @@ async function setMode(mode) {
         _(
           "It never creates or deletes rules, never turns DPI bypass off and never moves targets between rules."
         ),
-        _("At most %d change(s) per day; a rolled back strategy waits %s.").replace("%d", String(status.policy.max_applies_per_day)).replace("%s", durationLabel(status.policy.cooldown)),
+        // 'Label: value' keeps the Russian agreement right for any number.
+        _("Changes per day: at most %d; a rolled back strategy waits %s.").replace("%d", String(status.policy.max_applies_per_day)).replace("%s", durationLabel(status.policy.cooldown)),
         _("Changes are made only by scheduled checks, one group at a time.")
       ],
       confirmLabel: _("Turn on")
@@ -20746,13 +21447,6 @@ async function runCheck(scope) {
   }
   if (mounted2) await loadAll2();
 }
-function field2(label, control, hint) {
-  return [
-    E("label", {}, label),
-    control,
-    ...hint ? [E("div", { class: "fkp-autotune__field-hint" }, hint)] : []
-  ];
-}
 function select(name, choices, value) {
   return E(
     "select",
@@ -20776,20 +21470,6 @@ function numberInput(name, value, min, max) {
     step: "1",
     value: String(value)
   });
-}
-function modalActions(onSave, saveLabel) {
-  return E("div", { class: "fkp-confirm__actions" }, [
-    E(
-      "button",
-      { type: "button", class: "btn cbi-button", click: () => ui.hideModal() },
-      _("Cancel")
-    ),
-    E(
-      "button",
-      { type: "button", class: "btn cbi-button-action", click: onSave },
-      saveLabel
-    )
-  ]);
 }
 function showPolicyEditor() {
   if (!status) return;
@@ -21084,7 +21764,7 @@ function showCandidates(target) {
     E(
       "p",
       { class: "fkp-autotune__muted" },
-      `${formatTime2(last.at)} \xB7 ${_("measured in isolation from production traffic")}`
+      `${formatDateTime(last.at)} \xB7 ${_("measured in isolation from production traffic")}`
     ),
     rows.length ? E("div", { class: "fkp-autotune__table-wrap" }, [
       E("table", { class: "table fkp-autotune__table" }, [
@@ -21108,7 +21788,7 @@ function showCandidates(target) {
         )
       ])
     ]) : E("p", {}, _("No strategies were measured")),
-    E("div", { class: "fkp-confirm__actions" }, [
+    E("div", { class: "right fkp-confirm__actions" }, [
       E(
         "button",
         {
@@ -21123,9 +21803,10 @@ function showCandidates(target) {
 }
 function policySummary(policy) {
   return [
-    _("every %s").replace("%s", durationLabel(policy.interval)),
+    // 'Label: value' keeps the Russian agreement right for any number.
+    _("check interval: %s").replace("%s", durationLabel(policy.interval)),
     _("%d confirmations").replace("%d", String(policy.confirmations)),
-    _("up to %d automatic change(s) per day").replace(
+    _("automatic changes per day: up to %d").replace(
       "%d",
       String(policy.max_applies_per_day)
     ),
@@ -21213,7 +21894,7 @@ function renderState2() {
   else if (worker) facts.push([_("Last check"), renderStatus(worker)]);
   else facts.push([_("Last check"), _("Not checked yet")]);
   if (policy.mode !== "off" && status.next_run_at)
-    facts.push([_("Next scheduled check"), formatTime2(status.next_run_at)]);
+    facts.push([_("Next scheduled check"), formatDateTime(status.next_run_at)]);
   if (status.recovered_at)
     facts.push([
       _("Warning"),
@@ -21415,7 +22096,7 @@ function renderGroup(card3) {
   for (const cooldown of card3.cooldowns)
     facts.push([
       _("Pause"),
-      _("%s is not applied again before %t").replace("%s", cooldown.candidate).replace("%t", formatTime2(cooldown.until))
+      _("%s is not applied again before %t").replace("%s", cooldown.candidate).replace("%t", formatDateTime(cooldown.until))
     ]);
   facts.push([_("Targets"), card3.targets.join(", ") || "\u2014"]);
   return E("li", { class: "fkp-autotune__group" }, [
@@ -21775,7 +22456,7 @@ async function initController6() {
 }
 
 // src/prokop/tabs/autotune/styles.ts
-var styles8 = `
+var styles9 = `
 .fkp-autotune {
     display: flex;
     flex-direction: column;
@@ -21893,7 +22574,7 @@ var styles8 = `
 .fkp-autotune__form .fkp-autotune__domain input { width: auto; flex: none; margin: 0; }
 .fkp-autotune__field-hint { grid-column: 2; margin-top: calc(-1 * var(--fkp-space-1)); color: var(--fkp-tone-neutral); font-size: 0.9em; }
 
-@media (max-width: 599px) {
+@media (max-width: ${BREAKPOINTS.phone}px) {
     .fkp-autotune__facts,
     .fkp-autotune__form { grid-template-columns: minmax(0, 1fr); }
     .fkp-autotune__facts dd { margin-bottom: var(--fkp-space-2); }
@@ -21905,138 +22586,12 @@ var styles8 = `
 var AutotuneTab = {
   render: render6,
   initController: initController6,
-  styles: styles8
+  styles: styles9
 };
-
-// src/prokop/ui/styles.ts
-var styles9 = `
-:root {
-    --fkp-space-1: 4px;
-    --fkp-space-2: 8px;
-    --fkp-space-3: 12px;
-    --fkp-space-4: 16px;
-    --fkp-space-5: 24px;
-    --fkp-tone-success: var(--success-color-medium, #2e7d32);
-    --fkp-tone-warning: var(--warn-color-medium, #b26a00);
-    --fkp-tone-error: var(--error-color-medium, #c62828);
-    --fkp-tone-loading: var(--primary-color-high, #1565c0);
-    --fkp-tone-neutral: var(--text-color-medium, #616161);
-    --fkp-tone-muted: var(--text-color-low, #9e9e9e);
-    --fkp-border: var(--border-color-medium, rgba(127, 127, 127, 0.35));
-}
-
-.fkp-status {
-    display: inline-block;
-    max-width: 100%;
-    box-sizing: border-box;
-    padding: 1px var(--fkp-space-2);
-    border: 1px solid currentColor;
-    border-radius: 999px;
-    font-size: 0.9em;
-    line-height: 1.5;
-    white-space: normal;
-    overflow-wrap: anywhere;
-}
-.fkp-status--success { color: var(--fkp-tone-success); }
-.fkp-status--warning { color: var(--fkp-tone-warning); }
-.fkp-status--error { color: var(--fkp-tone-error); }
-.fkp-status--loading { color: var(--fkp-tone-loading); }
-.fkp-status--neutral { color: var(--fkp-tone-neutral); }
-.fkp-status--muted { color: var(--fkp-tone-muted); }
-
-.fkp-provenance {
-    display: inline-block;
-    padding: 0 var(--fkp-space-1);
-    border: 1px dashed var(--fkp-border);
-    border-radius: 4px;
-    font-size: 0.8em;
-    color: var(--fkp-tone-neutral);
-    white-space: normal;
-}
-
-.fkp-state {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--fkp-space-2);
-    padding: var(--fkp-space-3) 0;
-    min-width: 0;
-}
-.fkp-state__title { font-weight: 600; overflow-wrap: anywhere; }
-.fkp-state__hint { color: var(--fkp-tone-neutral); overflow-wrap: anywhere; }
-.fkp-state--error .fkp-state__title { color: var(--fkp-tone-error); }
-.fkp-state--loading .fkp-state__title { color: var(--fkp-tone-loading); font-weight: normal; }
-
-.fkp-tech { margin-top: var(--fkp-space-2); max-width: 100%; }
-.fkp-tech > summary { cursor: pointer; color: var(--fkp-tone-neutral); }
-.fkp-tech__content {
-    max-height: 320px;
-    overflow: auto;
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
-    font-size: 0.85em;
-}
-
-.fkp-confirm__consequences { margin: var(--fkp-space-2) 0 var(--fkp-space-3) var(--fkp-space-5); }
-.fkp-confirm__actions {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: var(--fkp-space-2);
-}
-
-.fkp-actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--fkp-space-2);
-    min-width: 0;
-}
-.fkp-menu {
-    position: relative;
-    display: inline-block;
-}
-.fkp-menu > summary {
-    list-style: none;
-    cursor: pointer;
-    min-width: 32px;
-    text-align: center;
-}
-.fkp-menu > summary::-webkit-details-marker { display: none; }
-.fkp-menu__list {
-    position: absolute;
-    right: 0;
-    z-index: 20;
-    display: flex;
-    flex-direction: column;
-    min-width: max-content;
-    max-width: min(320px, 90vw);
-    margin-top: var(--fkp-space-1);
-    padding: var(--fkp-space-1) 0;
-    border: 1px solid var(--fkp-border);
-    border-radius: 6px;
-    background: var(--background-color-high, #fff);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-.fkp-menu__item {
-    padding: var(--fkp-space-2) var(--fkp-space-4);
-    border: 0;
-    background: transparent;
-    color: inherit;
-    text-align: left;
-    white-space: normal;
-    cursor: pointer;
-}
-.fkp-menu__item:hover:not([disabled]) { background: var(--background-color-medium, rgba(127,127,127,0.12)); }
-.fkp-menu__item[disabled] { opacity: 0.5; cursor: default; }
-.fkp-action-danger-text {
-    color: var(--fkp-tone-error) !important;
-}
-`;
 
 // src/styles.ts
 var GlobalStyles = `
-${styles9}
+${styles3}
 ${DashboardTab.styles}
 ${DiagnosticTab.styles}
 ${MonitoringTab.styles}
@@ -22069,6 +22624,24 @@ ${PartialStyles}
 
 #cbi-${PROKOP_UCI_PACKAGE}-section .cbi-section-actions {
     text-align: right;
+}
+
+/* Narrow screens: the row actions wrap and the fixed column widths go,
+   so the rules table fits the page at 768 (UC-132). */
+@media (max-width: ${BREAKPOINTS.narrow}px) {
+    #cbi-${PROKOP_UCI_PACKAGE}-section .cbi-section-actions {
+        white-space: normal;
+    }
+
+    #cbi-${PROKOP_UCI_PACKAGE}-section .cbi-section-actions > div {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    #cbi-${PROKOP_UCI_PACKAGE}-section .th,
+    #cbi-${PROKOP_UCI_PACKAGE}-section .td {
+        width: auto !important;
+    }
 }
 
 /* Rule reorder visuals */
@@ -22184,7 +22757,7 @@ ${PartialStyles}
 }
 
 .toast-success {
-    background-color: #28a745;
+    background-color: #1e7e34;
 }
 
 .toast-error {

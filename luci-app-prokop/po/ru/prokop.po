@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-03 20:47+0000\n"
-"PO-Revision-Date: 2026-10-03 20:47+0000\n"
+"POT-Creation-Date: 2026-10-03 21:31+0000\n"
+"PO-Revision-Date: 2026-10-03 21:31+0000\n"
 "Last-Translator: Asofwar\n"
 "Language-Team: none\n"
 "Language: ru\n"
@@ -71,6 +71,18 @@ msgstr "%s (провайдер не установлен)"
 msgid "%s (unavailable)"
 msgstr "%s (недоступна)"
 
+msgid "%s has been disabled"
+msgstr "%s выключен"
+
+msgid "%s has been enabled"
+msgstr "%s включён"
+
+msgid "%s has been installed"
+msgstr "%s установлен"
+
+msgid "%s has been removed"
+msgstr "%s удалён"
+
 msgid "%s in the rule \"%t\""
 msgstr "%s в правиле «%t»"
 
@@ -88,6 +100,9 @@ msgstr "%s: «%s» нельзя записать в текущем виде бе
 
 msgid "%s: not moved to the Device filter, the rule has no destination condition and does not use it"
 msgstr "%s: не переносится в «Фильтр по устройствам» — у правила нет условия назначения, и он не используется"
+
+msgid "%s/s"
+msgstr "%s/с"
 
 msgid "+ Add JSON outbound"
 msgstr "+ Добавить JSON outbound"
@@ -196,6 +211,9 @@ msgstr "около %d мин"
 
 msgid "Action"
 msgstr "Действие"
+
+msgid "Action completed"
+msgstr "Действие выполнено"
 
 msgid "Action required"
 msgstr "Требуется действие"
@@ -449,9 +467,6 @@ msgstr "Нужно указать хотя бы один корректный д
 msgid "At least one valid IP or subnet must be specified."
 msgstr "Нужно указать хотя бы один корректный IP-адрес или подсеть."
 
-msgid "At most %d change(s) per day; a rolled back strategy waits %s."
-msgstr "Не больше %d изменений в сутки; откаченная стратегия ждёт %s."
-
 msgid "Auto refresh"
 msgstr "Автообновление"
 
@@ -466,6 +481,9 @@ msgstr "Для автоматического применения нужна в
 
 msgid "Automatic changes per day"
 msgstr "Автоизменений в сутки"
+
+msgid "automatic changes per day: up to %d"
+msgstr "автоизменений в сутки: до %d"
 
 msgid "Automatic component update checks"
 msgstr "Автоматическая проверка обновлений компонентов"
@@ -559,6 +577,9 @@ msgstr "Автоподбор: ручной откат %s"
 
 msgid "Available to administrators only."
 msgstr "Доступно только администратору."
+
+msgid "B"
+msgstr "Б"
 
 msgid "Backend validation unavailable: %s. Save again to retry."
 msgstr "Проверка на роутере недоступна: %s. Сохраните ещё раз, чтобы повторить."
@@ -722,6 +743,9 @@ msgstr "Изменения вносят только плановые прове
 msgid "Changes compare a snapshot with the saved configuration. Unsaved form edits are not included."
 msgstr "Изменения сравнивают снимок с сохранённой конфигурацией. Несохранённые правки в формах не учитываются."
 
+msgid "Changes per day: at most %d; a rolled back strategy waits %s."
+msgstr "Изменений в сутки: не больше %d; откаченная стратегия ждёт %s."
+
 msgid "Changes since this snapshot"
 msgstr "Изменения после этого снимка"
 
@@ -763,6 +787,9 @@ msgstr "Проверка не пройдена, выполнен автомат�
 
 msgid "Check interval"
 msgstr "Интервал проверки"
+
+msgid "check interval: %s"
+msgstr "интервал проверки: %s"
 
 msgid "Check now"
 msgstr "Проверить сейчас"
@@ -1045,6 +1072,9 @@ msgstr "Не удалось загрузить снимки конфигурац
 
 msgid "Could not load data"
 msgstr "Не удалось загрузить данные"
+
+msgid "Could not refresh. Showing data from %s"
+msgstr "Не удалось обновить. Показаны данные на %s"
 
 msgid "Could not save a pre-apply configuration snapshot: it could not be written. Check the free space on the router. Changes were not applied."
 msgstr "Не удалось сохранить снимок перед применением: его не удалось записать. Проверьте свободное место на роутере. Изменения не применены."
@@ -1430,6 +1460,9 @@ msgstr "Длительность"
 msgid "Each target is measured in isolation; production traffic is not changed. After the probes Prokop waits until their connections close, which can take a few minutes on a blocked site."
 msgstr "Каждая цель измеряется изолированно, рабочий трафик не меняется. После проб Prokop ждёт закрытия их соединений — на заблокированном сайте это может занять несколько минут."
 
+msgid "EB"
+msgstr "ЭБ"
+
 msgid "Edit"
 msgstr "Изменить"
 
@@ -1528,9 +1561,6 @@ msgstr "Ошибка"
 
 msgid "Errors: %d"
 msgstr "Ошибки: %d"
-
-msgid "every %s"
-msgstr "каждые %s"
 
 msgid "Every change made since the last known working configuration is undone, your own edits included. The current configuration is kept as a \"Before restore\" snapshot in History and recovery."
 msgstr "Все изменения, сделанные после последней рабочей конфигурации, будут отменены, включая ваши собственные правки. Текущая конфигурация сохранится как снимок «Перед восстановлением» в разделе «История и восстановление»."
@@ -1682,6 +1712,9 @@ msgstr "Полное удаление"
 msgid "Fuzzing is not supported here because Prokop needs deterministic runtime validation."
 msgstr "Fuzzing здесь не поддерживается, потому что Prokop нужна предсказуемая runtime-валидация."
 
+msgid "GB"
+msgstr "ГБ"
+
 msgid "Geo-blocked services"
 msgstr "Сервисы с геоблокировкой"
 
@@ -1690,6 +1723,9 @@ msgstr "Получить глобальную проверку"
 
 msgid "Global check"
 msgstr "Глобальная проверка"
+
+msgid "Groups: %d · targets: %d"
+msgstr "Групп: %d · целей: %d"
 
 msgid "has no effect"
 msgstr "ни на что не влияет"
@@ -2000,6 +2036,27 @@ msgstr "Неверный URL-адрес SOCKS: должен начинаться
 msgid "Invalid SOCKS URL: parsing failed"
 msgstr "Неверный URL SOCKS: парсинг не удался"
 
+msgid "Invalid Trojan URL: invalid host and port"
+msgstr "Неверный URL Trojan: некорректные хост и порт"
+
+msgid "Invalid Trojan URL: invalid port number"
+msgstr "Неверный URL Trojan: некорректный номер порта"
+
+msgid "Invalid Trojan URL: missing credentials and host"
+msgstr "Неверный URL Trojan: отсутствуют учётные данные и хост"
+
+msgid "Invalid Trojan URL: missing hostname"
+msgstr "Неверный URL Trojan: отсутствует имя хоста"
+
+msgid "Invalid Trojan URL: missing hostname and port"
+msgstr "Неверный URL Trojan: отсутствуют имя хоста и порт"
+
+msgid "Invalid Trojan URL: missing password"
+msgstr "Неверный URL Trojan: отсутствует пароль"
+
+msgid "Invalid Trojan URL: missing port"
+msgstr "Неверный URL Trojan: отсутствует порт"
+
 msgid "Invalid Trojan URL: must not contain spaces"
 msgstr "Неверный URL Trojan: не должен содержать пробелов"
 
@@ -2012,8 +2069,74 @@ msgstr "Неверный URL Trojan: ошибка разбора"
 msgid "Invalid URL format"
 msgstr "Неверный формат URL"
 
+msgid "Invalid VLESS URL: flow xtls-rprx-vision-udp443 is not supported"
+msgstr "Неверный URL VLESS: flow xtls-rprx-vision-udp443 не поддерживается"
+
+msgid "Invalid VLESS URL: invalid host and port"
+msgstr "Неверный URL VLESS: некорректные хост и порт"
+
+msgid "Invalid VLESS URL: invalid port number"
+msgstr "Неверный URL VLESS: некорректный номер порта"
+
+msgid "Invalid VLESS URL: missing fp for reality"
+msgstr "Неверный URL VLESS: для reality отсутствует fp"
+
+msgid "Invalid VLESS URL: missing host and UUID"
+msgstr "Неверный URL VLESS: отсутствуют хост и UUID"
+
+msgid "Invalid VLESS URL: missing hostname"
+msgstr "Неверный URL VLESS: отсутствует имя хоста"
+
+msgid "Invalid VLESS URL: missing pbk for reality"
+msgstr "Неверный URL VLESS: для reality отсутствует pbk"
+
+msgid "Invalid VLESS URL: missing port"
+msgstr "Неверный URL VLESS: отсутствует порт"
+
+msgid "Invalid VLESS URL: missing query parameters"
+msgstr "Неверный URL VLESS: отсутствуют параметры запроса"
+
+msgid "Invalid VLESS URL: missing server"
+msgstr "Неверный URL VLESS: отсутствует сервер"
+
+msgid "Invalid VLESS URL: missing UUID"
+msgstr "Неверный URL VLESS: отсутствует UUID"
+
+msgid "Invalid VLESS URL: must not contain spaces"
+msgstr "Неверный URL VLESS: не должен содержать пробелов"
+
+msgid "Invalid VLESS URL: must start with vless://"
+msgstr "Неверный URL VLESS: должен начинаться с vless://"
+
 msgid "Invalid VLESS URL: parsing failed"
 msgstr "Неверный URL VLESS: ошибка разбора"
+
+msgid "Invalid VLESS URL: unsupported or missing security"
+msgstr "Неверный URL VLESS: security не указан или не поддерживается"
+
+msgid "Invalid VLESS URL: unsupported or missing type"
+msgstr "Неверный URL VLESS: тип не указан или не поддерживается"
+
+msgid "Invalid VMess URL: invalid config"
+msgstr "Неверный URL VMess: некорректная конфигурация"
+
+msgid "Invalid VMess URL: invalid port number"
+msgstr "Неверный URL VMess: некорректный номер порта"
+
+msgid "Invalid VMess URL: invalid server"
+msgstr "Неверный URL VMess: некорректный сервер"
+
+msgid "Invalid VMess URL: missing encoded config"
+msgstr "Неверный URL VMess: отсутствует закодированная конфигурация"
+
+msgid "Invalid VMess URL: missing UUID"
+msgstr "Неверный URL VMess: отсутствует UUID"
+
+msgid "Invalid VMess URL: must not contain spaces"
+msgstr "Неверный URL VMess: не должен содержать пробелов"
+
+msgid "Invalid VMess URL: must start with vmess://"
+msgstr "Неверный URL VMess: должен начинаться с vmess://"
 
 msgid "Invalid VMess URL: parsing failed"
 msgstr "Некорректный VMess URL: ошибка разбора"
@@ -2089,6 +2212,9 @@ msgstr "Настройки JSON outbound"
 
 msgid "just now"
 msgstr "только что"
+
+msgid "KB"
+msgstr "КБ"
 
 msgid "Keep Priority before latency-sorted servers"
 msgstr "Показывать Priority перед серверами, отсортированными по задержке"
@@ -2243,6 +2369,9 @@ msgstr "Ручное применение доступно только в ре�
 msgid "Manual checks only measure; changes are applied only on schedule."
 msgstr "Ручная проверка только измеряет; изменения применяются только по расписанию."
 
+msgid "Manual selection"
+msgstr "Ручной выбор"
+
 msgid "manually"
 msgstr "вручную"
 
@@ -2254,6 +2383,9 @@ msgstr "Совпадение по портам назначения. Испол�
 
 msgid "Maximum time to wait for example.com to resolve during a DNS health check."
 msgstr "Максимальное время ожидания разрешения example.com при проверке доступности DNS."
+
+msgid "MB"
+msgstr "МБ"
 
 msgid "measured in isolation from production traffic"
 msgstr "измерено изолированно от рабочего трафика"
@@ -2606,6 +2738,9 @@ msgstr "Только: %d"
 msgid "Open"
 msgstr "Открыть"
 
+msgid "Open autotune"
+msgstr "Открыть автоподбор"
+
 msgid "Open History and recovery"
 msgstr "Открыть «История и восстановление»"
 
@@ -2675,6 +2810,12 @@ msgstr "Восстановление пакетов"
 msgid "Package recovery has not finished"
 msgstr "Восстановление пакетов не завершено"
 
+msgid "Packet Steering mode 2 has been enabled"
+msgstr "Включён режим 2 Packet Steering"
+
+msgid "Packet Steering normal mode has been restored"
+msgstr "Восстановлен обычный режим Packet Steering"
+
 msgid "Panic"
 msgstr "Паника"
 
@@ -2719,6 +2860,9 @@ msgstr "пауза после отката %s"
 
 msgid "Pause updates"
 msgstr "Приостановить обновление"
+
+msgid "PB"
+msgstr "ПБ"
 
 msgid "Pending"
 msgstr "Ожидает запуска"
@@ -2828,6 +2972,9 @@ msgstr "В этом режиме Prokop не применяет рекоменд
 msgid "Prokop Error"
 msgstr "Ошибка Prokop"
 
+msgid "Prokop has been installed"
+msgstr "Prokop установлен"
+
 msgid "Prokop has turned off the iptables hooks of br_netfilter (net.bridge.bridge-nf-call-iptables and -ip6tables) for transparent proxying: iptables rules do not filter bridged traffic while it runs. Stopping Prokop restores the previous values unless another program has changed them since."
 msgstr "Prokop отключил хуки iptables модуля br_netfilter (net.bridge.bridge-nf-call-iptables и -ip6tables) для прозрачного проксирования: пока он работает, правила iptables не фильтруют трафик через мост. Остановка Prokop вернёт прежние значения, если их с тех пор не изменила другая программа."
 
@@ -2905,6 +3052,9 @@ msgstr "Работа Prokop"
 
 msgid "Prokop service is stopped. Start the service to display connections."
 msgstr "Служба Prokop остановлена. Запустите сервис для отображения соединений."
+
+msgid "Prokop service is stopped. Start the service to display nodes and groups."
+msgstr "Служба Prokop остановлена. Запустите её, чтобы увидеть узлы и группы."
 
 msgid "Prokop stays stopped until you start it: reloads, restores and updates do not start it."
 msgstr "Prokop останется остановленным, пока вы его не запустите: перезагрузка конфигурации, восстановление и обновления его не запускают."
@@ -2996,11 +3146,17 @@ msgstr "Доступно"
 msgid "Ready"
 msgstr "Готов"
 
+msgid "Received"
+msgstr "Получено"
+
 msgid "Recommendation confirmed"
 msgstr "Рекомендация подтверждена"
 
 msgid "Recommendations only"
 msgstr "Только рекомендации"
+
+msgid "Recommendations waiting for a decision: %d"
+msgstr "Рекомендаций ждут решения: %d"
 
 msgid "Recommended"
 msgstr "Рекомендовано"
@@ -3266,6 +3422,9 @@ msgstr "DNS роутера"
 msgid "Router DNS is not pointed to Prokop"
 msgstr "DNS роутера не направлен в Prokop"
 
+msgid "Router FakeIP check could not be completed"
+msgstr "Не удалось выполнить проверку FakeIP на роутере"
+
 msgid "Router kernel route"
 msgstr "Маршрут ядра роутера"
 
@@ -3451,6 +3610,9 @@ msgstr "Выбрано %d из %d"
 
 msgid "Selector and URLTest outbounds must contain a non-empty outbounds array"
 msgstr "Selector и URLTest outbound должны содержать непустой массив outbounds"
+
+msgid "Sent"
+msgstr "Отправлено"
 
 msgid "Sent with the requests for this subscription. Leave empty to try compatible client profiles automatically."
 msgstr "Передаётся в запросах этой подписки. Оставьте пустым, чтобы совместимые профили клиентов подбирались автоматически."
@@ -3779,6 +3941,9 @@ msgstr "Целям этого правила нужны разные страт�
 msgid "Targets outside DPI rules (%d)"
 msgstr "Цели вне DPI-правил (%d)"
 
+msgid "TB"
+msgstr "ТБ"
+
 msgid "Technical data"
 msgstr "Технические данные"
 
@@ -3862,6 +4027,9 @@ msgstr "Изменение не сохранено."
 
 msgid "The changes are saved: Save & Apply applies them once a snapshot can be taken."
 msgstr "Изменения сохранены: «Сохранить и применить» применит их, когда снимок удастся сохранить."
+
+msgid "The check could not run"
+msgstr "Проверку не удалось выполнить"
 
 msgid "The check did not complete"
 msgstr "Проверка не завершилась"
@@ -3950,6 +4118,9 @@ msgstr "Не удалось надёжно определить DPI-правил
 msgid "The editor has no field for downloaded lists: they cannot be converted and stay as they are."
 msgstr "Для загружаемых списков в редакторе нет поля: их нельзя конвертировать, они остаются как есть."
 
+msgid "The interrupted Prokop update was rolled back; no new update was attempted"
+msgstr "Прерванное обновление Prokop откачено; новое обновление не запускалось"
+
 msgid "The interval must be at least 1h: automatic updates run at most once an hour. An update started by hand always runs."
 msgstr "Интервал должен быть не меньше 1h: автоматические обновления выполняются не чаще раза в час. Обновление, запущенное вручную, выполняется всегда."
 
@@ -3958,6 +4129,9 @@ msgstr "загрузчик kill-switch в /usr/share/nftables.d/ruleset-post"
 
 msgid "The last autotune change is not resolved."
 msgstr "Последнее изменение автоподбора не завершено."
+
+msgid "The last autotune change needs attention."
+msgstr "Последнее изменение автоподбора требует внимания."
 
 msgid "The last change (%s) can be rolled back to the configuration before it."
 msgstr "Последнее изменение (%s) можно откатить к конфигурации до него."
@@ -4099,6 +4273,9 @@ msgstr "Маршрут рассчитывается по конфигураци�
 
 msgid "the route of an IPv6 address is not calculated"
 msgstr "маршрут для адреса IPv6 не рассчитывается"
+
+msgid "The router could not check whether the site opens. Try the check again."
+msgstr "Роутер не смог проверить, открывается ли сайт. Повторите проверку."
 
 msgid "The router could not resolve the address."
 msgstr "Роутер не смог определить адрес."
@@ -4508,9 +4685,6 @@ msgstr "Нестабильно"
 msgid "Unstable without bypass; a stable strategy was found."
 msgstr "Без обхода нестабильно; найдена стабильная стратегия."
 
-msgid "up to %d automatic change(s) per day"
-msgstr "до %d автоизменений в сутки"
-
 msgid "Up to 8 domains; exactly these are checked."
 msgstr "До 8 доменов; проверяются именно они."
 
@@ -4528,9 +4702,6 @@ msgstr "Обновить подписки"
 
 msgid "Update this subscription automatically"
 msgstr "Автоматически обновлять эту подписку"
-
-msgid "Upload"
-msgstr "Отправлено"
 
 msgid "URL must start with vless://, vmess://, ss://, trojan://, socks4://, socks4a://, socks5://, hysteria2://, or hy2://"
 msgstr "URL должен начинаться с vless://, vmess://, ss://, trojan://, socks4://, socks4a://, socks5://, hysteria2:// или hy2://"
@@ -4703,6 +4874,9 @@ msgstr "Работает без обхода."
 msgid "YACD Secret Key"
 msgstr "Секретный ключ YACD"
 
+msgid "YB"
+msgstr "ИБ"
+
 msgid "Yes"
 msgstr "Да"
 
@@ -4759,3 +4933,6 @@ msgstr "sing-box outbound для Zapret2 настроен"
 
 msgid "Zapret2 sing-box outbound is not configured"
 msgstr "sing-box outbound для Zapret2 не настроен"
+
+msgid "ZB"
+msgstr "ЗБ"

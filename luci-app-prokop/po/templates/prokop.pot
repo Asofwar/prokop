@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-03 20:47+0000\n"
-"PO-Revision-Date: 2026-10-03 20:47+0000\n"
+"POT-Creation-Date: 2026-10-03 21:31+0000\n"
+"PO-Revision-Date: 2026-10-03 21:31+0000\n"
 "Last-Translator: Asofwar <7397608+Asofwar@users.noreply.github.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -25,11 +25,11 @@ msgstr ""
 msgid "-- Select --"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:823
+#: src/prokop/tabs/autotune/initController.ts:805
 msgid "%d confirmations"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:344
+#: src/prokop/tabs/dashboard/overview.ts:355
 msgid "%d connections now"
 msgstr ""
 
@@ -53,7 +53,7 @@ msgstr ""
 msgid "%d min ago"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overviewCards.ts:249
+#: src/prokop/tabs/dashboard/overviewCards.ts:251
 msgid "%d more groups"
 msgstr ""
 
@@ -62,21 +62,23 @@ msgid "%d more: refine the search"
 msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:576
-#: src/prokop/tabs/dashboard/initController.ts:1088
-#: src/prokop/tabs/dashboard/partials/renderSections.ts:318
-#: src/prokop/tabs/dashboard/partials/renderSections.ts:487
+#: src/prokop/tabs/dashboard/initController.ts:1119
+#: src/prokop/tabs/dashboard/overview.ts:372
+#: src/prokop/tabs/dashboard/partials/renderSections.ts:343
+#: src/prokop/tabs/dashboard/partials/renderSections.ts:526
+#: src/prokop/tabs/diagnostic/checks/runSectionsCheck.ts:153
 msgid "%d ms"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:337
+#: src/prokop/tabs/dashboard/overview.ts:348
 msgid "%d node groups"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:335
+#: src/prokop/tabs/dashboard/overview.ts:346
 msgid "%d rules"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:331
+#: src/prokop/tabs/dashboard/overview.ts:342
 msgid "%d rules · %d node groups"
 msgstr ""
 
@@ -101,6 +103,22 @@ msgstr ""
 msgid "%s (unavailable)"
 msgstr ""
 
+#: src/prokop/tabs/updates/componentActionToast.ts:62
+msgid "%s has been disabled"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts:59
+msgid "%s has been enabled"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts:53
+msgid "%s has been installed"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts:56
+msgid "%s has been removed"
+msgstr ""
+
 #: src/prokop/tabs/autotune/model.ts:1342
 msgid "%s in the rule \"%t\""
 msgstr ""
@@ -109,7 +127,7 @@ msgstr ""
 msgid "%s is “%s”: sing-box and the firewall read it differently"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:1147
+#: src/prokop/tabs/autotune/initController.ts:1129
 msgid "%s is not applied again before %t"
 msgstr ""
 
@@ -123,6 +141,10 @@ msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5079
 msgid "%s: not moved to the Device filter, the rule has no destination condition and does not use it"
+msgstr ""
+
+#: src/helpers/prettyBytes.ts:26
+msgid "%s/s"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9170
@@ -141,25 +163,25 @@ msgstr ""
 msgid "+ Add URLTest"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:535
+#: src/prokop/tabs/autotune/initController.ts:516
 msgid "0–5; 0 turns automatic changes off."
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:701
+#: src/prokop/tabs/autotune/initController.ts:682
 msgid "1–8 domains, spread evenly over the list; a domain without an address is replaced by the next one."
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:547
+#: src/prokop/tabs/autotune/initController.ts:528
 msgid "3–7 attempts per strategy and target in each check."
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:234
-#: src/prokop/tabs/autotune/initController.ts:399
+#: src/prokop/tabs/autotune/initController.ts:238
+#: src/prokop/tabs/autotune/initController.ts:403
 #: src/prokop/tabs/autotune/model.ts:969
 msgid "A check is already running."
 msgstr ""
 
-#: src/prokop/tabs/updates/releaseSelector.ts:46
+#: src/prokop/tabs/updates/releaseSelector.ts:50
 msgid "A configuration backup will be saved in /etc/prokop-backups. Older versions may not support all current settings."
 msgstr ""
 
@@ -167,19 +189,19 @@ msgstr ""
 msgid "A configuration change did not finish and its protection is still active. Restore a snapshot in History and recovery."
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:127
+#: src/prokop/tabs/dashboard/overview.ts:138
 msgid "A configuration change is being applied. Traffic that needs DPI bypass may be blocked until it finishes."
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:131
+#: src/prokop/tabs/dashboard/overview.ts:142
 msgid "A configuration change was not confirmed. Traffic that needs DPI bypass may be blocked; see the recovery details for the next step."
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:429
+#: src/prokop/tabs/dashboard/overview.ts:442
 msgid "A configuration restore did not finish: restore the last known good snapshot to finish it."
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:123
+#: src/prokop/tabs/dashboard/overview.ts:134
 msgid "A configuration restore did not finish. Traffic that needs DPI bypass stays blocked until you restore the last known good snapshot."
 msgstr ""
 
@@ -187,7 +209,7 @@ msgstr ""
 msgid "A Connection rule needs a connection: add a connection URL, a subscription, a network interface or a JSON outbound, or disable the rule."
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:734
+#: src/prokop/tabs/autotune/initController.ts:715
 msgid "A domain, or a list of a DPI rule measured through a few of its domains."
 msgstr ""
 
@@ -195,11 +217,11 @@ msgstr ""
 msgid "a failed change left the DPI guard in place; restart Prokop"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:415
+#: src/prokop/tabs/dashboard/overview.ts:428
 msgid "A failed change left the DPI guard in place: restart Prokop to remove it."
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:119
+#: src/prokop/tabs/dashboard/overview.ts:130
 msgid "A failed change left the DPI guard in place. Traffic that needs DPI bypass stays blocked until you restart Prokop."
 msgstr ""
 
@@ -211,7 +233,7 @@ msgstr ""
 msgid "A group is one Zapret DPI rule. Prokop changes only the strategy of an existing rule, for all its targets at once. It never creates or deletes rules and never turns DPI bypass off."
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:692
+#: src/prokop/tabs/autotune/initController.ts:673
 msgid "A list of a DPI rule. Each check takes a few of its domains; keywords and regular expressions are skipped."
 msgstr ""
 
@@ -219,7 +241,7 @@ msgstr ""
 msgid "a previous apply is not resolved"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:540
+#: src/prokop/tabs/autotune/initController.ts:521
 msgid "A rolled back strategy is not applied again before this time passes."
 msgstr ""
 
@@ -247,7 +269,7 @@ msgstr ""
 msgid "A safe isolated check is not possible right now."
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:686
+#: src/prokop/tabs/autotune/initController.ts:667
 msgid "A site or service checked through the DPI rule that routes it."
 msgstr ""
 
@@ -272,18 +294,22 @@ msgstr ""
 msgid "Action"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:939
-#: src/prokop/tabs/autotune/initController.ts:1111
+#: src/prokop/tabs/updates/componentActionToast.ts:65
+msgid "Action completed"
+msgstr ""
+
+#: src/prokop/tabs/autotune/initController.ts:921
+#: src/prokop/tabs/autotune/initController.ts:1093
 msgid "Action required"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:989
-#: src/prokop/tabs/monitoring/initController.ts:1292
+#: src/prokop/tabs/monitoring/initController.ts:993
+#: src/prokop/tabs/monitoring/initController.ts:1294
 msgid "Actions"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:770
-#: src/prokop/tabs/monitoring/initController.ts:1108
+#: src/prokop/tabs/monitoring/initController.ts:774
+#: src/prokop/tabs/monitoring/initController.ts:1110
 #: src/prokop/tabs/monitoring/render.ts:51
 msgid "Active"
 msgstr ""
@@ -292,7 +318,7 @@ msgstr ""
 msgid "Active Bootstrap DNS"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:1678
+#: src/prokop/tabs/monitoring/initController.ts:1680
 msgid "Active connections of all devices are interrupted."
 msgstr ""
 
@@ -304,19 +330,19 @@ msgstr ""
 msgid "Active until the next firewall reload"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:55
+#: src/prokop/tabs/history/model.ts:51
 msgid "Active: a change is being applied"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:70
+#: src/prokop/tabs/history/model.ts:66
 msgid "Active: DPI switch not confirmed"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:60
+#: src/prokop/tabs/history/model.ts:56
 msgid "Active: kept by a failed change"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:65
+#: src/prokop/tabs/history/model.ts:61
 msgid "Active: restore not finished"
 msgstr ""
 
@@ -332,7 +358,7 @@ msgstr ""
 msgid "Add a rule"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:998
+#: src/prokop/tabs/autotune/initController.ts:980
 msgid "Add a target first"
 msgstr ""
 
@@ -348,8 +374,8 @@ msgstr ""
 msgid "Add prefix to nodes"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:728
-#: src/prokop/tabs/autotune/initController.ts:1339
+#: src/prokop/tabs/autotune/initController.ts:709
+#: src/prokop/tabs/autotune/initController.ts:1321
 msgid "Add target"
 msgstr ""
 
@@ -361,7 +387,7 @@ msgstr ""
 msgid "add the interface item %s with the DNS resolver %s %s"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:1284
+#: src/prokop/tabs/autotune/initController.ts:1266
 msgid "Add the sites that go through your DPI rules, for example youtube.com."
 msgstr ""
 
@@ -399,8 +425,8 @@ msgstr ""
 msgid "Additionally filter servers by protocol, transport, and security. Add only servers matching the specified parameters."
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:261
-#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:308
+#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:274
+#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:321
 #: src/prokop/tabs/diagnostic/siteCheck.ts:122
 msgid "Address"
 msgstr ""
@@ -425,7 +451,7 @@ msgstr ""
 msgid "Advanced settings"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:196
+#: src/prokop/tabs/history/model.ts:192
 msgid "All"
 msgstr ""
 
@@ -434,13 +460,13 @@ msgid "All check results"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4351
-#: src/prokop/tabs/monitoring/initController.ts:631
+#: src/prokop/tabs/monitoring/initController.ts:635
 #: src/prokop/tabs/monitoring/render.ts:84
 msgid "All devices"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:1510
-#: src/prokop/tabs/dashboard/overviewCards.ts:318
+#: src/prokop/tabs/autotune/initController.ts:1492
+#: src/prokop/tabs/dashboard/overviewCards.ts:335
 msgid "All events"
 msgstr ""
 
@@ -448,7 +474,7 @@ msgstr ""
 msgid "All except selected"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:668
+#: src/prokop/tabs/monitoring/initController.ts:672
 msgid "All paths"
 msgstr ""
 
@@ -488,11 +514,11 @@ msgstr ""
 msgid "Allows limiting the list of servers for URLTest"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:946
+#: src/prokop/tabs/autotune/initController.ts:928
 msgid "An administrator can roll it back."
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:156
+#: src/prokop/tabs/dashboard/overview.ts:167
 msgid "An interrupted package update is being recovered. Avoid changes until it completes."
 msgstr ""
 
@@ -501,7 +527,7 @@ msgid "An IP address needs no DNS"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/configform.js:342
-#: src/prokop/tabs/history/model.ts:421
+#: src/prokop/tabs/history/model.ts:417
 msgid "and %d more"
 msgstr ""
 
@@ -513,7 +539,7 @@ msgstr ""
 msgid "Another action of this kind is already running. Try again when it finishes."
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:333
+#: src/prokop/tabs/autotune/initController.ts:337
 #: src/prokop/tabs/autotune/model.ts:1156
 msgid "Another autotune operation is running."
 msgstr ""
@@ -534,7 +560,7 @@ msgstr ""
 msgid "Another snapshot operation is already in progress. Changes were not applied; try again in a moment."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:439
+#: src/prokop/tabs/history/model.ts:435
 msgid "Another snapshot operation is already in progress. Try again in a moment."
 msgstr ""
 
@@ -550,7 +576,7 @@ msgstr ""
 msgid "Applied and checked, but not confirmed as the working configuration"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:325
+#: src/prokop/tabs/history/model.ts:321
 msgid "Applied by reload"
 msgstr ""
 
@@ -562,7 +588,7 @@ msgstr ""
 msgid "Apply"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:1209
+#: src/prokop/tabs/autotune/initController.ts:1191
 msgid "Apply %s"
 msgstr ""
 
@@ -578,17 +604,17 @@ msgstr ""
 msgid "Apply section rules only to the specified local IP addresses"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:897
+#: src/prokop/tabs/autotune/initController.ts:879
 #: src/prokop/tabs/autotune/model.ts:888
 msgid "Applying a strategy"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:210
-#: src/prokop/tabs/dashboard/overview.ts:263
+#: src/prokop/tabs/dashboard/overview.ts:221
+#: src/prokop/tabs/dashboard/overview.ts:274
 msgid "Applying changes…"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/initController.ts:1366
+#: src/prokop/tabs/dashboard/initController.ts:1395
 msgid "Applying Prokop configuration…"
 msgstr ""
 
@@ -600,11 +626,11 @@ msgstr ""
 msgid "Applying the new strategy did not finish: its reload did not succeed, and the configuration was changed meanwhile. Prokop kept that change instead of rolling back. Check the rule, or restore the snapshot you need in History and recovery."
 msgstr ""
 
-#: src/prokop/tabs/dashboard/initController.ts:1349
+#: src/prokop/tabs/dashboard/initController.ts:1382
 msgid "Applying…"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:1680
+#: src/prokop/tabs/monitoring/initController.ts:1682
 msgid "Apps reconnect on their own; downloads and calls may drop"
 msgstr ""
 
@@ -624,11 +650,7 @@ msgstr ""
 msgid "At least one valid IP or subnet must be specified."
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:207
-msgid "At most %d change(s) per day; a rolled back strategy waits %s."
-msgstr ""
-
-#: src/partials/modal/renderModal.ts:286
+#: src/partials/modal/renderModal.ts:306
 msgid "Auto refresh"
 msgstr ""
 
@@ -645,8 +667,12 @@ msgstr ""
 msgid "Automatic apply requires high confidence."
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:533
+#: src/prokop/tabs/autotune/initController.ts:514
 msgid "Automatic changes per day"
+msgstr ""
+
+#: src/prokop/tabs/autotune/initController.ts:806
+msgid "automatic changes per day: up to %d"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:753
@@ -657,7 +683,7 @@ msgstr ""
 msgid "Automatic recovery did not finish."
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:595
+#: src/prokop/tabs/autotune/initController.ts:576
 msgid "Automatically"
 msgstr ""
 
@@ -670,19 +696,19 @@ msgid "Automatically check installed components for new versions"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3433
-#: src/prokop/tabs/dashboard/initController.ts:1581
+#: src/prokop/tabs/dashboard/initController.ts:1611
 msgid "Automatically select the fastest node in the current level"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:303
+#: src/prokop/tabs/dashboard/overview.ts:314
 msgid "Autostart is off"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:303
+#: src/prokop/tabs/dashboard/overview.ts:314
 msgid "Autostart is on"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:194
+#: src/prokop/tabs/history/model.ts:190
 msgid "Autotune"
 msgstr ""
 
@@ -694,7 +720,7 @@ msgstr ""
 msgid "Autotune cannot change the strategy of this rule."
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:1464
+#: src/prokop/tabs/autotune/initController.ts:1446
 msgid "Autotune checks only the sites listed here."
 msgstr ""
 
@@ -702,16 +728,16 @@ msgstr ""
 msgid "Autotune history"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:1178
+#: src/prokop/tabs/autotune/initController.ts:1160
 msgid "Autotune is off. To apply the recommendation, switch to \"Recommendations only\" and apply it here, or to \"Automatic\"."
 msgstr ""
 
 #: src/prokop/ui/status.ts:286
-#: src/prokop/tabs/autotune/initController.ts:218
+#: src/prokop/tabs/autotune/initController.ts:222
 msgid "Autotune mode changed"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:517
+#: src/prokop/tabs/autotune/initController.ts:498
 msgid "Autotune policy"
 msgstr ""
 
@@ -727,53 +753,58 @@ msgstr ""
 msgid "Autotune run"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:842
+#: src/prokop/tabs/autotune/initController.ts:824
+#: src/prokop/tabs/dashboard/overview.ts:501
 msgid "Autotune state is unavailable"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:274
+#: src/prokop/tabs/history/model.ts:270
 msgid "Autotune: %s applied automatically"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:273
+#: src/prokop/tabs/history/model.ts:269
 msgid "Autotune: %s applied manually"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:269
+#: src/prokop/tabs/history/model.ts:265
 msgid "Autotune: automatic apply"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:279
+#: src/prokop/tabs/history/model.ts:275
 msgid "Autotune: automatic apply of %s"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:287
+#: src/prokop/tabs/history/model.ts:283
 msgid "Autotune: automatic rollback"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:291
+#: src/prokop/tabs/history/model.ts:287
 msgid "Autotune: automatic rollback of %s"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:268
+#: src/prokop/tabs/history/model.ts:264
 msgid "Autotune: manual apply"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:278
+#: src/prokop/tabs/history/model.ts:274
 msgid "Autotune: manual apply of %s"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:286
+#: src/prokop/tabs/history/model.ts:282
 msgid "Autotune: manual rollback"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:290
+#: src/prokop/tabs/history/model.ts:286
 msgid "Autotune: manual rollback of %s"
 msgstr ""
 
 #: src/prokop/ui/states.ts:60
 #: src/prokop/tabs/diagnostic/renderDiagnostic.ts:25
 msgid "Available to administrators only."
+msgstr ""
+
+#: src/helpers/prettyBytes.ts:4
+msgid "B"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6575
@@ -786,15 +817,15 @@ msgstr ""
 msgid "Basics"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:328
+#: src/prokop/tabs/history/model.ts:324
 msgid "Before applying changes"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:334
+#: src/prokop/tabs/history/model.ts:330
 msgid "Before autotune"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:330
+#: src/prokop/tabs/history/model.ts:326
 msgid "Before restore"
 msgstr ""
 
@@ -805,6 +836,7 @@ msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4268
 #: src/prokop/tabs/monitoring/connectionView.ts:120
+#: src/prokop/tabs/dashboard/partials/getOutboundFooterLabel.ts:13
 msgid "Block"
 msgstr ""
 
@@ -841,21 +873,21 @@ msgstr ""
 msgid "Bootstrap DNS Servers"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:174
+#: src/prokop/tabs/dashboard/overview.ts:185
 msgid "br_netfilter is loaded"
 msgstr ""
 
 #: src/prokop/tabs/diagnostic/checkCards.ts:75
-#: src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:51
-#: src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:79
+#: src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:59
+#: src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:93
 msgid "Browser FakeIP check could not be completed"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:82
+#: src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:96
 msgid "Browser is not using FakeIP"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:81
+#: src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:95
 msgid "Browser is using FakeIP correctly"
 msgstr ""
 
@@ -872,7 +904,7 @@ msgstr ""
 msgid "Built-in rule sets of the same services: %s. They match more than the removed sets (domains and other addresses of these services), so they were not added."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:220
+#: src/prokop/tabs/history/model.ts:216
 msgid "Built-in rule sets of the same services: %s. They were not added; the rule editor offers them."
 msgstr ""
 
@@ -937,7 +969,7 @@ msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4270
 #: src/prokop/tabs/monitoring/connectionView.ts:116
-#: src/prokop/tabs/monitoring/initController.ts:217
+#: src/prokop/tabs/monitoring/initController.ts:221
 msgid "Bypass"
 msgstr ""
 
@@ -965,11 +997,12 @@ msgstr ""
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5159
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8625
 #: src/prokop/ui/confirmAction.ts:30
-#: src/prokop/tabs/autotune/initController.ts:451
-#: src/prokop/tabs/dashboard/initController.ts:1441
+#: src/prokop/tabs/autotune/dialog.ts:34
+#: src/prokop/tabs/dashboard/initController.ts:1470
 #: src/prokop/tabs/updates/fullUninstall.ts:17
-#: src/prokop/tabs/updates/releaseSelector.ts:62
-#: src/prokop/tabs/updates/releaseSelector.ts:123
+#: src/prokop/tabs/updates/releaseSelector.ts:40
+#: src/prokop/tabs/updates/releaseSelector.ts:92
+#: src/prokop/tabs/updates/releaseSelector.ts:136
 msgid "Cancel"
 msgstr ""
 
@@ -1005,15 +1038,15 @@ msgstr ""
 msgid "Cascade connection"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:437
+#: src/prokop/tabs/dashboard/overview.ts:450
 msgid "Change in progress"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:394
+#: src/prokop/tabs/history/initController.ts:397
 msgid "Changes"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:210
+#: src/prokop/tabs/autotune/initController.ts:214
 msgid "Changes are made only by scheduled checks, one group at a time."
 msgstr ""
 
@@ -1021,11 +1054,15 @@ msgstr ""
 msgid "Changes compare a snapshot with the saved configuration. Unsaved form edits are not included."
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:229
+#: src/prokop/tabs/autotune/initController.ts:211
+msgid "Changes per day: at most %d; a rolled back strategy waits %s."
+msgstr ""
+
+#: src/prokop/tabs/history/initController.ts:232
 msgid "Changes since this snapshot"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:283
+#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:296
 #: src/prokop/tabs/diagnostic/renderDiagnostic.ts:54
 #: src/prokop/tabs/diagnostic/renderDiagnostic.ts:94
 msgid "Check"
@@ -1039,7 +1076,7 @@ msgstr ""
 msgid "Check a site or app"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:1147
+#: src/prokop/tabs/monitoring/initController.ts:1149
 msgid "Check address in Diagnostics"
 msgstr ""
 
@@ -1047,19 +1084,19 @@ msgstr ""
 msgid "Check all"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:1002
+#: src/prokop/tabs/autotune/initController.ts:984
 msgid "Check all now"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:232
+#: src/prokop/tabs/autotune/initController.ts:236
 msgid "Check completed"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:519
+#: src/prokop/tabs/autotune/initController.ts:500
 msgid "Check every"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:101
+#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:104
 msgid "Check failed"
 msgstr ""
 
@@ -1077,15 +1114,19 @@ msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2921
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3384
-#: src/prokop/tabs/dashboard/initController.ts:1568
+#: src/prokop/tabs/dashboard/initController.ts:1598
 msgid "Check interval"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:1224
+#: src/prokop/tabs/autotune/initController.ts:804
+msgid "check interval: %s"
+msgstr ""
+
+#: src/prokop/tabs/autotune/initController.ts:1206
 msgid "Check now"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:391
+#: src/prokop/tabs/autotune/initController.ts:395
 msgid "Check started. Targets are measured in isolation; production traffic is not changed."
 msgstr ""
 
@@ -1093,7 +1134,7 @@ msgstr ""
 msgid "Check the DNS server addresses in Settings or choose another server."
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/siteCheck.ts:178
+#: src/prokop/tabs/diagnostic/siteCheck.ts:182
 msgid "Check the node of the rule in Monitoring → Nodes and groups."
 msgstr ""
 
@@ -1101,17 +1142,17 @@ msgstr ""
 msgid "Check timeout after which the server is considered dead"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:824
+#: src/prokop/tabs/updates/initController.ts:827
 msgid "Check update"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2947
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3371
-#: src/prokop/tabs/dashboard/initController.ts:1566
+#: src/prokop/tabs/dashboard/initController.ts:1596
 msgid "Check URL"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:1134
+#: src/prokop/tabs/autotune/initController.ts:1116
 msgid "Checked"
 msgstr ""
 
@@ -1123,8 +1164,8 @@ msgstr ""
 msgid "Checking now"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:906
-#: src/prokop/tabs/autotune/initController.ts:1042
+#: src/prokop/tabs/autotune/initController.ts:888
+#: src/prokop/tabs/autotune/initController.ts:1024
 #: src/prokop/tabs/autotune/model.ts:889
 msgid "Checking targets"
 msgstr ""
@@ -1141,7 +1182,7 @@ msgstr ""
 msgid "Checking the recommendation"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/initController.ts:865
+#: src/prokop/tabs/diagnostic/initController.ts:866
 #: src/prokop/tabs/diagnostic/checks/runByedpiCheck.ts:14
 #: src/prokop/tabs/diagnostic/checks/runDnsCheck.ts:15
 #: src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:15
@@ -1154,12 +1195,12 @@ msgid "Checking, please wait"
 msgstr ""
 
 #: src/prokop/ui/status.ts:140
-#: src/prokop/tabs/autotune/initController.ts:1002
-#: src/prokop/tabs/autotune/initController.ts:1224
-#: src/prokop/tabs/dashboard/overview.ts:257
-#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:111
+#: src/prokop/tabs/autotune/initController.ts:984
+#: src/prokop/tabs/autotune/initController.ts:1206
+#: src/prokop/tabs/dashboard/overview.ts:268
+#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:114
 #: src/prokop/tabs/diagnostic/dpiPlayground.ts:48
-#: src/prokop/tabs/diagnostic/siteCheck.ts:262
+#: src/prokop/tabs/diagnostic/siteCheck.ts:266
 #: src/prokop/tabs/diagnostic/statusLabels.ts:28
 msgid "Checking…"
 msgstr ""
@@ -1174,7 +1215,7 @@ msgid "Checks failed"
 msgstr ""
 
 #: src/prokop/tabs/diagnostic/checks/getCheckItemsMeta.ts:23
-#: src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:43
+#: src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:49
 #: src/prokop/tabs/diagnostic/helpers/getMeta.ts:13
 msgid "Checks passed"
 msgstr ""
@@ -1195,20 +1236,20 @@ msgstr ""
 msgid "Choose a list of a DPI rule."
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:654
+#: src/prokop/tabs/autotune/initController.ts:635
 msgid "Choose at least one domain of the list."
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:596
+#: src/prokop/tabs/autotune/initController.ts:577
 msgid "Choose from the list"
 msgstr ""
 
-#: src/prokop/tabs/updates/releaseSelector.ts:82
-#: src/prokop/tabs/updates/releaseSelector.ts:88
+#: src/prokop/tabs/updates/releaseSelector.ts:95
+#: src/prokop/tabs/updates/releaseSelector.ts:101
 msgid "Choose Prokop version"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1300
+#: src/prokop/tabs/updates/initController.ts:1303
 msgid "Choose version"
 msgstr ""
 
@@ -1233,16 +1274,16 @@ msgid "Clear…"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3713
-#: src/partials/modal/renderModal.ts:263
-#: src/prokop/tabs/autotune/initController.ts:812
-#: src/prokop/tabs/dashboard/initController.ts:1313
-#: src/prokop/tabs/dashboard/initController.ts:1700
-#: src/prokop/tabs/history/initController.ts:239
-#: src/prokop/tabs/updates/releaseSelector.ts:133
+#: src/partials/modal/renderModal.ts:283
+#: src/prokop/tabs/autotune/initController.ts:793
+#: src/prokop/tabs/dashboard/initController.ts:1333
+#: src/prokop/tabs/dashboard/initController.ts:1730
+#: src/prokop/tabs/history/initController.ts:242
+#: src/prokop/tabs/updates/releaseSelector.ts:148
 msgid "Close"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:1682
+#: src/prokop/tabs/monitoring/initController.ts:1684
 msgid "Close all"
 msgstr ""
 
@@ -1251,26 +1292,26 @@ msgstr ""
 msgid "Close all connections"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:1677
+#: src/prokop/tabs/monitoring/initController.ts:1679
 msgid "Close all connections?"
 msgstr ""
 
 #: src/prokop/tabs/monitoring/connectionView.ts:205
-#: src/prokop/tabs/monitoring/initController.ts:1178
+#: src/prokop/tabs/monitoring/initController.ts:1180
 msgid "Close connection"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:1096
-#: src/prokop/tabs/monitoring/initController.ts:1097
+#: src/prokop/tabs/monitoring/initController.ts:1098
+#: src/prokop/tabs/monitoring/initController.ts:1099
 msgid "Close details"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:962
+#: src/prokop/tabs/monitoring/initController.ts:966
 msgid "closed"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:777
-#: src/prokop/tabs/monitoring/initController.ts:1109
+#: src/prokop/tabs/monitoring/initController.ts:781
+#: src/prokop/tabs/monitoring/initController.ts:1111
 #: src/prokop/tabs/monitoring/render.ts:60
 msgid "Closed"
 msgstr ""
@@ -1287,7 +1328,7 @@ msgstr ""
 msgid "Component update check interval"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:239
+#: src/prokop/tabs/history/model.ts:235
 msgid "Component update check interval was %s, shorter than the 1 h minimum of automatic updates: set to %s."
 msgstr ""
 
@@ -1299,7 +1340,7 @@ msgstr ""
 msgid "compressed"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:339
+#: src/prokop/tabs/history/model.ts:335
 msgid "Concurrent edit"
 msgstr ""
 
@@ -1312,7 +1353,7 @@ msgstr ""
 msgid "confidence"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:1131
+#: src/prokop/tabs/autotune/initController.ts:1113
 msgid "Confidence"
 msgstr ""
 
@@ -1320,7 +1361,7 @@ msgstr ""
 msgid "Config File Path"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:190
+#: src/prokop/tabs/history/model.ts:186
 msgid "Configuration"
 msgstr ""
 
@@ -1337,11 +1378,11 @@ msgstr ""
 msgid "Configuration reload"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:682
+#: src/prokop/tabs/history/model.ts:678
 msgid "Configuration restored and reloaded"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:692
+#: src/prokop/tabs/history/model.ts:688
 msgid "Configuration restored, but Prokop is stopped: it was not started or checked. The restored configuration takes effect when Prokop is started."
 msgstr ""
 
@@ -1365,19 +1406,19 @@ msgstr ""
 msgid "Configure User-Agent in the item settings"
 msgstr ""
 
-#: src/prokop/tabs/updates/releaseSelector.ts:40
+#: src/prokop/tabs/updates/releaseSelector.ts:44
 msgid "Confirm version change"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:1133
+#: src/prokop/tabs/autotune/initController.ts:1115
 msgid "Confirmation"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:1101
+#: src/prokop/tabs/autotune/initController.ts:1083
 msgid "Confirmation %d / %d"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:521
+#: src/prokop/tabs/autotune/initController.ts:502
 msgid "Confirmations"
 msgstr ""
 
@@ -1398,11 +1439,11 @@ msgstr ""
 msgid "Connection"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:1017
+#: src/prokop/tabs/monitoring/initController.ts:1021
 msgid "Connection ID"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:97
+#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:100
 msgid "Connection refused or host unreachable"
 msgstr ""
 
@@ -1410,12 +1451,12 @@ msgstr ""
 msgid "Connection URL"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overviewCards.ts:258
+#: src/prokop/tabs/dashboard/overviewCards.ts:260
 #: src/prokop/tabs/monitoring/render.ts:14
 msgid "Connections"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:1358
+#: src/prokop/tabs/monitoring/initController.ts:1360
 msgid "Connections are unavailable"
 msgstr ""
 
@@ -1443,30 +1484,30 @@ msgstr ""
 msgid "Copied"
 msgstr ""
 
-#: src/partials/modal/renderModal.ts:258
+#: src/partials/modal/renderModal.ts:278
 msgid "Copy"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1347
+#: src/prokop/tabs/updates/initController.ts:1350
 msgid "Copy address"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:1164
+#: src/prokop/tabs/monitoring/initController.ts:1166
 #: src/prokop/tabs/diagnostic/partials/renderCheckSection.ts:153
 msgid "Copy details"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/initController.ts:196
-#: src/prokop/tabs/dashboard/initController.ts:199
+#: src/prokop/tabs/dashboard/initController.ts:233
+#: src/prokop/tabs/dashboard/initController.ts:236
 msgid "Could not change autostart"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:225
-#: src/prokop/tabs/history/initController.ts:292
+#: src/prokop/tabs/history/initController.ts:228
+#: src/prokop/tabs/history/initController.ts:295
 msgid "Could not compare configurations"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:89
+#: src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:103
 msgid "Could not compare FakeIP and control public IPs"
 msgstr ""
 
@@ -1474,36 +1515,40 @@ msgstr ""
 msgid "Could not confirm completion. Check the removal log before retrying."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:551
+#: src/prokop/tabs/history/model.ts:547
 msgid "Could not create snapshot"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:478
+#: src/prokop/tabs/history/model.ts:474
 msgid "Could not delete snapshot"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:1264
+#: src/prokop/tabs/autotune/initController.ts:1246
 msgid "Could not determine the current rule of each target; results of the last check are shown."
 msgstr ""
 
 #: src/prokop/tabs/updates/releaseSelector.ts:26
-#: src/prokop/tabs/updates/releaseSelector.ts:131
+#: src/prokop/tabs/updates/releaseSelector.ts:144
 msgid "Could not load available versions"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:355
+#: src/prokop/tabs/history/initController.ts:358
 msgid "Could not load configuration snapshots"
 msgstr ""
 
 #: src/prokop/ui/states.ts:115
 #: src/prokop/tabs/diagnostic/initController.ts:588
 #: src/prokop/tabs/diagnostic/initController.ts:592
-#: src/prokop/tabs/diagnostic/initController.ts:627
-#: src/prokop/tabs/diagnostic/initController.ts:631
-#: src/prokop/tabs/diagnostic/initController.ts:667
-#: src/prokop/tabs/diagnostic/initController.ts:671
-#: src/prokop/tabs/history/initController.ts:253
+#: src/prokop/tabs/diagnostic/initController.ts:628
+#: src/prokop/tabs/diagnostic/initController.ts:632
+#: src/prokop/tabs/diagnostic/initController.ts:668
+#: src/prokop/tabs/diagnostic/initController.ts:672
+#: src/prokop/tabs/history/initController.ts:256
 msgid "Could not load data"
+msgstr ""
+
+#: src/prokop/tabs/dashboard/sectionsRefresh.ts:51
+msgid "Could not refresh. Showing data from %s"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/configform.js:107
@@ -1526,17 +1571,17 @@ msgstr ""
 msgid "Could not start removal. Another component action may be running."
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:335
 #: src/prokop/tabs/autotune/initController.ts:339
+#: src/prokop/tabs/autotune/initController.ts:343
 msgid "Could not start the apply"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:401
 #: src/prokop/tabs/autotune/initController.ts:405
+#: src/prokop/tabs/autotune/initController.ts:409
 msgid "Could not start the check"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:345
+#: src/prokop/tabs/history/initController.ts:348
 msgid "Create snapshot"
 msgstr ""
 
@@ -1568,7 +1613,7 @@ msgstr ""
 msgid "Custom strategy"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/partials/renderSections.ts:38
+#: src/prokop/tabs/dashboard/partials/renderSections.ts:43
 msgid "Dashboard currently unavailable"
 msgstr ""
 
@@ -1576,7 +1621,7 @@ msgstr ""
 msgid "Debug"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1117
+#: src/prokop/tabs/updates/initController.ts:1120
 msgid "Dedicated cgroup unavailable"
 msgstr ""
 
@@ -1600,19 +1645,19 @@ msgstr ""
 msgid "Delay value cannot be empty"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:310
+#: src/prokop/tabs/history/initController.ts:313
 msgid "Delete"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:308
+#: src/prokop/tabs/history/initController.ts:311
 msgid "Delete snapshot?"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:309
+#: src/prokop/tabs/history/initController.ts:312
 msgid "Delete this configuration snapshot?"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:408
+#: src/prokop/tabs/history/initController.ts:411
 msgid "Delete…"
 msgstr ""
 
@@ -1620,15 +1665,15 @@ msgstr ""
 msgid "Derived from configuration"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:980
-#: src/prokop/tabs/monitoring/initController.ts:1008
-#: src/prokop/tabs/monitoring/initController.ts:1035
-#: src/prokop/tabs/monitoring/initController.ts:1288
+#: src/prokop/tabs/monitoring/initController.ts:984
+#: src/prokop/tabs/monitoring/initController.ts:1012
+#: src/prokop/tabs/monitoring/initController.ts:1037
+#: src/prokop/tabs/monitoring/initController.ts:1290
 msgid "Destination"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:1370
-#: src/prokop/tabs/autotune/initController.ts:1411
+#: src/prokop/tabs/autotune/initController.ts:1352
+#: src/prokop/tabs/autotune/initController.ts:1393
 #: src/prokop/tabs/monitoring/connectionView.ts:198
 #: src/prokop/tabs/diagnostic/partials/renderCheckSection.ts:180
 msgid "Details"
@@ -1639,7 +1684,7 @@ msgstr ""
 msgid "Detect server country"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:1256
+#: src/prokop/tabs/autotune/initController.ts:1238
 msgid "Determining which rule routes each target…"
 msgstr ""
 
@@ -1647,12 +1692,12 @@ msgstr ""
 msgid "detour must be a non-empty string"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/initController.ts:793
+#: src/prokop/tabs/diagnostic/initController.ts:794
 #: src/prokop/tabs/diagnostic/renderDiagnostic.ts:82
-#: src/prokop/tabs/monitoring/initController.ts:979
-#: src/prokop/tabs/monitoring/initController.ts:1034
-#: src/prokop/tabs/monitoring/initController.ts:1104
-#: src/prokop/tabs/monitoring/initController.ts:1287
+#: src/prokop/tabs/monitoring/initController.ts:983
+#: src/prokop/tabs/monitoring/initController.ts:1036
+#: src/prokop/tabs/monitoring/initController.ts:1106
+#: src/prokop/tabs/monitoring/initController.ts:1289
 #: src/prokop/tabs/monitoring/render.ts:82
 msgid "Device"
 msgstr ""
@@ -1686,19 +1731,20 @@ msgid "DHCP is managed manually"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/diagnostics.js:18
-#: src/prokop/tabs/dashboard/overviewCards.ts:207
+#: src/prokop/tabs/dashboard/overviewCards.ts:209
 msgid "Diagnostics"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:311
+#: src/prokop/tabs/dashboard/overview.ts:322
 msgid "Diagnostics has not been run yet"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:218
+#: src/prokop/tabs/monitoring/initController.ts:222
 msgid "direct"
 msgstr ""
 
 #: src/prokop/tabs/monitoring/connectionView.ts:118
+#: src/prokop/tabs/dashboard/partials/getOutboundFooterLabel.ts:8
 msgid "Direct"
 msgstr ""
 
@@ -1706,16 +1752,17 @@ msgstr ""
 msgid "Direct connection"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1087
+#: src/prokop/tabs/updates/componentActionToast.ts:20
+#: src/prokop/tabs/updates/initController.ts:1090
 msgid "Direct Proxy"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1096
-#: src/prokop/tabs/updates/initController.ts:1127
+#: src/prokop/tabs/updates/initController.ts:1099
+#: src/prokop/tabs/updates/initController.ts:1130
 msgid "Disable"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overviewCards.ts:188
+#: src/prokop/tabs/dashboard/overviewCards.ts:190
 msgid "Disable autostart"
 msgstr ""
 
@@ -1730,8 +1777,8 @@ msgstr ""
 #: src/prokop/ui/status.ts:172
 #: src/prokop/tabs/autotune/model.ts:684
 #: src/prokop/tabs/autotune/model.ts:717
-#: src/prokop/tabs/updates/initController.ts:1090
-#: src/prokop/tabs/updates/initController.ts:1122
+#: src/prokop/tabs/updates/initController.ts:1093
+#: src/prokop/tabs/updates/initController.ts:1125
 msgid "Disabled"
 msgstr ""
 
@@ -1758,7 +1805,7 @@ msgstr ""
 msgid "DNS Check Interval"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:83
+#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:86
 msgid "DNS check needs a domain name"
 msgstr ""
 
@@ -1766,7 +1813,7 @@ msgstr ""
 msgid "DNS checks"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:96
+#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:99
 msgid "DNS name did not resolve"
 msgstr ""
 
@@ -1821,7 +1868,7 @@ msgstr ""
 msgid "DNS server address cannot be empty"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:744
+#: src/prokop/tabs/autotune/initController.ts:725
 msgid "DNS server for checks"
 msgstr ""
 
@@ -1883,8 +1930,8 @@ msgstr ""
 msgid "Does not work without bypass; a stable strategy was found."
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:559
-#: src/prokop/tabs/autotune/initController.ts:684
+#: src/prokop/tabs/autotune/initController.ts:540
+#: src/prokop/tabs/autotune/initController.ts:665
 msgid "Domain"
 msgstr ""
 
@@ -1892,7 +1939,7 @@ msgstr ""
 msgid "Domain and IP lists"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:94
+#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:97
 msgid "Domain does not exist"
 msgstr ""
 
@@ -1929,7 +1976,7 @@ msgstr ""
 msgid "Domains of device-limited rules not blocked through DNS (shared by all devices)"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:706
+#: src/prokop/tabs/autotune/initController.ts:687
 msgid "Domains of the list"
 msgstr ""
 
@@ -1937,7 +1984,7 @@ msgstr ""
 msgid "Domains the excluded devices of this section resolve while Prokop is stopped (through their own resolver)"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:699
+#: src/prokop/tabs/autotune/initController.ts:680
 msgid "Domains to check"
 msgstr ""
 
@@ -1950,9 +1997,7 @@ msgstr ""
 msgid "Dont Touch My DHCP!"
 msgstr ""
 
-#: src/partials/modal/renderModal.ts:253
-#: src/prokop/tabs/monitoring/initController.ts:1043
-#: src/prokop/tabs/monitoring/render.ts:101
+#: src/partials/modal/renderModal.ts:273
 msgid "Download"
 msgstr ""
 
@@ -2013,6 +2058,7 @@ msgid "DPI"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/autotune.js:15
+#: src/prokop/tabs/dashboard/overviewCards.ts:272
 msgid "DPI autotune"
 msgstr ""
 
@@ -2020,7 +2066,7 @@ msgstr ""
 msgid "DPI bypass of the rules using this provider may not work."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:131
+#: src/prokop/tabs/history/model.ts:127
 msgid "DPI guard"
 msgstr ""
 
@@ -2028,7 +2074,7 @@ msgstr ""
 msgid "DPI protection is active"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:148
+#: src/prokop/tabs/dashboard/overview.ts:159
 msgid "DPI protection is holding traffic"
 msgstr ""
 
@@ -2036,7 +2082,7 @@ msgstr ""
 msgid "DPI rule groups"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:1124
+#: src/prokop/tabs/monitoring/initController.ts:1126
 msgid "DPI strategy"
 msgstr ""
 
@@ -2052,16 +2098,20 @@ msgstr ""
 msgid "Duplicate value"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:1042
+#: src/prokop/tabs/monitoring/initController.ts:1044
 #: src/prokop/tabs/monitoring/render.ts:100
 msgid "Duration"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:1083
+#: src/prokop/tabs/autotune/initController.ts:1065
 msgid "Each target is measured in isolation; production traffic is not changed. After the probes Prokop waits until their connections close, which can take a few minutes on a blocked site."
 msgstr ""
 
-#: src/prokop/tabs/dashboard/initController.ts:1301
+#: src/helpers/prettyBytes.ts:10
+msgid "EB"
+msgstr ""
+
+#: src/prokop/tabs/dashboard/initController.ts:1345
 msgid "Edit"
 msgstr ""
 
@@ -2069,15 +2119,15 @@ msgstr ""
 msgid "Edit rule action"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:728
+#: src/prokop/tabs/autotune/initController.ts:709
 msgid "Edit target"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/initController.ts:1446
+#: src/prokop/tabs/dashboard/initController.ts:1475
 msgid "Edit URLTest"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:1420
+#: src/prokop/tabs/autotune/initController.ts:1402
 msgid "Edit…"
 msgstr ""
 
@@ -2086,8 +2136,8 @@ msgid "Empty response"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8672
-#: src/prokop/tabs/updates/initController.ts:1103
-#: src/prokop/tabs/updates/initController.ts:1134
+#: src/prokop/tabs/updates/initController.ts:1106
+#: src/prokop/tabs/updates/initController.ts:1137
 msgid "Enable"
 msgstr ""
 
@@ -2095,7 +2145,7 @@ msgstr ""
 msgid "Enable automatic updates for remote lists and rule sets"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overviewCards.ts:189
+#: src/prokop/tabs/dashboard/overviewCards.ts:191
 msgid "Enable autostart"
 msgstr ""
 
@@ -2119,7 +2169,7 @@ msgstr ""
 msgid "Enable Mixed Proxy Authentication"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1077
+#: src/prokop/tabs/updates/initController.ts:1080
 msgid "Enable mode 2"
 msgstr ""
 
@@ -2135,9 +2185,9 @@ msgstr ""
 msgid "Enable YACD WAN Access"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:750
-#: src/prokop/tabs/updates/initController.ts:1089
-#: src/prokop/tabs/updates/initController.ts:1119
+#: src/prokop/tabs/autotune/initController.ts:731
+#: src/prokop/tabs/updates/initController.ts:1092
+#: src/prokop/tabs/updates/initController.ts:1122
 msgid "Enabled"
 msgstr ""
 
@@ -2156,7 +2206,7 @@ msgstr ""
 msgid "Enter a domain name, for example youtube.com."
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/siteCheck.ts:258
+#: src/prokop/tabs/diagnostic/siteCheck.ts:262
 msgid "Enter a domain or IP address"
 msgstr ""
 
@@ -2165,7 +2215,7 @@ msgstr ""
 msgid "Enter a level name"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:85
+#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:88
 msgid "Enter a port"
 msgstr ""
 
@@ -2177,7 +2227,7 @@ msgstr ""
 msgid "Enter a valid DNS server address"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/siteCheck.ts:219
+#: src/prokop/tabs/diagnostic/siteCheck.ts:223
 msgid "Enter a valid domain or IP address"
 msgstr ""
 
@@ -2185,7 +2235,7 @@ msgstr ""
 msgid "Enter a whole number of milliseconds from 0 to 60000"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:80
+#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:83
 msgid "Enter an address"
 msgstr ""
 
@@ -2202,10 +2252,6 @@ msgstr ""
 
 #: src/prokop/tabs/diagnostic/checkCards.ts:147
 msgid "Errors: %d"
-msgstr ""
-
-#: src/prokop/tabs/autotune/initController.ts:822
-msgid "every %s"
 msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:1462
@@ -2272,7 +2318,7 @@ msgstr ""
 msgid "Expecting: %s"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/partials/renderSections.ts:125
+#: src/prokop/tabs/dashboard/partials/renderSections.ts:150
 msgid "Expires"
 msgstr ""
 
@@ -2294,13 +2340,13 @@ msgstr ""
 msgid "Failed"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:1649
-#: src/prokop/tabs/monitoring/initController.ts:1664
+#: src/prokop/tabs/monitoring/initController.ts:1651
+#: src/prokop/tabs/monitoring/initController.ts:1666
 msgid "Failed to close connection"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:1696
-#: src/prokop/tabs/monitoring/initController.ts:1709
+#: src/prokop/tabs/monitoring/initController.ts:1698
+#: src/prokop/tabs/monitoring/initController.ts:1711
 msgid "Failed to close connections"
 msgstr ""
 
@@ -2312,37 +2358,37 @@ msgstr ""
 msgid "Failed to create support report"
 msgstr ""
 
-#: src/prokop/methods/shell/index.ts:195
-#: src/prokop/methods/shell/index.ts:201
-#: src/prokop/tabs/updates/initController.ts:549
-#: src/prokop/tabs/updates/initController.ts:562
-#: src/prokop/tabs/updates/initController.ts:613
-#: src/prokop/tabs/updates/initController.ts:803
+#: src/prokop/methods/shell/index.ts:191
+#: src/prokop/methods/shell/index.ts:197
+#: src/prokop/tabs/updates/initController.ts:552
+#: src/prokop/tabs/updates/initController.ts:565
+#: src/prokop/tabs/updates/initController.ts:616
+#: src/prokop/tabs/updates/initController.ts:806
 msgid "Failed to execute"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/initController.ts:1416
+#: src/prokop/tabs/dashboard/initController.ts:1445
 msgid "Failed to save URLTest settings"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/initController.ts:953
-#: src/prokop/tabs/dashboard/initController.ts:958
+#: src/prokop/tabs/dashboard/initController.ts:984
+#: src/prokop/tabs/dashboard/initController.ts:989
 msgid "Failed to switch the node"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/initController.ts:479
-#: src/prokop/tabs/dashboard/initController.ts:480
-#: src/prokop/tabs/dashboard/initController.ts:546
-#: src/prokop/tabs/dashboard/initController.ts:1755
+#: src/prokop/tabs/dashboard/initController.ts:504
+#: src/prokop/tabs/dashboard/initController.ts:505
+#: src/prokop/tabs/dashboard/initController.ts:571
+#: src/prokop/tabs/dashboard/initController.ts:1785
 #: src/prokop/tabs/dashboard/subscriptionJob.ts:10
 msgid "Failed to update subscriptions"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:91
+#: src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:105
 msgid "FakeIP and control checks use different public IPs"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:92
+#: src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:106
 msgid "FakeIP and control checks use the same public IP"
 msgstr ""
 
@@ -2359,16 +2405,16 @@ msgid "FakeIP works; only the comparison with the control address did not give a
 msgstr ""
 
 #: src/prokop/tabs/diagnostic/checkCards.ts:87
-#: src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:46
+#: src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:52
 msgid "FakeIP works; public IP comparison is inconclusive"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3444
-#: src/prokop/tabs/dashboard/initController.ts:1587
+#: src/prokop/tabs/dashboard/initController.ts:1617
 msgid "Faster server search interval"
 msgstr ""
 
-#: src/prokop/methods/custom/getDashboardSections.ts:652
+#: src/prokop/methods/custom/getDashboardSections.ts:657
 msgid "Fastest"
 msgstr ""
 
@@ -2393,15 +2439,15 @@ msgstr ""
 msgid "Follow new"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:711
+#: src/prokop/tabs/monitoring/initController.ts:715
 msgid "Following new connections"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/siteCheck.ts:174
+#: src/prokop/tabs/diagnostic/siteCheck.ts:178
 msgid "For a DPI rule this can mean the strategy does not work with your provider."
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:528
+#: src/prokop/tabs/autotune/initController.ts:509
 msgid "For recommendations. Automatic apply always requires high confidence."
 msgstr ""
 
@@ -2422,12 +2468,16 @@ msgid "From the router"
 msgstr ""
 
 #: src/prokop/tabs/updates/fullUninstall.ts:101
-#: src/prokop/tabs/updates/fullUninstall.ts:129
+#: src/prokop/tabs/updates/fullUninstall.ts:131
 msgid "Full removal"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7117
 msgid "Fuzzing is not supported here because Prokop needs deterministic runtime validation."
+msgstr ""
+
+#: src/helpers/prettyBytes.ts:7
+msgid "GB"
 msgstr ""
 
 #: src/constants.ts:56
@@ -2442,11 +2492,15 @@ msgstr ""
 msgid "Global check"
 msgstr ""
 
+#: src/prokop/tabs/dashboard/overview.ts:512
+msgid "Groups: %d · targets: %d"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4749
 msgid "has no effect"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:286
+#: src/prokop/tabs/dashboard/overview.ts:297
 msgid "Health state unavailable"
 msgstr ""
 
@@ -2460,7 +2514,7 @@ msgstr ""
 msgid "Help"
 msgstr ""
 
-#: src/partials/modal/renderModal.ts:310
+#: src/partials/modal/renderModal.ts:330
 msgid "Hide values"
 msgstr ""
 
@@ -2469,7 +2523,7 @@ msgid "high"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3408
-#: src/prokop/tabs/dashboard/initController.ts:1573
+#: src/prokop/tabs/dashboard/initController.ts:1603
 msgid "Higher-level check interval"
 msgstr ""
 
@@ -2485,16 +2539,16 @@ msgstr ""
 msgid "History and recovery"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:149
+#: src/prokop/tabs/history/initController.ts:152
 msgid "History is kept in memory until the router restarts."
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:1474
-#: src/prokop/tabs/history/initController.ts:136
+#: src/prokop/tabs/autotune/initController.ts:1456
+#: src/prokop/tabs/history/initController.ts:139
 msgid "History is unavailable"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:1011
+#: src/prokop/tabs/monitoring/initController.ts:1015
 msgid "Host"
 msgstr ""
 
@@ -2523,12 +2577,12 @@ msgid "HTTPS request made by the router itself"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2960
-#: src/prokop/tabs/dashboard/initController.ts:1198
-#: src/prokop/tabs/dashboard/initController.ts:1452
+#: src/prokop/tabs/dashboard/initController.ts:1229
+#: src/prokop/tabs/dashboard/initController.ts:1481
 msgid "Idle timeout"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:191
+#: src/prokop/tabs/dashboard/overview.ts:202
 msgid "If the VPN kill-switch is enabled, its sections stay blocked until Prokop is started."
 msgstr ""
 
@@ -2574,11 +2628,11 @@ msgid "In automatic mode only scheduled checks count; \"Check now\" does not."
 msgstr ""
 
 #: src/prokop/ui/status.ts:166
-#: src/prokop/tabs/history/model.ts:82
+#: src/prokop/tabs/history/model.ts:78
 msgid "In progress"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:201
+#: src/prokop/tabs/history/initController.ts:204
 msgid "In snapshot"
 msgstr ""
 
@@ -2586,7 +2640,7 @@ msgstr ""
 msgid "In use: sing-box does not answer; names of VPN sections stay blocked, other names use the regular DNS"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:51
+#: src/prokop/tabs/history/model.ts:47
 msgid "Inactive"
 msgstr ""
 
@@ -2618,39 +2672,39 @@ msgstr ""
 msgid "Info"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:838
-#: src/prokop/tabs/updates/initController.ts:981
-#: src/prokop/tabs/updates/initController.ts:1307
-#: src/prokop/tabs/updates/releaseSelector.ts:64
+#: src/prokop/tabs/updates/initController.ts:841
+#: src/prokop/tabs/updates/initController.ts:984
+#: src/prokop/tabs/updates/initController.ts:1310
+#: src/prokop/tabs/updates/releaseSelector.ts:68
 msgid "Install"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1377
+#: src/prokop/tabs/updates/initController.ts:1380
 msgid "Install another build:"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:940
+#: src/prokop/tabs/updates/initController.ts:943
 msgid "Install Extended build"
 msgstr ""
 
-#: src/prokop/tabs/updates/releaseSelector.ts:107
+#: src/prokop/tabs/updates/releaseSelector.ts:120
 msgid "Install selected version"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:931
+#: src/prokop/tabs/updates/initController.ts:934
 msgid "Install Tiny build"
 msgstr ""
 
-#: src/prokop/tabs/updates/releaseSelector.ts:97
+#: src/prokop/tabs/updates/releaseSelector.ts:110
 msgid "Installed"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1055
+#: src/prokop/tabs/updates/initController.ts:1058
 msgid "Installed (Mirror edition)"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:301
-#: src/prokop/tabs/updates/initController.ts:1198
+#: src/prokop/tabs/updates/initController.ts:304
+#: src/prokop/tabs/updates/initController.ts:1201
 msgid "Installed version is newer than release"
 msgstr ""
 
@@ -2668,9 +2722,9 @@ msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2974
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3460
-#: src/prokop/tabs/dashboard/initController.ts:1200
-#: src/prokop/tabs/dashboard/initController.ts:1453
-#: src/prokop/tabs/dashboard/initController.ts:1593
+#: src/prokop/tabs/dashboard/initController.ts:1231
+#: src/prokop/tabs/dashboard/initController.ts:1482
+#: src/prokop/tabs/dashboard/initController.ts:1623
 msgid "Interrupt connections"
 msgstr ""
 
@@ -2682,8 +2736,8 @@ msgstr ""
 msgid "Interrupt connections when URLTest switches the selected server"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/initController.ts:1196
-#: src/prokop/tabs/dashboard/initController.ts:1450
+#: src/prokop/tabs/dashboard/initController.ts:1227
+#: src/prokop/tabs/dashboard/initController.ts:1479
 msgid "Interval"
 msgstr ""
 
@@ -2880,6 +2934,34 @@ msgstr ""
 msgid "Invalid SOCKS URL: parsing failed"
 msgstr ""
 
+#: src/validators/validateTrojanUrl.ts:48
+msgid "Invalid Trojan URL: invalid host and port"
+msgstr ""
+
+#: src/validators/validateTrojanUrl.ts:64
+msgid "Invalid Trojan URL: invalid port number"
+msgstr ""
+
+#: src/validators/validateTrojanUrl.ts:29
+msgid "Invalid Trojan URL: missing credentials and host"
+msgstr ""
+
+#: src/validators/validateTrojanUrl.ts:55
+msgid "Invalid Trojan URL: missing hostname"
+msgstr ""
+
+#: src/validators/validateTrojanUrl.ts:41
+msgid "Invalid Trojan URL: missing hostname and port"
+msgstr ""
+
+#: src/validators/validateTrojanUrl.ts:35
+msgid "Invalid Trojan URL: missing password"
+msgstr ""
+
+#: src/validators/validateTrojanUrl.ts:59
+msgid "Invalid Trojan URL: missing port"
+msgstr ""
+
 #: src/validators/validateTrojanUrl.ts:16
 msgid "Invalid Trojan URL: must not contain spaces"
 msgstr ""
@@ -2888,7 +2970,7 @@ msgstr ""
 msgid "Invalid Trojan URL: must start with trojan://"
 msgstr ""
 
-#: src/validators/validateTrojanUrl.ts:61
+#: src/validators/validateTrojanUrl.ts:67
 msgid "Invalid Trojan URL: parsing failed"
 msgstr ""
 
@@ -2898,8 +2980,96 @@ msgstr ""
 msgid "Invalid URL format"
 msgstr ""
 
-#: src/validators/validateVlessUrl.ts:117
+#: src/validators/validateVlessUrl.ts:113
+msgid "Invalid VLESS URL: flow xtls-rprx-vision-udp443 is not supported"
+msgstr ""
+
+#: src/validators/validateVlessUrl.ts:43
+msgid "Invalid VLESS URL: invalid host and port"
+msgstr ""
+
+#: src/validators/validateVlessUrl.ts:60
+msgid "Invalid VLESS URL: invalid port number"
+msgstr ""
+
+#: src/validators/validateVlessUrl.ts:106
+msgid "Invalid VLESS URL: missing fp for reality"
+msgstr ""
+
+#: src/validators/validateVlessUrl.ts:28
+msgid "Invalid VLESS URL: missing host and UUID"
+msgstr ""
+
+#: src/validators/validateVlessUrl.ts:50
+msgid "Invalid VLESS URL: missing hostname"
+msgstr ""
+
+#: src/validators/validateVlessUrl.ts:101
+msgid "Invalid VLESS URL: missing pbk for reality"
+msgstr ""
+
+#: src/validators/validateVlessUrl.ts:54
+msgid "Invalid VLESS URL: missing port"
+msgstr ""
+
+#: src/validators/validateVlessUrl.ts:66
+msgid "Invalid VLESS URL: missing query parameters"
+msgstr ""
+
+#: src/validators/validateVlessUrl.ts:37
+msgid "Invalid VLESS URL: missing server"
+msgstr ""
+
+#: src/validators/validateVlessUrl.ts:34
+msgid "Invalid VLESS URL: missing UUID"
+msgstr ""
+
+#: src/validators/validateVlessUrl.ts:16
+msgid "Invalid VLESS URL: must not contain spaces"
+msgstr ""
+
+#: src/validators/validateVlessUrl.ts:10
+msgid "Invalid VLESS URL: must start with vless://"
+msgstr ""
+
+#: src/validators/validateVlessUrl.ts:121
 msgid "Invalid VLESS URL: parsing failed"
+msgstr ""
+
+#: src/validators/validateVlessUrl.ts:94
+msgid "Invalid VLESS URL: unsupported or missing security"
+msgstr ""
+
+#: src/validators/validateVlessUrl.ts:88
+msgid "Invalid VLESS URL: unsupported or missing type"
+msgstr ""
+
+#: src/validators/validateVmessUrl.ts:47
+msgid "Invalid VMess URL: invalid config"
+msgstr ""
+
+#: src/validators/validateVmessUrl.ts:58
+msgid "Invalid VMess URL: invalid port number"
+msgstr ""
+
+#: src/validators/validateVmessUrl.ts:52
+msgid "Invalid VMess URL: invalid server"
+msgstr ""
+
+#: src/validators/validateVmessUrl.ts:41
+msgid "Invalid VMess URL: missing encoded config"
+msgstr ""
+
+#: src/validators/validateVmessUrl.ts:63
+msgid "Invalid VMess URL: missing UUID"
+msgstr ""
+
+#: src/validators/validateVmessUrl.ts:32
+msgid "Invalid VMess URL: must not contain spaces"
+msgstr ""
+
+#: src/validators/validateVmessUrl.ts:25
+msgid "Invalid VMess URL: must start with vmess://"
 msgstr ""
 
 #: src/validators/validateVmessUrl.ts:68
@@ -2967,11 +3137,11 @@ msgstr ""
 msgid "It is not routed by a DPI rule."
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:204
+#: src/prokop/tabs/autotune/initController.ts:207
 msgid "It never creates or deletes rules, never turns DPI bypass off and never moves targets between rules."
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:759
+#: src/prokop/tabs/autotune/initController.ts:740
 msgid "Its measurements are deleted as well. Routing rules are not changed."
 msgstr ""
 
@@ -3006,6 +3176,10 @@ msgstr ""
 msgid "just now"
 msgstr ""
 
+#: src/helpers/prettyBytes.ts:5
+msgid "KB"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3470
 msgid "Keep Priority before latency-sorted servers"
 msgstr ""
@@ -3030,19 +3204,20 @@ msgstr ""
 msgid "Kill-switch status is unavailable: %s"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:936
-#: src/prokop/tabs/autotune/initController.ts:1137
+#: src/prokop/tabs/autotune/initController.ts:918
+#: src/prokop/tabs/autotune/initController.ts:1119
 msgid "Last change"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:774
+#: src/prokop/tabs/autotune/initController.ts:755
 msgid "last check"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:911
-#: src/prokop/tabs/autotune/initController.ts:917
-#: src/prokop/tabs/autotune/initController.ts:918
-#: src/prokop/tabs/diagnostic/partials/renderRunAction.ts:55
+#: src/prokop/tabs/autotune/initController.ts:893
+#: src/prokop/tabs/autotune/initController.ts:899
+#: src/prokop/tabs/autotune/initController.ts:900
+#: src/prokop/tabs/dashboard/overview.ts:562
+#: src/prokop/tabs/diagnostic/partials/renderRunAction.ts:56
 msgid "Last check"
 msgstr ""
 
@@ -3054,7 +3229,7 @@ msgstr ""
 msgid "Last check postponed"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:307
+#: src/prokop/tabs/dashboard/overview.ts:318
 msgid "Last diagnostics: %s"
 msgstr ""
 
@@ -3062,28 +3237,28 @@ msgstr ""
 msgid "Last error"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overviewCards.ts:304
+#: src/prokop/tabs/dashboard/overviewCards.ts:321
 msgid "Last important event"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:381
-#: src/prokop/tabs/history/model.ts:332
+#: src/prokop/tabs/history/initController.ts:384
+#: src/prokop/tabs/history/model.ts:328
 msgid "Last known good"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:159
+#: src/prokop/tabs/history/model.ts:155
 msgid "Last known good configuration"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:135
+#: src/prokop/tabs/history/model.ts:131
 msgid "Last recovery"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:150
+#: src/prokop/tabs/history/model.ts:146
 msgid "Last reload"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:379
+#: src/prokop/tabs/dashboard/overview.ts:392
 msgid "Last reload: %s"
 msgstr ""
 
@@ -3091,9 +3266,9 @@ msgstr ""
 msgid "Last update"
 msgstr ""
 
-#: src/prokop/methods/shell/index.ts:674
-#: src/prokop/methods/shell/index.ts:695
-#: src/prokop/tabs/dashboard/initController.ts:1047
+#: src/prokop/methods/shell/index.ts:671
+#: src/prokop/methods/shell/index.ts:692
+#: src/prokop/tabs/dashboard/initController.ts:1078
 #: src/prokop/tabs/dashboard/latencyJob.ts:9
 msgid "Latency test failed"
 msgstr ""
@@ -3102,16 +3277,16 @@ msgstr ""
 msgid "Latency test URL"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:304
-#: src/prokop/tabs/updates/initController.ts:1196
+#: src/prokop/tabs/updates/initController.ts:307
+#: src/prokop/tabs/updates/initController.ts:1199
 msgid "Latest version is installed"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1198
+#: src/prokop/tabs/updates/initController.ts:1201
 msgid "Latest version:"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:1049
+#: src/prokop/tabs/autotune/initController.ts:1031
 msgid "left"
 msgstr ""
 
@@ -3123,7 +3298,7 @@ msgstr ""
 msgid "less than a minute"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/initController.ts:1529
+#: src/prokop/tabs/dashboard/initController.ts:1559
 msgid "Level"
 msgstr ""
 
@@ -3131,7 +3306,7 @@ msgstr ""
 msgid "Level name"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:690
+#: src/prokop/tabs/autotune/initController.ts:671
 #: src/prokop/tabs/autotune/model.ts:694
 msgid "List"
 msgstr ""
@@ -3140,7 +3315,7 @@ msgstr ""
 msgid "List must be an HTTP(S) URL or a local .lst path"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:563
+#: src/prokop/tabs/autotune/initController.ts:544
 msgid "List of a rule"
 msgstr ""
 
@@ -3148,7 +3323,7 @@ msgstr ""
 msgid "List Update Frequency"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:242
+#: src/prokop/tabs/history/model.ts:238
 msgid "List update frequency was %s, shorter than the 1 h minimum of automatic updates: set to %s."
 msgstr ""
 
@@ -3160,11 +3335,11 @@ msgstr ""
 msgid "Lists: %d"
 msgstr ""
 
-#: src/prokop/tabs/updates/releaseSelector.ts:80
+#: src/prokop/tabs/updates/releaseSelector.ts:88
 msgid "Loading available versions…"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:1348
+#: src/prokop/tabs/monitoring/initController.ts:1350
 #: src/prokop/tabs/monitoring/render.ts:164
 msgid "Loading connections"
 msgstr ""
@@ -3173,23 +3348,24 @@ msgstr ""
 msgid "Loading kill-switch status…"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:994
-#: src/prokop/tabs/updates/initController.ts:1005
-#: src/prokop/tabs/updates/initController.ts:1016
-#: src/prokop/tabs/updates/initController.ts:1029
-#: src/prokop/tabs/updates/initController.ts:1042
+#: src/prokop/tabs/updates/initController.ts:997
+#: src/prokop/tabs/updates/initController.ts:1008
+#: src/prokop/tabs/updates/initController.ts:1019
+#: src/prokop/tabs/updates/initController.ts:1032
+#: src/prokop/tabs/updates/initController.ts:1045
 msgid "Loading..."
 msgstr ""
 
 #: src/prokop/ui/states.ts:36
 #: src/prokop/tabs/autotune/domainPicker.ts:121
-#: src/prokop/tabs/autotune/initController.ts:1280
+#: src/prokop/tabs/autotune/initController.ts:1262
 #: src/prokop/tabs/autotune/render.ts:14
 #: src/prokop/tabs/autotune/render.ts:25
 #: src/prokop/tabs/autotune/render.ts:29
 #: src/prokop/tabs/autotune/render.ts:33
-#: src/prokop/tabs/dashboard/render.ts:14
-#: src/prokop/tabs/diagnostic/initController.ts:737
+#: src/prokop/tabs/dashboard/overview.ts:504
+#: src/prokop/tabs/dashboard/render.ts:16
+#: src/prokop/tabs/diagnostic/initController.ts:738
 #: src/prokop/tabs/history/render.ts:13
 #: src/prokop/tabs/history/render.ts:17
 #: src/prokop/tabs/history/render.ts:29
@@ -3204,7 +3380,7 @@ msgstr ""
 msgid "low"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/initController.ts:757
+#: src/prokop/tabs/diagnostic/initController.ts:758
 msgid "LuCI app"
 msgstr ""
 
@@ -3224,7 +3400,7 @@ msgstr ""
 msgid "Make sure the provider is installed and the rule strategy is valid, then restart Prokop."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:320
+#: src/prokop/tabs/history/model.ts:316
 msgid "Manual"
 msgstr ""
 
@@ -3234,6 +3410,10 @@ msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:204
 msgid "Manual checks only measure; changes are applied only on schedule."
+msgstr ""
+
+#: src/prokop/tabs/dashboard/partials/getOutboundFooterLabel.ts:10
+msgid "Manual selection"
 msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:521
@@ -3252,7 +3432,11 @@ msgstr ""
 msgid "Maximum time to wait for example.com to resolve during a DNS health check."
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:778
+#: src/helpers/prettyBytes.ts:6
+msgid "MB"
+msgstr ""
+
+#: src/prokop/tabs/autotune/initController.ts:759
 msgid "measured in isolation from production traffic"
 msgstr ""
 
@@ -3260,7 +3444,7 @@ msgstr ""
 msgid "medium"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:526
+#: src/prokop/tabs/autotune/initController.ts:507
 msgid "Minimum confidence"
 msgstr ""
 
@@ -3280,12 +3464,13 @@ msgstr ""
 msgid "Mixed Proxy Username"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:855
-#: src/prokop/tabs/autotune/initController.ts:863
+#: src/prokop/tabs/autotune/initController.ts:837
+#: src/prokop/tabs/autotune/initController.ts:845
+#: src/prokop/tabs/dashboard/overview.ts:572
 msgid "Mode"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1065
+#: src/prokop/tabs/updates/initController.ts:1068
 msgid "Mode 2 enabled"
 msgstr ""
 
@@ -3305,15 +3490,15 @@ msgstr ""
 msgid "Monitoring view"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/partials/renderSections.ts:132
+#: src/prokop/tabs/dashboard/partials/renderSections.ts:157
 msgid "More details"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:116
+#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:121
 msgid "ms"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overviewCards.ts:116
+#: src/prokop/tabs/dashboard/overviewCards.ts:118
 msgid "Multiple sing-box processes were found or their ownership is unclear. Restart is unavailable; traffic routing was not changed. Stop Prokop ends Prokop's traffic interception and stops the sing-box processes that Prokop runs; then start Prokop again. A sing-box of another program is not stopped, and Prokop starts only after it has exited."
 msgstr ""
 
@@ -3336,8 +3521,8 @@ msgstr ""
 #: src/prokop/tabs/diagnostic/statusLabels.ts:24
 #: src/prokop/tabs/diagnostic/statusLabels.ts:45
 #: src/prokop/tabs/diagnostic/statusLabels.ts:56
-#: src/prokop/tabs/history/model.ts:83
-#: src/prokop/tabs/history/model.ts:86
+#: src/prokop/tabs/history/model.ts:79
+#: src/prokop/tabs/history/model.ts:82
 msgid "Needs attention"
 msgstr ""
 
@@ -3366,12 +3551,13 @@ msgstr ""
 msgid "News"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:920
+#: src/prokop/tabs/autotune/initController.ts:902
+#: src/prokop/tabs/dashboard/overview.ts:566
 msgid "Next scheduled check"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:96
-#: src/prokop/tabs/history/model.ts:106
+#: src/prokop/tabs/history/model.ts:92
+#: src/prokop/tabs/history/model.ts:102
 msgid "Next step"
 msgstr ""
 
@@ -3409,22 +3595,22 @@ msgstr ""
 msgid "nftables checks"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/initController.ts:1064
-#: src/prokop/tabs/dashboard/initController.ts:1068
-#: src/prokop/tabs/dashboard/initController.ts:1144
-#: src/prokop/tabs/dashboard/initController.ts:1484
+#: src/prokop/tabs/dashboard/initController.ts:1095
+#: src/prokop/tabs/dashboard/initController.ts:1099
+#: src/prokop/tabs/dashboard/initController.ts:1175
+#: src/prokop/tabs/dashboard/initController.ts:1514
 msgid "No"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:1395
+#: src/prokop/tabs/monitoring/initController.ts:1397
 msgid "No active connections"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:1501
+#: src/prokop/tabs/autotune/initController.ts:1483
 msgid "No autotune events yet"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:223
+#: src/prokop/tabs/history/model.ts:219
 msgid "No built-in rule set replaces them."
 msgstr ""
 
@@ -3440,34 +3626,34 @@ msgstr ""
 msgid "No change was needed"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/partials/renderRunAction.ts:56
+#: src/prokop/tabs/diagnostic/partials/renderRunAction.ts:57
 msgid "No check has been run yet"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:1396
+#: src/prokop/tabs/monitoring/initController.ts:1398
 msgid "No closed connections"
 msgstr ""
 
-#: src/prokop/tabs/updates/releaseSelector.ts:103
+#: src/prokop/tabs/updates/releaseSelector.ts:116
 msgid "No compatible releases available"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:1376
+#: src/prokop/tabs/monitoring/initController.ts:1378
 msgid "No connections match the filters"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:360
+#: src/prokop/tabs/dashboard/overview.ts:373
 msgid "no data"
 msgstr ""
 
 #: src/prokop/ui/states.ts:102
-#: src/prokop/tabs/autotune/initController.ts:1244
-#: src/prokop/tabs/autotune/initController.ts:1346
+#: src/prokop/tabs/autotune/initController.ts:1226
+#: src/prokop/tabs/autotune/initController.ts:1328
 #: src/prokop/tabs/autotune/model.ts:468
 msgid "No data"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:95
+#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:98
 msgid "No DNS records for this name"
 msgstr ""
 
@@ -3479,16 +3665,16 @@ msgstr ""
 msgid "No domain of the list has an address at the DNS server."
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:737
+#: src/prokop/tabs/autotune/initController.ts:718
 msgid "No DPI rule has a downloaded list; only domains can be added."
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:184
+#: src/prokop/tabs/history/initController.ts:187
 msgid "No events of this kind"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overviewCards.ts:317
-#: src/prokop/tabs/history/initController.ts:183
+#: src/prokop/tabs/dashboard/overviewCards.ts:334
+#: src/prokop/tabs/history/initController.ts:186
 msgid "No events recorded yet"
 msgstr ""
 
@@ -3501,7 +3687,7 @@ msgstr ""
 msgid "No measurements yet."
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:1391
+#: src/prokop/tabs/monitoring/initController.ts:1393
 msgid "No new connections yet. Open the site or app you want to check."
 msgstr ""
 
@@ -3509,16 +3695,16 @@ msgstr ""
 msgid "No other marking rules found"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:465
+#: src/prokop/tabs/dashboard/overview.ts:478
 msgid "No recovery needed"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:386
-#: src/prokop/tabs/history/model.ts:156
+#: src/prokop/tabs/dashboard/overview.ts:399
+#: src/prokop/tabs/history/model.ts:152
 msgid "No reload recorded yet"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/siteCheck.ts:180
+#: src/prokop/tabs/diagnostic/siteCheck.ts:184
 msgid "No rule handles it; it may need to be added to a rule."
 msgstr ""
 
@@ -3539,16 +3725,16 @@ msgstr ""
 msgid "No rules use Zapret2"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:192
-#: src/prokop/tabs/history/initController.ts:291
+#: src/prokop/tabs/history/initController.ts:195
+#: src/prokop/tabs/history/initController.ts:294
 msgid "No saved changes since this snapshot"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:422
+#: src/prokop/tabs/history/initController.ts:425
 msgid "No snapshots yet"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:803
+#: src/prokop/tabs/autotune/initController.ts:784
 msgid "No strategies were measured"
 msgstr ""
 
@@ -3556,12 +3742,12 @@ msgstr ""
 msgid "No strategy is stable. The current strategy is kept."
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:1279
+#: src/prokop/tabs/autotune/initController.ts:1261
 msgid "No target is routed through a Zapret DPI rule"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:1281
-#: src/prokop/tabs/autotune/initController.ts:1461
+#: src/prokop/tabs/autotune/initController.ts:1263
+#: src/prokop/tabs/autotune/initController.ts:1443
 msgid "No targets yet"
 msgstr ""
 
@@ -3574,18 +3760,18 @@ msgstr ""
 msgid "No usable result"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/initController.ts:1285
-#: src/prokop/tabs/dashboard/initController.ts:1685
+#: src/prokop/tabs/dashboard/initController.ts:1316
+#: src/prokop/tabs/dashboard/initController.ts:1715
 msgid "Node list is empty"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/initController.ts:1224
-#: src/prokop/tabs/dashboard/initController.ts:1617
-#: src/prokop/tabs/dashboard/partials/renderSections.ts:335
+#: src/prokop/tabs/dashboard/initController.ts:1255
+#: src/prokop/tabs/dashboard/initController.ts:1647
+#: src/prokop/tabs/dashboard/partials/renderSections.ts:360
 msgid "Nodes"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overviewCards.ts:255
+#: src/prokop/tabs/dashboard/overviewCards.ts:257
 #: src/prokop/tabs/monitoring/render.ts:15
 #: src/prokop/tabs/diagnostic/partials/renderCheckSection.ts:97
 msgid "Nodes and groups"
@@ -3595,7 +3781,7 @@ msgstr ""
 msgid "none"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1065
+#: src/prokop/tabs/updates/initController.ts:1068
 msgid "Normal mode"
 msgstr ""
 
@@ -3626,12 +3812,13 @@ msgstr ""
 #: src/prokop/tabs/autotune/model.ts:422
 #: src/prokop/tabs/autotune/model.ts:681
 #: src/prokop/tabs/autotune/model.ts:720
-#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:109
+#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:112
 #: src/prokop/tabs/diagnostic/statusLabels.ts:32
 msgid "Not checked"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:918
+#: src/prokop/tabs/autotune/initController.ts:900
+#: src/prokop/tabs/dashboard/overview.ts:562
 msgid "Not checked yet"
 msgstr ""
 
@@ -3648,11 +3835,11 @@ msgstr ""
 
 #: src/prokop/helpers/singBoxVariant.ts:29
 #: src/prokop/helpers/singBoxVariant.ts:37
-#: src/prokop/tabs/diagnostic/initController.ts:739
-#: src/prokop/tabs/updates/initController.ts:1019
-#: src/prokop/tabs/updates/initController.ts:1032
-#: src/prokop/tabs/updates/initController.ts:1045
-#: src/prokop/tabs/updates/initController.ts:1056
+#: src/prokop/tabs/diagnostic/initController.ts:740
+#: src/prokop/tabs/updates/initController.ts:1022
+#: src/prokop/tabs/updates/initController.ts:1035
+#: src/prokop/tabs/updates/initController.ts:1048
+#: src/prokop/tabs/updates/initController.ts:1059
 msgid "Not installed"
 msgstr ""
 
@@ -3660,12 +3847,12 @@ msgstr ""
 msgid "Not managed (Dont Touch My DHCP)"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:140
-#: src/prokop/tabs/history/model.ts:147
+#: src/prokop/tabs/history/model.ts:136
+#: src/prokop/tabs/history/model.ts:143
 msgid "Not needed"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:163
+#: src/prokop/tabs/history/model.ts:159
 msgid "Not recorded yet"
 msgstr ""
 
@@ -3681,7 +3868,7 @@ msgid "Not responding"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:143
-#: src/prokop/tabs/dashboard/overview.ts:242
+#: src/prokop/tabs/dashboard/overview.ts:253
 #: src/prokop/tabs/diagnostic/diagnostic.store.ts:131
 #: src/prokop/tabs/diagnostic/initController.ts:106
 #: src/prokop/tabs/diagnostic/initController.ts:330
@@ -3691,12 +3878,12 @@ msgid "Not running"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/configform.js:332
-#: src/prokop/tabs/history/model.ts:365
+#: src/prokop/tabs/history/model.ts:361
 msgid "not set"
 msgstr ""
 
 #: src/prokop/ui/status.ts:137
-#: src/prokop/tabs/dashboard/overview.ts:226
+#: src/prokop/tabs/dashboard/overview.ts:237
 msgid "Not started"
 msgstr ""
 
@@ -3705,7 +3892,7 @@ msgstr ""
 msgid "Not supported"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:256
+#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:269
 msgid "not used"
 msgstr ""
 
@@ -3729,9 +3916,9 @@ msgstr ""
 msgid "Nothing was rolled back: the router has uncommitted uci changes of Prokop (made with \"uci set\" without a commit). Commit or revert them, then roll back again."
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:1127
+#: src/prokop/tabs/autotune/initController.ts:1109
 #: src/prokop/tabs/autotune/model.ts:1035
-#: src/prokop/tabs/history/initController.ts:202
+#: src/prokop/tabs/history/initController.ts:205
 msgid "Now"
 msgstr ""
 
@@ -3776,7 +3963,7 @@ msgstr ""
 msgid "Only servers with one of the selected transports."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:408
+#: src/prokop/tabs/history/model.ts:404
 msgid "Only the first %d changes are listed; %d changes in total."
 msgstr ""
 
@@ -3788,12 +3975,16 @@ msgstr ""
 msgid "Only: %d"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1189
-#: src/prokop/tabs/updates/initController.ts:1211
+#: src/prokop/tabs/updates/initController.ts:1192
+#: src/prokop/tabs/updates/initController.ts:1214
 msgid "Open"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:1120
+#: src/prokop/tabs/dashboard/overviewCards.ts:279
+msgid "Open autotune"
+msgstr ""
+
+#: src/prokop/tabs/autotune/initController.ts:1102
 msgid "Open History and recovery"
 msgstr ""
 
@@ -3806,7 +3997,7 @@ msgstr ""
 msgid "Open priority settings and enter a display name"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:1233
+#: src/prokop/tabs/autotune/initController.ts:1215
 #: src/prokop/tabs/diagnostic/partials/renderCheckSection.ts:94
 msgid "Open rules"
 msgstr ""
@@ -3816,8 +4007,8 @@ msgid "Open settings"
 msgstr ""
 
 #: src/helpers/withTimeout.ts:7
-#: src/prokop/methods/shell/index.ts:643
-#: src/prokop/methods/shell/index.ts:733
+#: src/prokop/methods/shell/index.ts:640
+#: src/prokop/methods/shell/index.ts:730
 msgid "Operation timed out"
 msgstr ""
 
@@ -3825,7 +4016,7 @@ msgstr ""
 msgid "Option \"%s\" contains an invalid input value."
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:746
+#: src/prokop/tabs/autotune/initController.ts:727
 msgid "Optional IPv4 address. By default the first IPv4 DNS server of Prokop is used."
 msgstr ""
 
@@ -3841,11 +4032,11 @@ msgstr ""
 msgid "Original repositories could not be restored. Removal was cancelled before deleting packages."
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/initController.ts:789
+#: src/prokop/tabs/diagnostic/initController.ts:790
 msgid "OS"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:341
+#: src/prokop/tabs/history/model.ts:337
 #: src/prokop/tabs/monitoring/connectionView.ts:122
 msgid "Other"
 msgstr ""
@@ -3854,7 +4045,7 @@ msgstr ""
 msgid "Other event"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:1015
+#: src/prokop/tabs/monitoring/initController.ts:1019
 msgid "Outbound chain"
 msgstr ""
 
@@ -3883,13 +4074,21 @@ msgstr ""
 msgid "Overview"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:144
+#: src/prokop/tabs/history/model.ts:140
 msgid "Package recovery"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:155
-#: src/prokop/tabs/dashboard/overview.ts:449
+#: src/prokop/tabs/dashboard/overview.ts:166
+#: src/prokop/tabs/dashboard/overview.ts:462
 msgid "Package recovery has not finished"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts:43
+msgid "Packet Steering mode 2 has been enabled"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts:46
+msgid "Packet Steering normal mode has been restored"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:899
@@ -3912,9 +4111,9 @@ msgstr ""
 msgid "Password cannot be empty"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:984
-#: src/prokop/tabs/monitoring/initController.ts:1037
-#: src/prokop/tabs/monitoring/initController.ts:1289
+#: src/prokop/tabs/monitoring/initController.ts:988
+#: src/prokop/tabs/monitoring/initController.ts:1039
+#: src/prokop/tabs/monitoring/initController.ts:1291
 #: src/prokop/tabs/monitoring/render.ts:89
 msgid "Path"
 msgstr ""
@@ -3935,26 +4134,30 @@ msgstr ""
 msgid "Path must end with cache.db"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:671
+#: src/prokop/tabs/monitoring/initController.ts:675
 msgid "Path type"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:1146
+#: src/prokop/tabs/autotune/initController.ts:1128
 msgid "Pause"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:538
+#: src/prokop/tabs/autotune/initController.ts:519
 msgid "Pause after a rollback"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:828
+#: src/prokop/tabs/autotune/initController.ts:810
 msgid "pause after a rollback %s"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:806
+#: src/prokop/tabs/monitoring/initController.ts:810
 #: src/prokop/tabs/monitoring/render.ts:140
 #: src/prokop/tabs/monitoring/render.ts:141
 msgid "Pause updates"
+msgstr ""
+
+#: src/helpers/prettyBytes.ts:9
+msgid "PB"
 msgstr ""
 
 #: src/prokop/tabs/diagnostic/diagnostic.store.ts:58
@@ -3978,21 +4181,21 @@ msgstr ""
 msgid "Pinned domains: %d"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:884
+#: src/prokop/tabs/autotune/initController.ts:866
 msgid "Policy"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:511
+#: src/prokop/tabs/autotune/initController.ts:492
 msgid "Policy saved"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:989
+#: src/prokop/tabs/autotune/initController.ts:971
 msgid "Policy…"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:255
-#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:258
-#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:310
+#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:268
+#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:271
+#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:323
 msgid "Port"
 msgstr ""
 
@@ -4005,7 +4208,7 @@ msgid "Port for the local mixed proxy of this section"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6463
-#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:88
+#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:91
 msgid "Port must be between 1 and 65535"
 msgstr ""
 
@@ -4042,17 +4245,17 @@ msgid "preparing the isolated check"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9251
-#: src/prokop/tabs/dashboard/partials/renderSections.ts:281
+#: src/prokop/tabs/dashboard/partials/renderSections.ts:306
 msgid "Priority"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/initController.ts:1712
-#: src/prokop/tabs/dashboard/partials/renderSections.ts:465
-#: src/prokop/tabs/dashboard/partials/renderSections.ts:466
+#: src/prokop/tabs/dashboard/initController.ts:1742
+#: src/prokop/tabs/dashboard/partials/renderSections.ts:504
+#: src/prokop/tabs/dashboard/partials/renderSections.ts:505
 msgid "Priority details"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/initController.ts:1554
+#: src/prokop/tabs/dashboard/initController.ts:1584
 msgid "Priority details are unavailable"
 msgstr ""
 
@@ -4071,7 +4274,7 @@ msgstr ""
 msgid "Priority settings"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:100
+#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:103
 msgid "Probe tool is missing on the router"
 msgstr ""
 
@@ -4079,7 +4282,7 @@ msgstr ""
 msgid "probes done, removing the temporary rules"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:545
+#: src/prokop/tabs/autotune/initController.ts:526
 msgid "Probes per strategy"
 msgstr ""
 
@@ -4087,11 +4290,11 @@ msgstr ""
 msgid "probes: %d of %d"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/partials/renderSections.ts:130
+#: src/prokop/tabs/dashboard/partials/renderSections.ts:155
 msgid "Profile"
 msgstr ""
 
-#: src/prokop/tabs/updates/releaseSelector.ts:55
+#: src/prokop/tabs/updates/releaseSelector.ts:59
 msgid "Prokop 1.0.31 and older have no VPN kill-switch. If it is enabled, the installation removes its protection, and protected traffic is no longer blocked while Prokop is stopped."
 msgstr ""
 
@@ -4111,7 +4314,11 @@ msgstr ""
 msgid "Prokop Error"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:176
+#: src/prokop/methods/shell/index.ts:887
+msgid "Prokop has been installed"
+msgstr ""
+
+#: src/prokop/tabs/dashboard/overview.ts:187
 msgid "Prokop has turned off the iptables hooks of br_netfilter (net.bridge.bridge-nf-call-iptables and -ip6tables) for transparent proxying: iptables rules do not filter bridged traffic while it runs. Stopping Prokop restores the previous values unless another program has changed them since."
 msgstr ""
 
@@ -4124,7 +4331,7 @@ msgstr ""
 msgid "Prokop is busy with another service action, so the change is not applied yet; apply it again when that action finishes."
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:279
+#: src/prokop/tabs/dashboard/overview.ts:290
 msgid "Prokop is running"
 msgstr ""
 
@@ -4148,7 +4355,7 @@ msgstr ""
 msgid "Prokop is stopped: the change applies when it is started."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:621
+#: src/prokop/tabs/history/model.ts:617
 msgid "Prokop is stopped: the configuration is replaced and checked, but Prokop is not started. It takes effect when you start Prokop."
 msgstr ""
 
@@ -4156,8 +4363,8 @@ msgstr ""
 msgid "Prokop is stopped. Start it to run the checks."
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:165
-#: src/prokop/tabs/dashboard/overview.ts:459
+#: src/prokop/tabs/dashboard/overview.ts:176
+#: src/prokop/tabs/dashboard/overview.ts:472
 msgid "Prokop kept or restored the previous configuration."
 msgstr ""
 
@@ -4185,7 +4392,7 @@ msgstr ""
 msgid "Prokop measures the targets on schedule and shows recommendations. It does not change rules."
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:266
+#: src/prokop/tabs/dashboard/overview.ts:277
 msgid "Prokop needs attention"
 msgstr ""
 
@@ -4198,7 +4405,7 @@ msgstr ""
 msgid "Prokop never turns DPI bypass off by itself."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:624
+#: src/prokop/tabs/history/model.ts:620
 msgid "Prokop reloads the configuration. If the reload fails, the previous configuration is restored automatically."
 msgstr ""
 
@@ -4214,11 +4421,15 @@ msgstr ""
 msgid "Prokop runtime"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:1336
+#: src/prokop/tabs/monitoring/initController.ts:1338
 msgid "Prokop service is stopped. Start the service to display connections."
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:216
+#: src/prokop/tabs/dashboard/partials/renderSections.ts:58
+msgid "Prokop service is stopped. Start the service to display nodes and groups."
+msgstr ""
+
+#: src/prokop/tabs/dashboard/overview.ts:227
 msgid "Prokop stays stopped until you start it: reloads, restores and updates do not start it."
 msgstr ""
 
@@ -4226,11 +4437,11 @@ msgstr ""
 msgid "Prokop stops handling traffic until it is started again."
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:228
+#: src/prokop/tabs/dashboard/overview.ts:239
 msgid "Prokop was not started since the router booted: reloads, restores and updates do not start it."
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:245
+#: src/prokop/tabs/dashboard/overview.ts:256
 msgid "Prokop was not stopped by the user: its start failed or it stopped unexpectedly."
 msgstr ""
 
@@ -4238,7 +4449,7 @@ msgstr ""
 msgid "Prokop was removed, but this is still in place: %s. See the removal log in /tmp/prokop-uninstall.*/output.log."
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:200
+#: src/prokop/tabs/autotune/initController.ts:203
 msgid "Prokop will change the strategy of existing DPI rules by itself, only after several confirmations in a row, with a production check and automatic rollback."
 msgstr ""
 
@@ -4307,12 +4518,12 @@ msgstr ""
 msgid "Protection and recovery"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:441
+#: src/prokop/tabs/dashboard/overview.ts:454
 msgid "Protection is active"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2429
-#: src/prokop/tabs/monitoring/initController.ts:1012
+#: src/prokop/tabs/monitoring/initController.ts:1016
 msgid "Protocol"
 msgstr ""
 
@@ -4333,12 +4544,17 @@ msgstr ""
 msgid "Re-apply now"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:116
+#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:121
 msgid "Reachable"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:141
 msgid "Ready"
+msgstr ""
+
+#: src/prokop/tabs/monitoring/initController.ts:1045
+#: src/prokop/tabs/monitoring/render.ts:101
+msgid "Received"
 msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:427
@@ -4349,7 +4565,11 @@ msgstr ""
 msgid "Recommendations only"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:1129
+#: src/prokop/tabs/dashboard/overview.ts:533
+msgid "Recommendations waiting for a decision: %d"
+msgstr ""
+
+#: src/prokop/tabs/autotune/initController.ts:1111
 msgid "Recommended"
 msgstr ""
 
@@ -4361,24 +4581,24 @@ msgid "Recovered"
 msgstr ""
 
 #: src/prokop/ui/status.ts:280
-#: src/prokop/tabs/dashboard/overviewCards.ts:288
+#: src/prokop/tabs/dashboard/overviewCards.ts:305
 msgid "Recovery"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:143
-#: src/prokop/tabs/dashboard/overviewCards.ts:297
+#: src/prokop/tabs/dashboard/overview.ts:154
+#: src/prokop/tabs/dashboard/overviewCards.ts:314
 msgid "Recovery details"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:91
+#: src/prokop/tabs/history/initController.ts:94
 msgid "Recovery state is unavailable"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/partials/renderSections.ts:126
+#: src/prokop/tabs/dashboard/partials/renderSections.ts:151
 msgid "Refill"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/initController.ts:1370
+#: src/prokop/tabs/dashboard/initController.ts:1399
 msgid "Refreshing Dashboard…"
 msgstr ""
 
@@ -4391,12 +4611,12 @@ msgid "Removal did not finish. See the removal log in /tmp/prokop-uninstall.*/ou
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5300
-#: src/prokop/tabs/autotune/initController.ts:760
-#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:290
-#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:291
-#: src/prokop/tabs/updates/initController.ts:733
-#: src/prokop/tabs/updates/initController.ts:883
-#: src/prokop/tabs/updates/initController.ts:972
+#: src/prokop/tabs/autotune/initController.ts:741
+#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:303
+#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:304
+#: src/prokop/tabs/updates/initController.ts:736
+#: src/prokop/tabs/updates/initController.ts:886
+#: src/prokop/tabs/updates/initController.ts:975
 msgid "Remove"
 msgstr ""
 
@@ -4408,7 +4628,7 @@ msgstr ""
 msgid "Remove %s from this rule? When you save the rule, it matches without them and the configuration can be applied again. Nothing else in the rule changes."
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:728
+#: src/prokop/tabs/updates/initController.ts:731
 msgid "Remove %s?"
 msgstr ""
 
@@ -4416,11 +4636,11 @@ msgstr ""
 msgid "Remove permanently"
 msgstr ""
 
-#: src/prokop/tabs/updates/fullUninstall.ts:135
+#: src/prokop/tabs/updates/fullUninstall.ts:137
 msgid "Remove Prokop and sing-box with their settings and restore the original device repositories."
 msgstr ""
 
-#: src/prokop/tabs/updates/fullUninstall.ts:140
+#: src/prokop/tabs/updates/fullUninstall.ts:142
 msgid "Remove Prokop completely"
 msgstr ""
 
@@ -4440,7 +4660,7 @@ msgstr ""
 msgid "Remove servers whose names match the expression from this level."
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:758
+#: src/prokop/tabs/autotune/initController.ts:739
 msgid "Remove target?"
 msgstr ""
 
@@ -4453,7 +4673,7 @@ msgid "Remove the specified servers from this level."
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5293
-#: src/prokop/tabs/autotune/initController.ts:1425
+#: src/prokop/tabs/autotune/initController.ts:1407
 msgid "Remove…"
 msgstr ""
 
@@ -4462,7 +4682,7 @@ msgstr ""
 msgid "Removing Prokop…"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/initController.ts:1400
+#: src/prokop/tabs/dashboard/initController.ts:1429
 msgid "Removing user settings…"
 msgstr ""
 
@@ -4470,8 +4690,8 @@ msgstr ""
 msgid "Require a username and password for the local mixed proxy"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:730
-#: src/prokop/tabs/monitoring/initController.ts:1385
+#: src/prokop/tabs/monitoring/initController.ts:734
+#: src/prokop/tabs/monitoring/initController.ts:1387
 msgid "Reset filters"
 msgstr ""
 
@@ -4499,9 +4719,9 @@ msgstr ""
 msgid "Resource selection by IP or CIDR inside nfqws2 is not supported here; sing-box selects resources before NFQUEUE."
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overviewCards.ts:148
-#: src/prokop/tabs/dashboard/overviewCards.ts:170
-#: src/prokop/tabs/dashboard/overviewCards.ts:283
+#: src/prokop/tabs/dashboard/overviewCards.ts:150
+#: src/prokop/tabs/dashboard/overviewCards.ts:172
+#: src/prokop/tabs/dashboard/overviewCards.ts:300
 msgid "Restart Prokop"
 msgstr ""
 
@@ -4509,7 +4729,7 @@ msgstr ""
 msgid "Restart Prokop on the Overview. If it repeats, open the logs under Technical data."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:97
+#: src/prokop/tabs/history/model.ts:93
 msgid "Restart Prokop: the restart removes the DPI guard that a failed change left in place."
 msgstr ""
 
@@ -4517,116 +4737,116 @@ msgstr ""
 msgid "Restart Prokop. If another add-on marks traffic, make sure it does not conflict."
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:411
+#: src/prokop/tabs/dashboard/overview.ts:424
 msgid "Restart required"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:294
+#: src/prokop/tabs/history/initController.ts:297
 msgid "Restore"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:286
+#: src/prokop/tabs/history/initController.ts:289
 msgid "Restore configuration snapshot?"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:801
+#: src/prokop/tabs/history/model.ts:797
 msgid "Restore did not finish: a failed change left the DPI guard in place, and the DPI guard stays active. Restart Prokop, then restore the snapshot again."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:792
+#: src/prokop/tabs/history/model.ts:788
 msgid "Restore did not finish: the configuration was changed while the snapshot was being applied."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:791
+#: src/prokop/tabs/history/model.ts:787
 msgid "Restore did not finish: the configuration was changed while the snapshot was being applied. Prokop was reloaded, but it is not known whether with the snapshot or with the change."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:809
+#: src/prokop/tabs/history/model.ts:805
 msgid "Restore did not finish: the service was busy and only queued the reload. The DPI guard stays active; restore again when the service is idle."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:818
+#: src/prokop/tabs/history/model.ts:814
 msgid "Restore failed; check the recovery state before retrying"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:707
+#: src/prokop/tabs/history/model.ts:703
 msgid "Restore failed; previous configuration and runtime recovered"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1070
+#: src/prokop/tabs/updates/initController.ts:1073
 msgid "Restore normal mode"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:425
+#: src/prokop/tabs/dashboard/overview.ts:438
 msgid "Restore required"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:107
+#: src/prokop/tabs/history/model.ts:103
 msgid "Restore the last known good snapshot: the restore finishes and removes the DPI guard."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:791
+#: src/prokop/tabs/history/model.ts:787
 msgid "Restore the snapshot you need to finish."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:765
+#: src/prokop/tabs/history/model.ts:761
 msgid "Restore was not applied: Prokop was stopped during the restore. The previous configuration is kept."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:788
+#: src/prokop/tabs/history/model.ts:784
 msgid "Restore was not applied: Prokop was stopped, and the configuration was changed during the restore."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:738
-#: src/prokop/tabs/history/model.ts:739
+#: src/prokop/tabs/history/model.ts:734
+#: src/prokop/tabs/history/model.ts:735
 msgid "Restore was not applied: the configuration file could not be written. The previous configuration is kept."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:704
+#: src/prokop/tabs/history/model.ts:700
 msgid "Restore was not applied: the service was busy and only queued the reload. The previous configuration is kept."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:762
+#: src/prokop/tabs/history/model.ts:758
 msgid "Restore was not applied: the snapshot configuration did not pass validation. The previous configuration is kept; Prokop stays stopped."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:716
+#: src/prokop/tabs/history/model.ts:712
 msgid "Restore was not started: a failed change left the DPI guard in place, and nothing can be reloaded until Prokop is restarted. Restart Prokop, then restore the snapshot if it is still needed."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:575
+#: src/prokop/tabs/history/model.ts:571
 msgid "Restore was not started: the configuration was changed while the restore was starting. Nothing was changed; check the change and try again."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:571
+#: src/prokop/tabs/history/model.ts:567
 msgid "Restore was not started: the current configuration could not be read. Nothing was changed."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:563
+#: src/prokop/tabs/history/model.ts:559
 msgid "Restore was not started: the current configuration could not be saved as a snapshot first. Nothing was changed. Check the free space on the router."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:579
+#: src/prokop/tabs/history/model.ts:575
 msgid "Restore was not started: the DPI guard that protects traffic during the restore could not be installed. Nothing was changed."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:726
+#: src/prokop/tabs/history/model.ts:722
 msgid "Restore was not started: the router has uncommitted uci changes of Prokop (made with \"uci set\" without a commit). Commit or revert them, then restore again."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:567
+#: src/prokop/tabs/history/model.ts:563
 msgid "Restore was not started: the snapshot is missing or damaged. Nothing was changed."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:583
+#: src/prokop/tabs/history/model.ts:579
 msgid "Restore was not started: the snapshot storage could not be locked. Nothing was changed."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:589
+#: src/prokop/tabs/history/model.ts:585
 msgid "Restore was not started: the snapshot was saved by an older version of Prokop, and its configuration could not be migrated to this version. Nothing was changed."
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:401
+#: src/prokop/tabs/history/initController.ts:404
 msgid "Restore…"
 msgstr ""
 
@@ -4634,12 +4854,12 @@ msgstr ""
 msgid "Restoring the previous configuration"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:265
-#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:311
+#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:278
+#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:324
 msgid "Result"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:806
+#: src/prokop/tabs/monitoring/initController.ts:810
 msgid "Resume updates"
 msgstr ""
 
@@ -4676,7 +4896,7 @@ msgstr ""
 msgid "Roll back the last autotune change?"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:1016
+#: src/prokop/tabs/autotune/initController.ts:998
 msgid "Roll back the last change…"
 msgstr ""
 
@@ -4693,17 +4913,17 @@ msgstr ""
 msgid "Rolled back by an administrator"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:890
+#: src/prokop/tabs/autotune/initController.ts:872
 msgid "Rolling back the last change"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:1015
+#: src/prokop/tabs/autotune/initController.ts:997
 msgid "Rolling back…"
 msgstr ""
 
 #: src/prokop/tabs/diagnostic/siteCheck.ts:80
 #: src/prokop/tabs/diagnostic/siteCheck.ts:105
-#: src/prokop/tabs/monitoring/initController.ts:1112
+#: src/prokop/tabs/monitoring/initController.ts:1114
 msgid "Route"
 msgstr ""
 
@@ -4715,23 +4935,28 @@ msgstr ""
 msgid "Route requests to this DNS server through another section."
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:632
+#: src/prokop/tabs/autotune/initController.ts:613
 msgid "Router DNS"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:297
+#: src/prokop/tabs/dashboard/overview.ts:308
 msgid "Router DNS is not pointed to Prokop"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/siteCheck.ts:297
+#: src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:58
+#: src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:80
+msgid "Router FakeIP check could not be completed"
+msgstr ""
+
+#: src/prokop/tabs/diagnostic/siteCheck.ts:301
 msgid "Router kernel route"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overviewCards.ts:215
+#: src/prokop/tabs/dashboard/overviewCards.ts:217
 msgid "Routing"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:342
+#: src/prokop/tabs/dashboard/overview.ts:353
 msgid "Routing is paused while Prokop is stopped."
 msgstr ""
 
@@ -4744,24 +4969,24 @@ msgid "rule"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/rules.js:27
-#: src/prokop/tabs/monitoring/initController.ts:680
-#: src/prokop/tabs/monitoring/initController.ts:1013
+#: src/prokop/tabs/monitoring/initController.ts:684
+#: src/prokop/tabs/monitoring/initController.ts:1017
 msgid "Rule"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:233
+#: src/prokop/tabs/history/model.ts:229
 msgid "Rule “%s”: a subscription source now sends the User-Agent set in its settings. Earlier versions ignored it and chose one automatically; clear the field to go back to automatic selection."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:249
+#: src/prokop/tabs/history/model.ts:245
 msgid "Rule “%s”: changed by the update."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:214
+#: src/prokop/tabs/history/model.ts:210
 msgid "Rule “%s”: the retired rule sets %s were removed from Built-in rule sets #2, their source no longer publishes them."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:226
+#: src/prokop/tabs/history/model.ts:222
 msgid "Rule “%s”: the subscription settings %s were removed. This version always generates the HWID from the router and hides nodes of imported URLTest groups and cascades."
 msgstr ""
 
@@ -4769,7 +4994,7 @@ msgstr ""
 msgid "Rule not calculated"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:1014
+#: src/prokop/tabs/monitoring/initController.ts:1018
 msgid "Rule payload"
 msgstr ""
 
@@ -4787,7 +5012,7 @@ msgid "Rule sets"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/rules.js:16
-#: src/prokop/tabs/dashboard/overviewCards.ts:261
+#: src/prokop/tabs/dashboard/overviewCards.ts:263
 msgid "Rules"
 msgstr ""
 
@@ -4819,11 +5044,11 @@ msgstr ""
 msgid "Rules proxy exist"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:731
+#: src/prokop/tabs/updates/initController.ts:734
 msgid "Rules that use this provider stop bypassing DPI"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/partials/renderRunAction.ts:24
+#: src/prokop/tabs/diagnostic/partials/renderRunAction.ts:25
 msgid "Run full diagnostics"
 msgstr ""
 
@@ -4840,9 +5065,9 @@ msgid "Russia: blocked inside"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3722
-#: src/prokop/tabs/autotune/initController.ts:550
-#: src/prokop/tabs/autotune/initController.ts:752
-#: src/prokop/tabs/dashboard/initController.ts:1436
+#: src/prokop/tabs/autotune/initController.ts:531
+#: src/prokop/tabs/autotune/initController.ts:733
+#: src/prokop/tabs/dashboard/initController.ts:1465
 msgid "Save"
 msgstr ""
 
@@ -4854,7 +5079,7 @@ msgstr ""
 msgid "Saved, service stopped"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/initController.ts:1385
+#: src/prokop/tabs/dashboard/initController.ts:1414
 msgid "Saving URLTest settings…"
 msgstr ""
 
@@ -4890,7 +5115,7 @@ msgstr ""
 msgid "Security"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/siteCheck.ts:289
+#: src/prokop/tabs/diagnostic/siteCheck.ts:293
 msgid "See connections to this address"
 msgstr ""
 
@@ -4948,7 +5173,7 @@ msgid "Select path for sing-box config file. Change this ONLY if you know what y
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3422
-#: src/prokop/tabs/dashboard/initController.ts:1577
+#: src/prokop/tabs/dashboard/initController.ts:1607
 msgid "Select the fastest node"
 msgstr ""
 
@@ -4968,8 +5193,8 @@ msgstr ""
 msgid "Select the WAN interfaces to be monitored"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/initController.ts:1192
-#: src/prokop/tabs/dashboard/initController.ts:1563
+#: src/prokop/tabs/dashboard/initController.ts:1223
+#: src/prokop/tabs/dashboard/initController.ts:1593
 msgid "Selected"
 msgstr ""
 
@@ -4981,11 +5206,16 @@ msgstr ""
 msgid "Selector and URLTest outbounds must contain a non-empty outbounds array"
 msgstr ""
 
+#: src/prokop/tabs/monitoring/initController.ts:1046
+#: src/prokop/tabs/monitoring/render.ts:102
+msgid "Sent"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2820
 msgid "Sent with the requests for this subscription. Leave empty to try compatible client profiles automatically."
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:99
+#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:102
 msgid "Server closed the connection without a response"
 msgstr ""
 
@@ -5014,18 +5244,18 @@ msgstr ""
 msgid "server_port must be a number from 1 to 65535"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:192
+#: src/prokop/tabs/history/model.ts:188
 msgid "Service"
 msgstr ""
 
 #: src/prokop/helpers/serviceActionNotice.ts:30
 #: src/prokop/helpers/serviceActionNotice.ts:31
-#: src/prokop/methods/shell/index.ts:554
-#: src/prokop/methods/shell/index.ts:604
+#: src/prokop/methods/shell/index.ts:551
+#: src/prokop/methods/shell/index.ts:601
 msgid "Service action failed"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overviewCards.ts:166
+#: src/prokop/tabs/dashboard/overviewCards.ts:168
 msgid "Service actions"
 msgstr ""
 
@@ -5050,7 +5280,7 @@ msgstr ""
 msgid "set %s: %s"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:200
+#: src/prokop/tabs/history/initController.ts:203
 msgid "Setting"
 msgstr ""
 
@@ -5067,12 +5297,12 @@ msgstr ""
 msgid "Show only connections that start from now on, active and closed"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/initController.ts:654
+#: src/prokop/tabs/diagnostic/initController.ts:655
 #: src/prokop/tabs/diagnostic/partials/renderAvailableActions.ts:55
 msgid "Show sing-box config"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:713
+#: src/prokop/tabs/monitoring/initController.ts:717
 msgid "Shown %d of %d"
 msgstr ""
 
@@ -5084,11 +5314,11 @@ msgstr ""
 msgid "sing-box checks"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:69
+#: src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:83
 msgid "Sing-box FakeIP DNS does not work"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:68
+#: src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:82
 msgid "Sing-box FakeIP DNS works"
 msgstr ""
 
@@ -5096,11 +5326,11 @@ msgstr ""
 msgid "Sing-box installed"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:293
+#: src/prokop/tabs/dashboard/overview.ts:304
 msgid "sing-box is not running"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:292
+#: src/prokop/tabs/dashboard/overview.ts:303
 msgid "sing-box is running"
 msgstr ""
 
@@ -5124,7 +5354,7 @@ msgstr ""
 msgid "Site, IP, device or rule"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:399
+#: src/prokop/tabs/history/initController.ts:402
 msgid "Snapshot actions"
 msgstr ""
 
@@ -5133,27 +5363,27 @@ msgid "Snapshot created"
 msgstr ""
 
 #: src/prokop/ui/status.ts:294
-#: src/prokop/tabs/history/model.ts:456
+#: src/prokop/tabs/history/model.ts:452
 msgid "Snapshot deleted"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:515
+#: src/prokop/tabs/history/model.ts:511
 msgid "Snapshot not saved: at most %d manual snapshots are kept, so that the automatic snapshots taken before a restore, Save & Apply or autotune always have room. Delete a manual snapshot you no longer need, then try again."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:509
+#: src/prokop/tabs/history/model.ts:505
 msgid "Snapshot not saved: at most %d manual snapshots are kept, so that the automatic snapshots taken before a restore, Save & Apply or autotune always have room. There are %d manual snapshots now: delete %d you no longer need, then try again."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:533
+#: src/prokop/tabs/history/model.ts:529
 msgid "Snapshot not saved: it could not be written. Check the free space on the router."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:524
+#: src/prokop/tabs/history/model.ts:520
 msgid "Snapshot not saved: the configuration file could not be read."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:541
+#: src/prokop/tabs/history/model.ts:537
 msgid "Snapshot not saved: the snapshot storage could not be locked. Try again in a moment."
 msgstr ""
 
@@ -5161,7 +5391,7 @@ msgstr ""
 msgid "Snapshot restore"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:491
+#: src/prokop/tabs/history/model.ts:487
 msgid "Snapshot saved"
 msgstr ""
 
@@ -5169,11 +5399,11 @@ msgstr ""
 msgid "Snapshot storage is full: delete a manual snapshot in History and recovery. Changes were not applied."
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:390
+#: src/prokop/tabs/dashboard/overview.ts:403
 msgid "Snapshots: %d"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:957
+#: src/prokop/tabs/autotune/initController.ts:939
 msgid "Some autotune settings are invalid; safe defaults are used for them."
 msgstr ""
 
@@ -5193,7 +5423,7 @@ msgstr ""
 msgid "Sorts servers in this section by lowest latency in the dashboard."
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:1006
+#: src/prokop/tabs/monitoring/initController.ts:1010
 msgid "Source"
 msgstr ""
 
@@ -5201,7 +5431,7 @@ msgstr ""
 msgid "Source Network Interface"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:786
+#: src/prokop/tabs/autotune/initController.ts:767
 msgid "Stability"
 msgstr ""
 
@@ -5257,7 +5487,7 @@ msgstr ""
 msgid "Standby DNS for a failed sing-box"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overviewCards.ts:161
+#: src/prokop/tabs/dashboard/overviewCards.ts:163
 #: src/prokop/tabs/shared/startService.ts:37
 #: src/prokop/tabs/shared/startService.ts:41
 msgid "Start Prokop"
@@ -5267,7 +5497,7 @@ msgstr ""
 msgid "Start time"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:1016
+#: src/prokop/tabs/monitoring/initController.ts:1020
 msgid "Started"
 msgstr ""
 
@@ -5275,27 +5505,27 @@ msgstr ""
 msgid "starting"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:211
-#: src/prokop/tabs/dashboard/overviewCards.ts:161
+#: src/prokop/tabs/dashboard/overview.ts:222
+#: src/prokop/tabs/dashboard/overviewCards.ts:163
 #: src/prokop/tabs/shared/startService.ts:28
 #: src/prokop/tabs/shared/startService.ts:41
 msgid "Starting…"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:888
-#: src/prokop/tabs/autotune/initController.ts:896
-#: src/prokop/tabs/autotune/initController.ts:902
-#: src/prokop/tabs/dashboard/overviewCards.ts:198
+#: src/prokop/tabs/autotune/initController.ts:870
+#: src/prokop/tabs/autotune/initController.ts:878
+#: src/prokop/tabs/autotune/initController.ts:884
+#: src/prokop/tabs/dashboard/overviewCards.ts:200
 msgid "State"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:260
-#: src/prokop/tabs/dashboard/overview.ts:371
-#: src/prokop/tabs/dashboard/overview.ts:397
+#: src/prokop/tabs/dashboard/overview.ts:271
+#: src/prokop/tabs/dashboard/overview.ts:384
+#: src/prokop/tabs/dashboard/overview.ts:410
 msgid "State unavailable"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:1106
+#: src/prokop/tabs/monitoring/initController.ts:1108
 msgid "Status"
 msgstr ""
 
@@ -5315,13 +5545,13 @@ msgstr ""
 msgid "Stop Prokop?"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overviewCards.ts:132
-#: src/prokop/tabs/dashboard/overviewCards.ts:179
+#: src/prokop/tabs/dashboard/overviewCards.ts:134
+#: src/prokop/tabs/dashboard/overviewCards.ts:181
 msgid "Stop Prokop…"
 msgstr ""
 
 #: src/prokop/ui/status.ts:136
-#: src/prokop/tabs/dashboard/overview.ts:214
+#: src/prokop/tabs/dashboard/overview.ts:225
 msgid "Stopped by user"
 msgstr ""
 
@@ -5329,7 +5559,7 @@ msgstr ""
 msgid "stopped: protected traffic is blocked"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:784
+#: src/prokop/tabs/autotune/initController.ts:765
 #: src/prokop/tabs/diagnostic/renderDiagnostic.ts:40
 msgid "Strategy"
 msgstr ""
@@ -5346,12 +5576,12 @@ msgstr ""
 msgid "Subscription auto update"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/partials/renderSections.ts:140
+#: src/prokop/tabs/dashboard/partials/renderSections.ts:165
 msgid "Subscription info:"
 msgstr ""
 
-#: src/prokop/methods/shell/index.ts:938
-#: src/prokop/methods/shell/index.ts:958
+#: src/prokop/methods/shell/index.ts:935
+#: src/prokop/methods/shell/index.ts:955
 msgid "Subscription update failed"
 msgstr ""
 
@@ -5367,7 +5597,7 @@ msgstr ""
 msgid "Subscription URL settings"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/initController.ts:506
+#: src/prokop/tabs/dashboard/initController.ts:531
 msgid "Subscriptions updated"
 msgstr ""
 
@@ -5376,11 +5606,11 @@ msgstr ""
 msgid "Succeeded"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:785
+#: src/prokop/tabs/autotune/initController.ts:766
 msgid "Successful"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/partials/renderSections.ts:131
+#: src/prokop/tabs/dashboard/partials/renderSections.ts:156
 msgid "Support"
 msgstr ""
 
@@ -5416,19 +5646,19 @@ msgstr ""
 msgid "Target %d of %d"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:1418
+#: src/prokop/tabs/autotune/initController.ts:1400
 msgid "Target actions"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:766
+#: src/prokop/tabs/autotune/initController.ts:747
 msgid "Target removed"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:679
+#: src/prokop/tabs/autotune/initController.ts:660
 msgid "Target saved"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:1151
+#: src/prokop/tabs/autotune/initController.ts:1133
 #: src/prokop/tabs/autotune/render.ts:28
 msgid "Targets"
 msgstr ""
@@ -5438,8 +5668,12 @@ msgstr ""
 msgid "Targets of this rule need different strategies."
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:1294
+#: src/prokop/tabs/autotune/initController.ts:1276
 msgid "Targets outside DPI rules (%d)"
+msgstr ""
+
+#: src/helpers/prettyBytes.ts:8
+msgid "TB"
 msgstr ""
 
 #: src/prokop/tabs/diagnostic/renderDiagnostic.ts:169
@@ -5447,13 +5681,13 @@ msgid "Technical data"
 msgstr ""
 
 #: src/prokop/ui/states.ts:71
-#: src/prokop/tabs/monitoring/initController.ts:1190
+#: src/prokop/tabs/monitoring/initController.ts:1192
 msgid "Technical details"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/partials/renderSections.ts:233
-#: src/prokop/tabs/dashboard/partials/renderSections.ts:241
-#: src/prokop/tabs/dashboard/partials/renderSections.ts:562
+#: src/prokop/tabs/dashboard/partials/renderSections.ts:258
+#: src/prokop/tabs/dashboard/partials/renderSections.ts:266
+#: src/prokop/tabs/dashboard/partials/renderSections.ts:601
 msgid "Test latency"
 msgstr ""
 
@@ -5485,8 +5719,8 @@ msgstr ""
 msgid "Test servers whose names match the expression."
 msgstr ""
 
-#: src/prokop/tabs/dashboard/initController.ts:1195
-#: src/prokop/tabs/dashboard/initController.ts:1449
+#: src/prokop/tabs/dashboard/initController.ts:1226
+#: src/prokop/tabs/dashboard/initController.ts:1478
 msgid "Testing URL"
 msgstr ""
 
@@ -5514,7 +5748,7 @@ msgstr ""
 msgid "The autotune state could not be saved. Check the free space on the router."
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:925
+#: src/prokop/tabs/autotune/initController.ts:907
 msgid "The autotune state was damaged and has been reset; automatic changes wait for the pause after a rollback."
 msgstr ""
 
@@ -5542,11 +5776,11 @@ msgstr ""
 msgid "The change affects the whole group:"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:779
+#: src/prokop/tabs/history/model.ts:775
 msgid "The change is kept and saved as a snapshot (\"Concurrent edit\")."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:780
+#: src/prokop/tabs/history/model.ts:776
 msgid "The change is kept in the configuration, but no snapshot of it could be saved."
 msgstr ""
 
@@ -5558,8 +5792,12 @@ msgstr ""
 msgid "The changes are saved: Save & Apply applies them once a snapshot can be taken."
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:238
-#: src/prokop/tabs/autotune/initController.ts:248
+#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:150
+msgid "The check could not run"
+msgstr ""
+
+#: src/prokop/tabs/autotune/initController.ts:242
+#: src/prokop/tabs/autotune/initController.ts:252
 msgid "The check did not complete"
 msgstr ""
 
@@ -5571,7 +5809,7 @@ msgstr ""
 msgid "The check needs more probe connections than one run can make; lower the number of probes."
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:252
+#: src/prokop/tabs/autotune/initController.ts:256
 msgid "The check stopped unexpectedly"
 msgstr ""
 
@@ -5579,7 +5817,7 @@ msgstr ""
 msgid "The check was invalid: a strategy did not process every packet. It will be repeated."
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:244
+#: src/prokop/tabs/autotune/initController.ts:248
 msgid "The check was postponed. See the state above."
 msgstr ""
 
@@ -5615,11 +5853,11 @@ msgstr ""
 msgid "The configuration before the change is restored."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:656
+#: src/prokop/tabs/history/model.ts:652
 msgid "The configuration of the snapshot was migrated from Prokop %s to %s."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:661
+#: src/prokop/tabs/history/model.ts:657
 msgid "The configuration of the snapshot was migrated to Prokop %s."
 msgstr ""
 
@@ -5656,12 +5894,12 @@ msgstr ""
 msgid "The DNS server must be an IPv4 address."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:738
-#: src/prokop/tabs/history/model.ts:752
+#: src/prokop/tabs/history/model.ts:734
+#: src/prokop/tabs/history/model.ts:748
 msgid "The DPI guard of an earlier restore stays active."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:792
+#: src/prokop/tabs/history/model.ts:788
 msgid "The DPI guard stays active. Restore the snapshot you need to finish."
 msgstr ""
 
@@ -5678,6 +5916,10 @@ msgstr ""
 msgid "The editor has no field for downloaded lists: they cannot be converted and stay as they are."
 msgstr ""
 
+#: src/prokop/tabs/updates/componentActionToast.ts:36
+msgid "The interrupted Prokop update was rolled back; no new update was attempted"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:91
 msgid "The interval must be at least 1h: automatic updates run at most once an hour. An update started by hand always runs."
 msgstr ""
@@ -5688,6 +5930,10 @@ msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:1423
 msgid "The last autotune change is not resolved."
+msgstr ""
+
+#: src/prokop/tabs/dashboard/overview.ts:545
+msgid "The last autotune change needs attention."
 msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:1441
@@ -5710,7 +5956,7 @@ msgstr ""
 msgid "The last change (%s) was not confirmed by its check, and the configuration was changed since; the rule still uses that strategy. Until you choose another strategy for the rule, turn the rule off or restore a snapshot in History and recovery, Prokop does not record this configuration as the last known working one, and autotune applies nothing."
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:282
+#: src/prokop/tabs/dashboard/overview.ts:293
 msgid "The last change was rolled back automatically."
 msgstr ""
 
@@ -5728,16 +5974,16 @@ msgstr ""
 msgid "The last check was interrupted"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:164
-#: src/prokop/tabs/dashboard/overview.ts:456
+#: src/prokop/tabs/dashboard/overview.ts:175
+#: src/prokop/tabs/dashboard/overview.ts:469
 msgid "The last configuration change failed"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:409
+#: src/prokop/tabs/history/initController.ts:412
 msgid "The last known good snapshot cannot be deleted"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:465
+#: src/prokop/tabs/history/model.ts:461
 msgid "The last known good snapshot cannot be deleted: it is the configuration Prokop returns to after a failed change."
 msgstr ""
 
@@ -5823,7 +6069,7 @@ msgstr ""
 msgid "The notice is dismissed; nothing else in the rule changes. Save the rule to keep the change."
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:729
+#: src/prokop/tabs/updates/initController.ts:732
 msgid "The package is removed from the router."
 msgstr ""
 
@@ -5872,7 +6118,7 @@ msgstr ""
 msgid "The rollback of the last change (%s) did not finish."
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/siteCheck.ts:222
+#: src/prokop/tabs/diagnostic/siteCheck.ts:226
 msgid "The route check did not complete. Try again."
 msgstr ""
 
@@ -5882,6 +6128,10 @@ msgstr ""
 
 #: src/prokop/tabs/diagnostic/siteCheck.ts:44
 msgid "the route of an IPv6 address is not calculated"
+msgstr ""
+
+#: src/prokop/tabs/diagnostic/siteCheck.ts:169
+msgid "The router could not check whether the site opens. Try the check again."
 msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:149
@@ -5908,7 +6158,7 @@ msgstr ""
 msgid "The router does not route this address through FakeIP, so Prokop cannot check a strategy change for it."
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:137
+#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:148
 msgid "The router rejected this check"
 msgstr ""
 
@@ -5970,7 +6220,7 @@ msgstr ""
 msgid "the rules connect through each other in a loop"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:523
+#: src/prokop/tabs/autotune/initController.ts:504
 msgid "The same result this many checks in a row (2–10)."
 msgstr ""
 
@@ -5997,7 +6247,7 @@ msgstr ""
 msgid "the service is busy"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:436
+#: src/prokop/tabs/history/model.ts:432
 msgid "The service is busy with another operation (list or subscription update, reload or start). Nothing was changed; try again when it finishes."
 msgstr ""
 
@@ -6005,7 +6255,7 @@ msgstr ""
 msgid "the sing-box configuration is not available; is Prokop running?"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/siteCheck.ts:183
+#: src/prokop/tabs/diagnostic/siteCheck.ts:187
 msgid "The site did not open from the router. The router may take a different path than devices."
 msgstr ""
 
@@ -6013,7 +6263,7 @@ msgstr ""
 msgid "the site has a real address; whether Prokop intercepts it depends on the address lists of the rules"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/siteCheck.ts:169
+#: src/prokop/tabs/diagnostic/siteCheck.ts:173
 msgid "The site opens from the router. If it does not open on a device, look at its real connections."
 msgstr ""
 
@@ -6025,7 +6275,7 @@ msgstr ""
 msgid "The snapshot to return to is missing: restore a snapshot in History and recovery. Checks and changes wait until then."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:473
+#: src/prokop/tabs/history/model.ts:469
 msgid "The snapshot was not found or cannot be read."
 msgstr ""
 
@@ -6137,7 +6387,7 @@ msgstr ""
 msgid "There are rules using Zapret2"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:610
+#: src/prokop/tabs/history/model.ts:606
 msgid "There are unsaved changes of Prokop in this session. Save & Apply or revert them, then restore the snapshot."
 msgstr ""
 
@@ -6227,11 +6477,11 @@ msgstr ""
 msgid "This section has no IP lists, so it is protected through FakeIP and DNS only."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:643
+#: src/prokop/tabs/history/model.ts:639
 msgid "This snapshot was saved by an older version of Prokop. Before the restore, its configuration is migrated to the current version %s, as an upgrade migrates it: settings retired since then are updated. The snapshot itself is not changed; the changes listed above compare the snapshot as it was saved."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:638
+#: src/prokop/tabs/history/model.ts:634
 msgid "This snapshot was saved by Prokop %s. Before the restore, its configuration is migrated to the current version %s, as an upgrade migrates it: settings retired since then are updated. The snapshot itself is not changed; the changes listed above compare the snapshot as it was saved."
 msgstr ""
 
@@ -6256,7 +6506,7 @@ msgstr ""
 msgid "Time in seconds for DNS record caching (default: 60)"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:93
+#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:96
 msgid "Timed out"
 msgstr ""
 
@@ -6264,17 +6514,17 @@ msgstr ""
 msgid "tiny"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:98
+#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:101
 msgid "TLS or certificate error"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:787
+#: src/prokop/tabs/autotune/initController.ts:768
 msgid "TLS, median"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2933
-#: src/prokop/tabs/dashboard/initController.ts:1197
-#: src/prokop/tabs/dashboard/initController.ts:1451
+#: src/prokop/tabs/dashboard/initController.ts:1228
+#: src/prokop/tabs/dashboard/initController.ts:1480
 msgid "Tolerance"
 msgstr ""
 
@@ -6282,11 +6532,12 @@ msgstr ""
 msgid "Top level has the highest priority; lower levels are used as fallback"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1113
+#: src/prokop/tabs/updates/componentActionToast.ts:22
+#: src/prokop/tabs/updates/initController.ts:1116
 msgid "TorrServer Direct"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1115
+#: src/prokop/tabs/updates/initController.ts:1118
 msgid "TorrServer not found"
 msgstr ""
 
@@ -6298,10 +6549,10 @@ msgstr ""
 msgid "Trace"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/initController.ts:985
-#: src/prokop/tabs/monitoring/initController.ts:1134
-#: src/prokop/tabs/monitoring/initController.ts:1290
-#: src/prokop/tabs/dashboard/partials/renderSections.ts:121
+#: src/prokop/tabs/monitoring/initController.ts:989
+#: src/prokop/tabs/monitoring/initController.ts:1136
+#: src/prokop/tabs/monitoring/initController.ts:1292
+#: src/prokop/tabs/dashboard/partials/renderSections.ts:146
 msgid "Traffic"
 msgstr ""
 
@@ -6309,9 +6560,9 @@ msgstr ""
 msgid "Traffic for this level goes directly."
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:221
-#: src/prokop/tabs/dashboard/overview.ts:233
-#: src/prokop/tabs/dashboard/overview.ts:252
+#: src/prokop/tabs/dashboard/overview.ts:232
+#: src/prokop/tabs/dashboard/overview.ts:244
+#: src/prokop/tabs/dashboard/overview.ts:263
 msgid "Traffic goes through the router without Prokop."
 msgstr ""
 
@@ -6335,11 +6586,11 @@ msgstr ""
 msgid "TTL value cannot be empty"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:212
+#: src/prokop/tabs/autotune/initController.ts:216
 msgid "Turn on"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:199
+#: src/prokop/tabs/autotune/initController.ts:202
 msgid "Turn on automatic mode?"
 msgstr ""
 
@@ -6351,8 +6602,8 @@ msgstr ""
 msgid "turns text mode on for domains, IPs and devices"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:262
-#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:309
+#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:275
+#: src/prokop/tabs/diagnostic/connectivityMatrix.ts:322
 msgid "Type"
 msgstr ""
 
@@ -6380,7 +6631,7 @@ msgid "Unable to validate the NFQWS2 strategy through the backend parser."
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3396
-#: src/prokop/tabs/dashboard/initController.ts:1571
+#: src/prokop/tabs/dashboard/initController.ts:1601
 msgid "Unavailability timeout"
 msgstr ""
 
@@ -6420,14 +6671,14 @@ msgstr ""
 #: src/prokop/services/systemInfo.service.ts:22
 #: src/prokop/services/systemInfo.service.ts:33
 #: src/prokop/services/systemInfo.service.ts:34
-#: src/prokop/tabs/diagnostic/initController.ts:735
-#: src/prokop/tabs/updates/initController.ts:339
+#: src/prokop/tabs/diagnostic/initController.ts:736
+#: src/prokop/tabs/updates/initController.ts:342
 msgid "unknown"
 msgstr ""
 
 #: src/prokop/ui/status.ts:174
 #: src/prokop/ui/status.ts:266
-#: src/prokop/tabs/history/model.ts:164
+#: src/prokop/tabs/history/model.ts:160
 msgid "Unknown"
 msgstr ""
 
@@ -6469,39 +6720,30 @@ msgstr ""
 msgid "Unstable without bypass; a stable strategy was found."
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:824
-msgid "up to %d automatic change(s) per day"
-msgstr ""
-
-#: src/prokop/tabs/autotune/initController.ts:708
+#: src/prokop/tabs/autotune/initController.ts:689
 msgid "Up to 8 domains; exactly these are checked."
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:838
+#: src/prokop/tabs/updates/initController.ts:841
 msgid "Update"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:297
+#: src/prokop/tabs/updates/initController.ts:300
 msgid "Update is available"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1175
+#: src/prokop/tabs/updates/initController.ts:1178
 msgid "Update is available:"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/partials/renderSections.ts:210
-#: src/prokop/tabs/dashboard/partials/renderSections.ts:223
-#: src/prokop/tabs/dashboard/partials/renderSections.ts:224
+#: src/prokop/tabs/dashboard/partials/renderSections.ts:235
+#: src/prokop/tabs/dashboard/partials/renderSections.ts:248
+#: src/prokop/tabs/dashboard/partials/renderSections.ts:249
 msgid "Update subscriptions"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2755
 msgid "Update this subscription automatically"
-msgstr ""
-
-#: src/prokop/tabs/monitoring/initController.ts:1044
-#: src/prokop/tabs/monitoring/render.ts:102
-msgid "Upload"
 msgstr ""
 
 #: src/validators/validateProxyUrl.ts:42
@@ -6524,13 +6766,13 @@ msgstr ""
 msgid "URLTest"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/initController.ts:1471
-#: src/prokop/tabs/dashboard/partials/renderSections.ts:446
-#: src/prokop/tabs/dashboard/partials/renderSections.ts:447
+#: src/prokop/tabs/dashboard/initController.ts:1501
+#: src/prokop/tabs/dashboard/partials/renderSections.ts:485
+#: src/prokop/tabs/dashboard/partials/renderSections.ts:486
 msgid "URLTest details"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/initController.ts:1183
+#: src/prokop/tabs/dashboard/initController.ts:1214
 msgid "URLTest details are unavailable"
 msgstr ""
 
@@ -6572,7 +6814,7 @@ msgstr ""
 msgid "Use sing-box duration format like 1d, 12h or 30m"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/initController.ts:1427
+#: src/prokop/tabs/dashboard/initController.ts:1456
 msgid "Use source values"
 msgstr ""
 
@@ -6622,9 +6864,9 @@ msgstr ""
 #: src/validators/validateShadowsocksUrl.ts:101
 #: src/validators/validateSocksUrl.ts:75
 #: src/validators/validateSubnet.ts:42
-#: src/validators/validateTrojanUrl.ts:64
+#: src/validators/validateTrojanUrl.ts:70
 #: src/validators/validateUrl.ts:32
-#: src/validators/validateVlessUrl.ts:115
+#: src/validators/validateVlessUrl.ts:119
 #: src/validators/validateVmessUrl.ts:66
 msgid "Valid"
 msgstr ""
@@ -6681,18 +6923,18 @@ msgstr ""
 msgid "Waiting for the service action to finish."
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1121
+#: src/prokop/tabs/updates/initController.ts:1124
 msgid "Waiting for TorrServer"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:146
+#: src/prokop/tabs/history/model.ts:142
 msgid "Waiting to finish"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:896
 #: src/prokop/ui/status.ts:160
-#: src/prokop/tabs/autotune/initController.ts:923
-#: src/prokop/tabs/autotune/initController.ts:955
+#: src/prokop/tabs/autotune/initController.ts:905
+#: src/prokop/tabs/autotune/initController.ts:937
 msgid "Warning"
 msgstr ""
 
@@ -6712,7 +6954,7 @@ msgstr ""
 msgid "What Prokop should do when this section matches"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:731
+#: src/prokop/tabs/autotune/initController.ts:712
 msgid "What to check"
 msgstr ""
 
@@ -6732,7 +6974,7 @@ msgstr ""
 msgid "Where to"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:696
+#: src/prokop/tabs/autotune/initController.ts:677
 msgid "Which domains to check"
 msgstr ""
 
@@ -6740,7 +6982,7 @@ msgstr ""
 msgid "While Prokop is stopped, the kill-switch answers this rule's names with NXDOMAIN for every device, the devices excluded from this rule included: DNS is shared by all devices. With this option the excluded devices of this rule resolve its names through a separate resolver of their own; every other device stays blocked and the firewall part of the kill-switch does not change. While Prokop is stopped, all DNS of these devices goes through that resolver, past the router's own DNS settings: host names without the local domain, address overrides, blocking lists and rebind protection of the router do not apply to them. Each group of excluded devices with different blocked names gets its own resolver with a copy of the block list in memory, at most 4; the devices of further groups stay blocked. Applies from the next successful Prokop start or reload."
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:179
+#: src/prokop/tabs/dashboard/overview.ts:190
 msgid "While Prokop runs, it turns off the iptables hooks of br_netfilter (net.bridge.bridge-nf-call-iptables and -ip6tables) that are on, for transparent proxying, so iptables rules do not filter bridged traffic. Their current values were not set by Prokop, and stopping it does not change them."
 msgstr ""
 
@@ -6764,7 +7006,11 @@ msgstr ""
 msgid "YACD Secret Key"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/initController.ts:1064
+#: src/helpers/prettyBytes.ts:12
+msgid "YB"
+msgstr ""
+
+#: src/prokop/tabs/dashboard/initController.ts:1095
 msgid "Yes"
 msgstr ""
 
@@ -6796,7 +7042,7 @@ msgstr ""
 msgid "Zapret provider binary is not available"
 msgstr ""
 
-#: src/prokop/tabs/autotune/initController.ts:1158
+#: src/prokop/tabs/autotune/initController.ts:1140
 msgid "Zapret rule"
 msgstr ""
 
@@ -6838,4 +7084,8 @@ msgstr ""
 
 #: src/prokop/tabs/diagnostic/checks/runZapret2Check.ts:107
 msgid "Zapret2 sing-box outbound is not configured"
+msgstr ""
+
+#: src/helpers/prettyBytes.ts:11
+msgid "ZB"
 msgstr ""

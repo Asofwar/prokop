@@ -15,14 +15,14 @@
     "call": "%d confirmations",
     "key": "%d confirmations",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:823"
+      "src/prokop/tabs/autotune/initController.ts:805"
     ]
   },
   {
     "call": "%d connections now",
     "key": "%d connections now",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:344"
+      "src/prokop/tabs/dashboard/overview.ts:355"
     ]
   },
   {
@@ -64,7 +64,7 @@
     "call": "%d more groups",
     "key": "%d more groups",
     "places": [
-      "src/prokop/tabs/dashboard/overviewCards.ts:249"
+      "src/prokop/tabs/dashboard/overviewCards.ts:251"
     ]
   },
   {
@@ -79,30 +79,32 @@
     "key": "%d ms",
     "places": [
       "src/prokop/tabs/autotune/model.ts:576",
-      "src/prokop/tabs/dashboard/initController.ts:1088",
-      "src/prokop/tabs/dashboard/partials/renderSections.ts:318",
-      "src/prokop/tabs/dashboard/partials/renderSections.ts:487"
+      "src/prokop/tabs/dashboard/initController.ts:1119",
+      "src/prokop/tabs/dashboard/overview.ts:372",
+      "src/prokop/tabs/dashboard/partials/renderSections.ts:343",
+      "src/prokop/tabs/dashboard/partials/renderSections.ts:526",
+      "src/prokop/tabs/diagnostic/checks/runSectionsCheck.ts:153"
     ]
   },
   {
     "call": "%d node groups",
     "key": "%d node groups",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:337"
+      "src/prokop/tabs/dashboard/overview.ts:348"
     ]
   },
   {
     "call": "%d rules",
     "key": "%d rules",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:335"
+      "src/prokop/tabs/dashboard/overview.ts:346"
     ]
   },
   {
     "call": "%d rules · %d node groups",
     "key": "%d rules · %d node groups",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:331"
+      "src/prokop/tabs/dashboard/overview.ts:342"
     ]
   },
   {
@@ -139,6 +141,34 @@
     ]
   },
   {
+    "call": "%s has been disabled",
+    "key": "%s has been disabled",
+    "places": [
+      "src/prokop/tabs/updates/componentActionToast.ts:62"
+    ]
+  },
+  {
+    "call": "%s has been enabled",
+    "key": "%s has been enabled",
+    "places": [
+      "src/prokop/tabs/updates/componentActionToast.ts:59"
+    ]
+  },
+  {
+    "call": "%s has been installed",
+    "key": "%s has been installed",
+    "places": [
+      "src/prokop/tabs/updates/componentActionToast.ts:53"
+    ]
+  },
+  {
+    "call": "%s has been removed",
+    "key": "%s has been removed",
+    "places": [
+      "src/prokop/tabs/updates/componentActionToast.ts:56"
+    ]
+  },
+  {
     "call": "%s in the rule \"%t\"",
     "key": "%s in the rule \"%t\"",
     "places": [
@@ -156,7 +186,7 @@
     "call": "%s is not applied again before %t",
     "key": "%s is not applied again before %t",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1147"
+      "src/prokop/tabs/autotune/initController.ts:1129"
     ]
   },
   {
@@ -178,6 +208,13 @@
     "key": "%s: not moved to the Device filter, the rule has no destination condition and does not use it",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5079"
+    ]
+  },
+  {
+    "call": "%s/s",
+    "key": "%s/s",
+    "places": [
+      "src/helpers/prettyBytes.ts:26"
     ]
   },
   {
@@ -212,29 +249,29 @@
     "call": "0–5; 0 turns automatic changes off.",
     "key": "0–5; 0 turns automatic changes off.",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:535"
+      "src/prokop/tabs/autotune/initController.ts:516"
     ]
   },
   {
     "call": "1–8 domains, spread evenly over the list; a domain without an address is replaced by the next one.",
     "key": "1–8 domains, spread evenly over the list; a domain without an address is replaced by the next one.",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:701"
+      "src/prokop/tabs/autotune/initController.ts:682"
     ]
   },
   {
     "call": "3–7 attempts per strategy and target in each check.",
     "key": "3–7 attempts per strategy and target in each check.",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:547"
+      "src/prokop/tabs/autotune/initController.ts:528"
     ]
   },
   {
     "call": "A check is already running.",
     "key": "A check is already running.",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:234",
-      "src/prokop/tabs/autotune/initController.ts:399",
+      "src/prokop/tabs/autotune/initController.ts:238",
+      "src/prokop/tabs/autotune/initController.ts:403",
       "src/prokop/tabs/autotune/model.ts:969"
     ]
   },
@@ -242,7 +279,7 @@
     "call": "A configuration backup will be saved in /etc/prokop-backups. Older versions may not support all current settings.",
     "key": "A configuration backup will be saved in /etc/prokop-backups. Older versions may not support all current settings.",
     "places": [
-      "src/prokop/tabs/updates/releaseSelector.ts:46"
+      "src/prokop/tabs/updates/releaseSelector.ts:50"
     ]
   },
   {
@@ -256,28 +293,28 @@
     "call": "A configuration change is being applied. Traffic that needs DPI bypass may be blocked until it finishes.",
     "key": "A configuration change is being applied. Traffic that needs DPI bypass may be blocked until it finishes.",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:127"
+      "src/prokop/tabs/dashboard/overview.ts:138"
     ]
   },
   {
     "call": "A configuration change was not confirmed. Traffic that needs DPI bypass may be blocked; see the recovery details for the next step.",
     "key": "A configuration change was not confirmed. Traffic that needs DPI bypass may be blocked; see the recovery details for the next step.",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:131"
+      "src/prokop/tabs/dashboard/overview.ts:142"
     ]
   },
   {
     "call": "A configuration restore did not finish: restore the last known good snapshot to finish it.",
     "key": "A configuration restore did not finish: restore the last known good snapshot to finish it.",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:429"
+      "src/prokop/tabs/dashboard/overview.ts:442"
     ]
   },
   {
     "call": "A configuration restore did not finish. Traffic that needs DPI bypass stays blocked until you restore the last known good snapshot.",
     "key": "A configuration restore did not finish. Traffic that needs DPI bypass stays blocked until you restore the last known good snapshot.",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:123"
+      "src/prokop/tabs/dashboard/overview.ts:134"
     ]
   },
   {
@@ -291,7 +328,7 @@
     "call": "A domain, or a list of a DPI rule measured through a few of its domains.",
     "key": "A domain, or a list of a DPI rule measured through a few of its domains.",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:734"
+      "src/prokop/tabs/autotune/initController.ts:715"
     ]
   },
   {
@@ -305,14 +342,14 @@
     "call": "A failed change left the DPI guard in place: restart Prokop to remove it.",
     "key": "A failed change left the DPI guard in place: restart Prokop to remove it.",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:415"
+      "src/prokop/tabs/dashboard/overview.ts:428"
     ]
   },
   {
     "call": "A failed change left the DPI guard in place. Traffic that needs DPI bypass stays blocked until you restart Prokop.",
     "key": "A failed change left the DPI guard in place. Traffic that needs DPI bypass stays blocked until you restart Prokop.",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:119"
+      "src/prokop/tabs/dashboard/overview.ts:130"
     ]
   },
   {
@@ -333,7 +370,7 @@
     "call": "A list of a DPI rule. Each check takes a few of its domains; keywords and regular expressions are skipped.",
     "key": "A list of a DPI rule. Each check takes a few of its domains; keywords and regular expressions are skipped.",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:692"
+      "src/prokop/tabs/autotune/initController.ts:673"
     ]
   },
   {
@@ -347,7 +384,7 @@
     "call": "A rolled back strategy is not applied again before this time passes.",
     "key": "A rolled back strategy is not applied again before this time passes.",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:540"
+      "src/prokop/tabs/autotune/initController.ts:521"
     ]
   },
   {
@@ -396,7 +433,7 @@
     "call": "A site or service checked through the DPI rule that routes it.",
     "key": "A site or service checked through the DPI rule that routes it.",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:686"
+      "src/prokop/tabs/autotune/initController.ts:667"
     ]
   },
   {
@@ -436,27 +473,34 @@
     ]
   },
   {
+    "call": "Action completed",
+    "key": "Action completed",
+    "places": [
+      "src/prokop/tabs/updates/componentActionToast.ts:65"
+    ]
+  },
+  {
     "call": "Action required",
     "key": "Action required",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:939",
-      "src/prokop/tabs/autotune/initController.ts:1111"
+      "src/prokop/tabs/autotune/initController.ts:921",
+      "src/prokop/tabs/autotune/initController.ts:1093"
     ]
   },
   {
     "call": "Actions",
     "key": "Actions",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:989",
-      "src/prokop/tabs/monitoring/initController.ts:1292"
+      "src/prokop/tabs/monitoring/initController.ts:993",
+      "src/prokop/tabs/monitoring/initController.ts:1294"
     ]
   },
   {
     "call": "Active",
     "key": "Active",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:770",
-      "src/prokop/tabs/monitoring/initController.ts:1108",
+      "src/prokop/tabs/monitoring/initController.ts:774",
+      "src/prokop/tabs/monitoring/initController.ts:1110",
       "src/prokop/tabs/monitoring/render.ts:51"
     ]
   },
@@ -471,7 +515,7 @@
     "call": "Active connections of all devices are interrupted.",
     "key": "Active connections of all devices are interrupted.",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1678"
+      "src/prokop/tabs/monitoring/initController.ts:1680"
     ]
   },
   {
@@ -492,28 +536,28 @@
     "call": "Active: a change is being applied",
     "key": "Active: a change is being applied",
     "places": [
-      "src/prokop/tabs/history/model.ts:55"
+      "src/prokop/tabs/history/model.ts:51"
     ]
   },
   {
     "call": "Active: DPI switch not confirmed",
     "key": "Active: DPI switch not confirmed",
     "places": [
-      "src/prokop/tabs/history/model.ts:70"
+      "src/prokop/tabs/history/model.ts:66"
     ]
   },
   {
     "call": "Active: kept by a failed change",
     "key": "Active: kept by a failed change",
     "places": [
-      "src/prokop/tabs/history/model.ts:60"
+      "src/prokop/tabs/history/model.ts:56"
     ]
   },
   {
     "call": "Active: restore not finished",
     "key": "Active: restore not finished",
     "places": [
-      "src/prokop/tabs/history/model.ts:65"
+      "src/prokop/tabs/history/model.ts:61"
     ]
   },
   {
@@ -541,7 +585,7 @@
     "call": "Add a target first",
     "key": "Add a target first",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:998"
+      "src/prokop/tabs/autotune/initController.ts:980"
     ]
   },
   {
@@ -569,8 +613,8 @@
     "call": "Add target",
     "key": "Add target",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:728",
-      "src/prokop/tabs/autotune/initController.ts:1339"
+      "src/prokop/tabs/autotune/initController.ts:709",
+      "src/prokop/tabs/autotune/initController.ts:1321"
     ]
   },
   {
@@ -591,7 +635,7 @@
     "call": "Add the sites that go through your DPI rules, for example youtube.com.",
     "key": "Add the sites that go through your DPI rules, for example youtube.com.",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1284"
+      "src/prokop/tabs/autotune/initController.ts:1266"
     ]
   },
   {
@@ -656,8 +700,8 @@
     "call": "Address",
     "key": "Address",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:261",
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:308",
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:274",
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:321",
       "src/prokop/tabs/diagnostic/siteCheck.ts:122"
     ]
   },
@@ -700,7 +744,7 @@
     "call": "All",
     "key": "All",
     "places": [
-      "src/prokop/tabs/history/model.ts:196"
+      "src/prokop/tabs/history/model.ts:192"
     ]
   },
   {
@@ -715,7 +759,7 @@
     "key": "All devices",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4351",
-      "src/prokop/tabs/monitoring/initController.ts:631",
+      "src/prokop/tabs/monitoring/initController.ts:635",
       "src/prokop/tabs/monitoring/render.ts:84"
     ]
   },
@@ -723,8 +767,8 @@
     "call": "All events",
     "key": "All events",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1510",
-      "src/prokop/tabs/dashboard/overviewCards.ts:318"
+      "src/prokop/tabs/autotune/initController.ts:1492",
+      "src/prokop/tabs/dashboard/overviewCards.ts:335"
     ]
   },
   {
@@ -738,7 +782,7 @@
     "call": "All paths",
     "key": "All paths",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:668"
+      "src/prokop/tabs/monitoring/initController.ts:672"
     ]
   },
   {
@@ -808,14 +852,14 @@
     "call": "An administrator can roll it back.",
     "key": "An administrator can roll it back.",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:946"
+      "src/prokop/tabs/autotune/initController.ts:928"
     ]
   },
   {
     "call": "An interrupted package update is being recovered. Avoid changes until it completes.",
     "key": "An interrupted package update is being recovered. Avoid changes until it completes.",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:156"
+      "src/prokop/tabs/dashboard/overview.ts:167"
     ]
   },
   {
@@ -830,7 +874,7 @@
     "key": "and %d more",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/configform.js:342",
-      "src/prokop/tabs/history/model.ts:421"
+      "src/prokop/tabs/history/model.ts:417"
     ]
   },
   {
@@ -851,7 +895,7 @@
     "call": "Another autotune operation is running.",
     "key": "Another autotune operation is running.",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:333",
+      "src/prokop/tabs/autotune/initController.ts:337",
       "src/prokop/tabs/autotune/model.ts:1156"
     ]
   },
@@ -887,7 +931,7 @@
     "call": "Another snapshot operation is already in progress. Try again in a moment.",
     "key": "Another snapshot operation is already in progress. Try again in a moment.",
     "places": [
-      "src/prokop/tabs/history/model.ts:439"
+      "src/prokop/tabs/history/model.ts:435"
     ]
   },
   {
@@ -915,7 +959,7 @@
     "call": "Applied by reload",
     "key": "Applied by reload",
     "places": [
-      "src/prokop/tabs/history/model.ts:325"
+      "src/prokop/tabs/history/model.ts:321"
     ]
   },
   {
@@ -936,7 +980,7 @@
     "call": "Apply %s",
     "key": "Apply %s",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1209"
+      "src/prokop/tabs/autotune/initController.ts:1191"
     ]
   },
   {
@@ -964,7 +1008,7 @@
     "call": "Applying a strategy",
     "key": "Applying a strategy",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:897",
+      "src/prokop/tabs/autotune/initController.ts:879",
       "src/prokop/tabs/autotune/model.ts:888"
     ]
   },
@@ -972,15 +1016,15 @@
     "call": "Applying changes…",
     "key": "Applying changes…",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:210",
-      "src/prokop/tabs/dashboard/overview.ts:263"
+      "src/prokop/tabs/dashboard/overview.ts:221",
+      "src/prokop/tabs/dashboard/overview.ts:274"
     ]
   },
   {
     "call": "Applying Prokop configuration…",
     "key": "Applying Prokop configuration…",
     "places": [
-      "src/prokop/tabs/dashboard/initController.ts:1366"
+      "src/prokop/tabs/dashboard/initController.ts:1395"
     ]
   },
   {
@@ -1001,14 +1045,14 @@
     "call": "Applying…",
     "key": "Applying…",
     "places": [
-      "src/prokop/tabs/dashboard/initController.ts:1349"
+      "src/prokop/tabs/dashboard/initController.ts:1382"
     ]
   },
   {
     "call": "Apps reconnect on their own; downloads and calls may drop",
     "key": "Apps reconnect on their own; downloads and calls may drop",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1680"
+      "src/prokop/tabs/monitoring/initController.ts:1682"
     ]
   },
   {
@@ -1040,17 +1084,10 @@
     ]
   },
   {
-    "call": "At most %d change(s) per day; a rolled back strategy waits %s.",
-    "key": "At most %d change(s) per day; a rolled back strategy waits %s.",
-    "places": [
-      "src/prokop/tabs/autotune/initController.ts:207"
-    ]
-  },
-  {
     "call": "Auto refresh",
     "key": "Auto refresh",
     "places": [
-      "src/partials/modal/renderModal.ts:286"
+      "src/partials/modal/renderModal.ts:306"
     ]
   },
   {
@@ -1079,7 +1116,14 @@
     "call": "Automatic changes per day",
     "key": "Automatic changes per day",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:533"
+      "src/prokop/tabs/autotune/initController.ts:514"
+    ]
+  },
+  {
+    "call": "automatic changes per day: up to %d",
+    "key": "automatic changes per day: up to %d",
+    "places": [
+      "src/prokop/tabs/autotune/initController.ts:806"
     ]
   },
   {
@@ -1100,7 +1144,7 @@
     "call": "Automatically",
     "key": "Automatically",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:595"
+      "src/prokop/tabs/autotune/initController.ts:576"
     ]
   },
   {
@@ -1122,28 +1166,28 @@
     "key": "Automatically select the fastest node in the current level",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3433",
-      "src/prokop/tabs/dashboard/initController.ts:1581"
+      "src/prokop/tabs/dashboard/initController.ts:1611"
     ]
   },
   {
     "call": "Autostart is off",
     "key": "Autostart is off",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:303"
+      "src/prokop/tabs/dashboard/overview.ts:314"
     ]
   },
   {
     "call": "Autostart is on",
     "key": "Autostart is on",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:303"
+      "src/prokop/tabs/dashboard/overview.ts:314"
     ]
   },
   {
     "call": "Autotune",
     "key": "Autotune",
     "places": [
-      "src/prokop/tabs/history/model.ts:194"
+      "src/prokop/tabs/history/model.ts:190"
     ]
   },
   {
@@ -1164,7 +1208,7 @@
     "call": "Autotune checks only the sites listed here.",
     "key": "Autotune checks only the sites listed here.",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1464"
+      "src/prokop/tabs/autotune/initController.ts:1446"
     ]
   },
   {
@@ -1178,7 +1222,7 @@
     "call": "Autotune is off. To apply the recommendation, switch to \"Recommendations only\" and apply it here, or to \"Automatic\".",
     "key": "Autotune is off. To apply the recommendation, switch to \"Recommendations only\" and apply it here, or to \"Automatic\".",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1178"
+      "src/prokop/tabs/autotune/initController.ts:1160"
     ]
   },
   {
@@ -1186,14 +1230,14 @@
     "key": "Autotune mode changed",
     "places": [
       "src/prokop/ui/status.ts:286",
-      "src/prokop/tabs/autotune/initController.ts:218"
+      "src/prokop/tabs/autotune/initController.ts:222"
     ]
   },
   {
     "call": "Autotune policy",
     "key": "Autotune policy",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:517"
+      "src/prokop/tabs/autotune/initController.ts:498"
     ]
   },
   {
@@ -1221,77 +1265,78 @@
     "call": "Autotune state is unavailable",
     "key": "Autotune state is unavailable",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:842"
+      "src/prokop/tabs/autotune/initController.ts:824",
+      "src/prokop/tabs/dashboard/overview.ts:501"
     ]
   },
   {
     "call": "Autotune: %s applied automatically",
     "key": "Autotune: %s applied automatically",
     "places": [
-      "src/prokop/tabs/history/model.ts:274"
+      "src/prokop/tabs/history/model.ts:270"
     ]
   },
   {
     "call": "Autotune: %s applied manually",
     "key": "Autotune: %s applied manually",
     "places": [
-      "src/prokop/tabs/history/model.ts:273"
+      "src/prokop/tabs/history/model.ts:269"
     ]
   },
   {
     "call": "Autotune: automatic apply",
     "key": "Autotune: automatic apply",
     "places": [
-      "src/prokop/tabs/history/model.ts:269"
+      "src/prokop/tabs/history/model.ts:265"
     ]
   },
   {
     "call": "Autotune: automatic apply of %s",
     "key": "Autotune: automatic apply of %s",
     "places": [
-      "src/prokop/tabs/history/model.ts:279"
+      "src/prokop/tabs/history/model.ts:275"
     ]
   },
   {
     "call": "Autotune: automatic rollback",
     "key": "Autotune: automatic rollback",
     "places": [
-      "src/prokop/tabs/history/model.ts:287"
+      "src/prokop/tabs/history/model.ts:283"
     ]
   },
   {
     "call": "Autotune: automatic rollback of %s",
     "key": "Autotune: automatic rollback of %s",
     "places": [
-      "src/prokop/tabs/history/model.ts:291"
+      "src/prokop/tabs/history/model.ts:287"
     ]
   },
   {
     "call": "Autotune: manual apply",
     "key": "Autotune: manual apply",
     "places": [
-      "src/prokop/tabs/history/model.ts:268"
+      "src/prokop/tabs/history/model.ts:264"
     ]
   },
   {
     "call": "Autotune: manual apply of %s",
     "key": "Autotune: manual apply of %s",
     "places": [
-      "src/prokop/tabs/history/model.ts:278"
+      "src/prokop/tabs/history/model.ts:274"
     ]
   },
   {
     "call": "Autotune: manual rollback",
     "key": "Autotune: manual rollback",
     "places": [
-      "src/prokop/tabs/history/model.ts:286"
+      "src/prokop/tabs/history/model.ts:282"
     ]
   },
   {
     "call": "Autotune: manual rollback of %s",
     "key": "Autotune: manual rollback of %s",
     "places": [
-      "src/prokop/tabs/history/model.ts:290"
+      "src/prokop/tabs/history/model.ts:286"
     ]
   },
   {
@@ -1300,6 +1345,13 @@
     "places": [
       "src/prokop/ui/states.ts:60",
       "src/prokop/tabs/diagnostic/renderDiagnostic.ts:25"
+    ]
+  },
+  {
+    "call": "B",
+    "key": "B",
+    "places": [
+      "src/helpers/prettyBytes.ts:4"
     ]
   },
   {
@@ -1322,21 +1374,21 @@
     "call": "Before applying changes",
     "key": "Before applying changes",
     "places": [
-      "src/prokop/tabs/history/model.ts:328"
+      "src/prokop/tabs/history/model.ts:324"
     ]
   },
   {
     "call": "Before autotune",
     "key": "Before autotune",
     "places": [
-      "src/prokop/tabs/history/model.ts:334"
+      "src/prokop/tabs/history/model.ts:330"
     ]
   },
   {
     "call": "Before restore",
     "key": "Before restore",
     "places": [
-      "src/prokop/tabs/history/model.ts:330"
+      "src/prokop/tabs/history/model.ts:326"
     ]
   },
   {
@@ -1352,7 +1404,8 @@
     "key": "Block",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4268",
-      "src/prokop/tabs/monitoring/connectionView.ts:120"
+      "src/prokop/tabs/monitoring/connectionView.ts:120",
+      "src/prokop/tabs/dashboard/partials/getOutboundFooterLabel.ts:13"
     ]
   },
   {
@@ -1416,7 +1469,7 @@
     "call": "br_netfilter is loaded",
     "key": "br_netfilter is loaded",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:174"
+      "src/prokop/tabs/dashboard/overview.ts:185"
     ]
   },
   {
@@ -1424,22 +1477,22 @@
     "key": "Browser FakeIP check could not be completed",
     "places": [
       "src/prokop/tabs/diagnostic/checkCards.ts:75",
-      "src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:51",
-      "src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:79"
+      "src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:59",
+      "src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:93"
     ]
   },
   {
     "call": "Browser is not using FakeIP",
     "key": "Browser is not using FakeIP",
     "places": [
-      "src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:82"
+      "src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:96"
     ]
   },
   {
     "call": "Browser is using FakeIP correctly",
     "key": "Browser is using FakeIP correctly",
     "places": [
-      "src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:81"
+      "src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:95"
     ]
   },
   {
@@ -1468,7 +1521,7 @@
     "call": "Built-in rule sets of the same services: %s. They were not added; the rule editor offers them.",
     "key": "Built-in rule sets of the same services: %s. They were not added; the rule editor offers them.",
     "places": [
-      "src/prokop/tabs/history/model.ts:220"
+      "src/prokop/tabs/history/model.ts:216"
     ]
   },
   {
@@ -1578,7 +1631,7 @@
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4270",
       "src/prokop/tabs/monitoring/connectionView.ts:116",
-      "src/prokop/tabs/monitoring/initController.ts:217"
+      "src/prokop/tabs/monitoring/initController.ts:221"
     ]
   },
   {
@@ -1624,11 +1677,12 @@
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5159",
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8625",
       "src/prokop/ui/confirmAction.ts:30",
-      "src/prokop/tabs/autotune/initController.ts:451",
-      "src/prokop/tabs/dashboard/initController.ts:1441",
+      "src/prokop/tabs/autotune/dialog.ts:34",
+      "src/prokop/tabs/dashboard/initController.ts:1470",
       "src/prokop/tabs/updates/fullUninstall.ts:17",
-      "src/prokop/tabs/updates/releaseSelector.ts:62",
-      "src/prokop/tabs/updates/releaseSelector.ts:123"
+      "src/prokop/tabs/updates/releaseSelector.ts:40",
+      "src/prokop/tabs/updates/releaseSelector.ts:92",
+      "src/prokop/tabs/updates/releaseSelector.ts:136"
     ]
   },
   {
@@ -1685,21 +1739,21 @@
     "call": "Change in progress",
     "key": "Change in progress",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:437"
+      "src/prokop/tabs/dashboard/overview.ts:450"
     ]
   },
   {
     "call": "Changes",
     "key": "Changes",
     "places": [
-      "src/prokop/tabs/history/initController.ts:394"
+      "src/prokop/tabs/history/initController.ts:397"
     ]
   },
   {
     "call": "Changes are made only by scheduled checks, one group at a time.",
     "key": "Changes are made only by scheduled checks, one group at a time.",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:210"
+      "src/prokop/tabs/autotune/initController.ts:214"
     ]
   },
   {
@@ -1710,17 +1764,24 @@
     ]
   },
   {
+    "call": "Changes per day: at most %d; a rolled back strategy waits %s.",
+    "key": "Changes per day: at most %d; a rolled back strategy waits %s.",
+    "places": [
+      "src/prokop/tabs/autotune/initController.ts:211"
+    ]
+  },
+  {
     "call": "Changes since this snapshot",
     "key": "Changes since this snapshot",
     "places": [
-      "src/prokop/tabs/history/initController.ts:229"
+      "src/prokop/tabs/history/initController.ts:232"
     ]
   },
   {
     "call": "Check",
     "key": "Check",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:283",
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:296",
       "src/prokop/tabs/diagnostic/renderDiagnostic.ts:54",
       "src/prokop/tabs/diagnostic/renderDiagnostic.ts:94"
     ]
@@ -1743,7 +1804,7 @@
     "call": "Check address in Diagnostics",
     "key": "Check address in Diagnostics",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1147"
+      "src/prokop/tabs/monitoring/initController.ts:1149"
     ]
   },
   {
@@ -1757,28 +1818,28 @@
     "call": "Check all now",
     "key": "Check all now",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1002"
+      "src/prokop/tabs/autotune/initController.ts:984"
     ]
   },
   {
     "call": "Check completed",
     "key": "Check completed",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:232"
+      "src/prokop/tabs/autotune/initController.ts:236"
     ]
   },
   {
     "call": "Check every",
     "key": "Check every",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:519"
+      "src/prokop/tabs/autotune/initController.ts:500"
     ]
   },
   {
     "call": "Check failed",
     "key": "Check failed",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:101"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:104"
     ]
   },
   {
@@ -1808,21 +1869,28 @@
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2921",
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3384",
-      "src/prokop/tabs/dashboard/initController.ts:1568"
+      "src/prokop/tabs/dashboard/initController.ts:1598"
+    ]
+  },
+  {
+    "call": "check interval: %s",
+    "key": "check interval: %s",
+    "places": [
+      "src/prokop/tabs/autotune/initController.ts:804"
     ]
   },
   {
     "call": "Check now",
     "key": "Check now",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1224"
+      "src/prokop/tabs/autotune/initController.ts:1206"
     ]
   },
   {
     "call": "Check started. Targets are measured in isolation; production traffic is not changed.",
     "key": "Check started. Targets are measured in isolation; production traffic is not changed.",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:391"
+      "src/prokop/tabs/autotune/initController.ts:395"
     ]
   },
   {
@@ -1836,7 +1904,7 @@
     "call": "Check the node of the rule in Monitoring → Nodes and groups.",
     "key": "Check the node of the rule in Monitoring → Nodes and groups.",
     "places": [
-      "src/prokop/tabs/diagnostic/siteCheck.ts:178"
+      "src/prokop/tabs/diagnostic/siteCheck.ts:182"
     ]
   },
   {
@@ -1850,7 +1918,7 @@
     "call": "Check update",
     "key": "Check update",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:824"
+      "src/prokop/tabs/updates/initController.ts:827"
     ]
   },
   {
@@ -1859,14 +1927,14 @@
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2947",
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3371",
-      "src/prokop/tabs/dashboard/initController.ts:1566"
+      "src/prokop/tabs/dashboard/initController.ts:1596"
     ]
   },
   {
     "call": "Checked",
     "key": "Checked",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1134"
+      "src/prokop/tabs/autotune/initController.ts:1116"
     ]
   },
   {
@@ -1887,8 +1955,8 @@
     "call": "Checking targets",
     "key": "Checking targets",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:906",
-      "src/prokop/tabs/autotune/initController.ts:1042",
+      "src/prokop/tabs/autotune/initController.ts:888",
+      "src/prokop/tabs/autotune/initController.ts:1024",
       "src/prokop/tabs/autotune/model.ts:889"
     ]
   },
@@ -1917,7 +1985,7 @@
     "call": "Checking, please wait",
     "key": "Checking, please wait",
     "places": [
-      "src/prokop/tabs/diagnostic/initController.ts:865",
+      "src/prokop/tabs/diagnostic/initController.ts:866",
       "src/prokop/tabs/diagnostic/checks/runByedpiCheck.ts:14",
       "src/prokop/tabs/diagnostic/checks/runDnsCheck.ts:15",
       "src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:15",
@@ -1933,12 +2001,12 @@
     "key": "Checking…",
     "places": [
       "src/prokop/ui/status.ts:140",
-      "src/prokop/tabs/autotune/initController.ts:1002",
-      "src/prokop/tabs/autotune/initController.ts:1224",
-      "src/prokop/tabs/dashboard/overview.ts:257",
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:111",
+      "src/prokop/tabs/autotune/initController.ts:984",
+      "src/prokop/tabs/autotune/initController.ts:1206",
+      "src/prokop/tabs/dashboard/overview.ts:268",
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:114",
       "src/prokop/tabs/diagnostic/dpiPlayground.ts:48",
-      "src/prokop/tabs/diagnostic/siteCheck.ts:262",
+      "src/prokop/tabs/diagnostic/siteCheck.ts:266",
       "src/prokop/tabs/diagnostic/statusLabels.ts:28"
     ]
   },
@@ -1962,7 +2030,7 @@
     "key": "Checks passed",
     "places": [
       "src/prokop/tabs/diagnostic/checks/getCheckItemsMeta.ts:23",
-      "src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:43",
+      "src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:49",
       "src/prokop/tabs/diagnostic/helpers/getMeta.ts:13"
     ]
   },
@@ -1998,29 +2066,29 @@
     "call": "Choose at least one domain of the list.",
     "key": "Choose at least one domain of the list.",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:654"
+      "src/prokop/tabs/autotune/initController.ts:635"
     ]
   },
   {
     "call": "Choose from the list",
     "key": "Choose from the list",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:596"
+      "src/prokop/tabs/autotune/initController.ts:577"
     ]
   },
   {
     "call": "Choose Prokop version",
     "key": "Choose Prokop version",
     "places": [
-      "src/prokop/tabs/updates/releaseSelector.ts:82",
-      "src/prokop/tabs/updates/releaseSelector.ts:88"
+      "src/prokop/tabs/updates/releaseSelector.ts:95",
+      "src/prokop/tabs/updates/releaseSelector.ts:101"
     ]
   },
   {
     "call": "Choose version",
     "key": "Choose version",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:1300"
+      "src/prokop/tabs/updates/initController.ts:1303"
     ]
   },
   {
@@ -2063,19 +2131,19 @@
     "key": "Close",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3713",
-      "src/partials/modal/renderModal.ts:263",
-      "src/prokop/tabs/autotune/initController.ts:812",
-      "src/prokop/tabs/dashboard/initController.ts:1313",
-      "src/prokop/tabs/dashboard/initController.ts:1700",
-      "src/prokop/tabs/history/initController.ts:239",
-      "src/prokop/tabs/updates/releaseSelector.ts:133"
+      "src/partials/modal/renderModal.ts:283",
+      "src/prokop/tabs/autotune/initController.ts:793",
+      "src/prokop/tabs/dashboard/initController.ts:1333",
+      "src/prokop/tabs/dashboard/initController.ts:1730",
+      "src/prokop/tabs/history/initController.ts:242",
+      "src/prokop/tabs/updates/releaseSelector.ts:148"
     ]
   },
   {
     "call": "Close all",
     "key": "Close all",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1682"
+      "src/prokop/tabs/monitoring/initController.ts:1684"
     ]
   },
   {
@@ -2090,7 +2158,7 @@
     "call": "Close all connections?",
     "key": "Close all connections?",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1677"
+      "src/prokop/tabs/monitoring/initController.ts:1679"
     ]
   },
   {
@@ -2098,30 +2166,30 @@
     "key": "Close connection",
     "places": [
       "src/prokop/tabs/monitoring/connectionView.ts:205",
-      "src/prokop/tabs/monitoring/initController.ts:1178"
+      "src/prokop/tabs/monitoring/initController.ts:1180"
     ]
   },
   {
     "call": "Close details",
     "key": "Close details",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1096",
-      "src/prokop/tabs/monitoring/initController.ts:1097"
+      "src/prokop/tabs/monitoring/initController.ts:1098",
+      "src/prokop/tabs/monitoring/initController.ts:1099"
     ]
   },
   {
     "call": "closed",
     "key": "closed",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:962"
+      "src/prokop/tabs/monitoring/initController.ts:966"
     ]
   },
   {
     "call": "Closed",
     "key": "Closed",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:777",
-      "src/prokop/tabs/monitoring/initController.ts:1109",
+      "src/prokop/tabs/monitoring/initController.ts:781",
+      "src/prokop/tabs/monitoring/initController.ts:1111",
       "src/prokop/tabs/monitoring/render.ts:60"
     ]
   },
@@ -2150,7 +2218,7 @@
     "call": "Component update check interval was %s, shorter than the 1 h minimum of automatic updates: set to %s.",
     "key": "Component update check interval was %s, shorter than the 1 h minimum of automatic updates: set to %s.",
     "places": [
-      "src/prokop/tabs/history/model.ts:239"
+      "src/prokop/tabs/history/model.ts:235"
     ]
   },
   {
@@ -2171,7 +2239,7 @@
     "call": "Concurrent edit",
     "key": "Concurrent edit",
     "places": [
-      "src/prokop/tabs/history/model.ts:339"
+      "src/prokop/tabs/history/model.ts:335"
     ]
   },
   {
@@ -2193,7 +2261,7 @@
     "call": "Confidence",
     "key": "Confidence",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1131"
+      "src/prokop/tabs/autotune/initController.ts:1113"
     ]
   },
   {
@@ -2207,7 +2275,7 @@
     "call": "Configuration",
     "key": "Configuration",
     "places": [
-      "src/prokop/tabs/history/model.ts:190"
+      "src/prokop/tabs/history/model.ts:186"
     ]
   },
   {
@@ -2236,14 +2304,14 @@
     "call": "Configuration restored and reloaded",
     "key": "Configuration restored and reloaded",
     "places": [
-      "src/prokop/tabs/history/model.ts:682"
+      "src/prokop/tabs/history/model.ts:678"
     ]
   },
   {
     "call": "Configuration restored, but Prokop is stopped: it was not started or checked. The restored configuration takes effect when Prokop is started.",
     "key": "Configuration restored, but Prokop is stopped: it was not started or checked. The restored configuration takes effect when Prokop is started.",
     "places": [
-      "src/prokop/tabs/history/model.ts:692"
+      "src/prokop/tabs/history/model.ts:688"
     ]
   },
   {
@@ -2285,28 +2353,28 @@
     "call": "Confirm version change",
     "key": "Confirm version change",
     "places": [
-      "src/prokop/tabs/updates/releaseSelector.ts:40"
+      "src/prokop/tabs/updates/releaseSelector.ts:44"
     ]
   },
   {
     "call": "Confirmation",
     "key": "Confirmation",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1133"
+      "src/prokop/tabs/autotune/initController.ts:1115"
     ]
   },
   {
     "call": "Confirmation %d / %d",
     "key": "Confirmation %d / %d",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1101"
+      "src/prokop/tabs/autotune/initController.ts:1083"
     ]
   },
   {
     "call": "Confirmations",
     "key": "Confirmations",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:521"
+      "src/prokop/tabs/autotune/initController.ts:502"
     ]
   },
   {
@@ -2342,14 +2410,14 @@
     "call": "Connection ID",
     "key": "Connection ID",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1017"
+      "src/prokop/tabs/monitoring/initController.ts:1021"
     ]
   },
   {
     "call": "Connection refused or host unreachable",
     "key": "Connection refused or host unreachable",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:97"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:100"
     ]
   },
   {
@@ -2363,7 +2431,7 @@
     "call": "Connections",
     "key": "Connections",
     "places": [
-      "src/prokop/tabs/dashboard/overviewCards.ts:258",
+      "src/prokop/tabs/dashboard/overviewCards.ts:260",
       "src/prokop/tabs/monitoring/render.ts:14"
     ]
   },
@@ -2371,7 +2439,7 @@
     "call": "Connections are unavailable",
     "key": "Connections are unavailable",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1358"
+      "src/prokop/tabs/monitoring/initController.ts:1360"
     ]
   },
   {
@@ -2420,21 +2488,21 @@
     "call": "Copy",
     "key": "Copy",
     "places": [
-      "src/partials/modal/renderModal.ts:258"
+      "src/partials/modal/renderModal.ts:278"
     ]
   },
   {
     "call": "Copy address",
     "key": "Copy address",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:1347"
+      "src/prokop/tabs/updates/initController.ts:1350"
     ]
   },
   {
     "call": "Copy details",
     "key": "Copy details",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1164",
+      "src/prokop/tabs/monitoring/initController.ts:1166",
       "src/prokop/tabs/diagnostic/partials/renderCheckSection.ts:153"
     ]
   },
@@ -2442,23 +2510,23 @@
     "call": "Could not change autostart",
     "key": "Could not change autostart",
     "places": [
-      "src/prokop/tabs/dashboard/initController.ts:196",
-      "src/prokop/tabs/dashboard/initController.ts:199"
+      "src/prokop/tabs/dashboard/initController.ts:233",
+      "src/prokop/tabs/dashboard/initController.ts:236"
     ]
   },
   {
     "call": "Could not compare configurations",
     "key": "Could not compare configurations",
     "places": [
-      "src/prokop/tabs/history/initController.ts:225",
-      "src/prokop/tabs/history/initController.ts:292"
+      "src/prokop/tabs/history/initController.ts:228",
+      "src/prokop/tabs/history/initController.ts:295"
     ]
   },
   {
     "call": "Could not compare FakeIP and control public IPs",
     "key": "Could not compare FakeIP and control public IPs",
     "places": [
-      "src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:89"
+      "src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:103"
     ]
   },
   {
@@ -2472,21 +2540,21 @@
     "call": "Could not create snapshot",
     "key": "Could not create snapshot",
     "places": [
-      "src/prokop/tabs/history/model.ts:551"
+      "src/prokop/tabs/history/model.ts:547"
     ]
   },
   {
     "call": "Could not delete snapshot",
     "key": "Could not delete snapshot",
     "places": [
-      "src/prokop/tabs/history/model.ts:478"
+      "src/prokop/tabs/history/model.ts:474"
     ]
   },
   {
     "call": "Could not determine the current rule of each target; results of the last check are shown.",
     "key": "Could not determine the current rule of each target; results of the last check are shown.",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1264"
+      "src/prokop/tabs/autotune/initController.ts:1246"
     ]
   },
   {
@@ -2494,14 +2562,14 @@
     "key": "Could not load available versions",
     "places": [
       "src/prokop/tabs/updates/releaseSelector.ts:26",
-      "src/prokop/tabs/updates/releaseSelector.ts:131"
+      "src/prokop/tabs/updates/releaseSelector.ts:144"
     ]
   },
   {
     "call": "Could not load configuration snapshots",
     "key": "Could not load configuration snapshots",
     "places": [
-      "src/prokop/tabs/history/initController.ts:355"
+      "src/prokop/tabs/history/initController.ts:358"
     ]
   },
   {
@@ -2511,11 +2579,18 @@
       "src/prokop/ui/states.ts:115",
       "src/prokop/tabs/diagnostic/initController.ts:588",
       "src/prokop/tabs/diagnostic/initController.ts:592",
-      "src/prokop/tabs/diagnostic/initController.ts:627",
-      "src/prokop/tabs/diagnostic/initController.ts:631",
-      "src/prokop/tabs/diagnostic/initController.ts:667",
-      "src/prokop/tabs/diagnostic/initController.ts:671",
-      "src/prokop/tabs/history/initController.ts:253"
+      "src/prokop/tabs/diagnostic/initController.ts:628",
+      "src/prokop/tabs/diagnostic/initController.ts:632",
+      "src/prokop/tabs/diagnostic/initController.ts:668",
+      "src/prokop/tabs/diagnostic/initController.ts:672",
+      "src/prokop/tabs/history/initController.ts:256"
+    ]
+  },
+  {
+    "call": "Could not refresh. Showing data from %s",
+    "key": "Could not refresh. Showing data from %s",
+    "places": [
+      "src/prokop/tabs/dashboard/sectionsRefresh.ts:51"
     ]
   },
   {
@@ -2557,23 +2632,23 @@
     "call": "Could not start the apply",
     "key": "Could not start the apply",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:335",
-      "src/prokop/tabs/autotune/initController.ts:339"
+      "src/prokop/tabs/autotune/initController.ts:339",
+      "src/prokop/tabs/autotune/initController.ts:343"
     ]
   },
   {
     "call": "Could not start the check",
     "key": "Could not start the check",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:401",
-      "src/prokop/tabs/autotune/initController.ts:405"
+      "src/prokop/tabs/autotune/initController.ts:405",
+      "src/prokop/tabs/autotune/initController.ts:409"
     ]
   },
   {
     "call": "Create snapshot",
     "key": "Create snapshot",
     "places": [
-      "src/prokop/tabs/history/initController.ts:345"
+      "src/prokop/tabs/history/initController.ts:348"
     ]
   },
   {
@@ -2629,7 +2704,7 @@
     "call": "Dashboard currently unavailable",
     "key": "Dashboard currently unavailable",
     "places": [
-      "src/prokop/tabs/dashboard/partials/renderSections.ts:38"
+      "src/prokop/tabs/dashboard/partials/renderSections.ts:43"
     ]
   },
   {
@@ -2643,7 +2718,7 @@
     "call": "Dedicated cgroup unavailable",
     "key": "Dedicated cgroup unavailable",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:1117"
+      "src/prokop/tabs/updates/initController.ts:1120"
     ]
   },
   {
@@ -2685,28 +2760,28 @@
     "call": "Delete",
     "key": "Delete",
     "places": [
-      "src/prokop/tabs/history/initController.ts:310"
+      "src/prokop/tabs/history/initController.ts:313"
     ]
   },
   {
     "call": "Delete snapshot?",
     "key": "Delete snapshot?",
     "places": [
-      "src/prokop/tabs/history/initController.ts:308"
+      "src/prokop/tabs/history/initController.ts:311"
     ]
   },
   {
     "call": "Delete this configuration snapshot?",
     "key": "Delete this configuration snapshot?",
     "places": [
-      "src/prokop/tabs/history/initController.ts:309"
+      "src/prokop/tabs/history/initController.ts:312"
     ]
   },
   {
     "call": "Delete…",
     "key": "Delete…",
     "places": [
-      "src/prokop/tabs/history/initController.ts:408"
+      "src/prokop/tabs/history/initController.ts:411"
     ]
   },
   {
@@ -2720,18 +2795,18 @@
     "call": "Destination",
     "key": "Destination",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:980",
-      "src/prokop/tabs/monitoring/initController.ts:1008",
-      "src/prokop/tabs/monitoring/initController.ts:1035",
-      "src/prokop/tabs/monitoring/initController.ts:1288"
+      "src/prokop/tabs/monitoring/initController.ts:984",
+      "src/prokop/tabs/monitoring/initController.ts:1012",
+      "src/prokop/tabs/monitoring/initController.ts:1037",
+      "src/prokop/tabs/monitoring/initController.ts:1290"
     ]
   },
   {
     "call": "Details",
     "key": "Details",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1370",
-      "src/prokop/tabs/autotune/initController.ts:1411",
+      "src/prokop/tabs/autotune/initController.ts:1352",
+      "src/prokop/tabs/autotune/initController.ts:1393",
       "src/prokop/tabs/monitoring/connectionView.ts:198",
       "src/prokop/tabs/diagnostic/partials/renderCheckSection.ts:180"
     ]
@@ -2748,7 +2823,7 @@
     "call": "Determining which rule routes each target…",
     "key": "Determining which rule routes each target…",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1256"
+      "src/prokop/tabs/autotune/initController.ts:1238"
     ]
   },
   {
@@ -2762,12 +2837,12 @@
     "call": "Device",
     "key": "Device",
     "places": [
-      "src/prokop/tabs/diagnostic/initController.ts:793",
+      "src/prokop/tabs/diagnostic/initController.ts:794",
       "src/prokop/tabs/diagnostic/renderDiagnostic.ts:82",
-      "src/prokop/tabs/monitoring/initController.ts:979",
-      "src/prokop/tabs/monitoring/initController.ts:1034",
-      "src/prokop/tabs/monitoring/initController.ts:1104",
-      "src/prokop/tabs/monitoring/initController.ts:1287",
+      "src/prokop/tabs/monitoring/initController.ts:983",
+      "src/prokop/tabs/monitoring/initController.ts:1036",
+      "src/prokop/tabs/monitoring/initController.ts:1106",
+      "src/prokop/tabs/monitoring/initController.ts:1289",
       "src/prokop/tabs/monitoring/render.ts:82"
     ]
   },
@@ -2825,28 +2900,29 @@
     "key": "Diagnostics",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/diagnostics.js:18",
-      "src/prokop/tabs/dashboard/overviewCards.ts:207"
+      "src/prokop/tabs/dashboard/overviewCards.ts:209"
     ]
   },
   {
     "call": "Diagnostics has not been run yet",
     "key": "Diagnostics has not been run yet",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:311"
+      "src/prokop/tabs/dashboard/overview.ts:322"
     ]
   },
   {
     "call": "direct",
     "key": "direct",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:218"
+      "src/prokop/tabs/monitoring/initController.ts:222"
     ]
   },
   {
     "call": "Direct",
     "key": "Direct",
     "places": [
-      "src/prokop/tabs/monitoring/connectionView.ts:118"
+      "src/prokop/tabs/monitoring/connectionView.ts:118",
+      "src/prokop/tabs/dashboard/partials/getOutboundFooterLabel.ts:8"
     ]
   },
   {
@@ -2860,22 +2936,23 @@
     "call": "Direct Proxy",
     "key": "Direct Proxy",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:1087"
+      "src/prokop/tabs/updates/componentActionToast.ts:20",
+      "src/prokop/tabs/updates/initController.ts:1090"
     ]
   },
   {
     "call": "Disable",
     "key": "Disable",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:1096",
-      "src/prokop/tabs/updates/initController.ts:1127"
+      "src/prokop/tabs/updates/initController.ts:1099",
+      "src/prokop/tabs/updates/initController.ts:1130"
     ]
   },
   {
     "call": "Disable autostart",
     "key": "Disable autostart",
     "places": [
-      "src/prokop/tabs/dashboard/overviewCards.ts:188"
+      "src/prokop/tabs/dashboard/overviewCards.ts:190"
     ]
   },
   {
@@ -2899,8 +2976,8 @@
       "src/prokop/ui/status.ts:172",
       "src/prokop/tabs/autotune/model.ts:684",
       "src/prokop/tabs/autotune/model.ts:717",
-      "src/prokop/tabs/updates/initController.ts:1090",
-      "src/prokop/tabs/updates/initController.ts:1122"
+      "src/prokop/tabs/updates/initController.ts:1093",
+      "src/prokop/tabs/updates/initController.ts:1125"
     ]
   },
   {
@@ -2945,7 +3022,7 @@
     "call": "DNS check needs a domain name",
     "key": "DNS check needs a domain name",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:83"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:86"
     ]
   },
   {
@@ -2959,7 +3036,7 @@
     "call": "DNS name did not resolve",
     "key": "DNS name did not resolve",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:96"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:99"
     ]
   },
   {
@@ -3050,7 +3127,7 @@
     "call": "DNS server for checks",
     "key": "DNS server for checks",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:744"
+      "src/prokop/tabs/autotune/initController.ts:725"
     ]
   },
   {
@@ -3157,8 +3234,8 @@
     "call": "Domain",
     "key": "Domain",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:559",
-      "src/prokop/tabs/autotune/initController.ts:684"
+      "src/prokop/tabs/autotune/initController.ts:540",
+      "src/prokop/tabs/autotune/initController.ts:665"
     ]
   },
   {
@@ -3172,7 +3249,7 @@
     "call": "Domain does not exist",
     "key": "Domain does not exist",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:94"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:97"
     ]
   },
   {
@@ -3236,7 +3313,7 @@
     "call": "Domains of the list",
     "key": "Domains of the list",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:706"
+      "src/prokop/tabs/autotune/initController.ts:687"
     ]
   },
   {
@@ -3250,7 +3327,7 @@
     "call": "Domains to check",
     "key": "Domains to check",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:699"
+      "src/prokop/tabs/autotune/initController.ts:680"
     ]
   },
   {
@@ -3272,9 +3349,7 @@
     "call": "Download",
     "key": "Download",
     "places": [
-      "src/partials/modal/renderModal.ts:253",
-      "src/prokop/tabs/monitoring/initController.ts:1043",
-      "src/prokop/tabs/monitoring/render.ts:101"
+      "src/partials/modal/renderModal.ts:273"
     ]
   },
   {
@@ -3376,7 +3451,8 @@
     "call": "DPI autotune",
     "key": "DPI autotune",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/autotune.js:15"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/autotune.js:15",
+      "src/prokop/tabs/dashboard/overviewCards.ts:272"
     ]
   },
   {
@@ -3390,7 +3466,7 @@
     "call": "DPI guard",
     "key": "DPI guard",
     "places": [
-      "src/prokop/tabs/history/model.ts:131"
+      "src/prokop/tabs/history/model.ts:127"
     ]
   },
   {
@@ -3404,7 +3480,7 @@
     "call": "DPI protection is holding traffic",
     "key": "DPI protection is holding traffic",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:148"
+      "src/prokop/tabs/dashboard/overview.ts:159"
     ]
   },
   {
@@ -3418,7 +3494,7 @@
     "call": "DPI strategy",
     "key": "DPI strategy",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1124"
+      "src/prokop/tabs/monitoring/initController.ts:1126"
     ]
   },
   {
@@ -3446,7 +3522,7 @@
     "call": "Duration",
     "key": "Duration",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1042",
+      "src/prokop/tabs/monitoring/initController.ts:1044",
       "src/prokop/tabs/monitoring/render.ts:100"
     ]
   },
@@ -3454,14 +3530,21 @@
     "call": "Each target is measured in isolation; production traffic is not changed. After the probes Prokop waits until their connections close, which can take a few minutes on a blocked site.",
     "key": "Each target is measured in isolation; production traffic is not changed. After the probes Prokop waits until their connections close, which can take a few minutes on a blocked site.",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1083"
+      "src/prokop/tabs/autotune/initController.ts:1065"
+    ]
+  },
+  {
+    "call": "EB",
+    "key": "EB",
+    "places": [
+      "src/helpers/prettyBytes.ts:10"
     ]
   },
   {
     "call": "Edit",
     "key": "Edit",
     "places": [
-      "src/prokop/tabs/dashboard/initController.ts:1301"
+      "src/prokop/tabs/dashboard/initController.ts:1345"
     ]
   },
   {
@@ -3475,21 +3558,21 @@
     "call": "Edit target",
     "key": "Edit target",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:728"
+      "src/prokop/tabs/autotune/initController.ts:709"
     ]
   },
   {
     "call": "Edit URLTest",
     "key": "Edit URLTest",
     "places": [
-      "src/prokop/tabs/dashboard/initController.ts:1446"
+      "src/prokop/tabs/dashboard/initController.ts:1475"
     ]
   },
   {
     "call": "Edit…",
     "key": "Edit…",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1420"
+      "src/prokop/tabs/autotune/initController.ts:1402"
     ]
   },
   {
@@ -3504,8 +3587,8 @@
     "key": "Enable",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8672",
-      "src/prokop/tabs/updates/initController.ts:1103",
-      "src/prokop/tabs/updates/initController.ts:1134"
+      "src/prokop/tabs/updates/initController.ts:1106",
+      "src/prokop/tabs/updates/initController.ts:1137"
     ]
   },
   {
@@ -3519,7 +3602,7 @@
     "call": "Enable autostart",
     "key": "Enable autostart",
     "places": [
-      "src/prokop/tabs/dashboard/overviewCards.ts:189"
+      "src/prokop/tabs/dashboard/overviewCards.ts:191"
     ]
   },
   {
@@ -3561,7 +3644,7 @@
     "call": "Enable mode 2",
     "key": "Enable mode 2",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:1077"
+      "src/prokop/tabs/updates/initController.ts:1080"
     ]
   },
   {
@@ -3589,9 +3672,9 @@
     "call": "Enabled",
     "key": "Enabled",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:750",
-      "src/prokop/tabs/updates/initController.ts:1089",
-      "src/prokop/tabs/updates/initController.ts:1119"
+      "src/prokop/tabs/autotune/initController.ts:731",
+      "src/prokop/tabs/updates/initController.ts:1092",
+      "src/prokop/tabs/updates/initController.ts:1122"
     ]
   },
   {
@@ -3622,7 +3705,7 @@
     "call": "Enter a domain or IP address",
     "key": "Enter a domain or IP address",
     "places": [
-      "src/prokop/tabs/diagnostic/siteCheck.ts:258"
+      "src/prokop/tabs/diagnostic/siteCheck.ts:262"
     ]
   },
   {
@@ -3637,7 +3720,7 @@
     "call": "Enter a port",
     "key": "Enter a port",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:85"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:88"
     ]
   },
   {
@@ -3658,7 +3741,7 @@
     "call": "Enter a valid domain or IP address",
     "key": "Enter a valid domain or IP address",
     "places": [
-      "src/prokop/tabs/diagnostic/siteCheck.ts:219"
+      "src/prokop/tabs/diagnostic/siteCheck.ts:223"
     ]
   },
   {
@@ -3672,7 +3755,7 @@
     "call": "Enter an address",
     "key": "Enter an address",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:80"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:83"
     ]
   },
   {
@@ -3697,13 +3780,6 @@
     "key": "Errors: %d",
     "places": [
       "src/prokop/tabs/diagnostic/checkCards.ts:147"
-    ]
-  },
-  {
-    "call": "every %s",
-    "key": "every %s",
-    "places": [
-      "src/prokop/tabs/autotune/initController.ts:822"
     ]
   },
   {
@@ -3819,7 +3895,7 @@
     "call": "Expires",
     "key": "Expires",
     "places": [
-      "src/prokop/tabs/dashboard/partials/renderSections.ts:125"
+      "src/prokop/tabs/dashboard/partials/renderSections.ts:150"
     ]
   },
   {
@@ -3856,16 +3932,16 @@
     "call": "Failed to close connection",
     "key": "Failed to close connection",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1649",
-      "src/prokop/tabs/monitoring/initController.ts:1664"
+      "src/prokop/tabs/monitoring/initController.ts:1651",
+      "src/prokop/tabs/monitoring/initController.ts:1666"
     ]
   },
   {
     "call": "Failed to close connections",
     "key": "Failed to close connections",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1696",
-      "src/prokop/tabs/monitoring/initController.ts:1709"
+      "src/prokop/tabs/monitoring/initController.ts:1698",
+      "src/prokop/tabs/monitoring/initController.ts:1711"
     ]
   },
   {
@@ -3886,37 +3962,37 @@
     "call": "Failed to execute",
     "key": "Failed to execute",
     "places": [
-      "src/prokop/methods/shell/index.ts:195",
-      "src/prokop/methods/shell/index.ts:201",
-      "src/prokop/tabs/updates/initController.ts:549",
-      "src/prokop/tabs/updates/initController.ts:562",
-      "src/prokop/tabs/updates/initController.ts:613",
-      "src/prokop/tabs/updates/initController.ts:803"
+      "src/prokop/methods/shell/index.ts:191",
+      "src/prokop/methods/shell/index.ts:197",
+      "src/prokop/tabs/updates/initController.ts:552",
+      "src/prokop/tabs/updates/initController.ts:565",
+      "src/prokop/tabs/updates/initController.ts:616",
+      "src/prokop/tabs/updates/initController.ts:806"
     ]
   },
   {
     "call": "Failed to save URLTest settings",
     "key": "Failed to save URLTest settings",
     "places": [
-      "src/prokop/tabs/dashboard/initController.ts:1416"
+      "src/prokop/tabs/dashboard/initController.ts:1445"
     ]
   },
   {
     "call": "Failed to switch the node",
     "key": "Failed to switch the node",
     "places": [
-      "src/prokop/tabs/dashboard/initController.ts:953",
-      "src/prokop/tabs/dashboard/initController.ts:958"
+      "src/prokop/tabs/dashboard/initController.ts:984",
+      "src/prokop/tabs/dashboard/initController.ts:989"
     ]
   },
   {
     "call": "Failed to update subscriptions",
     "key": "Failed to update subscriptions",
     "places": [
-      "src/prokop/tabs/dashboard/initController.ts:479",
-      "src/prokop/tabs/dashboard/initController.ts:480",
-      "src/prokop/tabs/dashboard/initController.ts:546",
-      "src/prokop/tabs/dashboard/initController.ts:1755",
+      "src/prokop/tabs/dashboard/initController.ts:504",
+      "src/prokop/tabs/dashboard/initController.ts:505",
+      "src/prokop/tabs/dashboard/initController.ts:571",
+      "src/prokop/tabs/dashboard/initController.ts:1785",
       "src/prokop/tabs/dashboard/subscriptionJob.ts:10"
     ]
   },
@@ -3924,14 +4000,14 @@
     "call": "FakeIP and control checks use different public IPs",
     "key": "FakeIP and control checks use different public IPs",
     "places": [
-      "src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:91"
+      "src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:105"
     ]
   },
   {
     "call": "FakeIP and control checks use the same public IP",
     "key": "FakeIP and control checks use the same public IP",
     "places": [
-      "src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:92"
+      "src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:106"
     ]
   },
   {
@@ -3960,7 +4036,7 @@
     "key": "FakeIP works; public IP comparison is inconclusive",
     "places": [
       "src/prokop/tabs/diagnostic/checkCards.ts:87",
-      "src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:46"
+      "src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:52"
     ]
   },
   {
@@ -3968,14 +4044,14 @@
     "key": "Faster server search interval",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3444",
-      "src/prokop/tabs/dashboard/initController.ts:1587"
+      "src/prokop/tabs/dashboard/initController.ts:1617"
     ]
   },
   {
     "call": "Fastest",
     "key": "Fastest",
     "places": [
-      "src/prokop/methods/custom/getDashboardSections.ts:652"
+      "src/prokop/methods/custom/getDashboardSections.ts:657"
     ]
   },
   {
@@ -4018,21 +4094,21 @@
     "call": "Following new connections",
     "key": "Following new connections",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:711"
+      "src/prokop/tabs/monitoring/initController.ts:715"
     ]
   },
   {
     "call": "For a DPI rule this can mean the strategy does not work with your provider.",
     "key": "For a DPI rule this can mean the strategy does not work with your provider.",
     "places": [
-      "src/prokop/tabs/diagnostic/siteCheck.ts:174"
+      "src/prokop/tabs/diagnostic/siteCheck.ts:178"
     ]
   },
   {
     "call": "For recommendations. Automatic apply always requires high confidence.",
     "key": "For recommendations. Automatic apply always requires high confidence.",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:528"
+      "src/prokop/tabs/autotune/initController.ts:509"
     ]
   },
   {
@@ -4068,7 +4144,7 @@
     "key": "Full removal",
     "places": [
       "src/prokop/tabs/updates/fullUninstall.ts:101",
-      "src/prokop/tabs/updates/fullUninstall.ts:129"
+      "src/prokop/tabs/updates/fullUninstall.ts:131"
     ]
   },
   {
@@ -4076,6 +4152,13 @@
     "key": "Fuzzing is not supported here because Prokop needs deterministic runtime validation.",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7117"
+    ]
+  },
+  {
+    "call": "GB",
+    "key": "GB",
+    "places": [
+      "src/helpers/prettyBytes.ts:7"
     ]
   },
   {
@@ -4100,6 +4183,13 @@
     ]
   },
   {
+    "call": "Groups: %d · targets: %d",
+    "key": "Groups: %d · targets: %d",
+    "places": [
+      "src/prokop/tabs/dashboard/overview.ts:512"
+    ]
+  },
+  {
     "call": "has no effect",
     "key": "has no effect",
     "places": [
@@ -4110,7 +4200,7 @@
     "call": "Health state unavailable",
     "key": "Health state unavailable",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:286"
+      "src/prokop/tabs/dashboard/overview.ts:297"
     ]
   },
   {
@@ -4133,7 +4223,7 @@
     "call": "Hide values",
     "key": "Hide values",
     "places": [
-      "src/partials/modal/renderModal.ts:310"
+      "src/partials/modal/renderModal.ts:330"
     ]
   },
   {
@@ -4148,7 +4238,7 @@
     "key": "Higher-level check interval",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3408",
-      "src/prokop/tabs/dashboard/initController.ts:1573"
+      "src/prokop/tabs/dashboard/initController.ts:1603"
     ]
   },
   {
@@ -4176,22 +4266,22 @@
     "call": "History is kept in memory until the router restarts.",
     "key": "History is kept in memory until the router restarts.",
     "places": [
-      "src/prokop/tabs/history/initController.ts:149"
+      "src/prokop/tabs/history/initController.ts:152"
     ]
   },
   {
     "call": "History is unavailable",
     "key": "History is unavailable",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1474",
-      "src/prokop/tabs/history/initController.ts:136"
+      "src/prokop/tabs/autotune/initController.ts:1456",
+      "src/prokop/tabs/history/initController.ts:139"
     ]
   },
   {
     "call": "Host",
     "key": "Host",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1011"
+      "src/prokop/tabs/monitoring/initController.ts:1015"
     ]
   },
   {
@@ -4241,15 +4331,15 @@
     "key": "Idle timeout",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2960",
-      "src/prokop/tabs/dashboard/initController.ts:1198",
-      "src/prokop/tabs/dashboard/initController.ts:1452"
+      "src/prokop/tabs/dashboard/initController.ts:1229",
+      "src/prokop/tabs/dashboard/initController.ts:1481"
     ]
   },
   {
     "call": "If the VPN kill-switch is enabled, its sections stay blocked until Prokop is started.",
     "key": "If the VPN kill-switch is enabled, its sections stay blocked until Prokop is started.",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:191"
+      "src/prokop/tabs/dashboard/overview.ts:202"
     ]
   },
   {
@@ -4328,14 +4418,14 @@
     "key": "In progress",
     "places": [
       "src/prokop/ui/status.ts:166",
-      "src/prokop/tabs/history/model.ts:82"
+      "src/prokop/tabs/history/model.ts:78"
     ]
   },
   {
     "call": "In snapshot",
     "key": "In snapshot",
     "places": [
-      "src/prokop/tabs/history/initController.ts:201"
+      "src/prokop/tabs/history/initController.ts:204"
     ]
   },
   {
@@ -4349,7 +4439,7 @@
     "call": "Inactive",
     "key": "Inactive",
     "places": [
-      "src/prokop/tabs/history/model.ts:51"
+      "src/prokop/tabs/history/model.ts:47"
     ]
   },
   {
@@ -4402,60 +4492,60 @@
     "call": "Install",
     "key": "Install",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:838",
-      "src/prokop/tabs/updates/initController.ts:981",
-      "src/prokop/tabs/updates/initController.ts:1307",
-      "src/prokop/tabs/updates/releaseSelector.ts:64"
+      "src/prokop/tabs/updates/initController.ts:841",
+      "src/prokop/tabs/updates/initController.ts:984",
+      "src/prokop/tabs/updates/initController.ts:1310",
+      "src/prokop/tabs/updates/releaseSelector.ts:68"
     ]
   },
   {
     "call": "Install another build:",
     "key": "Install another build:",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:1377"
+      "src/prokop/tabs/updates/initController.ts:1380"
     ]
   },
   {
     "call": "Install Extended build",
     "key": "Install Extended build",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:940"
+      "src/prokop/tabs/updates/initController.ts:943"
     ]
   },
   {
     "call": "Install selected version",
     "key": "Install selected version",
     "places": [
-      "src/prokop/tabs/updates/releaseSelector.ts:107"
+      "src/prokop/tabs/updates/releaseSelector.ts:120"
     ]
   },
   {
     "call": "Install Tiny build",
     "key": "Install Tiny build",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:931"
+      "src/prokop/tabs/updates/initController.ts:934"
     ]
   },
   {
     "call": "Installed",
     "key": "Installed",
     "places": [
-      "src/prokop/tabs/updates/releaseSelector.ts:97"
+      "src/prokop/tabs/updates/releaseSelector.ts:110"
     ]
   },
   {
     "call": "Installed (Mirror edition)",
     "key": "Installed (Mirror edition)",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:1055"
+      "src/prokop/tabs/updates/initController.ts:1058"
     ]
   },
   {
     "call": "Installed version is newer than release",
     "key": "Installed version is newer than release",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:301",
-      "src/prokop/tabs/updates/initController.ts:1198"
+      "src/prokop/tabs/updates/initController.ts:304",
+      "src/prokop/tabs/updates/initController.ts:1201"
     ]
   },
   {
@@ -4485,9 +4575,9 @@
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2974",
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3460",
-      "src/prokop/tabs/dashboard/initController.ts:1200",
-      "src/prokop/tabs/dashboard/initController.ts:1453",
-      "src/prokop/tabs/dashboard/initController.ts:1593"
+      "src/prokop/tabs/dashboard/initController.ts:1231",
+      "src/prokop/tabs/dashboard/initController.ts:1482",
+      "src/prokop/tabs/dashboard/initController.ts:1623"
     ]
   },
   {
@@ -4508,8 +4598,8 @@
     "call": "Interval",
     "key": "Interval",
     "places": [
-      "src/prokop/tabs/dashboard/initController.ts:1196",
-      "src/prokop/tabs/dashboard/initController.ts:1450"
+      "src/prokop/tabs/dashboard/initController.ts:1227",
+      "src/prokop/tabs/dashboard/initController.ts:1479"
     ]
   },
   {
@@ -4847,6 +4937,55 @@
     ]
   },
   {
+    "call": "Invalid Trojan URL: invalid host and port",
+    "key": "Invalid Trojan URL: invalid host and port",
+    "places": [
+      "src/validators/validateTrojanUrl.ts:48"
+    ]
+  },
+  {
+    "call": "Invalid Trojan URL: invalid port number",
+    "key": "Invalid Trojan URL: invalid port number",
+    "places": [
+      "src/validators/validateTrojanUrl.ts:64"
+    ]
+  },
+  {
+    "call": "Invalid Trojan URL: missing credentials and host",
+    "key": "Invalid Trojan URL: missing credentials and host",
+    "places": [
+      "src/validators/validateTrojanUrl.ts:29"
+    ]
+  },
+  {
+    "call": "Invalid Trojan URL: missing hostname",
+    "key": "Invalid Trojan URL: missing hostname",
+    "places": [
+      "src/validators/validateTrojanUrl.ts:55"
+    ]
+  },
+  {
+    "call": "Invalid Trojan URL: missing hostname and port",
+    "key": "Invalid Trojan URL: missing hostname and port",
+    "places": [
+      "src/validators/validateTrojanUrl.ts:41"
+    ]
+  },
+  {
+    "call": "Invalid Trojan URL: missing password",
+    "key": "Invalid Trojan URL: missing password",
+    "places": [
+      "src/validators/validateTrojanUrl.ts:35"
+    ]
+  },
+  {
+    "call": "Invalid Trojan URL: missing port",
+    "key": "Invalid Trojan URL: missing port",
+    "places": [
+      "src/validators/validateTrojanUrl.ts:59"
+    ]
+  },
+  {
     "call": "Invalid Trojan URL: must not contain spaces",
     "key": "Invalid Trojan URL: must not contain spaces",
     "places": [
@@ -4864,7 +5003,7 @@
     "call": "Invalid Trojan URL: parsing failed",
     "key": "Invalid Trojan URL: parsing failed",
     "places": [
-      "src/validators/validateTrojanUrl.ts:61"
+      "src/validators/validateTrojanUrl.ts:67"
     ]
   },
   {
@@ -4877,10 +5016,164 @@
     ]
   },
   {
+    "call": "Invalid VLESS URL: flow xtls-rprx-vision-udp443 is not supported",
+    "key": "Invalid VLESS URL: flow xtls-rprx-vision-udp443 is not supported",
+    "places": [
+      "src/validators/validateVlessUrl.ts:113"
+    ]
+  },
+  {
+    "call": "Invalid VLESS URL: invalid host and port",
+    "key": "Invalid VLESS URL: invalid host and port",
+    "places": [
+      "src/validators/validateVlessUrl.ts:43"
+    ]
+  },
+  {
+    "call": "Invalid VLESS URL: invalid port number",
+    "key": "Invalid VLESS URL: invalid port number",
+    "places": [
+      "src/validators/validateVlessUrl.ts:60"
+    ]
+  },
+  {
+    "call": "Invalid VLESS URL: missing fp for reality",
+    "key": "Invalid VLESS URL: missing fp for reality",
+    "places": [
+      "src/validators/validateVlessUrl.ts:106"
+    ]
+  },
+  {
+    "call": "Invalid VLESS URL: missing host and UUID",
+    "key": "Invalid VLESS URL: missing host and UUID",
+    "places": [
+      "src/validators/validateVlessUrl.ts:28"
+    ]
+  },
+  {
+    "call": "Invalid VLESS URL: missing hostname",
+    "key": "Invalid VLESS URL: missing hostname",
+    "places": [
+      "src/validators/validateVlessUrl.ts:50"
+    ]
+  },
+  {
+    "call": "Invalid VLESS URL: missing pbk for reality",
+    "key": "Invalid VLESS URL: missing pbk for reality",
+    "places": [
+      "src/validators/validateVlessUrl.ts:101"
+    ]
+  },
+  {
+    "call": "Invalid VLESS URL: missing port",
+    "key": "Invalid VLESS URL: missing port",
+    "places": [
+      "src/validators/validateVlessUrl.ts:54"
+    ]
+  },
+  {
+    "call": "Invalid VLESS URL: missing query parameters",
+    "key": "Invalid VLESS URL: missing query parameters",
+    "places": [
+      "src/validators/validateVlessUrl.ts:66"
+    ]
+  },
+  {
+    "call": "Invalid VLESS URL: missing server",
+    "key": "Invalid VLESS URL: missing server",
+    "places": [
+      "src/validators/validateVlessUrl.ts:37"
+    ]
+  },
+  {
+    "call": "Invalid VLESS URL: missing UUID",
+    "key": "Invalid VLESS URL: missing UUID",
+    "places": [
+      "src/validators/validateVlessUrl.ts:34"
+    ]
+  },
+  {
+    "call": "Invalid VLESS URL: must not contain spaces",
+    "key": "Invalid VLESS URL: must not contain spaces",
+    "places": [
+      "src/validators/validateVlessUrl.ts:16"
+    ]
+  },
+  {
+    "call": "Invalid VLESS URL: must start with vless://",
+    "key": "Invalid VLESS URL: must start with vless://",
+    "places": [
+      "src/validators/validateVlessUrl.ts:10"
+    ]
+  },
+  {
     "call": "Invalid VLESS URL: parsing failed",
     "key": "Invalid VLESS URL: parsing failed",
     "places": [
-      "src/validators/validateVlessUrl.ts:117"
+      "src/validators/validateVlessUrl.ts:121"
+    ]
+  },
+  {
+    "call": "Invalid VLESS URL: unsupported or missing security",
+    "key": "Invalid VLESS URL: unsupported or missing security",
+    "places": [
+      "src/validators/validateVlessUrl.ts:94"
+    ]
+  },
+  {
+    "call": "Invalid VLESS URL: unsupported or missing type",
+    "key": "Invalid VLESS URL: unsupported or missing type",
+    "places": [
+      "src/validators/validateVlessUrl.ts:88"
+    ]
+  },
+  {
+    "call": "Invalid VMess URL: invalid config",
+    "key": "Invalid VMess URL: invalid config",
+    "places": [
+      "src/validators/validateVmessUrl.ts:47"
+    ]
+  },
+  {
+    "call": "Invalid VMess URL: invalid port number",
+    "key": "Invalid VMess URL: invalid port number",
+    "places": [
+      "src/validators/validateVmessUrl.ts:58"
+    ]
+  },
+  {
+    "call": "Invalid VMess URL: invalid server",
+    "key": "Invalid VMess URL: invalid server",
+    "places": [
+      "src/validators/validateVmessUrl.ts:52"
+    ]
+  },
+  {
+    "call": "Invalid VMess URL: missing encoded config",
+    "key": "Invalid VMess URL: missing encoded config",
+    "places": [
+      "src/validators/validateVmessUrl.ts:41"
+    ]
+  },
+  {
+    "call": "Invalid VMess URL: missing UUID",
+    "key": "Invalid VMess URL: missing UUID",
+    "places": [
+      "src/validators/validateVmessUrl.ts:63"
+    ]
+  },
+  {
+    "call": "Invalid VMess URL: must not contain spaces",
+    "key": "Invalid VMess URL: must not contain spaces",
+    "places": [
+      "src/validators/validateVmessUrl.ts:32"
+    ]
+  },
+  {
+    "call": "Invalid VMess URL: must start with vmess://",
+    "key": "Invalid VMess URL: must start with vmess://",
+    "places": [
+      "src/validators/validateVmessUrl.ts:25"
     ]
   },
   {
@@ -5000,14 +5293,14 @@
     "call": "It never creates or deletes rules, never turns DPI bypass off and never moves targets between rules.",
     "key": "It never creates or deletes rules, never turns DPI bypass off and never moves targets between rules.",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:204"
+      "src/prokop/tabs/autotune/initController.ts:207"
     ]
   },
   {
     "call": "Its measurements are deleted as well. Routing rules are not changed.",
     "key": "Its measurements are deleted as well. Routing rules are not changed.",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:759"
+      "src/prokop/tabs/autotune/initController.ts:740"
     ]
   },
   {
@@ -5063,6 +5356,13 @@
     ]
   },
   {
+    "call": "KB",
+    "key": "KB",
+    "places": [
+      "src/helpers/prettyBytes.ts:5"
+    ]
+  },
+  {
     "call": "Keep Priority before latency-sorted servers",
     "key": "Keep Priority before latency-sorted servers",
     "places": [
@@ -5108,25 +5408,26 @@
     "call": "Last change",
     "key": "Last change",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:936",
-      "src/prokop/tabs/autotune/initController.ts:1137"
+      "src/prokop/tabs/autotune/initController.ts:918",
+      "src/prokop/tabs/autotune/initController.ts:1119"
     ]
   },
   {
     "call": "last check",
     "key": "last check",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:774"
+      "src/prokop/tabs/autotune/initController.ts:755"
     ]
   },
   {
     "call": "Last check",
     "key": "Last check",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:911",
-      "src/prokop/tabs/autotune/initController.ts:917",
-      "src/prokop/tabs/autotune/initController.ts:918",
-      "src/prokop/tabs/diagnostic/partials/renderRunAction.ts:55"
+      "src/prokop/tabs/autotune/initController.ts:893",
+      "src/prokop/tabs/autotune/initController.ts:899",
+      "src/prokop/tabs/autotune/initController.ts:900",
+      "src/prokop/tabs/dashboard/overview.ts:562",
+      "src/prokop/tabs/diagnostic/partials/renderRunAction.ts:56"
     ]
   },
   {
@@ -5147,7 +5448,7 @@
     "call": "Last diagnostics: %s",
     "key": "Last diagnostics: %s",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:307"
+      "src/prokop/tabs/dashboard/overview.ts:318"
     ]
   },
   {
@@ -5161,43 +5462,43 @@
     "call": "Last important event",
     "key": "Last important event",
     "places": [
-      "src/prokop/tabs/dashboard/overviewCards.ts:304"
+      "src/prokop/tabs/dashboard/overviewCards.ts:321"
     ]
   },
   {
     "call": "Last known good",
     "key": "Last known good",
     "places": [
-      "src/prokop/tabs/history/initController.ts:381",
-      "src/prokop/tabs/history/model.ts:332"
+      "src/prokop/tabs/history/initController.ts:384",
+      "src/prokop/tabs/history/model.ts:328"
     ]
   },
   {
     "call": "Last known good configuration",
     "key": "Last known good configuration",
     "places": [
-      "src/prokop/tabs/history/model.ts:159"
+      "src/prokop/tabs/history/model.ts:155"
     ]
   },
   {
     "call": "Last recovery",
     "key": "Last recovery",
     "places": [
-      "src/prokop/tabs/history/model.ts:135"
+      "src/prokop/tabs/history/model.ts:131"
     ]
   },
   {
     "call": "Last reload",
     "key": "Last reload",
     "places": [
-      "src/prokop/tabs/history/model.ts:150"
+      "src/prokop/tabs/history/model.ts:146"
     ]
   },
   {
     "call": "Last reload: %s",
     "key": "Last reload: %s",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:379"
+      "src/prokop/tabs/dashboard/overview.ts:392"
     ]
   },
   {
@@ -5211,9 +5512,9 @@
     "call": "Latency test failed",
     "key": "Latency test failed",
     "places": [
-      "src/prokop/methods/shell/index.ts:674",
-      "src/prokop/methods/shell/index.ts:695",
-      "src/prokop/tabs/dashboard/initController.ts:1047",
+      "src/prokop/methods/shell/index.ts:671",
+      "src/prokop/methods/shell/index.ts:692",
+      "src/prokop/tabs/dashboard/initController.ts:1078",
       "src/prokop/tabs/dashboard/latencyJob.ts:9"
     ]
   },
@@ -5228,22 +5529,22 @@
     "call": "Latest version is installed",
     "key": "Latest version is installed",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:304",
-      "src/prokop/tabs/updates/initController.ts:1196"
+      "src/prokop/tabs/updates/initController.ts:307",
+      "src/prokop/tabs/updates/initController.ts:1199"
     ]
   },
   {
     "call": "Latest version:",
     "key": "Latest version:",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:1198"
+      "src/prokop/tabs/updates/initController.ts:1201"
     ]
   },
   {
     "call": "left",
     "key": "left",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1049"
+      "src/prokop/tabs/autotune/initController.ts:1031"
     ]
   },
   {
@@ -5264,7 +5565,7 @@
     "call": "Level",
     "key": "Level",
     "places": [
-      "src/prokop/tabs/dashboard/initController.ts:1529"
+      "src/prokop/tabs/dashboard/initController.ts:1559"
     ]
   },
   {
@@ -5278,7 +5579,7 @@
     "call": "List",
     "key": "List",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:690",
+      "src/prokop/tabs/autotune/initController.ts:671",
       "src/prokop/tabs/autotune/model.ts:694"
     ]
   },
@@ -5293,7 +5594,7 @@
     "call": "List of a rule",
     "key": "List of a rule",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:563"
+      "src/prokop/tabs/autotune/initController.ts:544"
     ]
   },
   {
@@ -5307,7 +5608,7 @@
     "call": "List update frequency was %s, shorter than the 1 h minimum of automatic updates: set to %s.",
     "key": "List update frequency was %s, shorter than the 1 h minimum of automatic updates: set to %s.",
     "places": [
-      "src/prokop/tabs/history/model.ts:242"
+      "src/prokop/tabs/history/model.ts:238"
     ]
   },
   {
@@ -5328,14 +5629,14 @@
     "call": "Loading available versions…",
     "key": "Loading available versions…",
     "places": [
-      "src/prokop/tabs/updates/releaseSelector.ts:80"
+      "src/prokop/tabs/updates/releaseSelector.ts:88"
     ]
   },
   {
     "call": "Loading connections",
     "key": "Loading connections",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1348",
+      "src/prokop/tabs/monitoring/initController.ts:1350",
       "src/prokop/tabs/monitoring/render.ts:164"
     ]
   },
@@ -5350,11 +5651,11 @@
     "call": "Loading...",
     "key": "Loading...",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:994",
-      "src/prokop/tabs/updates/initController.ts:1005",
-      "src/prokop/tabs/updates/initController.ts:1016",
-      "src/prokop/tabs/updates/initController.ts:1029",
-      "src/prokop/tabs/updates/initController.ts:1042"
+      "src/prokop/tabs/updates/initController.ts:997",
+      "src/prokop/tabs/updates/initController.ts:1008",
+      "src/prokop/tabs/updates/initController.ts:1019",
+      "src/prokop/tabs/updates/initController.ts:1032",
+      "src/prokop/tabs/updates/initController.ts:1045"
     ]
   },
   {
@@ -5363,13 +5664,14 @@
     "places": [
       "src/prokop/ui/states.ts:36",
       "src/prokop/tabs/autotune/domainPicker.ts:121",
-      "src/prokop/tabs/autotune/initController.ts:1280",
+      "src/prokop/tabs/autotune/initController.ts:1262",
       "src/prokop/tabs/autotune/render.ts:14",
       "src/prokop/tabs/autotune/render.ts:25",
       "src/prokop/tabs/autotune/render.ts:29",
       "src/prokop/tabs/autotune/render.ts:33",
-      "src/prokop/tabs/dashboard/render.ts:14",
-      "src/prokop/tabs/diagnostic/initController.ts:737",
+      "src/prokop/tabs/dashboard/overview.ts:504",
+      "src/prokop/tabs/dashboard/render.ts:16",
+      "src/prokop/tabs/diagnostic/initController.ts:738",
       "src/prokop/tabs/history/render.ts:13",
       "src/prokop/tabs/history/render.ts:17",
       "src/prokop/tabs/history/render.ts:29"
@@ -5393,7 +5695,7 @@
     "call": "LuCI app",
     "key": "LuCI app",
     "places": [
-      "src/prokop/tabs/diagnostic/initController.ts:757"
+      "src/prokop/tabs/diagnostic/initController.ts:758"
     ]
   },
   {
@@ -5428,7 +5730,7 @@
     "call": "Manual",
     "key": "Manual",
     "places": [
-      "src/prokop/tabs/history/model.ts:320"
+      "src/prokop/tabs/history/model.ts:316"
     ]
   },
   {
@@ -5443,6 +5745,13 @@
     "key": "Manual checks only measure; changes are applied only on schedule.",
     "places": [
       "src/prokop/tabs/autotune/model.ts:204"
+    ]
+  },
+  {
+    "call": "Manual selection",
+    "key": "Manual selection",
+    "places": [
+      "src/prokop/tabs/dashboard/partials/getOutboundFooterLabel.ts:10"
     ]
   },
   {
@@ -5474,10 +5783,17 @@
     ]
   },
   {
+    "call": "MB",
+    "key": "MB",
+    "places": [
+      "src/helpers/prettyBytes.ts:6"
+    ]
+  },
+  {
     "call": "measured in isolation from production traffic",
     "key": "measured in isolation from production traffic",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:778"
+      "src/prokop/tabs/autotune/initController.ts:759"
     ]
   },
   {
@@ -5491,7 +5807,7 @@
     "call": "Minimum confidence",
     "key": "Minimum confidence",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:526"
+      "src/prokop/tabs/autotune/initController.ts:507"
     ]
   },
   {
@@ -5526,15 +5842,16 @@
     "call": "Mode",
     "key": "Mode",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:855",
-      "src/prokop/tabs/autotune/initController.ts:863"
+      "src/prokop/tabs/autotune/initController.ts:837",
+      "src/prokop/tabs/autotune/initController.ts:845",
+      "src/prokop/tabs/dashboard/overview.ts:572"
     ]
   },
   {
     "call": "Mode 2 enabled",
     "key": "Mode 2 enabled",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:1065"
+      "src/prokop/tabs/updates/initController.ts:1068"
     ]
   },
   {
@@ -5569,21 +5886,21 @@
     "call": "More details",
     "key": "More details",
     "places": [
-      "src/prokop/tabs/dashboard/partials/renderSections.ts:132"
+      "src/prokop/tabs/dashboard/partials/renderSections.ts:157"
     ]
   },
   {
     "call": "ms",
     "key": "ms",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:116"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:121"
     ]
   },
   {
     "call": "Multiple sing-box processes were found or their ownership is unclear. Restart is unavailable; traffic routing was not changed. Stop Prokop ends Prokop's traffic interception and stops the sing-box processes that Prokop runs; then start Prokop again. A sing-box of another program is not stopped, and Prokop starts only after it has exited.",
     "key": "Multiple sing-box processes were found or their ownership is unclear. Restart is unavailable; traffic routing was not changed. Stop Prokop ends Prokop's traffic interception and stops the sing-box processes that Prokop runs; then start Prokop again. A sing-box of another program is not stopped, and Prokop starts only after it has exited.",
     "places": [
-      "src/prokop/tabs/dashboard/overviewCards.ts:116"
+      "src/prokop/tabs/dashboard/overviewCards.ts:118"
     ]
   },
   {
@@ -5618,8 +5935,8 @@
       "src/prokop/tabs/diagnostic/statusLabels.ts:24",
       "src/prokop/tabs/diagnostic/statusLabels.ts:45",
       "src/prokop/tabs/diagnostic/statusLabels.ts:56",
-      "src/prokop/tabs/history/model.ts:83",
-      "src/prokop/tabs/history/model.ts:86"
+      "src/prokop/tabs/history/model.ts:79",
+      "src/prokop/tabs/history/model.ts:82"
     ]
   },
   {
@@ -5669,15 +5986,16 @@
     "call": "Next scheduled check",
     "key": "Next scheduled check",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:920"
+      "src/prokop/tabs/autotune/initController.ts:902",
+      "src/prokop/tabs/dashboard/overview.ts:566"
     ]
   },
   {
     "call": "Next step",
     "key": "Next step",
     "places": [
-      "src/prokop/tabs/history/model.ts:96",
-      "src/prokop/tabs/history/model.ts:106"
+      "src/prokop/tabs/history/model.ts:92",
+      "src/prokop/tabs/history/model.ts:102"
     ]
   },
   {
@@ -5742,31 +6060,31 @@
     "call": "No",
     "key": "No",
     "places": [
-      "src/prokop/tabs/dashboard/initController.ts:1064",
-      "src/prokop/tabs/dashboard/initController.ts:1068",
-      "src/prokop/tabs/dashboard/initController.ts:1144",
-      "src/prokop/tabs/dashboard/initController.ts:1484"
+      "src/prokop/tabs/dashboard/initController.ts:1095",
+      "src/prokop/tabs/dashboard/initController.ts:1099",
+      "src/prokop/tabs/dashboard/initController.ts:1175",
+      "src/prokop/tabs/dashboard/initController.ts:1514"
     ]
   },
   {
     "call": "No active connections",
     "key": "No active connections",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1395"
+      "src/prokop/tabs/monitoring/initController.ts:1397"
     ]
   },
   {
     "call": "No autotune events yet",
     "key": "No autotune events yet",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1501"
+      "src/prokop/tabs/autotune/initController.ts:1483"
     ]
   },
   {
     "call": "No built-in rule set replaces them.",
     "key": "No built-in rule set replaces them.",
     "places": [
-      "src/prokop/tabs/history/model.ts:223"
+      "src/prokop/tabs/history/model.ts:219"
     ]
   },
   {
@@ -5794,35 +6112,35 @@
     "call": "No check has been run yet",
     "key": "No check has been run yet",
     "places": [
-      "src/prokop/tabs/diagnostic/partials/renderRunAction.ts:56"
+      "src/prokop/tabs/diagnostic/partials/renderRunAction.ts:57"
     ]
   },
   {
     "call": "No closed connections",
     "key": "No closed connections",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1396"
+      "src/prokop/tabs/monitoring/initController.ts:1398"
     ]
   },
   {
     "call": "No compatible releases available",
     "key": "No compatible releases available",
     "places": [
-      "src/prokop/tabs/updates/releaseSelector.ts:103"
+      "src/prokop/tabs/updates/releaseSelector.ts:116"
     ]
   },
   {
     "call": "No connections match the filters",
     "key": "No connections match the filters",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1376"
+      "src/prokop/tabs/monitoring/initController.ts:1378"
     ]
   },
   {
     "call": "no data",
     "key": "no data",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:360"
+      "src/prokop/tabs/dashboard/overview.ts:373"
     ]
   },
   {
@@ -5830,8 +6148,8 @@
     "key": "No data",
     "places": [
       "src/prokop/ui/states.ts:102",
-      "src/prokop/tabs/autotune/initController.ts:1244",
-      "src/prokop/tabs/autotune/initController.ts:1346",
+      "src/prokop/tabs/autotune/initController.ts:1226",
+      "src/prokop/tabs/autotune/initController.ts:1328",
       "src/prokop/tabs/autotune/model.ts:468"
     ]
   },
@@ -5839,7 +6157,7 @@
     "call": "No DNS records for this name",
     "key": "No DNS records for this name",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:95"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:98"
     ]
   },
   {
@@ -5860,22 +6178,22 @@
     "call": "No DPI rule has a downloaded list; only domains can be added.",
     "key": "No DPI rule has a downloaded list; only domains can be added.",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:737"
+      "src/prokop/tabs/autotune/initController.ts:718"
     ]
   },
   {
     "call": "No events of this kind",
     "key": "No events of this kind",
     "places": [
-      "src/prokop/tabs/history/initController.ts:184"
+      "src/prokop/tabs/history/initController.ts:187"
     ]
   },
   {
     "call": "No events recorded yet",
     "key": "No events recorded yet",
     "places": [
-      "src/prokop/tabs/dashboard/overviewCards.ts:317",
-      "src/prokop/tabs/history/initController.ts:183"
+      "src/prokop/tabs/dashboard/overviewCards.ts:334",
+      "src/prokop/tabs/history/initController.ts:186"
     ]
   },
   {
@@ -5897,7 +6215,7 @@
     "call": "No new connections yet. Open the site or app you want to check.",
     "key": "No new connections yet. Open the site or app you want to check.",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1391"
+      "src/prokop/tabs/monitoring/initController.ts:1393"
     ]
   },
   {
@@ -5911,22 +6229,22 @@
     "call": "No recovery needed",
     "key": "No recovery needed",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:465"
+      "src/prokop/tabs/dashboard/overview.ts:478"
     ]
   },
   {
     "call": "No reload recorded yet",
     "key": "No reload recorded yet",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:386",
-      "src/prokop/tabs/history/model.ts:156"
+      "src/prokop/tabs/dashboard/overview.ts:399",
+      "src/prokop/tabs/history/model.ts:152"
     ]
   },
   {
     "call": "No rule handles it; it may need to be added to a rule.",
     "key": "No rule handles it; it may need to be added to a rule.",
     "places": [
-      "src/prokop/tabs/diagnostic/siteCheck.ts:180"
+      "src/prokop/tabs/diagnostic/siteCheck.ts:184"
     ]
   },
   {
@@ -5962,22 +6280,22 @@
     "call": "No saved changes since this snapshot",
     "key": "No saved changes since this snapshot",
     "places": [
-      "src/prokop/tabs/history/initController.ts:192",
-      "src/prokop/tabs/history/initController.ts:291"
+      "src/prokop/tabs/history/initController.ts:195",
+      "src/prokop/tabs/history/initController.ts:294"
     ]
   },
   {
     "call": "No snapshots yet",
     "key": "No snapshots yet",
     "places": [
-      "src/prokop/tabs/history/initController.ts:422"
+      "src/prokop/tabs/history/initController.ts:425"
     ]
   },
   {
     "call": "No strategies were measured",
     "key": "No strategies were measured",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:803"
+      "src/prokop/tabs/autotune/initController.ts:784"
     ]
   },
   {
@@ -5991,15 +6309,15 @@
     "call": "No target is routed through a Zapret DPI rule",
     "key": "No target is routed through a Zapret DPI rule",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1279"
+      "src/prokop/tabs/autotune/initController.ts:1261"
     ]
   },
   {
     "call": "No targets yet",
     "key": "No targets yet",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1281",
-      "src/prokop/tabs/autotune/initController.ts:1461"
+      "src/prokop/tabs/autotune/initController.ts:1263",
+      "src/prokop/tabs/autotune/initController.ts:1443"
     ]
   },
   {
@@ -6021,24 +6339,24 @@
     "call": "Node list is empty",
     "key": "Node list is empty",
     "places": [
-      "src/prokop/tabs/dashboard/initController.ts:1285",
-      "src/prokop/tabs/dashboard/initController.ts:1685"
+      "src/prokop/tabs/dashboard/initController.ts:1316",
+      "src/prokop/tabs/dashboard/initController.ts:1715"
     ]
   },
   {
     "call": "Nodes",
     "key": "Nodes",
     "places": [
-      "src/prokop/tabs/dashboard/initController.ts:1224",
-      "src/prokop/tabs/dashboard/initController.ts:1617",
-      "src/prokop/tabs/dashboard/partials/renderSections.ts:335"
+      "src/prokop/tabs/dashboard/initController.ts:1255",
+      "src/prokop/tabs/dashboard/initController.ts:1647",
+      "src/prokop/tabs/dashboard/partials/renderSections.ts:360"
     ]
   },
   {
     "call": "Nodes and groups",
     "key": "Nodes and groups",
     "places": [
-      "src/prokop/tabs/dashboard/overviewCards.ts:255",
+      "src/prokop/tabs/dashboard/overviewCards.ts:257",
       "src/prokop/tabs/monitoring/render.ts:15",
       "src/prokop/tabs/diagnostic/partials/renderCheckSection.ts:97"
     ]
@@ -6054,7 +6372,7 @@
     "call": "Normal mode",
     "key": "Normal mode",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:1065"
+      "src/prokop/tabs/updates/initController.ts:1068"
     ]
   },
   {
@@ -6103,7 +6421,7 @@
       "src/prokop/tabs/autotune/model.ts:422",
       "src/prokop/tabs/autotune/model.ts:681",
       "src/prokop/tabs/autotune/model.ts:720",
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:109",
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:112",
       "src/prokop/tabs/diagnostic/statusLabels.ts:32"
     ]
   },
@@ -6111,7 +6429,8 @@
     "call": "Not checked yet",
     "key": "Not checked yet",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:918"
+      "src/prokop/tabs/autotune/initController.ts:900",
+      "src/prokop/tabs/dashboard/overview.ts:562"
     ]
   },
   {
@@ -6137,11 +6456,11 @@
     "places": [
       "src/prokop/helpers/singBoxVariant.ts:29",
       "src/prokop/helpers/singBoxVariant.ts:37",
-      "src/prokop/tabs/diagnostic/initController.ts:739",
-      "src/prokop/tabs/updates/initController.ts:1019",
-      "src/prokop/tabs/updates/initController.ts:1032",
-      "src/prokop/tabs/updates/initController.ts:1045",
-      "src/prokop/tabs/updates/initController.ts:1056"
+      "src/prokop/tabs/diagnostic/initController.ts:740",
+      "src/prokop/tabs/updates/initController.ts:1022",
+      "src/prokop/tabs/updates/initController.ts:1035",
+      "src/prokop/tabs/updates/initController.ts:1048",
+      "src/prokop/tabs/updates/initController.ts:1059"
     ]
   },
   {
@@ -6155,15 +6474,15 @@
     "call": "Not needed",
     "key": "Not needed",
     "places": [
-      "src/prokop/tabs/history/model.ts:140",
-      "src/prokop/tabs/history/model.ts:147"
+      "src/prokop/tabs/history/model.ts:136",
+      "src/prokop/tabs/history/model.ts:143"
     ]
   },
   {
     "call": "Not recorded yet",
     "key": "Not recorded yet",
     "places": [
-      "src/prokop/tabs/history/model.ts:163"
+      "src/prokop/tabs/history/model.ts:159"
     ]
   },
   {
@@ -6188,7 +6507,7 @@
     "key": "Not running",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:143",
-      "src/prokop/tabs/dashboard/overview.ts:242",
+      "src/prokop/tabs/dashboard/overview.ts:253",
       "src/prokop/tabs/diagnostic/diagnostic.store.ts:131",
       "src/prokop/tabs/diagnostic/initController.ts:106",
       "src/prokop/tabs/diagnostic/initController.ts:330",
@@ -6201,7 +6520,7 @@
     "key": "not set",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/configform.js:332",
-      "src/prokop/tabs/history/model.ts:365"
+      "src/prokop/tabs/history/model.ts:361"
     ]
   },
   {
@@ -6209,7 +6528,7 @@
     "key": "Not started",
     "places": [
       "src/prokop/ui/status.ts:137",
-      "src/prokop/tabs/dashboard/overview.ts:226"
+      "src/prokop/tabs/dashboard/overview.ts:237"
     ]
   },
   {
@@ -6224,7 +6543,7 @@
     "call": "not used",
     "key": "not used",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:256"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:269"
     ]
   },
   {
@@ -6263,9 +6582,9 @@
     "call": "Now",
     "key": "Now",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1127",
+      "src/prokop/tabs/autotune/initController.ts:1109",
       "src/prokop/tabs/autotune/model.ts:1035",
-      "src/prokop/tabs/history/initController.ts:202"
+      "src/prokop/tabs/history/initController.ts:205"
     ]
   },
   {
@@ -6340,7 +6659,7 @@
     "call": "Only the first %d changes are listed; %d changes in total.",
     "key": "Only the first %d changes are listed; %d changes in total.",
     "places": [
-      "src/prokop/tabs/history/model.ts:408"
+      "src/prokop/tabs/history/model.ts:404"
     ]
   },
   {
@@ -6361,15 +6680,22 @@
     "call": "Open",
     "key": "Open",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:1189",
-      "src/prokop/tabs/updates/initController.ts:1211"
+      "src/prokop/tabs/updates/initController.ts:1192",
+      "src/prokop/tabs/updates/initController.ts:1214"
+    ]
+  },
+  {
+    "call": "Open autotune",
+    "key": "Open autotune",
+    "places": [
+      "src/prokop/tabs/dashboard/overviewCards.ts:279"
     ]
   },
   {
     "call": "Open History and recovery",
     "key": "Open History and recovery",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1120"
+      "src/prokop/tabs/autotune/initController.ts:1102"
     ]
   },
   {
@@ -6391,7 +6717,7 @@
     "call": "Open rules",
     "key": "Open rules",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1233",
+      "src/prokop/tabs/autotune/initController.ts:1215",
       "src/prokop/tabs/diagnostic/partials/renderCheckSection.ts:94"
     ]
   },
@@ -6407,8 +6733,8 @@
     "key": "Operation timed out",
     "places": [
       "src/helpers/withTimeout.ts:7",
-      "src/prokop/methods/shell/index.ts:643",
-      "src/prokop/methods/shell/index.ts:733"
+      "src/prokop/methods/shell/index.ts:640",
+      "src/prokop/methods/shell/index.ts:730"
     ]
   },
   {
@@ -6422,7 +6748,7 @@
     "call": "Optional IPv4 address. By default the first IPv4 DNS server of Prokop is used.",
     "key": "Optional IPv4 address. By default the first IPv4 DNS server of Prokop is used.",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:746"
+      "src/prokop/tabs/autotune/initController.ts:727"
     ]
   },
   {
@@ -6450,14 +6776,14 @@
     "call": "OS",
     "key": "OS",
     "places": [
-      "src/prokop/tabs/diagnostic/initController.ts:789"
+      "src/prokop/tabs/diagnostic/initController.ts:790"
     ]
   },
   {
     "call": "Other",
     "key": "Other",
     "places": [
-      "src/prokop/tabs/history/model.ts:341",
+      "src/prokop/tabs/history/model.ts:337",
       "src/prokop/tabs/monitoring/connectionView.ts:122"
     ]
   },
@@ -6472,7 +6798,7 @@
     "call": "Outbound chain",
     "key": "Outbound chain",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1015"
+      "src/prokop/tabs/monitoring/initController.ts:1019"
     ]
   },
   {
@@ -6522,15 +6848,29 @@
     "call": "Package recovery",
     "key": "Package recovery",
     "places": [
-      "src/prokop/tabs/history/model.ts:144"
+      "src/prokop/tabs/history/model.ts:140"
     ]
   },
   {
     "call": "Package recovery has not finished",
     "key": "Package recovery has not finished",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:155",
-      "src/prokop/tabs/dashboard/overview.ts:449"
+      "src/prokop/tabs/dashboard/overview.ts:166",
+      "src/prokop/tabs/dashboard/overview.ts:462"
+    ]
+  },
+  {
+    "call": "Packet Steering mode 2 has been enabled",
+    "key": "Packet Steering mode 2 has been enabled",
+    "places": [
+      "src/prokop/tabs/updates/componentActionToast.ts:43"
+    ]
+  },
+  {
+    "call": "Packet Steering normal mode has been restored",
+    "key": "Packet Steering normal mode has been restored",
+    "places": [
+      "src/prokop/tabs/updates/componentActionToast.ts:46"
     ]
   },
   {
@@ -6572,9 +6912,9 @@
     "call": "Path",
     "key": "Path",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:984",
-      "src/prokop/tabs/monitoring/initController.ts:1037",
-      "src/prokop/tabs/monitoring/initController.ts:1289",
+      "src/prokop/tabs/monitoring/initController.ts:988",
+      "src/prokop/tabs/monitoring/initController.ts:1039",
+      "src/prokop/tabs/monitoring/initController.ts:1291",
       "src/prokop/tabs/monitoring/render.ts:89"
     ]
   },
@@ -6610,37 +6950,44 @@
     "call": "Path type",
     "key": "Path type",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:671"
+      "src/prokop/tabs/monitoring/initController.ts:675"
     ]
   },
   {
     "call": "Pause",
     "key": "Pause",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1146"
+      "src/prokop/tabs/autotune/initController.ts:1128"
     ]
   },
   {
     "call": "Pause after a rollback",
     "key": "Pause after a rollback",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:538"
+      "src/prokop/tabs/autotune/initController.ts:519"
     ]
   },
   {
     "call": "pause after a rollback %s",
     "key": "pause after a rollback %s",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:828"
+      "src/prokop/tabs/autotune/initController.ts:810"
     ]
   },
   {
     "call": "Pause updates",
     "key": "Pause updates",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:806",
+      "src/prokop/tabs/monitoring/initController.ts:810",
       "src/prokop/tabs/monitoring/render.ts:140",
       "src/prokop/tabs/monitoring/render.ts:141"
+    ]
+  },
+  {
+    "call": "PB",
+    "key": "PB",
+    "places": [
+      "src/helpers/prettyBytes.ts:9"
     ]
   },
   {
@@ -6683,30 +7030,30 @@
     "call": "Policy",
     "key": "Policy",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:884"
+      "src/prokop/tabs/autotune/initController.ts:866"
     ]
   },
   {
     "call": "Policy saved",
     "key": "Policy saved",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:511"
+      "src/prokop/tabs/autotune/initController.ts:492"
     ]
   },
   {
     "call": "Policy…",
     "key": "Policy…",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:989"
+      "src/prokop/tabs/autotune/initController.ts:971"
     ]
   },
   {
     "call": "Port",
     "key": "Port",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:255",
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:258",
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:310"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:268",
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:271",
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:323"
     ]
   },
   {
@@ -6728,7 +7075,7 @@
     "key": "Port must be between 1 and 65535",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6463",
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:88"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:91"
     ]
   },
   {
@@ -6792,23 +7139,23 @@
     "key": "Priority",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9251",
-      "src/prokop/tabs/dashboard/partials/renderSections.ts:281"
+      "src/prokop/tabs/dashboard/partials/renderSections.ts:306"
     ]
   },
   {
     "call": "Priority details",
     "key": "Priority details",
     "places": [
-      "src/prokop/tabs/dashboard/initController.ts:1712",
-      "src/prokop/tabs/dashboard/partials/renderSections.ts:465",
-      "src/prokop/tabs/dashboard/partials/renderSections.ts:466"
+      "src/prokop/tabs/dashboard/initController.ts:1742",
+      "src/prokop/tabs/dashboard/partials/renderSections.ts:504",
+      "src/prokop/tabs/dashboard/partials/renderSections.ts:505"
     ]
   },
   {
     "call": "Priority details are unavailable",
     "key": "Priority details are unavailable",
     "places": [
-      "src/prokop/tabs/dashboard/initController.ts:1554"
+      "src/prokop/tabs/dashboard/initController.ts:1584"
     ]
   },
   {
@@ -6839,7 +7186,7 @@
     "call": "Probe tool is missing on the router",
     "key": "Probe tool is missing on the router",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:100"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:103"
     ]
   },
   {
@@ -6853,7 +7200,7 @@
     "call": "Probes per strategy",
     "key": "Probes per strategy",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:545"
+      "src/prokop/tabs/autotune/initController.ts:526"
     ]
   },
   {
@@ -6867,14 +7214,14 @@
     "call": "Profile",
     "key": "Profile",
     "places": [
-      "src/prokop/tabs/dashboard/partials/renderSections.ts:130"
+      "src/prokop/tabs/dashboard/partials/renderSections.ts:155"
     ]
   },
   {
     "call": "Prokop 1.0.31 and older have no VPN kill-switch. If it is enabled, the installation removes its protection, and protected traffic is no longer blocked while Prokop is stopped.",
     "key": "Prokop 1.0.31 and older have no VPN kill-switch. If it is enabled, the installation removes its protection, and protected traffic is no longer blocked while Prokop is stopped.",
     "places": [
-      "src/prokop/tabs/updates/releaseSelector.ts:55"
+      "src/prokop/tabs/updates/releaseSelector.ts:59"
     ]
   },
   {
@@ -6906,10 +7253,17 @@
     ]
   },
   {
+    "call": "Prokop has been installed",
+    "key": "Prokop has been installed",
+    "places": [
+      "src/prokop/methods/shell/index.ts:887"
+    ]
+  },
+  {
     "call": "Prokop has turned off the iptables hooks of br_netfilter (net.bridge.bridge-nf-call-iptables and -ip6tables) for transparent proxying: iptables rules do not filter bridged traffic while it runs. Stopping Prokop restores the previous values unless another program has changed them since.",
     "key": "Prokop has turned off the iptables hooks of br_netfilter (net.bridge.bridge-nf-call-iptables and -ip6tables) for transparent proxying: iptables rules do not filter bridged traffic while it runs. Stopping Prokop restores the previous values unless another program has changed them since.",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:176"
+      "src/prokop/tabs/dashboard/overview.ts:187"
     ]
   },
   {
@@ -6931,7 +7285,7 @@
     "call": "Prokop is running",
     "key": "Prokop is running",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:279"
+      "src/prokop/tabs/dashboard/overview.ts:290"
     ]
   },
   {
@@ -6973,7 +7327,7 @@
     "call": "Prokop is stopped: the configuration is replaced and checked, but Prokop is not started. It takes effect when you start Prokop.",
     "key": "Prokop is stopped: the configuration is replaced and checked, but Prokop is not started. It takes effect when you start Prokop.",
     "places": [
-      "src/prokop/tabs/history/model.ts:621"
+      "src/prokop/tabs/history/model.ts:617"
     ]
   },
   {
@@ -6987,8 +7341,8 @@
     "call": "Prokop kept or restored the previous configuration.",
     "key": "Prokop kept or restored the previous configuration.",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:165",
-      "src/prokop/tabs/dashboard/overview.ts:459"
+      "src/prokop/tabs/dashboard/overview.ts:176",
+      "src/prokop/tabs/dashboard/overview.ts:472"
     ]
   },
   {
@@ -7037,7 +7391,7 @@
     "call": "Prokop needs attention",
     "key": "Prokop needs attention",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:266"
+      "src/prokop/tabs/dashboard/overview.ts:277"
     ]
   },
   {
@@ -7059,7 +7413,7 @@
     "call": "Prokop reloads the configuration. If the reload fails, the previous configuration is restored automatically.",
     "key": "Prokop reloads the configuration. If the reload fails, the previous configuration is restored automatically.",
     "places": [
-      "src/prokop/tabs/history/model.ts:624"
+      "src/prokop/tabs/history/model.ts:620"
     ]
   },
   {
@@ -7087,14 +7441,21 @@
     "call": "Prokop service is stopped. Start the service to display connections.",
     "key": "Prokop service is stopped. Start the service to display connections.",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1336"
+      "src/prokop/tabs/monitoring/initController.ts:1338"
+    ]
+  },
+  {
+    "call": "Prokop service is stopped. Start the service to display nodes and groups.",
+    "key": "Prokop service is stopped. Start the service to display nodes and groups.",
+    "places": [
+      "src/prokop/tabs/dashboard/partials/renderSections.ts:58"
     ]
   },
   {
     "call": "Prokop stays stopped until you start it: reloads, restores and updates do not start it.",
     "key": "Prokop stays stopped until you start it: reloads, restores and updates do not start it.",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:216"
+      "src/prokop/tabs/dashboard/overview.ts:227"
     ]
   },
   {
@@ -7108,14 +7469,14 @@
     "call": "Prokop was not started since the router booted: reloads, restores and updates do not start it.",
     "key": "Prokop was not started since the router booted: reloads, restores and updates do not start it.",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:228"
+      "src/prokop/tabs/dashboard/overview.ts:239"
     ]
   },
   {
     "call": "Prokop was not stopped by the user: its start failed or it stopped unexpectedly.",
     "key": "Prokop was not stopped by the user: its start failed or it stopped unexpectedly.",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:245"
+      "src/prokop/tabs/dashboard/overview.ts:256"
     ]
   },
   {
@@ -7129,7 +7490,7 @@
     "call": "Prokop will change the strategy of existing DPI rules by itself, only after several confirmations in a row, with a production check and automatic rollback.",
     "key": "Prokop will change the strategy of existing DPI rules by itself, only after several confirmations in a row, with a production check and automatic rollback.",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:200"
+      "src/prokop/tabs/autotune/initController.ts:203"
     ]
   },
   {
@@ -7249,7 +7610,7 @@
     "call": "Protection is active",
     "key": "Protection is active",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:441"
+      "src/prokop/tabs/dashboard/overview.ts:454"
     ]
   },
   {
@@ -7257,7 +7618,7 @@
     "key": "Protocol",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2429",
-      "src/prokop/tabs/monitoring/initController.ts:1012"
+      "src/prokop/tabs/monitoring/initController.ts:1016"
     ]
   },
   {
@@ -7293,7 +7654,7 @@
     "call": "Reachable",
     "key": "Reachable",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:116"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:121"
     ]
   },
   {
@@ -7301,6 +7662,14 @@
     "key": "Ready",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:141"
+    ]
+  },
+  {
+    "call": "Received",
+    "key": "Received",
+    "places": [
+      "src/prokop/tabs/monitoring/initController.ts:1045",
+      "src/prokop/tabs/monitoring/render.ts:101"
     ]
   },
   {
@@ -7318,10 +7687,17 @@
     ]
   },
   {
+    "call": "Recommendations waiting for a decision: %d",
+    "key": "Recommendations waiting for a decision: %d",
+    "places": [
+      "src/prokop/tabs/dashboard/overview.ts:533"
+    ]
+  },
+  {
     "call": "Recommended",
     "key": "Recommended",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1129"
+      "src/prokop/tabs/autotune/initController.ts:1111"
     ]
   },
   {
@@ -7339,36 +7715,36 @@
     "key": "Recovery",
     "places": [
       "src/prokop/ui/status.ts:280",
-      "src/prokop/tabs/dashboard/overviewCards.ts:288"
+      "src/prokop/tabs/dashboard/overviewCards.ts:305"
     ]
   },
   {
     "call": "Recovery details",
     "key": "Recovery details",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:143",
-      "src/prokop/tabs/dashboard/overviewCards.ts:297"
+      "src/prokop/tabs/dashboard/overview.ts:154",
+      "src/prokop/tabs/dashboard/overviewCards.ts:314"
     ]
   },
   {
     "call": "Recovery state is unavailable",
     "key": "Recovery state is unavailable",
     "places": [
-      "src/prokop/tabs/history/initController.ts:91"
+      "src/prokop/tabs/history/initController.ts:94"
     ]
   },
   {
     "call": "Refill",
     "key": "Refill",
     "places": [
-      "src/prokop/tabs/dashboard/partials/renderSections.ts:126"
+      "src/prokop/tabs/dashboard/partials/renderSections.ts:151"
     ]
   },
   {
     "call": "Refreshing Dashboard…",
     "key": "Refreshing Dashboard…",
     "places": [
-      "src/prokop/tabs/dashboard/initController.ts:1370"
+      "src/prokop/tabs/dashboard/initController.ts:1399"
     ]
   },
   {
@@ -7390,12 +7766,12 @@
     "key": "Remove",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5300",
-      "src/prokop/tabs/autotune/initController.ts:760",
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:290",
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:291",
-      "src/prokop/tabs/updates/initController.ts:733",
-      "src/prokop/tabs/updates/initController.ts:883",
-      "src/prokop/tabs/updates/initController.ts:972"
+      "src/prokop/tabs/autotune/initController.ts:741",
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:303",
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:304",
+      "src/prokop/tabs/updates/initController.ts:736",
+      "src/prokop/tabs/updates/initController.ts:886",
+      "src/prokop/tabs/updates/initController.ts:975"
     ]
   },
   {
@@ -7416,7 +7792,7 @@
     "call": "Remove %s?",
     "key": "Remove %s?",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:728"
+      "src/prokop/tabs/updates/initController.ts:731"
     ]
   },
   {
@@ -7430,14 +7806,14 @@
     "call": "Remove Prokop and sing-box with their settings and restore the original device repositories.",
     "key": "Remove Prokop and sing-box with their settings and restore the original device repositories.",
     "places": [
-      "src/prokop/tabs/updates/fullUninstall.ts:135"
+      "src/prokop/tabs/updates/fullUninstall.ts:137"
     ]
   },
   {
     "call": "Remove Prokop completely",
     "key": "Remove Prokop completely",
     "places": [
-      "src/prokop/tabs/updates/fullUninstall.ts:140"
+      "src/prokop/tabs/updates/fullUninstall.ts:142"
     ]
   },
   {
@@ -7472,7 +7848,7 @@
     "call": "Remove target?",
     "key": "Remove target?",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:758"
+      "src/prokop/tabs/autotune/initController.ts:739"
     ]
   },
   {
@@ -7494,7 +7870,7 @@
     "key": "Remove…",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5293",
-      "src/prokop/tabs/autotune/initController.ts:1425"
+      "src/prokop/tabs/autotune/initController.ts:1407"
     ]
   },
   {
@@ -7509,7 +7885,7 @@
     "call": "Removing user settings…",
     "key": "Removing user settings…",
     "places": [
-      "src/prokop/tabs/dashboard/initController.ts:1400"
+      "src/prokop/tabs/dashboard/initController.ts:1429"
     ]
   },
   {
@@ -7523,8 +7899,8 @@
     "call": "Reset filters",
     "key": "Reset filters",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:730",
-      "src/prokop/tabs/monitoring/initController.ts:1385"
+      "src/prokop/tabs/monitoring/initController.ts:734",
+      "src/prokop/tabs/monitoring/initController.ts:1387"
     ]
   },
   {
@@ -7573,9 +7949,9 @@
     "call": "Restart Prokop",
     "key": "Restart Prokop",
     "places": [
-      "src/prokop/tabs/dashboard/overviewCards.ts:148",
-      "src/prokop/tabs/dashboard/overviewCards.ts:170",
-      "src/prokop/tabs/dashboard/overviewCards.ts:283"
+      "src/prokop/tabs/dashboard/overviewCards.ts:150",
+      "src/prokop/tabs/dashboard/overviewCards.ts:172",
+      "src/prokop/tabs/dashboard/overviewCards.ts:300"
     ]
   },
   {
@@ -7589,7 +7965,7 @@
     "call": "Restart Prokop: the restart removes the DPI guard that a failed change left in place.",
     "key": "Restart Prokop: the restart removes the DPI guard that a failed change left in place.",
     "places": [
-      "src/prokop/tabs/history/model.ts:97"
+      "src/prokop/tabs/history/model.ts:93"
     ]
   },
   {
@@ -7603,197 +7979,197 @@
     "call": "Restart required",
     "key": "Restart required",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:411"
+      "src/prokop/tabs/dashboard/overview.ts:424"
     ]
   },
   {
     "call": "Restore",
     "key": "Restore",
     "places": [
-      "src/prokop/tabs/history/initController.ts:294"
+      "src/prokop/tabs/history/initController.ts:297"
     ]
   },
   {
     "call": "Restore configuration snapshot?",
     "key": "Restore configuration snapshot?",
     "places": [
-      "src/prokop/tabs/history/initController.ts:286"
+      "src/prokop/tabs/history/initController.ts:289"
     ]
   },
   {
     "call": "Restore did not finish: a failed change left the DPI guard in place, and the DPI guard stays active. Restart Prokop, then restore the snapshot again.",
     "key": "Restore did not finish: a failed change left the DPI guard in place, and the DPI guard stays active. Restart Prokop, then restore the snapshot again.",
     "places": [
-      "src/prokop/tabs/history/model.ts:801"
+      "src/prokop/tabs/history/model.ts:797"
     ]
   },
   {
     "call": "Restore did not finish: the configuration was changed while the snapshot was being applied.",
     "key": "Restore did not finish: the configuration was changed while the snapshot was being applied.",
     "places": [
-      "src/prokop/tabs/history/model.ts:792"
+      "src/prokop/tabs/history/model.ts:788"
     ]
   },
   {
     "call": "Restore did not finish: the configuration was changed while the snapshot was being applied. Prokop was reloaded, but it is not known whether with the snapshot or with the change.",
     "key": "Restore did not finish: the configuration was changed while the snapshot was being applied. Prokop was reloaded, but it is not known whether with the snapshot or with the change.",
     "places": [
-      "src/prokop/tabs/history/model.ts:791"
+      "src/prokop/tabs/history/model.ts:787"
     ]
   },
   {
     "call": "Restore did not finish: the service was busy and only queued the reload. The DPI guard stays active; restore again when the service is idle.",
     "key": "Restore did not finish: the service was busy and only queued the reload. The DPI guard stays active; restore again when the service is idle.",
     "places": [
-      "src/prokop/tabs/history/model.ts:809"
+      "src/prokop/tabs/history/model.ts:805"
     ]
   },
   {
     "call": "Restore failed; check the recovery state before retrying",
     "key": "Restore failed; check the recovery state before retrying",
     "places": [
-      "src/prokop/tabs/history/model.ts:818"
+      "src/prokop/tabs/history/model.ts:814"
     ]
   },
   {
     "call": "Restore failed; previous configuration and runtime recovered",
     "key": "Restore failed; previous configuration and runtime recovered",
     "places": [
-      "src/prokop/tabs/history/model.ts:707"
+      "src/prokop/tabs/history/model.ts:703"
     ]
   },
   {
     "call": "Restore normal mode",
     "key": "Restore normal mode",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:1070"
+      "src/prokop/tabs/updates/initController.ts:1073"
     ]
   },
   {
     "call": "Restore required",
     "key": "Restore required",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:425"
+      "src/prokop/tabs/dashboard/overview.ts:438"
     ]
   },
   {
     "call": "Restore the last known good snapshot: the restore finishes and removes the DPI guard.",
     "key": "Restore the last known good snapshot: the restore finishes and removes the DPI guard.",
     "places": [
-      "src/prokop/tabs/history/model.ts:107"
+      "src/prokop/tabs/history/model.ts:103"
     ]
   },
   {
     "call": "Restore the snapshot you need to finish.",
     "key": "Restore the snapshot you need to finish.",
     "places": [
-      "src/prokop/tabs/history/model.ts:791"
+      "src/prokop/tabs/history/model.ts:787"
     ]
   },
   {
     "call": "Restore was not applied: Prokop was stopped during the restore. The previous configuration is kept.",
     "key": "Restore was not applied: Prokop was stopped during the restore. The previous configuration is kept.",
     "places": [
-      "src/prokop/tabs/history/model.ts:765"
+      "src/prokop/tabs/history/model.ts:761"
     ]
   },
   {
     "call": "Restore was not applied: Prokop was stopped, and the configuration was changed during the restore.",
     "key": "Restore was not applied: Prokop was stopped, and the configuration was changed during the restore.",
     "places": [
-      "src/prokop/tabs/history/model.ts:788"
+      "src/prokop/tabs/history/model.ts:784"
     ]
   },
   {
     "call": "Restore was not applied: the configuration file could not be written. The previous configuration is kept.",
     "key": "Restore was not applied: the configuration file could not be written. The previous configuration is kept.",
     "places": [
-      "src/prokop/tabs/history/model.ts:738",
-      "src/prokop/tabs/history/model.ts:739"
+      "src/prokop/tabs/history/model.ts:734",
+      "src/prokop/tabs/history/model.ts:735"
     ]
   },
   {
     "call": "Restore was not applied: the service was busy and only queued the reload. The previous configuration is kept.",
     "key": "Restore was not applied: the service was busy and only queued the reload. The previous configuration is kept.",
     "places": [
-      "src/prokop/tabs/history/model.ts:704"
+      "src/prokop/tabs/history/model.ts:700"
     ]
   },
   {
     "call": "Restore was not applied: the snapshot configuration did not pass validation. The previous configuration is kept; Prokop stays stopped.",
     "key": "Restore was not applied: the snapshot configuration did not pass validation. The previous configuration is kept; Prokop stays stopped.",
     "places": [
-      "src/prokop/tabs/history/model.ts:762"
+      "src/prokop/tabs/history/model.ts:758"
     ]
   },
   {
     "call": "Restore was not started: a failed change left the DPI guard in place, and nothing can be reloaded until Prokop is restarted. Restart Prokop, then restore the snapshot if it is still needed.",
     "key": "Restore was not started: a failed change left the DPI guard in place, and nothing can be reloaded until Prokop is restarted. Restart Prokop, then restore the snapshot if it is still needed.",
     "places": [
-      "src/prokop/tabs/history/model.ts:716"
+      "src/prokop/tabs/history/model.ts:712"
     ]
   },
   {
     "call": "Restore was not started: the configuration was changed while the restore was starting. Nothing was changed; check the change and try again.",
     "key": "Restore was not started: the configuration was changed while the restore was starting. Nothing was changed; check the change and try again.",
     "places": [
-      "src/prokop/tabs/history/model.ts:575"
+      "src/prokop/tabs/history/model.ts:571"
     ]
   },
   {
     "call": "Restore was not started: the current configuration could not be read. Nothing was changed.",
     "key": "Restore was not started: the current configuration could not be read. Nothing was changed.",
     "places": [
-      "src/prokop/tabs/history/model.ts:571"
+      "src/prokop/tabs/history/model.ts:567"
     ]
   },
   {
     "call": "Restore was not started: the current configuration could not be saved as a snapshot first. Nothing was changed. Check the free space on the router.",
     "key": "Restore was not started: the current configuration could not be saved as a snapshot first. Nothing was changed. Check the free space on the router.",
     "places": [
-      "src/prokop/tabs/history/model.ts:563"
+      "src/prokop/tabs/history/model.ts:559"
     ]
   },
   {
     "call": "Restore was not started: the DPI guard that protects traffic during the restore could not be installed. Nothing was changed.",
     "key": "Restore was not started: the DPI guard that protects traffic during the restore could not be installed. Nothing was changed.",
     "places": [
-      "src/prokop/tabs/history/model.ts:579"
+      "src/prokop/tabs/history/model.ts:575"
     ]
   },
   {
     "call": "Restore was not started: the router has uncommitted uci changes of Prokop (made with \"uci set\" without a commit). Commit or revert them, then restore again.",
     "key": "Restore was not started: the router has uncommitted uci changes of Prokop (made with \"uci set\" without a commit). Commit or revert them, then restore again.",
     "places": [
-      "src/prokop/tabs/history/model.ts:726"
+      "src/prokop/tabs/history/model.ts:722"
     ]
   },
   {
     "call": "Restore was not started: the snapshot is missing or damaged. Nothing was changed.",
     "key": "Restore was not started: the snapshot is missing or damaged. Nothing was changed.",
     "places": [
-      "src/prokop/tabs/history/model.ts:567"
+      "src/prokop/tabs/history/model.ts:563"
     ]
   },
   {
     "call": "Restore was not started: the snapshot storage could not be locked. Nothing was changed.",
     "key": "Restore was not started: the snapshot storage could not be locked. Nothing was changed.",
     "places": [
-      "src/prokop/tabs/history/model.ts:583"
+      "src/prokop/tabs/history/model.ts:579"
     ]
   },
   {
     "call": "Restore was not started: the snapshot was saved by an older version of Prokop, and its configuration could not be migrated to this version. Nothing was changed.",
     "key": "Restore was not started: the snapshot was saved by an older version of Prokop, and its configuration could not be migrated to this version. Nothing was changed.",
     "places": [
-      "src/prokop/tabs/history/model.ts:589"
+      "src/prokop/tabs/history/model.ts:585"
     ]
   },
   {
     "call": "Restore…",
     "key": "Restore…",
     "places": [
-      "src/prokop/tabs/history/initController.ts:401"
+      "src/prokop/tabs/history/initController.ts:404"
     ]
   },
   {
@@ -7807,15 +8183,15 @@
     "call": "Result",
     "key": "Result",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:265",
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:311"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:278",
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:324"
     ]
   },
   {
     "call": "Resume updates",
     "key": "Resume updates",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:806"
+      "src/prokop/tabs/monitoring/initController.ts:810"
     ]
   },
   {
@@ -7879,7 +8255,7 @@
     "call": "Roll back the last change…",
     "key": "Roll back the last change…",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1016"
+      "src/prokop/tabs/autotune/initController.ts:998"
     ]
   },
   {
@@ -7908,14 +8284,14 @@
     "call": "Rolling back the last change",
     "key": "Rolling back the last change",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:890"
+      "src/prokop/tabs/autotune/initController.ts:872"
     ]
   },
   {
     "call": "Rolling back…",
     "key": "Rolling back…",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1015"
+      "src/prokop/tabs/autotune/initController.ts:997"
     ]
   },
   {
@@ -7924,7 +8300,7 @@
     "places": [
       "src/prokop/tabs/diagnostic/siteCheck.ts:80",
       "src/prokop/tabs/diagnostic/siteCheck.ts:105",
-      "src/prokop/tabs/monitoring/initController.ts:1112"
+      "src/prokop/tabs/monitoring/initController.ts:1114"
     ]
   },
   {
@@ -7945,35 +8321,43 @@
     "call": "Router DNS",
     "key": "Router DNS",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:632"
+      "src/prokop/tabs/autotune/initController.ts:613"
     ]
   },
   {
     "call": "Router DNS is not pointed to Prokop",
     "key": "Router DNS is not pointed to Prokop",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:297"
+      "src/prokop/tabs/dashboard/overview.ts:308"
+    ]
+  },
+  {
+    "call": "Router FakeIP check could not be completed",
+    "key": "Router FakeIP check could not be completed",
+    "places": [
+      "src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:58",
+      "src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:80"
     ]
   },
   {
     "call": "Router kernel route",
     "key": "Router kernel route",
     "places": [
-      "src/prokop/tabs/diagnostic/siteCheck.ts:297"
+      "src/prokop/tabs/diagnostic/siteCheck.ts:301"
     ]
   },
   {
     "call": "Routing",
     "key": "Routing",
     "places": [
-      "src/prokop/tabs/dashboard/overviewCards.ts:215"
+      "src/prokop/tabs/dashboard/overviewCards.ts:217"
     ]
   },
   {
     "call": "Routing is paused while Prokop is stopped.",
     "key": "Routing is paused while Prokop is stopped.",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:342"
+      "src/prokop/tabs/dashboard/overview.ts:353"
     ]
   },
   {
@@ -7995,36 +8379,36 @@
     "key": "Rule",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/rules.js:27",
-      "src/prokop/tabs/monitoring/initController.ts:680",
-      "src/prokop/tabs/monitoring/initController.ts:1013"
+      "src/prokop/tabs/monitoring/initController.ts:684",
+      "src/prokop/tabs/monitoring/initController.ts:1017"
     ]
   },
   {
     "call": "Rule “%s”: a subscription source now sends the User-Agent set in its settings. Earlier versions ignored it and chose one automatically; clear the field to go back to automatic selection.",
     "key": "Rule “%s”: a subscription source now sends the User-Agent set in its settings. Earlier versions ignored it and chose one automatically; clear the field to go back to automatic selection.",
     "places": [
-      "src/prokop/tabs/history/model.ts:233"
+      "src/prokop/tabs/history/model.ts:229"
     ]
   },
   {
     "call": "Rule “%s”: changed by the update.",
     "key": "Rule “%s”: changed by the update.",
     "places": [
-      "src/prokop/tabs/history/model.ts:249"
+      "src/prokop/tabs/history/model.ts:245"
     ]
   },
   {
     "call": "Rule “%s”: the retired rule sets %s were removed from Built-in rule sets #2, their source no longer publishes them.",
     "key": "Rule “%s”: the retired rule sets %s were removed from Built-in rule sets #2, their source no longer publishes them.",
     "places": [
-      "src/prokop/tabs/history/model.ts:214"
+      "src/prokop/tabs/history/model.ts:210"
     ]
   },
   {
     "call": "Rule “%s”: the subscription settings %s were removed. This version always generates the HWID from the router and hides nodes of imported URLTest groups and cascades.",
     "key": "Rule “%s”: the subscription settings %s were removed. This version always generates the HWID from the router and hides nodes of imported URLTest groups and cascades.",
     "places": [
-      "src/prokop/tabs/history/model.ts:226"
+      "src/prokop/tabs/history/model.ts:222"
     ]
   },
   {
@@ -8038,7 +8422,7 @@
     "call": "Rule payload",
     "key": "Rule payload",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1014"
+      "src/prokop/tabs/monitoring/initController.ts:1018"
     ]
   },
   {
@@ -8068,7 +8452,7 @@
     "key": "Rules",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/rules.js:16",
-      "src/prokop/tabs/dashboard/overviewCards.ts:261"
+      "src/prokop/tabs/dashboard/overviewCards.ts:263"
     ]
   },
   {
@@ -8124,14 +8508,14 @@
     "call": "Rules that use this provider stop bypassing DPI",
     "key": "Rules that use this provider stop bypassing DPI",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:731"
+      "src/prokop/tabs/updates/initController.ts:734"
     ]
   },
   {
     "call": "Run full diagnostics",
     "key": "Run full diagnostics",
     "places": [
-      "src/prokop/tabs/diagnostic/partials/renderRunAction.ts:24"
+      "src/prokop/tabs/diagnostic/partials/renderRunAction.ts:25"
     ]
   },
   {
@@ -8160,9 +8544,9 @@
     "key": "Save",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3722",
-      "src/prokop/tabs/autotune/initController.ts:550",
-      "src/prokop/tabs/autotune/initController.ts:752",
-      "src/prokop/tabs/dashboard/initController.ts:1436"
+      "src/prokop/tabs/autotune/initController.ts:531",
+      "src/prokop/tabs/autotune/initController.ts:733",
+      "src/prokop/tabs/dashboard/initController.ts:1465"
     ]
   },
   {
@@ -8183,7 +8567,7 @@
     "call": "Saving URLTest settings…",
     "key": "Saving URLTest settings…",
     "places": [
-      "src/prokop/tabs/dashboard/initController.ts:1385"
+      "src/prokop/tabs/dashboard/initController.ts:1414"
     ]
   },
   {
@@ -8246,7 +8630,7 @@
     "call": "See connections to this address",
     "key": "See connections to this address",
     "places": [
-      "src/prokop/tabs/diagnostic/siteCheck.ts:289"
+      "src/prokop/tabs/diagnostic/siteCheck.ts:293"
     ]
   },
   {
@@ -8346,7 +8730,7 @@
     "key": "Select the fastest node",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3422",
-      "src/prokop/tabs/dashboard/initController.ts:1577"
+      "src/prokop/tabs/dashboard/initController.ts:1607"
     ]
   },
   {
@@ -8381,8 +8765,8 @@
     "call": "Selected",
     "key": "Selected",
     "places": [
-      "src/prokop/tabs/dashboard/initController.ts:1192",
-      "src/prokop/tabs/dashboard/initController.ts:1563"
+      "src/prokop/tabs/dashboard/initController.ts:1223",
+      "src/prokop/tabs/dashboard/initController.ts:1593"
     ]
   },
   {
@@ -8400,6 +8784,14 @@
     ]
   },
   {
+    "call": "Sent",
+    "key": "Sent",
+    "places": [
+      "src/prokop/tabs/monitoring/initController.ts:1046",
+      "src/prokop/tabs/monitoring/render.ts:102"
+    ]
+  },
+  {
     "call": "Sent with the requests for this subscription. Leave empty to try compatible client profiles automatically.",
     "key": "Sent with the requests for this subscription. Leave empty to try compatible client profiles automatically.",
     "places": [
@@ -8410,7 +8802,7 @@
     "call": "Server closed the connection without a response",
     "key": "Server closed the connection without a response",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:99"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:102"
     ]
   },
   {
@@ -8460,7 +8852,7 @@
     "call": "Service",
     "key": "Service",
     "places": [
-      "src/prokop/tabs/history/model.ts:192"
+      "src/prokop/tabs/history/model.ts:188"
     ]
   },
   {
@@ -8469,15 +8861,15 @@
     "places": [
       "src/prokop/helpers/serviceActionNotice.ts:30",
       "src/prokop/helpers/serviceActionNotice.ts:31",
-      "src/prokop/methods/shell/index.ts:554",
-      "src/prokop/methods/shell/index.ts:604"
+      "src/prokop/methods/shell/index.ts:551",
+      "src/prokop/methods/shell/index.ts:601"
     ]
   },
   {
     "call": "Service actions",
     "key": "Service actions",
     "places": [
-      "src/prokop/tabs/dashboard/overviewCards.ts:166"
+      "src/prokop/tabs/dashboard/overviewCards.ts:168"
     ]
   },
   {
@@ -8520,7 +8912,7 @@
     "call": "Setting",
     "key": "Setting",
     "places": [
-      "src/prokop/tabs/history/initController.ts:200"
+      "src/prokop/tabs/history/initController.ts:203"
     ]
   },
   {
@@ -8549,7 +8941,7 @@
     "call": "Show sing-box config",
     "key": "Show sing-box config",
     "places": [
-      "src/prokop/tabs/diagnostic/initController.ts:654",
+      "src/prokop/tabs/diagnostic/initController.ts:655",
       "src/prokop/tabs/diagnostic/partials/renderAvailableActions.ts:55"
     ]
   },
@@ -8557,7 +8949,7 @@
     "call": "Shown %d of %d",
     "key": "Shown %d of %d",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:713"
+      "src/prokop/tabs/monitoring/initController.ts:717"
     ]
   },
   {
@@ -8578,14 +8970,14 @@
     "call": "Sing-box FakeIP DNS does not work",
     "key": "Sing-box FakeIP DNS does not work",
     "places": [
-      "src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:69"
+      "src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:83"
     ]
   },
   {
     "call": "Sing-box FakeIP DNS works",
     "key": "Sing-box FakeIP DNS works",
     "places": [
-      "src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:68"
+      "src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:82"
     ]
   },
   {
@@ -8599,14 +8991,14 @@
     "call": "sing-box is not running",
     "key": "sing-box is not running",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:293"
+      "src/prokop/tabs/dashboard/overview.ts:304"
     ]
   },
   {
     "call": "sing-box is running",
     "key": "sing-box is running",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:292"
+      "src/prokop/tabs/dashboard/overview.ts:303"
     ]
   },
   {
@@ -8648,7 +9040,7 @@
     "call": "Snapshot actions",
     "key": "Snapshot actions",
     "places": [
-      "src/prokop/tabs/history/initController.ts:399"
+      "src/prokop/tabs/history/initController.ts:402"
     ]
   },
   {
@@ -8663,42 +9055,42 @@
     "key": "Snapshot deleted",
     "places": [
       "src/prokop/ui/status.ts:294",
-      "src/prokop/tabs/history/model.ts:456"
+      "src/prokop/tabs/history/model.ts:452"
     ]
   },
   {
     "call": "Snapshot not saved: at most %d manual snapshots are kept, so that the automatic snapshots taken before a restore, Save & Apply or autotune always have room. Delete a manual snapshot you no longer need, then try again.",
     "key": "Snapshot not saved: at most %d manual snapshots are kept, so that the automatic snapshots taken before a restore, Save & Apply or autotune always have room. Delete a manual snapshot you no longer need, then try again.",
     "places": [
-      "src/prokop/tabs/history/model.ts:515"
+      "src/prokop/tabs/history/model.ts:511"
     ]
   },
   {
     "call": "Snapshot not saved: at most %d manual snapshots are kept, so that the automatic snapshots taken before a restore, Save & Apply or autotune always have room. There are %d manual snapshots now: delete %d you no longer need, then try again.",
     "key": "Snapshot not saved: at most %d manual snapshots are kept, so that the automatic snapshots taken before a restore, Save & Apply or autotune always have room. There are %d manual snapshots now: delete %d you no longer need, then try again.",
     "places": [
-      "src/prokop/tabs/history/model.ts:509"
+      "src/prokop/tabs/history/model.ts:505"
     ]
   },
   {
     "call": "Snapshot not saved: it could not be written. Check the free space on the router.",
     "key": "Snapshot not saved: it could not be written. Check the free space on the router.",
     "places": [
-      "src/prokop/tabs/history/model.ts:533"
+      "src/prokop/tabs/history/model.ts:529"
     ]
   },
   {
     "call": "Snapshot not saved: the configuration file could not be read.",
     "key": "Snapshot not saved: the configuration file could not be read.",
     "places": [
-      "src/prokop/tabs/history/model.ts:524"
+      "src/prokop/tabs/history/model.ts:520"
     ]
   },
   {
     "call": "Snapshot not saved: the snapshot storage could not be locked. Try again in a moment.",
     "key": "Snapshot not saved: the snapshot storage could not be locked. Try again in a moment.",
     "places": [
-      "src/prokop/tabs/history/model.ts:541"
+      "src/prokop/tabs/history/model.ts:537"
     ]
   },
   {
@@ -8712,7 +9104,7 @@
     "call": "Snapshot saved",
     "key": "Snapshot saved",
     "places": [
-      "src/prokop/tabs/history/model.ts:491"
+      "src/prokop/tabs/history/model.ts:487"
     ]
   },
   {
@@ -8726,14 +9118,14 @@
     "call": "Snapshots: %d",
     "key": "Snapshots: %d",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:390"
+      "src/prokop/tabs/dashboard/overview.ts:403"
     ]
   },
   {
     "call": "Some autotune settings are invalid; safe defaults are used for them.",
     "key": "Some autotune settings are invalid; safe defaults are used for them.",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:957"
+      "src/prokop/tabs/autotune/initController.ts:939"
     ]
   },
   {
@@ -8768,7 +9160,7 @@
     "call": "Source",
     "key": "Source",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1006"
+      "src/prokop/tabs/monitoring/initController.ts:1010"
     ]
   },
   {
@@ -8782,7 +9174,7 @@
     "call": "Stability",
     "key": "Stability",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:786"
+      "src/prokop/tabs/autotune/initController.ts:767"
     ]
   },
   {
@@ -8880,7 +9272,7 @@
     "call": "Start Prokop",
     "key": "Start Prokop",
     "places": [
-      "src/prokop/tabs/dashboard/overviewCards.ts:161",
+      "src/prokop/tabs/dashboard/overviewCards.ts:163",
       "src/prokop/tabs/shared/startService.ts:37",
       "src/prokop/tabs/shared/startService.ts:41"
     ]
@@ -8896,7 +9288,7 @@
     "call": "Started",
     "key": "Started",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1016"
+      "src/prokop/tabs/monitoring/initController.ts:1020"
     ]
   },
   {
@@ -8910,8 +9302,8 @@
     "call": "Starting…",
     "key": "Starting…",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:211",
-      "src/prokop/tabs/dashboard/overviewCards.ts:161",
+      "src/prokop/tabs/dashboard/overview.ts:222",
+      "src/prokop/tabs/dashboard/overviewCards.ts:163",
       "src/prokop/tabs/shared/startService.ts:28",
       "src/prokop/tabs/shared/startService.ts:41"
     ]
@@ -8920,26 +9312,26 @@
     "call": "State",
     "key": "State",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:888",
-      "src/prokop/tabs/autotune/initController.ts:896",
-      "src/prokop/tabs/autotune/initController.ts:902",
-      "src/prokop/tabs/dashboard/overviewCards.ts:198"
+      "src/prokop/tabs/autotune/initController.ts:870",
+      "src/prokop/tabs/autotune/initController.ts:878",
+      "src/prokop/tabs/autotune/initController.ts:884",
+      "src/prokop/tabs/dashboard/overviewCards.ts:200"
     ]
   },
   {
     "call": "State unavailable",
     "key": "State unavailable",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:260",
-      "src/prokop/tabs/dashboard/overview.ts:371",
-      "src/prokop/tabs/dashboard/overview.ts:397"
+      "src/prokop/tabs/dashboard/overview.ts:271",
+      "src/prokop/tabs/dashboard/overview.ts:384",
+      "src/prokop/tabs/dashboard/overview.ts:410"
     ]
   },
   {
     "call": "Status",
     "key": "Status",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1106"
+      "src/prokop/tabs/monitoring/initController.ts:1108"
     ]
   },
   {
@@ -8974,8 +9366,8 @@
     "call": "Stop Prokop…",
     "key": "Stop Prokop…",
     "places": [
-      "src/prokop/tabs/dashboard/overviewCards.ts:132",
-      "src/prokop/tabs/dashboard/overviewCards.ts:179"
+      "src/prokop/tabs/dashboard/overviewCards.ts:134",
+      "src/prokop/tabs/dashboard/overviewCards.ts:181"
     ]
   },
   {
@@ -8983,7 +9375,7 @@
     "key": "Stopped by user",
     "places": [
       "src/prokop/ui/status.ts:136",
-      "src/prokop/tabs/dashboard/overview.ts:214"
+      "src/prokop/tabs/dashboard/overview.ts:225"
     ]
   },
   {
@@ -8997,7 +9389,7 @@
     "call": "Strategy",
     "key": "Strategy",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:784",
+      "src/prokop/tabs/autotune/initController.ts:765",
       "src/prokop/tabs/diagnostic/renderDiagnostic.ts:40"
     ]
   },
@@ -9026,15 +9418,15 @@
     "call": "Subscription info:",
     "key": "Subscription info:",
     "places": [
-      "src/prokop/tabs/dashboard/partials/renderSections.ts:140"
+      "src/prokop/tabs/dashboard/partials/renderSections.ts:165"
     ]
   },
   {
     "call": "Subscription update failed",
     "key": "Subscription update failed",
     "places": [
-      "src/prokop/methods/shell/index.ts:938",
-      "src/prokop/methods/shell/index.ts:958"
+      "src/prokop/methods/shell/index.ts:935",
+      "src/prokop/methods/shell/index.ts:955"
     ]
   },
   {
@@ -9062,7 +9454,7 @@
     "call": "Subscriptions updated",
     "key": "Subscriptions updated",
     "places": [
-      "src/prokop/tabs/dashboard/initController.ts:506"
+      "src/prokop/tabs/dashboard/initController.ts:531"
     ]
   },
   {
@@ -9077,14 +9469,14 @@
     "call": "Successful",
     "key": "Successful",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:785"
+      "src/prokop/tabs/autotune/initController.ts:766"
     ]
   },
   {
     "call": "Support",
     "key": "Support",
     "places": [
-      "src/prokop/tabs/dashboard/partials/renderSections.ts:131"
+      "src/prokop/tabs/dashboard/partials/renderSections.ts:156"
     ]
   },
   {
@@ -9147,28 +9539,28 @@
     "call": "Target actions",
     "key": "Target actions",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1418"
+      "src/prokop/tabs/autotune/initController.ts:1400"
     ]
   },
   {
     "call": "Target removed",
     "key": "Target removed",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:766"
+      "src/prokop/tabs/autotune/initController.ts:747"
     ]
   },
   {
     "call": "Target saved",
     "key": "Target saved",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:679"
+      "src/prokop/tabs/autotune/initController.ts:660"
     ]
   },
   {
     "call": "Targets",
     "key": "Targets",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1151",
+      "src/prokop/tabs/autotune/initController.ts:1133",
       "src/prokop/tabs/autotune/render.ts:28"
     ]
   },
@@ -9184,7 +9576,14 @@
     "call": "Targets outside DPI rules (%d)",
     "key": "Targets outside DPI rules (%d)",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1294"
+      "src/prokop/tabs/autotune/initController.ts:1276"
+    ]
+  },
+  {
+    "call": "TB",
+    "key": "TB",
+    "places": [
+      "src/helpers/prettyBytes.ts:8"
     ]
   },
   {
@@ -9199,16 +9598,16 @@
     "key": "Technical details",
     "places": [
       "src/prokop/ui/states.ts:71",
-      "src/prokop/tabs/monitoring/initController.ts:1190"
+      "src/prokop/tabs/monitoring/initController.ts:1192"
     ]
   },
   {
     "call": "Test latency",
     "key": "Test latency",
     "places": [
-      "src/prokop/tabs/dashboard/partials/renderSections.ts:233",
-      "src/prokop/tabs/dashboard/partials/renderSections.ts:241",
-      "src/prokop/tabs/dashboard/partials/renderSections.ts:562"
+      "src/prokop/tabs/dashboard/partials/renderSections.ts:258",
+      "src/prokop/tabs/dashboard/partials/renderSections.ts:266",
+      "src/prokop/tabs/dashboard/partials/renderSections.ts:601"
     ]
   },
   {
@@ -9264,8 +9663,8 @@
     "call": "Testing URL",
     "key": "Testing URL",
     "places": [
-      "src/prokop/tabs/dashboard/initController.ts:1195",
-      "src/prokop/tabs/dashboard/initController.ts:1449"
+      "src/prokop/tabs/dashboard/initController.ts:1226",
+      "src/prokop/tabs/dashboard/initController.ts:1478"
     ]
   },
   {
@@ -9314,7 +9713,7 @@
     "call": "The autotune state was damaged and has been reset; automatic changes wait for the pause after a rollback.",
     "key": "The autotune state was damaged and has been reset; automatic changes wait for the pause after a rollback.",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:925"
+      "src/prokop/tabs/autotune/initController.ts:907"
     ]
   },
   {
@@ -9363,14 +9762,14 @@
     "call": "The change is kept and saved as a snapshot (\"Concurrent edit\").",
     "key": "The change is kept and saved as a snapshot (\"Concurrent edit\").",
     "places": [
-      "src/prokop/tabs/history/model.ts:779"
+      "src/prokop/tabs/history/model.ts:775"
     ]
   },
   {
     "call": "The change is kept in the configuration, but no snapshot of it could be saved.",
     "key": "The change is kept in the configuration, but no snapshot of it could be saved.",
     "places": [
-      "src/prokop/tabs/history/model.ts:780"
+      "src/prokop/tabs/history/model.ts:776"
     ]
   },
   {
@@ -9388,11 +9787,18 @@
     ]
   },
   {
+    "call": "The check could not run",
+    "key": "The check could not run",
+    "places": [
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:150"
+    ]
+  },
+  {
     "call": "The check did not complete",
     "key": "The check did not complete",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:238",
-      "src/prokop/tabs/autotune/initController.ts:248"
+      "src/prokop/tabs/autotune/initController.ts:242",
+      "src/prokop/tabs/autotune/initController.ts:252"
     ]
   },
   {
@@ -9413,7 +9819,7 @@
     "call": "The check stopped unexpectedly",
     "key": "The check stopped unexpectedly",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:252"
+      "src/prokop/tabs/autotune/initController.ts:256"
     ]
   },
   {
@@ -9427,7 +9833,7 @@
     "call": "The check was postponed. See the state above.",
     "key": "The check was postponed. See the state above.",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:244"
+      "src/prokop/tabs/autotune/initController.ts:248"
     ]
   },
   {
@@ -9490,14 +9896,14 @@
     "call": "The configuration of the snapshot was migrated from Prokop %s to %s.",
     "key": "The configuration of the snapshot was migrated from Prokop %s to %s.",
     "places": [
-      "src/prokop/tabs/history/model.ts:656"
+      "src/prokop/tabs/history/model.ts:652"
     ]
   },
   {
     "call": "The configuration of the snapshot was migrated to Prokop %s.",
     "key": "The configuration of the snapshot was migrated to Prokop %s.",
     "places": [
-      "src/prokop/tabs/history/model.ts:661"
+      "src/prokop/tabs/history/model.ts:657"
     ]
   },
   {
@@ -9561,15 +9967,15 @@
     "call": "The DPI guard of an earlier restore stays active.",
     "key": "The DPI guard of an earlier restore stays active.",
     "places": [
-      "src/prokop/tabs/history/model.ts:738",
-      "src/prokop/tabs/history/model.ts:752"
+      "src/prokop/tabs/history/model.ts:734",
+      "src/prokop/tabs/history/model.ts:748"
     ]
   },
   {
     "call": "The DPI guard stays active. Restore the snapshot you need to finish.",
     "key": "The DPI guard stays active. Restore the snapshot you need to finish.",
     "places": [
-      "src/prokop/tabs/history/model.ts:792"
+      "src/prokop/tabs/history/model.ts:788"
     ]
   },
   {
@@ -9595,6 +10001,13 @@
     ]
   },
   {
+    "call": "The interrupted Prokop update was rolled back; no new update was attempted",
+    "key": "The interrupted Prokop update was rolled back; no new update was attempted",
+    "places": [
+      "src/prokop/tabs/updates/componentActionToast.ts:36"
+    ]
+  },
+  {
     "call": "The interval must be at least 1h: automatic updates run at most once an hour. An update started by hand always runs.",
     "key": "The interval must be at least 1h: automatic updates run at most once an hour. An update started by hand always runs.",
     "places": [
@@ -9613,6 +10026,13 @@
     "key": "The last autotune change is not resolved.",
     "places": [
       "src/prokop/tabs/autotune/model.ts:1423"
+    ]
+  },
+  {
+    "call": "The last autotune change needs attention.",
+    "key": "The last autotune change needs attention.",
+    "places": [
+      "src/prokop/tabs/dashboard/overview.ts:545"
     ]
   },
   {
@@ -9654,7 +10074,7 @@
     "call": "The last change was rolled back automatically.",
     "key": "The last change was rolled back automatically.",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:282"
+      "src/prokop/tabs/dashboard/overview.ts:293"
     ]
   },
   {
@@ -9684,22 +10104,22 @@
     "call": "The last configuration change failed",
     "key": "The last configuration change failed",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:164",
-      "src/prokop/tabs/dashboard/overview.ts:456"
+      "src/prokop/tabs/dashboard/overview.ts:175",
+      "src/prokop/tabs/dashboard/overview.ts:469"
     ]
   },
   {
     "call": "The last known good snapshot cannot be deleted",
     "key": "The last known good snapshot cannot be deleted",
     "places": [
-      "src/prokop/tabs/history/initController.ts:409"
+      "src/prokop/tabs/history/initController.ts:412"
     ]
   },
   {
     "call": "The last known good snapshot cannot be deleted: it is the configuration Prokop returns to after a failed change.",
     "key": "The last known good snapshot cannot be deleted: it is the configuration Prokop returns to after a failed change.",
     "places": [
-      "src/prokop/tabs/history/model.ts:465"
+      "src/prokop/tabs/history/model.ts:461"
     ]
   },
   {
@@ -9848,7 +10268,7 @@
     "call": "The package is removed from the router.",
     "key": "The package is removed from the router.",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:729"
+      "src/prokop/tabs/updates/initController.ts:732"
     ]
   },
   {
@@ -9933,7 +10353,7 @@
     "call": "The route check did not complete. Try again.",
     "key": "The route check did not complete. Try again.",
     "places": [
-      "src/prokop/tabs/diagnostic/siteCheck.ts:222"
+      "src/prokop/tabs/diagnostic/siteCheck.ts:226"
     ]
   },
   {
@@ -9948,6 +10368,13 @@
     "key": "the route of an IPv6 address is not calculated",
     "places": [
       "src/prokop/tabs/diagnostic/siteCheck.ts:44"
+    ]
+  },
+  {
+    "call": "The router could not check whether the site opens. Try the check again.",
+    "key": "The router could not check whether the site opens. Try the check again.",
+    "places": [
+      "src/prokop/tabs/diagnostic/siteCheck.ts:169"
     ]
   },
   {
@@ -9996,7 +10423,7 @@
     "call": "The router rejected this check",
     "key": "The router rejected this check",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:137"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:148"
     ]
   },
   {
@@ -10103,7 +10530,7 @@
     "call": "The same result this many checks in a row (2–10).",
     "key": "The same result this many checks in a row (2–10).",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:523"
+      "src/prokop/tabs/autotune/initController.ts:504"
     ]
   },
   {
@@ -10148,7 +10575,7 @@
     "call": "The service is busy with another operation (list or subscription update, reload or start). Nothing was changed; try again when it finishes.",
     "key": "The service is busy with another operation (list or subscription update, reload or start). Nothing was changed; try again when it finishes.",
     "places": [
-      "src/prokop/tabs/history/model.ts:436"
+      "src/prokop/tabs/history/model.ts:432"
     ]
   },
   {
@@ -10162,7 +10589,7 @@
     "call": "The site did not open from the router. The router may take a different path than devices.",
     "key": "The site did not open from the router. The router may take a different path than devices.",
     "places": [
-      "src/prokop/tabs/diagnostic/siteCheck.ts:183"
+      "src/prokop/tabs/diagnostic/siteCheck.ts:187"
     ]
   },
   {
@@ -10176,7 +10603,7 @@
     "call": "The site opens from the router. If it does not open on a device, look at its real connections.",
     "key": "The site opens from the router. If it does not open on a device, look at its real connections.",
     "places": [
-      "src/prokop/tabs/diagnostic/siteCheck.ts:169"
+      "src/prokop/tabs/diagnostic/siteCheck.ts:173"
     ]
   },
   {
@@ -10197,7 +10624,7 @@
     "call": "The snapshot was not found or cannot be read.",
     "key": "The snapshot was not found or cannot be read.",
     "places": [
-      "src/prokop/tabs/history/model.ts:473"
+      "src/prokop/tabs/history/model.ts:469"
     ]
   },
   {
@@ -10390,7 +10817,7 @@
     "call": "There are unsaved changes of Prokop in this session. Save & Apply or revert them, then restore the snapshot.",
     "key": "There are unsaved changes of Prokop in this session. Save & Apply or revert them, then restore the snapshot.",
     "places": [
-      "src/prokop/tabs/history/model.ts:610"
+      "src/prokop/tabs/history/model.ts:606"
     ]
   },
   {
@@ -10546,14 +10973,14 @@
     "call": "This snapshot was saved by an older version of Prokop. Before the restore, its configuration is migrated to the current version %s, as an upgrade migrates it: settings retired since then are updated. The snapshot itself is not changed; the changes listed above compare the snapshot as it was saved.",
     "key": "This snapshot was saved by an older version of Prokop. Before the restore, its configuration is migrated to the current version %s, as an upgrade migrates it: settings retired since then are updated. The snapshot itself is not changed; the changes listed above compare the snapshot as it was saved.",
     "places": [
-      "src/prokop/tabs/history/model.ts:643"
+      "src/prokop/tabs/history/model.ts:639"
     ]
   },
   {
     "call": "This snapshot was saved by Prokop %s. Before the restore, its configuration is migrated to the current version %s, as an upgrade migrates it: settings retired since then are updated. The snapshot itself is not changed; the changes listed above compare the snapshot as it was saved.",
     "key": "This snapshot was saved by Prokop %s. Before the restore, its configuration is migrated to the current version %s, as an upgrade migrates it: settings retired since then are updated. The snapshot itself is not changed; the changes listed above compare the snapshot as it was saved.",
     "places": [
-      "src/prokop/tabs/history/model.ts:638"
+      "src/prokop/tabs/history/model.ts:634"
     ]
   },
   {
@@ -10596,7 +11023,7 @@
     "call": "Timed out",
     "key": "Timed out",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:93"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:96"
     ]
   },
   {
@@ -10610,14 +11037,14 @@
     "call": "TLS or certificate error",
     "key": "TLS or certificate error",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:98"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:101"
     ]
   },
   {
     "call": "TLS, median",
     "key": "TLS, median",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:787"
+      "src/prokop/tabs/autotune/initController.ts:768"
     ]
   },
   {
@@ -10625,8 +11052,8 @@
     "key": "Tolerance",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2933",
-      "src/prokop/tabs/dashboard/initController.ts:1197",
-      "src/prokop/tabs/dashboard/initController.ts:1451"
+      "src/prokop/tabs/dashboard/initController.ts:1228",
+      "src/prokop/tabs/dashboard/initController.ts:1480"
     ]
   },
   {
@@ -10640,14 +11067,15 @@
     "call": "TorrServer Direct",
     "key": "TorrServer Direct",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:1113"
+      "src/prokop/tabs/updates/componentActionToast.ts:22",
+      "src/prokop/tabs/updates/initController.ts:1116"
     ]
   },
   {
     "call": "TorrServer not found",
     "key": "TorrServer not found",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:1115"
+      "src/prokop/tabs/updates/initController.ts:1118"
     ]
   },
   {
@@ -10668,10 +11096,10 @@
     "call": "Traffic",
     "key": "Traffic",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:985",
-      "src/prokop/tabs/monitoring/initController.ts:1134",
-      "src/prokop/tabs/monitoring/initController.ts:1290",
-      "src/prokop/tabs/dashboard/partials/renderSections.ts:121"
+      "src/prokop/tabs/monitoring/initController.ts:989",
+      "src/prokop/tabs/monitoring/initController.ts:1136",
+      "src/prokop/tabs/monitoring/initController.ts:1292",
+      "src/prokop/tabs/dashboard/partials/renderSections.ts:146"
     ]
   },
   {
@@ -10685,9 +11113,9 @@
     "call": "Traffic goes through the router without Prokop.",
     "key": "Traffic goes through the router without Prokop.",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:221",
-      "src/prokop/tabs/dashboard/overview.ts:233",
-      "src/prokop/tabs/dashboard/overview.ts:252"
+      "src/prokop/tabs/dashboard/overview.ts:232",
+      "src/prokop/tabs/dashboard/overview.ts:244",
+      "src/prokop/tabs/dashboard/overview.ts:263"
     ]
   },
   {
@@ -10729,14 +11157,14 @@
     "call": "Turn on",
     "key": "Turn on",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:212"
+      "src/prokop/tabs/autotune/initController.ts:216"
     ]
   },
   {
     "call": "Turn on automatic mode?",
     "key": "Turn on automatic mode?",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:199"
+      "src/prokop/tabs/autotune/initController.ts:202"
     ]
   },
   {
@@ -10757,8 +11185,8 @@
     "call": "Type",
     "key": "Type",
     "places": [
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:262",
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:309"
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:275",
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:322"
     ]
   },
   {
@@ -10804,7 +11232,7 @@
     "key": "Unavailability timeout",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3396",
-      "src/prokop/tabs/dashboard/initController.ts:1571"
+      "src/prokop/tabs/dashboard/initController.ts:1601"
     ]
   },
   {
@@ -10865,8 +11293,8 @@
       "src/prokop/services/systemInfo.service.ts:22",
       "src/prokop/services/systemInfo.service.ts:33",
       "src/prokop/services/systemInfo.service.ts:34",
-      "src/prokop/tabs/diagnostic/initController.ts:735",
-      "src/prokop/tabs/updates/initController.ts:339"
+      "src/prokop/tabs/diagnostic/initController.ts:736",
+      "src/prokop/tabs/updates/initController.ts:342"
     ]
   },
   {
@@ -10875,7 +11303,7 @@
     "places": [
       "src/prokop/ui/status.ts:174",
       "src/prokop/ui/status.ts:266",
-      "src/prokop/tabs/history/model.ts:164"
+      "src/prokop/tabs/history/model.ts:160"
     ]
   },
   {
@@ -10944,47 +11372,40 @@
     ]
   },
   {
-    "call": "up to %d automatic change(s) per day",
-    "key": "up to %d automatic change(s) per day",
-    "places": [
-      "src/prokop/tabs/autotune/initController.ts:824"
-    ]
-  },
-  {
     "call": "Up to 8 domains; exactly these are checked.",
     "key": "Up to 8 domains; exactly these are checked.",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:708"
+      "src/prokop/tabs/autotune/initController.ts:689"
     ]
   },
   {
     "call": "Update",
     "key": "Update",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:838"
+      "src/prokop/tabs/updates/initController.ts:841"
     ]
   },
   {
     "call": "Update is available",
     "key": "Update is available",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:297"
+      "src/prokop/tabs/updates/initController.ts:300"
     ]
   },
   {
     "call": "Update is available:",
     "key": "Update is available:",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:1175"
+      "src/prokop/tabs/updates/initController.ts:1178"
     ]
   },
   {
     "call": "Update subscriptions",
     "key": "Update subscriptions",
     "places": [
-      "src/prokop/tabs/dashboard/partials/renderSections.ts:210",
-      "src/prokop/tabs/dashboard/partials/renderSections.ts:223",
-      "src/prokop/tabs/dashboard/partials/renderSections.ts:224"
+      "src/prokop/tabs/dashboard/partials/renderSections.ts:235",
+      "src/prokop/tabs/dashboard/partials/renderSections.ts:248",
+      "src/prokop/tabs/dashboard/partials/renderSections.ts:249"
     ]
   },
   {
@@ -10992,14 +11413,6 @@
     "key": "Update this subscription automatically",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2755"
-    ]
-  },
-  {
-    "call": "Upload",
-    "key": "Upload",
-    "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1044",
-      "src/prokop/tabs/monitoring/render.ts:102"
     ]
   },
   {
@@ -11041,16 +11454,16 @@
     "call": "URLTest details",
     "key": "URLTest details",
     "places": [
-      "src/prokop/tabs/dashboard/initController.ts:1471",
-      "src/prokop/tabs/dashboard/partials/renderSections.ts:446",
-      "src/prokop/tabs/dashboard/partials/renderSections.ts:447"
+      "src/prokop/tabs/dashboard/initController.ts:1501",
+      "src/prokop/tabs/dashboard/partials/renderSections.ts:485",
+      "src/prokop/tabs/dashboard/partials/renderSections.ts:486"
     ]
   },
   {
     "call": "URLTest details are unavailable",
     "key": "URLTest details are unavailable",
     "places": [
-      "src/prokop/tabs/dashboard/initController.ts:1183"
+      "src/prokop/tabs/dashboard/initController.ts:1214"
     ]
   },
   {
@@ -11119,7 +11532,7 @@
     "call": "Use source values",
     "key": "Use source values",
     "places": [
-      "src/prokop/tabs/dashboard/initController.ts:1427"
+      "src/prokop/tabs/dashboard/initController.ts:1456"
     ]
   },
   {
@@ -11196,9 +11609,9 @@
       "src/validators/validateShadowsocksUrl.ts:101",
       "src/validators/validateSocksUrl.ts:75",
       "src/validators/validateSubnet.ts:42",
-      "src/validators/validateTrojanUrl.ts:64",
+      "src/validators/validateTrojanUrl.ts:70",
       "src/validators/validateUrl.ts:32",
-      "src/validators/validateVlessUrl.ts:115",
+      "src/validators/validateVlessUrl.ts:119",
       "src/validators/validateVmessUrl.ts:66"
     ]
   },
@@ -11294,14 +11707,14 @@
     "call": "Waiting for TorrServer",
     "key": "Waiting for TorrServer",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:1121"
+      "src/prokop/tabs/updates/initController.ts:1124"
     ]
   },
   {
     "call": "Waiting to finish",
     "key": "Waiting to finish",
     "places": [
-      "src/prokop/tabs/history/model.ts:146"
+      "src/prokop/tabs/history/model.ts:142"
     ]
   },
   {
@@ -11310,8 +11723,8 @@
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:896",
       "src/prokop/ui/status.ts:160",
-      "src/prokop/tabs/autotune/initController.ts:923",
-      "src/prokop/tabs/autotune/initController.ts:955"
+      "src/prokop/tabs/autotune/initController.ts:905",
+      "src/prokop/tabs/autotune/initController.ts:937"
     ]
   },
   {
@@ -11346,7 +11759,7 @@
     "call": "What to check",
     "key": "What to check",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:731"
+      "src/prokop/tabs/autotune/initController.ts:712"
     ]
   },
   {
@@ -11381,7 +11794,7 @@
     "call": "Which domains to check",
     "key": "Which domains to check",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:696"
+      "src/prokop/tabs/autotune/initController.ts:677"
     ]
   },
   {
@@ -11395,7 +11808,7 @@
     "call": "While Prokop runs, it turns off the iptables hooks of br_netfilter (net.bridge.bridge-nf-call-iptables and -ip6tables) that are on, for transparent proxying, so iptables rules do not filter bridged traffic. Their current values were not set by Prokop, and stopping it does not change them.",
     "key": "While Prokop runs, it turns off the iptables hooks of br_netfilter (net.bridge.bridge-nf-call-iptables and -ip6tables) that are on, for transparent proxying, so iptables rules do not filter bridged traffic. Their current values were not set by Prokop, and stopping it does not change them.",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:179"
+      "src/prokop/tabs/dashboard/overview.ts:190"
     ]
   },
   {
@@ -11434,10 +11847,17 @@
     ]
   },
   {
+    "call": "YB",
+    "key": "YB",
+    "places": [
+      "src/helpers/prettyBytes.ts:12"
+    ]
+  },
+  {
     "call": "Yes",
     "key": "Yes",
     "places": [
-      "src/prokop/tabs/dashboard/initController.ts:1064"
+      "src/prokop/tabs/dashboard/initController.ts:1095"
     ]
   },
   {
@@ -11493,7 +11913,7 @@
     "call": "Zapret rule",
     "key": "Zapret rule",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1158"
+      "src/prokop/tabs/autotune/initController.ts:1140"
     ]
   },
   {
@@ -11564,6 +11984,13 @@
     "key": "Zapret2 sing-box outbound is not configured",
     "places": [
       "src/prokop/tabs/diagnostic/checks/runZapret2Check.ts:107"
+    ]
+  },
+  {
+    "call": "ZB",
+    "key": "ZB",
+    "places": [
+      "src/helpers/prettyBytes.ts:11"
     ]
   }
 ]

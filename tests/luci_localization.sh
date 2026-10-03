@@ -114,14 +114,21 @@ if grep -rnE --include='*.ts' "_\('[^']*\(s\)" "$ROOT_DIR/fe-app-prokop/src" | g
   fail "plural-sensitive msgids must use the 'Label: value' pattern"
 fi
 
-# Manual autotune apply (6.9.1): the texts the operator relies on.
+# Manual autotune apply (6.9.1) and the S11 units, traffic nouns and
+# check failures: the texts the operator relies on.
 for pair in \
   'Strategy %s applied and checked.|Стратегия %s применена и проверена.' \
   'Automatic recovery did not finish.|Автоматическое восстановление не завершилось.' \
   'Action required|Требуется действие' \
   'The recommendation is outdated: the configuration changed after the check. Run the check again.|Рекомендация устарела: конфигурация изменилась после проверки. Запустите проверку ещё раз.' \
   'The new strategy did not pass the check. Prokop restored the previous configuration automatically.|Новая стратегия не прошла проверку. Prokop автоматически восстановил предыдущую конфигурацию.' \
-  'Autotune: %s applied manually|Автоподбор: %s применена вручную'; do
+  'Autotune: %s applied manually|Автоподбор: %s применена вручную' \
+  'Received|Получено' \
+  'Sent|Отправлено' \
+  'KB|КБ' \
+  '%s/s|%s/с' \
+  'automatic changes per day: up to %d|автоизменений в сутки: до %d' \
+  'The check could not run|Проверку не удалось выполнить'; do
   id="${pair%%|*}" str="${pair#*|}"
   for po in "$SOURCE_PO" "$PACKAGE_PO"; do
     grep -Fxq "msgid \"$id\"" "$po" && grep -A1 -Fx "msgid \"$id\"" "$po" | grep -Fxq "msgstr \"$str\"" ||
