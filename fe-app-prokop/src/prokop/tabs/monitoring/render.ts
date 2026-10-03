@@ -98,8 +98,8 @@ function renderConnectionsView(hidden: boolean) {
             [
               E('option', { value: 'start' }, _('Start time')),
               E('option', { value: 'duration' }, _('Duration')),
-              E('option', { value: 'download' }, _('Download')),
-              E('option', { value: 'upload' }, _('Upload')),
+              E('option', { value: 'download' }, _('Received')),
+              E('option', { value: 'upload' }, _('Sent')),
               E('option', { value: 'total' }, _('Total traffic')),
             ],
           ),

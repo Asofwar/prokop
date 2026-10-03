@@ -1,5 +1,5 @@
 import { Prokop } from '../../types';
-import { prettyBytes } from '../../../helpers/prettyBytes';
+import { prettyBytesRate } from '../../../helpers/prettyBytes';
 import {
   eventKindLabel,
   eventOutcomeView,
@@ -343,7 +343,7 @@ export function overviewRouting(input: OverviewInput): OverviewRouting {
   } else if (input.connections !== null) {
     live = _('%d connections now').replace('%d', String(input.connections));
     if (input.traffic) {
-      live += ` · ↓ ${prettyBytes(input.traffic.down)}/s ↑ ${prettyBytes(input.traffic.up)}/s`;
+      live += ` · ↓ ${prettyBytesRate(input.traffic.down)} ↑ ${prettyBytesRate(input.traffic.up)}`;
     }
   }
 
@@ -357,7 +357,9 @@ export function overviewRouting(input: OverviewInput): OverviewRouting {
       return {
         name: group.displayName,
         node: selected.displayName,
-        latency: selected.latency ? `${selected.latency} ms` : _('no data'),
+        latency: selected.latency
+          ? _('%d ms').replace('%d', String(selected.latency))
+          : _('no data'),
         tone: latencyTone(selected.latency),
       };
     }),
