@@ -106,6 +106,21 @@ describe('recovery state', () => {
     expect(recoveryRows(autotuneRollback, [])[1].value).toMatch(
       /^Autotune rollback: Succeeded · /,
     );
+
+    // The backend never records a 'recovery' kind: such an event counts only
+    // by its outcome and is named as another event.
+    const unknownKind = health({
+      recent_activity: [{ kind: 'recovery', status: 'success', timestamp: 8 }],
+    });
+    expect(recoveryRows(unknownKind, [])[1].value).toBe('Not needed');
+    const unknownKindRecovered = health({
+      recent_activity: [
+        { kind: 'recovery', status: 'recovered', timestamp: 8 },
+      ],
+    });
+    expect(recoveryRows(unknownKindRecovered, [])[1].value).toMatch(
+      /^Other event: Recovered · /,
+    );
   });
 
   it('maps an active guard and pending package recovery', () => {

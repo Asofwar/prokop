@@ -128,8 +128,6 @@ export function eventKindLabel(kind: string): string {
       return _('Configuration reload');
     case 'restore':
       return _('Snapshot restore');
-    case 'recovery':
-      return _('Recovery');
     case 'autotune_apply':
       return _('Autotune apply');
     case 'autotune_rollback':

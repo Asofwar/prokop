@@ -16,8 +16,9 @@ export interface RecoveryRow {
 }
 
 // A plain reload is not a recovery: only restores (an autotune rollback
-// restores a snapshot too), recovery runs and events that ended in a
-// rollback ("recovered") count.
+// restores a snapshot too) and events that ended in a rollback
+// ("recovered") count. diagnostics/health.uc never recorded a 'recovery'
+// event kind; one would read as an other event.
 export function lastRecoveryEvent(health: Prokop.HealthStatus) {
   const events = [
     ...health.recent_activity,
@@ -26,7 +27,6 @@ export function lastRecoveryEvent(health: Prokop.HealthStatus) {
     (event) =>
       event.kind === 'restore' ||
       event.kind === 'autotune_rollback' ||
-      event.kind === 'recovery' ||
       event.status === 'recovered',
   );
   return events.sort((a, b) => b.timestamp - a.timestamp)[0] ?? null;
