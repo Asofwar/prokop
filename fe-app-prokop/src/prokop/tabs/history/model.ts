@@ -5,7 +5,7 @@ import {
   toEventOutcome,
   type StatusTone,
 } from '../../ui/status';
-import { formatRelativeTime } from '../../ui/time';
+import { formatDateTime, formatRelativeTime } from '../../ui/time';
 
 // Pure view model of the History & Recovery page.
 
@@ -13,10 +13,6 @@ export interface RecoveryRow {
   label: string;
   value: string;
   tone: StatusTone;
-}
-
-function formatTime(timestamp: number) {
-  return new Date(timestamp * 1000).toLocaleString();
 }
 
 // A plain reload is not a recovery: only restores (an autotune rollback
@@ -39,7 +35,7 @@ export function lastRecoveryEvent(health: Prokop.HealthStatus) {
 function eventText(event: { kind: string; status: string; timestamp: number }) {
   const outcome = eventOutcomeView(toEventOutcome(event.status));
   return {
-    value: `${eventKindLabel(event.kind)}: ${outcome.label} · ${formatTime(event.timestamp)}`,
+    value: `${eventKindLabel(event.kind)}: ${outcome.label} · ${formatDateTime(event.timestamp)}`,
     tone: outcome.tone,
   };
 }
@@ -150,7 +146,7 @@ export function recoveryRows(
       label: _('Last reload'),
       ...(reload && reloadOutcome
         ? {
-            value: `${reloadOutcome.label} · ${formatTime(reload.timestamp)}`,
+            value: `${reloadOutcome.label} · ${formatDateTime(reload.timestamp)}`,
             tone: reloadOutcome.tone,
           }
         : { value: _('No reload recorded yet'), tone: 'neutral' as const }),
@@ -158,7 +154,7 @@ export function recoveryRows(
     {
       label: _('Last known good configuration'),
       ...(lkg
-        ? { value: formatTime(lkg.created_at), tone: 'success' as const }
+        ? { value: formatDateTime(lkg.created_at), tone: 'success' as const }
         : snapshots
           ? { value: _('Not recorded yet'), tone: 'neutral' as const }
           : { value: _('Unknown'), tone: 'neutral' as const }),
@@ -308,7 +304,7 @@ export function historyItems(
     .map(({ event }) => ({
       title: eventTitle(event),
       outcome: eventOutcomeView(toEventOutcome(event.status)),
-      time: formatTime(event.timestamp),
+      time: formatDateTime(event.timestamp),
       relative: formatRelativeTime(event.timestamp, nowMs),
       details: (event.notices ?? []).map(migrationNoticeText),
     }));
@@ -349,7 +345,7 @@ export function snapshotRows(snapshots: Prokop.SnapshotMetadata[]) {
     .sort((a, b) => b.created_at - a.created_at)
     .map((snapshot) => ({
       id: snapshot.id,
-      time: formatTime(snapshot.created_at),
+      time: formatDateTime(snapshot.created_at),
       // The badge already says "last known good" for such snapshots.
       reason:
         snapshot.is_lkg && snapshot.reason === 'last-known-working'

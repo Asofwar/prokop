@@ -15,7 +15,10 @@ import {
   renderErrorState,
   renderLoadingState,
 } from '../../ui/states';
-import { formatRelativeTime } from '../../ui/time';
+import {
+  formatDateTime as formatTime,
+  formatRelativeTime,
+} from '../../ui/time';
 import { historyItems } from '../history/model';
 import {
   applyConfirmation,
@@ -106,10 +109,6 @@ function replace(id: string, ...nodes: Node[]) {
   const container = document.getElementById(id);
   if (container)
     preserveScrollForPage(() => container.replaceChildren(...nodes));
-}
-
-function formatTime(timestamp: number) {
-  return new Date(timestamp * 1000).toLocaleString();
 }
 
 function timeNode(timestamp: number) {

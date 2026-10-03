@@ -18,7 +18,10 @@ export type RowResult =
   | { state: 'idle' }
   | { state: 'running' }
   | { state: 'done'; result: Prokop.ConnectivityResult }
-  | { state: 'invalid'; message: string };
+  | { state: 'invalid'; message: string }
+  // The probe did not run or gave no answer (rpcd error, timeout): nothing
+  // was observed, so it is neither a typing mistake nor an unreachable host.
+  | { state: 'failed'; message: string };
 
 const TYPES: ConnectivityType[] = ['DNS', 'TCP', 'HTTP', 'HTTPS'];
 export const DEFAULT_PORTS: Record<ConnectivityType, string> = {
@@ -111,6 +114,8 @@ export function resultView(result: RowResult): {
     return { text: _('Checking…'), tone: 'loading' };
   if (result.state === 'invalid')
     return { text: result.message, tone: 'error' };
+  if (result.state === 'failed')
+    return { text: result.message, tone: 'warning' };
   const data = result.result;
   if (data.status === 'ok') {
     const parts = [`✓ ${_('Reachable')}`, `${data.latency_ms} ${_('ms')}`];
@@ -133,8 +138,16 @@ export async function probe(target: Target): Promise<RowResult> {
     target.type,
     target.type === 'DNS' ? '' : target.port,
   );
-  if (!response.success || !response.data?.status)
+  // connectivity_test answers {error:"invalid_input"} for a target it
+  // rejects; any other answer without a status is a check that did not run.
+  if (
+    response.success &&
+    (response.data as { error?: unknown } | undefined)?.error ===
+      'invalid_input'
+  )
     return { state: 'invalid', message: _('The router rejected this check') };
+  if (!response.success || !response.data?.status)
+    return { state: 'failed', message: _('The check could not run') };
   // A late answer for an edited row must not be shown as its result.
   if (
     response.data.type !== target.type ||

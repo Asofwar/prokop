@@ -7,6 +7,7 @@ import {
   type ReadableStorage,
   type WritableStorage,
 } from '../../../helpers/legacyStorage';
+import { formatDateTime } from '../../../ui/time';
 
 interface IRenderDiagnosticRunActionProps {
   loading: boolean;
@@ -52,6 +53,6 @@ export function readLastRun(storage: ReadableStorage) {
 export function lastRunText(storage: ReadableStorage) {
   const value = readLastRun(storage) || 0;
   return value > 0
-    ? `${_('Last check')}: ${new Date(value).toLocaleString()}`
+    ? `${_('Last check')}: ${formatDateTime(value / 1000)}`
     : _('No check has been run yet');
 }
