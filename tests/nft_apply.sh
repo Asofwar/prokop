@@ -215,8 +215,15 @@ if grep -Fq $'prokop_dns_sources\tudp\tdport\t53\tmeta\tmark' "$NFT_LOG"; then
 fi
 assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tProkopTable\tmangle\tiifname\t@prokop_interfaces\tip6\tdaddr\t@localv6\tip6\tdaddr\t!=\tfc00::/18\treturn' "runtime local6 return preserves FakeIP6 capture"
 assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tProkopTable\tmangle\tjump\tpriority_rules' "runtime priority jump"
-assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tProkopTable\tmangle\tiifname\t@prokop_interfaces\tip\tdaddr\t@prokop_subnets\tmeta\tl4proto\ttcp\tmeta\tmark\tset\t0x00100000\tcounter' "runtime common tcp rule"
-assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tProkopTable\tmangle\tiifname\t@prokop_interfaces\tip6\tdaddr\t@prokop_subnets6\tmeta\tl4proto\ttcp\tmeta\tmark\tset\t0x00100000\tcounter' "runtime common6 tcp rule"
+assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tProkopTable\tmangle\tiifname\t@prokop_interfaces\tip\tdaddr\t198.18.0.0/15\tmeta\tl4proto\ttcp\tmeta\tmark\tset\t0x00100000\tcounter' "runtime fakeip tcp rule"
+assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tProkopTable\tmangle\tiifname\t@prokop_interfaces\tip6\tdaddr\tfc00::/18\tmeta\tl4proto\ttcp\tmeta\tmark\tset\t0x00100000\tcounter' "runtime fakeip6 tcp rule"
+# Nothing ever filled the shared capture sets of the releases before the
+# per-rule sets: neither they nor rules matching them are created (UC-170).
+for shared_set in prokop_subnets prokop_subnets6 prokop_ports prokop_ip_ports prokop_ip6_ports; do
+  if grep -Fq $'\t'"$shared_set"$'\t' "$NFT_LOG" || grep -Fq $'\t@'"$shared_set"$'\t' "$NFT_LOG"; then
+    fail "runtime base must not create or match the shared set $shared_set"
+  fi
+done
 assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tProkopTable\tproxy\tmeta\tmark\t&\t0x00100000\t==\t0x00100000\tmeta\tl4proto\ttcp\ttproxy\tip\tto\t:1602\tcounter' "runtime proxy tcp rule"
 assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tProkopTable\tproxy\tmeta\tmark\t&\t0x00100000\t==\t0x00100000\tmeta\tl4proto\ttcp\ttproxy\tip6\tto\t[::1]:1602\tcounter' "runtime proxy6 tcp rule"
 assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tProkopTable\tmangle_output\tmeta\tmark\t&\t0xff2000ff\t==\t0x00200000\tcounter\treturn' "runtime outbound return on Prokop's mark bits"
@@ -238,12 +245,10 @@ assert_contains "$NFT_LOG" $'nft\tinsert\trule\tinet\tProkopTable\tmangle\tudp\t
 
 : > "$NFT_LOG"
 nft_ucode nft-create-runtime-output-rules ProkopTable localv4 prokop_subnets prokop_ports prokop_ip_ports 0x00100000 198.18.0.0/15
-assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tProkopTable\tmangle_output\tip\tdaddr\t@prokop_subnets\tmeta\tl4proto\ttcp\tmeta\tmark\tset\t0x00100000\tcounter' "runtime output common tcp"
-assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tProkopTable\tmangle_output\tip6\tdaddr\t@prokop_subnets6\tmeta\tl4proto\ttcp\tmeta\tmark\tset\t0x00100000\tcounter' "runtime output common6 tcp"
-assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tProkopTable\tmangle_output\tip\tdaddr\t.\ttcp\tdport\t@prokop_ip_ports\tmeta\tmark\tset\t0x00100000\tcounter' "runtime output ip-port tcp"
-assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tProkopTable\tmangle_output\tip6\tdaddr\t.\ttcp\tdport\t@prokop_ip6_ports\tmeta\tmark\tset\t0x00100000\tcounter' "runtime output ip6-port tcp"
-assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tProkopTable\tmangle_output\ttcp\tdport\t@prokop_ports\tmeta\tmark\tset\t0x00100000\tcounter' "runtime output port tcp"
 assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tProkopTable\tmangle_output\tip\tdaddr\t198.18.0.0/15\tmeta\tl4proto\tudp\tmeta\tmark\tset\t0x00100000\tcounter' "runtime output fakeip udp"
+assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tProkopTable\tmangle_output\tip6\tdaddr\tfc00::/18\tmeta\tl4proto\ttcp\tmeta\tmark\tset\t0x00100000\tcounter' "runtime output fakeip6 tcp"
+[ "$(grep -c . "$NFT_LOG")" -eq 4 ] ||
+  fail "runtime output rules must be the four FakeIP range rules only (UC-170)"
 
 : > "$NFT_LOG"
 if NFT_LIST_TABLE_FAIL=1 nft_ucode nft-table-present-fixture ProkopTable 2>"$WORK_DIR/nft-table-present.err"; then

@@ -275,7 +275,9 @@ check production "$WORK_DIR/empty.json" "$TABLE" "$OUTBOUND_MARK" no
 check set "$WORK_DIR/empty.json" "$TABLE" "$INTERFACES" br-lan
 check set "$WORK_DIR/empty.json" "$TABLE" "$LOCALV4" 10.0.0.0/8 192.168.0.0/16
 check set "$WORK_DIR/empty.json" "$TABLE" "$LOCALV6" fc00::/7 fe80::/10
-check empty-set "$WORK_DIR/empty.json" "$TABLE" "$COMMON" "$COMMON6" "$PORTS" "$IP_PORTS" "$IP6_PORTS"
+# The shared capture sets of the releases before the per-rule sets were
+# never filled; they and the rules matching them are gone (UC-170).
+check absent-set "$WORK_DIR/empty.json" "$TABLE" "$COMMON" "$COMMON6" "$PORTS" "$IP_PORTS" "$IP6_PORTS"
 grep -Fxq "105 $RT_TABLE" "$PROKOP_RT_TABLES" || fail "the route table registry was not written to PROKOP_RT_TABLES"
 ok "empty configuration: fresh candidate checked and applied"
 
@@ -332,6 +334,14 @@ connections_lists() {
     "$TABLE" "$COMMON" "$IP_PORTS" "$WORK_DIR/unscoped.lst" "$WORK_DIR/scoped.lst" 5000 \
     "$COMMON6" "$IP6_PORTS" || fail "rule-set list data"
 }
+# The live table as an older release left it: the shared capture sets, one
+# filled, and a rule matching it. The reload replaces the table, and none of
+# them survives (UC-170).
+nft add set inet "$TABLE" "$COMMON" '{ type ipv4_addr; flags interval; }' &&
+  nft add element inet "$TABLE" "$COMMON" '{ 93.184.229.0/24 }' &&
+  nft add set inet "$TABLE" "$PORTS" '{ type inet_service; flags interval; }' &&
+  nft add rule inet "$TABLE" mangle ip daddr "@$COMMON" meta mark set "$FAKEIP_MARK" counter ||
+  fail "could not build the older release's table"
 candidate "$WORK_DIR/connections.uci" "$WORK_DIR/connections.nft" connections_lists
 [ "$(first_command "$WORK_DIR/connections.nft")" = "delete table inet $TABLE" ] ||
   fail "a reload candidate must replace the live table in the same transaction"
@@ -361,6 +371,7 @@ check set "$json" "$TABLE" prokop_rule_ports_udp_ip6_ports '2606:4700::/32 . 347
 check set "$json" "$TABLE" prokop_rule_portonly_ports 5000-5010
 check set "$json" "$TABLE" prokop_dns_sources 192.168.1.0/24 192.168.2.40
 check set "$json" "$TABLE" prokop_dns_sources6 fd00:1::/64
+check absent-set "$json" "$TABLE" "$COMMON" "$COMMON6" "$PORTS" "$IP_PORTS" "$IP6_PORTS"
 if grep -Fq 'prokop_rule_disabled_' "$WORK_DIR/connections.nft"; then
   fail "a disabled section produced nft objects"
 fi
