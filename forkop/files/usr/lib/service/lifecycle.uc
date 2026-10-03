@@ -861,10 +861,13 @@ function nft_populate_runtime_sets() {
     ]);
 }
 
+// The nft sets are filled inside the start candidate, which is committed
+// atomically before this runs: init-config must not fill them again live
+// (UC-162), as reload's prepare-config-stage does not.
 function singbox_init_config() {
     let result = module_capture(SINGBOX_UC, [
         "init-config",
-        as_string(nft_populate_enabled),
+        "0",
         subscription_caches_prepared,
         subscription_runtime_no_refresh,
         subscription_deferred_sections
