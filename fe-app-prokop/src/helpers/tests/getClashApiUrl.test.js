@@ -15,7 +15,34 @@ describe('canUseDirectClashApi', () => {
       location: { hostname: 'router.example', protocol: 'http:' },
     });
 
-    expect(canUseDirectClashApi('secret')).toBe(true);
+    expect(canUseDirectClashApi('secret', ['router.example'])).toBe(true);
+  });
+
+  // UC-125: LuCI through a tunnel or a proxy must not reach a controller on
+  // the local machine.
+  it('blocks direct Clash API access from a host the router does not report', () => {
+    vi.stubGlobal('window', {
+      location: { hostname: '127.0.0.1', protocol: 'http:' },
+    });
+    expect(canUseDirectClashApi('secret', ['192.168.1.1'])).toBe(false);
+
+    vi.stubGlobal('window', {
+      location: { hostname: 'localhost', protocol: 'http:' },
+    });
+    expect(canUseDirectClashApi('secret', ['192.168.1.1'])).toBe(false);
+
+    vi.stubGlobal('window', {
+      location: { hostname: 'router.example', protocol: 'http:' },
+    });
+    expect(canUseDirectClashApi('secret', [])).toBe(false);
+  });
+
+  it('matches the router address regardless of brackets and case', () => {
+    vi.stubGlobal('window', {
+      location: { hostname: '[FD00::1]', protocol: 'http:' },
+    });
+
+    expect(canUseDirectClashApi('secret', ['fd00::1'])).toBe(true);
   });
 
   it('blocks direct Clash API access without the secret (read-only sessions)', () => {
@@ -23,8 +50,8 @@ describe('canUseDirectClashApi', () => {
       location: { hostname: 'router.example', protocol: 'http:' },
     });
 
-    expect(canUseDirectClashApi('')).toBe(false);
-    expect(canUseDirectClashApi('   ')).toBe(false);
+    expect(canUseDirectClashApi('', ['router.example'])).toBe(false);
+    expect(canUseDirectClashApi('   ', ['router.example'])).toBe(false);
   });
 
   it('blocks direct Clash API access from HTTPS LuCI', () => {
@@ -32,13 +59,13 @@ describe('canUseDirectClashApi', () => {
       location: { hostname: 'router.example', protocol: 'https:' },
     });
 
-    expect(canUseDirectClashApi('secret')).toBe(false);
+    expect(canUseDirectClashApi('secret', ['router.example'])).toBe(false);
   });
 
   it('blocks direct Clash API access outside a browser location', () => {
     vi.stubGlobal('window', undefined);
 
-    expect(canUseDirectClashApi('secret')).toBe(false);
+    expect(canUseDirectClashApi('secret', ['router.example'])).toBe(false);
   });
 });
 

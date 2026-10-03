@@ -8,6 +8,7 @@ import {
 import { getClashApiSecretFromSettings } from '../../../helpers/getClashApiUrl';
 import { getOutboundTagBySection } from '../../runtimeTags';
 import { ProkopShellMethods } from '../shell';
+import { parseClashControllerHosts } from './getClashControllerHosts';
 import { isReadonlyMode } from '../../services/accessMode.service';
 import { isSectionEnabled } from '../../helpers/sectionEnabled';
 
@@ -45,6 +46,7 @@ type UrlTestCacheGroup = {
 
 type SingBoxRuntimeMetadata = {
   urltestGroups: Record<string, UrlTestCacheGroup>;
+  clashControllerHosts: string[];
 };
 
 type PriorityCacheLevel = {
@@ -143,15 +145,18 @@ function getClashApiSecret(configSections: Prokop.ConfigSection[]) {
   return getClashApiSecretFromSettings(getSettingsSection(configSections));
 }
 
-function canFetchClashApiDirectly(secret: string) {
-  return canUseDirectClashApi(secret) && typeof fetch === 'function';
+function canFetchClashApiDirectly(secret: string, routerHosts: string[]) {
+  return (
+    canUseDirectClashApi(secret, routerHosts) && typeof fetch === 'function'
+  );
 }
 
 async function getClashApiProxies(
   configSections: Prokop.ConfigSection[],
+  routerHosts: string[],
 ): Promise<Prokop.MethodResponse<ClashAPI.Proxies>> {
   const secret = getClashApiSecret(configSections);
-  if (canFetchClashApiDirectly(secret)) {
+  if (canFetchClashApiDirectly(secret, routerHosts)) {
     const controller = new AbortController();
     const timeoutId = setTimeout(
       () => controller.abort(),
@@ -826,8 +831,16 @@ function getUrlTestGroups(dashboardCache?: DashboardSectionCache) {
 async function readRuntimeMetadata(): Promise<SingBoxRuntimeMetadata> {
   const response = await ProkopShellMethods.getDashboardRuntimeMetadata();
   return response.success
-    ? (response.data as SingBoxRuntimeMetadata)
-    : { urltestGroups: {} };
+    ? {
+        urltestGroups: (response.data.urltestGroups ?? {}) as Record<
+          string,
+          UrlTestCacheGroup
+        >,
+        clashControllerHosts: parseClashControllerHosts(
+          response.data.clashControllerHosts,
+        ),
+      }
+    : { urltestGroups: {}, clashControllerHosts: [] };
 }
 
 function mergeUrlTestGroups(
@@ -1389,10 +1402,13 @@ function getOutboundMetadata(dashboardCache?: DashboardSectionCache) {
 
 export async function getDashboardSections(): Promise<IGetDashboardSectionsResponse> {
   const configSections = hydrateConfigSections(await getConfigSections());
-  const [clashProxies, runtimeMetadata] = await Promise.all([
-    getClashApiProxies(configSections),
-    readRuntimeMetadata(),
-  ]);
+  // The controller hosts decide whether the browser may ask the controller
+  // directly (UC-125), so the metadata comes first.
+  const runtimeMetadata = await readRuntimeMetadata();
+  const clashProxies = await getClashApiProxies(
+    configSections,
+    runtimeMetadata.clashControllerHosts,
+  );
 
   if (!clashProxies.success || !clashProxies.data?.proxies) {
     return {

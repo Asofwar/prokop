@@ -26,6 +26,7 @@ import {
 import { CustomProkopMethods, ProkopShellMethods } from '../../methods';
 import { getOutboundTagBySection } from '../../runtimeTags';
 import { getClashApiSecret } from '../../methods/custom/getClashApiSecret';
+import { getClashControllerHosts } from '../../methods/custom/getClashControllerHosts';
 import { logger, socket, store, StoreType } from '../../services';
 import { Prokop } from '../../types';
 import {
@@ -1928,7 +1929,10 @@ function startConnectionsPolling() {
 
 async function connectToConnectionsSocket(updatesId: number) {
   const mountId = monitoringMountId;
-  const clashApiSecret = await getClashApiSecret();
+  const [clashApiSecret, clashControllerHosts] = await Promise.all([
+    getClashApiSecret(),
+    getClashControllerHosts(),
+  ]);
 
   if (
     !monitoringMounted ||
@@ -1939,7 +1943,7 @@ async function connectToConnectionsSocket(updatesId: number) {
     return;
   }
 
-  if (!canUseDirectClashApi(clashApiSecret)) {
+  if (!canUseDirectClashApi(clashApiSecret, clashControllerHosts)) {
     startConnectionsPolling();
     return;
   }

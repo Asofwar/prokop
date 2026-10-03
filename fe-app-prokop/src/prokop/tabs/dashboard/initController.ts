@@ -23,6 +23,7 @@ import {
 } from './partials';
 import { fetchServicesInfo } from '../../fetchers/fetchServicesInfo';
 import { getClashApiSecret } from '../../methods/custom/getClashApiSecret';
+import { getClashControllerHosts } from '../../methods/custom/getClashControllerHosts';
 import { Prokop } from '../../types';
 import {
   getCachedRuntimeUiState,
@@ -644,7 +645,10 @@ function stopActionStateWatcher() {
 
 async function connectToClashSockets(dataUpdatesId: number) {
   const mountId = dashboardMountId;
-  const clashApiSecret = await getClashApiSecret();
+  const [clashApiSecret, clashControllerHosts] = await Promise.all([
+    getClashApiSecret(),
+    getClashControllerHosts(),
+  ]);
 
   if (
     !dashboardMounted ||
@@ -655,7 +659,7 @@ async function connectToClashSockets(dataUpdatesId: number) {
     return;
   }
 
-  if (!canUseDirectClashApi(clashApiSecret)) {
+  if (!canUseDirectClashApi(clashApiSecret, clashControllerHosts)) {
     startClashRpcPolling(dataUpdatesId);
     return;
   }

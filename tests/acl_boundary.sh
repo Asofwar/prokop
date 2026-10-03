@@ -141,7 +141,7 @@ prokop.main.subscription_urls=https://example.test/?token=secret
 EOF
 sed -i "s|CONFIG_PATH|$WORK_DIR/sing-box.json|" "$WORK_DIR/state"
 cat >"$WORK_DIR/sing-box.json" <<'EOF'
-{"outbounds":[{"type":"urltest","tag":"group","outbounds":["node-a"],"url":"https://example.test/?token=secret","interval":"1m"},{"type":"vless","tag":"node-a","uuid":"do-not-expose"}]}
+{"outbounds":[{"type":"urltest","tag":"group","outbounds":["node-a"],"url":"https://example.test/?token=secret","interval":"1m"},{"type":"vless","tag":"node-a","uuid":"do-not-expose"}],"experimental":{"clash_api":{"external_controller":"192.168.1.1:9090","secret":"secret"}}}
 EOF
 
 PROKOP_CONFIG="$WORK_DIR/prokop" PROKOP_UCI_STATE_FILE="$WORK_DIR/state" \
@@ -159,7 +159,26 @@ if (!sections.some(section => section['.name'] === 'main' && section.action === 
 if (runtime.urltestGroups.group.outbounds[0] !== 'node-a') {
   throw Error('read-only dashboard lost runtime group metadata');
 }
+// UC-125: the router address of the controller, never its secret.
+if (JSON.stringify(runtime.clashControllerHosts) !== '["192.168.1.1"]') {
+  throw Error(`controller host not reported: ${JSON.stringify(runtime.clashControllerHosts)}`);
+}
 if (/secret|do-not-expose/.test(output)) throw Error('read-only metadata leaked raw secrets');
 NODE
+
+# UC-125: a controller on a wildcard answers on the inbound listen
+# addresses; loopback is never reported as the router.
+controller_hosts() {
+  printf '%s\n' "$1" >"$WORK_DIR/sing-box.json"
+  PROKOP_CONFIG="$WORK_DIR/prokop" PROKOP_UCI_STATE_FILE="$WORK_DIR/state" \
+    ucode -L "$PROKOP_LIB" "$DIAGNOSTICS" get-dashboard-runtime-metadata |
+    node -e 'process.stdout.write(JSON.stringify(JSON.parse(require("node:fs").readFileSync(0, "utf8")).clashControllerHosts))'
+}
+[ "$(controller_hosts '{"experimental":{"clash_api":{"external_controller":"0.0.0.0:9090"}},"inbounds":[{"listen":"127.0.0.42"},{"listen":"192.168.1.1"},{"listen":"::1"},{"listen":"192.168.1.1"}]}')" = '["192.168.1.1"]' ] ||
+  { printf 'FAIL: wildcard controller hosts\n' >&2; exit 1; }
+[ "$(controller_hosts '{"experimental":{"clash_api":{"external_controller":"127.0.0.1:9090"}}}')" = '[]' ] ||
+  { printf 'FAIL: loopback controller reported as the router\n' >&2; exit 1; }
+[ "$(controller_hosts '{}')" = '[]' ] ||
+  { printf 'FAIL: controller hosts without a clash API\n' >&2; exit 1; }
 
 printf 'ACL read boundary checks passed\n'

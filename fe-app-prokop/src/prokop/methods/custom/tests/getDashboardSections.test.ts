@@ -1239,6 +1239,10 @@ describe('getDashboardSections', () => {
       proxySection(),
     ]);
     mocks.canUseDirectClashApi.mockReturnValue(true);
+    mocks.getDashboardRuntimeMetadata.mockResolvedValue({
+      success: true,
+      data: { urltestGroups: {}, clashControllerHosts: ['router.example'] },
+    });
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ proxies: clashProxies }),
@@ -1258,7 +1262,10 @@ describe('getDashboardSections', () => {
       }),
     );
     expect(mocks.getClashApiProxies).not.toHaveBeenCalled();
-    expect(mocks.canUseDirectClashApi).toHaveBeenCalledWith('secret');
+    // Only from a page on the router address the backend reports (UC-125).
+    expect(mocks.canUseDirectClashApi).toHaveBeenCalledWith('secret', [
+      'router.example',
+    ]);
   });
 
   it('decides direct access by the configured secret (read-only has none)', async () => {
@@ -1270,7 +1277,7 @@ describe('getDashboardSections', () => {
     const result = await getDashboardSections();
 
     expect(result.success).toBe(true);
-    expect(mocks.canUseDirectClashApi).toHaveBeenCalledWith('');
+    expect(mocks.canUseDirectClashApi).toHaveBeenCalledWith('', []);
     expect(fetchMock).not.toHaveBeenCalled();
     expect(mocks.getClashApiProxies).toHaveBeenCalledTimes(1);
   });
