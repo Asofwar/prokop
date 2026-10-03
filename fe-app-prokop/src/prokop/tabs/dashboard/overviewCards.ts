@@ -3,6 +3,7 @@ import { renderOverflowMenu } from '../../ui/overflowMenu';
 import { renderStatus, statusTone } from '../../ui/status';
 import type { SemanticStatus } from '../../ui/status';
 import type {
+  OverviewAutotune,
   OverviewEvent,
   OverviewLine,
   OverviewRecovery,
@@ -15,6 +16,7 @@ export interface OverviewViewModel {
   warning: OverviewWarning | null;
   state: OverviewState;
   routing: OverviewRouting;
+  autotune: OverviewAutotune;
   recovery: OverviewRecovery;
   event: OverviewEvent | null;
 }
@@ -263,6 +265,21 @@ function renderRoutingCard(routing: OverviewRouting, readonly: boolean) {
   );
 }
 
+// Read-only in every session: mode changes and applies stay on the
+// Autotune page.
+function renderAutotuneCard(autotune: OverviewAutotune) {
+  return card(
+    _('DPI autotune'),
+    [
+      E('div', { class: 'fkp-overview__status' }, [
+        renderStatus(statusView(autotune.status, autotune.title)),
+      ]),
+      renderLines(autotune.lines),
+    ],
+    [linkButton(_('Open autotune'), () => openProkopPage('autotune'))],
+  );
+}
+
 function renderRecoveryCard(
   recovery: OverviewRecovery,
   actions: OverviewActions,
@@ -328,6 +345,7 @@ export function renderOverview(
     E('div', { class: 'fkp-overview__grid' }, [
       renderStateCard(vm.state, actions, vm.recovery.step === 'restart'),
       renderRoutingCard(vm.routing, actions.readonly),
+      renderAutotuneCard(vm.autotune),
       renderRecoveryCard(vm.recovery, actions),
       renderEventCard(vm.event),
     ]),

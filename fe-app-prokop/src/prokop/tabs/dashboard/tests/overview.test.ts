@@ -39,6 +39,7 @@ function text(node: unknown): string {
 }
 
 import {
+  overviewAutotune,
   overviewLastEvent,
   overviewRecovery,
   overviewRouting,
@@ -111,6 +112,157 @@ function input(patch: Partial<OverviewInput> = {}): OverviewInput {
     ...patch,
   };
 }
+
+function autotune(
+  patch: Partial<Prokop.AutotuneStatus> = {},
+  policy: Partial<Prokop.AutotunePolicy> = {},
+): Prokop.AutotuneStatus {
+  return {
+    status: 'ok',
+    policy: {
+      mode: 'recommend',
+      interval: '6h',
+      confirmations: 3,
+      min_confidence: 'high',
+      max_applies_per_day: 1,
+      cooldown: '1d',
+      probes: 3,
+      ...policy,
+    },
+    errors: [],
+    targets: [
+      {
+        id: 't_1',
+        host: 'youtube.com',
+        enabled: true,
+        resolver: null,
+        last: null,
+      },
+      {
+        id: 't_2',
+        host: 'discord.com',
+        enabled: true,
+        resolver: null,
+        last: null,
+      },
+      {
+        id: 't_3',
+        host: 'old.example',
+        enabled: false,
+        resolver: null,
+        last: null,
+      },
+    ],
+    groups: {
+      youtube: {
+        pending: { candidate: 'multisplit', count: 3 },
+        ready: true,
+        result: {
+          status: 'recommendation',
+          candidate: 'multisplit',
+        } as Prokop.AutotuneGroupResult,
+      },
+      discord: { pending: null },
+    },
+    next_run_at: ts(-3600),
+    worker: {
+      state: 'finished',
+      result: 'completed',
+      finished_at: ts(600),
+    },
+    recovered_at: null,
+    state_recovered: null,
+    apply: null,
+    ...patch,
+  };
+}
+
+describe('overview autotune card', () => {
+  const texts = (value: ReturnType<typeof overviewAutotune>) =>
+    value.lines.map((line) => line.text);
+
+  it('waits for the first status, then says when it is unavailable', () => {
+    expect(overviewAutotune(input()).title).toBe('Loading…');
+    expect(overviewAutotune(input({ autotuneFailed: true })).title).toBe(
+      'Autotune state is unavailable',
+    );
+  });
+
+  it('shows the mode, what it watches, and the last and next check', () => {
+    const value = overviewAutotune(
+      input({
+        autotune: autotune(
+          { groups: { discord: { pending: null } } },
+          { mode: 'off' },
+        ),
+      }),
+    );
+
+    expect(value.status).toBe('off');
+    expect(value.title).toBe('Mode: Off');
+    expect(texts(value)).toContain('Groups: 1 · targets: 2');
+    expect(texts(value)).toContain('Last check completed · 10 min ago');
+    // Off: nothing is scheduled.
+    expect(texts(value).join(' ')).not.toContain('Next scheduled check');
+  });
+
+  it('flags a confirmed recommendation that waits for a decision', () => {
+    const value = overviewAutotune(input({ autotune: autotune() }));
+
+    expect(value.status).toBe('warning');
+    expect(value.title).toBe('Mode: Recommendations only');
+    expect(value.lines).toContainEqual({
+      text: 'Recommendations waiting for a decision: 1',
+      tone: 'warning',
+    });
+    expect(texts(value).join(' ')).toContain('Next scheduled check');
+  });
+
+  it('does not ask for a decision in automatic mode', () => {
+    const value = overviewAutotune(
+      input({ autotune: autotune({}, { mode: 'auto' }) }),
+    );
+
+    expect(value.status).toBe('healthy');
+    expect(value.title).toBe('Mode: Automatic');
+    expect(texts(value).join(' ')).not.toContain('waiting for a decision');
+  });
+
+  it('shows a running check and a change that needs attention', () => {
+    const running = overviewAutotune(
+      input({
+        autotune: autotune(
+          { worker: { state: 'running', phase: 'measuring' } },
+          { mode: 'auto' },
+        ),
+      }),
+    );
+    expect(running.status).toBe('busy');
+    expect(texts(running)).toContain('Checking targets');
+
+    const attention = overviewAutotune(
+      input({
+        autotune: autotune({
+          apply: {
+            phase: null,
+            reason: null,
+            group: 'youtube',
+            candidate: 'multisplit',
+            finished_at: ts(60),
+            resolved: false,
+            diagnosis: 'in_transaction',
+            in_progress: false,
+            rollback: false,
+          },
+        }),
+      }),
+    );
+    expect(attention.status).toBe('needs_attention');
+    expect(texts(attention)).toContain(
+      'The last autotune change needs attention.',
+    );
+  });
+});
 
 describe('overview warning', () => {
   it('is empty on a healthy system', () => {
@@ -593,6 +745,7 @@ describe('overview cards', () => {
       warning: overviewWarning(value.health),
       state: overviewState(value),
       routing: overviewRouting(value),
+      autotune: overviewAutotune(value),
       recovery: overviewRecovery(value),
       event: overviewLastEvent(value),
     };
@@ -750,5 +903,23 @@ describe('overview cards', () => {
     expect(text(node)).not.toContain('Start Prokop');
     expect(labels(node)).not.toContain('Service actions');
     expect(text(node)).not.toContain('Rules');
+  });
+
+  it('places the autotune card between Routing and Recovery, with a link only', () => {
+    for (const readonly of [false, true]) {
+      const node = renderOverview(vm({ autotune: autotune() }), {
+        ...actions,
+        readonly,
+      }) as unknown as FakeNode;
+      const cards = node.children
+        .flatMap((child) => (child as FakeNode).children || [])
+        .map((card) => text(card));
+      const index = cards.findIndex((card) => card.includes('DPI autotune'));
+
+      expect(cards[index - 1]).toContain('Routing');
+      expect(cards[index + 1]).toContain('Recovery');
+      expect(cards[index]).toContain('Mode: Recommendations only');
+      expect(cards[index]).toContain('Open autotune');
+    }
   });
 });

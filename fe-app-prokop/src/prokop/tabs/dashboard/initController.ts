@@ -36,6 +36,7 @@ import { getServiceAvailability } from '../../helpers/serviceAvailability';
 import { createPriorityMembersState } from './priorityMembersState';
 import {
   overviewLastEvent,
+  overviewAutotune,
   overviewRecovery,
   overviewRouting,
   overviewState,
@@ -89,6 +90,8 @@ let overviewHealth: Prokop.HealthStatus | null = null;
 let overviewHealthStale = false;
 let overviewRuleCount: number | null = null;
 let overviewSnapshotCount: number | null = null;
+let overviewAutotuneStatus: Prokop.AutotuneStatus | null = null;
+let overviewAutotuneFailed = false;
 let overviewServiceBusy = false;
 // The controller runs on two pages: Overview (summary cards, live traffic)
 // and Monitoring → Nodes (node selection only). Summary data, the health
@@ -107,6 +110,29 @@ async function refreshHealth(mountId: number) {
   } else {
     overviewHealthStale = true;
   }
+  renderOverviewCards();
+}
+
+// The autotune card: the same status call as the Autotune page, which a
+// read-only session may make too. It changes on the scale of checks, so it
+// is read with the health poll at a slower pace.
+const AUTOTUNE_REFRESH_INTERVAL_MS = 30000;
+let autotuneLoadedAt = 0;
+
+async function refreshAutotune(mountId: number) {
+  autotuneLoadedAt = Date.now();
+  let next: Prokop.AutotuneStatus | null = null;
+  try {
+    const response = await ProkopShellMethods.autotuneStatus();
+    const data = response.success ? response.data : null;
+    next = data && data.status === 'ok' && data.policy ? data : null;
+  } catch (error) {
+    logger.error('[DASHBOARD]', 'autotune status failed', error);
+  }
+  if (!dashboardMounted || mountId !== dashboardMountId) return;
+  // A failed poll keeps the last known state, like the health card.
+  if (next) overviewAutotuneStatus = next;
+  overviewAutotuneFailed = !next && !overviewAutotuneStatus;
   renderOverviewCards();
 }
 
@@ -165,6 +191,8 @@ function overviewInput(): OverviewInput {
     snapshotCount: overviewSnapshotCount,
     lastDiagnosticRun: readLastRun(localStorage),
     nowMs: Date.now(),
+    autotune: overviewAutotuneStatus,
+    autotuneFailed: overviewAutotuneFailed,
   };
 }
 
@@ -216,6 +244,7 @@ function renderOverviewCards() {
       warning: overviewWarning(input.health),
       state: overviewState(input),
       routing: overviewRouting(input),
+      autotune: overviewAutotune(input),
       recovery: overviewRecovery(input),
       event: overviewLastEvent(input),
     },
@@ -2000,7 +2029,12 @@ async function onPageMount() {
   overviewHost = Boolean(document.getElementById('dashboard-overview'));
   if (overviewHost) {
     void refreshHealth(mountId);
-    healthRefreshTimer = setInterval(() => void refreshHealth(mountId), 10000);
+    void refreshAutotune(mountId);
+    healthRefreshTimer = setInterval(() => {
+      void refreshHealth(mountId);
+      if (Date.now() - autotuneLoadedAt >= AUTOTUNE_REFRESH_INTERVAL_MS)
+        void refreshAutotune(mountId);
+    }, 10000);
   }
   const hasRuntimeSnapshot = Boolean(getCachedRuntimeUiState());
 
