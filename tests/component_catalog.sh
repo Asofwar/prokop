@@ -11,7 +11,7 @@ set -euo pipefail
 #     and refuses a pair outside it as invalid input, without a job.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 ACTION_UC="$LIB/components/action.uc"
 WORK="$(mktemp -d)"
 LIVE=""
@@ -68,12 +68,12 @@ NODE
 pairs="$(node -e 'const c = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")); for (const [k, v] of Object.entries(c)) for (const a of v) console.log(k + " " + a);' "${WORK:?}/catalog.json")"
 
 # --- The UI start accepts every catalog pair and nothing else -------------------
-export FORKOP_LIB="$LIB"
+export PROKOP_LIB="$LIB"
 export UPDATES_JOB_DIR="${WORK:?}/jobs"
-export FORKOP_UI_COMPONENT_ACTION_DIR="${WORK:?}/jobs"
+export PROKOP_UI_COMPONENT_ACTION_DIR="${WORK:?}/jobs"
 export UPDATES_LOCK_DIR="${WORK:?}/component-action.lock"
-export FORKOP_RUNTIME_STATE_DIR="${WORK:?}/run"
-mkdir -p "$UPDATES_JOB_DIR" "$FORKOP_RUNTIME_STATE_DIR"
+export PROKOP_RUNTIME_STATE_DIR="${WORK:?}/run"
+mkdir -p "$UPDATES_JOB_DIR" "$PROKOP_RUNTIME_STATE_DIR"
 sleep 600 &
 LIVE=$!
 ucode -L "$LIB" "$LIB/service/state.uc" acquire-runtime-dir-lock "$UPDATES_LOCK_DIR" "$LIVE" ||
@@ -93,7 +93,7 @@ while read -r component action; do
     fail "the UI start refused the catalog action $component $action: $(cat "${WORK:?}/out")"
 done <<<"$pairs"
 [ "$(start sing-box check_update)" = busy ] || fail "the UI start must accept the sing-box spelling: $(cat "${WORK:?}/out")"
-for pair in "forkop remove" "zapret_manager check_update" "bogus install"; do
+for pair in "prokop remove" "zapret_manager check_update" "bogus install"; do
   # shellcheck disable=SC2086
   [ "$(start $pair)" = invalid_input ] || fail "the UI start must refuse $pair as invalid input: $(cat "${WORK:?}/out")"
 done

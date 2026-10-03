@@ -6,19 +6,19 @@ set -euo pipefail
 # every target, and each question is one sing-box process that parses the
 # whole list. So:
 # - each question is bounded: sing-box is killed after
-#   FORKOP_RULESET_MATCH_TIMEOUT seconds, and the list is undecidable;
+#   PROKOP_RULESET_MATCH_TIMEOUT seconds, and the list is undecidable;
 # - one process asks each (list file, value) once, however many rules name
 #   the list and however many times the target is resolved; a changed file
 #   is asked again;
 # - one pass over the rules (each target resolved) spends at most
-#   FORKOP_RULESET_MATCH_BUDGET seconds in sing-box, and a run never outlasts
+#   PROKOP_RULESET_MATCH_BUDGET seconds in sing-box, and a run never outlasts
 #   what is left of it; after that, lists are undecidable instead of asked;
 # - a caller that resolves many targets for a waiting page (autotune_groups)
 #   limits the whole process (limit_ruleset_time) the same way;
 # - the watchdog that kills a run leaves no process behind.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK="$(mktemp -d)"
 cleanup() {
     pkill -KILL -f -- "$WORK/" 2>/dev/null || true
@@ -33,7 +33,7 @@ cat >"$WORK/sing-box" <<EOF
 exec ucode -- "$ROOT_DIR/tests/helpers/sing_box_rule_set_stub.uc" "\$@"
 EOF
 chmod +x "$WORK/sing-box"
-export FORKOP_RULESET_MATCH_BIN="$WORK/sing-box"
+export PROKOP_RULESET_MATCH_BIN="$WORK/sing-box"
 export RULESET_STUB_CALLS="$WORK/calls"
 : >"$WORK/calls"
 
@@ -48,7 +48,7 @@ binary_list youtube.srs '{ "version": 3, "rules": [ { "domain_suffix": [ "youtub
 for n in 1 2 3; do binary_list "other$n.srs" "{ \"version\": 3, \"rules\": [ { \"domain\": [ \"example$n.org\" ] } ] }"; done
 binary_list hang.srs '{ "version": 3, "rules": [ { "domain_suffix": [ "youtube.com" ] } ] }'
 
-cat >"$WORK/forkop" <<'EOF'
+cat >"$WORK/prokop" <<'EOF'
 config settings 'settings'
 config section 'youtube'
 	option action 'zapret'
@@ -73,7 +73,7 @@ let out = [];
 for (let step in c.steps) {
     if (step.rewrite != null) {
         fs.writefile(step.rewrite.path, step.rewrite.text);
-        system([ "ucode", "-L", getenv("FORKOP_LIB"), getenv("RECORD"), step.rewrite.path ]);
+        system([ "ucode", "-L", getenv("PROKOP_LIB"), getenv("RECORD"), step.rewrite.path ]);
     }
     let before = asked();
     let got = r.resolve(config, sections, r.target(step.host, "198.18.0.9", { fakeip: true }));
@@ -84,7 +84,7 @@ EOF
 
 run_steps() { # json -> one line per step: status rule section questions
     printf '%s' "$1" >"$WORK/case.json"
-    timeout 30 env FORKOP_LIB="$LIB" ucode -L "$LIB" "$WORK/steps.uc" "$WORK/forkop" "$WORK/case.json" ||
+    timeout 30 env PROKOP_LIB="$LIB" ucode -L "$LIB" "$WORK/steps.uc" "$WORK/prokop" "$WORK/case.json" ||
         fail "the resolver did not finish"
 }
 
@@ -114,7 +114,7 @@ $want"
 # ---- one question is bounded -----------------------------------------------
 binary_list youtube.srs '{ "version": 3, "rules": [ { "domain_suffix": [ "youtube.com" ] } ] }'
 start=$SECONDS
-got="$(RULESET_STUB_HANG=youtube.com FORKOP_RULESET_MATCH_TIMEOUT=1 run_steps "{ \"rule_set\": $sets,
+got="$(RULESET_STUB_HANG=youtube.com PROKOP_RULESET_MATCH_TIMEOUT=1 run_steps "{ \"rule_set\": $sets,
   \"rules\": [ $(route hang youtube-out), $(route yt youtube-out) ], \"steps\": [ { \"host\": \"youtube.com\" } ] }")"
 [ "$got" = "undecidable 0 null 1" ] || fail "timeout: got $got"
 [ $((SECONDS - start)) -le 8 ] || fail "timeout: the resolver waited $((SECONDS - start))s for a hung sing-box"
@@ -124,7 +124,7 @@ if pgrep -f -- "$WORK/hang.srs" >/dev/null; then fail "timeout: the hung sing-bo
 # The timeout of one run is 20s, but only 2s of the budget are left: the hung
 # sing-box is killed after 2s.
 start=$SECONDS
-got="$(RULESET_STUB_HANG=youtube.com FORKOP_RULESET_MATCH_TIMEOUT=20 FORKOP_RULESET_MATCH_BUDGET=2 run_steps "{ \"rule_set\": $sets,
+got="$(RULESET_STUB_HANG=youtube.com PROKOP_RULESET_MATCH_TIMEOUT=20 PROKOP_RULESET_MATCH_BUDGET=2 run_steps "{ \"rule_set\": $sets,
   \"rules\": [ $(route hang youtube-out), $(route yt youtube-out) ], \"steps\": [ { \"host\": \"youtube.com\" } ] }")"
 [ "$got" = "undecidable 0 null 1" ] || fail "clamped run: got $got"
 [ $((SECONDS - start)) -le 6 ] || fail "clamped run: the resolver waited $((SECONDS - start))s with a 2s budget"
@@ -136,7 +136,7 @@ got="$(RULESET_STUB_HANG=youtube.com FORKOP_RULESET_MATCH_TIMEOUT=20 FORKOP_RULE
 # next target has a budget of its own and is asked again.
 four="[ $(route other1 main-out), $(route other2 main-out), $(route other3 main-out), $(route yt youtube-out) ]"
 start=$SECONDS
-got="$(RULESET_STUB_DELAY_MS=1500 FORKOP_RULESET_MATCH_BUDGET=3 run_steps "{ \"rule_set\": $sets, \"rules\": $four,
+got="$(RULESET_STUB_DELAY_MS=1500 PROKOP_RULESET_MATCH_BUDGET=3 run_steps "{ \"rule_set\": $sets, \"rules\": $four,
   \"steps\": [ { \"host\": \"youtube.com\" }, { \"host\": \"www.youtube.com\" } ] }")"
 elapsed=$((SECONDS - start))
 case "$got" in
@@ -150,7 +150,7 @@ esac
 # ---- a limit for the whole process -----------------------------------------
 # The caller limits the process to 2s: the first pass asks one list (1.5s),
 # then nothing is asked any more, whatever the budget of a pass.
-got="$(RULESET_STUB_DELAY_MS=1500 FORKOP_RULESET_MATCH_BUDGET=30 run_steps "{ \"rule_set\": $sets, \"rules\": $four,
+got="$(RULESET_STUB_DELAY_MS=1500 PROKOP_RULESET_MATCH_BUDGET=30 run_steps "{ \"rule_set\": $sets, \"rules\": $four,
   \"limit\": 2, \"steps\": [ { \"host\": \"youtube.com\" }, { \"host\": \"www.youtube.com\" } ] }")"
 want="undecidable 1 null 1
 undecidable 0 null 0"
@@ -167,7 +167,7 @@ $want"
 # killed watchdog may leave its current one-second sleep: give it 3s.
 targets=""
 for n in $(seq 1 200); do targets="$targets${targets:+, }{ \"host\": \"host$n.test\" }"; done
-FORKOP_RULESET_MATCH_BIN=true FORKOP_RULESET_MATCH_TIMEOUT=29 FORKOP_RULESET_MATCH_BUDGET=59 RESOLVER_RUN_MARK="$WORK" \
+PROKOP_RULESET_MATCH_BIN=true PROKOP_RULESET_MATCH_TIMEOUT=29 PROKOP_RULESET_MATCH_BUDGET=59 RESOLVER_RUN_MARK="$WORK" \
     run_steps "{ \"rule_set\": $sets, \"rules\": [ $(route yt youtube-out) ], \"steps\": [ $targets ] }" >/dev/null
 marked() {
     local count=0 environ

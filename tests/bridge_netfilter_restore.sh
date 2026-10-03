@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# br_netfilter's iptables hooks around Forkop's start and stop (D-19 (a),
+# br_netfilter's iptables hooks around Prokop's start and stop (D-19 (a),
 # UC-109).
 #
 # Before: start wrote net.bridge.bridge-nf-call-iptables=0 and -ip6tables=0
@@ -9,15 +9,15 @@ set -euo pipefail
 # bridged traffic stayed off after a stop or a removal until a reboot.
 #
 # Now start records the value of each hook it turns off, once per boot, and
-# stop puts it back where the hook still holds Forkop's 0. A hook that
+# stop puts it back where the hook still holds Prokop's 0. A hook that
 # another program set since is left as it is, and so is everything when the
 # record cannot be read. Health reports a loaded br_netfilter.
 #
 # The real nft/apply.uc and diagnostics/health.uc run against a fake
-# /proc/sys (FORKOP_PROC_SYS_DIR); the host's is never read or written.
+# /proc/sys (PROKOP_PROC_SYS_DIR); the host's is never read or written.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK="$(mktemp -d)"
 trap 'rm -rf "${WORK:?}"' EXIT
 trap 'exit 1' HUP INT TERM
@@ -35,8 +35,8 @@ RUN="$WORK/run"
 RECORD="$RUN/bridge-netfilter.saved"
 mkdir -p "$WORK/bin" "$RUN"
 export PATH="$WORK/bin:$PATH" TMPDIR="$WORK" SYSLOG="$WORK/syslog"
-export FORKOP_PROC_SYS_DIR="$SYS" FORKOP_RUNTIME_STATE_DIR="$RUN"
-export FORKOP_NFT_SUBNET_CACHE_DIR="$WORK/subnet-cache"
+export PROKOP_PROC_SYS_DIR="$SYS" PROKOP_RUNTIME_STATE_DIR="$RUN"
+export PROKOP_NFT_SUBNET_CACHE_DIR="$WORK/subnet-cache"
 printf '#!/bin/sh\nprintf "%%s\\n" "$*" >>"$SYSLOG"\n' >"$WORK/bin/logger"
 # Nothing may reach the host's sysctl or nftables.
 printf '#!/bin/sh\necho "unexpected sysctl $*" >>"$SYSLOG"\nexit 1\n' >"$WORK/bin/sysctl"
@@ -72,16 +72,16 @@ expect 1 1 "after stop"
 ok "start turns the hooks off and stop puts them back"
 
 # 2. A second start (reload, restart, crash) keeps the values from before
-#    Forkop; only a hook that was on is recorded and put back.
+#    Prokop; only a hook that was on is recorded and put back.
 hooks 1 0
 start
 start
 expect 0 0 "after two starts"
 stop
 expect 1 0 "after two starts and a stop"
-ok "the values from before Forkop survive a second start; a hook that was off stays off"
+ok "the values from before Prokop survive a second start; a hook that was off stays off"
 
-# 3. Another program has set a hook since Forkop's start: stop leaves it.
+# 3. Another program has set a hook since Prokop's start: stop leaves it.
 hooks 1 1
 start
 printf '1\n' >"$BRIDGE/bridge-nf-call-ip6tables"
@@ -118,33 +118,33 @@ expect 0 0 "hooks that were off"
 ! grep -q 'unexpected sysctl' "$SYSLOG" || fail "the hooks were changed through the sysctl command"
 ok "nothing is recorded without br_netfilter or with its hooks off"
 
-# 6. Health reports a loaded br_netfilter as a warning, and whether Forkop
+# 6. Health reports a loaded br_netfilter as a warning, and whether Prokop
 #    holds its hooks off.
 # The UI state that health reads comes from a stand-in.
 mkdir -p "$WORK/fake-lib/service"
 printf 'print("{}\\n");\n' >"$WORK/fake-lib/service/ui.uc"
 health_bridge() {
-  FORKOP_LIB="$WORK/fake-lib" FORKOP_HISTORY_FILE="$WORK/history.jsonl" FORKOP_OPKG_RECOVERY_DIR="$WORK/recovery" \
-    FORKOP_SNAPSHOT_LOCK_DIR="$WORK/snapshot.lock" FORKOP_RELOAD_LOCK_DIR="$WORK/reload.lock" \
+  PROKOP_LIB="$WORK/fake-lib" PROKOP_HISTORY_FILE="$WORK/history.jsonl" PROKOP_OPKG_RECOVERY_DIR="$WORK/recovery" \
+    PROKOP_SNAPSHOT_LOCK_DIR="$WORK/snapshot.lock" PROKOP_RELOAD_LOCK_DIR="$WORK/reload.lock" \
     ucode -L "$LIB" "$LIB/diagnostics/health.uc" get 2>/dev/null |
     node -e 'const h = JSON.parse(require("fs").readFileSync(0, "utf8")); process.stdout.write(JSON.stringify(h.bridge_netfilter))'
 }
 hooks 1 1
 start
-[ "$(health_bridge)" = '{"status":"warning","loaded":true,"disabled_by_forkop":true}' ] ||
-  fail "health with br_netfilter whose hooks Forkop holds off: $(health_bridge)"
-# Another program has turned them on again: Forkop holds nothing off.
+[ "$(health_bridge)" = '{"status":"warning","loaded":true,"disabled_by_prokop":true}' ] ||
+  fail "health with br_netfilter whose hooks Prokop holds off: $(health_bridge)"
+# Another program has turned them on again: Prokop holds nothing off.
 printf '1\n' >"$BRIDGE/bridge-nf-call-iptables"
 printf '1\n' >"$BRIDGE/bridge-nf-call-ip6tables"
-[ "$(health_bridge)" = '{"status":"warning","loaded":true,"disabled_by_forkop":false}' ] ||
+[ "$(health_bridge)" = '{"status":"warning","loaded":true,"disabled_by_prokop":false}' ] ||
   fail "health with hooks another program turned on again: $(health_bridge)"
 hooks 1 1
 start
 stop
-[ "$(health_bridge)" = '{"status":"warning","loaded":true,"disabled_by_forkop":false}' ] ||
+[ "$(health_bridge)" = '{"status":"warning","loaded":true,"disabled_by_prokop":false}' ] ||
   fail "health with br_netfilter after the stop: $(health_bridge)"
 rm -rf "$SYS"
-[ "$(health_bridge)" = '{"status":"ok","loaded":false,"disabled_by_forkop":false}' ] ||
+[ "$(health_bridge)" = '{"status":"ok","loaded":false,"disabled_by_prokop":false}' ] ||
   fail "health without br_netfilter: $(health_bridge)"
 ok "health warns about a loaded br_netfilter"
 

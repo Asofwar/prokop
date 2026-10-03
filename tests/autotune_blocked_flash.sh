@@ -14,8 +14,8 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=tests/helpers/autotune_scheduler/setup.sh
 source "$ROOT_DIR/tests/helpers/autotune_scheduler/setup.sh"
 
-STATE="$FORKOP_AUTOTUNE_STATE_FILE"
-POSTPONED="$FORKOP_AUTOTUNE_STATE_DIR/postponed.json"
+STATE="$PROKOP_AUTOTUNE_STATE_FILE"
+POSTPONED="$PROKOP_AUTOTUNE_STATE_DIR/postponed.json"
 state_edit() { node -e 'const f=process.argv[1],s=require(f);(new Function("s",process.argv[2]))(s);require("fs").writeFileSync(f,JSON.stringify(s)+"\n")' "$STATE" "$1"; }
 # Identity and modification time (ns) of the state file: any write changes it.
 written() { stat -c '%i %y' "$STATE"; }

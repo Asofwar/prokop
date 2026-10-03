@@ -3,7 +3,7 @@ set -eu
 
 ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 INSTALLER="$ROOT_DIR/install.sh"
-CONFIG="$ROOT_DIR/forkop/files/etc/config/forkop"
+CONFIG="$ROOT_DIR/prokop/files/etc/config/prokop"
 
 # shellcheck source=tests/helpers/source_checks.sh
 . "$ROOT_DIR/tests/helpers/source_checks.sh"
@@ -11,7 +11,7 @@ CONFIG="$ROOT_DIR/forkop/files/etc/config/forkop"
 sh -n "$INSTALLER"
 
 # The dependency mirror is opt-in: no default host, empty means disabled.
-grep -Fq 'MIRROR_BASE_URL="${FORKOP_MIRROR_BASE_URL:-}"' "$INSTALLER" || {
+grep -Fq 'MIRROR_BASE_URL="${PROKOP_MIRROR_BASE_URL:-}"' "$INSTALLER" || {
     echo "installer must leave the dependency mirror disabled unless it is requested" >&2
     exit 1
 }
@@ -25,8 +25,8 @@ grep -Fq -- '  --mirror URL ' "$INSTALLER" || {
     echo "installer usage does not document --mirror URL" >&2
     exit 1
 }
-grep -Fq '  FORKOP_MIRROR_BASE_URL ' "$INSTALLER" || {
-    echo "installer usage does not document FORKOP_MIRROR_BASE_URL" >&2
+grep -Fq '  PROKOP_MIRROR_BASE_URL ' "$INSTALLER" || {
+    echo "installer usage does not document PROKOP_MIRROR_BASE_URL" >&2
     exit 1
 }
 
@@ -47,7 +47,7 @@ source_refute "installer must not configure the upstream Forkop APK feed" -F \
 }
 source_refute "installer must not write the upstream feed or key" -E \
     '>>? *"?\$(UPSTREAM_APK_REPOSITORY_FILE|UPSTREAM_APK_KEY_FILE)' "$INSTALLER"
-grep -Fq 'remove_upstream_forkop_repository' "$INSTALLER" || {
+grep -Fq 'remove_upstream_prokop_repository' "$INSTALLER" || {
     echo "installer does not remove the upstream Forkop feed and key" >&2
     exit 1
 }
@@ -97,7 +97,7 @@ grep -Fq 'SING_BOX_INSTALL_VARIANT="tiny"' "$INSTALLER" || {
     exit 1
 }
 grep -Eq "^[[:space:]]*option mirror_base_url ''[[:space:]]*$" "$CONFIG" || {
-    echo "packaged Forkop config must ship the dependency mirror disabled: option mirror_base_url ''" >&2
+    echo "packaged Prokop config must ship the dependency mirror disabled: option mirror_base_url ''" >&2
     exit 1
 }
 grep -Fq 'platform_index_reason' "$INSTALLER" || {
@@ -123,7 +123,7 @@ grep -Fq 'install_json_ucode installer-persist-mirror "$MIRROR_BASE_URL"' "$INST
     echo "installer does not save an opted-in mirror through the embedded ucode helper" >&2
     exit 1
 }
-grep -Fq 'MIRROR_MIGRATION_SCRIPT="/usr/share/forkop/mirror-migration.sh"' "$INSTALLER" || {
+grep -Fq 'MIRROR_MIGRATION_SCRIPT="/usr/share/prokop/mirror-migration.sh"' "$INSTALLER" || {
     echo "installer does not reconcile feeds through the packaged mirror migration" >&2
     exit 1
 }

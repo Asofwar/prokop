@@ -23,7 +23,7 @@ if ucode "$WORK_DIR/forward.uc" >/dev/null 2>&1; then
   printf 'NOTE: the ordering guard below may be relaxed to a style rule.\n'
 fi
 
-python3 - "$ROOT_DIR/forkop/files/usr/lib" <<'PY'
+python3 - "$ROOT_DIR/prokop/files/usr/lib" <<'PY'
 import pathlib
 import re
 import sys

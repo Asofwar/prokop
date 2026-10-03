@@ -12,12 +12,12 @@ set -euo pipefail
 #     refuses ("bad port range"), aborting the reload (UC-098);
 #   - a keyword is generated in lower case: sing-box compares a keyword with
 #     the lower-cased domain as written, so 'YouTube' never matched (UC-099).
-# With a sing-box binary ($FORKOP_TEST_SING_BOX, else sing-box on PATH, else
-# the versions in $FORKOP_TEST_SING_BOX_DIRS) the generated config must also
+# With a sing-box binary ($PROKOP_TEST_SING_BOX, else sing-box on PATH, else
+# the versions in $PROKOP_TEST_SING_BOX_DIRS) the generated config must also
 # pass "sing-box check".
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK="$(mktemp -d)"
 trap 'rm -rf "${WORK:?}"' EXIT HUP INT TERM
 
@@ -99,16 +99,16 @@ NODE
 # ---- sing-box itself accepts the generated config -------------------------
 
 binaries=()
-if [ -n "${FORKOP_TEST_SING_BOX:-}" ]; then
-  binaries+=("$FORKOP_TEST_SING_BOX")
+if [ -n "${PROKOP_TEST_SING_BOX:-}" ]; then
+  binaries+=("$PROKOP_TEST_SING_BOX")
 elif command -v sing-box >/dev/null 2>&1; then
   binaries+=("$(command -v sing-box)")
 fi
-for dir in ${FORKOP_TEST_SING_BOX_DIRS:-}; do
+for dir in ${PROKOP_TEST_SING_BOX_DIRS:-}; do
   [ -x "$dir/sing-box" ] && binaries+=("$dir/sing-box")
 done
 if [ "${#binaries[@]}" -eq 0 ]; then
-  printf 'SKIP: singbox_route_base_rules: no sing-box binary for "sing-box check" (set FORKOP_TEST_SING_BOX or FORKOP_TEST_SING_BOX_DIRS)\n'
+  printf 'SKIP: singbox_route_base_rules: no sing-box binary for "sing-box check" (set PROKOP_TEST_SING_BOX or PROKOP_TEST_SING_BOX_DIRS)\n'
 fi
 for bin in "${binaries[@]}"; do
   version="$("$bin" version 2>/dev/null | sed -n '1s/.* version //p')"

@@ -15,8 +15,8 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-export FORKOP_LIB
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+export PROKOP_LIB
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "${WORK_DIR:?}"' EXIT
 
@@ -39,10 +39,10 @@ for (let section in data.section || [])
 print(sprintf("%J\n", result));
 UC
 agents() {
-  ucode -L "$FORKOP_LIB" "$WORK_DIR/agents.uc" "$1"
+  ucode -L "$PROKOP_LIB" "$WORK_DIR/agents.uc" "$1"
 }
 
-cat >"$WORK_DIR/forkop.json" <<'JSON'
+cat >"$WORK_DIR/prokop.json" <<'JSON'
 {
   "settings": { ".name": "settings", ".type": "settings", "config_version": "1.0.5", "yacd_secret_key": "s" },
   "section": [
@@ -68,7 +68,7 @@ cat >"$WORK_DIR/forkop.json" <<'JSON'
 }
 JSON
 
-node - "$(agents "$WORK_DIR/forkop.json")" <<'NODE'
+node - "$(agents "$WORK_DIR/prokop.json")" <<'NODE'
 const assert = require('node:assert/strict');
 assert.deepEqual(JSON.parse(process.argv[2]), {
   'vpn https://one.example/sub': 'Clash/1.0',
@@ -81,8 +81,8 @@ assert.deepEqual(JSON.parse(process.argv[2]), {
 NODE
 
 # The migration removes what the runtime ignores and keeps what it does.
-ucode -L "$FORKOP_LIB" "$FORKOP_LIB/config/migration.uc" migrate-fixture "$WORK_DIR/forkop.json" >"$WORK_DIR/forkop.out.json"
-node - "$WORK_DIR/forkop.out.json" <<'NODE'
+ucode -L "$PROKOP_LIB" "$PROKOP_LIB/config/migration.uc" migrate-fixture "$WORK_DIR/prokop.json" >"$WORK_DIR/prokop.out.json"
+node - "$WORK_DIR/prokop.out.json" <<'NODE'
 const assert = require('node:assert/strict');
 const out = JSON.parse(require('fs').readFileSync(process.argv[2], 'utf8'));
 const items = Object.fromEntries(out.config.subscription_url.map((item) => [item['.name'], item]));
@@ -124,7 +124,7 @@ cat >"$WORK_DIR/automatic.json" <<'JSON'
   ]
 }
 JSON
-ucode -L "$FORKOP_LIB" "$FORKOP_LIB/config/migration.uc" migrate-fixture "$WORK_DIR/automatic.json" >"$WORK_DIR/automatic.out.json"
+ucode -L "$PROKOP_LIB" "$PROKOP_LIB/config/migration.uc" migrate-fixture "$WORK_DIR/automatic.json" >"$WORK_DIR/automatic.out.json"
 node -e '
   const out = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
   if (out.notices.some((notice) => notice.code === "subscription_user_agent_in_effect")) process.exit(1);
@@ -134,9 +134,9 @@ node -e '
   const fs = require("fs");
   const out = JSON.parse(fs.readFileSync(process.argv[1], "utf8")).config;
   fs.writeFileSync(process.argv[2], JSON.stringify(out));
-' "$WORK_DIR/forkop.out.json" "$WORK_DIR/forkop.migrated.json"
-[ "$(agents "$WORK_DIR/forkop.json")" = "$(agents "$WORK_DIR/forkop.migrated.json")" ] ||
-  fail "the migration changed a User-Agent: $(agents "$WORK_DIR/forkop.migrated.json")"
+' "$WORK_DIR/prokop.out.json" "$WORK_DIR/prokop.migrated.json"
+[ "$(agents "$WORK_DIR/prokop.json")" = "$(agents "$WORK_DIR/prokop.migrated.json")" ] ||
+  fail "the migration changed a User-Agent: $(agents "$WORK_DIR/prokop.migrated.json")"
 
 # podkop: 'url | UA' keeps its User-Agent, which the request now sends.
 cat >"$WORK_DIR/podkop.json" <<'JSON'
@@ -148,7 +148,7 @@ cat >"$WORK_DIR/podkop.json" <<'JSON'
   ]
 }
 JSON
-ucode -L "$FORKOP_LIB" "$FORKOP_LIB/config/migration.uc" migrate-fixture "$WORK_DIR/podkop.json" podkop >"$WORK_DIR/podkop.out.json"
+ucode -L "$PROKOP_LIB" "$PROKOP_LIB/config/migration.uc" migrate-fixture "$WORK_DIR/podkop.json" podkop >"$WORK_DIR/podkop.out.json"
 node - "$WORK_DIR/podkop.out.json" "$WORK_DIR/podkop.migrated.json" <<'NODE'
 const assert = require('node:assert/strict');
 const fs = require('fs');
@@ -199,20 +199,20 @@ SH
 chmod +x "$WORK_DIR/bin/logger"
 : >"$WORK_DIR/logger.log"
 PATH="$WORK_DIR/bin:$PATH" LOGGER_LOG="$WORK_DIR/logger.log" \
-  ucode -L "$FORKOP_LIB" "$FORKOP_LIB/config/validator.uc" validate-runtime-fixture "$WORK_DIR/control.json" '{}' \
+  ucode -L "$PROKOP_LIB" "$PROKOP_LIB/config/validator.uc" validate-runtime-fixture "$WORK_DIR/control.json" '{}' \
   >"$WORK_DIR/control.out" 2>&1 || fail "a stored User-Agent with control characters must stay valid: $(cat "$WORK_DIR/control.out")"
 grep -q "User-Agent of a subscription source in rule 'vpn' contains control characters" "$WORK_DIR/logger.log" ||
   fail "the validator must say why the User-Agent is not sent: $(cat "$WORK_DIR/logger.log")"
 
 # The history keeps the notice.
-FORKOP_HISTORY_FILE="$WORK_DIR/history.jsonl" FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/runtime" \
-  ucode -L "$FORKOP_LIB" "$FORKOP_LIB/diagnostics/health.uc" record config_migration success "" "" \
+PROKOP_HISTORY_FILE="$WORK_DIR/history.jsonl" PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/runtime" \
+  ucode -L "$PROKOP_LIB" "$PROKOP_LIB/diagnostics/health.uc" record config_migration success "" "" \
   '{"notices":[{"code":"subscription_options_removed","section":"vpn","values":["hwid","hide_detour_outbounds"]},{"code":"subscription_user_agent_in_effect","section":"vpn","values":["user_agent"]}]}'
-FORKOP_HISTORY_FILE="$WORK_DIR/history.jsonl" FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/runtime" \
-  ucode -L "$FORKOP_LIB" "$FORKOP_LIB/diagnostics/health.uc" history | grep -q '"subscription_options_removed"' ||
+PROKOP_HISTORY_FILE="$WORK_DIR/history.jsonl" PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/runtime" \
+  ucode -L "$PROKOP_LIB" "$PROKOP_LIB/diagnostics/health.uc" history | grep -q '"subscription_options_removed"' ||
   fail "the history must keep the subscription notice"
-FORKOP_HISTORY_FILE="$WORK_DIR/history.jsonl" FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/runtime" \
-  ucode -L "$FORKOP_LIB" "$FORKOP_LIB/diagnostics/health.uc" history | grep -q '"subscription_user_agent_in_effect"' ||
+PROKOP_HISTORY_FILE="$WORK_DIR/history.jsonl" PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/runtime" \
+  ucode -L "$PROKOP_LIB" "$PROKOP_LIB/diagnostics/health.uc" history | grep -q '"subscription_user_agent_in_effect"' ||
   fail "the history must keep the User-Agent notice"
 
 printf 'subscription_user_agent_explicit: ok\n'

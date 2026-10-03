@@ -13,7 +13,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "${WORK_DIR:?}"' EXIT
 
@@ -27,7 +27,7 @@ fail() {
 MODE=bypass
 extract() {
   printf '%s\n' "$1" >"$WORK_DIR/rules.json"
-  ucode -L "$FORKOP_LIB" "$FORKOP_LIB/routing/rulesets.uc" extract-ip-cidr-nft "$WORK_DIR/rules.json" \
+  ucode -L "$PROKOP_LIB" "$PROKOP_LIB/routing/rulesets.uc" extract-ip-cidr-nft "$WORK_DIR/rules.json" \
     "$WORK_DIR/unscoped" "$WORK_DIR/scoped" "${2:-[]}" "${3:-[]}" "$MODE" || fail "extract-ip-cidr-nft failed for $1"
   cat "$WORK_DIR/unscoped"
   printf -- '--\n'
@@ -113,8 +113,8 @@ printf '%s\n' "$MIXED" >"$WORK_DIR/mixed.json"
 import_section() { # section
   NFT_LOG="$WORK_DIR/nft.log"
   : >"$NFT_LOG"
-  PATH="$WORK_DIR/bin:$PATH" NFT_LOG="$NFT_LOG" FORKOP_NFT_SUBNET_CACHE_DIR="$WORK_DIR/cache" \
-    ucode -L "$FORKOP_LIB" "$FORKOP_LIB/nft/apply.uc" nft-add-json-ruleset-subnets-for-section-fixture \
+  PATH="$WORK_DIR/bin:$PATH" NFT_LOG="$NFT_LOG" PROKOP_NFT_SUBNET_CACHE_DIR="$WORK_DIR/cache" \
+    ucode -L "$PROKOP_LIB" "$PROKOP_LIB/nft/apply.uc" nft-add-json-ruleset-subnets-for-section-fixture \
     "$WORK_DIR/fixture.json" "$1" "$WORK_DIR/mixed.json" "Rule set test" T s4 p4 "$WORK_DIR/u" "$WORK_DIR/s" 5000 s6 p6 ||
     fail "import for $1 failed"
   grep -o '{ .* }' "$NFT_LOG" | tr -d '{}' | tr ',' '\n' | sed 's/^ *//; s/ *$//' | grep . | sort | tr '\n' ' '

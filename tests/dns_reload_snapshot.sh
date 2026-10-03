@@ -18,7 +18,7 @@ import pathlib
 import re
 import sys
 
-source = (pathlib.Path(sys.argv[1]) / 'forkop/files/usr/lib/service/lifecycle.uc').read_text()
+source = (pathlib.Path(sys.argv[1]) / 'prokop/files/usr/lib/service/lifecycle.uc').read_text()
 names = ('snapshot_dnsmasq_reload_config', 'restore_dnsmasq_reload_config',
          'discard_dnsmasq_reload_config')
 functions = []
@@ -36,7 +36,7 @@ let calls = [];
 function check(ok, message) { if (!ok) { warn("FAIL: " + message + "\n"); exit(1); } }
 function dns_apply_success(args) {
     push(calls, join(" ", args));
-    return args[0] == "has-forkop-dns" ? forwarding : true;
+    return args[0] == "has-prokop-dns" ? forwarding : true;
 }
 function dns_apply_status(args) {
     push(calls, join(" ", args));
@@ -50,7 +50,7 @@ check(snapshot_dnsmasq_reload_config(), "snapshot failed");
 forwarding = true;
 check(snapshot_dnsmasq_reload_config(), "second snapshot failed");
 check(restore_dnsmasq_reload_config(), "rollback failed");
-check(join(",", calls) == "has-forkop-dns,restore force" && dns_reload_rollback == "",
+check(join(",", calls) == "has-prokop-dns,restore force" && dns_reload_rollback == "",
     "the rollback did not restore dnsmasq: " + join(",", calls));
 
 // dnsmasq forwarded to sing-box: the rollback sets the forwarding again. A
@@ -62,7 +62,7 @@ check(!restore_dnsmasq_reload_config() && dns_reload_rollback == "configure",
     "a failed rollback was discarded");
 apply_ok = true;
 check(restore_dnsmasq_reload_config() && dns_reload_rollback == "", "the retry failed");
-check(join(",", calls) == "has-forkop-dns,configure force,configure force",
+check(join(",", calls) == "has-prokop-dns,configure force,configure force",
     "the rollback did not configure dnsmasq again: " + join(",", calls));
 
 // A completed reload discards it: no rollback.

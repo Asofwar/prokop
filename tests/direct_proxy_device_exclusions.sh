@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT
 
@@ -40,7 +40,7 @@ cat >"$WORK_DIR/fixture.json" <<'JSON'
 JSON
 
 for version in 1.13.0 1.14.0; do
-  ucode -L "$FORKOP_LIB" "$FORKOP_LIB/singbox/generator.uc" generate-config-fixture \
+  ucode -L "$PROKOP_LIB" "$PROKOP_LIB/singbox/generator.uc" generate-config-fixture \
     "$WORK_DIR/fixture.json" "$WORK_DIR/config.json" 192.0.2.1 0 1 '' "$version"
   ucode -e '
     let c = json(require("fs").readfile(ARGV[0]));
@@ -111,7 +111,7 @@ ucode -e '
   f.settings.direct_proxy_enabled = "0";
   fs.writefile(ARGV[1], sprintf("%J", f));
 ' "$WORK_DIR/fixture.json" "$WORK_DIR/disabled.json"
-ucode -L "$FORKOP_LIB" "$FORKOP_LIB/singbox/generator.uc" generate-config-fixture \
+ucode -L "$PROKOP_LIB" "$PROKOP_LIB/singbox/generator.uc" generate-config-fixture \
   "$WORK_DIR/disabled.json" "$WORK_DIR/disabled-config.json" 192.0.2.1
 if grep -q 'direct-proxy-in' "$WORK_DIR/disabled-config.json"; then
   echo 'FAIL: disabled Direct Proxy still creates a listener' >&2
@@ -120,11 +120,11 @@ fi
 
 for group in 'services/torrserver' 'services/media/torrserver'; do
   level="$(awk -F/ '{print NF}' <<<"$group")"
-  printf 'type route hook output priority -151; socket cgroupv2 level %s "%s" meta mark set 0x08000000 comment "Forkop TorrServer Direct"\n' "$level" "$group" |
-    ucode -L "$FORKOP_LIB" "$FORKOP_LIB/torrserver/direct.uc" rule-output-active "/$group"
+  printf 'type route hook output priority -151; socket cgroupv2 level %s "%s" meta mark set 0x08000000 comment "Prokop TorrServer Direct"\n' "$level" "$group" |
+    ucode -L "$PROKOP_LIB" "$PROKOP_LIB/torrserver/direct.uc" rule-output-active "/$group"
 done
-if printf '%s\n' 'type route hook output priority -151; socket cgroupv2 level 2 "services/media" meta mark set 0x08000000 comment "Forkop TorrServer Direct"' |
-  ucode -L "$FORKOP_LIB" "$FORKOP_LIB/torrserver/direct.uc" rule-output-active '/services/media/torrserver'; then
+if printf '%s\n' 'type route hook output priority -151; socket cgroupv2 level 2 "services/media" meta mark set 0x08000000 comment "Prokop TorrServer Direct"' |
+  ucode -L "$PROKOP_LIB" "$PROKOP_LIB/torrserver/direct.uc" rule-output-active '/services/media/torrserver'; then
   echo 'FAIL: TorrServer Direct must not accept a shared parent cgroup' >&2
   exit 1
 fi

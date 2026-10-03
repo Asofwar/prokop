@@ -2,11 +2,11 @@
 set -eo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_MAKEFILE="$ROOT_DIR/forkop/Makefile"
-FORKOP_CONFIG="$ROOT_DIR/forkop/files/etc/config/forkop"
+PROKOP_MAKEFILE="$ROOT_DIR/prokop/Makefile"
+PROKOP_CONFIG="$ROOT_DIR/prokop/files/etc/config/prokop"
 BUILD_SCRIPT="$ROOT_DIR/build.sh"
 BUILD_WORKFLOW="$ROOT_DIR/.github/workflows/build.yml"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
 
 fail() {
   printf 'FAIL: %s\n' "$1" >&2
@@ -22,8 +22,8 @@ require_file() {
 require_make_dep() {
   local package="$1"
 
-  grep -Eq "DEPENDS:=.*(^|[[:space:]])\\+$package([[:space:]]|$)" "$FORKOP_MAKEFILE" ||
-    fail "forkop/Makefile DEPENDS is missing +$package"
+  grep -Eq "DEPENDS:=.*(^|[[:space:]])\\+$package([[:space:]]|$)" "$PROKOP_MAKEFILE" ||
+    fail "prokop/Makefile DEPENDS is missing +$package"
 }
 
 require_build_dep() {
@@ -42,16 +42,16 @@ require_package_dependency() {
   require_build_dep "BACKEND_DEPENDS_APK" "$package"
 }
 
-require_file "$FORKOP_MAKEFILE"
-require_file "$FORKOP_CONFIG"
+require_file "$PROKOP_MAKEFILE"
+require_file "$PROKOP_CONFIG"
 require_file "$BUILD_SCRIPT"
 require_file "$BUILD_WORKFLOW"
-require_file "$FORKOP_LIB"
+require_file "$PROKOP_LIB"
 
-grep -Fq 'PKGARCH:=all' "$FORKOP_MAKEFILE" ||
-  fail "Forkop IPK package must remain architecture-independent"
-grep -Fq 'LUCI_PKGARCH:=all' "$ROOT_DIR/luci-app-forkop/Makefile" ||
-  fail "Forkop LuCI IPK package must remain architecture-independent"
+grep -Fq 'PKGARCH:=all' "$PROKOP_MAKEFILE" ||
+  fail "Prokop IPK package must remain architecture-independent"
+grep -Fq 'LUCI_PKGARCH:=all' "$ROOT_DIR/luci-app-prokop/Makefile" ||
+  fail "Prokop LuCI IPK package must remain architecture-independent"
 [ "$(grep -Fc 'Architecture: all' "$BUILD_SCRIPT")" -ge 3 ] ||
   fail "manually built IPK packages must remain Architecture: all"
 grep -Fq 'arch:noarch' "$BUILD_SCRIPT" ||
@@ -60,7 +60,7 @@ while IFS= read -r -d '' payload_file; do
   if file -b "$payload_file" | grep -Fq 'ELF'; then
     fail "architecture-specific ELF payload is not allowed: $payload_file"
   fi
-done < <(find "$ROOT_DIR/forkop/files" "$ROOT_DIR/luci-app-forkop/root" "$ROOT_DIR/luci-app-forkop/htdocs" -type f -print0)
+done < <(find "$ROOT_DIR/prokop/files" "$ROOT_DIR/luci-app-prokop/root" "$ROOT_DIR/luci-app-prokop/htdocs" -type f -print0)
 
 bash "$BUILD_SCRIPT" --help >/dev/null ||
   fail "build.sh must provide command-line usage"
@@ -92,27 +92,27 @@ grep -Fq 'body: ${{ needs.preparation.outputs.release_notes }}' "$BUILD_WORKFLOW
   fail "release action must receive normalized Markdown notes"
 
 for conflict in https-dns-proxy nextdns luci-app-passwall luci-app-passwall2; do
-  grep -E 'CONFLICTS:=' "$FORKOP_MAKEFILE" | grep -Fq "$conflict" ||
-    fail "forkop/Makefile conflicts are missing $conflict"
+  grep -E 'CONFLICTS:=' "$PROKOP_MAKEFILE" | grep -Fq "$conflict" ||
+    fail "prokop/Makefile conflicts are missing $conflict"
   grep -E '^BACKEND_CONFLICTS_IPK=' "$BUILD_SCRIPT" | grep -Fq "$conflict" ||
     fail "manual IPK conflicts are missing $conflict"
   grep -E '^BACKEND_DEPENDS_APK=' "$BUILD_SCRIPT" | grep -Fq "!$conflict" ||
     fail "manual APK conflicts are missing $conflict"
 done
 
-if grep -Fq 'coreutils-sort' "$FORKOP_MAKEFILE" "$BUILD_SCRIPT"; then
+if grep -Fq 'coreutils-sort' "$PROKOP_MAKEFILE" "$BUILD_SCRIPT"; then
   fail "unused coreutils-sort runtime dependency must not be packaged"
 fi
 
 require_package_dependency "nftables-json"
-if grep -Eq '(^|[[:space:],+])nftables([[:space:],]|$)' "$FORKOP_MAKEFILE" "$BUILD_SCRIPT"; then
-  fail "Forkop must depend on the concrete nftables-json provider, not the nftables virtual package"
+if grep -Eq '(^|[[:space:],+])nftables([[:space:],]|$)' "$PROKOP_MAKEFILE" "$BUILD_SCRIPT"; then
+  fail "Prokop must depend on the concrete nftables-json provider, not the nftables virtual package"
 fi
-grep -Fq "command_exists(\"nft\")" "$ROOT_DIR/forkop/files/usr/lib/config/validator.uc" ||
+grep -Fq "command_exists(\"nft\")" "$ROOT_DIR/prokop/files/usr/lib/config/validator.uc" ||
   fail "runtime validation must reject a missing nft executable before applying rules"
 
-grep -Fq "must use x.y.z format" "$FORKOP_MAKEFILE" ||
-  fail "forkop/Makefile must enforce the three-part release version contract"
+grep -Fq "must use x.y.z format" "$PROKOP_MAKEFILE" ||
+  fail "prokop/Makefile must enforce the three-part release version contract"
 apk_version_expression="$(sed -n '/^APK_INTERNAL_VERSION=/p' "$BUILD_SCRIPT")"
 for release_version in 1.0.6 1.0.6-2; do
   actual_version="$(RELEASE_VERSION="$release_version" bash -c "$apk_version_expression; printf '%s' \"\$APK_INTERNAL_VERSION\"")"
@@ -121,54 +121,54 @@ for release_version in 1.0.6 1.0.6-2; do
   [ "$actual_version" = "$expected_version" ] ||
     fail "APK version normalization: expected $expected_version, got $actual_version"
 done
-grep -Fq "option component_update_check_enabled '1'" "$FORKOP_CONFIG" ||
+grep -Fq "option component_update_check_enabled '1'" "$PROKOP_CONFIG" ||
   fail "new installations must enable component update checks by default"
-grep -Fq "option config_version '1.0.5'" "$FORKOP_CONFIG" ||
+grep -Fq "option config_version '1.0.5'" "$PROKOP_CONFIG" ||
   fail "new installations must start at the current configuration schema version"
-grep -Fq "list applied_migrations 'interface_sections'" "$FORKOP_CONFIG" ||
+grep -Fq "list applied_migrations 'interface_sections'" "$PROKOP_CONFIG" ||
   fail "new installations must mark the interface section migration as applied"
-grep -Fq "list applied_migrations 'enable_component_checks'" "$FORKOP_CONFIG" ||
+grep -Fq "list applied_migrations 'enable_component_checks'" "$PROKOP_CONFIG" ||
   fail "new installations must mark the component check migration as applied"
-grep -Fq "list applied_migrations 'http_connection_urls'" "$FORKOP_CONFIG" ||
+grep -Fq "list applied_migrations 'http_connection_urls'" "$PROKOP_CONFIG" ||
   fail "new installations must mark the HTTP connection URL migration as applied"
-grep -Fq "list applied_migrations 'flintnet_urltest_default'" "$FORKOP_CONFIG" ||
+grep -Fq "list applied_migrations 'flintnet_urltest_default'" "$PROKOP_CONFIG" ||
   fail "new installations must mark the Flintnet URLTest migration as applied"
-grep -Fq "list applied_migrations 'retired_secondary_rulesets'" "$FORKOP_CONFIG" ||
+grep -Fq "list applied_migrations 'retired_secondary_rulesets'" "$PROKOP_CONFIG" ||
   fail "new installations must mark the retired secondary rule set migration as applied"
-grep -Fq "list applied_migrations 'retired_secondary_rulesets_v2'" "$FORKOP_CONFIG" ||
+grep -Fq "list applied_migrations 'retired_secondary_rulesets_v2'" "$PROKOP_CONFIG" ||
   fail "new installations must mark the updated retired secondary rule set migration as applied"
-grep -Fq "list applied_migrations 'secondary_rulesets_mirror_v1'" "$FORKOP_CONFIG" ||
+grep -Fq "list applied_migrations 'secondary_rulesets_mirror_v1'" "$PROKOP_CONFIG" ||
   fail "new installations must mark the secondary rule set mirror migration as applied"
-grep -Fq "list applied_migrations 'own_dependency_mirror_v1'" "$FORKOP_CONFIG" ||
+grep -Fq "list applied_migrations 'own_dependency_mirror_v1'" "$PROKOP_CONFIG" ||
   fail "new installations must mark the own dependency mirror migration as applied"
-grep -Fq "list applied_migrations 'fork_mirror_opt_in_v1'" "$FORKOP_CONFIG" ||
+grep -Fq "list applied_migrations 'fork_mirror_opt_in_v1'" "$PROKOP_CONFIG" ||
   fail "new installations must mark the mirror opt-in migration as applied"
-grep -Eq "^[[:space:]]+option mirror_base_url ''$" "$FORKOP_CONFIG" ||
+grep -Eq "^[[:space:]]+option mirror_base_url ''$" "$PROKOP_CONFIG" ||
   fail "new installations must ship the dependency mirror disabled"
-if grep -Eq 'infotechtg|51343' "$FORKOP_CONFIG"; then
+if grep -Eq 'infotechtg|51343' "$PROKOP_CONFIG"; then
   fail "the shipped configuration must not name a former upstream mirror"
 fi
 fork_identity='Asofwar <7397608+Asofwar@users.noreply.github.com>'
 grep -Fxq "MAINTAINER=\"$fork_identity\"" "$BUILD_SCRIPT" ||
   fail "manually built packages must name the fork maintainer"
-grep -Fxq 'PROJECT_URL="https://github.com/Asofwar/forkop"' "$BUILD_SCRIPT" ||
+grep -Fxq 'PROJECT_URL="https://github.com/Asofwar/prokop"' "$BUILD_SCRIPT" ||
   fail "manually built packages must link the fork project"
-grep -Fxq "PKG_MAINTAINER:=$fork_identity" "$FORKOP_MAKEFILE" ||
-  fail "forkop/Makefile must name the fork maintainer"
-grep -Fq 'URL:=https://github.com/Asofwar/forkop' "$FORKOP_MAKEFILE" ||
-  fail "forkop/Makefile must link the fork project"
-grep -Fxq "LUCI_MAINTAINER:=$fork_identity" "$ROOT_DIR/luci-app-forkop/Makefile" ||
-  fail "luci-app-forkop/Makefile must name the fork maintainer"
-if grep -Fq 'slayer326' "$BUILD_SCRIPT" "$FORKOP_MAKEFILE" "$ROOT_DIR/luci-app-forkop/Makefile"; then
+grep -Fxq "PKG_MAINTAINER:=$fork_identity" "$PROKOP_MAKEFILE" ||
+  fail "prokop/Makefile must name the fork maintainer"
+grep -Fq 'URL:=https://github.com/Asofwar/prokop' "$PROKOP_MAKEFILE" ||
+  fail "prokop/Makefile must link the fork project"
+grep -Fxq "LUCI_MAINTAINER:=$fork_identity" "$ROOT_DIR/luci-app-prokop/Makefile" ||
+  fail "luci-app-prokop/Makefile must name the fork maintainer"
+if grep -Fq 'slayer326' "$BUILD_SCRIPT" "$PROKOP_MAKEFILE" "$ROOT_DIR/luci-app-prokop/Makefile"; then
   fail "package metadata must not name the upstream maintainer"
 fi
 # The mirror step is best effort: tests/fork_mirror_postinst.sh runs the chains.
-if grep -Eq 'mirror-migration\.sh (\|\| exit|&&)' "$FORKOP_MAKEFILE" "$BUILD_SCRIPT"; then
+if grep -Eq 'mirror-migration\.sh (\|\| exit|&&)' "$PROKOP_MAKEFILE" "$BUILD_SCRIPT"; then
   fail "a mirror reconciliation failure must not skip package_postinst"
 fi
-grep -Fq '/usr/lib/forkop/config/migration.uc migrate' "$FORKOP_MAKEFILE" ||
+grep -Fq '/usr/lib/prokop/config/migration.uc migrate' "$PROKOP_MAKEFILE" ||
   fail "OpenWrt package postinst must run configuration migrations"
-grep -Fq 'FORKOP_PACKAGE_POSTINST=1 /usr/share/forkop/mirror-migration.sh' "$FORKOP_MAKEFILE" ||
+grep -Fq 'PROKOP_PACKAGE_POSTINST=1 /usr/share/prokop/mirror-migration.sh' "$PROKOP_MAKEFILE" ||
   fail "OpenWrt package postinst must prevent nested package-manager updates during mirror migration"
 # The ipk's postinst and the apk's post-install and post-upgrade, as
 # build.sh writes them (one function since UC-026).
@@ -178,24 +178,24 @@ trap 'rm -rf "${WORK_DIR:?}"' EXIT
 . "$ROOT_DIR/tests/helpers/build_recipe.sh"
 build_recipe_scripts "$BUILD_SCRIPT" "$WORK_DIR/scripts" || fail "could not write build.sh's package scripts"
 for script in ipk/postinst apk/backend-post-install.sh apk/backend-post-upgrade.sh; do
-  grep -Fq '/usr/lib/forkop/config/migration.uc migrate' "$WORK_DIR/scripts/$script" ||
+  grep -Fq '/usr/lib/prokop/config/migration.uc migrate' "$WORK_DIR/scripts/$script" ||
     fail "manual package script $script must run configuration migrations after install and upgrade"
-  grep -Fq 'FORKOP_PACKAGE_POSTINST=1 /usr/share/forkop/mirror-migration.sh' "$WORK_DIR/scripts/$script" ||
+  grep -Fq 'PROKOP_PACKAGE_POSTINST=1 /usr/share/prokop/mirror-migration.sh' "$WORK_DIR/scripts/$script" ||
     fail "manual package script $script must prevent nested package-manager updates"
 done
 
-if grep -Rqs 'require("uci")' "$FORKOP_LIB"; then
+if grep -Rqs 'require("uci")' "$PROKOP_LIB"; then
   require_package_dependency "ucode-mod-uci"
 fi
 
-if grep -Rqs 'require("fs")' "$FORKOP_LIB"; then
+if grep -Rqs 'require("fs")' "$PROKOP_LIB"; then
   require_package_dependency "ucode-mod-fs"
 fi
 
-if grep -Rqs 'forkop_dnsmasq_failsafe_restore_raw' \
-  "$ROOT_DIR/forkop/files/usr/bin" \
-  "$ROOT_DIR/forkop/files/usr/lib" \
-  "$ROOT_DIR/forkop/files/etc/init.d"; then
+if grep -Rqs 'prokop_dnsmasq_failsafe_restore_raw' \
+  "$ROOT_DIR/prokop/files/usr/bin" \
+  "$ROOT_DIR/prokop/files/usr/lib" \
+  "$ROOT_DIR/prokop/files/etc/init.d"; then
   fail "duplicated raw dnsmasq failsafe restore shell owner is present"
 fi
 

@@ -7,7 +7,7 @@ let log = fs.open(dir + "/calls.log", "a");
 log.write(sprintf("%s %s %s\n", ARGV[0], host, join(" ", slice(ARGV, 2))));
 log.close();
 // The phase report the manager asks for (autotune/isolation.uc progress).
-if (getenv("FORKOP_AUTOTUNE_PROGRESS")) fs.writefile(getenv("FORKOP_AUTOTUNE_PROGRESS"), sprintf("%J
+if (getenv("PROKOP_AUTOTUNE_PROGRESS")) fs.writefile(getenv("PROKOP_AUTOTUNE_PROGRESS"), sprintf("%J
 ", { phase: "measuring", done: 3, total: 8 }));
 if (getenv("STUB_TUNE_SLEEP")) system("sleep " + getenv("STUB_TUNE_SLEEP"));
 let hook = fs.readfile(dir + "/" + host + ".hook");

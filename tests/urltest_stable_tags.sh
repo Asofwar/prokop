@@ -11,9 +11,9 @@ set -eo pipefail
 # tag then no longer depends on the position of the section.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-MIGRATION="$FORKOP_LIB/config/migration.uc"
-GENERATOR="$FORKOP_LIB/singbox/generator.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+MIGRATION="$PROKOP_LIB/config/migration.uc"
+GENERATOR="$PROKOP_LIB/singbox/generator.uc"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT
 
@@ -23,7 +23,7 @@ fail() {
 }
 
 migrate_fixture() {
-  FORKOP_CONFIG_NAME=forkop ucode -L "$FORKOP_LIB" "$MIGRATION" migrate-fixture "$1" >"$2"
+  PROKOP_CONFIG_NAME=prokop ucode -L "$PROKOP_LIB" "$MIGRATION" migrate-fixture "$1" >"$2"
 }
 
 # 1. The fixture migration names anonymous groups and moves their overrides.
@@ -112,89 +112,89 @@ if (renamed.length !== 1 || renamed[0].name !== "ut_022898_2" ||
 
 # 2. The runtime migration renames the sections in place through core.uci.
 cat >"$WORK_DIR/runtime.state" <<'EOF_UCI'
-forkop.settings=settings
-forkop.settings.yacd_secret_key=secret
-forkop.main=section
-forkop.main.action=connection
-forkop.cfg022898=urltest
-forkop.cfg022898.section=main
-forkop.cfg022898.name=Fastest
-forkop.cfg032898=urltest_override
-forkop.cfg032898.rule=main
-forkop.cfg032898.tag=main-urltest-cfg022898-out
-forkop.after=section
-forkop.after.action=block
+prokop.settings=settings
+prokop.settings.yacd_secret_key=secret
+prokop.main=section
+prokop.main.action=connection
+prokop.cfg022898=urltest
+prokop.cfg022898.section=main
+prokop.cfg022898.name=Fastest
+prokop.cfg032898=urltest_override
+prokop.cfg032898.rule=main
+prokop.cfg032898.tag=main-urltest-cfg022898-out
+prokop.after=section
+prokop.after.action=block
 EOF_UCI
 : >"$WORK_DIR/runtime.log"
-FORKOP_UCI_STATE_FILE="$WORK_DIR/runtime.state" \
-FORKOP_UCI_LOG_FILE="$WORK_DIR/runtime.log" \
-FORKOP_CONFIG_NAME=forkop \
+PROKOP_UCI_STATE_FILE="$WORK_DIR/runtime.state" \
+PROKOP_UCI_LOG_FILE="$WORK_DIR/runtime.log" \
+PROKOP_CONFIG_NAME=prokop \
 TMP_SUBSCRIPTION_FOLDER="$WORK_DIR/tmp-subscriptions" \
-FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/runtime" \
-FORKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR="$WORK_DIR/persistent-cache" \
-FORKOP_INTERNAL_CONFIG_TRIGGER_GUARD="$WORK_DIR/internal-config-change" \
-  ucode -L "$FORKOP_LIB" "$MIGRATION" migrate
+PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/runtime" \
+PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR="$WORK_DIR/persistent-cache" \
+PROKOP_INTERNAL_CONFIG_TRIGGER_GUARD="$WORK_DIR/internal-config-change" \
+  ucode -L "$PROKOP_LIB" "$MIGRATION" migrate
 grep -q 'cfg022898' "$WORK_DIR/runtime.state" && {
   cat "$WORK_DIR/runtime.state" >&2
   fail "the runtime migration must rename the anonymous URLTest section"
 }
 sed -n '5,7p' "$WORK_DIR/runtime.state" >"$WORK_DIR/runtime.group"
-printf '%s\n' 'forkop.ut_022898=urltest' 'forkop.ut_022898.section=main' 'forkop.ut_022898.name=Fastest' |
+printf '%s\n' 'prokop.ut_022898=urltest' 'prokop.ut_022898.section=main' 'prokop.ut_022898.name=Fastest' |
   cmp -s - "$WORK_DIR/runtime.group" || {
   cat "$WORK_DIR/runtime.state" >&2
   fail "the renamed URLTest section must keep its options and its place"
 }
-grep -Fxq 'forkop.cfg032898.tag=main-urltest-ut_022898-out' "$WORK_DIR/runtime.state" ||
+grep -Fxq 'prokop.cfg032898.tag=main-urltest-ut_022898-out' "$WORK_DIR/runtime.state" ||
   fail "the runtime migration must move the override to the new tag"
-grep -Fxq 'commit forkop' "$WORK_DIR/runtime.log" || fail "the runtime migration must commit"
+grep -Fxq 'commit prokop' "$WORK_DIR/runtime.log" || fail "the runtime migration must commit"
 
 # A section of a type the migrations do not read may hold the name.
 cat >"$WORK_DIR/taken.state" <<'EOF_UCI'
-forkop.settings=settings
-forkop.settings.yacd_secret_key=secret
-forkop.main=section
-forkop.main.action=connection
-forkop.ut_022898=priority_group
-forkop.ut_022898.section=main
-forkop.cfg022898=urltest
-forkop.cfg022898.section=main
-forkop.cfg032898=urltest_override
-forkop.cfg032898.rule=main
-forkop.cfg032898.tag=main-urltest-cfg022898-out
+prokop.settings=settings
+prokop.settings.yacd_secret_key=secret
+prokop.main=section
+prokop.main.action=connection
+prokop.ut_022898=priority_group
+prokop.ut_022898.section=main
+prokop.cfg022898=urltest
+prokop.cfg022898.section=main
+prokop.cfg032898=urltest_override
+prokop.cfg032898.rule=main
+prokop.cfg032898.tag=main-urltest-cfg022898-out
 EOF_UCI
-FORKOP_UCI_STATE_FILE="$WORK_DIR/taken.state" \
-FORKOP_CONFIG_NAME=forkop \
+PROKOP_UCI_STATE_FILE="$WORK_DIR/taken.state" \
+PROKOP_CONFIG_NAME=prokop \
 TMP_SUBSCRIPTION_FOLDER="$WORK_DIR/tmp-subscriptions" \
-FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/runtime" \
-FORKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR="$WORK_DIR/persistent-cache" \
-FORKOP_INTERNAL_CONFIG_TRIGGER_GUARD="$WORK_DIR/internal-config-change" \
-  ucode -L "$FORKOP_LIB" "$MIGRATION" migrate
-if ! grep -Fxq 'forkop.ut_022898_2=urltest' "$WORK_DIR/taken.state" ||
-  ! grep -Fxq 'forkop.ut_022898=priority_group' "$WORK_DIR/taken.state" ||
-  ! grep -Fxq 'forkop.cfg032898.tag=main-urltest-ut_022898_2-out' "$WORK_DIR/taken.state"; then
+PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/runtime" \
+PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR="$WORK_DIR/persistent-cache" \
+PROKOP_INTERNAL_CONFIG_TRIGGER_GUARD="$WORK_DIR/internal-config-change" \
+  ucode -L "$PROKOP_LIB" "$MIGRATION" migrate
+if ! grep -Fxq 'prokop.ut_022898_2=urltest' "$WORK_DIR/taken.state" ||
+  ! grep -Fxq 'prokop.ut_022898=priority_group' "$WORK_DIR/taken.state" ||
+  ! grep -Fxq 'prokop.cfg032898.tag=main-urltest-ut_022898_2-out' "$WORK_DIR/taken.state"; then
   cat "$WORK_DIR/taken.state" >&2
   fail "a URLTest name taken by a section of another type must get a suffix at runtime"
 fi
 
 # Groups that the Podkop migration creates from urltest_enabled are named too.
 cat >"$WORK_DIR/podkop.state" <<'EOF_UCI'
-forkop.settings=settings
-forkop.legacy=section
-forkop.legacy.connection_type=proxy
-forkop.legacy.proxy_config_type=urltest
-forkop.legacy.urltest_proxy_links=vless://one vless://two
-forkop.legacy.urltest_enabled=1
+prokop.settings=settings
+prokop.legacy=section
+prokop.legacy.connection_type=proxy
+prokop.legacy.proxy_config_type=urltest
+prokop.legacy.urltest_proxy_links=vless://one vless://two
+prokop.legacy.urltest_enabled=1
 EOF_UCI
-FORKOP_UCI_STATE_FILE="$WORK_DIR/podkop.state" \
-FORKOP_CONFIG_NAME=forkop \
+PROKOP_UCI_STATE_FILE="$WORK_DIR/podkop.state" \
+PROKOP_CONFIG_NAME=prokop \
 TMP_SUBSCRIPTION_FOLDER="$WORK_DIR/tmp-subscriptions" \
-FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/runtime" \
-FORKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR="$WORK_DIR/persistent-cache" \
-FORKOP_INTERNAL_CONFIG_TRIGGER_GUARD="$WORK_DIR/internal-config-change" \
-  ucode -L "$FORKOP_LIB" "$MIGRATION" migrate-podkop
-if ! grep -Fxq 'forkop.ut_000001=urltest' "$WORK_DIR/podkop.state" ||
-  ! grep -Fxq 'forkop.ut_000001.section=legacy' "$WORK_DIR/podkop.state" ||
-  grep -Eq '^forkop\.cfg[0-9a-f]+=urltest$' "$WORK_DIR/podkop.state"; then
+PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/runtime" \
+PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR="$WORK_DIR/persistent-cache" \
+PROKOP_INTERNAL_CONFIG_TRIGGER_GUARD="$WORK_DIR/internal-config-change" \
+  ucode -L "$PROKOP_LIB" "$MIGRATION" migrate-podkop
+if ! grep -Fxq 'prokop.ut_000001=urltest' "$WORK_DIR/podkop.state" ||
+  ! grep -Fxq 'prokop.ut_000001.section=legacy' "$WORK_DIR/podkop.state" ||
+  grep -Eq '^prokop\.cfg[0-9a-f]+=urltest$' "$WORK_DIR/podkop.state"; then
   cat "$WORK_DIR/podkop.state" >&2
   fail "the URLTest group created from urltest_enabled must get a stable name"
 fi
@@ -248,7 +248,7 @@ JSON
 urltest_tags() {
   local output="$WORK_DIR/$2.config.json"
   mkdir -p "$output.section-cache"
-  ucode -L "$FORKOP_LIB" "$GENERATOR" generate-config-fixture "$1" "$output" "127.0.0.1"
+  ucode -L "$PROKOP_LIB" "$GENERATOR" generate-config-fixture "$1" "$output" "127.0.0.1"
   node -e '
 const cfg = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
 const selector = cfg.outbounds.find((outbound) => outbound.tag === "proxy-out");

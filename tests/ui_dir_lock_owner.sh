@@ -9,7 +9,7 @@ set -euo pipefail
 # releases only its own record. service/ui.uc is the real code.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 UI_UC="$LIB/service/ui.uc"
 WORK_DIR="$(mktemp -d)"
 # shellcheck source=tests/helpers/wait.sh
@@ -34,30 +34,30 @@ fail() {
 mkdir -p "$WORK_DIR/bin" "$WORK_DIR/run" "$WORK_DIR/tmp"
 export TMPDIR="$WORK_DIR/tmp"
 export PATH="$WORK_DIR/bin:$PATH"
-export FORKOP_LIB="$LIB"
-export FORKOP_CONFIG_NAME=forkop-ui-lock-test
-export FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/run"
-export FORKOP_PENDING_RELOAD_FILE="$WORK_DIR/run/reload.pending"
-export FORKOP_START_IN_PROGRESS_FILE="$WORK_DIR/run/start.in-progress"
-export FORKOP_UI_STATE_DIR="$WORK_DIR/state"
-export FORKOP_UI_SERVICE_ACTION_DIR="$FORKOP_UI_STATE_DIR/service-actions"
-export FORKOP_UI_SERVICE_ACTION_LOCK_DIR="$FORKOP_UI_STATE_DIR/service-actions.lock"
-export FORKOP_UI_LATENCY_ACTION_DIR="$FORKOP_UI_STATE_DIR/latency-actions"
-export FORKOP_UI_COMPONENT_ACTION_DIR="$FORKOP_UI_STATE_DIR/component-actions"
-export FORKOP_UI_SUBSCRIPTION_ACTION_DIR="$FORKOP_UI_STATE_DIR/subscription-actions"
-export FORKOP_UI_SING_BOX_VERSION_CACHE_FILE="$FORKOP_UI_STATE_DIR/sing-box-version"
-export FORKOP_UI_SING_BOX_VERSION_CACHE_LOCK_DIR="$FORKOP_UI_SING_BOX_VERSION_CACHE_FILE.lock"
-export FORKOP_UI_SING_BOX_VARIANT_STATE_FILE="$WORK_DIR/missing-variant"
-export FORKOP_UI_SING_BOX_BIN_PATH="$WORK_DIR/sing-box"
-export FORKOP_UI_SING_BOX_VERSION_PROBE_TIMEOUT_SECONDS=10
-export FORKOP_LATENCY_TEST_LOCK_DIR="$WORK_DIR/run/automatic-latency-test.lock"
+export PROKOP_LIB="$LIB"
+export PROKOP_CONFIG_NAME=prokop-ui-lock-test
+export PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/run"
+export PROKOP_PENDING_RELOAD_FILE="$WORK_DIR/run/reload.pending"
+export PROKOP_START_IN_PROGRESS_FILE="$WORK_DIR/run/start.in-progress"
+export PROKOP_UI_STATE_DIR="$WORK_DIR/state"
+export PROKOP_UI_SERVICE_ACTION_DIR="$PROKOP_UI_STATE_DIR/service-actions"
+export PROKOP_UI_SERVICE_ACTION_LOCK_DIR="$PROKOP_UI_STATE_DIR/service-actions.lock"
+export PROKOP_UI_LATENCY_ACTION_DIR="$PROKOP_UI_STATE_DIR/latency-actions"
+export PROKOP_UI_COMPONENT_ACTION_DIR="$PROKOP_UI_STATE_DIR/component-actions"
+export PROKOP_UI_SUBSCRIPTION_ACTION_DIR="$PROKOP_UI_STATE_DIR/subscription-actions"
+export PROKOP_UI_SING_BOX_VERSION_CACHE_FILE="$PROKOP_UI_STATE_DIR/sing-box-version"
+export PROKOP_UI_SING_BOX_VERSION_CACHE_LOCK_DIR="$PROKOP_UI_SING_BOX_VERSION_CACHE_FILE.lock"
+export PROKOP_UI_SING_BOX_VARIANT_STATE_FILE="$WORK_DIR/missing-variant"
+export PROKOP_UI_SING_BOX_BIN_PATH="$WORK_DIR/sing-box"
+export PROKOP_UI_SING_BOX_VERSION_PROBE_TIMEOUT_SECONDS=10
+export PROKOP_LATENCY_TEST_LOCK_DIR="$WORK_DIR/run/automatic-latency-test.lock"
 export ZAPRET_PROVIDER_NFQWS_BIN="$WORK_DIR/missing-nfqws"
 export ZAPRET2_PROVIDER_NFQWS2_BIN="$WORK_DIR/missing-nfqws2"
 export BYEDPI_BIN="$WORK_DIR/missing-ciadpi"
 export PROBE_LOG="$WORK_DIR/probe.log"
-unset FORKOP_UI_ACTION_TRACKED
-SERVICE_LOCK="$FORKOP_UI_SERVICE_ACTION_LOCK_DIR"
-VERSION_LOCK="$FORKOP_UI_SING_BOX_VERSION_CACHE_LOCK_DIR"
+unset PROKOP_UI_ACTION_TRACKED
+SERVICE_LOCK="$PROKOP_UI_SERVICE_ACTION_LOCK_DIR"
+VERSION_LOCK="$PROKOP_UI_SING_BOX_VERSION_CACHE_LOCK_DIR"
 
 # Nothing here may reach the host's syslog, nftables or package manager.
 printf '#!/bin/sh\nexit 0\n' >"$WORK_DIR/bin/logger"
@@ -83,7 +83,7 @@ while [ "$caller" -gt 1 ]; do
   case "$(readlink "/proc/$caller/exe")" in */ucode) break ;; esac
   caller="$(sed -n 's/^PPid:[[:space:]]*//p' "/proc/$caller/status")"
 done
-lock="$FORKOP_UI_SING_BOX_VERSION_CACHE_LOCK_DIR"
+lock="$PROKOP_UI_SING_BOX_VERSION_CACHE_LOCK_DIR"
 printf 'expected owner.%s.%s\n' "$caller" "$(start_ticks "$caller")" >>"$PROBE_LOG"
 printf 'held %s\n' "$(ls -A "$lock" | tr '\n' ' ')" >>"$PROBE_LOG"
 if [ "${PROBE_MODE:-}" = takeover ]; then
@@ -121,7 +121,7 @@ b_ticks="$(start_ticks "$B")"
 #    action only when it gets the lock, and drops the lock afterwards.
 begin() {
   local status=0
-  rm -rf "$FORKOP_UI_SERVICE_ACTION_DIR"
+  rm -rf "$PROKOP_UI_SERVICE_ACTION_DIR"
   ucode -L "$LIB" "$UI_UC" service-action-begin-if-idle restart ui >/dev/null 2>&1 || status=$?
   printf '%s\n' "$status"
 }
@@ -173,7 +173,7 @@ rm -rf "$SERVICE_LOCK"
 #    holder by pid and start ticks; the holder's release leaves a lock that
 #    another caller took over meanwhile alone.
 capabilities() {
-  rm -f "$FORKOP_UI_SING_BOX_VERSION_CACHE_FILE" "$PROBE_LOG"
+  rm -f "$PROKOP_UI_SING_BOX_VERSION_CACHE_FILE" "$PROBE_LOG"
   ucode -L "$LIB" "$UI_UC" get-ui-capabilities >/dev/null
 }
 capabilities

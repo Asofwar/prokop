@@ -18,8 +18,8 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-export FORKOP_LIB
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+export PROKOP_LIB
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "${WORK_DIR:?}"' EXIT
 
@@ -58,7 +58,7 @@ JSON
 route() {
   local out="$WORK_DIR/$1-$2.out.json"
   mkdir -p "$out.section-cache" "$out.rulesets"
-  ucode -L "$FORKOP_LIB" "$FORKOP_LIB/singbox/generator.uc" generate-config-fixture \
+  ucode -L "$PROKOP_LIB" "$PROKOP_LIB/singbox/generator.uc" generate-config-fixture \
     "$WORK_DIR/$1.json" "$out" "127.0.0.1" "$2" "" "" "" >/dev/null
   node -e '
     const route = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")).route;
@@ -90,7 +90,7 @@ expect_route none 0 '{"auto":true,"iface":null}'
 # The reload signature: a change of the switch is a change of sing-box's
 # configuration; an interface that is not in effect is none.
 signature() {
-  ucode -L "$FORKOP_LIB" "$FORKOP_LIB/service/state.uc" sing-box-signature-fixture "$WORK_DIR/$1.json"
+  ucode -L "$PROKOP_LIB" "$PROKOP_LIB/service/state.uc" sing-box-signature-fixture "$WORK_DIR/$1.json"
 }
 [ "$(signature switch-on)" != "$(signature switch-off)" ] ||
   fail "switching the output interface off must change the sing-box signature"
@@ -101,7 +101,7 @@ signature() {
 
 # The migration keeps the effective behaviour of existing configurations.
 migrate() {
-  ucode -L "$FORKOP_LIB" "$FORKOP_LIB/config/migration.uc" \
+  ucode -L "$PROKOP_LIB" "$PROKOP_LIB/config/migration.uc" \
     migrate-fixture "$WORK_DIR/$1.json" >"$WORK_DIR/$1.migrated.json"
   node -e '
     const s = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")).config.settings;
@@ -167,16 +167,16 @@ STUB
 chmod +x "$WORK_DIR/bin/ucode" "$WORK_DIR/bin/logger"
 runtime_warning() { # runtime_warning <enable flag or ''>
   {
-    printf 'forkop.settings=settings\n'
-    printf 'forkop.settings.config_path=%s\n' "$WORK_DIR/run/config.json"
-    printf 'forkop.settings.output_network_interface=wan2\n'
-    [ -z "$1" ] || printf 'forkop.settings.enable_output_network_interface=%s\n' "$1"
+    printf 'prokop.settings=settings\n'
+    printf 'prokop.settings.config_path=%s\n' "$WORK_DIR/run/config.json"
+    printf 'prokop.settings.output_network_interface=wan2\n'
+    [ -z "$1" ] || printf 'prokop.settings.enable_output_network_interface=%s\n' "$1"
   } >"$WORK_DIR/uci.state"
   : >"$WORK_DIR/logger.log"
   PATH="$WORK_DIR/bin:$PATH" TMPDIR="$WORK_DIR/tmp" LOGGER_LOG="$WORK_DIR/logger.log" \
-    FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state" FORKOP_UCI_LOG_FILE="$WORK_DIR/uci.log" \
-    FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/run" TMP_SING_BOX_FOLDER="$WORK_DIR/run/sing-box" \
-    "$REAL_UCODE" -L "$FORKOP_LIB" "$FORKOP_LIB/singbox/runtime.uc" init-config 0 0 0 >/dev/null 2>&1 || true
+    PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state" PROKOP_UCI_LOG_FILE="$WORK_DIR/uci.log" \
+    PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/run" TMP_SING_BOX_FOLDER="$WORK_DIR/run/sing-box" \
+    "$REAL_UCODE" -L "$PROKOP_LIB" "$PROKOP_LIB/singbox/runtime.uc" init-config 0 0 0 >/dev/null 2>&1 || true
   grep 'mwan3 is active' "$WORK_DIR/logger.log" || true
 }
 case "$(runtime_warning 1)" in

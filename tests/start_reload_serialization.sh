@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 # shellcheck source=tests/helpers/owned_processes.sh
 . "$ROOT_DIR/tests/helpers/owned_processes.sh"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK_DIR="$(mktemp -d)"
 holder=""
 cleanup() {
@@ -16,21 +16,21 @@ cleanup() {
 trap cleanup EXIT
 fail() { printf 'FAIL: %s\n' "$1" >&2; exit 1; }
 # The lock and its owner are read through service/state.uc (core/runtime_lock.uc).
-state() { ucode -L "$FORKOP_LIB" "$FORKOP_LIB/service/state.uc" "$@"; }
-export REAL_LIB="$FORKOP_LIB" START_OWNER="$$"
+state() { ucode -L "$PROKOP_LIB" "$PROKOP_LIB/service/state.uc" "$@"; }
+export REAL_LIB="$PROKOP_LIB" START_OWNER="$$"
 
 mkdir -p "$WORK_DIR/run" "$WORK_DIR/lib/dns"
-printf 'forkop.settings=settings\n' >"$WORK_DIR/uci.state"
+printf 'prokop.settings=settings\n' >"$WORK_DIR/uci.state"
 printf 'exit(0);\n' >"$WORK_DIR/lib/dns/apply.uc"
-cat >"$WORK_DIR/forkop" <<'SH'
+cat >"$WORK_DIR/prokop" <<'SH'
 #!/bin/sh
 [ "$1" = start ] || exit 50
 # The start runs under its own reload.lock.
-[ "$(ucode -L "$REAL_LIB" "$REAL_LIB/service/state.uc" runtime-dir-lock-owner "$FORKOP_RELOAD_LOCK_DIR")" = "$START_OWNER" ] || exit 51
+[ "$(ucode -L "$REAL_LIB" "$REAL_LIB/service/state.uc" runtime-dir-lock-owner "$PROKOP_RELOAD_LOCK_DIR")" = "$START_OWNER" ] || exit 51
 printf 'start\n' >>"$START_TEST_LOG"
 exit "${START_TEST_STATUS:-0}"
 SH
-chmod +x "$WORK_DIR/forkop"
+chmod +x "$WORK_DIR/prokop"
 # The init script that a scheduled start retry runs. The retry is due after
 # 1 s: a start that cancels it signals only its shell (service/initd.uc), and
 # the shell's `sleep` lives on, reparented, until the delay ends.
@@ -38,14 +38,14 @@ printf '#!/bin/sh\nexit 0\n' >"$WORK_DIR/init"
 chmod +x "$WORK_DIR/init"
 
 start() {
-  env FORKOP_LIB="$WORK_DIR/lib" FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state" \
-    FORKOP_UI_ACTION_TRACKED=1 FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/run" \
-    FORKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/reload.lock" \
-    FORKOP_START_RUNTIME_LOCK_WAIT_SECONDS="${START_TEST_WAIT:-0}" \
-    FORKOP_SERVICE_INIT="$WORK_DIR/init" FORKOP_START_DEFERRED_RETRY_DELAY_SECONDS=1 \
-    FORKOP_BIN="${START_TEST_BIN:-$WORK_DIR/forkop}" \
+  env PROKOP_LIB="$WORK_DIR/lib" PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state" \
+    PROKOP_UI_ACTION_TRACKED=1 PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/run" \
+    PROKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/reload.lock" \
+    PROKOP_START_RUNTIME_LOCK_WAIT_SECONDS="${START_TEST_WAIT:-0}" \
+    PROKOP_SERVICE_INIT="$WORK_DIR/init" PROKOP_START_DEFERRED_RETRY_DELAY_SECONDS=1 \
+    PROKOP_BIN="${START_TEST_BIN:-$WORK_DIR/prokop}" \
     START_TEST_LOG="$WORK_DIR/start.log" START_TEST_STATUS="${START_TEST_STATUS:-0}" \
-    ucode -L "$FORKOP_LIB" "$FORKOP_LIB/service/initd.uc" start-service manual "$$"
+    ucode -L "$PROKOP_LIB" "$PROKOP_LIB/service/initd.uc" start-service manual "$$"
 }
 
 # A reload holds the lock under its own live owner.

@@ -2,8 +2,8 @@
 set -eo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SECTION_JS="$ROOT_DIR/luci-app-forkop/htdocs/luci-static/resources/view/forkop/section.js"
-MONITORING_STYLES="$ROOT_DIR/fe-app-forkop/src/forkop/tabs/monitoring/styles.ts"
+SECTION_JS="$ROOT_DIR/luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js"
+MONITORING_STYLES="$ROOT_DIR/fe-app-prokop/src/prokop/tabs/monitoring/styles.ts"
 
 fail() {
   printf 'FAIL: %s\n' "$1" >&2
@@ -97,7 +97,7 @@ grep -Fq 'result.push({ value: name, label: name });' "$SECTION_JS" ||
 if grep -Fq 'label: `${typeLabel}: ${name}`' "$SECTION_JS"; then
   fail "dashboard group labels must not include URLTest/Priority prefixes"
 fi
-if grep -Fq '__forkop_no_group__' "$SECTION_JS"; then
+if grep -Fq '__prokop_no_group__' "$SECTION_JS"; then
   fail "dashboard group selectors must not duplicate the placeholder with a fake choice"
 fi
 

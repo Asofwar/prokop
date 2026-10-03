@@ -7,10 +7,10 @@ set -euo pipefail
 # sing-box list questions (routing/resolve.uc), so the call limits the whole
 # process: past the limit, lists are undecidable and the remaining targets
 # are outside the groups instead of keeping the page waiting (UC-220).
-# FORKOP_AUTOTUNE_GROUPS_LIST_SECONDS stands in for the limit here.
+# PROKOP_AUTOTUNE_GROUPS_LIST_SECONDS stands in for the limit here.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK="$(mktemp -d)"
 cleanup() {
   pkill -KILL -f -- "$WORK/" 2>/dev/null || true
@@ -19,15 +19,15 @@ cleanup() {
 trap cleanup EXIT HUP INT TERM
 fail() { printf 'FAIL: %s\n' "$1" >&2; exit 1; }
 
-export FORKOP_LIB="$LIB"
-export FORKOP_AUTOTUNE_STATE_FILE="$WORK/etc/autotune/state.json"
-export FORKOP_AUTOTUNE_LAST_DIR="$WORK/run/last" FORKOP_AUTOTUNE_STATE_DIR="$WORK/run/autotune"
-export FORKOP_CONFIG_FILE="$WORK/config/forkop"
-export FORKOP_AUTOTUNE_SINGBOX_CONFIG="$WORK/sing-box.json"
-export FORKOP_AUTOTUNE_DIG="$WORK/dig"
-export FORKOP_AUTOTUNE_UCI_SAVEDIR="$WORK/uci-save" FORKOP_AUTOTUNE_TMPDIR="$WORK/tmp"
-export FORKOP_HISTORY_FILE="$WORK/etc/history.jsonl" FORKOP_RUNTIME_STATE_DIR="$WORK/run/state"
-export FORKOP_CRONTAB_FILE="$WORK/crontab" FORKOP_AUTOTUNE_CRONTAB="$WORK/crontab-cmd"
+export PROKOP_LIB="$LIB"
+export PROKOP_AUTOTUNE_STATE_FILE="$WORK/etc/autotune/state.json"
+export PROKOP_AUTOTUNE_LAST_DIR="$WORK/run/last" PROKOP_AUTOTUNE_STATE_DIR="$WORK/run/autotune"
+export PROKOP_CONFIG_FILE="$WORK/config/prokop"
+export PROKOP_AUTOTUNE_SINGBOX_CONFIG="$WORK/sing-box.json"
+export PROKOP_AUTOTUNE_DIG="$WORK/dig"
+export PROKOP_AUTOTUNE_UCI_SAVEDIR="$WORK/uci-save" PROKOP_AUTOTUNE_TMPDIR="$WORK/tmp"
+export PROKOP_HISTORY_FILE="$WORK/etc/history.jsonl" PROKOP_RUNTIME_STATE_DIR="$WORK/run/state"
+export PROKOP_CRONTAB_FILE="$WORK/crontab" PROKOP_AUTOTUNE_CRONTAB="$WORK/crontab-cmd"
 mkdir -p "$WORK/config" "$WORK/uci-save" "$WORK/tmp"
 
 cat >"$WORK/sing-box" <<EOF
@@ -35,7 +35,7 @@ cat >"$WORK/sing-box" <<EOF
 exec ucode -- "$ROOT_DIR/tests/helpers/sing_box_rule_set_stub.uc" "\$@"
 EOF
 chmod +x "$WORK/sing-box"
-export FORKOP_RULESET_MATCH_BIN="$WORK/sing-box"
+export PROKOP_RULESET_MATCH_BIN="$WORK/sing-box"
 export RULESET_STUB_CALLS="$WORK/calls"
 
 # Every target resolves to a FakeIP address.
@@ -45,7 +45,7 @@ echo 198.18.0.$(printf '%s' "$4" | wc -c)
 SH
 chmod +x "$WORK/dig"
 
-cat >"$WORK/config/forkop" <<'CONF'
+cat >"$WORK/config/prokop" <<'CONF'
 config settings 'settings'
 config section 'main'
 	option action 'connection'
@@ -94,7 +94,7 @@ groups >/dev/null
 # whole call limited to 4s: the first target is answered at once, the second
 # is killed with what is left of the 4s, the rest are not asked. They are
 # outside as undecidable and the call ends in time.
-took="$(RULESET_STUB_HANG=m.youtube.com FORKOP_RULESET_MATCH_BUDGET=30 FORKOP_AUTOTUNE_GROUPS_LIST_SECONDS=4 groups)"
+took="$(RULESET_STUB_HANG=m.youtube.com PROKOP_RULESET_MATCH_BUDGET=30 PROKOP_AUTOTUNE_GROUPS_LIST_SECONDS=4 groups)"
 [ "$(asked)" = 2 ] || fail "limited: asked $(asked) times"
 [ "$(summary)" = 't1 { "t2": "undecidable_matcher", "t3": "undecidable_matcher", "t4": "undecidable_matcher" }' ] ||
   fail "limited: got $(summary)"

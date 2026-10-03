@@ -15,7 +15,7 @@ set -eu
 # was refused before its transaction started changed nothing and is no
 # restore event in the history.
 ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
-LIB="$ROOT/forkop/files/usr/lib"
+LIB="$ROOT/prokop/files/usr/lib"
 SCRIPT="$LIB/config/snapshots.uc"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT HUP INT TERM
@@ -24,20 +24,20 @@ fail() { printf 'FAIL: %s\n' "$1" >&2; exit 1; }
 ok() { printf 'OK: %s\n' "$1"; }
 
 mkdir -p "$WORK/bin" "$WORK/run" "$WORK/state" "$WORK/etc" "$WORK/uci-save"
-export FORKOP_CONFIG_FILE="$WORK/etc/forkop"
-export FORKOP_SNAPSHOT_DIR="$WORK/snapshots"
-export FORKOP_SNAPSHOT_HASH_DIR="$WORK/hash"
-export FORKOP_SNAPSHOT_LOCK_DIR="$WORK/run/config-snapshot.lock"
-export FORKOP_AUTOTUNE_APPLY_STATE="$WORK/autotune-apply.json"
-export FORKOP_LIB="$LIB"
-export FORKOP_BIN="$WORK/bin/forkop"
-export FORKOP_RELOAD_COMMAND="$WORK/reload"
-export FORKOP_PENDING_RELOAD_FILE="$WORK/run/reload.pending"
-export FORKOP_RELOAD_LOCK_DIR="$WORK/run/reload.lock"
-export FORKOP_LIST_UPDATE_PID_FILE="$WORK/run/list-update.pid"
-export FORKOP_HISTORY_FILE="$WORK/history.jsonl"
-export FORKOP_RUNTIME_STATE_DIR="$WORK/run"
-export FORKOP_UCI_SAVEDIR="$WORK/uci-save"
+export PROKOP_CONFIG_FILE="$WORK/etc/prokop"
+export PROKOP_SNAPSHOT_DIR="$WORK/snapshots"
+export PROKOP_SNAPSHOT_HASH_DIR="$WORK/hash"
+export PROKOP_SNAPSHOT_LOCK_DIR="$WORK/run/config-snapshot.lock"
+export PROKOP_AUTOTUNE_APPLY_STATE="$WORK/autotune-apply.json"
+export PROKOP_LIB="$LIB"
+export PROKOP_BIN="$WORK/bin/prokop"
+export PROKOP_RELOAD_COMMAND="$WORK/reload"
+export PROKOP_PENDING_RELOAD_FILE="$WORK/run/reload.pending"
+export PROKOP_RELOAD_LOCK_DIR="$WORK/run/reload.lock"
+export PROKOP_LIST_UPDATE_PID_FILE="$WORK/run/list-update.pid"
+export PROKOP_HISTORY_FILE="$WORK/history.jsonl"
+export PROKOP_RUNTIME_STATE_DIR="$WORK/run"
+export PROKOP_UCI_SAVEDIR="$WORK/uci-save"
 export STATE="$WORK/state"
 
 # The restore guard, validation and the history are recorded, not run; no
@@ -60,7 +60,7 @@ cat > "$WORK/bin/nft" <<'STUB'
 #!/bin/sh
 exit 1
 STUB
-cat > "$WORK/bin/forkop" <<'STUB'
+cat > "$WORK/bin/prokop" <<'STUB'
 #!/bin/sh
 echo test
 STUB
@@ -70,11 +70,11 @@ echo "reload:$*" >> "$STATE/events"
 [ "${FAIL_RELOAD:-0}" = 1 ] && exit 1
 exit 0
 STUB
-chmod +x "$WORK/bin/ucode" "$WORK/bin/nft" "$WORK/bin/forkop" "$WORK/reload"
+chmod +x "$WORK/bin/ucode" "$WORK/bin/nft" "$WORK/bin/prokop" "$WORK/reload"
 
-config() { printf "config settings 'settings'\n\toption dns_server '1.1.1.1'\n\toption marker '%s'\n" "$1" > "$FORKOP_CONFIG_FILE"; }
-marker() { grep -o "marker '[a-z0-9]*'" "$FORKOP_CONFIG_FILE" | sed "s/marker '\(.*\)'/\1/"; }
-hash() { sha256sum "$FORKOP_CONFIG_FILE" | cut -d' ' -f1; }
+config() { printf "config settings 'settings'\n\toption dns_server '1.1.1.1'\n\toption marker '%s'\n" "$1" > "$PROKOP_CONFIG_FILE"; }
+marker() { grep -o "marker '[a-z0-9]*'" "$PROKOP_CONFIG_FILE" | sed "s/marker '\(.*\)'/\1/"; }
+hash() { sha256sum "$PROKOP_CONFIG_FILE" | cut -d' ' -f1; }
 # snapshots.uc <args>: the answer in result.json, the exit status in $code.
 run() {
   : > "$STATE/events"
@@ -84,7 +84,7 @@ run() {
 field() { node -e 'const r=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));let v=r;for(const k of process.argv[2].split("."))v=v==null?v:v[k];console.log(v===undefined||v===null?"":v)' "$WORK/result.json" "$1"; }
 answer() { tr -d '\n' < "$WORK/result.json"; }
 events() { tr '\n' ' ' < "$STATE/events"; }
-lkg() { cat "$FORKOP_SNAPSHOT_DIR/last-known-working"; }
+lkg() { cat "$PROKOP_SNAPSHOT_DIR/last-known-working"; }
 # What the store holds, from the list the UI reads: "<total> <manual>".
 store() {
   "$REAL_UCODE" -L "$LIB" "$SCRIPT" list |
@@ -94,8 +94,8 @@ manual_ids() {
   "$REAL_UCODE" -L "$LIB" "$SCRIPT" list |
     node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).filter(x=>x.kind==="manual").map(x=>x.id).sort().join(" ")))'
 }
-exists() { [ -f "$FORKOP_SNAPSHOT_DIR/$1.json" ]; }
-holds() { grep -q "marker '$2'" "$FORKOP_SNAPSHOT_DIR/$1.json"; }
+exists() { [ -f "$PROKOP_SNAPSHOT_DIR/$1.json" ]; }
+holds() { grep -q "marker '$2'" "$PROKOP_SNAPSHOT_DIR/$1.json"; }
 
 # 1. Manual snapshots stop at RETENTION-2 = 8; the refusal names the limit
 #    and changes nothing.
@@ -132,7 +132,7 @@ config a6; run restore "$target"
   fail "restore next to 8 manual snapshots and LKG: $(answer)"
 grep -q '^health:restore:success$' "$STATE/events" || fail "the restore was not recorded: $(events)"
 pre=""
-for file in "$FORKOP_SNAPSHOT_DIR"/*.json; do
+for file in "$PROKOP_SNAPSHOT_DIR"/*.json; do
   grep -q '"reason": *"pre-restore"' "$file" && pre="$(basename "$file" .json)"
 done
 [ -n "$pre" ] && holds "$pre" a6 || fail "no pre-restore snapshot of the replaced configuration"
@@ -166,9 +166,9 @@ ok "autotune next to 8 manual snapshots: applied, confirmed and rolled back"
 run restore nosuch
 [ "$(field status)" = failed ] && [ "$(field reason)" = invalid_snapshot ] || fail "restore of a missing snapshot: $(answer)"
 [ ! -s "$STATE/events" ] || fail "a refused restore was recorded or started: $(events)"
-mv "$FORKOP_CONFIG_FILE" "$WORK/config.saved"
+mv "$PROKOP_CONFIG_FILE" "$WORK/config.saved"
 run restore "$before_autotune"
-mv "$WORK/config.saved" "$FORKOP_CONFIG_FILE"
+mv "$WORK/config.saved" "$PROKOP_CONFIG_FILE"
 [ "$(field status)" = failed ] && [ "$(field reason)" = config_unavailable ] || fail "restore without a configuration: $(answer)"
 [ ! -s "$STATE/events" ] || fail "a refused restore was recorded or started: $(events)"
 config a8; export FAIL_RELOAD=1; run restore "$before_autotune"; unset FAIL_RELOAD
@@ -189,8 +189,8 @@ ok "a manual snapshot below the cap is taken; LKG stays"
 
 # 4. Upgrade: 10 manual snapshots taken before the cap, the newest of them
 #    the last-known-working one. Nothing is removed; safety operations work.
-export FORKOP_SNAPSHOT_DIR="$WORK/legacy-snapshots"
-node - "$FORKOP_SNAPSHOT_DIR" <<'JS'
+export PROKOP_SNAPSHOT_DIR="$WORK/legacy-snapshots"
+node - "$PROKOP_SNAPSHOT_DIR" <<'JS'
 const fs = require('node:fs');
 const crypto = require('node:crypto');
 const dir = process.argv[2];
@@ -199,7 +199,7 @@ for (let i = 1; i <= 10; i++) {
   const content = `config settings 'settings'\n\toption dns_server '1.1.1.1'\n\toption marker 'm${i}'\n`;
   const id = `${1700000000 + i}_${i}`;
   const snapshot = { id, created_at: 1700000000 + i, kind: 'manual', reason: 'manual',
-    config_hash: crypto.createHash('sha256').update(content).digest('hex'), forkop_version: 'old', content };
+    config_hash: crypto.createHash('sha256').update(content).digest('hex'), prokop_version: 'old', content };
   fs.writeFileSync(`${dir}/${id}.json`, `${JSON.stringify(snapshot)}\n`, { mode: 0o600 });
 }
 fs.writeFileSync(`${dir}/last-known-working`, `${1700000000 + 10}_10\n`);
@@ -269,10 +269,10 @@ ok "upgrade with 10 manual snapshots: the refusal counts them until three are de
 #    roll back. Automatic snapshots taken meanwhile (a lifecycle reload
 #    during the verification, Save & Apply) rotate without it, also next to
 #    8 manual snapshots; once the record is decided it rotates as well.
-export FORKOP_SNAPSHOT_DIR="$WORK/autotune-snapshots"
+export PROKOP_SNAPSHOT_DIR="$WORK/autotune-snapshots"
 apply_record() { # apply_record <phase> <before-autotune snapshot> [more JSON members]
   printf '{"phase":"%s","mutation":{"section":"Dpi","option":"nfqws_opt","from":"a","to":"b"},"pre_snapshot":"%s"%s}\n' \
-    "$1" "$2" "${3:-}" > "$FORKOP_AUTOTUNE_APPLY_STATE"
+    "$1" "$2" "${3:-}" > "$PROKOP_AUTOTUNE_APPLY_STATE"
 }
 for n in 1 2 3 4 5 6 7 8; do config "m$n"; run create manual; done
 manual_before="$(manual_ids)"
@@ -306,12 +306,12 @@ for phase in verifying applied needs_attention failed; do
       fail "an automatic snapshot pushed out the before-autotune snapshot of a record in phase $phase: $(answer), store $(store)"
   done
 done
-cp "$WORK/candidate" "$FORKOP_CONFIG_FILE"
+cp "$WORK/candidate" "$PROKOP_CONFIG_FILE"
 run confirm-working autotune "$before_autotune"
 [ "$(field status)" = confirmed ] && exists "$before_autotune" || fail "confirmation after the rotation: $(answer)"
 apply_record applied "$before_autotune"
 config v-edit; run create automatic
-cp "$WORK/candidate" "$FORKOP_CONFIG_FILE"
+cp "$WORK/candidate" "$PROKOP_CONFIG_FILE"
 run restore "$before_autotune" "$(hash)"
 [ "$(field status)" = success ] && [ "$(marker)" = base ] && [ "$(lkg)" = "$before_autotune" ] ||
   fail "operator rollback of the applied candidate after the rotation: $(answer)"
@@ -329,16 +329,16 @@ for phase in rolled_back stale no_change_required failed; do
   [ "$(field status)" = created ] && ! exists "$old" ||
     fail "the before-autotune snapshot of a decided record (phase $phase) did not rotate: store $(store)"
 done
-printf '{"phase":"applied","mutation":null,"pre_snapshot":"%s"}\n' "$(lkg)" > "$FORKOP_AUTOTUNE_APPLY_STATE"
+printf '{"phase":"applied","mutation":null,"pre_snapshot":"%s"}\n' "$(lkg)" > "$PROKOP_AUTOTUNE_APPLY_STATE"
 config f1; run create automatic; old="$(field snapshot.id)"
-printf '{"phase":"verifying","mutation":null,"pre_snapshot":"%s"}\n' "$old" > "$FORKOP_AUTOTUNE_APPLY_STATE"
+printf '{"phase":"verifying","mutation":null,"pre_snapshot":"%s"}\n' "$old" > "$PROKOP_AUTOTUNE_APPLY_STATE"
 config f2; run create automatic
 [ "$(field status)" = created ] && ! exists "$old" || fail "a record without a mutation kept a snapshot: store $(store)"
-echo 'not json' > "$FORKOP_AUTOTUNE_APPLY_STATE"
+echo 'not json' > "$PROKOP_AUTOTUNE_APPLY_STATE"
 config f3; run create automatic
 [ "$(field status)" = created ] || fail "an unreadable apply record refused an automatic snapshot: $(answer)"
 [ "$(manual_ids)" = "$manual_before" ] || fail "rotation removed a manual snapshot"
-rm -f "$FORKOP_AUTOTUNE_APPLY_STATE"
+rm -f "$PROKOP_AUTOTUNE_APPLY_STATE"
 ok "the before-autotune snapshot of a decided record, or of one without a mutation, rotates like the others"
 
 # 6. Save & Apply's snapshot of the configuration before its change (create

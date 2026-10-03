@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# What a running Forkop writes to /etc/config/dhcp (UC-236).
+# What a running Prokop writes to /etc/config/dhcp (UC-236).
 #
 # dnsmasq builds its configuration from UCI at every start, so forwarding to
 # sing-box (server=127.0.0.42, noresolv, cachesize=0) has to be committed
 # there. It is written only when something changes: a configure of a dnsmasq
-# that already forwards to sing-box, a restore or failsafe without Forkop
+# that already forwards to sing-box, a restore or failsafe without Prokop
 # settings and a kill-switch refresh that changes nothing write nothing. A
 # restore puts back exactly what the configure found, options that were not
 # set included. The edit works on a private copy of the committed file, so
@@ -23,7 +23,7 @@ set -euo pipefail
 # @type[n] references).
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 APPLY="$LIB/dns/apply.uc"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
@@ -44,9 +44,9 @@ printf '#!/bin/sh\nprintf "%%s\\n" "$*" >>"%s"\n' "$WORK/dnsmasq.log" >"$WORK/bi
 chmod 0755 "$WORK/bin/logger" "$WORK/bin/dnsmasq-init"
 export PATH="$WORK/bin:$PATH"
 export DNSMASQ_INIT="$WORK/bin/dnsmasq-init"
-export FORKOP_RUNTIME_STATE_DIR="$WORK/run"
+export PROKOP_RUNTIME_STATE_DIR="$WORK/run"
 export KILLSWITCH_STATE_DIR="$WORK/killswitch"
-export FORKOP_CONFIG_NAME=forkop
+export PROKOP_CONFIG_NAME=prokop
 export SB_DNS_INBOUND_ADDRESS=127.0.0.42
 
 # dns_apply <mode> [force]: the exit status in STATUS.
@@ -61,13 +61,13 @@ restarted() { grep -Fxq restart "$WORK/dnsmasq.log"; }
 # ---- 1. the UCI fixture --------------------------------------------------------
 
 STATE="$WORK/uci.state"
-export FORKOP_UCI_STATE_FILE="$STATE"
-export FORKOP_UCI_LOG_FILE="$WORK/uci.log"
-export FORKOP_DNSMASQ_CONFIG_FILE="$WORK/no-dhcp"
+export PROKOP_UCI_STATE_FILE="$STATE"
+export PROKOP_UCI_LOG_FILE="$WORK/uci.log"
+export PROKOP_DNSMASQ_CONFIG_FILE="$WORK/no-dhcp"
 
-# fixture <line...>: the dhcp state, with Forkop's settings.
+# fixture <line...>: the dhcp state, with Prokop's settings.
 fixture() {
-  printf '%s\n' "forkop.settings=settings" "$@" >"$STATE"
+  printf '%s\n' "prokop.settings=settings" "$@" >"$STATE"
   : >"$WORK/uci.log"
 }
 committed() { grep -Fxq 'commit dhcp' "$WORK/uci.log"; }
@@ -77,8 +77,8 @@ complete=(
   'dhcp.@dnsmasq[0].server=127.0.0.42'
   'dhcp.@dnsmasq[0].noresolv=1'
   'dhcp.@dnsmasq[0].cachesize=0'
-  'dhcp.@dnsmasq[0].forkop_server=1.1.1.1'
-  'dhcp.@dnsmasq[0].forkop_unset=noresolv cachesize'
+  'dhcp.@dnsmasq[0].prokop_server=1.1.1.1'
+  'dhcp.@dnsmasq[0].prokop_unset=noresolv cachesize'
 )
 
 # a. Nothing changes, nothing is written.
@@ -91,8 +91,8 @@ fixture 'dhcp.@dnsmasq[0].server=1.1.1.1'
 for mode in "restore force" failsafe-restore killswitch-refresh; do
   # shellcheck disable=SC2086
   dns_apply $mode
-  [ "$STATUS" = 0 ] || fail "$mode without Forkop settings failed"
-  committed && fail "$mode without Forkop settings committed dhcp"
+  [ "$STATUS" = 0 ] || fail "$mode without Prokop settings failed"
+  committed && fail "$mode without Prokop settings committed dhcp"
 done
 ok "dhcp settings that do not change are not written"
 
@@ -119,9 +119,9 @@ round_trip 'dhcp.@dnsmasq[0].noresolv=1' 'dhcp.@dnsmasq[0].cachesize=0'
 ok "a restore puts back the dnsmasq settings as the configure found them, unset options included"
 
 # c. Releases before UC-236 kept no record of an unset option: the dnsmasq
-# defaults undo the Forkop values.
+# defaults undo the Prokop values.
 fixture 'dhcp.@dnsmasq[0].server=127.0.0.42' 'dhcp.@dnsmasq[0].noresolv=1' 'dhcp.@dnsmasq[0].cachesize=0' \
-  'dhcp.@dnsmasq[0].forkop_server=1.1.1.1'
+  'dhcp.@dnsmasq[0].prokop_server=1.1.1.1'
 dns_apply restore force
 grep -Fxq 'dhcp.@dnsmasq[0].noresolv=0' "$STATE" && grep -Fxq 'dhcp.@dnsmasq[0].cachesize=150' "$STATE" &&
   grep -Fxq 'dhcp.@dnsmasq[0].server=1.1.1.1' "$STATE" ||
@@ -160,7 +160,7 @@ grep -q 'no dnsmasq section.*not forwarded' "$WORK/syslog" || fail "configure wi
 rm -f "$WORK/killswitch/dns-blocked.servers" "$WORK/killswitch/dnsmasq.servers"
 ok "without a dnsmasq section nothing is written and nothing fails"
 
-unset FORKOP_UCI_STATE_FILE FORKOP_UCI_LOG_FILE
+unset PROKOP_UCI_STATE_FILE PROKOP_UCI_LOG_FILE
 
 # ---- 2. a dhcp file through the uci CLI ---------------------------------------
 
@@ -173,8 +173,8 @@ fi
 
 mkdir -p "$WORK/etc" "$WORK/host-uci"
 DHCP="$WORK/etc/dhcp"
-export FORKOP_DNSMASQ_CONFIG_FILE="$DHCP"
-# The CLI as Forkop runs it: every call is logged, and $WORK/host-uci stands
+export PROKOP_DNSMASQ_CONFIG_FILE="$DHCP"
+# The CLI as Prokop runs it: every call is logged, and $WORK/host-uci stands
 # in for /tmp/.uci, which the real CLI merges into any commit of a package.
 # A read runs $WORK/foreign-hook first when it exists, with the directory of
 # the private copy (-c) the read is in.
@@ -187,7 +187,7 @@ fi
 exec "$UCI_REAL" -p "$WORK/host-uci" "\$@"
 SH
 chmod 0755 "$WORK/bin/uci"
-export FORKOP_UCI_CLI="$WORK/bin/uci"
+export PROKOP_UCI_CLI="$WORK/bin/uci"
 host_uci() { "$UCI_REAL" -q -c "$WORK/etc" -t "$WORK/host-uci" "$@"; }
 options() { "$UCI_REAL" -q -c "$(dirname "$1")" show "$(basename "$1")" | sort; }
 
@@ -212,7 +212,7 @@ cp "$WORK/dhcp.orig" "$DHCP"
 chmod 0644 "$DHCP"
 options "$DHCP" >"$WORK/options.orig"
 
-# Changes staged with `uci set` and never committed: one of an option Forkop
+# Changes staged with `uci set` and never committed: one of an option Prokop
 # reads, one elsewhere.
 host_uci set dhcp.@dnsmasq[0].cachesize=5000
 host_uci set dhcp.lan.leasetime=1h
@@ -226,7 +226,7 @@ restarted || fail "configure did not restart dnsmasq"
   fail "configure did not forward dnsmasq to sing-box: $(cat "$DHCP")"
 grep -q "leasetime '1h'" "$DHCP" && fail "configure committed a change someone else staged"
 grep -q "5000" "$DHCP" && fail "configure saved a value someone else staged"
-[ "$(host_uci get dhcp.@dnsmasq[0].forkop_cachesize)" = 1000 ] || fail "configure did not keep the committed cache size"
+[ "$(host_uci get dhcp.@dnsmasq[0].prokop_cachesize)" = 1000 ] || fail "configure did not keep the committed cache size"
 cmp -s "$WORK/staged.orig" "$WORK/host-uci/dhcp" || fail "configure changed what someone else staged"
 grep -q 'commit dhcp\| dhcp\.' "$WORK/uci.argv" && fail "configure went through the live dhcp package"
 [ "$(stat -c %a "$DHCP")" = 644 ] || fail "configure changed the mode of the dhcp file"
@@ -388,7 +388,7 @@ dns_apply configure force
 [ "$(foreign_value)" = c1 ] || fail "a configure lost a dhcp change committed during it: $(cat "$DHCP")"
 [ "$(host_uci get dhcp.@dnsmasq[0].server)" = 127.0.0.42 ] || fail "a configure during which dhcp was committed did not save its own settings"
 restarted || fail "a configure during which dhcp was committed did not restart dnsmasq"
-grep -q 'changed while Forkop edited' "$WORK/syslog" || fail "a configure that started over did not say why"
+grep -q 'changed while Prokop edited' "$WORK/syslog" || fail "a configure that started over did not say why"
 foreign r 1
 dns_apply restore force
 [ "$STATUS" = 0 ] && [ ! -e "$WORK/foreign.blocked" ] || fail "a restore during which dhcp was committed failed or blocked the commit"

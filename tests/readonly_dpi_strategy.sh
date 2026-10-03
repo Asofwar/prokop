@@ -4,11 +4,11 @@ set -eu
 # strategy id or "default", custom flag) without ever returning the raw
 # nfqws_opt / nfqws2_opt / byedpi_cmd_opts text.
 ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
-LIB="$ROOT/forkop/files/usr/lib"
+LIB="$ROOT/prokop/files/usr/lib"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT HUP INT TERM
 
-cat >"$WORK_DIR/forkop" <<'CONF'
+cat >"$WORK_DIR/prokop" <<'CONF'
 config settings 'settings'
 config section 'youtube'
 config section 'spaces'
@@ -19,28 +19,28 @@ config section 'bye'
 config section 'vpn'
 CONF
 cat >"$WORK_DIR/state" <<'STATE'
-forkop.settings=settings
-forkop.youtube=section
-forkop.youtube.action=zapret
-forkop.youtube.nfqws_opt=--filter-tcp=443 --dpi-desync=multisplit --dpi-desync-split-pos=1,midsld
-forkop.spaces=section
-forkop.spaces.action=zapret
-forkop.spaces.nfqws_opt=  --filter-tcp=443   --dpi-desync=multidisorder --dpi-desync-split-pos=1,midsld  
-forkop.plain=section
-forkop.plain.action=zapret
-forkop.custom=section
-forkop.custom.action=zapret
-forkop.custom.nfqws_opt=--filter-tcp=443 --dpi-desync=fake --hostlist=/etc/private-secret-list.txt
-forkop.z2=section
-forkop.z2.action=zapret2
-forkop.z2.nfqws2_opt=--lua-desync=private-z2-secret
-forkop.bye=section
-forkop.bye.action=byedpi
-forkop.vpn=section
-forkop.vpn.action=vpn
+prokop.settings=settings
+prokop.youtube=section
+prokop.youtube.action=zapret
+prokop.youtube.nfqws_opt=--filter-tcp=443 --dpi-desync=multisplit --dpi-desync-split-pos=1,midsld
+prokop.spaces=section
+prokop.spaces.action=zapret
+prokop.spaces.nfqws_opt=  --filter-tcp=443   --dpi-desync=multidisorder --dpi-desync-split-pos=1,midsld  
+prokop.plain=section
+prokop.plain.action=zapret
+prokop.custom=section
+prokop.custom.action=zapret
+prokop.custom.nfqws_opt=--filter-tcp=443 --dpi-desync=fake --hostlist=/etc/private-secret-list.txt
+prokop.z2=section
+prokop.z2.action=zapret2
+prokop.z2.nfqws2_opt=--lua-desync=private-z2-secret
+prokop.bye=section
+prokop.bye.action=byedpi
+prokop.vpn=section
+prokop.vpn.action=vpn
 STATE
 
-FORKOP_CONFIG="$WORK_DIR/forkop" FORKOP_UCI_STATE_FILE="$WORK_DIR/state" \
+PROKOP_CONFIG="$WORK_DIR/prokop" PROKOP_UCI_STATE_FILE="$WORK_DIR/state" \
   ucode -L "$LIB" "$LIB/diagnostics/runtime.uc" get-readonly-config-sections >"$WORK_DIR/sections.json"
 
 node - "$WORK_DIR/sections.json" <<'NODE'

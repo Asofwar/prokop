@@ -115,7 +115,7 @@ const edits = [
 // Page code reads whole sections too (uci.get without an option), which
 // merges the staged edits into the loaded values in place.
 function readWholeSections(env) {
-  for (const sid of Object.keys(env.uci.state.values.forkop)) env.uci.get('forkop', sid);
+  for (const sid of Object.keys(env.uci.state.values.prokop)) env.uci.get('prokop', sid);
 }
 
 const failures = [];

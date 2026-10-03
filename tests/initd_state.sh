@@ -2,17 +2,17 @@
 set -eo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-INITD_UC="$FORKOP_LIB/service/initd.uc"
-STATE_UC="$FORKOP_LIB/service/state.uc"
-INITD="$ROOT_DIR/forkop/files/etc/init.d/forkop"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+INITD_UC="$PROKOP_LIB/service/initd.uc"
+STATE_UC="$PROKOP_LIB/service/state.uc"
+INITD="$ROOT_DIR/prokop/files/etc/init.d/prokop"
 WORK_DIR="$(mktemp -d)"
 # Not the host's explicit stop: it holds reloads off (UC-056).
-export FORKOP_STOP_REQUESTED_FILE="$WORK_DIR/stop.requested"
-# Nor the host's explicit start: a Forkop not started since boot holds them
+export PROKOP_STOP_REQUESTED_FILE="$WORK_DIR/stop.requested"
+# Nor the host's explicit start: a Prokop not started since boot holds them
 # off too (D-15(a)). Here it was started, as by the start in progress below.
-export FORKOP_EXPLICIT_START_FILE="$WORK_DIR/start.explicit"
-: >"$FORKOP_EXPLICIT_START_FILE"
+export PROKOP_EXPLICIT_START_FILE="$WORK_DIR/start.explicit"
+: >"$PROKOP_EXPLICIT_START_FILE"
 
 cleanup() {
   rm -rf "$WORK_DIR"
@@ -25,13 +25,13 @@ fail() {
 }
 
 initd_ucode() {
-  ucode -L "$FORKOP_LIB" "$INITD_UC" "$@"
+  ucode -L "$PROKOP_LIB" "$INITD_UC" "$@"
 }
 
 # shellcheck source=tests/helpers/wait.sh
 source "$ROOT_DIR/tests/helpers/wait.sh"
 
-config_file="$WORK_DIR/forkop"
+config_file="$WORK_DIR/prokop"
 guard_file="$WORK_DIR/internal-config-change"
 sync_file="$WORK_DIR/service-triggers.sync"
 
@@ -98,7 +98,7 @@ if initd_ucode initd-should-queue-config-change-reload on_config_change on_confi
 fi
 
 pending_file="$WORK_DIR/reload.pending"
-if FORKOP_PENDING_RELOAD_FILE="$pending_file" \
+if PROKOP_PENDING_RELOAD_FILE="$pending_file" \
   initd_ucode reload-begin-fixture on_config_change 123 0 1 start >/dev/null 2>&1; then
   fail "queued config-change reload should not run immediately while service is starting"
 fi
@@ -108,7 +108,7 @@ grep -Fq 'reason=on_config_change' "$pending_file" ||
   fail "pending reload should preserve config-change reason"
 
 rm -f "$pending_file"
-if FORKOP_PENDING_RELOAD_FILE="$pending_file" \
+if PROKOP_PENDING_RELOAD_FILE="$pending_file" \
   initd_ucode reload-begin-fixture pending 123 1 1 start >/dev/null 2>&1; then
   fail "pending reload should not run while another service action is active"
 fi
@@ -142,15 +142,15 @@ fi
 
 retry_pid_file="$WORK_DIR/start-retry.pid"
 retry_call_file="$WORK_DIR/start-retry.called"
-retry_service="$WORK_DIR/forkop-init"
+retry_service="$WORK_DIR/prokop-init"
 cat >"$retry_service" <<EOF
 #!/bin/sh
 printf '%s\n' "\$1" >>"$retry_call_file"
 EOF
 chmod +x "$retry_service"
-FORKOP_SERVICE_INIT="$retry_service" \
-  FORKOP_START_RETRY_PID_FILE="$retry_pid_file" \
-  FORKOP_START_RETRY_DELAY_SECONDS=1 \
+PROKOP_SERVICE_INIT="$retry_service" \
+  PROKOP_START_RETRY_PID_FILE="$retry_pid_file" \
+  PROKOP_START_RETRY_DELAY_SECONDS=1 \
   initd_ucode schedule-start-retry >/dev/null ||
   fail "failed start should schedule an automatic retry"
 [ -s "$retry_pid_file" ] ||
@@ -278,7 +278,7 @@ fi
 if grep -Fq 'runtime_is_running' "$INITD"; then
   fail "init.d must not keep shell runtime status decisions"
 fi
-if grep -E -n 'FORKOP_(CONFIG_FILE|RELOAD_LOCK_DIR|RUNTIME_STATE_DIR|PENDING_RELOAD_FILE|SERVICE_TRIGGER_SYNC_FILE|INTERNAL_CONFIG_TRIGGER_GUARD|CONFIG_CHANGE_REASON|BIN|SERVICE_INIT)=' "$INITD" >/dev/null 2>&1; then
+if grep -E -n 'PROKOP_(CONFIG_FILE|RELOAD_LOCK_DIR|RUNTIME_STATE_DIR|PENDING_RELOAD_FILE|SERVICE_TRIGGER_SYNC_FILE|INTERNAL_CONFIG_TRIGGER_GUARD|CONFIG_CHANGE_REASON|BIN|SERVICE_INIT)=' "$INITD" >/dev/null 2>&1; then
   fail "init.d must not pass internal orchestration paths through shell env"
 fi
 if grep -n -E 'require\("uci"\)\.cursor|uci -q|uci", "-q"' "$INITD_UC" >/dev/null 2>&1; then
@@ -287,10 +287,10 @@ fi
 if grep -E -n '(^|[[:space:]])config_(load|get|get_bool|set)[[:space:]]' "$INITD" >/dev/null 2>&1; then
   fail "init.d must not read UCI directly"
 fi
-if grep -Fq 'FORKOP_STATE_UC' "$INITD" || grep -Fq 'FORKOP_UI_UC' "$INITD" || grep -Fq 'FORKOP_STATUS_UC' "$INITD"; then
+if grep -Fq 'PROKOP_STATE_UC' "$INITD" || grep -Fq 'PROKOP_UI_UC' "$INITD" || grep -Fq 'PROKOP_STATUS_UC' "$INITD"; then
   fail "init.d must not orchestrate state/UI/status modules directly"
 fi
-if grep -Fq 'procd_set_param command "$FORKOP_BIN" start' "$INITD"; then
+if grep -Fq 'procd_set_param command "$PROKOP_BIN" start' "$INITD"; then
   fail "init.d must not hand the one-shot start operation to procd as a daemon"
 fi
 if grep -Fq 'initd-should-' "$STATE_UC"; then

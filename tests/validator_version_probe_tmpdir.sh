@@ -4,13 +4,13 @@ set -eu
 # The requirements check (config/validator.uc check-requirements, run by
 # every start) reads `sing-box version` through a temporary file, with a
 # bound on how long sing-box may take. The file was a fixed name in /tmp,
-# /tmp/forkop-validator-version.<pid>: a name others can guess, and outside
+# /tmp/prokop-validator-version.<pid>: a name others can guess, and outside
 # the directory a test gives a run in TMPDIR, so the host check of
 # tests/run.sh saw it appear and go when runs overlapped. The file is now
 # made by mktemp in TMPDIR (/tmp when it is unset, as on OpenWrt), and is
 # removed after the probe.
 ROOT="$(cd -- "$(dirname -- "$0")/.." && pwd)"
-LIB="$ROOT/forkop/files/usr/lib"
+LIB="$ROOT/prokop/files/usr/lib"
 WORK="$(mktemp -d)"
 trap 'rm -rf "${WORK:?}"' EXIT HUP INT TERM
 fail() {
@@ -41,8 +41,8 @@ chmod 0755 "$WORK/bin/sing-box" "$WORK/bin/logger" "$WORK/bin/nft"
 check_requirements() {
   rm -f "$WORK/probe-target" "$WORK/logger.log"
   PATH="$WORK/bin:$PATH" PROBE_TARGET="$WORK/probe-target" LOGGER_LOG="$WORK/logger.log" \
-    FORKOP_UCI_STATE_FILE="$WORK/uci.state" FORKOP_UCI_LOG_FILE="$WORK/uci.log" \
-    FORKOP_RUNTIME_STATE_DIR="$WORK/run" TMPDIR="$1" \
+    PROKOP_UCI_STATE_FILE="$WORK/uci.state" PROKOP_UCI_LOG_FILE="$WORK/uci.log" \
+    PROKOP_RUNTIME_STATE_DIR="$WORK/run" TMPDIR="$1" \
     ucode -L "$LIB" "$LIB/config/validator.uc" check-requirements > /dev/null 2>&1 || true
 }
 
@@ -64,8 +64,8 @@ ok "the sing-box version is read through a file that mktemp makes in TMPDIR and 
 # must not reach the output of check-requirements.
 rm -f "$WORK/probe-target" "$WORK/logger.log"
 PATH="$WORK/bin:$PATH" PROBE_TARGET="$WORK/probe-target" LOGGER_LOG="$WORK/logger.log" \
-  FORKOP_UCI_STATE_FILE="$WORK/uci.state" FORKOP_UCI_LOG_FILE="$WORK/uci.log" \
-  FORKOP_RUNTIME_STATE_DIR="$WORK/run" TMPDIR="$WORK/missing" \
+  PROKOP_UCI_STATE_FILE="$WORK/uci.state" PROKOP_UCI_LOG_FILE="$WORK/uci.log" \
+  PROKOP_RUNTIME_STATE_DIR="$WORK/run" TMPDIR="$WORK/missing" \
   ucode -L "$LIB" "$LIB/config/validator.uc" check-requirements > "$WORK/missing.out" 2> "$WORK/missing.err" || true
 [ ! -e "$WORK/probe-target" ] || fail "sing-box was probed although mktemp could not make the file"
 ! grep -q mktemp "$WORK/missing.out" "$WORK/missing.err" ||

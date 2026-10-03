@@ -1,44 +1,44 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# A component action restarts Forkop after the change; its own stop for that
+# A component action restarts Prokop after the change; its own stop for that
 # restart is no stop by the user (UC-235, D-15(a)).
 #
-# Whether the user stopped Forkop while the change ran is read from the stop
-# request (stop.requested, by=<source>). The action restarted Forkop through
+# Whether the user stopped Prokop while the change ran is read from the stop
+# request (stop.requested, by=<source>). The action restarted Prokop through
 # `init.d restart`, whose stop carries no source and is therefore recorded as
 # the user's. A restart that failed before its start removed that record
-# read as a stop by the user: its stop failed (`forkop stop` exits 1, for
+# read as a stop by the user: its stop failed (`prokop stop` exits 1, for
 # example when the dnsmasq restore fails on a full overlay; init.d then exits
 # before the start), or its start was deferred for reload.lock past the wait.
-# The provider change then reported success with Forkop down and shown as
+# The provider change then reported success with Prokop down and shown as
 # "stopped by user", the failed sing-box change logged nothing, and Direct
-# Proxy kept the new setting without its rollback. The restart is Forkop's
+# Proxy kept the new setting without its rollback. The restart is Prokop's
 # own stop for the change (by=component) followed by an awaited start: such
 # failures stay failures, and a stop by the user still holds.
 #
 # That stop and that start are two init.d calls, each under procd's lock. A
-# user's Stop that waited for the lock behind Forkop's own stop ran between
+# user's Stop that waited for the lock behind Prokop's own stop ran between
 # them, after the action had read the stop request, and the start took the
-# user's request for the one before it: it removed it and started Forkop
-# against the user's stop. The start now compares with Forkop's own stop
-# request (FORKOP_START_AFTER_STOP), and any stop recorded after it wins.
-# So does every other start after Forkop's own stop: the start after a failed
+# user's request for the one before it: it removed it and started Prokop
+# against the user's stop. The start now compares with Prokop's own stop
+# request (PROKOP_START_AFTER_STOP), and any stop recorded after it wins.
+# So does every other start after Prokop's own stop: the start after a failed
 # sing-box change, after a failed upgrade and the start that puts back the
-# service state of a package set (restore_forkop_opkg_service). Each checked
+# service state of a package set (restore_prokop_opkg_service). Each checked
 # for the user's stop and then started without that request: a user's Stop
 # that got procd's lock right before the start was taken for the stop before
 # it and undone.
 #
 # The init script is the real one behind an rc.common stand-in that holds fd
-# 1000 like procd.sh; service/initd.uc is the real one; its backend `forkop`
+# 1000 like procd.sh; service/initd.uc is the real one; its backend `prokop`
 # fails or succeeds on demand. The component action is components/action.uc
 # with its dispatch replaced by the scenarios below; only its temporary
 # directory, the sing-box service of the host and UCI are test doubles.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
-REAL_INITD="$ROOT_DIR/forkop/files/etc/init.d/forkop"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
+REAL_INITD="$ROOT_DIR/prokop/files/etc/init.d/prokop"
 REAL_UCODE="$(command -v ucode)"
 ACTION_UC="${COMPONENT_RESTART_ACTION_UC:-$LIB/components/action.uc}"
 WORK_DIR="$(mktemp -d)"
@@ -51,11 +51,11 @@ WORK_DIR="$(mktemp -d)"
 # "$1"; rm -f .../start-retry.pid; exec init retry_start_on_wan_up' sh N`.
 kill_retry_workers() {
   local pid
-  for pid in $(pgrep -f "${WORK_DIR:?}/run/forkop/start-retry.pid" 2>/dev/null); do
+  for pid in $(pgrep -f "${WORK_DIR:?}/run/prokop/start-retry.pid" 2>/dev/null); do
     owned_kill_children KILL "$pid"
     owned_kill KILL "$pid" || true
   done
-  rm -f "${WORK_DIR:?}/run/forkop/start-retry.pid"
+  rm -f "${WORK_DIR:?}/run/prokop/start-retry.pid"
 }
 
 HOLDER=""
@@ -70,7 +70,7 @@ release_reload_lock() {
 cleanup() {
   local owner
   release_reload_lock
-  owner="$("$REAL_UCODE" -L "$LIB" "$LIB/service/state.uc" runtime-dir-lock-owner "$FORKOP_RELOAD_LOCK_DIR" 2>/dev/null || true)"
+  owner="$("$REAL_UCODE" -L "$LIB" "$LIB/service/state.uc" runtime-dir-lock-owner "$PROKOP_RELOAD_LOCK_DIR" 2>/dev/null || true)"
   [ -z "$owner" ] || owned_kill KILL "$owner" || true
   kill_retry_workers
   pkill -KILL -f "${WORK_DIR:?}" 2>/dev/null || true
@@ -87,33 +87,33 @@ fail() {
   exit 1
 }
 
-mkdir -p "$WORK_DIR/bin" "$WORK_DIR/run/forkop" "$WORK_DIR/tmp"
-printf 'forkop.settings=settings\n' >"$WORK_DIR/uci.state"
+mkdir -p "$WORK_DIR/bin" "$WORK_DIR/run/prokop" "$WORK_DIR/tmp"
+printf 'prokop.settings=settings\n' >"$WORK_DIR/uci.state"
 
 export TMPDIR="$WORK_DIR/tmp"
 export PATH="$WORK_DIR/bin:$PATH"
 export TEST_WORK="$WORK_DIR" REAL_INITD REAL_UCODE
 export TEST_LIB="$LIB"
-export RC_PROCD_LOCK="$WORK_DIR/procd_forkop.lock"
-export FORKOP_LIB="$LIB"
-export FORKOP_BIN="$WORK_DIR/bin/forkop"
-export FORKOP_SERVICE_INIT="$WORK_DIR/bin/init"
-export FORKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/forkop.reload.lock"
-export FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/run/forkop"
-export FORKOP_PENDING_RELOAD_FILE="$WORK_DIR/run/forkop/reload.pending"
-export FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
-export FORKOP_INTERNAL_CONFIG_TRIGGER_GUARD="$WORK_DIR/run/internal-config-change"
-export FORKOP_MANAGED_UPGRADE_SING_BOX_MARKER="$WORK_DIR/run/managed-upgrade-sing-box"
-export FORKOP_SYSTEM_INFO_CACHE_FILE="$WORK_DIR/run/system-info.json"
-export FORKOP_OPKG_RECOVERY_DIR="$WORK_DIR/recovery"
+export RC_PROCD_LOCK="$WORK_DIR/procd_prokop.lock"
+export PROKOP_LIB="$LIB"
+export PROKOP_BIN="$WORK_DIR/bin/prokop"
+export PROKOP_SERVICE_INIT="$WORK_DIR/bin/init"
+export PROKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/prokop.reload.lock"
+export PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/run/prokop"
+export PROKOP_PENDING_RELOAD_FILE="$WORK_DIR/run/prokop/reload.pending"
+export PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
+export PROKOP_INTERNAL_CONFIG_TRIGGER_GUARD="$WORK_DIR/run/internal-config-change"
+export PROKOP_MANAGED_UPGRADE_SING_BOX_MARKER="$WORK_DIR/run/managed-upgrade-sing-box"
+export PROKOP_SYSTEM_INFO_CACHE_FILE="$WORK_DIR/run/system-info.json"
+export PROKOP_OPKG_RECOVERY_DIR="$WORK_DIR/recovery"
 export UPDATES_LOCK_DIR="$WORK_DIR/run/component-action.lock"
-export FORKOP_START_RETRY_DELAY_SECONDS=300
-export FORKOP_START_DEFERRED_RETRY_DELAY_SECONDS=300
-export FORKOP_START_RUNTIME_LOCK_WAIT_SECONDS=1
-export FORKOP_STOP_RUNTIME_LOCK_WAIT_SECONDS=1
-export FORKOP_START_WAIT_TIMEOUT_SECONDS=4
-export FORKOP_START_SETTLE_SECONDS=2
-export FORKOP_UI_ACTION_TRACKED=1
+export PROKOP_START_RETRY_DELAY_SECONDS=300
+export PROKOP_START_DEFERRED_RETRY_DELAY_SECONDS=300
+export PROKOP_START_RUNTIME_LOCK_WAIT_SECONDS=1
+export PROKOP_STOP_RUNTIME_LOCK_WAIT_SECONDS=1
+export PROKOP_START_WAIT_TIMEOUT_SECONDS=4
+export PROKOP_START_SETTLE_SECONDS=2
+export PROKOP_UI_ACTION_TRACKED=1
 
 # Nothing here may reach the host's syslog, nftables or init scripts.
 cat >"$WORK_DIR/bin/logger" <<'SH'
@@ -122,22 +122,22 @@ printf '%s\n' "$*" >>"$TEST_WORK/syslog"
 SH
 printf '#!/bin/sh\nexit 1\n' >"$WORK_DIR/bin/nft"
 
-# `forkop` behind initd.uc. start exits with start.status and brings the
+# `prokop` behind initd.uc. start exits with start.status and brings the
 # runtime up; with start.user-stop the user's Stop comes in while it runs.
 # stop takes the runtime down and exits with stop.status. With stray, a
-# sing-box that runs Forkop's configuration outside procd makes the
+# sing-box that runs Prokop's configuration outside procd makes the
 # ownership of the runtime ambiguous: service/lifecycle.uc refuses
-# Forkop's own stop (exit 2, nothing changed) unless it is the cleanup stop
-# of a Forkop already down for the change (FORKOP_STOP_CLEANUP=1), which
+# Prokop's own stop (exit 2, nothing changed) unless it is the cleanup stop
+# of a Prokop already down for the change (PROKOP_STOP_CLEANUP=1), which
 # stops the stray as the user's Stop does; the start fails while it runs.
-cat >"$WORK_DIR/bin/forkop" <<'SH'
+cat >"$WORK_DIR/bin/prokop" <<'SH'
 #!/bin/sh
 case "$1" in
   start)
     printf 'start\n' >>"$TEST_WORK/starts"
     if [ -e "$TEST_WORK/start.user-stop" ]; then
       rm -f "$TEST_WORK/start.user-stop"
-      env -u FORKOP_STOP_SOURCE "$FORKOP_SERVICE_INIT" stop >/dev/null 2>&1
+      env -u PROKOP_STOP_SOURCE "$PROKOP_SERVICE_INIT" stop >/dev/null 2>&1
       exit 0
     fi
     [ ! -e "$TEST_WORK/stray" ] || exit 1
@@ -146,8 +146,8 @@ case "$1" in
     exit "$status"
     ;;
   stop)
-    if [ -e "$TEST_WORK/stray" ] && [ "${FORKOP_STOP_SOURCE:-}" = component ] &&
-      [ "${FORKOP_STOP_CLEANUP:-}" != 1 ]; then
+    if [ -e "$TEST_WORK/stray" ] && [ "${PROKOP_STOP_SOURCE:-}" = component ] &&
+      [ "${PROKOP_STOP_CLEANUP:-}" != 1 ]; then
       exit 2
     fi
     rm -f "$TEST_WORK/stray" "$TEST_WORK/runtime.up"
@@ -160,18 +160,18 @@ esac
 exit 0
 SH
 
-# /etc/init.d/forkop as procd runs it: rc.common with fd 1000 open and
+# /etc/init.d/prokop as procd runs it: rc.common with fd 1000 open and
 # flocked; restart is the init script's own (rc.common's stop, then start).
 cat >"$WORK_DIR/bin/init" <<'SH'
 #!/bin/sh
 exec bash "$TEST_WORK/rc" "$@"
 SH
 #
-# The user's Stop alongside Forkop's own stop for the restart
-# (FORKOP_STOP_SOURCE=component): with user-stop.queued it is requested while
+# The user's Stop alongside Prokop's own stop for the restart
+# (PROKOP_STOP_SOURCE=component): with user-stop.queued it is requested while
 # that stop runs and waits for procd's lock behind it (LuCI's System >
-# Startup, `service forkop stop`); once it has the lock it takes
-# FORKOP_TEST_USER_STOP_DELAY before it records its request, as a slow router
+# Startup, `service prokop stop`); once it has the lock it takes
+# PROKOP_TEST_USER_STOP_DELAY before it records its request, as a slow router
 # does. With user-stop.after it runs right after that stop, before the
 # action goes on. With user-stop.before-start it gets procd's lock right
 # before the next start, after the action has checked for the user's stop.
@@ -181,30 +181,30 @@ action="$1"
 shift
 if [ "$action" = start ] && [ -e "$TEST_WORK/user-stop.before-start" ]; then
   rm -f "$TEST_WORK/user-stop.before-start"
-  env -u FORKOP_STOP_SOURCE -u FORKOP_STOP_CLEANUP -u FORKOP_START_REQUEST -u FORKOP_START_AFTER_STOP \
-    "$FORKOP_SERVICE_INIT" stop </dev/null >/dev/null 2>&1
+  env -u PROKOP_STOP_SOURCE -u PROKOP_STOP_CLEANUP -u PROKOP_START_REQUEST -u PROKOP_START_AFTER_STOP \
+    "$PROKOP_SERVICE_INIT" stop </dev/null >/dev/null 2>&1
   printf '%s\n' "$?" >"$TEST_WORK/user-stop.done"
 fi
 exec 1000>"$RC_PROCD_LOCK"
-[ -z "${FORKOP_TEST_USER_STOP_DELAY:-}" ] || printf '%s\n' "$$" >"$TEST_WORK/user-stop.waiting"
+[ -z "${PROKOP_TEST_USER_STOP_DELAY:-}" ] || printf '%s\n' "$$" >"$TEST_WORK/user-stop.waiting"
 flock 1000
-[ -z "${FORKOP_TEST_USER_STOP_DELAY:-}" ] || sleep "$FORKOP_TEST_USER_STOP_DELAY"
+[ -z "${PROKOP_TEST_USER_STOP_DELAY:-}" ] || sleep "$PROKOP_TEST_USER_STOP_DELAY"
 initscript="$REAL_INITD"
 # shellcheck disable=SC1090
 . "$REAL_INITD"
-FORKOP_LIB="$TEST_LIB"
-FORKOP_INITD_UC="$TEST_LIB/service/initd.uc"
+PROKOP_LIB="$TEST_LIB"
+PROKOP_INITD_UC="$TEST_LIB/service/initd.uc"
 stop() { stop_service "$@"; }
 start() { start_service "$@"; service_started; }
-printf '%s source=%s cleanup=%s\n' "$action" "${FORKOP_STOP_SOURCE:-}" "${FORKOP_STOP_CLEANUP:-}" >>"$TEST_WORK/init.log"
+printf '%s source=%s cleanup=%s\n' "$action" "${PROKOP_STOP_SOURCE:-}" "${PROKOP_STOP_CLEANUP:-}" >>"$TEST_WORK/init.log"
 own_stop=""
-[ "$action" != stop ] || [ "${FORKOP_STOP_SOURCE:-}" != component ] || own_stop=1
+[ "$action" != stop ] || [ "${PROKOP_STOP_SOURCE:-}" != component ] || own_stop=1
 if [ -n "$own_stop" ] && [ -e "$TEST_WORK/user-stop.queued" ]; then
   rm -f "$TEST_WORK/user-stop.queued"
   (
     exec 1000>&-
     status=0
-    env -u FORKOP_STOP_SOURCE FORKOP_TEST_USER_STOP_DELAY=0.5 "$FORKOP_SERVICE_INIT" stop || status=$?
+    env -u PROKOP_STOP_SOURCE PROKOP_TEST_USER_STOP_DELAY=0.5 "$PROKOP_SERVICE_INIT" stop || status=$?
     printf '%s\n' "$status" >"$TEST_WORK/user-stop.done"
   ) </dev/null >/dev/null 2>&1 &
   # Until the user's stop waits in flock for procd's lock.
@@ -224,7 +224,7 @@ status=$?
 if [ -n "$own_stop" ] && [ -e "$TEST_WORK/user-stop.after" ]; then
   rm -f "$TEST_WORK/user-stop.after"
   exec 1000>&-
-  env -u FORKOP_STOP_SOURCE "$FORKOP_SERVICE_INIT" stop </dev/null >/dev/null 2>&1
+  env -u PROKOP_STOP_SOURCE "$PROKOP_SERVICE_INIT" stop </dev/null >/dev/null 2>&1
   printf '%s\n' "$?" >"$TEST_WORK/user-stop.done"
 fi
 exit "$status"
@@ -237,7 +237,7 @@ cat >"$WORK_DIR/bin/ucode" <<'SH'
 case "${3:-}" in
   */service/state.uc)
     case "${4:-}" in
-      forkop-stably-running) [ -e "$TEST_WORK/runtime.up" ]; exit $? ;;
+      prokop-stably-running) [ -e "$TEST_WORK/runtime.up" ]; exit $? ;;
       foreign-sing-box-present) exit 1 ;;
     esac
     ;;
@@ -268,7 +268,7 @@ function init_tmp_dir() {
 }
 function prepare_sing_box_service_disabled() {}
 // Direct Proxy is on at port 2080; a commit is what the router keeps.
-let test_uci = { "forkop.settings.direct_proxy_enabled": "1", "forkop.settings.direct_proxy_port": "2080" };
+let test_uci = { "prokop.settings.direct_proxy_enabled": "1", "prokop.settings.direct_proxy_port": "2080" };
 uci_core = {
     available: function() { return true; },
     get: function(path) { return test_uci[path]; },
@@ -277,56 +277,56 @@ uci_core = {
     commit: function() { return fs.writefile(TEST_WORK + "/uci.committed", sprintf("%J\n", test_uci)) != null; }
 };
 
-capture_forkop_running_state();
+capture_prokop_running_state();
 let scenario = ARGV[0];
 if (scenario == "restart")
-    print("restarted=", restart_forkop_after_successful_change() ? "yes" : "no", "\n");
+    print("restarted=", restart_prokop_after_successful_change() ? "yes" : "no", "\n");
 else if (scenario == "direct-proxy")
     set_direct_proxy("disable");
 else if (scenario == "failed-sing-box") {
-    // Forkop's own stop for the change; the new variant does not start,
+    // Prokop's own stop for the change; the new variant does not start,
     // and neither does the stop of the restart that follows.
-    if (!stop_forkop_before_sing_box_change())
+    if (!stop_prokop_before_sing_box_change())
         die("the stop for the sing-box change was refused");
     fs.writefile(TEST_WORK + "/start.status", "1\n");
     fs.writefile(TEST_WORK + "/stop.status", "1\n");
-    restart_forkop_after_failed_sing_box_change();
+    restart_prokop_after_failed_sing_box_change();
     print("done\n");
 }
 else if (scenario == "failed-sing-box-start") {
-    // Forkop's own stop for the change; the change fails, and the start
-    // after it would bring Forkop back.
-    if (!stop_forkop_before_sing_box_change())
+    // Prokop's own stop for the change; the change fails, and the start
+    // after it would bring Prokop back.
+    if (!stop_prokop_before_sing_box_change())
         die("the stop for the sing-box change was refused");
-    restart_forkop_after_failed_sing_box_change();
+    restart_prokop_after_failed_sing_box_change();
     print("done\n");
 }
 else if (scenario == "failed-upgrade") {
-    // Forkop's own stop for an in-app upgrade; the upgrade fails.
-    if (!command_success_from_args(forkop_stop_for_component_change_args()))
+    // Prokop's own stop for an in-app upgrade; the upgrade fails.
+    if (!command_success_from_args(prokop_stop_for_component_change_args()))
         die("the stop for the upgrade failed");
-    forkop_stopped_for_upgrade = true;
-    restart_forkop_after_failed_upgrade();
+    prokop_stopped_for_upgrade = true;
+    restart_prokop_after_failed_upgrade();
     print("done\n");
 }
 else if (scenario == "restore-service") {
-    // Forkop's own stop for a package set that is put back; Forkop ran
+    // Prokop's own stop for a package set that is put back; Prokop ran
     // before it.
-    if (!command_success_from_args(forkop_stop_for_component_change_args()))
+    if (!command_success_from_args(prokop_stop_for_component_change_args()))
         die("the stop for the package set failed");
-    print("restored=", restore_forkop_opkg_service(true) ? "yes" : "no", "\n");
+    print("restored=", restore_prokop_opkg_service(true) ? "yes" : "no", "\n");
 }
 else if (scenario == "sing-box-stray") {
-    // Forkop's own stop for the change; then a sing-box that runs Forkop's
+    // Prokop's own stop for the change; then a sing-box that runs Prokop's
     // configuration is left behind (with failed: the new variant does not
     // start cleanly).
-    if (!stop_forkop_before_sing_box_change())
+    if (!stop_prokop_before_sing_box_change())
         die("the stop for the sing-box change was refused");
     fs.writefile(TEST_WORK + "/stray", "");
     if (ARGV[1] == "failed")
-        restart_forkop_after_failed_sing_box_change();
+        restart_prokop_after_failed_sing_box_change();
     else
-        print("restarted=", restart_forkop_after_successful_change() ? "yes" : "no", "\n");
+        print("restarted=", restart_prokop_after_successful_change() ? "yes" : "no", "\n");
     print("done\n");
 }
 UCODE
@@ -336,16 +336,16 @@ UCODE
 hold_reload_lock() {
   rm -f "$WORK_DIR/hold.gate" "$WORK_DIR/hold.acquired"
   sh -c '
-    "$REAL_UCODE" -L "$TEST_LIB" "$TEST_LIB/service/state.uc" acquire-runtime-dir-lock "$FORKOP_RELOAD_LOCK_DIR" "$$" || exit 1
+    "$REAL_UCODE" -L "$TEST_LIB" "$TEST_LIB/service/state.uc" acquire-runtime-dir-lock "$PROKOP_RELOAD_LOCK_DIR" "$$" || exit 1
     : >"$TEST_WORK/hold.acquired"
     while [ ! -e "$TEST_WORK/hold.gate" ]; do sleep 0.05; done
-    "$REAL_UCODE" -L "$TEST_LIB" "$TEST_LIB/service/state.uc" release-runtime-dir-lock "$FORKOP_RELOAD_LOCK_DIR" "$$"
+    "$REAL_UCODE" -L "$TEST_LIB" "$TEST_LIB/service/state.uc" release-runtime-dir-lock "$PROKOP_RELOAD_LOCK_DIR" "$$"
   ' &
   HOLDER=$!
   wait_until 10 test -e "$WORK_DIR/hold.acquired" || fail "the lock holder did not get reload.lock"
 }
 
-# Forkop 1.0 runs, started explicitly; nobody asked for a stop.
+# Prokop 1.0 runs, started explicitly; nobody asked for a stop.
 reset_case() {
   release_reload_lock
   kill_retry_workers
@@ -353,12 +353,12 @@ reset_case() {
     "$WORK_DIR"/user-stop.queued "$WORK_DIR"/user-stop.after "$WORK_DIR"/user-stop.waiting "$WORK_DIR"/user-stop.done \
     "$WORK_DIR"/user-stop.before-start \
     "$WORK_DIR"/stray \
-    "$WORK_DIR"/uci.committed "$WORK_DIR"/out "$FORKOP_RUNTIME_STATE_DIR"/stop.requested \
-    "$FORKOP_RUNTIME_STATE_DIR"/start.retry "$FORKOP_RUNTIME_STATE_DIR"/start-result.*
+    "$WORK_DIR"/uci.committed "$WORK_DIR"/out "$PROKOP_RUNTIME_STATE_DIR"/stop.requested \
+    "$PROKOP_RUNTIME_STATE_DIR"/start.retry "$PROKOP_RUNTIME_STATE_DIR"/start-result.*
   : >"$WORK_DIR/syslog"
   : >"$WORK_DIR/init.log"
   : >"$WORK_DIR/runtime.up"
-  printf 'explicit\n' >"$FORKOP_RUNTIME_STATE_DIR/start.explicit"
+  printf 'explicit\n' >"$PROKOP_RUNTIME_STATE_DIR/start.explicit"
 }
 
 probe() {
@@ -368,11 +368,11 @@ probe() {
 }
 
 stop_request_by() {
-  sed -n 's/^by=//p' "$FORKOP_RUNTIME_STATE_DIR/stop.requested" 2>/dev/null || true
+  sed -n 's/^by=//p' "$PROKOP_RUNTIME_STATE_DIR/stop.requested" 2>/dev/null || true
 }
 
 expect_not_user_stop() {
-  [ "$(stop_request_by)" != user ] || fail "$1: Forkop's own stop for the restart was recorded as the user's"
+  [ "$(stop_request_by)" != user ] || fail "$1: Prokop's own stop for the restart was recorded as the user's"
   if grep -q 'stopped by the user' "$WORK_DIR/syslog"; then
     fail "$1: a failed restart was reported as the user's stop"
   fi
@@ -383,30 +383,30 @@ reset_case
 case="restart"
 probe restart || fail "$case: the probe failed"
 grep -qx 'restarted=yes' "$WORK_DIR/out" || fail "$case: a working restart was reported as failed"
-[ -e "$WORK_DIR/runtime.up" ] || fail "$case: Forkop does not run after its restart"
-[ ! -e "$FORKOP_RUNTIME_STATE_DIR/stop.requested" ] || fail "$case: the restart left a stop request"
-[ -e "$FORKOP_RUNTIME_STATE_DIR/start.explicit" ] || fail "$case: the restart ended the explicit start"
+[ -e "$WORK_DIR/runtime.up" ] || fail "$case: Prokop does not run after its restart"
+[ ! -e "$PROKOP_RUNTIME_STATE_DIR/stop.requested" ] || fail "$case: the restart left a stop request"
+[ -e "$PROKOP_RUNTIME_STATE_DIR/start.explicit" ] || fail "$case: the restart ended the explicit start"
 
-# 2. The restart's own stop fails (exit 1): init.d does not start Forkop.
-#    The change did not bring Forkop back, which is a failure.
+# 2. The restart's own stop fails (exit 1): init.d does not start Prokop.
+#    The change did not bring Prokop back, which is a failure.
 reset_case
 printf '1\n' >"$WORK_DIR/stop.status"
 case="restart, its stop fails"
 probe restart || fail "$case: the probe failed"
 grep -qx 'restarted=no' "$WORK_DIR/out" || fail "$case: a restart whose stop failed was reported as done"
 expect_not_user_stop "$case"
-grep -q '\[error\] Updates: Forkop did not start again after the component change' "$WORK_DIR/syslog" ||
+grep -q '\[error\] Updates: Prokop did not start again after the component change' "$WORK_DIR/syslog" ||
   fail "$case: the failed restart was not logged as an error"
 
 # 3. The restart's start is deferred for reload.lock past the wait: the
-#    change did not bring Forkop back within the wait.
+#    change did not bring Prokop back within the wait.
 reset_case
 hold_reload_lock
 case="restart, its start deferred"
 probe restart || fail "$case: the probe failed"
 grep -qx 'restarted=no' "$WORK_DIR/out" || fail "$case: a deferred restart was reported as done"
 expect_not_user_stop "$case"
-grep -q '\[error\] Updates: Forkop did not start again after the component change' "$WORK_DIR/syslog" ||
+grep -q '\[error\] Updates: Prokop did not start again after the component change' "$WORK_DIR/syslog" ||
   fail "$case: the deferred restart was not logged as an error"
 
 # 4. The user's Stop overtakes the restart's start: the stop holds and the
@@ -417,8 +417,8 @@ case="restart, the user's stop overtakes the start"
 probe restart || fail "$case: the probe failed"
 grep -qx 'restarted=yes' "$WORK_DIR/out" || fail "$case: the user's stop was reported as a failed restart"
 [ "$(stop_request_by)" = user ] || fail "$case: the user's stop is no longer recorded"
-[ ! -e "$WORK_DIR/runtime.up" ] || fail "$case: Forkop runs after the user stopped it"
-[ "$(grep -c '^start$' "$WORK_DIR/starts")" -eq 1 ] || fail "$case: Forkop was started again after the user's stop"
+[ ! -e "$WORK_DIR/runtime.up" ] || fail "$case: Prokop runs after the user stopped it"
+[ "$(grep -c '^start$' "$WORK_DIR/starts")" -eq 1 ] || fail "$case: Prokop was started again after the user's stop"
 
 # 5. Direct Proxy: the restart's stop fails. The new setting is rolled back
 #    and the action fails.
@@ -428,7 +428,7 @@ case="Direct Proxy, the restart's stop fails"
 probe direct-proxy && fail "$case: the action succeeded"
 grep -q '"success": *false' "$WORK_DIR/out" || fail "$case: the failed restart was reported as success"
 grep -q 'Failed to apply Direct Proxy settings' "$WORK_DIR/out" || fail "$case: unexpected result"
-grep -q '"forkop.settings.direct_proxy_enabled": *"1"' "$WORK_DIR/uci.committed" ||
+grep -q '"prokop.settings.direct_proxy_enabled": *"1"' "$WORK_DIR/uci.committed" ||
   fail "$case: the new Direct Proxy setting was kept: $(cat "$WORK_DIR/uci.committed")"
 expect_not_user_stop "$case"
 
@@ -437,11 +437,11 @@ expect_not_user_stop "$case"
 reset_case
 case="failed sing-box change, the restart's stop fails"
 probe failed-sing-box || fail "$case: the probe failed"
-grep -q '\[error\] Updates: Forkop did not start again after the failed sing-box component change' "$WORK_DIR/syslog" ||
+grep -q '\[error\] Updates: Prokop did not start again after the failed sing-box component change' "$WORK_DIR/syslog" ||
   fail "$case: the failed restart was not logged as an error"
 expect_not_user_stop "$case"
 
-# The user's Stop with Forkop's own stop for the restart: it holds, and the
+# The user's Stop with Prokop's own stop for the restart: it holds, and the
 # change is no failure (D-15(a)). No start runs, and the explicit start stays
 # ended: no reload brings the runtime back.
 expect_user_stop_holds() {
@@ -449,12 +449,12 @@ expect_user_stop_holds() {
   [ "$(cat "$WORK_DIR/user-stop.done")" = 0 ] || fail "$1: the user's stop failed"
   grep -qx 'restarted=yes' "$WORK_DIR/out" || fail "$1: the user's stop was reported as a failed restart"
   [ "$(stop_request_by)" = user ] || fail "$1: the user's stop is no longer recorded ($(stop_request_by))"
-  [ ! -e "$WORK_DIR/runtime.up" ] || fail "$1: Forkop runs after the user stopped it"
-  [ ! -s "$WORK_DIR/starts" ] || fail "$1: Forkop was started after the user's stop"
-  [ ! -e "$FORKOP_RUNTIME_STATE_DIR/start.explicit" ] || fail "$1: the start after the user's stop recorded an explicit start"
+  [ ! -e "$WORK_DIR/runtime.up" ] || fail "$1: Prokop runs after the user stopped it"
+  [ ! -s "$WORK_DIR/starts" ] || fail "$1: Prokop was started after the user's stop"
+  [ ! -e "$PROKOP_RUNTIME_STATE_DIR/start.explicit" ] || fail "$1: the start after the user's stop recorded an explicit start"
 }
 
-# 7. The user's Stop waits for procd's lock behind Forkop's own stop, and
+# 7. The user's Stop waits for procd's lock behind Prokop's own stop, and
 #    records its request only after the action has read the stop request.
 reset_case
 : >"$WORK_DIR/user-stop.queued"
@@ -469,22 +469,22 @@ case="restart, the user's stop between its stop and its start"
 probe restart || fail "$case: the probe failed"
 expect_user_stop_holds "$case"
 
-# A refused restart stop changed nothing: Forkop runs on as it was, with no
+# A refused restart stop changed nothing: Prokop runs on as it was, with no
 # stop request, and no start was tried. That is no failed start.
 expect_refused_restart() {
-  [ -e "$WORK_DIR/runtime.up" ] || fail "$1: Forkop does not run after its own stop was refused"
-  [ ! -e "$FORKOP_RUNTIME_STATE_DIR/stop.requested" ] || fail "$1: the refused stop left a stop request"
-  [ -e "$FORKOP_RUNTIME_STATE_DIR/start.explicit" ] || fail "$1: the refused stop ended the explicit start"
+  [ -e "$WORK_DIR/runtime.up" ] || fail "$1: Prokop does not run after its own stop was refused"
+  [ ! -e "$PROKOP_RUNTIME_STATE_DIR/stop.requested" ] || fail "$1: the refused stop left a stop request"
+  [ -e "$PROKOP_RUNTIME_STATE_DIR/start.explicit" ] || fail "$1: the refused stop ended the explicit start"
   [ ! -s "$WORK_DIR/starts" ] || fail "$1: a start followed the refused stop"
-  [ "$(grep -c '^stop ' "$WORK_DIR/init.log")" -eq 1 ] || fail "$1: Forkop was stopped again after the refusal"
-  grep -q 'Forkop was not restarted: another sing-box process makes the ownership of its runtime ambiguous' "$WORK_DIR/syslog" ||
+  [ "$(grep -c '^stop ' "$WORK_DIR/init.log")" -eq 1 ] || fail "$1: Prokop was stopped again after the refusal"
+  grep -q 'Prokop was not restarted: another sing-box process makes the ownership of its runtime ambiguous' "$WORK_DIR/syslog" ||
     fail "$1: the refusal is not reported"
   if grep -q 'did not start again' "$WORK_DIR/syslog"; then
     fail "$1: the refused restart was reported as a failed start"
   fi
 }
 
-# 9. Forkop's own stop for the restart is refused: another sing-box makes the
+# 9. Prokop's own stop for the restart is refused: another sing-box makes the
 #    ownership of the runtime ambiguous. The change is not applied, which the
 #    action reports as such.
 reset_case
@@ -494,37 +494,37 @@ probe restart || fail "$case: the probe failed"
 grep -qx 'restarted=no' "$WORK_DIR/out" || fail "$case: a refused restart was reported as done"
 expect_refused_restart "$case"
 
-# 10. Direct Proxy: the restart's own stop is refused. Forkop runs on with the
+# 10. Direct Proxy: the restart's own stop is refused. Prokop runs on with the
 #     previous settings, which are kept; nothing restarts it again.
 reset_case
 : >"$WORK_DIR/stray"
 case="Direct Proxy, the restart's own stop refused"
 probe direct-proxy && fail "$case: the action succeeded"
 grep -q '"success": *false' "$WORK_DIR/out" || fail "$case: the refused restart was reported as success"
-grep -q 'Forkop was not restarted: another sing-box process' "$WORK_DIR/out" ||
+grep -q 'Prokop was not restarted: another sing-box process' "$WORK_DIR/out" ||
   fail "$case: the action does not report the refusal"
 # The setting was rolled back: it does not apply at the next start.
 if grep -q 'applies at its next start' "$WORK_DIR/out" "$WORK_DIR/syslog"; then
   fail "$case: the refusal claims that the rolled-back setting applies at the next start"
 fi
-grep -q 'Forkop runs on with the previous Direct Proxy settings' "$WORK_DIR/out" ||
-  fail "$case: the refusal does not say that Forkop runs on with the previous settings"
-grep -q '"forkop.settings.direct_proxy_enabled": *"1"' "$WORK_DIR/uci.committed" ||
+grep -q 'Prokop runs on with the previous Direct Proxy settings' "$WORK_DIR/out" ||
+  fail "$case: the refusal does not say that Prokop runs on with the previous settings"
+grep -q '"prokop.settings.direct_proxy_enabled": *"1"' "$WORK_DIR/uci.committed" ||
   fail "$case: the new Direct Proxy setting was kept: $(cat "$WORK_DIR/uci.committed")"
 expect_refused_restart "$case"
 
-# 11. A sing-box change: Forkop is down already, stopped for the change, and
-#     a sing-box that runs Forkop's configuration is left behind. Nothing
+# 11. A sing-box change: Prokop is down already, stopped for the change, and
+#     a sing-box that runs Prokop's configuration is left behind. Nothing
 #     runs that the ownership guard would keep: the stop of the restart
-#     clears it as the user's Stop does, still as Forkop's own stop, and
-#     Forkop starts again. So does the restart fallback after a failed change.
+#     clears it as the user's Stop does, still as Prokop's own stop, and
+#     Prokop starts again. So does the restart fallback after a failed change.
 for mode in successful failed; do
   reset_case
   case="sing-box change ($mode), a stray sing-box left behind"
   probe sing-box-stray "$mode" || fail "$case: the probe failed"
   [ "$mode" = failed ] || grep -qx 'restarted=yes' "$WORK_DIR/out" || fail "$case: the restart was reported as failed"
   [ ! -e "$WORK_DIR/stray" ] || fail "$case: the stray sing-box was left running"
-  [ -e "$WORK_DIR/runtime.up" ] || fail "$case: Forkop does not run again"
+  [ -e "$WORK_DIR/runtime.up" ] || fail "$case: Prokop does not run again"
   grep -q '^stop source=component cleanup=1$' "$WORK_DIR/init.log" || fail "$case: the stop of the restart was no cleanup stop"
   [ "$(grep -c '^stop source=component cleanup=$' "$WORK_DIR/init.log")" -eq 1 ] ||
     fail "$case: the stop for the change was not the guarded one"
@@ -534,16 +534,16 @@ for mode in successful failed; do
   fi
 done
 
-# 12. The start after Forkop's own stop for a failed sing-box change, after a
+# 12. The start after Prokop's own stop for a failed sing-box change, after a
 #     failed upgrade and the start that puts back a package set's service
-#     state: without the user's stop each brings Forkop back; the user's
+#     state: without the user's stop each brings Prokop back; the user's
 #     Stop that gets procd's lock right before the start holds (D-15(a)).
 for scenario in failed-sing-box-start failed-upgrade restore-service; do
   reset_case
   case="$scenario, no stop by the user"
   probe "$scenario" || fail "$case: the probe failed"
-  [ -e "$WORK_DIR/runtime.up" ] || fail "$case: Forkop was not started again"
-  [ "$(grep -c '^start$' "$WORK_DIR/starts" 2>/dev/null || true)" -eq 1 ] || fail "$case: Forkop was not started once"
+  [ -e "$WORK_DIR/runtime.up" ] || fail "$case: Prokop was not started again"
+  [ "$(grep -c '^start$' "$WORK_DIR/starts" 2>/dev/null || true)" -eq 1 ] || fail "$case: Prokop was not started once"
   [ "$scenario" != restore-service ] || grep -qx 'restored=yes' "$WORK_DIR/out" ||
     fail "$case: the service state was not reported as restored"
 
@@ -554,9 +554,9 @@ for scenario in failed-sing-box-start failed-upgrade restore-service; do
   wait_until 20 test -e "$WORK_DIR/user-stop.done" || fail "$case: the user's stop did not run"
   [ "$(cat "$WORK_DIR/user-stop.done")" = 0 ] || fail "$case: the user's stop failed"
   [ "$(stop_request_by)" = user ] || fail "$case: the user's stop is no longer recorded ($(stop_request_by))"
-  [ ! -e "$WORK_DIR/runtime.up" ] || fail "$case: Forkop runs after the user stopped it"
-  [ ! -s "$WORK_DIR/starts" ] || fail "$case: Forkop was started after the user's stop"
-  [ ! -e "$FORKOP_RUNTIME_STATE_DIR/start.explicit" ] || fail "$case: the start after the user's stop recorded an explicit start"
+  [ ! -e "$WORK_DIR/runtime.up" ] || fail "$case: Prokop runs after the user stopped it"
+  [ ! -s "$WORK_DIR/starts" ] || fail "$case: Prokop was started after the user's stop"
+  [ ! -e "$PROKOP_RUNTIME_STATE_DIR/start.explicit" ] || fail "$case: the start after the user's stop recorded an explicit start"
   [ "$scenario" != restore-service ] || grep -qx 'restored=yes' "$WORK_DIR/out" ||
     fail "$case: the user's stop was reported as a service state not restored"
   if grep -q 'did not start again' "$WORK_DIR/syslog"; then

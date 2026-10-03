@@ -4,7 +4,7 @@ set -eu
 ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 # shellcheck source=tests/helpers/owned_processes.sh
 . "$ROOT_DIR/tests/helpers/owned_processes.sh"
-LIB_DIR="$ROOT_DIR/forkop/files/usr/lib"
+LIB_DIR="$ROOT_DIR/prokop/files/usr/lib"
 CLI="$ROOT_DIR/tests/fixtures/process_identity_cli.uc"
 STATE_DIR="$(mktemp -d)"
 sleep 300 &
@@ -15,10 +15,10 @@ cleanup() {
 }
 trap cleanup EXIT HUP INT TERM
 
-export FORKOP_LIB="$LIB_DIR"
-export FORKOP_RUNTIME_STATE_DIR="$STATE_DIR"
-export FORKOP_DNS_FAILOVER_PID_FILE="$STATE_DIR/dns.pid"
-export FORKOP_PRIORITY_PID_FILE="$STATE_DIR/priority.pid"
+export PROKOP_LIB="$LIB_DIR"
+export PROKOP_RUNTIME_STATE_DIR="$STATE_DIR"
+export PROKOP_DNS_FAILOVER_PID_FILE="$STATE_DIR/dns.pid"
+export PROKOP_PRIORITY_PID_FILE="$STATE_DIR/priority.pid"
 export BYEDPI_STATE_DIR="$STATE_DIR/byedpi"
 export BYEDPI_PID_DIR="$BYEDPI_STATE_DIR/pid"
 export BYEDPI_CHILD_PID_DIR="$BYEDPI_STATE_DIR/child-pid"
@@ -29,7 +29,7 @@ export ZAPRET2_CHILD_PID_DIR="$ZAPRET2_STATE_DIR/child-pid"
 export ZAPRET2_LOG_DIR="$ZAPRET2_STATE_DIR/log"
 mkdir -p "$BYEDPI_PID_DIR" "$BYEDPI_CHILD_PID_DIR" "$BYEDPI_LOG_DIR" "$ZAPRET2_PID_DIR" "$ZAPRET2_CHILD_PID_DIR" "$ZAPRET2_LOG_DIR"
 
-for file in "$FORKOP_DNS_FAILOVER_PID_FILE" "$FORKOP_PRIORITY_PID_FILE" "$BYEDPI_PID_DIR/example.pid" "$BYEDPI_CHILD_PID_DIR/example.pid" "$ZAPRET2_PID_DIR/example.pid" "$ZAPRET2_CHILD_PID_DIR/example.pid"; do
+for file in "$PROKOP_DNS_FAILOVER_PID_FILE" "$PROKOP_PRIORITY_PID_FILE" "$BYEDPI_PID_DIR/example.pid" "$BYEDPI_CHILD_PID_DIR/example.pid" "$ZAPRET2_PID_DIR/example.pid" "$ZAPRET2_CHILD_PID_DIR/example.pid"; do
     ucode -L "$LIB_DIR" "$CLI" record "$file" "$foreign_pid"
 done
 

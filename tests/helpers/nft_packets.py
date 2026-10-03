@@ -93,7 +93,7 @@ def ipv4_packet(src, dst, proto, dport):
     sport = 40000 + (dport % 20000)
     if proto == "udp":
         number = socket.IPPROTO_UDP
-        payload = b"forkop"
+        payload = b"prokop"
         l4 = struct.pack("!HHHH", sport, dport, 8 + len(payload), 0) + payload
     else:
         number = socket.IPPROTO_TCP
@@ -125,7 +125,7 @@ def local(dst, proto, dport, mark="0"):
     if mark:
         sock.setsockopt(socket.SOL_SOCKET, SO_MARK, mark)
     if proto == "udp":
-        sock.sendto(b"forkop", (dst, int(dport)))
+        sock.sendto(b"prokop", (dst, int(dport)))
     else:
         sock.setblocking(False)
         result = sock.connect_ex((dst, int(dport)))

@@ -14,9 +14,9 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-export FORKOP_LIB
-UPDATES="$FORKOP_LIB/components/updates.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+export PROKOP_LIB
+UPDATES="$PROKOP_LIB/components/updates.uc"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "${WORK_DIR:?}"' EXIT
 
@@ -59,7 +59,7 @@ JSON
 }
 
 plan() {
-  ucode -L "$FORKOP_LIB" "$UPDATES" cron-refresh-plan-fixture "$WORK_DIR/$1.json" /usr/bin/forkop '# list' '# sub' '# comp'
+  ucode -L "$PROKOP_LIB" "$UPDATES" cron-refresh-plan-fixture "$WORK_DIR/$1.json" /usr/bin/prokop '# list' '# sub' '# comp'
 }
 
 fixture minute 1m 1m
@@ -68,15 +68,15 @@ fixture subsecond 100ms 100ms
 fixture hours 2h 1d
 fixture hour 1h 90m
 
-[ "$(plan minute)" = $'list\t0 * * * * /usr/bin/forkop list_update_if_due # list\ncomponent\t0 * * * * /usr/bin/forkop component_updates_if_due # comp' ] ||
+[ "$(plan minute)" = $'list\t0 * * * * /usr/bin/prokop list_update_if_due # list\ncomponent\t0 * * * * /usr/bin/prokop component_updates_if_due # comp' ] ||
   fail "1m must be scheduled hourly: $(plan minute)"
-[ "$(plan second)" = $'list\t0 * * * * /usr/bin/forkop list_update_if_due # list\ncomponent\t0 * * * * /usr/bin/forkop component_updates_if_due # comp' ] ||
+[ "$(plan second)" = $'list\t0 * * * * /usr/bin/prokop list_update_if_due # list\ncomponent\t0 * * * * /usr/bin/prokop component_updates_if_due # comp' ] ||
   fail "1s/10m must be scheduled hourly: $(plan second)"
-[ "$(plan subsecond)" = $'list\t0 * * * * /usr/bin/forkop list_update_if_due # list\ncomponent\t0 * * * * /usr/bin/forkop component_updates_if_due # comp' ] ||
+[ "$(plan subsecond)" = $'list\t0 * * * * /usr/bin/prokop list_update_if_due # list\ncomponent\t0 * * * * /usr/bin/prokop component_updates_if_due # comp' ] ||
   fail "100ms must be scheduled hourly, not as 0 s: $(plan subsecond)"
-[ "$(plan hours)" = $'list\t0 */2 * * * /usr/bin/forkop list_update_if_due # list\ncomponent\t0 0 * * * /usr/bin/forkop component_updates_if_due # comp' ] ||
+[ "$(plan hours)" = $'list\t0 */2 * * * /usr/bin/prokop list_update_if_due # list\ncomponent\t0 0 * * * /usr/bin/prokop component_updates_if_due # comp' ] ||
   fail "intervals of an hour or more are kept: $(plan hours)"
-[ "$(plan hour)" = $'list\t0 * * * * /usr/bin/forkop list_update_if_due # list\ncomponent\t*/30 * * * * /usr/bin/forkop component_updates_if_due # comp' ] ||
+[ "$(plan hour)" = $'list\t0 * * * * /usr/bin/prokop list_update_if_due # list\ncomponent\t*/30 * * * * /usr/bin/prokop component_updates_if_due # comp' ] ||
   fail "1h and 90m are kept as they are, 90m checked every 30 minutes: $(plan hour)"
 
 # An interval of an hour or more that is no whole number of hours is not
@@ -84,7 +84,7 @@ fixture hour 1h 90m
 # hour, at least every 5 minutes (the update itself still runs once per
 # interval).
 schedule() {
-  ucode -L "$FORKOP_LIB" "$UPDATES" due-check-cron-schedule "$1"
+  ucode -L "$PROKOP_LIB" "$UPDATES" due-check-cron-schedule "$1"
 }
 [ "$(schedule 5400)" = '*/30 * * * *' ] || fail "90m: $(schedule 5400)"
 [ "$(schedule 8100)" = '*/15 * * * *' ] || fail "2h15m: $(schedule 8100)"
@@ -103,7 +103,7 @@ schedule() {
 due() {
   local status=0
   printf '%s\n' "$2" >"$WORK_DIR/last"
-  ucode -L "$FORKOP_LIB" "$UPDATES" list-update-due-status-fixture "$WORK_DIR/$1.json" "$WORK_DIR/last" 100000 >/dev/null || status=$?
+  ucode -L "$PROKOP_LIB" "$UPDATES" list-update-due-status-fixture "$WORK_DIR/$1.json" "$WORK_DIR/last" 100000 >/dev/null || status=$?
   printf '%s' "$status"
 }
 [ "$(due minute $((100000 - 120)))" = 1 ] || fail "a 1m interval must not make the list due after two minutes"
@@ -123,7 +123,7 @@ remote_interval() {
     fs.writeFileSync(process.argv[2], JSON.stringify(data));
   ' "$WORK_DIR/$1.json" "$WORK_DIR/$1.generator.json"
   TMP_SUBSCRIPTION_FOLDER="$WORK_DIR/subs" \
-    ucode -L "$FORKOP_LIB" "$FORKOP_LIB/singbox/generator.uc" generate-config-fixture \
+    ucode -L "$PROKOP_LIB" "$PROKOP_LIB/singbox/generator.uc" generate-config-fixture \
     "$WORK_DIR/$1.generator.json" "$out" "127.0.0.1" 0 "" "" "" >/dev/null
   node -e '
     const config = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
@@ -146,7 +146,7 @@ chmod +x "$WORK_DIR/bin/logger"
 validate() {
   : >"$WORK_DIR/$1.log"
   PATH="$WORK_DIR/bin:$PATH" LOGGER_LOG="$WORK_DIR/$1.log" \
-    ucode -L "$FORKOP_LIB" "$FORKOP_LIB/config/validator.uc" validate-runtime-fixture "$WORK_DIR/$1.json" '{}' \
+    ucode -L "$PROKOP_LIB" "$PROKOP_LIB/config/validator.uc" validate-runtime-fixture "$WORK_DIR/$1.json" '{}' \
     >/dev/null 2>&1
 }
 for name in minute subsecond; do
@@ -160,10 +160,10 @@ validate hours || fail "2h must be valid"
 ! grep -q 'shorter than 1h' "$WORK_DIR/hours.log" || fail "2h must not warn"
 
 # The migration raises a short interval to 1h and says so.
-ucode -L "$FORKOP_LIB" "$FORKOP_LIB/config/migration.uc" migrate-fixture "$WORK_DIR/minute.json" >"$WORK_DIR/minute.out.json"
-ucode -L "$FORKOP_LIB" "$FORKOP_LIB/config/migration.uc" migrate-fixture "$WORK_DIR/hour.json" >"$WORK_DIR/hour.out.json"
+ucode -L "$PROKOP_LIB" "$PROKOP_LIB/config/migration.uc" migrate-fixture "$WORK_DIR/minute.json" >"$WORK_DIR/minute.out.json"
+ucode -L "$PROKOP_LIB" "$PROKOP_LIB/config/migration.uc" migrate-fixture "$WORK_DIR/hour.json" >"$WORK_DIR/hour.out.json"
 fixture invalid bad 1.5h
-ucode -L "$FORKOP_LIB" "$FORKOP_LIB/config/migration.uc" migrate-fixture "$WORK_DIR/invalid.json" >"$WORK_DIR/invalid.out.json"
+ucode -L "$PROKOP_LIB" "$PROKOP_LIB/config/migration.uc" migrate-fixture "$WORK_DIR/invalid.json" >"$WORK_DIR/invalid.out.json"
 node - "$WORK_DIR/minute.out.json" "$WORK_DIR/hour.out.json" "$WORK_DIR/invalid.out.json" <<'NODE'
 const assert = require('node:assert/strict');
 const fs = require('fs');
@@ -184,11 +184,11 @@ assert.equal(invalid.config.settings.component_update_check_interval, '1.5h');
 NODE
 
 # The history keeps the notice with its durations.
-FORKOP_HISTORY_FILE="$WORK_DIR/history.jsonl" FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/runtime" \
-  ucode -L "$FORKOP_LIB" "$FORKOP_LIB/diagnostics/health.uc" record config_migration success "" "" \
+PROKOP_HISTORY_FILE="$WORK_DIR/history.jsonl" PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/runtime" \
+  ucode -L "$PROKOP_LIB" "$PROKOP_LIB/diagnostics/health.uc" record config_migration success "" "" \
   '{"notices":[{"code":"update_interval_raised","section":"settings","values":["update_interval"],"from":"1m","to":"1h"},{"code":"update_interval_raised","section":"settings","values":["update_interval"],"from":"1m; rm","to":"1h"}]}'
-FORKOP_HISTORY_FILE="$WORK_DIR/history.jsonl" FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/runtime" \
-  ucode -L "$FORKOP_LIB" "$FORKOP_LIB/diagnostics/health.uc" history >"$WORK_DIR/history.json"
+PROKOP_HISTORY_FILE="$WORK_DIR/history.jsonl" PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/runtime" \
+  ucode -L "$PROKOP_LIB" "$PROKOP_LIB/diagnostics/health.uc" history >"$WORK_DIR/history.json"
 node - "$WORK_DIR/history.json" <<'NODE'
 const assert = require('node:assert/strict');
 const history = JSON.parse(require('fs').readFileSync(process.argv[2], 'utf8'));

@@ -13,7 +13,7 @@ set -euo pipefail
 # is undecidable.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 RULESET_CACHE_UC="$LIB/singbox/ruleset_cache.uc"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT HUP INT TERM
@@ -44,14 +44,14 @@ chmod +x "$WORK/bin/sing-box" "$WORK/bin/curl"
 export PATH="$WORK/bin:$PATH"
 export SERVED_DIR="$WORK/served"
 export RULESET_STUB_CALLS="$WORK/calls"
-export FORKOP_RULESET_MATCH_BIN="$WORK/bin/sing-box"
-export FORKOP_RULESET_CACHE_DIR="$WORK/cache"
-export FORKOP_RULESET_CACHE_MANIFEST="$WORK/cache/manifest.json"
-export FORKOP_RULESET_RUNTIME_CACHE_DIR="$WORK/runtime"
-export FORKOP_RULESET_RUNTIME_MANIFEST="$WORK/runtime-manifest.json"
-export FORKOP_PERSISTENT_LIST_CACHE_DIR="$WORK/list-cache"
-export FORKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=33554432
-export FORKOP_LIST_DOWNLOAD_MIN_FREE_BYTES=0
+export PROKOP_RULESET_MATCH_BIN="$WORK/bin/sing-box"
+export PROKOP_RULESET_CACHE_DIR="$WORK/cache"
+export PROKOP_RULESET_CACHE_MANIFEST="$WORK/cache/manifest.json"
+export PROKOP_RULESET_RUNTIME_CACHE_DIR="$WORK/runtime"
+export PROKOP_RULESET_RUNTIME_MANIFEST="$WORK/runtime-manifest.json"
+export PROKOP_PERSISTENT_LIST_CACHE_DIR="$WORK/list-cache"
+export PROKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=33554432
+export PROKOP_LIST_DOWNLOAD_MIN_FREE_BYTES=0
 : >"$WORK/calls"
 
 # A "binary" list of the stand-in is "SRS" + source JSON.
@@ -75,7 +75,7 @@ path_of() { ucode -e 'let c = json(require("fs").readfile(ARGV[0])); for (let s 
 record() { cat "$(path_of "$1").validated"; }
 signature() { stat -c '%i:%s:%Y:%Z' "$1"; }
 
-cat >"$WORK/forkop" <<'EOF'
+cat >"$WORK/prokop" <<'EOF'
 config settings 'settings'
 config section 'youtube'
 	option action 'zapret'
@@ -101,7 +101,7 @@ print(join(" ", map([ got.status, got.route_rule, got.section ], (v) => v == nul
 EOF
 resolve() { # host tags [extra rule_set entries]
     : >"$WORK/calls"
-    ucode -L "$LIB" "$WORK/resolve.uc" "$WORK/forkop" "$WORK/config.json" "$1" "$2" "${3:-[]}"
+    ucode -L "$LIB" "$WORK/resolve.uc" "$WORK/prokop" "$WORK/config.json" "$1" "$2" "${3:-[]}"
 }
 expect() { # name host tags want [extra]
     local got
@@ -167,7 +167,7 @@ other" ] || fail "changed refresh: the new shape was not recorded: $(record plai
 expect changed_refresh youtube.com plain "undecidable 0 null"
 # Flash too full to keep it: the list goes to tmpfs with its record.
 serve plain.srs "$PLAIN"
-FORKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=8390000 refresh
+PROKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=8390000 refresh
 materialize cache-only
 runtime_path="$(path_of plain)"
 case "$runtime_path" in "$WORK/runtime"/*) ;; *) fail "low flash: the list was not served from tmpfs ($runtime_path)" ;; esac

@@ -10,7 +10,7 @@ set -euo pipefail
 # rule a's strategy on that queue. Every reader must count the same rules.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK="$(mktemp -d)"
 trap 'rm -rf "${WORK:?}"' EXIT HUP INT TERM
 
@@ -63,8 +63,8 @@ provider_bin="$WORK/provider"
 printf '#!/bin/sh\nexit 0\n' >"$provider_bin"
 chmod 0755 "$provider_bin"
 : >"$WORK/nft.batch"
-FORKOP_NFT_BATCH_FILE="$WORK/nft.batch" FORKOP_NFT_SUBNET_CACHE_DIR="$WORK/nft-cache" \
-  ucode -L "$LIB" "$LIB/nft/apply.uc" nft-create-provider-output-rules-fixture "$WORK/fixture.json" ForkopTable zapret \
+PROKOP_NFT_BATCH_FILE="$WORK/nft.batch" PROKOP_NFT_SUBNET_CACHE_DIR="$WORK/nft-cache" \
+  ucode -L "$LIB" "$LIB/nft/apply.uc" nft-create-provider-output-rules-fixture "$WORK/fixture.json" ProkopTable zapret \
   "$provider_bin" 0x01000000 4000 0x40000000 0x20000000 >/dev/null 2>"$WORK/nft.err" ||
   fail "nft provider rules refused: $(cat "$WORK/nft.err")"
 
@@ -73,12 +73,12 @@ FORKOP_NFT_BATCH_FILE="$WORK/nft.batch" FORKOP_NFT_SUBNET_CACHE_DIR="$WORK/nft-c
   for s in a:On b:1 c:FALSE d:Yes; do
     printf "config section '%s'\n\toption action 'zapret'\n\toption enabled '%s'\n" "${s%%:*}" "${s#*:}"
   done
-} >"$WORK/forkop.uci"
+} >"$WORK/prokop.uci"
 ucode -L "$LIB" -e '
 let r = require("routing.resolve"), fs = require("fs");
 let s = r.parse_config(fs.readfile(ARGV[0]));
 print(join(" ", map(r.zapret_sections(s), (x) => x.name)), "\n");
-' -- "$WORK/forkop.uci" >"$WORK/resolver.out" 2>&1 || fail "resolver: $(cat "$WORK/resolver.out")"
+' -- "$WORK/prokop.uci" >"$WORK/resolver.out" 2>&1 || fail "resolver: $(cat "$WORK/resolver.out")"
 
 node - "$WORK/generated" "$WORK/nft.batch" "$WORK/resolver.out" <<'NODE' || failures=$((failures + 1))
 const assert = require('node:assert/strict');

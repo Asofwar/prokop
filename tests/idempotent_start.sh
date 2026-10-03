@@ -12,7 +12,7 @@ import pathlib
 import re
 import sys
 
-root = pathlib.Path(sys.argv[1]) / 'forkop/files/usr/lib/service'
+root = pathlib.Path(sys.argv[1]) / 'prokop/files/usr/lib/service'
 
 
 def extract(filename, name):
@@ -28,15 +28,15 @@ def extract(filename, name):
 # so that every part of the probe is emitted below everything it calls.
 runtime_doubles = r'''
 const STATE_UC = "state.uc";
-const RT_TABLE_NAME = "forkop";
-const NFT_TABLE_NAME = "forkop";
+const RT_TABLE_NAME = "prokop";
+const NFT_TABLE_NAME = "prokop";
 const NFT_FAKEIP_MARK = "0x123";
 const RUNTIME_STABLE_MIN_AGE = 2;
 const MANAGED_UPGRADE_SING_BOX_MARKER = "/test/upgrade.marker";
 const MANAGED_UPGRADE_SING_BOX_WAIT_SECONDS = 20;
 const MANAGED_UPGRADE_SING_BOX_MARKER_MAX_AGE_SECONDS = 120;
-const SERVICE_INIT = "/etc/init.d/forkop";
-const SERVICE_NAME = "forkop";
+const SERVICE_INIT = "/etc/init.d/prokop";
+const SERVICE_NAME = "prokop";
 const START_RETRY_FILE = "/test/start.retry";
 const START_IN_PROGRESS_FILE = "/test/start.in-progress";
 const STOP_REQUESTED_FILE = "/test/stop.requested";
@@ -44,7 +44,7 @@ let marker_present = false;
 let marker_resolved = true;
 let conflict = false;
 let transition_guard = false;
-// ForkopTableDpiGuard of a failed DPI rollback, ForkopConfigRestoreDpiGuard of
+// ProkopTableDpiGuard of a failed DPI rollback, ProkopConfigRestoreDpiGuard of
 // a restore that ended needs_attention (UC-019).
 let dpi_guard = false;
 let restore_guard = false;
@@ -79,22 +79,22 @@ function sing_box_service_stable(age) {
 }
 function sing_box_runtime_ports_ready() { return health[2]; }
 function sing_box_clash_api_ready() { return health[3]; }
-function forkop_runtime_network_configured(rt, nft, mark) {
+function prokop_runtime_network_configured(rt, nft, mark) {
     check(rt == RT_TABLE_NAME && nft == NFT_TABLE_NAME && mark == NFT_FAKEIP_MARK,
         "network readiness parameters changed");
     return health[4];
 }
 '''
 
-# Emitted below forkop_stably_running: module_success() dispatches into it.
+# Emitted below prokop_stably_running: module_success() dispatches into it.
 service_doubles = r'''
 function module_success(path, args) {
     check(path == STATE_UC, "unexpected start helper");
     push(calls, args[0]);
     if (args[0] == "wait-managed-upgrade-sing-box-exit") return marker_resolved;
     if (args[0] == "sing-box-process-conflict") return conflict;
-    if (args[0] == "forkop-stably-running")
-        return forkop_stably_running(args[1], args[2], args[3], args[4]);
+    if (args[0] == "prokop-stably-running")
+        return prokop_stably_running(args[1], args[2], args[3], args[4]);
     die("unexpected state helper");
 }
 function log_message(message, level) { push(logs, level + ":" + message); }
@@ -124,9 +124,9 @@ function command_success_from_args(args) {
         let command = join(" ", args);
         if (command == "nft list table inet " + NFT_TABLE_NAME + "DpiGuard")
             return dpi_guard;
-        if (command == "nft list table inet ForkopConfigRestoreDpiGuard")
+        if (command == "nft list table inet ProkopConfigRestoreDpiGuard")
             return restore_guard;
-        check(command == "nft list chain inet " + NFT_TABLE_NAME + " forkop_transition_guard",
+        check(command == "nft list chain inet " + NFT_TABLE_NAME + " prokop_transition_guard",
             "unexpected nft command during duplicate start");
         return transition_guard;
     }
@@ -171,7 +171,7 @@ function reset_probe() {
 cases = r'''
 reset_probe();
 check(start() == 0, "duplicate stable start was not successful");
-check(join(",", calls) == "sing-box-process-conflict,forkop-stably-running",
+check(join(",", calls) == "sing-box-process-conflict,prokop-stably-running",
     "stable check bypassed ownership guard");
 check(released == 1 && cold_starts == 0 && cleanups == 0,
     "duplicate stable start changed existing runtime or leaked subscription lock");
@@ -220,7 +220,7 @@ check(start() == 23 && cold_starts == 1, "a cold start under the restore guard d
 reset_probe();
 marker_present = true;
 check(start() == 0, "resolved managed upgrade prevented duplicate start");
-check(join(",", calls) == "wait-managed-upgrade-sing-box-exit,sing-box-process-conflict,forkop-stably-running",
+check(join(",", calls) == "wait-managed-upgrade-sing-box-exit,sing-box-process-conflict,prokop-stably-running",
     "managed upgrade provenance was checked after runtime adoption");
 
 reset_probe();
@@ -248,7 +248,7 @@ for (let failed_check = 0; failed_check < 5; failed_check++) {
 }
 
 // init.d accepts the detached retry start with 0 before it has run; only the
-// start worker knows whether Forkop recovered (UC-013, tests/start_result_wait.sh).
+// start worker knows whether Prokop recovered (UC-013, tests/start_result_wait.sh).
 reset_probe();
 check(retry_start_on_wan_up("123") == 0, "accepted retry lost its status");
 check(index(join("\n", logs), "recovered automatically") < 0,
@@ -257,7 +257,7 @@ check(index(join("\n", logs), "recovered automatically") < 0,
 reset_probe();
 retry_status = 19;
 check(retry_start_on_wan_up("123") == 19, "failed retry lost its status");
-check(index(join("\n", logs), "[error] Forkop automatic recovery request failed with status 19") >= 0,
+check(index(join("\n", logs), "[error] Prokop automatic recovery request failed with status 19") >= 0,
     "failed retry request is not logged");
 
 for (let skipped in ["running", "disabled", "no-retry"]) {
@@ -269,18 +269,18 @@ for (let skipped in ["running", "disabled", "no-retry"]) {
     check(index(join(",", calls), "retry-start") < 0 && length(logs) == 0,
         "skipped retry started a service or falsely announced recovery");
 }
-// A retry of a start that an explicit stop interrupted does not start Forkop
+// A retry of a start that an explicit stop interrupted does not start Prokop
 // again; it is dropped (UC-012).
 reset_probe();
 retry_stop_requested = true;
 check(retry_start_on_wan_up("123") == 0, "a retry skipped for an explicit stop failed");
-check(index(join(",", calls), "retry-start") < 0, "a retry started Forkop after an explicit stop");
+check(index(join(",", calls), "retry-start") < 0, "a retry started Prokop after an explicit stop");
 check(index(join(",", calls), "clear-retry") >= 0, "a retry skipped for an explicit stop was kept pending");
 print("idempotent start and retry outcome checks passed\n");
 '''
 pathlib.Path(sys.argv[2]).write_text('\n'.join([
     runtime_doubles,
-    extract('state.uc', 'forkop_stably_running'),
+    extract('state.uc', 'prokop_stably_running'),
     service_doubles,
     extract('lifecycle.uc', 'start_inner'),
     extract('lifecycle.uc', 'start'),

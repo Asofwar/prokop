@@ -26,7 +26,7 @@ function functionBody(source, signature) {
   throw Error(`${signature} is not closed`);
 }
 
-const dashboard = read('fe-app-forkop/src/forkop/tabs/dashboard/initController.ts');
+const dashboard = read('fe-app-prokop/src/prokop/tabs/dashboard/initController.ts');
 const start = functionBody(dashboard, 'function startDashboardDataUpdates()');
 assert.match(start, /void connectToClashSockets\(dataUpdatesId\);/,
   'dashboard must start the Clash updates');
@@ -52,7 +52,7 @@ assert.match(functionBody(dashboard, 'function stopDashboardDataUpdates()'),
   /if \(clashUpdatesStarted\) socket\.resetAll\(\);/,
   'the dashboard must not close the monitoring socket');
 
-const monitoring = read('fe-app-forkop/src/forkop/tabs/monitoring/initController.ts');
+const monitoring = read('fe-app-prokop/src/prokop/tabs/monitoring/initController.ts');
 const monitoringSocket = functionBody(monitoring, 'async function connectToConnectionsSocket(updatesId: number)');
 assert.match(monitoringSocket, /if \(!canUseDirectClashApi\(clashApiSecret\)\) \{\s*startConnectionsPolling\(\);\s*return;/,
   'monitoring must poll through rpcd when the controller socket is not reachable or there is no secret');

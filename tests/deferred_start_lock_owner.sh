@@ -11,12 +11,12 @@ set -euo pipefail
 #
 # rc.common is emulated as in OpenWrt: fd 1000 is open and flocked when the
 # real init script's start_service runs. service/initd.uc, service/state.uc,
-# config/snapshots.uc and autotune/apply.uc are real; `forkop start` blocks
+# config/snapshots.uc and autotune/apply.uc are real; `prokop start` blocks
 # until the test releases it.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
-REAL_INITD="$ROOT_DIR/forkop/files/etc/init.d/forkop"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
+REAL_INITD="$ROOT_DIR/prokop/files/etc/init.d/prokop"
 REAL_UCODE="$(command -v ucode)"
 WORK_DIR="$(mktemp -d)"
 # shellcheck source=tests/helpers/wait.sh
@@ -41,38 +41,38 @@ fail() {
   exit 1
 }
 
-mkdir -p "$WORK_DIR/bin" "$WORK_DIR/run/forkop" "$WORK_DIR/tmp" "$WORK_DIR/snapshots"
-printf 'forkop.settings=settings\n' >"$WORK_DIR/uci.state"
+mkdir -p "$WORK_DIR/bin" "$WORK_DIR/run/prokop" "$WORK_DIR/tmp" "$WORK_DIR/snapshots"
+printf 'prokop.settings=settings\n' >"$WORK_DIR/uci.state"
 
 export TMPDIR="$WORK_DIR/tmp"
 export PATH="$WORK_DIR/bin:$PATH"
 export TEST_WORK="$WORK_DIR" EVENTS REAL_INITD REAL_UCODE
 export TEST_LIB="$LIB"
-export LOCK="$WORK_DIR/run/forkop.reload.lock"
-export RC_PROCD_LOCK="$WORK_DIR/procd_forkop.lock"
-export FORKOP_LIB="$LIB"
-export FORKOP_BIN="$WORK_DIR/bin/forkop"
-export FORKOP_RELOAD_LOCK_DIR="$LOCK"
-export FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/run/forkop"
-export FORKOP_PENDING_RELOAD_FILE="$WORK_DIR/run/forkop/reload.pending"
-export FORKOP_SERVICE_INIT="$WORK_DIR/bin/init"
-export FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
-export FORKOP_START_RETRY_DELAY_SECONDS=300
-export FORKOP_CONFIG_FILE="$WORK_DIR/forkop.config"
-export FORKOP_SNAPSHOT_DIR="$WORK_DIR/snapshots"
-export FORKOP_SNAPSHOT_HASH_DIR="$WORK_DIR/hash"
-export FORKOP_SNAPSHOT_LOCK_DIR="$WORK_DIR/run/forkop/config-snapshot.lock"
-export FORKOP_HISTORY_FILE="$WORK_DIR/history.jsonl"
-export FORKOP_RELOAD_COMMAND="$WORK_DIR/bin/no-init"
-export FORKOP_AUTOTUNE_APPLY_STATE="$WORK_DIR/autotune-apply.json"
-export FORKOP_AUTOTUNE_STATE_DIR="$WORK_DIR/run/forkop/autotune"
-unset FORKOP_UI_ACTION_TRACKED
+export LOCK="$WORK_DIR/run/prokop.reload.lock"
+export RC_PROCD_LOCK="$WORK_DIR/procd_prokop.lock"
+export PROKOP_LIB="$LIB"
+export PROKOP_BIN="$WORK_DIR/bin/prokop"
+export PROKOP_RELOAD_LOCK_DIR="$LOCK"
+export PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/run/prokop"
+export PROKOP_PENDING_RELOAD_FILE="$WORK_DIR/run/prokop/reload.pending"
+export PROKOP_SERVICE_INIT="$WORK_DIR/bin/init"
+export PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
+export PROKOP_START_RETRY_DELAY_SECONDS=300
+export PROKOP_CONFIG_FILE="$WORK_DIR/prokop.config"
+export PROKOP_SNAPSHOT_DIR="$WORK_DIR/snapshots"
+export PROKOP_SNAPSHOT_HASH_DIR="$WORK_DIR/hash"
+export PROKOP_SNAPSHOT_LOCK_DIR="$WORK_DIR/run/prokop/config-snapshot.lock"
+export PROKOP_HISTORY_FILE="$WORK_DIR/history.jsonl"
+export PROKOP_RELOAD_COMMAND="$WORK_DIR/bin/no-init"
+export PROKOP_AUTOTUNE_APPLY_STATE="$WORK_DIR/autotune-apply.json"
+export PROKOP_AUTOTUNE_STATE_DIR="$WORK_DIR/run/prokop/autotune"
+unset PROKOP_UI_ACTION_TRACKED
 
 # Nothing here may reach the host's syslog, nftables or init scripts.
 printf '#!/bin/sh\nexit 0\n' >"$WORK_DIR/bin/logger"
 printf '#!/bin/sh\nexit 0\n' >"$WORK_DIR/bin/no-init"
 printf '#!/bin/sh\nexit 1\n' >"$WORK_DIR/bin/nft"
-# /etc/init.d/forkop: a queued reload is applied through the init script.
+# /etc/init.d/prokop: a queued reload is applied through the init script.
 cat >"$WORK_DIR/bin/init" <<'SH'
 #!/bin/sh
 exec bash "$TEST_WORK/rc" "$@"
@@ -96,9 +96,9 @@ esac
 exec "$REAL_UCODE" "$@"
 SH
 
-# `forkop start` runs until START_GATE exists; a reload records whether it
+# `prokop start` runs until START_GATE exists; a reload records whether it
 # ran next to a start.
-cat >"$WORK_DIR/bin/forkop" <<'SH'
+cat >"$WORK_DIR/bin/prokop" <<'SH'
 #!/bin/sh
 ev() { printf '%s\n' "$1" >>"$EVENTS"; }
 case "$1" in
@@ -136,15 +136,15 @@ flock 1000
 initscript="$REAL_INITD"
 # shellcheck disable=SC1090
 . "$REAL_INITD"
-FORKOP_LIB="$TEST_LIB"
-FORKOP_INITD_UC="$TEST_LIB/service/initd.uc"
+PROKOP_LIB="$TEST_LIB"
+PROKOP_INITD_UC="$TEST_LIB/service/initd.uc"
 case "$action" in
   start) start_service "$@" ;;
   reload) reload_service "$@" ;;
   *) exit 64 ;;
 esac
 SH
-chmod +x "$WORK_DIR/bin/ucode" "$WORK_DIR/bin/forkop" "$WORK_DIR/bin/logger" \
+chmod +x "$WORK_DIR/bin/ucode" "$WORK_DIR/bin/prokop" "$WORK_DIR/bin/logger" \
   "$WORK_DIR/bin/no-init" "$WORK_DIR/bin/nft" "$WORK_DIR/bin/init" "$WORK_DIR/rc"
 
 has_event() { grep -q "$1" "$EVENTS" 2>/dev/null; }
@@ -170,12 +170,12 @@ descends_from() {
 }
 start_finished() { [ ! -e "$WORK_DIR/start.running" ] && grep -q '^start ' "$WORK_DIR/ui-finished" 2>/dev/null; }
 
-# `/etc/init.d/forkop start` as rcS, procd or a caller runs it: it returns at
+# `/etc/init.d/prokop start` as rcS, procd or a caller runs it: it returns at
 # once, and the detached worker carries on without fd 1000.
 deferred_start() {
   local status=0 caller
   : >"$EVENTS"
-  rm -f "$WORK_DIR/start.gate" "$WORK_DIR/ui-finished" "$FORKOP_PENDING_RELOAD_FILE"
+  rm -f "$WORK_DIR/start.gate" "$WORK_DIR/ui-finished" "$PROKOP_PENDING_RELOAD_FILE"
   setsid timeout -s KILL 90 bash "$WORK_DIR/rc" start manual >"$WORK_DIR/rc-start.out" 2>&1 &
   caller=$!
   actors+=("$caller")
@@ -197,7 +197,7 @@ owner_holds_lock() {
     fail "$label: reload.lock records no owner with the start ticks of $owner: $(ls -A "$LOCK" | tr '\n' ' ')"
   tr '\0' ' ' <"/proc/$owner/cmdline" | grep -q 'service/initd.uc start-service' ||
     fail "$label: reload.lock owner $owner is not the start worker"
-  descends_from "$BACKEND_PID" "$owner" || fail "$label: \`forkop start\` does not run under the lock owner"
+  descends_from "$BACKEND_PID" "$owner" || fail "$label: \`prokop start\` does not run under the lock owner"
   OWNER="$owner"
 }
 
@@ -207,7 +207,7 @@ deferred_start
 process_gone "$RC_PID" || fail "the rc.common shell is still running"
 owner_holds_lock "detached start"
 [ ! -e "/proc/$OWNER/fd/1000" ] || fail "the start worker kept procd's fd 1000"
-[ ! -e "/proc/$BACKEND_PID/fd/1000" ] || fail "\`forkop start\` inherited procd's fd 1000"
+[ ! -e "/proc/$BACKEND_PID/fd/1000" ] || fail "\`prokop start\` inherited procd's fd 1000"
 flock -n "$RC_PROCD_LOCK" true || fail "the detached start holds procd's service lock"
 [ "$(cat "$WORK_DIR/ui-job-start.pid" 2>/dev/null)" = "$OWNER" ] ||
   fail "the UI start job is tracked under pid '$(cat "$WORK_DIR/ui-job-start.pid" 2>/dev/null)', not the start worker $OWNER"
@@ -221,9 +221,9 @@ fi
 
 # 3. The owner record keeps the lock readers working: a snapshot apply and an
 #    autotune apply see the running start as a lifecycle action.
-printf 'config settings\n' >"$FORKOP_CONFIG_FILE"
+printf 'config settings\n' >"$PROKOP_CONFIG_FILE"
 printf 'config settings\n\toption changed 1\n' >"$WORK_DIR/candidate"
-config_hash="$(sha256sum "$FORKOP_CONFIG_FILE" | cut -d' ' -f1)"
+config_hash="$(sha256sum "$PROKOP_CONFIG_FILE" | cut -d' ' -f1)"
 answer="$("$REAL_UCODE" -L "$LIB" "$LIB/config/snapshots.uc" apply "$WORK_DIR/candidate" "$config_hash")" || true
 [ "$answer" = '{ "status": "stale", "reason": "service_action_in_progress" }' ] ||
   fail "snapshot apply did not see the running start: $answer"
@@ -239,7 +239,7 @@ actors+=("$reloader")
 wait_until 20 process_gone "$reloader" || fail "init.d reload did not return during the start"
 wait "$reloader" || status=$?
 [ "$status" = 0 ] || fail "queued reload returned $status"
-[ -e "$FORKOP_PENDING_RELOAD_FILE" ] || fail "the reload was neither run nor queued"
+[ -e "$PROKOP_PENDING_RELOAD_FILE" ] || fail "the reload was neither run nor queued"
 has_event '^reload' && fail "a reload ran next to the start"
 [ "$(lock_owner)" = "$OWNER" ] || fail "the reload changed the reload.lock owner"
 
@@ -254,7 +254,7 @@ wait_until 10 test ! -e "$LOCK" || fail "the finished start did not release relo
 [ "$(grep '^start ' "$WORK_DIR/ui-finished")" = "start job-start 0" ] || fail "the UI start job did not finish as success"
 has_event '^reload during start$' && fail "a reload ran next to the start"
 [ "$(grep -c '^reload after start$' "$EVENTS")" = 1 ] || fail "the queued reload did not run once after the start"
-[ ! -e "$FORKOP_PENDING_RELOAD_FILE" ] || fail "the queued reload is still pending after the start"
+[ ! -e "$PROKOP_PENDING_RELOAD_FILE" ] || fail "the queued reload is still pending after the start"
 
 # 6. A start whose lock was taken over (a contender broke it) releases only
 #    its own lock: the new owner's lock survives the start's release.

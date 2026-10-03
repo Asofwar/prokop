@@ -10,7 +10,7 @@
 // A decided answer must be the model's; where the model cannot know (IPv6,
 // DNS hijack, a FakeIP without its domain, an address after a foreign
 // resolve, QUIC on UDP) the resolver must not decide.
-// Usage: route_resolver_model.js <forkop lib> <forkop.uci fixture>
+// Usage: route_resolver_model.js <prokop lib> <prokop.uci fixture>
 
 const assert = require("node:assert/strict");
 const { Rng, seedFrom, casesFrom, ucodeBatch, forAll, exercised } = require("./scaffold");
@@ -195,7 +195,7 @@ function model(rulesList, t) {
 
 const UCODE = `
 let r = require("routing.resolve");
-let sections = r.parse_config(__fs.readfile(getenv("ROUTE_FORKOP_UCI")));
+let sections = r.parse_config(__fs.readfile(getenv("ROUTE_PROKOP_UCI")));
 const OUTBOUNDS = [
     { type: "direct", tag: "direct-out" }, { type: "direct", tag: "bypass-out" }, { type: "vless", tag: "main-out" },
     { type: "direct", tag: "youtube-out", routing_mark: 16777217 }, { type: "direct", tag: "discord-out", routing_mark: 16777218 }
@@ -209,7 +209,7 @@ function evaluate(input) {
 `;
 
 const cases = Array.from({ length: CASES }, () => ({ rules: rules(), t: target() }));
-const results = ucodeBatch(lib, UCODE, cases, { ROUTE_FORKOP_UCI: uciFixture });
+const results = ucodeBatch(lib, UCODE, cases, { ROUTE_PROKOP_UCI: uciFixture });
 const models = cases.map((c) => model(c.rules, c.t));
 
 forAll("a decided owner is the one sing-box and nft give; the unknowable is never decided", seed, cases, (c, i) => {

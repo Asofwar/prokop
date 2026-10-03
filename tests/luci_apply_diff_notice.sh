@@ -23,7 +23,7 @@ console.log = (...args) => `${args[0]}`.startsWith('[DEBUG]') || print(...args);
 const config = { settings: { '.name': 'settings', '.type': 'settings', '.anonymous': false,
   dns_rewrite_ttl: '60', yacd_secret_key: 'secret-0123456789' } };
 const installed = { loaded: true, zapretInstalled: true, zapret2Installed: true, byedpiInstalled: true };
-const health = (timestamp) => ({ service: { forkop: 'ok' },
+const health = (timestamp) => ({ service: { prokop: 'ok' },
   last_reload: { kind: 'reload', status: 'success', timestamp } });
 
 // Save & Apply on Settings, then the page LuCI loads once the apply is

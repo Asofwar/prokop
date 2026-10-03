@@ -5,7 +5,7 @@
 //
 // Every mode fails (non-zero exit, assertion message) unless the listing the
 // kernel returned has the expected structure. Nothing here depends on handle
-// numbers; order is checked only where Forkop relies on it.
+// numbers; order is checked only where Prokop relies on it.
 const fs = require('node:fs');
 const assert = require('node:assert/strict');
 
@@ -66,12 +66,12 @@ function maskedMark(rule) {
   }
   return null;
 }
-// A match on Forkop's own mark bits (UC-104): `meta mark & M == V` with a
+// A match on Prokop's own mark bits (UC-104): `meta mark & M == V` with a
 // mask that leaves out the bits other output hooks of the same priority use
 // (pbr, mwan3, Tailscale: 0x00ffff00). An exact `meta mark V` fails as soon
 // as such a hook ORs a bit into the mark first.
 const FOREIGN_MARK_BITS = 0x00ffff00;
-function forkopMark(rule) {
+function prokopMark(rule) {
   const m = maskedMark(rule);
   return m && (m.mask & FOREIGN_MARK_BITS) === 0 && (m.value & ~m.mask) === 0 && m.mask !== m.value ? m.value : null;
 }
@@ -105,18 +105,18 @@ const modes = {
     // The outbound (autotune probe) mark leaves mangle_output before anything
     // can re-mark, jump or queue it.
     const out = rulesOf(table, 'mangle_output');
-    const bypass = out.findIndex((r) => forkopMark(r) === outbound && verdict(r) === 'return');
-    assert.ok(bypass >= 0, 'mangle_output has no outbound mark bypass on Forkop\'s own mark bits');
+    const bypass = out.findIndex((r) => prokopMark(r) === outbound && verdict(r) === 'return');
+    assert.ok(bypass >= 0, 'mangle_output has no outbound mark bypass on Prokop\'s own mark bits');
     out.forEach((r, i) => {
       assert.equal(exactMark(r), null, `mangle_output rule ${i} matches an exact mark: ${JSON.stringify(r.expr)}`);
-      if (setsMark(r) !== null || statementOf(r, 'jump') || statementOf(r, 'queue') || (forkopMark(r) !== null && forkopMark(r) !== outbound))
+      if (setsMark(r) !== null || statementOf(r, 'jump') || statementOf(r, 'queue') || (prokopMark(r) !== null && prokopMark(r) !== outbound))
         assert.ok(i > bypass, `mangle_output rule ${i} (${JSON.stringify(r.expr)}) precedes the outbound mark bypass`);
     });
 
     // Provider rules: route mark -> NFQUEUE, after the desync returns.
     const found = [];
     out.forEach((r, i) => {
-      const mark = forkopMark(r);
+      const mark = prokopMark(r);
       if (mark === null || mark === outbound) return;
       const q = statementOf(r, 'queue');
       if (queueSupported === 'yes') {
@@ -216,8 +216,8 @@ const modes = {
   'transition-guard'() {
     const [table, markText] = args;
     const mark = Number(markText);
-    baseChain(table, 'forkop_transition_guard', 'filter', 'prerouting', -101);
-    const rules = rulesOf(table, 'forkop_transition_guard');
+    baseChain(table, 'prokop_transition_guard', 'filter', 'prerouting', -101);
+    const rules = rulesOf(table, 'prokop_transition_guard');
     assert.equal(rules.length, 1, 'transition guard rule count');
     const m = maskedMark(rules[0]);
     assert.ok(m && m.mask === mark && m.value === mark, 'transition guard must match the FakeIP mark');
@@ -236,7 +236,7 @@ const modes = {
     baseChain(table, 'output', 'route', 'output', -151);
     const rules = rulesOf(table, 'output');
     assert.equal(rules.length, 1, 'TorrServer Direct rule count');
-    assert.equal(rules[0].comment, 'Forkop TorrServer Direct');
+    assert.equal(rules[0].comment, 'Prokop TorrServer Direct');
     assert.equal(setsMark(rules[0]), Number(markText), 'TorrServer Direct must set the outbound mark');
     if (cgroup !== '-') {
       const socket = rules[0].expr.map((e) => e.match).find((m) => m && m.left && m.left.socket);

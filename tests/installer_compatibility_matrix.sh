@@ -14,16 +14,16 @@ fail_test() {
   exit 1
 }
 
-unset FORKOP_MIRROR_BASE_URL
+unset PROKOP_MIRROR_BASE_URL
 sed \
   -e '/^main "\$@"$/d' \
-  -e 's#\[ -f /etc/openwrt_release \]#\[ -f "$FORKOP_TEST_RELEASE_FILE" \]#' \
+  -e 's#\[ -f /etc/openwrt_release \]#\[ -f "$PROKOP_TEST_RELEASE_FILE" \]#' \
   "$ROOT_DIR/install.sh" > "$WORK_DIR/install-library.sh"
 # shellcheck disable=SC1090
 . "$WORK_DIR/install-library.sh"
 
-FORKOP_TEST_RELEASE_FILE="$WORK_DIR/openwrt_release"
-touch "$FORKOP_TEST_RELEASE_FILE"
+PROKOP_TEST_RELEASE_FILE="$WORK_DIR/openwrt_release"
+touch "$PROKOP_TEST_RELEASE_FILE"
 TMP_DIR="$WORK_DIR/tmp"
 mkdir -p "$TMP_DIR"
 
@@ -99,8 +99,8 @@ expect_rejected 25.12.5 0
 TEST_RELEASE="24.09.9"
 PKG_IS_APK=0
 unsupported_24_message="$( (check_system) 2>&1 || true)"
-printf '%s\n' "$unsupported_24_message" | grep -Fq 'Forkop supports OpenWrt 24.10.x, but not 24.09.9' ||
-  fail_test "unsupported OpenWrt 24 releases must be reported as a Forkop limit"
+printf '%s\n' "$unsupported_24_message" | grep -Fq 'Prokop supports OpenWrt 24.10.x, but not 24.09.9' ||
+  fail_test "unsupported OpenWrt 24 releases must be reported as a Prokop limit"
 if printf '%s\n' "$unsupported_24_message" | grep -qi 'mirror'; then
   fail_test "the OpenWrt 24 support message must not present the mirror as mandatory"
 fi
@@ -255,7 +255,7 @@ parse_args --language=ru --sing-box stable
   fail_test "explicit stable sing-box selection must be retained"
 
 INSTALL_MODE="clean"
-FORKOP_I18N_REQUESTED=0
+PROKOP_I18N_REQUESTED=0
 INSTALLER_LANG="en"
 INSTALLER_LANG_EXPLICIT=0
 INSTALLER_LANG_DETECTED=0
@@ -263,22 +263,22 @@ pkg_is_installed() { return 1; }
 get_luci_main_lang() { printf '%s\n' ru; }
 parse_args --lang ru
 decide_i18n_installation >/dev/null
-[ "$INSTALLER_LANG" = "ru" ] && [ "$FORKOP_I18N_REQUESTED" -eq 1 ] ||
+[ "$INSTALLER_LANG" = "ru" ] && [ "$PROKOP_I18N_REQUESTED" -eq 1 ] ||
   fail_test "Russian selection must request the Russian LuCI package"
 
-FORKOP_I18N_REQUESTED=0
+PROKOP_I18N_REQUESTED=0
 parse_args --lang en
 decide_i18n_installation >/dev/null
-[ "$INSTALLER_LANG" = "en" ] && [ "$FORKOP_I18N_REQUESTED" -eq 0 ] ||
+[ "$INSTALLER_LANG" = "en" ] && [ "$PROKOP_I18N_REQUESTED" -eq 0 ] ||
   fail_test "explicit English selection must override the detected LuCI language"
 
 printf x >"$WORK_DIR/backend.ipk"
 printf xx >"$WORK_DIR/app.ipk"
-FORKOP_BACKEND_FILE="$WORK_DIR/backend.ipk"
-FORKOP_APP_FILE="$WORK_DIR/app.ipk"
-FORKOP_I18N_FILE=""
+PROKOP_BACKEND_FILE="$WORK_DIR/backend.ipk"
+PROKOP_APP_FILE="$WORK_DIR/app.ipk"
+PROKOP_I18N_FILE=""
 pkg_is_installed() { return 0; }
-calculated_space="$(forkop_install_required_space_kb)"
+calculated_space="$(prokop_install_required_space_kb)"
 [ "$calculated_space" -eq "$((2 * PACKAGE_ARCHIVE_SPACE_FACTOR + PACKAGE_INSTALL_OVERHEAD_KB + FLASH_RESERVE_KB))" ] ||
   fail_test "installer must calculate flash requirements from the selected downloaded packages"
 [ "$calculated_space" -lt 15360 ] ||

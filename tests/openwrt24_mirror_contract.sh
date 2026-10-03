@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SYNC="$ROOT_DIR/ops/mirror/sync-openwrt.sh"
-PUBLISH="$ROOT_DIR/ops/mirror/publish-forkop-feed.sh"
+PUBLISH="$ROOT_DIR/ops/mirror/publish-prokop-feed.sh"
 PLATFORMS="$ROOT_DIR/ops/mirror/openwrt-platforms.conf.example"
 SERVICE="$ROOT_DIR/ops/mirror/openwrt-mirror.service"
 
@@ -35,10 +35,10 @@ grep -Fq 'forkop-platforms.tsv' "$SYNC" ||
   fail "mirror does not publish its platform matrix"
 grep -Fq 'rockchip/armv8 aarch64_generic' "$PLATFORMS" ||
   fail "tracked platform example is missing rockchip/armv8"
-grep -Fq 'EnvironmentFile=-/etc/default/forkop-openwrt-mirror' "$SERVICE" ||
+grep -Fq 'EnvironmentFile=-/etc/default/prokop-openwrt-mirror' "$SERVICE" ||
   fail "OpenWrt mirror service does not load its optional environment file"
 
-for package in forkop luci-app-forkop luci-i18n-forkop-ru; do
+for package in prokop luci-app-prokop luci-i18n-prokop-ru; do
   grep -Fq "${package}_\$VERSION.ipk" "$PUBLISH" ||
     fail "release metadata does not publish $package IPK"
 done

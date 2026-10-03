@@ -1,16 +1,16 @@
 #!/bin/sh
 set -eu
-# route_trace names the Forkop rule, action, outbound and DPI strategy the
+# route_trace names the Prokop rule, action, outbound and DPI strategy the
 # generated sing-box config assigns to a connection (calculated, marked
 # "simulated"; the strategy "configured"), says why when the config cannot
 # answer, and never returns secrets or raw strategy options.
 ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
-LIB="$ROOT/forkop/files/usr/lib"
+LIB="$ROOT/prokop/files/usr/lib"
 TRACE="$LIB/diagnostics/route_trace.uc"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT HUP INT TERM
 
-cat >"$WORK/forkop" <<CONF
+cat >"$WORK/prokop" <<CONF
 config settings 'settings'
 	option config_path '$WORK/sing-box.json'
 config section 'youtube'
@@ -45,7 +45,7 @@ JSON
 }
 
 trace() {
-  FORKOP_CONFIG="$WORK/forkop" ucode -L "$LIB" "$TRACE" fixture "$1" "$2" TCP 443 "$3" '' || true
+  PROKOP_CONFIG="$WORK/prokop" ucode -L "$LIB" "$TRACE" fixture "$1" "$2" TCP 443 "$3" '' || true
 }
 
 write_config ',{"action":"route","inbound":"tproxy-in","rule_set":["main-community"],"outbound":"main-urltest-out"}'

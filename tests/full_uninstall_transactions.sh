@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Full uninstall waits, bounded, for a configuration change of Forkop that
+# Full uninstall waits, bounded, for a configuration change of Prokop that
 # began before it (UC-084).
 #
-# Before: the removal stopped Forkop and deleted its files without looking
+# Before: the removal stopped Prokop and deleted its files without looking
 # at the snapshot and autotune transactions. One that was running when the
 # removal started (a restore from another LuCI tab, an autotune run or
 # apply, a change of the autotune policy, an URLTest override) went on
-# beside it: it could write /etc/config/forkop, the snapshots or the crontab
+# beside it: it could write /etc/config/prokop, the snapshots or the crontab
 # again after the files phase, or keep its nft guard, behind a removal that
 # reported "complete".
 #
@@ -23,7 +23,7 @@ set -euo pipefail
 # ucode processes with that identity, run from stand-in modules.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SCRIPT="$ROOT_DIR/forkop/files/usr/lib/full-uninstall.sh"
+SCRIPT="$ROOT_DIR/prokop/files/usr/lib/full-uninstall.sh"
 REAL_SLEEP="$(command -v sleep)"
 WORK="$(cd "$(mktemp -d)" && pwd -P)"
 # shellcheck source=tests/helpers/wait.sh
@@ -46,7 +46,7 @@ trap 'exit 1' HUP INT TERM
 ROOT=""
 fail() {
   printf 'FAIL: %s: %s\n' "$CASE" "$1" >&2
-  [ -z "$ROOT" ] || cat "$ROOT"/tmp/forkop-uninstall.*/output.log 2>/dev/null | sed 's/^/  log: /' >&2 || true
+  [ -z "$ROOT" ] || cat "$ROOT"/tmp/prokop-uninstall.*/output.log 2>/dev/null | sed 's/^/  log: /' >&2 || true
   exit 1
 }
 
@@ -79,28 +79,28 @@ export PATH="$WORK/bin:$PATH"
 fixture() {
   CASE="$1"
   ROOT="$WORK/$1"
-  LIB="$ROOT/usr/lib/forkop"
-  mkdir -p "$ROOT/etc/opkg" "$ROOT/usr/bin" "$ROOT/bin" "$ROOT/packages" "$ROOT/etc/forkop" \
+  LIB="$ROOT/usr/lib/prokop"
+  mkdir -p "$ROOT/etc/opkg" "$ROOT/usr/bin" "$ROOT/bin" "$ROOT/packages" "$ROOT/etc/prokop" \
     "$ROOT/etc/config" "$ROOT/etc/init.d" "$LIB/config" "$LIB/autotune"
   : >"$ROOT/calls"
   printf 'original vendor repositories\n' >"$ROOT/etc/opkg/distfeeds.conf.pre-forkop-mirror"
   printf 'https://mirror.51343.ru/openwrt/releases/test\n' >"$ROOT/etc/opkg/distfeeds.conf"
-  printf 'subscription secret\n' >"$ROOT/etc/config/forkop"
-  touch "$ROOT/packages/forkop" "$ROOT/packages/luci-app-forkop"
-  printf '#!/bin/sh\nprintf "forkop %%s\\n" "$*" >>"$FORKOP_UNINSTALL_ROOT/calls"\n' >"$ROOT/usr/bin/forkop"
-  printf '#!/bin/sh\nprintf "init.d/forkop %%s\\n" "$1" >>"$FORKOP_UNINSTALL_ROOT/calls"\n' >"$ROOT/etc/init.d/forkop"
+  printf 'subscription secret\n' >"$ROOT/etc/config/prokop"
+  touch "$ROOT/packages/prokop" "$ROOT/packages/luci-app-prokop"
+  printf '#!/bin/sh\nprintf "prokop %%s\\n" "$*" >>"$PROKOP_UNINSTALL_ROOT/calls"\n' >"$ROOT/usr/bin/prokop"
+  printf '#!/bin/sh\nprintf "init.d/prokop %%s\\n" "$1" >>"$PROKOP_UNINSTALL_ROOT/calls"\n' >"$ROOT/etc/init.d/prokop"
   cat >"$ROOT/bin/opkg" <<'SH'
 #!/bin/sh
 case "$1" in
-  status) [ -e "$FORKOP_UNINSTALL_ROOT/packages/$2" ] && echo 'Status: install ok installed' ;;
-  remove) shift; for p in "$@"; do rm -f "$FORKOP_UNINSTALL_ROOT/packages/$p"; done ;;
+  status) [ -e "$PROKOP_UNINSTALL_ROOT/packages/$2" ] && echo 'Status: install ok installed' ;;
+  remove) shift; for p in "$@"; do rm -f "$PROKOP_UNINSTALL_ROOT/packages/$p"; done ;;
   *) exit 1 ;;
 esac
 SH
-  # Nothing of Forkop's runtime is in place: never the host's nft and ip.
+  # Nothing of Prokop's runtime is in place: never the host's nft and ip.
   printf '#!/bin/sh\nexit 1\n' >"$ROOT/bin/nft"
   printf '#!/bin/sh\nexit 0\n' >"$ROOT/bin/ip"
-  chmod +x "$ROOT/usr/bin/forkop" "$ROOT/etc/init.d/forkop" "$ROOT/bin/opkg" "$ROOT/bin/nft" "$ROOT/bin/ip"
+  chmod +x "$ROOT/usr/bin/prokop" "$ROOT/etc/init.d/prokop" "$ROOT/bin/opkg" "$ROOT/bin/nft" "$ROOT/bin/ip"
 }
 
 # transaction MODULE MODE: a process with the identity of that transaction.
@@ -118,14 +118,14 @@ while (fs.stat(dir + "/release") == null)
     system("sleep 0.05");
 fs.writefile(getenv("TXN_CONFIG"), "written by the transaction\n");
 UCODE
-  TXN="$TXN" TXN_CONFIG="$ROOT/etc/config/forkop" ucode -L "$LIB" "$module" "$2" x </dev/null >/dev/null 2>&1 &
+  TXN="$TXN" TXN_CONFIG="$ROOT/etc/config/prokop" ucode -L "$LIB" "$module" "$2" x </dev/null >/dev/null 2>&1 &
   TXN_PID=$!
   pids+=("$TXN_PID")
   wait_until 20 test -e "$TXN/started" || fail "the transaction $1 $2 did not start"
 }
 
 settled() {
-  status="$(cat "$ROOT"/www/forkop-uninstall.*.json 2>/dev/null)"
+  status="$(cat "$ROOT"/www/prokop-uninstall.*.json 2>/dev/null)"
   case "$status" in *'"state":"complete"'* | *'"state":"failed"'*) return 0 ;; esac
   return 1
 }
@@ -136,7 +136,7 @@ waiting_or_settled() {
 }
 
 start_removal() {
-  FORKOP_UNINSTALL_ROOT="$ROOT" FORKOP_MIRROR_BASE_URL=https://mirror.51343.ru PATH="$ROOT/bin:$PATH" \
+  PROKOP_UNINSTALL_ROOT="$ROOT" PROKOP_MIRROR_BASE_URL=https://mirror.51343.ru PATH="$ROOT/bin:$PATH" \
     sh "$SCRIPT" start >"$ROOT/response" || fail "the removal did not start: $(cat "$ROOT/response")"
 }
 
@@ -154,23 +154,23 @@ for transaction in "config/snapshots.uc restore" "config/snapshots.uc create" \
   if settled; then
     fail "the removal did not wait for $transaction: $status"
   fi
-  if grep -q 'stop' "$ROOT/calls"; then fail "Forkop was stopped while $transaction ran"; fi
+  if grep -q 'stop' "$ROOT/calls"; then fail "Prokop was stopped while $transaction ran"; fi
   : >"$TXN/release"
   wait_until 30 process_gone "$TXN_PID" || fail "the transaction did not end"
   wait_until 30 settled || fail "the removal did not finish after $transaction ended"
   printf '%s\n' "$status" | grep -q '"state":"complete"' || fail "the removal failed: $status"
-  [ ! -e "$ROOT/etc/config/forkop" ] || fail "what $transaction wrote outlived the removal"
-  [ ! -e "$ROOT/packages/forkop" ] || fail "the packages were not removed"
+  [ ! -e "$ROOT/etc/config/prokop" ] || fail "what $transaction wrote outlived the removal"
+  [ ! -e "$ROOT/packages/prokop" ] || fail "the packages were not removed"
 done
 [ ! -e "$WORK/cmdline-grep" ] || fail "the removal searched the command lines with grep"
 
-# 2. What only reads, or is no transaction of this Forkop, holds nothing up.
+# 2. What only reads, or is no transaction of this Prokop, holds nothing up.
 fixture reads
 transaction config/snapshots.uc list
 transaction autotune/manager.uc status
 transaction autotune/isolation.uc status
 LIB_KEPT="$LIB"
-LIB="$WORK/other-root/usr/lib/forkop"
+LIB="$WORK/other-root/usr/lib/prokop"
 mkdir -p "$LIB/config"
 transaction config/snapshots.uc restore
 LIB="$LIB_KEPT"
@@ -187,11 +187,11 @@ wait_until 60 settled || fail "the removal did not give up waiting"
 printf '%s\n' "$status" | grep -q '"state":"failed","phase":"transactions"' ||
   fail "the removal did not fail while the transaction ran: $status"
 [ ! -s "$ROOT/calls" ] || fail "the removal did more than wait: $(cat "$ROOT/calls")"
-[ -e "$ROOT/packages/forkop" ] || fail "packages were removed"
-grep -qx 'subscription secret' "$ROOT/etc/config/forkop" || fail "the configuration was removed"
+[ -e "$ROOT/packages/prokop" ] || fail "packages were removed"
+grep -qx 'subscription secret' "$ROOT/etc/config/prokop" || fail "the configuration was removed"
 grep -q 'mirror.51343.ru' "$ROOT/etc/opkg/distfeeds.conf" || fail "the feeds were changed"
-grep -Fq "config/snapshots.uc restore (pid $TXN_PID)" "$ROOT"/tmp/forkop-uninstall.*/output.log ||
+grep -Fq "config/snapshots.uc restore (pid $TXN_PID)" "$ROOT"/tmp/prokop-uninstall.*/output.log ||
   fail "the log does not name the transaction"
-[ ! -e "$ROOT/tmp/forkop-full-uninstall.lock" ] || fail "the removal lock was left behind"
+[ ! -e "$ROOT/tmp/prokop-full-uninstall.lock" ] || fail "the removal lock was left behind"
 
 printf 'full_uninstall_transactions: ok\n'

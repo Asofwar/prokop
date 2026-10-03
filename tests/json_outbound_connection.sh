@@ -2,9 +2,9 @@
 set -eo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-GENERATOR_UC="$FORKOP_LIB/singbox/generator.uc"
-SECTION_JS="$ROOT_DIR/luci-app-forkop/htdocs/luci-static/resources/view/forkop/section.js"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+GENERATOR_UC="$PROKOP_LIB/singbox/generator.uc"
+SECTION_JS="$ROOT_DIR/luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js"
 WORK_DIR="$(mktemp -d)"
 
 cleanup() {
@@ -50,7 +50,7 @@ JSON
 
 runtime_config="$WORK_DIR/output.json"
 mkdir -p "$runtime_config.section-cache" "$runtime_config.rulesets"
-ucode -L "$FORKOP_LIB" "$GENERATOR_UC" generate-config-fixture \
+ucode -L "$PROKOP_LIB" "$GENERATOR_UC" generate-config-fixture \
   "$WORK_DIR/input.json" "$runtime_config" "127.0.0.1" "0"
 
 ucode -e '

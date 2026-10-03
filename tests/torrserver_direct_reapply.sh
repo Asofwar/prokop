@@ -7,7 +7,7 @@ set -euo pipefail
 #
 # UC-108: a re-apply deleted the table with one nft call and created it with
 # another, from a fixed /tmp path written through symlinks. Between the two
-# TorrServer's new connections went unmarked into Forkop's interception. Now
+# TorrServer's new connections went unmarked into Prokop's interception. Now
 # one nft -f from a fresh temporary file replaces the table in a single
 # transaction (add, delete, add), and no table is deleted on its own unless
 # that transaction fails.
@@ -19,7 +19,7 @@ set -euo pipefail
 # again, and the worker keeps running (procd would respawn it if it ended).
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 DIRECT_UC="$LIB/torrserver/direct.uc"
 WORK="$(mktemp -d)"
 trap 'rm -rf "${WORK:?}"' EXIT
@@ -36,9 +36,9 @@ fail() {
 REAL_SLEEP="$(command -v sleep)"
 mkdir -p "$WORK/bin" "$WORK/modules" "$WORK/tmp" "$WORK/proc/4242" "$WORK/cgroup/services/torrserver"
 export PATH="$WORK/bin:$PATH" TMPDIR="$WORK/tmp" NFT_LOG="$WORK/nft.log" NFT_STATE="$WORK/nft.applied"
-export FORKOP_PROC_DIR="$WORK/proc" FORKOP_CGROUP_DIR="$WORK/cgroup" STUB_STATE="$WORK/uci.json"
+export PROKOP_PROC_DIR="$WORK/proc" PROKOP_CGROUP_DIR="$WORK/cgroup" STUB_STATE="$WORK/uci.json"
 export SLEEP_COUNT="$WORK/sleep.count" POLL_LOG="$WORK/poll.log" POLL_DONE="$WORK/poll.done" REAL_SLEEP
-unset FORKOP_UCI_STATE_FILE
+unset PROKOP_UCI_STATE_FILE
 
 # A TorrServer in a cgroup of its own.
 printf '/usr/bin/torrserver\0--port\08090\0' >"$WORK/proc/4242/cmdline"
@@ -61,10 +61,10 @@ case "$1" in
   list)
     [ -e "$NFT_STATE" ] || exit 1
     cat <<'OUT'
-table inet ForkopTorrServerDirect {
+table inet ProkopTorrServerDirect {
 	chain output {
 		type route hook output priority mangle - 1; policy accept;
-		socket cgroupv2 level 2 "services/torrserver" meta mark set 0x08000000 counter packets 0 bytes 0 comment "Forkop TorrServer Direct"
+		socket cgroupv2 level 2 "services/torrserver" meta mark set 0x08000000 counter packets 0 bytes 0 comment "Prokop TorrServer Direct"
 	}
 }
 OUT
@@ -86,7 +86,7 @@ case "$count" in
   2) value=1 ;;
   *) echo $$ >"$POLL_DONE"; exec "$REAL_SLEEP" 60 ;;
 esac
-printf '{"forkop":{"settings":{".name":"settings",".type":"settings","torrserver_direct_enabled":"%s"}}}' "$value" >"$STUB_STATE"
+printf '{"prokop":{"settings":{".name":"settings",".type":"settings","torrserver_direct_enabled":"%s"}}}' "$value" >"$STUB_STATE"
 SH
 chmod +x "$WORK/bin/nft" "$WORK/bin/sleep"
 
@@ -116,7 +116,7 @@ return { cursor };
 UC
 
 set_enabled() {
-  printf '{"forkop":{"settings":{".name":"settings",".type":"settings","torrserver_direct_enabled":"%s"}}}' "$1" >"$STUB_STATE"
+  printf '{"prokop":{"settings":{".name":"settings",".type":"settings","torrserver_direct_enabled":"%s"}}}' "$1" >"$STUB_STATE"
 }
 direct() { ucode -L "$WORK/modules" -L "$LIB" "$DIRECT_UC" "$@"; }
 reset() { : >"$NFT_LOG"; rm -f "$NFT_STATE" "$SLEEP_COUNT" "$POLL_LOG" "$POLL_DONE"; }
@@ -132,12 +132,12 @@ for round in first re-apply; do
   grep -v '^file:' "$NFT_LOG" | grep -q '^call:\(add\|insert\|flush\)' &&
     fail "the $round apply changed the ruleset outside its transaction"
   batch="$(sed -n 's/^file://p' "$NFT_LOG")"
-  expected='add table inet ForkopTorrServerDirect
-delete table inet ForkopTorrServerDirect
-add table inet ForkopTorrServerDirect'
+  expected='add table inet ProkopTorrServerDirect
+delete table inet ProkopTorrServerDirect
+add table inet ProkopTorrServerDirect'
   [ "$(printf '%s\n' "$batch" | head -n 3)" = "$expected" ] ||
     fail "the $round batch does not replace the table in one transaction: $batch"
-  printf '%s\n' "$batch" | grep -q '^add rule inet ForkopTorrServerDirect output socket cgroupv2 level 2 "services/torrserver" meta mark set' ||
+  printf '%s\n' "$batch" | grep -q '^add rule inet ProkopTorrServerDirect output socket cgroupv2 level 2 "services/torrserver" meta mark set' ||
     fail "the $round batch lacks the rule: $batch"
   path="$(sed -n 's/^path://p' "$NFT_LOG")"
   case "$path" in
@@ -151,7 +151,7 @@ done
 # A refused transaction changed nothing; what is left of an older rule goes.
 : >"$NFT_LOG"
 if NFT_FAIL_F=1 direct reconcile; then fail "a refused nft -f was reported as applied"; fi
-grep -q '^call:delete table inet ForkopTorrServerDirect' "$NFT_LOG" ||
+grep -q '^call:delete table inet ProkopTorrServerDirect' "$NFT_LOG" ||
   fail "a refused transaction did not remove the older rule"
 [ -z "$(ls -A "$WORK/tmp")" ] || fail "a refused apply left temporary files: $(ls -A "$WORK/tmp")"
 printf 'ok - a re-apply is one nft transaction from a fresh temporary file\n'

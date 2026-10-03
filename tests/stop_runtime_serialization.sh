@@ -4,14 +4,14 @@ set -euo pipefail
 # An explicit stop against the work that holds reload.lock (UC-012).
 #
 # A forced subscription update holds reload.lock across its downloads and then
-# stops, reconfigures and starts sing-box; `forkop dns_failover_apply`, the
+# stops, reconfigures and starts sing-box; `prokop dns_failover_apply`, the
 # child of the DNS-failover worker, survives the TERM that stop sends to its
 # worker and holds reload.lock around its own stop/patch/start of sing-box.
 # A stop that neither waits for nor fences off these holders returns success,
 # after which they bring sing-box and the auxiliary workers back.
 #
 # The stop is the real init.d stop_service and service/initd.uc; its backend
-# stands in for `forkop stop` (tears down the modelled runtime). The update is
+# stands in for `prokop stop` (tears down the modelled runtime). The update is
 # the real components/updates.uc and the DNS-failover apply the real
 # service/lifecycle.uc; their locks and the "may the runtime be started"
 # predicate go through the real service/state.uc, sing-box and nft are
@@ -19,8 +19,8 @@ set -euo pipefail
 # lifetime are checked on the real lifecycle.uc.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-REAL_LIB="$ROOT_DIR/forkop/files/usr/lib"
-REAL_INITD="$ROOT_DIR/forkop/files/etc/init.d/forkop"
+REAL_LIB="$ROOT_DIR/prokop/files/usr/lib"
+REAL_INITD="$ROOT_DIR/prokop/files/etc/init.d/prokop"
 WORK_DIR="$(mktemp -d)"
 # shellcheck source=tests/helpers/wait.sh
 . "$ROOT_DIR/tests/helpers/wait.sh"
@@ -44,38 +44,38 @@ fail() {
   exit 1
 }
 
-mkdir -p "$WORK_DIR/bin" "$WORK_DIR/run/forkop" "$WORK_DIR/tmp" "$WORK_DIR/singbox-tmp/rulesets" \
+mkdir -p "$WORK_DIR/bin" "$WORK_DIR/run/prokop" "$WORK_DIR/tmp" "$WORK_DIR/singbox-tmp/rulesets" \
   "$WORK_DIR/fake-lib/service" "$WORK_DIR/fake-lib/subscription" "$WORK_DIR/fake-lib/config" \
   "$WORK_DIR/fake-lib/singbox"
 cat >"$WORK_DIR/uci.state" <<'EOF'
-forkop.settings=settings
-forkop.settings.yacd_secret_key=0123456789abcdef
-forkop.settings.dont_touch_dhcp=1
+prokop.settings=settings
+prokop.settings.yacd_secret_key=0123456789abcdef
+prokop.settings.dont_touch_dhcp=1
 EOF
-: >"$WORK_DIR/forkop.config"
+: >"$WORK_DIR/prokop.config"
 
 export TMPDIR="$WORK_DIR/tmp"
 export PATH="$WORK_DIR/bin:$PATH"
 export EVENTS REAL_LIB REAL_INITD
 export UNMODELLED_MODES="$WORK_DIR/unmodelled-state-modes"
-export RELOAD_LOCK="$WORK_DIR/run/forkop.reload.lock"
+export RELOAD_LOCK="$WORK_DIR/run/prokop.reload.lock"
 export SING_BOX_STATE="$WORK_DIR/singbox.state"
 export NFT_TABLE_FILE="$WORK_DIR/nft.table"
 export NFT_LOG="$WORK_DIR/nft.log"
-export STOP_MARKER="$WORK_DIR/run/forkop/stop.requested"
-START_RECORD="$WORK_DIR/run/forkop/start.explicit"
-export FORKOP_RELOAD_LOCK_DIR="$RELOAD_LOCK"
-export FORKOP_SUBSCRIPTION_UPDATE_LOCK_DIR="$WORK_DIR/run/forkop/subscription-update.lock"
-export FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/run/forkop"
-export FORKOP_PENDING_RELOAD_FILE="$WORK_DIR/run/forkop/reload.pending"
-export FORKOP_SERVICE_INIT="$WORK_DIR/bin/no-init"
-export FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
-export FORKOP_CONFIG_FILE="$WORK_DIR/forkop.config"
-export FORKOP_INTERNAL_CONFIG_TRIGGER_GUARD="$WORK_DIR/run/internal-config-change"
-export FORKOP_MANAGED_UPGRADE_SING_BOX_MARKER="$WORK_DIR/run/managed-upgrade-sing-box"
-export FORKOP_UI_ACTION_TRACKED=1
+export STOP_MARKER="$WORK_DIR/run/prokop/stop.requested"
+START_RECORD="$WORK_DIR/run/prokop/start.explicit"
+export PROKOP_RELOAD_LOCK_DIR="$RELOAD_LOCK"
+export PROKOP_SUBSCRIPTION_UPDATE_LOCK_DIR="$WORK_DIR/run/prokop/subscription-update.lock"
+export PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/run/prokop"
+export PROKOP_PENDING_RELOAD_FILE="$WORK_DIR/run/prokop/reload.pending"
+export PROKOP_SERVICE_INIT="$WORK_DIR/bin/no-init"
+export PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
+export PROKOP_CONFIG_FILE="$WORK_DIR/prokop.config"
+export PROKOP_INTERNAL_CONFIG_TRIGGER_GUARD="$WORK_DIR/run/internal-config-change"
+export PROKOP_MANAGED_UPGRADE_SING_BOX_MARKER="$WORK_DIR/run/managed-upgrade-sing-box"
+export PROKOP_UI_ACTION_TRACKED=1
 export TMP_SING_BOX_FOLDER="$WORK_DIR/singbox-tmp"
-export FORKOP_SING_BOX_RELOAD_PID_TIMEOUT=2
+export PROKOP_SING_BOX_RELOAD_PID_TIMEOUT=2
 
 # Nothing here may reach the host's syslog, firewall or init scripts.
 printf '#!/bin/sh\nprintf "%%s\\n" "$*" >>"%s"\n' "$WORK_DIR/syslog" >"$WORK_DIR/bin/logger"
@@ -88,8 +88,8 @@ cat >"$WORK_DIR/bin/nft" <<'SH'
 printf '%s\n' "$*" >>"$NFT_LOG"
 [ "$1" != -t ] || shift
 # Only the production table is modelled: no DPI guard of a failed transition
-# or of a restore (ForkopTableDpiGuard, ForkopConfigRestoreDpiGuard).
-if [ "$1 $2 $3" = "list table inet" ] && [ "$4" != ForkopTable ]; then
+# or of a restore (ProkopTableDpiGuard, ProkopConfigRestoreDpiGuard).
+if [ "$1 $2 $3" = "list table inet" ] && [ "$4" != ProkopTable ]; then
   exit 1
 fi
 if [ "$1 $2 $3" = "list table inet" ]; then
@@ -104,9 +104,9 @@ fi
 [ "$1 $2" != "list chain" ]
 SH
 
-# `forkop stop` behind initd.uc: records whether it runs inside reload.lock,
+# `prokop stop` behind initd.uc: records whether it runs inside reload.lock,
 # then tears the modelled runtime down.
-cat >"$WORK_DIR/bin/forkop" <<'SH'
+cat >"$WORK_DIR/bin/prokop" <<'SH'
 #!/bin/sh
 ev() { printf '%s\n' "$1" >>"$EVENTS"; }
 case "$1" in
@@ -136,8 +136,8 @@ shift
 initscript="$REAL_INITD"
 # shellcheck disable=SC1090
 . "$REAL_INITD"
-FORKOP_LIB="$REAL_LIB"
-FORKOP_INITD_UC="$REAL_LIB/service/initd.uc"
+PROKOP_LIB="$REAL_LIB"
+PROKOP_INITD_UC="$REAL_LIB/service/initd.uc"
 case "$action" in
   stop) stop_service "$@" ;;
   *) exit 64 ;;
@@ -215,7 +215,7 @@ if (mode == "start-managed-sing-box-runtime") {
     }
     exit(0);
 }
-if (mode == "forkop-running" || mode == "forkop-stably-running")
+if (mode == "prokop-running" || mode == "prokop-stably-running")
     exit(trim(fs.readfile(getenv("SING_BOX_STATE")) ?? "") == "running" && fs.stat(getenv("NFT_TABLE_FILE")) != null ? 0 : 1);
 if (mode == "sing-box-process-conflict")
     exit(getenv("FAKE_CONFLICT") == "1" ? 0 : 1);
@@ -302,7 +302,7 @@ start_actor() {
 
 runtime_up() {
   printf 'running\n' >"$SING_BOX_STATE"
-  printf 'ForkopTable\n' >"$NFT_TABLE_FILE"
+  printf 'ProkopTable\n' >"$NFT_TABLE_FILE"
 }
 
 runtime_down() {
@@ -320,15 +320,15 @@ reset_case() {
 }
 
 launch_update() {
-  start_actor env FORKOP_LIB="$WORK_DIR/fake-lib" UPDATE_GATE="${UPDATE_GATE:-}" \
+  start_actor env PROKOP_LIB="$WORK_DIR/fake-lib" UPDATE_GATE="${UPDATE_GATE:-}" \
     STOP_MANAGED_GATE="${STOP_MANAGED_GATE:-}" START_MANAGED_GATE="${START_MANAGED_GATE:-}" \
     ucode -L "$REAL_LIB" "$REAL_LIB/components/updates.uc" subscription-update >"$WORK_DIR/update.out" 2>&1
   UPDATE_PID="$LAST_ACTOR"
 }
 
 launch_stop() {
-  start_actor env FORKOP_BIN="$WORK_DIR/bin/forkop" FORKOP_LIB="$REAL_LIB" \
-    FORKOP_STOP_RUNTIME_LOCK_WAIT_SECONDS="${STOP_WAIT:-20}" sh "$WORK_DIR/rc" stop >"$WORK_DIR/stop.out" 2>&1
+  start_actor env PROKOP_BIN="$WORK_DIR/bin/prokop" PROKOP_LIB="$REAL_LIB" \
+    PROKOP_STOP_RUNTIME_LOCK_WAIT_SECONDS="${STOP_WAIT:-20}" sh "$WORK_DIR/rc" stop >"$WORK_DIR/stop.out" 2>&1
   STOP_PID="$LAST_ACTOR"
 }
 
@@ -421,20 +421,20 @@ finish "subscription update after the stop" "$UPDATE_PID" "$WORK_DIR/update.out"
 no_event '^state mark-pending-reload$' || fail "an update that outlived a stop queued a reload"
 assert_stopped_for_good "update that outlived a stop"
 
-# 3. A forced update while Forkop is not running at all (never started,
+# 3. A forced update while Prokop is not running at all (never started,
 #    failed start) refreshes the cache only; it never starts a lone sing-box.
 reset_case
 runtime_down
 UPDATE_GATE="" launch_update
 finish "subscription update while stopped" "$UPDATE_PID" "$WORK_DIR/update.out"
 has_event '^update end$' || fail "the update did not refresh the subscription cache"
-no_event '^start-managed$' || fail "an update started sing-box for a stopped Forkop"
-no_event '^singbox configure-service$' || fail "an update reconfigured the sing-box service for a stopped Forkop"
-no_event '^priority start-runtime$' || fail "an update started Priority for a stopped Forkop"
-no_event '^state mark-pending-reload$' || fail "an update queued a reload that would start a stopped Forkop"
-[ "$(cat "$SING_BOX_STATE")" = stopped ] || fail "an update left sing-box running for a stopped Forkop"
+no_event '^start-managed$' || fail "an update started sing-box for a stopped Prokop"
+no_event '^singbox configure-service$' || fail "an update reconfigured the sing-box service for a stopped Prokop"
+no_event '^priority start-runtime$' || fail "an update started Priority for a stopped Prokop"
+no_event '^state mark-pending-reload$' || fail "an update queued a reload that would start a stopped Prokop"
+[ "$(cat "$SING_BOX_STATE")" = stopped ] || fail "an update left sing-box running for a stopped Prokop"
 
-# 3b. A running Forkop whose table check fails (a transient nft error) when
+# 3b. A running Prokop whose table check fails (a transient nft error) when
 #     the update decides whether to apply: the committed cache is not
 #     silently left unapplied (the next scheduled update finds nothing new);
 #     a reload is queued for when the update releases its locks. The update
@@ -451,14 +451,14 @@ no_event '^stop-managed$' || fail "an update that could not check the runtime ch
 grep -q 'runtime could not be checked' "$WORK_DIR/syslog" || fail "the unapplied update was not logged"
 rm -f "$NFT_TABLE_FILE.list-fails"
 
-# 4. Control: a running Forkop still gets the new configuration applied.
+# 4. Control: a running Prokop still gets the new configuration applied.
 reset_case
 runtime_up
 UPDATE_GATE="" launch_update
 finish "subscription update while running" "$UPDATE_PID" "$WORK_DIR/update.out"
-before "stop-managed" "start-managed" || fail "a running Forkop did not get the updated sing-box"
-has_event '^dns_failover start-runtime$' || fail "a running Forkop lost its DNS failover worker"
-[ "$(cat "$SING_BOX_STATE")" = running ] || fail "the update left a running Forkop without sing-box"
+before "stop-managed" "start-managed" || fail "a running Prokop did not get the updated sing-box"
+has_event '^dns_failover start-runtime$' || fail "a running Prokop lost its DNS failover worker"
+[ "$(cat "$SING_BOX_STATE")" = running ] || fail "the update left a running Prokop without sing-box"
 
 # 4b. A stop requested while the update's new sing-box fails to start: the
 #     rollback to the previous configuration does not start sing-box either.
@@ -486,7 +486,7 @@ has_event '^stop-managed failed$' || fail "the modelled sing-box stop did not fa
 no_event '^priority start-runtime$' || fail "a refused update started Priority after the stop request"
 no_event '^dns_failover start-runtime$' || fail "a refused update started DNS failover after the stop request"
 
-# 4d. Once the update has checked Forkop and holds sing-box stopped under
+# 4d. Once the update has checked Prokop and holds sing-box stopped under
 #     reload.lock, only a stop request keeps sing-box down: a transient nft
 #     listing failure does not leave the dataplane without sing-box. The
 #     table check itself omits the (possibly huge) set contents.
@@ -497,20 +497,20 @@ UPDATE_GATE="" launch_update
 finish "subscription update with a transient nft error" "$UPDATE_PID" "$WORK_DIR/update.out"
 has_event '^start-managed$' || fail "a transient nft error left sing-box stopped after the update"
 has_event '^dns_failover start-runtime$' || fail "a transient nft error left the update without DNS failover"
-[ "$(cat "$SING_BOX_STATE")" = running ] || fail "the update left a running Forkop without sing-box"
+[ "$(cat "$SING_BOX_STATE")" = running ] || fail "the update left a running Prokop without sing-box"
 grep -q '^-t list table inet ' "$NFT_LOG" || fail "the runtime check lists the table with its set contents"
 if grep -q '^list table inet ' "$NFT_LOG"; then
   fail "the runtime check lists the table with its set contents: $(cat "$NFT_LOG")"
 fi
 
-# 5. Stop while `forkop dns_failover_apply` (whose worker a stop TERMs,
+# 5. Stop while `prokop dns_failover_apply` (whose worker a stop TERMs,
 #    leaving the apply itself alive) holds reload.lock between stopping and
 #    starting sing-box: the apply does not start sing-box after the stop.
 reset_case
 runtime_up
 printf '{}\n' >"$WORK_DIR/candidate.json"
 : >"$SING_BOX_STATE.gate-armed"
-start_actor env FORKOP_LIB="$WORK_DIR/fake-lib" STOP_MANAGED_GATE="$WORK_DIR/stop-managed.gate" \
+start_actor env PROKOP_LIB="$WORK_DIR/fake-lib" STOP_MANAGED_GATE="$WORK_DIR/stop-managed.gate" \
   ucode -L "$REAL_LIB" "$REAL_LIB/service/lifecycle.uc" dns-failover-apply "$WORK_DIR/candidate.json" >"$WORK_DIR/apply.out" 2>&1
 APPLY_PID="$LAST_ACTOR"
 wait_until 10 has_event '^stop-managed held$' || fail "DNS failover apply did not reach its sing-box stop: $(cat "$WORK_DIR/apply.out")"
@@ -531,7 +531,7 @@ reset_case
 runtime_down
 printf '1\n' >"$STOP_MARKER"
 status=0
-env FORKOP_LIB="$WORK_DIR/fake-lib" \
+env PROKOP_LIB="$WORK_DIR/fake-lib" \
   ucode -L "$REAL_LIB" "$REAL_LIB/service/lifecycle.uc" dns-failover-apply "$WORK_DIR/candidate.json" >"$WORK_DIR/apply.out" 2>&1 || status=$?
 [ "$status" != 0 ] || fail "a DNS failover switch after a stop was reported as applied"
 no_event '^stop-managed$' || fail "a DNS failover apply after a stop stopped sing-box"
@@ -545,7 +545,7 @@ reset_case
 runtime_up
 : >"$SING_BOX_STATE.patch-fails"
 status=0
-env FORKOP_LIB="$WORK_DIR/fake-lib" \
+env PROKOP_LIB="$WORK_DIR/fake-lib" \
   ucode -L "$REAL_LIB" "$REAL_LIB/service/lifecycle.uc" dns-failover-apply "$WORK_DIR/candidate.json" >"$WORK_DIR/apply.out" 2>&1 || status=$?
 [ "$status" != 0 ] || fail "a failed DNS failover patch was reported as applied"
 has_event '^singbox patch-dns-config failed$' || fail "the modelled patch did not fail"
@@ -558,11 +558,11 @@ no_event '^start-managed$' || fail "a failed DNS failover patch started sing-box
 #     ended by then (UC-061).
 reset_case
 runtime_up
-printf 'reason=on_config_change\n' >"$FORKOP_PENDING_RELOAD_FILE"
+printf 'reason=on_config_change\n' >"$PROKOP_PENDING_RELOAD_FILE"
 status=0
-env FORKOP_LIB="$WORK_DIR/fake-lib" \
+env PROKOP_LIB="$WORK_DIR/fake-lib" \
   ucode -L "$REAL_LIB" "$REAL_LIB/service/lifecycle.uc" dns-failover-apply "$WORK_DIR/candidate.json" >"$WORK_DIR/apply.out" 2>&1 || status=$?
-rm -f "$FORKOP_PENDING_RELOAD_FILE"
+rm -f "$PROKOP_PENDING_RELOAD_FILE"
 [ "$status" = 0 ] || fail "a DNS failover switch with a queued reload failed: $(cat "$WORK_DIR/apply.out")"
 has_event '^state run-pending-reload-if-requested$' ||
   fail "the reload queued behind the DNS failover apply was not applied after it"
@@ -573,7 +573,7 @@ has_event '^state run-pending-reload-if-requested$' ||
 #    rule-set refresh, a queued request, the deferred subscription recovery),
 #    a manual reload, a snapshot restore, an autotune apply (D-15, UC-056).
 run_reload() {
-  env FORKOP_LIB="$WORK_DIR/fake-lib" FAKE_CONFLICT="${FAKE_CONFLICT:-}" \
+  env PROKOP_LIB="$WORK_DIR/fake-lib" FAKE_CONFLICT="${FAKE_CONFLICT:-}" \
     ucode -L "$REAL_LIB" "$REAL_LIB/service/lifecycle.uc" reload "$1" >"$WORK_DIR/reload.out" 2>&1
 }
 for reason in list-content ruleset-cache pending subscription_deferred_recovery on_config_change badwan_interface_up \
@@ -599,10 +599,10 @@ grep -q "^interface	interface\.\*\.up	vpn0	.*	reload	badwan_interface_up\$" "$WO
 for reason in list-content ""; do
   reset_case
   runtime_down
-  run_reload "$reason" || fail "reload '$reason' of a Forkop not started failed: $(cat "$WORK_DIR/reload.out")"
-  [ ! -s "$EVENTS" ] || fail "reload '$reason' touched the runtime of a Forkop not started"
-  grep -q "Reload '$reason' skipped: Forkop was not started" "$WORK_DIR/syslog" ||
-    fail "skipped reload '$reason' of a Forkop not started was not logged"
+  run_reload "$reason" || fail "reload '$reason' of a Prokop not started failed: $(cat "$WORK_DIR/reload.out")"
+  [ ! -s "$EVENTS" ] || fail "reload '$reason' touched the runtime of a Prokop not started"
+  grep -q "Reload '$reason' skipped: Prokop was not started" "$WORK_DIR/syslog" ||
+    fail "skipped reload '$reason' of a Prokop not started was not logged"
 done
 # After an explicit start and without a stop the gate stays open, for a
 # background and a manual reload alike (the refused ownership check stands
@@ -621,27 +621,27 @@ reset_case
 runtime_down
 : >"$START_RECORD"
 run_reload "" || true
-grep -q 'restarting Forkop runtime' "$WORK_DIR/syslog" || fail "a reload did not repair a runtime that is down without a stop"
+grep -q 'restarting Prokop runtime' "$WORK_DIR/syslog" || fail "a reload did not repair a runtime that is down without a stop"
 [ ! -e "$STOP_MARKER" ] || fail "a reload that repaired the runtime recorded an explicit stop"
 
-# 7. `forkop stop` records the explicit stop and ends the explicit start; a
+# 7. `prokop stop` records the explicit stop and ends the explicit start; a
 #    start clears the stop and records itself, also when it fails (only a
 #    stop, not a failure, keeps the runtime down).
 reset_case
 runtime_up
 : >"$START_RECORD"
-env FORKOP_LIB="$WORK_DIR/fake-lib" ucode -L "$REAL_LIB" "$REAL_LIB/service/lifecycle.uc" stop >"$WORK_DIR/lifecycle.out" 2>&1 || true
-[ -e "$STOP_MARKER" ] || fail "forkop stop did not record the explicit stop"
-[ ! -e "$START_RECORD" ] || fail "forkop stop kept the explicit start"
-env FORKOP_LIB="$WORK_DIR/fake-lib" ucode -L "$REAL_LIB" "$REAL_LIB/service/lifecycle.uc" start >"$WORK_DIR/lifecycle.out" 2>&1 || true
-[ ! -e "$STOP_MARKER" ] || fail "forkop start did not clear the explicit stop"
-[ -e "$START_RECORD" ] || fail "forkop start did not record the explicit start"
+env PROKOP_LIB="$WORK_DIR/fake-lib" ucode -L "$REAL_LIB" "$REAL_LIB/service/lifecycle.uc" stop >"$WORK_DIR/lifecycle.out" 2>&1 || true
+[ -e "$STOP_MARKER" ] || fail "prokop stop did not record the explicit stop"
+[ ! -e "$START_RECORD" ] || fail "prokop stop kept the explicit start"
+env PROKOP_LIB="$WORK_DIR/fake-lib" ucode -L "$REAL_LIB" "$REAL_LIB/service/lifecycle.uc" start >"$WORK_DIR/lifecycle.out" 2>&1 || true
+[ ! -e "$STOP_MARKER" ] || fail "prokop start did not clear the explicit stop"
+[ -e "$START_RECORD" ] || fail "prokop start did not record the explicit start"
 # A start that finds the runtime already running (a stop that failed and kept
 # it) does not start it again, and still ends the explicit stop.
 reset_case
 runtime_up
 printf '1\n' >"$STOP_MARKER"
-env FORKOP_LIB="$WORK_DIR/fake-lib" ucode -L "$REAL_LIB" "$REAL_LIB/service/lifecycle.uc" start >"$WORK_DIR/lifecycle.out" 2>&1 ||
+env PROKOP_LIB="$WORK_DIR/fake-lib" ucode -L "$REAL_LIB" "$REAL_LIB/service/lifecycle.uc" start >"$WORK_DIR/lifecycle.out" 2>&1 ||
   fail "a duplicate start of a running runtime failed: $(cat "$WORK_DIR/lifecycle.out")"
 grep -q 'already stably running' "$WORK_DIR/syslog" || fail "the running runtime was not recognised by the start"
 [ ! -e "$STOP_MARKER" ] || fail "a start of an already running runtime kept the explicit stop"

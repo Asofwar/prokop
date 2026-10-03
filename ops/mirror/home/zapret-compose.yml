@@ -1,9 +1,9 @@
-name: forkop-zapret-cache
+name: prokop-zapret-cache
 services:
   cache:
     image: python@sha256:d50fb7611f86d04a3b0471b46d7557818d88983fc3136726336b2a4c657aa30b
     pull_policy: never
-    container_name: forkop-zapret-cache
+    container_name: prokop-zapret-cache
     user: "65534:65534"
     read_only: true
     restart: unless-stopped
@@ -27,17 +27,17 @@ services:
       - /tmp:size=8m,mode=1777
     volumes:
       - type: bind
-        source: /mnt/storage/forkop-mirror/config/zapret-manager-cache.py
+        source: /mnt/storage/prokop-mirror/config/zapret-manager-cache.py
         target: /app/cache.py
         read_only: true
         bind: {create_host_path: false}
       - type: bind
-        source: /mnt/storage/forkop-mirror/data/cache/zapret-manager
+        source: /mnt/storage/prokop-mirror/data/cache/zapret-manager
         target: /cache
         bind: {create_host_path: false}
     networks:
       matrix:
-        aliases: [forkop-zapret-cache]
+        aliases: [prokop-zapret-cache]
     logging:
       driver: json-file
       options: {max-size: "2m", max-file: "2"}

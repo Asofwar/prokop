@@ -15,7 +15,7 @@ set -euo pipefail
 # when hashing fails (the check never compares two empty hashes).
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 SCRIPT="$LIB/config/snapshots.uc"
 WORK="$(mktemp -d)"
 # A call the uci test shim refused fails the test, even one it tolerated.
@@ -38,21 +38,21 @@ REAL_SHA="$(command -v sha256sum)" || fail "sha256sum is required"
 
 # The configuration lives under a package name of its own, so neither the
 # real uci nor the shim can merge changes staged on the host.
-PKG=forkop_rewrite
+PKG=prokop_rewrite
 mkdir -p "$WORK/bin" "$WORK/run" "$WORK/state" "$WORK/etc" "$WORK/uci-save" "$WORK/lc-save" "$WORK/host-save"
-export FORKOP_TEST_UCI_SHIM_HOST_SAVEDIR="$WORK/host-save"
-export FORKOP_CONFIG_FILE="$WORK/etc/$PKG"
-export FORKOP_SNAPSHOT_DIR="$WORK/snapshots"
-export FORKOP_SNAPSHOT_HASH_DIR="$WORK/hash"
-export FORKOP_SNAPSHOT_LOCK_DIR="$WORK/run/config-snapshot.lock"
-export FORKOP_AUTOTUNE_APPLY_STATE="$WORK/autotune-apply.json"
-export FORKOP_LIB="$LIB"
-export FORKOP_RELOAD_COMMAND="$WORK/reload"
-export FORKOP_PENDING_RELOAD_FILE="$WORK/run/reload.pending"
-export FORKOP_RELOAD_LOCK_DIR="$WORK/run/reload.lock"
-export FORKOP_HISTORY_FILE="$WORK/history.jsonl"
-export FORKOP_RUNTIME_STATE_DIR="$WORK/run"
-export FORKOP_UCI_SAVEDIR="$WORK/uci-save"
+export PROKOP_TEST_UCI_SHIM_HOST_SAVEDIR="$WORK/host-save"
+export PROKOP_CONFIG_FILE="$WORK/etc/$PKG"
+export PROKOP_SNAPSHOT_DIR="$WORK/snapshots"
+export PROKOP_SNAPSHOT_HASH_DIR="$WORK/hash"
+export PROKOP_SNAPSHOT_LOCK_DIR="$WORK/run/config-snapshot.lock"
+export PROKOP_AUTOTUNE_APPLY_STATE="$WORK/autotune-apply.json"
+export PROKOP_LIB="$LIB"
+export PROKOP_RELOAD_COMMAND="$WORK/reload"
+export PROKOP_PENDING_RELOAD_FILE="$WORK/run/reload.pending"
+export PROKOP_RELOAD_LOCK_DIR="$WORK/run/reload.lock"
+export PROKOP_HISTORY_FILE="$WORK/history.jsonl"
+export PROKOP_RUNTIME_STATE_DIR="$WORK/run"
+export PROKOP_UCI_SAVEDIR="$WORK/uci-save"
 # The reload stub runs with the stubs first on PATH; the uci CLI keeps the
 # original one (the test shim runs on the real ucode, not the stub).
 ORIG_PATH="$PATH"
@@ -101,7 +101,7 @@ case "${step%%:*}" in
     [ "${step%%:*}" = edit ] || touch "$STATE/sha-broken"
     uci set "$PKG.settings.shutdown_correctly=1"; uci set "$PKG.settings.marker=edit"; uci commit "$PKG" ;;
 esac
-[ -e "$STATE/reloaded" ] || cp "$FORKOP_CONFIG_FILE" "$STATE/reloaded"
+[ -e "$STATE/reloaded" ] || cp "$PROKOP_CONFIG_FILE" "$STATE/reloaded"
 exit "${step##*:}"
 STUB
 chmod +x "$WORK/bin/ucode" "$WORK/bin/sha256sum" "$WORK/reload"
@@ -111,7 +111,7 @@ chmod +x "$WORK/bin/ucode" "$WORK/bin/sha256sum" "$WORK/reload"
 # the earlier value and writes no such line back). uci writes none of this
 # back as it was.
 handwritten() {
-  cat >"$FORKOP_CONFIG_FILE" <<'CONF'
+  cat >"$PROKOP_CONFIG_FILE" <<'CONF'
 # Written by hand on the router.
 config settings 'settings'
     option dns_server "1.1.1.1"   # upstream resolver
@@ -128,18 +128,18 @@ CONF
 }
 # The configuration the restore replaces, as uci writes it.
 current() {
-  printf "\nconfig settings 'settings'\n\toption dns_server '1.1.1.1'\n\toption shutdown_correctly '0'\n\toption marker '%s'\n\n" "$1" >"$FORKOP_CONFIG_FILE"
+  printf "\nconfig settings 'settings'\n\toption dns_server '1.1.1.1'\n\toption shutdown_correctly '0'\n\toption marker '%s'\n\n" "$1" >"$PROKOP_CONFIG_FILE"
 }
 field() { node -e 'const r=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));const v=r[process.argv[2]];console.log(v===undefined||v===null?"":v)' "$WORK/result.json" "$1"; }
 marker() { "$UCI_CLI" -c "$WORK/etc" -t "$WORK/lc-save" get "$PKG.settings.marker"; }
-lkg() { cat "$FORKOP_SNAPSHOT_DIR/last-known-working" 2>/dev/null || true; }
+lkg() { cat "$PROKOP_SNAPSHOT_DIR/last-known-working" 2>/dev/null || true; }
 reloads() { grep -c '^reload:' "$STATE/events" || true; }
 # The first reload's commit really rewrote the hand-written target in uci's
 # form (a CLI that did nothing would make scenarios 1 and 2 prove nothing).
 rewritten() {
   grep -q "^	option shutdown_correctly '1'$" "$STATE/reloaded" && ! grep -q '^#' "$STATE/reloaded"
 }
-concurrent_snapshots() { grep -l '"reason": *"concurrent-change"' "$FORKOP_SNAPSHOT_DIR"/*.json 2>/dev/null | wc -l; }
+concurrent_snapshots() { grep -l '"reason": *"concurrent-change"' "$PROKOP_SNAPSHOT_DIR"/*.json 2>/dev/null | wc -l; }
 restore() { # restore <reload plan>
   echo absent >"$STATE/guard"; echo "$1" >"$STATE/plan"; : >"$STATE/events"; rm -f "$STATE/sha-broken" "$STATE/reloaded"
   PATH="$WORK/bin:$PATH" "$REAL_UCODE" -L "$LIB" "$SCRIPT" restore "$good_id" >"$WORK/result.json" || true
@@ -152,12 +152,12 @@ good_id="$("$REAL_UCODE" -L "$LIB" "$SCRIPT" create manual | node -e 'let s="";p
 
 # 1. The target reload commits the lifecycle's flag (uci rewrites the whole
 #    hand-written file) and then fails: no edit, an ordinary recovery.
-current bad; cp "$FORKOP_CONFIG_FILE" "$WORK/before"; echo stale >"$FORKOP_SNAPSHOT_DIR/last-known-working"
+current bad; cp "$PROKOP_CONFIG_FILE" "$WORK/before"; echo stale >"$PROKOP_SNAPSHOT_DIR/last-known-working"
 restore "flag:1 none:0"
 rewritten || fail "the lifecycle's commit did not rewrite the target: $(cat "$STATE/reloaded" 2>/dev/null)"
 [ "$(field status)" = recovered ] && [ "$(field reason)" = target_reload_failed ] ||
   fail "uci's rewrite of the restored file taken for an edit: $(cat "$WORK/result.json")"
-cmp -s "$FORKOP_CONFIG_FILE" "$WORK/before" || fail "the previous configuration was not put back: $(cat "$FORKOP_CONFIG_FILE")"
+cmp -s "$PROKOP_CONFIG_FILE" "$WORK/before" || fail "the previous configuration was not put back: $(cat "$PROKOP_CONFIG_FILE")"
 [ "$(cat "$STATE/guard")" = absent ] && [ "$(reloads)" = 2 ] || fail "recovery: guard $(cat "$STATE/guard"), $(reloads) reloads"
 [ "$(concurrent_snapshots)" = 0 ] || fail "a rewrite by uci was saved as an edit"
 [ "$(lkg)" = stale ] || fail "last-known-working moved"
@@ -173,7 +173,7 @@ ok "hand-written snapshot rewritten by uci, reload ran -> success"
 
 # 3. A real edit committed the same way during a failing reload is still an
 #    edit: kept, saved, needs_attention, the guard stays.
-current bad; echo stale >"$FORKOP_SNAPSHOT_DIR/last-known-working"
+current bad; echo stale >"$PROKOP_SNAPSHOT_DIR/last-known-working"
 restore "edit:1"
 [ "$(field status)" = needs_attention ] && [ "$(field reason)" = config_changed_during_transaction ] ||
   fail "edit committed through uci during a failed reload: $(cat "$WORK/result.json")"
@@ -187,7 +187,7 @@ ok "edit committed through uci during a failed reload -> kept, saved, guard kept
 #    is no success and last-known-working does not move to a configuration
 #    that may never have run; the edit is kept and saved. A reload ran, so the
 #    guard goes.
-current bad; echo stale >"$FORKOP_SNAPSHOT_DIR/last-known-working"
+current bad; echo stale >"$PROKOP_SNAPSHOT_DIR/last-known-working"
 restore "edit:0"
 [ "$(field status)" = needs_attention ] && [ "$(field reason)" = config_changed_during_transaction ] ||
   fail "edit committed while the target reload ran: $(cat "$WORK/result.json")"
@@ -195,8 +195,8 @@ restore "edit:0"
 [ "$(marker)" = edit ] && [ "$(reloads)" = 1 ] || fail "edit during a reload that ran: marker $(marker), $(reloads) reloads"
 [ "$(lkg)" = stale ] || fail "last-known-working moved to a snapshot the reload may not have run"
 saved="$(field saved_snapshot)"
-[ -n "$saved" ] && grep -q '"reason": *"concurrent-change"' "$FORKOP_SNAPSHOT_DIR/$saved.json" &&
-  grep -q "option marker 'edit'" "$FORKOP_SNAPSHOT_DIR/$saved.json" || fail "the edit is not saved as a snapshot: $(cat "$WORK/result.json")"
+[ -n "$saved" ] && grep -q '"reason": *"concurrent-change"' "$PROKOP_SNAPSHOT_DIR/$saved.json" &&
+  grep -q "option marker 'edit'" "$PROKOP_SNAPSHOT_DIR/$saved.json" || fail "the edit is not saved as a snapshot: $(cat "$WORK/result.json")"
 grep -q '^health:restore:failure$' "$STATE/events" || fail "the restore is recorded as a success"
 ok "edit committed while the target reload ran -> needs_attention, edit kept and saved, LKG not moved, guard released"
 

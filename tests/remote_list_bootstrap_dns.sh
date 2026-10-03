@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT
 fail() { printf 'FAIL: %s\n' "$1" >&2; exit 1; }
@@ -76,13 +76,13 @@ cat >"$WORK_DIR/bin/logger" <<'SH'
 exit 0
 SH
 chmod +x "$WORK_DIR/bin/"*
-export PATH="$WORK_DIR/bin:$PATH" FORKOP_LIB
+export PATH="$WORK_DIR/bin:$PATH" PROKOP_LIB
 export DNS_LOG="$WORK_DIR/dns.log" CURL_LOG="$WORK_DIR/curl.log" DIG_LOG="$WORK_DIR/dig.log"
-export FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
-printf 'forkop.settings=settings\nforkop.settings.bootstrap_dns_server=1.1.1.1 8.8.8.8\n' >"$FORKOP_UCI_STATE_FILE"
+export PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
+printf 'prokop.settings=settings\nprokop.settings.bootstrap_dns_server=1.1.1.1 8.8.8.8\n' >"$PROKOP_UCI_STATE_FILE"
 reset_logs() { : >"$DNS_LOG"; : >"$CURL_LOG"; }
 download_list() {
-  ucode -L "$FORKOP_LIB" "$FORKOP_LIB/components/updates.uc" download-list-file "$1" "$WORK_DIR/list" "${2:-}"
+  ucode -L "$PROKOP_LIB" "$PROKOP_LIB/components/updates.uc" download-list-file "$1" "$WORK_DIR/list" "${2:-}"
 }
 reset_logs
 download_list 'https://cdn.jsdelivr.net:8443/gh/project/list@HEAD/domains.txt' || fail 'list Bootstrap download failed'
@@ -117,28 +117,28 @@ if NO_SPACE=1 download_list 'https://lists.example/rules.txt'; then fail 'no-spa
 [ ! -s "$DNS_LOG" ] || fail 'storage failure triggered Bootstrap'
 
 # Exercise the actual ruleset refresh path, not extracted helper functions.
-export FORKOP_RULESET_CACHE_DIR="$WORK_DIR/cache"
-export FORKOP_RULESET_CACHE_MANIFEST="$WORK_DIR/cache/manifest.json"
-export FORKOP_RULESET_RUNTIME_CACHE_DIR="$WORK_DIR/runtime"
-export FORKOP_RULESET_RUNTIME_MANIFEST="$WORK_DIR/runtime-manifest.json"
-export FORKOP_PERSISTENT_LIST_CACHE_DIR="$WORK_DIR/list-cache"
+export PROKOP_RULESET_CACHE_DIR="$WORK_DIR/cache"
+export PROKOP_RULESET_CACHE_MANIFEST="$WORK_DIR/cache/manifest.json"
+export PROKOP_RULESET_RUNTIME_CACHE_DIR="$WORK_DIR/runtime"
+export PROKOP_RULESET_RUNTIME_MANIFEST="$WORK_DIR/runtime-manifest.json"
+export PROKOP_PERSISTENT_LIST_CACHE_DIR="$WORK_DIR/list-cache"
 cat >"$WORK_DIR/config.json" <<'JSON'
 {"route":{"rule_set":[{"type":"remote","tag":"source","format":"source","url":"https://lists.example/rules@HEAD.json","update_interval":"1d"}]}}
 JSON
-ucode -L "$FORKOP_LIB" "$FORKOP_LIB/singbox/ruleset_cache.uc" materialize-config "$WORK_DIR/config.json" cache-only
+ucode -L "$PROKOP_LIB" "$PROKOP_LIB/singbox/ruleset_cache.uc" materialize-config "$WORK_DIR/config.json" cache-only
 reset_logs
-PAYLOAD_KIND=json ucode -L "$FORKOP_LIB" "$FORKOP_LIB/singbox/ruleset_cache.uc" refresh || fail 'ruleset Bootstrap refresh failed'
+PAYLOAD_KIND=json ucode -L "$PROKOP_LIB" "$PROKOP_LIB/singbox/ruleset_cache.uc" refresh || fail 'ruleset Bootstrap refresh failed'
 grep -Fq -- '--resolve lists.example:443:203.0.113.8' "$CURL_LOG" || fail 'ruleset DNS fallback absent'
 reset_logs
 # A distinct payload keeps this a real refresh: an identical one is committed by
 # the previous case, and refresh_manifest reports "nothing changed" as exit 1.
 DNS_MIXED_FAILURE=1 PAYLOAD_KIND=json PAYLOAD_TAG=mixed \
-  ucode -L "$FORKOP_LIB" "$FORKOP_LIB/singbox/ruleset_cache.uc" refresh ||
+  ucode -L "$PROKOP_LIB" "$PROKOP_LIB/singbox/ruleset_cache.uc" refresh ||
   fail 'ruleset valid A answer lost after failed AAAA query'
 grep -Fq -- '--resolve lists.example:443:203.0.113.8' "$CURL_LOG" || fail 'mixed DNS ruleset response not used'
 grep -Rq 'mixed.example' "$WORK_DIR/cache" "$WORK_DIR/runtime" || fail 'mixed DNS ruleset payload was not committed'
 reset_logs
-if PAYLOAD_KIND=json ucode -L "$FORKOP_LIB" "$FORKOP_LIB/singbox/ruleset_cache.uc" refresh '127.0.0.1:18080'; then
+if PAYLOAD_KIND=json ucode -L "$PROKOP_LIB" "$PROKOP_LIB/singbox/ruleset_cache.uc" refresh '127.0.0.1:18080'; then
   fail 'failed proxy refresh must fail'
 fi
 [ ! -s "$DNS_LOG" ] || fail 'ruleset proxy path bypassed proxy DNS'
@@ -149,7 +149,7 @@ grep -Rq 'resolved.example' "$WORK_DIR/cache" "$WORK_DIR/runtime" || fail 'worki
 # probe may only shorten the cold-boot grace period when it actually answers.
 dns_probe() {
   : >"$DIG_LOG"
-  ucode -L "$FORKOP_LIB" "$FORKOP_LIB/components/updates.uc" list-dns-probe "${1:-}"
+  ucode -L "$PROKOP_LIB" "$PROKOP_LIB/components/updates.uc" list-dns-probe "${1:-}"
 }
 
 SYSTEM_DNS_UP=1 dns_probe || fail 'working system DNS must pass the probe'
@@ -170,7 +170,7 @@ fi
 dns_probe 127.0.0.1:18080 || fail 'proxied list downloads must skip the DNS probe'
 [ ! -s "$DIG_LOG" ] || fail 'proxied probe must not query a resolver directly'
 
-ucode -L "$FORKOP_LIB" -e '
+ucode -L "$PROKOP_LIB" -e '
 let url = require("core.url");
 for (let value in ["https://user:pass@example.org:8443/list@HEAD?q=x@y#z@a", "https://example.org:8443/?q=x@y"]) {
     if (url.host(value) != "example.org" || url.port(value) != "8443") exit(1);

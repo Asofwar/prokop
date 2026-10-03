@@ -3,13 +3,13 @@ set -euo pipefail
 
 # D-1 (b), UC-007: the Clash API secret is mandatory and the validator refuses
 # to start without one. The package postinst migration generates it, but a
-# configuration that never went through the postinst (Forkop built into a
+# configuration that never went through the postinst (Prokop built into a
 # firmware image, a keep-settings sysupgrade or a restored backup of an older
 # config) must not fail closed: start and reload fill in an absent or blank
 # secret before validation and never replace an existing one.
 #
 # The secret is the only change they commit. A libuci commit of the package
-# would also commit whatever someone staged with `uci set` in /tmp/.uci/forkop
+# would also commit whatever someone staged with `uci set` in /tmp/.uci/prokop
 # (libuci merges that directory even through a cursor with its own save
 # directory), so the secret is written through a private copy under its own
 # package name, staged there in uci's delta format (never on a command line)
@@ -17,8 +17,8 @@ set -euo pipefail
 # (core/uci.uc commit_option).
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-LIFECYCLE="$FORKOP_LIB/service/lifecycle.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+LIFECYCLE="$PROKOP_LIB/service/lifecycle.uc"
 WORK="$(mktemp -d)"
 # A call the uci test shim refused fails the test, even one it tolerated.
 cleanup() {
@@ -42,7 +42,7 @@ UCODE_BIN="$(command -v ucode)" || fail "ucode is required"
 # The save directory `uci set` stages into on the router (/tmp/.uci); with the
 # test shim it is also the directory the shim treats as the host's.
 STAGED_DIR="$WORK/uci-save"
-export FORKOP_TEST_UCI_SHIM_HOST_SAVEDIR="$STAGED_DIR"
+export PROKOP_TEST_UCI_SHIM_HOST_SAVEDIR="$STAGED_DIR"
 mkdir -p "$STAGED_DIR" "$WORK/etc" "$WORK/bin"
 # Every uci call is logged with its arguments.
 cat >"$WORK/bin/uci" <<SH
@@ -65,7 +65,7 @@ extract() {
 let fs = require("fs");
 let common = require("core.common");
 let uci_core = require("core.uci");
-const CONFIG_NAME = "forkop";
+const CONFIG_NAME = "prokop";
 let guard_marks = 0;
 function log_message(message, level) { print(level, ": ", message, "\n"); }
 function mark_internal_config_guard() { guard_marks++; }
@@ -91,8 +91,8 @@ UCODE
 run_ensure() {
   local name="$1"
   : >"$WORK/uci.argv"
-  FORKOP_CONFIG_FILE="$WORK/etc/$name" FORKOP_UCI_CLI="$WORK/bin/uci" \
-    "$UCODE_BIN" -L "$FORKOP_LIB" "$WORK/ensure.uc" >"$WORK/$name.out" 2>&1 ||
+  PROKOP_CONFIG_FILE="$WORK/etc/$name" PROKOP_UCI_CLI="$WORK/bin/uci" \
+    "$UCODE_BIN" -L "$PROKOP_LIB" "$WORK/ensure.uc" >"$WORK/$name.out" 2>&1 ||
     fail "ensure_clash_api_secret crashed for $name: $(cat "$WORK/$name.out")"
 }
 
@@ -112,12 +112,12 @@ secret_of() {
   local dir="$WORK/read-$1"
   rm -rf "$dir"
   mkdir -p "$dir/save"
-  cp "$WORK/etc/$1" "$dir/forkop_read"
-  "$UCI_CLI" -q -c "$dir" -t "$dir/save" get forkop_read.settings.yacd_secret_key || true
+  cp "$WORK/etc/$1" "$dir/prokop_read"
+  "$UCI_CLI" -q -c "$dir" -t "$dir/save" get prokop_read.settings.yacd_secret_key || true
 }
 
 changed_options() {
-  "$UCODE_BIN" -L "$FORKOP_LIB" "$FORKOP_LIB/config/snapshots.uc" fixture-diff "$1" "$2" |
+  "$UCODE_BIN" -L "$PROKOP_LIB" "$PROKOP_LIB/config/snapshots.uc" fixture-diff "$1" "$2" |
     node -e 'let s="";process.stdin.on("data",(d)=>s+=d).on("end",()=>console.log(JSON.parse(s).map((c)=>c.section+"."+c.option).sort().join(" ")))'
 }
 
@@ -135,7 +135,7 @@ printf '%s' "$secret" | grep -Eq '^[0-9a-f]{64}$' || fail "the generated secret 
 [ "$(stat -c %a "$WORK/etc/absent")" = 640 ] || fail "the configuration file lost its mode: $(stat -c %a "$WORK/etc/absent")"
 grep -Fq "$secret" "$WORK/absent.out" && fail "the log must not quote the generated secret"
 grep -Fq "$secret" "$WORK/uci.argv" && fail "the secret must never be on a uci command line"
-grep -Eq '(^| )forkop(\.| |$)' "$WORK/uci.argv" && fail "uci touched the live package: $(cat "$WORK/uci.argv")"
+grep -Eq '(^| )prokop(\.| |$)' "$WORK/uci.argv" && fail "uci touched the live package: $(cat "$WORK/uci.argv")"
 grep -Fq -- "-c $WORK/etc " "$WORK/uci.argv" && fail "uci ran on the live configuration directory"
 [ -z "$(find "$WORK/etc" -name '.*')" ] || fail "a temporary file was left next to the configuration"
 
@@ -179,20 +179,20 @@ grep -Fq 'Generated' "$WORK/hidden.out" && fail "a kept secret must not be repor
 # would have to merge them and is refused, failing this test.
 config staged
 cp "$WORK/etc/staged" "$WORK/staged.before"
-printf "%s\n" "forkop.settings.dns_server='9.9.9.9'" "forkop.main.action='block'" >"$STAGED_DIR/forkop"
-cp "$STAGED_DIR/forkop" "$WORK/staged.delta"
+printf "%s\n" "prokop.settings.dns_server='9.9.9.9'" "prokop.main.action='block'" >"$STAGED_DIR/prokop"
+cp "$STAGED_DIR/prokop" "$WORK/staged.delta"
 run_ensure staged
 grep -Fq 'result=ok guard=1' "$WORK/staged.out" || fail "staged changes: the secret was not generated: $(cat "$WORK/staged.out")"
 [ "$(changed_options "$WORK/staged.before" "$WORK/etc/staged")" = settings.yacd_secret_key ] ||
   fail "staged changes were committed with the secret: $(changed_options "$WORK/staged.before" "$WORK/etc/staged")"
-cmp -s "$STAGED_DIR/forkop" "$WORK/staged.delta" || fail "the staged changes were touched"
-rm -f "$STAGED_DIR/forkop"
+cmp -s "$STAGED_DIR/prokop" "$WORK/staged.delta" || fail "the staged changes were touched"
+rm -f "$STAGED_DIR/prokop"
 
 # Without a random source nothing is written; the validator then reports the
 # missing secret.
 config norandom
 cp "$WORK/etc/norandom" "$WORK/norandom.before"
-FORKOP_SECRET_RANDOM_SOURCE="$WORK/missing-random" run_ensure norandom
+PROKOP_SECRET_RANDOM_SOURCE="$WORK/missing-random" run_ensure norandom
 grep -Fq 'result=failed' "$WORK/norandom.out" || fail "a failed generation must be reported"
 cmp -s "$WORK/etc/norandom" "$WORK/norandom.before" || fail "nothing may be written without a random source"
 
@@ -201,8 +201,8 @@ config broken
 cp "$WORK/etc/broken" "$WORK/broken.before"
 printf '#!/bin/sh\nexit 1\n' >"$WORK/bin/uci-broken"
 chmod +x "$WORK/bin/uci-broken"
-FORKOP_CONFIG_FILE="$WORK/etc/broken" FORKOP_UCI_CLI="$WORK/bin/uci-broken" \
-  "$UCODE_BIN" -L "$FORKOP_LIB" "$WORK/ensure.uc" >"$WORK/broken.out" 2>&1 || fail "ensure crashed with a failing uci"
+PROKOP_CONFIG_FILE="$WORK/etc/broken" PROKOP_UCI_CLI="$WORK/bin/uci-broken" \
+  "$UCODE_BIN" -L "$PROKOP_LIB" "$WORK/ensure.uc" >"$WORK/broken.out" 2>&1 || fail "ensure crashed with a failing uci"
 grep -Fq 'result=failed guard=0' "$WORK/broken.out" || fail "a failing uci must be reported: $(cat "$WORK/broken.out")"
 cmp -s "$WORK/etc/broken" "$WORK/broken.before" || fail "a failing uci changed the configuration"
 [ -z "$(find "$WORK/etc" -name '.*')" ] || fail "a failing uci left a temporary file next to the configuration"
@@ -222,11 +222,11 @@ cmp -s "$WORK/etc/nosettings" "$WORK/nosettings.before" || fail "the configurati
 # A full overlay takes the write of the copy that replaces the configuration
 # and keeps none of it while the file is small: the data sits in the stdio
 # buffer, and neither write nor close reports the error. Renamed over the
-# configuration, the empty copy erased the whole Forkop configuration while
+# configuration, the empty copy erased the whole Prokop configuration while
 # the secret was reported as generated. The copy is read back before the
 # rename. A full /tmp fails the private copy uci edits the same way and keeps
 # the configuration too. (Needs user and mount namespaces.)
-export WORK UCODE_BIN FORKOP_LIB
+export WORK UCODE_BIN PROKOP_LIB
 full_fs() {
   local where="$1"
   config "full-$where"
@@ -238,15 +238,15 @@ full_fs() {
     mount -t tmpfs -o size=16k tmpfs "$WORK/full-fs" || exit 90
     file="$WORK/etc/full-$where"
     if [ "$where" = overlay ]; then
-      cp "$file" "$WORK/full-fs/forkop"
-      file="$WORK/full-fs/forkop"
+      cp "$file" "$WORK/full-fs/prokop"
+      file="$WORK/full-fs/prokop"
     else
       export TMPDIR="$WORK/full-fs"
     fi
     dd if=/dev/zero of="$WORK/full-fs/fill" bs=1k 2>/dev/null
     status=0
-    FORKOP_CONFIG_FILE="$file" FORKOP_UCI_CLI="$WORK/bin/uci" \
-      "$UCODE_BIN" -L "$FORKOP_LIB" "$WORK/ensure.uc" >"$WORK/full-$where.out" 2>&1 || status=$?
+    PROKOP_CONFIG_FILE="$file" PROKOP_UCI_CLI="$WORK/bin/uci" \
+      "$UCODE_BIN" -L "$PROKOP_LIB" "$WORK/ensure.uc" >"$WORK/full-$where.out" 2>&1 || status=$?
     if [ "$where" = overlay ]; then
       cp "$file" "$WORK/etc/full-$where"
       find "$WORK/full-fs" -name ".*" >"$WORK/full-$where.left"
@@ -273,14 +273,14 @@ fi
 
 # The test fixture of core/uci.uc (the lifecycle tests' view of UCI) sets the
 # option in its state and never logs a commit of the whole package.
-printf '%s\n' 'forkop.settings=settings' 'forkop.settings.enable_yacd=0' >"$WORK/fixture.state"
+printf '%s\n' 'prokop.settings=settings' 'prokop.settings.enable_yacd=0' >"$WORK/fixture.state"
 : >"$WORK/fixture.log"
-FORKOP_CONFIG_FILE="$WORK/etc/fixture-missing" FORKOP_UCI_STATE_FILE="$WORK/fixture.state" FORKOP_UCI_LOG_FILE="$WORK/fixture.log" \
-  FORKOP_UCI_CLI="$WORK/bin/uci-broken" "$UCODE_BIN" -L "$FORKOP_LIB" "$WORK/ensure.uc" >"$WORK/fixture.out" 2>&1 ||
+PROKOP_CONFIG_FILE="$WORK/etc/fixture-missing" PROKOP_UCI_STATE_FILE="$WORK/fixture.state" PROKOP_UCI_LOG_FILE="$WORK/fixture.log" \
+  PROKOP_UCI_CLI="$WORK/bin/uci-broken" "$UCODE_BIN" -L "$PROKOP_LIB" "$WORK/ensure.uc" >"$WORK/fixture.out" 2>&1 ||
   fail "ensure crashed with the uci fixture"
 grep -Fq 'result=ok guard=1' "$WORK/fixture.out" || fail "fixture: $(cat "$WORK/fixture.out")"
-grep -Eq '^forkop\.settings\.yacd_secret_key=[0-9a-f]{64}$' "$WORK/fixture.state" || fail "fixture: no secret in the state"
-[ "$(cat "$WORK/fixture.log")" = 'commit-option forkop.settings.yacd_secret_key' ] ||
+grep -Eq '^prokop\.settings\.yacd_secret_key=[0-9a-f]{64}$' "$WORK/fixture.state" || fail "fixture: no secret in the state"
+[ "$(cat "$WORK/fixture.log")" = 'commit-option prokop.settings.yacd_secret_key' ] ||
   fail "fixture: a whole-package commit or none: $(cat "$WORK/fixture.log")"
 [ ! -e "$WORK/etc/fixture-missing" ] || fail "fixture: a configuration file was written"
 

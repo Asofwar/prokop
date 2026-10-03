@@ -9,13 +9,13 @@
 # VPN sections got real addresses and their traffic left directly. The
 # standby now answers the names of every VPN section locally; only the names
 # of other sections (bypass, DPI, unmatched) use the ordinary upstream. The
-# block list dnsmasq uses while Forkop is stopped keeps only the protected
+# block list dnsmasq uses while Prokop is stopped keeps only the protected
 # sections, as configured.
 set -eo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-KS_UC="$FORKOP_LIB/killswitch/runtime.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+KS_UC="$PROKOP_LIB/killswitch/runtime.uc"
 WORK_DIR="$(mktemp -d)"
 
 cleanup() {
@@ -37,10 +37,10 @@ cat >"$WORK_DIR/bin/nft" <<'NFT'
 #!/usr/bin/env bash
 case "$1 $2" in
   "list table")
-    [ "$4" = "ForkopTable" ] && exit 0
-    [ "$4" = "ForkopKillswitch" ] && { [ -e "$WORK_DIR/ks-present" ]; exit $?; }
+    [ "$4" = "ProkopTable" ] && exit 0
+    [ "$4" = "ProkopKillswitch" ] && { [ -e "$WORK_DIR/ks-present" ]; exit $?; }
     exit 1 ;;
-  "list set") printf 'table inet ForkopTable {\n\tset %s {\n\t\ttype ipv4_addr\n\t}\n}\n' "$5"; exit 0 ;;
+  "list set") printf 'table inet ProkopTable {\n\tset %s {\n\t\ttype ipv4_addr\n\t}\n}\n' "$5"; exit 0 ;;
   "-c -f") exit 0 ;;
   "-f "*) touch "$WORK_DIR/ks-present"; exit 0 ;;
   "delete table") rm -f "$WORK_DIR/ks-present"; exit 0 ;;
@@ -54,15 +54,15 @@ chmod 0755 "$WORK_DIR/bin/"*
 
 export WORK_DIR
 export PATH="$WORK_DIR/bin:$PATH"
-export FORKOP_LIB
-export FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
-export FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/run"
-export FORKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/reload.lock"
+export PROKOP_LIB
+export PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
+export PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/run"
+export PROKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/reload.lock"
 export KILLSWITCH_STATE_DIR="$WORK_DIR/ks"
-export KILLSWITCH_NFT_INCLUDE="$WORK_DIR/nftables.d/90-forkop-killswitch.nft"
+export KILLSWITCH_NFT_INCLUDE="$WORK_DIR/nftables.d/90-prokop-killswitch.nft"
 export KILLSWITCH_CACHE_DIR="$WORK_DIR/cache"
 export DNSMASQ_INIT="$WORK_DIR/bin/dnsmasq-init"
-export FORKOP_KILLSWITCH_INIT="$WORK_DIR/bin/killswitch-init"
+export PROKOP_KILLSWITCH_INIT="$WORK_DIR/bin/killswitch-init"
 
 printf '{"version":3,"rules":[{"domain_suffix":["other-list.example"]}]}\n' >"$WORK_DIR/other.json"
 write_sing_box_config() {
@@ -79,24 +79,24 @@ write_sing_box_config() {
 JSON
 }
 write_sing_box_config "$WORK_DIR/other.json"
-cat >"$FORKOP_UCI_STATE_FILE" <<EOF
-forkop.settings=settings
-forkop.settings.source_network_interfaces=br-lan
-forkop.settings.config_path=$WORK_DIR/sing-box.json
-forkop.byp=section
-forkop.byp.action=bypass
-forkop.main=section
-forkop.main.action=connection
-forkop.main.kill_switch=1
-forkop.zap=section
-forkop.zap.action=zapret
-forkop.other=section
-forkop.other.action=connection
+cat >"$PROKOP_UCI_STATE_FILE" <<EOF
+prokop.settings=settings
+prokop.settings.source_network_interfaces=br-lan
+prokop.settings.config_path=$WORK_DIR/sing-box.json
+prokop.byp=section
+prokop.byp.action=bypass
+prokop.main=section
+prokop.main.action=connection
+prokop.main.kill_switch=1
+prokop.zap=section
+prokop.zap.action=zapret
+prokop.other=section
+prokop.other.action=connection
 dhcp.@dnsmasq[0]=dnsmasq
 dhcp.@dnsmasq[0].server=127.0.0.42
-dhcp.@dnsmasq[0].forkop_server=1.1.1.1
+dhcp.@dnsmasq[0].prokop_server=1.1.1.1
 EOF
-ks() { ucode -L "$FORKOP_LIB" "$KS_UC" "$@"; }
+ks() { ucode -L "$PROKOP_LIB" "$KS_UC" "$@"; }
 
 BLOCKED="$KILLSWITCH_STATE_DIR/dns-blocked.servers"
 
@@ -136,11 +136,11 @@ grep -Fqx 'server=/vpn.example/' "$WORK_DIR/standby.conf" || fail "after a reboo
 mv "$WORK_DIR/cache.before-reboot" "$KILLSWITCH_CACHE_DIR"
 printf 'ok - the standby list is kept in RAM\n'
 
-grep -Fqx 'server=/vpn.example/' "$BLOCKED" || fail "a stopped Forkop must block the protected names"
+grep -Fqx 'server=/vpn.example/' "$BLOCKED" || fail "a stopped Prokop must block the protected names"
 if grep -Fq 'other' "$BLOCKED"; then
-  fail "a stopped Forkop must not block the names of an unprotected section"
+  fail "a stopped Prokop must not block the names of an unprotected section"
 fi
-printf 'ok - a stopped Forkop blocks the protected names only\n'
+printf 'ok - a stopped Prokop blocks the protected names only\n'
 
 # A list of an unprotected VPN section that is not downloaded yet cannot be
 # listed: the standby still blocks every name it can read, and says so.
@@ -156,7 +156,7 @@ grep -Fq 'not downloaded yet' "$KILLSWITCH_STATE_DIR/state.json" || fail "the in
 printf 'ok - an unreadable unprotected list keeps the other names in the standby\n'
 
 # Lifting the protection removes the standby list with it.
-sed -i '/kill_switch/d' "$FORKOP_UCI_STATE_FILE"
+sed -i '/kill_switch/d' "$PROKOP_UCI_STATE_FILE"
 ks sync reload || fail "lifting the protection failed"
 if ls "$KILLSWITCH_STATE_DIR"/*.servers "$KILLSWITCH_CACHE_DIR"/*.servers >/dev/null 2>&1; then
   fail "no block list may outlive the protection: $(ls "$KILLSWITCH_STATE_DIR" "$KILLSWITCH_CACHE_DIR")"

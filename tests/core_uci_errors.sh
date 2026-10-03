@@ -11,13 +11,13 @@ set -euo pipefail
 # runtime migration of a package upgrade and a rule's URLTest settings.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT HUP INT TERM
 fail() { printf 'FAIL: %s\n' "$1" >&2; exit 1; }
 ok() { printf 'OK: %s\n' "$1"; }
 
-unset FORKOP_UCI_STATE_FILE FORKOP_UCI_LOG_FILE
+unset PROKOP_UCI_STATE_FILE PROKOP_UCI_LOG_FILE
 
 # A stand-in for the libuci ucode module with the binding's return values:
 # true on success, null on an error. The packages come from STUB_STATE
@@ -122,7 +122,7 @@ print(sprintf("%J\n", result));
 UC
 
 cat >"$WORK/base.json" <<'JSON'
-{ "forkop": {
+{ "prokop": {
     "settings": { ".name": "settings", ".type": "settings", "marker": "1", "server": [ "a", "b" ] },
     "main": { ".name": "main", ".type": "section", "enabled": "1" }
 } }
@@ -144,32 +144,32 @@ expect() {
 }
 
 # ---- 1. core/uci.uc reports the binding's failures ---------------------------
-expect true "" commit forkop
-expect false commit commit forkop
+expect true "" commit prokop
+expect false commit commit prokop
 ok "a commit the binding refuses (read-only or full overlay) is a failure"
 
-expect true "" set forkop.settings.marker 2
-expect false set set forkop.settings.marker 2
-expect false "" set forkop.missing.marker 2
-expect false set set_section forkop.extra settings
-expect false set add_list forkop.settings.server c
-expect false set del_list forkop.settings.server a
-expect false rename rename forkop.main renamed
+expect true "" set prokop.settings.marker 2
+expect false set set prokop.settings.marker 2
+expect false "" set prokop.missing.marker 2
+expect false set set_section prokop.extra settings
+expect false set add_list prokop.settings.server c
+expect false set del_list prokop.settings.server a
+expect false rename rename prokop.main renamed
 ok "set, set_section, add_list, del_list and rename report a refused change"
 
-expect true "" delete forkop.settings.marker
-expect false delete delete forkop.settings.marker
-expect true delete delete forkop.settings.absent
-expect true delete delete forkop.absent
-grep -q '^delete forkop.settings.absent' "$WORK/calls" &&
+expect true "" delete prokop.settings.marker
+expect false delete delete prokop.settings.marker
+expect true delete delete prokop.settings.absent
+expect true delete delete prokop.absent
+grep -q '^delete prokop.settings.absent' "$WORK/calls" &&
   fail "a delete of an absent option still went to the binding"
 ok "a refused delete is a failure, a delete of what is already absent a success"
 
 # libuci stores no empty list and the binding refuses one: an empty list is
 # no option at all.
-expect '[ true, false ]' "" set_empty_list forkop.settings.server
-expect '[ true, false ]' "" set_empty_list forkop.settings.absent
-expect '[ false, true ]' delete set_empty_list forkop.settings.server
+expect '[ true, false ]' "" set_empty_list prokop.settings.server
+expect '[ true, false ]' "" set_empty_list prokop.settings.absent
+expect '[ false, true ]' delete set_empty_list prokop.settings.server
 ok "an empty list removes the option"
 
 # A package libuci cannot load (missing or unparsable file).
@@ -179,13 +179,13 @@ expect false "" exists network.lan
 ok "a package that cannot be loaded is neither read nor written"
 
 # ---- 2. the runtime migration of a package upgrade ---------------------------
-export FORKOP_CONFIG_NAME=forkop
-export FORKOP_RUNTIME_STATE_DIR="$WORK/run"
+export PROKOP_CONFIG_NAME=prokop
+export PROKOP_RUNTIME_STATE_DIR="$WORK/run"
 export TMP_SUBSCRIPTION_FOLDER="$WORK/subscriptions"
-export FORKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR="$WORK/subscription-cache"
-export FORKOP_INTERNAL_CONFIG_TRIGGER_GUARD="$WORK/internal-config-change"
+export PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR="$WORK/subscription-cache"
+export PROKOP_INTERNAL_CONFIG_TRIGGER_GUARD="$WORK/internal-config-change"
 cat >"$WORK/migrate.json" <<'JSON'
-{ "forkop": {
+{ "prokop": {
     "settings": { ".name": "settings", ".type": "settings", "config_version": "1.0.1",
                   "component_update_check_enabled": "0" },
     "main": { ".name": "main", ".type": "section", "enabled": "1", "action": "connection",
@@ -209,7 +209,7 @@ migrate() {
 # that no later run clears the caches for that.
 migrate "" migrate
 [ "$MIGRATE_STATUS" = 0 ] || fail "the migration failed without a failing call: $(cat "$WORK/calls")"
-grep -Fxq 'commit forkop' "$WORK/calls" || fail "the migration did not commit"
+grep -Fxq 'commit prokop' "$WORK/calls" || fail "the migration did not commit"
 migrate "" migrate-podkop
 [ "$MIGRATE_STATUS" = 0 ] || fail "the Podkop migration failed without a failing call: $(cat "$WORK/calls")"
 [ ! -e "$TMP_SUBSCRIPTION_FOLDER/main.json" ] || fail "the Podkop migration kept the cache of the converted subscription"
@@ -235,13 +235,13 @@ sed 's/"component_update_check_enabled": "0"/"component_update_check_enabled": "
 grep -q '"dns_server": ""' "$WORK/migrate-empty-dns.json" || fail "the empty DNS server fixture was not written"
 migrate "" migrate-podkop "$WORK/migrate-empty-dns.json"
 [ "$MIGRATE_STATUS" = 0 ] || fail "a migration of empty DNS server options failed: $(cat "$WORK/calls")"
-grep -Fxq 'delete forkop.settings.dns_server' "$WORK/calls" || fail "the empty DNS server option was not removed: $(cat "$WORK/calls")"
-grep -Fxq 'commit forkop' "$WORK/calls" || fail "the migration of empty DNS server options was not committed"
+grep -Fxq 'delete prokop.settings.dns_server' "$WORK/calls" || fail "the empty DNS server option was not removed: $(cat "$WORK/calls")"
+grep -Fxq 'commit prokop' "$WORK/calls" || fail "the migration of empty DNS server options was not committed"
 ok "a migration that empties a list removes the option"
 
 # ---- 3. a rule's URLTest settings ---------------------------------------------
 cat >"$WORK/urltest.json" <<'JSON'
-{ "forkop": { "settings": { ".name": "settings", ".type": "settings" },
+{ "prokop": { "settings": { ".name": "settings", ".type": "settings" },
               "main": { ".name": "main", ".type": "section", "enabled": "1" } } }
 JSON
 urltest_save() {
@@ -251,7 +251,7 @@ urltest_save() {
     https://check.example/generate_204 3m 50 30m 1 >/dev/null 2>&1
 }
 urltest_save "" || fail "saving the URLTest settings failed without a failing call: $(cat "$WORK/calls")"
-grep -Fxq 'commit forkop' "$WORK/calls" || fail "the URLTest settings were not committed"
+grep -Fxq 'commit prokop' "$WORK/calls" || fail "the URLTest settings were not committed"
 urltest_save commit && fail "URLTest settings whose commit failed were reported as saved"
 ok "URLTest settings whose commit fails are reported as not saved"
 
@@ -267,21 +267,21 @@ printf '%s\n' "\$*" >>"$WORK/torrserver.calls"
 SH
 chmod +x "$WORK/bin/logger" "$WORK/bin/torrserver-direct"
 cat >"$WORK/torrserver.json" <<'JSON'
-{ "forkop": { "settings": { ".name": "settings", ".type": "settings", "torrserver_direct_enabled": "1" } } }
+{ "prokop": { "settings": { ".name": "settings", ".type": "settings", "torrserver_direct_enabled": "1" } } }
 JSON
 torrserver_direct_off() {
   : >"$WORK/calls"
   : >"$WORK/torrserver.calls"
   PATH="$WORK/bin:$PATH" STUB_STATE="$WORK/torrserver.json" STUB_FAIL="$1" STUB_LOG="$WORK/calls" \
-    FORKOP_LIB="$LIB" FORKOP_RUNTIME_STATE_DIR="$WORK/action-run" UPDATES_LOCK_DIR="$WORK/action-run/component-action.lock" \
-    FORKOP_BIN="$WORK/no-forkop" FORKOP_SERVICE_INIT="$WORK/no-init" FORKOP_OPKG_RECOVERY_DIR="$WORK/recovery" \
-    FORKOP_MANAGED_UPGRADE_SING_BOX_MARKER="$WORK/managed-upgrade" FORKOP_TORRSERVER_DIRECT_INIT="$WORK/bin/torrserver-direct" \
+    PROKOP_LIB="$LIB" PROKOP_RUNTIME_STATE_DIR="$WORK/action-run" UPDATES_LOCK_DIR="$WORK/action-run/component-action.lock" \
+    PROKOP_BIN="$WORK/no-prokop" PROKOP_SERVICE_INIT="$WORK/no-init" PROKOP_OPKG_RECOVERY_DIR="$WORK/recovery" \
+    PROKOP_MANAGED_UPGRADE_SING_BOX_MARKER="$WORK/managed-upgrade" PROKOP_TORRSERVER_DIRECT_INIT="$WORK/bin/torrserver-direct" \
     ucode -L "$WORK/modules" -L "$LIB" "$LIB/components/action.uc" component-action torrserver_direct disable \
     >"$WORK/action.out" 2>/dev/null || true
 }
 torrserver_direct_off ""
 grep -q '"success": *true' "$WORK/action.out" || fail "TorrServer Direct could not be turned off: $(cat "$WORK/action.out")"
-grep -Fxq 'commit forkop' "$WORK/calls" || fail "the TorrServer Direct setting was not committed"
+grep -Fxq 'commit prokop' "$WORK/calls" || fail "the TorrServer Direct setting was not committed"
 grep -Fxq 'stop' "$WORK/torrserver.calls" || fail "TorrServer Direct was not stopped"
 for failing in set commit; do
   torrserver_direct_off "$failing"

@@ -1,0 +1,75 @@
+{
+  "admin/services/prokop": {
+    "title": "Prokop",
+    "order": 42,
+    "action": {
+      "type": "firstchild"
+    },
+    "depends": {
+      "acl": [ "luci-app-prokop" ],
+      "uci": { "prokop": true }
+    }
+  },
+  "admin/services/prokop/overview": {
+    "title": "Overview",
+    "order": 10,
+    "action": {
+      "type": "view",
+      "path": "prokop/page/overview"
+    }
+  },
+  "admin/services/prokop/rules": {
+    "title": "Rules",
+    "order": 15,
+    "action": {
+      "type": "view",
+      "path": "prokop/page/rules"
+    },
+    "depends": {
+      "acl": [ "luci-app-prokop-admin" ]
+    }
+  },
+  "admin/services/prokop/monitoring": {
+    "title": "Monitoring",
+    "order": 20,
+    "action": {
+      "type": "view",
+      "path": "prokop/page/monitoring"
+    }
+  },
+  "admin/services/prokop/diagnostics": {
+    "title": "Diagnostics",
+    "order": 30,
+    "action": {
+      "type": "view",
+      "path": "prokop/page/diagnostics"
+    }
+  },
+  "admin/services/prokop/autotune": {
+    "title": "DPI autotune",
+    "order": 35,
+    "action": {
+      "type": "view",
+      "path": "prokop/page/autotune"
+    }
+  },
+  "admin/services/prokop/history": {
+    "title": "History and recovery",
+    "order": 40,
+    "action": {
+      "type": "view",
+      "path": "prokop/page/history"
+    }
+  },
+  "admin/services/prokop/settings": {
+    "title": "Settings",
+    "order": 90,
+    "action": {
+      "type": "view",
+      "path": "prokop/page/settings"
+    },
+    "depends": {
+      "acl": [ "luci-app-prokop-admin" ]
+    }
+  }
+}

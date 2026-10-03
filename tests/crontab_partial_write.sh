@@ -5,16 +5,16 @@ set -euo pipefail
 # copies the new crontab into <user>.new, ignores a failed copy, renames what
 # it got over the crontab anyway and exits 0 (miscutils/crontab.c, Replace).
 # With room for the new file's inode but not for its data, every rewrite left
-# the router's crontab cut short or empty while Forkop reported success.
-# Forkop reads the crontab back after crontab: a crontab that does not hold
+# the router's crontab cut short or empty while Prokop reported success.
+# Prokop reads the crontab back after crontab: a crontab that does not hold
 # the new text fails the rewrite, with an error naming the file, and the
 # previous crontab is put back (the space of the old one is free again once
 # crontab renamed over it). The autotune cron line is written the same way.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-UPDATES_UC="$FORKOP_LIB/components/updates.uc"
-MANAGER_UC="$FORKOP_LIB/autotune/manager.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+UPDATES_UC="$PROKOP_LIB/components/updates.uc"
+MANAGER_UC="$PROKOP_LIB/autotune/manager.uc"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 fail() {
@@ -46,14 +46,14 @@ printf '%s\n' "\$*" >>"$WORK/syslog"
 SH
 chmod +x "$WORK/bin/crontab" "$WORK/bin/logger"
 export PATH="$WORK/bin:$PATH"
-export FORKOP_CRONTAB_FILE="$WORK/crontab" FORKOP_AUTOTUNE_CRONTAB="$WORK/bin/crontab" FORKOP_AUTOTUNE_TMPDIR="$WORK/tmp"
+export PROKOP_CRONTAB_FILE="$WORK/crontab" PROKOP_AUTOTUNE_CRONTAB="$WORK/bin/crontab" PROKOP_AUTOTUNE_TMPDIR="$WORK/tmp"
 export TMPDIR="$WORK/tmp"
 
 cat >"$WORK/crontab.orig" <<'CRON'
 0 4 * * * /usr/local/bin/backup.sh
 */10 * * * * /root/watchdog.sh # keep me
-0 0 * * * /usr/bin/forkop list_update_if_due # forkop-list-update
-*/15 * * * * /usr/bin/forkop autotune_if_due >/dev/null 2>&1 # forkop-autotune
+0 0 * * * /usr/bin/prokop list_update_if_due # prokop-list-update
+*/15 * * * * /usr/bin/prokop autotune_if_due >/dev/null 2>&1 # prokop-autotune
 CRON
 
 # setup <free bytes> <refund 0|1>
@@ -65,11 +65,11 @@ setup() {
   : >"$WORK/crontab.calls"
 }
 remove_jobs() {
-  ucode -L "$FORKOP_LIB" "$UPDATES_UC" remove-cron-jobs '# forkop-list-update' '# forkop-subscription-update' \
-    '# forkop-component-update' >"$WORK/remove.out" 2>&1 && STATUS=0 || STATUS=$?
+  ucode -L "$PROKOP_LIB" "$UPDATES_UC" remove-cron-jobs '# prokop-list-update' '# prokop-subscription-update' \
+    '# prokop-component-update' >"$WORK/remove.out" 2>&1 && STATUS=0 || STATUS=$?
 }
 autotune_remove() {
-  ucode -L "$FORKOP_LIB" "$MANAGER_UC" cron-remove >"$WORK/autotune.json" 2>&1 && STATUS=0 || STATUS=$?
+  ucode -L "$PROKOP_LIB" "$MANAGER_UC" cron-remove >"$WORK/autotune.json" 2>&1 && STATUS=0 || STATUS=$?
 }
 json_get() {
   node -e 'const v=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));console.log(JSON.stringify(v[process.argv[2]]))' "$1" "$2"
@@ -78,12 +78,12 @@ no_leftovers() {
   [ -z "$(ls -A "$WORK/tmp")" ] || fail "$1 left a staged crontab behind: $(ls -A "$WORK/tmp")"
 }
 
-# Room to spare: only Forkop's line goes, every other job stays.
+# Room to spare: only Prokop's line goes, every other job stays.
 setup 100000 1
 remove_jobs
 [ "$STATUS" = 0 ] || fail "the cron removal failed with room to spare: $(cat "$WORK/remove.out")"
-grep -vF '# forkop-list-update' "$WORK/crontab.orig" | cmp -s - "$WORK/crontab" ||
-  fail "the cron removal did not remove exactly Forkop's line: $(cat "$WORK/crontab")"
+grep -vF '# prokop-list-update' "$WORK/crontab.orig" | cmp -s - "$WORK/crontab" ||
+  fail "the cron removal did not remove exactly Prokop's line: $(cat "$WORK/crontab")"
 no_leftovers "the cron removal"
 printf 'ok - with room to spare the cron removal removes only its own line\n'
 
@@ -121,7 +121,7 @@ printf 'ok - a crontab that cannot be put back fails the cron removal with an er
 setup 100000 1
 autotune_remove
 [ "$(json_get "$WORK/autotune.json" status)" = '"ok"' ] || fail "the autotune cron removal failed: $(cat "$WORK/autotune.json")"
-grep -vF '# forkop-autotune' "$WORK/crontab.orig" | cmp -s - "$WORK/crontab" ||
+grep -vF '# prokop-autotune' "$WORK/crontab.orig" | cmp -s - "$WORK/crontab" ||
   fail "the autotune cron removal did not remove exactly its line: $(cat "$WORK/crontab")"
 for room in 0 40; do
   setup "$room" 1

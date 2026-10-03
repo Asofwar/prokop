@@ -13,7 +13,7 @@ HELPERS="$ROOT_DIR/tests/helpers/route_owner"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT HUP INT TERM
 
-node "$HELPERS/run_apply.js" "$ROOT_DIR/forkop/files/usr/lib" "$WORK" "$HELPERS/cases.js" > "$WORK/owners.json"
+node "$HELPERS/run_apply.js" "$ROOT_DIR/prokop/files/usr/lib" "$WORK" "$HELPERS/cases.js" > "$WORK/owners.json"
 node - "$WORK/owners.json" "$HELPERS/apply_owner.golden.json" <<'NODE'
 const assert = require('node:assert/strict');
 const fs = require('node:fs');

@@ -8,16 +8,16 @@ set -euo pipefail
 # Before UC-010 the job carried the pid of the rc.common shell, which exits
 # right after start_service returns: service/ui.uc marked the job "Service
 # action worker exited unexpectedly" once ACTION_STALE_GRACE_SECONDS had
-# passed, while `forkop start` was still running.
+# passed, while `prokop start` was still running.
 #
 # rc.common is emulated as in OpenWrt (fd 1000 open and flocked when the real
 # init script's handler runs). service/initd.uc, service/ui.uc and
-# service/state.uc are real; `forkop start` blocks until the test releases
+# service/state.uc are real; `prokop start` blocks until the test releases
 # it, and the runtime counts as stably running.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
-REAL_INITD="$ROOT_DIR/forkop/files/etc/init.d/forkop"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
+REAL_INITD="$ROOT_DIR/prokop/files/etc/init.d/prokop"
 REAL_UCODE="$(command -v ucode)"
 WORK_DIR="$(mktemp -d)"
 # shellcheck source=tests/helpers/wait.sh
@@ -45,44 +45,44 @@ fail() {
 }
 
 STALE_GRACE=1
-mkdir -p "$WORK_DIR/bin" "$WORK_DIR/run/forkop" "$WORK_DIR/tmp"
-printf 'forkop.settings=settings\n' >"$WORK_DIR/uci.state"
+mkdir -p "$WORK_DIR/bin" "$WORK_DIR/run/prokop" "$WORK_DIR/tmp"
+printf 'prokop.settings=settings\n' >"$WORK_DIR/uci.state"
 
 export TMPDIR="$WORK_DIR/tmp"
 export PATH="$WORK_DIR/bin:$PATH"
 export TEST_WORK="$WORK_DIR" EVENTS REAL_INITD REAL_UCODE
 export TEST_LIB="$LIB"
-export LOCK="$WORK_DIR/run/forkop.reload.lock"
-export RC_PROCD_LOCK="$WORK_DIR/procd_forkop.lock"
-export FORKOP_LIB="$LIB"
-export FORKOP_BIN="$WORK_DIR/bin/forkop"
-export FORKOP_RELOAD_LOCK_DIR="$LOCK"
-export FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/run/forkop"
-export FORKOP_PENDING_RELOAD_FILE="$WORK_DIR/run/forkop/reload.pending"
-export FORKOP_START_IN_PROGRESS_FILE="$WORK_DIR/run/forkop/start.in-progress"
-export FORKOP_SERVICE_INIT="$WORK_DIR/bin/init"
-export FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
-export FORKOP_START_RETRY_DELAY_SECONDS=300
-export FORKOP_UI_STATE_DIR="$WORK_DIR/ui-state"
-export FORKOP_UI_SERVICE_ACTION_DIR="$FORKOP_UI_STATE_DIR/service-actions"
-export FORKOP_UI_SERVICE_ACTION_LOCK_DIR="$FORKOP_UI_STATE_DIR/service-actions.lock"
-export FORKOP_UI_LATENCY_ACTION_DIR="$FORKOP_UI_STATE_DIR/latency-actions"
-export FORKOP_UI_COMPONENT_ACTION_DIR="$FORKOP_UI_STATE_DIR/component-actions"
-export FORKOP_UI_SUBSCRIPTION_ACTION_DIR="$FORKOP_UI_STATE_DIR/subscription-actions"
-export FORKOP_LATENCY_TEST_LOCK_DIR="$WORK_DIR/run/forkop/automatic-latency-test.lock"
-export FORKOP_UI_ACTION_STALE_GRACE_SECONDS="$STALE_GRACE"
-export FORKOP_UI_SERVICE_ACTION_SETTLE_SECONDS=1
-export FORKOP_UI_SERVICE_ACTION_TIMEOUT_SECONDS=20
-unset FORKOP_UI_ACTION_TRACKED
+export LOCK="$WORK_DIR/run/prokop.reload.lock"
+export RC_PROCD_LOCK="$WORK_DIR/procd_prokop.lock"
+export PROKOP_LIB="$LIB"
+export PROKOP_BIN="$WORK_DIR/bin/prokop"
+export PROKOP_RELOAD_LOCK_DIR="$LOCK"
+export PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/run/prokop"
+export PROKOP_PENDING_RELOAD_FILE="$WORK_DIR/run/prokop/reload.pending"
+export PROKOP_START_IN_PROGRESS_FILE="$WORK_DIR/run/prokop/start.in-progress"
+export PROKOP_SERVICE_INIT="$WORK_DIR/bin/init"
+export PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
+export PROKOP_START_RETRY_DELAY_SECONDS=300
+export PROKOP_UI_STATE_DIR="$WORK_DIR/ui-state"
+export PROKOP_UI_SERVICE_ACTION_DIR="$PROKOP_UI_STATE_DIR/service-actions"
+export PROKOP_UI_SERVICE_ACTION_LOCK_DIR="$PROKOP_UI_STATE_DIR/service-actions.lock"
+export PROKOP_UI_LATENCY_ACTION_DIR="$PROKOP_UI_STATE_DIR/latency-actions"
+export PROKOP_UI_COMPONENT_ACTION_DIR="$PROKOP_UI_STATE_DIR/component-actions"
+export PROKOP_UI_SUBSCRIPTION_ACTION_DIR="$PROKOP_UI_STATE_DIR/subscription-actions"
+export PROKOP_LATENCY_TEST_LOCK_DIR="$WORK_DIR/run/prokop/automatic-latency-test.lock"
+export PROKOP_UI_ACTION_STALE_GRACE_SECONDS="$STALE_GRACE"
+export PROKOP_UI_SERVICE_ACTION_SETTLE_SECONDS=1
+export PROKOP_UI_SERVICE_ACTION_TIMEOUT_SECONDS=20
+unset PROKOP_UI_ACTION_TRACKED
 
 # Nothing here may reach the host's syslog, nftables or init scripts.
 printf '#!/bin/sh\nexit 0\n' >"$WORK_DIR/bin/logger"
 printf '#!/bin/sh\nexit 1\n' >"$WORK_DIR/bin/nft"
-# /etc/init.d/forkop: records who applies a queued reload (a service/ui.uc
-# job worker runs it with FORKOP_UI_ACTION_TRACKED=1).
+# /etc/init.d/prokop: records who applies a queued reload (a service/ui.uc
+# job worker runs it with PROKOP_UI_ACTION_TRACKED=1).
 cat >"$WORK_DIR/bin/init" <<'SH'
 #!/bin/sh
-printf 'init %s tracked=%s\n' "$1 $2" "${FORKOP_UI_ACTION_TRACKED:-0}" >>"$EVENTS"
+printf 'init %s tracked=%s\n' "$1 $2" "${PROKOP_UI_ACTION_TRACKED:-0}" >>"$EVENTS"
 exec bash "$TEST_WORK/rc" "$@"
 SH
 
@@ -92,16 +92,16 @@ cat >"$WORK_DIR/bin/ucode" <<'SH'
 #!/bin/sh
 case "${3:-}" in
   */service/state.uc)
-    [ "${4:-}" != forkop-stably-running ] || exit 0
+    [ "${4:-}" != prokop-stably-running ] || exit 0
     ;;
   */dns/apply.uc | */nft/apply.uc | */config/validator.uc | */diagnostics/health.uc) exit 0 ;;
 esac
 exec "$REAL_UCODE" "$@"
 SH
 
-# `forkop start` runs until start.gate exists; a reload records whether it
+# `prokop start` runs until start.gate exists; a reload records whether it
 # ran next to a start.
-cat >"$WORK_DIR/bin/forkop" <<'SH'
+cat >"$WORK_DIR/bin/prokop" <<'SH'
 #!/bin/sh
 ev() { printf '%s\n' "$1" >>"$EVENTS"; }
 case "$1" in
@@ -138,22 +138,22 @@ flock 1000
 initscript="$REAL_INITD"
 # shellcheck disable=SC1090
 . "$REAL_INITD"
-FORKOP_LIB="$TEST_LIB"
-FORKOP_INITD_UC="$TEST_LIB/service/initd.uc"
+PROKOP_LIB="$TEST_LIB"
+PROKOP_INITD_UC="$TEST_LIB/service/initd.uc"
 case "$action" in
   start) start_service "$@" ;;
   reload) reload_service "$@" ;;
   *) exit 64 ;;
 esac
 SH
-chmod +x "$WORK_DIR/bin/ucode" "$WORK_DIR/bin/forkop" "$WORK_DIR/bin/logger" \
+chmod +x "$WORK_DIR/bin/ucode" "$WORK_DIR/bin/prokop" "$WORK_DIR/bin/logger" \
   "$WORK_DIR/bin/nft" "$WORK_DIR/bin/init" "$WORK_DIR/rc"
 
 ui() { "$REAL_UCODE" -L "$LIB" "$LIB/service/ui.uc" "$@"; }
 has_event() { grep -q "$1" "$EVENTS" 2>/dev/null; }
 job_file() {
   local path
-  for path in "$FORKOP_UI_SERVICE_ACTION_DIR"/*.json; do
+  for path in "$PROKOP_UI_SERVICE_ACTION_DIR"/*.json; do
     [ -e "$path" ] || continue
     grep -q "\"action\": *\"$1\"" "$path" && { printf '%s\n' "$path"; return 0; }
   done
@@ -181,7 +181,7 @@ owner="$("$REAL_UCODE" -L "$LIB" "$LIB/service/state.uc" runtime-dir-lock-owner 
 [ "$(job_field "$START_JOB" pid)" = "$owner" ] ||
   fail "the UI start job is tracked under pid '$(job_field "$START_JOB" pid)', not the reload.lock owner $owner"
 
-# 2. The job stays running past the stale grace while `forkop start` runs:
+# 2. The job stays running past the stale grace while `prokop start` runs:
 #    status reads refresh it against the live worker.
 started_at="$(job_field "$START_JOB" started_at)"
 wait_until 10 clock_after "$((started_at + STALE_GRACE + 1))" || fail "clock did not advance"
@@ -194,7 +194,7 @@ ui service-action-status "$(basename "$START_JOB" .json)" | grep -q '"running": 
 status=0
 timeout -s KILL 30 bash "$WORK_DIR/rc" reload badwan_interface_up >"$WORK_DIR/rc-reload.out" 2>&1 || status=$?
 [ "$status" = 0 ] || fail "queued reload returned $status: $(cat "$WORK_DIR/rc-reload.out")"
-[ -e "$FORKOP_PENDING_RELOAD_FILE" ] || fail "the reload was neither run nor queued"
+[ -e "$PROKOP_PENDING_RELOAD_FILE" ] || fail "the reload was neither run nor queued"
 has_event '^reload' && fail "a reload ran next to the start"
 
 # 4. The start finishes as success, and its waiter (the start job is still
@@ -211,6 +211,6 @@ has_event '^reload during start$' && fail "a reload ran next to the start"
 [ "$(grep -c '^init ' "$EVENTS")" = 1 ] || fail "the queued reload was applied more than once"
 # service/initd.uc's own drain would run `init.d reload pending` untracked.
 has_event '^init reload .*tracked=1$' || fail "the queued reload was not applied by the start job's waiter"
-[ ! -e "$FORKOP_PENDING_RELOAD_FILE" ] || fail "the queued reload is still pending"
+[ ! -e "$PROKOP_PENDING_RELOAD_FILE" ] || fail "the queued reload is still pending"
 
 printf 'deferred start UI job checks passed\n'

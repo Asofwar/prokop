@@ -10,7 +10,7 @@ set -euo pipefail
 # started the new sing-box, Priority, DNS failover, the DPI providers, the new
 # nft table and the dnsmasq change after the stop had torn the runtime down,
 # and a transition that failed because of the teardown was "rolled back" by
-# starting the previous sing-box again. Forkop then showed "Stopped by user"
+# starting the previous sing-box again. Prokop then showed "Stopped by user"
 # with a lone sing-box behind it.
 #
 # Now every start, commit and rollback step of the reload gives way to a
@@ -20,13 +20,13 @@ set -euo pipefail
 #
 # The reload is the real service/lifecycle.uc under reload.lock; the stop is
 # the real init.d stop_service and service/initd.uc, with a backend that
-# stands in for `forkop stop` (tears the modelled runtime down). Locks and
+# stands in for `prokop stop` (tears the modelled runtime down). Locks and
 # the stop marker go through the real service/state.uc; sing-box, nft and
 # the modules the reload calls are modelled.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-REAL_LIB="$ROOT_DIR/forkop/files/usr/lib"
-REAL_INITD="$ROOT_DIR/forkop/files/etc/init.d/forkop"
+REAL_LIB="$ROOT_DIR/prokop/files/usr/lib"
+REAL_INITD="$ROOT_DIR/prokop/files/etc/init.d/prokop"
 WORK_DIR="$(mktemp -d)"
 # shellcheck source=tests/helpers/wait.sh
 . "$ROOT_DIR/tests/helpers/wait.sh"
@@ -54,41 +54,41 @@ fail() {
 }
 
 FAKE_LIB="$WORK_DIR/fake-lib"
-mkdir -p "$WORK_DIR/bin" "$WORK_DIR/run/forkop" "$WORK_DIR/tmp" "$WORK_DIR/singbox-tmp/rulesets" \
+mkdir -p "$WORK_DIR/bin" "$WORK_DIR/run/prokop" "$WORK_DIR/tmp" "$WORK_DIR/singbox-tmp/rulesets" \
   "$FAKE_LIB/service" "$FAKE_LIB/subscription" "$FAKE_LIB/config" "$FAKE_LIB/singbox" "$FAKE_LIB/nft" \
   "$FAKE_LIB/dns" "$FAKE_LIB/components" "$FAKE_LIB/autotune" "$FAKE_LIB/diagnostics" \
   "$FAKE_LIB/providers/zapret" "$FAKE_LIB/providers/zapret2" "$FAKE_LIB/providers/byedpi"
 cat >"$WORK_DIR/uci.state" <<'EOF'
-forkop.settings=settings
-forkop.settings.yacd_secret_key=0123456789abcdef
-forkop.settings.dont_touch_dhcp=0
+prokop.settings=settings
+prokop.settings.yacd_secret_key=0123456789abcdef
+prokop.settings.dont_touch_dhcp=0
 EOF
-: >"$WORK_DIR/forkop.config"
+: >"$WORK_DIR/prokop.config"
 printf 'config dnsmasq\n' >"$WORK_DIR/dhcp"
 
 export TMPDIR="$WORK_DIR/tmp"
 export PATH="$WORK_DIR/bin:$PATH"
 export EVENTS REAL_LIB REAL_INITD FAKE_LIB
-export RELOAD_LOCK="$WORK_DIR/run/forkop.reload.lock"
+export RELOAD_LOCK="$WORK_DIR/run/prokop.reload.lock"
 export SING_BOX_STATE="$WORK_DIR/singbox.state"
 export NFT_TABLE_FILE="$WORK_DIR/nft.table"
-export STOP_MARKER="$WORK_DIR/run/forkop/stop.requested"
+export STOP_MARKER="$WORK_DIR/run/prokop/stop.requested"
 export GATE="$WORK_DIR/gate"
-export FORKOP_RELOAD_LOCK_DIR="$RELOAD_LOCK"
-export FORKOP_SUBSCRIPTION_UPDATE_LOCK_DIR="$WORK_DIR/run/forkop/subscription-update.lock"
-export FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/run/forkop"
-export FORKOP_PENDING_RELOAD_FILE="$WORK_DIR/run/forkop/reload.pending"
-export FORKOP_SERVICE_INIT="$WORK_DIR/bin/no-init"
-export FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
-export FORKOP_CONFIG_FILE="$WORK_DIR/forkop.config"
-export FORKOP_DNSMASQ_CONFIG_FILE="$WORK_DIR/dhcp"
+export PROKOP_RELOAD_LOCK_DIR="$RELOAD_LOCK"
+export PROKOP_SUBSCRIPTION_UPDATE_LOCK_DIR="$WORK_DIR/run/prokop/subscription-update.lock"
+export PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/run/prokop"
+export PROKOP_PENDING_RELOAD_FILE="$WORK_DIR/run/prokop/reload.pending"
+export PROKOP_SERVICE_INIT="$WORK_DIR/bin/no-init"
+export PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
+export PROKOP_CONFIG_FILE="$WORK_DIR/prokop.config"
+export PROKOP_DNSMASQ_CONFIG_FILE="$WORK_DIR/dhcp"
 export DNSMASQ_INIT="$WORK_DIR/bin/no-init"
-export FORKOP_INTERNAL_CONFIG_TRIGGER_GUARD="$WORK_DIR/run/internal-config-change"
-export FORKOP_MANAGED_UPGRADE_SING_BOX_MARKER="$WORK_DIR/run/managed-upgrade-sing-box"
-export FORKOP_UI_ACTION_TRACKED=1
+export PROKOP_INTERNAL_CONFIG_TRIGGER_GUARD="$WORK_DIR/run/internal-config-change"
+export PROKOP_MANAGED_UPGRADE_SING_BOX_MARKER="$WORK_DIR/run/managed-upgrade-sing-box"
+export PROKOP_UI_ACTION_TRACKED=1
 export TMP_SING_BOX_FOLDER="$WORK_DIR/singbox-tmp"
 export TMP_RULESET_FOLDER="$WORK_DIR/singbox-tmp/rulesets"
-export FORKOP_SING_BOX_RELOAD_PID_TIMEOUT=2
+export PROKOP_SING_BOX_RELOAD_PID_TIMEOUT=2
 
 # Nothing here may reach the host's syslog, firewall or init scripts.
 printf '#!/bin/sh\nprintf "%%s\\n" "$*" >>"%s"\n' "$WORK_DIR/syslog" >"$WORK_DIR/bin/logger"
@@ -98,8 +98,8 @@ cat >"$WORK_DIR/bin/nft" <<'SH'
 #!/bin/sh
 [ "$1" != -t ] || shift
 # Only the production table is modelled: no DPI guard of a failed transition
-# or of a restore (ForkopTableDpiGuard, ForkopConfigRestoreDpiGuard).
-if [ "$1 $2 $3" = "list table inet" ] && [ "$4" != ForkopTable ]; then
+# or of a restore (ProkopTableDpiGuard, ProkopConfigRestoreDpiGuard).
+if [ "$1 $2 $3" = "list table inet" ] && [ "$4" != ProkopTable ]; then
   exit 1
 fi
 if [ "$1 $2 $3" = "list table inet" ]; then
@@ -112,8 +112,8 @@ fi
 [ "$1 $2" != "list chain" ]
 SH
 
-# `forkop stop` behind initd.uc: tears the modelled runtime down.
-cat >"$WORK_DIR/bin/forkop" <<'SH'
+# `prokop stop` behind initd.uc: tears the modelled runtime down.
+cat >"$WORK_DIR/bin/prokop" <<'SH'
 #!/bin/sh
 case "$1" in
   stop)
@@ -134,24 +134,24 @@ shift
 initscript="$REAL_INITD"
 # shellcheck disable=SC1090
 . "$REAL_INITD"
-FORKOP_LIB="$REAL_LIB"
-FORKOP_INITD_UC="$REAL_LIB/service/initd.uc"
+PROKOP_LIB="$REAL_LIB"
+PROKOP_INITD_UC="$REAL_LIB/service/initd.uc"
 case "$action" in
   stop) stop_service "$@" ;;
   *) exit 64 ;;
 esac
 SH
 
-# init.d holds reload.lock around `forkop reload`; what init.d then finds
+# init.d holds reload.lock around `prokop reload`; what init.d then finds
 # (service/initd.uc reload_service) is recorded before the lock is released.
 cat >"$WORK_DIR/reload" <<'SH'
 #!/bin/sh
 state() { ucode -L "$REAL_LIB" "$REAL_LIB/service/state.uc" "$@"; }
-state acquire-runtime-dir-lock "$FORKOP_RELOAD_LOCK_DIR" "$$" || exit 99
-env FORKOP_LIB="$FAKE_LIB" ucode -L "$REAL_LIB" "$REAL_LIB/service/lifecycle.uc" reload "$1"
+state acquire-runtime-dir-lock "$PROKOP_RELOAD_LOCK_DIR" "$$" || exit 99
+env PROKOP_LIB="$FAKE_LIB" ucode -L "$REAL_LIB" "$REAL_LIB/service/lifecycle.uc" reload "$1"
 status=$?
 printf 'reload returned, sing-box %s\n' "$(cat "$SING_BOX_STATE")" >>"$EVENTS"
-state release-runtime-dir-lock "$FORKOP_RELOAD_LOCK_DIR" "$$"
+state release-runtime-dir-lock "$PROKOP_RELOAD_LOCK_DIR" "$$"
 exit "$status"
 SH
 
@@ -181,7 +181,7 @@ if (index(mode, "runtime-dir-lock") >= 0 || mode == "runtime-apply-allowed" || m
         command += " " + q(arg);
     exit(system(command));
 }
-if (mode == "forkop-running" || mode == "forkop-stably-running")
+if (mode == "prokop-running" || mode == "prokop-stably-running")
     exit(running() ? 0 : 1);
 if (mode == "sing-box-process-conflict")
     exit(1);
@@ -195,7 +195,7 @@ if (mode == "start-managed-sing-box-runtime") {
     fs.writefile(getenv("SING_BOX_STATE"), "running\n");
     exit(0);
 }
-if (mode == "wait-forkop-stable-start") {
+if (mode == "wait-prokop-stable-start") {
     hold("wait-stable");
     ev("wait-stable " + (running() ? "ok" : "failed"));
     exit(running() ? 0 : 1);
@@ -264,7 +264,7 @@ if (mode == "nft-rebuild-runtime-from-uci")
 if (mode == "remove-dpi-transition-guard")
     hold("dpi-guard-removal");
 if (mode == "nft-apply-candidate-batch" || mode == "nft-commit-candidate-batch")
-    fs.writefile(getenv("NFT_TABLE_FILE"), "ForkopTable\n");
+    fs.writefile(getenv("NFT_TABLE_FILE"), "ProkopTable\n");
 ev("nft " + mode);
 exit(0);
 UC
@@ -316,10 +316,10 @@ finish() {
 reset_case() {
   : >"$EVENTS"
   : >"$WORK_DIR/syslog"
-  rm -f "$GATE" "$GATE.armed" "$STOP_MARKER" "$FORKOP_PENDING_RELOAD_FILE"
+  rm -f "$GATE" "$GATE.armed" "$STOP_MARKER" "$PROKOP_PENDING_RELOAD_FILE"
   [ ! -e "$RELOAD_LOCK" ] || fail "reload.lock leaked from the previous case"
   printf 'running\n' >"$SING_BOX_STATE"
-  printf 'ForkopTable\n' >"$NFT_TABLE_FILE"
+  printf 'ProkopTable\n' >"$NFT_TABLE_FILE"
 }
 
 # The reload runs until it is held at HOLD_AT; a stop that gives up waiting
@@ -331,8 +331,8 @@ reload_overtaken_by_stop() {
   start_actor env PLAN="$plan" HOLD_AT="$hold_at" "$WORK_DIR/reload" "" >"$WORK_DIR/reload.out" 2>&1
   RELOAD_PID="$LAST_ACTOR"
   wait_until 30 has_event "^held at $hold_at\$" || fail "the reload did not reach $hold_at"
-  start_actor env FORKOP_BIN="$WORK_DIR/bin/forkop" FORKOP_LIB="$REAL_LIB" \
-    FORKOP_STOP_RUNTIME_LOCK_WAIT_SECONDS="${STOP_WAIT:-1}" sh "$WORK_DIR/rc" stop >"$WORK_DIR/stop.out" 2>&1
+  start_actor env PROKOP_BIN="$WORK_DIR/bin/prokop" PROKOP_LIB="$REAL_LIB" \
+    PROKOP_STOP_RUNTIME_LOCK_WAIT_SECONDS="${STOP_WAIT:-1}" sh "$WORK_DIR/rc" stop >"$WORK_DIR/stop.out" 2>&1
   STOP_PID="$LAST_ACTOR"
   if [ "${STOP_WAIT:-1}" -le 1 ]; then
     finish "the stop" "$STOP_PID" "$WORK_DIR/stop.out"

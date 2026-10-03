@@ -9,7 +9,7 @@ set -euo pipefail
 # /etc/crontabs/root and a crond signal), and every unchanged rule-set
 # refresh rewrote the .validated record next to the cached list. Now each is
 # written only when it changes. A crontab that exists but cannot be read was
-# taken as empty and written back with only Forkop's jobs, erasing the
+# taken as empty and written back with only Prokop's jobs, erasing the
 # user's; now the refresh fails and writes nothing. A copy of the init
 # script that a crash left between its write and its rename, and the
 # partial copy a failed write leaves of the persistent subscription cache or
@@ -21,7 +21,7 @@ set -euo pipefail
 # and mount namespaces (unshare -rm) and are skipped without them.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 trap 'exit 1' HUP INT TERM
@@ -38,12 +38,12 @@ printf '#!/bin/sh\nexit 0\n' >"$WORK/bin/logger"
 chmod 0755 "$WORK/bin/logger"
 export PATH="$WORK/bin:$PATH"
 export LIB WORK
-export FORKOP_RUNTIME_STATE_DIR="$WORK/run"
-export FORKOP_UCI_STATE_FILE="$WORK/uci.state"
-export FORKOP_UCI_LOG_FILE="$WORK/uci.log"
+export PROKOP_RUNTIME_STATE_DIR="$WORK/run"
+export PROKOP_UCI_STATE_FILE="$WORK/uci.state"
+export PROKOP_UCI_LOG_FILE="$WORK/uci.log"
 cat >"$WORK/uci.state" <<EOF
-forkop.settings=settings
-forkop.settings.config_path=$WORK/config.json
+prokop.settings=settings
+prokop.settings.config_path=$WORK/config.json
 sing-box.main=sing-box
 sing-box.main.enabled=1
 sing-box.main.user=root
@@ -71,8 +71,8 @@ stat -c '%i %y %s' /etc/init.d/sing-box >"$WORK/initd.second"
 sh -c 'exit 0' &
 dead=$!
 wait "$dead" || true
-printf 'stale\n' >"/etc/init.d/sing-box.forkop.$dead"
-printf 'in progress\n' >"/etc/init.d/sing-box.forkop.$$"
+printf 'stale\n' >"/etc/init.d/sing-box.prokop.$dead"
+printf 'in progress\n' >"/etc/init.d/sing-box.prokop.$$"
 printf '#!/bin/sh\n# an older managed script\n' >/etc/init.d/sing-box
 # The copy being installed is named after its writer, which lives until the
 # rename: another start must find that writer alive and keep the copy. The
@@ -82,8 +82,8 @@ printf '#!/bin/sh\n# an older managed script\n' >/etc/init.d/sing-box
 mkdir -p "$WORK/sync-bin"
 cat >"$WORK/sync-bin/sync" <<'SYNC'
 #!/bin/sh
-for copy in /etc/init.d/sing-box.forkop.*; do
-  [ -f "$copy" ] && [ "$copy" != "/etc/init.d/sing-box.forkop.$LIVE" ] || continue
+for copy in /etc/init.d/sing-box.prokop.*; do
+  [ -f "$copy" ] && [ "$copy" != "/etc/init.d/sing-box.prokop.$LIVE" ] || continue
   pid="${copy##*.}"
   if grep -q "$WRITER" "/proc/$pid/cmdline" 2>/dev/null; then echo writer; else echo "not the writer: $pid"; fi >>"$OWNER"
 done
@@ -97,7 +97,7 @@ printf '%s\n' "$$" >"$WORK/initd.live"
 sh -c 'exit 0' &
 dead=$!
 wait "$dead" || true
-printf 'stale\n' >"/etc/init.d/sing-box.forkop.$dead"
+printf 'stale\n' >"/etc/init.d/sing-box.prokop.$dead"
 configure
 printf '%s\n' "$dead" >"$WORK/initd.dead2"
 # The copy a component install (components/action.uc) writes is named after
@@ -109,15 +109,15 @@ printf '#!/bin/sh\n# an older managed script\n' >/etc/init.d/sing-box
 SH
   unshare -rm sh "$WORK/initd-check.sh" >"$WORK/initd.out" 2>&1 ||
     fail "configure-service failed: $(cat "$WORK/initd.out")"
-  grep -q 'Forkop managed sing-box service' "$WORK/initd/sing-box" || fail "the managed init script was not installed"
+  grep -q 'Prokop managed sing-box service' "$WORK/initd/sing-box" || fail "the managed init script was not installed"
   [ -x "$WORK/initd/sing-box" ] || fail "the managed init script is not executable"
   cmp -s "$WORK/initd.first" "$WORK/initd.second" ||
     fail "a second start rewrote the unchanged init script: $(cat "$WORK/initd.first") -> $(cat "$WORK/initd.second")"
   grep -q 'an older managed script' "$WORK/initd/sing-box" && fail "a start kept an init script that differs from the managed one"
-  [ ! -e "$WORK/initd/sing-box.forkop.$(cat "$WORK/initd.dead")" ] || fail "a copy of a writer that is gone was left in /etc/init.d"
-  [ ! -e "$WORK/initd/sing-box.forkop.$(cat "$WORK/initd.dead2")" ] ||
+  [ ! -e "$WORK/initd/sing-box.prokop.$(cat "$WORK/initd.dead")" ] || fail "a copy of a writer that is gone was left in /etc/init.d"
+  [ ! -e "$WORK/initd/sing-box.prokop.$(cat "$WORK/initd.dead2")" ] ||
     fail "a copy of a writer that is gone was left in /etc/init.d next to a current script"
-  [ -e "$WORK/initd/sing-box.forkop.$(cat "$WORK/initd.live")" ] || fail "a copy of a writer still at work was removed"
+  [ -e "$WORK/initd/sing-box.prokop.$(cat "$WORK/initd.live")" ] || fail "a copy of a writer still at work was removed"
   [ "$(cat "$WORK/initd.copy-owner" 2>/dev/null)" = writer ] ||
     fail "the copy of the init script is not named after its writer: $(cat "$WORK/initd.copy-owner" 2>/dev/null)"
   [ "$(cat "$WORK/initd.action-owner" 2>/dev/null)" = writer ] ||
@@ -129,27 +129,27 @@ fi
 
 CRONTAB="$WORK/crontabs/root"
 mkdir -p "$WORK/crontabs"
-export FORKOP_CRONTAB_FILE="$CRONTAB"
-export FORKOP_COMPONENT_UPDATE_CHECK_CACHE_DIR="$WORK/run/component-update-checks"
-export FORKOP_COMPONENT_UPDATE_CHECK_STATE_FILE="$WORK/run/component-update-check.timestamp"
+export PROKOP_CRONTAB_FILE="$CRONTAB"
+export PROKOP_COMPONENT_UPDATE_CHECK_CACHE_DIR="$WORK/run/component-update-checks"
+export PROKOP_COMPONENT_UPDATE_CHECK_STATE_FILE="$WORK/run/component-update-check.timestamp"
 # BusyBox crontab <file>: installs the file and signals crond.
 cat >"$WORK/bin/crontab" <<'SH'
 #!/bin/sh
 printf '%s\n' "$*" >>"$WORK/crontab.calls"
-cp "$1" "$FORKOP_CRONTAB_FILE"
+cp "$1" "$PROKOP_CRONTAB_FILE"
 SH
 chmod 0755 "$WORK/bin/crontab"
-markers=('# forkop-list-update' '# forkop-subscription-update' '# forkop-component-update-check')
+markers=('# prokop-list-update' '# prokop-subscription-update' '# prokop-component-update-check')
 updates() { ucode -L "$LIB" "$LIB/components/updates.uc" "$@"; }
 cron_calls() { [ -e "$WORK/crontab.calls" ] && wc -l <"$WORK/crontab.calls" || echo 0; }
-printf '%s\n' 'forkop.settings.component_update_check_enabled=1' 'forkop.settings.component_update_check_interval=1d' >>"$WORK/uci.state"
+printf '%s\n' 'prokop.settings.component_update_check_enabled=1' 'prokop.settings.component_update_check_interval=1d' >>"$WORK/uci.state"
 printf '%s\n' '0 4 * * * /usr/local/bin/backup.sh' >"$CRONTAB"
 
-updates refresh-cron-from-uci /usr/bin/forkop "${markers[@]}" || fail "the first cron refresh failed"
+updates refresh-cron-from-uci /usr/bin/prokop "${markers[@]}" || fail "the first cron refresh failed"
 [ "$(cron_calls)" = 1 ] || fail "the first cron refresh did not install the crontab"
 grep -Fq backup.sh "$CRONTAB" || fail "the cron refresh dropped a foreign job"
 before="$(stamp "$CRONTAB")"
-updates refresh-cron-from-uci /usr/bin/forkop "${markers[@]}" || fail "the second cron refresh failed"
+updates refresh-cron-from-uci /usr/bin/prokop "${markers[@]}" || fail "the second cron refresh failed"
 [ "$(cron_calls)" = 1 ] || fail "a cron refresh that changes nothing installed the crontab again"
 [ "$(stamp "$CRONTAB")" = "$before" ] || fail "a cron refresh that changes nothing rewrote the crontab"
 updates remove-cron-jobs "${markers[@]}" || fail "the removal of the cron jobs failed"
@@ -157,13 +157,13 @@ updates remove-cron-jobs "${markers[@]}" || fail "the removal of the cron jobs f
 [ "$(cat "$CRONTAB")" = '0 4 * * * /usr/local/bin/backup.sh' ] || fail "the removal left other than the foreign job: $(cat "$CRONTAB")"
 updates remove-cron-jobs "${markers[@]}" || fail "a second removal of the cron jobs failed"
 [ "$(cron_calls)" = 2 ] || fail "a removal that changes nothing installed the crontab again"
-ok "the crontab is installed only when Forkop's jobs change"
+ok "the crontab is installed only when Prokop's jobs change"
 
 # A crontab that exists but cannot be read is not taken as empty.
 mv "$CRONTAB" "$WORK/crontab.saved"
 mkdir "$CRONTAB"
 status=0
-updates refresh-cron-from-uci /usr/bin/forkop "${markers[@]}" || status=$?
+updates refresh-cron-from-uci /usr/bin/prokop "${markers[@]}" || status=$?
 [ "$status" != 0 ] || fail "a cron refresh of an unreadable crontab reported success"
 status=0
 updates remove-cron-jobs "${markers[@]}" || status=$?
@@ -173,7 +173,7 @@ rmdir "$CRONTAB"
 mv "$WORK/crontab.saved" "$CRONTAB"
 # A router without a crontab yet gets one.
 rm -f "$CRONTAB"
-updates refresh-cron-from-uci /usr/bin/forkop "${markers[@]}" || fail "a cron refresh without a crontab failed"
+updates refresh-cron-from-uci /usr/bin/prokop "${markers[@]}" || fail "a cron refresh without a crontab failed"
 [ -s "$CRONTAB" ] || fail "a cron refresh without a crontab did not create it"
 ok "an unreadable crontab fails the refresh and is never rewritten"
 
@@ -183,8 +183,8 @@ if ! unshare -rm true 2>/dev/null; then
   printf 'NOTE: no user and mount namespaces; the full /tmp crontab checks are skipped\n'
 else
   mkdir -p "$WORK/full-tmp"
-  printf '%s\n' '0 4 * * * /usr/local/bin/backup.sh' '0 5 * * * /usr/bin/forkop list_update # forkop-list-update' >"$CRONTAB"
-  printf '%s\n' '0 4 * * * /usr/local/bin/backup.sh' '0 3 * * * /usr/bin/forkop autotune_if_due # forkop-autotune' >"$WORK/autotune-crontab"
+  printf '%s\n' '0 4 * * * /usr/local/bin/backup.sh' '0 5 * * * /usr/bin/prokop list_update # prokop-list-update' >"$CRONTAB"
+  printf '%s\n' '0 4 * * * /usr/local/bin/backup.sh' '0 3 * * * /usr/bin/prokop autotune_if_due # prokop-autotune' >"$WORK/autotune-crontab"
   cp "$CRONTAB" "$WORK/crontab.before"
   cp "$WORK/autotune-crontab" "$WORK/autotune-crontab.before"
   # BusyBox crontab <file> for the autotune manager.
@@ -199,12 +199,12 @@ mount -t tmpfs -o size=16k tmpfs "$WORK/full-tmp" || exit 90
 dd if=/dev/zero of="$WORK/full-tmp/fill" bs=1k 2>/dev/null
 export TMPDIR="$WORK/full-tmp"
 updates() { ucode -L "$LIB" "$LIB/components/updates.uc" "$@"; }
-updates remove-cron-jobs '# forkop-list-update' '# forkop-subscription-update' '# forkop-component-update-check'
+updates remove-cron-jobs '# prokop-list-update' '# prokop-subscription-update' '# prokop-component-update-check'
 printf '%s\n' "$?" >"$WORK/full-tmp.remove"
-updates refresh-cron-from-uci /usr/bin/forkop '# forkop-list-update' '# forkop-subscription-update' '# forkop-component-update-check'
+updates refresh-cron-from-uci /usr/bin/prokop '# prokop-list-update' '# prokop-subscription-update' '# prokop-component-update-check'
 printf '%s\n' "$?" >"$WORK/full-tmp.refresh"
-FORKOP_CRONTAB_FILE="$WORK/autotune-crontab" FORKOP_AUTOTUNE_CRONTAB="$WORK/bin/autotune-crontab" \
-  FORKOP_AUTOTUNE_TMPDIR="$WORK/full-tmp" FORKOP_LIB="$LIB" \
+PROKOP_CRONTAB_FILE="$WORK/autotune-crontab" PROKOP_AUTOTUNE_CRONTAB="$WORK/bin/autotune-crontab" \
+  PROKOP_AUTOTUNE_TMPDIR="$WORK/full-tmp" PROKOP_LIB="$LIB" \
   ucode -L "$LIB" "$LIB/autotune/manager.uc" cron-remove >"$WORK/full-tmp.autotune"
 exit 0
 SH
@@ -250,11 +250,11 @@ cat >"$WORK/rs-config.json" <<'JSON'
 JSON
 ruleset_cache() {
   PATH="$WORK/rs-bin:$PATH" \
-    FORKOP_RULESET_CACHE_DIR="$WORK/rs-cache" \
-    FORKOP_RULESET_CACHE_MANIFEST="$WORK/rs-cache/manifest.json" \
-    FORKOP_RULESET_RUNTIME_CACHE_DIR="$WORK/rs-runtime" \
-    FORKOP_RULESET_RUNTIME_MANIFEST="$WORK/rs-runtime.json" \
-    FORKOP_PERSISTENT_LIST_CACHE_DIR="$WORK/rs-lists" \
+    PROKOP_RULESET_CACHE_DIR="$WORK/rs-cache" \
+    PROKOP_RULESET_CACHE_MANIFEST="$WORK/rs-cache/manifest.json" \
+    PROKOP_RULESET_RUNTIME_CACHE_DIR="$WORK/rs-runtime" \
+    PROKOP_RULESET_RUNTIME_MANIFEST="$WORK/rs-runtime.json" \
+    PROKOP_PERSISTENT_LIST_CACHE_DIR="$WORK/rs-lists" \
     ucode -L "$LIB" "$LIB/singbox/ruleset_cache.uc" "$@"
 }
 ruleset_cache materialize-config "$WORK/rs-config.json" >/dev/null 2>&1 || fail "the rule set was not materialized"
@@ -282,8 +282,8 @@ else
   # shellcheck disable=SC2016 # expanded by the sh that runs it
   unshare -rm sh -c '
     mount -t tmpfs -o size=16k tmpfs "$WORK/sub-persistent" || exit 90
-    FORKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR="$WORK/sub-persistent" \
-      FORKOP_RUNTIME_STATE_DIR="$WORK/sub-run" \
+    PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR="$WORK/sub-persistent" \
+      PROKOP_RUNTIME_STATE_DIR="$WORK/sub-run" \
       TMP_SING_BOX_FOLDER="$WORK/sub-run/tmp-sing-box" \
       ucode -L "$LIB" "$LIB/subscription/cache.uc" persist-source-cache \
       proxy-1 "$WORK/sub.json" https://example.com/sub v2rayN "" >/dev/null 2>&1
@@ -304,8 +304,8 @@ else
   unshare -rm sh -c '
     mount -t tmpfs -o size=64k tmpfs "$WORK/sub-small" || exit 90
     persist() {
-      FORKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR="$WORK/sub-small" \
-        FORKOP_RUNTIME_STATE_DIR="$WORK/sub-run" \
+      PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR="$WORK/sub-small" \
+        PROKOP_RUNTIME_STATE_DIR="$WORK/sub-run" \
         TMP_SING_BOX_FOLDER="$WORK/sub-run/tmp-sing-box" \
         ucode -L "$LIB" "$LIB/subscription/cache.uc" persist-source-cache \
         proxy-1 "$1" https://example.com/sub v2rayN "" >/dev/null 2>&1

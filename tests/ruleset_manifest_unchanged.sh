@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# The persistent rule-set cache manifest (/etc/forkop/ruleset-cache, flash)
+# The persistent rule-set cache manifest (/etc/prokop/ruleset-cache, flash)
 # is written by every sing-box config materialization: each start and each
 # reload. It used to be replaced even when it already held the same text, a
 # flash write per start and reload with nothing changed (the S5 flash-write
@@ -15,7 +15,7 @@ set -euo pipefail
 # is skipped without them.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 RULESET_CACHE_UC="$LIB/singbox/ruleset_cache.uc"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
@@ -32,12 +32,12 @@ CACHE="$WORK/cache"
 MANIFEST="$CACHE/manifest.json"
 mkdir -p "$WORK/bin" "$CACHE"
 export LIB RULESET_CACHE_UC WORK
-export FORKOP_RULESET_CACHE_DIR="$CACHE"
-export FORKOP_RULESET_CACHE_MANIFEST="$MANIFEST"
-export FORKOP_RULESET_RUNTIME_CACHE_DIR="$WORK/runtime-cache"
-export FORKOP_RULESET_RUNTIME_MANIFEST="$WORK/runtime-manifest.json"
-export FORKOP_PERSISTENT_LIST_CACHE_DIR="$WORK/list-cache"
-export FORKOP_PERSISTENT_LIST_CACHE_MIN_FREE_BYTES=0
+export PROKOP_RULESET_CACHE_DIR="$CACHE"
+export PROKOP_RULESET_CACHE_MANIFEST="$MANIFEST"
+export PROKOP_RULESET_RUNTIME_CACHE_DIR="$WORK/runtime-cache"
+export PROKOP_RULESET_RUNTIME_MANIFEST="$WORK/runtime-manifest.json"
+export PROKOP_PERSISTENT_LIST_CACHE_DIR="$WORK/list-cache"
+export PROKOP_PERSISTENT_LIST_CACHE_MIN_FREE_BYTES=0
 
 printf '{"version":1,"rules":[{"domain_suffix":["example.test"]}]}\n' >"$WORK/source.json"
 # A download writes the source list; nothing else is fetched here.
@@ -116,16 +116,16 @@ else
   # check is told there is room, as when another writer fills the overlay
   # between that check and the write.
   # shellcheck disable=SC2016 # expanded by the inner shell
-  FORKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=100000000 unshare -rm sh -c '
+  PROKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=100000000 unshare -rm sh -c '
     set -e
     mkdir -p "$WORK/full"
     mount -t tmpfs -o size=8k tmpfs "$WORK/full"
-    cp -a "$FORKOP_RULESET_CACHE_DIR/." "$WORK/full/"
-    mount --bind "$WORK/full" "$FORKOP_RULESET_CACHE_DIR"
-    dd if=/dev/zero of="$FORKOP_RULESET_CACHE_DIR/filler" bs=1k count=64 2>/dev/null || true
+    cp -a "$PROKOP_RULESET_CACHE_DIR/." "$WORK/full/"
+    mount --bind "$WORK/full" "$PROKOP_RULESET_CACHE_DIR"
+    dd if=/dev/zero of="$PROKOP_RULESET_CACHE_DIR/filler" bs=1k count=64 2>/dev/null || true
     ucode -L "$LIB" "$RULESET_CACHE_UC" materialize-config "$WORK/config.json" cache-only >/dev/null 2>&1 || exit 3
-    cat "$FORKOP_RULESET_CACHE_MANIFEST" >"$WORK/after"
-    ls -a "$FORKOP_RULESET_CACHE_DIR" >"$WORK/listing"
+    cat "$PROKOP_RULESET_CACHE_MANIFEST" >"$WORK/after"
+    ls -a "$PROKOP_RULESET_CACHE_DIR" >"$WORK/listing"
   ' || status=$?
   [ "$status" = 0 ] || [ "$status" = 3 ] || fail "the full-overlay fixture failed ($status)"
   [ -s "$WORK/after" ] || fail "a full overlay left an empty manifest in place of the previous one"

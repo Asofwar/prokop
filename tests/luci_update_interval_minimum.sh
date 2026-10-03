@@ -75,7 +75,7 @@ async function check(label, fn) {
 
       await check(`${version} ${key}: absent option, unchanged save`, async () => {
         // The field shows the default 1d; a save that changes nothing must
-        // not write it (no forkop change to apply).
+        // not write it (no prokop change to apply).
         const env = createEnvironment({ version, config: config({}) });
         const settings = await env.openSettings(installed);
         assert.equal(settings.option(key).formvalue('settings'), '1d');

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Forkop's dataplane with the real nft and real packets: which connections
+# Prokop's dataplane with the real nft and real packets: which connections
 # the production ruleset hands to sing-box (the FakeIP/tproxy mark) and
 # which it lets through.
 #
@@ -7,7 +7,7 @@
 # its LAN bridge (LAN clients' packets are written into it) and router-local
 # sockets send their own packets. The ruleset is the start/reload candidate
 # of nft/apply.uc for each configuration, applied by the real nft. A
-# separate observer table after Forkop's hooks records every packet and
+# separate observer table after Prokop's hooks records every packet and
 # every packet that carries the FakeIP mark.
 #
 # Skipped only when such a namespace, nft, python3 or a TUN device is not
@@ -15,8 +15,8 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-NFT_UC="$FORKOP_LIB/nft/apply.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+NFT_UC="$PROKOP_LIB/nft/apply.uc"
 CHECK_JS="$ROOT_DIR/tests/helpers/nft_real_check.js"
 PACKETS="$ROOT_DIR/tests/helpers/nft_packets.py"
 NAMESPACE=(unshare --user --map-root-user --net --mount)
@@ -34,7 +34,7 @@ if [ "${1:-}" != "--in-namespace" ]; then
   if ! probe="$("${NAMESPACE[@]}" nft list ruleset 2>&1)"; then
     skip "nftables is unavailable in an unprivileged network namespace: $probe"
   fi
-  FORKOP_NFT_REAL_HOST_NAMESPACES="$(namespaces)" exec "${NAMESPACE[@]}" bash "$0" --in-namespace
+  PROKOP_NFT_REAL_HOST_NAMESPACES="$(namespaces)" exec "${NAMESPACE[@]}" bash "$0" --in-namespace
 fi
 
 # ---- inside the namespace (same guard as tests/nft_real.sh) -----------------
@@ -48,7 +48,7 @@ read -r map_inside _ map_count <<<"${uid_map[0]:-}"
 if [ "${#uid_map[@]}" != 1 ] || [ "$map_inside" != 0 ] || [ "$map_count" != 1 ]; then
   refuse "not a user namespace mapping only root: ${uid_map[*]:-}"
 fi
-read -r host_net host_mnt <<<"${FORKOP_NFT_REAL_HOST_NAMESPACES:-}"
+read -r host_net host_mnt <<<"${PROKOP_NFT_REAL_HOST_NAMESPACES:-}"
 read -r own_net own_mnt <<<"$(namespaces)"
 if [ -z "${host_net:-}" ] || [ "$own_net" = "$host_net" ] || [ "$own_mnt" = "${host_mnt:-}" ]; then
   refuse "the network or mount namespace is not new"
@@ -78,11 +78,11 @@ printf '#!/bin/sh\nprintf "ip %%s\\n" "$*" >>"%s/ip.log"\n' "$WORK_DIR" >"$WORK_
 printf '#!/bin/sh\nprintf "%%s\\n" "$*" >>"%s/logger.log"\n' "$WORK_DIR" >"$WORK_DIR/bin/logger"
 chmod 0755 "$WORK_DIR/bin/"*
 export PATH="$WORK_DIR/bin:$PATH"
-export FORKOP_RT_TABLES="$WORK_DIR/rt_tables" FORKOP_LIB
-export FORKOP_NFT_SUBNET_CACHE_DIR="$WORK_DIR/nft-subnet-cache"
+export PROKOP_RT_TABLES="$WORK_DIR/rt_tables" PROKOP_LIB
+export PROKOP_NFT_SUBNET_CACHE_DIR="$WORK_DIR/nft-subnet-cache"
 
-nft_uc() { ucode -L "$FORKOP_LIB" "$NFT_UC" "$@"; }
-constant() { ucode -L "$FORKOP_LIB" "$FORKOP_LIB/core/constants.uc" get "$1"; }
+nft_uc() { ucode -L "$PROKOP_LIB" "$NFT_UC" "$@"; }
+constant() { ucode -L "$PROKOP_LIB" "$PROKOP_LIB/core/constants.uc" get "$1"; }
 
 RT_TABLE="$(constant RT_TABLE_NAME)"
 TABLE="$(constant NFT_TABLE_NAME)"
@@ -122,16 +122,16 @@ populate_args=(
 apply_config() {
   local state="$1" batch="$WORK_DIR/candidate.nft"
   nft delete table inet "$TABLE" 2>/dev/null || true
-  nft delete table inet ForkopTestObserve 2>/dev/null || true
-  printf '# Forkop nft candidate\n' >"$batch"
-  FORKOP_UCI_STATE_FILE="$state" FORKOP_NFT_BATCH_FILE="$batch" \
+  nft delete table inet ProkopTestObserve 2>/dev/null || true
+  printf '# Prokop nft candidate\n' >"$batch"
+  PROKOP_UCI_STATE_FILE="$state" PROKOP_NFT_BATCH_FILE="$batch" \
     nft_uc nft-rebuild-runtime-from-uci "${rebuild_args[@]}" || fail "$state: nft-rebuild-runtime-from-uci failed"
-  FORKOP_UCI_STATE_FILE="$state" FORKOP_NFT_BATCH_FILE="$batch" \
+  PROKOP_UCI_STATE_FILE="$state" PROKOP_NFT_BATCH_FILE="$batch" \
     nft_uc nft-populate-runtime-sets-from-uci "${populate_args[@]}" || fail "$state: nft-populate-runtime-sets-from-uci failed"
   nft_uc nft-validate-candidate-batch "$batch" 2>"$batch.err" || fail "$state: nft -c rejected the batch: $(cat "$batch.err")"
   nft_uc nft-commit-candidate-batch "$batch" 2>"$batch.err" || fail "$state: nft -f rejected the batch: $(cat "$batch.err")"
   nft -f - <<EOF || fail "the observer table was not applied"
-table inet ForkopTestObserve {
+table inet ProkopTestObserve {
   set seen { type ipv4_addr . inet_proto . inet_service; flags dynamic; }
   set marked { type ipv4_addr . inet_proto . inet_service; flags dynamic; }
   chain pre {
@@ -149,8 +149,8 @@ EOF
 }
 
 set_elements() {
-  nft -j list set inet ForkopTestObserve "$1" >"$WORK_DIR/set.json"
-  node "$CHECK_JS" elements "$WORK_DIR/set.json" ForkopTestObserve "$1"
+  nft -j list set inet ProkopTestObserve "$1" >"$WORK_DIR/set.json"
+  node "$CHECK_JS" elements "$WORK_DIR/set.json" ProkopTestObserve "$1"
 }
 
 # expect captured|direct lan SRC DST PROTO PORT  /  expect ... local DST PROTO PORT [MARK]
@@ -172,8 +172,8 @@ expect() {
     [ "$want" = direct ] || fail "the $origin packet $* was not captured; it must reach sing-box"
   fi
   # One packet per destination: the next check starts from empty sets.
-  nft flush set inet ForkopTestObserve seen
-  nft flush set inet ForkopTestObserve marked
+  nft flush set inet ProkopTestObserve seen
+  nft flush set inet ProkopTestObserve marked
 }
 
 # ---- UC-030: ByeDPI rules with IPs, subnets or ports ----------------------------
@@ -183,17 +183,17 @@ expect() {
 # loop). Since D-8(a) no ByeDPI section captures router-local traffic; LAN
 # clients are still captured.
 cat >"$WORK_DIR/byedpi.uci" <<'EOF'
-forkop.settings=settings
-forkop.bye=section
-forkop.bye.action=byedpi
-forkop.bye.ip_cidr=93.184.220.0/24
-forkop.byeports=section
-forkop.byeports.action=byedpi
-forkop.byeports.ports=8443
-forkop.byeipports=section
-forkop.byeipports.action=byedpi
-forkop.byeipports.ip_cidr=93.184.221.0/24
-forkop.byeipports.ports=443
+prokop.settings=settings
+prokop.bye=section
+prokop.bye.action=byedpi
+prokop.bye.ip_cidr=93.184.220.0/24
+prokop.byeports=section
+prokop.byeports.action=byedpi
+prokop.byeports.ports=8443
+prokop.byeipports=section
+prokop.byeipports.action=byedpi
+prokop.byeipports.ip_cidr=93.184.221.0/24
+prokop.byeipports.ports=443
 EOF
 apply_config "$WORK_DIR/byedpi.uci"
 expect captured lan 192.168.1.60 93.184.220.5 tcp 443
@@ -214,13 +214,13 @@ ok "ByeDPI with ip_cidr, port-only and ip+port matchers: LAN captured, ciadpi's 
 # earlier ByeDPI domain rule may take it again. This assertion pins the
 # remaining loop; change it when ciadpi's sockets are exempted by cgroup/uid.
 cat >"$WORK_DIR/byedpi-vpn.uci" <<'EOF'
-forkop.settings=settings
-forkop.bd=section
-forkop.bd.action=byedpi
-forkop.bd.domain=rutracker.org
-forkop.vpn=section
-forkop.vpn.action=vpn
-forkop.vpn.ports=443
+prokop.settings=settings
+prokop.bd=section
+prokop.bd.action=byedpi
+prokop.bd.domain=rutracker.org
+prokop.vpn=section
+prokop.vpn.action=vpn
+prokop.vpn.ports=443
 EOF
 apply_config "$WORK_DIR/byedpi-vpn.uci"
 expect captured local 104.21.32.1 tcp 443
@@ -237,26 +237,26 @@ ok "byedpi domain + port-only VPN rule: ciadpi's unmarked upstream is still capt
 # the mark, the connection would be lost. Real addresses keep the bypass
 # fast path.
 cat >"$WORK_DIR/bypass.uci" <<'EOF'
-forkop.settings=settings
-forkop.yt=section
-forkop.yt.action=connection
-forkop.yt.domain_suffix=youtube.com
-forkop.tv=section
-forkop.tv.action=bypass
-forkop.tv.source_ip_cidr=192.168.1.50/32
-forkop.tv.ports=443
-forkop.pb=section
-forkop.pb.action=bypass
-forkop.pb.ports=8443
-forkop.all=section
-forkop.all.action=bypass
-forkop.all.source_ip_cidr=192.168.1.70/32
-forkop.all.ip_cidr=0.0.0.0/0
-forkop.allports=section
-forkop.allports.action=bypass
-forkop.allports.source_ip_cidr=192.168.1.80/32
-forkop.allports.ip_cidr=0.0.0.0/0
-forkop.allports.ports=443
+prokop.settings=settings
+prokop.yt=section
+prokop.yt.action=connection
+prokop.yt.domain_suffix=youtube.com
+prokop.tv=section
+prokop.tv.action=bypass
+prokop.tv.source_ip_cidr=192.168.1.50/32
+prokop.tv.ports=443
+prokop.pb=section
+prokop.pb.action=bypass
+prokop.pb.ports=8443
+prokop.all=section
+prokop.all.action=bypass
+prokop.all.source_ip_cidr=192.168.1.70/32
+prokop.all.ip_cidr=0.0.0.0/0
+prokop.allports=section
+prokop.allports.action=bypass
+prokop.allports.source_ip_cidr=192.168.1.80/32
+prokop.allports.ip_cidr=0.0.0.0/0
+prokop.allports.ports=443
 EOF
 apply_config "$WORK_DIR/bypass.uci"
 FAKE_ADDRESS="${FAKEIP_RANGE%/*}"
@@ -278,14 +278,14 @@ ok "bypass rules by ports, device and ports, and subnets: FakeIP addresses still
 # ---- UC-104: other output hooks of the same priority ---------------------------
 
 # Another output hook at -150 (fw4's mangle_output, pbr, mwan3) registered
-# after Forkop's runs before it and may OR its own bits into the mark. sing-box
+# after Prokop's runs before it and may OR its own bits into the mark. sing-box
 # sockets (the outbound mark) must still leave mangle_output at once: here
 # to a FakeIP address, which the generic output rules would otherwise
 # capture back into sing-box.
 apply_config "$WORK_DIR/bypass.uci"
 expect direct local "$FAKE_ADDRESS" udp 444 "$OUTBOUND_MARK"
 nft -f - <<'EOF' || fail "the foreign output hook was not applied"
-table inet ForkopTestForeign {
+table inet ProkopTestForeign {
   chain mangle_output {
     type route hook output priority -150; policy accept;
     meta mark set meta mark | 0x00010000
@@ -295,7 +295,7 @@ EOF
 expect direct local "$FAKE_ADDRESS" udp 443 "$OUTBOUND_MARK"
 expect direct local "$FAKE_ADDRESS" tcp 443 "$OUTBOUND_MARK"
 expect captured local "$FAKE_ADDRESS" udp 443
-nft delete table inet ForkopTestForeign
+nft delete table inet ProkopTestForeign
 ok "a foreign output hook ORing its bits into sing-box's mark does not send sing-box's own traffic back to it (UC-104)"
 
 printf 'real nft dataplane checks passed\n'

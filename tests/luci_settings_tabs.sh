@@ -10,7 +10,7 @@ node - "$ROOT_DIR" <<'NODE'
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert/strict');
-const dir = path.join(process.argv[2], 'luci-app-forkop/htdocs/luci-static/resources/view/forkop');
+const dir = path.join(process.argv[2], 'luci-app-prokop/htdocs/luci-static/resources/view/prokop');
 const settings = fs.readFileSync(path.join(dir, 'settings.js'), 'utf8');
 const section = fs.readFileSync(path.join(dir, 'section.js'), 'utf8');
 

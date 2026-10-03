@@ -24,7 +24,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SCRIPT="$ROOT_DIR/forkop/files/usr/lib/full-uninstall.sh"
+SCRIPT="$ROOT_DIR/prokop/files/usr/lib/full-uninstall.sh"
 NAMESPACE=(unshare --user --map-root-user --mount --propagation private)
 
 namespaces() { printf '%s %s' "$(readlink /proc/self/ns/user)" "$(readlink /proc/self/ns/mnt)"; }
@@ -39,7 +39,7 @@ if [ "${1:-}" != "--in-namespace" ]; then
   probe_status=0
   probe="$("${NAMESPACE[@]}" sh -c 'mount -t tmpfs tmpfs /tmp' 2>&1)" || probe_status=$?
   [ "$probe_status" = 0 ] || skip "a private user+mount namespace with its own /tmp is unavailable: $probe"
-  FORKOP_DETACH_HOST_NAMESPACES="$(namespaces)" exec "${NAMESPACE[@]}" bash "$0" --in-namespace
+  PROKOP_DETACH_HOST_NAMESPACES="$(namespaces)" exec "${NAMESPACE[@]}" bash "$0" --in-namespace
 fi
 
 # ---- inside the namespace ---------------------------------------------------
@@ -55,7 +55,7 @@ read -r map_inside _ map_count <<<"${uid_map[0]:-}"
 if [ "${#uid_map[@]}" != 1 ] || [ "$map_inside" != 0 ] || [ "$map_count" != 1 ]; then
   refuse "not a user namespace mapping only root: ${uid_map[*]:-}"
 fi
-read -r host_user host_mnt <<<"${FORKOP_DETACH_HOST_NAMESPACES:-}"
+read -r host_user host_mnt <<<"${PROKOP_DETACH_HOST_NAMESPACES:-}"
 read -r own_user own_mnt <<<"$(namespaces)"
 if [ -z "${host_user:-}" ] || [ "$own_user" = "$host_user" ] || [ "$own_mnt" = "${host_mnt:-}" ]; then
   refuse "the user or mount namespace is not new"
@@ -77,13 +77,13 @@ exec 3<&- 4<&-
 . "$WORK/wait.sh"
 UCI="$(command -v uci)"
 REAL_SLEEP="$(command -v sleep)"
-SERVERS=/etc/forkop/killswitch/dnsmasq.servers
+SERVERS=/etc/prokop/killswitch/dnsmasq.servers
 
 ROOT=""
 fail() {
   printf 'FAIL: %s: %s\n' "$CASE" "$1" >&2
   if [ -n "$ROOT" ]; then
-    cat "$ROOT"/tmp/forkop-uninstall.*/output.log 2>/dev/null | sed 's/^/  log: /' >&2 || true
+    cat "$ROOT"/tmp/prokop-uninstall.*/output.log 2>/dev/null | sed 's/^/  log: /' >&2 || true
     sed 's/^/  dhcp: /' "$ROOT/etc/config/dhcp" >&2 || true
   fi
   exit 1
@@ -108,24 +108,24 @@ fixture() {
   CASE="$1"
   ROOT="$WORK/$1"
   mkdir -p "$ROOT/etc/opkg" "$ROOT/usr/bin" "$ROOT/bin" "$ROOT/packages" "$ROOT/etc/config" \
-    "$ROOT/etc/init.d" "$ROOT/etc/forkop/killswitch"
+    "$ROOT/etc/init.d" "$ROOT/etc/prokop/killswitch"
   printf 'original vendor repositories\n' >"$ROOT/etc/opkg/distfeeds.conf.pre-forkop-mirror"
   printf 'https://mirror.51343.ru/openwrt/releases/test\n' >"$ROOT/etc/opkg/distfeeds.conf"
-  touch "$ROOT/packages/forkop"
-  printf '#!/bin/sh\nexit 0\n' >"$ROOT/usr/bin/forkop"
-  printf '#!/bin/sh\nprintf "%%s\\n" "$*" >>"$FORKOP_UNINSTALL_ROOT/dnsmasq-calls"\n' >"$ROOT/etc/init.d/dnsmasq"
+  touch "$ROOT/packages/prokop"
+  printf '#!/bin/sh\nexit 0\n' >"$ROOT/usr/bin/prokop"
+  printf '#!/bin/sh\nprintf "%%s\\n" "$*" >>"$PROKOP_UNINSTALL_ROOT/dnsmasq-calls"\n' >"$ROOT/etc/init.d/dnsmasq"
   cat >"$ROOT/bin/opkg" <<'SH'
 #!/bin/sh
 case "$1" in
-  status) [ -e "$FORKOP_UNINSTALL_ROOT/packages/$2" ] && echo 'Status: install ok installed' ;;
-  remove) shift; for p in "$@"; do rm -f "$FORKOP_UNINSTALL_ROOT/packages/$p"; done ;;
+  status) [ -e "$PROKOP_UNINSTALL_ROOT/packages/$2" ] && echo 'Status: install ok installed' ;;
+  remove) shift; for p in "$@"; do rm -f "$PROKOP_UNINSTALL_ROOT/packages/$p"; done ;;
   *) exit 1 ;;
 esac
 SH
-  # Nothing of Forkop's runtime is in place: never the host's nft and ip.
+  # Nothing of Prokop's runtime is in place: never the host's nft and ip.
   printf '#!/bin/sh\nexit 1\n' >"$ROOT/bin/nft"
   printf '#!/bin/sh\nexit 0\n' >"$ROOT/bin/ip"
-  chmod +x "$ROOT/usr/bin/forkop" "$ROOT/etc/init.d/dnsmasq" "$ROOT/bin/opkg" "$ROOT/bin/nft" "$ROOT/bin/ip"
+  chmod +x "$ROOT/usr/bin/prokop" "$ROOT/etc/init.d/dnsmasq" "$ROOT/bin/opkg" "$ROOT/bin/nft" "$ROOT/bin/ip"
   : >"$ROOT/dnsmasq-calls"
   printf 'server=/example.com/\n' >"$ROOT$SERVERS"
   DHCP="$ROOT/etc/config/dhcp"
@@ -140,14 +140,14 @@ EOF
   chmod 644 "$DHCP"
 }
 
-remove_forkop() {
-  FORKOP_UNINSTALL_ROOT="$ROOT" FORKOP_MIRROR_BASE_URL=https://mirror.51343.ru PATH="$ROOT/bin:$PATH" \
+remove_prokop() {
+  PROKOP_UNINSTALL_ROOT="$ROOT" PROKOP_MIRROR_BASE_URL=https://mirror.51343.ru PATH="$ROOT/bin:$PATH" \
     sh "$SCRIPT" start >"$ROOT/response" || fail "the removal did not start: $(cat "$ROOT/response")"
   wait_until 60 settled || fail "the removal did not finish"
   printf '%s\n' "$status" | grep -q '"state":"complete"' || fail "the removal failed: $status"
 }
 settled() {
-  status="$(cat "$ROOT"/www/forkop-uninstall.*.json 2>/dev/null)"
+  status="$(cat "$ROOT"/www/prokop-uninstall.*.json 2>/dev/null)"
   case "$status" in *'"state":"complete"'* | *'"state":"failed"'*) return 0 ;; esac
   return 1
 }
@@ -167,7 +167,7 @@ fixture staged
 "$UCI" -c "$ROOT/etc/config" set 'dhcp.@dnsmasq[0].domain=staged'
 [ -s /tmp/.uci/dhcp ] || fail "uci did not stage the changes in /tmp/.uci"
 cp /tmp/.uci/dhcp "$WORK/staged-dhcp"
-remove_forkop
+remove_prokop
 detached
 ! grep -Fq 1.1.1.1 "$DHCP" || fail "the removal committed a server someone had only staged"
 ! grep -Fq staged "$DHCP" || fail "the removal committed a domain someone had only staged"
@@ -184,7 +184,7 @@ rm -rf /tmp/.uci
 fixture symlink
 mv "$DHCP" "$ROOT/etc/dhcp.real"
 ln -s ../dhcp.real "$DHCP"
-remove_forkop
+remove_prokop
 [ -L "$DHCP" ] || fail "the symbolic link dhcp was replaced by a file"
 DHCP="$ROOT/etc/dhcp.real"
 detached
@@ -195,7 +195,7 @@ fixture concurrent
 cat >"$ROOT/bin/uci" <<SH
 #!/bin/sh
 case " \$* " in
-  *" commit forkop_detach "*)
+  *" commit prokop_detach "*)
     if [ ! -e "$ROOT/committed-meanwhile" ]; then
       : >"$ROOT/committed-meanwhile"
       sed "s/option domain 'lan'/option domain 'lan'\n\toption localuse '1'/" "$DHCP" >"$DHCP.someone"
@@ -205,7 +205,7 @@ esac
 exec "$UCI" "\$@"
 SH
 chmod +x "$ROOT/bin/uci"
-remove_forkop
+remove_prokop
 [ -e "$ROOT/committed-meanwhile" ] || fail "the removal did not edit a copy of dhcp"
 detached
 has "	option localuse '1'" || fail "the removal overwrote what someone committed meanwhile"
@@ -215,7 +215,7 @@ has "	option localuse '1'" || fail "the removal overwrote what someone committed
 fixture foreign
 sed -i "s|$SERVERS|/etc/dnsmasq.servers|" "$DHCP"
 cp -p "$DHCP" "$WORK/foreign-dhcp"
-remove_forkop
+remove_prokop
 cmp -s "$DHCP" "$WORK/foreign-dhcp" || fail "dhcp without the kill-switch block list was changed"
 [ ! -s "$ROOT/dnsmasq-calls" ] || fail "dnsmasq was restarted for nothing"
 

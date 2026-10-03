@@ -1,9 +1,0 @@
-# Forkop VPN kill-switch loader. A file of the forkop package; do not edit.
-#
-# fw4 includes this file at every firewall start and reload. It loads the
-# kill-switch policy Forkop saved (killswitch/runtime.uc), and only while the
-# package is installed: a package removal, a downgrade to a release without
-# the kill-switch and a sysupgrade to an image without Forkop take this file
-# away, and the saved policy is never loaded again. The bracket makes the
-# include a wildcard, which is no error while no policy is saved.
-include "/etc/forkop/killswitch/policy.nf[t]"

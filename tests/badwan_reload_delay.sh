@@ -18,8 +18,8 @@ set -euo pipefail
 #   left as it is: it does not refuse the save of the rest of the page.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
-INITD="$ROOT_DIR/forkop/files/etc/init.d/forkop"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
+INITD="$ROOT_DIR/prokop/files/etc/init.d/prokop"
 WORK="$(mktemp -d)"
 trap 'rm -rf "${WORK:?}"' EXIT HUP INT TERM
 
@@ -44,8 +44,8 @@ cat >"$WORK/triggers.sh" <<'SH'
 initscript="$REAL_INITD"
 # shellcheck disable=SC1090
 . "$REAL_INITD"
-FORKOP_LIB="$TEST_LIB"
-FORKOP_INITD_UC="$TEST_LIB/service/initd.uc"
+PROKOP_LIB="$TEST_LIB"
+PROKOP_INITD_UC="$TEST_LIB/service/initd.uc"
 timeout_of() {
   if [ "$PROCD_RELOAD_DELAY" -gt 0 ] 2>/dev/null; then printf '%s' "$PROCD_RELOAD_DELAY"; else printf none; fi
 }
@@ -62,10 +62,10 @@ triggers() {
   local name="$1"
   shift
   {
-    printf 'forkop.settings=settings\n'
-    printf 'forkop.settings.%s\n' "$@"
+    printf 'prokop.settings=settings\n'
+    printf 'prokop.settings.%s\n' "$@"
   } >"$WORK/$name.state"
-  REAL_INITD="$INITD" TEST_LIB="$LIB" FORKOP_UCI_STATE_FILE="$WORK/$name.state" \
+  REAL_INITD="$INITD" TEST_LIB="$LIB" PROKOP_UCI_STATE_FILE="$WORK/$name.state" \
     bash "$WORK/triggers.sh" >"$WORK/$name.triggers" 2>"$WORK/$name.err"
 }
 
@@ -82,41 +82,41 @@ $expected"
 monitored=(enable_badwan_interface_monitoring=1 'badwan_monitored_interfaces=wan vpn0')
 
 triggers default "${monitored[@]}"
-expect_triggers default "config forkop 2000
+expect_triggers default "config prokop 2000
 interface wan 2000
 interface vpn0 2000"
 
 triggers custom "${monitored[@]}" badwan_reload_delay=3500
-expect_triggers custom "config forkop 2000
+expect_triggers custom "config prokop 2000
 interface wan 3500
 interface vpn0 3500"
 
 triggers duration_text "${monitored[@]}" badwan_reload_delay=2s
-expect_triggers duration_text "config forkop 2000
+expect_triggers duration_text "config prokop 2000
 interface wan 2000
 interface vpn0 2000"
 
 triggers no_delay "${monitored[@]}" badwan_reload_delay=0
-expect_triggers no_delay "config forkop 2000
+expect_triggers no_delay "config prokop 2000
 interface wan none
 interface vpn0 none"
 
 # Above 60000 ms the Settings page refuses a new value; one saved before keeps
 # working as it did.
 triggers large "${monitored[@]}" badwan_reload_delay=120000
-expect_triggers large "config forkop 2000
+expect_triggers large "config prokop 2000
 interface wan 120000
 interface vpn0 120000"
 
 # More than procd takes as a 32-bit timeout.
 triggers overflow "${monitored[@]}" badwan_reload_delay=99999999999
-expect_triggers overflow "config forkop 2000
+expect_triggers overflow "config prokop 2000
 interface wan 2000
 interface vpn0 2000"
 
 # Monitoring off: wan still reloads after the delay.
 triggers unmonitored badwan_reload_delay=4000
-expect_triggers unmonitored "config forkop 2000
+expect_triggers unmonitored "config prokop 2000
 interface wan 4000"
 
 # The validator reports a value the plan ignores and accepts the
@@ -126,7 +126,7 @@ validate() {
   printf '{ "settings": { ".name": "settings", ".type": "settings", "dns_server": ["77.88.8.8"], "bootstrap_dns_server": ["77.88.8.8"], "yacd_secret_key": "test-clash-secret"%s }, "section": [ { ".name": "b", ".type": "section", "enabled": "1", "action": "block", "domain": "example.com" } ] }\n' \
     "${members:+, $members}" >"$WORK/$name.json"
   : >"$WORK/$name.log"
-  PATH="$WORK/bin:$PATH" LOGGER_LOG="$WORK/$name.log" FORKOP_LIB="$LIB" \
+  PATH="$WORK/bin:$PATH" LOGGER_LOG="$WORK/$name.log" PROKOP_LIB="$LIB" \
     ucode -L "$LIB" "$LIB/config/validator.uc" validate-runtime-fixture "$WORK/$name.json" '{}' >"$WORK/$name.out" 2>&1
 }
 

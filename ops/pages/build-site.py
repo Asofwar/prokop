@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Rebuild the whole static Forkop release channel from GitHub releases.
+"""Rebuild the whole static Prokop release channel from GitHub releases.
 
 GitHub Pages replaces the published site on every deployment, so the channel
 is never patched in place: each run lays out the newest stable releases of the
@@ -8,7 +8,7 @@ for a plain static host:
 
     install.sh  LATEST  index.html
     updates/latest.json  updates/releases.json
-    releases/<X.Y.Z>/{forkop,luci-app-forkop,luci-i18n-forkop-ru}_<X.Y.Z>.{ipk,apk}
+    releases/<X.Y.Z>/{prokop,luci-app-prokop,luci-i18n-prokop-ru}_<X.Y.Z>.{ipk,apk}
     releases/<X.Y.Z>/SHA256SUMS
 
 Every package is downloaded, checked against the digest GitHub declares for
@@ -40,8 +40,8 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-FORK_REPO = "Asofwar/forkop"
-FORK_RELEASE_BASE = "https://asofwar.github.io/forkop"
+FORK_REPO = "Asofwar/prokop"
+FORK_RELEASE_BASE = "https://asofwar.github.io/prokop"
 API_URL = "https://api.github.com"
 RAW_URL = "https://raw.githubusercontent.com"
 DEFAULT_LIMIT = 8
@@ -51,7 +51,7 @@ MAX_RELEASE_PAGES = 10
 INSTALLER = "install.sh"
 REPOSITORY = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 SHA256 = re.compile(r"^[a-f0-9]{64}$")
-USER_AGENT = "forkop-pages"
+USER_AGENT = "prokop-pages"
 
 # The catalog module is imported from its file; it must not leave byte code
 # next to it in the checkout.
@@ -247,14 +247,14 @@ def index_page(version, base_url, repository):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>Forkop — установка</title>
+<title>Prokop — установка</title>
 <style>
 body {{ font-family: system-ui, sans-serif; line-height: 1.5; max-width: 46rem; margin: 2rem auto; padding: 0 1rem; }}
 pre {{ padding: .75rem 1rem; overflow-x: auto; border: 1px solid rgba(127, 127, 127, .4); border-radius: 6px; }}
 </style>
 </head>
 <body>
-<h1>Forkop</h1>
+<h1>Prokop</h1>
 <p>Текущая версия: <strong>{escape(version)}</strong></p>
 <h2>Установка и обновление</h2>
 <p>Выполните на роутере с OpenWrt (по SSH):</p>
@@ -324,9 +324,9 @@ def parse_arguments():
     parser.add_argument("--output", type=Path, required=True,
                         help="site directory to create (must be absent or empty)")
     parser.add_argument("--repository",
-                        default=os.environ.get("FORKOP_RELEASE_REPO") or FORK_REPO)
+                        default=os.environ.get("PROKOP_RELEASE_REPO") or FORK_REPO)
     parser.add_argument("--base-url",
-                        default=os.environ.get("FORKOP_RELEASE_BASE_URL") or FORK_RELEASE_BASE)
+                        default=os.environ.get("PROKOP_RELEASE_BASE_URL") or FORK_RELEASE_BASE)
     parser.add_argument("--limit", type=int, default=DEFAULT_LIMIT,
                         help=f"newest complete releases to publish (default {DEFAULT_LIMIT})")
     parser.add_argument("--api-url", default=os.environ.get("GITHUB_API_URL") or API_URL)

@@ -2,9 +2,9 @@
 set -eu
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-DIAGNOSTICS_UC="$FORKOP_LIB/diagnostics/runtime.uc"
-UPDATES_UC="$FORKOP_LIB/components/updates.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+DIAGNOSTICS_UC="$PROKOP_LIB/diagnostics/runtime.uc"
+UPDATES_UC="$PROKOP_LIB/components/updates.uc"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT
 
@@ -25,7 +25,7 @@ cat >"$WORK_DIR/config-changed.json" <<'EOF_CONFIG_CHANGED'
 EOF_CONFIG_CHANGED
 
 signature() {
-  FORKOP_LIB="$FORKOP_LIB" ucode -L "$FORKOP_LIB" "$DIAGNOSTICS_UC" proxy-outbounds-signature "$1"
+  PROKOP_LIB="$PROKOP_LIB" ucode -L "$PROKOP_LIB" "$DIAGNOSTICS_UC" proxy-outbounds-signature "$1"
 }
 
 sig_a="$(signature "$WORK_DIR/config-a.json")"
@@ -36,8 +36,8 @@ sig_changed="$(signature "$WORK_DIR/config-changed.json")"
 [ "$sig_a" != "$sig_changed" ] || fail "a real proxy endpoint change did not alter the proxy signature"
 
 cat >"$WORK_DIR/uci.state" <<EOF_UCI
-forkop.settings=settings
-forkop.settings.config_path=$WORK_DIR/config-changed.json
+prokop.settings=settings
+prokop.settings.config_path=$WORK_DIR/config-changed.json
 EOF_UCI
 cat >"$WORK_DIR/state-stub.uc" <<'EOF_STATE'
 #!/usr/bin/env ucode
@@ -98,73 +98,73 @@ export TEST_CURL_LOG="$WORK_DIR/curl.log"
 export TEST_PID_FILE="$WORK_DIR/pid"
 export TEST_RELOAD_COUNT_FILE="$WORK_DIR/reload-count"
 export TEST_RELOAD_FAIL_FLAG="$WORK_DIR/fail-reacquire"
-export FORKOP_LIB FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
-export FORKOP_SERVICE_STATE_UC="$WORK_DIR/state-stub.uc"
-export FORKOP_AUTOMATIC_LATENCY_PENDING_FILE="$WORK_DIR/automatic-latency.pending"
-export FORKOP_AUTOMATIC_LATENCY_TEST_LOCK_DIR="$WORK_DIR/latency.lock"
-export FORKOP_RELOAD_LOCK_DIR="$WORK_DIR/reload.lock"
-export FORKOP_AUTOMATIC_LATENCY_BATCH_PAUSE=0
-export FORKOP_AUTOMATIC_LATENCY_RETRY_BASE_SECONDS=2
-export FORKOP_AUTOMATIC_LATENCY_CLASH_READY_ATTEMPTS=1
+export PROKOP_LIB PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
+export PROKOP_SERVICE_STATE_UC="$WORK_DIR/state-stub.uc"
+export PROKOP_AUTOMATIC_LATENCY_PENDING_FILE="$WORK_DIR/automatic-latency.pending"
+export PROKOP_AUTOMATIC_LATENCY_TEST_LOCK_DIR="$WORK_DIR/latency.lock"
+export PROKOP_RELOAD_LOCK_DIR="$WORK_DIR/reload.lock"
+export PROKOP_AUTOMATIC_LATENCY_BATCH_PAUSE=0
+export PROKOP_AUTOMATIC_LATENCY_RETRY_BASE_SECONDS=2
+export PROKOP_AUTOMATIC_LATENCY_CLASH_READY_ATTEMPTS=1
 : >"$TEST_LOG"
 : >"$TEST_CURL_LOG"
 printf '123\n' >"$TEST_PID_FILE"
 printf '0\n' >"$TEST_RELOAD_COUNT_FILE"
 
-FORKOP_AUTOMATIC_LATENCY_PENDING_FILE="$FORKOP_AUTOMATIC_LATENCY_PENDING_FILE" \
-  ucode -L "$FORKOP_LIB" "$UPDATES_UC" schedule-automatic-latency-test "$sig_changed" ||
+PROKOP_AUTOMATIC_LATENCY_PENDING_FILE="$PROKOP_AUTOMATIC_LATENCY_PENDING_FILE" \
+  ucode -L "$PROKOP_LIB" "$UPDATES_UC" schedule-automatic-latency-test "$sig_changed" ||
   fail "proxy change did not create a pending marker"
-[ -s "$FORKOP_AUTOMATIC_LATENCY_PENDING_FILE" ] || fail "pending marker was not persisted"
-marker_before="$(cat "$FORKOP_AUTOMATIC_LATENCY_PENDING_FILE")"
-ucode -L "$FORKOP_LIB" "$UPDATES_UC" schedule-automatic-latency-test "$sig_changed" ||
+[ -s "$PROKOP_AUTOMATIC_LATENCY_PENDING_FILE" ] || fail "pending marker was not persisted"
+marker_before="$(cat "$PROKOP_AUTOMATIC_LATENCY_PENDING_FILE")"
+ucode -L "$PROKOP_LIB" "$UPDATES_UC" schedule-automatic-latency-test "$sig_changed" ||
   fail "identical pending request was not coalesced"
-[ "$(cat "$FORKOP_AUTOMATIC_LATENCY_PENDING_FILE")" = "$marker_before" ] ||
+[ "$(cat "$PROKOP_AUTOMATIC_LATENCY_PENDING_FILE")" = "$marker_before" ] ||
   fail "identical request rewrote pending retry state"
 
 # A malformed marker cannot survive startup and produce one warning per boot.
-printf '{malformed\n' >"$FORKOP_AUTOMATIC_LATENCY_PENDING_FILE"
+printf '{malformed\n' >"$PROKOP_AUTOMATIC_LATENCY_PENDING_FILE"
 invalid_log_lines="$(wc -l <"$TEST_LOG")"
-ucode -L "$FORKOP_LIB" "$DIAGNOSTICS_UC" automatic-latency-test resume
-[ ! -e "$FORKOP_AUTOMATIC_LATENCY_PENDING_FILE" ] || fail "invalid marker was retained"
+ucode -L "$PROKOP_LIB" "$DIAGNOSTICS_UC" automatic-latency-test resume
+[ ! -e "$PROKOP_AUTOMATIC_LATENCY_PENDING_FILE" ] || fail "invalid marker was retained"
 [ "$(wc -l <"$TEST_LOG")" -eq $((invalid_log_lines + 1)) ] ||
   fail "invalid marker did not emit exactly one discard log"
 grep -Fq 'Discarded invalid automatic latency test pending marker' "$TEST_LOG" ||
   fail "invalid marker discard was not logged"
-ucode -L "$FORKOP_LIB" "$DIAGNOSTICS_UC" automatic-latency-test resume
+ucode -L "$PROKOP_LIB" "$DIAGNOSTICS_UC" automatic-latency-test resume
 [ "$(wc -l <"$TEST_LOG")" -eq $((invalid_log_lines + 1)) ] ||
   fail "discarded invalid marker logged again on the next startup"
 
 # A stale marker must not test a different current proxy set.
-ucode -L "$FORKOP_LIB" "$UPDATES_UC" schedule-automatic-latency-test "$sig_changed"
-sed "s/$sig_changed/$sig_a/" "$FORKOP_AUTOMATIC_LATENCY_PENDING_FILE" >"$WORK_DIR/stale"
-mv "$WORK_DIR/stale" "$FORKOP_AUTOMATIC_LATENCY_PENDING_FILE"
-ucode -L "$FORKOP_LIB" "$DIAGNOSTICS_UC" automatic-latency-test resume
-[ ! -e "$FORKOP_AUTOMATIC_LATENCY_PENDING_FILE" ] || fail "stale marker was retained"
+ucode -L "$PROKOP_LIB" "$UPDATES_UC" schedule-automatic-latency-test "$sig_changed"
+sed "s/$sig_changed/$sig_a/" "$PROKOP_AUTOMATIC_LATENCY_PENDING_FILE" >"$WORK_DIR/stale"
+mv "$WORK_DIR/stale" "$PROKOP_AUTOMATIC_LATENCY_PENDING_FILE"
+ucode -L "$PROKOP_LIB" "$DIAGNOSTICS_UC" automatic-latency-test resume
+[ ! -e "$PROKOP_AUTOMATIC_LATENCY_PENDING_FILE" ] || fail "stale marker was retained"
 [ ! -s "$TEST_CURL_LOG" ] || fail "stale marker triggered Clash latency requests"
 
 # Two requests coalesce behind one runtime lock; success removes the marker.
-ucode -L "$FORKOP_LIB" "$UPDATES_UC" schedule-automatic-latency-test "$sig_changed"
-TEST_CURL_DELAY=2 ucode -L "$FORKOP_LIB" "$DIAGNOSTICS_UC" automatic-latency-test new &
+ucode -L "$PROKOP_LIB" "$UPDATES_UC" schedule-automatic-latency-test "$sig_changed"
+TEST_CURL_DELAY=2 ucode -L "$PROKOP_LIB" "$DIAGNOSTICS_UC" automatic-latency-test new &
 first_pid=$!
 sleep 1
-ucode -L "$FORKOP_LIB" "$DIAGNOSTICS_UC" automatic-latency-test new &
+ucode -L "$PROKOP_LIB" "$DIAGNOSTICS_UC" automatic-latency-test new &
 second_pid=$!
 wait "$first_pid"
 wait "$second_pid"
 [ "$(wc -l <"$TEST_CURL_LOG")" -eq 2 ] || fail "concurrent workers did not coalesce"
-[ ! -e "$FORKOP_AUTOMATIC_LATENCY_PENDING_FILE" ] || fail "successful full test did not remove marker"
+[ ! -e "$PROKOP_AUTOMATIC_LATENCY_PENDING_FILE" ] || fail "successful full test did not remove marker"
 
 # A semantic proxy change without a PID change cannot let an old worker
 # acknowledge its marker; the next worker discards that stale marker.
 : >"$TEST_CURL_LOG"
 cp "$WORK_DIR/config-changed.json" "$WORK_DIR/config-before-stale.json"
-ucode -L "$FORKOP_LIB" "$UPDATES_UC" schedule-automatic-latency-test "$sig_changed"
+ucode -L "$PROKOP_LIB" "$UPDATES_UC" schedule-automatic-latency-test "$sig_changed"
 TEST_CHANGE_CONFIG_FILE="$WORK_DIR/config-changed.json" \
 TEST_CHANGED_CONFIG="$WORK_DIR/config-a.json" \
-  ucode -L "$FORKOP_LIB" "$DIAGNOSTICS_UC" automatic-latency-test new
-[ -s "$FORKOP_AUTOMATIC_LATENCY_PENDING_FILE" ] || fail "stale worker removed its pending marker"
-ucode -L "$FORKOP_LIB" "$DIAGNOSTICS_UC" automatic-latency-test resume
-[ ! -e "$FORKOP_AUTOMATIC_LATENCY_PENDING_FILE" ] || fail "stale proxy marker was not discarded"
+  ucode -L "$PROKOP_LIB" "$DIAGNOSTICS_UC" automatic-latency-test new
+[ -s "$PROKOP_AUTOMATIC_LATENCY_PENDING_FILE" ] || fail "stale worker removed its pending marker"
+ucode -L "$PROKOP_LIB" "$DIAGNOSTICS_UC" automatic-latency-test resume
+[ ! -e "$PROKOP_AUTOMATIC_LATENCY_PENDING_FILE" ] || fail "stale proxy marker was not discarded"
 mv "$WORK_DIR/config-before-stale.json" "$WORK_DIR/config-changed.json"
 
 # A reload between batches keeps the marker, and a later start resumes it.
@@ -172,11 +172,11 @@ mv "$WORK_DIR/config-before-stale.json" "$WORK_DIR/config-changed.json"
 printf '123\n' >"$TEST_PID_FILE"
 printf '0\n' >"$TEST_RELOAD_COUNT_FILE"
 : >"$TEST_RELOAD_FAIL_FLAG"
-ucode -L "$FORKOP_LIB" "$UPDATES_UC" schedule-automatic-latency-test "$sig_changed"
-export FORKOP_AUTOMATIC_LATENCY_BATCH_SIZE=1
-ucode -L "$FORKOP_LIB" "$DIAGNOSTICS_UC" automatic-latency-test new
-unset FORKOP_AUTOMATIC_LATENCY_BATCH_SIZE
-[ -s "$FORKOP_AUTOMATIC_LATENCY_PENDING_FILE" ] || {
+ucode -L "$PROKOP_LIB" "$UPDATES_UC" schedule-automatic-latency-test "$sig_changed"
+export PROKOP_AUTOMATIC_LATENCY_BATCH_SIZE=1
+ucode -L "$PROKOP_LIB" "$DIAGNOSTICS_UC" automatic-latency-test new
+unset PROKOP_AUTOMATIC_LATENCY_BATCH_SIZE
+[ -s "$PROKOP_AUTOMATIC_LATENCY_PENDING_FILE" ] || {
   printf '%s\n' '--- automatic latency test log ---' >&2
   cat "$TEST_LOG" >&2
   printf 'reload acquisitions: %s\n' "$(cat "$TEST_RELOAD_COUNT_FILE")" >&2
@@ -185,24 +185,24 @@ unset FORKOP_AUTOMATIC_LATENCY_BATCH_SIZE
 rm -f "$TEST_RELOAD_FAIL_FLAG"
 printf '456\n' >"$TEST_PID_FILE"
 : >"$TEST_CURL_LOG"
-ucode -L "$FORKOP_LIB" "$DIAGNOSTICS_UC" automatic-latency-test resume
-[ ! -e "$FORKOP_AUTOMATIC_LATENCY_PENDING_FILE" ] || fail "resumed test did not complete and clear marker"
+ucode -L "$PROKOP_LIB" "$DIAGNOSTICS_UC" automatic-latency-test resume
+[ ! -e "$PROKOP_AUTOMATIC_LATENCY_PENDING_FILE" ] || fail "resumed test did not complete and clear marker"
 
 # Clash failure retains the marker and an immediate retry performs no requests.
 : >"$TEST_CURL_LOG"
-ucode -L "$FORKOP_LIB" "$UPDATES_UC" schedule-automatic-latency-test "$sig_changed"
-TEST_CLASH_UNREADY=1 ucode -L "$FORKOP_LIB" "$DIAGNOSTICS_UC" automatic-latency-test new &&
+ucode -L "$PROKOP_LIB" "$UPDATES_UC" schedule-automatic-latency-test "$sig_changed"
+TEST_CLASH_UNREADY=1 ucode -L "$PROKOP_LIB" "$DIAGNOSTICS_UC" automatic-latency-test new &&
   fail "unready Clash API unexpectedly succeeded"
-[ -s "$FORKOP_AUTOMATIC_LATENCY_PENDING_FILE" ] || fail "Clash failure removed pending marker"
-grep -Eq '"failures":[[:space:]]*1.*"retry_after":[[:space:]]*[1-9][0-9]+' "$FORKOP_AUTOMATIC_LATENCY_PENDING_FILE" ||
-  { cat "$FORKOP_AUTOMATIC_LATENCY_PENDING_FILE" >&2; fail "Clash failure did not record retry backoff"; }
+[ -s "$PROKOP_AUTOMATIC_LATENCY_PENDING_FILE" ] || fail "Clash failure removed pending marker"
+grep -Eq '"failures":[[:space:]]*1.*"retry_after":[[:space:]]*[1-9][0-9]+' "$PROKOP_AUTOMATIC_LATENCY_PENDING_FILE" ||
+  { cat "$PROKOP_AUTOMATIC_LATENCY_PENDING_FILE" >&2; fail "Clash failure did not record retry backoff"; }
 requests_before="$(wc -l <"$TEST_CURL_LOG")"
-ucode -L "$FORKOP_LIB" "$DIAGNOSTICS_UC" automatic-latency-test resume &
+ucode -L "$PROKOP_LIB" "$DIAGNOSTICS_UC" automatic-latency-test resume &
 retry_pid=$!
 sleep 1
 [ "$(wc -l <"$TEST_CURL_LOG")" -eq "$requests_before" ] || fail "retry pause allowed a rapid retry loop"
 wait "$retry_pid"
-[ ! -e "$FORKOP_AUTOMATIC_LATENCY_PENDING_FILE" ] || fail "deferred retry did not continue automatically"
+[ ! -e "$PROKOP_AUTOMATIC_LATENCY_PENDING_FILE" ] || fail "deferred retry did not continue automatically"
 
 grep -Fq 'Starting new automatic latency test' "$TEST_LOG" || fail "new-test log is missing"
 grep -Fq 'Resuming interrupted automatic latency test' "$TEST_LOG" || fail "resume log is missing"

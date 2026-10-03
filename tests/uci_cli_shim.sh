@@ -4,10 +4,10 @@ set -euo pipefail
 # UC-009: where no OpenWrt uci CLI is installed (GitHub backend CI), the
 # autotune tests write through the test shim tests/helpers/uci_cli/uci
 # (selected by tests/helpers/uci_cli/select.sh). Its behaviour on the subset
-# Forkop uses is pinned here to a transcript recorded with the real CLI
+# Prokop uses is pinned here to a transcript recorded with the real CLI
 # (tests/fixtures/uci_cli/transcript.txt, uci 74f6277a, 2026-03-12); with a
 # real uci on PATH the transcript is checked against it as well (a failure
-# only with FORKOP_TEST_UCI_CLI=real, which pins that revision). Calls
+# only with PROKOP_TEST_UCI_CLI=real, which pins that revision). Calls
 # outside the subset must fail loudly and fail the test that made them, and
 # the selection must name a missing or broken tool.
 
@@ -213,8 +213,8 @@ transcript() { # transcript <uci> <dir>
 }
 
 command -v ucode >/dev/null 2>&1 || fail "the uci test shim needs ucode on PATH"
-# FORKOP_TEST_UCI_RECORD=1 records the transcript again with the real CLI.
-if [ "${FORKOP_TEST_UCI_RECORD:-}" = 1 ]; then
+# PROKOP_TEST_UCI_RECORD=1 records the transcript again with the real CLI.
+if [ "${PROKOP_TEST_UCI_RECORD:-}" = 1 ]; then
   REAL="$(command -v uci)" || fail "recording needs the OpenWrt uci CLI on PATH"
   mkdir -p "$(dirname "$GOLDEN")"
   transcript "$REAL" "$WORK/record" >"$GOLDEN"
@@ -226,18 +226,18 @@ transcript "$SHIM" "$WORK/shim" >"$WORK/shim.txt"
 diff -u "$GOLDEN" "$WORK/shim.txt" >&2 || fail "the uci shim differs from the transcript of the real uci CLI"
 ok "the shim reproduces the recorded transcript of the real uci CLI"
 # The transcript is re-checked against a real uci on PATH. Only
-# FORKOP_TEST_UCI_CLI=real (a pinned uci, as in the CI proposal) makes a
+# PROKOP_TEST_UCI_CLI=real (a pinned uci, as in the CI proposal) makes a
 # difference a failure: another uci revision on a developer host may word its
 # errors differently, which says nothing about the shim.
 REAL=""
-case "${FORKOP_TEST_UCI_CLI:-auto}" in
+case "${PROKOP_TEST_UCI_CLI:-auto}" in
   auto) REAL="$(command -v uci 2>/dev/null || true)" ;;
   real)
     REAL="$(command -v uci 2>/dev/null)" ||
-      fail "FORKOP_TEST_UCI_CLI=real: the OpenWrt uci CLI (uci -c/-t) is not on PATH"
+      fail "PROKOP_TEST_UCI_CLI=real: the OpenWrt uci CLI (uci -c/-t) is not on PATH"
     ;;
   shim) ;;
-  *) fail "FORKOP_TEST_UCI_CLI must be auto, real or shim, not '${FORKOP_TEST_UCI_CLI}'" ;;
+  *) fail "PROKOP_TEST_UCI_CLI must be auto, real or shim, not '${PROKOP_TEST_UCI_CLI}'" ;;
 esac
 if [ -n "$REAL" ]; then
   transcript "$REAL" "$WORK/real" >"$WORK/real.txt"
@@ -245,12 +245,12 @@ if [ -n "$REAL" ]; then
     ok "the recorded transcript matches the real uci CLI ($REAL)"
   else
     cat "$WORK/real.diff" >&2
-    [ "${FORKOP_TEST_UCI_CLI:-auto}" != real ] ||
+    [ "${PROKOP_TEST_UCI_CLI:-auto}" != real ] ||
       fail "the real uci CLI ($REAL) differs from the recorded transcript"
-    printf 'NOTE: the uci CLI on PATH (%s) differs from the transcript recorded with uci 74f6277a; FORKOP_TEST_UCI_CLI=real makes this a failure, FORKOP_TEST_UCI_RECORD=1 records it again\n' "$REAL"
+    printf 'NOTE: the uci CLI on PATH (%s) differs from the transcript recorded with uci 74f6277a; PROKOP_TEST_UCI_CLI=real makes this a failure, PROKOP_TEST_UCI_RECORD=1 records it again\n' "$REAL"
   fi
-elif [ "${FORKOP_TEST_UCI_CLI:-auto}" = shim ]; then
-  printf 'NOTE: FORKOP_TEST_UCI_CLI=shim, the transcript is not re-checked against a real uci CLI\n'
+elif [ "${PROKOP_TEST_UCI_CLI:-auto}" = shim ]; then
+  printf 'NOTE: PROKOP_TEST_UCI_CLI=shim, the transcript is not re-checked against a real uci CLI\n'
 else
   printf 'NOTE: no OpenWrt uci CLI on PATH, the transcript is not re-checked against it\n'
 fi
@@ -263,15 +263,15 @@ printf "config a 'x' ; option o 1\n" >"$WORK/loud/c/semi"
 printf "config a 'x'\n\toption o a\\\\\n\toption p 2\n" >"$WORK/loud/c/cont"
 printf "config a 'x'\n" >"$WORK/loud/c/staged"
 echo "staged.x.o='1'" >"$WORK/loud/host/staged"
-export FORKOP_TEST_UCI_SHIM_LOG="$WORK/loud/shim.log"
-export FORKOP_TEST_UCI_SHIM_HOST_SAVEDIR="$WORK/loud/host"
+export PROKOP_TEST_UCI_SHIM_LOG="$WORK/loud/shim.log"
+export PROKOP_TEST_UCI_SHIM_HOST_SAVEDIR="$WORK/loud/host"
 loud() { # loud <what> <uci arguments...>
   local what="$1" rc=0
   shift
   (cd "$WORK/loud" && "$SHIM" "$@") >"$WORK/loud/out" 2>"$WORK/loud/err" || rc=$?
   [ "$rc" = 2 ] || fail "$what: exit $rc, want 2 ($(cat "$WORK/loud/err"))"
-  grep -Fq 'uci (Forkop test shim): unsupported' "$WORK/loud/err" || fail "$what: no explanation on stderr"
-  [ "$(tail -n 1 "$FORKOP_TEST_UCI_SHIM_LOG")" = "$(cat "$WORK/loud/err")" ] || fail "$what: not in the shim log"
+  grep -Fq 'uci (Prokop test shim): unsupported' "$WORK/loud/err" || fail "$what: no explanation on stderr"
+  [ "$(tail -n 1 "$PROKOP_TEST_UCI_SHIM_LOG")" = "$(cat "$WORK/loud/err")" ] || fail "$what: not in the shim log"
 }
 loud "add" -c c -t s add pk section
 loud "rename" -c c -t s rename pk.named=other
@@ -292,7 +292,7 @@ loud "host save directory" -c c -t "$WORK/loud/host" get pk.named
 loud "two arguments" -c c -t s set pk.named.label=a b
 loud "quiet does not hide it" -q -c c -t s add pk section
 [ ! -e "$WORK/loud/s" ] || fail "a refused call must not write deltas"
-unset FORKOP_TEST_UCI_SHIM_LOG FORKOP_TEST_UCI_SHIM_HOST_SAVEDIR
+unset PROKOP_TEST_UCI_SHIM_LOG PROKOP_TEST_UCI_SHIM_HOST_SAVEDIR
 ok "calls outside the subset fail loudly"
 
 # ---- selection: a missing or broken tool is named ------------------------------
@@ -308,17 +308,17 @@ tools "$WORK/noucode" bash mkdir rm grep cat
 tools "$WORK/brokenuci" bash mkdir rm grep cat ucode
 printf '#!/bin/sh\nexit 1\n' >"$WORK/brokenuci/uci"
 chmod +x "$WORK/brokenuci/uci"
-select_cli() { # select_cli <mode> <PATH>: prints FORKOP_AUTOTUNE_UCI or the failure
+select_cli() { # select_cli <mode> <PATH>: prints PROKOP_AUTOTUNE_UCI or the failure
   # shellcheck disable=SC2016 # expanded by the inner bash
-  env -u FORKOP_AUTOTUNE_UCI FORKOP_TEST_UCI_CLI="$1" PATH="$2" ROOT_DIR="$ROOT_DIR" WORK="$WORK/select" \
-    bash -c 'set -euo pipefail; mkdir -p "$WORK"; source "$ROOT_DIR/tests/helpers/uci_cli/select.sh"; echo "cli=$FORKOP_AUTOTUNE_UCI"' 2>&1 || true
+  env -u PROKOP_AUTOTUNE_UCI PROKOP_TEST_UCI_CLI="$1" PATH="$2" ROOT_DIR="$ROOT_DIR" WORK="$WORK/select" \
+    bash -c 'set -euo pipefail; mkdir -p "$WORK"; source "$ROOT_DIR/tests/helpers/uci_cli/select.sh"; echo "cli=$PROKOP_AUTOTUNE_UCI"' 2>&1 || true
 }
 got="$(select_cli auto "$WORK/nouci")"
 case "$got" in *"using the test shim"*"cli=$SHIM") ;; *) fail "auto without uci must use the shim and say so: $got" ;; esac
 got="$(select_cli shim "$WORK/nouci")"
 [ "$got" = "cli=$SHIM" ] || fail "shim mode: $got"
 got="$(select_cli real "$WORK/nouci")"
-case "$got" in *"FAIL: FORKOP_TEST_UCI_CLI=real: the OpenWrt uci CLI (uci -c/-t) is not on PATH"*) ;; *) fail "real mode without uci: $got" ;; esac
+case "$got" in *"FAIL: PROKOP_TEST_UCI_CLI=real: the OpenWrt uci CLI (uci -c/-t) is not on PATH"*) ;; *) fail "real mode without uci: $got" ;; esac
 case "$got" in *cli=*) fail "real mode without uci must stop: $got" ;; esac
 got="$(select_cli auto "$WORK/brokenuci")"
 case "$got" in *"FAIL: no working uci CLI ($WORK/brokenuci/uci)"*) ;; *) fail "a broken uci must be named: $got" ;; esac
@@ -326,7 +326,7 @@ case "$got" in *cli=*) fail "a broken uci must stop the test: $got" ;; esac
 got="$(select_cli shim "$WORK/noucode")"
 case "$got" in *"FAIL: the uci test shim needs ucode on PATH"*) ;; *) fail "the shim without ucode: $got" ;; esac
 got="$(select_cli bogus "$WORK/nouci")"
-case "$got" in *"FAIL: FORKOP_TEST_UCI_CLI must be auto, real or shim"*) ;; *) fail "unknown mode: $got" ;; esac
+case "$got" in *"FAIL: PROKOP_TEST_UCI_CLI must be auto, real or shim"*) ;; *) fail "unknown mode: $got" ;; esac
 ok "the selection names a missing or broken uci CLI"
 
 # ---- a refused call fails the test, even where the test tolerates it -----------
@@ -349,13 +349,13 @@ with_prologue() { # with_prologue <test file> <body>: runs it, sets RUN_RC and R
   } >"$script"
   rm -f "$WORK/refusal/work"
   RUN_RC=0
-  RUN_OUT="$(env -u FORKOP_AUTOTUNE_UCI FORKOP_TEST_UCI_CLI=shim \
-    FORKOP_TEST_UCI_SHIM_HOST_SAVEDIR="$WORK/refusal/host" bash "$script" 2>&1)" || RUN_RC=$?
+  RUN_OUT="$(env -u PROKOP_AUTOTUNE_UCI PROKOP_TEST_UCI_CLI=shim \
+    PROKOP_TEST_UCI_SHIM_HOST_SAVEDIR="$WORK/refusal/host" bash "$script" 2>&1)" || RUN_RC=$?
   [ -s "$WORK/refusal/work" ] || fail "${1#"$ROOT_DIR"/}: the body did not run: $RUN_OUT"
   [ ! -e "$(cat "$WORK/refusal/work")" ] || fail "${1#"$ROOT_DIR"/}: WORK was not removed at exit"
 }
 # shellcheck disable=SC2016 # expanded by the test body
-refused='if "$FORKOP_AUTOTUNE_UCI" -c "$WORK" -t "$WORK/uci-save" rename forkop.yt=other 2>/dev/null; then exit 3; fi'
+refused='if "$PROKOP_AUTOTUNE_UCI" -c "$WORK" -t "$WORK/uci-save" rename prokop.yt=other 2>/dev/null; then exit 3; fi'
 for file in $users; do
   name="${file#"$ROOT_DIR"/}"
   with_prologue "$file" "$refused"$'\nexit 0'

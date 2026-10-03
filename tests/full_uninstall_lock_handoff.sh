@@ -4,7 +4,7 @@ set -euo pipefail
 # full-uninstall.sh start hands its locks to the worker in order (UC-157
 # follow-up).
 #
-# The starter takes the removal lock (/tmp/forkop-full-uninstall.lock) and
+# The starter takes the removal lock (/tmp/prokop-full-uninstall.lock) and
 # the component action lock, starts the worker in the background, names the
 # worker in both lock records and exits. A worker that failed at once (no
 # original repositories to restore, no package manager) could reach its
@@ -17,7 +17,7 @@ set -euo pipefail
 # the worker may have finished.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SCRIPT="$ROOT_DIR/forkop/files/usr/lib/full-uninstall.sh"
+SCRIPT="$ROOT_DIR/prokop/files/usr/lib/full-uninstall.sh"
 REAL_SLEEP="$(command -v sleep)"
 WORK="$(mktemp -d)"
 # shellcheck source=tests/helpers/wait.sh
@@ -54,17 +54,17 @@ esac
 exec "$REAL_SLEEP" "\$@"
 SH
 chmod +x "$WORK/bin/sleep"
-export PATH="$WORK/bin:$PATH" FORKOP_MIRROR_BASE_URL="http://mirror.test"
+export PATH="$WORK/bin:$PATH" PROKOP_MIRROR_BASE_URL="http://mirror.test"
 
 # fixture NAME: a root whose only feed points at the mirror and has no
 # original to restore, so the worker fails at once.
 fixture() {
   UROOT="$WORK/root-$1"
-  LOCK="$UROOT/tmp/forkop-full-uninstall.lock"
-  ACTION_LOCK="$UROOT/var/run/forkop/component-action.lock"
-  mkdir -p "$UROOT/etc/opkg" "$UROOT/tmp" "$UROOT/www" "$UROOT/var/run/forkop"
+  LOCK="$UROOT/tmp/prokop-full-uninstall.lock"
+  ACTION_LOCK="$UROOT/var/run/prokop/component-action.lock"
+  mkdir -p "$UROOT/etc/opkg" "$UROOT/tmp" "$UROOT/www" "$UROOT/var/run/prokop"
   printf 'src/gz openwrt http://mirror.test/openwrt/releases/test\n' >"$UROOT/etc/opkg/distfeeds.conf"
-  export FORKOP_UNINSTALL_ROOT="$UROOT"
+  export PROKOP_UNINSTALL_ROOT="$UROOT"
   rm -f "$WORK/worker.waiting"
 }
 
@@ -120,10 +120,10 @@ sh "$SCRIPT" start >"$WORK/start.out" </dev/null || fail "3: start failed: $(cat
 grep -Fq '"success":true' "$WORK/start.out" || fail "3: start did not report the removal: $(cat "$WORK/start.out")"
 wait_until 20 test ! -e "$LOCK" || fail "3: the removal lock was left behind"
 wait_until 20 test ! -e "$ACTION_LOCK" || fail "3: the component action lock was left behind"
-for job in "$UROOT"/tmp/forkop-uninstall.*; do
+for job in "$UROOT"/tmp/prokop-uninstall.*; do
   [ -e "$job/started" ] || fail "3: the starter did not mark the hand-off"
 done
-wait_until 20 grep -Fq '"state":"failed","phase":"preflight"' "$UROOT"/www/forkop-uninstall.*.json ||
+wait_until 20 grep -Fq '"state":"failed","phase":"preflight"' "$UROOT"/www/prokop-uninstall.*.json ||
   fail "3: the removal did not fail its preflight"
 
 printf 'full_uninstall_lock_handoff: ok\n'

@@ -6,7 +6,7 @@ set -euo pipefail
 # copy written as "'\''" in ucode, which is three quotes, broke on a quote).
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT HUP INT TERM
 
@@ -33,7 +33,7 @@ cat >"$WORK/values.json" <<'EOF'
   "a b\tc", "; touch PWNED", "\"double\"", "back\\slash", "*", "-n", "trailing'" ]
 EOF
 
-(cd "$WORK" && FORKOP_LIB="$LIB" ucode -L "$LIB" "$WORK/check.uc" "$WORK/values.json") || fail "a value did not reach the command as one argument"
+(cd "$WORK" && PROKOP_LIB="$LIB" ucode -L "$LIB" "$WORK/check.uc" "$WORK/values.json") || fail "a value did not reach the command as one argument"
 [ ! -e "$WORK/PWNED" ] || fail "a command in a value was run"
 
 echo "core_shell_quote: ok"

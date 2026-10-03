@@ -12,7 +12,7 @@ const path = require('path');
 const assert = require('assert/strict');
 const root = process.argv[2];
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
-const src = 'fe-app-forkop/src/forkop/tabs/';
+const src = 'fe-app-prokop/src/prokop/tabs/';
 
 const dashboardRender = read(src + 'dashboard/render.ts');
 const overview = dashboardRender.slice(0, dashboardRender.indexOf('export function renderNodes'));
@@ -22,14 +22,14 @@ assert.match(dashboardRender.slice(dashboardRender.indexOf('export function rend
 
 const monitoringRender = read(src + 'monitoring/render.ts');
 assert.match(monitoringRender, /renderNodes\(\)/, 'Monitoring hosts the Nodes view');
-const page = read('luci-app-forkop/htdocs/luci-static/resources/view/forkop/page/monitoring.js');
+const page = read('luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/monitoring.js');
 assert.match(page, /main\.DashboardTab\.initController\(\)/, 'the monitoring page starts the node selection controller');
 
 const cards = read(src + 'dashboard/overviewCards.ts');
-assert.match(cards, /openForkopPage\('monitoring', \{ view: 'nodes' \}\)/, 'Overview links to Monitoring → Nodes');
+assert.match(cards, /openProkopPage\('monitoring', \{ view: 'nodes' \}\)/, 'Overview links to Monitoring → Nodes');
 
 const monitoring = read(src + 'monitoring/initController.ts');
-assert.match(monitoring, /ForkopShellMethods\.getReadonlyConfigSections\(\)/,
+assert.match(monitoring, /ProkopShellMethods\.getReadonlyConfigSections\(\)/,
   'Monitoring reads the derived section view for both roles');
 assert.doesNotMatch(monitoring, /nfqws2?_opt|byedpi_cmd_opts/, 'Monitoring never shows raw strategy options');
 assert.doesNotMatch(monitoring, /fkp-monitoring-trace/, 'the fake per-row trace action is gone');

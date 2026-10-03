@@ -10,7 +10,7 @@
 # Runs `FUNCTION GROUP` for every GROUP (a plain word), each in a background
 # subshell under set -e with its output in DIR/GROUP.log, waits for all of
 # them and then prints the logs in the order of the groups. Returns 1,
-# naming the group, when one of them failed. FORKOP_TEST_GROUP_JOBS, when
+# naming the group, when one of them failed. PROKOP_TEST_GROUP_JOBS, when
 # set to a positive number, bounds how many groups run at once (tests/run.sh
 # sets it while it runs several tests in parallel); by default all do.
 #
@@ -27,7 +27,7 @@ run_case_groups() {
         printf 'FAIL: run_case_groups runs in a condition or without set -e: a failed check would not stop its group\n' >&2
         return 1
     fi
-    run_case_groups_max=${FORKOP_TEST_GROUP_JOBS:-0}
+    run_case_groups_max=${PROKOP_TEST_GROUP_JOBS:-0}
     case $run_case_groups_max in '' | *[!0-9]*) run_case_groups_max=0 ;; esac
     mkdir -p "$run_case_groups_dir"
     run_case_groups_running=""

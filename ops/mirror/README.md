@@ -1,8 +1,8 @@
 # Optional dependency mirror
 
-Forkop does not need a mirror. Releases come from the fork's own channel
-(`https://asofwar.github.io/forkop`, falling back to the GitHub releases of
-`Asofwar/forkop`), and without a mirror every router uses the official OpenWrt
+Prokop does not need a mirror. Releases come from the fork's own channel
+(`https://asofwar.github.io/prokop`, falling back to the GitHub releases of
+`Asofwar/prokop`), and without a mirror every router uses the official OpenWrt
 feeds and the original list, rule-set, sing-box-extended and Zapret-Manager
 sources. The scripts here let the fork owner (or anyone) run a self-hosted
 accelerator for those dependencies, for networks where the original hosts are
@@ -11,10 +11,10 @@ slow or unreachable.
 A router uses a mirror only after an explicit opt-in:
 
 ```sh
-wget -qO- https://asofwar.github.io/forkop/install.sh | sh -s -- --mirror https://mirror.example.org
+wget -qO- https://asofwar.github.io/prokop/install.sh | sh -s -- --mirror https://mirror.example.org
 # or, on an installed router:
-uci set forkop.settings.mirror_base_url=https://mirror.example.org && uci commit forkop
-/usr/share/forkop/mirror-migration.sh
+uci set prokop.settings.mirror_base_url=https://mirror.example.org && uci commit prokop
+/usr/share/prokop/mirror-migration.sh
 ```
 
 `router-bootstrap.sh MIRROR_URL` is a wrapper around the first command. There
@@ -27,16 +27,16 @@ The router does not trust anything signed by a mirror. Neither the installer
 nor the packages download `<mirror>/forkop/forkop-apk.pem` into
 `/etc/apk/keys` or write `/etc/apk/repositories.d/forkop.list`, and both remove
 `/etc/apk/keys/forkop-mirror.pem` and that feed when they find them: apk trusts
-every key in `/etc/apk/keys` for every repository, and a mirror's Forkop feed
+every key in `/etc/apk/keys` for every repository, and a mirror's Prokop feed
 would replace the fork's packages with whatever the mirror builds. A mirror
-only ever serves OpenWrt packages, lists and third-party components; Forkop
+only ever serves OpenWrt packages, lists and third-party components; Prokop
 packages always come from the release channel, verified against its SHA-256
 metadata.
 
 ## OpenWrt feeds
 
 `sync-openwrt.sh` mirrors the OpenWrt target, kernel, and package feeds needed by
-Forkop. Supported platforms are configured with one target/architecture pair per
+Prokop. Supported platforms are configured with one target/architecture pair per
 line. Blank lines, full-line comments, and trailing comments are accepted:
 
 ```text
@@ -53,8 +53,8 @@ and [`25.12.3`](https://downloads.openwrt.org/releases/25.12.3/targets/rockchip/
 target profiles.
 
 Copy `openwrt-platforms.conf.example` to
-`/etc/forkop-mirror/platforms.conf`, copy `openwrt-mirror.env.example` to
-`/etc/default/forkop-openwrt-mirror`, and run the systemd service. The
+`/etc/prokop-mirror/platforms.conf`, copy `openwrt-mirror.env.example` to
+`/etc/default/prokop-openwrt-mirror`, and run the systemd service. The
 environment file is optional. Without a configured file, the script retains the
 legacy single-platform default (`mediatek/filogic aarch64_cortex-a53`). Existing
 `OPENWRT_TARGET` and `OPENWRT_ARCH` variables also retain their single-platform
@@ -86,17 +86,17 @@ architecture. A merged code change does not enable a platform on a mirror; the
 mirror operator must update the production configuration and finish a full
 successful synchronization first.
 
-## Forkop release copies
+## Prokop release copies
 
-`sync-forkop.sh` and `sync-forkop-release.py` copy the latest stable release of
-`FORKOP_GITHUB_REPOSITORY` (default `Asofwar/forkop`); the latter verifies the
+`sync-prokop.sh` and `sync-prokop-release.py` copy the latest stable release of
+`PROKOP_GITHUB_REPOSITORY` (default `Asofwar/prokop`); the latter verifies the
 declared size and SHA-256 digest of every asset and calls
-`publish-forkop-feed.sh` to build a signed APK repository under
-`/forkop/mirror/current/`. `update-forkop-from-git.sh` rebuilds a tag from Git
+`publish-prokop-feed.sh` to build a signed APK repository under
+`/forkop/mirror/current/`. `update-prokop-from-git.sh` rebuilds a tag from Git
 and refuses sources that do not follow releases of that repository. These
-copies are for browsing or manual use only: Forkop routers never add that feed
+copies are for browsing or manual use only: Prokop routers never add that feed
 or its key (see above), and the release channel is not served from a mirror.
-Run the release service with `forkop-release-sync.service` after placing the
+Run the release service with `prokop-release-sync.service` after placing the
 OpenWrt host `apk` tool at the configured path; it does not build packages on
 the mirror host.
 
@@ -124,13 +124,13 @@ install it unattended.
 
 On a home deployment, use the pinned, locally available Python image
 in `home/zapret-compose.yml`. Install the script/config under
-`/mnt/storage/forkop-mirror/config/` and create only
-`/mnt/storage/forkop-mirror/data/cache/zapret-manager` owned by 65534:65534.
+`/mnt/storage/prokop-mirror/config/` and create only
+`/mnt/storage/prokop-mirror/data/cache/zapret-manager` owned by 65534:65534.
 Start the separate compose project, warm the manager endpoint, and validate
 `home/web-with-zapret.Caddyfile` before applying it to the mirror's own web service.
 Back up its old Caddyfile first. Never restart a shared edge Caddy or other
 projects. Rollback: restore that Caddyfile, restart only
-`forkop-mirror-web.service`, then stop only the cache compose project.
+`prokop-mirror-web.service`, then stop only the cache compose project.
 
 ## Releases
 

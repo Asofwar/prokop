@@ -19,7 +19,7 @@ set -euo pipefail
 # - A read-only role sees only that legacy settings exist.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-node - "$ROOT_DIR/tests/helpers" "$ROOT_DIR/forkop/files/usr/lib" <<'NODE'
+node - "$ROOT_DIR/tests/helpers" "$ROOT_DIR/prokop/files/usr/lib" <<'NODE'
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
@@ -176,7 +176,7 @@ for (let s in (data.section || [])) {
 print(sprintf("%J\\n", out));
 `;
 function firewallConditions(data) {
-  const work = fs.mkdtempSync(path.join(os.tmpdir(), 'forkop-legacy-nft-'));
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), 'prokop-legacy-nft-'));
   try {
     fs.writeFileSync(path.join(work, 'fixture.json'), JSON.stringify(backend.fixtureFromUci(data)));
     fs.writeFileSync(path.join(work, 'nft.uc'), NFT_SCRIPT);
@@ -252,7 +252,7 @@ async function openNotice(version, config, options) {
         assert.match(notice.textContent, /converted/);
         assert.equal(hasButton(notice, 'Convert…'), false, 'nothing left to convert');
         // The Network Interface field lists the items the legacy list became.
-        const created = env.uci.sections('forkop', 'section_interface')
+        const created = env.uci.sections('prokop', 'section_interface')
           .filter((item) => !config[item['.name']]).map((item) => item['.name']);
         if (created.length)
           assert.deepEqual(modal.option('interfaces').formvalue('rule'), created, 'the field must list the new items');
@@ -340,7 +340,7 @@ async function openNotice(version, config, options) {
       field.setValue(['wg9', 'awg0']);
       button(notice, 'Convert…').attrs.click();
       button(notice, 'Convert').attrs.click();
-      const created = env.uci.sections('forkop', 'section_interface').map((item) => item['.name']);
+      const created = env.uci.sections('prokop', 'section_interface').map((item) => item['.name']);
       assert.deepEqual(field.getValue(), [...created, 'wg9'], 'the field must keep what the user added');
       await modal.save();
       const items = Object.values(env.uci.data).filter((item) => item['.type'] === 'section_interface');

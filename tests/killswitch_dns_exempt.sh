@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # D-23: a protected section may let its excluded devices resolve its names
-# while Forkop is stopped. The block list of the main dnsmasq is shared by
+# while Prokop is stopped. The block list of the main dnsmasq is shared by
 # every client, so it never changes: the excluded devices get resolvers of
 # their own (groups by the rules that do not apply to them), the kill-switch
-# watcher redirects exactly their DNS for the router there while Forkop is
+# watcher redirects exactly their DNS for the router there while Prokop is
 # stopped, and only to a resolver that answers with the configuration of its
 # group. Without the option every file, the state and the DNS chain stay as
 # they were. The firewall policy never changes.
@@ -12,12 +12,12 @@
 set -eo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-KS_UC="$FORKOP_LIB/killswitch/runtime.uc"
-DNS_UC="$FORKOP_LIB/dns/apply.uc"
-VALIDATOR="$FORKOP_LIB/config/validator.uc"
-INIT_SCRIPT="$ROOT_DIR/forkop/files/etc/init.d/forkop-killswitch"
-KEEP_LIST="$ROOT_DIR/forkop/files/lib/upgrade/keep.d/forkop-killswitch"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+KS_UC="$PROKOP_LIB/killswitch/runtime.uc"
+DNS_UC="$PROKOP_LIB/dns/apply.uc"
+VALIDATOR="$PROKOP_LIB/config/validator.uc"
+INIT_SCRIPT="$ROOT_DIR/prokop/files/etc/init.d/prokop-killswitch"
+KEEP_LIST="$ROOT_DIR/prokop/files/lib/upgrade/keep.d/prokop-killswitch"
 WORK_DIR="$(mktemp -d)"
 
 cleanup() {
@@ -37,31 +37,31 @@ fail() {
 }
 
 mkdir -p "$WORK_DIR/bin" "$WORK_DIR/run" "$WORK_DIR/conf" "$WORK_DIR/gen"
-# The live tables: ForkopTable while Forkop runs, the kill-switch table and
+# The live tables: ProkopTable while Prokop runs, the kill-switch table and
 # its DNS chain (only the rules of a batch that flushes it).
 cat >"$WORK_DIR/bin/nft" <<'NFT'
 #!/usr/bin/env bash
 printf '%s\n' "$*" >> "$WORK_DIR/nft.log"
 case "$1 $2" in
   "list table")
-    [ "$4" = "ForkopTable" ] && { [ -e "$WORK_DIR/live-present" ]; exit $?; }
-    [ "$4" = "ForkopKillswitch" ] && { [ -e "$WORK_DIR/ks-present" ]; exit $?; }
+    [ "$4" = "ProkopTable" ] && { [ -e "$WORK_DIR/live-present" ]; exit $?; }
+    [ "$4" = "ProkopKillswitch" ] && { [ -e "$WORK_DIR/ks-present" ]; exit $?; }
     exit 1 ;;
   "list set")
-    printf 'table inet ForkopTable {\n\tset %s {\n\t\ttype ipv4_addr\n\t}\n}\n' "$5"
+    printf 'table inet ProkopTable {\n\tset %s {\n\t\ttype ipv4_addr\n\t}\n}\n' "$5"
     exit 0 ;;
   "list chain")
     [ -e "$WORK_DIR/ks-present" ] || exit 1
-    printf 'table inet ForkopKillswitch {\n\tchain ks_dns {\n'
+    printf 'table inet ProkopKillswitch {\n\tchain ks_dns {\n'
     sed 's/^/\t\t/' "$WORK_DIR/ks_dns" 2>/dev/null
     printf '\t}\n}\n'
     exit 0 ;;
   "-c -f")
-    grep -q 'add table inet ForkopKillswitch' "$3" || exit 1
+    grep -q 'add table inet ProkopKillswitch' "$3" || exit 1
     exit 0 ;;
   "-f "*)
-    if grep -q '^flush chain inet ForkopKillswitch ks_dns$' "$2"; then
-      sed -n 's/^add rule inet ForkopKillswitch ks_dns //p' "$2" > "$WORK_DIR/ks_dns"
+    if grep -q '^flush chain inet ProkopKillswitch ks_dns$' "$2"; then
+      sed -n 's/^add rule inet ProkopKillswitch ks_dns //p' "$2" > "$WORK_DIR/ks_dns"
     else
       cp "$2" "$WORK_DIR/live.nft"; touch "$WORK_DIR/ks-present"; : > "$WORK_DIR/ks_dns"
     fi
@@ -109,16 +109,16 @@ chmod 0755 "$WORK_DIR/bin/"*
 
 export WORK_DIR
 export PATH="$WORK_DIR/bin:$PATH"
-export FORKOP_LIB
-export FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
-export FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/run"
-export FORKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/reload.lock"
+export PROKOP_LIB
+export PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
+export PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/run"
+export PROKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/reload.lock"
 export KILLSWITCH_STATE_DIR="$WORK_DIR/ks"
-export KILLSWITCH_NFT_INCLUDE="$WORK_DIR/ruleset-post/90-forkop-killswitch.nft"
+export KILLSWITCH_NFT_INCLUDE="$WORK_DIR/ruleset-post/90-prokop-killswitch.nft"
 export KILLSWITCH_CACHE_DIR="$WORK_DIR/conf"
 export DNSMASQ_INIT="$WORK_DIR/bin/dnsmasq-init"
-export FORKOP_KILLSWITCH_INIT="$WORK_DIR/bin/killswitch-init"
-export FORKOP_KILLSWITCH_WATCH_INTERVAL_MS=1
+export PROKOP_KILLSWITCH_INIT="$WORK_DIR/bin/killswitch-init"
+export PROKOP_KILLSWITCH_WATCH_INTERVAL_MS=1
 
 BLOCKED="$KILLSWITCH_STATE_DIR/dns-blocked.servers"
 SERVERS="$KILLSWITCH_STATE_DIR/dnsmasq.servers"
@@ -126,7 +126,7 @@ EXEMPT="$KILLSWITCH_STATE_DIR/dns-exempt.json"
 CONF_DIR="$WORK_DIR/conf"
 
 ks() {
-  ucode -L "$FORKOP_LIB" "$KS_UC" "$@"
+  ucode -L "$PROKOP_LIB" "$KS_UC" "$@"
 }
 json_value() {
   ucode -e 'let v = json(ARGV[0]); for (let k in split(ARGV[1], ".")) v = v == null ? null : v[k]; print(v ?? "null", "\n");' -- "$1" "$2"
@@ -172,7 +172,7 @@ cat >"$WORK_DIR/gen/fixture.json" <<JSON
   ]
 }
 JSON
-ucode -L "$FORKOP_LIB" "$FORKOP_LIB/singbox/generator.uc" generate-config-fixture \
+ucode -L "$PROKOP_LIB" "$PROKOP_LIB/singbox/generator.uc" generate-config-fixture \
   "$WORK_DIR/gen/fixture.json" "$WORK_DIR/config.json" 192.168.1.1 0 1 '' 1.13.0 >/dev/null ||
   fail "the generator fixture could not be generated"
 grep -Fq '"invert": true' "$WORK_DIR/config.json" || fail "the generator must wrap rules of sections with excluded devices"
@@ -181,36 +181,36 @@ grep -Fq '"invert": true' "$WORK_DIR/config.json" || fail "the generator must wr
 # ("" for none); $3: the DNS server dnsmasq forwards to.
 write_uci() {
   {
-    printf 'forkop.settings=settings\n'
-    printf 'forkop.settings.source_network_interfaces=%s\n' "${IFACES:-br-lan}"
-    printf 'forkop.settings.config_path=%s\n' "$WORK_DIR/config.json"
-    printf 'forkop.main=section\nforkop.main.action=connection\nforkop.main.kill_switch=1\n'
-    printf 'forkop.main.excluded_source_ip_cidr=192.168.1.50\n'
-    printf 'forkop.excl=section\nforkop.excl.action=connection\nforkop.excl.kill_switch=1\n'
-    printf 'forkop.excl.excluded_source_ip_cidr=192.168.1.50 192.168.1.0/28 fd00::50\n'
-    [ -z "$1" ] || printf 'forkop.excl.kill_switch_dns_exempt=%s\n' "$1"
-    printf 'forkop.excl2=section\nforkop.excl2.action=connection\nforkop.excl2.kill_switch=1\n'
-    printf 'forkop.excl2.excluded_source_ip_cidr=192.168.1.5\n'
-    [ -z "$2" ] || printf 'forkop.excl2.kill_switch_dns_exempt=%s\n' "$2"
-    printf 'forkop.late=section\nforkop.late.action=connection\nforkop.late.kill_switch=1\n'
-    printf 'forkop.free=section\nforkop.free.action=connection\n'
+    printf 'prokop.settings=settings\n'
+    printf 'prokop.settings.source_network_interfaces=%s\n' "${IFACES:-br-lan}"
+    printf 'prokop.settings.config_path=%s\n' "$WORK_DIR/config.json"
+    printf 'prokop.main=section\nprokop.main.action=connection\nprokop.main.kill_switch=1\n'
+    printf 'prokop.main.excluded_source_ip_cidr=192.168.1.50\n'
+    printf 'prokop.excl=section\nprokop.excl.action=connection\nprokop.excl.kill_switch=1\n'
+    printf 'prokop.excl.excluded_source_ip_cidr=192.168.1.50 192.168.1.0/28 fd00::50\n'
+    [ -z "$1" ] || printf 'prokop.excl.kill_switch_dns_exempt=%s\n' "$1"
+    printf 'prokop.excl2=section\nprokop.excl2.action=connection\nprokop.excl2.kill_switch=1\n'
+    printf 'prokop.excl2.excluded_source_ip_cidr=192.168.1.5\n'
+    [ -z "$2" ] || printf 'prokop.excl2.kill_switch_dns_exempt=%s\n' "$2"
+    printf 'prokop.late=section\nprokop.late.action=connection\nprokop.late.kill_switch=1\n'
+    printf 'prokop.free=section\nprokop.free.action=connection\n'
     printf 'dhcp.@dnsmasq[0]=dnsmasq\n'
     printf 'dhcp.@dnsmasq[0].server=%s\n' "${3:-127.0.0.42}"
-    printf 'dhcp.@dnsmasq[0].forkop_server=1.1.1.1\n'
+    printf 'dhcp.@dnsmasq[0].prokop_server=1.1.1.1\n'
     printf 'dhcp.@dnsmasq[0].noresolv=1\n'
     [ -z "$4" ] || printf 'dhcp.@dnsmasq[0].serversfile=%s\n' "$4"
-  } >"$FORKOP_UCI_STATE_FILE"
+  } >"$PROKOP_UCI_STATE_FILE"
 }
-# Forkop stops: dnsmasq answers with the block list itself.
-stop_forkop() {
+# Prokop stops: dnsmasq answers with the block list itself.
+stop_prokop() {
   write_uci "$1" "$2" 1.1.1.1 "$SERVERS"
-  ucode -L "$FORKOP_LIB" "$DNS_UC" killswitch-refresh || fail "DNS refresh failed"
-  cmp -s "$BLOCKED" "$SERVERS" || fail "a stopped Forkop must answer with the block list"
+  ucode -L "$PROKOP_LIB" "$DNS_UC" killswitch-refresh || fail "DNS refresh failed"
+  cmp -s "$BLOCKED" "$SERVERS" || fail "a stopped Prokop must answer with the block list"
 }
-start_forkop() {
+start_prokop() {
   write_uci "$1" "$2" 127.0.0.42 "$SERVERS"
-  ucode -L "$FORKOP_LIB" "$DNS_UC" killswitch-refresh || fail "DNS refresh failed"
-  [ ! -s "$SERVERS" ] || fail "a running Forkop must empty the block list dnsmasq reads"
+  ucode -L "$PROKOP_LIB" "$DNS_UC" killswitch-refresh || fail "DNS refresh failed"
+  [ ! -s "$SERVERS" ] || fail "a running Prokop must empty the block list dnsmasq reads"
 }
 fresh() {
   rm -rf "$KILLSWITCH_STATE_DIR" "$CONF_DIR" "$WORK_DIR/ks-present" "$WORK_DIR/ks_dns" "$WORK_DIR"/dead-* \
@@ -219,7 +219,7 @@ fresh() {
   touch "$WORK_DIR/live-present"
 }
 watch_passes() {
-  FORKOP_KILLSWITCH_WATCH_ITERATIONS="$1" ks watch || fail "watch failed"
+  PROKOP_KILLSWITCH_WATCH_ITERATIONS="$1" ks watch || fail "watch failed"
 }
 
 # ---- without the option: everything as before ----------------------------------
@@ -242,9 +242,9 @@ if grep -Eq 'exempt' "$KILLSWITCH_STATE_DIR/state.json"; then
   fail "without the option the state must not change: $(cat "$KILLSWITCH_STATE_DIR/state.json")"
 fi
 [ -z "$(ks exempt-configs "$CONF_DIR")" ] || fail "without the option no resolver of excluded devices may run"
-stop_forkop "" ""
+stop_prokop "" ""
 watch_passes 3
-[ ! -s "$WORK_DIR/ks_dns" ] || fail "without the option a stopped Forkop redirects no DNS"
+[ ! -s "$WORK_DIR/ks_dns" ] || fail "without the option a stopped Prokop redirects no DNS"
 grep -Fq '"dns_exempt": false' <<<"$(ks status)" || fail "status must report no exemption"
 
 # "0" is the same as no option.
@@ -267,15 +267,15 @@ cmp -s "$BLOCKED" "$WORK_DIR/blocked.off" || fail "the shared block list must st
 # devices: clients reach them only through the redirect.
 cmp -s <(grep -v ' ks_exempt_guard' "$KILLSWITCH_STATE_DIR/policy.nft") "$WORK_DIR/policy.off" ||
   fail "the firewall policy must not change apart from the guard of the resolvers"
-grep -Fqx 'add chain inet ForkopKillswitch ks_exempt_guard { type filter hook input priority -1; policy accept; }' "$KILLSWITCH_STATE_DIR/policy.nft" ||
+grep -Fqx 'add chain inet ProkopKillswitch ks_exempt_guard { type filter hook input priority -1; policy accept; }' "$KILLSWITCH_STATE_DIR/policy.nft" ||
   fail "the guard of the resolvers must be an input chain"
-grep -Fqx 'add rule inet ForkopKillswitch ks_exempt_guard iifname != "lo" meta l4proto { tcp, udp } th dport 18055-18058 ct direction original ct status & dnat == 0 drop' \
+grep -Fqx 'add rule inet ProkopKillswitch ks_exempt_guard iifname != "lo" meta l4proto { tcp, udp } th dport 18055-18058 ct direction original ct status & dnat == 0 drop' \
   "$KILLSWITCH_STATE_DIR/policy.nft" || fail "only redirected DNS may reach the resolvers of excluded devices"
 if grep -Fq ' ks_exempt_guard' "$WORK_DIR/policy.off"; then fail "without the option there is no guard"; fi
 ks standby-config "$WORK_DIR/standby.on" || fail "standby config failed"
 cmp -s "$WORK_DIR/standby.on" "$WORK_DIR/standby.off" || fail "the standby resolver must not change"
-[ -s "$EXEMPT" ] || fail "the groups of excluded devices must be saved for a stopped Forkop"
-grep -Fqx '/etc/forkop/killswitch/dns-exempt.json' "$KEEP_LIST" || fail "sysupgrade must keep the groups with the block list"
+[ -s "$EXEMPT" ] || fail "the groups of excluded devices must be saved for a stopped Prokop"
+grep -Fqx '/etc/prokop/killswitch/dns-exempt.json' "$KEEP_LIST" || fail "sysupgrade must keep the groups with the block list"
 # Only names the saved groups really resolve count: shared.example stays
 # blocked for the excluded devices of excl through late.
 [ "$(state_value dns.sections.excl.excluded_exempt)" = 2 ] || fail "the exempted names of excl must be reported"
@@ -304,7 +304,7 @@ for conf in "$both" "$single"; do
   for name in excl-inline.example second-list.example free.example; do
     if grep -Fq "/$name/" "$conf"; then fail "$conf must resolve $name"; fi
   done
-  grep -Eq '^address=/g[0-9]+-[0-9a-f]{32}\.exempt\.forkop\.invalid/127\.0\.0\.1$' "$conf" || fail "$conf must answer its probe name"
+  grep -Eq '^address=/g[0-9]+-[0-9a-f]{32}\.exempt\.prokop\.invalid/127\.0\.0\.1$' "$conf" || fail "$conf must answer its probe name"
 done
 if grep -Fq '/excl2-inline.example/' "$both"; then fail ".5 is excluded from excl2 as well"; fi
 port_both="$(sed -n 's/^port=//p' "$both")"
@@ -333,21 +333,21 @@ printf 'ok - the resolvers of excluded devices listen where the standby resolver
 
 # ---- the watcher -----------------------------------------------------------------
 
-# Running Forkop: client DNS goes through sing-box; nothing is redirected.
+# Running Prokop: client DNS goes through sing-box; nothing is redirected.
 touch "$WORK_DIR/sing-box-alive"
-start_forkop 1 1
+start_prokop 1 1
 watch_passes 3
-[ ! -s "$WORK_DIR/ks_dns" ] || fail "a running Forkop must not redirect the excluded devices"
+[ ! -s "$WORK_DIR/ks_dns" ] || fail "a running Prokop must not redirect the excluded devices"
 
 # Stopped: exactly the excluded addresses go to their resolvers, the
 # narrowest source first; DNS for the router only.
-stop_forkop 1 1
+stop_prokop 1 1
 watch_passes 2
 rules="$(cat "$WORK_DIR/ks_dns")"
 expect_rule() {
-  grep -Fq "iifname @ks_interfaces $1 saddr $2 fib daddr type local udp dport 53 counter redirect to :$3 comment \"forkop-exempt-" <<<"$rules" ||
+  grep -Fq "iifname @ks_interfaces $1 saddr $2 fib daddr type local udp dport 53 counter redirect to :$3 comment \"prokop-exempt-" <<<"$rules" ||
     fail "expected the UDP redirect of $2 to :$3"
-  grep -Fq "iifname @ks_interfaces $1 saddr $2 fib daddr type local tcp dport 53 counter redirect to :$3 comment \"forkop-exempt-" <<<"$rules" ||
+  grep -Fq "iifname @ks_interfaces $1 saddr $2 fib daddr type local tcp dport 53 counter redirect to :$3 comment \"prokop-exempt-" <<<"$rules" ||
     fail "expected the TCP redirect of $2 to :$3"
 }
 expect_rule ip 192.168.1.5/32 "$port_both"
@@ -355,7 +355,7 @@ expect_rule ip 192.168.1.50/32 "$port_single"
 expect_rule ip 192.168.1.0/28 "$port_single"
 expect_rule ip6 fd00:0:0:0:0:0:0:50/128 "$port_single"
 [ "$(wc -l <"$WORK_DIR/ks_dns")" = 8 ] || fail "only the excluded addresses may be redirected: $rules"
-if grep -Fq ':18054' <<<"$rules"; then fail "a stopped Forkop needs no standby redirect"; fi
+if grep -Fq ':18054' <<<"$rules"; then fail "a stopped Prokop needs no standby redirect"; fi
 line_of() { grep -nF "saddr $1 " "$WORK_DIR/ks_dns" | head -n1 | cut -d: -f1; }
 if [ "$(line_of 192.168.1.5/32)" -gt "$(line_of 192.168.1.0/28)" ] || [ "$(line_of 192.168.1.50/32)" -gt "$(line_of 192.168.1.0/28)" ]; then
   fail "an address inside the /28 must match its own group first: $rules"
@@ -395,40 +395,40 @@ cmp -s <(printf '%s\n' "$rules") "$WORK_DIR/ks_dns" || fail "the redirect stays 
 rm -f "$WORK_DIR"/calls-*
 : >"$WORK_DIR/nft.log"
 printf '2\n' >"$WORK_DIR/fail-at-$port_both"
-FORKOP_KILLSWITCH_EXEMPT_PROBE_PASSES=1 FORKOP_KILLSWITCH_WATCH_ITERATIONS=3 ks watch || fail "watch failed"
-[ "$(cat "$WORK_DIR/calls-$port_both")" = 3 ] || fail "every pass must probe with FORKOP_KILLSWITCH_EXEMPT_PROBE_PASSES=1"
+PROKOP_KILLSWITCH_EXEMPT_PROBE_PASSES=1 PROKOP_KILLSWITCH_WATCH_ITERATIONS=3 ks watch || fail "watch failed"
+[ "$(cat "$WORK_DIR/calls-$port_both")" = 3 ] || fail "every pass must probe with PROKOP_KILLSWITCH_EXEMPT_PROBE_PASSES=1"
 if grep -q '^-f ' "$WORK_DIR/nft.log"; then fail "a single failed probe must not change the DNS chain"; fi
 cmp -s <(printf '%s\n' "$rules") "$WORK_DIR/ks_dns" || fail "a single failed probe keeps the redirect"
 rm -f "$WORK_DIR"/calls-*
 printf '2\n3\n' >"$WORK_DIR/fail-at-$port_both"
-FORKOP_KILLSWITCH_EXEMPT_PROBE_PASSES=1 FORKOP_KILLSWITCH_WATCH_ITERATIONS=3 ks watch || fail "watch failed"
+PROKOP_KILLSWITCH_EXEMPT_PROBE_PASSES=1 PROKOP_KILLSWITCH_WATCH_ITERATIONS=3 ks watch || fail "watch failed"
 if grep -Fq 'saddr 192.168.1.5/32' "$WORK_DIR/ks_dns"; then fail "two failed probes in a row hand the devices back to the shared list"; fi
 grep -Fq 'saddr 192.168.1.0/28' "$WORK_DIR/ks_dns" || fail "the other group keeps its resolver"
 rm -f "$WORK_DIR"/calls-* "$WORK_DIR"/fail-at-*
 watch_passes 1
 cmp -s <(printf '%s\n' "$rules") "$WORK_DIR/ks_dns" || fail "an answering resolver gets its clients back"
 
-# Forkop starts again: the excluded devices use sing-box like everybody else.
-start_forkop 1 1
+# Prokop starts again: the excluded devices use sing-box like everybody else.
+start_prokop 1 1
 watch_passes 1
-[ ! -s "$WORK_DIR/ks_dns" ] || fail "a running Forkop must take the redirect of excluded devices away"
+[ ! -s "$WORK_DIR/ks_dns" ] || fail "a running Prokop must take the redirect of excluded devices away"
 
-# sing-box dies while Forkop runs: the standby resolver for everybody.
+# sing-box dies while Prokop runs: the standby resolver for everybody.
 rm -f "$WORK_DIR/sing-box-alive"
 watch_passes 3
 grep -Fq 'redirect to :18054' "$WORK_DIR/ks_dns" || fail "a dead sing-box must switch every client to the standby"
-if grep -Fq 'forkop-exempt' "$WORK_DIR/ks_dns"; then fail "the standby redirect replaces the exemption"; fi
+if grep -Fq 'prokop-exempt' "$WORK_DIR/ks_dns"; then fail "the standby redirect replaces the exemption"; fi
 touch "$WORK_DIR/sing-box-alive"
 watch_passes 2
 [ ! -s "$WORK_DIR/ks_dns" ] || fail "a recovered sing-box takes every client back"
-printf 'ok - the watcher redirects exactly the excluded devices while Forkop is stopped\n'
+printf 'ok - the watcher redirects exactly the excluded devices while Prokop is stopped\n'
 
 # ---- what the groups were saved for --------------------------------------------
 
 # The init script runs one dnsmasq per group, beside the standby.
 cat >"$WORK_DIR/init-start.sh" <<SH
 . "$INIT_SCRIPT"
-FORKOP_LIB="$FORKOP_LIB"
+PROKOP_LIB="$PROKOP_LIB"
 KILLSWITCH_UC="$KS_UC"
 STANDBY_DIR="$CONF_DIR"
 STANDBY_CONF="$CONF_DIR/standby.conf"
@@ -452,9 +452,9 @@ printf 'server=/added-by-another-release.example/\n' >>"$BLOCKED"
 [ -z "$(ks exempt-configs "$CONF_DIR")" ] || fail "groups saved for another block list must not get a resolver"
 ls "$CONF_DIR"/exempt-*.conf >/dev/null 2>&1 && fail "their configurations must be removed"
 cp "$WORK_DIR/blocked.saved" "$BLOCKED"
-stop_forkop 1 ""
+stop_prokop 1 ""
 [ -z "$(ks exempt-configs "$CONF_DIR")" ] || fail "groups saved for another exemption must not get a resolver"
-stop_forkop 1 1
+stop_prokop 1 1
 [ -n "$(ks exempt-configs "$CONF_DIR")" ] || fail "the saved groups are used again with the configuration they were saved for"
 printf 'ok - groups are used only with the block list and configuration they were saved for\n'
 
@@ -467,54 +467,54 @@ fresh
 write_uci 1 1
 ks sync start || fail "sync failed"
 cp "$EXEMPT" "$WORK_DIR/exempt.saved"
-stop_forkop 1 1
+stop_prokop 1 1
 ks exempt-configs "$CONF_DIR" >"$WORK_DIR/confs.saved" || fail "exempt-configs failed"
 watch_passes 1
-grep -Fq 'forkop-exempt' "$WORK_DIR/ks_dns" || fail "the exemption is in use before the other sync"
-start_forkop "" ""
+grep -Fq 'prokop-exempt' "$WORK_DIR/ks_dns" || fail "the exemption is in use before the other sync"
+start_prokop "" ""
 ks sync reload || fail "sync without the option failed"
 cp "$WORK_DIR/exempt.saved" "$EXEMPT"
 cmp -s "$BLOCKED" "$WORK_DIR/blocked.off" || fail "the other sync saved the same shared block list"
-stop_forkop 1 1
+stop_prokop 1 1
 watch_passes 1
-if grep -Fq 'forkop-exempt' "$WORK_DIR/ks_dns"; then fail "groups of another sync must not be redirected to"; fi
+if grep -Fq 'prokop-exempt' "$WORK_DIR/ks_dns"; then fail "groups of another sync must not be redirected to"; fi
 [ -z "$(ks exempt-configs "$CONF_DIR")" ] || fail "groups of another sync must not get a resolver"
-ks follow-stopped-config "reload while Forkop is stopped" || fail "follow-stopped-config failed"
-[ ! -e "$EXEMPT" ] || fail "a reload while Forkop is stopped removes groups of another sync"
+ks follow-stopped-config "reload while Prokop is stopped" || fail "follow-stopped-config failed"
+[ ! -e "$EXEMPT" ] || fail "a reload while Prokop is stopped removes groups of another sync"
 printf 'ok - groups are used only after the sync that saved them\n'
 fresh
 write_uci 1 1
 ks sync start || fail "sync failed"
-stop_forkop 1 1
+stop_prokop 1 1
 ks exempt-configs "$CONF_DIR" >/dev/null || fail "exempt-configs failed"
 
-# A reload while Forkop is stopped (D-15) does not render anything; a
+# A reload while Prokop is stopped (D-15) does not render anything; a
 # changed exemption ends at once, to the blocking side.
 watch_passes 1
-grep -Fq 'forkop-exempt' "$WORK_DIR/ks_dns" || fail "the exemption is in use before the change"
-stop_forkop 1 ""
-ks follow-stopped-config "reload while Forkop is stopped" || fail "follow-stopped-config failed"
-[ ! -e "$EXEMPT" ] || fail "an exemption changed while Forkop is stopped must end"
-if grep -Fq 'forkop-exempt' "$WORK_DIR/ks_dns"; then fail "its redirect must end at once"; fi
+grep -Fq 'prokop-exempt' "$WORK_DIR/ks_dns" || fail "the exemption is in use before the change"
+stop_prokop 1 ""
+ks follow-stopped-config "reload while Prokop is stopped" || fail "follow-stopped-config failed"
+[ ! -e "$EXEMPT" ] || fail "an exemption changed while Prokop is stopped must end"
+if grep -Fq 'prokop-exempt' "$WORK_DIR/ks_dns"; then fail "its redirect must end at once"; fi
 cmp -s "$BLOCKED" "$SERVERS" || fail "the shared block list stays"
 [ -s "$KILLSWITCH_STATE_DIR/policy.nft" ] || fail "the protection stays"
 watch_passes 1
 [ ! -s "$WORK_DIR/ks_dns" ] || fail "nothing may bring the redirect back until the next start"
-printf 'ok - a changed exemption ends while Forkop is stopped\n'
+printf 'ok - a changed exemption ends while Prokop is stopped\n'
 
 # A configuration that cannot be read keeps the protection, but not the
 # exemption: who is exempt cannot be known.
 fresh
 write_uci 1 1
 ks sync start || fail "sync failed"
-stop_forkop 1 1
+stop_prokop 1 1
 ks exempt-configs "$CONF_DIR" >/dev/null || fail "exempt-configs failed"
 watch_passes 1
-grep -Fq 'forkop-exempt' "$WORK_DIR/ks_dns" || fail "the exemption is in use before the configuration breaks"
-sed -i '/^forkop\./d' "$FORKOP_UCI_STATE_FILE"
-if ks follow-stopped-config "reload while Forkop is stopped"; then fail "an unreadable configuration is an error"; fi
+grep -Fq 'prokop-exempt' "$WORK_DIR/ks_dns" || fail "the exemption is in use before the configuration breaks"
+sed -i '/^prokop\./d' "$PROKOP_UCI_STATE_FILE"
+if ks follow-stopped-config "reload while Prokop is stopped"; then fail "an unreadable configuration is an error"; fi
 [ ! -e "$EXEMPT" ] || fail "an unreadable configuration ends the exemption"
-if grep -Fq 'forkop-exempt' "$WORK_DIR/ks_dns"; then fail "an unreadable configuration ends the redirect at once"; fi
+if grep -Fq 'prokop-exempt' "$WORK_DIR/ks_dns"; then fail "an unreadable configuration ends the redirect at once"; fi
 [ -s "$KILLSWITCH_STATE_DIR/policy.nft" ] || fail "an unreadable configuration keeps the protection"
 cmp -s "$BLOCKED" "$SERVERS" || fail "an unreadable configuration keeps the shared block list"
 grep -Fq 'could not be read' "$KILLSWITCH_STATE_DIR/state.json" || fail "the unreadable configuration must be reported"
@@ -525,15 +525,15 @@ fresh
 write_uci 1 1
 ks sync start || fail "sync failed"
 cp "$EXEMPT" "$WORK_DIR/exempt.saved"
-stop_forkop 1 1
-ks follow-stopped-config "reload while Forkop is stopped" || fail "follow-stopped-config failed"
+stop_prokop 1 1
+ks follow-stopped-config "reload while Prokop is stopped" || fail "follow-stopped-config failed"
 cmp -s "$EXEMPT" "$WORK_DIR/exempt.saved" || fail "an unchanged exemption must stay"
 
 # ---- removal -----------------------------------------------------------------------
 
 ks exempt-configs "$CONF_DIR" >/dev/null
 watch_passes 1
-grep -Fq 'forkop-exempt' "$WORK_DIR/ks_dns" || fail "the exemption is in use before the removal"
+grep -Fq 'prokop-exempt' "$WORK_DIR/ks_dns" || fail "the exemption is in use before the removal"
 ks disable "test" || fail "disable failed"
 [ ! -e "$EXEMPT" ] || fail "removing the kill-switch removes the groups"
 ls "$CONF_DIR"/exempt-*.conf >/dev/null 2>&1 && fail "removing the kill-switch removes the resolver configurations"
@@ -544,7 +544,7 @@ fresh
 write_uci 1 1
 ks sync start || fail "sync failed"
 [ -s "$EXEMPT" ] || fail "the exemption is saved"
-printf 'forkop.settings.dont_touch_dhcp=1\n' >>"$FORKOP_UCI_STATE_FILE"
+printf 'prokop.settings.dont_touch_dhcp=1\n' >>"$PROKOP_UCI_STATE_FILE"
 ks sync reload || fail "sync with dont_touch_dhcp failed"
 [ ! -e "$EXEMPT" ] || fail "without a block list there is nothing to exempt from"
 
@@ -577,14 +577,14 @@ cat >"$WORK_DIR/added.json" <<'JSON'
 JSON
 fresh
 {
-  printf 'forkop.settings=settings\nforkop.settings.source_network_interfaces=br-lan\n'
-  printf 'forkop.settings.config_path=%s\n' "$WORK_DIR/added.json"
-  printf 'forkop.exa=section\nforkop.exa.action=connection\nforkop.exa.kill_switch=1\nforkop.exa.kill_switch_dns_exempt=1\n'
-  printf 'forkop.exa.excluded_source_ip_cidr=192.168.1.50\n'
-  printf 'forkop.free=section\nforkop.free.action=connection\n'
-  printf 'forkop.prot=section\nforkop.prot.action=connection\nforkop.prot.kill_switch=1\n'
+  printf 'prokop.settings=settings\nprokop.settings.source_network_interfaces=br-lan\n'
+  printf 'prokop.settings.config_path=%s\n' "$WORK_DIR/added.json"
+  printf 'prokop.exa=section\nprokop.exa.action=connection\nprokop.exa.kill_switch=1\nprokop.exa.kill_switch_dns_exempt=1\n'
+  printf 'prokop.exa.excluded_source_ip_cidr=192.168.1.50\n'
+  printf 'prokop.free=section\nprokop.free.action=connection\n'
+  printf 'prokop.prot=section\nprokop.prot.action=connection\nprokop.prot.kill_switch=1\n'
   printf 'dhcp.@dnsmasq[0]=dnsmasq\ndhcp.@dnsmasq[0].server=127.0.0.42\n'
-} >"$FORKOP_UCI_STATE_FILE"
+} >"$PROKOP_UCI_STATE_FILE"
 ks sync start || fail "sync failed"
 grep -Fqx 'server=/example.com/' "$BLOCKED" || fail "example.com is blocked for every client"
 if grep -Fq 'sub.example.com' "$BLOCKED"; then fail "every other client gets no exception for sub.example.com"; fi
@@ -613,13 +613,13 @@ printf 'ok - a group gets the exceptions only it has, and only what it resolves 
 } >"$WORK_DIR/many.json"
 fresh
 {
-  printf 'forkop.settings=settings\nforkop.settings.source_network_interfaces=br-lan\n'
-  printf 'forkop.settings.config_path=%s\n' "$WORK_DIR/many.json"
+  printf 'prokop.settings=settings\nprokop.settings.source_network_interfaces=br-lan\n'
+  printf 'prokop.settings.config_path=%s\n' "$WORK_DIR/many.json"
   for i in 1 2 3 4 5 6 7; do
-    printf 'forkop.s%s=section\nforkop.s%s.action=connection\nforkop.s%s.kill_switch=1\nforkop.s%s.kill_switch_dns_exempt=1\n' "$i" "$i" "$i" "$i"
+    printf 'prokop.s%s=section\nprokop.s%s.action=connection\nprokop.s%s.kill_switch=1\nprokop.s%s.kill_switch_dns_exempt=1\n' "$i" "$i" "$i" "$i"
   done
   printf 'dhcp.@dnsmasq[0]=dnsmasq\ndhcp.@dnsmasq[0].server=127.0.0.42\n'
-} >"$FORKOP_UCI_STATE_FILE"
+} >"$PROKOP_UCI_STATE_FILE"
 ks sync start || fail "sync with many groups failed"
 [ "$(state_value dns.exempt_groups)" = 4 ] || fail "at most four groups get a resolver"
 grep -Fq 'more than 4 groups with different blocked names, only 4 get their own resolver; 2 device addresses stay blocked' "$KILLSWITCH_STATE_DIR/state.json" ||
@@ -642,7 +642,7 @@ validate() {
     "outbound_json": "{\"type\":\"direct\"}", "domain_suffix": [ "example.com" ], "kill_switch": "1",
     "excluded_source_ip_cidr": [ "192.168.1.50" ], "kill_switch_dns_exempt": "$1" } ] }
 JSON
-  ucode -L "$FORKOP_LIB" "$VALIDATOR" validate-runtime-fixture "$WORK_DIR/validate.json" '{}' 2>&1
+  ucode -L "$PROKOP_LIB" "$VALIDATOR" validate-runtime-fixture "$WORK_DIR/validate.json" '{}' 2>&1
 }
 for value in 1 0; do
   output="$(validate "$value")" || fail "kill_switch_dns_exempt=$value must be valid: $output"

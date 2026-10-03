@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-node - "$ROOT_DIR/luci-app-forkop/htdocs/luci-static/resources/view/forkop/section.js" <<'NODE'
+node - "$ROOT_DIR/luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js" <<'NODE'
 const fs = require('fs');
 const vm = require('vm');
 const assert = require('assert/strict');
@@ -26,7 +26,7 @@ const start = source.lastIndexOf('o = section.taboption(', source.search(/form\.
 const end = source.indexOf('addTextConditionField(section, {', source.indexOf('"resolve_real_ip_for_routing"'));
 assert(start >= 0 && end > start, 'hidden rule options not found');
 
-const UCI_PACKAGE = 'forkop';
+const UCI_PACKAGE = 'prokop';
 let store;
 let form;
 const uci = {

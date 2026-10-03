@@ -16,8 +16,8 @@
 #                     BASE when it holds '..') and the staged, unstaged and
 #                     untracked files. A test is selected when it changed or
 #                     its text names a changed file by repository path, by
-#                     basename (.uc .js .ts .sh .json under forkop/,
-#                     luci-app-forkop/, fe-app-forkop/src/, tests/helpers/), by
+#                     basename (.uc .js .ts .sh .json under prokop/,
+#                     luci-app-prokop/, fe-app-prokop/src/, tests/helpers/), by
 #                     ucode module name (core.uci) or by its fixture
 #                     directory. A module or helper that requires or sources a
 #                     changed one counts as changed. A safety set always runs.
@@ -25,7 +25,7 @@
 #   -l, --list        print the selected tests in run order and exit
 #   --no-rerun        do not re-run failed tests
 #   --durations FILE  durations cache for longest-first scheduling (default
-#                     ${XDG_CACHE_HOME:-$HOME/.cache}/forkop-tests/durations.tsv)
+#                     ${XDG_CACHE_HOME:-$HOME/.cache}/prokop-tests/durations.tsv)
 #   --all             run every test; without TEST under GitHub Actions the
 #                     runner otherwise exits at once, since the CI loop over
 #                     tests/*.sh runs each test itself
@@ -38,15 +38,15 @@
 # is run once more, alone: one that passes then is reported as FLAKY and does
 # not fail the run. While several tests run at once, a test that runs groups
 # of its cases in parallel (tests/helpers/case_groups.sh) runs at most
-# FORKOP_TEST_GROUP_JOBS of them at a time (default: 2 x CPUs / jobs, at
+# PROKOP_TEST_GROUP_JOBS of them at a time (default: 2 x CPUs / jobs, at
 # least 2; a value set in the environment is kept). A test run alone runs all
 # its groups at once.
 #
 # A test keeps its files in its own temporary directory. The run also fails
-# when it changed the host where a test that misses an override of a Forkop
+# when it changed the host where a test that misses an override of a Prokop
 # default path, or writes under an empty variable, writes instead: an entry
-# at /, Forkop's paths under /etc, /usr, /run and /tmp, the default UCI
-# savedir (HOST_PATHS). FORKOP_TEST_HOST_ROOT moves that check to another
+# at /, Prokop's paths under /etc, /usr, /run and /tmp, the default UCI
+# savedir (HOST_PATHS). PROKOP_TEST_HOST_ROOT moves that check to another
 # root (the runner's self-test).
 #
 # Exit status: 0 when no test failed and the host is unchanged, 1 when a
@@ -90,7 +90,7 @@ verbose=0
 list_only=0
 rerun=1
 run_all=0
-durations="${XDG_CACHE_HOME:-$HOME/.cache}/forkop-tests/durations.tsv"
+durations="${XDG_CACHE_HOME:-$HOME/.cache}/prokop-tests/durations.tsv"
 args=()
 
 need_value() {
@@ -190,12 +190,12 @@ changed_files() { # BASE
   ) | LC_ALL=C sort -u
 }
 
-# Dotted ucode module name of a library file: forkop/files/usr/lib/core/uci.uc
+# Dotted ucode module name of a library file: prokop/files/usr/lib/core/uci.uc
 # is required as "core.uci".
 module_name() {
   local path=$1
-  [[ $path == forkop/files/usr/lib/*.uc ]] || return 1
-  path=${path#forkop/files/usr/lib/}
+  [[ $path == prokop/files/usr/lib/*.uc ]] || return 1
+  path=${path#prokop/files/usr/lib/}
   path=${path%.uc}
   printf '%s\n' "${path//\//.}"
 }
@@ -204,7 +204,7 @@ module_name() {
 usage_tokens() {
   local file=$1 module
   if module="$(module_name "$file")"; then
-    printf '%s\n' "\"$module\"" "'$module'" "/${file#forkop/files/usr/lib/}"
+    printf '%s\n' "\"$module\"" "'$module'" "/${file#prokop/files/usr/lib/}"
   fi
   case $file in
     tests/helpers/*) printf '%s\n' "${file#tests/}" ;;
@@ -217,7 +217,7 @@ declare -A CHANGED=()
 expand_changed() {
   local -a frontier=("$@") next tokens scope
   local file user dir
-  for dir in forkop/files luci-app-forkop/root tests/helpers; do
+  for dir in prokop/files luci-app-prokop/root tests/helpers; do
     [[ -d $ROOT_DIR/$dir ]] && scope+=("$dir")
   done
   ((${#scope[@]})) || return 0
@@ -243,7 +243,7 @@ test_tokens() {
   printf 's\t%s\n' "$file"
   base=${file##*/}
   case $file in
-    forkop/* | luci-app-forkop/* | fe-app-forkop/src/* | tests/helpers/*)
+    prokop/* | luci-app-prokop/* | fe-app-prokop/src/* | tests/helpers/*)
       case $base in
         *.uc | *.js | *.ts | *.sh | *.json) printf 's\t%s\n' "$base" ;;
       esac
@@ -374,16 +374,16 @@ fi
 # ---------------------------------------------------------------------------
 # Running
 
-LOG_DIR="$(mktemp -d "${TMPDIR:-/tmp}/forkop-tests.XXXXXX")" || die "cannot create a log directory" 1
+LOG_DIR="$(mktemp -d "${TMPDIR:-/tmp}/prokop-tests.XXXXXX")" || die "cannot create a log directory" 1
 
 # The host paths a test must not change (see the header). A directory at /
 # counts by name: what changes in it is the system's.
-HOST_ROOT=${FORKOP_TEST_HOST_ROOT:-}
-HOST_PATHS=(etc/forkop etc/forkop-backups etc/config etc/sing-box etc/crontabs
+HOST_ROOT=${PROKOP_TEST_HOST_ROOT:-}
+HOST_PATHS=(etc/prokop etc/prokop-backups etc/config etc/sing-box etc/crontabs
   etc/opkg etc/apk etc/rc.d etc/uci-defaults etc/hotplug.d
-  etc/init.d/forkop etc/init.d/forkop-killswitch etc/init.d/forkop-torrserver-direct
-  etc/init.d/sing-box usr/bin/forkop usr/lib/forkop usr/share/forkop
-  usr/libexec/forkop-ro run/forkop var/run/forkop tmp/.uci)
+  etc/init.d/prokop etc/init.d/prokop-killswitch etc/init.d/prokop-torrserver-direct
+  etc/init.d/sing-box usr/bin/prokop usr/lib/prokop usr/share/prokop
+  usr/libexec/prokop-ro run/prokop var/run/prokop tmp/.uci)
 
 host_state() {
   local path
@@ -395,7 +395,7 @@ host_state() {
     find "${HOST_ROOT:-/}" -mindepth 1 -maxdepth 1 -type d -printf '%p %y\n'
     find "${HOST_ROOT:-/}" -mindepth 1 -maxdepth 1 ! -type d -printf '%p %y %s %T@\n'
     ((${#paths[@]})) && find "${paths[@]}" -printf '%p %y %s %T@\n'
-    find "$HOST_ROOT/tmp" -mindepth 1 -maxdepth 1 -name 'forkop*' ! -name 'forkop-tests.*' \
+    find "$HOST_ROOT/tmp" -mindepth 1 -maxdepth 1 -name 'prokop*' ! -name 'prokop-tests.*' \
       -printf '%p %y %s %T@\n'
   } 2>/dev/null | LC_ALL=C sort
 }
@@ -426,7 +426,7 @@ run_test() { # PATH LOG RESULT [GROUP_JOBS]
   (
     cd "$ROOT_DIR" || exit 1
     if [[ -n $group_jobs ]]; then
-      exec env FORKOP_TEST_GROUP_JOBS="$group_jobs" timeout -k "$KILL_GRACE" "$timeout_s" bash "$run_path"
+      exec env PROKOP_TEST_GROUP_JOBS="$group_jobs" timeout -k "$KILL_GRACE" "$timeout_s" bash "$run_path"
     fi
     exec timeout -k "$KILL_GRACE" "$timeout_s" bash "$run_path"
   ) </dev/null >"$log" 2>&1 &
@@ -494,7 +494,7 @@ if ((jobs_n > total)); then jobs_n=$total; fi
 # shared already, and an overloaded host fails the tests that bound a wait.
 # More groups for the longest test made the run no shorter on a loaded host,
 # and the tests that bound a wait then failed.
-group_jobs=${FORKOP_TEST_GROUP_JOBS:-}
+group_jobs=${PROKOP_TEST_GROUP_JOBS:-}
 if [[ -z $group_jobs ]] && ((jobs_n > 1)); then
   group_jobs=$(((cpus * 2 + jobs_n - 1) / jobs_n))
   ((group_jobs >= 2)) || group_jobs=2
@@ -563,7 +563,7 @@ flaky=()
 if ((rerun)) && ((${#failed[@]})); then
   printf '\nRe-running %d failed test(s) one at a time\n' "${#failed[@]}"
   for name in "${failed[@]}"; do
-    run_test "${TEST_PATH[$name]}" "$LOG_DIR/$name.rerun.log" "$LOG_DIR/$name.rerun.result" "${FORKOP_TEST_GROUP_JOBS:-}" &
+    run_test "${TEST_PATH[$name]}" "$LOG_DIR/$name.rerun.log" "$LOG_DIR/$name.rerun.result" "${PROKOP_TEST_GROUP_JOBS:-}" &
     wait "$!"
     read_result "$name" "$LOG_DIR/$name.rerun.result"
     printf 'rerun   %-7s %6ss  %s\n' "${STATUS[$name]}" "$(seconds "${ELAPSED[$name]}")" "$name"

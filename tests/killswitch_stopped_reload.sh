@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# While Forkop is stopped by the user or not started since boot (D-15), a
+# While Prokop is stopped by the user or not started since boot (D-15), a
 # reload never reaches start/reload, which refresh the kill-switch. A
 # configuration change that leaves no protected section (unchecking the
 # option, deleting the section, restoring a snapshot without it) must still
@@ -13,9 +13,9 @@
 set -eo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-INITD_UC="$FORKOP_LIB/service/initd.uc"
-LIFECYCLE_UC="$FORKOP_LIB/service/lifecycle.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+INITD_UC="$PROKOP_LIB/service/initd.uc"
+LIFECYCLE_UC="$PROKOP_LIB/service/lifecycle.uc"
 WORK_DIR="$(mktemp -d)"
 # shellcheck source=tests/helpers/wait.sh
 . "$ROOT_DIR/tests/helpers/wait.sh"
@@ -32,7 +32,7 @@ trap cleanup EXIT
 fail() {
   printf 'FAIL: %s\n' "$1" >&2
   printf 'uci state:\n' >&2
-  cat "$FORKOP_UCI_STATE_FILE" >&2 2>/dev/null || true
+  cat "$PROKOP_UCI_STATE_FILE" >&2 2>/dev/null || true
   printf 'logger:\n' >&2
   cat "$WORK_DIR/logger.log" >&2 2>/dev/null || true
   exit 1
@@ -43,9 +43,9 @@ cat >"$WORK_DIR/bin/nft" <<'NFT'
 #!/usr/bin/env bash
 case "$1 $2" in
   "list table")
-    [ "$4" = "ForkopKillswitch" ] && { [ -e "$WORK_DIR/ks-present" ]; exit $?; }
+    [ "$4" = "ProkopKillswitch" ] && { [ -e "$WORK_DIR/ks-present" ]; exit $?; }
     exit 1 ;;
-  "delete table") [ "$4" = "ForkopKillswitch" ] && rm -f "$WORK_DIR/ks-present"; exit 0 ;;
+  "delete table") [ "$4" = "ProkopKillswitch" ] && rm -f "$WORK_DIR/ks-present"; exit 0 ;;
 esac
 exit 0
 NFT
@@ -56,45 +56,45 @@ chmod 0755 "$WORK_DIR/bin/"*
 
 export WORK_DIR
 export PATH="$WORK_DIR/bin:$PATH"
-export FORKOP_LIB
-export FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
-export FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/run"
-export FORKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/reload.lock"
-export FORKOP_INTERNAL_CONFIG_TRIGGER_GUARD="$WORK_DIR/run/internal-config-change"
-export FORKOP_CONFIG_FILE="$WORK_DIR/forkop.config"
+export PROKOP_LIB
+export PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
+export PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/run"
+export PROKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/reload.lock"
+export PROKOP_INTERNAL_CONFIG_TRIGGER_GUARD="$WORK_DIR/run/internal-config-change"
+export PROKOP_CONFIG_FILE="$WORK_DIR/prokop.config"
 export KILLSWITCH_STATE_DIR="$WORK_DIR/ks"
-export KILLSWITCH_NFT_INCLUDE="$WORK_DIR/ruleset-post/90-forkop-killswitch.nft"
+export KILLSWITCH_NFT_INCLUDE="$WORK_DIR/ruleset-post/90-prokop-killswitch.nft"
 export KILLSWITCH_CACHE_DIR="$WORK_DIR/cache"
 export DNSMASQ_INIT="$WORK_DIR/bin/dnsmasq-init"
-export FORKOP_KILLSWITCH_INIT="$WORK_DIR/bin/killswitch-init"
-export FORKOP_PENDING_RELOAD_FILE="$WORK_DIR/run/reload.pending"
-export FORKOP_SERVICE_INIT="$WORK_DIR/bin/no-init"
-export FORKOP_KILLSWITCH_LOCK_ATTEMPTS=2
-: >"$FORKOP_CONFIG_FILE"
+export PROKOP_KILLSWITCH_INIT="$WORK_DIR/bin/killswitch-init"
+export PROKOP_PENDING_RELOAD_FILE="$WORK_DIR/run/reload.pending"
+export PROKOP_SERVICE_INIT="$WORK_DIR/bin/no-init"
+export PROKOP_KILLSWITCH_LOCK_ATTEMPTS=2
+: >"$PROKOP_CONFIG_FILE"
 
 POLICY="$KILLSWITCH_STATE_DIR/policy.nft"
 SERVERS="$KILLSWITCH_STATE_DIR/dnsmasq.servers"
 BLOCKED="$KILLSWITCH_STATE_DIR/dns-blocked.servers"
 
 uci_value() {
-  awk -F= -v key="$1" '$1 == key { print substr($0, length($1) + 2) }' "$FORKOP_UCI_STATE_FILE"
+  awk -F= -v key="$1" '$1 == key { print substr($0, length($1) + 2) }' "$PROKOP_UCI_STATE_FILE"
 }
 
-# Forkop stopped with the protection of section "main" in place.
+# Prokop stopped with the protection of section "main" in place.
 arm() {
-  cat >"$FORKOP_UCI_STATE_FILE" <<EOF
-forkop.settings=settings
-forkop.main=section
-forkop.main.action=connection
-forkop.main.kill_switch=1
-forkop.other=section
-forkop.other.action=connection
-forkop.other.kill_switch=$1
+  cat >"$PROKOP_UCI_STATE_FILE" <<EOF
+prokop.settings=settings
+prokop.main=section
+prokop.main.action=connection
+prokop.main.kill_switch=1
+prokop.other=section
+prokop.other.action=connection
+prokop.other.kill_switch=$1
 dhcp.@dnsmasq[0]=dnsmasq
 dhcp.@dnsmasq[0].server=1.1.1.1
 dhcp.@dnsmasq[0].serversfile=$SERVERS
 EOF
-  printf 'add table inet ForkopKillswitch\n' >"$POLICY"
+  printf 'add table inet ProkopKillswitch\n' >"$POLICY"
   printf 'server=/example.com/\n' >"$BLOCKED"
   cp "$BLOCKED" "$SERVERS"
   touch "$WORK_DIR/ks-present"
@@ -103,9 +103,9 @@ EOF
 # What init.d runs for a reload of a runtime that is down.
 reload() {
   local output
-  output="$(ucode -L "$FORKOP_LIB" "$INITD_UC" reload-begin-fixture "$1" 0 0 1 "" 2>&1)" || true
+  output="$(ucode -L "$PROKOP_LIB" "$INITD_UC" reload-begin-fixture "$1" 0 0 1 "" 2>&1)" || true
   printf '%s\n' "$output" | grep -Fq "INITD_RELOAD_ACTION='skip'" ||
-    fail "a reload of a stopped Forkop must be skipped (D-15): $output"
+    fail "a reload of a stopped Prokop must be skipped (D-15): $output"
 }
 
 # init.d holds reload.lock while service/lifecycle.uc reloads, recorded the
@@ -116,15 +116,15 @@ hold_reload_lock() {
   wait_until 5 test -r "/proc/$HOLDER/stat" || fail "the reload.lock holder did not start"
   local ticks
   ticks="$(awk '{ sub(/^.*\) /, ""); print $20 }' "/proc/$HOLDER/stat")"
-  mkdir -p "$FORKOP_RELOAD_LOCK_DIR"
-  printf '%s\n%s\n' "$HOLDER" "$ticks" >"$FORKOP_RELOAD_LOCK_DIR/owner.$HOLDER.$ticks"
+  mkdir -p "$PROKOP_RELOAD_LOCK_DIR"
+  printf '%s\n%s\n' "$HOLDER" "$ticks" >"$PROKOP_RELOAD_LOCK_DIR/owner.$HOLDER.$ticks"
 }
 
 release_reload_lock() {
   owned_kill TERM "$HOLDER" || true
   wait "$HOLDER" 2>/dev/null || true
   HOLDER=""
-  rm -rf "$FORKOP_RELOAD_LOCK_DIR"
+  rm -rf "$PROKOP_RELOAD_LOCK_DIR"
 }
 
 assert_kept() {
@@ -141,7 +141,7 @@ assert_lifted() {
 
 # ---- stopped by the user ----------------------------------------------------
 
-printf 'user\n' >"$FORKOP_RUNTIME_STATE_DIR/stop.requested"
+printf 'user\n' >"$PROKOP_RUNTIME_STATE_DIR/stop.requested"
 
 arm 1
 reload on_config_change
@@ -149,17 +149,17 @@ assert_kept "an unrelated change while stopped"
 
 # Unchecking one of two protected sections keeps the protection: it cannot
 # be rendered again without a runtime, and blocking is the safe side.
-sed -i 's/^forkop.other.kill_switch=1$/forkop.other.kill_switch=0/' "$FORKOP_UCI_STATE_FILE"
+sed -i 's/^prokop.other.kill_switch=1$/prokop.other.kill_switch=0/' "$PROKOP_UCI_STATE_FILE"
 reload on_config_change
 assert_kept "one protected section left while stopped"
 
-sed -i 's/^forkop.main.kill_switch=1$/forkop.main.kill_switch=0/' "$FORKOP_UCI_STATE_FILE"
+sed -i 's/^prokop.main.kill_switch=1$/prokop.main.kill_switch=0/' "$PROKOP_UCI_STATE_FILE"
 reload on_config_change
 assert_lifted "the option unchecked on the last protected section while stopped"
 
 # A snapshot restore reloads with its own reason.
 arm 0
-sed -i '/^forkop.main/d' "$FORKOP_UCI_STATE_FILE"
+sed -i '/^prokop.main/d' "$PROKOP_UCI_STATE_FILE"
 reload config-restore
 assert_lifted "a restored configuration without a protected section while stopped"
 
@@ -167,7 +167,7 @@ assert_lifted "a restored configuration without a protected section while stoppe
 # file cut short) reads as no section at all. That proves nothing about the
 # protected sections: the protection stays.
 arm 1
-sed -i '/^forkop\./d' "$FORKOP_UCI_STATE_FILE"
+sed -i '/^prokop\./d' "$PROKOP_UCI_STATE_FILE"
 reload on_config_change
 assert_kept "a configuration that could not be read while stopped"
 grep -Fq 'could not be read' "$KILLSWITCH_STATE_DIR/state.json" ||
@@ -176,19 +176,19 @@ grep -Fq 'could not be read' "$KILLSWITCH_STATE_DIR/state.json" ||
 # A stop that lands after init.d let the reload through is caught again by
 # service/lifecycle.uc under the reload.lock init.d holds for it.
 arm 1
-sed -i 's/kill_switch=1$/kill_switch=0/' "$FORKOP_UCI_STATE_FILE"
+sed -i 's/kill_switch=1$/kill_switch=0/' "$PROKOP_UCI_STATE_FILE"
 hold_reload_lock
-ucode -L "$FORKOP_LIB" "$LIFECYCLE_UC" reload on_config_change >"$WORK_DIR/lifecycle.out" 2>&1 ||
-  fail "the reload of a stopped Forkop failed: $(cat "$WORK_DIR/lifecycle.out")"
+ucode -L "$PROKOP_LIB" "$LIFECYCLE_UC" reload on_config_change >"$WORK_DIR/lifecycle.out" 2>&1 ||
+  fail "the reload of a stopped Prokop failed: $(cat "$WORK_DIR/lifecycle.out")"
 assert_lifted "the option unchecked on every section, seen by the reload under reload.lock"
-[ -d "$FORKOP_RELOAD_LOCK_DIR" ] || fail "the reload must leave init.d's reload.lock alone"
+[ -d "$PROKOP_RELOAD_LOCK_DIR" ] || fail "the reload must leave init.d's reload.lock alone"
 release_reload_lock
 
 # ---- not started since boot -------------------------------------------------
 
-rm -f "$FORKOP_RUNTIME_STATE_DIR/stop.requested" "$FORKOP_RUNTIME_STATE_DIR/start.explicit"
+rm -f "$PROKOP_RUNTIME_STATE_DIR/stop.requested" "$PROKOP_RUNTIME_STATE_DIR/start.explicit"
 arm 0
-sed -i 's/^forkop.main.action=connection$/forkop.main.action=bypass/' "$FORKOP_UCI_STATE_FILE"
+sed -i 's/^prokop.main.action=connection$/prokop.main.action=bypass/' "$PROKOP_UCI_STATE_FILE"
 reload on_config_change
 assert_lifted "the protected section turned into a bypass while not started"
 

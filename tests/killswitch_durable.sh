@@ -7,9 +7,9 @@
 set -eo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-KS_UC="$FORKOP_LIB/killswitch/runtime.uc"
-DNS_UC="$FORKOP_LIB/dns/apply.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+KS_UC="$PROKOP_LIB/killswitch/runtime.uc"
+DNS_UC="$PROKOP_LIB/dns/apply.uc"
 WORK_DIR="$(mktemp -d)"
 
 cleanup() {
@@ -29,12 +29,12 @@ cat >"$WORK_DIR/bin/nft" <<'NFT'
 #!/usr/bin/env bash
 case "$1 $2" in
   "list table")
-    [ "$4" = "ForkopTable" ] && exit 0
-    [ "$4" = "ForkopKillswitch" ] && { [ -e "$WORK_DIR/ks-present" ]; exit $?; }
+    [ "$4" = "ProkopTable" ] && exit 0
+    [ "$4" = "ProkopKillswitch" ] && { [ -e "$WORK_DIR/ks-present" ]; exit $?; }
     exit 1 ;;
   "list set")
-    printf 'table inet ForkopTable {\n\tset %s {\n\t\ttype ipv4_addr\n' "$5"
-    [ "$5" = "forkop_rule_main_subnets" ] && printf '\t\telements = { %s }\n' "$(cat "$WORK_DIR/elements")"
+    printf 'table inet ProkopTable {\n\tset %s {\n\t\ttype ipv4_addr\n' "$5"
+    [ "$5" = "prokop_rule_main_subnets" ] && printf '\t\telements = { %s }\n' "$(cat "$WORK_DIR/elements")"
     printf '\t}\n}\n'
     exit 0 ;;
   "-c -f") exit 0 ;;
@@ -54,33 +54,33 @@ chmod 0755 "$WORK_DIR/bin/"*
 
 export WORK_DIR
 export PATH="$WORK_DIR/bin:$PATH"
-export FORKOP_LIB
-export FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
-export FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/run"
-export FORKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/reload.lock"
+export PROKOP_LIB
+export PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
+export PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/run"
+export PROKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/reload.lock"
 export KILLSWITCH_STATE_DIR="$WORK_DIR/ks"
-export KILLSWITCH_NFT_INCLUDE="$WORK_DIR/ruleset-post/90-forkop-killswitch.nft"
+export KILLSWITCH_NFT_INCLUDE="$WORK_DIR/ruleset-post/90-prokop-killswitch.nft"
 export KILLSWITCH_CACHE_DIR="$WORK_DIR/cache"
 export DNSMASQ_INIT="$WORK_DIR/bin/dnsmasq-init"
-export FORKOP_KILLSWITCH_INIT="$WORK_DIR/bin/killswitch-init"
+export PROKOP_KILLSWITCH_INIT="$WORK_DIR/bin/killswitch-init"
 
 cat >"$WORK_DIR/config.json" <<'JSON'
 { "route": { "rules": [ { "action": "route", "outbound": "main-out", "domain_suffix": [ "example.com" ] } ], "rule_set": [] } }
 JSON
-cat >"$FORKOP_UCI_STATE_FILE" <<EOF
-forkop.settings=settings
-forkop.settings.source_network_interfaces=br-lan
-forkop.settings.config_path=$WORK_DIR/config.json
-forkop.main=section
-forkop.main.action=connection
-forkop.main.kill_switch=1
-forkop.main.ip_cidr=3.3.3.0/24
+cat >"$PROKOP_UCI_STATE_FILE" <<EOF
+prokop.settings=settings
+prokop.settings.source_network_interfaces=br-lan
+prokop.settings.config_path=$WORK_DIR/config.json
+prokop.main=section
+prokop.main.action=connection
+prokop.main.kill_switch=1
+prokop.main.ip_cidr=3.3.3.0/24
 dhcp.@dnsmasq[0]=dnsmasq
 dhcp.@dnsmasq[0].server=127.0.0.42
 EOF
 printf '3.3.3.0/24' >"$WORK_DIR/elements"
 
-ks() { ucode -L "$FORKOP_LIB" "$KS_UC" "$@"; }
+ks() { ucode -L "$PROKOP_LIB" "$KS_UC" "$@"; }
 POLICY="$KILLSWITCH_STATE_DIR/policy.nft"
 STATE="$KILLSWITCH_STATE_DIR/state.json"
 SERVERS="$KILLSWITCH_STATE_DIR/dnsmasq.servers"
@@ -119,13 +119,13 @@ grep -Eq '(^| )policy\.nft\.tmp\.[0-9]+ ' "$WORK_DIR/sync.log" || fail "a change
 
 # The servers file dnsmasq reads: flushed when it changes, untouched otherwise.
 : >"$WORK_DIR/sync.log"
-sed -i 's/^dhcp.@dnsmasq\[0\].server=.*/dhcp.@dnsmasq[0].server=1.1.1.1/' "$FORKOP_UCI_STATE_FILE"
-ucode -L "$FORKOP_LIB" "$DNS_UC" killswitch-refresh || fail "DNS refresh failed"
-grep -Fqx 'server=/example.com/' "$SERVERS" || fail "a stopped Forkop must block protected names"
+sed -i 's/^dhcp.@dnsmasq\[0\].server=.*/dhcp.@dnsmasq[0].server=1.1.1.1/' "$PROKOP_UCI_STATE_FILE"
+ucode -L "$PROKOP_LIB" "$DNS_UC" killswitch-refresh || fail "DNS refresh failed"
+grep -Fqx 'server=/example.com/' "$SERVERS" || fail "a stopped Prokop must block protected names"
 grep -Eq '(^| )dnsmasq\.servers\.tmp\.[0-9]+ ' "$WORK_DIR/sync.log" || fail "the servers file must be flushed before the rename"
 servers_inode="$(inode "$SERVERS")"
 : >"$WORK_DIR/sync.log"
-ucode -L "$FORKOP_LIB" "$DNS_UC" killswitch-refresh || fail "second DNS refresh failed"
+ucode -L "$PROKOP_LIB" "$DNS_UC" killswitch-refresh || fail "second DNS refresh failed"
 [ "$(inode "$SERVERS")" = "$servers_inode" ] || fail "an unchanged servers file must not be rewritten"
 [ ! -s "$WORK_DIR/sync.log" ] || fail "an unchanged servers file must not be flushed"
 

@@ -2,8 +2,8 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-GENERATOR="$FORKOP_LIB/singbox/generator.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+GENERATOR="$PROKOP_LIB/singbox/generator.uc"
 WORK_DIR="$(mktemp -d)"
 
 cleanup() {
@@ -78,7 +78,7 @@ generate() {
   local fixture="$1"
   local output="$2"
   write_materialized_rulesets "$output"
-  ucode -L "$FORKOP_LIB" "$GENERATOR" generate-config-fixture \
+  ucode -L "$PROKOP_LIB" "$GENERATOR" generate-config-fixture \
     "$fixture" "$output" "127.0.0.1" "0" "1" "" "1.14.0"
 }
 
@@ -178,7 +178,7 @@ for (let rule_set in config.route.rule_set || [])
 MISSING_OUTPUT="$WORK_DIR/missing-materialized.json"
 write_materialized_rulesets "$MISSING_OUTPUT"
 rm -f "$MISSING_OUTPUT.rulesets/vpn-remote-subnets-ruleset.json"
-if ucode -L "$FORKOP_LIB" "$GENERATOR" generate-config-fixture \
+if ucode -L "$PROKOP_LIB" "$GENERATOR" generate-config-fixture \
   "$WORK_DIR/fixture.json" "$MISSING_OUTPUT" "127.0.0.1" "0" "1" "" "1.14.0" \
   >"$WORK_DIR/missing-materialized.stdout" 2>"$WORK_DIR/missing-materialized.stderr"; then
   fail "missing materialized remote subnet ruleset must fail closed"

@@ -6,10 +6,10 @@
 //   - the migrations are idempotent on their own: without the applied
 //     markers a second run changes nothing but the markers (for configs
 //     that had no markers, so that every migration ran the first time);
-//   - options unknown to Forkop and existing secrets survive unchanged.
-// Configs are random mixes of legacy (Podkop, older Forkop) and current
+//   - options unknown to Prokop and existing secrets survive unchanged.
+// Configs are random mixes of legacy (Podkop, older Prokop) and current
 // sections with random option subsets and unknown options.
-// Usage: config_migration.js <forkop lib> <work dir>
+// Usage: config_migration.js <prokop lib> <work dir>
 
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
@@ -27,7 +27,7 @@ function evaluate(input) {
     return { legacy: core.ZAPRET_LEGACY_DEFAULT_NFQWS_OPT, current: core.ZAPRET_DEFAULT_NFQWS_OPT };
 }
 `, [{}]);
-const env = { ...process.env, FORKOP_LIB: lib,
+const env = { ...process.env, PROKOP_LIB: lib,
   ZAPRET_LEGACY_DEFAULT_NFQWS_OPT: defaults.legacy, ZAPRET_DEFAULT_NFQWS_OPT: defaults.current };
 
 const SETTINGS = {
@@ -83,7 +83,7 @@ function fixture() {
     for (const [key, value] of Object.entries(template)) if (key !== ".name" && rng.bool(0.8)) section[key] = value;
     (config[type] = config[type] || []).push(withUnknown(section));
   }
-  return { source: rng.pickWeighted([[2, "forkop"], [1, "podkop"]]), config };
+  return { source: rng.pickWeighted([[2, "prokop"], [1, "podkop"]]), config };
 }
 
 let runs = 0;
@@ -115,7 +115,7 @@ forAll("migration keeps unknown options and reaches a fixed point", seed, cases,
     assert.equal(first.config.settings.yacd_secret_key, config.settings.yacd_secret_key, "an existing Clash API secret is kept");
   }
 
-  const again = migrate(first.config, "forkop");
+  const again = migrate(first.config, "prokop");
   assert.equal(again.changed, false, "a migrated config needs no further migration");
   assert.deepEqual(again.config, first.config);
 
@@ -125,7 +125,7 @@ forAll("migration keeps unknown options and reaches a fixed point", seed, cases,
   unmarkedCases++;
   const unmarked = { ...first.config, settings: { ...first.config.settings } };
   delete unmarked.settings.applied_migrations;
-  const rerun = migrate(unmarked, "forkop");
+  const rerun = migrate(unmarked, "prokop");
   assert.deepEqual(withoutMarkers(rerun.config), withoutMarkers(first.config), "migrations are idempotent without their markers");
   for (const op of rerun.operations) assert.equal(op.option, "applied_migrations", `a re-run only restores markers: ${JSON.stringify(op)}`);
 });

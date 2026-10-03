@@ -16,8 +16,8 @@ set -eo pipefail
 # before the update or while it ran; without one the update records it.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-UPDATES_UC="$ROOT_DIR/forkop/files/usr/lib/components/updates.uc"
-REAL_LIB="$ROOT_DIR/forkop/files/usr/lib"
+UPDATES_UC="$ROOT_DIR/prokop/files/usr/lib/components/updates.uc"
+REAL_LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK_DIR="$(mktemp -d)"
 
 cleanup() {
@@ -100,7 +100,7 @@ if (mode == "commit-config-stage") {
     if (as_string(ARGV[2]) != "")
         fs.writefile(ARGV[2], "backup\n");
     if (getenv("FAKE_QUEUE_DURING_UPDATE") == "1")
-        fs.writefile(getenv("FORKOP_PENDING_RELOAD_FILE"), "reason=on_config_change\nupdated_at=1\nrequest=2\n");
+        fs.writefile(getenv("PROKOP_PENDING_RELOAD_FILE"), "reason=on_config_change\nupdated_at=1\nrequest=2\n");
     exit(0);
 }
 if (mode == "configure-service" || mode == "prepare-config-stage" ||
@@ -126,22 +126,22 @@ run_update() {
   mkdir -p "$WORK_DIR/tmp" "$RUN"
   env \
     TMPDIR="$WORK_DIR/tmp" \
-    FORKOP_LIB="$FAKE_LIB" \
-    FORKOP_RUNTIME_STATE_DIR="$RUN" \
-    FORKOP_SUBSCRIPTION_UPDATE_LOCK_DIR="$RUN/subscription-update.lock" \
-    FORKOP_RELOAD_LOCK_DIR="$RUN/reload.lock" \
-    FORKOP_SUBSCRIPTION_UPDATE_STATE_DIR="$RUN/subscription-update" \
-    FORKOP_SUBSCRIPTION_UPDATE_JOB_DIR="$RUN/subscription-update-jobs" \
-    FORKOP_SUBSCRIPTION_LINKS_DIR="$RUN/subscription-links" \
-    FORKOP_SUBSCRIPTION_METADATA_DIR="$RUN/subscription-metadata" \
-    FORKOP_OUTBOUND_METADATA_DIR="$RUN/outbound-metadata" \
-    FORKOP_SECTION_CACHE_DIR="$RUN/section-cache" \
-    FORKOP_RUNTIME_CACHE_FORMAT_FILE="$RUN/cache-format" \
-    FORKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR="$WORK_DIR/persistent/subscription-cache" \
-    FORKOP_PERSISTENT_SUBSCRIPTION_CACHE_FORMAT_FILE="$WORK_DIR/persistent/subscription-cache/cache-format" \
-    FORKOP_PENDING_RELOAD_FILE="$PENDING" \
-    FORKOP_RELOAD_STATE_FILE="$RUN/reload-state" \
-    FORKOP_RULE_CONDITION_CACHE_DIR="$RUN/rule-condition-cache" \
+    PROKOP_LIB="$FAKE_LIB" \
+    PROKOP_RUNTIME_STATE_DIR="$RUN" \
+    PROKOP_SUBSCRIPTION_UPDATE_LOCK_DIR="$RUN/subscription-update.lock" \
+    PROKOP_RELOAD_LOCK_DIR="$RUN/reload.lock" \
+    PROKOP_SUBSCRIPTION_UPDATE_STATE_DIR="$RUN/subscription-update" \
+    PROKOP_SUBSCRIPTION_UPDATE_JOB_DIR="$RUN/subscription-update-jobs" \
+    PROKOP_SUBSCRIPTION_LINKS_DIR="$RUN/subscription-links" \
+    PROKOP_SUBSCRIPTION_METADATA_DIR="$RUN/subscription-metadata" \
+    PROKOP_OUTBOUND_METADATA_DIR="$RUN/outbound-metadata" \
+    PROKOP_SECTION_CACHE_DIR="$RUN/section-cache" \
+    PROKOP_RUNTIME_CACHE_FORMAT_FILE="$RUN/cache-format" \
+    PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR="$WORK_DIR/persistent/subscription-cache" \
+    PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_FORMAT_FILE="$WORK_DIR/persistent/subscription-cache/cache-format" \
+    PROKOP_PENDING_RELOAD_FILE="$PENDING" \
+    PROKOP_RELOAD_STATE_FILE="$RUN/reload-state" \
+    PROKOP_RULE_CONDITION_CACHE_DIR="$RUN/rule-condition-cache" \
     FAKE_RELOAD_STATE="$RELOAD_STATE" \
     FAKE_CALL_LOG="$WORK_DIR/calls.log" \
     ucode -L "$REAL_LIB" "$UPDATES_UC" subscription-update-if-due

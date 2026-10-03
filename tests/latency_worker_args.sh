@@ -7,12 +7,12 @@ set -euo pipefail
 # checks rely on it), so the path must not reach it: sing-box would test
 # "/var/run/.../<job>.json" and fail. A group delay takes no third argument.
 #
-# The real ui.uc latency-worker runs against a FORKOP_BIN double that records
+# The real ui.uc latency-worker runs against a PROKOP_BIN double that records
 # its argv and answers with a canned rc, so the job outcome follows clash_api.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-UI_UC="$FORKOP_LIB/service/ui.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+UI_UC="$PROKOP_LIB/service/ui.uc"
 WORK="$(mktemp -d)"
 cleanup() {
   [ -n "${KEEP_WORK:-}" ] || rm -rf "${WORK:?}"
@@ -27,7 +27,7 @@ fail() {
 command -v ucode >/dev/null || fail "ucode is required"
 command -v node >/dev/null || fail "node is required"
 
-cat >"${WORK:?}/forkop-bin" <<'SH'
+cat >"${WORK:?}/prokop-bin" <<'SH'
 #!/bin/sh
 # Records one argument per line, then answers like clash_api would.
 : >"$FAKE_ARGV_LOG"
@@ -37,26 +37,26 @@ done
 printf '%s\n' "$FAKE_ANSWER"
 exit "$FAKE_RC"
 SH
-chmod +x "${WORK:?}/forkop-bin"
+chmod +x "${WORK:?}/prokop-bin"
 
-export FORKOP_LIB
-export FORKOP_BIN="${WORK:?}/forkop-bin"
-export FORKOP_UI_STATE_DIR="${WORK:?}/ui-state"
-export FORKOP_UI_LATENCY_ACTION_DIR="${WORK:?}/ui-state/latency-actions"
-export FORKOP_LATENCY_TEST_LOCK_DIR="${WORK:?}/latency.lock"
-export FORKOP_RUNTIME_STATE_DIR="${WORK:?}/run"
-mkdir -p "$FORKOP_UI_LATENCY_ACTION_DIR" "$FORKOP_RUNTIME_STATE_DIR"
+export PROKOP_LIB
+export PROKOP_BIN="${WORK:?}/prokop-bin"
+export PROKOP_UI_STATE_DIR="${WORK:?}/ui-state"
+export PROKOP_UI_LATENCY_ACTION_DIR="${WORK:?}/ui-state/latency-actions"
+export PROKOP_LATENCY_TEST_LOCK_DIR="${WORK:?}/latency.lock"
+export PROKOP_RUNTIME_STATE_DIR="${WORK:?}/run"
+mkdir -p "$PROKOP_UI_LATENCY_ACTION_DIR" "$PROKOP_RUNTIME_STATE_DIR"
 
 # run_worker TYPE TAG TIMEOUT RC ANSWER: runs one job and leaves its state
 # path in STATE and the recorded argv in ARGV_LOG.
 run_worker() {
   local type="$1" tag="$2" timeout="$3" rc="$4" answer="$5"
-  STATE="$FORKOP_UI_LATENCY_ACTION_DIR/job-$type.json"
+  STATE="$PROKOP_UI_LATENCY_ACTION_DIR/job-$type.json"
   ARGV_LOG="${WORK:?}/argv-$type"
   printf '{"success":true,"running":true,"kind":"latency","latency_type":"%s","section":"main","tag":"x","started_at":100}\n' \
     "$type" >"$STATE"
   FAKE_ARGV_LOG="$ARGV_LOG" FAKE_RC="$rc" FAKE_ANSWER="$answer" \
-    ucode -L "$FORKOP_LIB" "$UI_UC" latency-worker "$STATE" "$type" "$tag" "$timeout" ||
+    ucode -L "$PROKOP_LIB" "$UI_UC" latency-worker "$STATE" "$type" "$tag" "$timeout" ||
     fail "latency-worker $type exited non-zero"
 }
 

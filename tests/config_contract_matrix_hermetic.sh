@@ -20,7 +20,7 @@ fail() {
 
 COPY="$WORK_DIR/copy"
 mkdir -p "$COPY/tests/helpers" "$COPY/tests/fixtures"
-cp -R "$ROOT_DIR/forkop" "$ROOT_DIR/luci-app-forkop" "$COPY/"
+cp -R "$ROOT_DIR/prokop" "$ROOT_DIR/luci-app-prokop" "$COPY/"
 cp "$ROOT_DIR/install.sh" "$COPY/"
 cp "$ROOT_DIR/tests/config_contract_matrix.sh" "$COPY/tests/"
 cp "$ROOT_DIR/tests/helpers/config_contract_matrix.js" "$COPY/tests/helpers/"
@@ -37,8 +37,8 @@ SH
 chmod 0755 "$WORK_DIR/bin/git"
 : >"$WORK_DIR/git.log"
 
-if ! env -u FORKOP_STABLE_REPO -u FORKOP_STABLE_REF -u FORKOP_STABLE_COMMIT -u FORKOP_STABLE_VERSION \
-  -u FORKOP_STABLE_INVENTORY \
+if ! env -u PROKOP_STABLE_REPO -u PROKOP_STABLE_REF -u PROKOP_STABLE_COMMIT -u PROKOP_STABLE_VERSION \
+  -u PROKOP_STABLE_INVENTORY \
   PATH="$WORK_DIR/bin:$PATH" GIT_CALL_LOG="$WORK_DIR/git.log" \
   bash "$COPY/tests/config_contract_matrix.sh" >"$WORK_DIR/run.out" 2>&1; then
   cat "$WORK_DIR/run.out" >&2

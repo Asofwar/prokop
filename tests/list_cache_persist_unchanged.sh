@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The persistent list cache lives on flash (/etc/forkop/list-cache, up to
+# The persistent list cache lives on flash (/etc/prokop/list-cache, up to
 # 8 MiB). A successful list update whose lists did not change must not copy
 # it again: the cached files, their manifest and the directory stay as they
 # are, only the success time moves on (UC-072). Changed lists still replace
@@ -7,7 +7,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 UPDATES_UC="$LIB/components/updates.uc"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT HUP INT TERM
@@ -17,12 +17,12 @@ export TMP_SING_BOX_FOLDER="$WORK/tmp-sing-box"
 CACHE="$WORK/cache"
 mkdir -p "$WORK/runtime-rulesets" "$WORK/bin"
 cat >"$WORK/uci.state" <<'EOF_UCI'
-forkop.settings=settings
-forkop.settings.update_interval=1d
-forkop.alpha=section
-forkop.alpha.enabled=1
-forkop.alpha.action=connection
-forkop.alpha.remote_domain_lists=https://lists.test/domains.txt
+prokop.settings=settings
+prokop.settings.update_interval=1d
+prokop.alpha=section
+prokop.alpha.enabled=1
+prokop.alpha.action=connection
+prokop.alpha.remote_domain_lists=https://lists.test/domains.txt
 EOF_UCI
 printf '{"version":3,"rules":[{"domain_suffix":["first.example"]}]}\n' >"$WORK/runtime-rulesets/alpha-lists-ruleset.json"
 cat >"$WORK/bin/logger" <<'SH'
@@ -34,19 +34,19 @@ chmod +x "$WORK/bin/logger"
 
 cache_cmd() {
   PATH="$WORK/bin:$PATH" \
-  FORKOP_UCI_STATE_FILE="$WORK/uci.state" \
-  FORKOP_PERSISTENT_LIST_CACHE_DIR="$CACHE" \
-  FORKOP_PERSISTENT_LIST_CACHE_MANIFEST="$CACHE/manifest.json" \
-  FORKOP_LIST_UPDATE_STATE_FILE="$CACHE/last-success.timestamp" \
-  FORKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=33554432 \
-  FORKOP_RULESET_CACHE_DIR="$WORK/ruleset-cache" \
-  FORKOP_RUNTIME_LIST_GENERATION_DIR="$WORK/runtime-generation" \
-  FORKOP_RUNTIME_STATE_DIR="$WORK/run" \
-  FORKOP_LIST_UPDATE_RUNTIME_STATE_FILE="$WORK/run/list-update-last-success.timestamp" \
-  FORKOP_LIST_UPDATE_RUNTIME_SIGNATURE_FILE="$WORK/run/list-update-signature" \
-  FORKOP_LIST_CACHE_LOG_STATE_FILE="$WORK/run/list-cache-restore.log-state" \
+  PROKOP_UCI_STATE_FILE="$WORK/uci.state" \
+  PROKOP_PERSISTENT_LIST_CACHE_DIR="$CACHE" \
+  PROKOP_PERSISTENT_LIST_CACHE_MANIFEST="$CACHE/manifest.json" \
+  PROKOP_LIST_UPDATE_STATE_FILE="$CACHE/last-success.timestamp" \
+  PROKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=33554432 \
+  PROKOP_RULESET_CACHE_DIR="$WORK/ruleset-cache" \
+  PROKOP_RUNTIME_LIST_GENERATION_DIR="$WORK/runtime-generation" \
+  PROKOP_RUNTIME_STATE_DIR="$WORK/run" \
+  PROKOP_LIST_UPDATE_RUNTIME_STATE_FILE="$WORK/run/list-update-last-success.timestamp" \
+  PROKOP_LIST_UPDATE_RUNTIME_SIGNATURE_FILE="$WORK/run/list-update-signature" \
+  PROKOP_LIST_CACHE_LOG_STATE_FILE="$WORK/run/list-cache-restore.log-state" \
   TMP_RULESET_FOLDER="$WORK/runtime-rulesets" \
-  FORKOP_LIB="$LIB" \
+  PROKOP_LIB="$LIB" \
     ucode -L "$LIB" "$UPDATES_UC" "$@"
 }
 # identity PATH...: inode, change and modification time of each path. The
@@ -82,7 +82,7 @@ cache_cmd restore-list-cache || fail "the persistent cache is not restorable aft
 # older, so a reload does not report the lists as RAM-only.
 mkdir -p "$WORK/run"
 printf '200\n' >"$WORK/run/list-update-last-success.timestamp"
-FORKOP_UCI_STATE_FILE="$WORK/uci.state" ucode -L "$LIB" "$LIB/service/state.uc" list-update-signature \
+PROKOP_UCI_STATE_FILE="$WORK/uci.state" ucode -L "$LIB" "$LIB/service/state.uc" list-update-signature \
   >"$WORK/run/list-update-signature"
 sed -i 's/"generation": *"[^"]*"/"generation":"gen-republished"/' "$WORK/runtime-generation/manifest.json"
 grep -q gen-republished "$WORK/runtime-generation/manifest.json" || fail "the fixture did not rename the runtime generation"

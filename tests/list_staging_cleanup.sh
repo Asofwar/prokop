@@ -11,7 +11,7 @@ set -euo pipefail
 # of a running worker is never removed.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK_DIR="$(mktemp -d)"
 # shellcheck source=tests/helpers/wait.sh
 . "$ROOT_DIR/tests/helpers/wait.sh"
@@ -35,28 +35,28 @@ fail() {
 
 mkdir -p "$WORK_DIR/bin" "$WORK_DIR/run" "$WORK_DIR/tmp" "$WORK_DIR/rulesets"
 cat >"$WORK_DIR/uci.state" <<'UCI'
-forkop.settings=settings
-forkop.settings.update_interval=1d
-forkop.alpha=section
-forkop.alpha.enabled=1
-forkop.alpha.action=connection
-forkop.alpha.remote_domain_lists=https://lists.test/domains.txt
+prokop.settings=settings
+prokop.settings.update_interval=1d
+prokop.alpha=section
+prokop.alpha.enabled=1
+prokop.alpha.action=connection
+prokop.alpha.remote_domain_lists=https://lists.test/domains.txt
 UCI
 
 export TMPDIR="$WORK_DIR/tmp"
 export PATH="$WORK_DIR/bin:$PATH"
 export TEST_WORK="$WORK_DIR"
-export FORKOP_LIB="$LIB"
-export FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
-export FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/run"
-export FORKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/reload.lock"
-export FORKOP_PENDING_RELOAD_FILE="$WORK_DIR/run/reload.pending"
-export FORKOP_SERVICE_INIT="$WORK_DIR/bin/init"
-export FORKOP_LIST_UPDATE_PID_FILE="$WORK_DIR/run/list.pid"
-export FORKOP_PERSISTENT_LIST_CACHE_DIR="$WORK_DIR/list-cache"
-export FORKOP_RULESET_CACHE_DIR="$WORK_DIR/ruleset-cache"
-export FORKOP_RUNTIME_LIST_GENERATION_DIR="$WORK_DIR/list-generation"
-export FORKOP_LIST_DOWNLOAD_MIN_FREE_BYTES=0
+export PROKOP_LIB="$LIB"
+export PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
+export PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/run"
+export PROKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/reload.lock"
+export PROKOP_PENDING_RELOAD_FILE="$WORK_DIR/run/reload.pending"
+export PROKOP_SERVICE_INIT="$WORK_DIR/bin/init"
+export PROKOP_LIST_UPDATE_PID_FILE="$WORK_DIR/run/list.pid"
+export PROKOP_PERSISTENT_LIST_CACHE_DIR="$WORK_DIR/list-cache"
+export PROKOP_RULESET_CACHE_DIR="$WORK_DIR/ruleset-cache"
+export PROKOP_RUNTIME_LIST_GENERATION_DIR="$WORK_DIR/list-generation"
+export PROKOP_LIST_DOWNLOAD_MIN_FREE_BYTES=0
 export TMP_SING_BOX_FOLDER="$WORK_DIR/tmp/sing-box"
 export TMP_RULESET_FOLDER="$WORK_DIR/rulesets"
 
@@ -129,14 +129,14 @@ sleep 300 &
 other=$!
 actors+=("$other")
 wait_until 10 process_exec_is "$other" sleep || fail "the other process did not start"
-mkdir -p "$TMPDIR/forkop-list-staging.$dead.12345" "$TMPDIR/forkop-list-staging.$other.$(start_ticks "$other")"
-printf 'x\n' >"$TMPDIR/forkop-list-staging.$dead.12345/source-1"
-mkdir -p "$TMPDIR/forkop-list-staging.junk" "$TMPDIR/unrelated"
+mkdir -p "$TMPDIR/prokop-list-staging.$dead.12345" "$TMPDIR/prokop-list-staging.$other.$(start_ticks "$other")"
+printf 'x\n' >"$TMPDIR/prokop-list-staging.$dead.12345/source-1"
+mkdir -p "$TMPDIR/prokop-list-staging.junk" "$TMPDIR/unrelated"
 start_worker
-[ ! -e "$TMPDIR/forkop-list-staging.$dead.12345" ] || fail "a list update kept the staging directory of a killed worker"
-[ ! -e "$TMPDIR/forkop-list-staging.$other.$(start_ticks "$other")" ] ||
+[ ! -e "$TMPDIR/prokop-list-staging.$dead.12345" ] || fail "a list update kept the staging directory of a killed worker"
+[ ! -e "$TMPDIR/prokop-list-staging.$other.$(start_ticks "$other")" ] ||
   fail "a list update kept a staging directory whose PID another process reused"
-for kept in forkop-list-staging.junk unrelated; do
+for kept in prokop-list-staging.junk unrelated; do
   [ -d "$TMPDIR/$kept" ] || fail "a list update removed $kept, which is no staging directory"
 done
 # Another list update while this one runs: it skips, and the running

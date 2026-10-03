@@ -13,7 +13,7 @@ set -euo pipefail
 # it has to be fixed before the rule is saved again.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK="$(mktemp -d)"
 trap 'rm -rf "${WORK:?}"' EXIT HUP INT TERM
 
@@ -48,7 +48,7 @@ cat >"$WORK/fixture.json" <<'JSON'
 JSON
 
 : >"$WORK/logger.log"
-if ! PATH="$WORK/bin:$PATH" LOGGER_LOG="$WORK/logger.log" FORKOP_LIB="$LIB" \
+if ! PATH="$WORK/bin:$PATH" LOGGER_LOG="$WORK/logger.log" PROKOP_LIB="$LIB" \
   ucode -L "$LIB" "$LIB/config/validator.uc" validate-runtime-fixture "$WORK/fixture.json" '{}' >"$WORK/validator.out" 2>&1; then
   fail "a configuration whose legacy values were ignored started before and must still be accepted ($(cat "$WORK/validator.out"))"
 fi

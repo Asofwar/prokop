@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# A crontab that another writer changed between Forkop's `crontab` and its
+# A crontab that another writer changed between Prokop's `crontab` and its
 # read-back is not overwritten (S5 integration, UC-159).
 #
-# Forkop reads the crontab back after `crontab`, because BusyBox crontab
+# Prokop reads the crontab back after `crontab`, because BusyBox crontab
 # renames a copy cut short by a full overlay over the crontab and exits 0
-# (tests/crontab_partial_write.sh). Only a crontab that holds Forkop's own
-# new text cut short is Forkop's failed write: the previous crontab is put
+# (tests/crontab_partial_write.sh). Only a crontab that holds Prokop's own
+# new text cut short is Prokop's failed write: the previous crontab is put
 # back then. Any other content is someone else's change made in between (a
 # LuCI Scheduled Tasks save, an opkg postinst, the autotune manager or the
 # list update cron refresh): putting the previous crontab back would erase
@@ -15,14 +15,14 @@ set -euo pipefail
 #
 # A crontab that `crontab` never touched is neither: on a completely full
 # overlay BusyBox crontab cannot even create <user>.new, says "can't create"
-# and exits 0. The crontab still holds what Forkop read before; nothing is
+# and exits 0. The crontab still holds what Prokop read before; nothing is
 # put back, and the rewrite fails as one that did not land (is the overlay
 # full?), not as another writer's change (S5 integration review).
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-UPDATES_UC="$FORKOP_LIB/components/updates.uc"
-MANAGER_UC="$FORKOP_LIB/autotune/manager.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+UPDATES_UC="$PROKOP_LIB/components/updates.uc"
+MANAGER_UC="$PROKOP_LIB/autotune/manager.uc"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 trap 'exit 1' HUP INT TERM
@@ -55,13 +55,13 @@ printf '%s\n' "\$*" >>"$WORK/syslog"
 SH
 chmod +x "$WORK/bin/crontab" "$WORK/bin/logger"
 export PATH="$WORK/bin:$PATH"
-export FORKOP_CRONTAB_FILE="$WORK/crontab" FORKOP_AUTOTUNE_CRONTAB="$WORK/bin/crontab" FORKOP_AUTOTUNE_TMPDIR="$WORK/tmp"
+export PROKOP_CRONTAB_FILE="$WORK/crontab" PROKOP_AUTOTUNE_CRONTAB="$WORK/bin/crontab" PROKOP_AUTOTUNE_TMPDIR="$WORK/tmp"
 export TMPDIR="$WORK/tmp"
 
 cat >"$WORK/crontab.orig" <<'CRON'
 0 4 * * * /usr/local/bin/backup.sh
-0 0 * * * /usr/bin/forkop list_update_if_due # forkop-list-update
-*/15 * * * * /usr/bin/forkop autotune_if_due >/dev/null 2>&1 # forkop-autotune
+0 0 * * * /usr/bin/prokop list_update_if_due # prokop-list-update
+*/15 * * * * /usr/bin/prokop autotune_if_due >/dev/null 2>&1 # prokop-autotune
 CRON
 # What the other writer saves: the crontab as it read it, plus its own job.
 {
@@ -82,8 +82,8 @@ json_get() {
 # The cron refresh of components/updates.uc.
 setup
 status=0
-ucode -L "$FORKOP_LIB" "$UPDATES_UC" remove-cron-jobs '# forkop-list-update' '# forkop-subscription-update' \
-  '# forkop-component-update' >"$WORK/remove.out" 2>&1 || status=$?
+ucode -L "$PROKOP_LIB" "$UPDATES_UC" remove-cron-jobs '# prokop-list-update' '# prokop-subscription-update' \
+  '# prokop-component-update' >"$WORK/remove.out" 2>&1 || status=$?
 [ "$status" != 0 ] || fail "a crontab another writer changed meanwhile was reported as written"
 cmp -s "$WORK/crontab.foreign" "$WORK/crontab" ||
   fail "the change another writer made to the crontab was overwritten: $(cat "$WORK/crontab")"
@@ -94,7 +94,7 @@ printf 'ok - the cron refresh keeps a change another writer made meanwhile and f
 
 # The autotune cron line.
 setup
-ucode -L "$FORKOP_LIB" "$MANAGER_UC" cron-remove >"$WORK/autotune.json" 2>&1 || true
+ucode -L "$PROKOP_LIB" "$MANAGER_UC" cron-remove >"$WORK/autotune.json" 2>&1 || true
 [ "$(json_get "$WORK/autotune.json" status)" = '"failed"' ] ||
   fail "an autotune cron rewrite that another writer overtook was reported as done: $(cat "$WORK/autotune.json")"
 [ "$(json_get "$WORK/autotune.json" reason)" = '"crontab_changed"' ] ||
@@ -126,26 +126,26 @@ unchanged_reported() {
 
 no_room "$WORK/crontab.orig"
 status=0
-ucode -L "$FORKOP_LIB" "$UPDATES_UC" remove-cron-jobs '# forkop-list-update' '# forkop-subscription-update' \
-  '# forkop-component-update' >"$WORK/remove.out" 2>&1 || status=$?
+ucode -L "$PROKOP_LIB" "$UPDATES_UC" remove-cron-jobs '# prokop-list-update' '# prokop-subscription-update' \
+  '# prokop-component-update' >"$WORK/remove.out" 2>&1 || status=$?
 [ "$status" != 0 ] || fail "a cron removal that crontab could not write was reported as written"
 unchanged_reported "the cron removal"
 printf "ok - a cron removal that crontab could not write is not taken for another writer's change\n"
 
 no_room "$WORK/crontab.orig"
-ucode -L "$FORKOP_LIB" "$MANAGER_UC" cron-remove >"$WORK/autotune.json" 2>&1 || true
+ucode -L "$PROKOP_LIB" "$MANAGER_UC" cron-remove >"$WORK/autotune.json" 2>&1 || true
 [ "$(json_get "$WORK/autotune.json" status)" = '"failed"' ] ||
   fail "an autotune cron rewrite that crontab could not write was reported as done: $(cat "$WORK/autotune.json")"
 [ "$(json_get "$WORK/autotune.json" reason)" = '"crontab_not_written"' ] ||
   fail "the autotune cron rewrite must report a write that did not land: $(cat "$WORK/autotune.json")"
 unchanged_reported "the autotune cron removal"
 
-# Forkop's line goes at the end: the crontab as it was is the start of the
+# Prokop's line goes at the end: the crontab as it was is the start of the
 # new one, and still nothing is put back.
-grep -Fv 'forkop-autotune' "$WORK/crontab.orig" >"$WORK/crontab.without-autotune"
+grep -Fv 'prokop-autotune' "$WORK/crontab.orig" >"$WORK/crontab.without-autotune"
 no_room "$WORK/crontab.without-autotune"
-printf "config autotune 'autotune'\n\toption mode 'recommend'\n" >"$WORK/forkop.config"
-FORKOP_CONFIG_FILE="$WORK/forkop.config" ucode -L "$FORKOP_LIB" "$MANAGER_UC" cron-sync >"$WORK/autotune.json" 2>&1 || true
+printf "config autotune 'autotune'\n\toption mode 'recommend'\n" >"$WORK/prokop.config"
+PROKOP_CONFIG_FILE="$WORK/prokop.config" ucode -L "$PROKOP_LIB" "$MANAGER_UC" cron-sync >"$WORK/autotune.json" 2>&1 || true
 [ "$(json_get "$WORK/autotune.json" reason)" = '"crontab_not_written"' ] ||
   fail "the autotune cron line that crontab could not add must be reported as not written: $(cat "$WORK/autotune.json")"
 unchanged_reported "the autotune cron line added at the end"

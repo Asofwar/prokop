@@ -9,7 +9,7 @@ tests/runner/run.sh --repeat 5      # flake hunting under load
 ```
 
 From Windows PowerShell: `.\tests\runner\run.ps1` with the same arguments
-(runs inside WSL). Logs of the last run: `~/.cache/forkop-tests/last`.
+(runs inside WSL). Logs of the last run: `~/.cache/prokop-tests/last`.
 
 ## Lanes
 
@@ -34,7 +34,7 @@ periods (`sleep 1`, integer drain/quiet timeouts) and tests stub daemons.
 With the longest tests scheduled first, wall time equals the longest single
 test (an autotune test, 2-3 min): on 16 CPUs every worker count from 4 to
 64 gave the same wall time, larger counts only used more memory. The default
-is one worker per CPU (`nproc`); override with `-j N` or `FORKOP_TEST_JOBS`.
+is one worker per CPU (`nproc`); override with `-j N` or `PROKOP_TEST_JOBS`.
 
 ## Isolation
 

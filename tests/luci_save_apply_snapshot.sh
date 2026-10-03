@@ -7,9 +7,9 @@ set -euo pipefail
 # maps and then calls ui.changes.apply(); form.Map has no handleSaveApply.
 # The pages take a snapshot of the configuration before the apply first. A
 # refused snapshot saves the changes but applies nothing, and says so. LuCI
-# reloads the page once it has confirmed the apply, before the Forkop reload
+# reloads the page once it has confirmed the apply, before the Prokop reload
 # that the commit starts has finished: the page that loads then reports that
-# reload (confirmed with what changed, failed, Forkop not running, or not
+# reload (confirmed with what changed, failed, Prokop not running, or not
 # confirmed in time) from the health record, never from the apply alone.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -30,7 +30,7 @@ const installed = { loaded: true, zapretInstalled: true, zapret2Installed: true,
 const created = { status: 'created', snapshot: { id: '1_1', kind: 'automatic' } };
 const reloadAt = (timestamp, status = 'success') => ({ kind: 'reload', status, timestamp });
 // busy: a reload runs or the list worker that ends in one (reload.lock).
-const health = (last_reload, forkop = 'ok', busy = false) => ({ overall: 'ok', service: { forkop, sing_box: 'ok' },
+const health = (last_reload, prokop = 'ok', busy = false) => ({ overall: 'ok', service: { prokop, sing_box: 'ok' },
   last_reload, reload: { busy } });
 
 // A page load with the CLI answering `answers`; log keeps the order of the
@@ -66,7 +66,7 @@ const pages = {
   },
 };
 
-const RECORD = 'forkop-pending-apply';
+const RECORD = 'prokop-pending-apply';
 const failures = [];
 async function check(label, fn) {
   try {
@@ -161,13 +161,13 @@ async function check(label, fn) {
 
     // An explicit stop holds the runtime down: no reload follows (D-15).
     for (const state of ['stopped', 'not_started'])
-      await check(`${version} Forkop ${state} after the page reload`, async () => {
+      await check(`${version} Prokop ${state} after the page reload`, async () => {
         const { next } = await applied({ get_health_status: health(reloadAt(100), state) });
         const reloaded = await next();
         assert.equal(reloaded.env.notifications.length, 1);
         assert.equal(reloaded.env.notifications[0].type, 'warning');
         assert.equal(reloaded.env.notifications[0].text,
-          'Configuration saved. Forkop X is not running: the changes take effect when it is started.');
+          'Configuration saved. Prokop is not running: the changes take effect when it is started.');
       });
 
     // Another kind of event (a restore, an autotune apply) is not the
@@ -247,9 +247,9 @@ async function check(label, fn) {
       assert.equal(reloaded.calls(/config_snapshot_diff/).length, 0);
     });
 
-    // An apply that commits nothing of Forkop X (only changes of other
-    // packages were staged) starts no Forkop reload: nothing to report.
-    await check(`${version} apply without Forkop changes`, async () => {
+    // An apply that commits nothing of Prokop (only changes of other
+    // packages were staged) starts no Prokop reload: nothing to report.
+    await check(`${version} apply without Prokop changes`, async () => {
       const { env, calls } = page(version, { config_snapshot_create: created,
         get_health_status: health(reloadAt(100)) });
       const rules = await env.openRules();
@@ -258,7 +258,7 @@ async function check(label, fn) {
       assert.deepEqual(env.ui.changes.applies, [true], 'LuCI applies the other packages');
       assert.equal(calls(/^exec config_snapshot_create/).length, 1);
       env.confirmApply();
-      assert.equal(env.sessionStorage.has(RECORD), false, 'an apply without Forkop changes was kept for a report');
+      assert.equal(env.sessionStorage.has(RECORD), false, 'an apply without Prokop changes was kept for a report');
     });
 
     // An apply that LuCI never confirmed (no changes, refused, rolled back)

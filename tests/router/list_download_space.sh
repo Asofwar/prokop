@@ -4,8 +4,8 @@ set -eu
 ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 # shellcheck source=tests/helpers/owned_processes.sh
 . "$ROOT_DIR/tests/helpers/owned_processes.sh"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-UPDATES_UC="$FORKOP_LIB/components/updates.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+UPDATES_UC="$PROKOP_LIB/components/updates.uc"
 WORK_DIR="$(mktemp -d)"
 TARGET_DIR="$WORK_DIR/target"
 SOURCE_DIR="$WORK_DIR/source"
@@ -35,9 +35,9 @@ HTTP_PID=$!
 sleep 1
 
 download() {
-  FORKOP_LIST_DOWNLOAD_MIN_FREE_BYTES=8388608 \
-  FORKOP_LIB="$FORKOP_LIB" \
-    ucode -L "$FORKOP_LIB" "$UPDATES_UC" download-list-file "$1" "$2"
+  PROKOP_LIST_DOWNLOAD_MIN_FREE_BYTES=8388608 \
+  PROKOP_LIB="$PROKOP_LIB" \
+    ucode -L "$PROKOP_LIB" "$UPDATES_UC" download-list-file "$1" "$2"
 }
 
 download http://127.0.0.1:18089/small "$TARGET_DIR/small" ||

@@ -12,7 +12,7 @@
 #
 # Here a process counts as this test's only while that is proven, right
 # before each signal, by one of:
-# - the test's mark: sourcing this file exports FORKOP_TEST_OWNER, a random
+# - the test's mark: sourcing this file exports PROKOP_TEST_OWNER, a random
 #   token of this test run, and every program the test runs from then on,
 #   and every program those run, carries it in /proc/<pid>/environ, which
 #   shows the environment a program was exec'd with. A process of another
@@ -52,8 +52,8 @@ owned_processes_init() {
     owned_processes_random=""
     IFS= read -r owned_processes_random 2>/dev/null </proc/sys/kernel/random/uuid ||
         owned_processes_random="$(od -An -N8 -tx1 /dev/urandom 2>/dev/null | tr -d ' \n')"
-    FORKOP_TEST_OWNER="$$-$(date +%s)-${owned_processes_random:?no random bytes for the test owner mark}"
-    export FORKOP_TEST_OWNER
+    PROKOP_TEST_OWNER="$$-$(date +%s)-${owned_processes_random:?no random bytes for the test owner mark}"
+    export PROKOP_TEST_OWNER
 }
 
 # owned_processes_stat PID: the state and the parent of PID in
@@ -70,13 +70,13 @@ owned_processes_stat() {
 }
 
 owned_processes_marked() {
-    [ -n "${FORKOP_TEST_OWNER:-}" ] || return 1
+    [ -n "${PROKOP_TEST_OWNER:-}" ] || return 1
     owned_processes_environ="$(tr '\0' '\n' 2>/dev/null <"/proc/$1/environ")" || return 1
     case "
 $owned_processes_environ
 " in
         *"
-FORKOP_TEST_OWNER=$FORKOP_TEST_OWNER
+PROKOP_TEST_OWNER=$PROKOP_TEST_OWNER
 "*) return 0 ;;
     esac
     return 1
@@ -154,6 +154,6 @@ OWNED_PROCESSES
     return 0
 }
 
-if [ -z "${OWNED_PROCESSES_KEEP_MARK:-}" ] || [ -z "${FORKOP_TEST_OWNER:-}" ]; then
+if [ -z "${OWNED_PROCESSES_KEEP_MARK:-}" ] || [ -z "${PROKOP_TEST_OWNER:-}" ]; then
     owned_processes_init
 fi

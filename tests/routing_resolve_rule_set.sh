@@ -11,7 +11,7 @@ set -euo pipefail
 # stdout stays empty and the exit status is 0 with or without a hit (UC-198).
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT HUP INT TERM
 
@@ -22,7 +22,7 @@ cat >"$WORK/sing-box" <<EOF
 exec ucode -- "$ROOT_DIR/tests/helpers/sing_box_rule_set_stub.uc" "\$@"
 EOF
 chmod +x "$WORK/sing-box"
-export FORKOP_RULESET_MATCH_BIN="$WORK/sing-box"
+export PROKOP_RULESET_MATCH_BIN="$WORK/sing-box"
 export RULESET_STUB_CALLS="$WORK/calls"
 
 # A "binary" list of the stand-in is "SRS" + source JSON, stored the way
@@ -36,7 +36,7 @@ binary_list other.srs '{ "version": 3, "rules": [ { "domain": [ "example.org" ] 
 printf '%s\n' '{ "version": 3, "rules": [ { "ip_cidr": [ "93.184.216.7/32", "2001:db8::/32" ] } ] }' >"$WORK/addresses.json"
 printf 'not a rule-set\n' >"$WORK/broken.srs"
 
-cat >"$WORK/forkop" <<'EOF'
+cat >"$WORK/prokop" <<'EOF'
 config settings 'settings'
 config section 'youtube'
 	option action 'zapret'
@@ -61,7 +61,7 @@ EOF
 resolve() {
     printf '%s' "$2" >"$WORK/$1.json"
     : >"$WORK/calls"
-    FORKOP_LIB="$LIB" ucode -L "$LIB" "$WORK/resolve.uc" "$WORK/forkop" "$WORK/$1.json"
+    PROKOP_LIB="$LIB" ucode -L "$LIB" "$WORK/resolve.uc" "$WORK/prokop" "$WORK/$1.json"
 }
 expect() { # name json want
     local got

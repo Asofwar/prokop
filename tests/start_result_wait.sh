@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# The outcome of a Forkop start or restart (UC-013).
+# The outcome of a Prokop start or restart (UC-013).
 #
 # procd.sh opens its lock on fd 1000 for every init.d call, so start_service
-# always detaches the start worker and `/etc/init.d/forkop start|restart`
+# always detaches the start worker and `/etc/init.d/prokop start|restart`
 # exits 0 before the start has run. Callers that act on the outcome (the
 # Direct Proxy rollback, the restart after a component change, the WAN-up
 # retry, the package postinst, a UI start) must learn the real result:
@@ -12,13 +12,13 @@ set -euo pipefail
 # detached worker's own result and then checks the runtime.
 #
 # The init script is the real one behind an rc.common stand-in that holds fd
-# 1000 like procd.sh; its backend `forkop` fails or succeeds on demand and
+# 1000 like procd.sh; its backend `prokop` fails or succeeds on demand and
 # reports the runtime as running or not. The component action paths are
 # checked on the real action.uc functions with doubles.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
-REAL_INITD="$ROOT_DIR/forkop/files/etc/init.d/forkop"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
+REAL_INITD="$ROOT_DIR/prokop/files/etc/init.d/prokop"
 REAL_UCODE="$(command -v ucode)"
 WORK_DIR="$(mktemp -d)"
 # shellcheck source=tests/helpers/wait.sh
@@ -30,19 +30,19 @@ WORK_DIR="$(mktemp -d)"
 # .../start-retry.pid; exec init retry_start_on_wan_up' sh N`.
 kill_retry_workers() {
   local pid
-  for pid in $(pgrep -f "$WORK_DIR/run/forkop/start-retry.pid" 2>/dev/null); do
+  for pid in $(pgrep -f "$WORK_DIR/run/prokop/start-retry.pid" 2>/dev/null); do
     owned_kill_children KILL "$pid"
     owned_kill KILL "$pid" || true
   done
-  rm -f "$WORK_DIR/run/forkop/start-retry.pid"
+  rm -f "$WORK_DIR/run/prokop/start-retry.pid"
 }
 
 cleanup() {
   local owner
   # A detached start worker that still runs (a slow start when a check
-  # failed) would schedule its retry once its `forkop start` is killed: stop
+  # failed) would schedule its retry once its `prokop start` is killed: stop
   # it first by the reload.lock it holds.
-  owner="$("$REAL_UCODE" -L "$LIB" "$LIB/service/state.uc" runtime-dir-lock-owner "$FORKOP_RELOAD_LOCK_DIR" 2>/dev/null || true)"
+  owner="$("$REAL_UCODE" -L "$LIB" "$LIB/service/state.uc" runtime-dir-lock-owner "$PROKOP_RELOAD_LOCK_DIR" 2>/dev/null || true)"
   [ -z "$owner" ] || owned_kill KILL "$owner" || true
   # Scheduled retries, detached start workers and UI waiters.
   kill_retry_workers
@@ -57,41 +57,41 @@ fail() {
   exit 1
 }
 
-mkdir -p "$WORK_DIR/bin" "$WORK_DIR/run/forkop" "$WORK_DIR/tmp" "$WORK_DIR/proc"
-# An upgrade restarts Forkop only on a configuration this release has
+mkdir -p "$WORK_DIR/bin" "$WORK_DIR/run/prokop" "$WORK_DIR/tmp" "$WORK_DIR/proc"
+# An upgrade restarts Prokop only on a configuration this release has
 # migrated (UC-026).
 # shellcheck source=tests/helpers/migrated_config.sh
 . "$ROOT_DIR/tests/helpers/migrated_config.sh"
 {
-  printf 'forkop.settings=settings\n'
+  printf 'prokop.settings=settings\n'
   migrated_settings_state "$LIB" "$WORK_DIR"
 } >"$WORK_DIR/uci.state" || fail "could not describe a migrated configuration"
-printf "config settings 'settings'\n" >"$WORK_DIR/forkop.conf"
+printf "config settings 'settings'\n" >"$WORK_DIR/prokop.conf"
 
 export TMPDIR="$WORK_DIR/tmp"
 export PATH="$WORK_DIR/bin:$PATH"
 export TEST_WORK="$WORK_DIR" REAL_INITD REAL_UCODE
 export TEST_LIB="$LIB"
-export RC_PROCD_LOCK="$WORK_DIR/procd_forkop.lock"
-export FORKOP_LIB="$LIB"
-export FORKOP_BIN="$WORK_DIR/bin/forkop"
-export FORKOP_SERVICE_INIT="$WORK_DIR/bin/init"
-export FORKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/forkop.reload.lock"
-export FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/run/forkop"
-export FORKOP_PENDING_RELOAD_FILE="$WORK_DIR/run/forkop/reload.pending"
-export FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
-export FORKOP_START_RETRY_DELAY_SECONDS=300
-export FORKOP_START_WAIT_TIMEOUT_SECONDS=20
-export FORKOP_START_SETTLE_SECONDS=6
-export FORKOP_UI_ACTION_TRACKED=1
+export RC_PROCD_LOCK="$WORK_DIR/procd_prokop.lock"
+export PROKOP_LIB="$LIB"
+export PROKOP_BIN="$WORK_DIR/bin/prokop"
+export PROKOP_SERVICE_INIT="$WORK_DIR/bin/init"
+export PROKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/prokop.reload.lock"
+export PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/run/prokop"
+export PROKOP_PENDING_RELOAD_FILE="$WORK_DIR/run/prokop/reload.pending"
+export PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
+export PROKOP_START_RETRY_DELAY_SECONDS=300
+export PROKOP_START_WAIT_TIMEOUT_SECONDS=20
+export PROKOP_START_SETTLE_SECONDS=6
+export PROKOP_UI_ACTION_TRACKED=1
 
 # Nothing here may reach the host's syslog, nftables or init scripts.
 printf '#!/bin/sh\nprintf "%%s\\n" "$*" >>"$TEST_WORK/syslog"\n' >"$WORK_DIR/bin/logger"
 printf '#!/bin/sh\nexit 1\n' >"$WORK_DIR/bin/nft"
 
-# `forkop` behind initd.uc: start exits with start.status and brings the
+# `prokop` behind initd.uc: start exits with start.status and brings the
 # modelled runtime up when runtime.comes-up exists.
-cat >"$WORK_DIR/bin/forkop" <<'SH'
+cat >"$WORK_DIR/bin/prokop" <<'SH'
 #!/bin/sh
 case "$1" in
   start)
@@ -116,7 +116,7 @@ esac
 exit 0
 SH
 
-# /etc/init.d/forkop as procd runs it: rc.common with fd 1000 open and
+# /etc/init.d/prokop as procd runs it: rc.common with fd 1000 open and
 # flocked (procd.sh procd_lock); bash stands in for busybox ash (dash has no
 # file descriptor above 9). start and restart return service_started's
 # status, as rc.common does.
@@ -133,8 +133,8 @@ flock 1000
 initscript="$REAL_INITD"
 # shellcheck disable=SC1090
 . "$REAL_INITD"
-FORKOP_LIB="$TEST_LIB"
-FORKOP_INITD_UC="${TEST_INITD_UC:-$TEST_LIB/service/initd.uc}"
+PROKOP_LIB="$TEST_LIB"
+PROKOP_INITD_UC="${TEST_INITD_UC:-$TEST_LIB/service/initd.uc}"
 case "$action" in
   start) start_service "$@"; service_started ;;
   stop) stop_service "$@" ;;
@@ -148,7 +148,7 @@ cat >"$WORK_DIR/bin/ucode" <<'SH'
 #!/bin/sh
 case "${3:-}" in
   */service/state.uc)
-    if [ "${4:-}" = forkop-stably-running ]; then
+    if [ "${4:-}" = prokop-stably-running ]; then
       [ -e "$TEST_WORK/runtime.up" ]
       exit $?
     fi
@@ -164,7 +164,7 @@ initd() { "$REAL_UCODE" -L "$LIB" "$LIB/service/initd.uc" "$@"; }
 reset_case() {
   kill_retry_workers
   rm -f "$WORK_DIR/runtime.up" "$WORK_DIR/runtime.comes-up" "$WORK_DIR/runtime.comes-up-later" "$WORK_DIR/start.status" \
-    "$FORKOP_RUNTIME_STATE_DIR"/start.retry "$FORKOP_RUNTIME_STATE_DIR"/stop.requested
+    "$PROKOP_RUNTIME_STATE_DIR"/start.retry "$PROKOP_RUNTIME_STATE_DIR"/stop.requested
   : >"$WORK_DIR/syslog"
 }
 
@@ -186,28 +186,28 @@ timed_wait() {
 reset_case
 start_fails
 status=0
-"$FORKOP_SERVICE_INIT" start >"$WORK_DIR/init.out" 2>&1 || status=$?
+"$PROKOP_SERVICE_INIT" start >"$WORK_DIR/init.out" 2>&1 || status=$?
 [ "$status" = 0 ] || fail "a detached init.d start no longer returns at once: status $status"
 # Its worker fails afterwards and schedules a retry.
-wait_until 10 file_nonempty "$FORKOP_RUNTIME_STATE_DIR/start-retry.pid" ||
+wait_until 10 file_nonempty "$PROKOP_RUNTIME_STATE_DIR/start-retry.pid" ||
   fail "the detached start worker did not fail and schedule its retry"
 reset_case
 start_fails
 timed_wait start && fail "a failed start was reported as successful to a waiting caller"
-[ "$WAIT_SECONDS" -lt "$FORKOP_START_WAIT_TIMEOUT_SECONDS" ] ||
+[ "$WAIT_SECONDS" -lt "$PROKOP_START_WAIT_TIMEOUT_SECONDS" ] ||
   fail "a failed start was only noticed after the wait timeout"
 # The failed start scheduled its retry; that later start is not the one the
 # caller waited for and must not report under its request.
 retry_sleep() {
   local shell_pid child
-  shell_pid="$(head -n 1 "$FORKOP_RUNTIME_STATE_DIR/start-retry.pid" 2>/dev/null)" || return 1
+  shell_pid="$(head -n 1 "$PROKOP_RUNTIME_STATE_DIR/start-retry.pid" 2>/dev/null)" || return 1
   for child in $(pgrep -P "$shell_pid" 2>/dev/null); do
     process_exec_is "$child" sleep && { printf '%s\n' "$child"; return 0; }
   done
   return 1
 }
 wait_until 10 retry_sleep >/dev/null || fail "the failed start scheduled no retry"
-if tr '\0' '\n' <"/proc/$(retry_sleep)/environ" | grep -q '^FORKOP_START_REQUEST='; then
+if tr '\0' '\n' <"/proc/$(retry_sleep)/environ" | grep -q '^PROKOP_START_REQUEST='; then
   fail "the scheduled retry inherited the waiting caller's start request"
 fi
 
@@ -231,13 +231,13 @@ timed_wait start || fail "a start whose runtime settled shortly after its result
 #     results older than the wait timeout, and leaves recent ones alone.
 reset_case
 start_succeeds
-printf 'status=0\n' >"$FORKOP_RUNTIME_STATE_DIR/start-result.gone.1"
-touch -d '1 hour ago' "$FORKOP_RUNTIME_STATE_DIR/start-result.gone.1"
-printf 'status=0\n' >"$FORKOP_RUNTIME_STATE_DIR/start-result.recent.1"
+printf 'status=0\n' >"$PROKOP_RUNTIME_STATE_DIR/start-result.gone.1"
+touch -d '1 hour ago' "$PROKOP_RUNTIME_STATE_DIR/start-result.gone.1"
+printf 'status=0\n' >"$PROKOP_RUNTIME_STATE_DIR/start-result.recent.1"
 timed_wait start || fail "a successful start was reported as failed: $(cat "$WORK_DIR/wait.out")"
-[ ! -e "$FORKOP_RUNTIME_STATE_DIR/start-result.gone.1" ] || fail "a start result nobody waits for was left behind"
-[ -e "$FORKOP_RUNTIME_STATE_DIR/start-result.recent.1" ] || fail "a recent start result was removed"
-rm -f "$FORKOP_RUNTIME_STATE_DIR/start-result.recent.1"
+[ ! -e "$PROKOP_RUNTIME_STATE_DIR/start-result.gone.1" ] || fail "a start result nobody waits for was left behind"
+[ -e "$PROKOP_RUNTIME_STATE_DIR/start-result.recent.1" ] || fail "a recent start result was removed"
+rm -f "$PROKOP_RUNTIME_STATE_DIR/start-result.recent.1"
 
 # 4. restart: stop, then the detached start.
 reset_case
@@ -251,11 +251,11 @@ timed_wait restart || fail "a successful restart was reported as failed: $(cat "
 reset_case
 start_succeeds
 status=0
-TEST_INITD_UC="$WORK_DIR/missing-initd.uc" "$FORKOP_SERVICE_INIT" start >"$WORK_DIR/init.out" 2>&1 || status=$?
+TEST_INITD_UC="$WORK_DIR/missing-initd.uc" "$PROKOP_SERVICE_INIT" start >"$WORK_DIR/init.out" 2>&1 || status=$?
 [ "$status" != 0 ] || fail "init.d start reported success without a start worker"
 
 # No result is left behind for callers that are gone.
-if ls "$FORKOP_RUNTIME_STATE_DIR"/start-result.* >/dev/null 2>&1; then
+if ls "$PROKOP_RUNTIME_STATE_DIR"/start-result.* >/dev/null 2>&1; then
   fail "start results were left in the runtime state directory"
 fi
 
@@ -275,50 +275,50 @@ grep -q 'automatic recovery attempt failed' "$WORK_DIR/syslog" ||
 
 # 7. A UI start (service/ui.uc job worker, service disabled on this host)
 #    finishes as failed when the start fails, and as success when it works.
-export FORKOP_UI_STATE_DIR="$WORK_DIR/ui-state"
-export FORKOP_UI_SERVICE_ACTION_DIR="$FORKOP_UI_STATE_DIR/service-actions"
-export FORKOP_UI_SERVICE_ACTION_LOCK_DIR="$FORKOP_UI_STATE_DIR/service-actions.lock"
-export FORKOP_UI_LATENCY_ACTION_DIR="$FORKOP_UI_STATE_DIR/latency-actions"
-export FORKOP_UI_COMPONENT_ACTION_DIR="$FORKOP_UI_STATE_DIR/component-actions"
-export FORKOP_UI_SUBSCRIPTION_ACTION_DIR="$FORKOP_UI_STATE_DIR/subscription-actions"
-export FORKOP_UI_SERVICE_ACTION_SETTLE_SECONDS=1
-export FORKOP_UI_SERVICE_ACTION_TIMEOUT_SECONDS=20
+export PROKOP_UI_STATE_DIR="$WORK_DIR/ui-state"
+export PROKOP_UI_SERVICE_ACTION_DIR="$PROKOP_UI_STATE_DIR/service-actions"
+export PROKOP_UI_SERVICE_ACTION_LOCK_DIR="$PROKOP_UI_STATE_DIR/service-actions.lock"
+export PROKOP_UI_LATENCY_ACTION_DIR="$PROKOP_UI_STATE_DIR/latency-actions"
+export PROKOP_UI_COMPONENT_ACTION_DIR="$PROKOP_UI_STATE_DIR/component-actions"
+export PROKOP_UI_SUBSCRIPTION_ACTION_DIR="$PROKOP_UI_STATE_DIR/subscription-actions"
+export PROKOP_UI_SERVICE_ACTION_SETTLE_SECONDS=1
+export PROKOP_UI_SERVICE_ACTION_TIMEOUT_SECONDS=20
 ui() { "$REAL_UCODE" -L "$LIB" "$LIB/service/ui.uc" "$@"; }
 ui_start() {
   local job
   job="$(ui service-action-begin-if-idle start ui)" || fail "could not begin a UI start job"
-  ui service-action-worker "$FORKOP_UI_SERVICE_ACTION_DIR/$job.json" start "$job" "" >/dev/null 2>&1 || true
-  UI_JOB="$FORKOP_UI_SERVICE_ACTION_DIR/$job.json"
+  ui service-action-worker "$PROKOP_UI_SERVICE_ACTION_DIR/$job.json" start "$job" "" >/dev/null 2>&1 || true
+  UI_JOB="$PROKOP_UI_SERVICE_ACTION_DIR/$job.json"
 }
 reset_case
 start_fails
 began="$(date +%s)"
 ui_start
 grep -q '"success": *false' "$UI_JOB" || fail "a failed UI start finished as success: $(cat "$UI_JOB")"
-[ "$(($(date +%s) - began))" -lt "$FORKOP_UI_SERVICE_ACTION_TIMEOUT_SECONDS" ] ||
+[ "$(($(date +%s) - began))" -lt "$PROKOP_UI_SERVICE_ACTION_TIMEOUT_SECONDS" ] ||
   fail "a failed UI start was only reported after the action timeout"
 reset_case
 start_succeeds
 ui_start
 grep -q '"success": *true' "$UI_JOB" || fail "a successful UI start did not finish as success: $(cat "$UI_JOB")"
-unset FORKOP_UI_ACTION_TRACKED
+unset PROKOP_UI_ACTION_TRACKED
 
 # 8. The package postinst restores the pre-upgrade service and reports a
 #    start that did not come up, without failing the package operation: the
 #    failed start schedules its own retry, and opkg configures a package whose
 #    postinst failed again on every later install. The upgrade hand-off is
 #    consumed either way, so such a re-run neither waits for the runtime that
-#    came up meanwhile nor starts a Forkop that was stopped since.
+#    came up meanwhile nor starts a Prokop that was stopped since.
 postinst() {
-  FORKOP_POSTINST_START_WAIT_SECONDS="${POSTINST_WAIT:-15}" \
-  FORKOP_INIT="$FORKOP_SERVICE_INIT" \
-  FORKOP_CONFIG_PATH="$WORK_DIR/forkop.conf" \
-  FORKOP_DEFAULT_CONFIG_PATH="$WORK_DIR/forkop.conf" \
-  FORKOP_PACKAGE_UPGRADE_STATE="$WORK_DIR/was-running" \
-  FORKOP_PROC_DIR="$WORK_DIR/proc" \
-  FORKOP_RC_D_DIR="$WORK_DIR/rc.d" \
-  FORKOP_TORRSERVER_DIRECT_INIT="$WORK_DIR/missing-torrserver-direct-init" \
-  FORKOP_UPGRADE_SING_BOX_WAIT_SECONDS=1 \
+  PROKOP_POSTINST_START_WAIT_SECONDS="${POSTINST_WAIT:-15}" \
+  PROKOP_INIT="$PROKOP_SERVICE_INIT" \
+  PROKOP_CONFIG_PATH="$WORK_DIR/prokop.conf" \
+  PROKOP_DEFAULT_CONFIG_PATH="$WORK_DIR/prokop.conf" \
+  PROKOP_PACKAGE_UPGRADE_STATE="$WORK_DIR/was-running" \
+  PROKOP_PROC_DIR="$WORK_DIR/proc" \
+  PROKOP_RC_D_DIR="$WORK_DIR/rc.d" \
+  PROKOP_TORRSERVER_DIRECT_INIT="$WORK_DIR/missing-torrserver-direct-init" \
+  PROKOP_UPGRADE_SING_BOX_WAIT_SECONDS=1 \
     "$REAL_UCODE" -L "$LIB" "$LIB/service/package.uc" postinst >"$WORK_DIR/postinst.out" 2>&1
 }
 starts() { grep -c '^start$' "$WORK_DIR/starts" 2>/dev/null || true; }
@@ -331,27 +331,27 @@ grep -q 'did not start after the package upgrade' "$WORK_DIR/postinst.out" ||
   fail "postinst did not report the start that failed: $(cat "$WORK_DIR/postinst.out")"
 [ ! -e "$WORK_DIR/was-running" ] || fail "postinst kept the upgrade hand-off of a failed start"
 [ "$(starts)" = 1 ] || fail "postinst did not attempt the start exactly once"
-# The retry brought Forkop up (a sing-box runs); opkg configures the package
+# The retry brought Prokop up (a sing-box runs); opkg configures the package
 # again during an unrelated install.
 kill_retry_workers
 mkdir -p "$WORK_DIR/proc/4242"
 ln -s /usr/bin/sing-box "$WORK_DIR/proc/4242/exe"
 began="$(date +%s)"
-postinst || fail "a postinst re-run with Forkop running failed: $(cat "$WORK_DIR/postinst.out")"
+postinst || fail "a postinst re-run with Prokop running failed: $(cat "$WORK_DIR/postinst.out")"
 [ "$(($(date +%s) - began))" -lt 5 ] || fail "a postinst re-run waited for the running sing-box"
-[ "$(starts)" = 1 ] || fail "a postinst re-run started Forkop again"
+[ "$(starts)" = 1 ] || fail "a postinst re-run started Prokop again"
 rm -rf "$WORK_DIR/proc/4242"
-# The user has stopped Forkop since; a re-run does not start it.
+# The user has stopped Prokop since; a re-run does not start it.
 start_succeeds
-postinst || fail "a postinst re-run with Forkop stopped failed: $(cat "$WORK_DIR/postinst.out")"
-[ "$(starts)" = 1 ] || fail "a postinst re-run started a Forkop that was stopped"
-[ ! -e "$WORK_DIR/runtime.up" ] || fail "a postinst re-run brought a stopped Forkop up"
+postinst || fail "a postinst re-run with Prokop stopped failed: $(cat "$WORK_DIR/postinst.out")"
+[ "$(starts)" = 1 ] || fail "a postinst re-run started a Prokop that was stopped"
+[ ! -e "$WORK_DIR/runtime.up" ] || fail "a postinst re-run brought a stopped Prokop up"
 reset_case
 start_succeeds
 printf '1\n' >"$WORK_DIR/was-running"
 postinst || fail "postinst failed for a start that succeeded: $(cat "$WORK_DIR/postinst.out")"
 [ ! -e "$WORK_DIR/was-running" ] || fail "postinst kept the upgrade hand-off after a successful start"
-[ -e "$WORK_DIR/runtime.up" ] || fail "postinst did not start Forkop"
+[ -e "$WORK_DIR/runtime.up" ] || fail "postinst did not start Prokop"
 # A slow cold start runs inside the package manager's transaction (it holds
 # its lock): the postinst waits for it only for its own, shorter bound, then
 # says that the start carries on instead of reporting a failure.
@@ -378,7 +378,7 @@ import pathlib
 import re
 import sys
 
-source = (pathlib.Path(sys.argv[1]) / 'forkop/files/usr/lib/components/action.uc').read_text()
+source = (pathlib.Path(sys.argv[1]) / 'prokop/files/usr/lib/components/action.uc').read_text()
 
 
 def extract(name, optional=False):
@@ -391,16 +391,16 @@ def extract(name, optional=False):
 
 
 doubles = r'''
-const CONFIG_NAME = "forkop";
+const CONFIG_NAME = "prokop";
 const LIB_DIR = "/lib";
-const SERVICE_INIT = "/etc/init.d/forkop";
+const SERVICE_INIT = "/etc/init.d/prokop";
 const SYSTEM_INFO_CACHE_FILE = "/test/system-info.json";
-let forkop_was_running = true;
-let forkop_stopped_for_sing_box_change = false;
-let forkop_restart_refused = false;
-const FORKOP_RESTART_REFUSED = "Forkop was not restarted: refused";
-const FORKOP_RESTART_REFUSED_APPLIES_LATER = FORKOP_RESTART_REFUSED + "; the change applies at its next start";
-// service/lifecycle.uc refuses Forkop's own stop (exit 2): the ownership
+let prokop_was_running = true;
+let prokop_stopped_for_sing_box_change = false;
+let prokop_restart_refused = false;
+const PROKOP_RESTART_REFUSED = "Prokop was not restarted: refused";
+const PROKOP_RESTART_REFUSED_APPLIES_LATER = PROKOP_RESTART_REFUSED + "; the change applies at its next start";
+// service/lifecycle.uc refuses Prokop's own stop (exit 2): the ownership
 // of the runtime is ambiguous.
 let stop_refused = false;
 let uci = {};
@@ -415,14 +415,14 @@ let status_results = [];
 // is in place (runtime-apply-allowed also refuses after a stop).
 let stop_requested = false;
 let runtime_table = false;
-// The user stopped Forkop while the action ran (stop.requested by=user);
+// The user stopped Prokop while the action ran (stop.requested by=user);
 // component_change_user_stop.sh runs those paths end to end.
 let user_stopped = false;
-function forkop_stopped_by_user() { return user_stopped; }
-// The stop request after Forkop's own stop: the user's, or Forkop's own one
-// that the start after it names (FORKOP_START_AFTER_STOP).
+function prokop_stopped_by_user() { return user_stopped; }
+// The stop request after Prokop's own stop: the user's, or Prokop's own one
+// that the start after it names (PROKOP_START_AFTER_STOP).
 function own_stop_request() { return user_stopped ? null : "1.000000001.42"; }
-let constants = { NFT_TABLE_NAME: "ForkopTable" };
+let constants = { NFT_TABLE_NAME: "ProkopTable" };
 function as_string(value) { return value == null ? "" : "" + value; }
 function die_check(message) { warn("FAIL: " + message + "\n"); exit(1); }
 function check(condition, message) { if (!condition) die_check(message); }
@@ -447,7 +447,7 @@ function read_file(path) {
     check(path == LIB_DIR + "/service/initd.uc", "unexpected read of " + path);
     return initd_source;
 }
-function forkop_status_running_with_timeout() {
+function prokop_status_running_with_timeout() {
     push(calls, "status");
     return length(status_results) > 0 ? shift(status_results) : false;
 }
@@ -458,8 +458,8 @@ function command_success_from_args(args) {
         return true;
     let cleanup = false;
     if (args[0] == "env") {
-        cleanup = args[2] == "FORKOP_STOP_CLEANUP=1";
-        check(args[1] == "FORKOP_STOP_SOURCE=component" && args[cleanup ? 4 : 3] == "stop",
+        cleanup = args[2] == "PROKOP_STOP_CLEANUP=1";
+        check(args[1] == "PROKOP_STOP_SOURCE=component" && args[cleanup ? 4 : 3] == "stop",
             "the action's own stop is not recorded as its own: " + join(" ", args));
         args = slice(args, cleanup ? 3 : 2);
     }
@@ -482,7 +482,7 @@ function module_success(args) {
     if (args[0] == LIB_DIR + "/service/state.uc" && args[1] == "stop-requested")
         return stop_requested;
     if (args[0] == LIB_DIR + "/service/state.uc" && args[1] == "runtime-apply-allowed") {
-        check(args[2] == "ForkopTable", "the runtime check names no nft table");
+        check(args[2] == "ProkopTable", "the runtime check names no nft table");
         return !stop_requested && runtime_table;
     }
     check(args[0] == LIB_DIR + "/service/initd.uc" && args[1] == "start-and-wait",
@@ -490,10 +490,10 @@ function module_success(args) {
     push(calls, "wait:" + args[2]);
     return next_result();
 }
-// The start after Forkop's own stop compares with that stop's request.
+// The start after Prokop's own stop compares with that stop's request.
 function module_success_env(assignments, args) {
-    check(length(keys(assignments)) == 1 && assignments.FORKOP_START_AFTER_STOP == "1.000000001.42",
-        "the start after Forkop's own stop does not name its request: " + sprintf("%J", assignments));
+    check(length(keys(assignments)) == 1 && assignments.PROKOP_START_AFTER_STOP == "1.000000001.42",
+        "the start after Prokop's own stop does not name its request: " + sprintf("%J", assignments));
     return module_success(args);
 }
 function action_fail(component, action, message) {
@@ -510,10 +510,10 @@ function provider_package_version(module) { return "1.0"; }
 function is_apk() { return false; }
 function clear_version_caches() { return true; }
 function reset(values) {
-    uci = { "forkop.settings.direct_proxy_enabled": "0", "forkop.settings.direct_proxy_port": "2080" };
+    uci = { "prokop.settings.direct_proxy_enabled": "0", "prokop.settings.direct_proxy_port": "2080" };
     calls = []; results = values; outcome = null;
-    forkop_was_running = true; forkop_stopped_for_sing_box_change = false;
-    forkop_restart_refused = false; stop_refused = false;
+    prokop_was_running = true; prokop_stopped_for_sing_box_change = false;
+    prokop_restart_refused = false; stop_refused = false;
     initd_source = 'else if (mode == "start-and-wait")'; status_results = [];
     stop_requested = false; runtime_table = false; user_stopped = false;
 }
@@ -524,98 +524,98 @@ function run(fn) {
 '''
 
 cases = r'''
-// Direct Proxy: a restart (Forkop's own stop, then the awaited start) that
-// does not bring Forkop up rolls the settings back, restarts the previous
+// Direct Proxy: a restart (Prokop's own stop, then the awaited start) that
+// does not bring Prokop up rolls the settings back, restarts the previous
 // configuration and fails the action.
 reset([ false, true ]);
 run(function() { set_direct_proxy("enable"); });
-check(outcome != null && !outcome.success, "Direct Proxy enable was reported as success although Forkop did not start");
-check(uci["forkop.settings.direct_proxy_enabled"] == "0", "the failed Direct Proxy settings were kept");
+check(outcome != null && !outcome.success, "Direct Proxy enable was reported as success although Prokop did not start");
+check(uci["prokop.settings.direct_proxy_enabled"] == "0", "the failed Direct Proxy settings were kept");
 check(join(",", calls) == "init:stop,wait:start,init:stop,wait:start", "the previous Direct Proxy settings were not restarted: " + join(",", calls));
 
 reset([ true ]);
 run(function() { set_direct_proxy("enable"); });
 check(outcome != null && outcome.success, "a working Direct Proxy enable was reported as failure");
-check(uci["forkop.settings.direct_proxy_enabled"] == "1", "a working Direct Proxy enable was rolled back");
+check(uci["prokop.settings.direct_proxy_enabled"] == "1", "a working Direct Proxy enable was rolled back");
 
 // A restart after a successful component change reports its outcome.
 reset([ false ]);
-check(restart_forkop_after_successful_change() === false, "a restart that failed after a component change was reported as done");
+check(restart_prokop_after_successful_change() === false, "a restart that failed after a component change was reported as done");
 reset([ true ]);
-check(restart_forkop_after_successful_change() === true, "a working restart after a component change was reported as failed");
+check(restart_prokop_after_successful_change() === true, "a working restart after a component change was reported as failed");
 reset([]);
-forkop_was_running = false;
-check(restart_forkop_after_successful_change() === true, "a skipped restart was reported as failed");
-check(index(join(",", calls), "wait:") < 0 && index(join(",", calls), "init:") < 0, "a stopped Forkop was restarted after a component change");
+prokop_was_running = false;
+check(restart_prokop_after_successful_change() === true, "a skipped restart was reported as failed");
+check(index(join(",", calls), "wait:") < 0 && index(join(",", calls), "init:") < 0, "a stopped Prokop was restarted after a component change");
 
-// The component action reports a Forkop that did not come back.
+// The component action reports a Prokop that did not come back.
 reset([ false ]);
 run(function() { remove_optional_component("zapret", "zapret", "zapret", "/lib/providers/zapret/runtime.uc"); });
-check(outcome != null && !outcome.success, "a component removal was reported as success although Forkop did not start again");
-check(outcome.message == "zapret package has been removed, but Forkop did not start again", "unexpected result: " + outcome.message);
+check(outcome != null && !outcome.success, "a component removal was reported as success although Prokop did not start again");
+check(outcome.message == "zapret package has been removed, but Prokop did not start again", "unexpected result: " + outcome.message);
 // Or one whose own stop for the restart was refused: no start was tried.
 reset([]);
 stop_refused = true;
 run(function() { remove_optional_component("zapret", "zapret", "zapret", "/lib/providers/zapret/runtime.uc"); });
-check(outcome != null && !outcome.success, "a component removal was reported as success although Forkop was not restarted");
-check(outcome.message == "zapret package has been removed, but " + FORKOP_RESTART_REFUSED_APPLIES_LATER, "the refused restart is not reported: " + outcome.message);
+check(outcome != null && !outcome.success, "a component removal was reported as success although Prokop was not restarted");
+check(outcome.message == "zapret package has been removed, but " + PROKOP_RESTART_REFUSED_APPLIES_LATER, "the refused restart is not reported: " + outcome.message);
 check(join(",", calls) == "init:remove,log:info,init:stop-refused,log:warn", "a refused restart went on: " + join(",", calls));
 
 // After a failed sing-box change, a start that fails falls back to a restart.
 reset([ false, true ]);
-forkop_stopped_for_sing_box_change = true;
-restart_forkop_after_failed_sing_box_change();
+prokop_stopped_for_sing_box_change = true;
+restart_prokop_after_failed_sing_box_change();
 check(join(",", calls) == "log:info,wait:start,init:stop-cleanup,wait:start", "a failed start after a failed sing-box change had no restart fallback: " + join(",", calls));
-// Direct Proxy of a stopped Forkop: the setting is saved and applies at its
+// Direct Proxy of a stopped Prokop: the setting is saved and applies at its
 // next start; a setting change does not start it (D-15).
 reset([]);
-forkop_was_running = false;
+prokop_was_running = false;
 run(function() { set_direct_proxy("enable"); });
-check(outcome != null && outcome.success, "Direct Proxy of a stopped Forkop was not saved");
-check(uci["forkop.settings.direct_proxy_enabled"] == "1", "Direct Proxy of a stopped Forkop was rolled back");
+check(outcome != null && outcome.success, "Direct Proxy of a stopped Prokop was not saved");
+check(uci["prokop.settings.direct_proxy_enabled"] == "1", "Direct Proxy of a stopped Prokop was rolled back");
 check(index(join(",", calls), "wait:") < 0 && index(join(",", calls), "init:") < 0,
-    "a Direct Proxy change started a stopped Forkop: " + join(",", calls));
+    "a Direct Proxy change started a stopped Prokop: " + join(",", calls));
 // Nor one that the user stopped, although its status still read running (the
 // stop is waiting for reload.lock) or its nft table is still there.
 reset([]);
 stop_requested = true; runtime_table = true;
 run(function() { set_direct_proxy("enable"); });
-check(outcome != null && outcome.success && uci["forkop.settings.direct_proxy_enabled"] == "1",
-    "Direct Proxy of a Forkop that the user stopped was not saved");
-check(index(join(",", calls), "wait:") < 0, "a Direct Proxy change restarted a Forkop that the user stopped: " + join(",", calls));
-// A Forkop whose status probe failed in the middle of a sing-box restart (a
+check(outcome != null && outcome.success && uci["prokop.settings.direct_proxy_enabled"] == "1",
+    "Direct Proxy of a Prokop that the user stopped was not saved");
+check(index(join(",", calls), "wait:") < 0, "a Direct Proxy change restarted a Prokop that the user stopped: " + join(",", calls));
+// A Prokop whose status probe failed in the middle of a sing-box restart (a
 // DNS-failover switch, a subscription update, a reload) or answered too
 // slowly still has its runtime: the change is applied by a restart.
 reset([ true ]);
-forkop_was_running = false; runtime_table = true;
+prokop_was_running = false; runtime_table = true;
 run(function() { set_direct_proxy("enable"); });
-check(outcome != null && outcome.success, "Direct Proxy of a Forkop in a transition was reported as failure");
-check(join(",", calls) == "init:stop,wait:start", "Direct Proxy of a Forkop in a transition was not applied by a restart: " + join(",", calls));
+check(outcome != null && outcome.success, "Direct Proxy of a Prokop in a transition was reported as failure");
+check(join(",", calls) == "init:stop,wait:start", "Direct Proxy of a Prokop in a transition was not applied by a restart: " + join(",", calls));
 
 // An older release installed by the action has no start-and-wait: the
 // start goes through init.d and the runtime is polled instead.
 reset([]);
 initd_source = 'else if (mode == "start-service")';
 status_results = [ false, true ];
-check(restart_forkop_after_successful_change() === true, "a restart through an older initd.uc was reported as failed");
+check(restart_prokop_after_successful_change() === true, "a restart through an older initd.uc was reported as failed");
 check(index(join(",", calls), "wait:") < 0, "start-and-wait was used with an initd.uc that has no such mode");
 check(index(join(",", calls), "init:stop,init:start,status,status") >= 0,
     "an older initd.uc was not restarted through init.d and polled: " + join(",", calls));
 reset([]);
 initd_source = 'else if (mode == "start-service")';
-check(restart_forkop_after_successful_change() === false, "an older release that did not start was reported as started");
+check(restart_prokop_after_successful_change() === false, "an older release that did not start was reported as started");
 print("component start outcome checks passed\n");
 '''
 
 pathlib.Path(sys.argv[2]).write_text('\n'.join([
     doubles,
-    extract('forkop_start_and_wait', optional=True),
-    extract('forkop_stop_for_component_change_args'),
-    extract('forkop_restart_and_wait'),
-    extract('forkop_not_restarted_text'),
-    extract('forkop_active_for_setting_change', optional=True),
-    extract('restart_forkop_after_failed_sing_box_change'),
-    extract('restart_forkop_after_successful_change'),
+    extract('prokop_start_and_wait', optional=True),
+    extract('prokop_stop_for_component_change_args'),
+    extract('prokop_restart_and_wait'),
+    extract('prokop_not_restarted_text'),
+    extract('prokop_active_for_setting_change', optional=True),
+    extract('restart_prokop_after_failed_sing_box_change'),
+    extract('restart_prokop_after_successful_change'),
     extract('remove_optional_component'),
     extract('set_direct_proxy'),
     cases,

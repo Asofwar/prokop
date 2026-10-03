@@ -13,7 +13,7 @@ set -euo pipefail
 #   (config/connections.uc subscription_user_agent).
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-node - "$ROOT_DIR/tests/helpers" "$ROOT_DIR/forkop/files/usr/lib" <<'NODE'
+node - "$ROOT_DIR/tests/helpers" "$ROOT_DIR/prokop/files/usr/lib" <<'NODE'
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
@@ -30,7 +30,7 @@ const sub = (values) => Object.assign({ '.name': 'sub', '.type': 'subscription_u
 
 // The User-Agent the backend sends for the stored state.
 function sentUserAgent(data) {
-  const work = fs.mkdtempSync(path.join(os.tmpdir(), 'forkop-ua-'));
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), 'prokop-ua-'));
   try {
     const fixture = { settings: { '.name': 'settings', '.type': 'settings' }, section: [], subscription_url: [] };
     for (const item of Object.values(data)) (fixture[item['.type']] ??= []).push(item);

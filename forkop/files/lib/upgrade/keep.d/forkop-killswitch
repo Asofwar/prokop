@@ -1,4 +1,0 @@
-/etc/forkop/killswitch/policy.nft
-/etc/forkop/killswitch/dns-blocked.servers
-/etc/forkop/killswitch/state.json
-/etc/forkop/killswitch/dns-exempt.json

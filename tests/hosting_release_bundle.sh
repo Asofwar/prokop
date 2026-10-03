@@ -14,10 +14,10 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK_DIR="$(mktemp -d)"
 VERSION="1.0.2"
-BASE_URL="https://downloads.example/forkop"
-REPOSITORY="example/forkop"
+BASE_URL="https://downloads.example/prokop"
+REPOSITORY="example/prokop"
 GITHUB_URL="https://api.github.com/repos/$REPOSITORY/releases?per_page=10"
-FORK_BASE_URL="https://asofwar.github.io/forkop"
+FORK_BASE_URL="https://asofwar.github.io/prokop"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 NETWORK="$WORK_DIR/network"
 
@@ -33,12 +33,12 @@ fail() {
 }
 
 packages=(
-  "forkop_${VERSION}.ipk"
-  "luci-app-forkop_${VERSION}.ipk"
-  "luci-i18n-forkop-ru_${VERSION}.ipk"
-  "forkop_${VERSION}.apk"
-  "luci-app-forkop_${VERSION}.apk"
-  "luci-i18n-forkop-ru_${VERSION}.apk"
+  "prokop_${VERSION}.ipk"
+  "luci-app-prokop_${VERSION}.ipk"
+  "luci-i18n-prokop-ru_${VERSION}.ipk"
+  "prokop_${VERSION}.apk"
+  "luci-app-prokop_${VERSION}.apk"
+  "luci-i18n-prokop-ru_${VERSION}.apk"
 )
 
 mkdir -p "$WORK_DIR/artifacts"
@@ -62,7 +62,7 @@ network, current = Path(sys.argv[1]), sys.argv[2]
 
 def names(version):
     return [f"{package}_{version}.{extension}" for extension in ("ipk", "apk")
-            for package in ("forkop", "luci-app-forkop", "luci-i18n-forkop-ru")]
+            for package in ("prokop", "luci-app-prokop", "luci-i18n-prokop-ru")]
 
 
 def release(version, draft=False, prerelease=False, mirrored=None, digested=None):
@@ -96,8 +96,8 @@ HOSTING_TEST_NETWORK="$NETWORK" \
   HOSTING_TEST_GITHUB_URL="$GITHUB_URL" \
   HOSTING_TEST_BASE_URL="$BASE_URL" \
   PYTHONPATH="$WORK_DIR/pythonpath" \
-  FORKOP_RELEASE_REPO="$REPOSITORY" \
-  FORKOP_RELEASE_BASE_URL="$BASE_URL" \
+  PROKOP_RELEASE_REPO="$REPOSITORY" \
+  PROKOP_RELEASE_BASE_URL="$BASE_URL" \
   "$ROOT_DIR/ops/hosting/prepare-release.sh" \
   "$VERSION" "$WORK_DIR/artifacts" "$WORK_DIR/output"
 
@@ -112,16 +112,16 @@ if grep -E '^socket$|^unexpected ' "$NETWORK/requests" >&2; then
   fail "the catalog builder reached for the network"
 fi
 
-[[ "$(cat "$WORK_DIR/output/forkop/LATEST")" == "$VERSION" ]] ||
+[[ "$(cat "$WORK_DIR/output/prokop/LATEST")" == "$VERSION" ]] ||
   fail "LATEST does not contain the release version"
-[[ -s "$WORK_DIR/output/forkop/install.sh" ]] || fail "install.sh was not included"
-[[ -s "$WORK_DIR/output/forkop/releases/$VERSION/SHA256SUMS" ]] ||
+[[ -s "$WORK_DIR/output/prokop/install.sh" ]] || fail "install.sh was not included"
+[[ -s "$WORK_DIR/output/prokop/releases/$VERSION/SHA256SUMS" ]] ||
   fail "SHA256SUMS was not generated"
-[[ -s "$WORK_DIR/output/forkop-timeweb-$VERSION.tar.gz" ]] ||
+[[ -s "$WORK_DIR/output/prokop-timeweb-$VERSION.tar.gz" ]] ||
   fail "Timeweb archive was not generated"
 
 for package in "${packages[@]}"; do
-  [[ -s "$WORK_DIR/output/forkop/releases/$VERSION/$package" ]] ||
+  [[ -s "$WORK_DIR/output/prokop/releases/$VERSION/$package" ]] ||
     fail "$package was not copied"
 done
 
@@ -203,16 +203,16 @@ PY
 
 # The listing goes to a file first: grep -q stops reading at its match, and
 # a tar still listing would die of SIGPIPE, which pipefail reports.
-tar -tzf "$WORK_DIR/output/forkop-timeweb-$VERSION.tar.gz" >"$WORK_DIR/archive.list" ||
+tar -tzf "$WORK_DIR/output/prokop-timeweb-$VERSION.tar.gz" >"$WORK_DIR/archive.list" ||
   fail "the archive cannot be listed"
-for published in forkop/updates/latest.json forkop/updates/releases.json; do
+for published in prokop/updates/latest.json prokop/updates/releases.json; do
   grep -Fxq "$published" "$WORK_DIR/archive.list" || fail "archive does not contain $published"
 done
 
 # Without an explicit address the bundle describes the fork's Pages channel.
 # The catalog builder lists only the release being built here (offline): no
 # GitHub API call and no HEAD request.
-env -u FORKOP_RELEASE_BASE_URL -u FORKOP_RELEASE_REPO FORKOP_RELEASE_CATALOG_OFFLINE=1 \
+env -u PROKOP_RELEASE_BASE_URL -u PROKOP_RELEASE_REPO PROKOP_RELEASE_CATALOG_OFFLINE=1 \
   "$ROOT_DIR/ops/hosting/prepare-release.sh" \
   "$VERSION" "$WORK_DIR/artifacts" "$WORK_DIR/default" >/dev/null
 check_metadata "$WORK_DIR/default" "$FORK_BASE_URL" ||

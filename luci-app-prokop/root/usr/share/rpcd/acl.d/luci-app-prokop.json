@@ -1,0 +1,120 @@
+{
+  "luci-app-prokop": {
+    "description": "Grant UCI and RPC access to LuCI app Prokop",
+    "read": {
+      "file": {
+        "/usr/libexec/prokop-ro get_status": ["exec"],
+        "/usr/libexec/prokop-ro killswitch_status": ["exec"],
+        "/usr/libexec/prokop-ro get_sing_box_status": ["exec"],
+        "/usr/libexec/prokop-ro get_zapret_status": ["exec"],
+        "/usr/libexec/prokop-ro get_zapret2_status": ["exec"],
+        "/usr/libexec/prokop-ro get_byedpi_status": ["exec"],
+        "/usr/libexec/prokop-ro get_system_info": ["exec"],
+        "/usr/libexec/prokop-ro get_ui_capabilities": ["exec"],
+        "/usr/libexec/prokop-ro get_ui_state": ["exec"],
+        "/usr/libexec/prokop-ro get_health_status": ["exec"],
+        "/usr/libexec/prokop-ro get_history": ["exec"],
+        "/usr/libexec/prokop-ro autotune_status": ["exec"],
+        "/usr/libexec/prokop-ro autotune_groups": ["exec"],
+        "/usr/libexec/prokop-ro autotune_run_status *": ["exec"],
+        "/usr/libexec/prokop-ro route_trace *": ["exec"],
+        "/usr/libexec/prokop-ro config_snapshot_list": ["exec"],
+        "/usr/libexec/prokop-ro config_snapshot_diff *": ["exec"],
+        "/usr/libexec/prokop-ro connectivity_test *": ["exec"],
+        "/usr/libexec/prokop-ro get_readonly_config_sections": ["exec"],
+        "/usr/libexec/prokop-ro get_dashboard_runtime_metadata": ["exec"],
+        "/usr/libexec/prokop-ro show_version": ["exec"],
+        "/usr/libexec/prokop-ro check_nft_rules": ["exec"],
+        "/usr/libexec/prokop-ro check_sing_box": ["exec"],
+        "/usr/libexec/prokop-ro check_logs": ["exec"],
+        "/usr/libexec/prokop-ro check_fakeip": ["exec"],
+        "/usr/libexec/prokop-ro check_zapret_runtime": ["exec"],
+        "/usr/libexec/prokop-ro check_zapret2_runtime": ["exec"],
+        "/usr/libexec/prokop-ro check_byedpi_runtime": ["exec"],
+        "/usr/libexec/prokop-ro check_dns_available": ["exec"],
+        "/usr/libexec/prokop-ro clash_api get_proxies": ["exec"],
+        "/usr/libexec/prokop-ro clash_api get_connections": ["exec"],
+        "/usr/libexec/prokop-ro service_action_status *": ["exec"],
+        "/usr/libexec/prokop-ro latency_test_status *": ["exec"],
+        "/usr/libexec/prokop-ro component_action_status *": ["exec"],
+        "/usr/libexec/prokop-ro subscription_update_status *": ["exec"],
+        "/usr/libexec/prokop-ro component_update_check_cache": ["exec"],
+        "/var/run/prokop/component-actions/*": [
+          "read"
+        ],
+        "/tmp/run/prokop/component-actions/*": [
+          "read"
+        ],
+        "/var/run/prokop/ui-state/*": [
+          "read"
+        ],
+        "/tmp/run/prokop/ui-state/*": [
+          "read"
+        ],
+        "/var/run/prokop/ui-state/service-actions/*": [
+          "read"
+        ],
+        "/tmp/run/prokop/ui-state/service-actions/*": [
+          "read"
+        ],
+        "/var/run/prokop/ui-state/latency-actions/*": [
+          "read"
+        ],
+        "/tmp/run/prokop/ui-state/latency-actions/*": [
+          "read"
+        ],
+        "/usr/libexec/prokop-ro global_check masked": ["exec"],
+        "/usr/libexec/prokop-ro show_sing_box_config masked": ["exec"]
+      },
+      "ubus": {
+        "file": [
+          "exec"
+        ],
+        "luci-rpc": [
+          "getDHCPLeases",
+          "getHostHints"
+        ],
+        "network.interface": [
+          "dump"
+        ]
+      }
+    },
+    "write": {
+      "file": {
+        "/usr/bin/prokop": ["exec"],
+        "/etc/init.d/prokop": ["exec"],
+        "/etc/sing-box/config.json": ["read"],
+        "/tmp/sing-box/config.json": ["read"],
+        "/var/run/prokop/section-cache/*": ["read"],
+        "/tmp/run/prokop/section-cache/*": ["read"],
+        "/var/run/prokop/ui-state/*": [
+          "write"
+        ],
+        "/tmp/run/prokop/ui-state/*": [
+          "write"
+        ],
+        "/var/run/prokop/ui-state/service-actions/*": [
+          "write"
+        ],
+        "/tmp/run/prokop/ui-state/service-actions/*": [
+          "write"
+        ],
+        "/var/run/prokop/ui-state/latency-actions/*": [
+          "write"
+        ],
+        "/tmp/run/prokop/ui-state/latency-actions/*": [
+          "write"
+        ]
+      },
+      "uci": [
+        "prokop"
+      ]
+    }
+  },
+  "luci-app-prokop-admin": {
+    "description": "Grant Prokop configuration read access to administrators",
+    "read": {
+      "uci": ["prokop"]
+    }
+  }
+}

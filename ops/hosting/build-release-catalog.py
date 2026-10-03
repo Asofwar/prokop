@@ -12,7 +12,7 @@ The release being built is always listed: its packages travel in the same
 bundle. Earlier releases come from the GitHub releases of this repository and
 are listed only once every package has been confirmed present on the host --
 a version whose bundle was never uploaded must not be offered for rollback.
-With --offline (or FORKOP_RELEASE_CATALOG_OFFLINE=1) only the release being
+With --offline (or PROKOP_RELEASE_CATALOG_OFFLINE=1) only the release being
 built is listed and nothing is fetched.
 """
 import argparse
@@ -26,9 +26,9 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-FORK_REPO = "Asofwar/forkop"
+FORK_REPO = "Asofwar/prokop"
 VERSION = re.compile(r"^\d+\.\d+\.\d+$")
-PACKAGES = ("forkop", "luci-app-forkop", "luci-i18n-forkop-ru")
+PACKAGES = ("prokop", "luci-app-prokop", "luci-i18n-prokop-ru")
 EXTENSIONS = ("ipk", "apk")
 TIMEOUT = 20
 
@@ -66,7 +66,7 @@ def github_releases(repository, limit):
     url = f"https://api.github.com/repos/{repository}/releases?per_page={limit}"
     request = urllib.request.Request(url, headers={
         "Accept": "application/vnd.github+json",
-        "User-Agent": "forkop-release-catalog",
+        "User-Agent": "prokop-release-catalog",
     })
     token = os.environ.get("GITHUB_TOKEN", "")
     if token:
@@ -89,7 +89,7 @@ def mirror_has_every_package(base_url, version):
     for name in package_names(version):
         request = urllib.request.Request(
             f"{base_url}/releases/{version}/{name}", method="HEAD",
-            headers={"User-Agent": "forkop-release-catalog"})
+            headers={"User-Agent": "prokop-release-catalog"})
         try:
             with urllib.request.urlopen(request, timeout=TIMEOUT) as response:
                 if response.status != 200:
@@ -155,10 +155,10 @@ def main():
     parser.add_argument("output", type=Path)
     parser.add_argument("--base-url", required=True)
     parser.add_argument("--repository", default=os.environ.get(
-        "FORKOP_RELEASE_REPO", FORK_REPO))
+        "PROKOP_RELEASE_REPO", FORK_REPO))
     parser.add_argument("--limit", type=int, default=10)
     parser.add_argument("--offline", action="store_true",
-                        default=os.environ.get("FORKOP_RELEASE_CATALOG_OFFLINE") == "1",
+                        default=os.environ.get("PROKOP_RELEASE_CATALOG_OFFLINE") == "1",
                         help="list only the release being built; fetch nothing")
     arguments = parser.parse_args()
 

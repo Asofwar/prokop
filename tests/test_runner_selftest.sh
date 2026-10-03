@@ -16,7 +16,7 @@ fail() {
 
 REPO="$WORK/repo"
 STATE="$WORK/state"
-mkdir -p "$REPO/tests" "$STATE" "$WORK/tmp" "$WORK/host/run/forkop" "$WORK/host/tmp"
+mkdir -p "$REPO/tests" "$STATE" "$WORK/tmp" "$WORK/host/run/prokop" "$WORK/host/tmp"
 cp "$ROOT_DIR/tests/run.sh" "$REPO/tests/run.sh"
 
 fake_test() { # NAME BODY
@@ -26,10 +26,10 @@ fake_test() { # NAME BODY
 # The runner as a developer calls it, but with its logs and durations cache
 # inside $WORK, and its host check on $WORK/host instead of the host.
 # GITHUB_ACTIONS is dropped: without TEST arguments the runner would otherwise
-# leave the suite to the CI loop; so is FORKOP_TEST_GROUP_JOBS, which the
+# leave the suite to the CI loop; so is PROKOP_TEST_GROUP_JOBS, which the
 # runner running this test sets.
 runner() {
-  env -u GITHUB_ACTIONS -u FORKOP_TEST_GROUP_JOBS TMPDIR="$WORK/tmp" FORKOP_TEST_HOST_ROOT="$WORK/host" \
+  env -u GITHUB_ACTIONS -u PROKOP_TEST_GROUP_JOBS TMPDIR="$WORK/tmp" PROKOP_TEST_HOST_ROOT="$WORK/host" \
     bash "$REPO/tests/run.sh" --durations "$WORK/durations.tsv" "$@"
 }
 
@@ -119,30 +119,30 @@ expect_line "$WORK/parallel.out" 'PASS 3  FLAKY 0  FAIL 0  of 3 tests'
 # tests 2 x CPUs / jobs of them (at least 2), a test run alone all of them; a
 # value set by the caller applies to every test.
 for name in gj_a gj_b gj_c; do
-  fake_test "$name" "printf '%s\n' \"\${FORKOP_TEST_GROUP_JOBS:-unset}\" >'$STATE/$name.gj'"
+  fake_test "$name" "printf '%s\n' \"\${PROKOP_TEST_GROUP_JOBS:-unset}\" >'$STATE/$name.gj'"
 done
 printf 'gj_a\t9.0\ngj_b\t5.0\ngj_c\t1.0\n' >"$WORK/durations.tsv"
 cpus="$(nproc 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null || echo 2)"
 [ "$cpus" -gt 2 ] || cpus=2
 runner -j 2 'gj_*' >"$WORK/gj.out" 2>&1 || fail "the group-jobs tests failed: $(cat "$WORK/gj.out")"
 [ "$(cat "$STATE/gj_a.gj" "$STATE/gj_b.gj" "$STATE/gj_c.gj" | tr '\n' ' ')" = "$cpus $cpus $cpus " ] ||
-  fail "FORKOP_TEST_GROUP_JOBS of the tests: $(cat "$STATE"/gj_*.gj | tr '\n' ' ')"
+  fail "PROKOP_TEST_GROUP_JOBS of the tests: $(cat "$STATE"/gj_*.gj | tr '\n' ' ')"
 runner gj_b >"$WORK/gj.out" 2>&1 || fail "a single group-jobs test failed: $(cat "$WORK/gj.out")"
 [ "$(cat "$STATE/gj_b.gj")" = unset ] || fail "a test run alone was limited: $(cat "$STATE/gj_b.gj")"
-env -u GITHUB_ACTIONS FORKOP_TEST_GROUP_JOBS=7 TMPDIR="$WORK/tmp" FORKOP_TEST_HOST_ROOT="$WORK/host" bash "$REPO/tests/run.sh" \
+env -u GITHUB_ACTIONS PROKOP_TEST_GROUP_JOBS=7 TMPDIR="$WORK/tmp" PROKOP_TEST_HOST_ROOT="$WORK/host" bash "$REPO/tests/run.sh" \
   --durations "$WORK/durations.tsv" -j 2 'gj_*' >"$WORK/gj.out" 2>&1 || fail "the group-jobs tests failed: $(cat "$WORK/gj.out")"
 [ "$(cat "$STATE/gj_a.gj" "$STATE/gj_b.gj" "$STATE/gj_c.gj" | tr '\n' ' ')" = "7 7 7 " ] ||
-  fail "a caller's FORKOP_TEST_GROUP_JOBS was not kept: $(cat "$STATE"/gj_*.gj | tr '\n' ' ')"
+  fail "a caller's PROKOP_TEST_GROUP_JOBS was not kept: $(cat "$STATE"/gj_*.gj | tr '\n' ' ')"
 
 # 6. --affected selects by path, basename, module name, users of a changed
 # module or helper, changed tests and the safety set.
-mkdir -p "$REPO/forkop/files/usr/lib/core" "$REPO/forkop/files/usr/lib/feature" "$REPO/tests/helpers"
-printf 'return { x: 1 };\n' >"$REPO/forkop/files/usr/lib/core/base.uc"
-printf 'let base = require("core.base");\n' >"$REPO/forkop/files/usr/lib/feature/user.uc"
+mkdir -p "$REPO/prokop/files/usr/lib/core" "$REPO/prokop/files/usr/lib/feature" "$REPO/tests/helpers"
+printf 'return { x: 1 };\n' >"$REPO/prokop/files/usr/lib/core/base.uc"
+printf 'let base = require("core.base");\n' >"$REPO/prokop/files/usr/lib/feature/user.uc"
 printf 'helper() { :; }\n' >"$REPO/tests/helpers/common.sh"
 fake_test uses_base "ucode -e 'require(\"core.base\")'"
 # shellcheck disable=SC2016 # $ROOT_DIR is the fake test's own variable
-fake_test uses_user 'ucode "$ROOT_DIR/forkop/files/usr/lib/feature/user.uc"'
+fake_test uses_user 'ucode "$ROOT_DIR/prokop/files/usr/lib/feature/user.uc"'
 # shellcheck disable=SC2016
 fake_test uses_helper '. "$ROOT_DIR/tests/helpers/common.sh"'
 fake_test unrelated 'true'
@@ -169,7 +169,7 @@ affected() { # BASE EXPECTED-NAMES...
 }
 
 affected HEAD acl_boundary
-printf 'return { x: 2 };\n' >"$REPO/forkop/files/usr/lib/core/base.uc"
+printf 'return { x: 2 };\n' >"$REPO/prokop/files/usr/lib/core/base.uc"
 affected HEAD acl_boundary uses_base uses_user
 git_repo commit -q -am 'change base'
 affected HEAD~1 acl_boundary uses_base uses_user
@@ -185,7 +185,7 @@ grep -Eq '^acl_boundary +safety set' "$WORK/why.out" ||
   fail "--verbose does not name the safety set"
 
 # 7. Under GitHub Actions a bare call leaves the suite to the CI loop.
-GITHUB_ACTIONS=true TMPDIR="$WORK/tmp" FORKOP_TEST_HOST_ROOT="$WORK/host" bash "$REPO/tests/run.sh" \
+GITHUB_ACTIONS=true TMPDIR="$WORK/tmp" PROKOP_TEST_HOST_ROOT="$WORK/host" bash "$REPO/tests/run.sh" \
   --durations "$WORK/durations.tsv" >"$WORK/ci.out" 2>&1 ||
   fail "a bare call under GitHub Actions failed"
 expect_line "$WORK/ci.out" 'pass --all'
@@ -195,9 +195,9 @@ fi
 
 # 8. A test that writes to the host instead of its temporary directory
 # fails the run, also when it passes itself: here an entry at / (a path under
-# an empty variable) and a file in Forkop's runtime directory. The runner
+# an empty variable) and a file in Prokop's runtime directory. The runner
 # names what changed; a later run that leaves the host as it was passes.
-fake_test host_leak "printf x >'$WORK/host/stray'; : >'$WORK/host/run/forkop/state.json'"
+fake_test host_leak "printf x >'$WORK/host/stray'; : >'$WORK/host/run/prokop/state.json'"
 if runner host_leak >"$WORK/host.out" 2>&1; then
   cat "$WORK/host.out" >&2
   fail "a test that wrote to the host passed the run"
@@ -205,7 +205,7 @@ fi
 expect_line "$WORK/host.out" 'PASS 1  FLAKY 0  FAIL 0  of 1 tests'
 expect_line "$WORK/host.out" 'HOST CHANGED'
 expect_line "$WORK/host.out" "> $WORK/host/stray f 1 "
-expect_line "$WORK/host.out" "> $WORK/host/run/forkop/state.json f 0 "
+expect_line "$WORK/host.out" "> $WORK/host/run/prokop/state.json f 0 "
 runner pass >"$WORK/host.out" 2>&1 || {
   cat "$WORK/host.out" >&2
   fail "a run that left the host as it was failed"

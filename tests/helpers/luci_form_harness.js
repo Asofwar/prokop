@@ -1,8 +1,8 @@
 "use strict";
 
-// Minimal LuCI runtime for driving the real Forkop view modules under node.
+// Minimal LuCI runtime for driving the real Prokop view modules under node.
 //
-// It loads luci-app-forkop/.../view/forkop/section.js (and the generated
+// It loads luci-app-prokop/.../view/prokop/section.js (and the generated
 // main.js) unchanged, builds the Rules and Settings pages from the shipped
 // page/rules.js and page/settings.js (configform.js, settings.js), and
 // replaces luci-base with a small model of the parts a page or modal save
@@ -31,7 +31,7 @@ const path = require("node:path");
 
 const VIEW_DIR = path.join(
   __dirname,
-  "../../luci-app-forkop/htdocs/luci-static/resources/view/forkop",
+  "../../luci-app-prokop/htdocs/luci-static/resources/view/prokop",
 );
 
 if (typeof String.prototype.format !== "function") {
@@ -116,7 +116,7 @@ function createUciStore(initial) {
   const uci = {
     data,
     // luci-base uci keeps loaded packages here; settings.js reads it directly.
-    state: { values: { forkop: data } },
+    state: { values: { prokop: data } },
     get(_config, sid, option) {
       const section = data[sid];
       if (!section) return null;
@@ -1034,7 +1034,7 @@ function loadModule(file, modules, globals) {
   return typeof exported === "function" ? new exported() : exported;
 }
 
-// The Forkop CLI as fs.exec answers it (createEnvironment({ fs })):
+// The Prokop CLI as fs.exec answers it (createEnvironment({ fs })):
 // answers[command] is the JSON the command prints, a function of its
 // arguments that returns it, { code, data } for a non-zero exit, or
 // { code, stdout } for raw output; other commands print {}. log gets
@@ -1071,7 +1071,7 @@ function createEnvironment({
   sessionStorage = new Map(),
 } = {}) {
   const baseclass = createBaseclass();
-  const uci = createStagedUciStore("forkop", config);
+  const uci = createStagedUciStore("prokop", config);
   const document = createDocument();
   const listeners = new Map();
   // window.setTimeout callbacks wait here until runTimers() runs them.
@@ -1229,7 +1229,7 @@ function createEnvironment({
   let settingsModule = null;
   let shellModule = null;
 
-  // A page of the Forkop menu (page/*.js) as LuCI renders it: the view's
+  // A page of the Prokop menu (page/*.js) as LuCI renders it: the view's
   // render() builds its form with configform.createMap() and renders it.
   const configform = loadModule("configform.js", { baseclass, form, uci, ui, main }, globals);
 
@@ -1293,7 +1293,7 @@ function createEnvironment({
     },
   });
 
-  // A page of the Forkop menu (page/*.js). The view is rendered here at
+  // A page of the Prokop menu (page/*.js). The view is rendered here at
   // once (view.__init__ runs load() first, which only starts the shell
   // services), so a test reaches its form without waiting; mount() puts the
   // rendered content and the footer into #view, as view.__init__ does.
@@ -1392,7 +1392,7 @@ function createEnvironment({
       await settle();
     },
     settle,
-    // view/forkop/shell.js sharing this environment's main.js and window.
+    // view/prokop/shell.js sharing this environment's main.js and window.
     shell() {
       shellModule ??= loadModule("shell.js", { baseclass, uci, main }, moduleGlobals);
       return shellModule;
@@ -1456,10 +1456,10 @@ function createEnvironment({
     },
     // GridSection.renderMoreOptionsModal() for an existing rule. The modal
     // map takes `readonly` from the page map (a role that may read but not
-    // write the Forkop UCI package).
+    // write the Prokop UCI package).
     async openRule(section_id, { readonly = false } = {}) {
       await rulesPage.rendered;
-      const map = new form.Map("forkop");
+      const map = new form.Map("prokop");
       const named = map.section(form.NamedSection, section_id, "section");
       map.parent = pageMap;
       if (readonly) map.readonly = true;

@@ -149,8 +149,8 @@ if on["push"]["branches"] != ["main"]:
     problems.append("backend-ci.yml: push must stay limited to main")
 if on["pull_request"]["paths"] != on["push"]["paths"]:
     problems.append("backend-ci.yml: pull_request and push path filters differ")
-for path in ("forkop/files/**", "build.sh", "install.sh", "tests/**", "luci-app-forkop/**",
-             "fe-app-forkop/**", ".github/**"):
+for path in ("prokop/files/**", "build.sh", "install.sh", "tests/**", "luci-app-prokop/**",
+             "fe-app-prokop/**", ".github/**"):
     if path not in on["pull_request"]["paths"]:
         problems.append(f"backend-ci.yml: path filter misses {path}")
 jobs = backend["jobs"]

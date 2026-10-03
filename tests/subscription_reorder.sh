@@ -6,7 +6,7 @@ trap 'rm -rf "$WORK_DIR"' EXIT
 cat >"$WORK_DIR/reorder.uc" <<'UCODE'
 let fs = require("fs");
 let parser = require("subscription.parser");
-let folder = getenv("FORKOP_REORDER_TEST_DIR");
+let folder = getenv("PROKOP_REORDER_TEST_DIR");
 let left = folder + "/left.json", right = folder + "/right.json";
 let a = {type: "vless", tag: "A", server: "a.example", server_port: 443, uuid: "first"};
 let b = {type: "vless", tag: "B", server: "b.example", server_port: 443, uuid: "second"};
@@ -33,4 +33,4 @@ write(right, [group, a]);
 expect(false, "removed servers must request a reload");
 print("subscription reorder checks passed\n");
 UCODE
-FORKOP_REORDER_TEST_DIR="$WORK_DIR" ucode -L "$ROOT_DIR/forkop/files/usr/lib" "$WORK_DIR/reorder.uc"
+PROKOP_REORDER_TEST_DIR="$WORK_DIR" ucode -L "$ROOT_DIR/prokop/files/usr/lib" "$WORK_DIR/reorder.uc"

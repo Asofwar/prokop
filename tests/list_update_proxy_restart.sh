@@ -24,7 +24,7 @@ set -euo pipefail
 # real service/state.uc.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-REAL_LIB="$ROOT_DIR/forkop/files/usr/lib"
+REAL_LIB="$ROOT_DIR/prokop/files/usr/lib"
 REAL_SLEEP="$(command -v sleep)"
 WORK_DIR="$(mktemp -d)"
 # shellcheck source=tests/helpers/wait.sh
@@ -115,13 +115,13 @@ cat >"$WORK_DIR/bin/sleep" <<'SH'
 [ "$*" != 2 ] || exec "$REAL_SLEEP" 0.1
 exec "$REAL_SLEEP" "$@"
 SH
-cat >"$WORK_DIR/bin/init-forkop" <<'SH'
+cat >"$WORK_DIR/bin/init-prokop" <<'SH'
 #!/bin/sh
 printf 'init %s\n' "$*" >>"$EVENTS"
 SH
 cat >"$WORK_DIR/bin/nft" <<'SH'
 #!/bin/sh
-[ "$*" = '-j list table inet forkop' ] && printf '{"nftables":[]}\n'
+[ "$*" = '-j list table inet prokop' ] && printf '{"nftables":[]}\n'
 exit 0
 SH
 printf '#!/bin/sh\nexit 0\n' >"$WORK_DIR/bin/logger"
@@ -152,30 +152,30 @@ start_worker() {
   mkdir -p "$WORK_DIR/cache"
   printf '{"version":3,"rules":[{"domain_suffix":["old.example"]}]}\n' >"$WORK_DIR/rulesets/alpha-remote-domains-ruleset.json"
   cat >"$WORK_DIR/uci.state" <<'UCI'
-forkop.settings=settings
-forkop.settings.update_interval=1d
-forkop.alpha=section
-forkop.alpha.enabled=1
-forkop.alpha.action=connection
+prokop.settings=settings
+prokop.settings.update_interval=1d
+prokop.alpha=section
+prokop.alpha.enabled=1
+prokop.alpha.action=connection
 UCI
-  printf 'forkop.alpha.remote_domain_lists=%s\n' "$*" >>"$WORK_DIR/uci.state"
+  printf 'prokop.alpha.remote_domain_lists=%s\n' "$*" >>"$WORK_DIR/uci.state"
   if [ "$proxy" = 1 ]; then
-    printf 'forkop.settings.download_lists_via_proxy=1\nforkop.settings.download_lists_via_proxy_section=alpha\n' \
+    printf 'prokop.settings.download_lists_via_proxy=1\nprokop.settings.download_lists_via_proxy_section=alpha\n' \
       >>"$WORK_DIR/uci.state"
   fi
   env PATH="$WORK_DIR/bin:$PATH" \
-    FORKOP_LIB="$LIB" \
-    FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state" \
-    FORKOP_RUNTIME_LIST_GENERATION_DIR="$WORK_DIR/generation" \
-    FORKOP_RULESET_CACHE_DIR="$WORK_DIR/ruleset-cache" \
+    PROKOP_LIB="$LIB" \
+    PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state" \
+    PROKOP_RUNTIME_LIST_GENERATION_DIR="$WORK_DIR/generation" \
+    PROKOP_RULESET_CACHE_DIR="$WORK_DIR/ruleset-cache" \
     TMP_RULESET_FOLDER="$WORK_DIR/rulesets" \
-    FORKOP_RUNTIME_STATE_DIR="$RUN" \
-    FORKOP_RELOAD_LOCK_DIR="$RELOAD_LOCK" \
-    FORKOP_LIST_UPDATE_PID_FILE="$RUN/list.pid" \
-    FORKOP_PENDING_RELOAD_FILE="$RUN/reload.pending" \
-    FORKOP_PERSISTENT_LIST_CACHE_DIR="$WORK_DIR/cache" \
-    FORKOP_SERVICE_INIT="$WORK_DIR/bin/init-forkop" \
-    NFT_TABLE_NAME=forkop \
+    PROKOP_RUNTIME_STATE_DIR="$RUN" \
+    PROKOP_RELOAD_LOCK_DIR="$RELOAD_LOCK" \
+    PROKOP_LIST_UPDATE_PID_FILE="$RUN/list.pid" \
+    PROKOP_PENDING_RELOAD_FILE="$RUN/reload.pending" \
+    PROKOP_PERSISTENT_LIST_CACHE_DIR="$WORK_DIR/cache" \
+    PROKOP_SERVICE_INIT="$WORK_DIR/bin/init-prokop" \
+    NFT_TABLE_NAME=prokop \
     ucode -L "$LIB" "$LIB/components/updates.uc" list-update >"$WORK_DIR/worker.log" 2>&1 &
   worker=$!
   pids+=("$worker")

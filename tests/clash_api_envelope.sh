@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# UC-118, UC-033: `forkop clash_api` exits non-zero exactly when it prints a
+# UC-118, UC-033: `prokop clash_api` exits non-zero exactly when it prints a
 # failure, and every failure has one envelope:
 #   {"success": false, "error": "<code>", "message": "<text>", ...}
 # A transport failure (no answer, timeout), a sing-box error body
@@ -17,8 +17,8 @@ set -euo pipefail
 # marker is removed); only a run the controller did not answer is retried.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-RUNTIME_UC="$FORKOP_LIB/diagnostics/runtime.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+RUNTIME_UC="$PROKOP_LIB/diagnostics/runtime.uc"
 WORK="$(mktemp -d)"
 cleanup() {
   [ -n "${KEEP_WORK:-}" ] || rm -rf "${WORK:?}"
@@ -57,12 +57,12 @@ chmod +x "${WORK:?}/bin/curl"
 
 uci_state="${WORK:?}/uci-state"
 cat >"$uci_state" <<'EOF'
-forkop.settings=settings
-forkop.settings.latency_test_url=https://latency.example/generate_204
+prokop.settings=settings
+prokop.settings.latency_test_url=https://latency.example/generate_204
 EOF
 
-export FORKOP_LIB FAKE_DIR
-export FORKOP_UCI_STATE_FILE="$uci_state"
+export PROKOP_LIB FAKE_DIR
+export PROKOP_UCI_STATE_FILE="$uci_state"
 export FAKE_CURL_LOG="${WORK:?}/curl.log"
 export PATH="${WORK:?}/bin:$PATH"
 
@@ -80,7 +80,7 @@ no_answer() {
 # clash ACTION ARG...: runs the action, leaves stdout in OUT and rc in RC.
 clash() {
   set +e
-  OUT="$(ucode -L "$FORKOP_LIB" "$RUNTIME_UC" clash-api "$@" 2>/dev/null)"
+  OUT="$(ucode -L "$PROKOP_LIB" "$RUNTIME_UC" clash-api "$@" 2>/dev/null)"
   RC=$?
   set -e
 }
@@ -230,7 +230,7 @@ if (p.completed !== Number(completed) || p.failed !== Number(failed)) {
 }
 NODE
 }
-export FORKOP_UI_LATENCY_ACTION_DIR="$progress_dir"
+export PROKOP_UI_LATENCY_ACTION_DIR="$progress_dir"
 
 answer proxies_proxy-a_delay '{"delay":42}'
 answer proxies_proxy-b_delay '{"delay":51}'
@@ -287,20 +287,20 @@ clash no_such_action
 expect_failure "an unknown action" invalid_input 'Array.isArray(value.available)'
 
 # --- the dashboard latency job end to end (UC-033) -----------------------------
-# service/ui.uc latency-worker -> /usr/bin/forkop clash_api -> runtime.uc.
-cat >"${WORK:?}/forkop" <<SH
+# service/ui.uc latency-worker -> /usr/bin/prokop clash_api -> runtime.uc.
+cat >"${WORK:?}/prokop" <<SH
 #!/bin/sh
-exec ucode "$ROOT_DIR/forkop/files/usr/bin/forkop" "\$@"
+exec ucode "$ROOT_DIR/prokop/files/usr/bin/prokop" "\$@"
 SH
-chmod +x "${WORK:?}/forkop"
+chmod +x "${WORK:?}/prokop"
 job_dir="${WORK:?}/ui-state/latency-actions"
 run_latency_job() {
   job="$job_dir/job-$1.json"
   printf '{"success":true,"running":true,"kind":"latency","latency_type":"%s","section":"main","tag":"%s","started_at":100}\n' \
     "$1" "$2" >"$job"
-  FORKOP_BIN="${WORK:?}/forkop" FORKOP_LATENCY_TEST_LOCK_DIR="${WORK:?}/latency.lock" \
-  FORKOP_RUNTIME_STATE_DIR="${WORK:?}/run" \
-    ucode -L "$FORKOP_LIB" "$FORKOP_LIB/service/ui.uc" latency-worker "$job" "$1" "$2" 5000 ||
+  PROKOP_BIN="${WORK:?}/prokop" PROKOP_LATENCY_TEST_LOCK_DIR="${WORK:?}/latency.lock" \
+  PROKOP_RUNTIME_STATE_DIR="${WORK:?}/run" \
+    ucode -L "$PROKOP_LIB" "$PROKOP_LIB/service/ui.uc" latency-worker "$job" "$1" "$2" 5000 ||
     fail "latency-worker $1 exited non-zero"
   JOB="$job" node -e 'const v = JSON.parse(require("fs").readFileSync(process.env.JOB, "utf8"));
     if (v.running !== false) process.exit(1); process.stdout.write(String(v.success));'
@@ -327,9 +327,9 @@ answer proxies_proxy-a_delay '{"message":"An error occurred in the delay test"}'
 # --- the automatic latency test --------------------------------------------------
 # Only the lock and readiness answers of service/state.uc are modelled here.
 mkdir -p "${WORK:?}/latency-lib/service"
-ln -s "$FORKOP_LIB/core" "${WORK:?}/latency-lib/core"
-ln -s "$FORKOP_LIB/diagnostics" "${WORK:?}/latency-lib/diagnostics"
-ln -s "$FORKOP_LIB/singbox" "${WORK:?}/latency-lib/singbox"
+ln -s "$PROKOP_LIB/core" "${WORK:?}/latency-lib/core"
+ln -s "$PROKOP_LIB/diagnostics" "${WORK:?}/latency-lib/diagnostics"
+ln -s "$PROKOP_LIB/singbox" "${WORK:?}/latency-lib/singbox"
 cat >"${WORK:?}/latency-lib/service/state.uc" <<'UC'
 if (ARGV[0] == "sing-box-service-runtime-pid") {
     print("4242\n");
@@ -343,19 +343,19 @@ if (ARGV[0] == "single-ready-sing-box-runtime" ||
 exit(64);
 UC
 printf '%s\n' '{"outbounds":[{"type":"vless","tag":"proxy-a","server":"one.test"},{"type":"trojan","tag":"proxy-b","server":"two.test"}]}' >"${WORK:?}/config.json"
-printf 'forkop.settings.config_path=%s\n' "${WORK:?}/config.json" >>"$uci_state"
-signature="$(ucode -L "$FORKOP_LIB" "$RUNTIME_UC" proxy-outbounds-signature "${WORK:?}/config.json")"
+printf 'prokop.settings.config_path=%s\n' "${WORK:?}/config.json" >>"$uci_state"
+signature="$(ucode -L "$PROKOP_LIB" "$RUNTIME_UC" proxy-outbounds-signature "${WORK:?}/config.json")"
 marker="${WORK:?}/automatic.pending"
 
 run_automatic() {
   printf '{"format":"1","signature":"%s"}\n' "$signature" >"$marker"
   set +e
-  FORKOP_LIB="${WORK:?}/latency-lib" \
-  FORKOP_AUTOMATIC_LATENCY_PENDING_FILE="$marker" \
-  FORKOP_AUTOMATIC_LATENCY_TEST_LOCK_DIR="${WORK:?}/automatic.lock" \
-  FORKOP_PENDING_RELOAD_FILE="${WORK:?}/reload.pending" \
-  FORKOP_AUTOMATIC_LATENCY_BATCH_PAUSE=0 \
-    ucode -L "$ROOT_DIR/forkop/files/usr/lib" "$RUNTIME_UC" automatic-latency-test >/dev/null 2>&1
+  PROKOP_LIB="${WORK:?}/latency-lib" \
+  PROKOP_AUTOMATIC_LATENCY_PENDING_FILE="$marker" \
+  PROKOP_AUTOMATIC_LATENCY_TEST_LOCK_DIR="${WORK:?}/automatic.lock" \
+  PROKOP_PENDING_RELOAD_FILE="${WORK:?}/reload.pending" \
+  PROKOP_AUTOMATIC_LATENCY_BATCH_PAUSE=0 \
+    ucode -L "$ROOT_DIR/prokop/files/usr/lib" "$RUNTIME_UC" automatic-latency-test >/dev/null 2>&1
   RC=$?
   set -e
 }

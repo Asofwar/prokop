@@ -10,7 +10,7 @@ set -euo pipefail
 # card wanted a bootstrap server and asked it for the name "2606" (UC-086).
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK="$(mktemp -d)"
 trap 'rm -rf "${WORK:?}"' EXIT HUP INT TERM
 
@@ -45,13 +45,13 @@ generator_needs_bootstrap() {
 # leaves the JSON in $WORK/<name>.json and the dig queries in <name>.dig.
 diagnostics_check() {
   local name="$1" dns_type="$2" server="$3"
-  printf 'forkop.settings=settings\nforkop.settings.dns_type=%s\nforkop.settings.dns_server=%s\nforkop.settings.bootstrap_dns_server=1.1.1.1\n' \
+  printf 'prokop.settings=settings\nprokop.settings.dns_type=%s\nprokop.settings.dns_server=%s\nprokop.settings.bootstrap_dns_server=1.1.1.1\n' \
     "$dns_type" "$server" >"$WORK/$name.state"
   : >"$WORK/$name.dig"
   PATH="$WORK/bin:$PATH" DIG_LOG="$WORK/$name.dig" \
-    FORKOP_UCI_STATE_FILE="$WORK/$name.state" \
-    FORKOP_DNS_FAILOVER_STATE_FILE="$WORK/$name.none.json" \
-    FORKOP_RUNTIME_STATE_DIR="$WORK/$name.run" FORKOP_LIB="$LIB" \
+    PROKOP_UCI_STATE_FILE="$WORK/$name.state" \
+    PROKOP_DNS_FAILOVER_STATE_FILE="$WORK/$name.none.json" \
+    PROKOP_RUNTIME_STATE_DIR="$WORK/$name.run" PROKOP_LIB="$LIB" \
     ucode -L "$LIB" "$LIB/diagnostics/runtime.uc" check-dns-available >"$WORK/$name.json" 2>"$WORK/$name.err"
 }
 

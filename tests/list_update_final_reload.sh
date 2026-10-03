@@ -4,10 +4,10 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 # shellcheck source=tests/helpers/owned_processes.sh
 . "$ROOT_DIR/tests/helpers/owned_processes.sh"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-UPDATES_UC="$FORKOP_LIB/components/updates.uc"
-LIFECYCLE_UC="$FORKOP_LIB/service/lifecycle.uc"
-INITD_UC="$FORKOP_LIB/service/initd.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+UPDATES_UC="$PROKOP_LIB/components/updates.uc"
+LIFECYCLE_UC="$PROKOP_LIB/service/lifecycle.uc"
+INITD_UC="$PROKOP_LIB/service/initd.uc"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT
 
@@ -20,49 +20,49 @@ mkdir -p "$WORK_DIR/bin" "$WORK_DIR/runtime-generation"
 printf 'coherent-generation\n' >"$WORK_DIR/runtime-generation/source-1"
 generation_hash="$(md5sum "$WORK_DIR/runtime-generation/source-1" | awk '{print $1}')"
 
-cat >"$WORK_DIR/bin/forkop-init" <<'EOF_INIT'
+cat >"$WORK_DIR/bin/prokop-init" <<'EOF_INIT'
 #!/bin/sh
-printf '%s\n' "$*" >>"$FORKOP_TEST_RELOAD_LOG"
-if [ -e "${FORKOP_TEST_PENDING_FILE}.queue" ]; then
-  printf 'reason=list-content\n' >"$FORKOP_TEST_PENDING_FILE"
+printf '%s\n' "$*" >>"$PROKOP_TEST_RELOAD_LOG"
+if [ -e "${PROKOP_TEST_PENDING_FILE}.queue" ]; then
+  printf 'reason=list-content\n' >"$PROKOP_TEST_PENDING_FILE"
   printf 'queued\n'
   exit 0
 fi
-if [ "${FORKOP_TEST_RELOAD_APPLIED:-1}" = 1 ]; then
+if [ "${PROKOP_TEST_RELOAD_APPLIED:-1}" = 1 ]; then
   # Model lifecycle's post-commit removal. A synchronous init.d reload has
   # actually completed by this point; a queued one must leave the marker.
-  rm -f "$FORKOP_TEST_LIST_APPLY_MARKER"
+  rm -f "$PROKOP_TEST_LIST_APPLY_MARKER"
 fi
-exit "${FORKOP_TEST_RELOAD_STATUS:-0}"
+exit "${PROKOP_TEST_RELOAD_STATUS:-0}"
 EOF_INIT
 cat >"$WORK_DIR/ruleset-cache-stub.uc" <<'EOF_RULESET'
 #!/usr/bin/env ucode
-exit(int(getenv("FORKOP_TEST_RULESET_STATUS") || "1"));
+exit(int(getenv("PROKOP_TEST_RULESET_STATUS") || "1"));
 EOF_RULESET
 cat >"$WORK_DIR/bin/logger" <<'EOF_LOGGER'
 #!/bin/sh
-printf '%s\n' "$*" >>"$FORKOP_TEST_LOG"
+printf '%s\n' "$*" >>"$PROKOP_TEST_LOG"
 EOF_LOGGER
-chmod +x "$WORK_DIR/bin/forkop-init" "$WORK_DIR/bin/logger"
+chmod +x "$WORK_DIR/bin/prokop-init" "$WORK_DIR/bin/logger"
 
 run_finish() {
   PATH="$WORK_DIR/bin:$PATH" \
-  FORKOP_LIB="$FORKOP_LIB" \
-  FORKOP_SERVICE_INIT="$WORK_DIR/bin/forkop-init" \
-  FORKOP_RULESET_CACHE_UC="$WORK_DIR/ruleset-cache-stub.uc" \
-  FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/runtime" \
-  FORKOP_PENDING_RELOAD_FILE="$WORK_DIR/reload.pending" \
-  FORKOP_LIST_UPDATE_RELOAD_FILE="$WORK_DIR/list-update.reload" \
-  FORKOP_RULESET_REFRESH_AFTER_LIST_FILE="$WORK_DIR/ruleset-refresh-after-list" \
-  FORKOP_LIST_UPDATE_PID_FILE="$WORK_DIR/list-update.pid" \
-  FORKOP_RELOAD_LOCK_DIR="$WORK_DIR/reload.lock" \
-  FORKOP_TEST_RELOAD_LOG="$WORK_DIR/reload.log" \
-  FORKOP_TEST_PENDING_FILE="$WORK_DIR/reload.pending" \
-  FORKOP_TEST_LIST_APPLY_MARKER="$WORK_DIR/list-update.reload" \
-  FORKOP_TEST_LOG="$WORK_DIR/log" \
-  FORKOP_TEST_RELOAD_STATUS="$1" \
-  FORKOP_TEST_RULESET_STATUS="${4:-1}" \
-    ucode -L "$FORKOP_LIB" "$UPDATES_UC" finish-list-update-fixture 0 1 "$2"
+  PROKOP_LIB="$PROKOP_LIB" \
+  PROKOP_SERVICE_INIT="$WORK_DIR/bin/prokop-init" \
+  PROKOP_RULESET_CACHE_UC="$WORK_DIR/ruleset-cache-stub.uc" \
+  PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/runtime" \
+  PROKOP_PENDING_RELOAD_FILE="$WORK_DIR/reload.pending" \
+  PROKOP_LIST_UPDATE_RELOAD_FILE="$WORK_DIR/list-update.reload" \
+  PROKOP_RULESET_REFRESH_AFTER_LIST_FILE="$WORK_DIR/ruleset-refresh-after-list" \
+  PROKOP_LIST_UPDATE_PID_FILE="$WORK_DIR/list-update.pid" \
+  PROKOP_RELOAD_LOCK_DIR="$WORK_DIR/reload.lock" \
+  PROKOP_TEST_RELOAD_LOG="$WORK_DIR/reload.log" \
+  PROKOP_TEST_PENDING_FILE="$WORK_DIR/reload.pending" \
+  PROKOP_TEST_LIST_APPLY_MARKER="$WORK_DIR/list-update.reload" \
+  PROKOP_TEST_LOG="$WORK_DIR/log" \
+  PROKOP_TEST_RELOAD_STATUS="$1" \
+  PROKOP_TEST_RULESET_STATUS="${4:-1}" \
+    ucode -L "$PROKOP_LIB" "$UPDATES_UC" finish-list-update-fixture 0 1 "$2"
 }
 
 printf 'reason=config-change\n' >"$WORK_DIR/reload.pending"
@@ -87,8 +87,8 @@ rm -f "$WORK_DIR/reload.pending.queue"
   fail "queued final apply did not preserve list-content pending semantics"
 [ "$(cat "$WORK_DIR/list-update.reload")" = "apply-pending" ] ||
   fail "queued final apply lost its durable local marker"
-pending_reason="$(FORKOP_LIST_UPDATE_RELOAD_FILE="$WORK_DIR/list-update.reload" \
-  ucode -L "$FORKOP_LIB" "$LIFECYCLE_UC" reload-reason-fixture pending)"
+pending_reason="$(PROKOP_LIST_UPDATE_RELOAD_FILE="$WORK_DIR/list-update.reload" \
+  ucode -L "$PROKOP_LIB" "$LIFECYCLE_UC" reload-reason-fixture pending)"
 [ "$pending_reason" = "list-content" ] || fail "queued pending reload lost list-content reason"
 
 # Exercise the real initd lock path too, rather than merely returning the
@@ -97,25 +97,25 @@ pending_reason="$(FORKOP_LIST_UPDATE_RELOAD_FILE="$WORK_DIR/list-update.reload" 
 sleep 300 >/dev/null 2>&1 &
 holder=$!
 trap 'owned_kill TERM "$holder" || true; rm -rf "$WORK_DIR"' EXIT
-ucode -L "$FORKOP_LIB" "$FORKOP_LIB/service/state.uc" acquire-runtime-dir-lock "$WORK_DIR/held-reload.lock" "$holder" ||
+ucode -L "$PROKOP_LIB" "$PROKOP_LIB/service/state.uc" acquire-runtime-dir-lock "$WORK_DIR/held-reload.lock" "$holder" ||
   fail "the holder could not take reload.lock"
-# Forkop was started since boot: a Forkop that was not is not reloaded at all
+# Prokop was started since boot: a Prokop that was not is not reloaded at all
 # (D-15(a); tests/reboot_not_started.sh).
 mkdir -p "$WORK_DIR/initd-runtime"
 : >"$WORK_DIR/initd-runtime/start.explicit"
 initd_queue_output="$(
-  FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/initd-runtime" \
-  FORKOP_PENDING_RELOAD_FILE="$WORK_DIR/initd-reload.pending" \
-  FORKOP_RELOAD_LOCK_DIR="$WORK_DIR/held-reload.lock" \
-  FORKOP_SERVICE_INIT="$WORK_DIR/bin/forkop-init" \
-    ucode -L "$FORKOP_LIB" "$INITD_UC" reload-service list-content "$$"
+  PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/initd-runtime" \
+  PROKOP_PENDING_RELOAD_FILE="$WORK_DIR/initd-reload.pending" \
+  PROKOP_RELOAD_LOCK_DIR="$WORK_DIR/held-reload.lock" \
+  PROKOP_SERVICE_INIT="$WORK_DIR/bin/prokop-init" \
+    ucode -L "$PROKOP_LIB" "$INITD_UC" reload-service list-content "$$"
 )"
 [ "$initd_queue_output" = "queued" ] || fail "locked initd request did not report queued list-content"
 [ "$(sed -n '1p' "$WORK_DIR/initd-reload.pending")" = "reason=list-content" ] ||
   fail "locked initd request did not retain list-content as its pending reason"
-[ "$(ucode -L "$FORKOP_LIB" "$FORKOP_LIB/service/state.uc" runtime-dir-lock-owner "$WORK_DIR/held-reload.lock")" = "$holder" ] ||
+[ "$(ucode -L "$PROKOP_LIB" "$PROKOP_LIB/service/state.uc" runtime-dir-lock-owner "$WORK_DIR/held-reload.lock")" = "$holder" ] ||
   fail "the queued initd request changed the reload.lock owner"
-ucode -L "$FORKOP_LIB" "$FORKOP_LIB/service/state.uc" release-runtime-dir-lock "$WORK_DIR/held-reload.lock" "$holder"
+ucode -L "$PROKOP_LIB" "$PROKOP_LIB/service/state.uc" release-runtime-dir-lock "$WORK_DIR/held-reload.lock" "$holder"
 [ ! -e "$WORK_DIR/held-reload.lock" ] || fail "the holder's release left reload.lock behind"
 owned_kill TERM "$holder" || true
 
@@ -166,16 +166,16 @@ fi
 grep -Fq 'retaining it for a local retry' "$WORK_DIR/log" ||
   fail "failed runtime apply did not record the retry-safe error"
 
-pending_reason="$(FORKOP_LIST_UPDATE_RELOAD_FILE="$WORK_DIR/list-update.reload" \
-  ucode -L "$FORKOP_LIB" "$LIFECYCLE_UC" reload-reason-fixture pending)"
+pending_reason="$(PROKOP_LIST_UPDATE_RELOAD_FILE="$WORK_DIR/list-update.reload" \
+  ucode -L "$PROKOP_LIB" "$LIFECYCLE_UC" reload-reason-fixture pending)"
 [ "$pending_reason" = "list-content" ] || fail "pending reload did not choose local list-content retry"
 grep -Fq 'plan.has_work = 1;' "$LIFECYCLE_UC" ||
   fail "local list-content retry can still be skipped as a no-op"
 grep -Fq 'if (reason == "list-content")' "$LIFECYCLE_UC" ||
   fail "successful local list-content retry does not clear its durable marker"
 rm -f "$WORK_DIR/list-update.reload"
-ordinary_reason="$(FORKOP_LIST_UPDATE_RELOAD_FILE="$WORK_DIR/list-update.reload" \
-  ucode -L "$FORKOP_LIB" "$LIFECYCLE_UC" reload-reason-fixture pending)"
+ordinary_reason="$(PROKOP_LIST_UPDATE_RELOAD_FILE="$WORK_DIR/list-update.reload" \
+  ucode -L "$PROKOP_LIB" "$LIFECYCLE_UC" reload-reason-fixture pending)"
 [ "$ordinary_reason" = "pending" ] || fail "normal pending reload was unexpectedly rewritten"
 
 printf 'final list update/reload lifecycle checks passed\n'

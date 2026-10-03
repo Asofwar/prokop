@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Start fills Forkop's nft sets once, inside the candidate transaction it
+# Start fills Prokop's nft sets once, inside the candidate transaction it
 # commits atomically (UC-162). sing-box init-config ran the same population
 # again right after the commit, live and outside any transaction (one
 # `nft add element` per chunk): a second, non-atomic pass over sets the
@@ -12,7 +12,7 @@ set -euo pipefail
 # records its call (the harness of tests/cron_refresh_failure.sh).
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK_DIR="$(mktemp -d)"
 # shellcheck source=tests/helpers/wait.sh
 . "$ROOT_DIR/tests/helpers/wait.sh"
@@ -37,29 +37,29 @@ fail() {
 }
 ok() { printf 'OK: %s\n' "$1"; }
 
-STATE_DIR="$WORK_DIR/run/forkop"
+STATE_DIR="$WORK_DIR/run/prokop"
 mkdir -p "$WORK_DIR/bin" "$STATE_DIR" "$WORK_DIR/tmp" "$FAKE_LIB"
 
 export TMPDIR="$WORK_DIR/tmp"
 export PATH="$WORK_DIR/bin:$PATH"
 export TEST_WORK="$WORK_DIR" EVENTS TEST_LIB="$LIB"
-export FORKOP_RUNTIME_STATE_DIR="$STATE_DIR"
-export FORKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/forkop.reload.lock"
-export FORKOP_PENDING_RELOAD_FILE="$STATE_DIR/reload.pending"
-export FORKOP_SUBSCRIPTION_UPDATE_LOCK_DIR="$STATE_DIR/subscription-update.lock"
-export FORKOP_INTERNAL_CONFIG_TRIGGER_GUARD="$WORK_DIR/run/internal-config-change"
-export FORKOP_MANAGED_UPGRADE_SING_BOX_MARKER="$WORK_DIR/run/managed-upgrade-sing-box"
-export FORKOP_CONFIG_FILE="$WORK_DIR/forkop.config"
-export FORKOP_DNSMASQ_CONFIG_FILE="$WORK_DIR/dhcp.config"
-export FORKOP_BIN="$WORK_DIR/bin/forkop"
-export FORKOP_SERVICE_INIT="$WORK_DIR/bin/init"
-export FORKOP_UI_ACTION_TRACKED=1
-export FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
-export FORKOP_UCI_LOG_FILE="$WORK_DIR/uci.log"
+export PROKOP_RUNTIME_STATE_DIR="$STATE_DIR"
+export PROKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/prokop.reload.lock"
+export PROKOP_PENDING_RELOAD_FILE="$STATE_DIR/reload.pending"
+export PROKOP_SUBSCRIPTION_UPDATE_LOCK_DIR="$STATE_DIR/subscription-update.lock"
+export PROKOP_INTERNAL_CONFIG_TRIGGER_GUARD="$WORK_DIR/run/internal-config-change"
+export PROKOP_MANAGED_UPGRADE_SING_BOX_MARKER="$WORK_DIR/run/managed-upgrade-sing-box"
+export PROKOP_CONFIG_FILE="$WORK_DIR/prokop.config"
+export PROKOP_DNSMASQ_CONFIG_FILE="$WORK_DIR/dhcp.config"
+export PROKOP_BIN="$WORK_DIR/bin/prokop"
+export PROKOP_SERVICE_INIT="$WORK_DIR/bin/init"
+export PROKOP_UI_ACTION_TRACKED=1
+export PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
+export PROKOP_UCI_LOG_FILE="$WORK_DIR/uci.log"
 export TMP_SING_BOX_FOLDER="$WORK_DIR/singbox-tmp"
 export DNSMASQ_INIT="$WORK_DIR/bin/dnsmasq-init"
 export KILLSWITCH_STATE_DIR="$WORK_DIR/killswitch"
-export FORKOP_CONFIG_NAME=forkop
+export PROKOP_CONFIG_NAME=prokop
 export SB_DNS_INBOUND_ADDRESS=127.0.0.42
 
 # Nothing here may reach the host's syslog, nftables, dnsmasq or init scripts.
@@ -67,13 +67,13 @@ printf '#!/bin/sh\nprintf "%%s\\n" "$*" >>"$TEST_WORK/syslog"\n' >"$WORK_DIR/bin
 printf '#!/bin/sh\nexit 1\n' >"$WORK_DIR/bin/nft"
 printf '#!/bin/sh\nexit 0\n' >"$WORK_DIR/bin/ip"
 printf '#!/bin/sh\nexit 0\n' >"$WORK_DIR/bin/init"
-printf '#!/bin/sh\nexit 0\n' >"$WORK_DIR/bin/forkop"
+printf '#!/bin/sh\nexit 0\n' >"$WORK_DIR/bin/prokop"
 printf '#!/bin/sh\nexit 0\n' >"$DNSMASQ_INIT"
 chmod 0755 "$WORK_DIR"/bin/*
-printf 'config dnsmasq\n' >"$FORKOP_DNSMASQ_CONFIG_FILE"
-: >"$FORKOP_CONFIG_FILE"
-printf 'forkop.settings=settings\nforkop.settings.yacd_secret_key=0123456789abcdef\nforkop.settings.dont_touch_dhcp=1\n' \
-  >"$FORKOP_UCI_STATE_FILE"
+printf 'config dnsmasq\n' >"$PROKOP_DNSMASQ_CONFIG_FILE"
+: >"$PROKOP_CONFIG_FILE"
+printf 'prokop.settings=settings\nprokop.settings.yacd_secret_key=0123456789abcdef\nprokop.settings.dont_touch_dhcp=1\n' \
+  >"$PROKOP_UCI_STATE_FILE"
 
 # Every module call: records "<module> <arguments>" and succeeds, except as
 # below. Locks and the stop request go to the real service/state.uc; the
@@ -96,7 +96,7 @@ let running = getenv("RUNNING") == "1";
 if (name == "service/state.uc" && (mode == "has-list-update-sources" || mode == "has-nft-list-update-sources" ||
     mode == "sing-box-process-conflict"))
     exit(1);
-if (name == "service/state.uc" && (mode == "forkop-stably-running" || mode == "forkop-running"))
+if (name == "service/state.uc" && (mode == "prokop-stably-running" || mode == "prokop-running"))
     exit(running ? 0 : 1);
 if (name == "service/state.uc" && mode == "sing-box-service-runtime-pid") {
     print("4242\\n");
@@ -143,7 +143,7 @@ line_of() { grep -nF -- "$1" "$EVENTS" | head -n 1 | cut -d: -f1; }
 
 : >"$EVENTS"
 STATUS=0
-env FORKOP_LIB="$FAKE_LIB" RUNNING=0 ucode -L "$LIB" "$LIB/service/lifecycle.uc" start >"$WORK_DIR/lifecycle.out" 2>&1 ||
+env PROKOP_LIB="$FAKE_LIB" RUNNING=0 ucode -L "$LIB" "$LIB/service/lifecycle.uc" start >"$WORK_DIR/lifecycle.out" 2>&1 ||
   STATUS=$?
 wait_until 20 no_fake_modules || fail "the background workers of the start did not finish"
 [ "$STATUS" = 0 ] || fail "the start failed (status $STATUS)"

@@ -21,7 +21,7 @@ set -euo pipefail
 # and mount namespaces (unshare -rm) and are skipped without them.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 RUNTIME="$LIB/singbox/runtime.uc"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
@@ -36,7 +36,7 @@ ok() { printf 'OK: %s\n' "$1"; }
 DIR="$WORK/etc/sing-box"
 CONFIG="$DIR/config.json"
 mkdir -p "$WORK/bin" "$WORK/tmp" "$DIR"
-# logger keeps what Forkop logs.
+# logger keeps what Prokop logs.
 cat >"$WORK/bin/logger" <<'SH'
 #!/bin/sh
 printf '%s\n' "$*" >>"$WORK/log"
@@ -46,16 +46,16 @@ printf '#!/bin/sh\nexit 0\n' >"$WORK/bin/sing-box"
 chmod 0755 "$WORK/bin/"*
 export PATH="$WORK/bin:$PATH"
 export TMPDIR="$WORK/tmp"
-export FORKOP_UCI_STATE_FILE="$WORK/uci.state"
-export FORKOP_UCI_LOG_FILE="$WORK/uci.log"
-export FORKOP_RUNTIME_STATE_DIR="$WORK/run"
-export FORKOP_DNS_FAILOVER_STATE_FILE="$WORK/run/dns-failover.json"
+export PROKOP_UCI_STATE_FILE="$WORK/uci.state"
+export PROKOP_UCI_LOG_FILE="$WORK/uci.log"
+export PROKOP_RUNTIME_STATE_DIR="$WORK/run"
+export PROKOP_DNS_FAILOVER_STATE_FILE="$WORK/run/dns-failover.json"
 export LIB RUNTIME WORK
 cat >"$WORK/uci.state" <<EOF
-forkop.settings=settings
-forkop.settings.config_path=$CONFIG
-forkop.settings.dns_server=1.1.1.1 8.8.8.8
-forkop.settings.bootstrap_dns_server=77.88.8.8 9.9.9.9
+prokop.settings=settings
+prokop.settings.config_path=$CONFIG
+prokop.settings.dns_server=1.1.1.1 8.8.8.8
+prokop.settings.bootstrap_dns_server=77.88.8.8 9.9.9.9
 EOF
 
 runtime() { ucode -L "$LIB" "$RUNTIME" "$@"; }
@@ -181,9 +181,9 @@ UC
   printf 'exit(0);\n' >"$STUB_LIB/singbox/ruleset_cache.uc"
   printf 'exit(1);\n' >"$STUB_LIB/config/validator.uc"
   printf '{"generated":"%s"}\n' "$(bytes 2000)" >"$WORK/generated.json"
-  printf 'forkop.settings.service_listen_address=192.0.2.1\n' >>"$WORK/uci.state"
+  printf 'prokop.settings.service_listen_address=192.0.2.1\n' >>"$WORK/uci.state"
   : >"$WORK/log"
-  FORKOP_LIB="$STUB_LIB" SB_VARIANT_STATE_FILE="$WORK/variant" on_full_overlay init-config 0 1 1 main
+  PROKOP_LIB="$STUB_LIB" SB_VARIANT_STATE_FILE="$WORK/variant" on_full_overlay init-config 0 1 1 main
   [ "$STATUS" != 0 ] || fail "a start on a full overlay reported success"
   cmp -s "$WORK/old.json" "$WORK/after.json" || fail "a start on a full overlay changed config.json"
   [ -z "$(ls -A "$WORK/tmp")" ] || fail "a start on a full overlay left in /tmp: $(ls -A "$WORK/tmp")"

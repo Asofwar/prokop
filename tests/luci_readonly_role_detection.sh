@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# The read ACL group may run the CLI only through /usr/libexec/forkop-ro
+# The read ACL group may run the CLI only through /usr/libexec/prokop-ro
 # (UC-001), so a session must be treated as read-only whenever its role lacks
-# write access to luci-app-forkop, even if it can read the Forkop UCI package
+# write access to luci-app-prokop, even if it can read the Prokop UCI package
 # (for example a viewer role granted read of every group, including
-# luci-app-forkop-admin). LuCI reports that through L.hasViewPermission().
+# luci-app-prokop-admin). LuCI reports that through L.hasViewPermission().
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 node - "$ROOT_DIR" <<'NODE'
@@ -14,12 +14,12 @@ const path = require('node:path');
 const assert = require('node:assert/strict');
 const root = process.argv[2];
 const source = fs.readFileSync(path.join(root,
-  'luci-app-forkop/htdocs/luci-static/resources/view/forkop/shell.js'), 'utf8');
+  'luci-app-prokop/htdocs/luci-static/resources/view/prokop/shell.js'), 'utf8');
 
 function loadShell({ canReadUci, permission, withL = true }) {
   const calls = [];
   const main = {
-    FORKOP_UCI_PACKAGE: 'forkop',
+    PROKOP_UCI_PACKAGE: 'prokop',
     setReadonlyMode(value) { calls.push(`readonly:${value}`); },
   };
   const uci = { load: async () => { calls.push('uci'); if (!canReadUci) throw Error('Permission denied'); } };

@@ -2,9 +2,9 @@
 // wrapper tests/helpers/uci_cli/uci. Never shipped.
 //
 // tests/helpers/uci_cli/select.sh hands it to the code under test (through
-// FORKOP_AUTOTUNE_UCI) only when no real uci is on PATH, or when
-// FORKOP_TEST_UCI_CLI=shim asks for it. It implements the part of the CLI
-// Forkop shells out to, with the semantics of libuci and cli.c:
+// PROKOP_AUTOTUNE_UCI) only when no real uci is on PATH, or when
+// PROKOP_TEST_UCI_CLI=shim asks for it. It implements the part of the CLI
+// Prokop shells out to, with the semantics of libuci and cli.c:
 //
 //   uci [-q] [-s] -c CONFDIR -t SAVEDIR get|show|set|delete|add_list|del_list|commit ARG
 //
@@ -14,18 +14,18 @@
 // (other commands and options, @type[n] and anonymous cfgXXXXXX references,
 // ';' statement separators, line continuations, changes staged in the host
 // save directory, which the real CLI merges even with -t) is refused loudly
-// on stderr and in $FORKOP_TEST_UCI_SHIM_LOG, never approximated.
+// on stderr and in $PROKOP_TEST_UCI_SHIM_LOG, never approximated.
 // tests/uci_cli_shim.sh pins the behaviour against the real CLI.
 
 let fs = require("fs");
 
-const SHIM_LOG = getenv("FORKOP_TEST_UCI_SHIM_LOG") || "";
-const HOST_SAVEDIR = getenv("FORKOP_TEST_UCI_SHIM_HOST_SAVEDIR") || "/tmp/.uci";
+const SHIM_LOG = getenv("PROKOP_TEST_UCI_SHIM_LOG") || "";
+const HOST_SAVEDIR = getenv("PROKOP_TEST_UCI_SHIM_HOST_SAVEDIR") || "/tmp/.uci";
 
 let quiet = false;
 
 function unsupported(what) {
-    let message = "uci (Forkop test shim): unsupported " + what +
+    let message = "uci (Prokop test shim): unsupported " + what +
         "; install the OpenWrt uci CLI or extend tests/helpers/uci_cli/uci.uc\n";
     warn(message);
     if (SHIM_LOG != "") {

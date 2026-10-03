@@ -2,14 +2,14 @@
 set -eo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-STABLE_VERSION="${FORKOP_STABLE_VERSION:-0.7.19.9}"
-STABLE_REPO="${FORKOP_STABLE_REPO:-}"
+STABLE_VERSION="${PROKOP_STABLE_VERSION:-0.7.19.9}"
+STABLE_REPO="${PROKOP_STABLE_REPO:-}"
 # The stable side comes from a committed inventory of the 0.7.19.9 release, so
 # the test needs neither git history nor network and never writes git refs.
 # Regenerate it from a checkout of that release with:
 #   node tests/helpers/config_contract_matrix.js --inventory <stable-checkout> \
 #     --version 0.7.19.9 --commit 68d516e85b9a81b5a37e8e258610098ed03b02d1
-STABLE_INVENTORY="${FORKOP_STABLE_INVENTORY:-$ROOT_DIR/tests/fixtures/config_contract/stable-$STABLE_VERSION.json}"
+STABLE_INVENTORY="${PROKOP_STABLE_INVENTORY:-$ROOT_DIR/tests/fixtures/config_contract/stable-$STABLE_VERSION.json}"
 MATRIX_SCRIPT="$ROOT_DIR/tests/helpers/config_contract_matrix.js"
 WORK_DIR="$(mktemp -d)"
 LEGACY_STEM="$(printf '\160\157\144\153\157\160')"
@@ -25,14 +25,14 @@ fail() {
 }
 
 if [ -n "$STABLE_REPO" ]; then
-  if [ ! -r "$STABLE_REPO/forkop/files/etc/config/forkop" ] &&
+  if [ ! -r "$STABLE_REPO/prokop/files/etc/config/prokop" ] &&
     [ ! -r "$STABLE_REPO/$LEGACY_STEM/files/etc/config/$LEGACY_STEM" ]; then
     fail "stable repo is missing the expected config template: $STABLE_REPO"
   fi
   node "$MATRIX_SCRIPT" --current "$ROOT_DIR" --stable "$STABLE_REPO" >"$WORK_DIR/matrix.json"
 else
   [ -r "$STABLE_INVENTORY" ] ||
-    fail "precondition: stable baseline inventory is missing: $STABLE_INVENTORY (set FORKOP_STABLE_REPO to a checkout of $STABLE_VERSION instead)"
+    fail "precondition: stable baseline inventory is missing: $STABLE_INVENTORY (set PROKOP_STABLE_REPO to a checkout of $STABLE_VERSION instead)"
   node "$MATRIX_SCRIPT" --current "$ROOT_DIR" --stable-inventory "$STABLE_INVENTORY" >"$WORK_DIR/matrix.json"
 fi
 

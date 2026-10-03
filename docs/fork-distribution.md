@@ -1,15 +1,15 @@
-# Распространение форка Asofwar/forkop
+# Распространение форка Asofwar/prokop
 
 Документ описывает, откуда форк берёт свои релизы и зависимости, почему он не
 доверяет зеркалам, как на него переходят существующие роутеры и где у этой схемы
 пределы. Коротко:
 
-- Forkop ставится и обновляется только из релизов форка: статический канал
-  `https://asofwar.github.io/forkop` (GitHub Pages), резерв — GitHub Releases
-  репозитория `Asofwar/forkop`.
+- Prokop ставится и обновляется только из релизов форка: статический канал
+  `https://asofwar.github.io/prokop` (GitHub Pages), резерв — GitHub Releases
+  репозитория `Asofwar/prokop`.
 - Зеркало зависимостей выключено по умолчанию и включается только явно.
 - Ни при каких настройках роутер не получает APK-ключ зеркала и фид
-  `forkop.list`: пакеты Forkop не могут прийти с зеркала.
+  `forkop.list`: пакеты Prokop не могут прийти с зеркала.
 - Ни slayer326/forkop, ни `fold8.ru`, ни `mirror.infotechtg.ru` для работы форка
   не нужны.
 
@@ -17,7 +17,7 @@
 
 | Что | Без зеркала (по умолчанию) | С включённым зеркалом |
 |---|---|---|
-| Пакеты Forkop, `install.sh` | канал `https://asofwar.github.io/forkop`, резерв — GitHub Releases `Asofwar/forkop` | так же: зеркало не участвует |
+| Пакеты Prokop, `install.sh` | канал `https://asofwar.github.io/prokop`, резерв — GitHub Releases `Asofwar/prokop` | так же: зеркало не участвует |
 | Пакеты OpenWrt (sing-box, зависимости) | официальные фиды `downloads.openwrt.org` | `<зеркало>/openwrt/releases`, если индекс платформ зеркала знает релиз и архитектуру роутера |
 | Списки и наборы правил | исходные репозитории на GitHub (для части списков — резерв через jsDelivr) | `<зеркало>/forkop/lists`, резерв — исходные адреса |
 | sing-box-extended | `https://api.github.com/repos/shtorm-7/sing-box-extended/releases/latest`, SHA-256 сверяется с `digest` ассета, когда GitHub его отдаёт | копия метаданных релиза на зеркале |
@@ -28,16 +28,16 @@
 ### Структура
 
 ```text
-https://asofwar.github.io/forkop/
+https://asofwar.github.io/prokop/
 ├── index.html
 ├── install.sh                 установщик самого нового релиза
 ├── LATEST                     X.Y.Z самого нового релиза
 ├── updates/latest.json        метаданные самого нового релиза
 ├── updates/releases.json      каталог версий (format 1) для выбора и отката
 └── releases/X.Y.Z/
-    ├── forkop_X.Y.Z.{ipk,apk}
-    ├── luci-app-forkop_X.Y.Z.{ipk,apk}
-    ├── luci-i18n-forkop-ru_X.Y.Z.{ipk,apk}
+    ├── prokop_X.Y.Z.{ipk,apk}
+    ├── luci-app-prokop_X.Y.Z.{ipk,apk}
+    ├── luci-i18n-prokop-ru_X.Y.Z.{ipk,apk}
     └── SHA256SUMS
 ```
 
@@ -45,14 +45,14 @@ https://asofwar.github.io/forkop/
 `latest.json` повторяет ответ GitHub API (`tag_name`, `assets[]` с
 `browser_download_url`, `sha256`, `digest`), `releases.json` — каталог
 `{"format": 1, "releases": [...]}`. Все ссылки абсолютные и ведут в
-`https://asofwar.github.io/forkop/releases/X.Y.Z/`. Поэтому роутеру, установщику
+`https://asofwar.github.io/prokop/releases/X.Y.Z/`. Поэтому роутеру, установщику
 и LuCI не нужен отдельный код для Pages — они просто читают другой адрес.
 
 ### Как канал собирается
 
 1. Владелец пушит тег `X.Y.Z`. Workflow **Build packages** прогоняет тесты,
    собирает шесть пакетов и создаёт GitHub Release: пакеты, `install.sh` из того
-   же коммита и архив статического бандла `forkop-timeweb-X.Y.Z.tar.gz`.
+   же коммита и архив статического бандла `prokop-timeweb-X.Y.Z.tar.gz`.
 2. Успешное завершение **Build packages** запускает **Publish release channel**
    (`.github/workflows/pages.yml`, событие `workflow_run`).
 3. `ops/pages/build-site.py` читает список релизов через GitHub API, берёт
@@ -84,16 +84,16 @@ Releases, а Pages — производная от них витрина.
 
 ### Резервные пути
 
-- **Установка.** Основная команда — `wget -qO- https://asofwar.github.io/forkop/install.sh | sh`.
+- **Установка.** Основная команда — `wget -qO- https://asofwar.github.io/prokop/install.sh | sh`.
   Если `github.io` недоступен, та же версия установщика есть в релизе:
-  `wget -qO- https://github.com/Asofwar/forkop/releases/latest/download/install.sh | sh`.
+  `wget -qO- https://github.com/Asofwar/prokop/releases/latest/download/install.sh | sh`.
 - **Метаданные.** Установщик и встроенное обновление сначала читают
   `updates/latest.json` канала, а при его недоступности — GitHub API
-  `https://api.github.com/repos/Asofwar/forkop/releases/latest`. Имена ассетов в
+  `https://api.github.com/repos/Asofwar/prokop/releases/latest`. Имена ассетов в
   релизе совпадают с именами в канале, суммы берутся из `digest` ассетов.
 - **Значения по умолчанию** на роутере заданы в
-  `forkop/files/usr/lib/core/constants.uc`: `FORKOP_RELEASE_REPO=Asofwar/forkop`,
-  `FORKOP_RELEASE_BASE_URL=https://asofwar.github.io/forkop`; одноимённые
+  `prokop/files/usr/lib/core/constants.uc`: `PROKOP_RELEASE_REPO=Asofwar/prokop`,
+  `PROKOP_RELEASE_BASE_URL=https://asofwar.github.io/prokop`; одноимённые
   переменные окружения их переопределяют.
 - **Выбор версии и откат** работают по `updates/releases.json` канала. Резерва
   через GitHub API у каталога нет: в нём перечислено только то, что реально
@@ -106,8 +106,8 @@ Releases, а Pages — производная от них витрина.
 
 ### Как определяется зеркало
 
-Везде одинаково: если переменная окружения `FORKOP_MIRROR_BASE_URL` задана
-(даже пустой), действует её значение; иначе — `forkop.settings.mirror_base_url`;
+Везде одинаково: если переменная окружения `PROKOP_MIRROR_BASE_URL` задана
+(даже пустой), действует её значение; иначе — `prokop.settings.mirror_base_url`;
 пустое или отсутствующее значение означает «зеркало выключено». Завершающие `/`
 отбрасываются. Ни один путь кода больше не подставляет зеркало по умолчанию.
 
@@ -115,22 +115,22 @@ Releases, а Pages — производная от них витрина.
 
 ```sh
 # при установке
-wget -qO- https://asofwar.github.io/forkop/install.sh | sh -s -- --mirror https://mirror.example.org
+wget -qO- https://asofwar.github.io/prokop/install.sh | sh -s -- --mirror https://mirror.example.org
 # или переменной окружения
-wget -qO- https://asofwar.github.io/forkop/install.sh | FORKOP_MIRROR_BASE_URL=https://mirror.example.org sh
+wget -qO- https://asofwar.github.io/prokop/install.sh | PROKOP_MIRROR_BASE_URL=https://mirror.example.org sh
 # на установленном роутере
-uci set forkop.settings.mirror_base_url=https://mirror.example.org
-uci commit forkop
-/usr/share/forkop/mirror-migration.sh   # привести фиды OpenWrt к настройке
+uci set prokop.settings.mirror_base_url=https://mirror.example.org
+uci commit prokop
+/usr/share/prokop/mirror-migration.sh   # привести фиды OpenWrt к настройке
 ```
 
-Выключение — `uci set forkop.settings.mirror_base_url=''`, `uci commit forkop` и
+Выключение — `uci set prokop.settings.mirror_base_url=''`, `uci commit prokop` и
 тот же скрипт: фиды, указывающие на бывшие зеркала upstream, вернутся на
 официальные адреса; фиды на своём зеркале скрипт не трогает — их возвращают
 вручную (резервная копия лежит рядом в `<файл>.pre-forkop-mirror`).
 
 Установщик сохраняет зеркало в UCI после установки пакетов и ещё раз
-запускает `/usr/share/forkop/mirror-migration.sh`, чтобы фиды OpenWrt
+запускает `/usr/share/prokop/mirror-migration.sh`, чтобы фиды OpenWrt
 соответствовали настройке. Индекс платформ `<зеркало>/openwrt/forkop-platforms.tsv`
 запрашивается только при включённом зеркале.
 
@@ -142,7 +142,7 @@ uci commit forkop
 
 Раньше установка с зеркалом клала `<зеркало>/forkop/forkop-apk.pem` в
 `/etc/apk/keys/forkop-mirror.pem` и добавляла фид
-`/etc/apk/repositories.d/forkop.list` с пакетами Forkop, собранными на зеркале.
+`/etc/apk/repositories.d/forkop.list` с пакетами Prokop, собранными на зеркале.
 Для форка это недопустимо:
 
 - `apk` доверяет каждому ключу из `/etc/apk/keys` для **любого** репозитория.
@@ -159,18 +159,18 @@ uci commit forkop
 `forkop.list` — даже при включённом зеркале. Наоборот, и установщик, и
 `postinst` пакета удаляют `/etc/apk/keys/forkop-mirror.pem` и
 `/etc/apk/repositories.d/forkop.list`, если находят их. Зеркало остаётся
-ускорителем для пакетов OpenWrt, списков и сторонних компонентов; сам Forkop
+ускорителем для пакетов OpenWrt, списков и сторонних компонентов; сам Prokop
 всегда приходит из канала релизов форка.
 
 ### Сценарии пакетов не падают из-за зеркала
 
-Цепочка `postinst` пакета `forkop`:
+Цепочка `postinst` пакета `prokop`:
 
 1. `migration.uc migrate` — миграции конфигурации; ошибка, как и раньше,
    прерывает установку;
 2. `mirror-migration.sh` — сверка фидов с настройкой зеркала; выполняется
    «по возможности»: при ошибке печатается предупреждение;
-3. `forkop package_postinst` — выполняется всегда.
+3. `prokop package_postinst` — выполняется всегда.
 
 `mirror-migration.sh` сам завершается с кодом 0 во всех ситуациях, связанных с
 зеркалом, и только печатает предупреждения. Он:
@@ -190,17 +190,17 @@ uci commit forkop
 
 ### С upstream на форк
 
-На роутере с Forkop от upstream достаточно выполнить установку форка:
+На роутере с Prokop от upstream достаточно выполнить установку форка:
 
 ```sh
-wget -qO- https://asofwar.github.io/forkop/install.sh | sh
+wget -qO- https://asofwar.github.io/prokop/install.sh | sh
 ```
 
 Имена пакетов у форка те же, поэтому установщик ставит пакеты форка поверх
 установленных. Дальше всё делают сценарии нового пакета:
 
 - одноразовая миграция конфигурации `fork_mirror_opt_in_v1` (в
-  `forkop/files/usr/lib/config/migration.uc`, после прежних миграций зеркала):
+  `prokop/files/usr/lib/config/migration.uc`, после прежних миграций зеркала):
   если `mirror_base_url` указывает на бывшее зеркало upstream, значение
   становится пустым; адреса списков и наборов правил вида
   `<бывшее-зеркало>/forkop/lists/...` переводятся на прямые источники — те же,
@@ -221,7 +221,7 @@ wget -qO- https://asofwar.github.io/forkop/install.sh | sh
 Проверка после перехода:
 
 ```sh
-uci -q get forkop.settings.mirror_base_url        # пусто: зеркало выключено
+uci -q get prokop.settings.mirror_base_url        # пусто: зеркало выключено
 ls /etc/apk/keys/forkop-mirror.pem                # файла нет
 ls /etc/apk/repositories.d/forkop.list            # файла нет
 cat /etc/apk/repositories.d/distfeeds.list        # apk: downloads.openwrt.org
@@ -265,14 +265,14 @@ cat /etc/opkg/distfeeds.conf                      # opkg: downloads.openwrt.org
    или одной командой:
 
    ```sh
-   gh api -X POST repos/Asofwar/forkop/pages -f build_type=workflow
+   gh api -X POST repos/Asofwar/prokop/pages -f build_type=workflow
    ```
 
    GitHub создаст окружение `github-pages`, разрешающее деплой с ветки по
    умолчанию.
 3. **Первый релиз.** Тег `X.Y.Z` → `git push origin X.Y.Z`. После
    **Build packages** и **Publish release channel** проверьте
-   `https://asofwar.github.io/forkop/updates/latest.json`.
+   `https://asofwar.github.io/prokop/updates/latest.json`.
 4. Канал можно пересобрать в любой момент вручную через `workflow_dispatch`.
 
 ## Ограничения

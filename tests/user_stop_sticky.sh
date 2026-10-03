@@ -16,7 +16,7 @@ set -euo pipefail
 # whoever requests it, and only an explicit start or restart ends the stop; a
 # stopped runtime that nobody stopped after an explicit start (a crash, a
 # failed start) is still repaired by a reload; one that nobody started since
-# boot is held down too (D-15(a)). `forkop stop` terminates the refresh
+# boot is held down too (D-15(a)). `prokop stop` terminates the refresh
 # workers by their recorded identity (core/process_identity.uc) and drops
 # reload.pending.
 #
@@ -24,8 +24,8 @@ set -euo pipefail
 # are real; sing-box, nft and the modules the lifecycle calls are modelled.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-REAL_LIB="$ROOT_DIR/forkop/files/usr/lib"
-REAL_INITD="$ROOT_DIR/forkop/files/etc/init.d/forkop"
+REAL_LIB="$ROOT_DIR/prokop/files/usr/lib"
+REAL_INITD="$ROOT_DIR/prokop/files/etc/init.d/prokop"
 WORK_DIR="$(mktemp -d)"
 # shellcheck source=tests/helpers/wait.sh
 . "$ROOT_DIR/tests/helpers/wait.sh"
@@ -55,7 +55,7 @@ fail() {
 }
 
 LIB="$WORK_DIR/lib"
-mkdir -p "$WORK_DIR/bin" "$WORK_DIR/run/forkop" "$WORK_DIR/tmp" "$WORK_DIR/singbox-tmp/rulesets" \
+mkdir -p "$WORK_DIR/bin" "$WORK_DIR/run/prokop" "$WORK_DIR/tmp" "$WORK_DIR/singbox-tmp/rulesets" \
   "$LIB/service" "$LIB/config" "$LIB/singbox" "$WORK_DIR/ui-state"
 # The modelled library: the real lifecycle, rule-set cache and core modules
 # by their paths in it (the refresh workers are recognised by those command
@@ -66,13 +66,13 @@ ln -s "$REAL_LIB/singbox/ruleset_cache.uc" "$LIB/singbox/ruleset_cache.uc"
 ln -s "$REAL_LIB/singbox/rulesets.uc" "$LIB/singbox/rulesets.uc"
 
 cat >"$WORK_DIR/uci.state" <<'EOF'
-forkop.settings=settings
-forkop.settings.yacd_secret_key=0123456789abcdef
-forkop.settings.dont_touch_dhcp=1
+prokop.settings=settings
+prokop.settings.yacd_secret_key=0123456789abcdef
+prokop.settings.dont_touch_dhcp=1
 EOF
-: >"$WORK_DIR/forkop.config"
+: >"$WORK_DIR/prokop.config"
 
-STATE_DIR="$WORK_DIR/run/forkop"
+STATE_DIR="$WORK_DIR/run/prokop"
 export TMPDIR="$WORK_DIR/tmp"
 export PATH="$WORK_DIR/bin:$PATH"
 export EVENTS REAL_LIB REAL_INITD LIB
@@ -82,35 +82,35 @@ export SING_BOX_STATE="$WORK_DIR/singbox.state"
 export NFT_TABLE_FILE="$WORK_DIR/nft.table"
 export STOP_MARKER="$STATE_DIR/stop.requested"
 START_RECORD="$STATE_DIR/start.explicit"
-export FORKOP_LIB="$LIB"
-export FORKOP_BIN="$WORK_DIR/bin/forkop"
-export FORKOP_SERVICE_INIT="$WORK_DIR/bin/init"
-export FORKOP_SERVICE_NAME=forkop
-export FORKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/forkop.reload.lock"
-export FORKOP_SUBSCRIPTION_UPDATE_LOCK_DIR="$STATE_DIR/subscription-update.lock"
-export FORKOP_RUNTIME_STATE_DIR="$STATE_DIR"
-export FORKOP_PENDING_RELOAD_FILE="$STATE_DIR/reload.pending"
-export FORKOP_LIST_UPDATE_PID_FILE="$STATE_DIR/list-update.pid"
-export FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
-export FORKOP_CONFIG_FILE="$WORK_DIR/forkop.config"
-export FORKOP_INTERNAL_CONFIG_TRIGGER_GUARD="$WORK_DIR/run/internal-config-change"
-export FORKOP_MANAGED_UPGRADE_SING_BOX_MARKER="$WORK_DIR/run/managed-upgrade-sing-box"
-export FORKOP_HISTORY_FILE="$WORK_DIR/history.jsonl"
-export FORKOP_UI_STATE_DIR="$WORK_DIR/ui-state"
-export FORKOP_UI_SERVICE_ACTION_DIR="$FORKOP_UI_STATE_DIR/service-actions"
-export FORKOP_UI_SERVICE_ACTION_LOCK_DIR="$FORKOP_UI_STATE_DIR/service-actions.lock"
-export FORKOP_UI_LATENCY_ACTION_DIR="$FORKOP_UI_STATE_DIR/latency-actions"
-export FORKOP_UI_COMPONENT_ACTION_DIR="$FORKOP_UI_STATE_DIR/component-actions"
-export FORKOP_UI_SUBSCRIPTION_ACTION_DIR="$FORKOP_UI_STATE_DIR/subscription-actions"
-export FORKOP_UI_ACTION_TRACKED=1
+export PROKOP_LIB="$LIB"
+export PROKOP_BIN="$WORK_DIR/bin/prokop"
+export PROKOP_SERVICE_INIT="$WORK_DIR/bin/init"
+export PROKOP_SERVICE_NAME=prokop
+export PROKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/prokop.reload.lock"
+export PROKOP_SUBSCRIPTION_UPDATE_LOCK_DIR="$STATE_DIR/subscription-update.lock"
+export PROKOP_RUNTIME_STATE_DIR="$STATE_DIR"
+export PROKOP_PENDING_RELOAD_FILE="$STATE_DIR/reload.pending"
+export PROKOP_LIST_UPDATE_PID_FILE="$STATE_DIR/list-update.pid"
+export PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
+export PROKOP_CONFIG_FILE="$WORK_DIR/prokop.config"
+export PROKOP_INTERNAL_CONFIG_TRIGGER_GUARD="$WORK_DIR/run/internal-config-change"
+export PROKOP_MANAGED_UPGRADE_SING_BOX_MARKER="$WORK_DIR/run/managed-upgrade-sing-box"
+export PROKOP_HISTORY_FILE="$WORK_DIR/history.jsonl"
+export PROKOP_UI_STATE_DIR="$WORK_DIR/ui-state"
+export PROKOP_UI_SERVICE_ACTION_DIR="$PROKOP_UI_STATE_DIR/service-actions"
+export PROKOP_UI_SERVICE_ACTION_LOCK_DIR="$PROKOP_UI_STATE_DIR/service-actions.lock"
+export PROKOP_UI_LATENCY_ACTION_DIR="$PROKOP_UI_STATE_DIR/latency-actions"
+export PROKOP_UI_COMPONENT_ACTION_DIR="$PROKOP_UI_STATE_DIR/component-actions"
+export PROKOP_UI_SUBSCRIPTION_ACTION_DIR="$PROKOP_UI_STATE_DIR/subscription-actions"
+export PROKOP_UI_ACTION_TRACKED=1
 export TMP_SING_BOX_FOLDER="$WORK_DIR/singbox-tmp"
 export TMP_RULESET_FOLDER="$WORK_DIR/singbox-tmp/rulesets"
-export FORKOP_SING_BOX_RELOAD_PID_TIMEOUT=2
-export FORKOP_RULESET_CACHE_DIR="$WORK_DIR/ruleset-cache"
-export FORKOP_RULESET_CACHE_MANIFEST="$WORK_DIR/ruleset-cache/manifest.json"
-export FORKOP_RULESET_RUNTIME_CACHE_DIR="$WORK_DIR/ruleset-runtime"
-export FORKOP_RULESET_RUNTIME_MANIFEST="$STATE_DIR/ruleset-cache-runtime.json"
-export FORKOP_PERSISTENT_LIST_CACHE_DIR="$WORK_DIR/list-cache"
+export PROKOP_SING_BOX_RELOAD_PID_TIMEOUT=2
+export PROKOP_RULESET_CACHE_DIR="$WORK_DIR/ruleset-cache"
+export PROKOP_RULESET_CACHE_MANIFEST="$WORK_DIR/ruleset-cache/manifest.json"
+export PROKOP_RULESET_RUNTIME_CACHE_DIR="$WORK_DIR/ruleset-runtime"
+export PROKOP_RULESET_RUNTIME_MANIFEST="$STATE_DIR/ruleset-cache-runtime.json"
+export PROKOP_PERSISTENT_LIST_CACHE_DIR="$WORK_DIR/list-cache"
 export DOWNLOAD_GATE="$WORK_DIR/download.gate"
 export RULESET_SOURCE="$WORK_DIR/ruleset-source.json"
 
@@ -121,8 +121,8 @@ cat >"$WORK_DIR/bin/nft" <<'SH'
 #!/bin/sh
 [ "$1" != -t ] || shift
 # Only the production table is modelled: no DPI guard of a failed transition
-# or of a restore (ForkopTableDpiGuard, ForkopConfigRestoreDpiGuard).
-if [ "$1 $2 $3" = "list table inet" ] && [ "$4" != ForkopTable ]; then
+# or of a restore (ProkopTableDpiGuard, ProkopConfigRestoreDpiGuard).
+if [ "$1 $2 $3" = "list table inet" ] && [ "$4" != ProkopTable ]; then
   exit 1
 fi
 if [ "$1 $2 $3" = "list table inet" ]; then
@@ -134,7 +134,7 @@ if [ "$1 $2 $3" = "delete table inet" ]; then
 fi
 [ "$1 $2" != "list chain" ]
 SH
-# /etc/init.d/forkop for the workers: only records the reload they request.
+# /etc/init.d/prokop for the workers: only records the reload they request.
 cat >"$WORK_DIR/bin/init" <<'SH'
 #!/bin/sh
 printf 'init %s\n' "$*" >>"$EVENTS"
@@ -177,7 +177,7 @@ if (index(mode, "runtime-dir-lock") >= 0 || mode == "runtime-apply-allowed" || m
         command += " " + q(arg);
     exit(system(command));
 }
-if (mode == "forkop-running" || mode == "forkop-stably-running")
+if (mode == "prokop-running" || mode == "prokop-stably-running")
     exit(trim(fs.readfile(getenv("SING_BOX_STATE")) ?? "") == "running" && fs.stat(getenv("NFT_TABLE_FILE")) != null ? 0 : 1);
 if (mode == "sing-box-process-conflict")
     exit(1);
@@ -228,9 +228,9 @@ exit(0);
 UC
 done
 
-# `forkop` behind service/initd.uc: get_status reports the modelled runtime;
+# `prokop` behind service/initd.uc: get_status reports the modelled runtime;
 # a reload is recorded.
-cat >"$WORK_DIR/bin/forkop" <<'SH'
+cat >"$WORK_DIR/bin/prokop" <<'SH'
 #!/bin/sh
 case "$1" in
   get_status)
@@ -247,7 +247,7 @@ esac
 exit 0
 SH
 
-# /etc/init.d/forkop as procd runs it: the real script behind rc.common.
+# /etc/init.d/prokop as procd runs it: the real script behind rc.common.
 cat >"$WORK_DIR/rc" <<'SH'
 #!/usr/bin/env bash
 action="$1"
@@ -255,8 +255,8 @@ shift
 initscript="$REAL_INITD"
 # shellcheck disable=SC1090
 . "$REAL_INITD"
-FORKOP_LIB="$LIB"
-FORKOP_INITD_UC="$REAL_LIB/service/initd.uc"
+PROKOP_LIB="$LIB"
+PROKOP_INITD_UC="$REAL_LIB/service/initd.uc"
 case "$action" in
   reload) reload_service "$@" ;;
   stop) stop_service "$@" ;;
@@ -276,7 +276,7 @@ start_actor() {
 
 runtime_up() {
   printf 'running\n' >"$SING_BOX_STATE"
-  printf 'ForkopTable\n' >"$NFT_TABLE_FILE"
+  printf 'ProkopTable\n' >"$NFT_TABLE_FILE"
 }
 
 runtime_down() {
@@ -287,9 +287,9 @@ runtime_down() {
 reset_case() {
   : >"$EVENTS"
   : >"$WORK_DIR/syslog"
-  rm -rf "$STOP_MARKER" "$START_RECORD" "$FORKOP_PENDING_RELOAD_FILE" "$DOWNLOAD_GATE" \
-    "$FORKOP_RULESET_CACHE_DIR" "$FORKOP_RULESET_RUNTIME_CACHE_DIR" "$FORKOP_RULESET_RUNTIME_MANIFEST"
-  [ ! -e "$FORKOP_RELOAD_LOCK_DIR" ] || fail "reload.lock leaked from the previous case"
+  rm -rf "$STOP_MARKER" "$START_RECORD" "$PROKOP_PENDING_RELOAD_FILE" "$DOWNLOAD_GATE" \
+    "$PROKOP_RULESET_CACHE_DIR" "$PROKOP_RULESET_RUNTIME_CACHE_DIR" "$PROKOP_RULESET_RUNTIME_MANIFEST"
+  [ ! -e "$PROKOP_RELOAD_LOCK_DIR" ] || fail "reload.lock leaked from the previous case"
 }
 
 lifecycle() {
@@ -307,10 +307,10 @@ for reason in "" config-restore autotune list-content ruleset-cache pending on_c
   lifecycle reload "$reason" || fail "reload '$reason' of a stopped runtime failed: $(cat "$WORK_DIR/lifecycle.out")"
   no_event '^stop-managed$' || fail "reload '$reason' of a stopped runtime touched sing-box"
   no_event '^reload-plan' || fail "reload '$reason' of a stopped runtime reached the reload plan"
-  if grep -q 'restarting Forkop runtime' "$WORK_DIR/syslog"; then
+  if grep -q 'restarting Prokop runtime' "$WORK_DIR/syslog"; then
     fail "reload '$reason' restarted a runtime that an explicit stop took down"
   fi
-  grep -q "Reload '$reason' skipped: Forkop was stopped" "$WORK_DIR/syslog" ||
+  grep -q "Reload '$reason' skipped: Prokop was stopped" "$WORK_DIR/syslog" ||
     fail "skipped reload '$reason' of a stopped runtime was not logged"
   [ -e "$STOP_MARKER" ] || fail "reload '$reason' ended the explicit stop"
 done
@@ -321,7 +321,7 @@ reset_case
 runtime_down
 : >"$START_RECORD"
 lifecycle reload "" || true
-grep -q 'Runtime state is incomplete; restarting Forkop runtime' "$WORK_DIR/syslog" ||
+grep -q 'Runtime state is incomplete; restarting Prokop runtime' "$WORK_DIR/syslog" ||
   fail "a reload did not repair a runtime that is down without a stop"
 
 # 1c. A runtime that nobody started since boot (no stop, no explicit start
@@ -330,10 +330,10 @@ grep -q 'Runtime state is incomplete; restarting Forkop runtime' "$WORK_DIR/sysl
 for reason in "" config-restore list-content; do
   reset_case
   runtime_down
-  lifecycle reload "$reason" || fail "reload '$reason' of a Forkop not started failed: $(cat "$WORK_DIR/lifecycle.out")"
-  no_event '^reload-plan' || fail "reload '$reason' of a Forkop not started reached the reload plan"
-  grep -q "Reload '$reason' skipped: Forkop was not started" "$WORK_DIR/syslog" ||
-    fail "reload '$reason' started a Forkop that nobody started since boot"
+  lifecycle reload "$reason" || fail "reload '$reason' of a Prokop not started failed: $(cat "$WORK_DIR/lifecycle.out")"
+  no_event '^reload-plan' || fail "reload '$reason' of a Prokop not started reached the reload plan"
+  grep -q "Reload '$reason' skipped: Prokop was not started" "$WORK_DIR/syslog" ||
+    fail "reload '$reason' started a Prokop that nobody started since boot"
   [ ! -e "$START_RECORD" ] || fail "reload '$reason' recorded an explicit start"
 done
 
@@ -344,7 +344,7 @@ reset_case
 runtime_up
 printf 'stop\n' >"$STOP_MARKER"
 lifecycle reload "" || true
-grep -q 'Reload state is unavailable; restarting Forkop runtime' "$WORK_DIR/syslog" ||
+grep -q 'Reload state is unavailable; restarting Prokop runtime' "$WORK_DIR/syslog" ||
   fail "the reload did not reach the runtime restart"
 [ -e "$STOP_MARKER" ] || fail "a reload that restarted the runtime ended a pending explicit stop"
 no_event '^start-managed$' || fail "a reload restarted sing-box while a stop was pending"
@@ -354,9 +354,9 @@ no_event '^start-managed$' || fail "a reload restarted sing-box while a stop was
 #    "stopped", never an empty answer that reads as a reload that ran
 #    (tests/config_restore_user_stop.sh), and so is the job of a UI reload
 #    (service/ui.uc, tests/ui_reload_queued_job.sh); for others the answer
-#    stays empty. Only service/ui.uc runs init.d with FORKOP_UI_ACTION_TRACKED.
+#    stays empty. Only service/ui.uc runs init.d with PROKOP_UI_ACTION_TRACKED.
 initd_reload() {
-  env -u FORKOP_UI_ACTION_TRACKED bash "$WORK_DIR/rc" reload "$@" 2>"$WORK_DIR/initd.err"
+  env -u PROKOP_UI_ACTION_TRACKED bash "$WORK_DIR/rc" reload "$@" 2>"$WORK_DIR/initd.err"
 }
 for reason in "" list-content some-caller config-restore autotune; do
   reset_case
@@ -369,13 +369,13 @@ for reason in "" list-content some-caller config-restore autotune; do
   esac
   [ "$output" = "$want" ] || fail "init.d reload '$reason' of a stopped runtime answered '$output', not '$want'"
   no_event '^reload ran' || fail "init.d ran reload '$reason' of a stopped runtime"
-  [ ! -e "$FORKOP_RELOAD_LOCK_DIR" ] || fail "init.d reload '$reason' of a stopped runtime left reload.lock behind"
+  [ ! -e "$PROKOP_RELOAD_LOCK_DIR" ] || fail "init.d reload '$reason' of a stopped runtime left reload.lock behind"
   [ -e "$STOP_MARKER" ] || fail "init.d reload '$reason' ended the explicit stop"
 done
 reset_case
 runtime_down
 printf 'stop\n' >"$STOP_MARKER"
-output="$(FORKOP_UI_ACTION_TRACKED=1 bash "$WORK_DIR/rc" reload "" 2>"$WORK_DIR/initd.err")" ||
+output="$(PROKOP_UI_ACTION_TRACKED=1 bash "$WORK_DIR/rc" reload "" 2>"$WORK_DIR/initd.err")" ||
   fail "the UI reload of a stopped runtime failed: $(cat "$WORK_DIR/initd.err")"
 [ "$output" = stopped ] || fail "the UI reload of a stopped runtime answered '$output', not 'stopped'"
 no_event '^reload ran' || fail "init.d ran the UI reload of a stopped runtime"
@@ -395,7 +395,7 @@ output="$(initd_reload config-restore)" || fail "init.d reload of a crashed runt
 has_event '^reload ran config-restore$' || fail "init.d did not pass the reload of a crashed runtime on for repair"
 [ -z "$output" ] || fail "a reload of a crashed runtime answered '$output'"
 
-# 4. `forkop stop` terminates the rule-set refresh workers, whose final
+# 4. `prokop stop` terminates the rule-set refresh workers, whose final
 #    reload would otherwise be the next trigger, and drops the queued reload:
 #    the next start applies the whole configuration anyway.
 refresh_workers_recorded() {
@@ -413,9 +413,9 @@ launch_refresh_workers() {
   AND_RELOAD_PID="$LAST_ACTOR"
 }
 seed_ruleset_manifest() {
-  mkdir -p "$FORKOP_RULESET_CACHE_DIR"
+  mkdir -p "$PROKOP_RULESET_CACHE_DIR"
   printf '%s\n' '{"a":{"url":"https://example.test/one.json","format":"source","update_interval":"1d","last_success":0},"b":{"url":"https://example.test/two.json","format":"source","update_interval":"1d","last_success":0}}' \
-    >"$FORKOP_RULESET_CACHE_MANIFEST"
+    >"$PROKOP_RULESET_CACHE_MANIFEST"
 }
 
 # 4a. Control: without a stop each worker finishes its downloads and
@@ -452,13 +452,13 @@ ucode -L "$REAL_LIB" -e 'exit(require("core.process_identity").record(ARGV[0], A
 launch_refresh_workers
 wait_until 20 downloads_begun 2 || fail "the refresh workers did not start downloading"
 wait_until 20 refresh_workers_recorded 3 || fail "the refresh workers did not record themselves"
-printf 'reason=pending\n' >"$FORKOP_PENDING_RELOAD_FILE"
+printf 'reason=pending\n' >"$PROKOP_PENDING_RELOAD_FILE"
 lifecycle stop || true
-[ -e "$STOP_MARKER" ] || fail "forkop stop did not record the explicit stop"
-wait_until 10 process_gone "$AFTER_START_PID" || fail "forkop stop left the post-start rule-set refresh worker running"
-wait_until 10 process_gone "$AND_RELOAD_PID" || fail "forkop stop left the refresh-and-reload worker running"
-process_running "$DECOY_PID" || fail "forkop stop signalled a process that is no refresh worker"
-[ ! -e "$FORKOP_PENDING_RELOAD_FILE" ] || fail "forkop stop left the queued reload behind"
+[ -e "$STOP_MARKER" ] || fail "prokop stop did not record the explicit stop"
+wait_until 10 process_gone "$AFTER_START_PID" || fail "prokop stop left the post-start rule-set refresh worker running"
+wait_until 10 process_gone "$AND_RELOAD_PID" || fail "prokop stop left the refresh-and-reload worker running"
+process_running "$DECOY_PID" || fail "prokop stop signalled a process that is no refresh worker"
+[ ! -e "$PROKOP_PENDING_RELOAD_FILE" ] || fail "prokop stop left the queued reload behind"
 : >"$DOWNLOAD_GATE"
 # Their orphaned downloads finish; no reload follows.
 sleep 1
@@ -471,12 +471,12 @@ reset_case
 runtime_down
 printf 'stop\n' >"$STOP_MARKER"
 lifecycle restart || true
-grep -q 'Starting Forkop' "$WORK_DIR/syslog" || fail "forkop restart did not reach the start"
+grep -q 'Starting Prokop' "$WORK_DIR/syslog" || fail "prokop restart did not reach the start"
 [ ! -e "$STOP_MARKER" ] || fail "an explicit restart kept the explicit stop"
 [ -e "$START_RECORD" ] || fail "an explicit restart was not recorded as an explicit start"
 
-# 6. A stop records who asked for it: Forkop's own stop for a package or
-#    component change (FORKOP_STOP_SOURCE, followed by a start) is told apart
+# 6. A stop records who asked for it: Prokop's own stop for a package or
+#    component change (PROKOP_STOP_SOURCE, followed by a start) is told apart
 #    from the user's (tests/stopped_by_user_state.sh); both hold reloads off
 #    alike. A stop made while the user's stop is in effect stays the user's;
 #    any other source is the user's.
@@ -492,16 +492,16 @@ for how in init.d lifecycle; do
     : >"$START_RECORD"
     [ -z "$previous" ] || printf '1.000000001.42\nby=%s\n' "$previous" >"$STOP_MARKER"
     if [ "$how" = init.d ]; then
-      FORKOP_STOP_SOURCE="$source" bash "$WORK_DIR/rc" stop >"$WORK_DIR/stop.out" 2>&1 || true
+      PROKOP_STOP_SOURCE="$source" bash "$WORK_DIR/rc" stop >"$WORK_DIR/stop.out" 2>&1 || true
     else
-      FORKOP_STOP_SOURCE="$source" lifecycle stop || true
+      PROKOP_STOP_SOURCE="$source" lifecycle stop || true
     fi
     [ -e "$STOP_MARKER" ] || fail "$how stop by '$source' did not record the stop"
     [ "$(stop_source)" = "$want" ] ||
       fail "$how stop by '$source' after a stop by '$previous' recorded '$(stop_source)', not '$want'"
     head -n 1 "$STOP_MARKER" | grep -Eq '^[0-9]+\.[0-9]{9}\.[0-9]+$' ||
       fail "$how stop by '$source' changed the stop request value: $(head -n 1 "$STOP_MARKER")"
-    # The user's stop ends the explicit start; Forkop's own stop is followed
+    # The user's stop ends the explicit start; Prokop's own stop is followed
     # by a start and keeps it (D-15(a)).
     if [ "$want" = user ]; then
       [ ! -e "$START_RECORD" ] || fail "$how stop by the user kept the explicit start"
@@ -515,7 +515,7 @@ reset_case
 runtime_down
 printf '1.000000001.42\nby=package\n' >"$STOP_MARKER"
 lifecycle reload "" || fail "reload after a package stop failed"
-grep -q "Reload '' skipped: Forkop was stopped" "$WORK_DIR/syslog" || fail "a reload started a runtime that a package stop took down"
+grep -q "Reload '' skipped: Prokop was stopped" "$WORK_DIR/syslog" || fail "a reload started a runtime that a package stop took down"
 
 [ ! -s "$UNMODELLED_MODES" ] ||
   fail "the lifecycle asked the modelled service/state.uc for modes it does not model: $(sort -u "$UNMODELLED_MODES" | tr '\n' ' ')"

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One writer for files on flash (core/durable.uc). Every file that Forkop
+# One writer for files on flash (core/durable.uc). Every file that Prokop
 # replaces on flash is written to a temporary file next to it, read back
 # (a full filesystem takes the write of a small file and keeps none of it,
 # UC-241) and renamed over it; the rare, critical ones are flushed (sync)
@@ -11,7 +11,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK="$(mktemp -d)"
 # A call the uci test shim refused fails the test, even one it tolerated.
 cleanup() {
@@ -46,13 +46,13 @@ chmod 0755 "$WORK/bin/"*
 export PATH="$WORK/bin:$PATH" SYNC_LOG="$WORK/sync" SYNC_WATCH=""
 export LIB WORK
 # Nothing of this test lands in the host's runtime directory.
-export FORKOP_RUNTIME_STATE_DIR="$WORK/run" FORKOP_NFT_SUBNET_CACHE_DIR="$WORK/run/nft-subnet-cache"
+export PROKOP_RUNTIME_STATE_DIR="$WORK/run" PROKOP_NFT_SUBNET_CACHE_DIR="$WORK/run/nft-subnet-cache"
 
 durable_uc() { ucode -L "$LIB" -e "let durable = require('core.durable'); let fs = require('fs'); $1"; }
 watch() { rm -rf "$WORK/sync"; mkdir -p "$WORK/sync"; SYNC_WATCH="$*"; }
 sync_count() { cat "$WORK/sync/count" 2>/dev/null || echo 0; }
 # leftovers DIR: the temporary files writers left in DIR.
-leftovers() { find "$1" -mindepth 1 -maxdepth 1 -name '*forkop-*' -printf '%f ' 2>/dev/null; }
+leftovers() { find "$1" -mindepth 1 -maxdepth 1 -name '*prokop-*' -printf '%f ' 2>/dev/null; }
 
 # ---- 1. a symlink stays one ----------------------------------------------------
 
@@ -172,7 +172,7 @@ copy_in() {
 # The Clash API secret committed alone (core/uci.uc commit_option) and an
 # edit of /etc/config/dhcp (core/uci.uc session) through the uci CLI.
 mkdir -p "$WORK/etc/config"
-CONFIG="$WORK/etc/config/forkop"
+CONFIG="$WORK/etc/config/prokop"
 DHCP="$WORK/etc/config/dhcp"
 printf "config settings 'settings'\n\toption dns_server '1.1.1.1'\n" >"$CONFIG"
 printf "config dnsmasq\n\toption domainneeded '1'\n" >"$DHCP"
@@ -180,10 +180,10 @@ chmod 0600 "$CONFIG"
 chmod 0644 "$DHCP"
 watch "$WORK/etc/config"
 result="$(F="$CONFIG" CLI="$UCI_CLI" ucode -L "$LIB" -e '
-  print(require("core.uci").commit_option(getenv("F"), "forkop.settings.yacd_secret_key", "s3cret-durable", true, getenv("CLI")));')"
+  print(require("core.uci").commit_option(getenv("F"), "prokop.settings.yacd_secret_key", "s3cret-durable", true, getenv("CLI")));')"
 [ "$result" = written ] || fail "commit_option: $result"
 grep -Fq "s3cret-durable" "$CONFIG" || fail "commit_option did not write the secret: $(cat "$CONFIG")"
-flushed "$CONFIG" "the secret commit_option writes to /etc/config/forkop"
+flushed "$CONFIG" "the secret commit_option writes to /etc/config/prokop"
 [ "$(stat -c %a "$CONFIG")" = 600 ] || fail "commit_option changed the mode of the configuration"
 [ -z "$(leftovers "$WORK/etc/config")" ] || fail "commit_option left: $(leftovers "$WORK/etc/config")"
 watch "$WORK/etc/config"
@@ -201,9 +201,9 @@ ok "UCI writers flush before and after the rename"
 cat >"$WORK/bin/ip" <<'IP'
 #!/bin/sh
 case "$*" in
-  "route list table forkop") echo 'local default dev lo scope host' ;;
-  "-6 route list table forkop") echo 'local default dev lo metric 1024 pref medium' ;;
-  "-4 rule list"|"-6 rule list") echo '105: from all fwmark 0x100000/0x100000 lookup forkop' ;;
+  "route list table prokop") echo 'local default dev lo scope host' ;;
+  "-6 route list table prokop") echo 'local default dev lo metric 1024 pref medium' ;;
+  "-4 rule list"|"-6 rule list") echo '105: from all fwmark 0x100000/0x100000 lookup prokop' ;;
 esac
 exit 0
 IP
@@ -212,12 +212,12 @@ mkdir -p "$WORK/etc/iproute2"
 RT="$WORK/etc/iproute2/rt_tables"
 printf '%s\n' '255 local' '254 main' '200 vendor' >"$RT"
 watch "$WORK/etc/iproute2"
-ucode -L "$LIB" "$LIB/nft/apply.uc" ensure-tproxy-route-rule forkop 0x00100000 "$RT" || fail "the start could not name its table"
-grep -Fxq '105 forkop' "$RT" || fail "the start did not name its table: $(cat "$RT")"
+ucode -L "$LIB" "$LIB/nft/apply.uc" ensure-tproxy-route-rule prokop 0x00100000 "$RT" || fail "the start could not name its table"
+grep -Fxq '105 prokop' "$RT" || fail "the start did not name its table: $(cat "$RT")"
 flushed "$RT" "rt_tables the start writes"
 watch "$WORK/etc/iproute2"
-FORKOP_RT_TABLES="$RT" ucode -L "$LIB" "$LIB/service/package.uc" remove-rt-tables-entry || fail "the package removal failed"
-if grep -Fq forkop "$RT"; then fail "the package removal kept its table: $(cat "$RT")"; fi
+PROKOP_RT_TABLES="$RT" ucode -L "$LIB" "$LIB/service/package.uc" remove-rt-tables-entry || fail "the package removal failed"
+if grep -Fq prokop "$RT"; then fail "the package removal kept its table: $(cat "$RT")"; fi
 flushed "$RT" "rt_tables the package removal writes"
 [ -z "$(leftovers "$WORK/etc/iproute2")" ] || fail "rt_tables writers left: $(leftovers "$WORK/etc/iproute2")"
 ok "rt_tables is flushed before and after the rename"
@@ -248,10 +248,10 @@ printf '%s\n' "DISTRIB_RELEASE='24.10.5'" "DISTRIB_TARGET='mediatek/filogic'" "D
 FEEDS="$OPKG_ROOT/etc/opkg/distfeeds.conf"
 printf '%s\n' 'src/gz openwrt_core https://downloads.openwrt.org/releases/24.10.5/targets/mediatek/filogic/packages' >"$FEEDS"
 watch "$OPKG_ROOT/etc/opkg"
-FORKOP_MIGRATION_ROOT="$OPKG_ROOT" FORKOP_MIGRATION_APK_BIN="$WORK/bin/missing-apk" \
-  FORKOP_MIGRATION_OPKG_BIN="$WORK/bin/opkg" FORKOP_MIGRATION_CURL_BIN="$WORK/bin/curl" \
-  FORKOP_MIGRATION_UCI_BIN="$WORK/bin/uci-stub" FORKOP_MIRROR_BASE_URL="https://mirror.example.test" \
-  sh "$ROOT_DIR/forkop/files/usr/share/forkop/mirror-migration.sh" ||
+PROKOP_MIGRATION_ROOT="$OPKG_ROOT" PROKOP_MIGRATION_APK_BIN="$WORK/bin/missing-apk" \
+  PROKOP_MIGRATION_OPKG_BIN="$WORK/bin/opkg" PROKOP_MIGRATION_CURL_BIN="$WORK/bin/curl" \
+  PROKOP_MIGRATION_UCI_BIN="$WORK/bin/uci-stub" PROKOP_MIRROR_BASE_URL="https://mirror.example.test" \
+  sh "$ROOT_DIR/prokop/files/usr/share/prokop/mirror-migration.sh" ||
   fail "the mirror migration failed"
 grep -Fq 'mirror.example.test' "$FEEDS" || fail "the mirror migration did not rewrite the feeds: $(cat "$FEEDS")"
 flushed "$FEEDS" "the feeds the mirror migration rewrites"
@@ -265,19 +265,19 @@ else
   mkdir -p "$WORK/initd" "$WORK/run"
   printf 'extended-compressed\n' >"$WORK/variant"
   {
-    printf '%s\n' 'forkop.settings=settings' "forkop.settings.config_path=$WORK/config.json"
+    printf '%s\n' 'prokop.settings=settings' "prokop.settings.config_path=$WORK/config.json"
     printf '%s\n' 'sing-box.main=sing-box' 'sing-box.main.enabled=1' 'sing-box.main.user=root'
     printf '%s\n' "sing-box.main.conffile=$WORK/config.json"
   } >"$WORK/uci.state"
   cat >"$WORK/initd.sh" <<'INITD'
 set -e
 mount --bind "$WORK/initd" /etc/init.d
-FORKOP_UCI_STATE_FILE="$WORK/uci.state" FORKOP_UCI_LOG_FILE="$WORK/uci.log" FORKOP_RUNTIME_STATE_DIR="$WORK/run" \
+PROKOP_UCI_STATE_FILE="$WORK/uci.state" PROKOP_UCI_LOG_FILE="$WORK/uci.log" PROKOP_RUNTIME_STATE_DIR="$WORK/run" \
   SB_VARIANT_STATE_FILE="$WORK/variant" ucode -L "$LIB" "$LIB/singbox/runtime.uc" configure-service
 INITD
   watch "$WORK/initd"
   unshare -rm sh "$WORK/initd.sh" >"$WORK/initd.out" 2>&1 || fail "configure-service failed: $(cat "$WORK/initd.out")"
-  grep -q 'Forkop managed sing-box service' "$WORK/initd/sing-box" || fail "the managed init script was not installed"
+  grep -q 'Prokop managed sing-box service' "$WORK/initd/sing-box" || fail "the managed init script was not installed"
   [ "$(stat -c %a "$WORK/initd/sing-box")" = 755 ] || fail "the managed init script is not executable"
   flushed "$WORK/initd/sing-box" "the managed sing-box init script"
   ok "the managed init script is flushed before and after the rename"
@@ -293,7 +293,7 @@ mount -t tmpfs -o size=16k tmpfs "$WORK/ks" || exit 90
 printf 'server=/old.example/\n' >"$WORK/ks/dnsmasq.servers"
 printf 'server=/example.com/\nserver=/example.net/\n' >"$WORK/ks/dns-blocked.servers"
 dd if=/dev/zero of="$WORK/ks/fill" bs=1k 2>/dev/null
-FORKOP_UCI_STATE_FILE="$WORK/ks-uci.state" KILLSWITCH_STATE_DIR="$WORK/ks" DNSMASQ_INIT="$WORK/bin/dnsmasq-init" \
+PROKOP_UCI_STATE_FILE="$WORK/ks-uci.state" KILLSWITCH_STATE_DIR="$WORK/ks" DNSMASQ_INIT="$WORK/bin/dnsmasq-init" \
   ucode -L "$LIB" "$LIB/dns/apply.uc" killswitch-refresh
 cp "$WORK/ks/dnsmasq.servers" "$WORK/ks-full.after"
 ls -A "$WORK/ks" >"$WORK/ks-full.list"
@@ -311,34 +311,34 @@ fi
 
 # The variant marker and the version of a binary sing-box variant, read on
 # every start.
-mkdir -p "$WORK/etc/forkop"
-printf 'extended\n' >"$WORK/etc/forkop/sing-box-variant"
-printf '1.11.0\n' >"$WORK/etc/forkop/sing-box-version"
-watch "$WORK/etc/forkop"
-SB_VARIANT_STATE_FILE="$WORK/etc/forkop/sing-box-variant" ucode -L "$LIB" "$LIB/singbox/runtime.uc" write-variant-marker extended-compressed ||
+mkdir -p "$WORK/etc/prokop"
+printf 'extended\n' >"$WORK/etc/prokop/sing-box-variant"
+printf '1.11.0\n' >"$WORK/etc/prokop/sing-box-version"
+watch "$WORK/etc/prokop"
+SB_VARIANT_STATE_FILE="$WORK/etc/prokop/sing-box-variant" ucode -L "$LIB" "$LIB/singbox/runtime.uc" write-variant-marker extended-compressed ||
   fail "the variant marker could not be written"
-[ "$(cat "$WORK/etc/forkop/sing-box-variant")" = extended-compressed ] || fail "the variant marker was not written"
-flushed "$WORK/etc/forkop/sing-box-variant" "the sing-box variant marker"
-watch "$WORK/etc/forkop"
-SB_VERSION_STATE_FILE="$WORK/etc/forkop/sing-box-version" ucode -L "$LIB" "$LIB/singbox/runtime.uc" write-version-state 1.12.0 ||
+[ "$(cat "$WORK/etc/prokop/sing-box-variant")" = extended-compressed ] || fail "the variant marker was not written"
+flushed "$WORK/etc/prokop/sing-box-variant" "the sing-box variant marker"
+watch "$WORK/etc/prokop"
+SB_VERSION_STATE_FILE="$WORK/etc/prokop/sing-box-version" ucode -L "$LIB" "$LIB/singbox/runtime.uc" write-version-state 1.12.0 ||
   fail "the version state could not be written"
-[ "$(cat "$WORK/etc/forkop/sing-box-version")" = 1.12.0 ] || fail "the version state was not written"
-flushed "$WORK/etc/forkop/sing-box-version" "the sing-box version state"
-[ -z "$(find "$WORK/etc/forkop" -name '*.tmp*' -printf '%f ')" ] || fail "the marker writers left a temporary file"
+[ "$(cat "$WORK/etc/prokop/sing-box-version")" = 1.12.0 ] || fail "the version state was not written"
+flushed "$WORK/etc/prokop/sing-box-version" "the sing-box version state"
+[ -z "$(find "$WORK/etc/prokop" -name '*.tmp*' -printf '%f ')" ] || fail "the marker writers left a temporary file"
 ok "the sing-box variant marker and version state are flushed before and after the rename"
 
-# The recovery marker of an in-app Forkop upgrade, which the recovery after a
-# power cut mid-install reads (tests/helpers/forkop_upgrade_harness.sh).
+# The recovery marker of an in-app Prokop upgrade, which the recovery after a
+# power cut mid-install reads (tests/helpers/prokop_upgrade_harness.sh).
 WORK_DIR="$WORK"
-# shellcheck source=tests/helpers/forkop_upgrade_harness.sh
-. "$ROOT_DIR/tests/helpers/forkop_upgrade_harness.sh"
+# shellcheck source=tests/helpers/prokop_upgrade_harness.sh
+. "$ROOT_DIR/tests/helpers/prokop_upgrade_harness.sh"
 upgrade_harness_setup
 cp "$WORK/bin/sync" "$UPGRADE_BIN/sync"
 upgrade_harness_reset opkg
 mkdir -p "$UPGRADE_RECOVERY_DIR"
 watch "$UPGRADE_RECOVERY_DIR"
 upgrade_harness_run || fail "the in-app upgrade failed: $(cat "$UPGRADE_OUT")"
-[ "$(upgrade_harness_version forkop)" = 1.1.0-r1 ] || fail "the in-app upgrade did not install the new release"
+[ "$(upgrade_harness_version prokop)" = 1.1.0-r1 ] || fail "the in-app upgrade did not install the new release"
 n=1 before="" after=""
 while [ "$n" -le "$(sync_count)" ]; do
   snap="$WORK/sync/$n$UPGRADE_RECOVERY_DIR"
@@ -374,15 +374,15 @@ else
   printf '#!/bin/sh\nexit 0\n' >"$WORK/bin/nft"
   chmod 0755 "$WORK/bin/sing-box" "$WORK/bin/nft"
   : >"$WORK/validator-uci.state"
-  FORKOP_UCI_STATE_FILE="$WORK/validator-uci.state" SB_VARIANT_STATE_FILE="$WORK/variant" \
-    SB_VERSION_STATE_FILE="$WORK/etc/forkop/sing-box-version" TMPDIR="$WORK" \
+  PROKOP_UCI_STATE_FILE="$WORK/validator-uci.state" SB_VARIANT_STATE_FILE="$WORK/variant" \
+    SB_VERSION_STATE_FILE="$WORK/etc/prokop/sing-box-version" TMPDIR="$WORK" \
     ucode -L "$LIB" "$LIB/config/validator.uc" check-requirements || true
 fi
 INSTALL
     watch "$WORK/initd-$writer"
     WRITER="$writer" unshare -rm sh "$WORK/install-$writer.sh" >"$WORK/install-$writer.out" 2>&1 ||
       fail "the $writer install of the init script failed: $(cat "$WORK/install-$writer.out")"
-    grep -q 'Forkop managed sing-box service' "$WORK/initd-$writer/sing-box" ||
+    grep -q 'Prokop managed sing-box service' "$WORK/initd-$writer/sing-box" ||
       fail "the $writer install did not write the managed init script: $(cat "$WORK/install-$writer.out")"
     [ "$(stat -c %a "$WORK/initd-$writer/sing-box")" = 755 ] || fail "the init script the $writer install writes is not executable"
     flushed "$WORK/initd-$writer/sing-box" "the init script the $writer install writes"

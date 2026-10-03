@@ -7,17 +7,17 @@ set -euo pipefail
 # full last tune output in tmpfs; read-only autotune_status/autotune_target.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT HUP INT TERM
-export FORKOP_LIB="$LIB"
-export FORKOP_AUTOTUNE_STATE_FILE="$WORK/etc/autotune/state.json"
-export FORKOP_AUTOTUNE_LAST_DIR="$WORK/run/last"
-export FORKOP_CONFIG_FILE="$WORK/forkop"
+export PROKOP_LIB="$LIB"
+export PROKOP_AUTOTUNE_STATE_FILE="$WORK/etc/autotune/state.json"
+export PROKOP_AUTOTUNE_LAST_DIR="$WORK/run/last"
+export PROKOP_CONFIG_FILE="$WORK/prokop"
 
 fail() { printf 'FAIL: %s\n' "$1" >&2; exit 1; }
 
-cat >"$WORK/forkop" <<'CONF'
+cat >"$WORK/prokop" <<'CONF'
 config settings 'settings'
 config section 'youtube'
 	option action 'zapret'
@@ -28,9 +28,9 @@ manager() { ucode -L "$LIB" "$LIB/autotune/manager.uc" "$@"; }
 
 # No autotune section: defaults, mode off, nothing written.
 manager status >"$WORK/defaults.json"
-[ ! -e "$FORKOP_AUTOTUNE_STATE_FILE" ] || fail "reading the status must not create the state"
+[ ! -e "$PROKOP_AUTOTUNE_STATE_FILE" ] || fail "reading the status must not create the state"
 
-cat >>"$WORK/forkop" <<'CONF'
+cat >>"$WORK/prokop" <<'CONF'
 config autotune 'autotune'
 	option mode 'auto'
 	option interval '30m'
@@ -91,7 +91,7 @@ print(sprintf("%J\n", out));
 UC
 ucode -L "$LIB" "$WORK/state.uc" >"$WORK/state.json"
 
-node - "$WORK" "$FORKOP_AUTOTUNE_STATE_FILE" <<'NODE'
+node - "$WORK" "$PROKOP_AUTOTUNE_STATE_FILE" <<'NODE'
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const [work] = process.argv.slice(2);
@@ -136,4 +136,4 @@ for (const name of ['defaults', 'policy', 'state'])
   assert.doesNotMatch(fs.readFileSync(`${work}/${name}.json`, 'utf8'), /private-user-list/, `${name}: no raw user strategy`);
 console.log('autotune state checks passed');
 NODE
-mode=$(stat -c %a "$FORKOP_AUTOTUNE_STATE_FILE"); [ "$mode" = 600 ] || fail "state file must be private (got $mode)"
+mode=$(stat -c %a "$PROKOP_AUTOTUNE_STATE_FILE"); [ "$mode" = 600 ] || fail "state file must be private (got $mode)"

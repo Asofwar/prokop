@@ -14,7 +14,7 @@ fail_test() {
   exit 1
 }
 
-unset FORKOP_MIRROR_BASE_URL
+unset PROKOP_MIRROR_BASE_URL
 sed '/^main "\$@"$/d' "$ROOT_DIR/install.sh" > "$WORK_DIR/install-library.sh"
 # shellcheck disable=SC1090
 . "$WORK_DIR/install-library.sh"
@@ -59,7 +59,7 @@ rollback_package_mirror >/dev/null
 cmp -s "$WORK_DIR/original" "$distfeeds" ||
   fail_test "transaction rollback did not restore original feeds"
 
-transaction_key="$WORK_DIR/new-forkop-key.pem"
+transaction_key="$WORK_DIR/new-prokop-key.pem"
 begin_package_mirror_transaction
 backup_package_mirror_file "$transaction_key"
 printf '%s\n' 'temporary key' > "$transaction_key"
@@ -138,7 +138,7 @@ prepare_apk_root() {
     'https://mirror.infotechtg.ru.example/openwrt/releases/25.12.5/packages/aarch64_generic/luci/packages.adb' \
     'https://vendor.example/openwrt/releases/v25.x/v25.12.5/rockchip/armv8/packages/packages.adb' \
     'https://downloads.openwrt.org/releases/v25.x/v25.12.5/rockchip/armv8/packages/packages.adb' \
-    'https://mirror.51343.ru/forkop/apk/current/packages.adb' \
+    'https://mirror.51343.ru/prokop/apk/current/packages.adb' \
     'https://mirror.infotechtg.ru/openwrt/releases/25.12.5/packages/aarch64_generic/luci/packages.adb' \
     >"$APK_EXTRA_LIST"
   printf '%s\n' 'https://vendor.example/custom/packages.adb' >"$APK_REPOSITORIES_FILE"
@@ -177,7 +177,7 @@ cmp -s "$WORK_DIR/apk-original/etc/apk/repositories" "$APK_REPOSITORIES_FILE" ||
   fail_test "an opted-in APK mirror must be verified by one package list update"
 [ "$MIRROR_TRANSACTION_ACTIVE" -eq 0 ] ||
   fail_test "a verified APK mirror must commit the feed transaction"
-if grep -R -F 'forkop/mirror/current' "$APK_ROOT/etc/apk" >/dev/null; then
+if grep -R -F 'prokop/mirror/current' "$APK_ROOT/etc/apk" >/dev/null; then
   fail_test "the upstream Forkop feed must not be written anywhere"
 fi
 
@@ -206,7 +206,7 @@ printf '%s\n' \
   'https://mirror.infotechtg.ru.example/openwrt/releases/25.12.5/packages/aarch64_generic/luci/packages.adb' \
   'https://vendor.example/openwrt/releases/v25.x/v25.12.5/rockchip/armv8/packages/packages.adb' \
   'https://downloads.openwrt.org/releases/v25.x/v25.12.5/rockchip/armv8/packages/packages.adb' \
-  'https://mirror.51343.ru/forkop/apk/current/packages.adb' \
+  'https://mirror.51343.ru/prokop/apk/current/packages.adb' \
   'https://downloads.openwrt.org/releases/25.12.5/packages/aarch64_generic/luci/packages.adb' \
   >"$WORK_DIR/apk-extra-restored"
 
@@ -316,7 +316,7 @@ cat >"$customfeeds" <<'EOF'
 src/gz legacy_layout http://mirror.51343.ru/openwrt/releases/v24.x/v24.10.7/mediatek/filogic
 src/gz legacy_layout_slash https://mirror.infotechtg.ru/openwrt/releases/v24.x/24.10.7/mediatek/filogic/
 src/gz lookalike https://mirror.infotechtg.ru.example/openwrt/releases/24.10.7/packages/aarch64_cortex-a53/base
-src/gz upstream_forkop https://mirror.infotechtg.ru/forkop/ipk/current
+src/gz upstream_prokop https://mirror.infotechtg.ru/prokop/ipk/current
 EOF
 cp "$customfeeds" "$WORK_DIR/customfeeds-original"
 sed \
@@ -327,7 +327,7 @@ cat >"$WORK_DIR/customfeeds-restored" <<'EOF'
 src/gz legacy_layout https://downloads.openwrt.org/releases/24.10.7/targets/mediatek/filogic/packages
 src/gz legacy_layout_slash https://downloads.openwrt.org/releases/24.10.7/targets/mediatek/filogic/packages
 src/gz lookalike https://mirror.infotechtg.ru.example/openwrt/releases/24.10.7/packages/aarch64_cortex-a53/base
-src/gz upstream_forkop https://mirror.infotechtg.ru/forkop/ipk/current
+src/gz upstream_prokop https://mirror.infotechtg.ru/prokop/ipk/current
 EOF
 ! cmp -s "$WORK_DIR/original" "$WORK_DIR/distfeeds-restored" ||
   fail_test "the OPKG fixture must contain feeds on a former mirror"

@@ -6,8 +6,8 @@ set -euo pipefail
 #
 # Since the crontab is read back after `crontab` (cddbba56), a nearly full
 # overlay or a change another writer made at the same moment fails the
-# refresh of Forkop's scheduled jobs. Start and reload aborted at phase
-# cron-refresh then: the start left Forkop down and the reload rolled back,
+# refresh of Prokop's scheduled jobs. Start and reload aborted at phase
+# cron-refresh then: the start left Prokop down and the reload rolled back,
 # because the scheduled-jobs file could not be written. Now both carry on,
 # and the failure is not masked: an error in the system log and a
 # cron_refresh failure in the history (diagnostics/health.uc).
@@ -28,7 +28,7 @@ set -euo pipefail
 # still fails the start and the reload, as before.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK_DIR="$(mktemp -d)"
 # shellcheck source=tests/helpers/wait.sh
 . "$ROOT_DIR/tests/helpers/wait.sh"
@@ -53,29 +53,29 @@ fail() {
 }
 ok() { printf 'OK: %s\n' "$1"; }
 
-STATE_DIR="$WORK_DIR/run/forkop"
+STATE_DIR="$WORK_DIR/run/prokop"
 mkdir -p "$WORK_DIR/bin" "$STATE_DIR" "$WORK_DIR/tmp" "$FAKE_LIB"
 
 export TMPDIR="$WORK_DIR/tmp"
 export PATH="$WORK_DIR/bin:$PATH"
 export TEST_WORK="$WORK_DIR" EVENTS TEST_LIB="$LIB"
-export FORKOP_RUNTIME_STATE_DIR="$STATE_DIR"
-export FORKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/forkop.reload.lock"
-export FORKOP_PENDING_RELOAD_FILE="$STATE_DIR/reload.pending"
-export FORKOP_SUBSCRIPTION_UPDATE_LOCK_DIR="$STATE_DIR/subscription-update.lock"
-export FORKOP_INTERNAL_CONFIG_TRIGGER_GUARD="$WORK_DIR/run/internal-config-change"
-export FORKOP_MANAGED_UPGRADE_SING_BOX_MARKER="$WORK_DIR/run/managed-upgrade-sing-box"
-export FORKOP_CONFIG_FILE="$WORK_DIR/forkop.config"
-export FORKOP_DNSMASQ_CONFIG_FILE="$WORK_DIR/dhcp.config"
-export FORKOP_BIN="$WORK_DIR/bin/forkop"
-export FORKOP_SERVICE_INIT="$WORK_DIR/bin/init"
-export FORKOP_UI_ACTION_TRACKED=1
-export FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
-export FORKOP_UCI_LOG_FILE="$WORK_DIR/uci.log"
+export PROKOP_RUNTIME_STATE_DIR="$STATE_DIR"
+export PROKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/prokop.reload.lock"
+export PROKOP_PENDING_RELOAD_FILE="$STATE_DIR/reload.pending"
+export PROKOP_SUBSCRIPTION_UPDATE_LOCK_DIR="$STATE_DIR/subscription-update.lock"
+export PROKOP_INTERNAL_CONFIG_TRIGGER_GUARD="$WORK_DIR/run/internal-config-change"
+export PROKOP_MANAGED_UPGRADE_SING_BOX_MARKER="$WORK_DIR/run/managed-upgrade-sing-box"
+export PROKOP_CONFIG_FILE="$WORK_DIR/prokop.config"
+export PROKOP_DNSMASQ_CONFIG_FILE="$WORK_DIR/dhcp.config"
+export PROKOP_BIN="$WORK_DIR/bin/prokop"
+export PROKOP_SERVICE_INIT="$WORK_DIR/bin/init"
+export PROKOP_UI_ACTION_TRACKED=1
+export PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
+export PROKOP_UCI_LOG_FILE="$WORK_DIR/uci.log"
 export TMP_SING_BOX_FOLDER="$WORK_DIR/singbox-tmp"
 export DNSMASQ_INIT="$WORK_DIR/bin/dnsmasq-init"
 export KILLSWITCH_STATE_DIR="$WORK_DIR/killswitch"
-export FORKOP_CONFIG_NAME=forkop
+export PROKOP_CONFIG_NAME=prokop
 export SB_DNS_INBOUND_ADDRESS=127.0.0.42
 
 # Nothing here may reach the host's syslog, nftables, dnsmasq or init scripts.
@@ -83,13 +83,13 @@ printf '#!/bin/sh\nprintf "%%s\\n" "$*" >>"$TEST_WORK/syslog"\n' >"$WORK_DIR/bin
 printf '#!/bin/sh\nexit 1\n' >"$WORK_DIR/bin/nft"
 printf '#!/bin/sh\nexit 0\n' >"$WORK_DIR/bin/ip"
 printf '#!/bin/sh\nexit 0\n' >"$WORK_DIR/bin/init"
-printf '#!/bin/sh\nexit 0\n' >"$WORK_DIR/bin/forkop"
+printf '#!/bin/sh\nexit 0\n' >"$WORK_DIR/bin/prokop"
 printf '#!/bin/sh\nexit 0\n' >"$DNSMASQ_INIT"
 chmod 0755 "$WORK_DIR"/bin/*
-printf 'config dnsmasq\n' >"$FORKOP_DNSMASQ_CONFIG_FILE"
-: >"$FORKOP_CONFIG_FILE"
-printf 'forkop.settings=settings\nforkop.settings.yacd_secret_key=0123456789abcdef\nforkop.settings.dont_touch_dhcp=1\n' \
-  >"$FORKOP_UCI_STATE_FILE"
+printf 'config dnsmasq\n' >"$PROKOP_DNSMASQ_CONFIG_FILE"
+: >"$PROKOP_CONFIG_FILE"
+printf 'prokop.settings=settings\nprokop.settings.yacd_secret_key=0123456789abcdef\nprokop.settings.dont_touch_dhcp=1\n' \
+  >"$PROKOP_UCI_STATE_FILE"
 
 # Every module call: records "<module> <arguments>" and succeeds, except as
 # below. Locks and the stop request go to the real service/state.uc. The
@@ -115,7 +115,7 @@ let running = getenv("RUNNING") == "1";
 if (name == "service/state.uc" && (mode == "has-list-update-sources" || mode == "has-nft-list-update-sources" ||
     mode == "sing-box-process-conflict"))
     exit(1);
-if (name == "service/state.uc" && (mode == "forkop-stably-running" || mode == "forkop-running"))
+if (name == "service/state.uc" && (mode == "prokop-stably-running" || mode == "prokop-running"))
     exit(running ? 0 : 1);
 if (name == "service/state.uc" && mode == "sing-box-service-runtime-pid") {
     print("4242\\n");
@@ -172,7 +172,7 @@ start() {
   : >"$EVENTS"
   : >"$WORK_DIR/syslog"
   STATUS=0
-  env FORKOP_LIB="$FAKE_LIB" RUNNING=0 ucode -L "$LIB" "$LIB/service/lifecycle.uc" start >"$WORK_DIR/lifecycle.out" 2>&1 ||
+  env PROKOP_LIB="$FAKE_LIB" RUNNING=0 ucode -L "$LIB" "$LIB/service/lifecycle.uc" start >"$WORK_DIR/lifecycle.out" 2>&1 ||
     STATUS=$?
   wait_until 20 no_fake_modules || fail "the background workers of the start did not finish"
 }
@@ -184,12 +184,12 @@ has_event 'record cron_refresh' && fail "a start whose cron refresh succeeded re
 
 export CRON_FAILS=1
 start
-[ "$STATUS" = 0 ] || fail "a start whose cron refresh failed did not bring Forkop up (status $STATUS)"
+[ "$STATUS" = 0 ] || fail "a start whose cron refresh failed did not bring Prokop up (status $STATUS)"
 has_event 'service/state.uc start-managed-sing-box-runtime' || fail "a start whose cron refresh failed did not start sing-box"
 grep -q "phase 'cron-refresh' failed" "$WORK_DIR/syslog" && fail "the start still failed at phase cron-refresh"
 cron_failure_reported "the start"
 has_event 'diagnostics/health.uc record start success' || fail "the start was not recorded as a success"
-ok "a start whose cron refresh failed brings Forkop up and reports the failed refresh"
+ok "a start whose cron refresh failed brings Prokop up and reports the failed refresh"
 
 # ---- reload --------------------------------------------------------------------
 
@@ -197,10 +197,10 @@ ok "a start whose cron refresh failed brings Forkop up and reports the failed re
 cat >"$WORK_DIR/reload" <<'SH'
 #!/bin/sh
 state() { ucode -L "$TEST_LIB" "$TEST_LIB/service/state.uc" "$@"; }
-state acquire-runtime-dir-lock "$FORKOP_RELOAD_LOCK_DIR" "$$" || exit 99
-env FORKOP_LIB="$FAKE_LIB" RUNNING=1 ucode -L "$TEST_LIB" "$TEST_LIB/service/lifecycle.uc" reload "${RELOAD_REASON:-}"
+state acquire-runtime-dir-lock "$PROKOP_RELOAD_LOCK_DIR" "$$" || exit 99
+env PROKOP_LIB="$FAKE_LIB" RUNNING=1 ucode -L "$TEST_LIB" "$TEST_LIB/service/lifecycle.uc" reload "${RELOAD_REASON:-}"
 status=$?
-state release-runtime-dir-lock "$FORKOP_RELOAD_LOCK_DIR" "$$"
+state release-runtime-dir-lock "$PROKOP_RELOAD_LOCK_DIR" "$$"
 exit "$status"
 SH
 chmod 0755 "$WORK_DIR/reload"
@@ -271,7 +271,7 @@ grep -q 'Reload skipped' "$WORK_DIR/syslog" || fail "a reload with nothing to ap
 ok "the next reload refreshes the jobs that a reload could not write"
 
 CRON_FAILS=1 start
-[ "$STATUS" = 0 ] || fail "a start whose cron refresh failed did not bring Forkop up (status $STATUS)"
+[ "$STATUS" = 0 ] || fail "a start whose cron refresh failed did not bring Prokop up (status $STATUS)"
 cron_failure_reported "the start before the reload"
 CRON_FAILS=0 reload_real
 [ "$STATUS" = 0 ] || fail "the reload after a start whose cron refresh failed failed (status $STATUS)"

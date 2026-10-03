@@ -2,12 +2,12 @@
 set -eo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_BIN="$ROOT_DIR/forkop/files/usr/bin/forkop"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-CLI_UC="$FORKOP_BIN"
-BYEDPI_RUNTIME_SH="$FORKOP_LIB/byedpi.sh"
-LIFECYCLE_UC="$FORKOP_LIB/service/lifecycle.uc"
-BYEDPI_RUNTIME_UC="$FORKOP_LIB/providers/byedpi/runtime.uc"
+PROKOP_BIN="$ROOT_DIR/prokop/files/usr/bin/prokop"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+CLI_UC="$PROKOP_BIN"
+BYEDPI_RUNTIME_SH="$PROKOP_LIB/byedpi.sh"
+LIFECYCLE_UC="$PROKOP_LIB/service/lifecycle.uc"
+BYEDPI_RUNTIME_UC="$PROKOP_LIB/providers/byedpi/runtime.uc"
 WORK_DIR="$(mktemp -d)"
 
 cleanup() {
@@ -26,15 +26,15 @@ source "$ROOT_DIR/tests/helpers/source_checks.sh"
 [ ! -e "$BYEDPI_RUNTIME_SH" ] ||
   fail "byedpi.sh shell owner must be removed"
 
-grep -Fq '#!/usr/bin/ucode' "$FORKOP_BIN" ||
-  fail "forkop entrypoint must be a direct ucode executable"
+grep -Fq '#!/usr/bin/ucode' "$PROKOP_BIN" ||
+  fail "prokop entrypoint must be a direct ucode executable"
 grep -Fq 'service/lifecycle.uc' "$CLI_UC" ||
   fail "service/cli.uc must dispatch lifecycle orchestration through service/lifecycle.uc"
 grep -Fq 'providers/byedpi/runtime.uc' "$LIFECYCLE_UC" ||
   fail "service/lifecycle.uc must call providers/byedpi/runtime.uc for ByeDPI runtime operations"
 
 source_refute_shell "ByeDPI runtime shell symbols must not remain" \
-  -E 'start_byedpi_runtime|stop_byedpi_runtime|get_byedpi_status_json|check_byedpi_runtime_json|is_byedpi_installed|get_byedpi_package_version|get_byedpi_rule_|run_byedpi_supervisor' "$FORKOP_BIN" "$FORKOP_LIB"
+  -E 'start_byedpi_runtime|stop_byedpi_runtime|get_byedpi_status_json|check_byedpi_runtime_json|is_byedpi_installed|get_byedpi_package_version|get_byedpi_rule_|run_byedpi_supervisor' "$PROKOP_BIN" "$PROKOP_LIB"
 if grep -n -E 'require\("uci"\)\.cursor|uci -q|"uci", "-q"' "$BYEDPI_RUNTIME_UC" >/dev/null 2>&1; then
   fail "providers/byedpi/runtime.uc must use core.uci instead of direct UCI cursor or CLI access"
 fi
@@ -71,12 +71,12 @@ esac
 SH
 chmod +x "$WORK_DIR/apk"
 
-version="$(FORKOP_LIB="$FORKOP_LIB" PATH="$WORK_DIR:$PATH" ucode -L "$FORKOP_LIB" "$BYEDPI_RUNTIME_UC" package-version)"
+version="$(PROKOP_LIB="$PROKOP_LIB" PATH="$WORK_DIR:$PATH" ucode -L "$PROKOP_LIB" "$BYEDPI_RUNTIME_UC" package-version)"
 [ "$version" = "0.17.3-r1" ] ||
   fail "ByeDPI APK version was parsed as '$version'"
 
-FORKOP_LIB="$FORKOP_LIB" BYEDPI_BIN="$ROOT_DIR/tests/missing-ciadpi" \
-  ucode -L "$FORKOP_LIB" "$BYEDPI_RUNTIME_UC" check |
+PROKOP_LIB="$PROKOP_LIB" BYEDPI_BIN="$ROOT_DIR/tests/missing-ciadpi" \
+  ucode -L "$PROKOP_LIB" "$BYEDPI_RUNTIME_UC" check |
   node -e '
 const fs = require("fs");
 const value = JSON.parse(fs.readFileSync(0, "utf8"));

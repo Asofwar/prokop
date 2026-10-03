@@ -2,10 +2,10 @@
 set -eo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-PARSER_UC="$FORKOP_LIB/subscription/parser.uc"
-GENERATOR_UC="$FORKOP_LIB/singbox/generator.uc"
-CACHE_UC="$FORKOP_LIB/subscription/cache.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+PARSER_UC="$PROKOP_LIB/subscription/parser.uc"
+GENERATOR_UC="$PROKOP_LIB/singbox/generator.uc"
+CACHE_UC="$PROKOP_LIB/subscription/cache.uc"
 WORK_DIR="$(mktemp -d)"
 
 cleanup() {
@@ -18,7 +18,7 @@ fail() {
   exit 1
 }
 
-ucode -L "$FORKOP_LIB" -e '
+ucode -L "$PROKOP_LIB" -e '
 let subscription = require("singbox.subscription");
 let state = {
     servers: {
@@ -49,7 +49,7 @@ if (state.outboundMetadata.descriptions.proxy != "Upstream Tube")
 normalize_subscription() {
   local input="$1"
   local output="$2"
-  ucode -L "$FORKOP_LIB" "$PARSER_UC" normalize-content "$input" "$output"
+  ucode -L "$PROKOP_LIB" "$PARSER_UC" normalize-content "$input" "$output"
 }
 
 prepare_subscription_cache() {
@@ -70,8 +70,8 @@ generate_config() {
   local output="$2"
   mkdir -p "${output}.section-cache"
   TMP_SUBSCRIPTION_FOLDER="$WORK_DIR/subscriptions" \
-    FORKOP_SUBSCRIPTION_METADATA_DIR="$WORK_DIR/metadata" \
-    ucode -L "$FORKOP_LIB" "$GENERATOR_UC" generate-config-fixture \
+    PROKOP_SUBSCRIPTION_METADATA_DIR="$WORK_DIR/metadata" \
+    ucode -L "$PROKOP_LIB" "$GENERATOR_UC" generate-config-fixture \
       "$fixture" "$output" "127.0.0.1"
 }
 
@@ -159,7 +159,7 @@ JSON
 
 mkdir -p "$WORK_DIR/metadata"
 : >"$WORK_DIR/xray.headers"
-ucode -L "$FORKOP_LIB" "$PARSER_UC" metadata-extract-ui-file \
+ucode -L "$PROKOP_LIB" "$PARSER_UC" metadata-extract-ui-file \
   "$WORK_DIR/xray.headers" "$WORK_DIR/xray.json" "$WORK_DIR/metadata/proxy.json"
 ucode -e '
 let fs = require("fs");
@@ -246,7 +246,7 @@ let fs = require("fs");
 let value = json(fs.readfile(ARGV[0]));
 let descriptions = {};
 for (let outbound in value.outbounds || [])
-    descriptions[outbound.remark] = outbound.__forkop_description;
+    descriptions[outbound.remark] = outbound.__prokop_description;
 if (descriptions["Amsterdam #1"] != "Upstream Tube")
     die("first Xray node description was not retained\n");
 if (descriptions["Amsterdam #2"] != "Upstream Backbone")
@@ -408,7 +408,7 @@ for (let child in builtin.outbounds || [])
 ' "$xray_config" "$xray_config.section-cache/proxy.json" "$xray_reveal_urltest_config" || fail "xray generated URLTest behavior"
 
 xray_metadata="$WORK_DIR/xray-ui-outbound-metadata.json"
-ucode -L "$FORKOP_LIB" "$CACHE_UC" get-outbound-metadata "$xray_config.section-cache" proxy "$WORK_DIR/missing-outbound-metadata.json" >"$xray_metadata"
+ucode -L "$PROKOP_LIB" "$CACHE_UC" get-outbound-metadata "$xray_config.section-cache" proxy "$WORK_DIR/missing-outbound-metadata.json" >"$xray_metadata"
 
 ucode -e '
 let fs = require("fs");
@@ -478,8 +478,8 @@ let value = json(fs.readfile(ARGV[0]));
 let flags = {};
 for (let outbound in value.outbounds || [])
     flags[outbound.tag] = {
-        allow: outbound.__forkop_allow_group === true,
-        hidden: outbound.__forkop_hidden === true
+        allow: outbound.__prokop_allow_group === true,
+        hidden: outbound.__prokop_hidden === true
     };
 if (!flags["Native Group"].allow)
     die("native sing-box URLTest group was not allowed\n");
@@ -714,7 +714,7 @@ if (!contains(candidates, "Native A") || !contains(candidates, "Detour Only"))
 ' "$singbox_config" "$singbox_config.section-cache/proxy.json" "$singbox_reveal_urltest_config" "$singbox_reveal_detour_config" || fail "native sing-box generated URLTest behavior"
 
 singbox_metadata="$WORK_DIR/singbox-ui-outbound-metadata.json"
-ucode -L "$FORKOP_LIB" "$CACHE_UC" get-outbound-metadata "$singbox_config.section-cache" proxy "$WORK_DIR/missing-outbound-metadata.json" >"$singbox_metadata"
+ucode -L "$PROKOP_LIB" "$CACHE_UC" get-outbound-metadata "$singbox_config.section-cache" proxy "$WORK_DIR/missing-outbound-metadata.json" >"$singbox_metadata"
 
 ucode -e '
 let fs = require("fs");

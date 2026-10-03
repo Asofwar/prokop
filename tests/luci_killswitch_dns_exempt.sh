@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # D-23 in the rule editor: the option that lets a protected rule's excluded
-# devices resolve its names while Forkop is stopped sits next to the
+# devices resolve its names while Prokop is stopped sits next to the
 # kill-switch on the Advanced tab, only for rules that can have the
 # kill-switch and only while it is on. Unchecked means absent; an untouched
 # save writes nothing, also for a rule whose kill-switch is off (the option
@@ -45,7 +45,7 @@ async function check(label, fn) {
       const option = modal.option(NAME);
       assert.equal(option.tab, 'advanced', 'next to the kill-switch on the Advanced tab');
       // What it costs: the devices' whole DNS bypasses the router's own
-      // settings while Forkop is stopped, and every group runs a resolver.
+      // settings while Prokop is stopped, and every group runs a resolver.
       assert.match(option.description, /all DNS of these devices goes through that resolver, past the router's own DNS settings/);
       assert.match(option.description, /rebind protection/);
       assert.match(option.description, /own resolver with a copy of the block list in memory, at most 4/);
@@ -147,7 +147,7 @@ async function check(label, fn) {
     // The status of the rule: how many of its names its excluded devices
     // resolve, instead of the count of names blocked for them as well.
     await check(`${version} rule status`, async () => {
-      const status = { configured: ['rule'], active: true, persistent: true, forkop_running: false, counters: {},
+      const status = { configured: ['rule'], active: true, persistent: true, prokop_running: false, counters: {},
         state: { sections: ['rule'], rule_sections: ['rule'], dns: { domains: 3, sections: {
           rule: { domains: 3, uncovered: 0, client_limited: 0, excluded_devices: 1, excluded_exempt: 2 } } } } };
       const env = createEnvironment({ version, config: { rule: rule({ kill_switch: '1', [NAME]: '1' }) },
@@ -156,7 +156,7 @@ async function check(label, fn) {
       const rendered = modal.option('_kill_switch_status').renderWidget('rule');
       await env.settle();
       assert.match(rendered.textContent,
-        /Domains the excluded devices of this section resolve while Forkop is stopped \(through their own resolver\): 2/);
+        /Domains the excluded devices of this section resolve while Prokop is stopped \(through their own resolver\): 2/);
       assert.match(rendered.textContent, /Domains also blocked for the excluded devices of this section .*: 1/);
     });
 
@@ -172,12 +172,12 @@ async function check(label, fn) {
   }
 
   // Read-only sessions: the allowlist of what they may read leaves it out.
-  const runtime = fs.readFileSync(path.join(ROOT, 'forkop/files/usr/lib/diagnostics/runtime.uc'), 'utf8');
+  const runtime = fs.readFileSync(path.join(ROOT, 'prokop/files/usr/lib/diagnostics/runtime.uc'), 'utf8');
   const safe = runtime.match(/let safe_keys = \[([^\]]*)\]/);
   assert(safe, 'the read-only allowlist was not found');
   assert(!safe[1].includes(NAME), 'read-only sessions must not read the option');
-  const menu = JSON.parse(fs.readFileSync(path.join(ROOT, 'luci-app-forkop/root/usr/share/luci/menu.d/luci-app-forkop.json'), 'utf8'));
-  assert.deepEqual(menu['admin/services/forkop/rules'].depends.acl, ['luci-app-forkop-admin'],
+  const menu = JSON.parse(fs.readFileSync(path.join(ROOT, 'luci-app-prokop/root/usr/share/luci/menu.d/luci-app-prokop.json'), 'utf8'));
+  assert.deepEqual(menu['admin/services/prokop/rules'].depends.acl, ['luci-app-prokop-admin'],
     'the rule editor is for administrators only');
 
   if (failures.length) {

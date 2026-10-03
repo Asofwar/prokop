@@ -10,10 +10,10 @@
 set -eo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-KS_UC="$FORKOP_LIB/killswitch/runtime.uc"
-GENERATOR_UC="$FORKOP_LIB/singbox/generator.uc"
-NFT_UC="$FORKOP_LIB/nft/apply.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+KS_UC="$PROKOP_LIB/killswitch/runtime.uc"
+GENERATOR_UC="$PROKOP_LIB/singbox/generator.uc"
+NFT_UC="$PROKOP_LIB/nft/apply.uc"
 WORK_DIR="$(mktemp -d)"
 
 cleanup() {
@@ -47,7 +47,7 @@ cat >"$WORK_DIR/fixture.json" <<JSON
   ]
 }
 JSON
-ucode -L "$FORKOP_LIB" "$GENERATOR_UC" generate-config-fixture \
+ucode -L "$PROKOP_LIB" "$GENERATOR_UC" generate-config-fixture \
   "$WORK_DIR/fixture.json" "$WORK_DIR/config.json" 192.168.1.1 0 1 'vpn other' 1.13.0 ||
   fail "the generator must accept deferred sections"
 ucode -e '
@@ -77,32 +77,32 @@ printf 'ok - the running sing-box rejects a deferred protected section\n'
 # ---- its destinations still reach sing-box ------------------------------------
 
 cat >"$WORK_DIR/populate.uci" <<'EOF'
-forkop.settings=settings
-forkop.settings.source_network_interfaces=br-lan
-forkop.vpn=section
-forkop.vpn.action=connection
-forkop.vpn.kill_switch=1
-forkop.vpn.subscription_urls=https://sub.example/vpn
-forkop.vpn.ip_cidr=93.184.216.0/24
-forkop.vpn.source_ip_cidr=192.168.1.0/28
-forkop.vpn.domain_suffix=vpn.example
-forkop.other=section
-forkop.other.action=connection
-forkop.other.subscription_urls=https://sub.example/other
-forkop.other.ip_cidr=203.0.113.0/24
-forkop.other.source_ip_cidr=192.168.1.32/28
-forkop.other.domain_suffix=other.example
+prokop.settings=settings
+prokop.settings.source_network_interfaces=br-lan
+prokop.vpn=section
+prokop.vpn.action=connection
+prokop.vpn.kill_switch=1
+prokop.vpn.subscription_urls=https://sub.example/vpn
+prokop.vpn.ip_cidr=93.184.216.0/24
+prokop.vpn.source_ip_cidr=192.168.1.0/28
+prokop.vpn.domain_suffix=vpn.example
+prokop.other=section
+prokop.other.action=connection
+prokop.other.subscription_urls=https://sub.example/other
+prokop.other.ip_cidr=203.0.113.0/24
+prokop.other.source_ip_cidr=192.168.1.32/28
+prokop.other.domain_suffix=other.example
 EOF
 printf '# candidate\n' >"$WORK_DIR/populate.nft"
-FORKOP_UCI_STATE_FILE="$WORK_DIR/populate.uci" FORKOP_NFT_BATCH_FILE="$WORK_DIR/populate.nft" \
-  ucode -L "$FORKOP_LIB" "$NFT_UC" nft-populate-runtime-sets-from-uci 1 'vpn other' ForkopTable \
-  forkop_subnets forkop_ports forkop_ip_ports forkop_interfaces localv4 0x00100000 \
-  forkop_subnets6 forkop_ip_ports6 localv6 || fail "populating the runtime sets failed"
-grep -Fq 'forkop_rule_vpn_subnets { 93.184.216.0/24 }' "$WORK_DIR/populate.nft" ||
+PROKOP_UCI_STATE_FILE="$WORK_DIR/populate.uci" PROKOP_NFT_BATCH_FILE="$WORK_DIR/populate.nft" \
+  ucode -L "$PROKOP_LIB" "$NFT_UC" nft-populate-runtime-sets-from-uci 1 'vpn other' ProkopTable \
+  prokop_subnets prokop_ports prokop_ip_ports prokop_interfaces localv4 0x00100000 \
+  prokop_subnets6 prokop_ip_ports6 localv6 || fail "populating the runtime sets failed"
+grep -Fq 'prokop_rule_vpn_subnets { 93.184.216.0/24 }' "$WORK_DIR/populate.nft" ||
   fail "a deferred protected section's IP destinations must be captured for sing-box to reject: $(cat "$WORK_DIR/populate.nft")"
-grep -Eq 'forkop_dns_sources \{[^}]*192\.168\.1\.0/28' "$WORK_DIR/populate.nft" ||
+grep -Eq 'prokop_dns_sources \{[^}]*192\.168\.1\.0/28' "$WORK_DIR/populate.nft" ||
   fail "a deferred protected section's clients must use the source-aware DNS the generator expects"
-if grep -Fq '203.0.113.0/24' "$WORK_DIR/populate.nft" || grep -Eq 'forkop_dns_sources \{[^}]*192\.168\.1\.32/28' "$WORK_DIR/populate.nft"; then
+if grep -Fq '203.0.113.0/24' "$WORK_DIR/populate.nft" || grep -Eq 'prokop_dns_sources \{[^}]*192\.168\.1\.32/28' "$WORK_DIR/populate.nft"; then
   fail "an unprotected deferred section must not be captured"
 fi
 printf 'ok - the destinations of a deferred protected section reach sing-box\n'
@@ -112,7 +112,7 @@ printf 'ok - the destinations of a deferred protected section reach sing-box\n'
 # plan sees it in the sing-box and nft signatures. Elsewhere it changes
 # neither (killswitch/runtime.uc follows it without a runtime reload).
 signatures() {
-  ucode -L "$FORKOP_LIB" "$FORKOP_LIB/service/state.uc" reload-state-text-fixture "$1" 1 |
+  ucode -L "$PROKOP_LIB" "$PROKOP_LIB/service/state.uc" reload-state-text-fixture "$1" 1 |
     grep -E '^(sing_box|nft)_signature='
 }
 signature_fixture() {
@@ -145,13 +145,13 @@ cat >"$WORK_DIR/bin/nft" <<'NFT'
 #!/usr/bin/env bash
 case "$1 $2" in
   "list table")
-    [ "$4" = "ForkopTable" ] && exit 0
-    [ "$4" = "ForkopKillswitch" ] && { [ -e "$WORK_DIR/ks-present" ]; exit $?; }
+    [ "$4" = "ProkopTable" ] && exit 0
+    [ "$4" = "ProkopKillswitch" ] && { [ -e "$WORK_DIR/ks-present" ]; exit $?; }
     exit 1 ;;
   "list set")
-    printf 'table inet ForkopTable {\n\tset %s {\n\t\ttype ipv4_addr\n' "$5"
-    [ "$5" = "forkop_rule_vpn_subnets" ] && [ -e "$WORK_DIR/vpn-elements" ] && printf '\t\telements = { 93.184.216.0/24 }\n'
-    [ "$5" = "forkop_rule_main_subnets" ] && printf '\t\telements = { 198.51.100.0/24 }\n'
+    printf 'table inet ProkopTable {\n\tset %s {\n\t\ttype ipv4_addr\n' "$5"
+    [ "$5" = "prokop_rule_vpn_subnets" ] && [ -e "$WORK_DIR/vpn-elements" ] && printf '\t\telements = { 93.184.216.0/24 }\n'
+    [ "$5" = "prokop_rule_main_subnets" ] && printf '\t\telements = { 198.51.100.0/24 }\n'
     printf '\t}\n}\n'
     exit 0 ;;
   "-c -f") exit 0 ;;
@@ -166,34 +166,34 @@ chmod 0755 "$WORK_DIR/bin/"*
 
 export WORK_DIR
 export PATH="$WORK_DIR/bin:$PATH"
-export FORKOP_LIB
-export FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
-export FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/run"
-export FORKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/reload.lock"
+export PROKOP_LIB
+export PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
+export PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/run"
+export PROKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/reload.lock"
 export KILLSWITCH_STATE_DIR="$WORK_DIR/ks"
-export KILLSWITCH_NFT_INCLUDE="$WORK_DIR/nftables.d/90-forkop-killswitch.nft"
+export KILLSWITCH_NFT_INCLUDE="$WORK_DIR/nftables.d/90-prokop-killswitch.nft"
 export KILLSWITCH_CACHE_DIR="$WORK_DIR/cache"
 export DNSMASQ_INIT="$WORK_DIR/bin/dnsmasq-init"
-export FORKOP_KILLSWITCH_INIT="$WORK_DIR/bin/killswitch-init"
+export PROKOP_KILLSWITCH_INIT="$WORK_DIR/bin/killswitch-init"
 
 uci_state() {
-  cat >"$FORKOP_UCI_STATE_FILE" <<EOF
-forkop.settings=settings
-forkop.settings.source_network_interfaces=br-lan
-forkop.settings.config_path=$WORK_DIR/sing-box.json
-forkop.main=section
-forkop.main.action=connection
-forkop.main.kill_switch=$1
-forkop.main.ip_cidr=198.51.100.0/24
-forkop.vpn=section
-forkop.vpn.action=connection
-forkop.vpn.kill_switch=1
-forkop.vpn.ip_cidr=93.184.216.0/24
+  cat >"$PROKOP_UCI_STATE_FILE" <<EOF
+prokop.settings=settings
+prokop.settings.source_network_interfaces=br-lan
+prokop.settings.config_path=$WORK_DIR/sing-box.json
+prokop.main=section
+prokop.main.action=connection
+prokop.main.kill_switch=$1
+prokop.main.ip_cidr=198.51.100.0/24
+prokop.vpn=section
+prokop.vpn.action=connection
+prokop.vpn.kill_switch=1
+prokop.vpn.ip_cidr=93.184.216.0/24
 dhcp.@dnsmasq[0]=dnsmasq
 dhcp.@dnsmasq[0].server=127.0.0.42
 EOF
 }
-ks() { ucode -L "$FORKOP_LIB" "$KS_UC" "$@"; }
+ks() { ucode -L "$PROKOP_LIB" "$KS_UC" "$@"; }
 routed_config() {
   cat >"$WORK_DIR/sing-box.json" <<'JSON'
 { "outbounds": [ { "type": "direct", "tag": "main-out" }, { "type": "direct", "tag": "vpn-out" } ],
@@ -218,7 +218,7 @@ touch "$WORK_DIR/vpn-elements"
 uci_state 1
 routed_config
 ks sync start || fail "the sync of routed sections failed"
-grep -Fq 'forkop_rule_vpn_subnets { 93.184.216.0/24 }' "$POLICY" || fail "the complete policy must hold the section's destinations"
+grep -Fq 'prokop_rule_vpn_subnets { 93.184.216.0/24 }' "$POLICY" || fail "the complete policy must hold the section's destinations"
 grep -Fqx 'server=/vpn.example/' "$BLOCKED" || fail "the complete block list must hold the section's names"
 grep -Fqx 'server=/main.example/' "$BLOCKED" || fail "the complete block list must hold the other section's names"
 cp "$BLOCKED" "$WORK_DIR/blocked.before"
@@ -228,7 +228,7 @@ cp "$BLOCKED" "$WORK_DIR/blocked.before"
 deferred_config
 uci_state 0
 ks sync reload || fail "a sync while a protected section is not routed must still refresh the nft policy"
-grep -Fq 'forkop_rule_vpn_subnets { 93.184.216.0/24 }' "$POLICY" ||
+grep -Fq 'prokop_rule_vpn_subnets { 93.184.216.0/24 }' "$POLICY" ||
   fail "the refreshed policy must keep the deferred section's destinations from the live table: $(cat "$POLICY")"
 ! grep -Fq 'ks_main' "$POLICY" || fail "a section whose kill-switch was turned off must not stay protected while another is deferred"
 cmp -s "$BLOCKED" "$WORK_DIR/blocked.before" || fail "the names of a deferred section are unknown; the block list must stay as it was"
@@ -236,7 +236,7 @@ grep -Fq 'not routed' "$KILLSWITCH_STATE_DIR/state.json" || fail "the kept block
 grep -Fq '"last_error": ""' "$KILLSWITCH_STATE_DIR/state.json" || fail "the refreshed nft policy is not an error"
 status="$(ks status)" || fail "status failed"
 ucode -e 'let s = json(ARGV[0]); exit(sprintf("%J", s.unrouted) == "[ \"vpn\" ]" ? 0 : 1);' -- "$status" ||
-  fail "status must name the protected section the running Forkop does not route: $status"
+  fail "status must name the protected section the running Prokop does not route: $status"
 printf 'ok - a deferred section keeps the previous block list, and the nft policy follows the configuration\n'
 
 routed_config

@@ -2,11 +2,11 @@
 set -eo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-RELOAD_UC="$ROOT_DIR/forkop/files/usr/lib/service/reload.uc"
-STATE_UC="$ROOT_DIR/forkop/files/usr/lib/service/state.uc"
-LIFECYCLE_UC="$ROOT_DIR/forkop/files/usr/lib/service/lifecycle.uc"
-UPDATES_UC="$ROOT_DIR/forkop/files/usr/lib/components/updates.uc"
-FORKOP_LIB="${FORKOP_TEST_LIB:-$ROOT_DIR/forkop/files/usr/lib}"
+RELOAD_UC="$ROOT_DIR/prokop/files/usr/lib/service/reload.uc"
+STATE_UC="$ROOT_DIR/prokop/files/usr/lib/service/state.uc"
+LIFECYCLE_UC="$ROOT_DIR/prokop/files/usr/lib/service/lifecycle.uc"
+UPDATES_UC="$ROOT_DIR/prokop/files/usr/lib/components/updates.uc"
+PROKOP_LIB="${PROKOP_TEST_LIB:-$ROOT_DIR/prokop/files/usr/lib}"
 WORK_DIR="$(mktemp -d)"
 
 cleanup() {
@@ -36,7 +36,7 @@ cat >"$WORK_DIR/reordered.json" <<'JSON'
 JSON
 
 list_signature() {
-  ucode -L "$FORKOP_LIB" "$STATE_UC" list-update-signature-fixture "$1"
+  ucode -L "$PROKOP_LIB" "$STATE_UC" list-update-signature-fixture "$1"
 }
 
 base_signature="$(list_signature "$WORK_DIR/base.json")"
@@ -95,9 +95,9 @@ if [ "$(grep -Fc '"refresh-and-reload"' "$LIFECYCLE_UC")" -ne 1 ]; then
   fail "reload lifecycle must have exactly one conditional rule-set refresh"
 fi
 
-grep -Fq 'if (refresh_manifest(proxy_address, false) != 0)' "$ROOT_DIR/forkop/files/usr/lib/singbox/ruleset_cache.uc" ||
+grep -Fq 'if (refresh_manifest(proxy_address, false) != 0)' "$ROOT_DIR/prokop/files/usr/lib/singbox/ruleset_cache.uc" ||
   fail "unchanged rule-set content must not request a reload"
-grep -Fq 'if (failed && !changed)' "$ROOT_DIR/forkop/files/usr/lib/singbox/ruleset_cache.uc" ||
+grep -Fq 'if (failed && !changed)' "$ROOT_DIR/prokop/files/usr/lib/singbox/ruleset_cache.uc" ||
   fail "a failed rule-set source must not suppress reload of other successful changes"
 
 grep -Fq 'PERSISTENT_LIST_CACHE_DIR + "/last-success.timestamp"' "$UPDATES_UC" ||

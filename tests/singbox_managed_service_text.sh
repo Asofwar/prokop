@@ -4,14 +4,14 @@ set -euo pipefail
 # One text of the managed sing-box init script (UC-085).
 #
 # A binary sing-box variant (the compressed sing-box-extended) comes without
-# the package's init script, and Forkop installs its own: at a start
+# the package's init script, and Prokop installs its own: at a start
 # (singbox/runtime.uc configure-service), at a component install, update or
 # rollback (components/action.uc) and in the requirements check when there is
 # none (config/validator.uc). Each writer carried its own copy of the text,
 # and two of them still had `procd_set_param file`, which release 1.0.14 took
 # out of the start's copy: after a component install, `/etc/init.d/sing-box
 # start|reload` with a changed config.json made procd restart sing-box
-# outside Forkop's controlled transitions, until the next start of Forkop
+# outside Prokop's controlled transitions, until the next start of Prokop
 # rewrote the script. Now every writer writes one text, byte for byte,
 # without `procd_set_param file`: a start after a component install has
 # nothing to rewrite. A copy of the script that a crash left behind, named
@@ -23,7 +23,7 @@ set -euo pipefail
 # run.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 trap 'exit 1' HUP INT TERM
@@ -63,8 +63,8 @@ chmod 0755 "$WORK/bin/"*
 printf 'extended-compressed\n' >"$WORK/variant"
 printf '1.12.0\n' >"$WORK/version"
 cat >"$WORK/uci.state" <<EOF
-forkop.settings=settings
-forkop.settings.config_path=$WORK/config.json
+prokop.settings=settings
+prokop.settings.config_path=$WORK/config.json
 sing-box.main=sing-box
 sing-box.main.enabled=1
 sing-box.main.user=root
@@ -73,7 +73,7 @@ EOF
 : >"$WORK/validator-uci.state"
 # The requirements check keeps its temporary file in TMPDIR.
 export PATH="$WORK/bin:$PATH" LIB WORK TMPDIR="$WORK"
-export FORKOP_RUNTIME_STATE_DIR="$WORK/run" FORKOP_UCI_LOG_FILE="$WORK/uci.log"
+export PROKOP_RUNTIME_STATE_DIR="$WORK/run" PROKOP_UCI_LOG_FILE="$WORK/uci.log"
 export SB_VARIANT_STATE_FILE="$WORK/variant" SB_VERSION_STATE_FILE="$WORK/version"
 
 # writer.sh DIR WRITER...: runs each WRITER with DIR as /etc/init.d.
@@ -84,7 +84,7 @@ shift
 for writer in "$@"; do
   case "$writer" in
     start)
-      FORKOP_UCI_STATE_FILE="$WORK/uci.state" ucode -L "$LIB" "$LIB/singbox/runtime.uc" configure-service
+      PROKOP_UCI_STATE_FILE="$WORK/uci.state" ucode -L "$LIB" "$LIB/singbox/runtime.uc" configure-service
       ;;
     component)
       ucode -L "$LIB" "$LIB/components/action.uc" install-managed-sing-box-service-fixture
@@ -92,7 +92,7 @@ for writer in "$@"; do
     requirements)
       # Fails later on the missing coreutils-base64; the script is
       # installed before that.
-      FORKOP_UCI_STATE_FILE="$WORK/validator-uci.state" ucode -L "$LIB" "$LIB/config/validator.uc" check-requirements || true
+      PROKOP_UCI_STATE_FILE="$WORK/validator-uci.state" ucode -L "$LIB" "$LIB/config/validator.uc" check-requirements || true
       ;;
     stamp)
       stat -c '%i %y %s' /etc/init.d/sing-box >>"$WORK/stamps"
@@ -112,8 +112,8 @@ for writer in start component requirements; do
   run_writers "$WORK/initd-$writer" "$writer"
   script="$WORK/initd-$writer/sing-box"
   [ -f "$script" ] || fail "the $writer writer did not install the managed init script: $(cat "$WORK/writer.out")"
-  grep -q 'Forkop managed sing-box service for binary variants' "$script" ||
-    fail "the script the $writer writer installs is not marked as Forkop's"
+  grep -q 'Prokop managed sing-box service for binary variants' "$script" ||
+    fail "the script the $writer writer installs is not marked as Prokop's"
   [ "$(stat -c %a "$script")" = 755 ] || fail "the script the $writer writer installs is not executable"
   if grep -n -F 'procd_set_param file' "$script" >&2; then
     fail "the script the $writer writer installs has procd restart sing-box when config.json changes"
@@ -140,17 +140,17 @@ mkdir -p "$WORK/initd-seq"
 sh -c 'exit 0' &
 dead=$!
 wait "$dead" || true
-printf 'stale\n' >"$WORK/initd-seq/sing-box.forkop.$dead"
-printf 'in progress\n' >"$WORK/initd-seq/sing-box.forkop.$$"
-printf '#!/bin/sh /etc/rc.common\n# Forkop managed sing-box service for binary variants\n# an older managed script\n' \
+printf 'stale\n' >"$WORK/initd-seq/sing-box.prokop.$dead"
+printf 'in progress\n' >"$WORK/initd-seq/sing-box.prokop.$$"
+printf '#!/bin/sh /etc/rc.common\n# Prokop managed sing-box service for binary variants\n# an older managed script\n' \
   >"$WORK/initd-seq/sing-box"
 : >"$WORK/stamps"
 run_writers "$WORK/initd-seq" component stamp start stamp requirements stamp
 cmp -s "$WORK/initd-seq/sing-box" "$WORK/initd-start/sing-box" ||
   fail "a component install did not replace an older managed init script"
-[ ! -e "$WORK/initd-seq/sing-box.forkop.$dead" ] ||
+[ ! -e "$WORK/initd-seq/sing-box.prokop.$dead" ] ||
   fail "a component install left a copy of the init script whose writer is gone"
-[ -e "$WORK/initd-seq/sing-box.forkop.$$" ] || fail "a component install removed the copy of a writer still at work"
+[ -e "$WORK/initd-seq/sing-box.prokop.$$" ] || fail "a component install removed the copy of a writer still at work"
 [ "$(LC_ALL=C sort -u "$WORK/stamps" | wc -l)" -eq 1 ] ||
   fail "a start or the requirements check rewrote the init script a component install wrote: $(tr '\n' ';' <"$WORK/stamps")"
 ok "a start after a component install keeps the script; stale copies go, a live writer's copy stays"

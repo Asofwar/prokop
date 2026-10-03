@@ -20,8 +20,8 @@ set -euo pipefail
 # real init.d reload_service and service/initd.uc.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-REAL_LIB="$ROOT_DIR/forkop/files/usr/lib"
-REAL_INITD="$ROOT_DIR/forkop/files/etc/init.d/forkop"
+REAL_LIB="$ROOT_DIR/prokop/files/usr/lib"
+REAL_INITD="$ROOT_DIR/prokop/files/etc/init.d/prokop"
 WORK_DIR="$(mktemp -d)"
 # shellcheck source=tests/helpers/wait.sh
 . "$ROOT_DIR/tests/helpers/wait.sh"
@@ -45,32 +45,32 @@ fail() {
   exit 1
 }
 
-mkdir -p "$WORK_DIR/bin" "$WORK_DIR/run/forkop" "$WORK_DIR/tmp" "$WORK_DIR/fake-lib/service" "$WORK_DIR/fake-lib/subscription"
-printf 'forkop.settings=settings\n' >"$WORK_DIR/uci.state"
+mkdir -p "$WORK_DIR/bin" "$WORK_DIR/run/prokop" "$WORK_DIR/tmp" "$WORK_DIR/fake-lib/service" "$WORK_DIR/fake-lib/subscription"
+printf 'prokop.settings=settings\n' >"$WORK_DIR/uci.state"
 
 export TMPDIR="$WORK_DIR/tmp"
 export PATH="$WORK_DIR/bin:$PATH"
 export EVENTS REAL_LIB REAL_INITD
 export TEST_LIB="$REAL_LIB"
-export RELOAD_LOCK="$WORK_DIR/run/forkop.reload.lock"
-export SUB_LOCK="$WORK_DIR/run/forkop/subscription-update.lock"
-export FORKOP_RELOAD_LOCK_DIR="$RELOAD_LOCK"
-export FORKOP_SUBSCRIPTION_UPDATE_LOCK_DIR="$SUB_LOCK"
-export FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/run/forkop"
-export FORKOP_PENDING_RELOAD_FILE="$WORK_DIR/run/forkop/reload.pending"
-export FORKOP_SERVICE_INIT="$WORK_DIR/bin/init"
-export FORKOP_BIN="$WORK_DIR/bin/forkop"
-export FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
+export RELOAD_LOCK="$WORK_DIR/run/prokop.reload.lock"
+export SUB_LOCK="$WORK_DIR/run/prokop/subscription-update.lock"
+export PROKOP_RELOAD_LOCK_DIR="$RELOAD_LOCK"
+export PROKOP_SUBSCRIPTION_UPDATE_LOCK_DIR="$SUB_LOCK"
+export PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/run/prokop"
+export PROKOP_PENDING_RELOAD_FILE="$WORK_DIR/run/prokop/reload.pending"
+export PROKOP_SERVICE_INIT="$WORK_DIR/bin/init"
+export PROKOP_BIN="$WORK_DIR/bin/prokop"
+export PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
 export B_GATE="$WORK_DIR/b.gate"
-unset FORKOP_UI_ACTION_TRACKED
+unset PROKOP_UI_ACTION_TRACKED
 # The init.d reload reads and tidies the UI jobs (service/ui.uc).
-export FORKOP_UI_STATE_DIR="$WORK_DIR/run/ui-state"
-export FORKOP_UI_COMPONENT_ACTION_DIR="$FORKOP_UI_STATE_DIR/component-actions"
-export FORKOP_UI_SUBSCRIPTION_ACTION_DIR="$FORKOP_UI_STATE_DIR/subscription-actions"
+export PROKOP_UI_STATE_DIR="$WORK_DIR/run/ui-state"
+export PROKOP_UI_COMPONENT_ACTION_DIR="$PROKOP_UI_STATE_DIR/component-actions"
+export PROKOP_UI_SUBSCRIPTION_ACTION_DIR="$PROKOP_UI_STATE_DIR/subscription-actions"
 
 # Nothing here may reach the host's syslog or init scripts.
 printf '#!/bin/sh\nexit 0\n' >"$WORK_DIR/bin/logger"
-# /etc/init.d/forkop as the queue drain calls it: record the call and
+# /etc/init.d/prokop as the queue drain calls it: record the call and
 # whether reload.lock was still held at that moment.
 cat >"$WORK_DIR/bin/init" <<'SH'
 #!/bin/sh
@@ -78,16 +78,16 @@ if [ -e "$RELOAD_LOCK" ]; then held=held; else held=free; fi
 printf 'init %s reload.lock=%s\n' "$*" "$held" >>"$EVENTS"
 exit 0
 SH
-cat >"$WORK_DIR/bin/forkop" <<'SH'
+cat >"$WORK_DIR/bin/prokop" <<'SH'
 #!/bin/sh
 case "$1" in
-  reload) printf 'forkop reload %s\n' "$2" >>"$EVENTS" ;;
+  reload) printf 'prokop reload %s\n' "$2" >>"$EVENTS" ;;
   get_status) printf '{"running":true}\n' ;;
 esac
 exit 0
 SH
 
-# rc.common stand-in for `/etc/init.d/forkop reload <reason>` (no procd lock
+# rc.common stand-in for `/etc/init.d/prokop reload <reason>` (no procd lock
 # on fd 1000: a hotplug or CLI reload).
 cat >"$WORK_DIR/rc" <<'SH'
 #!/bin/sh
@@ -96,8 +96,8 @@ shift
 initscript="$REAL_INITD"
 # shellcheck disable=SC1090
 . "$REAL_INITD"
-FORKOP_LIB="$TEST_LIB"
-FORKOP_INITD_UC="$TEST_LIB/service/initd.uc"
+PROKOP_LIB="$TEST_LIB"
+PROKOP_INITD_UC="$TEST_LIB/service/initd.uc"
 case "$action" in
   reload) reload_service "$@" ;;
   *) exit 64 ;;
@@ -146,10 +146,10 @@ if (mode == "update-request") {
 }
 exit(64);
 UC
-chmod +x "$WORK_DIR/bin/init" "$WORK_DIR/bin/forkop" "$WORK_DIR/bin/logger" "$WORK_DIR/rc"
+chmod +x "$WORK_DIR/bin/init" "$WORK_DIR/bin/prokop" "$WORK_DIR/bin/logger" "$WORK_DIR/rc"
 
 has_event() { grep -q "$1" "$EVENTS" 2>/dev/null; }
-pending_reason() { sed -n 's/^reason=//p' "$FORKOP_PENDING_RELOAD_FILE" 2>/dev/null; }
+pending_reason() { sed -n 's/^reason=//p' "$PROKOP_PENDING_RELOAD_FILE" 2>/dev/null; }
 
 # The deferred bootstrap retry worker stands in as a live holder of
 # subscription-update.lock for the whole test.
@@ -163,10 +163,10 @@ ucode -L "$REAL_LIB" "$REAL_LIB/service/state.uc" acquire-runtime-dir-lock "$SUB
 run_case() {
   local label="$1" mode="$2" expected_status="$3" update status
   : >"$EVENTS"
-  rm -f "$B_GATE" "$FORKOP_PENDING_RELOAD_FILE"
+  rm -f "$B_GATE" "$PROKOP_PENDING_RELOAD_FILE"
   [ ! -e "$RELOAD_LOCK" ] || fail "$label: reload.lock leaked from the previous case"
 
-  setsid timeout -s KILL 60 env FORKOP_LIB="$WORK_DIR/fake-lib" SUB_WAIT_SECONDS=2 \
+  setsid timeout -s KILL 60 env PROKOP_LIB="$WORK_DIR/fake-lib" SUB_WAIT_SECONDS=2 \
     ucode -L "$REAL_LIB" "$REAL_LIB/components/updates.uc" "$mode" >"$WORK_DIR/update.out" 2>&1 &
   update=$!
   actors+=("$update")
@@ -179,7 +179,7 @@ run_case() {
   timeout -s KILL 30 sh "$WORK_DIR/rc" reload badwan_interface_up >"$WORK_DIR/reload.out" 2>&1 || status=$?
   [ "$status" = 0 ] || fail "$label: init.d reload returned $status: $(cat "$WORK_DIR/reload.out")"
   [ "$(pending_reason)" = badwan_interface_up ] || fail "$label: the reload was not queued behind the update"
-  has_event '^forkop reload' && fail "$label: a reload ran next to the update's reload.lock"
+  has_event '^prokop reload' && fail "$label: a reload ran next to the update's reload.lock"
 
   touch "$B_GATE"
   wait_until 30 process_gone "$update" || fail "$label: the update did not give up on the busy subscription-update.lock"
@@ -210,7 +210,7 @@ printf '{ "success": true, "running": true, "kind": "service", "action": "start"
 
 # 1. The due (unforced) update tries each lock once.
 run_case "due update" subscription-update-if-due 0
-[ ! -e "$FORKOP_PENDING_RELOAD_FILE" ] || fail "due update: the queued reload is still pending ($(pending_reason))"
+[ ! -e "$PROKOP_PENDING_RELOAD_FILE" ] || fail "due update: the queued reload is still pending ($(pending_reason))"
 grep -q '"running": *false' "$stale_job" ||
   fail "the init.d reload did not read the test's own UI state: $(cat "$stale_job")"
 

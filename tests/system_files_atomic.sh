@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# System files that Forkop shares with other packages are replaced whole
+# System files that Prokop shares with other packages are replaced whole
 # (UC-076).
 #
 # /etc/iproute2/rt_tables (other packages name their tables there) and the
@@ -14,8 +14,8 @@ set -euo pipefail
 # claiming that all were.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
-MIGRATION="$ROOT_DIR/forkop/files/usr/share/forkop/mirror-migration.sh"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
+MIGRATION="$ROOT_DIR/prokop/files/usr/share/prokop/mirror-migration.sh"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 trap 'exit 1' HUP INT TERM
@@ -28,13 +28,13 @@ ok() { printf 'OK: %s\n' "$1"; }
 
 mkdir -p "$WORK/bin" "$WORK/etc/iproute2"
 printf '#!/bin/sh\nexit 0\n' >"$WORK/bin/logger"
-# Routes and rules of table forkop are in place: only rt_tables is written.
+# Routes and rules of table prokop are in place: only rt_tables is written.
 cat >"$WORK/bin/ip" <<'SH'
 #!/bin/sh
 case "$*" in
-  "route list table forkop") echo 'local default dev lo scope host' ;;
-  "-6 route list table forkop") echo 'local default dev lo metric 1024 pref medium' ;;
-  "-4 rule list"|"-6 rule list") echo '105: from all fwmark 0x100000/0x100000 lookup forkop' ;;
+  "route list table prokop") echo 'local default dev lo scope host' ;;
+  "-6 route list table prokop") echo 'local default dev lo metric 1024 pref medium' ;;
+  "-4 rule list"|"-6 rule list") echo '105: from all fwmark 0x100000/0x100000 lookup prokop' ;;
 esac
 exit 0
 SH
@@ -66,14 +66,14 @@ RT="$WORK/etc/iproute2/rt_tables"
 printf '%s\n' '255 local' '254 main' '200 vendor' >"$RT"
 chmod 0640 "$RT"
 replaced_whole "$RT" "the start (ensure the table name)" \
-  ucode -L "$LIB" "$LIB/nft/apply.uc" ensure-tproxy-route-rule forkop 0x00100000 "$RT"
-grep -Fxq '105 forkop' "$RT" && grep -Fxq '200 vendor' "$RT" || fail "the start did not add its table name next to the others: $(cat "$RT")"
+  ucode -L "$LIB" "$LIB/nft/apply.uc" ensure-tproxy-route-rule prokop 0x00100000 "$RT"
+grep -Fxq '105 prokop' "$RT" && grep -Fxq '200 vendor' "$RT" || fail "the start did not add its table name next to the others: $(cat "$RT")"
 before="$(stat -c '%i %y' "$RT")"
-ucode -L "$LIB" "$LIB/nft/apply.uc" ensure-tproxy-route-rule forkop 0x00100000 "$RT" || fail "a second start failed"
+ucode -L "$LIB" "$LIB/nft/apply.uc" ensure-tproxy-route-rule prokop 0x00100000 "$RT" || fail "a second start failed"
 [ "$(stat -c '%i %y' "$RT")" = "$before" ] || fail "a start rewrote rt_tables that already named its table"
 
 replaced_whole "$RT" "the package removal" \
-  env FORKOP_RT_TABLES="$RT" ucode -L "$LIB" "$LIB/service/package.uc" remove-rt-tables-entry
+  env PROKOP_RT_TABLES="$RT" ucode -L "$LIB" "$LIB/service/package.uc" remove-rt-tables-entry
 [ "$(cat "$RT")" = "$(printf '%s\n' '255 local' '254 main' '200 vendor')" ] ||
   fail "the package removal did not keep exactly the other entries: $(cat "$RT")"
 
@@ -82,9 +82,9 @@ mkdir -p "$WORK/usr-share"
 printf '%s\n' '254 main' >"$WORK/usr-share/rt_tables"
 rm -f "$RT"
 ln -s ../../usr-share/rt_tables "$RT"
-ucode -L "$LIB" "$LIB/nft/apply.uc" ensure-tproxy-route-rule forkop 0x00100000 "$RT" || fail "the start through a symlink failed"
-[ -L "$RT" ] && grep -Fxq '105 forkop' "$WORK/usr-share/rt_tables" || fail "the start replaced the rt_tables symlink or missed its target"
-FORKOP_RT_TABLES="$RT" ucode -L "$LIB" "$LIB/service/package.uc" remove-rt-tables-entry || fail "the removal through a symlink failed"
+ucode -L "$LIB" "$LIB/nft/apply.uc" ensure-tproxy-route-rule prokop 0x00100000 "$RT" || fail "the start through a symlink failed"
+[ -L "$RT" ] && grep -Fxq '105 prokop' "$WORK/usr-share/rt_tables" || fail "the start replaced the rt_tables symlink or missed its target"
+PROKOP_RT_TABLES="$RT" ucode -L "$LIB" "$LIB/service/package.uc" remove-rt-tables-entry || fail "the removal through a symlink failed"
 [ -L "$RT" ] && [ "$(cat "$WORK/usr-share/rt_tables")" = '254 main' ] || fail "the removal replaced the rt_tables symlink or missed its target"
 ok "rt_tables is replaced whole by a rename, its mode and other entries kept"
 
@@ -98,20 +98,20 @@ else
     printf '%s\n' '255 local' '254 main'
     for i in $(seq 1 60); do printf '%s vendor-table-%s\n' "$((i + 10))" "$i"; done
   } >"$WORK/rt_tables.full"
-  # With table forkop for the removal, without it for the start.
-  { cat "$WORK/rt_tables.full"; printf '105 forkop\n'; } >"$WORK/rt_tables.forkop"
+  # With table prokop for the removal, without it for the start.
+  { cat "$WORK/rt_tables.full"; printf '105 prokop\n'; } >"$WORK/rt_tables.prokop"
   cat >"$WORK/rt-full.sh" <<'SH'
 mount -t tmpfs -o size=16k tmpfs "$WORK/etc/iproute2" || exit 90
 RT="$WORK/etc/iproute2/rt_tables"
 cp "$WORK/rt_tables.full" "$RT"
 dd if=/dev/zero of="$WORK/etc/iproute2/fill" bs=1k 2>/dev/null
-ucode -L "$LIB" "$LIB/nft/apply.uc" ensure-tproxy-route-rule forkop 0x00100000 "$RT"
+ucode -L "$LIB" "$LIB/nft/apply.uc" ensure-tproxy-route-rule prokop 0x00100000 "$RT"
 printf '%s\n' "$?" >"$WORK/rt-full.start"
 cp "$RT" "$WORK/rt-full.after-start"
 rm -f "$WORK/etc/iproute2/fill"
-cp "$WORK/rt_tables.forkop" "$RT"
+cp "$WORK/rt_tables.prokop" "$RT"
 dd if=/dev/zero of="$WORK/etc/iproute2/fill" bs=1k 2>/dev/null
-FORKOP_RT_TABLES="$RT" ucode -L "$LIB" "$LIB/service/package.uc" remove-rt-tables-entry
+PROKOP_RT_TABLES="$RT" ucode -L "$LIB" "$LIB/service/package.uc" remove-rt-tables-entry
 printf '%s\n' "$?" >"$WORK/rt-full.remove"
 cp "$RT" "$WORK/rt-full.after-remove"
 ls -A "$WORK/etc/iproute2" >"$WORK/rt-full.list"
@@ -125,7 +125,7 @@ SH
   cmp -s "$WORK/rt_tables.full" "$WORK/rt-full.after-start" ||
     fail "a start on a full overlay damaged rt_tables ($(wc -c <"$WORK/rt-full.after-start") bytes left)"
   [ "$(cat "$WORK/rt-full.remove")" != 0 ] || fail "a package removal on a full overlay reported success"
-  cmp -s "$WORK/rt_tables.forkop" "$WORK/rt-full.after-remove" ||
+  cmp -s "$WORK/rt_tables.prokop" "$WORK/rt-full.after-remove" ||
     fail "a package removal on a full overlay damaged rt_tables ($(wc -c <"$WORK/rt-full.after-remove") bytes left)"
   [ "$(sort "$WORK/rt-full.list" | tr '\n' ' ')" = 'fill rt_tables ' ] ||
     fail "a full overlay left a copy of rt_tables behind: $(cat "$WORK/rt-full.list")"
@@ -174,11 +174,11 @@ MIRROR_URL="https://mirror.example.test"
 migrate() {
   local root="$1" manager="$2"
   shift 2
-  env FORKOP_MIGRATION_ROOT="$root" \
-    FORKOP_MIGRATION_APK_BIN="$WORK/bin/$([ "$manager" = apk ] && echo apk || echo missing-apk)" \
-    FORKOP_MIGRATION_OPKG_BIN="$WORK/bin/opkg" \
-    FORKOP_MIGRATION_CURL_BIN="$WORK/bin/curl" \
-    FORKOP_MIGRATION_UCI_BIN="$WORK/bin/uci" \
+  env PROKOP_MIGRATION_ROOT="$root" \
+    PROKOP_MIGRATION_APK_BIN="$WORK/bin/$([ "$manager" = apk ] && echo apk || echo missing-apk)" \
+    PROKOP_MIGRATION_OPKG_BIN="$WORK/bin/opkg" \
+    PROKOP_MIGRATION_CURL_BIN="$WORK/bin/curl" \
+    PROKOP_MIGRATION_UCI_BIN="$WORK/bin/uci" \
     "$@" sh "$MIGRATION"
 }
 
@@ -190,7 +190,7 @@ FEEDS="$OPKG_ROOT/etc/opkg/distfeeds.conf"
 printf '%s\n' 'src/gz openwrt_core https://downloads.openwrt.org/releases/24.10.5/targets/mediatek/filogic/packages' \
   'src/gz vendor https://packages.vendor.example/24.10/base' >"$FEEDS"
 chmod 0600 "$FEEDS"
-replaced_whole "$FEEDS" "the opkg mirror migration" migrate "$OPKG_ROOT" opkg FORKOP_MIRROR_BASE_URL="$MIRROR_URL"
+replaced_whole "$FEEDS" "the opkg mirror migration" migrate "$OPKG_ROOT" opkg PROKOP_MIRROR_BASE_URL="$MIRROR_URL"
 grep -Fq "$MIRROR_URL/openwrt/releases/24.10.5/targets/mediatek/filogic/packages" "$FEEDS" &&
   grep -Fxq 'src/gz vendor https://packages.vendor.example/24.10/base' "$FEEDS" ||
   fail "the opkg mirror migration did not rewrite the feeds: $(cat "$FEEDS")"
@@ -203,7 +203,7 @@ REPOS="$APK_ROOT/etc/apk/repositories"
 OFFICIAL_REPOS='https://downloads.openwrt.org/releases/25.12.4/targets/rockchip/armv8/packages/packages.adb'
 printf '%s\n' "$OFFICIAL_REPOS" >"$REPOS"
 chmod 0644 "$REPOS"
-replaced_whole "$REPOS" "the apk mirror migration" migrate "$APK_ROOT" apk FORKOP_MIRROR_BASE_URL="$MIRROR_URL"
+replaced_whole "$REPOS" "the apk mirror migration" migrate "$APK_ROOT" apk PROKOP_MIRROR_BASE_URL="$MIRROR_URL"
 grep -Fq "$MIRROR_URL/openwrt/releases/25.12.4/targets/rockchip/armv8/packages/packages.adb" "$REPOS" ||
   fail "the apk mirror migration did not rewrite the feeds: $(cat "$REPOS")"
 ok "the mirror migration replaces feeds whole by a rename, their mode kept"
@@ -213,13 +213,13 @@ ok "the mirror migration replaces feeds whole by a rename, their mode kept"
 # Control: a migration whose index update fails restores the feeds and says so.
 printf '%s\n' "$OFFICIAL_REPOS" >"$REPOS"
 cp "$REPOS" "$WORK/repos.orig"
-migrate "$APK_ROOT" apk FORKOP_MIRROR_BASE_URL="$MIRROR_URL" MIGRATION_UPDATE_FAILS=1 2>"$WORK/rollback.err" ||
+migrate "$APK_ROOT" apk PROKOP_MIRROR_BASE_URL="$MIRROR_URL" MIGRATION_UPDATE_FAILS=1 2>"$WORK/rollback.err" ||
   fail "a failed mirror reconciliation failed the package: $(cat "$WORK/rollback.err")"
 cmp -s "$WORK/repos.orig" "$REPOS" || fail "the failed migration was not rolled back"
 grep -q 'the previous feeds were restored' "$WORK/rollback.err" || fail "a complete rollback did not say so: $(cat "$WORK/rollback.err")"
 
 # The feed file cannot be restored: it became a directory with content.
-migrate "$APK_ROOT" apk FORKOP_MIRROR_BASE_URL="$MIRROR_URL" MIGRATION_UPDATE_FAILS=1 MIGRATION_BREAK_ROLLBACK="$REPOS" \
+migrate "$APK_ROOT" apk PROKOP_MIRROR_BASE_URL="$MIRROR_URL" MIGRATION_UPDATE_FAILS=1 MIGRATION_BREAK_ROLLBACK="$REPOS" \
   2>"$WORK/rollback.err" || fail "a failed mirror reconciliation failed the package: $(cat "$WORK/rollback.err")"
 grep -q 'restored' "$WORK/rollback.err" && fail "a rollback that could not restore the feed claimed success: $(cat "$WORK/rollback.err")"
 grep -Fq "could not restore: $REPOS" "$WORK/rollback.err" || fail "a rollback that failed did not name the file: $(cat "$WORK/rollback.err")"
@@ -238,8 +238,8 @@ SH
   status=0
   # shellcheck disable=SC2016 # expanded by the sh that runs it
   unshare -rm sh -c 'cp "$1" "$2" && shift 2 && exec "$@"' sh "$WORK/bin/apk-ro" "$WORK/bin/apk" \
-    env FORKOP_MIGRATION_ROOT="$APK_ROOT" FORKOP_MIGRATION_APK_BIN="$WORK/bin/apk" FORKOP_MIRROR_BASE_URL="$MIRROR_URL" \
-    FORKOP_MIGRATION_CURL_BIN="$WORK/bin/curl" FORKOP_MIGRATION_UCI_BIN="$WORK/bin/uci" \
+    env PROKOP_MIGRATION_ROOT="$APK_ROOT" PROKOP_MIGRATION_APK_BIN="$WORK/bin/apk" PROKOP_MIRROR_BASE_URL="$MIRROR_URL" \
+    PROKOP_MIGRATION_CURL_BIN="$WORK/bin/curl" PROKOP_MIGRATION_UCI_BIN="$WORK/bin/uci" \
     MIGRATION_RO_DIR="$APK_ROOT/etc/apk" sh "$MIGRATION" 2>"$WORK/rollback.err" || status=$?
   cp "$WORK/bin/opkg" "$WORK/bin/apk"
   [ "$status" = 0 ] || fail "a failed mirror reconciliation on a read-only overlay failed the package ($status)"

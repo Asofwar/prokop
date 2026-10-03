@@ -1,0 +1,228 @@
+#!/bin/sh /etc/rc.common
+# shellcheck disable=SC2034
+
+START=99
+USE_PROCD=1
+EXTRA_COMMANDS="retry_start_on_wan_up handle_wan_up"
+EXTRA_HELP="        retry_start_on_wan_up Retry failed cold start after WAN comes up\n        handle_wan_up Reload or retry after monitored WAN comes up\n"
+
+script=$(readlink "$initscript")
+NAME="$(basename ${script:-$initscript})"
+PROKOP_LIB="/usr/lib/prokop"
+PROKOP_INITD_UC="$PROKOP_LIB/service/initd.uc"
+
+initd_ucode() {
+    [ -r "$PROKOP_INITD_UC" ] || return 1
+    PROKOP_LIB="$PROKOP_LIB" \
+        PROKOP_SERVICE_NAME="$NAME" \
+        ucode -L "$PROKOP_LIB" "$PROKOP_INITD_UC" "$@"
+}
+
+sync_service_triggers() {
+    _procd_call sync_service_triggers_payload
+}
+
+sync_service_triggers_payload() {
+    json_init
+    json_add_string name "$NAME"
+    service_triggers
+    _procd_ubus_call set >/dev/null 2>&1 || true
+}
+
+start_service() {
+    # The start of OpenWrt's default package script starts nothing; the
+    # exit leaves procd without a registration of Prokop, as the package
+    # operation found it (package_default_action). A restart is never that
+    # script's.
+    if [ "${action:-}" = start ] && package_default_action "$1"; then
+        exit 0
+    fi
+
+    # rcS/procd keeps its service transaction on fd 1000. Prokop starts and
+    # verifies the separate sing-box procd service, so doing the full workflow
+    # inside that transaction deadlocks nested service control until procd's
+    # timeout. Detach the tracked worker and let rcS continue; LuCI reports the
+    # action as "starting" until service/initd.uc completes it. This shell
+    # exits as soon as start_service returns, so the worker owns reload.lock
+    # and the UI job under its own identity, not under $$. Its outcome is not
+    # known here: callers that act on it use service/initd.uc start-and-wait.
+    # Only a worker that cannot be launched at all fails this call.
+    if [ -e "/proc/$$/fd/1000" ]; then
+        if [ ! -r "$PROKOP_INITD_UC" ]; then
+            PROKOP_LAST_START_STATUS=1
+            return 1
+        fi
+        initd_ucode start-service "$1" </dev/null >/dev/null 2>&1 1000>&- &
+        PROKOP_LAST_START_STATUS=0
+        return 0
+    fi
+
+    initd_ucode start-service "$1" "$$"
+    PROKOP_LAST_START_STATUS="$?"
+    return "$PROKOP_LAST_START_STATUS"
+}
+
+service_started() {
+    return "${PROKOP_LAST_START_STATUS:-0}"
+}
+
+# OpenWrt's default package scripts (lib/functions.sh default_postinst and
+# default_prerm), which a package built with the SDK runs around its own
+# (prokop/Makefile), enable every init script of the package on a first
+# install and start it after every install and upgrade, and disable it on
+# a removal. For Prokop that is package_postinst's decision
+# (service/package.uc): it starts again a Prokop that ran before the
+# upgrade, once its configuration is migrated, and leaves a new install and
+# a Prokop the user stopped down (D-15). Autostart stays as the user left
+# it, also across a removal and a new install (opkg install
+# --force-reinstall, the in-app rollback of a failed upgrade): no package
+# script enables Prokop again. So it is with build.sh's packages, which run
+# no default script. A package manager runs its scripts with PKG_ROOT
+# (opkg) or APK_SCRIPT (apk) set: there a plain "enable", "disable" or
+# "start" is that default script. Prokop's own start passes
+# PROKOP_START_REQUEST (service/initd.uc start-and-wait), a deferred or
+# triggered start its reason, and an image build (IPKG_INSTROOT) enables and
+# disables Prokop as every other init script. The default prerm's plain
+# stop stops nothing: package_prerm's own stops name their source
+# (stop_service).
+package_default_action() {
+    [ -z "${IPKG_INSTROOT:-}" ] &&
+        [ -n "${PKG_ROOT:-}${APK_SCRIPT:-}" ] &&
+        [ -z "${PROKOP_START_REQUEST:-}" ] &&
+        [ -z "${1:-}" ]
+}
+
+enable() {
+    package_default_action && return 0
+
+    # rc.common's enable.
+    local name err=1
+    name="$(basename "$initscript")"
+    [ "$START" ] &&
+        ln -sf "../init.d/$name" "$IPKG_INSTROOT/etc/rc.d/S${START}${name##S[0-9][0-9]}" &&
+        err=0
+    [ "$STOP" ] &&
+        ln -sf "../init.d/$name" "$IPKG_INSTROOT/etc/rc.d/K${STOP}${name##K[0-9][0-9]}" &&
+        err=0
+    return "$err"
+}
+
+disable() {
+    package_default_action && return 0
+
+    # A failed start schedules a delayed retry.  Removing only the rc.d link
+    # leaves that worker alive, so an explicit disable must cancel it first.
+    # A deferred start is no autostart: its retry stays (service/initd.uc).
+    [ -n "${IPKG_INSTROOT:-}" ] || initd_ucode cancel-scheduled-start-retry >/dev/null 2>&1 || true
+
+    local name
+    name="$(basename "$initscript")"
+    rm -f "$IPKG_INSTROOT"/etc/rc.d/S??"$name"
+    rm -f "$IPKG_INSTROOT"/etc/rc.d/K??"$name"
+}
+
+stop_service() {
+    # The plain stop of OpenWrt's default prerm stops nothing:
+    # package_prerm stops Prokop for the upgrade or the removal
+    # (PROKOP_STOP_SOURCE=package) and reports a stop that failed or was
+    # refused; for a removal it takes down what that stop left with an
+    # explicit stop of its own (PROKOP_STOP_SOURCE=user). The default
+    # prerm's stop runs after it (opkg) or before it (apk's pre-deinstall),
+    # and a second, plain stop would be the user's (service/initd.uc
+    # stop_request_source): a new install would show Prokop stopped by the
+    # user, not as not started. build.sh's packages run no default script.
+    # The exit leaves procd as package_prerm's stop left it.
+    if [ "${action:-}" = stop ] && [ -z "${PROKOP_STOP_SOURCE:-}" ] && package_default_action "$1"; then
+        exit 0
+    fi
+
+    initd_ucode stop-service "$$"
+    local status="$?"
+    # rc.common calls procd_kill even when stop_service returns an error.
+    # Abort this invocation when Stop fails, so procd does not unregister a
+    # service whose runtime is still up and then report success.
+    [ "$status" -eq 0 ] || exit "$status"
+}
+
+restart() {
+    # A sing-box of another program outlives the stop, and the start after it
+    # refuses the ambiguous runtime: refuse the restart before the stop
+    # instead of taking Prokop down (service/initd.uc restart-blocked).
+    if initd_ucode restart-blocked; then
+        return 1
+    fi
+    trap '' TERM
+    stop "$@"
+    trap - TERM
+    start "$@"
+}
+
+reload_service() {
+    local reason="$1"
+    local result status
+
+    trap 'initd_ucode reload-release "$$" >/dev/null 2>&1 || true' INT TERM
+    result="$(initd_ucode reload-service "$reason" "$$")"
+    status="$?"
+    trap - INT TERM
+
+    case "$result" in
+        sync)
+            sync_service_triggers
+            ;;
+        # Keep the queue acknowledgement visible to its callers (list worker,
+        # snapshot restore, autotune apply).  The status stays 0: they tell an
+        # accepted-but-not-applied request from a completed lifecycle by this
+        # token, so the list worker retains its durable apply marker and a
+        # restore never confirms a configuration the runtime has not loaded.
+        queued)
+            printf '%s\n' queued
+            ;;
+        # An explicit stop holds the runtime down: the reload was skipped
+        # (snapshot restore, autotune apply; D-15, UC-056).
+        stopped)
+            printf '%s\n' stopped
+            ;;
+    esac
+    return "$status"
+}
+
+status_service() {
+    initd_ucode status-service
+}
+
+retry_start_on_wan_up() {
+    initd_ucode retry-start-on-wan-up "$$"
+}
+
+handle_wan_up() {
+    initd_ucode handle-wan-up "$$"
+}
+
+service_triggers() {
+    local plan kind event target init action reason
+
+    plan="$(initd_ucode trigger-plan)" || return 0
+
+    procd_open_trigger
+    while IFS="$(printf '\t')" read -r kind event target init action reason; do
+        case "$kind" in
+        delay)
+            PROCD_RELOAD_DELAY="$event"
+            ;;
+        config)
+            procd_add_config_trigger "$event" "$target" "$init" "$action" "$reason"
+            ;;
+        interface)
+            if [ -n "$reason" ]; then
+                procd_add_interface_trigger "$event" "$target" "$init" "$action" "$reason"
+            else
+                procd_add_interface_trigger "$event" "$target" "$init" "$action"
+            fi
+            ;;
+        esac
+    done << EOF
+$plan
+EOF
+    procd_close_trigger
+}

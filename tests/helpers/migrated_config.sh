@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # A configuration that the migrations of this release have nothing left to
-# do on (config/migration.uc migrated): service/package.uc starts Forkop
+# do on (config/migration.uc migrated): service/package.uc starts Prokop
 # again after an upgrade only on one (UC-026).
 #
 # Source this file and call
-#   migrated_settings_state <forkop lib> <scratch directory>
-# It prints the lines of a UCI state file (core/uci.uc FORKOP_UCI_STATE_FILE)
+#   migrated_settings_state <prokop lib> <scratch directory>
+# It prints the lines of a UCI state file (core/uci.uc PROKOP_UCI_STATE_FILE)
 # that record every migration of the release and the config_version its
-# migrations write in forkop.settings; add them to the case's own. Both come
+# migrations write in prokop.settings; add them to the case's own. Both come
 # from config/migration.uc, so a release that adds a migration or raises the
 # version needs no change here.
 
@@ -23,7 +23,7 @@ let settings = { ".name": "settings", ".type": "settings", ".anonymous": false,
 if (length(ids) == 0 || migration.migrate_sections([ settings ], "") == null ||
     type(settings.config_version) != "string" || settings.config_version == "0")
     exit(1);
-printf("forkop.settings.config_version=%s\nforkop.settings.applied_migrations=%s\n",
+printf("prokop.settings.config_version=%s\nprokop.settings.applied_migrations=%s\n",
     settings.config_version, join(" ", ids));
 UC
   state="$(ucode -L "$lib" "$scratch/migrated-settings.uc")" || return 1

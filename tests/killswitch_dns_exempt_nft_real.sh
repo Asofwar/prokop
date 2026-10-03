@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # D-23 with the real nft and real packets: only the excluded devices of
-# sections that exempt them bypass the kill-switch's DNS block while Forkop
+# sections that exempt them bypass the kill-switch's DNS block while Prokop
 # is stopped; every other client stays blocked, and so do the names of every
 # section that does not exempt the device.
 #
@@ -10,7 +10,7 @@
 # (the main dnsmasq with the shared block list, one per group of excluded
 # devices with the configuration the kill-switch generated for it). The
 # kill-switch itself is the production code: its sync applies the policy
-# from a real live ForkopTable, its watcher puts the redirect into the real
+# from a real live ProkopTable, its watcher puts the redirect into the real
 # table, and the kernel routes the packets.
 #
 # Skipped only when such a namespace, nft, python3 or a TUN device is not
@@ -18,10 +18,10 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-KS_UC="$FORKOP_LIB/killswitch/runtime.uc"
-NFT_UC="$FORKOP_LIB/nft/apply.uc"
-DNS_UC="$FORKOP_LIB/dns/apply.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+KS_UC="$PROKOP_LIB/killswitch/runtime.uc"
+NFT_UC="$PROKOP_LIB/nft/apply.uc"
+DNS_UC="$PROKOP_LIB/dns/apply.uc"
 HELPER="$ROOT_DIR/tests/helpers/dns_tun.py"
 NAMESPACE=(unshare --user --map-root-user --net --mount)
 
@@ -38,7 +38,7 @@ if [ "${1:-}" != "--in-namespace" ]; then
   if ! probe="$("${NAMESPACE[@]}" nft list ruleset 2>&1)"; then
     skip "nftables is unavailable in an unprivileged network namespace: $probe"
   fi
-  FORKOP_NFT_REAL_HOST_NAMESPACES="$(namespaces)" exec "${NAMESPACE[@]}" bash "$0" --in-namespace
+  PROKOP_NFT_REAL_HOST_NAMESPACES="$(namespaces)" exec "${NAMESPACE[@]}" bash "$0" --in-namespace
 fi
 
 # ---- inside the namespace (same guard as tests/nft_real.sh) -----------------
@@ -52,7 +52,7 @@ read -r map_inside _ map_count <<<"${uid_map[0]:-}"
 if [ "${#uid_map[@]}" != 1 ] || [ "$map_inside" != 0 ] || [ "$map_count" != 1 ]; then
   refuse "not a user namespace mapping only root: ${uid_map[*]:-}"
 fi
-read -r host_net host_mnt <<<"${FORKOP_NFT_REAL_HOST_NAMESPACES:-}"
+read -r host_net host_mnt <<<"${PROKOP_NFT_REAL_HOST_NAMESPACES:-}"
 read -r own_net own_mnt <<<"$(namespaces)"
 if [ -z "${host_net:-}" ] || [ "$own_net" = "$host_net" ] || [ "$own_mnt" = "${host_mnt:-}" ]; then
   refuse "the network or mount namespace is not new"
@@ -117,23 +117,23 @@ EOF
 chmod 0755 "$WORK_DIR/bin/"* "$WORK_DIR/stub/nft"
 
 export PATH="$WORK_DIR/bin:$PATH"
-export FORKOP_LIB
-export FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
-export FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/run"
-export FORKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/reload.lock"
+export PROKOP_LIB
+export PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
+export PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/run"
+export PROKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/reload.lock"
 export KILLSWITCH_STATE_DIR="$STATE_DIR"
 export KILLSWITCH_CACHE_DIR="$CONF_DIR"
-export KILLSWITCH_NFT_INCLUDE="$WORK_DIR/90-forkop-killswitch.nft"
+export KILLSWITCH_NFT_INCLUDE="$WORK_DIR/90-prokop-killswitch.nft"
 export DNSMASQ_INIT="$WORK_DIR/bin/dnsmasq-init"
-export FORKOP_KILLSWITCH_INIT="$WORK_DIR/bin/killswitch-init"
-export FORKOP_KILLSWITCH_WATCH_INTERVAL_MS=1
+export PROKOP_KILLSWITCH_INIT="$WORK_DIR/bin/killswitch-init"
+export PROKOP_KILLSWITCH_WATCH_INTERVAL_MS=1
 export DNS_TUN_LOG="$WORK_DIR/resolvers.log"
 SERVERS="$STATE_DIR/dnsmasq.servers"
 EXEMPT="$STATE_DIR/dns-exempt.json"
 
-ks() { ucode -L "$FORKOP_LIB" "$KS_UC" "$@"; }
+ks() { ucode -L "$PROKOP_LIB" "$KS_UC" "$@"; }
 
-# ---- a running Forkop with four protected sections ----------------------------
+# ---- a running Prokop with four protected sections ----------------------------
 
 printf '{"version":3,"rules":[{"domain_suffix":["second-list.example"]}]}\n' >"$WORK_DIR/gen/second.json"
 outbound_json() {
@@ -160,54 +160,54 @@ cat >"$WORK_DIR/gen/fixture.json" <<JSON
   ]
 }
 JSON
-ucode -L "$FORKOP_LIB" "$FORKOP_LIB/singbox/generator.uc" generate-config-fixture \
+ucode -L "$PROKOP_LIB" "$PROKOP_LIB/singbox/generator.uc" generate-config-fixture \
   "$WORK_DIR/gen/fixture.json" "$WORK_DIR/config.json" 192.168.1.1 0 1 '' 1.13.0 >/dev/null ||
   fail "the generator fixture could not be generated"
 
 # $1: whether excl and excl2 exempt their excluded devices; $2: the server
-# dnsmasq forwards to (127.0.0.42 while Forkop runs); IFACES: the LAN
+# dnsmasq forwards to (127.0.0.42 while Prokop runs); IFACES: the LAN
 # interfaces (br-lan).
 write_uci() {
   {
-    printf 'forkop.settings=settings\nforkop.settings.source_network_interfaces=%s\n' "${IFACES:-br-lan}"
-    printf 'forkop.settings.config_path=%s\n' "$WORK_DIR/config.json"
-    printf 'forkop.main=section\nforkop.main.action=connection\nforkop.main.kill_switch=1\n'
-    printf 'forkop.main.ip_cidr=3.3.3.0/24\nforkop.main.excluded_source_ip_cidr=192.168.1.50\n'
-    printf 'forkop.excl=section\nforkop.excl.action=connection\nforkop.excl.kill_switch=1\n'
-    printf 'forkop.excl.excluded_source_ip_cidr=192.168.1.50 192.168.1.0/28 fd00::50\n'
-    printf 'forkop.excl2=section\nforkop.excl2.action=connection\nforkop.excl2.kill_switch=1\n'
-    printf 'forkop.excl2.excluded_source_ip_cidr=192.168.1.5\n'
+    printf 'prokop.settings=settings\nprokop.settings.source_network_interfaces=%s\n' "${IFACES:-br-lan}"
+    printf 'prokop.settings.config_path=%s\n' "$WORK_DIR/config.json"
+    printf 'prokop.main=section\nprokop.main.action=connection\nprokop.main.kill_switch=1\n'
+    printf 'prokop.main.ip_cidr=3.3.3.0/24\nprokop.main.excluded_source_ip_cidr=192.168.1.50\n'
+    printf 'prokop.excl=section\nprokop.excl.action=connection\nprokop.excl.kill_switch=1\n'
+    printf 'prokop.excl.excluded_source_ip_cidr=192.168.1.50 192.168.1.0/28 fd00::50\n'
+    printf 'prokop.excl2=section\nprokop.excl2.action=connection\nprokop.excl2.kill_switch=1\n'
+    printf 'prokop.excl2.excluded_source_ip_cidr=192.168.1.5\n'
     if [ "$1" = 1 ]; then
-      printf 'forkop.excl.kill_switch_dns_exempt=1\nforkop.excl2.kill_switch_dns_exempt=1\n'
+      printf 'prokop.excl.kill_switch_dns_exempt=1\nprokop.excl2.kill_switch_dns_exempt=1\n'
     fi
-    printf 'forkop.free=section\nforkop.free.action=connection\n'
-    printf 'forkop.late=section\nforkop.late.action=connection\nforkop.late.kill_switch=1\n'
-    printf 'dhcp.@dnsmasq[0]=dnsmasq\ndhcp.@dnsmasq[0].server=%s\ndhcp.@dnsmasq[0].forkop_server=1.1.1.1\n' "$2"
+    printf 'prokop.free=section\nprokop.free.action=connection\n'
+    printf 'prokop.late=section\nprokop.late.action=connection\nprokop.late.kill_switch=1\n'
+    printf 'dhcp.@dnsmasq[0]=dnsmasq\ndhcp.@dnsmasq[0].server=%s\ndhcp.@dnsmasq[0].prokop_server=1.1.1.1\n' "$2"
     printf 'dhcp.@dnsmasq[0].serversfile=%s\n' "$SERVERS"
-  } >"$FORKOP_UCI_STATE_FILE"
+  } >"$PROKOP_UCI_STATE_FILE"
 }
 
 write_uci 1 127.0.0.42
-PATH="$WORK_DIR/stub:$PATH" ucode -L "$FORKOP_LIB" "$NFT_UC" killswitch-render ForkopTable ForkopKillswitch \
+PATH="$WORK_DIR/stub:$PATH" ucode -L "$PROKOP_LIB" "$NFT_UC" killswitch-render ProkopTable ProkopKillswitch \
   "$WORK_DIR/sets.nft" 198.18.0.0/15 fc00::/18 >/dev/null || fail "could not render the set layout"
 {
-  printf 'add table inet ForkopTable\n'
-  grep '^add set inet ForkopKillswitch forkop_rule_' "$WORK_DIR/sets.nft" | sed 's/ ForkopKillswitch / ForkopTable /'
-  printf 'add element inet ForkopTable forkop_rule_main_subnets { 3.3.3.0/24 }\n'
+  printf 'add table inet ProkopTable\n'
+  grep '^add set inet ProkopKillswitch prokop_rule_' "$WORK_DIR/sets.nft" | sed 's/ ProkopKillswitch / ProkopTable /'
+  printf 'add element inet ProkopTable prokop_rule_main_subnets { 3.3.3.0/24 }\n'
 } >"$WORK_DIR/live.nft"
-nft -f "$WORK_DIR/live.nft" || fail "could not create the live ForkopTable"
+nft -f "$WORK_DIR/live.nft" || fail "could not create the live ProkopTable"
 
 ks sync start || fail "sync from the real live table failed"
-nft list table inet ForkopKillswitch >/dev/null 2>&1 || fail "the synced policy is not live"
+nft list table inet ProkopKillswitch >/dev/null 2>&1 || fail "the synced policy is not live"
 [ -s "$EXEMPT" ] || fail "the groups of excluded devices must be saved"
 cp "$STATE_DIR/policy.nft" "$WORK_DIR/policy.exempt"
 if grep -q redirect "$WORK_DIR/policy.exempt"; then fail "the saved firewall policy redirects nothing"; fi
 grep -q ' ks_exempt_guard ' "$WORK_DIR/policy.exempt" || fail "the saved firewall policy guards the resolvers of excluded devices"
 
-# Forkop stops: dnsmasq answers with the shared block list.
+# Prokop stops: dnsmasq answers with the shared block list.
 write_uci 1 1.1.1.1
-ucode -L "$FORKOP_LIB" "$DNS_UC" killswitch-refresh || fail "DNS refresh failed"
-grep -Fqx 'server=/excl-inline.example/' "$SERVERS" || fail "a stopped Forkop blocks the names of excl for every client"
+ucode -L "$PROKOP_LIB" "$DNS_UC" killswitch-refresh || fail "DNS refresh failed"
+grep -Fqx 'server=/excl-inline.example/' "$SERVERS" || fail "a stopped Prokop blocks the names of excl for every client"
 
 ks exempt-configs "$CONF_DIR" >"$WORK_DIR/confs" || fail "exempt-configs failed"
 [ "$(wc -l <"$WORK_DIR/confs")" = 2 ] || fail "two groups of excluded devices expected: $(cat "$WORK_DIR/confs")"
@@ -223,8 +223,8 @@ serve() {
 resolvers_ready() { grep -qxs ready "$WORK_DIR/serve.out"; }
 serve
 
-FORKOP_KILLSWITCH_WATCH_ITERATIONS=2 ks watch || fail "watch failed"
-chain="$(nft list chain inet ForkopKillswitch ks_dns)"
+PROKOP_KILLSWITCH_WATCH_ITERATIONS=2 ks watch || fail "watch failed"
+chain="$(nft list chain inet ProkopKillswitch ks_dns)"
 grep -Fq 'ip saddr 192.168.1.5 fib daddr type local udp dport 53 counter' <<<"$chain" ||
   fail "the kernel must hold the redirect of the excluded devices: $chain"
 grep -Fq 'ip6 saddr fd00::50 fib daddr type local' <<<"$chain" || fail "the IPv6 excluded device must be redirected: $chain"
@@ -294,10 +294,10 @@ ok "DNS for other servers is not redirected"
 
 # A firewall reload loads the saved policy without the redirect; the
 # watcher puts it back.
-nft delete table inet ForkopKillswitch
+nft delete table inet ProkopKillswitch
 nft -f "$STATE_DIR/policy.nft" || fail "the saved policy does not load"
 expect 192.168.1.50 excl-inline.example blocked
-FORKOP_KILLSWITCH_WATCH_ITERATIONS=1 ks watch || fail "watch failed"
+PROKOP_KILLSWITCH_WATCH_ITERATIONS=1 ks watch || fail "watch failed"
 expect 192.168.1.50 excl-inline.example exempt
 ok "the watcher restores the redirect after a firewall reload"
 
@@ -309,10 +309,10 @@ ks sync start || fail "sync without the option failed"
 cmp -s "$STATE_DIR/policy.nft" <(grep -v ' ks_exempt_guard ' "$WORK_DIR/policy.exempt") ||
   fail "the option must not change the firewall policy apart from the guard of its resolvers"
 write_uci 0 1.1.1.1
-ucode -L "$FORKOP_LIB" "$DNS_UC" killswitch-refresh || fail "DNS refresh failed"
+ucode -L "$PROKOP_LIB" "$DNS_UC" killswitch-refresh || fail "DNS refresh failed"
 [ -z "$(ks exempt-configs "$CONF_DIR")" ] || fail "without the option no resolver of excluded devices may run"
-FORKOP_KILLSWITCH_WATCH_ITERATIONS=1 ks watch || fail "watch failed"
-if grep -q redirect <<<"$(nft list chain inet ForkopKillswitch ks_dns)"; then
+PROKOP_KILLSWITCH_WATCH_ITERATIONS=1 ks watch || fail "watch failed"
+if grep -q redirect <<<"$(nft list chain inet ProkopKillswitch ks_dns)"; then
   fail "without the option nothing may be redirected"
 fi
 for client in 192.168.1.50 192.168.1.5 fd00::50 192.168.1.70; do
@@ -328,10 +328,10 @@ ok "without the option every client keeps the shared block list"
 IFACES='br-*' write_uci 1 127.0.0.42
 ks sync start || fail "sync with a wildcard interface failed"
 IFACES='br-*' write_uci 1 1.1.1.1
-ucode -L "$FORKOP_LIB" "$DNS_UC" killswitch-refresh || fail "DNS refresh failed"
+ucode -L "$PROKOP_LIB" "$DNS_UC" killswitch-refresh || fail "DNS refresh failed"
 ks exempt-configs "$CONF_DIR" >"$WORK_DIR/confs" || fail "exempt-configs failed"
 serve
-FORKOP_KILLSWITCH_WATCH_ITERATIONS=1 ks watch || fail "watch failed"
+PROKOP_KILLSWITCH_WATCH_ITERATIONS=1 ks watch || fail "watch failed"
 expect 192.168.1.50 excl-inline.example exempt
 expect 192.168.1.5 excl2-inline.example exempt
 expect 192.168.1.70 excl-inline.example blocked
@@ -342,12 +342,12 @@ ok "with a wildcard interface the excluded devices reach their resolvers"
 write_uci 1 127.0.0.42
 ks sync start || fail "sync failed"
 write_uci 1 1.1.1.1
-ucode -L "$FORKOP_LIB" "$DNS_UC" killswitch-refresh || fail "DNS refresh failed"
+ucode -L "$PROKOP_LIB" "$DNS_UC" killswitch-refresh || fail "DNS refresh failed"
 ks exempt-configs "$CONF_DIR" >/dev/null || fail "exempt-configs failed"
-FORKOP_KILLSWITCH_WATCH_ITERATIONS=1 ks watch || fail "watch failed"
+PROKOP_KILLSWITCH_WATCH_ITERATIONS=1 ks watch || fail "watch failed"
 expect 192.168.1.50 excl-inline.example exempt
 ks release "package removal" || fail "release failed"
-if nft list table inet ForkopKillswitch >/dev/null 2>&1; then fail "the package removal must remove the table"; fi
+if nft list table inet ProkopKillswitch >/dev/null 2>&1; then fail "the package removal must remove the table"; fi
 [ ! -e "$EXEMPT" ] || fail "the package removal must remove the groups"
 ls "$CONF_DIR"/exempt-*.conf >/dev/null 2>&1 && fail "the package removal must remove the resolver configurations"
 expect 192.168.1.50 excl-inline.example shared

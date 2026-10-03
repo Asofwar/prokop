@@ -6,7 +6,7 @@ set -euo pipefail
 # refresh_cron or remove_cron_jobs. Those calls must not let that JSON reach the
 # output of an init.d action.
 #
-# Before the fix, `/etc/init.d/forkop restart` printed
+# Before the fix, `/etc/init.d/prokop restart` printed
 #     { "status": "ok", "enabled": false, "changed": false }
 # because module_success runs the module through system(), which leaves stdout
 # attached to the caller's terminal. The line is autotune reporting that its
@@ -18,7 +18,7 @@ set -euo pipefail
 # blocks the service), so only the capture keeps it quiet.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIFECYCLE_UC="$ROOT_DIR/forkop/files/usr/lib/service/lifecycle.uc"
+LIFECYCLE_UC="$ROOT_DIR/prokop/files/usr/lib/service/lifecycle.uc"
 
 # shellcheck source=tests/helpers/source_checks.sh
 . "$ROOT_DIR/tests/helpers/source_checks.sh"

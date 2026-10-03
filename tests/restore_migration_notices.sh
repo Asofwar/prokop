@@ -11,12 +11,12 @@ set -eu
 # that migrate_sections returned, so the History page never named them.
 #
 # Now a restore whose migrated copy is in place when the transaction ends
-# (success, or restored_not_started while Forkop X is stopped) records the
+# (success, or restored_not_started while Prokop is stopped) records the
 # same config_migration event, before its restore event. A restore that put
 # the previous configuration back, or a snapshot that needed no migration,
 # records none.
 ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
-LIB="$ROOT/forkop/files/usr/lib"
+LIB="$ROOT/prokop/files/usr/lib"
 SCRIPT="$LIB/config/snapshots.uc"
 MIGRATION="$LIB/config/migration.uc"
 WORK="$(mktemp -d)"
@@ -33,19 +33,19 @@ ok() { printf 'OK: %s\n' "$1"; }
 
 mkdir -p "$WORK/bin" "$WORK/run" "$WORK/state" "$WORK/etc" "$WORK/uci-save" "$WORK/snapshots"
 chmod 700 "$WORK/snapshots"
-export FORKOP_CONFIG_FILE="$WORK/etc/forkop"
-export FORKOP_SNAPSHOT_DIR="$WORK/snapshots"
-export FORKOP_SNAPSHOT_HASH_DIR="$WORK/hash"
-export FORKOP_SNAPSHOT_LOCK_DIR="$WORK/run/config-snapshot.lock"
-export FORKOP_AUTOTUNE_APPLY_STATE="$WORK/autotune-apply.json"
-export FORKOP_LIB="$LIB"
-export FORKOP_BIN="$WORK/bin/forkop"
-export FORKOP_RELOAD_COMMAND="$WORK/reload"
-export FORKOP_PENDING_RELOAD_FILE="$WORK/run/reload.pending"
-export FORKOP_RELOAD_LOCK_DIR="$WORK/run/reload.lock"
-export FORKOP_HISTORY_FILE="$WORK/history.jsonl"
-export FORKOP_RUNTIME_STATE_DIR="$WORK/run"
-export FORKOP_UCI_SAVEDIR="$WORK/uci-save"
+export PROKOP_CONFIG_FILE="$WORK/etc/prokop"
+export PROKOP_SNAPSHOT_DIR="$WORK/snapshots"
+export PROKOP_SNAPSHOT_HASH_DIR="$WORK/hash"
+export PROKOP_SNAPSHOT_LOCK_DIR="$WORK/run/config-snapshot.lock"
+export PROKOP_AUTOTUNE_APPLY_STATE="$WORK/autotune-apply.json"
+export PROKOP_LIB="$LIB"
+export PROKOP_BIN="$WORK/bin/prokop"
+export PROKOP_RELOAD_COMMAND="$WORK/reload"
+export PROKOP_PENDING_RELOAD_FILE="$WORK/run/reload.pending"
+export PROKOP_RELOAD_LOCK_DIR="$WORK/run/reload.lock"
+export PROKOP_HISTORY_FILE="$WORK/history.jsonl"
+export PROKOP_RUNTIME_STATE_DIR="$WORK/run"
+export PROKOP_UCI_SAVEDIR="$WORK/uci-save"
 export STATE="$WORK/state"
 
 # The restore guard and the validator are modelled; snapshots.uc, the
@@ -64,18 +64,18 @@ esac
 STUB
 # No runtime guard of a failed transition.
 printf '#!/bin/sh\nexit 1\n' > "$WORK/bin/nft"
-# init.d answers "stopped" for a restore while Forkop X is stopped (D-15).
+# init.d answers "stopped" for a restore while Prokop is stopped (D-15).
 cat > "$WORK/reload" <<'STUB'
 #!/bin/sh
 [ ! -e "$STATE/stopped" ] || echo stopped
 exit 0
 STUB
-cat > "$WORK/bin/forkop" <<'STUB'
+cat > "$WORK/bin/prokop" <<'STUB'
 #!/bin/sh
 [ "$1" = show_version ] && echo 1.0.33-test
 exit 0
 STUB
-chmod +x "$WORK/bin/ucode" "$WORK/bin/nft" "$WORK/reload" "$WORK/bin/forkop"
+chmod +x "$WORK/bin/ucode" "$WORK/bin/nft" "$WORK/reload" "$WORK/bin/prokop"
 
 json() { node -e 'const r=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));const v=process.argv[2].split(".").reduce((o,k)=>o==null?o:o[k],r);console.log(v===undefined||v===null?"":typeof v==="object"?JSON.stringify(v):v)' "$WORK/result.json" "$1"; }
 restore() {
@@ -98,9 +98,9 @@ put_snapshot() {
     const content = fs.readFileSync(file, "utf8");
     const snapshot = { id, created_at: 1700000000, kind: "manual", reason: "manual",
       config_hash: crypto.createHash("sha256").update(content).digest("hex"),
-      forkop_version: version, content };
+      prokop_version: version, content };
     fs.writeFileSync(`${dir}/${id}.json`, JSON.stringify(snapshot) + "\n", { mode: 0o600 });
-  ' "$FORKOP_SNAPSHOT_DIR" "$1" "$2" "$3"
+  ' "$PROKOP_SNAPSHOT_DIR" "$1" "$2" "$3"
 }
 
 # Every migration of this release, as config/migration.uc records them.
@@ -116,7 +116,7 @@ live_config() {
     printf "\toption yacd_secret_key 'live-secret-0123456789'\n"
     printf "\toption mirror_base_url 'https://mirror.infotechtg.ru'\n\toption marker 'live'\n"
     printf "\nconfig section 'main'\n\toption action 'connection'\n\toption enabled '1'\n"
-  } > "$FORKOP_CONFIG_FILE"
+  } > "$PROKOP_CONFIG_FILE"
 }
 
 # A snapshot of a release before the retired rule sets were removed and
@@ -147,8 +147,8 @@ put_snapshot older 1.0.23 "$WORK/older.uci"
 live_config
 restore older
 [ "$(json status)" = success ] || fail "older snapshot: not restored"
-grep -Fxq "	option marker 'older'" "$FORKOP_CONFIG_FILE" || fail "older snapshot: the snapshot configuration was not restored"
-grep -Fxq "	option update_interval '1h'" "$FORKOP_CONFIG_FILE" || fail "the short interval was not raised"
+grep -Fxq "	option marker 'older'" "$PROKOP_CONFIG_FILE" || fail "older snapshot: the snapshot configuration was not restored"
+grep -Fxq "	option update_interval '1h'" "$PROKOP_CONFIG_FILE" || fail "the short interval was not raised"
 [ "$(history_kinds)" = "config_migration:success restore:success" ] ||
   fail "history after a migrated restore: '$(history_kinds)'"
 node - "$WORK/history.jsonl" <<'JS' || fail "the config_migration event does not name what the migrations changed"
@@ -161,13 +161,13 @@ assert.deepEqual(event.notices, [
 JS
 ok "migrated restore -> config_migration event with the notices, then the restore"
 
-# 2. Forkop X stopped (D-15): the migrated copy stays for the next start.
+# 2. Prokop stopped (D-15): the migrated copy stays for the next start.
 live_config
 : > "$STATE/stopped"
 restore older
 rm -f "$STATE/stopped"
 [ "$(json status)" = restored_not_started ] || fail "stopped: status"
-grep -Fxq "	option marker 'older'" "$FORKOP_CONFIG_FILE" || fail "stopped: the migrated copy is not in place"
+grep -Fxq "	option marker 'older'" "$PROKOP_CONFIG_FILE" || fail "stopped: the migrated copy is not in place"
 [ "$(history_kinds)" = "config_migration:success restore:not_started" ] ||
   fail "history after a migrated restore while stopped: '$(history_kinds)'"
 ok "migrated restore while stopped -> config_migration event"
@@ -175,12 +175,12 @@ ok "migrated restore while stopped -> config_migration event"
 # 3. The migrated copy fails validation: the previous configuration is put
 # back, so nothing the migrations did is in place.
 live_config
-cp "$FORKOP_CONFIG_FILE" "$WORK/live.uci"
+cp "$PROKOP_CONFIG_FILE" "$WORK/live.uci"
 : > "$STATE/invalid"
 restore older
 rm -f "$STATE/invalid"
 [ "$(json status)" = recovered ] || fail "invalid copy: status"
-cmp -s "$FORKOP_CONFIG_FILE" "$WORK/live.uci" || fail "invalid copy: the previous configuration was not put back"
+cmp -s "$PROKOP_CONFIG_FILE" "$WORK/live.uci" || fail "invalid copy: the previous configuration was not put back"
 [ "$(history_kinds)" = "restore:recovered" ] || fail "history after a restore that was put back: '$(history_kinds)'"
 ok "restore put back -> no config_migration event"
 

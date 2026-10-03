@@ -17,7 +17,7 @@ set -euo pipefail
 #   and that was switched off, still starts.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK="$(mktemp -d)"
 trap 'rm -rf "${WORK:?}"' EXIT HUP INT TERM
 
@@ -49,7 +49,7 @@ generator_accepts() {
 }
 
 validator_accepts() {
-  FORKOP_LIB="$LIB" ucode -L "$LIB" "$LIB/config/validator.uc" \
+  PROKOP_LIB="$LIB" ucode -L "$LIB" "$LIB/config/validator.uc" \
     validate-runtime-fixture "$WORK/$1.json" '{}' >"$WORK/$1.val" 2>&1
 }
 

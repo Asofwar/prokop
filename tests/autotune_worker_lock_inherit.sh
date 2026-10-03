@@ -4,7 +4,7 @@ set -euo pipefail
 # The autotune worker lock belongs to the manager run alone (UC-055).
 #
 # The manager holds an flock on worker.lock for the whole run and spawns the
-# isolation and apply tools meanwhile. An apply reloads Forkop, and the reload
+# isolation and apply tools meanwhile. An apply reloads Prokop, and the reload
 # restarts long-lived production daemons (zapret supervisors, nfqws) from
 # inside that tool chain. When the lock's file descriptor is inherited, these
 # daemons keep the lock after the manager dies (SIGKILL, OOM): every later
@@ -21,7 +21,7 @@ source "$ROOT_DIR/tests/helpers/autotune_scheduler/setup.sh"
 # shellcheck source=tests/helpers/wait.sh
 . "$ROOT_DIR/tests/helpers/wait.sh"
 
-lock_free() { flock -n "$FORKOP_AUTOTUNE_STATE_DIR/worker.lock" true; }
+lock_free() { flock -n "$PROKOP_AUTOTUNE_STATE_DIR/worker.lock" true; }
 tool_gone() { ! pgrep -f "$LIB/autotune/isolation.uc" >/dev/null 2>&1; }
 
 manager policy-set mode recommend >/dev/null
@@ -41,7 +41,7 @@ wait_until 20 test -s "$WORK/daemon.pid" || fail "the run did not start its daem
 daemon_pid="$(cat "$WORK/daemon.pid")"
 BG_PIDS+=("$daemon_pid")
 wait_until 10 process_running "$daemon_pid" || fail "fixture: the daemon is not running"
-[ "$(json_get "$FORKOP_AUTOTUNE_STATE_FILE" worker.state)" = '"running"' ] || fail "fixture: the run is not marked running"
+[ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" worker.state)" = '"running"' ] || fail "fixture: the run is not marked running"
 lock_free && fail "fixture: the live run does not hold the worker lock"
 
 # The manager dies; its tool chain finishes without it.

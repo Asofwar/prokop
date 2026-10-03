@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Local parallel test runner for Forkop (Linux or WSL).
+# Local parallel test runner for Prokop (Linux or WSL).
 #
 # Independent lanes run concurrently and are aggregated into one result:
 #   backend   tests/*.sh in a job pool, longest test first
-#   syntax    ucode -c and ucode -S -c for forkop/files/usr/lib/**/*.uc
+#   syntax    ucode -c and ucode -S -c for prokop/files/usr/lib/**/*.uc
 #   shell     shellcheck --severity=error over the CI file set
-#   frontend  prettier --check, eslint, vitest, tsc --noEmit (fe-app-forkop)
+#   frontend  prettier --check, eslint, vitest, tsc --noEmit (fe-app-prokop)
 #
 # The backend and static lanes run on a fresh copy of the working tree on the
 # native Linux filesystem: /mnt/c (9p) is several times slower and serialises
@@ -33,26 +33,26 @@ Modes:
                      or glob (autotune_*)
 
 Options:
-  -j, --jobs N       backend workers (default: auto, FORKOP_TEST_JOBS)
+  -j, --jobs N       backend workers (default: auto, PROKOP_TEST_JOBS)
   --repeat N         run every selected backend test N times (flake hunting)
-  --timeout SEC      per-test timeout (default 600, FORKOP_TEST_TIMEOUT)
+  --timeout SEC      per-test timeout (default 600, PROKOP_TEST_TIMEOUT)
   --in-place         run from the working tree instead of a native-fs copy
   --no-isolate       no namespaces; each test still gets a private TMPDIR
   -v, --verbose      print every finished test, not only failures
   --list             print the backend tests in scheduling order and exit
   -h, --help         this help
 
-Logs and timings: ${FORKOP_TEST_CACHE:-~/.cache/forkop-tests}/last
+Logs and timings: ${PROKOP_TEST_CACHE:-~/.cache/prokop-tests}/last
 EOF
 }
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-CACHE_DIR="${FORKOP_TEST_CACHE:-${XDG_CACHE_HOME:-$HOME/.cache}/forkop-tests}"
+CACHE_DIR="${PROKOP_TEST_CACHE:-${XDG_CACHE_HOME:-$HOME/.cache}/prokop-tests}"
 TIMINGS="$CACHE_DIR/timings.tsv"
 NPROC="$(nproc 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null || echo 4)"
 
-JOBS="${FORKOP_TEST_JOBS:-auto}"
-TIMEOUT="${FORKOP_TEST_TIMEOUT:-600}"
+JOBS="${PROKOP_TEST_JOBS:-auto}"
+TIMEOUT="${PROKOP_TEST_TIMEOUT:-600}"
 REPEAT=1
 LANES="backend,syntax,shell,frontend"
 SERIAL=0
@@ -206,7 +206,7 @@ fi
 # PID 1 of the namespace: private /tmp, loopback only, then the test without
 # any capability. When PID 1 exits the kernel kills everything the test left.
 NS_INIT='
-mount -t tmpfs -o mode=1777 forkop-test-tmp /tmp || exit 125
+mount -t tmpfs -o mode=1777 prokop-test-tmp /tmp || exit 125
 mkdir -p /tmp/home
 ip link set lo up 2>/dev/null
 HOME=/tmp/home setpriv --inh-caps=-all --ambient-caps=-all --bounding-set=-all -- bash "$1" &
@@ -214,7 +214,7 @@ wait "$!"
 '
 NS_CMD=(unshare --user --map-current-user --mount --pid --fork --mount-proc --net --kill-child --keep-caps)
 
-if [ "$ISOLATE" = 1 ] && ! "${NS_CMD[@]}" bash -c "$NS_INIT" forkop-ns /dev/null >/dev/null 2>&1; then
+if [ "$ISOLATE" = 1 ] && ! "${NS_CMD[@]}" bash -c "$NS_INIT" prokop-ns /dev/null >/dev/null 2>&1; then
   printf 'warning: user namespaces unavailable, falling back to --no-isolate\n' >&2
   ISOLATE=0
 fi
@@ -222,7 +222,7 @@ fi
 run_test() {
   local name="$1" tmp="$OUT/tmp/$2"
   if [ "$ISOLATE" = 1 ]; then
-    timeout -k 10 "$TIMEOUT" "${NS_CMD[@]}" bash -c "$NS_INIT" forkop-ns "$TREE/tests/$name.sh"
+    timeout -k 10 "$TIMEOUT" "${NS_CMD[@]}" bash -c "$NS_INIT" prokop-ns "$TREE/tests/$name.sh"
   else
     mkdir -p "$tmp"
     TMPDIR="$tmp" timeout -k 10 "$TIMEOUT" bash "$TREE/tests/$name.sh"
@@ -284,7 +284,7 @@ lane_backend() {
     "$((${#TESTS[@]} * REPEAT)) runs, $failed failed, $JOBS workers"
 }
 
-uc_files() { find "$TREE/forkop/files/usr/lib" -name '*.uc' -print0; }
+uc_files() { find "$TREE/prokop/files/usr/lib" -name '*.uc' -print0; }
 
 lane_syntax() {
   local start rc=0
@@ -311,8 +311,8 @@ lane_shell() {
   # Same selection as .github/workflows/shellcheck.yml.
   mapfile -d '' scripts < <(cd "$TREE" && find . -type f \
     \( -name '*.sh' -o -path './build.sh' -o -path './install.sh' \
-       -o -path './forkop/files/etc/init.d/*' \
-       -o -path './luci-app-forkop/root/etc/uci-defaults/*' \) -print0)
+       -o -path './prokop/files/etc/init.d/*' \
+       -o -path './luci-app-prokop/root/etc/uci-defaults/*' \) -print0)
   (cd "$TREE" && printf '%s\0' "${scripts[@]}" |
     xargs -0 -n4 -P "$NPROC" shellcheck --severity=error) >"$OUT/logs/lane-shell.log" 2>&1 || rc=1
   lane_result shell "$([ "$rc" = 0 ] && echo PASS || echo FAIL)" "$(($(now_ms) - start))" \
@@ -334,17 +334,17 @@ frontend_check() {
   local name="$1" start rc
   shift
   start="$(now_ms)"
-  (cd "$ROOT/fe-app-forkop" && "$@") >"$OUT/logs/frontend-$name.log" 2>&1
+  (cd "$ROOT/fe-app-prokop" && "$@") >"$OUT/logs/frontend-$name.log" 2>&1
   rc=$?
   printf '%s\t%s\t%s\n' "frontend-$name" "$rc" "$(($(now_ms) - start))" >"$OUT/status/frontend-$name"
   [ "$rc" = 0 ] || printf 'FAIL  %7s  frontend-%s\n' "$(fmt_ms "$(($(now_ms) - start))")" "$name"
 }
 
 lane_frontend() {
-  local start fe="$ROOT/fe-app-forkop" node failed
+  local start fe="$ROOT/fe-app-prokop" node failed
   start="$(now_ms)"
   if [ ! -d "$fe/node_modules" ]; then
-    lane_result frontend SKIP 0 "fe-app-forkop/node_modules missing (yarn install)"
+    lane_result frontend SKIP 0 "fe-app-prokop/node_modules missing (yarn install)"
     return
   fi
   node="$(find_frontend_node "$fe")"
@@ -385,7 +385,7 @@ MEM0="$(mem_used_mb)"
 sample_memory &
 SAMPLER=$!
 
-printf 'forkop tests: %d backend x%d, %d workers, %d CPUs, lanes %s%s%s\n' \
+printf 'prokop tests: %d backend x%d, %d workers, %d CPUs, lanes %s%s%s\n' \
   "${#TESTS[@]}" "$REPEAT" "$JOBS" "$NPROC" "$LANES" \
   "$([ "$ISOLATE" = 1 ] && echo ', isolated' || echo ', not isolated')" \
   "$([ "$IN_PLACE" = 1 ] && echo ', in place' || echo ', native-fs copy')"

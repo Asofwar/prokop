@@ -10,7 +10,7 @@ set -euo pipefail
 # started before (invariant 17).
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK="$(mktemp -d)"
 trap 'rm -rf "${WORK:?}"' EXIT HUP INT TERM
 
@@ -51,7 +51,7 @@ cat >"$WORK/fixture.json" <<'JSON'
 JSON
 
 : >"$WORK/logger.log"
-if ! PATH="$WORK/bin:$PATH" LOGGER_LOG="$WORK/logger.log" FORKOP_LIB="$LIB" \
+if ! PATH="$WORK/bin:$PATH" LOGGER_LOG="$WORK/logger.log" PROKOP_LIB="$LIB" \
   ucode -L "$LIB" "$LIB/config/validator.uc" validate-runtime-fixture "$WORK/fixture.json" '{}' >"$WORK/validator.out" 2>&1; then
   fail "a rule without conditions started before and must still be accepted ($(cat "$WORK/validator.out"))"
 fi
@@ -67,7 +67,7 @@ const fs = require('node:fs');
 const config = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
 const log = fs.readFileSync(process.argv[3], 'utf8').split('\n').filter(Boolean);
 const rules = config.route.rules;
-// The first Connection rule also carries Forkop's own check domain
+// The first Connection rule also carries Prokop's own check domain
 // (ip.podkop.fyi), which is no condition of the rule.
 const owns = (name) => rules.some((r) => (r.outbound === `${name}-out` || r.outbound?.startsWith(`${name}-`)) &&
   !JSON.stringify(r.domain || []).includes('podkop.fyi'));

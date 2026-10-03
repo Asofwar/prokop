@@ -2,19 +2,19 @@
 set -euo pipefail
 
 # Stateful OpenWrt regression for the lifecycle single-process invariant.
-# It is intentionally run against an installed, already healthy Forkop
+# It is intentionally run against an installed, already healthy Prokop
 # instance; it never kills a process it did not start itself.
 
-FORKOP_LIB="${FORKOP_LIB:-/usr/lib/forkop}"
-STATE_UC="$FORKOP_LIB/service/state.uc"
+PROKOP_LIB="${PROKOP_LIB:-/usr/lib/prokop}"
+STATE_UC="$PROKOP_LIB/service/state.uc"
 WORK_DIR="$(mktemp -d)"
 DUPLICATE_PID=""
 
 fail() { printf 'FAIL: %s\n' "$1" >&2; exit 1; }
-state() { ucode -L "$FORKOP_LIB" "$STATE_UC" "$@"; }
+state() { ucode -L "$PROKOP_LIB" "$STATE_UC" "$@"; }
 process_count() { state sing-box-process-count | tr -d '[:space:]'; }
 table_policy_hash() {
-  nft list table inet ForkopTable |
+  nft list table inet ProkopTable |
     sed -E 's/counter packets [0-9]+ bytes [0-9]+/counter packets X bytes Y/g' |
     md5sum | awk '{print $1}'
 }
@@ -28,17 +28,17 @@ cleanup() {
 }
 trap cleanup EXIT
 
-[ -r "$STATE_UC" ] || fail "Forkop state module is missing"
+[ -r "$STATE_UC" ] || fail "Prokop state module is missing"
 command -v sing-box >/dev/null || fail "sing-box is not installed"
 
-expected_pid="$(state sing-box-service-runtime-pid)" || fail "procd has no Forkop sing-box PID"
-[ -n "$(nft list table inet ForkopTable 2>/dev/null)" ] || fail "healthy baseline has no ForkopTable"
+expected_pid="$(state sing-box-service-runtime-pid)" || fail "procd has no Prokop sing-box PID"
+[ -n "$(nft list table inet ProkopTable 2>/dev/null)" ] || fail "healthy baseline has no ProkopTable"
 table_hash="$(table_policy_hash)"
 [ "$(process_count)" = "1" ] || fail "healthy baseline does not have exactly one sing-box process"
 state sing-box-single-owned-service-runtime || fail "healthy PID is not the sole procd-owned sing-box"
 state single-ready-sing-box-runtime || fail "healthy sing-box readiness failed"
-state wait-forkop-stable-start forkop ForkopTable 0x04000000 0 2 ||
-  fail "healthy Forkop state was not accepted"
+state wait-prokop-stable-start prokop ProkopTable 0x04000000 0 2 ||
+  fail "healthy Prokop state was not accepted"
 
 cat >"$WORK_DIR/duplicate.json" <<'EOF'
 {
@@ -63,13 +63,13 @@ done
 if state single-ready-sing-box-runtime; then
   fail "duplicate sing-box process was accepted as ready"
 fi
-if state forkop-running forkop ForkopTable 0x04000000; then
+if state prokop-running prokop ProkopTable 0x04000000; then
   fail "duplicate sing-box process was accepted as running"
 fi
-if state wait-forkop-stable-start forkop ForkopTable 0x04000000 0 1; then
+if state wait-prokop-stable-start prokop ProkopTable 0x04000000 0 1; then
   fail "duplicate sing-box process was accepted as stable"
 fi
-if /usr/bin/forkop reload on_config_change >/dev/null 2>&1; then
+if /usr/bin/prokop reload on_config_change >/dev/null 2>&1; then
   fail "lifecycle accepted reload while sing-box ownership was ambiguous"
 fi
 [ "$(state sing-box-service-runtime-pid)" = "$expected_pid" ] ||
@@ -85,7 +85,7 @@ for _ in 1 2 3 4 5; do
   sleep 1
 done
 [ "$(process_count)" = "1" ] || fail "test-owned duplicate did not exit"
-state wait-forkop-stable-start forkop ForkopTable 0x04000000 0 4 ||
-  fail "Forkop did not recover its accepted state after duplicate exit"
+state wait-prokop-stable-start prokop ProkopTable 0x04000000 0 4 ||
+  fail "Prokop did not recover its accepted state after duplicate exit"
 
 printf 'sing-box single-process lifecycle checks passed\n'

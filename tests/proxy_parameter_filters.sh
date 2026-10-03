@@ -2,9 +2,9 @@
 set -eo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-GENERATOR_UC="$FORKOP_LIB/singbox/generator.uc"
-VALIDATOR_UC="$FORKOP_LIB/config/validator.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+GENERATOR_UC="$PROKOP_LIB/singbox/generator.uc"
+VALIDATOR_UC="$PROKOP_LIB/config/validator.uc"
 WORK_DIR="$(mktemp -d)"
 
 cleanup() {
@@ -21,7 +21,7 @@ generate_config() {
   local fixture="$1"
   local output="$2"
   mkdir -p "${output}.section-cache"
-  ucode -L "$FORKOP_LIB" "$GENERATOR_UC" generate-config-fixture \
+  ucode -L "$PROKOP_LIB" "$GENERATOR_UC" generate-config-fixture \
     "$fixture" "$output" "127.0.0.1"
 }
 
@@ -37,7 +37,7 @@ validate_fixture() {
     input.settings.yacd_secret_key ??= "test-clash-secret";
     fs.writeFileSync(process.argv[2], JSON.stringify(input));
   ' "$fixture" "$normalized"
-  FORKOP_LIB="$FORKOP_LIB" ucode -L "$FORKOP_LIB" "$VALIDATOR_UC" \
+  PROKOP_LIB="$PROKOP_LIB" ucode -L "$PROKOP_LIB" "$VALIDATOR_UC" \
     validate-runtime-fixture "$normalized" "{}"
 }
 

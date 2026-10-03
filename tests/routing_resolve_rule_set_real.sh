@@ -2,19 +2,19 @@
 set -euo pipefail
 
 # routing/resolve.uc against a real "sing-box rule-set match" (UC-198): the
-# binary is $FORKOP_TEST_SING_BOX, else sing-box on PATH; without one the
+# binary is $PROKOP_TEST_SING_BOX, else sing-box on PATH; without one the
 # test is skipped. It also checks that the stand-in the other resolver tests
 # use (helpers/sing_box_rule_set_stub.uc) answers exactly as the real binary:
 # the same matching rule lines on stderr, nothing on stdout, the same exit
 # status (UC-052: a stub must not diverge from what it stands for).
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 STUB="$ROOT_DIR/tests/helpers/sing_box_rule_set_stub.uc"
 
-SING_BOX="${FORKOP_TEST_SING_BOX:-$(command -v sing-box 2>/dev/null || true)}"
+SING_BOX="${PROKOP_TEST_SING_BOX:-$(command -v sing-box 2>/dev/null || true)}"
 if [ -z "$SING_BOX" ] || [ ! -x "$SING_BOX" ]; then
-    printf 'SKIP: routing_resolve_rule_set_real: no sing-box binary (set FORKOP_TEST_SING_BOX); the resolver is checked against the stand-in only\n'
+    printf 'SKIP: routing_resolve_rule_set_real: no sing-box binary (set PROKOP_TEST_SING_BOX); the resolver is checked against the stand-in only\n'
     exit 0
 fi
 
@@ -76,7 +76,7 @@ record() { # srs
 record "$WORK/youtube.srs"
 list other '{ "version": 3, "rules": [ { "domain": [ "example.org" ] } ] }'
 
-cat >"$WORK/forkop" <<'EOF'
+cat >"$WORK/prokop" <<'EOF'
 config settings 'settings'
 config section 'youtube'
 	option action 'zapret'
@@ -100,7 +100,7 @@ EOF
 expect() { # name json want
     local got
     printf '%s' "$2" >"$WORK/case-$1.json"
-    got="$(FORKOP_RULESET_MATCH_BIN="$SING_BOX" FORKOP_LIB="$LIB" ucode -L "$LIB" "$WORK/resolve.uc" "$WORK/forkop" "$WORK/case-$1.json")"
+    got="$(PROKOP_RULESET_MATCH_BIN="$SING_BOX" PROKOP_LIB="$LIB" ucode -L "$LIB" "$WORK/resolve.uc" "$WORK/prokop" "$WORK/case-$1.json")"
     [ "$got" = "$3" ] || fail "$1: got $got, want $3"
 }
 

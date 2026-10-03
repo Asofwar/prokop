@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  Runs the Forkop test suite inside WSL with maximum safe parallelism.
+  Runs the Prokop test suite inside WSL with maximum safe parallelism.
 .DESCRIPTION
   Thin wrapper around tests/runner/run.sh; every argument is passed through.
 .EXAMPLE

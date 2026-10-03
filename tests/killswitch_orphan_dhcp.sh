@@ -21,8 +21,8 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-KS_UC="$FORKOP_LIB/killswitch/runtime.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+KS_UC="$PROKOP_LIB/killswitch/runtime.uc"
 WORK_DIR="$(mktemp -d)"
 # shellcheck source=tests/helpers/wait.sh
 . "$ROOT_DIR/tests/helpers/wait.sh"
@@ -78,17 +78,17 @@ chmod 0755 "$WORK_DIR/bin/"*
 
 export WORK_DIR
 export PATH="$WORK_DIR/bin:$PATH"
-unset FORKOP_UCI_STATE_FILE FORKOP_UCI_LOG_FILE
-export FORKOP_LIB
-export FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/run"
-export FORKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/reload.lock"
-export FORKOP_DNSMASQ_CONFIG_FILE="$WORK_DIR/etc/config/dhcp"
-export FORKOP_UCI_CLI="$WORK_DIR/bin/uci"
+unset PROKOP_UCI_STATE_FILE PROKOP_UCI_LOG_FILE
+export PROKOP_LIB
+export PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/run"
+export PROKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/reload.lock"
+export PROKOP_DNSMASQ_CONFIG_FILE="$WORK_DIR/etc/config/dhcp"
+export PROKOP_UCI_CLI="$WORK_DIR/bin/uci"
 export KILLSWITCH_STATE_DIR="$WORK_DIR/ks"
-export KILLSWITCH_NFT_INCLUDE="$WORK_DIR/ruleset-post/90-forkop-killswitch.nft"
+export KILLSWITCH_NFT_INCLUDE="$WORK_DIR/ruleset-post/90-prokop-killswitch.nft"
 export KILLSWITCH_CACHE_DIR="$WORK_DIR/cache"
 export DNSMASQ_INIT="$WORK_DIR/bin/dnsmasq-init"
-export FORKOP_KILLSWITCH_INIT="$WORK_DIR/bin/killswitch-init"
+export PROKOP_KILLSWITCH_INIT="$WORK_DIR/bin/killswitch-init"
 
 SERVERS="$KILLSWITCH_STATE_DIR/dnsmasq.servers"
 uci_get() { "$UCI_REAL" -q -c "$WORK_DIR/etc/config" -t "$WORK_DIR/empty-save" get "$1" || true; }
@@ -124,8 +124,8 @@ EOF
 # its scripts does.
 orphaned_watcher() {
   cp "$KS_UC" "$WORK_DIR/package/killswitch/runtime.uc"
-  FORKOP_KILLSWITCH_WATCH_ITERATIONS=20000 FORKOP_KILLSWITCH_WATCH_INTERVAL_MS=1 \
-    ucode -L "$FORKOP_LIB" "$WORK_DIR/package/killswitch/runtime.uc" watch &
+  PROKOP_KILLSWITCH_WATCH_ITERATIONS=20000 PROKOP_KILLSWITCH_WATCH_INTERVAL_MS=1 \
+    ucode -L "$PROKOP_LIB" "$WORK_DIR/package/killswitch/runtime.uc" watch &
   WATCHER=$!
   wait_until 15 watcher_running || fail "the watcher did not start"
   rm -f "$WORK_DIR/package/killswitch/runtime.uc"

@@ -2,24 +2,24 @@
 # The VPN kill-switch policy never outlives the package that can lift it
 # (UC-191), checked with the real nft.
 #
-# The production sync renders the policy from a real live ForkopTable, checks
+# The production sync renders the policy from a real live ProkopTable, checks
 # (-c) and applies (-f) it, and saves it for the boots to come. A "boot" here
 # is what fw4 does at every boot and firewall reload: its own table plus every
-# file in ruleset-post. With the Forkop package installed the saved policy
+# file in ruleset-post. With the Prokop package installed the saved policy
 # comes back after the boot; once the package is gone (removal, a downgrade
 # to a release without the kill-switch, a sysupgrade to an image without
-# Forkop) nothing may load it, and no DNS block list may stay attached.
+# Prokop) nothing may load it, and no DNS block list may stay attached.
 #
 # The namespace part is skipped only when such a namespace cannot be created.
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-KS_UC="$FORKOP_LIB/killswitch/runtime.uc"
-NFT_UC="$FORKOP_LIB/nft/apply.uc"
-DNS_UC="$FORKOP_LIB/dns/apply.uc"
-LOADER_SOURCE="$ROOT_DIR/forkop/files/usr/share/nftables.d/ruleset-post/90-forkop-killswitch-loader.nft"
-KEEP_LIST="$ROOT_DIR/forkop/files/lib/upgrade/keep.d/forkop-killswitch"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+KS_UC="$PROKOP_LIB/killswitch/runtime.uc"
+NFT_UC="$PROKOP_LIB/nft/apply.uc"
+DNS_UC="$PROKOP_LIB/dns/apply.uc"
+LOADER_SOURCE="$ROOT_DIR/prokop/files/usr/share/nftables.d/ruleset-post/90-prokop-killswitch-loader.nft"
+KEEP_LIST="$ROOT_DIR/prokop/files/lib/upgrade/keep.d/prokop-killswitch"
 NAMESPACE=(unshare --user --map-root-user --net --mount)
 
 namespaces() { printf '%s %s' "$(readlink /proc/self/ns/net)" "$(readlink /proc/self/ns/mnt)"; }
@@ -34,7 +34,7 @@ if [ "${1:-}" != "--in-namespace" ]; then
   if ! probe="$("${NAMESPACE[@]}" nft list ruleset 2>&1)"; then
     skip "nftables is unavailable in an unprivileged network namespace: $probe"
   fi
-  FORKOP_NFT_REAL_HOST_NAMESPACES="$(namespaces)" exec "${NAMESPACE[@]}" bash "$0" --in-namespace
+  PROKOP_NFT_REAL_HOST_NAMESPACES="$(namespaces)" exec "${NAMESPACE[@]}" bash "$0" --in-namespace
 fi
 
 # ---- inside the namespace (same guard as tests/nft_real.sh) -----------------
@@ -48,7 +48,7 @@ read -r map_inside _ map_count <<<"${uid_map[0]:-}"
 if [ "${#uid_map[@]}" != 1 ] || [ "$map_inside" != 0 ] || [ "$map_count" != 1 ]; then
   refuse "not a user namespace mapping only root: ${uid_map[*]:-}"
 fi
-read -r host_net host_mnt <<<"${FORKOP_NFT_REAL_HOST_NAMESPACES:-}"
+read -r host_net host_mnt <<<"${PROKOP_NFT_REAL_HOST_NAMESPACES:-}"
 read -r own_net own_mnt <<<"$(namespaces)"
 if [ -z "${host_net:-}" ] || [ "$own_net" = "$host_net" ] || [ "$own_mnt" = "${host_mnt:-}" ]; then
   refuse "the network or mount namespace is not new"
@@ -71,7 +71,7 @@ ok() { printf 'ok - %s\n' "$1"; }
 # The router's file system: /etc/... of the router is $ROOT/etc/... here.
 ROOT="$WORK_DIR/root"
 RULESET_POST="$ROOT/usr/share/nftables.d/ruleset-post"
-STATE_DIR="$ROOT/etc/forkop/killswitch"
+STATE_DIR="$ROOT/etc/prokop/killswitch"
 mkdir -p "$WORK_DIR/bin" "$WORK_DIR/stub" "$WORK_DIR/run" "$RULESET_POST" "$ROOT/etc/config" "$STATE_DIR"
 
 for name in logger dnsmasq-init killswitch-init sync; do
@@ -86,17 +86,17 @@ EOF
 chmod 0755 "$WORK_DIR/bin/"* "$WORK_DIR/stub/nft"
 
 export PATH="$WORK_DIR/bin:$PATH"
-export FORKOP_LIB
-export FORKOP_UCI_STATE_FILE="$ROOT/etc/config/uci.state"
-export FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/run"
-export FORKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/reload.lock"
+export PROKOP_LIB
+export PROKOP_UCI_STATE_FILE="$ROOT/etc/config/uci.state"
+export PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/run"
+export PROKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/reload.lock"
 export KILLSWITCH_STATE_DIR="$STATE_DIR"
 export KILLSWITCH_CACHE_DIR="$WORK_DIR/cache"
 # The fixed paths the first kill-switch build used and the package's loader.
-export KILLSWITCH_NFT_INCLUDE="$RULESET_POST/90-forkop-killswitch.nft"
-export KILLSWITCH_NFT_LOADER="$RULESET_POST/90-forkop-killswitch-loader.nft"
+export KILLSWITCH_NFT_INCLUDE="$RULESET_POST/90-prokop-killswitch.nft"
+export KILLSWITCH_NFT_LOADER="$RULESET_POST/90-prokop-killswitch-loader.nft"
 export DNSMASQ_INIT="$WORK_DIR/bin/dnsmasq-init"
-export FORKOP_KILLSWITCH_INIT="$WORK_DIR/bin/killswitch-init"
+export PROKOP_KILLSWITCH_INIT="$WORK_DIR/bin/killswitch-init"
 
 cat >"$WORK_DIR/config.json" <<'JSON'
 { "route": { "rules": [
@@ -105,17 +105,17 @@ cat >"$WORK_DIR/config.json" <<'JSON'
 ], "rule_set": [] } }
 JSON
 write_uci() {
-  cat >"$FORKOP_UCI_STATE_FILE" <<EOF
-forkop.settings=settings
-forkop.settings.source_network_interfaces=br-lan
-forkop.settings.config_path=$WORK_DIR/config.json
-forkop.byp=section
-forkop.byp.action=bypass
-forkop.byp.ip_cidr=2.2.2.0/24
-forkop.main=section
-forkop.main.action=connection
-forkop.main.kill_switch=1
-forkop.main.ip_cidr=3.3.3.0/24
+  cat >"$PROKOP_UCI_STATE_FILE" <<EOF
+prokop.settings=settings
+prokop.settings.source_network_interfaces=br-lan
+prokop.settings.config_path=$WORK_DIR/config.json
+prokop.byp=section
+prokop.byp.action=bypass
+prokop.byp.ip_cidr=2.2.2.0/24
+prokop.main=section
+prokop.main.action=connection
+prokop.main.kill_switch=1
+prokop.main.ip_cidr=3.3.3.0/24
 dhcp.@dnsmasq[0]=dnsmasq
 dhcp.@dnsmasq[0].server=$1
 EOF
@@ -124,22 +124,22 @@ uci_value() {
   awk -F= -v key="$2" '$1 == key { print substr($0, length($1) + 2) }' "$1"
 }
 
-ks() { ucode -L "$FORKOP_LIB" "$KS_UC" "$@"; }
-ks_present() { nft list table inet ForkopKillswitch >/dev/null 2>&1; }
+ks() { ucode -L "$PROKOP_LIB" "$KS_UC" "$@"; }
+ks_present() { nft list table inet ProkopKillswitch >/dev/null 2>&1; }
 
 # Installs the package's own file into a root: the loader, as built
-# (build.sh, forkop/Makefile), reading the policy from that root.
+# (build.sh, prokop/Makefile), reading the policy from that root.
 install_package_files() {
   local root="$1"
   mkdir -p "$root/usr/share/nftables.d/ruleset-post"
   [ -r "$LOADER_SOURCE" ] || return 0
-  sed "s#/etc/forkop/killswitch/#$root/etc/forkop/killswitch/#g" "$LOADER_SOURCE" \
-    >"$root/usr/share/nftables.d/ruleset-post/90-forkop-killswitch-loader.nft"
+  sed "s#/etc/prokop/killswitch/#$root/etc/prokop/killswitch/#g" "$LOADER_SOURCE" \
+    >"$root/usr/share/nftables.d/ruleset-post/90-prokop-killswitch-loader.nft"
 }
 # A removal, or a downgrade to a release without the kill-switch, takes the
-# package's files away and leaves what Forkop created at run time.
+# package's files away and leaves what Prokop created at run time.
 remove_package_files() {
-  rm -f "$1/usr/share/nftables.d/ruleset-post/90-forkop-killswitch-loader.nft"
+  rm -f "$1/usr/share/nftables.d/ruleset-post/90-prokop-killswitch-loader.nft"
 }
 
 # A boot (or any fw4 start/reload): the kernel state is gone, fw4 loads its
@@ -157,20 +157,20 @@ fw4_boot() {
   nft -f "$WORK_DIR/fw4.nft" || fail "fw4 could not load its ruleset with the ruleset-post includes of $root"
 }
 
-# ---- a running Forkop with one protected section ------------------------------
+# ---- a running Prokop with one protected section ------------------------------
 
 write_uci 127.0.0.42
-# The live ForkopTable holds every set the render reads, declared exactly as
+# The live ProkopTable holds every set the render reads, declared exactly as
 # the render declares them.
-PATH="$WORK_DIR/stub:$PATH" ucode -L "$FORKOP_LIB" "$NFT_UC" killswitch-render ForkopTable ForkopKillswitch \
+PATH="$WORK_DIR/stub:$PATH" ucode -L "$PROKOP_LIB" "$NFT_UC" killswitch-render ProkopTable ProkopKillswitch \
   "$WORK_DIR/sets.nft" 198.18.0.0/15 fc00::/18 >/dev/null || fail "could not render the set layout"
 {
-  printf 'add table inet ForkopTable\n'
-  grep '^add set inet ForkopKillswitch forkop_rule_' "$WORK_DIR/sets.nft" | sed 's/ ForkopKillswitch / ForkopTable /'
-  printf 'add element inet ForkopTable forkop_rule_byp_subnets { 2.2.2.0/24 }\n'
-  printf 'add element inet ForkopTable forkop_rule_main_subnets { 3.3.3.0/24 }\n'
+  printf 'add table inet ProkopTable\n'
+  grep '^add set inet ProkopKillswitch prokop_rule_' "$WORK_DIR/sets.nft" | sed 's/ ProkopKillswitch / ProkopTable /'
+  printf 'add element inet ProkopTable prokop_rule_byp_subnets { 2.2.2.0/24 }\n'
+  printf 'add element inet ProkopTable prokop_rule_main_subnets { 3.3.3.0/24 }\n'
 } >"$WORK_DIR/live.nft"
-nft -f "$WORK_DIR/live.nft" || fail "could not create the live ForkopTable"
+nft -f "$WORK_DIR/live.nft" || fail "could not create the live ProkopTable"
 
 install_package_files "$ROOT"
 # nft writes a listing in many small writes: a grep -q that matched early
@@ -178,11 +178,11 @@ install_package_files "$ROOT"
 # every listing is read in full before it is matched.
 ks sync start || fail "sync from the real live table failed"
 ks_present || fail "the synced policy is not live"
-grep -Fq 'counter name "ks_main" jump ks_reject' <<<"$(nft list chain inet ForkopKillswitch priority_rules)" ||
+grep -Fq 'counter name "ks_main" jump ks_reject' <<<"$(nft list chain inet ProkopKillswitch priority_rules)" ||
   fail "the protected section does not reject"
-grep -Fq '@forkop_rule_byp_subnets return' <<<"$(nft list chain inet ForkopKillswitch priority_rules)" ||
+grep -Fq '@prokop_rule_byp_subnets return' <<<"$(nft list chain inet ProkopKillswitch priority_rules)" ||
   fail "the earlier bypass section does not keep its verdict"
-grep -Fq '3.3.3.0/24' <<<"$(nft list set inet ForkopKillswitch forkop_rule_main_subnets)" ||
+grep -Fq '3.3.3.0/24' <<<"$(nft list set inet ProkopKillswitch prokop_rule_main_subnets)" ||
   fail "the live set content was not copied"
 ks sync reload || fail "re-applying the same policy failed"
 ok "the policy rendered from a real live table passes nft -c, -f and a re-apply"
@@ -192,10 +192,10 @@ ok "the policy rendered from a real live table passes nft -c, -f and a re-apply"
 if printf 'add table inet ks_probe\nadd chain inet ks_probe c { type nat hook prerouting priority -102; policy accept; }\nadd rule inet ks_probe c udp dport 53 redirect to :1\n' |
   nft -c -f - >/dev/null 2>&1; then
   ks dns-redirect on || fail "switching client DNS to the standby resolver failed"
-  grep -Eq 'iifname @ks_interfaces udp dport 53 counter .*redirect to :18054' <<<"$(nft list chain inet ForkopKillswitch ks_dns)" ||
+  grep -Eq 'iifname @ks_interfaces udp dport 53 counter .*redirect to :18054' <<<"$(nft list chain inet ProkopKillswitch ks_dns)" ||
     fail "the standby redirect is not in the live table"
   ks dns-redirect off || fail "handing client DNS back failed"
-  dns_chain="$(nft list chain inet ForkopKillswitch ks_dns)" || fail "the DNS chain must stay in the live table"
+  dns_chain="$(nft list chain inet ProkopKillswitch ks_dns)" || fail "the DNS chain must stay in the live table"
   if grep -q redirect <<<"$dns_chain"; then fail "the standby redirect must be gone"; fi
   ok "the standby DNS redirect passes the real nft"
 else
@@ -205,8 +205,8 @@ fi
 # ---- with the package installed the policy survives a reboot ------------------
 
 fw4_boot "$ROOT"
-ks_present || fail "with Forkop installed the policy must come back after a boot"
-grep -Fq 'counter name "ks_main" jump ks_reject' <<<"$(nft list chain inet ForkopKillswitch priority_rules)" ||
+ks_present || fail "with Prokop installed the policy must come back after a boot"
+grep -Fq 'counter name "ks_main" jump ks_reject' <<<"$(nft list chain inet ProkopKillswitch priority_rules)" ||
   fail "the policy loaded at boot does not reject protected traffic"
 ok "with the package installed the saved policy is loaded at boot"
 
@@ -215,7 +215,7 @@ ok "with the package installed the saved policy is loaded at boot"
 remove_package_files "$ROOT"
 fw4_boot "$ROOT"
 if ks_present; then
-  fail "without the Forkop package (removal or downgrade) fw4 must not load the kill-switch"
+  fail "without the Prokop package (removal or downgrade) fw4 must not load the kill-switch"
 fi
 ok "after removal or a downgrade the saved policy is inert"
 
@@ -224,13 +224,13 @@ fw4_boot "$ROOT"
 ks_present || fail "a reinstalled package must find the saved policy again"
 ok "a reinstall brings the saved policy back"
 
-# ---- sysupgrade: Forkop stopped, protected names are blocked ------------------
+# ---- sysupgrade: Prokop stopped, protected names are blocked ------------------
 
 write_uci 1.1.1.1
-ucode -L "$FORKOP_LIB" "$DNS_UC" killswitch-refresh || fail "DNS refresh failed"
-servers="$(uci_value "$FORKOP_UCI_STATE_FILE" 'dhcp.@dnsmasq[0].serversfile')"
+ucode -L "$PROKOP_LIB" "$DNS_UC" killswitch-refresh || fail "DNS refresh failed"
+servers="$(uci_value "$PROKOP_UCI_STATE_FILE" 'dhcp.@dnsmasq[0].serversfile')"
 [ -n "$servers" ] || fail "dnsmasq must read the kill-switch servers file"
-grep -Fqx 'server=/example.com/' "$servers" || fail "a stopped Forkop must block protected names"
+grep -Fqx 'server=/example.com/' "$servers" || fail "a stopped Prokop must block protected names"
 
 # What sysupgrade carries into the new image: /etc/config and the keep list.
 sysupgrade_root() {
@@ -249,17 +249,17 @@ NEW_ROOT="$WORK_DIR/new-root"
 sysupgrade_root "$NEW_ROOT"
 fw4_boot "$NEW_ROOT"
 if ks_present; then
-  fail "an image without Forkop must not load the kill-switch kept by sysupgrade"
+  fail "an image without Prokop must not load the kill-switch kept by sysupgrade"
 fi
 kept_servers="$NEW_ROOT${servers#"$ROOT"}"
 if [ -e "$kept_servers" ] && grep -q '^server=/' "$kept_servers"; then
-  fail "an image without Forkop must not keep a DNS block list attached to dnsmasq"
+  fail "an image without Prokop must not keep a DNS block list attached to dnsmasq"
 fi
-ok "a sysupgrade to an image without Forkop keeps no active policy"
+ok "a sysupgrade to an image without Prokop keeps no active policy"
 
 install_package_files "$NEW_ROOT"
 fw4_boot "$NEW_ROOT"
-ks_present || fail "an image with Forkop must load the policy kept by sysupgrade"
-ok "a sysupgrade to an image with Forkop keeps the protection"
+ks_present || fail "an image with Prokop must load the policy kept by sysupgrade"
+ok "a sysupgrade to an image with Prokop keeps the protection"
 
 printf 'killswitch_owner_nft_real: PASS\n'

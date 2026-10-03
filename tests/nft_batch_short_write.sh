@@ -15,7 +15,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT/forkop/files/usr/lib"
+LIB="$ROOT/prokop/files/usr/lib"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT HUP INT TERM
 fail() { printf 'FAIL: %s\n' "$1" >&2; exit 1; }
@@ -25,7 +25,7 @@ cat >"$WORK/bin/nft" <<'SH'
 #!/bin/sh
 printf '%s\n' "$*" >>"$NFT_LOG"
 if [ "$1 $2" = "list chain" ] && [ -n "${NFT_KS_CHAIN:-}" ]; then
-  printf 'table inet ForkopKillswitch {\n\tchain ks_dns {\n\t}\n}\n'
+  printf 'table inet ProkopKillswitch {\n\tchain ks_dns {\n\t}\n}\n'
   exit 0
 fi
 [ "$1" = list ] && exit 1
@@ -55,11 +55,11 @@ fill() { head -c 65536 /dev/zero >"$FULL/fill.$1" 2>/dev/null || true; }
 # A page-aligned candidate on a full tmpfs: the appended set elements are
 # lost, yet the batch still ends at a line boundary.
 batch="$FULL/candidate.nft"
-{ printf '# Forkop nft candidate\n'; head -c 4072 /dev/zero | tr '\0' '#'; printf '\n'; } >"$batch"
+{ printf '# Prokop nft candidate\n'; head -c 4072 /dev/zero | tr '\0' '#'; printf '\n'; } >"$batch"
 [ "$(stat -c %s "$batch")" -eq 4096 ] || fail "the fixture batch is not page-aligned"
 fill 1
 : >"$NFT_LOG"
-if FORKOP_NFT_BATCH_FILE="$batch" nft_uc nft-add-file-chunks-to-set "$WORK/subnets.txt" ForkopTable forkop_subnets ips '' 5000; then
+if PROKOP_NFT_BATCH_FILE="$batch" nft_uc nft-add-file-chunks-to-set "$WORK/subnets.txt" ProkopTable prokop_subnets ips '' 5000; then
   fail "an append lost on a full tmpfs was reported as prepared ($(stat -c %s "$batch") bytes)"
 fi
 [ ! -s "$NFT_LOG" ] || fail "candidate preparation reached nft: $(cat "$NFT_LOG")"
@@ -67,20 +67,20 @@ fi
 # Several appends: the first fit in the batch's last page, a later one does
 # not. The preparation fails at the short one.
 rm -f "$FULL"/fill.* "$batch"
-{ printf '# Forkop nft candidate\n'; head -c 3970 /dev/zero | tr '\0' '#'; printf '\n'; } >"$batch"
+{ printf '# Prokop nft candidate\n'; head -c 3970 /dev/zero | tr '\0' '#'; printf '\n'; } >"$batch"
 fill 2
 before="$(stat -c %s "$batch")"
-if FORKOP_NFT_BATCH_FILE="$batch" nft_uc nft-add-file-chunks-to-set "$WORK/subnets.txt" ForkopTable forkop_subnets ips '' 1; then
+if PROKOP_NFT_BATCH_FILE="$batch" nft_uc nft-add-file-chunks-to-set "$WORK/subnets.txt" ProkopTable prokop_subnets ips '' 1; then
   fail "a candidate whose later appends were lost was reported as prepared ($before -> $(stat -c %s "$batch") bytes)"
 fi
 [ "$(stat -c %s "$batch")" -gt "$before" ] || fail "the fixture did not let the first append through"
 
 # The same preparation with room is complete.
 rm -f "$FULL"/fill.* "$batch"
-printf '# Forkop nft candidate\n' >"$batch"
-FORKOP_NFT_BATCH_FILE="$batch" nft_uc nft-add-file-chunks-to-set "$WORK/subnets.txt" ForkopTable forkop_subnets ips '' 1 ||
+printf '# Prokop nft candidate\n' >"$batch"
+PROKOP_NFT_BATCH_FILE="$batch" nft_uc nft-add-file-chunks-to-set "$WORK/subnets.txt" ProkopTable prokop_subnets ips '' 1 ||
   fail "a candidate with room was not prepared"
-[ "$(grep -c '^add element inet ForkopTable forkop_subnets ' "$batch")" -eq 3 ] || fail "the candidate with room lost elements: $(cat "$batch")"
+[ "$(grep -c '^add element inet ProkopTable prokop_subnets ' "$batch")" -eq 3 ] || fail "the candidate with room lost elements: $(cat "$batch")"
 
 # The guard batches are written whole into a temporary file: an empty one
 # passes `nft -c` and `nft -f` and installs nothing.
@@ -88,12 +88,12 @@ rm -f "$batch"
 mkdir -p "$FULL/tmp"
 fill 3
 : >"$NFT_LOG"
-if TMPDIR="$FULL/tmp" nft_uc install-transition-guard ForkopTable 0x04000000; then
+if TMPDIR="$FULL/tmp" nft_uc install-transition-guard ProkopTable 0x04000000; then
   fail "a transition guard lost on a full tmpfs was reported as installed"
 fi
 ! grep -q -- '-f ' "$NFT_LOG" || fail "an empty transition guard batch reached nft: $(cat "$NFT_LOG")"
 : >"$NFT_LOG"
-if TMPDIR="$FULL/tmp" nft_uc install-dpi-transition-guard ForkopTable; then
+if TMPDIR="$FULL/tmp" nft_uc install-dpi-transition-guard ProkopTable; then
   fail "a DPI guard lost on a full tmpfs was reported as installed"
 fi
 ! grep -q -- '-f ' "$NFT_LOG" || fail "an empty DPI guard batch reached nft: $(cat "$NFT_LOG")"
@@ -102,10 +102,10 @@ fi
 # appended. The batch has room left in its last page, the extraction files
 # have none: an empty extraction is not a rule set without subnets.
 rm -rf "$FULL"/fill.* "$FULL/tmp"
-{ printf '# Forkop nft candidate\n'; head -c 2000 /dev/zero | tr '\0' '#'; printf '\n'; } >"$batch"
+{ printf '# Prokop nft candidate\n'; head -c 2000 /dev/zero | tr '\0' '#'; printf '\n'; } >"$batch"
 fill 4
-if FORKOP_NFT_SUBNET_CACHE_DIR="$FULL/cache" FORKOP_NFT_BATCH_FILE="$batch" nft_uc nft-add-json-ruleset-subnets-for-section-fixture \
-  "$WORK/fixture.json" all "$WORK/rules.json" "Rule set test" ForkopTable s4 p4 "$FULL/u" "$FULL/s" 5000 s6 p6; then
+if PROKOP_NFT_SUBNET_CACHE_DIR="$FULL/cache" PROKOP_NFT_BATCH_FILE="$batch" nft_uc nft-add-json-ruleset-subnets-for-section-fixture \
+  "$WORK/fixture.json" all "$WORK/rules.json" "Rule set test" ProkopTable s4 p4 "$FULL/u" "$FULL/s" 5000 s6 p6; then
   fail "a rule set whose extracted subnets were lost was reported as prepared: $(grep -c 'add element' "$batch") elements"
 fi
 if ucode -L "$LIB" "$LIB/routing/rulesets.uc" extract-ip-cidr-nft "$WORK/rules.json" "$FULL/u" "$FULL/s"; then
@@ -120,7 +120,7 @@ fi
 # empty one passes `nft -f` and changes nothing.
 mkdir -p "$FULL/tmp"
 : >"$NFT_LOG"
-if TMPDIR="$FULL/tmp" NFT_KS_CHAIN=1 FORKOP_RUNTIME_STATE_DIR="$WORK/run" KILLSWITCH_STATE_DIR="$WORK/ks" \
+if TMPDIR="$FULL/tmp" NFT_KS_CHAIN=1 PROKOP_RUNTIME_STATE_DIR="$WORK/run" KILLSWITCH_STATE_DIR="$WORK/ks" \
   ucode -L "$LIB" "$LIB/killswitch/runtime.uc" dns-redirect on; then
   fail "a kill-switch DNS batch lost on a full tmpfs was reported as applied"
 fi
@@ -130,8 +130,8 @@ SH
 # Everywhere: a batch on /dev/full takes every write and keeps nothing, as a
 # full tmpfs does, and write() and close() report success the same way.
 : >"$WORK/nft.log"
-if PATH="$WORK/bin:$PATH" NFT_LOG="$WORK/nft.log" FORKOP_NFT_BATCH_FILE=/dev/full \
-  ucode -L "$LIB" "$LIB/nft/apply.uc" nft-add-file-chunks-to-set "$WORK/subnets.txt" ForkopTable forkop_subnets ips '' 5000; then
+if PATH="$WORK/bin:$PATH" NFT_LOG="$WORK/nft.log" PROKOP_NFT_BATCH_FILE=/dev/full \
+  ucode -L "$LIB" "$LIB/nft/apply.uc" nft-add-file-chunks-to-set "$WORK/subnets.txt" ProkopTable prokop_subnets ips '' 5000; then
   fail "appends lost on /dev/full were reported as prepared"
 fi
 

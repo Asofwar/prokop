@@ -2,8 +2,8 @@
 set -eo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-CACHE_UC="$ROOT_DIR/forkop/files/usr/lib/subscription/cache.uc"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
+CACHE_UC="$ROOT_DIR/prokop/files/usr/lib/subscription/cache.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK_DIR="$(mktemp -d)"
 
 cleanup() {
@@ -26,14 +26,14 @@ assert_file() {
 }
 
 default_ua="sing-box/1.12.0"
-forkop_ua="Happ/1.1.0"
+prokop_ua="Happ/1.1.0"
 default_candidates="$(printf '%s\n%s' \
-  "$forkop_ua" \
+  "$prokop_ua" \
   "$default_ua")"
 preferred_candidates="$default_candidates"
 
 cache_ucode() {
-  FORKOP_VERSION=1.1.0 ucode -L "$FORKOP_LIB" "$CACHE_UC" "$@"
+  PROKOP_VERSION=1.1.0 ucode -L "$PROKOP_LIB" "$CACHE_UC" "$@"
 }
 
 cache_ucode write-user-agent-candidates "$WORK_DIR/default.txt" "" "" "$default_ua"

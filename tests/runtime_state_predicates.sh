@@ -2,15 +2,15 @@
 set -eo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-STATE_UC="$ROOT_DIR/forkop/files/usr/lib/service/state.uc"
-NFT_UC="$ROOT_DIR/forkop/files/usr/lib/nft/apply.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+STATE_UC="$ROOT_DIR/prokop/files/usr/lib/service/state.uc"
+NFT_UC="$ROOT_DIR/prokop/files/usr/lib/nft/apply.uc"
 UCODE_BIN="$(command -v ucode)"
 WORK_DIR="$(mktemp -d)"
 export ZAPRET_DEFAULT_NFQWS_OPT="--default-zapret"
 export ZAPRET2_DEFAULT_NFQWS2_OPT="--default-zapret2"
 export BYEDPI_DEFAULT_CMD_OPTS="--default-bye"
-export FORKOP_FAKE_INIT_CAPTURE="$WORK_DIR/pending-reload-init.args"
+export PROKOP_FAKE_INIT_CAPTURE="$WORK_DIR/pending-reload-init.args"
 
 cleanup() {
   rm -rf "$WORK_DIR"
@@ -38,11 +38,11 @@ md5_file() {
 }
 
 state_ucode() {
-  ucode -L "$FORKOP_LIB" "$STATE_UC" "$@"
+  ucode -L "$PROKOP_LIB" "$STATE_UC" "$@"
 }
 
 nft_ucode() {
-  ucode -L "$FORKOP_LIB" "$NFT_UC" "$@"
+  ucode -L "$PROKOP_LIB" "$NFT_UC" "$@"
 }
 
 state_ucode list-has-remote-references "local.lst https://example.com/list.txt" >/dev/null ||
@@ -236,17 +236,17 @@ stable_start_checks() {
     REAL_UCODE="$UCODE_BIN" \
     SING_BOX_TEST_PID_FILE="$WORK_DIR/sing-box.pid" \
     SING_BOX_TEST_NETSTAT_FILE="$WORK_DIR/sing-box.netstat" \
-    state_ucode forkop-running forkop ForkopTable 0x00100000; then
+    state_ucode prokop-running prokop ProkopTable 0x00100000; then
     owned_kill TERM "$sing_box_pid" || true
     wait "$sing_box_pid" 2>/dev/null || true
-    fail "stable-start fixture must expose configured Forkop networking"
+    fail "stable-start fixture must expose configured Prokop networking"
   fi
   sed '/127.0.0.42:53/d' "$WORK_DIR/sing-box.netstat" >"$WORK_DIR/sing-box.no-dns.netstat"
   if PATH="$WORK_DIR/stable-start-bin:$PATH" \
     REAL_UCODE="$UCODE_BIN" \
     SING_BOX_TEST_PID_FILE="$WORK_DIR/sing-box.pid" \
     SING_BOX_TEST_NETSTAT_FILE="$WORK_DIR/sing-box.no-dns.netstat" \
-    state_ucode forkop-running forkop ForkopTable 0x00100000 >/dev/null 2>&1; then
+    state_ucode prokop-running prokop ProkopTable 0x00100000 >/dev/null 2>&1; then
     owned_kill TERM "$sing_box_pid" || true
     wait "$sing_box_pid" 2>/dev/null || true
     fail "runtime state must reject sing-box without the DNS inbound"
@@ -255,7 +255,7 @@ stable_start_checks() {
     REAL_UCODE="$UCODE_BIN" \
     SING_BOX_TEST_PID_FILE="$WORK_DIR/sing-box.pid" \
     SING_BOX_TEST_NETSTAT_FILE="$WORK_DIR/sing-box.netstat" \
-    state_ucode wait-forkop-stable-start forkop ForkopTable 0x00100000 2 2; then
+    state_ucode wait-prokop-stable-start prokop ProkopTable 0x00100000 2 2; then
     owned_kill TERM "$sing_box_pid" || true
     wait "$sing_box_pid" 2>/dev/null || true
     fail "stable-start wait must check runtime state after its final sleep"
@@ -263,7 +263,7 @@ stable_start_checks() {
   owned_kill TERM "$sing_box_pid" || true
   wait "$sing_box_pid" 2>/dev/null || true
 }
-export ROOT_DIR WORK_DIR UCODE_BIN FORKOP_LIB STATE_UC
+export ROOT_DIR WORK_DIR UCODE_BIN PROKOP_LIB STATE_UC
 export -f fail state_ucode stable_start_checks
 "${ISOLATE[@]}" bash -eo pipefail -c stable_start_checks
 
@@ -285,17 +285,17 @@ fi
 
 cat >"$WORK_DIR/fake-init" <<'SH'
 #!/bin/sh
-printf '%s\n' "$1" >"$FORKOP_FAKE_INIT_CAPTURE"
+printf '%s\n' "$1" >"$PROKOP_FAKE_INIT_CAPTURE"
 SH
 chmod +x "$WORK_DIR/fake-init"
 state_ucode mark-pending-reload "$PENDING_RELOAD_FILE" "reload_busy"
 state_ucode run-pending-reload-if-requested "$PENDING_RELOAD_FILE" "$WORK_DIR/fake-init"
 for _ in $(seq 1 20); do
-  [ -s "$FORKOP_FAKE_INIT_CAPTURE" ] && break
+  [ -s "$PROKOP_FAKE_INIT_CAPTURE" ] && break
   sleep 0.1
 done
 assert_eq "reload" \
-  "$(cat "$FORKOP_FAKE_INIT_CAPTURE")" \
+  "$(cat "$PROKOP_FAKE_INIT_CAPTURE")" \
   "pending reload should invoke init.d reload"
 [ ! -e "$PENDING_RELOAD_FILE" ] ||
   fail "pending reload should be consumed when worker is started"
@@ -367,9 +367,9 @@ cat >"$WORK_DIR/service-dns-state.json" <<'JSON'
     "server": [ "1.1.1.1#53", "8.8.8.8" ],
     "noresolv": "1",
     "cachesize": "0",
-    "forkop_server": [ "127.0.0.42#53" ],
-    "forkop_noresolv": "0",
-    "forkop_cachesize": "1500"
+    "prokop_server": [ "127.0.0.42#53" ],
+    "prokop_noresolv": "0",
+    "prokop_cachesize": "1500"
   },
   "legacy_dnsmasq_present": true
 }
@@ -393,13 +393,13 @@ cat >"$WORK_DIR/dnsmasq-signature.expected" <<'EOF_DNSMASQ_SIG'
 1
 [dhcp.@dnsmasq[0].cachesize]
 0
-[dhcp.@dnsmasq[0].forkop_server]
+[dhcp.@dnsmasq[0].prokop_server]
 127.0.0.42#53
-[dhcp.@dnsmasq[0].forkop_noresolv]
+[dhcp.@dnsmasq[0].prokop_noresolv]
 0
-[dhcp.@dnsmasq[0].forkop_cachesize]
+[dhcp.@dnsmasq[0].prokop_cachesize]
 1500
-[dhcp.forkop.present]
+[dhcp.prokop.present]
 1
 EOF_DNSMASQ_SIG
 

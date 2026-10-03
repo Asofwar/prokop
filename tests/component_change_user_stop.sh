@@ -1,34 +1,34 @@
 #!/bin/sh
 set -eu
 
-# A component change never starts a Forkop that the user stopped while the
+# A component change never starts a Prokop that the user stopped while the
 # change ran (D-15(a), UC-235).
 #
-# A component action notes whether Forkop runs when it begins and puts that
+# A component action notes whether Prokop runs when it begins and puts that
 # state back once the change is done. Meanwhile the UI and the CLI still
 # offer Stop. Before, every start after the change went by the noted state:
 # the restart after a provider package was installed or removed, the restart
 # and the wait after a sing-box variant change, the start (and its restart
 # fallback) after a failed sing-box change and the restart with the previous
-# Direct Proxy settings each started Forkop again and removed the user's
+# Direct Proxy settings each started Prokop again and removed the user's
 # stop. A restart that the user's stop overtook was also reported as a
 # failed start, which rolled the change back; a start of the new release
 # that it overtook failed the upgrade and kept its recovery set. Now the
-# user's stop holds on every path: nothing starts Forkop again, the change
+# user's stop holds on every path: nothing starts Prokop again, the change
 # stands, and the action does not fail for the start the user cancelled.
-# Forkop's own stop for its restart is no stop by the user: a restart that
+# Prokop's own stop for its restart is no stop by the user: a restart that
 # fails before its start still fails the change.
 #
-# The actions run against the stand-ins of tests/helpers/forkop_upgrade_harness.sh:
-# the provider removal and the Forkop upgrade end to end, the sing-box change
+# The actions run against the stand-ins of tests/helpers/prokop_upgrade_harness.sh:
+# the provider removal and the Prokop upgrade end to end, the sing-box change
 # and Direct Proxy through the production functions in a variant of the
 # harness (the sing-box binaries and UCI of the host are not the router's).
 
 ROOT_DIR="$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT HUP INT TERM
-# shellcheck source=tests/helpers/forkop_upgrade_harness.sh
-. "$ROOT_DIR/tests/helpers/forkop_upgrade_harness.sh"
+# shellcheck source=tests/helpers/prokop_upgrade_harness.sh
+. "$ROOT_DIR/tests/helpers/prokop_upgrade_harness.sh"
 
 fail() {
     printf 'component_change_user_stop: FAIL: %s\n' "$1" >&2
@@ -43,16 +43,16 @@ expect_message() {
     esac
 }
 
-# A start or restart of Forkop after the user's stop (a stop without a
+# A start or restart of Prokop after the user's stop (a stop without a
 # source, or the stop that overtook a start).
 started_after_user_stop() {
-    awk '/^stop source=$/ || /^start skipped: the user stopped Forkop$/ { stopped = 1; next }
+    awk '/^stop source=$/ || /^start skipped: the user stopped Prokop$/ { stopped = 1; next }
         stopped && /^(start|restart) / { found = 1 }
         END { exit found ? 0 : 1 }' "$UPGRADE_STATE/init.log"
 }
 
-# Forkop's own restart after the change: COUNT stops of its own for the
-# change (by=component; the sing-box change stops Forkop before it, too),
+# Prokop's own restart after the change: COUNT stops of its own for the
+# change (by=component; the sing-box change stops Prokop before it, too),
 # then the awaited start.
 restarted_after_change() {
     [ "$(grep -c '^stop source=component$' "$UPGRADE_STATE/init.log")" -eq "$1" ] &&
@@ -60,18 +60,18 @@ restarted_after_change() {
         ! grep -q '^restart' "$UPGRADE_STATE/init.log"
 }
 
-# A failed restart is no stop by the user: Forkop's own stop for it is
+# A failed restart is no stop by the user: Prokop's own stop for it is
 # recorded as such (UC-235).
 expect_own_stop_kept() {
     grep -Fxq 'by=component' "$UPGRADE_STATE/run/stop.requested" 2>/dev/null ||
-        fail "$1: Forkop's own stop for the restart is not recorded as its own"
+        fail "$1: Prokop's own stop for the restart is not recorded as its own"
 }
 
 expect_user_stop_kept() {
-    grep -Eq '^stop source=$|^start skipped: the user stopped Forkop$' "$UPGRADE_STATE/init.log" ||
+    grep -Eq '^stop source=$|^start skipped: the user stopped Prokop$' "$UPGRADE_STATE/init.log" ||
         fail "$1: the user's stop did not happen during the change"
-    ! started_after_user_stop || fail "$1: Forkop was started again after the user stopped it"
-    ! upgrade_harness_running || fail "$1: Forkop runs after the user stopped it"
+    ! started_after_user_stop || fail "$1: Prokop was started again after the user stopped it"
+    ! upgrade_harness_running || fail "$1: Prokop runs after the user stopped it"
     grep -Fxq 'by=user' "$UPGRADE_STATE/run/stop.requested" 2>/dev/null ||
         fail "$1: the user's stop is no longer recorded"
 }
@@ -88,11 +88,11 @@ cat >>"$SCENARIO" <<'UCODE'
 // The user presses Stop (init.d stop without a stop source).
 function user_stop_if_flagged() {
     if (file_exists(HARNESS_STATE + "/flags/user_stop_during_change"))
-        system([ "env", "-u", "FORKOP_STOP_SOURCE", SERVICE_INIT, "stop" ]);
+        system([ "env", "-u", "PROKOP_STOP_SOURCE", SERVICE_INIT, "stop" ]);
 }
 
 // UCI of the router, in memory: Direct Proxy is on at port 2080.
-let harness_uci = { "forkop.settings.direct_proxy_enabled": "1", "forkop.settings.direct_proxy_port": "2080" };
+let harness_uci = { "prokop.settings.direct_proxy_enabled": "1", "prokop.settings.direct_proxy_port": "2080" };
 uci_core = {
     available: function() { return true; },
     get: function(path) { return harness_uci[path]; },
@@ -101,21 +101,21 @@ uci_core = {
     commit: function() { return true; }
 };
 
-capture_forkop_running_state();
+capture_prokop_running_state();
 let scenario = ARGV[0];
 if (scenario == "sing-box-change") {
-    // Forkop's own stop for the change, the new variant is in place, then
-    // Forkop is put back and awaited (install_package_sing_box and the
+    // Prokop's own stop for the change, the new variant is in place, then
+    // Prokop is put back and awaited (install_package_sing_box and the
     // extended variants).
-    if (!stop_forkop_before_sing_box_change())
+    if (!stop_prokop_before_sing_box_change())
         action_fail("sing_box", "install", SING_BOX_CHANGE_STOP_REFUSED);
     user_stop_if_flagged();
-    if (!restart_forkop_after_successful_change() || !wait_forkop_running_after_sing_box_change())
-        action_fail("sing_box", "install", "sing-box was installed, but Forkop did not start cleanly");
+    if (!restart_prokop_after_successful_change() || !wait_prokop_running_after_sing_box_change())
+        action_fail("sing_box", "install", "sing-box was installed, but Prokop did not start cleanly");
     action_success("sing_box", "install", "sing-box has been installed");
 }
 else if (scenario == "sing-box-failure") {
-    if (!stop_forkop_before_sing_box_change())
+    if (!stop_prokop_before_sing_box_change())
         action_fail("sing_box", "install", SING_BOX_CHANGE_STOP_REFUSED);
     user_stop_if_flagged();
     action_fail("sing_box", "install", "sing-box package installation failed; previous sing-box variant was restored");
@@ -151,11 +151,11 @@ for pm in apk opkg; do
     case="$pm zapret removal"
     upgrade_harness_run zapret remove || fail "$case: the removal failed: $(upgrade_harness_message)"
     [ -z "$(upgrade_harness_version zapret)" ] || fail "$case: zapret was not removed"
-    restarted_after_change 1 || fail "$case: Forkop was not restarted after the change"
-    upgrade_harness_running || fail "$case: Forkop does not run after the change"
+    restarted_after_change 1 || fail "$case: Prokop was not restarted after the change"
+    upgrade_harness_running || fail "$case: Prokop does not run after the change"
 
     # The restart's own stop fails (init.d exits before its start), or its
-    # start is deferred past the wait: Forkop did not come back, and nobody
+    # start is deferred past the wait: Prokop did not come back, and nobody
     # stopped it. The removal reports that.
     for flag in stop_status start_deferred; do
         upgrade_harness_reset "$pm"
@@ -163,11 +163,11 @@ for pm in apk opkg; do
         upgrade_harness_flag "$flag"
         case="$pm zapret removal, $flag"
         upgrade_harness_run zapret remove && fail "$case: the removal was reported as done"
-        expect_message "$case" "zapret package has been removed, but Forkop did not start again"
+        expect_message "$case" "zapret package has been removed, but Prokop did not start again"
         expect_own_stop_kept "$case"
     done
 
-    # The user stops Forkop while the package is removed.
+    # The user stops Prokop while the package is removed.
     upgrade_harness_reset "$pm"
     printf '1.0-r1\n' >"$UPGRADE_STATE/pkg/zapret"
     upgrade_harness_flag user_stop_on_remove
@@ -189,35 +189,35 @@ for pm in apk opkg; do
     expect_message "$case" "ByeDPI package has been removed"
     expect_user_stop_kept "$case"
     [ "$(grep -c '^start-and-wait' "$UPGRADE_STATE/initd.log")" -eq 1 ] ||
-        fail "$case: Forkop was started more than once"
+        fail "$case: Prokop was started more than once"
 
-    # --- the Forkop upgrade: the user stops Forkop during the install --------
+    # --- the Prokop upgrade: the user stops Prokop during the install --------
     upgrade_harness_reset "$pm"
     upgrade_harness_flag user_stop_on_install
-    case="$pm Forkop upgrade, user stop"
+    case="$pm Prokop upgrade, user stop"
     upgrade_harness_run || fail "$case: the upgrade failed: $(upgrade_harness_message)"
-    [ "$(upgrade_harness_version forkop)" = 1.1.0-r1 ] || fail "$case: the new release is not installed"
+    [ "$(upgrade_harness_version prokop)" = 1.1.0-r1 ] || fail "$case: the new release is not installed"
     expect_user_stop_kept "$case"
 
     # The user's stop overtakes the start of the new release: the upgrade is
     # done, and its recovery set is no longer needed.
     upgrade_harness_reset "$pm"
     upgrade_harness_flag user_stop_on_start
-    case="$pm Forkop upgrade, user stop overtakes the start"
+    case="$pm Prokop upgrade, user stop overtakes the start"
     upgrade_harness_run || fail "$case: the upgrade failed: $(upgrade_harness_message)"
-    expect_message "$case" "Forkop has been installed"
-    [ "$(upgrade_harness_version forkop)" = 1.1.0-r1 ] || fail "$case: the new release is not installed"
+    expect_message "$case" "Prokop has been installed"
+    [ "$(upgrade_harness_version prokop)" = 1.1.0-r1 ] || fail "$case: the new release is not installed"
     expect_user_stop_kept "$case"
     [ ! -e "$UPGRADE_RECOVERY_DIR" ] || fail "$case: the recovery set of a completed upgrade was kept"
-    [ "$(grep -c '^start-and-wait' "$UPGRADE_STATE/initd.log")" -eq 1 ] || fail "$case: Forkop was started more than once"
+    [ "$(grep -c '^start-and-wait' "$UPGRADE_STATE/initd.log")" -eq 1 ] || fail "$case: Prokop was started more than once"
 done
 
 # --- a sing-box variant change ----------------------------------------------
 upgrade_harness_reset opkg
 case="sing-box change"
 scenario sing-box-change || fail "$case: the change failed: $(upgrade_harness_message)"
-restarted_after_change 2 || fail "$case: Forkop was not stopped for the change and restarted as its own"
-upgrade_harness_running || fail "$case: Forkop does not run after the change"
+restarted_after_change 2 || fail "$case: Prokop was not stopped for the change and restarted as its own"
+upgrade_harness_running || fail "$case: Prokop does not run after the change"
 
 # The restart's start is deferred past the wait: the new variant did not
 # start cleanly, which is a failure (the action rolls the variant back).
@@ -225,11 +225,11 @@ upgrade_harness_reset opkg
 upgrade_harness_flag start_deferred
 case="sing-box change, the restart's start deferred"
 scenario sing-box-change && fail "$case: the change was reported as done"
-expect_message "$case" "Forkop did not start cleanly"
+expect_message "$case" "Prokop did not start cleanly"
 expect_own_stop_kept "$case"
 
-# The user stops Forkop while the variant is replaced: the change completes,
-# Forkop stays stopped, and the standalone sing-box service stays disabled.
+# The user stops Prokop while the variant is replaced: the change completes,
+# Prokop stays stopped, and the standalone sing-box service stays disabled.
 upgrade_harness_reset opkg
 upgrade_harness_flag user_stop_during_change
 case="sing-box change, user stop"
@@ -246,15 +246,15 @@ upgrade_harness_flag user_stop_on_start
 case="sing-box change, user stop overtakes the restart"
 scenario sing-box-change || fail "$case: the change failed: $(upgrade_harness_message)"
 expect_user_stop_kept "$case"
-[ "$(grep -c '^start-and-wait' "$UPGRADE_STATE/initd.log")" -eq 1 ] || fail "$case: Forkop was started more than once"
+[ "$(grep -c '^start-and-wait' "$UPGRADE_STATE/initd.log")" -eq 1 ] || fail "$case: Prokop was started more than once"
 
 # --- a failed sing-box change ------------------------------------------------
 upgrade_harness_reset opkg
 case="failed sing-box change"
 scenario sing-box-failure && fail "$case: the failed change was reported as done"
 grep -Fxq 'start-and-wait start' "$UPGRADE_STATE/initd.log" ||
-    fail "$case: Forkop was not started again after the failed change"
-upgrade_harness_running || fail "$case: Forkop does not run after the failed change"
+    fail "$case: Prokop was not started again after the failed change"
+upgrade_harness_running || fail "$case: Prokop does not run after the failed change"
 
 upgrade_harness_reset opkg
 upgrade_harness_flag user_stop_during_change
@@ -269,16 +269,16 @@ upgrade_harness_flag user_stop_on_start
 case="failed sing-box change, user stop overtakes the start"
 scenario sing-box-failure && fail "$case: the failed change was reported as done"
 expect_user_stop_kept "$case"
-[ "$(grep -c '^start-and-wait' "$UPGRADE_STATE/initd.log")" -eq 1 ] || fail "$case: Forkop was started more than once"
+[ "$(grep -c '^start-and-wait' "$UPGRADE_STATE/initd.log")" -eq 1 ] || fail "$case: Prokop was started more than once"
 
 # --- Direct Proxy: the user's stop overtakes the restart ---------------------
 # The setting is saved and applies at the next start; the restart with the
-# previous settings would have started Forkop again.
+# previous settings would have started Prokop again.
 upgrade_harness_reset opkg
 case="Direct Proxy"
 scenario direct-proxy || fail "$case: the change failed: $(upgrade_harness_message)"
-restarted_after_change 1 || fail "$case: Forkop was not restarted"
-upgrade_harness_running || fail "$case: Forkop does not run after the change"
+restarted_after_change 1 || fail "$case: Prokop was not restarted"
+upgrade_harness_running || fail "$case: Prokop does not run after the change"
 
 # The restart's own stop fails: the setting is not applied, and the action
 # fails (the previous setting is restored).
@@ -295,6 +295,6 @@ case="Direct Proxy, user stop overtakes the restart"
 scenario direct-proxy || fail "$case: the change failed: $(upgrade_harness_message)"
 expect_message "$case" "Direct Proxy has been disabled"
 expect_user_stop_kept "$case"
-[ "$(grep -c '^start-and-wait' "$UPGRADE_STATE/initd.log")" -eq 1 ] || fail "$case: Forkop was started more than once"
+[ "$(grep -c '^start-and-wait' "$UPGRADE_STATE/initd.log")" -eq 1 ] || fail "$case: Prokop was started more than once"
 
 printf 'component_change_user_stop: PASS\n'

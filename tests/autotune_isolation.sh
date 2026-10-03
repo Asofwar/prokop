@@ -6,7 +6,7 @@ set -euo pipefail
 # are stubs (tests/helpers/autotune_stubs.sh); process identity, pidfiles and
 # the run lock are real.
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT/forkop/files/usr/lib"
+LIB="$ROOT/prokop/files/usr/lib"
 # shellcheck source=tests/helpers/autotune_stubs.sh
 . "$ROOT/tests/helpers/autotune_stubs.sh"
 # shellcheck source=tests/helpers/wait.sh
@@ -95,20 +95,20 @@ grep -qx -- '/dev/null' <<<"$args" || fail "curl keeps the body"
 ! grep -qxE -- '-b|-c|-D|-H|-u|--cookie|--cookie-jar|--dump-header|-i|-v' <<<"$args" || fail "curl records headers or cookies"
 grep -qx -- '@192.0.2.53' "$STUB_LOG/dig.args" || fail "dig not pinned to the upstream resolver"
 batch="$(cat "$NFT_STATE/last.nft")"
-grep -qx 'create table inet ForkopAutotuneProbe' <<<"$batch" || fail "table not created atomically"
+grep -qx 'create table inet ProkopAutotuneProbe' <<<"$batch" || fail "table not created atomically"
 grep -q 'type route hook output priority -151; policy accept;' <<<"$batch" || fail "wrong hook/priority"
 [ "$(grep -c '^add rule' <<<"$batch")" = 5 ] || fail "unexpected rule count"
 T='ip daddr 93.184.216.34 tcp dport 443 tcp sport 61000-61031'
 expect_line() { sed -n "$1p" "$NFT_STATE/last.nft" | grep -qxF -- "$2" || fail "batch line $1: $(sed -n "$1p" "$NFT_STATE/last.nft")"; }
-expect_line 2 'add chain inet ForkopAutotuneProbe premark { type route hook output priority -152; policy accept; }'
-expect_line 3 "add rule inet ForkopAutotuneProbe premark $T meta mark 0x00000000 meta mark set 0x08000000 counter accept comment \"probe_mark\""
-expect_line 4 'add chain inet ForkopAutotuneProbe output { type route hook output priority -151; policy accept; }'
-expect_line 5 "add rule inet ForkopAutotuneProbe output $T meta mark 0x48000000 meta mark set 0x08000000 counter return comment \"reinjected\""
-expect_line 6 "add rule inet ForkopAutotuneProbe output $T meta mark 0x40000000 meta mark set 0x08000000 counter return comment \"reinjected_bare\""
-expect_line 7 "add rule inet ForkopAutotuneProbe output $T meta mark 0x08000000 counter queue num 4600 comment \"probe\""
-expect_line 8 "add rule inet ForkopAutotuneProbe output $T counter drop comment \"unexpected\""
+expect_line 2 'add chain inet ProkopAutotuneProbe premark { type route hook output priority -152; policy accept; }'
+expect_line 3 "add rule inet ProkopAutotuneProbe premark $T meta mark 0x00000000 meta mark set 0x08000000 counter accept comment \"probe_mark\""
+expect_line 4 'add chain inet ProkopAutotuneProbe output { type route hook output priority -151; policy accept; }'
+expect_line 5 "add rule inet ProkopAutotuneProbe output $T meta mark 0x48000000 meta mark set 0x08000000 counter return comment \"reinjected\""
+expect_line 6 "add rule inet ProkopAutotuneProbe output $T meta mark 0x40000000 meta mark set 0x08000000 counter return comment \"reinjected_bare\""
+expect_line 7 "add rule inet ProkopAutotuneProbe output $T meta mark 0x08000000 counter queue num 4600 comment \"probe\""
+expect_line 8 "add rule inet ProkopAutotuneProbe output $T counter drop comment \"unexpected\""
 ! grep -q '0x48000000 counter return\|& 0x40000000' <<<"$batch" || fail "an injected packet may leave the probe chain unnormalized"
-grep -qxF "replace rule inet ForkopAutotuneProbe output handle 5 $T meta mark 0x08000000 counter accept comment \"released\"" "$NFT_STATE/release.nft" ||
+grep -qxF "replace rule inet ProkopAutotuneProbe output handle 5 $T meta mark 0x08000000 counter accept comment \"released\"" "$NFT_STATE/release.nft" ||
   fail "the candidate queue is not released to the bypass before nfqws stops"
 grep -qx 'ip -j route get 93.184.216.34 mark 0x08000000 ipproto tcp sport 61000 dport 443 uid 0' "$STUB_LOG/ip.log" || fail "route not resolved with the probe mark and tuple"
 grep -qx 'ip -j route get 93.184.216.34 mark 0 ipproto tcp sport 61000 dport 443 uid 0' "$STUB_LOG/ip.log" || fail "socket route not compared"
@@ -171,28 +171,28 @@ refused() {
   ok "refused: $1"
 }
 reset_state; queue_reset "$PROD_QUEUE_LINE" ' 4600  31337     0 2 65531     0     0        0  1'; refused queue_in_use
-grep -q ' 4600  31337' "$FORKOP_AUTOTUNE_PROC_QUEUE" || fail "foreign queue listener was touched"
+grep -q ' 4600  31337' "$PROKOP_AUTOTUNE_PROC_QUEUE" || fail "foreign queue listener was touched"
 reset_state; printf 'table inet other {\n\tqueue to 4590-4610\n}\n' >> "$NFT_STATE/ruleset"; refused queue_referenced
-reset_state; export FORKOP_AUTOTUNE_QUEUE=4001; refused queue_overlaps_forkop_range
-reset_state; printf '32768\t61010\n' > "$FORKOP_AUTOTUNE_PORT_RANGE_FILE"; refused port_range_overlaps_ephemeral
+reset_state; export PROKOP_AUTOTUNE_QUEUE=4001; refused queue_overlaps_prokop_range
+reset_state; printf '32768\t61010\n' > "$PROKOP_AUTOTUNE_PORT_RANGE_FILE"; refused port_range_overlaps_ephemeral
 reset_state; printf '   0: 0100007F:EE4D 01010101:01BB 01\n' >> "$WORK/proc_net/tcp"; refused port_range_in_use
 reset_state; printf '   0: 0100007F:EE4D 01010101:01BB 06\n' >> "$WORK/proc_net/tcp"; run_probe multisplit 1
 json 'a.equal(r.status, "completed");' "$WORK/out.json"; ok "TIME_WAIT leftovers accepted"
-reset_state; touch "$NFT_STATE/tables/ForkopConfigRestoreDpiGuard"; refused guard_active
-[ -e "$NFT_STATE/tables/ForkopConfigRestoreDpiGuard" ] || fail "guard was removed"
-reset_state; touch "$NFT_STATE/tables/ForkopTableDpiGuard"; refused guard_active
+reset_state; touch "$NFT_STATE/tables/ProkopConfigRestoreDpiGuard"; refused guard_active
+[ -e "$NFT_STATE/tables/ProkopConfigRestoreDpiGuard" ] || fail "guard was removed"
+reset_state; touch "$NFT_STATE/tables/ProkopTableDpiGuard"; refused guard_active
 # The transition guard chain a failed sing-box transition keeps (UC-019).
-reset_state; mkdir -p "$NFT_STATE/chains"; touch "$NFT_STATE/chains/ForkopTable.forkop_transition_guard"
+reset_state; mkdir -p "$NFT_STATE/chains"; touch "$NFT_STATE/chains/ProkopTable.prokop_transition_guard"
 refused guard_active
-rm -f "$NFT_STATE/chains/ForkopTable.forkop_transition_guard"
-reset_state; mkdir -p "$FORKOP_SNAPSHOT_LOCK_DIR"; refused snapshot_operation_in_progress
+rm -f "$NFT_STATE/chains/ProkopTable.prokop_transition_guard"
+reset_state; mkdir -p "$PROKOP_SNAPSHOT_LOCK_DIR"; refused snapshot_operation_in_progress
 
 # --- stale state -----------------------------------------------------------
-reset_state; touch "$NFT_STATE/tables/ForkopAutotuneProbe"; run_probe multisplit 1
+reset_state; touch "$NFT_STATE/tables/ProkopAutotuneProbe"; run_probe multisplit 1
 json 'a.equal(r.status, "completed"); a.ok(r.recovered.includes("table:removed"));' "$WORK/out.json"
 assert_clean "stale table"
 ok "temporary table already exists"
-reset_state; touch "$NFT_STATE/tables/ForkopAutotuneProbe"; export NFT_STUB_FAIL_DELETE=1; run_probe multisplit 1
+reset_state; touch "$NFT_STATE/tables/ProkopAutotuneProbe"; export NFT_STUB_FAIL_DELETE=1; run_probe multisplit 1
 json 'a.equal(r.status, "refused"); a.equal(r.reason, "stale_probe_state");' "$WORK/out.json"
 unset NFT_STUB_FAIL_DELETE; iso cleanup
 json 'a.equal(r.status, "clean"); a.ok(r.actions.includes("table:removed"));' "$WORK/out.json"
@@ -200,11 +200,11 @@ assert_clean "stale table undeletable"
 ok "undeletable stale table blocks the run"
 
 stale_pid() {
-  reset_state; mkdir -p "$FORKOP_AUTOTUNE_STATE_DIR"
+  reset_state; mkdir -p "$PROKOP_AUTOTUNE_STATE_DIR"
   sleep 600 & local victim=$!; FOREIGN_PIDS+=("$victim")
   local ticks; ticks="$(ucode -L "$LIB" -e 'print(require("core.process_identity").start_ticks(ARGV[0]))' "$victim")"
-  printf '%s\n%s\n' "$victim" "${1:-$ticks}" > "$FORKOP_AUTOTUNE_STATE_DIR/nfqws-4600.pid"
-  printf '{"nfqws":[{"queue":4600,"argv":["%s","--qnum=4600","--dpi-desync-fwmark=0x40000000"]}]}\n' "$ZAPRET_NFQWS_BIN" > "$FORKOP_AUTOTUNE_STATE_DIR/active.json"
+  printf '%s\n%s\n' "$victim" "${1:-$ticks}" > "$PROKOP_AUTOTUNE_STATE_DIR/nfqws-4600.pid"
+  printf '{"nfqws":[{"queue":4600,"argv":["%s","--qnum=4600","--dpi-desync-fwmark=0x40000000"]}]}\n' "$ZAPRET_NFQWS_BIN" > "$PROKOP_AUTOTUNE_STATE_DIR/active.json"
   iso cleanup
   json 'a.equal(r.status, "clean"); a.ok(r.actions.includes("pidfile:stale"), r.actions);' "$WORK/out.json"
   kill -0 "$victim" || fail "cleanup killed an unrelated process ($2)"
@@ -213,7 +213,7 @@ stale_pid() {
 }
 stale_pid "" "PID reused by an unrelated process"
 stale_pid 1 "start time mismatch"
-reset_state; mkdir -p "$FORKOP_AUTOTUNE_STATE_DIR"; printf '999999\n1\n' > "$FORKOP_AUTOTUNE_STATE_DIR/nfqws-4600.pid"; iso cleanup
+reset_state; mkdir -p "$PROKOP_AUTOTUNE_STATE_DIR"; printf '999999\n1\n' > "$PROKOP_AUTOTUNE_STATE_DIR/nfqws-4600.pid"; iso cleanup
 json 'a.equal(r.status, "clean"); a.ok(r.actions.includes("pidfile:stale"));' "$WORK/out.json"
 assert_clean "dead pid"; ok "stale pidfile of a dead process"
 reset_state; iso cleanup; json 'a.equal(r.status, "clean"); a.deepEqual(r.actions, []);' "$WORK/out.json"
@@ -223,7 +223,7 @@ iso cleanup; json 'a.equal(r.status, "clean");' "$WORK/out.json"; ok "cleanup id
 # on a run queue, say) is not ours: neither a run nor a cleanup signals it,
 # and a run refuses while it exists (UC-053). Both name it, so the operator
 # knows what to stop.
-queue_released() { ! grep -q "^ $1 " "$FORKOP_AUTOTUNE_PROC_QUEUE"; }
+queue_released() { ! grep -q "^ $1 " "$PROKOP_AUTOTUNE_PROC_QUEUE"; }
 foreign_on_run_queue() {
   local foreign
   reset_state
@@ -237,7 +237,7 @@ foreign_on_run_queue() {
   json "a.equal(r.status, 'refused'); a.equal(r.reason, 'queue_in_use');
     a.deepEqual(r.blocking_nfqws, [{ pid: $foreign, queue: 4600 }]);" "$WORK/out.json"
   process_running "$foreign" || fail "a run signalled a foreign nfqws on its queue ($1)"
-  [ ! -e "$NFT_STATE/tables/ForkopAutotuneProbe" ] || fail "a refused run created its table ($1)"
+  [ ! -e "$NFT_STATE/tables/ProkopAutotuneProbe" ] || fail "a refused run created its table ($1)"
   iso cleanup
   json "a.equal(r.status, 'failed'); a.equal(r.verified.process_absent, false);
     a.deepEqual(r.verified.blocking_nfqws, [{ pid: $foreign, queue: 4600 }]);" "$WORK/out.json"
@@ -252,22 +252,22 @@ foreign_on_run_queue() {
 foreign_on_run_queue bound
 foreign_on_run_queue unbound
 # The run's own nfqws is found by its record even without active.json.
-reset_state; mkdir -p "$FORKOP_AUTOTUNE_STATE_DIR"
+reset_state; mkdir -p "$PROKOP_AUTOTUNE_STATE_DIR"
 ( "$ZAPRET_NFQWS_BIN" --qnum=4600 --dpi-desync-fwmark=0x40000000 --filter-tcp=443 >/dev/null 2>&1 & )
 wait_until 30 nfqws_started "$WORK/bin/nfqws --qnum=4600" || fail "recorded nfqws double did not start"
 ucode -L "$LIB" "$LIB/core/pidfile_cli.uc" record "$(pgrep -f "$WORK/bin/nfqws --qnum=4600")" \
-  "$FORKOP_AUTOTUNE_STATE_DIR/nfqws-4600.pid"
+  "$PROKOP_AUTOTUNE_STATE_DIR/nfqws-4600.pid"
 iso cleanup
 json 'a.equal(r.status, "clean"); a.ok(r.actions.includes("pidfile:stopped"), r.actions);' "$WORK/out.json"
 assert_clean "recorded nfqws, active.json lost"; ok "recorded nfqws stopped without active.json"
 # A candidate whose pidfile cannot be written is stopped at once: unrecorded,
 # nothing would stop it later.
-reset_state; mkdir -p "$FORKOP_AUTOTUNE_STATE_DIR/nfqws-4600.pid"
+reset_state; mkdir -p "$PROKOP_AUTOTUNE_STATE_DIR/nfqws-4600.pid"
 run_probe multisplit 1
 json 'a.equal(r.status, "failed"); a.equal(r.reason, "nfqws_start_failed");' "$WORK/out.json"
 ! pgrep -f "$WORK/bin/nfqws --qnum" >/dev/null || fail "an unrecorded candidate nfqws was left running"
 wait_until 10 queue_released 4600 || fail "the unrecorded candidate kept its queue"
-rmdir "$FORKOP_AUTOTUNE_STATE_DIR/nfqws-4600.pid"; iso cleanup
+rmdir "$PROKOP_AUTOTUNE_STATE_DIR/nfqws-4600.pid"; iso cleanup
 assert_clean "unrecorded candidate"; ok "a candidate that could not be recorded is stopped"
 # A production-like nfqws on another queue is never an orphan.
 ( "$ZAPRET_NFQWS_BIN" --qnum=4000 --dpi-desync-fwmark=0x40000000 >/dev/null 2>&1 & )
@@ -279,7 +279,7 @@ pkill -f "$WORK/bin/nfqws --qnum=4000"; ok "production-queue nfqws ignored by or
 # --- interruption ----------------------------------------------------------
 wait_active() {
   for _ in $(seq 1 50); do
-    [ -e "$NFT_STATE/tables/ForkopAutotuneProbe" ] && pgrep -f "$WORK/bin/nfqws --qnum" >/dev/null && return 0
+    [ -e "$NFT_STATE/tables/ProkopAutotuneProbe" ] && pgrep -f "$WORK/bin/nfqws --qnum" >/dev/null && return 0
     sleep 0.1
   done
   fail "probe run did not become active"
@@ -308,7 +308,7 @@ ucode -L "$LIB" "$LIB/autotune/isolation.uc" run multisplit example.com 3 192.0.
 runner=$!
 wait_active
 kill -KILL "$runner"; wait "$runner" 2>/dev/null || true
-[ -e "$NFT_STATE/tables/ForkopAutotuneProbe" ] || fail "SIGKILL scenario did not leave state"
+[ -e "$NFT_STATE/tables/ProkopAutotuneProbe" ] || fail "SIGKILL scenario did not leave state"
 pkill -f "$WORK/bin/curl" 2>/dev/null || true
 unset CURL_STUB_SLEEP; iso cleanup
 json 'a.equal(r.status, "clean"); a.ok(r.actions.includes("pidfile:stopped")); a.ok(r.actions.includes("table:removed"));' "$WORK/out.json"
@@ -328,7 +328,7 @@ json 'a.equal(r.status, "unsupported"); a.equal(r.reason, "isolation_unavailable
   a.ok(r.contract.violations.some((v) => v.code === "bypass_rule_missing")); a.equal(r.probes.length, 0); a.equal(r.timeline.length, 0);' "$WORK/out.json"
 no_probe_path "bypass missing"
 ok "missing production bypass: refused before creating the probe path"
-reset_state; mutate_ruleset "$NFT_STATE/tables/ForkopTable" remove-bypass; run_probe multisplit 1
+reset_state; mutate_ruleset "$NFT_STATE/tables/ProkopTable" remove-bypass; run_probe multisplit 1
 json 'a.equal(r.status, "unsupported"); a.equal(r.isolation.unavailable, "bypass_contract_changed");' "$WORK/out.json"
 no_probe_path "snapshot contract"
 ok "production table changed after the contract check: refused"
@@ -346,9 +346,9 @@ no_probe_path "ruleset unavailable"
 ok "ruleset unavailable: refused"
 reset_state; run_probe multisplit 1
 json 'a.equal(r.status, "completed"); a.equal(r.contract.ok, true); a.equal(r.contract.bypass.length, 1);
-  a.equal(r.contract.bypass[0].chain, "ForkopTable/mangle_output"); a.equal(r.target.route.dev, "pppoe-wan");
+  a.equal(r.contract.bypass[0].chain, "ProkopTable/mangle_output"); a.equal(r.target.route.dev, "pppoe-wan");
   a.deepEqual(r.isolation.rules.map((x) => x.chain + "/" + x.comment), ["premark/probe_mark", "output/reinjected", "output/reinjected_bare", "output/probe", "output/unexpected"]);
-  a.equal(r.target.route.unmarked.dev, "pppoe-wan"); a.deepEqual(r.contract.sets, { forkop_interfaces: ["br-lan"] });' "$WORK/out.json"
+  a.equal(r.target.route.unmarked.dev, "pppoe-wan"); a.deepEqual(r.contract.sets, { prokop_interfaces: ["br-lan"] });' "$WORK/out.json"
 ok "contract and route recorded for a completed run"
 
 # --- teardown: drain and hold ---------------------------------------------
@@ -356,7 +356,7 @@ reset_state; export CURL_STUB_UNEXPECTED=1; run_probe multisplit 1
 json 'a.equal(r.status, "failed"); a.equal(r.reason, "unexpected_probe_packets"); a.equal(r.cleanup.status, "clean");' "$WORK/out.json"
 assert_clean "unexpected"
 ok "packets outside the modelled paths fail the run"
-reset_state; export CURL_STUB_PENDING=2 FORKOP_AUTOTUNE_DRAIN_TIMEOUT=6; run_probe multisplit 1
+reset_state; export CURL_STUB_PENDING=2 PROKOP_AUTOTUNE_DRAIN_TIMEOUT=6; run_probe multisplit 1
 json 'a.equal(r.status, "completed"); a.equal(r.teardown.drain.settled, true); a.ok(r.teardown.drain.waited_s >= 1);' "$WORK/out.json"
 assert_clean "pending"
 ok "drain waits for queued verdicts before stopping nfqws"
@@ -364,7 +364,7 @@ reset_state; export CURL_STUB_PENDING=forever; run_probe multisplit 1
 json 'a.equal(r.status, "completed"); a.equal(r.teardown.drain.settled, false); a.equal(r.teardown.drain.queue_pending, 1); a.equal(r.cleanup.status, "clean");' "$WORK/out.json"
 assert_clean "pending timeout"
 ok "drain timeout proceeds to the release and teardown"
-reset_state; export CURL_STUB_SOCKET=2 CURL_STUB_CLOSING=2 FORKOP_AUTOTUNE_DRAIN_TIMEOUT=6 FORKOP_AUTOTUNE_HOLD_TIMEOUT=8; run_probe multisplit 1
+reset_state; export CURL_STUB_SOCKET=2 CURL_STUB_CLOSING=2 PROKOP_AUTOTUNE_DRAIN_TIMEOUT=6 PROKOP_AUTOTUNE_HOLD_TIMEOUT=8; run_probe multisplit 1
 json '
 a.equal(r.status, "completed");
 a.equal(r.teardown.drain.settled, true); a.ok(r.teardown.drain.waited_s >= 1, "drain waited for the closing socket");
@@ -379,12 +379,12 @@ assert_clean "hold"
 ok "table kept (drop-only) until the probe sockets are gone, then removed"
 }
 cases_7() {
-reset_state; export CURL_STUB_SOCKET=30 FORKOP_AUTOTUNE_HOLD_TIMEOUT=1; run_probe multisplit 1
+reset_state; export CURL_STUB_SOCKET=30 PROKOP_AUTOTUNE_HOLD_TIMEOUT=1; run_probe multisplit 1
 json 'a.equal(r.status, "failed"); a.equal(r.reason, "isolation_hold_timeout"); a.equal(r.teardown.hold.settled, false);
   a.ok(r.cleanup.actions.includes("hold:timeout")); a.ok(r.cleanup.actions.includes("table:kept")); a.equal(r.cleanup.status, "failed");' "$WORK/out.json"
-[ -e "$NFT_STATE/tables/ForkopAutotuneProbe" ] || fail "table removed while probe sockets are alive"
+[ -e "$NFT_STATE/tables/ProkopAutotuneProbe" ] || fail "table removed while probe sockets are alive"
 [ -e "$NFT_STATE/released" ] || fail "kept table still queues to the stopped candidate"
-[ -e "$FORKOP_AUTOTUNE_STATE_DIR/active.json" ] || fail "recovery data dropped with the table kept"
+[ -e "$PROKOP_AUTOTUNE_STATE_DIR/active.json" ] || fail "recovery data dropped with the table kept"
 iso cleanup; json 'a.equal(r.status, "failed"); a.ok(r.actions.includes("table:kept"));' "$WORK/out.json"
 sed -i '/22D8B85D:01BB/d' "$WORK/proc_net/tcp"
 iso cleanup; json 'a.equal(r.status, "clean"); a.ok(r.actions.includes("probe_rule:already_released")); a.ok(r.actions.includes("table:removed"));' "$WORK/out.json"
@@ -403,7 +403,7 @@ ok "legacy iptables tables loaded: refused"
 reset_state; export NFT_STUB_INTERFACES='["br-lan","pppoe-wan"]'; run_probe multisplit 1
 json 'a.equal(r.status, "unsupported"); a.ok(r.contract.violations.some((v) => v.code === "reply_path_unsafe"));' "$WORK/out.json"
 no_probe_path "reply path"
-ok "replies classified by production (WAN in forkop_interfaces): refused"
+ok "replies classified by production (WAN in prokop_interfaces): refused"
 reset_state; export CURL_STUB_MODE=alternate; run_probe multisplit 3
 json 'a.equal(r.status, "completed"); a.equal(r.summary.successes, 2); a.ok(Math.abs(r.summary.success_rate - 2 / 3) < 1e-9, String(r.summary.success_rate));' "$WORK/out.json"
 ok "partial success rate is fractional"
@@ -417,7 +417,7 @@ unset NFT_STUB_FAIL_REPLACE; iso cleanup; assert_clean "release failure"
 ok "failed release of the candidate queue is reported, cleanup recovers"
 }
 cases_8() {
-reset_state; export CURL_STUB_SOCKET=4 FORKOP_AUTOTUNE_HOLD_TIMEOUT=10
+reset_state; export CURL_STUB_SOCKET=4 PROKOP_AUTOTUNE_HOLD_TIMEOUT=10
 ucode -L "$LIB" "$LIB/autotune/isolation.uc" run multisplit example.com 1 192.0.2.53 > "$WORK/out.json" &
 runner=$!
 for _ in $(seq 1 100); do [ -e "$NFT_STATE/released" ] && break; sleep 0.1; done
@@ -426,9 +426,9 @@ kill -TERM "$runner"; wait "$runner" || true
 json 'a.equal(r.status, "interrupted"); a.equal(r.teardown.hold.settled, true); a.ok(r.teardown.hold.waited_s >= 1, "hold continued after the signal"); a.equal(r.cleanup.status, "clean");' "$WORK/out.json"
 assert_clean "SIGTERM during hold"
 ok "a signal during teardown does not cut the hold short"
-reset_state; mkdir -p "$FORKOP_AUTOTUNE_STATE_DIR"; touch "$NFT_STATE/tables/ForkopAutotuneProbe"
+reset_state; mkdir -p "$PROKOP_AUTOTUNE_STATE_DIR"; touch "$NFT_STATE/tables/ProkopAutotuneProbe"
 echo 93.184.216.34 > "$NFT_STATE/probe.target"; for c in probe_mark reinjected reinjected_bare probe unexpected; do echo "0 0" > "$NFT_STATE/counters/$c"; done
-printf '{broken' > "$FORKOP_AUTOTUNE_STATE_DIR/active.json"; iso cleanup
+printf '{broken' > "$PROKOP_AUTOTUNE_STATE_DIR/active.json"; iso cleanup
 json 'a.equal(r.status, "clean"); a.ok(r.actions.includes("hold:settled"), r.actions); a.ok(r.actions.includes("table:removed"));' "$WORK/out.json"
 assert_clean "malformed active"
 ok "malformed active.json: target recovered from the table itself"
@@ -438,12 +438,12 @@ wait_until 30 nfqws_started "$WORK/nfqws-other" || fail "nfqws double with anoth
 iso cleanup
 pgrep -f "$WORK/nfqws-other" >/dev/null || fail "an nfqws with another binary path was treated as an orphan"
 pkill -f "$WORK/nfqws-other"; ok "orphan scan requires the exact binary path"
-reset_state; export FORKOP_AUTOTUNE_QUEUE=4001
+reset_state; export PROKOP_AUTOTUNE_QUEUE=4001
 for m in cleanup status; do
-  iso "$m"; json 'a.equal(r.status, "refused"); a.equal(r.reason, "queue_overlaps_forkop_range");' "$WORK/out.json"
+  iso "$m"; json 'a.equal(r.status, "refused"); a.equal(r.reason, "queue_overlaps_prokop_range");' "$WORK/out.json"
 done
 ok "a production queue number is refused by every mode"
-unset FORKOP_AUTOTUNE_QUEUE
+unset PROKOP_AUTOTUNE_QUEUE
 cat > "$WORK/ipfrag.uc" <<'UC'
 let c = require("autotune.catalog");
 print(sprintf("%J
@@ -453,8 +453,8 @@ UC
 ucode -L "$LIB" "$WORK/ipfrag.uc" > "$WORK/c.json"
 json 'a.equal(r.state, "unsupported"); a.equal(r.reason, "ipfrag_unsupported_by_isolation");' "$WORK/c.json"
 ok "ipfrag candidates are unsupported by the isolation"
-reset_state; export FORKOP_AUTOTUNE_QUIET_TIMEOUT=0
-printf '%s\n 4300  777     2 2 65531     0     0       10  1\n' "$PROD_QUEUE_LINE" > "$FORKOP_AUTOTUNE_PROC_QUEUE"; run_probe multisplit 1
+reset_state; export PROKOP_AUTOTUNE_QUIET_TIMEOUT=0
+printf '%s\n 4300  777     2 2 65531     0     0       10  1\n' "$PROD_QUEUE_LINE" > "$PROKOP_AUTOTUNE_PROC_QUEUE"; run_probe multisplit 1
 json 'a.equal(r.status, "failed"); a.equal(r.reason, "production_queue_busy"); a.equal(r.teardown.quiet_before_creation.pending, 2);' "$WORK/out.json"
 [ ! -e "$NFT_STATE/last.nft" ] || fail "hooks registered while production packets were queued"
 ok "production packets waiting in an NFQUEUE: no hook registration"
@@ -470,11 +470,11 @@ ok "a routing change during the run is detected"
 # --- production integrity ---------------------------------------------------
 reset_state; export CURL_STUB_TOUCH_PROD=1; run_probe multisplit 1
 json 'a.equal(r.status, "failed"); a.equal(r.reason, "production_changed"); a.equal(r.production.unchanged, false);
-  a.notEqual(r.production.before.forkop_table_hash, r.production.after.forkop_table_hash); a.equal(r.cleanup.status, "clean");' "$WORK/out.json"
+  a.notEqual(r.production.before.prokop_table_hash, r.production.after.prokop_table_hash); a.equal(r.cleanup.status, "clean");' "$WORK/out.json"
 assert_clean "prod mismatch"
 ok "production nft hash mismatch detected"
 reset_state; run_probe multisplit 1
-json 'a.equal(r.status, "completed"); a.equal(r.production.unchanged, true); a.match(r.production.before.forkop_table_hash, /^[0-9a-f]{64}$/);
+json 'a.equal(r.status, "completed"); a.equal(r.production.unchanged, true); a.match(r.production.before.prokop_table_hash, /^[0-9a-f]{64}$/);
   a.deepEqual(r.production.before.queues, ["4000:29676"]); a.equal(r.production.before.zapret_children.length, 1);' "$WORK/out.json"
 ok "live counter changes are not a production change"
 }

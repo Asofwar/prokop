@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# S10 contract of /usr/bin/forkop: the exit code never contradicts what a
+# S10 contract of /usr/bin/prokop: the exit code never contradicts what a
 # command prints (UC-118, UC-119, UC-033), and refusals carry a stable reason.
 #
 # CONTRACT below is the command table of the CLI/RPC inventory (A13/A16 of
 # docs/audit/ULTRACODE_INVENTORIES.md, commit 07872084) as of S10. Every
-# command of command_spec in /usr/bin/forkop has exactly one row, and a row
+# command of command_spec in /usr/bin/prokop has exactly one row, and a row
 # without a command fails the test, so a new command needs its contract here.
 # Classes:
 #   job-start    {success, job_id, message[, reason]}; rc 0 iff success; a
@@ -27,8 +27,8 @@ set -euo pipefail
 # the others name the tests that cover them.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
-CLI="$ROOT_DIR/forkop/files/usr/bin/forkop"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
+CLI="$ROOT_DIR/prokop/files/usr/bin/prokop"
 # shellcheck source=tests/helpers/owned_processes.sh
 . "$ROOT_DIR/tests/helpers/owned_processes.sh"
 WORK="$(mktemp -d)"
@@ -116,7 +116,7 @@ latency_test_status            | job-status    | run
 ui_action_ack                  | job-start     | run
 component_action               | json-success  | run: {success:false, reason} rc 1; covered: components_updater_job
 component_action_async         | job-start     | run
-forkop_releases                | json-success  | run: {success, releases}; rc 1 with a reason when none could be listed
+prokop_releases                | json-success  | run: {success, releases}; rc 1 with a reason when none could be listed
 component_action_status        | job-status    | run
 component_updates_if_due       | rc            | busy is rc 0 (cron); covered: updates_due
 component_update_check_cache   | json          | covered: cli_entrypoint
@@ -158,7 +158,7 @@ REASONS="busy startup_in_progress invalid_input not_found forbidden failure time
 # --- Every command has its contract ----------------------------------------------
 dispatched="$(awk '/function command_spec/,/return commands/' "$CLI" |
   sed -n 's/^[[:space:]]*\([a-z0-9_]*\): \[.*/\1/p' | sort)"
-[ "$(printf '%s\n' "$dispatched" | wc -l)" -ge 90 ] || fail "could not read command_spec of /usr/bin/forkop"
+[ "$(printf '%s\n' "$dispatched" | wc -l)" -ge 90 ] || fail "could not read command_spec of /usr/bin/prokop"
 contracted="$(printf '%s\n' "$CONTRACT" | awk -F'|' 'NF { gsub(/[[:space:]]/, "", $1); print $1 }' | sort)"
 [ -z "$(printf '%s\n' "$contracted" | uniq -d)" ] || fail "a command has two contract rows: $(printf '%s\n' "$contracted" | uniq -d)"
 missing="$(comm -23 <(printf '%s\n' "$dispatched") <(printf '%s\n' "$contracted"))"
@@ -178,56 +178,56 @@ done
 printf '#!/bin/sh\nexit 0\n' >"${WORK:?}/bin/logger"
 # The Clash API controller: the error a stopped sing-box answers with.
 printf '#!/bin/sh\nexit 7\n' >"${WORK:?}/bin/curl"
-printf '#!/bin/sh\nexit 0\n' >"${WORK:?}/init.d-forkop"
-cat >"${WORK:?}/forkop" <<SH
+printf '#!/bin/sh\nexit 0\n' >"${WORK:?}/init.d-prokop"
+cat >"${WORK:?}/prokop" <<SH
 #!/bin/sh
 exec ucode "$CLI" "\$@"
 SH
-chmod +x "${WORK:?}/bin/"* "${WORK:?}/init.d-forkop" "${WORK:?}/forkop"
+chmod +x "${WORK:?}/bin/"* "${WORK:?}/init.d-prokop" "${WORK:?}/prokop"
 
-cat >"${WORK:?}/forkop.conf" <<'UCI'
+cat >"${WORK:?}/prokop.conf" <<'UCI'
 config settings 'settings'
 	option dns_type 'doh'
 	option latency_test_url 'https://latency.example/generate_204'
 UCI
-printf '%s\n' 'forkop.settings=settings' 'forkop.settings.dns_type=doh' >"${WORK:?}/uci-state"
+printf '%s\n' 'prokop.settings=settings' 'prokop.settings.dns_type=doh' >"${WORK:?}/uci-state"
 
 export PATH="${WORK:?}/bin:$PATH"
-export FORKOP_LIB="$LIB"
-export FORKOP_BIN="${WORK:?}/forkop"
-export FORKOP_SERVICE_INIT="${WORK:?}/init.d-forkop"
-export FORKOP_RELOAD_COMMAND="${WORK:?}/init.d-forkop"
-export FORKOP_RUNTIME_STATE_DIR="${WORK:?}/run"
-export FORKOP_UI_STATE_DIR="${WORK:?}/ui-state"
-export FORKOP_UI_SERVICE_ACTION_DIR="${WORK:?}/ui-state/service-actions"
-export FORKOP_UI_SERVICE_ACTION_LOCK_DIR="${WORK:?}/ui-state/service-actions.lock"
-export FORKOP_UI_LATENCY_ACTION_DIR="${WORK:?}/ui-state/latency-actions"
-export FORKOP_UI_COMPONENT_ACTION_DIR="${WORK:?}/component-actions"
-export FORKOP_UI_SUBSCRIPTION_ACTION_DIR="${WORK:?}/subscription-jobs"
-export FORKOP_SUBSCRIPTION_UPDATE_JOB_DIR="${WORK:?}/subscription-jobs"
+export PROKOP_LIB="$LIB"
+export PROKOP_BIN="${WORK:?}/prokop"
+export PROKOP_SERVICE_INIT="${WORK:?}/init.d-prokop"
+export PROKOP_RELOAD_COMMAND="${WORK:?}/init.d-prokop"
+export PROKOP_RUNTIME_STATE_DIR="${WORK:?}/run"
+export PROKOP_UI_STATE_DIR="${WORK:?}/ui-state"
+export PROKOP_UI_SERVICE_ACTION_DIR="${WORK:?}/ui-state/service-actions"
+export PROKOP_UI_SERVICE_ACTION_LOCK_DIR="${WORK:?}/ui-state/service-actions.lock"
+export PROKOP_UI_LATENCY_ACTION_DIR="${WORK:?}/ui-state/latency-actions"
+export PROKOP_UI_COMPONENT_ACTION_DIR="${WORK:?}/component-actions"
+export PROKOP_UI_SUBSCRIPTION_ACTION_DIR="${WORK:?}/subscription-jobs"
+export PROKOP_SUBSCRIPTION_UPDATE_JOB_DIR="${WORK:?}/subscription-jobs"
 export UPDATES_JOB_DIR="${WORK:?}/component-actions"
 export UPDATES_LOCK_DIR="${WORK:?}/run/component-action.lock"
-export FORKOP_LATENCY_TEST_LOCK_DIR="${WORK:?}/run/latency.lock"
-export FORKOP_START_IN_PROGRESS_FILE="${WORK:?}/run/start.in-progress"
-export FORKOP_PENDING_RELOAD_FILE="${WORK:?}/run/reload.pending"
-export FORKOP_RELOAD_LOCK_DIR="${WORK:?}/run/reload.lock"
-export FORKOP_UI_SING_BOX_BIN_PATH="${WORK:?}/no-sing-box"
-export FORKOP_UI_SING_BOX_VARIANT_STATE_FILE="${WORK:?}/sing-box-variant"
-export FORKOP_SYSTEM_INFO_CACHE_FILE="${WORK:?}/run/system-info.json"
-export FORKOP_CONFIG="${WORK:?}/forkop.conf"
-export FORKOP_CONFIG_FILE="${WORK:?}/forkop.conf"
-export FORKOP_UCI_STATE_FILE="${WORK:?}/uci-state"
-export FORKOP_UCI_SAVEDIR="${WORK:?}/uci-save"
-export FORKOP_SNAPSHOT_DIR="${WORK:?}/snapshots"
-export FORKOP_SNAPSHOT_HASH_DIR="${WORK:?}/run/snapshot-hash"
-export FORKOP_SNAPSHOT_LOCK_DIR="${WORK:?}/run/config-snapshot.lock"
-export FORKOP_HISTORY_FILE="${WORK:?}/history.jsonl"
-export FORKOP_OPKG_RECOVERY_DIR="${WORK:?}/opkg-recovery"
-export FORKOP_AUTOTUNE_APPLY_STATE="${WORK:?}/autotune-apply.json"
-export FORKOP_AUTOTUNE_STATE_DIR="${WORK:?}/run/autotune"
-export FORKOP_AUTOTUNE_UCI_SAVEDIR="${WORK:?}/uci-save"
-export FORKOP_CRONTAB_FILE="${WORK:?}/crontab"
-export FORKOP_MANAGED_UPGRADE_SING_BOX_MARKER="${WORK:?}/managed-upgrade"
+export PROKOP_LATENCY_TEST_LOCK_DIR="${WORK:?}/run/latency.lock"
+export PROKOP_START_IN_PROGRESS_FILE="${WORK:?}/run/start.in-progress"
+export PROKOP_PENDING_RELOAD_FILE="${WORK:?}/run/reload.pending"
+export PROKOP_RELOAD_LOCK_DIR="${WORK:?}/run/reload.lock"
+export PROKOP_UI_SING_BOX_BIN_PATH="${WORK:?}/no-sing-box"
+export PROKOP_UI_SING_BOX_VARIANT_STATE_FILE="${WORK:?}/sing-box-variant"
+export PROKOP_SYSTEM_INFO_CACHE_FILE="${WORK:?}/run/system-info.json"
+export PROKOP_CONFIG="${WORK:?}/prokop.conf"
+export PROKOP_CONFIG_FILE="${WORK:?}/prokop.conf"
+export PROKOP_UCI_STATE_FILE="${WORK:?}/uci-state"
+export PROKOP_UCI_SAVEDIR="${WORK:?}/uci-save"
+export PROKOP_SNAPSHOT_DIR="${WORK:?}/snapshots"
+export PROKOP_SNAPSHOT_HASH_DIR="${WORK:?}/run/snapshot-hash"
+export PROKOP_SNAPSHOT_LOCK_DIR="${WORK:?}/run/config-snapshot.lock"
+export PROKOP_HISTORY_FILE="${WORK:?}/history.jsonl"
+export PROKOP_OPKG_RECOVERY_DIR="${WORK:?}/opkg-recovery"
+export PROKOP_AUTOTUNE_APPLY_STATE="${WORK:?}/autotune-apply.json"
+export PROKOP_AUTOTUNE_STATE_DIR="${WORK:?}/run/autotune"
+export PROKOP_AUTOTUNE_UCI_SAVEDIR="${WORK:?}/uci-save"
+export PROKOP_CRONTAB_FILE="${WORK:?}/crontab"
+export PROKOP_MANAGED_UPGRADE_SING_BOX_MARKER="${WORK:?}/managed-upgrade"
 
 # expect COMMAND RC [REASON] -- ARG...: runs the command, checks its class
 # rule, the exit code and, when given, the reason (or clash_api's error).
@@ -309,10 +309,10 @@ state() { ucode -L "$LIB" "$LIB/service/state.uc" "$@"; }
 
 # --- UI service actions ---------------------------------------------------------------
 expect service_action_async 1 invalid_input -- bogus
-mkdir -p "$FORKOP_UI_SERVICE_ACTION_DIR"
+mkdir -p "$PROKOP_UI_SERVICE_ACTION_DIR"
 live_process
 printf '{"success":true,"running":true,"kind":"service","action":"restart","source":"ui","message":"Service action is running","pid":"%s","started_at":%s}\n' \
-  "$LIVE" "$(date +%s)" >"$FORKOP_UI_SERVICE_ACTION_DIR/job-busy.json"
+  "$LIVE" "$(date +%s)" >"$PROKOP_UI_SERVICE_ACTION_DIR/job-busy.json"
 expect service_action_async 1 busy -- reload
 expect service_action_status 0 "" -- job-busy
 expect service_action_status 1 invalid_input -- ../job-busy
@@ -320,23 +320,23 @@ expect service_action_status 1 not_found -- 1700000000_123
 expect ui_action_ack 1 busy -- service job-busy
 expect ui_action_ack 1 invalid_input -- nothing job-busy
 owned_kill TERM "$LIVE" || true
-printf '{"success":false,"running":false,"kind":"service","action":"restart","message":"Service restart did not finish within 120 s and is still pending; see the Forkop log for its outcome","reason":"timeout","exit_code":1,"started_at":1,"updated_at":2}\n' \
-  >"$FORKOP_UI_SERVICE_ACTION_DIR/job-busy.json"
+printf '{"success":false,"running":false,"kind":"service","action":"restart","message":"Service restart did not finish within 120 s and is still pending; see the Prokop log for its outcome","reason":"timeout","exit_code":1,"started_at":1,"updated_at":2}\n' \
+  >"$PROKOP_UI_SERVICE_ACTION_DIR/job-busy.json"
 expect service_action_status 0 timeout -- job-busy
 expect ui_action_ack 0 "" -- service job-busy
 # A command that returned 0 while the runtime then stayed in the wrong state
 # for the whole wait failed: that is no unconfirmed action (timeout), which
 # the page shows as a warning that it may still finish.
 printf '{"success":true,"running":true,"kind":"service","action":"start","source":"ui","message":"Service action is running","started_at":%s}\n' \
-  "$(date +%s)" >"$FORKOP_UI_SERVICE_ACTION_DIR/job-state.json"
+  "$(date +%s)" >"$PROKOP_UI_SERVICE_ACTION_DIR/job-state.json"
 mkdir -p "${WORK:?}/no-runtime"
 for tool in nft ubus ip pidof; do
   printf '#!/bin/sh\nexit 1\n' >"${WORK:?}/no-runtime/$tool"
 done
 chmod +x "${WORK:?}/no-runtime/"*
-PATH="${WORK:?}/no-runtime:$PATH" FORKOP_UI_SERVICE_ACTION_TIMEOUT_SECONDS=1 FORKOP_UI_SERVICE_ACTION_SETTLE_SECONDS=1 \
+PATH="${WORK:?}/no-runtime:$PATH" PROKOP_UI_SERVICE_ACTION_TIMEOUT_SECONDS=1 PROKOP_UI_SERVICE_ACTION_SETTLE_SECONDS=1 \
   ucode -L "$LIB" "$LIB/service/ui.uc" service-action-wait-worker \
-  "$FORKOP_UI_SERVICE_ACTION_DIR/job-state.json" start job-state >/dev/null 2>&1 ||
+  "$PROKOP_UI_SERVICE_ACTION_DIR/job-state.json" start job-state >/dev/null 2>&1 ||
   fail "service-action-wait-worker exited non-zero"
 expect service_action_status 0 failure -- job-state
 grep -Fq 'did not reach expected state' "${WORK:?}/out" || fail "fixture: the start was expected to miss its state: $(cat "${WORK:?}/out")"
@@ -347,25 +347,25 @@ grep -Fq 'did not reach expected state' "${WORK:?}/out" || fail "fixture: the st
 stale_job() {
   printf '{"success":true,"running":true,"kind":"%s","message":"running","started_at":1%s}\n' "$2" "$3" >"$1"
 }
-mkdir -p "$FORKOP_UI_LATENCY_ACTION_DIR" "$UPDATES_JOB_DIR" "$FORKOP_SUBSCRIPTION_UPDATE_JOB_DIR"
-stale_job "$FORKOP_UI_SERVICE_ACTION_DIR/job-stale.json" service ',"action":"restart","source":"ui"'
+mkdir -p "$PROKOP_UI_LATENCY_ACTION_DIR" "$UPDATES_JOB_DIR" "$PROKOP_SUBSCRIPTION_UPDATE_JOB_DIR"
+stale_job "$PROKOP_UI_SERVICE_ACTION_DIR/job-stale.json" service ',"action":"restart","source":"ui"'
 expect service_action_status 0 stale -- job-stale
-stale_job "$FORKOP_UI_LATENCY_ACTION_DIR/job-stale.json" latency ',"latency_type":"proxy","section":"main","tag":"proxy-a"'
+stale_job "$PROKOP_UI_LATENCY_ACTION_DIR/job-stale.json" latency ',"latency_type":"proxy","section":"main","tag":"proxy-a"'
 expect latency_test_status 0 stale -- job-stale
 stale_job "$UPDATES_JOB_DIR/job-stale.json" component ',"component":"sing_box","action":"check_update"'
 expect component_action_status 0 stale -- job-stale
-stale_job "$FORKOP_SUBSCRIPTION_UPDATE_JOB_DIR/job-stale.json" subscription ',"section":"main","source_index":"0"'
+stale_job "$PROKOP_SUBSCRIPTION_UPDATE_JOB_DIR/job-stale.json" subscription ',"section":"main","source_index":"0"'
 expect subscription_update_status 0 stale -- job-stale
-rm -f "$FORKOP_UI_SERVICE_ACTION_DIR/job-stale.json" "$FORKOP_UI_LATENCY_ACTION_DIR/job-stale.json" \
-  "$UPDATES_JOB_DIR/job-stale.json" "$FORKOP_SUBSCRIPTION_UPDATE_JOB_DIR/job-stale.json"
+rm -f "$PROKOP_UI_SERVICE_ACTION_DIR/job-stale.json" "$PROKOP_UI_LATENCY_ACTION_DIR/job-stale.json" \
+  "$UPDATES_JOB_DIR/job-stale.json" "$PROKOP_SUBSCRIPTION_UPDATE_JOB_DIR/job-stale.json"
 
 # --- Latency tests --------------------------------------------------------------------
 expect latency_test_async 1 invalid_input -- bogus main tag 5000
 expect latency_test_async 1 invalid_input -- proxy main "" 5000
 live_process
-state acquire-runtime-dir-lock "$FORKOP_LATENCY_TEST_LOCK_DIR" "$LIVE" || fail "fixture: could not take the latency lock"
+state acquire-runtime-dir-lock "$PROKOP_LATENCY_TEST_LOCK_DIR" "$LIVE" || fail "fixture: could not take the latency lock"
 expect latency_test_async 1 busy -- proxy main proxy-a 5000
-state release-runtime-dir-lock "$FORKOP_LATENCY_TEST_LOCK_DIR" "$LIVE"
+state release-runtime-dir-lock "$PROKOP_LATENCY_TEST_LOCK_DIR" "$LIVE"
 expect latency_test_status 1 invalid_input -- ../x
 expect latency_test_status 1 not_found -- 1700000000_123
 # A latency job against a controller that does not answer fails with the
@@ -395,13 +395,13 @@ expect component_action 1 busy -- sing_box check_update
 # An action outside components/catalog.uc, the one list the UI start and the
 # action itself check, is refused by the UI start before any lock: no refusal
 # as busy that a retry could not help.
-expect component_action_async 1 invalid_input -- forkop remove
+expect component_action_async 1 invalid_input -- prokop remove
 state release-runtime-dir-lock "$UPDATES_LOCK_DIR" "$LIVE"
 [ -z "$(ls -A "$UPDATES_JOB_DIR")" ] || fail "a refused component action started a job"
 expect component_action 1 invalid_input -- bogus nothing
-expect component_action 1 invalid_input -- forkop remove
+expect component_action 1 invalid_input -- prokop remove
 # The release catalog cannot be fetched (curl, wget and uclient-fetch fail).
-expect forkop_releases 1 failure --
+expect prokop_releases 1 failure --
 expect component_action_status 1 invalid_input -- ../x
 expect component_action_status 1 not_found -- 1700000000_123
 
@@ -409,17 +409,17 @@ expect component_action_status 1 not_found -- 1700000000_123
 expect subscription_update_status 1 invalid_input -- ../x
 expect subscription_update_status 1 not_found -- 1700000000_123
 # A UI update that another reload or subscription update kept from its locks
-# (forkop subscription_update exits 2) was refused as busy, not failed.
-cat >"${WORK:?}/busy-forkop" <<'SH'
+# (prokop subscription_update exits 2) was refused as busy, not failed.
+cat >"${WORK:?}/busy-prokop" <<'SH'
 #!/bin/sh
-echo "Forkop reload is already running; the subscription update did not run"
+echo "Prokop reload is already running; the subscription update did not run"
 exit 2
 SH
-chmod +x "${WORK:?}/busy-forkop"
+chmod +x "${WORK:?}/busy-prokop"
 printf '{"success":true,"running":true,"kind":"subscription","message":"running","section":"main","source_index":"0","started_at":%s}\n' \
-  "$(date +%s)" >"$FORKOP_SUBSCRIPTION_UPDATE_JOB_DIR/job-busy.json"
-FORKOP_BIN="${WORK:?}/busy-forkop" ucode -L "$LIB" "$LIB/components/updates.uc" subscription-update-worker \
-  "$FORKOP_SUBSCRIPTION_UPDATE_JOB_DIR/job-busy.json" "${WORK:?}/busy-update.out" main 0 ||
+  "$(date +%s)" >"$PROKOP_SUBSCRIPTION_UPDATE_JOB_DIR/job-busy.json"
+PROKOP_BIN="${WORK:?}/busy-prokop" ucode -L "$LIB" "$LIB/components/updates.uc" subscription-update-worker \
+  "$PROKOP_SUBSCRIPTION_UPDATE_JOB_DIR/job-busy.json" "${WORK:?}/busy-update.out" main 0 ||
   fail "subscription-update-worker exited non-zero"
 expect subscription_update_status 0 busy -- job-busy
 grep -Fq 'did not run' "${WORK:?}/out" || fail "the busy subscription job must say why: $(cat "${WORK:?}/out")"
@@ -433,9 +433,9 @@ expect config_snapshot_diff 0 "" -- "$snapshot"
 expect config_snapshot_diff 1 "" -- missing-snapshot
 expect config_snapshot_delete 1 invalid_input -- ../x
 expect config_snapshot_delete 1 invalid_snapshot -- missing-snapshot
-printf '%s\n' "$snapshot" >"$FORKOP_SNAPSHOT_DIR/last-known-working"
+printf '%s\n' "$snapshot" >"$PROKOP_SNAPSHOT_DIR/last-known-working"
 expect config_snapshot_delete 1 lkg_protected -- "$snapshot"
-rm -f "$FORKOP_SNAPSHOT_DIR/last-known-working"
+rm -f "$PROKOP_SNAPSHOT_DIR/last-known-working"
 expect config_snapshot_delete 0 "" -- "$snapshot"
 
 # --- Read views, validators and inputs ----------------------------------------------------------
@@ -453,7 +453,7 @@ expect route_trace 1 invalid_input -- "bad host!" "" "" ""
 expect connectivity_test 1 invalid_input -- "bad host!" tcp 443
 expect autotune_status 0 "" --
 expect autotune_target 1 invalid_target -- "../x"
-FORKOP_UCI_STATE_FILE="${WORK:?}/missing-state" expect show_sing_box_config 1 "" -- masked
+PROKOP_UCI_STATE_FILE="${WORK:?}/missing-state" expect show_sing_box_config 1 "" -- masked
 grep -Fxq 'Configuration file not found' "${WORK:?}/err" || fail "show_sing_box_config must say why it failed"
 
 printf 'CLI rc <-> JSON contract checks passed\n'

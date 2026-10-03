@@ -8,7 +8,7 @@ set -euo pipefail
 # marked `retain`, so saving a rule from the modal must not erase them.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-node - "$ROOT_DIR/luci-app-forkop/htdocs/luci-static/resources/view/forkop/section.js" <<'NODE'
+node - "$ROOT_DIR/luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js" <<'NODE'
 const fs = require('fs');
 const vm = require('vm');
 const assert = require('assert/strict');
@@ -57,7 +57,7 @@ function saveRule(store, sectionId, state) {
     _: text => text,
     form: { Flag: 'Flag', ListValue: 'ListValue' },
     uci,
-    UCI_PACKAGE: 'forkop',
+    UCI_PACKAGE: 'prokop',
     getOutboundDetourTargetSections: () => [],
     getDefaultOutboundDetourSection: () => '',
     getUciSectionName: item => item,
@@ -76,7 +76,7 @@ function saveRule(store, sectionId, state) {
           depends(key, value) {
             this.dependencies.push(typeof key === 'string' ? { [key]: value } : key);
           },
-          remove(sid) { uci.unset('forkop', sid, this.option); },
+          remove(sid) { uci.unset('prokop', sid, this.option); },
         };
       },
     },

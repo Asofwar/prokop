@@ -2,8 +2,8 @@
 set -eo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-GENERATOR_UC="$FORKOP_LIB/singbox/generator.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+GENERATOR_UC="$PROKOP_LIB/singbox/generator.uc"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT
 fail() { printf 'FAIL: %s\n' "$1" >&2; exit 1; }
@@ -32,7 +32,7 @@ for (let name in [ "russia_inside", "youtube", "porn", "news", "anime" ])
 if (rs.community_kind("not-a-list") != "unknown")
     exit(1);
 UC
-ucode -L "$FORKOP_LIB" "$WORK_DIR/kinds.uc" ||
+ucode -L "$PROKOP_LIB" "$WORK_DIR/kinds.uc" ||
   fail "community lists must be classified as domain-only or mixed"
 
 # 2. Address detection inside a local rule-set file.
@@ -50,7 +50,7 @@ if (!rs.has_ip_matchers(base + "/mixed.json")) exit(1);
 if (rs.has_ip_matchers(base + "/empty-ip.json")) exit(1);
 if (!rs.has_domain_matchers(base + "/mixed.json")) exit(1);
 UC
-ucode -L "$FORKOP_LIB" "$WORK_DIR/matchers.uc" ||
+ucode -L "$PROKOP_LIB" "$WORK_DIR/matchers.uc" ||
   fail "address matchers must be detected inside a rule-set file"
 
 # 3. The generator contract: the split exists and is gated on the runtime flag.

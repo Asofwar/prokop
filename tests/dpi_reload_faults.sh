@@ -2,7 +2,7 @@
 set -eu
 
 ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
-LIFECYCLE="$ROOT_DIR/forkop/files/usr/lib/service/lifecycle.uc"
+LIFECYCLE="$ROOT_DIR/prokop/files/usr/lib/service/lifecycle.uc"
 STATE_DIR="$(mktemp -d)"
 trap 'rm -rf "$STATE_DIR"' EXIT HUP INT TERM
 # shellcheck source=tests/helpers/source_checks.sh
@@ -14,7 +14,7 @@ const ZAPRET_UC = "zapret";
 const ZAPRET2_UC = "zapret2";
 const BYEDPI_UC = "byedpi";
 const NFT_UC = "nft";
-const NFT_TABLE_NAME = "ForkopTable";
+const NFT_TABLE_NAME = "ProkopTable";
 const NFT_FAKEIP_MARK = "0x04000000";
 const RELOAD_STATE_SNAPSHOT_FILE = "reload-state.snapshot";
 let dpi_snapshot_dir = "";

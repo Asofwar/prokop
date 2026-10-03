@@ -30,14 +30,14 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 . "$ROOT_DIR/tests/helpers/source_checks.sh"
 
 WORK_DIR="$(mktemp -d)"
-OWN_MARK="$FORKOP_TEST_OWNER"
+OWN_MARK="$PROKOP_TEST_OWNER"
 # The processes of "another test" carry a mark of their own.
 OTHER_MARK="other-$OWN_MARK"
 OTHERS=()
 OWN=()
 cleanup() {
-  FORKOP_TEST_OWNER="$OTHER_MARK" owned_kill KILL "${OTHERS[@]}" || true
-  FORKOP_TEST_OWNER="$OWN_MARK" owned_kill KILL "${OWN[@]}" || true
+  PROKOP_TEST_OWNER="$OTHER_MARK" owned_kill KILL "${OTHERS[@]}" || true
+  PROKOP_TEST_OWNER="$OWN_MARK" owned_kill KILL "${OWN[@]}" || true
   # The host processes end with the work directory.
   rm -rf "$WORK_DIR"
 }
@@ -68,7 +68,7 @@ running() { process_running "$1"; }
 carries_mark() {
   local environ
   environ="$(tr '\0' '\n' <"/proc/$1/environ")" || return 1
-  case "$environ" in *"FORKOP_TEST_OWNER=$2"*) return 0 ;; esac
+  case "$environ" in *"PROKOP_TEST_OWNER=$2"*) return 0 ;; esac
   return 1
 }
 group_members() { pgrep -g "$1" 2>/dev/null | while read -r pid; do process_running "$pid" && echo "$pid"; done; }
@@ -96,7 +96,7 @@ pair_child() {
 
 # 1. A stored PID that names a host process: neither the process, nor its
 #    children, nor a group of that number is signalled.
-HOST="$(env -u FORKOP_TEST_OWNER sh -c "$ORPHAN" orphan sh -c "$PAIR_LOOP" host "$GATE_LOOP" "$WORK_DIR")"
+HOST="$(env -u PROKOP_TEST_OWNER sh -c "$ORPHAN" orphan sh -c "$PAIR_LOOP" host "$GATE_LOOP" "$WORK_DIR")"
 wait_until 10 process_exec_is "$HOST" "$SH_EXE" || fail "a host process did not start"
 wait_until 10 pair_child "$HOST" || fail "the host process did not start its child"
 HOST_CHILD=$PAIR_CHILD
@@ -111,10 +111,10 @@ running "$HOST_CHILD" || fail "owned_kill_children signalled the child of a host
 # 2. A stored PID that names a process of another test, and a stored number
 #    that is the process group of another test (started under setsid, like
 #    the actors of the lifecycle tests), with its leader alive or gone.
-OTHER="$(FORKOP_TEST_OWNER="$OTHER_MARK" sh -c "$ORPHAN" orphan sh -c "$GATE_LOOP" other "$WORK_DIR")"
-OTHER_GROUP="$(FORKOP_TEST_OWNER="$OTHER_MARK" sh -c "$ORPHAN" orphan \
+OTHER="$(PROKOP_TEST_OWNER="$OTHER_MARK" sh -c "$ORPHAN" orphan sh -c "$GATE_LOOP" other "$WORK_DIR")"
+OTHER_GROUP="$(PROKOP_TEST_OWNER="$OTHER_MARK" sh -c "$ORPHAN" orphan \
   setsid sh -c "$PAIR_LOOP" other-group "$GATE_LOOP" "$WORK_DIR")"
-ORPHANED_GROUP="$(FORKOP_TEST_OWNER="$OTHER_MARK" sh -c "$ORPHAN" orphan setsid sh -c "$ORPHANING" orphaned "$WORK_DIR")"
+ORPHANED_GROUP="$(PROKOP_TEST_OWNER="$OTHER_MARK" sh -c "$ORPHAN" orphan setsid sh -c "$ORPHANING" orphaned "$WORK_DIR")"
 OTHERS+=("$OTHER" "$OTHER_GROUP" "$ORPHANED_GROUP")
 wait_until 10 process_gone "$ORPHANED_GROUP" || fail "the leader of another test's group did not exit"
 wait_until 10 pair_child "$OTHER_GROUP" || fail "another test's process group did not start"
@@ -131,7 +131,7 @@ running "$OTHER_MEMBER" || fail "owned_kill signalled a member of another test's
 [ "$(group_size "$ORPHANED_GROUP")" -ge 1 ] || fail "owned_kill signalled another test's group whose leader had exited"
 # Its own mark reaches all of them, a group whose leader has exited too: the
 # helper keeps what `kill -- -$pid` did for a test's own group.
-FORKOP_TEST_OWNER="$OTHER_MARK" owned_kill KILL "$OTHER" "$OTHER_GROUP" "$ORPHANED_GROUP" ||
+PROKOP_TEST_OWNER="$OTHER_MARK" owned_kill KILL "$OTHER" "$OTHER_GROUP" "$ORPHANED_GROUP" ||
   fail "owned_kill did not signal processes under their own mark"
 wait_until 10 process_gone "$OTHER" || fail "a process was not killed under its own mark"
 wait_until 10 group_empty "$OTHER_GROUP" || fail "a process group was not killed under its own mark"
@@ -157,7 +157,7 @@ owned_kill KILL "$OWN_GROUP" || fail "owned_kill did not signal the test's group
 wait_until 10 group_empty "$OWN_GROUP" || fail "the test's group whose leader had exited survived"
 
 # shellcheck disable=SC2016 # expanded by the parent sh
-PARENT="$(sh -c "$ORPHAN" orphan sh -c 'sleep 300 & env -u FORKOP_TEST_OWNER sh -c "$1" host-child "$2" & wait' \
+PARENT="$(sh -c "$ORPHAN" orphan sh -c 'sleep 300 & env -u PROKOP_TEST_OWNER sh -c "$1" host-child "$2" & wait' \
   parent "$GATE_LOOP" "$WORK_DIR")"
 OWN+=("$PARENT")
 # One child of the test's (sleep) and one of the host's (sh once env has
@@ -210,9 +210,9 @@ zombie_child() {
 wait_until 10 zombie_child || fail "no zombie to check"
 owned_process "$ZOMBIE" && fail "a zombie counts as a process of the test"
 owned_kill KILL "$ZOMBIE_PARENT" || true
-HOSTILE="$(env -u FORKOP_TEST_OWNER "X_FORKOP_TEST_OWNER=$OWN_MARK" "FORKOP_TEST_OWNER_COPY=$OWN_MARK" \
+HOSTILE="$(env -u PROKOP_TEST_OWNER "X_PROKOP_TEST_OWNER=$OWN_MARK" "PROKOP_TEST_OWNER_COPY=$OWN_MARK" \
   sh -c "$ORPHAN" orphan sh -c "$GATE_LOOP" hostile "$WORK_DIR")"
-LONGER="$(FORKOP_TEST_OWNER="${OWN_MARK}x" sh -c "$ORPHAN" orphan sh -c "$GATE_LOOP" longer "$WORK_DIR")"
+LONGER="$(PROKOP_TEST_OWNER="${OWN_MARK}x" sh -c "$ORPHAN" orphan sh -c "$GATE_LOOP" longer "$WORK_DIR")"
 wait_until 10 process_exec_is "$HOSTILE" "$SH_EXE" || fail "the process did not start"
 wait_until 10 process_exec_is "$LONGER" "$SH_EXE" || fail "the process did not start"
 owned_process "$HOSTILE" && fail "a process with the mark in another variable counts as the test's"
@@ -225,7 +225,7 @@ OWN+=("$BEFORE")
 wait_until 10 process_exec_is "$BEFORE" sleep || fail "the test's process did not start"
 (
   owned_processes_init
-  [ "$FORKOP_TEST_OWNER" != "$OWN_MARK" ] || fail "a group of cases kept the test's mark"
+  [ "$PROKOP_TEST_OWNER" != "$OWN_MARK" ] || fail "a group of cases kept the test's mark"
   owned_process "$BEFORE" && fail "a process of the test counts as the group's"
   group_process="$(sh -c "$ORPHAN" orphan sleep 300)"
   printf '%s\n' "$group_process" >"$WORK_DIR/group.pid"
@@ -234,8 +234,8 @@ wait_until 10 process_exec_is "$BEFORE" sleep || fail "the test's process did no
 )
 GROUP_PROCESS="$(cat "$WORK_DIR/group.pid")"
 owned_process "$GROUP_PROCESS" && fail "a process of a group of cases counts as the test's"
-[ "$FORKOP_TEST_OWNER" = "$OWN_MARK" ] || fail "a group of cases changed the test's mark"
-FORKOP_TEST_OWNER="$(tr '\0' '\n' <"/proc/$GROUP_PROCESS/environ" | sed -n 's/^FORKOP_TEST_OWNER=//p')" \
+[ "$PROKOP_TEST_OWNER" = "$OWN_MARK" ] || fail "a group of cases changed the test's mark"
+PROKOP_TEST_OWNER="$(tr '\0' '\n' <"/proc/$GROUP_PROCESS/environ" | sed -n 's/^PROKOP_TEST_OWNER=//p')" \
   owned_kill KILL "$GROUP_PROCESS" || fail "the group's process was not killed under its mark"
 owned_kill KILL "$BEFORE" || fail "the test's process was not killed"
 
@@ -244,11 +244,11 @@ owned_kill KILL "$BEFORE" || fail "the test's process was not killed"
 mkdir "$WORK_DIR/busybox-bin"
 for tool in awk cat date tr; do ln -s "$(command -v "$tool")" "$WORK_DIR/busybox-bin/$tool"; done
 # shellcheck disable=SC2016 # expanded by the sh that loads the helper
-marks="$(env -u FORKOP_TEST_OWNER PATH="$WORK_DIR/busybox-bin" /bin/sh -c '
+marks="$(env -u PROKOP_TEST_OWNER PATH="$WORK_DIR/busybox-bin" /bin/sh -c '
   . "$1" || exit 1
-  first=$FORKOP_TEST_OWNER
+  first=$PROKOP_TEST_OWNER
   owned_processes_init || exit 1
-  printf "%s %s\n" "$first" "$FORKOP_TEST_OWNER"
+  printf "%s %s\n" "$first" "$PROKOP_TEST_OWNER"
 ' sh "$ROOT_DIR/tests/helpers/owned_processes.sh" 2>&1)" || fail "the helper does not load without od and hexdump: $marks"
 case "$marks" in
   *-?*" "*-?*) [ "${marks% *}" != "${marks#* }" ] || fail "the helper set the same mark twice: $marks" ;;
@@ -438,7 +438,7 @@ while IFS= read -r file; do
     # group of a test it started only while its pidfile says that the test
     # still runs, the local lane runner, which signals only jobs of its own
     # shell before it reaps them, and a regression run alone on a router
-    # against the installed Forkop, without this repository.
+    # against the installed Prokop, without this repository.
     tests/helpers/owned_processes.sh | tests/owned_processes.sh | tests/run.sh | tests/runner/run.sh | \
       tests/router/singbox_single_process.sh) continue ;;
   esac

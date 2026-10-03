@@ -2,9 +2,9 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-UPDATES_UC="$FORKOP_LIB/components/updates.uc"
-STATE_UC="$FORKOP_LIB/service/state.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+UPDATES_UC="$PROKOP_LIB/components/updates.uc"
+STATE_UC="$PROKOP_LIB/service/state.uc"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT
 # Keep every runtime path, including the free-space probe, inside WORK_DIR.
@@ -17,20 +17,20 @@ fail() {
 
 mkdir -p "$WORK_DIR/cache" "$WORK_DIR/runtime-rulesets" "$WORK_DIR/bin"
 cat >"$WORK_DIR/uci.state" <<'EOF_UCI'
-forkop.settings=settings
-forkop.settings.update_interval=1d
-forkop.alpha=section
-forkop.alpha.enabled=1
-forkop.alpha.action=connection
-forkop.alpha.remote_domain_lists=https://lists.test/domains.txt
+prokop.settings=settings
+prokop.settings.update_interval=1d
+prokop.alpha=section
+prokop.alpha.enabled=1
+prokop.alpha.action=connection
+prokop.alpha.remote_domain_lists=https://lists.test/domains.txt
 EOF_UCI
 cat >"$WORK_DIR/cache/alpha-remote-domains-ruleset.json" <<'EOF_RULESET'
 {"version":3,"rules":[{"domain_suffix":["old.example"]}]}
 EOF_RULESET
 printf 'cached.example\n' >"$WORK_DIR/cache/source-1"
 
-signature="$(FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state" \
-  ucode -L "$FORKOP_LIB" "$STATE_UC" list-update-signature)"
+signature="$(PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state" \
+  ucode -L "$PROKOP_LIB" "$STATE_UC" list-update-signature)"
 ruleset_md5="$(md5sum "$WORK_DIR/cache/alpha-remote-domains-ruleset.json" | cut -d' ' -f1)"
 source_md5="$(md5sum "$WORK_DIR/cache/source-1" | cut -d' ' -f1)"
 ruleset_size="$(wc -c <"$WORK_DIR/cache/alpha-remote-domains-ruleset.json")"
@@ -42,18 +42,18 @@ printf '2000000000\n' >"$WORK_DIR/cache/last-success.timestamp"
 
 cache_cmd() {
   PATH="$WORK_DIR/bin:$PATH" \
-  FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state" \
-  FORKOP_PERSISTENT_LIST_CACHE_DIR="$WORK_DIR/cache" \
-  FORKOP_RULESET_CACHE_DIR="$WORK_DIR/ruleset-cache" \
-  FORKOP_PERSISTENT_LIST_CACHE_MANIFEST="$WORK_DIR/cache/manifest.json" \
-  FORKOP_LIST_UPDATE_STATE_FILE="$WORK_DIR/cache/last-success.timestamp" \
-  FORKOP_LIST_UPDATE_RUNTIME_STATE_FILE="$WORK_DIR/runtime-last-success.timestamp" \
-  FORKOP_LIST_UPDATE_RUNTIME_SIGNATURE_FILE="$WORK_DIR/runtime-signature" \
-  FORKOP_RUNTIME_LIST_GENERATION_DIR="$WORK_DIR/runtime-generation" \
-  FORKOP_LIST_CACHE_LOG_STATE_FILE="$WORK_DIR/list-cache-log-state" \
+  PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state" \
+  PROKOP_PERSISTENT_LIST_CACHE_DIR="$WORK_DIR/cache" \
+  PROKOP_RULESET_CACHE_DIR="$WORK_DIR/ruleset-cache" \
+  PROKOP_PERSISTENT_LIST_CACHE_MANIFEST="$WORK_DIR/cache/manifest.json" \
+  PROKOP_LIST_UPDATE_STATE_FILE="$WORK_DIR/cache/last-success.timestamp" \
+  PROKOP_LIST_UPDATE_RUNTIME_STATE_FILE="$WORK_DIR/runtime-last-success.timestamp" \
+  PROKOP_LIST_UPDATE_RUNTIME_SIGNATURE_FILE="$WORK_DIR/runtime-signature" \
+  PROKOP_RUNTIME_LIST_GENERATION_DIR="$WORK_DIR/runtime-generation" \
+  PROKOP_LIST_CACHE_LOG_STATE_FILE="$WORK_DIR/list-cache-log-state" \
   TMP_RULESET_FOLDER="$WORK_DIR/runtime-rulesets" \
-  FORKOP_LIB="$FORKOP_LIB" \
-    ucode -L "$FORKOP_LIB" "$UPDATES_UC" "$@"
+  PROKOP_LIB="$PROKOP_LIB" \
+    ucode -L "$PROKOP_LIB" "$UPDATES_UC" "$@"
 }
 
 cat >"$WORK_DIR/bin/curl" <<'EOF_WGET'
@@ -154,7 +154,7 @@ cache_cmd list-cache-valid || fail "interrupted persistent cache swap was not re
 [ ! -e "$WORK_DIR/cache.stage" ] || fail "incomplete staged cache generation was not removed"
 
 # Local routing conditions do not invalidate source cache identity.
-sed -i 's/forkop.alpha.action=connection/forkop.alpha.action=block/' "$WORK_DIR/uci.state"
+sed -i 's/prokop.alpha.action=connection/prokop.alpha.action=block/' "$WORK_DIR/uci.state"
 cache_cmd list-cache-valid || fail "local action change invalidated list cache"
 
 cache_cmd apply-list-cache || fail "cached sources could not be applied offline"
@@ -196,28 +196,28 @@ grep -Eq '^rejected-(size|md5)-source-1$' "$WORK_DIR/list-cache-log-state" ||
 
 # Flash quota applies only to persistence. With 10 MiB available and an
 # 8 MiB reserve, a 1 MiB generation fits while a 3 MiB generation does not.
-FORKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=10485760 \
-FORKOP_PERSISTENT_LIST_CACHE_MAX_BYTES=8388608 \
-FORKOP_PERSISTENT_LIST_CACHE_MIN_FREE_BYTES=8388608 \
+PROKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=10485760 \
+PROKOP_PERSISTENT_LIST_CACHE_MAX_BYTES=8388608 \
+PROKOP_PERSISTENT_LIST_CACHE_MIN_FREE_BYTES=8388608 \
   cache_cmd list-cache-capacity 1048576 ||
   fail "a cache generation fitting above the flash reserve was rejected"
-if FORKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=10485760 \
-  FORKOP_PERSISTENT_LIST_CACHE_MAX_BYTES=8388608 \
-  FORKOP_PERSISTENT_LIST_CACHE_MIN_FREE_BYTES=8388608 \
+if PROKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=10485760 \
+  PROKOP_PERSISTENT_LIST_CACHE_MAX_BYTES=8388608 \
+  PROKOP_PERSISTENT_LIST_CACHE_MIN_FREE_BYTES=8388608 \
     cache_cmd list-cache-capacity 3145728; then
   fail "a cache generation crossing the flash reserve was accepted"
 fi
-if FORKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=33554432 \
-  FORKOP_PERSISTENT_LIST_CACHE_MAX_BYTES=8388608 \
-  FORKOP_PERSISTENT_LIST_CACHE_MIN_FREE_BYTES=8388608 \
+if PROKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=33554432 \
+  PROKOP_PERSISTENT_LIST_CACHE_MAX_BYTES=8388608 \
+  PROKOP_PERSISTENT_LIST_CACHE_MIN_FREE_BYTES=8388608 \
     cache_cmd list-cache-capacity 9437184; then
   fail "a cache generation exceeding the absolute quota was accepted"
 fi
 mkdir -p "$WORK_DIR/ruleset-cache"
 dd if=/dev/zero of="$WORK_DIR/ruleset-cache/existing.srs" bs=1024 count=7680 2>/dev/null
-if FORKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=33554432 \
-  FORKOP_PERSISTENT_LIST_CACHE_MAX_BYTES=8388608 \
-  FORKOP_PERSISTENT_LIST_CACHE_MIN_FREE_BYTES=8388608 \
+if PROKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=33554432 \
+  PROKOP_PERSISTENT_LIST_CACHE_MAX_BYTES=8388608 \
+  PROKOP_PERSISTENT_LIST_CACHE_MIN_FREE_BYTES=8388608 \
     cache_cmd list-cache-capacity 1048576; then
   fail "combined list and remote rule-set caches exceeded the shared quota"
 fi
@@ -229,15 +229,15 @@ cat >"$WORK_DIR/quota-runtime/alpha-lists-ruleset.json" <<'EOF_QUOTA_RULESET'
 {"version":3,"rules":[{"domain_suffix":["first.example"]}]}
 EOF_QUOTA_RULESET
 quota_cmd() {
-  FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state" \
-  FORKOP_PERSISTENT_LIST_CACHE_DIR="$WORK_DIR/quota-cache" \
-  FORKOP_RULESET_CACHE_DIR="$WORK_DIR/quota-ruleset-cache" \
-  FORKOP_PERSISTENT_LIST_CACHE_MANIFEST="$WORK_DIR/quota-cache/manifest.json" \
-  FORKOP_LIST_UPDATE_STATE_FILE="$WORK_DIR/quota-cache/last-success.timestamp" \
-  FORKOP_RUNTIME_LIST_GENERATION_DIR="$WORK_DIR/quota-generation" \
+  PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state" \
+  PROKOP_PERSISTENT_LIST_CACHE_DIR="$WORK_DIR/quota-cache" \
+  PROKOP_RULESET_CACHE_DIR="$WORK_DIR/quota-ruleset-cache" \
+  PROKOP_PERSISTENT_LIST_CACHE_MANIFEST="$WORK_DIR/quota-cache/manifest.json" \
+  PROKOP_LIST_UPDATE_STATE_FILE="$WORK_DIR/quota-cache/last-success.timestamp" \
+  PROKOP_RUNTIME_LIST_GENERATION_DIR="$WORK_DIR/quota-generation" \
   TMP_RULESET_FOLDER="$WORK_DIR/quota-runtime" \
-  FORKOP_LIB="$FORKOP_LIB" \
-    ucode -L "$FORKOP_LIB" "$UPDATES_UC" "$@"
+  PROKOP_LIB="$PROKOP_LIB" \
+    ucode -L "$PROKOP_LIB" "$UPDATES_UC" "$@"
 }
 # Inline/custom rule sets share this directory but are not downloaded list data.
 printf 'not a downloaded list\n' >"$WORK_DIR/quota-runtime/inline-custom.json"
@@ -250,14 +250,14 @@ quota_cmd commit-runtime-list-generation || fail "an identical runtime generatio
   fail "an identical validated generation replaced the active generation"
 [ ! -e "$WORK_DIR/quota-generation.stage" ] ||
   fail "an identical validated generation retained staging material"
-FORKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=33554432 quota_cmd persist-list-cache 100 ||
+PROKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=33554432 quota_cmd persist-list-cache 100 ||
   fail "a fitting persistent cache was not committed"
 first_md5="$(md5sum "$WORK_DIR/quota-cache/alpha-lists-ruleset.json" | cut -d' ' -f1)"
 cat >"$WORK_DIR/quota-runtime/alpha-lists-ruleset.json" <<'EOF_QUOTA_CHANGED'
 {"version":3,"rules":[{"domain_suffix":["second.example"]}]}
 EOF_QUOTA_CHANGED
 quota_cmd commit-runtime-list-generation || fail "changed runtime generation was not committed"
-if FORKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=8390000 quota_cmd persist-list-cache 200; then
+if PROKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=8390000 quota_cmd persist-list-cache 200; then
   fail "persistent cache committed despite violating the free-space reserve"
 fi
 [ "$first_md5" = "$(md5sum "$WORK_DIR/quota-cache/alpha-lists-ruleset.json" | cut -d' ' -f1)" ] ||
@@ -270,7 +270,7 @@ fi
 # test hook; production leaves it unset.
 runtime_before="$(md5sum "$WORK_DIR/quota-generation/manifest.json" | cut -d' ' -f1)"
 for phase in runtime-stage-create runtime-file-write runtime-manifest-write runtime-validate runtime-rename-previous; do
-  if FORKOP_LIST_GENERATION_FAIL_PHASE="$phase" quota_cmd commit-runtime-list-generation; then
+  if PROKOP_LIST_GENERATION_FAIL_PHASE="$phase" quota_cmd commit-runtime-list-generation; then
     fail "runtime failure injection '$phase' unexpectedly committed"
   fi
   quota_cmd runtime-list-cache-active || fail "runtime active generation was lost after '$phase'"
@@ -288,20 +288,20 @@ printf 'Filesystem 1024-blocks Used Available Capacity Mounted on\n'
 printf 'tmpfs 8192 4096 4096 50%% /tmp\n'
 EOF_DF
 chmod +x "$WORK_DIR/df-bin/df"
-if PATH="$WORK_DIR/df-bin:$PATH" FORKOP_LIST_DOWNLOAD_MIN_FREE_BYTES=4194304 \
+if PATH="$WORK_DIR/df-bin:$PATH" PROKOP_LIST_DOWNLOAD_MIN_FREE_BYTES=4194304 \
   quota_cmd commit-runtime-list-generation; then
   fail "runtime generation committed despite insufficient /tmp capacity"
 fi
 quota_cmd runtime-list-cache-active || fail "runtime active generation was lost after /tmp capacity failure"
 [ "$runtime_before" = "$(md5sum "$WORK_DIR/quota-generation/manifest.json" | cut -d' ' -f1)" ] ||
   fail "/tmp capacity failure changed active generation"
-PATH="$WORK_DIR/df-bin:$PATH" FORKOP_LIST_DOWNLOAD_MIN_FREE_BYTES=0 \
+PATH="$WORK_DIR/df-bin:$PATH" PROKOP_LIST_DOWNLOAD_MIN_FREE_BYTES=0 \
   quota_cmd commit-runtime-list-generation ||
   fail "runtime generation was rejected although simulated /tmp capacity is sufficient"
 
 # Interruption after active -> .previous recovers the old complete generation;
 # the fully written but unpublished stage is discarded.
-if FORKOP_LIST_GENERATION_FAIL_PHASE=runtime-rename-active quota_cmd commit-runtime-list-generation; then
+if PROKOP_LIST_GENERATION_FAIL_PHASE=runtime-rename-active quota_cmd commit-runtime-list-generation; then
   fail "runtime rename-active injection unexpectedly committed"
 fi
 [ -d "$WORK_DIR/quota-generation.previous" ] || fail "runtime previous was not retained after interrupted swap"
@@ -310,7 +310,7 @@ quota_cmd runtime-list-cache-active || fail "runtime interrupted swap did not re
   fail "runtime interrupted swap selected unpublished stage"
 [ ! -e "$WORK_DIR/quota-generation.stage" ] || fail "runtime interrupted swap retained stage"
 
-FORKOP_LIST_GENERATION_FAIL_PHASE=runtime-cleanup-previous quota_cmd commit-runtime-list-generation ||
+PROKOP_LIST_GENERATION_FAIL_PHASE=runtime-cleanup-previous quota_cmd commit-runtime-list-generation ||
   fail "runtime cleanup interruption did not publish complete active generation"
 [ -d "$WORK_DIR/quota-generation.previous" ] || fail "runtime cleanup injection did not retain previous"
 quota_cmd runtime-list-cache-active || fail "runtime generation was invalid after cleanup interruption"
@@ -319,7 +319,7 @@ quota_cmd runtime-list-cache-active || fail "runtime generation was invalid afte
 # Persistent failures before publication never replace the known-good flash
 # cache. An interruption between the two renames is recovered from .previous.
 for phase in persistent-stage-create persistent-file-write persistent-manifest-write persistent-validate persistent-rename-previous; do
-  if FORKOP_LIST_GENERATION_FAIL_PHASE="$phase" FORKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=33554432 quota_cmd persist-list-cache 300; then
+  if PROKOP_LIST_GENERATION_FAIL_PHASE="$phase" PROKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=33554432 quota_cmd persist-list-cache 300; then
     fail "persistent failure injection '$phase' unexpectedly committed"
   fi
   quota_cmd list-cache-valid || fail "persistent LKG was lost after '$phase'"
@@ -328,7 +328,7 @@ for phase in persistent-stage-create persistent-file-write persistent-manifest-w
   [ ! -e "$WORK_DIR/quota-cache.stage" ] || fail "persistent failure '$phase' retained stage"
 done
 
-if FORKOP_LIST_GENERATION_FAIL_PHASE=persistent-rename-active FORKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=33554432 quota_cmd persist-list-cache 400; then
+if PROKOP_LIST_GENERATION_FAIL_PHASE=persistent-rename-active PROKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=33554432 quota_cmd persist-list-cache 400; then
   fail "persistent rename-active injection unexpectedly committed"
 fi
 [ -d "$WORK_DIR/quota-cache.previous" ] || fail "persistent previous was not retained after interrupted swap"
@@ -337,7 +337,7 @@ quota_cmd list-cache-valid || fail "persistent interrupted swap did not recover 
   fail "persistent interrupted swap selected unpublished stage"
 [ ! -e "$WORK_DIR/quota-cache.stage" ] || fail "persistent interrupted swap retained stage"
 
-FORKOP_LIST_GENERATION_FAIL_PHASE=persistent-cleanup-previous FORKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=33554432 quota_cmd persist-list-cache 500 ||
+PROKOP_LIST_GENERATION_FAIL_PHASE=persistent-cleanup-previous PROKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=33554432 quota_cmd persist-list-cache 500 ||
   fail "persistent cleanup interruption did not publish complete cache"
 [ -d "$WORK_DIR/quota-cache.previous" ] || fail "persistent cleanup injection did not retain previous"
 quota_cmd list-cache-valid || fail "persistent generation was invalid after cleanup interruption"
@@ -361,19 +361,19 @@ printf '123\n' >"$WORK_DIR/legacy-v1/last-success.timestamp"
 cp -a "$WORK_DIR/legacy-v1" "$WORK_DIR/legacy-v1-invalid"
 legacy_cmd() {
   PATH="$WORK_DIR/bin:$PATH" \
-  FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state" \
-  FORKOP_PERSISTENT_LIST_CACHE_DIR="$WORK_DIR/legacy-v1" \
-  FORKOP_RULESET_CACHE_DIR="$WORK_DIR/legacy-ruleset-cache" \
-  FORKOP_PERSISTENT_LIST_CACHE_MANIFEST="$WORK_DIR/legacy-v1/manifest.json" \
-  FORKOP_LIST_UPDATE_STATE_FILE="$WORK_DIR/legacy-v1/last-success.timestamp" \
-  FORKOP_LIST_UPDATE_RUNTIME_STATE_FILE="$WORK_DIR/legacy-runtime-last-success.timestamp" \
-  FORKOP_LIST_UPDATE_RUNTIME_SIGNATURE_FILE="$WORK_DIR/legacy-runtime-signature" \
-  FORKOP_RUNTIME_LIST_GENERATION_DIR="$WORK_DIR/legacy-runtime-generation" \
-  FORKOP_LIST_CACHE_LOG_STATE_FILE="$WORK_DIR/legacy-log-state" \
-  FORKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=33554432 \
+  PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state" \
+  PROKOP_PERSISTENT_LIST_CACHE_DIR="$WORK_DIR/legacy-v1" \
+  PROKOP_RULESET_CACHE_DIR="$WORK_DIR/legacy-ruleset-cache" \
+  PROKOP_PERSISTENT_LIST_CACHE_MANIFEST="$WORK_DIR/legacy-v1/manifest.json" \
+  PROKOP_LIST_UPDATE_STATE_FILE="$WORK_DIR/legacy-v1/last-success.timestamp" \
+  PROKOP_LIST_UPDATE_RUNTIME_STATE_FILE="$WORK_DIR/legacy-runtime-last-success.timestamp" \
+  PROKOP_LIST_UPDATE_RUNTIME_SIGNATURE_FILE="$WORK_DIR/legacy-runtime-signature" \
+  PROKOP_RUNTIME_LIST_GENERATION_DIR="$WORK_DIR/legacy-runtime-generation" \
+  PROKOP_LIST_CACHE_LOG_STATE_FILE="$WORK_DIR/legacy-log-state" \
+  PROKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=33554432 \
   TMP_RULESET_FOLDER="$WORK_DIR/legacy-runtime-rulesets" \
-  FORKOP_LIB="$FORKOP_LIB" \
-    ucode -L "$FORKOP_LIB" "$UPDATES_UC" "$@"
+  PROKOP_LIB="$PROKOP_LIB" \
+    ucode -L "$PROKOP_LIB" "$UPDATES_UC" "$@"
 }
 : >"$LIST_CACHE_WGET_LOG"
 legacy_cmd list-cache-valid || fail "valid 1.3.8 v1 cache was not migrated to v2"
@@ -390,13 +390,13 @@ legacy_cmd list-cache-valid || fail "migrated v2 cache was not idempotently vali
 
 printf 'corrupt\n' >>"$WORK_DIR/legacy-v1-invalid/source-1"
 legacy_bad_cmd() {
-  FORKOP_PERSISTENT_LIST_CACHE_DIR="$WORK_DIR/legacy-v1-invalid" \
-  FORKOP_PERSISTENT_LIST_CACHE_MANIFEST="$WORK_DIR/legacy-v1-invalid/manifest.json" \
-  FORKOP_LIST_UPDATE_STATE_FILE="$WORK_DIR/legacy-v1-invalid/last-success.timestamp" \
-  FORKOP_RUNTIME_LIST_GENERATION_DIR="$WORK_DIR/legacy-invalid-runtime-generation" \
-  FORKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=33554432 \
-  FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state" TMP_RULESET_FOLDER="$WORK_DIR/legacy-invalid-rulesets" \
-  FORKOP_LIB="$FORKOP_LIB" ucode -L "$FORKOP_LIB" "$UPDATES_UC" "$@"
+  PROKOP_PERSISTENT_LIST_CACHE_DIR="$WORK_DIR/legacy-v1-invalid" \
+  PROKOP_PERSISTENT_LIST_CACHE_MANIFEST="$WORK_DIR/legacy-v1-invalid/manifest.json" \
+  PROKOP_LIST_UPDATE_STATE_FILE="$WORK_DIR/legacy-v1-invalid/last-success.timestamp" \
+  PROKOP_RUNTIME_LIST_GENERATION_DIR="$WORK_DIR/legacy-invalid-runtime-generation" \
+  PROKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=33554432 \
+  PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state" TMP_RULESET_FOLDER="$WORK_DIR/legacy-invalid-rulesets" \
+  PROKOP_LIB="$PROKOP_LIB" ucode -L "$PROKOP_LIB" "$UPDATES_UC" "$@"
 }
 legacy_bad_cmd list-cache-valid && fail "corrupt v1 cache was migrated"
 [ "$(ucode -e 'print(json(require("fs").readfile(ARGV[0])).format);' "$WORK_DIR/legacy-v1-invalid/manifest.json")" = 1 ] ||
@@ -420,8 +420,8 @@ done
 printf 'proxied.example\n' >"$output"
 EOF_PROXY_WGET
 chmod +x "$WORK_DIR/bin/curl"
-PATH="$WORK_DIR/bin:$PATH" FORKOP_LIST_DOWNLOAD_MIN_FREE_BYTES=0 FORKOP_LIB="$FORKOP_LIB" \
-  ucode -L "$FORKOP_LIB" "$UPDATES_UC" download-list-file \
+PATH="$WORK_DIR/bin:$PATH" PROKOP_LIST_DOWNLOAD_MIN_FREE_BYTES=0 PROKOP_LIB="$PROKOP_LIB" \
+  ucode -L "$PROKOP_LIB" "$UPDATES_UC" download-list-file \
     https://lists.test/proxied "$WORK_DIR/proxied" 127.0.0.1:18080 ||
   fail "temporary-space limit wrapper dropped the service proxy environment"
 grep -Fq 'proxied.example' "$WORK_DIR/proxied" || fail "proxied fixture download was not written"

@@ -8,11 +8,11 @@ set -euo pipefail
 # destination, and the answer names that address (source_scope).
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT HUP INT TERM
 
-cat >"$WORK/forkop" <<'EOF'
+cat >"$WORK/prokop" <<'EOF'
 config settings 'settings'
 config section 'youtube'
 	option action 'zapret'
@@ -46,7 +46,7 @@ print(sprintf("%J\n", {
     ipv6_only: ask([ rule("youtube-out", { source_ip_cidr: [ "fd00::/8" ] }) ], assume)
 }));
 EOF
-FORKOP_LIB="$LIB" ucode -L "$LIB" "$WORK/cases.uc" "$WORK/forkop" >"$WORK/out.json"
+PROKOP_LIB="$LIB" ucode -L "$LIB" "$WORK/cases.uc" "$WORK/prokop" >"$WORK/out.json"
 
 node - "$WORK/out.json" <<'NODE'
 const assert = require('node:assert/strict');

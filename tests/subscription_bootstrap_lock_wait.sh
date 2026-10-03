@@ -37,8 +37,8 @@ set -euo pipefail
 # double that runs under the retry's production command line.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-REAL_LIB="$ROOT_DIR/forkop/files/usr/lib"
-REAL_INITD="$ROOT_DIR/forkop/files/etc/init.d/forkop"
+REAL_LIB="$ROOT_DIR/prokop/files/usr/lib"
+REAL_INITD="$ROOT_DIR/prokop/files/etc/init.d/prokop"
 WORK_DIR="$(mktemp -d)"
 # shellcheck source=tests/helpers/wait.sh
 . "$ROOT_DIR/tests/helpers/wait.sh"
@@ -64,29 +64,29 @@ fail() {
 }
 
 FAKE_LIB="$WORK_DIR/fake-lib"
-mkdir -p "$WORK_DIR/bin" "$WORK_DIR/run/forkop" "$WORK_DIR/tmp" "$FAKE_LIB"
+mkdir -p "$WORK_DIR/bin" "$WORK_DIR/run/prokop" "$WORK_DIR/tmp" "$FAKE_LIB"
 cat >"$WORK_DIR/uci.state" <<'EOF'
-forkop.settings=settings
-forkop.settings.yacd_secret_key=0123456789abcdef
-forkop.settings.dont_touch_dhcp=1
+prokop.settings=settings
+prokop.settings.yacd_secret_key=0123456789abcdef
+prokop.settings.dont_touch_dhcp=1
 EOF
 
 export TMPDIR="$WORK_DIR/tmp"
 export PATH="$WORK_DIR/bin:$PATH"
 export TEST_WORK="$WORK_DIR" EVENTS REAL_LIB REAL_INITD FAKE_LIB
-export RELOAD_LOCK="$WORK_DIR/run/forkop.reload.lock"
-export SUB_LOCK="$WORK_DIR/run/forkop/subscription-update.lock"
-export WORKER_PID_FILE="$WORK_DIR/run/forkop/subscription-bootstrap-retry.pid"
-export FORKOP_LIB="$FAKE_LIB"
-export FORKOP_RELOAD_LOCK_DIR="$RELOAD_LOCK"
-export FORKOP_SUBSCRIPTION_UPDATE_LOCK_DIR="$SUB_LOCK"
-export FORKOP_SUBSCRIPTION_BOOTSTRAP_RETRY_PID_FILE="$WORKER_PID_FILE"
-export FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/run/forkop"
-export FORKOP_PENDING_RELOAD_FILE="$WORK_DIR/run/forkop/reload.pending"
-export FORKOP_SERVICE_INIT="$WORK_DIR/bin/no-init"
-export FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
-export FORKOP_SING_BOX_RELOAD_PID_TIMEOUT=2
-export FORKOP_UI_ACTION_TRACKED=1
+export RELOAD_LOCK="$WORK_DIR/run/prokop.reload.lock"
+export SUB_LOCK="$WORK_DIR/run/prokop/subscription-update.lock"
+export WORKER_PID_FILE="$WORK_DIR/run/prokop/subscription-bootstrap-retry.pid"
+export PROKOP_LIB="$FAKE_LIB"
+export PROKOP_RELOAD_LOCK_DIR="$RELOAD_LOCK"
+export PROKOP_SUBSCRIPTION_UPDATE_LOCK_DIR="$SUB_LOCK"
+export PROKOP_SUBSCRIPTION_BOOTSTRAP_RETRY_PID_FILE="$WORKER_PID_FILE"
+export PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/run/prokop"
+export PROKOP_PENDING_RELOAD_FILE="$WORK_DIR/run/prokop/reload.pending"
+export PROKOP_SERVICE_INIT="$WORK_DIR/bin/no-init"
+export PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
+export PROKOP_SING_BOX_RELOAD_PID_TIMEOUT=2
+export PROKOP_UI_ACTION_TRACKED=1
 
 # Nothing here may reach the host's syslog, firewall or init scripts.
 printf '#!/bin/sh\nprintf "%%s\\n" "$*" >>"$TEST_WORK/syslog"\n' >"$WORK_DIR/bin/logger"
@@ -94,16 +94,16 @@ printf '#!/bin/sh\nexit 0\n' >"$WORK_DIR/bin/no-init"
 printf '#!/bin/sh\nexit 1\n' >"$WORK_DIR/bin/nft"
 printf '#!/bin/sh\nexit 0\n' >"$WORK_DIR/bin/ip"
 
-# `forkop start` behind initd.uc, which holds reload.lock around it: the real
+# `prokop start` behind initd.uc, which holds reload.lock around it: the real
 # lifecycle start on the doubles.
-cat >"$WORK_DIR/bin/forkop" <<'SH'
+cat >"$WORK_DIR/bin/prokop" <<'SH'
 #!/bin/sh
 ev() { printf '%s\n' "$1" >>"$EVENTS"; }
 case "$1" in
   start)
     ev "S start begin"
     status=0
-    FORKOP_LIB="$FAKE_LIB" ACTOR=S ucode -L "$REAL_LIB" "$REAL_LIB/service/lifecycle.uc" start >"$TEST_WORK/lifecycle.out" 2>&1 || status=$?
+    PROKOP_LIB="$FAKE_LIB" ACTOR=S ucode -L "$REAL_LIB" "$REAL_LIB/service/lifecycle.uc" start >"$TEST_WORK/lifecycle.out" 2>&1 || status=$?
     ev "S start end $status"
     exit "$status"
     ;;
@@ -121,8 +121,8 @@ shift
 initscript="$REAL_INITD"
 # shellcheck disable=SC1090
 . "$REAL_INITD"
-FORKOP_LIB="$REAL_LIB"
-FORKOP_INITD_UC="$REAL_LIB/service/initd.uc"
+PROKOP_LIB="$REAL_LIB"
+PROKOP_INITD_UC="$REAL_LIB/service/initd.uc"
 case "$action" in
   start) start_service "$@" ;;
   *) exit 64 ;;
@@ -204,8 +204,8 @@ if (name == "subscription/cache.uc") {
         exit(0);
     }
 }
-if (name == "service/state.uc" && (mode == "has-list-update-sources" || mode == "forkop-stably-running" ||
-    mode == "sing-box-process-conflict" || mode == "forkop-running"))
+if (name == "service/state.uc" && (mode == "has-list-update-sources" || mode == "prokop-stably-running" ||
+    mode == "sing-box-process-conflict" || mode == "prokop-running"))
     exit(1);
 exit(0);
 UC
@@ -245,7 +245,7 @@ finish() {
 
 reset_case() {
   : >"$EVENTS"
-  rm -f "$WORK_DIR/worker.gate" "$WORKER_PID_FILE" "$FORKOP_PENDING_RELOAD_FILE"
+  rm -f "$WORK_DIR/worker.gate" "$WORKER_PID_FILE" "$PROKOP_PENDING_RELOAD_FILE"
   [ ! -e "$RELOAD_LOCK" ] || fail "reload.lock leaked from the previous case"
   [ ! -e "$SUB_LOCK" ] || fail "subscription-update.lock leaked from the previous case"
 }
@@ -368,8 +368,8 @@ locks_released "start during the retry"
 reset_case
 launch_worker 0
 launch_update
-start_actor env FORKOP_BIN="$WORK_DIR/bin/forkop" FORKOP_START_RUNTIME_LOCK_WAIT_SECONDS=20 \
-  FORKOP_START_RETRY_DELAY_SECONDS=300 sh "$WORK_DIR/rc" start manual >"$WORK_DIR/start.out" 2>&1
+start_actor env PROKOP_BIN="$WORK_DIR/bin/prokop" PROKOP_START_RUNTIME_LOCK_WAIT_SECONDS=20 \
+  PROKOP_START_RETRY_DELAY_SECONDS=300 sh "$WORK_DIR/rc" start manual >"$WORK_DIR/start.out" 2>&1
 START_PID="$LAST_ACTOR"
 finish "start during the update's wait" "$START_PID" "$WORK_DIR/start.out"
 has_event '^S start end 0$' || fail "the start did not run its backend: $(cat "$WORK_DIR/start.out") $(cat "$WORK_DIR/lifecycle.out")"
@@ -389,7 +389,7 @@ locks_released "start and forced update behind the retry"
 #    reload held it and queueing a reload that brings no new subscription.
 reset_case
 launch_worker 0
-launch_update SUB_FREED_AT_DEADLINE=1 FORKOP_SUBSCRIPTION_LOCK_WAIT_SECONDS=3
+launch_update SUB_FREED_AT_DEADLINE=1 PROKOP_SUBSCRIPTION_LOCK_WAIT_SECONDS=3
 wait_until 60 process_gone "$UPDATE_PID" || fail "the forced update did not finish (deadlock on reload.lock/subscription-update.lock)"
 status=0
 wait "$UPDATE_PID" || status=$?

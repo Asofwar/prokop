@@ -9,7 +9,7 @@
 // output chain re-routes a packet with its new mark only when the chain ends
 // in accept (nf_route_table_hook4 -> ip_route_me_harder); a queue verdict
 // does not re-route (the saved mark equals the current one on reinjection).
-// Only the parts of the nft JSON rule language used by Forkop output chains
+// Only the parts of the nft JSON rule language used by Prokop output chains
 // are implemented; anything else throws so a new construct cannot silently
 // pass.
 
@@ -45,7 +45,7 @@ function elementMatches(value, element) {
 
 class Production {
   // listing: nftables array; sets: { name: [element, ...] } (missing sets are empty)
-  constructor(listing, sets, table = 'ForkopTable') {
+  constructor(listing, sets, table = 'ProkopTable') {
     this.table = table;
     this.sets = sets || {};
     this.chains = new Map();
@@ -190,7 +190,7 @@ function runProbeChain(chain, pkt, path) {
     if (!tupleMatches(rule, pkt)) continue;
     if (rule.mark !== null && rule.mark !== pkt.mark) continue;
     if (rule.set_mark !== null) pkt.mark = rule.set_mark >>> 0;
-    path.push({ chain: `ForkopAutotuneProbe/${chain.name}`, comment: rule.comment, action: rule.verdict, mark: pkt.mark });
+    path.push({ chain: `ProkopAutotuneProbe/${chain.name}`, comment: rule.comment, action: rule.verdict, mark: pkt.mark });
     if (rule.verdict === null) continue;
     if (rule.verdict === 'queue') return { verdict: 'queue', queue: rule.queue };
     if (rule.verdict === 'drop') return { verdict: 'drop' };

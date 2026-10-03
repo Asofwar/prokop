@@ -3,7 +3,7 @@ set -euo pipefail
 
 # UC-117: the CLI diagnostics print their progress and verdict lines on a
 # terminal. nolog() used to test `test -t 1` with stdout redirected to
-# /dev/null, so it never printed: `forkop show_config` on a terminal failed
+# /dev/null, so it never printed: `prokop show_config` on a terminal failed
 # without a word. Off a terminal (the UI, scripts, pipes) stdout stays the bare
 # result the callers parse, and a failure says why on stderr, which the UI
 # shows when the command fails.
@@ -11,8 +11,8 @@ set -euo pipefail
 # The terminal is a pty from util-linux script(1).
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-RUNTIME_UC="$FORKOP_LIB/diagnostics/runtime.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+RUNTIME_UC="$PROKOP_LIB/diagnostics/runtime.uc"
 WORK="$(mktemp -d)"
 cleanup() {
   [ -n "${KEEP_WORK:-}" ] || rm -rf "${WORK:?}"
@@ -28,17 +28,17 @@ command -v ucode >/dev/null || fail "ucode is required"
 command -v node >/dev/null || fail "node is required"
 command -v script >/dev/null || fail "script (util-linux) is required for the pty"
 
-export FORKOP_LIB
+export PROKOP_LIB
 uci_state="${WORK:?}/uci-state"
-printf '%s\n' 'forkop.settings=settings' "forkop.settings.config_path=${WORK:?}/missing-sing-box.json" >"$uci_state"
-export FORKOP_UCI_STATE_FILE="$uci_state"
+printf '%s\n' 'prokop.settings=settings' "prokop.settings.config_path=${WORK:?}/missing-sing-box.json" >"$uci_state"
+export PROKOP_UCI_STATE_FILE="$uci_state"
 
 # on_tty OUT MODE ARG...: runs a runtime.uc mode on a pty; its output (the
 # pty merges stdout and stderr) goes to OUT, its exit code to RC.
 on_tty() {
   local out="$1" command=""
   shift
-  printf -v command '%q ' ucode -L "$FORKOP_LIB" "$RUNTIME_UC" "$@"
+  printf -v command '%q ' ucode -L "$PROKOP_LIB" "$RUNTIME_UC" "$@"
   set +e
   script -qec "$command" /dev/null </dev/null >"$out" 2>&1
   RC=$?
@@ -48,7 +48,7 @@ on_tty() {
 # off_tty MODE ARG...: runs it with stdout and stderr in files.
 off_tty() {
   set +e
-  ucode -L "$FORKOP_LIB" "$RUNTIME_UC" "$@" >"${WORK:?}/stdout" 2>"${WORK:?}/stderr" </dev/null
+  ucode -L "$PROKOP_LIB" "$RUNTIME_UC" "$@" >"${WORK:?}/stdout" 2>"${WORK:?}/stderr" </dev/null
   RC=$?
   set -e
 }
@@ -58,7 +58,7 @@ has_escape() {
 }
 
 # --- A failure says why ------------------------------------------------------
-export FORKOP_CONFIG="${WORK:?}/missing-forkop"
+export PROKOP_CONFIG="${WORK:?}/missing-prokop"
 
 on_tty "${WORK:?}/tty" show-config masked
 [ "$RC" -eq 1 ] || fail "show_config without a configuration must fail on a terminal (rc $RC)"
@@ -99,8 +99,8 @@ grep -Fxq 'Error: logread command not found' "${WORK:?}/stderr" ||
   fail "check_logs without logread must say why on stderr off a terminal"
 
 # --- A success keeps stdout to its result off a terminal -------------------------
-printf '%s\n' "config settings 'settings'" "	option dns_type 'doh'" >"${WORK:?}/forkop"
-export FORKOP_CONFIG="${WORK:?}/forkop"
+printf '%s\n' "config settings 'settings'" "	option dns_type 'doh'" >"${WORK:?}/prokop"
+export PROKOP_CONFIG="${WORK:?}/prokop"
 off_tty show-config masked
 [ "$RC" -eq 0 ] || fail "show_config must succeed (rc $RC)"
 grep -Fq "option dns_type 'doh'" "${WORK:?}/stdout" || fail "show_config must print the configuration"
@@ -108,7 +108,7 @@ has_escape "${WORK:?}/stdout" && fail "show_config off a terminal must not print
 [ ! -s "${WORK:?}/stderr" ] || fail "a successful show_config must keep stderr empty"
 
 printf '%s\n' '{"log":{"level":"warn"},"outbounds":[]}' >"${WORK:?}/sing-box.json"
-printf '%s\n' 'forkop.settings=settings' "forkop.settings.config_path=${WORK:?}/sing-box.json" >"$uci_state"
+printf '%s\n' 'prokop.settings=settings' "prokop.settings.config_path=${WORK:?}/sing-box.json" >"$uci_state"
 off_tty show-sing-box-config masked
 [ "$RC" -eq 0 ] || fail "show_sing_box_config must succeed (rc $RC)"
 node -e 'JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"))' "${WORK:?}/stdout" ||
@@ -131,17 +131,17 @@ elif unshare --user --map-root-user --mount --net --propagation private sh -c 'm
   ISOLATE=(unshare --user --map-root-user --mount --net --propagation private)
 fi
 [ "${#ISOLATE[@]}" -gt 0 ] && ISOLATE+=(sh -c 'mount -t tmpfs tmpfs /run && exec "$@"' sh)
-printf '%s\n' 'forkop.settings=settings' "forkop.settings.config_path=${WORK:?}/missing-sing-box.json" >"$uci_state"
+printf '%s\n' 'prokop.settings=settings' "prokop.settings.config_path=${WORK:?}/missing-sing-box.json" >"$uci_state"
 set +e
-FORKOP_CONFIG="${WORK:?}/missing-forkop" FORKOP_RUNTIME_STATE_DIR="${WORK:?}/run" \
-  FORKOP_SYSTEM_INFO_CACHE_FILE="${WORK:?}/system-info.json" \
-  "${ISOLATE[@]}" timeout 60 ucode -L "$FORKOP_LIB" "$RUNTIME_UC" global-check masked \
+PROKOP_CONFIG="${WORK:?}/missing-prokop" PROKOP_RUNTIME_STATE_DIR="${WORK:?}/run" \
+  PROKOP_SYSTEM_INFO_CACHE_FILE="${WORK:?}/system-info.json" \
+  "${ISOLATE[@]}" timeout 60 ucode -L "$PROKOP_LIB" "$RUNTIME_UC" global-check masked \
   >"${WORK:?}/stdout" 2>"${WORK:?}/stderr" </dev/null
 RC=$?
 set -e
 [ "$RC" -eq 0 ] || fail "global_check must finish (rc $RC): $(cat "${WORK:?}/stderr")"
-grep -A1 -F 'Forkop config' "${WORK:?}/stdout" | grep -Fxq 'Configuration file not found' ||
-  fail "global_check must say in place that the Forkop configuration is missing: $(cat "${WORK:?}/stdout")"
+grep -A1 -F 'Prokop config' "${WORK:?}/stdout" | grep -Fxq 'Configuration file not found' ||
+  fail "global_check must say in place that the Prokop configuration is missing: $(cat "${WORK:?}/stdout")"
 grep -Fq 'Configuration file not found' "${WORK:?}/stderr" &&
   fail "global_check must not detach a failure to stderr"
 

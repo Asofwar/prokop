@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 # The kill-switch is rendered from the configuration in UCI (rules and their
-# order) and the set contents of the live ForkopTable. Both must describe
+# order) and the set contents of the live ProkopTable. Both must describe
 # the same runtime (UC-209): while committed changes wait for a reload, or a
 # reload left the rebuild of the table to the list worker's list-content
 # reload, a refresh would put the new rule order on top of the old sets and
-# could reject traffic the running Forkop deliberately sends directly. Such a
+# could reject traffic the running Prokop deliberately sends directly. Such a
 # refresh keeps the previous protection instead.
 set -eo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-KS_UC="$FORKOP_LIB/killswitch/runtime.uc"
-STATE_UC="$FORKOP_LIB/service/state.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+KS_UC="$PROKOP_LIB/killswitch/runtime.uc"
+STATE_UC="$PROKOP_LIB/service/state.uc"
 WORK_DIR="$(mktemp -d)"
 
 cleanup() {
@@ -33,13 +33,13 @@ cat >"$WORK_DIR/bin/nft" <<'NFT'
 #!/usr/bin/env bash
 case "$1 $2" in
   "list table")
-    [ "$4" = "ForkopTable" ] && exit 0
-    [ "$4" = "ForkopKillswitch" ] && { [ -e "$WORK_DIR/ks-present" ]; exit $?; }
+    [ "$4" = "ProkopTable" ] && exit 0
+    [ "$4" = "ProkopKillswitch" ] && { [ -e "$WORK_DIR/ks-present" ]; exit $?; }
     exit 1 ;;
   "list set")
-    printf 'table inet ForkopTable {\n\tset %s {\n\t\ttype ipv4_addr\n' "$5"
+    printf 'table inet ProkopTable {\n\tset %s {\n\t\ttype ipv4_addr\n' "$5"
     case "$5" in
-      forkop_rule_byp_subnets|forkop_rule_vpn_subnets) printf '\t\telements = { 93.184.216.0/24 }\n' ;;
+      prokop_rule_byp_subnets|prokop_rule_vpn_subnets) printf '\t\telements = { 93.184.216.0/24 }\n' ;;
     esac
     printf '\t}\n}\n'
     exit 0 ;;
@@ -55,19 +55,19 @@ chmod 0755 "$WORK_DIR/bin/"*
 
 export WORK_DIR
 export PATH="$WORK_DIR/bin:$PATH"
-export FORKOP_LIB
-export FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
-export FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/run"
-export FORKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/reload.lock"
-export FORKOP_RELOAD_STATE_FILE="$WORK_DIR/run/reload-state"
+export PROKOP_LIB
+export PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
+export PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/run"
+export PROKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/reload.lock"
+export PROKOP_RELOAD_STATE_FILE="$WORK_DIR/run/reload-state"
 export KILLSWITCH_STATE_DIR="$WORK_DIR/ks"
-export KILLSWITCH_NFT_INCLUDE="$WORK_DIR/nftables.d/90-forkop-killswitch.nft"
+export KILLSWITCH_NFT_INCLUDE="$WORK_DIR/nftables.d/90-prokop-killswitch.nft"
 export KILLSWITCH_CACHE_DIR="$WORK_DIR/cache"
 export DNSMASQ_INIT="$WORK_DIR/bin/dnsmasq-init"
-export FORKOP_KILLSWITCH_INIT="$WORK_DIR/bin/killswitch-init"
+export PROKOP_KILLSWITCH_INIT="$WORK_DIR/bin/killswitch-init"
 
 POLICY="$KILLSWITCH_STATE_DIR/policy.nft"
-LISTS_PENDING="$FORKOP_RUNTIME_STATE_DIR/runtime-lists.pending"
+LISTS_PENDING="$PROKOP_RUNTIME_STATE_DIR/runtime-lists.pending"
 
 cat >"$WORK_DIR/sing-box.json" <<'JSON'
 { "outbounds": [ { "type": "direct", "tag": "vpn-out" } ],
@@ -77,32 +77,32 @@ JSON
 write_config() {
   local first="$1" second="$2"
   {
-    printf 'forkop.settings=settings\n'
-    printf 'forkop.settings.source_network_interfaces=br-lan\n'
-    printf 'forkop.settings.config_path=%s\n' "$WORK_DIR/sing-box.json"
+    printf 'prokop.settings=settings\n'
+    printf 'prokop.settings.source_network_interfaces=br-lan\n'
+    printf 'prokop.settings.config_path=%s\n' "$WORK_DIR/sing-box.json"
     for name in "$first" "$second"; do
-      printf 'forkop.%s=section\n' "$name"
+      printf 'prokop.%s=section\n' "$name"
       if [ "$name" = byp ]; then
-        printf 'forkop.byp.action=bypass\n'
+        printf 'prokop.byp.action=bypass\n'
       else
-        printf 'forkop.vpn.action=connection\nforkop.vpn.kill_switch=1\n'
+        printf 'prokop.vpn.action=connection\nprokop.vpn.kill_switch=1\n'
       fi
-      printf 'forkop.%s.ip_cidr=93.184.216.0/24\n' "$name"
+      printf 'prokop.%s.ip_cidr=93.184.216.0/24\n' "$name"
     done
     printf 'dhcp.@dnsmasq[0]=dnsmasq\ndhcp.@dnsmasq[0].server=127.0.0.42\n'
-  } >"$FORKOP_UCI_STATE_FILE"
+  } >"$PROKOP_UCI_STATE_FILE"
 }
 # What a successful start or reload records for the configuration it applied.
 applied() {
-  ucode -L "$FORKOP_LIB" "$STATE_UC" capture-reload-state "$FORKOP_RELOAD_STATE_FILE" 1 ||
+  ucode -L "$PROKOP_LIB" "$STATE_UC" capture-reload-state "$PROKOP_RELOAD_STATE_FILE" 1 ||
     fail "the reload state could not be captured"
 }
-ks() { ucode -L "$FORKOP_LIB" "$KS_UC" "$@"; }
+ks() { ucode -L "$PROKOP_LIB" "$KS_UC" "$@"; }
 bypass_first() {
-  awk '/forkop_rule_byp_subnets return/ { b = NR } /ks_vpn jump ks_reject/ { v = NR } END { exit !(b && v && b < v) }' "$POLICY"
+  awk '/prokop_rule_byp_subnets return/ { b = NR } /ks_vpn jump ks_reject/ { v = NR } END { exit !(b && v && b < v) }' "$POLICY"
 }
 
-# The running Forkop applied: bypass first.
+# The running Prokop applied: bypass first.
 write_config byp vpn
 applied
 ks sync manual || fail "a manual refresh of the applied configuration failed"
@@ -112,11 +112,11 @@ cp "$POLICY" "$WORK_DIR/policy.applied"
 # Committed, not reloaded yet: the protected section moved first.
 write_config vpn byp
 if ks sync manual 2>"$WORK_DIR/sync.err"; then
-  fail "a manual refresh must not render a configuration the running Forkop has not applied"
+  fail "a manual refresh must not render a configuration the running Prokop has not applied"
 fi
 cmp -s "$POLICY" "$WORK_DIR/policy.applied" || fail "the previous protection must stay while the configuration waits for a reload"
 grep -Fq 'reload' "$KILLSWITCH_STATE_DIR/state.json" || fail "the kept protection must say that a reload is needed"
-grep -Fq 'reload Forkop first' "$WORK_DIR/sync.err" || fail "a manual refresh must tell why it kept the protection"
+grep -Fq 'reload Prokop first' "$WORK_DIR/sync.err" || fail "a manual refresh must tell why it kept the protection"
 printf 'ok - a manual refresh waits for the reload of a committed change\n'
 
 # The reload applied it.
@@ -148,7 +148,7 @@ printf 'ok - no refresh runs before the list generation is applied\n'
 
 # Without a protected section the protection is lifted whatever the runtime.
 write_config byp vpn
-sed -i '/kill_switch/d' "$FORKOP_UCI_STATE_FILE"
+sed -i '/kill_switch/d' "$PROKOP_UCI_STATE_FILE"
 printf 'reload\n' >"$LISTS_PENDING"
 ks sync manual || fail "lifting the protection must not wait for the runtime"
 [ ! -e "$POLICY" ] || fail "the protection must be lifted"

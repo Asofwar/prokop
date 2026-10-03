@@ -21,23 +21,23 @@ trap cleanup_test EXIT
 fail() { printf 'FAIL: %s\n' "$1" >&2; exit 1; }
 
 mkdir -p "$WORK/bin" "$WORK/nft/tables" "$WORK/nft/counters" "$WORK/proc_net" "$WORK/child-pid" "$WORK/log"
-export FORKOP_LIB="$LIB"
-export FORKOP_AUTOTUNE_STATE_DIR="$WORK/run/autotune"
-export FORKOP_AUTOTUNE_PROC_QUEUE="$WORK/nfnetlink_queue"
-export FORKOP_AUTOTUNE_PORT_RANGE_FILE="$WORK/ip_local_port_range"
-export FORKOP_AUTOTUNE_PROC_NET="$WORK/proc_net"
-export FORKOP_AUTOTUNE_CURL="$WORK/bin/curl"
-export FORKOP_AUTOTUNE_DIG="$WORK/bin/dig"
-export FORKOP_AUTOTUNE_LISTENER_WAIT=2
-export FORKOP_AUTOTUNE_DRAIN_TIMEOUT=1 FORKOP_AUTOTUNE_HOLD_TIMEOUT=2
+export PROKOP_LIB="$LIB"
+export PROKOP_AUTOTUNE_STATE_DIR="$WORK/run/autotune"
+export PROKOP_AUTOTUNE_PROC_QUEUE="$WORK/nfnetlink_queue"
+export PROKOP_AUTOTUNE_PORT_RANGE_FILE="$WORK/ip_local_port_range"
+export PROKOP_AUTOTUNE_PROC_NET="$WORK/proc_net"
+export PROKOP_AUTOTUNE_CURL="$WORK/bin/curl"
+export PROKOP_AUTOTUNE_DIG="$WORK/bin/dig"
+export PROKOP_AUTOTUNE_LISTENER_WAIT=2
+export PROKOP_AUTOTUNE_DRAIN_TIMEOUT=1 PROKOP_AUTOTUNE_HOLD_TIMEOUT=2
 FIXTURES="$ROOT/tests/fixtures/autotune"
-export FORKOP_SNAPSHOT_LOCK_DIR="$WORK/run/config-snapshot.lock"
+export PROKOP_SNAPSHOT_LOCK_DIR="$WORK/run/config-snapshot.lock"
 export ZAPRET_NFQWS_BIN="$WORK/bin/nfqws"
 export ZAPRET_CHILD_PID_DIR="$WORK/child-pid"
 export NFT_STATE="$WORK/nft" STUB_LOG="$WORK/log"
 export PATH="$WORK/bin:$PATH"
 PROD_QUEUE_LINE=" 4000  29676     0 2 65531     0     0       51  1"
-export NFQWS_STUB_QUEUE_FILE="$FORKOP_AUTOTUNE_PROC_QUEUE"
+export NFQWS_STUB_QUEUE_FILE="$PROKOP_AUTOTUNE_PROC_QUEUE"
 
 # nfqws stand-in: a real binary named nfqws so /proc identity checks apply.
 # It binds the queue of its --qnum (a line in the queue file) and a watcher
@@ -107,25 +107,25 @@ case "$*" in
   "list chain inet "*) [ -e "$S/chains/$4.$5" ]; exit ;;
   "-j list table inet "*)
     [ -e "$T/$5" ] || exit 1
-    if [ "$5" = ForkopAutotuneProbe ]; then
+    if [ "$5" = ProkopAutotuneProbe ]; then
       [ -z "${NFT_STUB_FAIL_PROBE_LISTING:-}" ] || exit 1
       target="$(cat "$S/probe.target" 2>/dev/null)"
       probe="probe"; [ ! -e "$S/rule.state" ] || read -r probe _ < "$S/rule.state"
       [ -e "$S/counters/$probe" ] || echo "0 0" > "$S/counters/$probe"
       rule() {
         read -r p b < "$S/counters/$2"
-        printf '{"rule":{"family":"inet","table":"ForkopAutotuneProbe","chain":"%s","handle":%s,"comment":"%s","expr":[{"match":{"op":"==","left":{"payload":{"protocol":"ip","field":"daddr"}},"right":"%s"}},{"counter":{"packets":%s,"bytes":%s}}]}}' "$1" "$3" "$2" "$target" "$p" "$b"
+        printf '{"rule":{"family":"inet","table":"ProkopAutotuneProbe","chain":"%s","handle":%s,"comment":"%s","expr":[{"match":{"op":"==","left":{"payload":{"protocol":"ip","field":"daddr"}},"right":"%s"}},{"counter":{"packets":%s,"bytes":%s}}]}}' "$1" "$3" "$2" "$target" "$p" "$b"
       }
-      printf '{"nftables":[{"table":{"family":"inet","name":"ForkopAutotuneProbe","handle":90}},%s,%s,%s,%s,%s]}\n' \
+      printf '{"nftables":[{"table":{"family":"inet","name":"ProkopAutotuneProbe","handle":90}},%s,%s,%s,%s,%s]}\n' \
         "$(rule premark probe_mark 2)" "$(rule output reinjected 3)" "$(rule output reinjected_bare 4)" "$(rule output "$probe" 5)" "$(rule output unexpected 6)"
     else cat "$T/$5"; fi
     exit 0 ;;
-  "list ruleset") cat "$S/ruleset"; [ -e "$T/ForkopAutotuneProbe" ] && echo "queue to 4600"; exit 0 ;;
+  "list ruleset") cat "$S/ruleset"; [ -e "$T/ProkopAutotuneProbe" ] && echo "queue to 4600"; exit 0 ;;
   "-j -t list ruleset") [ -z "${NFT_STUB_FAIL_RULESET:-}" ] || exit 1; cat "$S/ruleset.json"; exit 0 ;;
-  "-j list set inet ForkopTable forkop_interfaces")
-    printf '{"nftables":[{"set":{"family":"inet","name":"forkop_interfaces","table":"ForkopTable","type":"ifname","elem":%s}}]}\n' "${NFT_STUB_INTERFACES:-[\"br-lan\"]}"; exit 0 ;;
+  "-j list set inet ProkopTable prokop_interfaces")
+    printf '{"nftables":[{"set":{"family":"inet","name":"prokop_interfaces","table":"ProkopTable","type":"ifname","elem":%s}}]}\n' "${NFT_STUB_INTERFACES:-[\"br-lan\"]}"; exit 0 ;;
   "-f "*)
-    if grep -q '^replace rule inet ForkopAutotuneProbe output handle 5 ' "$2"; then
+    if grep -q '^replace rule inet ProkopAutotuneProbe output handle 5 ' "$2"; then
       [ -z "${NFT_STUB_FAIL_REPLACE:-}" ] || exit 1
       comment="$(sed -n 's/.* comment "\([a-z_]*\)".*/\1/p' "$2")"
       queue="$(sed -n 's/.* queue num \([0-9]*\) .*/\1/p' "$2")"
@@ -135,8 +135,8 @@ case "$*" in
       exit 0
     fi
     [ -z "${NFT_STUB_FAIL_SETUP:-}" ] || exit 1
-    grep -q '^create table inet ForkopAutotuneProbe$' "$2" && [ -e "$T/ForkopAutotuneProbe" ] && exit 1
-    cp "$2" "$S/last.nft"; touch "$T/ForkopAutotuneProbe"; rm -f "$S/released"
+    grep -q '^create table inet ProkopAutotuneProbe$' "$2" && [ -e "$T/ProkopAutotuneProbe" ] && exit 1
+    cp "$2" "$S/last.nft"; touch "$T/ProkopAutotuneProbe"; rm -f "$S/released"
     sed -n 's/.* ip daddr \([0-9.]*\) .*/\1/p' "$2" | head -n 1 > "$S/probe.target"
     line="$(grep ' output .*meta mark 0x08000000 .*comment ' "$2" | head -n 1)"
     comment="$(sed -n 's/.* comment "\([a-z_]*\)".*/\1/p' <<<"$line")"
@@ -159,7 +159,7 @@ printf '%s\n' "$@" > "$STUB_LOG/curl.args"
 ip="$(printf '%s\n' "$@" | sed -n 's/^[^:]*:443:\(.*\)$/\1/p')"
 bump() { local p b; read -r p b < "$NFT_STATE/counters/$1" 2>/dev/null || { p=0; b=0; }; echo "$((p + $2)) $((b + $2 * 80))" > "$NFT_STATE/counters/$1"; }
 key=none
-if [ -e "$NFT_STATE/tables/ForkopAutotuneProbe" ]; then
+if [ -e "$NFT_STATE/tables/ProkopAutotuneProbe" ]; then
   comment=probe; queue=-
   [ ! -e "$NFT_STATE/rule.state" ] || read -r comment queue < "$NFT_STATE/rule.state"
   key="$comment"; [ "$queue" = - ] || key="$queue"
@@ -170,15 +170,15 @@ if [ -e "$NFT_STATE/tables/ForkopAutotuneProbe" ]; then
     (
       flock 9
       awk -v q="$queue" -v n="${CURL_STUB_QUEUED:-7}" '$1 == q { printf " %d %8d %5d %d %5d %5d %5d %8d  %d\n", $1, $2, $3, $4, $5, $6, $7, $8 + n, $9; next } { print }' \
-        "$FORKOP_AUTOTUNE_PROC_QUEUE" > "$FORKOP_AUTOTUNE_PROC_QUEUE.tmp" && mv "$FORKOP_AUTOTUNE_PROC_QUEUE.tmp" "$FORKOP_AUTOTUNE_PROC_QUEUE"
-    ) 9>"$FORKOP_AUTOTUNE_PROC_QUEUE.lock"
+        "$PROKOP_AUTOTUNE_PROC_QUEUE" > "$PROKOP_AUTOTUNE_PROC_QUEUE.tmp" && mv "$PROKOP_AUTOTUNE_PROC_QUEUE.tmp" "$PROKOP_AUTOTUNE_PROC_QUEUE"
+    ) 9>"$PROKOP_AUTOTUNE_PROC_QUEUE.lock"
   fi
   [ -z "${CURL_STUB_ROUTE_CHANGE:-}" ] || touch "$NFT_STATE/route.changed"
   if [ -n "${CURL_STUB_PENDING:-}" ]; then
-    sed -i "s/^\( 4600 *[0-9]* *\)0 /\11 /" "$FORKOP_AUTOTUNE_PROC_QUEUE"
+    sed -i "s/^\( 4600 *[0-9]* *\)0 /\11 /" "$PROKOP_AUTOTUNE_PROC_QUEUE"
     # Only the subshell is backgrounded; it must not hold curl's stdout open.
     if [ "$CURL_STUB_PENDING" != forever ]; then
-      ( sleep "$CURL_STUB_PENDING"; sed -i "s/^\( 4600 *[0-9]* *\)1 /\10 /" "$FORKOP_AUTOTUNE_PROC_QUEUE" ) >/dev/null 2>&1 &
+      ( sleep "$CURL_STUB_PENDING"; sed -i "s/^\( 4600 *[0-9]* *\)1 /\10 /" "$PROKOP_AUTOTUNE_PROC_QUEUE" ) >/dev/null 2>&1 &
     fi
   fi
 fi
@@ -187,15 +187,15 @@ echo "$key $ip" >> "$STUB_LOG/curl.seq"
 # optionally closing first, then TIME_WAIT until they expire.
 if [ -n "${CURL_STUB_SOCKET:-}" ]; then
   state=06; [ -z "${CURL_STUB_CLOSING:-}" ] || state=04
-  printf '   9: 0A00000A:EE48 22D8B85D:01BB %s 00000000:00000000\n' "$state" >> "$FORKOP_AUTOTUNE_PROC_NET/tcp"
+  printf '   9: 0A00000A:EE48 22D8B85D:01BB %s 00000000:00000000\n' "$state" >> "$PROKOP_AUTOTUNE_PROC_NET/tcp"
   (
-    [ -z "${CURL_STUB_CLOSING:-}" ] || { sleep "$CURL_STUB_CLOSING"; sed -i 's/22D8B85D:01BB 04/22D8B85D:01BB 06/' "$FORKOP_AUTOTUNE_PROC_NET/tcp"; }
-    sleep "$CURL_STUB_SOCKET"; sed -i '/22D8B85D:01BB/d' "$FORKOP_AUTOTUNE_PROC_NET/tcp"
+    [ -z "${CURL_STUB_CLOSING:-}" ] || { sleep "$CURL_STUB_CLOSING"; sed -i 's/22D8B85D:01BB 04/22D8B85D:01BB 06/' "$PROKOP_AUTOTUNE_PROC_NET/tcp"; }
+    sleep "$CURL_STUB_SOCKET"; sed -i '/22D8B85D:01BB/d' "$PROKOP_AUTOTUNE_PROC_NET/tcp"
   ) >/dev/null 2>&1 &
 fi
 # Live production traffic moves counters but not the table structure.
-sed -i 's/"packets": *[0-9]*/"packets": 999/' "$NFT_STATE/tables/ForkopTable"
-[ -z "${CURL_STUB_TOUCH_PROD:-}" ] || sed -i 's/"handle": 48/"handle": 49/' "$NFT_STATE/tables/ForkopTable"
+sed -i 's/"packets": *[0-9]*/"packets": 999/' "$NFT_STATE/tables/ProkopTable"
+[ -z "${CURL_STUB_TOUCH_PROD:-}" ] || sed -i 's/"handle": 48/"handle": 49/' "$NFT_STATE/tables/ProkopTable"
 [ -z "${CURL_STUB_SLEEP:-}" ] || sleep "$CURL_STUB_SLEEP"
 mode="${CURL_STUB_MODE:-success}"
 if [ "$mode" = alternate ]; then
@@ -258,15 +258,15 @@ try {'"$1"'} catch (e) { console.error("result: status=%s reason=%s", r && r.sta
 # Production stand-ins that must survive every scenario untouched.
 sleep 600 & PROD_NFQWS=$!; disown; FOREIGN_PIDS+=("$PROD_NFQWS")
 ucode -L "$LIB" "$LIB/core/pidfile_cli.uc" record "$PROD_NFQWS" "$WORK/child-pid/WardogsGame.pid"
-# The ForkopTable listing (hashed and contract-checked by the run) as the
+# The ProkopTable listing (hashed and contract-checked by the run) as the
 # production part of the current terse ruleset.
 production_from_ruleset() {
   node -e '
 const fs = require("fs");
 const r = JSON.parse(fs.readFileSync(process.argv[1], "utf8")).nftables;
-const own = (x) => x.metainfo || (x.table && x.table.name === "ForkopTable") ||
-  ["chain", "rule", "set"].some((k) => x[k] && x[k].table === "ForkopTable");
-fs.writeFileSync(process.argv[2], JSON.stringify({ nftables: r.filter(own) }, null, 1) + "\n");' "$NFT_STATE/ruleset.json" "$NFT_STATE/tables/ForkopTable"
+const own = (x) => x.metainfo || (x.table && x.table.name === "ProkopTable") ||
+  ["chain", "rule", "set"].some((k) => x[k] && x[k].table === "ProkopTable");
+fs.writeFileSync(process.argv[2], JSON.stringify({ nftables: r.filter(own) }, null, 1) + "\n");' "$NFT_STATE/ruleset.json" "$NFT_STATE/tables/ProkopTable"
 }
 # Surgery on the production output path by meaning (never by handle).
 mutate_ruleset() {
@@ -275,7 +275,7 @@ const fs = require("fs");
 const file = process.argv[1];
 const r = JSON.parse(fs.readFileSync(file, "utf8"));
 const PROBE = 0x08000000;
-const bypass = (x) => x.rule && x.rule.table === "ForkopTable" && x.rule.chain === "mangle_output" &&
+const bypass = (x) => x.rule && x.rule.table === "ProkopTable" && x.rule.chain === "mangle_output" &&
   x.rule.expr.some((e) => e.match && e.match.left.meta && e.match.left.meta.key === "mark" && e.match.right === PROBE);
 if (process.argv[2] === "remove-bypass") r.nftables = r.nftables.filter((x) => !bypass(x));
 fs.writeFileSync(file, JSON.stringify(r, null, 1) + "\n");' "$1" "$2"
@@ -287,26 +287,26 @@ queue_reset() {
   local line
   (
     flock 9
-    : > "$FORKOP_AUTOTUNE_PROC_QUEUE"
-    for line in "$@"; do printf '%s\n' "$line" >> "$FORKOP_AUTOTUNE_PROC_QUEUE"; done
-  ) 9>"$FORKOP_AUTOTUNE_PROC_QUEUE.lock"
+    : > "$PROKOP_AUTOTUNE_PROC_QUEUE"
+    for line in "$@"; do printf '%s\n' "$line" >> "$PROKOP_AUTOTUNE_PROC_QUEUE"; done
+  ) 9>"$PROKOP_AUTOTUNE_PROC_QUEUE.lock"
 }
 reset_state() {
   unset CURL_STUB_MODE CURL_STUB_TOUCH_PROD CURL_STUB_SLEEP NFT_STUB_FAIL_SETUP NFT_STUB_FAIL_DELETE \
-    NFQWS_STUB_EXIT NFQWS_STUB_NO_LISTENER NFQWS_STUB_REJECT NFQWS_STUB_IGNORE_TERM DIG_STUB_ANSWER FORKOP_AUTOTUNE_QUEUE \
+    NFQWS_STUB_EXIT NFQWS_STUB_NO_LISTENER NFQWS_STUB_REJECT NFQWS_STUB_IGNORE_TERM DIG_STUB_ANSWER PROKOP_AUTOTUNE_QUEUE \
     CURL_STUB_UNEXPECTED CURL_STUB_PENDING CURL_STUB_SOCKET CURL_STUB_CLOSING NFT_STUB_FAIL_RULESET \
     IP_STUB_RULE_FAIL IP_STUB_ROUTE_LOCAL IP_STUB_ROUTE_DIFFERS NFT_STUB_INTERFACES NFT_STUB_FAIL_REPLACE \
-    CURL_STUB_QUEUED CURL_STUB_ROUTE_CHANGE FORKOP_AUTOTUNE_QUIET_TIMEOUT \
+    CURL_STUB_QUEUED CURL_STUB_ROUTE_CHANGE PROKOP_AUTOTUNE_QUIET_TIMEOUT \
     NFT_STUB_FAIL_PROBE_LISTING CURL_STUB_PLAN
   rm -f "$WORK/proc_net/ip_tables_names" "$WORK/proc_net/ip6_tables_names" "$STUB_LOG"/* \
     "$NFT_STATE/released" "$NFT_STATE/release.nft" "$NFT_STATE/route.changed" "$NFT_STATE/rule.state"
-  export FORKOP_AUTOTUNE_DRAIN_TIMEOUT=1 FORKOP_AUTOTUNE_HOLD_TIMEOUT=2
-  rm -rf "$FORKOP_AUTOTUNE_STATE_DIR" "$FORKOP_SNAPSHOT_LOCK_DIR" "$NFT_STATE/tables"/* "$NFT_STATE/last.nft"
+  export PROKOP_AUTOTUNE_DRAIN_TIMEOUT=1 PROKOP_AUTOTUNE_HOLD_TIMEOUT=2
+  rm -rf "$PROKOP_AUTOTUNE_STATE_DIR" "$PROKOP_SNAPSHOT_LOCK_DIR" "$NFT_STATE/tables"/* "$NFT_STATE/last.nft"
   queue_reset "$PROD_QUEUE_LINE"
-  printf '32768\t60999\n' > "$FORKOP_AUTOTUNE_PORT_RANGE_FILE"
+  printf '32768\t60999\n' > "$PROKOP_AUTOTUNE_PORT_RANGE_FILE"
   printf '  sl  local_address rem_address   st\n' > "$WORK/proc_net/tcp"
   printf '  sl  local_address rem_address   st\n' > "$WORK/proc_net/tcp6"
-  printf 'table inet ForkopTable {\n\tqueue flags bypass to 4000\n}\n' > "$NFT_STATE/ruleset"
+  printf 'table inet ProkopTable {\n\tqueue flags bypass to 4000\n}\n' > "$NFT_STATE/ruleset"
   cp "$FIXTURES/ruleset.json" "$NFT_STATE/ruleset.json"
   cp "$FIXTURES/iprule.json" "$NFT_STATE/iprule.json"
   production_from_ruleset
@@ -314,17 +314,17 @@ reset_state() {
 iso() { ucode -L "$LIB" "$LIB/autotune/isolation.uc" "$@" > "$WORK/out.json" || true; }
 run_probe() { iso run "$1" example.com "${2:-3}" 192.0.2.53; }
 assert_clean() {
-  [ ! -e "$NFT_STATE/tables/ForkopAutotuneProbe" ] || fail "$1: temporary table left behind"
-  ! grep -qE '^ 46(0[0-7]) ' "$FORKOP_AUTOTUNE_PROC_QUEUE" || fail "$1: a run queue left behind"
+  [ ! -e "$NFT_STATE/tables/ProkopAutotuneProbe" ] || fail "$1: temporary table left behind"
+  ! grep -qE '^ 46(0[0-7]) ' "$PROKOP_AUTOTUNE_PROC_QUEUE" || fail "$1: a run queue left behind"
   ! pgrep -f "$WORK/bin/nfqws --qnum" >/dev/null || fail "$1: temporary nfqws left behind"
   for leftover in active.json work; do
-    [ ! -e "$FORKOP_AUTOTUNE_STATE_DIR/$leftover" ] || fail "$1: temporary state $leftover left behind"
+    [ ! -e "$PROKOP_AUTOTUNE_STATE_DIR/$leftover" ] || fail "$1: temporary state $leftover left behind"
   done
-  ! ls "$FORKOP_AUTOTUNE_STATE_DIR"/nfqws-*.pid >/dev/null 2>&1 || fail "$1: pidfile left behind"
-  [ ! -e "$FORKOP_AUTOTUNE_STATE_DIR/lock" ] || fail "$1: run lock left behind"
-  [ ! -e "$FORKOP_AUTOTUNE_STATE_DIR" ] || fail "$1: runtime directory left behind: $(ls -A "$FORKOP_AUTOTUNE_STATE_DIR")"
+  ! ls "$PROKOP_AUTOTUNE_STATE_DIR"/nfqws-*.pid >/dev/null 2>&1 || fail "$1: pidfile left behind"
+  [ ! -e "$PROKOP_AUTOTUNE_STATE_DIR/lock" ] || fail "$1: run lock left behind"
+  [ ! -e "$PROKOP_AUTOTUNE_STATE_DIR" ] || fail "$1: runtime directory left behind: $(ls -A "$PROKOP_AUTOTUNE_STATE_DIR")"
   kill -0 "$PROD_NFQWS" || fail "$1: production nfqws stand-in was signalled"
-  grep -q '^ 4000 ' "$FORKOP_AUTOTUNE_PROC_QUEUE" || fail "$1: production queue line lost"
+  grep -q '^ 4000 ' "$PROKOP_AUTOTUNE_PROC_QUEUE" || fail "$1: production queue line lost"
 }
 pass=0
 ok() { pass=$((pass + 1)); printf 'ok %s\n' "$1"; }

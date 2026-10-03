@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 # While a full removal runs, the CLI refuses every command that changes
-# Forkop (UC-084).
+# Prokop (UC-084).
 #
-# Before: /usr/bin/forkop refused a hand-kept list of commands while
-# /tmp/forkop-full-uninstall.lock existed (start, reload, the updates, the
+# Before: /usr/bin/prokop refused a hand-kept list of commands while
+# /tmp/prokop-full-uninstall.lock existed (start, reload, the updates, the
 # component actions, autotune runs and applies). Commands added later were
 # missing from it: a snapshot restore, create or delete, an URLTest
 # override, the autotune policy and targets (which also write the crontab),
 # DNS failover, a kill-switch sync, a UI service action, a postinst, and the
 # Clash API actions that change the running proxy all ran during the
-# removal and could write /etc/config/forkop, the snapshots, the crontab or
+# removal and could write /etc/config/prokop, the snapshots, the crontab or
 # an nft table again after the removal had taken them away.
 #
 # Now the CLI names what may run during a removal, the commands that only
@@ -20,7 +20,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-CLI="$ROOT_DIR/forkop/files/usr/bin/forkop"
+CLI="$ROOT_DIR/prokop/files/usr/bin/prokop"
 NAMESPACE=(unshare --user --map-root-user --mount --propagation private)
 
 namespaces() { printf '%s %s' "$(readlink /proc/self/ns/user)" "$(readlink /proc/self/ns/mnt)"; }
@@ -34,7 +34,7 @@ if [ "${1:-}" != "--in-namespace" ]; then
   probe_status=0
   probe="$("${NAMESPACE[@]}" sh -c 'mount -t tmpfs tmpfs /tmp' 2>&1)" || probe_status=$?
   [ "$probe_status" = 0 ] || skip "a private user+mount namespace with its own /tmp is unavailable: $probe"
-  FORKOP_GATE_HOST_NAMESPACES="$(namespaces)" exec "${NAMESPACE[@]}" bash "$0" --in-namespace
+  PROKOP_GATE_HOST_NAMESPACES="$(namespaces)" exec "${NAMESPACE[@]}" bash "$0" --in-namespace
 fi
 
 # ---- inside the namespace ---------------------------------------------------
@@ -50,7 +50,7 @@ read -r map_inside _ map_count <<<"${uid_map[0]:-}"
 if [ "${#uid_map[@]}" != 1 ] || [ "$map_inside" != 0 ] || [ "$map_count" != 1 ]; then
   refuse "not a user namespace mapping only root: ${uid_map[*]:-}"
 fi
-read -r host_user host_mnt <<<"${FORKOP_GATE_HOST_NAMESPACES:-}"
+read -r host_user host_mnt <<<"${PROKOP_GATE_HOST_NAMESPACES:-}"
 read -r own_user own_mnt <<<"$(namespaces)"
 if [ -z "${host_user:-}" ] || [ "$own_user" = "$host_user" ] || [ "$own_mnt" = "${host_mnt:-}" ]; then
   refuse "the user or mount namespace is not new"
@@ -62,10 +62,10 @@ mount -t tmpfs -o mode=1777 tmpfs /tmp || refuse "cannot mount a private /tmp"
 
 export TMPDIR=/tmp
 WORK="$(mktemp -d)"
-CLI="$WORK/forkop"
+CLI="$WORK/prokop"
 cat <&3 >"$CLI"
 exec 3<&-
-LOCK=/tmp/forkop-full-uninstall.lock
+LOCK=/tmp/prokop-full-uninstall.lock
 LIB="$WORK/lib"
 export GATE_RAN="$WORK/ran"
 
@@ -87,11 +87,11 @@ get_zapret2_status get_byedpi_status get_system_info get_ui_capabilities get_ui_
 get_health_status get_history get_readonly_config_sections get_dashboard_runtime_metadata
 route_trace connectivity_test global_check support_report config_snapshot_list config_snapshot_diff
 service_action_status latency_test_status component_action_status subscription_update_status
-component_update_check_cache forkop_releases autotune_status autotune_target autotune_groups
+component_update_check_cache prokop_releases autotune_status autotune_target autotune_groups
 autotune_list_domains autotune_run_status validate_nfqws_strategy_json
 validate_nfqws2_strategy_json validate_byedpi_strategy_json
 "
-# Everything that changes Forkop's configuration, snapshots, scheduled jobs,
+# Everything that changes Prokop's configuration, snapshots, scheduled jobs,
 # packages or runtime.
 REFUSED="
 start main restart reload enable uninstall dns_failover_apply
@@ -115,7 +115,7 @@ for spec in "${specs[@]}"; do
     fail "$command is listed as allowed and as refused"
   fi
   listed "$command" "$ALLOWED" || listed "$command" "$REFUSED" ||
-    fail "the new command $command must be classified here: may it run while Forkop is being removed?"
+    fail "the new command $command must be classified here: may it run while Prokop is being removed?"
   if [ ! -e "$LIB/$module" ]; then
     mkdir -p "$(dirname "$LIB/$module")"
     cat >"$LIB/$module" <<'UCODE'
@@ -131,7 +131,7 @@ done
 run() {
   : >"$GATE_RAN"
   rc=0
-  FORKOP_LIB="$LIB" ucode "$CLI" "$@" >"$WORK/out" 2>"$WORK/err" </dev/null || rc=$?
+  PROKOP_LIB="$LIB" ucode "$CLI" "$@" >"$WORK/out" 2>"$WORK/err" </dev/null || rc=$?
   ran="$(cat "$GATE_RAN")"
 }
 expect_ran() {
@@ -144,7 +144,7 @@ expect_refused() {
   run "$@"
   [ "$rc" != 0 ] || fail "$CASE: $1 ${2:-} succeeded"
   [ -z "$ran" ] || fail "$CASE: $1 ${2:-} ran its module: $ran"
-  grep -Fq 'Forkop full removal is in progress' "$WORK/err" ||
+  grep -Fq 'Prokop full removal is in progress' "$WORK/err" ||
     fail "$CASE: $1 ${2:-} did not say why it was refused: $(cat "$WORK/err")"
 }
 

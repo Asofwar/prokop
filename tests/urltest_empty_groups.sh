@@ -2,8 +2,8 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-GENERATOR_UC="$FORKOP_LIB/singbox/generator.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+GENERATOR_UC="$PROKOP_LIB/singbox/generator.uc"
 WORK_DIR="$(mktemp -d)"
 
 cleanup() { rm -rf "$WORK_DIR"; }
@@ -15,7 +15,7 @@ fail() {
 }
 
 generate() {
-  ucode -L "$FORKOP_LIB" "$GENERATOR_UC" generate-config-fixture "$1" "$2" 127.0.0.1
+  ucode -L "$PROKOP_LIB" "$GENERATOR_UC" generate-config-fixture "$1" "$2" 127.0.0.1
 }
 
 # A group which loses every leaf to its filter must fail while the config is

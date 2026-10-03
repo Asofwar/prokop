@@ -2,12 +2,12 @@
 set -eo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SECTION_JS="$ROOT_DIR/luci-app-forkop/htdocs/luci-static/resources/view/forkop/section.js"
-SOURCE_PO="$ROOT_DIR/fe-app-forkop/locales/forkop.ru.po"
-PACKAGE_PO="$ROOT_DIR/luci-app-forkop/po/ru/forkop.po"
-SOURCE_POT="$ROOT_DIR/fe-app-forkop/locales/forkop.pot"
-PACKAGE_POT="$ROOT_DIR/luci-app-forkop/po/templates/forkop.pot"
-CALLS_JSON="$ROOT_DIR/fe-app-forkop/locales/calls.json"
+SECTION_JS="$ROOT_DIR/luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js"
+SOURCE_PO="$ROOT_DIR/fe-app-prokop/locales/prokop.ru.po"
+PACKAGE_PO="$ROOT_DIR/luci-app-prokop/po/ru/prokop.po"
+SOURCE_POT="$ROOT_DIR/fe-app-prokop/locales/prokop.pot"
+PACKAGE_POT="$ROOT_DIR/luci-app-prokop/po/templates/prokop.pot"
+CALLS_JSON="$ROOT_DIR/fe-app-prokop/locales/calls.json"
 
 fail() {
   printf 'FAIL: %s\n' "$1" >&2
@@ -15,10 +15,10 @@ fail() {
 }
 
 if grep -Fq '_("Dismiss")' "$SECTION_JS"; then
-  fail "Forkop modals must use Close instead of the shared LuCI Dismiss key"
+  fail "Prokop modals must use Close instead of the shared LuCI Dismiss key"
 fi
 grep -Fq '_("Close")' "$SECTION_JS" ||
-  fail "Forkop section settings modal must expose a Close action"
+  fail "Prokop section settings modal must expose a Close action"
 
 if grep -Fq 'http(s)://, hy2/hysteria2:// links' \
   "$SECTION_JS" "$SOURCE_PO" "$PACKAGE_PO" "$SOURCE_POT" "$PACKAGE_POT" "$CALLS_JSON"; then
@@ -87,18 +87,18 @@ for (const id of pot.keys()) if (!po.has(id)) throw Error(`template string missi
 NODE
 
 # Phrases are translated whole: no word glued to a translated fragment.
-DIAG_TITLE="$ROOT_DIR/fe-app-forkop/src/forkop/tabs/diagnostic/helpers/getCheckTitle.ts"
+DIAG_TITLE="$ROOT_DIR/fe-app-prokop/src/prokop/tabs/diagnostic/helpers/getCheckTitle.ts"
 if grep -Fq "_('checks')" "$DIAG_TITLE"; then
   fail "diagnostic check titles must be whole translatable phrases"
 fi
-SETTINGS_JS="$ROOT_DIR/luci-app-forkop/htdocs/luci-static/resources/view/forkop/settings.js"
+SETTINGS_JS="$ROOT_DIR/luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js"
 if grep -Eq '\.value\("(trace|debug|info|warn|error|fatal|panic)", "' "$SETTINGS_JS"; then
   fail "log levels must be translatable"
 fi
 if grep -Eq '"(Flash|RAM) \(' "$SETTINGS_JS"; then
   fail "storage names must be translatable"
 fi
-if grep -rn --include='*.ts' "'N/A'" "$ROOT_DIR/fe-app-forkop/src" | grep -v '/tests/' | grep -q .; then
+if grep -rn --include='*.ts' "'N/A'" "$ROOT_DIR/fe-app-prokop/src" | grep -v '/tests/' | grep -q .; then
   fail "N/A is shown untranslated"
 fi
 
@@ -108,7 +108,7 @@ for pair in \
   'Automatic recovery did not finish.|Автоматическое восстановление не завершилось.' \
   'Action required|Требуется действие' \
   'The recommendation is outdated: the configuration changed after the check. Run the check again.|Рекомендация устарела: конфигурация изменилась после проверки. Запустите проверку ещё раз.' \
-  'The new strategy did not pass the check. Forkop X restored the previous configuration automatically.|Новая стратегия не прошла проверку. Forkop X автоматически восстановил предыдущую конфигурацию.' \
+  'The new strategy did not pass the check. Prokop restored the previous configuration automatically.|Новая стратегия не прошла проверку. Prokop автоматически восстановил предыдущую конфигурацию.' \
   'Autotune: %s applied manually|Автоподбор: %s применена вручную'; do
   id="${pair%%|*}" str="${pair#*|}"
   for po in "$SOURCE_PO" "$PACKAGE_PO"; do

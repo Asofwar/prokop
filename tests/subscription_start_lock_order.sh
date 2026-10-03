@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Lock order between reload.lock and subscription-update.lock (UC-054).
-# A start holds reload.lock (service/initd.uc) for the whole `forkop start`,
+# A start holds reload.lock (service/initd.uc) for the whole `prokop start`,
 # and start_main takes subscription-update.lock inside it. A forced
 # subscription update (components/updates.uc) must take the two locks in the
 # same order: otherwise an update that arrives while a start holds reload.lock
@@ -22,8 +22,8 @@ set -euo pipefail
 # (fd 1000 open), whose worker holds reload.lock itself (UC-010).
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-REAL_LIB="$ROOT_DIR/forkop/files/usr/lib"
-REAL_INITD="$ROOT_DIR/forkop/files/etc/init.d/forkop"
+REAL_LIB="$ROOT_DIR/prokop/files/usr/lib"
+REAL_INITD="$ROOT_DIR/prokop/files/etc/init.d/prokop"
 WORK_DIR="$(mktemp -d)"
 # shellcheck source=tests/helpers/wait.sh
 . "$ROOT_DIR/tests/helpers/wait.sh"
@@ -51,31 +51,31 @@ fail() {
 # finishes within a few lock polling rounds.
 DEADLINE_SECONDS=25
 
-mkdir -p "$WORK_DIR/bin" "$WORK_DIR/run/forkop" "$WORK_DIR/tmp" "$WORK_DIR/fake-lib/service" "$WORK_DIR/fake-lib/subscription"
-printf 'forkop.settings=settings\n' >"$WORK_DIR/uci.state"
+mkdir -p "$WORK_DIR/bin" "$WORK_DIR/run/prokop" "$WORK_DIR/tmp" "$WORK_DIR/fake-lib/service" "$WORK_DIR/fake-lib/subscription"
+printf 'prokop.settings=settings\n' >"$WORK_DIR/uci.state"
 
 export TMPDIR="$WORK_DIR/tmp"
 export PATH="$WORK_DIR/bin:$PATH"
 export EVENTS REAL_LIB REAL_INITD
 export TEST_LIB="$REAL_LIB"
-export RELOAD_LOCK="$WORK_DIR/run/forkop.reload.lock"
-export SUB_LOCK="$WORK_DIR/run/forkop/subscription-update.lock"
-export FORKOP_RELOAD_LOCK_DIR="$RELOAD_LOCK"
-export FORKOP_SUBSCRIPTION_UPDATE_LOCK_DIR="$SUB_LOCK"
-export FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/run/forkop"
-export FORKOP_PENDING_RELOAD_FILE="$WORK_DIR/run/forkop/reload.pending"
-export FORKOP_SERVICE_INIT="$WORK_DIR/bin/no-init"
-export FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
+export RELOAD_LOCK="$WORK_DIR/run/prokop.reload.lock"
+export SUB_LOCK="$WORK_DIR/run/prokop/subscription-update.lock"
+export PROKOP_RELOAD_LOCK_DIR="$RELOAD_LOCK"
+export PROKOP_SUBSCRIPTION_UPDATE_LOCK_DIR="$SUB_LOCK"
+export PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/run/prokop"
+export PROKOP_PENDING_RELOAD_FILE="$WORK_DIR/run/prokop/reload.pending"
+export PROKOP_SERVICE_INIT="$WORK_DIR/bin/no-init"
+export PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
 export A_OWNER_FILE="$WORK_DIR/a.owner"
 
 # Nothing here may reach the host's syslog or init scripts.
 printf '#!/bin/sh\nexit 0\n' >"$WORK_DIR/bin/logger"
 printf '#!/bin/sh\nexit 0\n' >"$WORK_DIR/bin/no-init"
 
-# The start's backend: `forkop start` under the reload.lock that initd.uc
+# The start's backend: `prokop start` under the reload.lock that initd.uc
 # holds. Like lifecycle.uc start_main it waits for subscription-update.lock
 # (300 s) with its own live pid as the owner.
-cat >"$WORK_DIR/bin/forkop" <<'SH'
+cat >"$WORK_DIR/bin/prokop" <<'SH'
 #!/bin/sh
 ev() { printf '%s\n' "$1" >>"$EVENTS"; }
 state() { ucode -L "$REAL_LIB" "$REAL_LIB/service/state.uc" "$@"; }
@@ -121,8 +121,8 @@ fi
 initscript="$REAL_INITD"
 # shellcheck disable=SC1090
 . "$REAL_INITD"
-FORKOP_LIB="$TEST_LIB"
-FORKOP_INITD_UC="$TEST_LIB/service/initd.uc"
+PROKOP_LIB="$TEST_LIB"
+PROKOP_INITD_UC="$TEST_LIB/service/initd.uc"
 case "$action" in
   start) start_service "$@" ;;
   reload) reload_service "$@" ;;
@@ -171,7 +171,7 @@ if (mode == "update-request") {
 }
 exit(64);
 UC
-chmod +x "$WORK_DIR/bin/forkop" "$WORK_DIR/bin/logger" "$WORK_DIR/bin/no-init" "$WORK_DIR/rc"
+chmod +x "$WORK_DIR/bin/prokop" "$WORK_DIR/bin/logger" "$WORK_DIR/bin/no-init" "$WORK_DIR/rc"
 
 A_PID=""
 B_PID=""
@@ -189,10 +189,10 @@ launch_start() {
   local shell=sh procd_lock=""
   if [ "$RC_MODE" = detached ]; then
     shell=bash
-    procd_lock="$WORK_DIR/procd_forkop.lock"
+    procd_lock="$WORK_DIR/procd_prokop.lock"
   fi
-  start_actor env FORKOP_UI_ACTION_TRACKED=1 FORKOP_BIN="$WORK_DIR/bin/forkop" \
-    FORKOP_START_RUNTIME_LOCK_WAIT_SECONDS=20 FORKOP_START_RETRY_DELAY_SECONDS=300 \
+  start_actor env PROKOP_UI_ACTION_TRACKED=1 PROKOP_BIN="$WORK_DIR/bin/prokop" \
+    PROKOP_START_RUNTIME_LOCK_WAIT_SECONDS=20 PROKOP_START_RETRY_DELAY_SECONDS=300 \
     RC_PROCD_LOCK="$procd_lock" A_GATE="${A_GATE:-}" "$shell" "$WORK_DIR/rc" start manual >"$WORK_DIR/a.out" 2>&1
   A_PID="$LAST_ACTOR"
 }
@@ -207,7 +207,7 @@ start_done() {
 }
 
 launch_update() {
-  start_actor env FORKOP_LIB="$WORK_DIR/fake-lib" B_GATE="${B_GATE:-}" \
+  start_actor env PROKOP_LIB="$WORK_DIR/fake-lib" B_GATE="${B_GATE:-}" \
     ucode -L "$REAL_LIB" "$REAL_LIB/components/updates.uc" subscription-update >"$WORK_DIR/b.out" 2>&1
   B_PID="$LAST_ACTOR"
 }
@@ -216,7 +216,7 @@ has_event() { grep -q "$1" "$EVENTS" 2>/dev/null; }
 
 reset_case() {
   : >"$EVENTS"
-  rm -f "$WORK_DIR/a.gate" "$WORK_DIR/b.gate" "$FORKOP_PENDING_RELOAD_FILE" "$A_OWNER_FILE"
+  rm -f "$WORK_DIR/a.gate" "$WORK_DIR/b.gate" "$PROKOP_PENDING_RELOAD_FILE" "$A_OWNER_FILE"
   [ ! -e "$RELOAD_LOCK" ] || fail "reload.lock leaked from the previous case"
   [ ! -e "$SUB_LOCK" ] || fail "subscription-update.lock leaked from the previous case"
 }
@@ -239,7 +239,7 @@ finish_case() {
   has_event '^B update end$' || fail "$label: the subscription update did not run"
   [ ! -e "$RELOAD_LOCK" ] || fail "$label: reload.lock was left behind"
   [ ! -e "$SUB_LOCK" ] || fail "$label: subscription-update.lock was left behind"
-  [ ! -e "$FORKOP_PENDING_RELOAD_FILE" ] || fail "$label: a lock wait gave up and queued a reload"
+  [ ! -e "$PROKOP_PENDING_RELOAD_FILE" ] || fail "$label: a lock wait gave up and queued a reload"
   exclusive "$label"
 }
 
