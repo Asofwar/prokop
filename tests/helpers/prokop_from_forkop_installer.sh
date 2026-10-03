@@ -297,6 +297,15 @@ case "${0##*/}" in
                 shift
                 install_files "$@"
                 ;;
+            list)
+                shift
+                [ "${1:-}" != --installed ] || shift
+                for name in "$@"; do
+                    [ -e "$db/installed/$name" ] || continue
+                    printf '%s-%s noarch {%s} (GPL-2.0-or-later) [installed]\n' \
+                        "$name" "$(cat "$db/installed/$name")" "$name"
+                done
+                ;;
         esac
         ;;
 esac
@@ -495,6 +504,11 @@ SH
     printf '%s\n' '{}' >"$root/etc/forkop/vpn-guard/policy.json"
     printf '%s\n' 'old ipk' >"$root/etc/forkop/opkg-package-set-recovery/forkop.ipk"
     printf '%s\n' 'hidden' >"$root/etc/forkop/.ui-state"
+    # Its subscription cache: an older format, with its own outbound keys.
+    mkdir -p "$root/etc/forkop/subscription-cache"
+    printf '%s\n' 9 >"$root/etc/forkop/subscription-cache/cache-format"
+    printf '%s\n' '{"outbounds":[{"tag":"node","__forkop_hidden":true}]}' \
+        >"$root/etc/forkop/subscription-cache/main-1.json"
     printf '%s\n' 'backup archive' >"$root/etc/forkop-backups/configuration.tar.gz"
     printf '%s\n' '12345' >"$root/var/run/forkop/list-update.pid"
     printf '%s\n' '1' >"$root/tmp/forkop-package-was-running"
@@ -603,12 +617,29 @@ SH
 }
 
 # The Prokop backend package as the release installs it, without its
-# postinst (which needs a router). Its prerm, like the real one
+# postinst (which needs a router), but with the persistent subscription cache
+# of the current format the postinst creates (config/migration.uc
+# ensure_runtime_cache_format). Its prerm, like the real one
 # (/usr/bin/prokop package_prerm), restores dnsmasq while its executable is
-# there.
+# there. Its service/package.uc records when the installer runs it and what
+# its legacy cleanup would find: it does nothing while the old init script
+# exists, and reads the saved flow offload from the old guard's policy.
 pff_materialize_prokop_backend() {
     root="$PFF_ROOT"
-    mkdir -p "$root/usr/lib/prokop/config" "$root/usr/share/prokop/defaults"
+    mkdir -p "$root/usr/lib/prokop/config" "$root/usr/lib/prokop/service" "$root/usr/share/prokop/defaults"
+    if [ ! -e "$root/etc/prokop/subscription-cache/cache-format" ]; then
+        mkdir -p "$root/etc/prokop/subscription-cache"
+        printf '%s\n' 10 >"$root/etc/prokop/subscription-cache/cache-format"
+    fi
+    cat >"$root/usr/lib/prokop/service/package.uc" <<'UC'
+let fs = require("fs");
+let root = getenv("PFF_ROOT");
+let log = fs.open(getenv("PFF_EVENTS"), "a");
+log.write(sprintf("prokop package.uc %s forkop-init=%s vpn-guard-policy=%s\n", ARGV[0],
+    fs.stat(root + "/etc/init.d/forkop") != null ? "present" : "absent",
+    fs.stat(root + "/etc/forkop/vpn-guard/policy.json") != null ? "present" : "absent"));
+log.close();
+UC
     printf '%s\n' "config settings 'settings'" "	option mirror_base_url ''" \
         >"$root/usr/share/prokop/defaults/prokop"
     if [ ! -e "$root/etc/config/prokop" ]; then
@@ -687,18 +718,20 @@ pff_stub_installer() {
 
     interactive_terminal_available() { return 1; }
 
+    # The release channel serves PFF_RELEASE_VERSION (2.0.0 by default).
     resolve_prokop_release() {
         pff_extension=ipk
         [ "$PKG_IS_APK" -eq 0 ] || pff_extension=apk
-        PROKOP_RELEASE_TAG="2.0.0"
+        pff_version="${PFF_RELEASE_VERSION:-2.0.0}"
+        PROKOP_RELEASE_TAG="$pff_version"
         PROKOP_RELEASE_SOURCE="the test release channel"
-        PROKOP_PACKAGE_VERSION="2.0.0"
-        PROKOP_BACKEND_NAME="prokop_2.0.0.$pff_extension"
-        PROKOP_APP_NAME="luci-app-prokop_2.0.0.$pff_extension"
+        PROKOP_PACKAGE_VERSION="$pff_version"
+        PROKOP_BACKEND_NAME="prokop_$pff_version.$pff_extension"
+        PROKOP_APP_NAME="luci-app-prokop_$pff_version.$pff_extension"
         PROKOP_I18N_NAME=""
         PROKOP_I18N_URL=""
         if [ "$PROKOP_I18N_REQUESTED" -eq 1 ]; then
-            PROKOP_I18N_NAME="luci-i18n-prokop-ru_2.0.0.$pff_extension"
+            PROKOP_I18N_NAME="luci-i18n-prokop-ru_$pff_version.$pff_extension"
             PROKOP_I18N_URL="https://example.invalid/$PROKOP_I18N_NAME"
         fi
     }

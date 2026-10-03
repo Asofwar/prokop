@@ -215,9 +215,10 @@ generate() {
     "$WORK_DIR/subscription.json" "$dir/subscriptions/subs-subscription-1.json"
   printf '%s\n' 'https://singbox.example/sub' >"$dir/subscriptions/subs-subscription-1.url"
   : >"$dir/subscriptions/subs-subscription-1.user_agent"
+  # The baseline predates the Forkop -> Prokop rename and reads FORKOP_*.
   PROKOP_URLTEST_START_SEED=urltest-override-validation \
-    # The baseline predates the Forkop -> Prokop rename and reads FORKOP_*.
-  PROKOP_UCI_STATE_FILE="$WORK_DIR/existing.state" \
+    FORKOP_URLTEST_START_SEED=urltest-override-validation \
+    PROKOP_UCI_STATE_FILE="$WORK_DIR/existing.state" \
     FORKOP_UCI_STATE_FILE="$WORK_DIR/existing-forkop.state" \
     TMP_SUBSCRIPTION_FOLDER="$dir/subscriptions" \
     PROKOP_SUBSCRIPTION_METADATA_DIR="$dir/metadata" \

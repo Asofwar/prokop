@@ -9,7 +9,9 @@ set -euo pipefail
 #    both are present (priority: interrupted switch, Forkop, podkop-plus,
 #    update, clean);
 #  * Forkop leftovers without its packages (configuration only) are switched
-#    and cleaned up as well;
+#    and cleaned up as well, its rc.d links by their exact names; next to an
+#    installed Prokop a left configuration is only reported (a Prokop
+#    update);
 #  * the switch never uses the recursive name scan of the podkop-plus
 #    cleanup.
 
@@ -157,6 +159,14 @@ root="$PFF_ROOT"
 rm -f "$FAKE_PKG_DIR/installed/forkop" "$FAKE_PKG_DIR/installed/luci-app-forkop"
 rm -rf "$root/etc/init.d/forkop" "$root/etc/init.d/forkop-killswitch" "$root/etc/init.d/forkop-torrserver-direct" \
     "$root/usr/bin/forkop" "$root/usr/lib/forkop"
+# rc.d links of its three services (START/STOP 99/-, 20/90, 100/9) and two
+# that are not its own.
+for link in S99forkop S20forkop-killswitch K90forkop-killswitch S100forkop-torrserver-direct \
+    K9forkop-torrserver-direct; do
+    [ -L "$root/etc/rc.d/$link" ] || ln -s ../init.d/removed "$root/etc/rc.d/$link"
+done
+ln -s ../init.d/forkopx "$root/etc/rc.d/S99forkopx"
+ln -s ../init.d/prokop "$root/etc/rc.d/S50prokop"
 
 pff_run_installer || pff_fail "Forkop leftovers must be switched as well"
 pff_assert_log 'Installation mode: legacy_forkop'
@@ -168,15 +178,70 @@ grep -Fxq 'nft delete table inet ForkopTable' "$PFF_NFT_LOG" || pff_fail "the le
 [ "$(pff_uci 'dnsmasq().server')" = 8.8.8.8 ] || pff_fail "dnsmasq must be restored without the old code"
 grep -Fq "vless://forkop-migration-test" "$root/etc/config/prokop" || pff_fail "the left configuration must be migrated"
 for path in etc/config/forkop etc/forkop etc/rc.d/S99forkop etc/rc.d/S20forkop-killswitch \
+    etc/rc.d/K90forkop-killswitch etc/rc.d/S100forkop-torrserver-direct etc/rc.d/K9forkop-torrserver-direct \
     www/luci-static/resources/view/forkop; do
     pff_assert_absent "$root/$path" "the leftovers must be cleaned up"
 done
+pff_assert_exists "$root/etc/rc.d/S99forkopx" "an rc.d link of another service must stay"
+pff_assert_exists "$root/etc/rc.d/S50prokop" "an rc.d link of another service must stay"
 grep -Fq '# forkop-' "$root/etc/crontabs/root" && pff_fail "the left cron jobs must go"
 pff_refute_event 'prokop start' 'without a Forkop service Prokop is not started'
+SCENARIO
+
+# Only the configuration is left and Prokop is not installed: it is imported.
+cat >"$WORK_DIR/config-file-only.sh" <<'SCENARIO'
+. "$PFF_REPO/tests/helpers/prokop_from_forkop_installer.sh"
+pff_setup apk
+root="$PFF_ROOT"
+printf '%s\n' "config section 'main'" "	list selector_proxy_links 'vless://forkop-leftover'" \
+    >"$root/etc/config/forkop"
+
+pff_run_installer || pff_fail "a left Forkop configuration must be switched without Prokop"
+pff_assert_log 'Installation mode: legacy_forkop'
+grep -Fq "vless://forkop-leftover" "$root/etc/config/prokop" || pff_fail "the left configuration must be imported"
+pff_assert_absent "$root/etc/config/forkop" "the imported configuration must be cleaned up"
+pff_installed prokop || pff_fail "Prokop must be installed"
+SCENARIO
+
+# Prokop was installed and started outside the installer; Forkop is gone and
+# left only its configuration (and dnsmasq backups). That is a Prokop update:
+# the 127.0.0.42 dnsmasq forwards to and the running service are Prokop's.
+cat >"$WORK_DIR/config-left-next-to-prokop.sh" <<'SCENARIO'
+. "$PFF_REPO/tests/helpers/prokop_from_forkop_installer.sh"
+. "$PFF_WORK/../common.sh"
+pff_setup opkg
+root="$PFF_ROOT"
+pff_materialize_prokop_backend
+printf '%s\n' 2.0.0 >"$FAKE_PKG_DIR/installed/prokop"
+printf '%s\n' 2.0.0 >"$FAKE_PKG_DIR/installed/luci-app-prokop"
+ln -s ../init.d/prokop "$root/etc/rc.d/S99prokop"
+: >"$FAKE_NFT_DIR/ProkopTable"
+printf '%s\n' "config section 'main'" "	list selector_proxy_links 'vless://forkop-leftover'" \
+    >"$root/etc/config/forkop"
+"$PFF_REAL_UCODE" -e '
+    let fs = require("fs");
+    let s = json(fs.readfile(getenv("FAKE_UCI_STATE")));
+    let d = s.dhcp.cfg01411c;
+    d.prokop_server = d.server;
+    d.forkop_server = [ "1.1.1.1" ];
+    d.server = [ "127.0.0.42" ];
+    d.noresolv = "1";
+    fs.writefile(getenv("FAKE_UCI_STATE"), sprintf("%.2J\n", s));
+' || pff_fail "failed to write the dnsmasq fixture"
+before="$(root_digest)"
+
+pff_run_installer || pff_fail "detection failed next to an installed Prokop"
+pff_assert_log 'NOT MIGRATED: mode update' 'a left Forkop configuration next to Prokop is a Prokop update'
+pff_assert_log "$root/etc/config/forkop is left over from Forkop, which is not installed" \
+    'the left configuration must be reported'
+assert_untouched "$before"
+pff_assert_exists "$root/etc/config/forkop" "the left configuration must stay"
 SCENARIO
 
 run_scenario no-forkop
 run_scenario podkop-plus
 run_scenario config-only
+run_scenario config-file-only
+run_scenario config-left-next-to-prokop
 
 printf 'Prokop from Forkop installer detection tests passed\n'

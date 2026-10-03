@@ -34,9 +34,10 @@ LEGACY_FORKOP_CONFIG="/etc/config/forkop"
 LEGACY_FORKOP_INIT="/etc/init.d/forkop"
 LEGACY_FORKOP_KILLSWITCH_INIT="/etc/init.d/forkop-killswitch"
 LEGACY_FORKOP_TORRSERVER_INIT="/etc/init.d/forkop-torrserver-direct"
+# Its rc.d links are S/K, the START/STOP number (one to three digits:
+# S100forkop-torrserver-direct, K9forkop-torrserver-direct) and one of these.
 LEGACY_FORKOP_SERVICES="forkop forkop-killswitch forkop-torrserver-direct"
 LEGACY_FORKOP_INIT_GLOB="/etc/init.d/forkop*"
-LEGACY_FORKOP_RC_NAME_GLOB="forkop*"
 # The old service/initd.uc tells Forkop's own stop for a package change from
 # the user's stop by this variable.
 LEGACY_FORKOP_STOP_SOURCE="FORKOP_STOP_SOURCE=package"
@@ -47,7 +48,11 @@ LEGACY_FORKOP_SHARE_DIR="/usr/share/forkop"
 LEGACY_FORKOP_LIBEXEC_RO="/usr/libexec/forkop-ro"
 LEGACY_FORKOP_STATE_DIR="/etc/forkop"
 LEGACY_FORKOP_BACKUP_DIR="/etc/forkop-backups"
-LEGACY_FORKOP_STATE_SKIP="killswitch vpn-guard opkg-package-set-recovery"
+# Not copied: the kill-switch, guard and package recovery state, and the
+# subscription cache with its __forkop_* outbound keys. The Prokop postinst
+# creates its own empty cache of the current format first, so a copied old
+# cache would pass as current; subscriptions are downloaded again instead.
+LEGACY_FORKOP_STATE_SKIP="killswitch vpn-guard opkg-package-set-recovery subscription-cache"
 LEGACY_FORKOP_RUN_GLOB="/var/run/forkop*"
 LEGACY_FORKOP_TMP_GLOB="/tmp/forkop*"
 LEGACY_FORKOP_NFT_MAIN_TABLE="ForkopTable"
@@ -1782,20 +1787,30 @@ function legacy_forkop_service_state() {
     return true;
 }
 
+// dnsmasq forwarding to 127.0.0.42 is the old installation's only while it
+// is installed (its init script or executable) or its runtime table exists;
+// otherwise it can be Prokop's own.
+function legacy_forkop_owns_dns() {
+    return path_executable(LEGACY_FORKOP_INIT) || path_exists(LEGACY_FORKOP_BIN) ||
+        legacy_forkop_nft_table_present(LEGACY_FORKOP_NFT_MAIN_TABLE);
+}
+
 // dnsmasq after the old stop: that stop restores it itself (its
 // dnsmasq_restore, which also attaches the kill-switch servers file). When it
-// could not, its fail-safe restore runs, then the installer's own one with
-// the old option names; dnsmasq is restarted only then. Backups the old code
-// left are handed to Prokop under its option names in one commit, which
-// dnsmasq does not read, so it is not restarted for them. The servers file is
-// never touched here: Prokop's kill-switch moves it when it arms.
-function legacy_forkop_dns_handover() {
+// could not, and the old installation owned that DNS (owns_dns: decided by
+// legacy_forkop_owns_dns before its stop), its fail-safe restore runs, then
+// the installer's own one with the old option names; dnsmasq is restarted
+// only then. Backups the old code left are handed to Prokop under its option
+// names in one commit, which dnsmasq does not read, so it is not restarted
+// for them. The servers file is never touched here: Prokop's kill-switch
+// moves it when it arms.
+function legacy_forkop_dns_handover(owns_dns) {
     let result = { restored: false, converted: false, leftover: false };
     if (LEGACY_FORKOP_DHCP_OPTION_PREFIX == "" || LEGACY_FORKOP_DHCP_SECTION == "" || !uci_available())
         return result;
 
     legacy_forkop_select_dns_owner();
-    if (dnsmasq_has_managed_dns()) {
+    if (owns_dns && dnsmasq_has_managed_dns()) {
         let dns_module = LEGACY_FORKOP_LIB + "/dns/apply.uc";
         if (LEGACY_FORKOP_LIB != "" && path_exists(dns_module))
             installer_command_result([ "ucode", "-L", LEGACY_FORKOP_LIB, dns_module, "failsafe-restore" ],
@@ -1839,6 +1854,9 @@ function legacy_forkop_deactivate() {
     if (LEGACY_FORKOP_INIT == "")
         return false;
 
+    // Decided before the stop removes its runtime table.
+    let owns_dns = legacy_forkop_owns_dns();
+
     // The kill-switch service first: its stop turns the client DNS redirect
     // to its standby resolver off, and procd ends the standby dnsmasq and the
     // watcher. Its nftables policy and fw4 include stay.
@@ -1876,7 +1894,7 @@ function legacy_forkop_deactivate() {
         run_args([ "conntrack", "-D", "-p", "tcp", "--dport", "53" ]);
     }
 
-    legacy_forkop_print_dns(legacy_forkop_dns_handover());
+    legacy_forkop_print_dns(legacy_forkop_dns_handover(owns_dns));
 
     if (legacy_forkop_nft_table_present(LEGACY_FORKOP_NFT_MAIN_TABLE)) {
         warn("The " + LEGACY_FORKOP_BRAND + " runtime table " + LEGACY_FORKOP_NFT_MAIN_TABLE + " could not be removed.\n");
@@ -2089,7 +2107,7 @@ else if (mode == "installer-legacy-forkop-state")
 else if (mode == "installer-legacy-forkop-deactivate")
     exit(legacy_forkop_deactivate() ? 0 : 1);
 else if (mode == "installer-legacy-forkop-dns-handover") {
-    legacy_forkop_print_dns(legacy_forkop_dns_handover());
+    legacy_forkop_print_dns(legacy_forkop_dns_handover(legacy_forkop_owns_dns()));
     exit(0);
 }
 else if (mode == "installer-legacy-forkop-restore-service")
@@ -2388,6 +2406,27 @@ pkg_install_files() {
 
 opkg_installed_version() {
     opkg list-installed 2>/dev/null | awk -v pkg="$1" '$1 == pkg && $2 == "-" { print $3; exit }'
+}
+
+# apk lists an installed package as "<name>-<version> <arch> ...".
+apk_installed_version() {
+    apk list --installed "$1" 2>/dev/null | awk -v prefix="$1-" '{
+        for (i = 1; i <= NF; i++)
+            if (index($i, prefix) == 1 && length($i) > length(prefix)) {
+                print substr($i, length(prefix) + 1)
+                exit
+            }
+    }'
+}
+
+# The installed version of a package; empty when it is not installed or the
+# version cannot be read.
+pkg_installed_version() {
+    if [ "$PKG_IS_APK" -eq 1 ]; then
+        apk_installed_version "$1"
+    else
+        opkg_installed_version "$1"
+    fi
 }
 
 # Installs a Prokop package file. opkg calls an installed package of the same
@@ -3486,8 +3525,9 @@ legacy_forkop_managed_sing_box_present() {
     [ -r "$SING_BOX_INIT_SCRIPT" ] && grep -Fq "$LEGACY_FORKOP_SING_BOX_MARKER" "$SING_BOX_INIT_SCRIPT"
 }
 
-# Any of its packages, its configuration, init script or executable; or the
-# resume marker of an interrupted migration. Nothing is changed here.
+# Any of its packages, its init script or executable, or its configuration
+# while Prokop is not installed; or the resume marker of an interrupted
+# migration. Nothing is changed here.
 legacy_forkop_detect_installation() {
     LEGACY_FORKOP_DETECTED=0
     LEGACY_FORKOP_RESUME_STAGE=""
@@ -3513,12 +3553,22 @@ legacy_forkop_detect_installation() {
             LEGACY_FORKOP_DETECTED=1
         fi
     done
-    for legacy_forkop_path in "$LEGACY_FORKOP_CONFIG" "$LEGACY_FORKOP_INIT" "$LEGACY_FORKOP_BIN"; do
+    for legacy_forkop_path in "$LEGACY_FORKOP_INIT" "$LEGACY_FORKOP_BIN"; do
         if [ -e "$legacy_forkop_path" ]; then
             LEGACY_FORKOP_DETECTED=1
         fi
     done
-    [ "$LEGACY_FORKOP_DETECTED" -eq 1 ] || return 0
+    if [ "$LEGACY_FORKOP_DETECTED" -eq 0 ]; then
+        [ -e "$LEGACY_FORKOP_CONFIG" ] || return 0
+        # Only its configuration is left. Next to an installed Prokop this is
+        # a Prokop update: the dnsmasq forwarding to 127.0.0.42 and the
+        # service state are Prokop's own, not the old installation's.
+        if pkg_is_installed prokop; then
+            warn "$LEGACY_FORKOP_CONFIG is left over from $LEGACY_FORKOP_BRAND, which is not installed; Prokop is installed, so it was neither imported nor removed"
+            return 0
+        fi
+        LEGACY_FORKOP_DETECTED=1
+    fi
 
     if pkg_is_installed "$LEGACY_FORKOP_PACKAGE_I18N"; then
         LEGACY_FORKOP_I18N_INSTALLED=1
@@ -3831,11 +3881,28 @@ legacy_forkop_delete_services() {
     done
 }
 
+# An rc.d link of one of its services: S or K, the START/STOP number and the
+# service name, exactly.
+legacy_forkop_rc_link() {
+    legacy_forkop_rc_name="${1##*/}"
+    legacy_forkop_rc_rest="${legacy_forkop_rc_name#[SK]}"
+    [ "$legacy_forkop_rc_rest" != "$legacy_forkop_rc_name" ] || return 1
+    legacy_forkop_rc_digits="${legacy_forkop_rc_rest%%[!0-9]*}"
+    [ -n "$legacy_forkop_rc_digits" ] || return 1
+    case " $LEGACY_FORKOP_SERVICES " in
+        *" ${legacy_forkop_rc_rest#"$legacy_forkop_rc_digits"} "*) return 0 ;;
+    esac
+    return 1
+}
+
 # Explicit paths only, never a scan for the old name.
 legacy_forkop_remove_files() {
+    for legacy_forkop_path in "$SYSTEM_RC_DIR"/[SK]*; do
+        legacy_forkop_rc_link "$legacy_forkop_path" || continue
+        rm -f "$legacy_forkop_path" || warn "Failed to remove $legacy_forkop_path"
+    done
     # shellcheck disable=SC2086 # the glob variables are expanded on purpose
     for legacy_forkop_path in $LEGACY_FORKOP_INIT_GLOB \
-        "$SYSTEM_RC_DIR"/[SK]??$LEGACY_FORKOP_RC_NAME_GLOB \
         "$LEGACY_FORKOP_BIN" "$LEGACY_FORKOP_LIBEXEC_RO" "$LEGACY_FORKOP_LIB" "$LEGACY_FORKOP_SHARE_DIR" \
         "$LEGACY_FORKOP_LUCI_VIEW_DIR" "$LEGACY_FORKOP_LUCI_MENU" "$LEGACY_FORKOP_LUCI_ACL" \
         "$LEGACY_FORKOP_LUCI_UCI_DEFAULTS" "$LEGACY_FORKOP_I18N_UCI_DEFAULTS" $LEGACY_FORKOP_LUCI_I18N_GLOB \
@@ -3926,15 +3993,17 @@ legacy_forkop_cleanup() {
     legacy_forkop_remove_cron_jobs
     legacy_forkop_remove_rt_table
     legacy_forkop_remove_configuration
-    legacy_forkop_remove_state
-    legacy_forkop_ucode installer-legacy-forkop-cleanup-uci >"$TMP_DIR/legacy-forkop-cleanup.env" ||
-        warn "Failed to update the rpcd login grants and the LuCI caches"
     # Prokop's postinst skips its legacy cleanup while the old init script
     # exists; it is gone now, so run it once instead of waiting for an upgrade.
+    # It restores the flow offload the old guard saved in its state, so it
+    # runs before that state is removed.
     if [ -r "$PROKOP_TARGET_LIB/service/package.uc" ]; then
         ucode -L "$PROKOP_TARGET_LIB" "$PROKOP_TARGET_LIB/service/package.uc" legacy-cleanup >/dev/null 2>&1 ||
             warn "Failed to clean up what the old $LEGACY_FORKOP_BRAND guard left behind"
     fi
+    legacy_forkop_remove_state
+    legacy_forkop_ucode installer-legacy-forkop-cleanup-uci >"$TMP_DIR/legacy-forkop-cleanup.env" ||
+        warn "Failed to update the rpcd login grants and the LuCI caches"
 }
 
 legacy_forkop_finish() {
@@ -4102,7 +4171,10 @@ legacy_forkop_resume_after_point_of_no_return() {
     resolve_prokop_release
     msg "Downloading Prokop packages"
     download_prokop_packages
-    if ! pkg_is_installed prokop; then
+    # The interface is installed from this release at the end; the backend
+    # comes from it too unless it is installed at that version already (a
+    # newer release may have appeared since the interrupted run).
+    if [ "$(pkg_installed_version prokop)" != "$PROKOP_PACKAGE_VERSION" ]; then
         install_backend_package
     fi
     legacy_forkop_after_point_of_no_return "$(legacy_forkop_stage_rank "$LEGACY_FORKOP_RESUME_STAGE")"

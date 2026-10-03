@@ -15,7 +15,8 @@ set -euo pipefail
 #  * dnsmasq: Forkop's own stop restores it; when it could not, its fail-safe
 #    restore and then the installer's restore it with one restart; backups
 #    left behind go to Prokop's option names in one commit without a
-#    restart, never over Prokop's own;
+#    restart, never over Prokop's own; 127.0.0.42 counts as Forkop's only
+#    while Forkop is installed or its runtime table exists;
 #  * an old stop that fails still leaves no Forkop runtime table behind.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -186,6 +187,50 @@ pff_assert_log 'The dnsmasq backups left by Forkop were handed to Prokop'
 [ "$(pff_event_count 'dnsmasq restart')" -eq 0 ] || pff_fail "dnsmasq does not read the backups: no restart"
 SCENARIO
 
+cat >"$WORK_DIR/dns-not-forkops.sh" <<'SCENARIO'
+. "$PFF_REPO/tests/helpers/prokop_from_forkop_installer.sh"
+pff_setup opkg
+# dnsmasq forwards to 127.0.0.42 for Prokop, which keeps its own backups;
+# Forkop is neither installed nor running, it only left backups behind.
+dns_state() {
+    "$PFF_REAL_UCODE" -e '
+        let fs = require("fs");
+        let s = json(fs.readfile(getenv("FAKE_UCI_STATE")));
+        let d = s.dhcp.cfg01411c;
+        d.server = [ "127.0.0.42" ];
+        d.noresolv = "1";
+        d.cachesize = "0";
+        d.prokop_server = [ "8.8.8.8" ];
+        d.prokop_noresolv = "0";
+        d.prokop_cachesize = "150";
+        d.forkop_server = [ "1.1.1.1" ];
+        fs.writefile(getenv("FAKE_UCI_STATE"), sprintf("%.2J\n", s));
+    ' || pff_fail "failed to write the dnsmasq fixture"
+}
+dns_state
+
+legacy_forkop_ucode installer-legacy-forkop-dns-handover >"$PFF_WORK/handover.env" ||
+    pff_fail "the DNS hand-over failed"
+grep -Fxq 'LEGACY_FORKOP_DNS_RESTORED=0' "$PFF_WORK/handover.env" ||
+    pff_fail "127.0.0.42 is not Forkop's while Forkop is neither installed nor running"
+grep -Fxq 'LEGACY_FORKOP_DNS_LEFTOVER=1' "$PFF_WORK/handover.env" ||
+    pff_fail "the forwarding to 127.0.0.42 must be reported"
+[ "$(pff_uci 'dnsmasq().server')" = 127.0.0.42 ] || pff_fail "Prokop's dnsmasq forwarding must stay"
+[ "$(pff_uci 'dnsmasq().noresolv')" = 1 ] || pff_fail "Prokop's noresolv must stay"
+[ "$(pff_uci 'dnsmasq().prokop_server')" = 8.8.8.8 ] || pff_fail "Prokop's own backup must stay"
+[ -z "$(pff_uci 'dnsmasq().forkop_server')" ] || pff_fail "the Forkop backups left behind must go"
+[ "$(pff_event_count 'dnsmasq restart')" -eq 0 ] || pff_fail "dnsmasq must not be restarted"
+
+# A running Forkop runtime (its table) owns it, also without its package.
+dns_state
+: >"$FAKE_NFT_DIR/ForkopTable"
+legacy_forkop_ucode installer-legacy-forkop-dns-handover >"$PFF_WORK/handover.env" ||
+    pff_fail "the DNS hand-over failed"
+grep -Fxq 'LEGACY_FORKOP_DNS_RESTORED=1' "$PFF_WORK/handover.env" ||
+    pff_fail "127.0.0.42 is Forkop's while its runtime table exists"
+[ "$(pff_uci 'dnsmasq().server')" = 1.1.1.1 ] || pff_fail "dnsmasq must be restored from the Forkop backup"
+SCENARIO
+
 cat >"$WORK_DIR/old-stop-fails.sh" <<'SCENARIO'
 . "$PFF_REPO/tests/helpers/prokop_from_forkop_installer.sh"
 pff_setup opkg
@@ -208,6 +253,7 @@ run_scenario killswitch-servers-file-only
 run_scenario no-killswitch
 run_scenario dnsmasq-not-restored
 run_scenario dnsmasq-backups-left
+run_scenario dns-not-forkops
 run_scenario old-stop-fails
 
 printf 'Prokop from Forkop installer hand-over tests passed\n'

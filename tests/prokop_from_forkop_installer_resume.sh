@@ -4,7 +4,8 @@ set -euo pipefail
 # After the point of no return a failure keeps the migrated Prokop
 # configuration, the backups and the resume marker, leaves Prokop disabled
 # and says how to finish; the next run completes the switch from the
-# recorded stage without stopping or removing anything twice. A run cut off
+# recorded stage without stopping or removing anything twice, with the
+# backend of the release it installs the interface from. A run cut off
 # (power loss) after that point is completed the same way; one cut off
 # before it is rolled back and started again. A marker with an unknown
 # stage stops the installer before any change.
@@ -48,7 +49,43 @@ assert_switched() {
     pff_assert_absent "$PFF_ROOT/etc/prokop/.migrating-from-forkop"
     pff_assert_absent "$PFF_ROOT/etc/prokop-forkop-migration"
 }
+
+# A switch that failed after the point of no return is resumed after a newer
+# release appeared: the backend comes from that release as the interface
+# does, never an older backend under a newer interface.
+newer_release_on_resume() {
+    export FAKE_PKG_INSTALL_FAILS=luci-app-prokop
+    if pff_run_installer; then
+        pff_fail "a failed luci-app-prokop installation must stop the switch"
+    fi
+    [ "$(cat "$PFF_ROOT/etc/prokop/.migrating-from-forkop")" = finish ] || pff_fail "the marker must name the finish stage"
+    [ "$(cat "$FAKE_PKG_DIR/installed/prokop")" = 2.0.0 ] || pff_fail "the first run installs the 2.0.0 backend"
+    unset FAKE_PKG_INSTALL_FAILS
+
+    PFF_RELEASE_VERSION=2.0.1
+    pff_run_installer || pff_fail "the resumed switch must complete with the newer release"
+    pff_assert_log 'Resuming the interrupted switch from Forkop at stage finish'
+    pff_assert_event 'install prokop 2.0.1' 'the backend must come from the release of the interface'
+    for package in prokop luci-app-prokop; do
+        [ "$(cat "$FAKE_PKG_DIR/installed/$package")" = 2.0.1 ] ||
+            pff_fail "$package must be at the resolved release 2.0.1, not $(cat "$FAKE_PKG_DIR/installed/$package")"
+    done
+    first() { grep -Fxn -- "$1" "$PFF_EVENTS" | head -n 1 | cut -d: -f1; }
+    [ "$(first 'install prokop 2.0.1')" -lt "$(first 'install luci-app-prokop 2.0.1')" ] ||
+        pff_fail "the backend must be installed before its interface"
+    assert_switched
+}
 SCENARIO
+
+for manager in opkg apk; do
+    cat >"$WORK_DIR/newer-release-on-resume-$manager.sh" <<SCENARIO
+. "\$PFF_REPO/tests/helpers/prokop_from_forkop_installer.sh"
+. "\$PFF_WORK/../common.sh"
+pff_setup $manager
+PFF_I18N=0 pff_install_forkop
+newer_release_on_resume
+SCENARIO
+done
 
 cat >"$WORK_DIR/failure-after-removal.sh" <<'SCENARIO'
 . "$PFF_REPO/tests/helpers/prokop_from_forkop_installer.sh"
@@ -118,6 +155,8 @@ if pff_installed forkop; then pff_fail "forkop was removed before the interrupti
 pff_run_installer || pff_fail "the run after the interruption must complete the switch"
 pff_assert_log 'Resuming the interrupted switch from Forkop at stage cleanup'
 [ "$(pff_event_count 'remove forkop')" -eq 1 ] || pff_fail "Forkop must be removed once"
+[ "$(pff_event_count 'install prokop 2.0.0')" -eq 1 ] ||
+    pff_fail "a backend of the resolved release is not reinstalled with apk"
 [ "$(pff_event_count 'forkop stop source=package')" -eq 2 ] ||
     pff_fail "Forkop must be stopped once by the installer and once by its own prerm"
 assert_switched
@@ -171,6 +210,8 @@ pff_assert_exists "$root/etc/prokop/.migrating-from-forkop" "the marker must sta
 SCENARIO
 
 run_scenario failure-after-removal
+run_scenario newer-release-on-resume-opkg
+run_scenario newer-release-on-resume-apk
 run_scenario interrupted-cleanup
 run_scenario interrupted-install
 run_scenario unknown-stage

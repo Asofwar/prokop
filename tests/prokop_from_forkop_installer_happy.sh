@@ -88,6 +88,21 @@ for path in killswitch vpn-guard opkg-package-set-recovery; do
     pff_assert_absent "$root/etc/prokop/$path" "$path must not be copied"
 done
 pff_assert_exists "$root/etc/prokop-backups/configuration.tar.gz" "the Forkop backups must be copied"
+# The Forkop subscription cache is not carried over, not even into the cache
+# of the current format the Prokop postinst created: Prokop would take its
+# __forkop_* outbound keys as its own until the next download.
+pff_assert_absent "$root/etc/prokop/subscription-cache/main-1.json" "the Forkop subscription cache must not be copied"
+[ "$(cat "$root/etc/prokop/subscription-cache/cache-format")" = 10 ] ||
+    pff_fail "the subscription cache format of the Prokop postinst must stay"
+if grep -rl '__forkop_' "$root/etc/prokop" "$root/etc/prokop-backups"; then
+    pff_fail "no Forkop cache may be carried over to Prokop"
+fi
+
+# Prokop's legacy cleanup (service/package.uc) runs once the old init script
+# is gone, and before the old state it reads is removed.
+pff_assert_event 'prokop package.uc legacy-cleanup forkop-init=absent vpn-guard-policy=present' \
+    "the Prokop legacy cleanup must see the old guard's policy and no old init script"
+[ "$(grep -c '^prokop package.uc ' "$PFF_EVENTS")" -eq 1 ] || pff_fail "the Prokop legacy cleanup must run once"
 
 # Explicit cleanup.
 for path in etc/init.d/forkop etc/init.d/forkop-killswitch etc/init.d/forkop-torrserver-direct \
@@ -98,7 +113,8 @@ for path in etc/init.d/forkop etc/init.d/forkop-killswitch etc/init.d/forkop-tor
     etc/uci-defaults/luci-i18n-forkop-ru usr/lib/lua/luci/i18n/forkop.ru.lmo \
     var/run/forkop var/run/forkop.reload.lock tmp/forkop-killswitch tmp/forkop-package-was-running \
     etc/config/forkop etc/forkop-backups etc/forkop/tailscale etc/forkop/lists etc/forkop/vpn-guard \
-    etc/forkop/opkg-package-set-recovery etc/forkop/.ui-state tmp/luci-indexcache.0 tmp/luci-modulecache; do
+    etc/forkop/opkg-package-set-recovery etc/forkop/.ui-state etc/forkop/subscription-cache \
+    tmp/luci-indexcache.0 tmp/luci-modulecache; do
     pff_assert_absent "$root/$path" "the switch must remove"
 done
 pff_assert_exists "$root/etc/opkg/distfeeds.conf.pre-forkop-mirror" "*.pre-forkop-mirror files must stay"
@@ -175,6 +191,7 @@ grep -Fq "vless://forkop-migration-test" "$root/etc/config/prokop" ||
     pff_fail "the Forkop configuration was not copied with apk"
 pff_assert_absent "$root/etc/config/forkop"
 pff_assert_absent "$root/usr/lib/forkop"
+pff_assert_absent "$root/etc/prokop/subscription-cache/main-1.json" "the Forkop subscription cache must not be copied with apk"
 pff_assert_absent "$root/etc/prokop/.migrating-from-forkop"
 pff_assert_absent "$root/etc/prokop-forkop-migration"
 SCENARIO
