@@ -2377,19 +2377,19 @@ function install_prokop_package_set(latest_version, backend_file, app_file, i18n
         return "Failed to prepare Prokop package-set recovery storage";
     if (!command_success_from_args([ "mkdir", "-m", "0700", PROKOP_OPKG_RECOVERY_DIR ]))
         return "Failed to reserve Prokop package-set recovery storage";
-    let old_backend = PROKOP_OPKG_RECOVERY_DIR + "/backend.ipk";
-    let old_app = PROKOP_OPKG_RECOVERY_DIR + "/app.ipk";
-    let old_i18n = with_i18n ? PROKOP_OPKG_RECOVERY_DIR + "/i18n.ipk" : "";
-    if (!download_with_retry(previous.backend_url, old_backend, previous.backend_name) ||
-        !download_with_retry(previous.app_url, old_app, previous.app_name) ||
-        (with_i18n && !download_with_retry(previous.i18n_url, old_i18n, previous.i18n_name))) {
+    // Stage under the names recovery reads back, so a rollback in this call or
+    // a later one finds the archives with the package manager's extension.
+    let old_files = prokop_recovery_files(with_i18n);
+    if (!download_with_retry(previous.backend_url, old_files[0], previous.backend_name) ||
+        !download_with_retry(previous.app_url, old_files[1], previous.app_name) ||
+        (with_i18n && !download_with_retry(previous.i18n_url, old_files[2], previous.i18n_name))) {
         command_success_from_args([ "rm", "-rf", PROKOP_OPKG_RECOVERY_DIR ]);
         return "Failed to stage previous Prokop release packages; automatic upgrade refused";
     }
     // Every staged package the source published a checksum for must match it.
-    let staged_checksums = [ [ old_backend, previous.backend_sha256 ], [ old_app, previous.app_sha256 ] ];
+    let staged_checksums = [ [ old_files[0], previous.backend_sha256 ], [ old_files[1], previous.app_sha256 ] ];
     if (with_i18n)
-        push(staged_checksums, [ old_i18n, previous.i18n_sha256 ]);
+        push(staged_checksums, [ old_files[2], previous.i18n_sha256 ]);
     for (let staged in staged_checksums) {
         if (staged[1] && !download_checksum_ok(staged[0], staged[1])) {
             command_success_from_args([ "rm", "-rf", PROKOP_OPKG_RECOVERY_DIR ]);
@@ -2397,12 +2397,9 @@ function install_prokop_package_set(latest_version, backend_file, app_file, i18n
         }
     }
 
-    let old_files = [ old_backend, old_app ];
     let new_files = [ backend_file, app_file ];
-    if (with_i18n) {
-        push(old_files, old_i18n);
+    if (with_i18n)
         push(new_files, i18n_file);
-    }
     if (!run_logged("Checking new Prokop package set", pkg_prokop_set_command(new_files, true)) ||
         !run_logged("Checking previous Prokop package set", pkg_prokop_set_command(old_files, true, true))) {
         command_success_from_args([ "rm", "-rf", PROKOP_OPKG_RECOVERY_DIR ]);

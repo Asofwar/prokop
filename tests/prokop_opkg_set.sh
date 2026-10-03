@@ -28,6 +28,7 @@ const PROKOP_VERSION = "1.0.0";
 const PROKOP_OPKG_RECOVERY_DIR = "/recovery";
 const SERVICE_INIT = "/init";
 let tmp_dir = "/tmp";
+let apk = false;
 let prokop_was_running = true;
 let service_running = true;
 let service_restart_fail = false;
@@ -65,40 +66,52 @@ function installed_package_version(name) { return versions[name] || ""; }
 function prokop_status_running_with_timeout() { return service_running; }
 function previous_prokop_release(version) {
     check(version == PROKOP_VERSION, "wrong previous release");
-    return { backend_name: "prokop_1.0.0.ipk", backend_url: "old-backend",
-        app_name: "luci-app-prokop_1.0.0.ipk", app_url: "old-app",
-        i18n_name: "luci-i18n-prokop-ru_1.0.0.ipk", i18n_url: "old-i18n" };
+    let ext = apk ? "apk" : "ipk";
+    return { backend_name: "prokop_1.0.0." + ext, backend_url: "old-backend",
+        app_name: "luci-app-prokop_1.0.0." + ext, app_url: "old-app",
+        i18n_name: "luci-i18n-prokop-ru_1.0.0." + ext, i18n_url: "old-i18n" };
 }
 function download_with_retry(url, path, label) { push(downloads, path); return true; }
 function command_from_args(args) { return join(" ", args); }
 function command_output_from_args(args) { check(args[0] == "dirname", "unexpected path command"); return "/"; }
 function ensure_dir(path) { return path == "/"; }
-// This probe drives the opkg branch; the apk branch is covered separately.
-function is_apk() { return false; }
+function is_apk() { return apk; }
 // Free space is exercised by its own test, so leave room here.
 function available_kib(path) { return 1048576; }
 function file_bytes(path) { return 0; }
 function path_basename(path) { let parts = split(path, "/"); return parts[length(parts) - 1]; }
 function updates_log(message, level) { push(events, message); }
+// Staged archives are matched by stem only, so a wrong extension surfaces as
+// the recovery failure it causes on a router rather than as a probe error.
+function package_name(file) {
+    let base = path_basename(file);
+    if (index(base, "luci-i18n-prokop-ru_") == 0 || index(base, "i18n.") == 0) return "luci-i18n-prokop-ru";
+    if (index(base, "luci-app-prokop_") == 0 || index(base, "app.") == 0) return "luci-app-prokop";
+    if (index(base, "prokop_") == 0 || index(base, "backend.") == 0) return "prokop";
+    return "";
+}
+// opkg takes one file per step. apk takes the whole new set in one transaction
+// and commits the packages ahead of the one that fails.
 function run_logged(description, command) {
     push(events, description);
-    let old = index(command, PROKOP_OPKG_RECOVERY_DIR + "/") >= 0;
-    if (index(command, "--noaction") >= 0)
+    if (index(command, apk ? "--simulate" : "--noaction") >= 0)
         return true;
-    let name = "";
-    if (index(command, "luci-i18n-prokop-ru_") >= 0 || index(command, "/i18n.ipk") >= 0) name = "luci-i18n-prokop-ru";
-    else if (index(command, "luci-app-prokop_") >= 0 || index(command, "/app.ipk") >= 0) name = "luci-app-prokop";
-    else if (index(command, "prokop_") >= 0 || index(command, "/backend.ipk") >= 0) name = "prokop";
-    check(name != "", "unknown package step");
-    if (old && name == rollback_failure) return false;
-    if (old && name == "prokop") service_running = false; // rollback prerm
-    if (!old && name == failure) {
-        if (name == "prokop") service_running = false;
-        return false;
+    let files = filter(split(command, " "), (word) => index(word, "/") == 0);
+    check(length(files) > 0, "package step without files");
+    for (let file in files) {
+        let old = index(file, PROKOP_OPKG_RECOVERY_DIR + "/") == 0;
+        let name = package_name(file);
+        check(name != "", "unknown package file " + file);
+        if (old && name == rollback_failure) return false;
+        if (old && name == "prokop") service_running = false; // rollback prerm
+        if (!old && name == failure) {
+            if (name == "prokop") service_running = false;
+            return false;
+        }
+        if (!old && name == uncommitted) continue;
+        if (!old && name == "prokop") service_running = false;
+        versions[name] = old ? "1.0.0-r1" : "1.1.0-r1";
     }
-    if (!old && name == uncommitted) return true;
-    if (!old && name == "prokop") service_running = false;
-    versions[name] = old ? "1.0.0-r1" : "1.1.0-r1";
     return true;
 }
 '''
@@ -106,6 +119,7 @@ suffix = r'''
 function reset() {
     versions = { "prokop": "1.0.0-r1", "luci-app-prokop": "1.0.0-r1",
         "luci-i18n-prokop-ru": "1.0.0-r1" };
+    apk = false;
     events = [];
     downloads = [];
     recovery_dir = false;
@@ -187,9 +201,55 @@ check(recover_prokop_opkg_set() == "" && service_running && marker == "",
 reset(); marker = "1.0.0\t1.1.0\t1\n"; recovery_dir = true;
 check(index(recover_prokop_opkg_set(), "unknown") >= 0 && marker != "",
     "legacy marker silently assumed original service state");
-print("Prokop OPKG package-set checks passed\n");
+
+// apk installs app, i18n and backend in one transaction, so a failure leaves
+// the packages ahead of it upgraded and the rollback has to restore from the
+// staged archives, which must be ones apk will read back.
+function restored_files() {
+    let files = [];
+    for (let event in events)
+        if (index(event, "Restoring Prokop release package ") == 0)
+            push(files, substr(event, length("Restoring Prokop release package ")));
+    return join(" ", files);
+}
+let apk_restores = { "prokop": "i18n.apk app.apk backend.apk",
+    "luci-app-prokop": "", "luci-i18n-prokop-ru": "i18n.apk app.apk backend.apk" };
+for (let target in [ "", "prokop", "luci-app-prokop", "luci-i18n-prokop-ru" ]) {
+    reset(); apk = true; failure = target;
+    let error = install_prokop_package_set("1.1.0", "/new/prokop_1.1.0.apk",
+        "/new/luci-app-prokop_1.1.0.apk", "/new/luci-i18n-prokop-ru_1.1.0.apk");
+    if (target == "") {
+        check(error == "" && opkg_prokop_set_versions_match("1.1.0", true) && marker == "",
+            "apk success path failed: " + error);
+        continue;
+    }
+    check(index(error, "previous release restored") >= 0,
+        "apk failure in " + target + " not restored: " + error);
+    check(opkg_prokop_set_versions_match("1.0.0", true) && marker == "",
+        "apk mixed package versions after " + target);
+    check(restored_files() == apk_restores[target],
+        "apk rollback after " + target + " restored [" + restored_files() + "]");
+}
+reset(); apk = true; failure = "luci-i18n-prokop-ru"; rollback_failure = "luci-app-prokop";
+error = install_prokop_package_set("1.1.0", "/new/prokop_1.1.0.apk",
+    "/new/luci-app-prokop_1.1.0.apk", "/new/luci-i18n-prokop-ru_1.1.0.apk");
+check(index(error, "archives retained") >= 0 && marker != "" && recovery_dir,
+    "apk failed rollback did not retain its archives: " + error);
+rollback_failure = ""; failure = ""; events = [];
+error = recover_prokop_opkg_set();
+check(error == "" && opkg_prokop_set_versions_match("1.0.0", true) && marker == "",
+    "apk pending recovery did not restore previous package set: " + error);
+check(restored_files() == "i18n.apk app.apk backend.apk",
+    "apk pending recovery restored [" + restored_files() + "]");
+print("Prokop package-set checks passed\n");
 '''
 pathlib.Path(sys.argv[2]).write_text(prefix + '\n\n'.join(functions) + suffix)
 PY
 
-ucode "$WORK_DIR/probe.uc"
+# An uncaught ucode exception can still exit 0, so require the final line.
+output="$(ucode "$WORK_DIR/probe.uc")"
+printf '%s\n' "$output"
+[ "$output" = "Prokop package-set checks passed" ] || {
+  echo "FAIL: package-set probe did not run to completion" >&2
+  exit 1
+}

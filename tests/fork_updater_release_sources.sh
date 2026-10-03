@@ -98,7 +98,8 @@ names = ('as_string', 'shell_quote', 'command_from_args', 'command_status',
          'selected_prokop_release', 'prokop_release_page_url', 'resolve_prokop_release_json',
          'prokop_release_matches', 'previous_prokop_release',
          'prokop_channel_installer_command', 'unpublished_prokop_release_error',
-         'opkg_prokop_set_versions_match', 'pkg_set_extension', 'pkg_prokop_set_command',
+         'opkg_prokop_set_versions_match', 'pkg_set_extension', 'prokop_recovery_files',
+         'pkg_prokop_set_command',
          'install_prokop_package_set', 'verify_latest_release_downloads')
 parts = []
 for name in consts:
