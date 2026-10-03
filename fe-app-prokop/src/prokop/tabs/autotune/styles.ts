@@ -1,3 +1,5 @@
+import { BREAKPOINTS } from '../../ui/styles';
+
 // language=CSS
 export const styles = `
 .fkp-autotune {
@@ -117,7 +119,7 @@ export const styles = `
 .fkp-autotune__form .fkp-autotune__domain input { width: auto; flex: none; margin: 0; }
 .fkp-autotune__field-hint { grid-column: 2; margin-top: calc(-1 * var(--fkp-space-1)); color: var(--fkp-tone-neutral); font-size: 0.9em; }
 
-@media (max-width: 599px) {
+@media (max-width: ${BREAKPOINTS.phone}px) {
     .fkp-autotune__facts,
     .fkp-autotune__form { grid-template-columns: minmax(0, 1fr); }
     .fkp-autotune__facts dd { margin-bottom: var(--fkp-space-2); }

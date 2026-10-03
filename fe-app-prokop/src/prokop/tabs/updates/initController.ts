@@ -31,6 +31,7 @@ import {
   isServiceTransitionStatus,
 } from '../diagnostic/serviceTransition';
 import { shouldApplyCompletedComponentActionResult } from './componentActionCompletion';
+import { componentActionSuccessText } from './componentActionToast';
 import { showReleaseSelector } from './releaseSelector';
 import {
   shouldPreserveCompletedCheckResultOnNextMount,
@@ -55,6 +56,8 @@ import {
 } from '../../services/runtimeUiState.service';
 import { Prokop } from '../../types';
 import { renderFullUninstall } from './fullUninstall';
+import { render } from './render';
+import { renderOnAttach } from './renderOnAttach';
 import { confirmAction } from '../../ui/confirmAction';
 
 type UpdateStatus = StoreType['updatesChecks'][Prokop.ComponentName]['status'];
@@ -490,7 +493,7 @@ async function applyCompletedComponentAction({
     resetCheckResult(result.component);
     setActionLoading(key, false);
     if (notify) {
-      showToast(result.message, 'success', 5000);
+      showToast(componentActionSuccessText(result), 'success', 5000);
       window.setTimeout(() => window.location.reload(), 5000);
     }
     return;
@@ -506,8 +509,8 @@ async function applyCompletedComponentAction({
   setActionLoading(key, false);
 
   if (result.component === 'prokop' && result.action === 'install') {
-    if (notify && result.message) {
-      showToast(result.message, 'success', 1200);
+    if (notify) {
+      showToast(componentActionSuccessText(result), 'success', 1200);
     }
 
     if (notify) {
@@ -516,8 +519,8 @@ async function applyCompletedComponentAction({
     return;
   }
 
-  if (notify && result.message) {
-    showToast(result.message, 'success');
+  if (notify) {
+    showToast(componentActionSuccessText(result), 'success');
   }
 
   void refreshSystemInfoAfterMutation();
@@ -1553,6 +1556,16 @@ function registerLifecycleListeners() {
       }
     }
   });
+}
+
+export function renderView(): HTMLElement {
+  const root = render();
+  renderOnAttach(root, {
+    isMounted: () => updatesMounted,
+    waitForAttach: onMount,
+    renderComponents: renderUpdatesComponents,
+  });
+  return root;
 }
 
 export async function initController(): Promise<void> {

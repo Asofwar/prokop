@@ -6,7 +6,7 @@ import { UpdatesTab } from './prokop/tabs/updates';
 import { HistoryTab } from './prokop/tabs/history';
 import { AutotuneTab } from './prokop/tabs/autotune';
 import { PartialStyles } from './partials';
-import { FoundationStyles } from './prokop/ui';
+import { BREAKPOINTS, FoundationStyles } from './prokop/ui';
 import { PROKOP_UCI_PACKAGE as PROKOP_CBI_PREFIX } from './constants';
 
 export const GlobalStyles = `
@@ -43,6 +43,24 @@ ${PartialStyles}
 
 #cbi-${PROKOP_CBI_PREFIX}-section .cbi-section-actions {
     text-align: right;
+}
+
+/* Narrow screens: the row actions wrap and the fixed column widths go,
+   so the rules table fits the page at 768 (UC-132). */
+@media (max-width: ${BREAKPOINTS.narrow}px) {
+    #cbi-${PROKOP_CBI_PREFIX}-section .cbi-section-actions {
+        white-space: normal;
+    }
+
+    #cbi-${PROKOP_CBI_PREFIX}-section .cbi-section-actions > div {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    #cbi-${PROKOP_CBI_PREFIX}-section .th,
+    #cbi-${PROKOP_CBI_PREFIX}-section .td {
+        width: auto !important;
+    }
 }
 
 /* Rule reorder visuals */
@@ -158,7 +176,7 @@ ${PartialStyles}
 }
 
 .toast-success {
-    background-color: #28a745;
+    background-color: #1e7e34;
 }
 
 .toast-error {

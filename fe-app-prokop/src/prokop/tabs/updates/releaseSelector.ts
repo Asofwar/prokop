@@ -36,6 +36,10 @@ function confirmVersionChange(
   version: string,
   install: (version: string) => void,
 ) {
+  const cancel = renderButton({
+    text: _('Cancel'),
+    onClick: () => ui.hideModal(),
+  });
   ui.showModal(
     _('Confirm version change'),
     E('div', {}, [
@@ -59,7 +63,7 @@ function confirmVersionChange(
           ]
         : []),
       E('div', { class: 'right' }, [
-        renderButton({ text: _('Cancel'), onClick: () => ui.hideModal() }),
+        cancel,
         renderButton({
           text: _('Install'),
           classNames: ['cbi-button-save'],
@@ -71,14 +75,23 @@ function confirmVersionChange(
       ]),
     ]),
   );
+  // Cancel is the default focus, as in confirmAction (UC-133).
+  cancel.focus();
 }
 
+// Buttons sit in a '.right' container with Cancel or Close first: LuCI's
+// Escape handler clicks the first '.right > button' of the modal (UC-134).
 export async function showReleaseSelector(
   currentVersion: string,
   install: (version: string) => void,
 ) {
   const status = E('p', { role: 'status' }, _('Loading available versions…'));
-  const content = E('div', {}, [status]);
+  const content = E('div', {}, [
+    status,
+    E('div', { class: 'right' }, [
+      renderButton({ text: _('Cancel'), onClick: () => ui.hideModal() }),
+    ]),
+  ]);
   ui.showModal(_('Choose Prokop version'), content);
 
   try {
@@ -129,8 +142,11 @@ export async function showReleaseSelector(
       error instanceof Error
         ? error.message
         : _('Could not load available versions');
-    content.appendChild(
-      renderButton({ text: _('Close'), onClick: () => ui.hideModal() }),
+    content.replaceChildren(
+      status,
+      E('div', { class: 'right' }, [
+        renderButton({ text: _('Close'), onClick: () => ui.hideModal() }),
+      ]),
     );
   }
 }

@@ -1,3 +1,5 @@
+import { BREAKPOINTS } from '../../ui/styles';
+
 // language=CSS
 import { PROKOP_UCI_PACKAGE as PROKOP_CBI_PREFIX } from '../../../constants';
 
@@ -30,13 +32,13 @@ export const styles = `
     width: 100%;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: ${BREAKPOINTS.medium}px) {
     .fkp_updates-page__components {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
-@media (max-width: 760px) {
+@media (max-width: ${BREAKPOINTS.narrow}px) {
     .fkp_updates-page__components {
         grid-template-columns: minmax(0, 1fr);
     }
@@ -94,7 +96,7 @@ export const styles = `
     align-items: center;
     min-height: 24px;
     gap: 8px;
-    white-space: nowrap;
+    flex-wrap: wrap;
 }
 
 .fkp_updates-page__component__info-label {
@@ -145,7 +147,7 @@ export const styles = `
     display: flex;
     justify-content: flex-start;
     align-items: center;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     gap: 6px;
 }
 
@@ -164,7 +166,7 @@ export const styles = `
 
 .fkp_updates-page__component__variants-buttons {
     display: flex;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     gap: 6px;
 }
 `;

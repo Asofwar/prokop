@@ -1287,7 +1287,20 @@ function renderUrlTestInfoModal(outbound: Prokop.Outbound) {
             ],
       ),
     ]),
-    E('div', { class: 'fkp_dashboard-page__urltest-details__footer' }, [
+    // Close first in '.right': LuCI's Escape clicks the first
+    // '.right > button' of the modal (UC-134).
+    E('div', { class: 'right fkp_dashboard-page__urltest-details__footer' }, [
+      E(
+        'button',
+        {
+          type: 'button',
+          class: 'btn cbi-button cbi-button-neutral',
+          click: () => {
+            ui.hideModal();
+          },
+        },
+        _('Close'),
+      ),
       ...(isReadonlyMode()
         ? []
         : [
@@ -1301,17 +1314,6 @@ function renderUrlTestInfoModal(outbound: Prokop.Outbound) {
               _('Edit'),
             ),
           ]),
-      E(
-        'button',
-        {
-          type: 'button',
-          class: 'btn cbi-button cbi-button-neutral',
-          click: () => {
-            ui.hideModal();
-          },
-        },
-        _('Close'),
-      ),
     ]),
   ]);
 }
@@ -1453,10 +1455,11 @@ function renderUrlTestEditorModal(outbound: Prokop.Outbound) {
         row(_('Interrupt connections'), interrupt),
       ]),
       progress,
-      E('div', { class: 'fkp_dashboard-page__urltest-details__footer' }, [
+      // Cancel first in '.right': LuCI's Escape clicks it (UC-134).
+      E('div', { class: 'right fkp_dashboard-page__urltest-details__footer' }, [
+        cancelButton,
         resetButton,
         saveButton,
-        cancelButton,
       ]),
     ]),
   );
@@ -1687,7 +1690,7 @@ function renderPriorityInfoModal(outbound: Prokop.Outbound) {
             ],
       ),
     ]),
-    E('div', { class: 'fkp_dashboard-page__urltest-details__footer' }, [
+    E('div', { class: 'right fkp_dashboard-page__urltest-details__footer' }, [
       E(
         'button',
         {
