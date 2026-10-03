@@ -231,14 +231,16 @@ grep -Fq 'ip6 saddr fd00::50 fib daddr type local' <<<"$chain" || fail "the IPv6
 
 # ---- what the clients get --------------------------------------------------------
 
-ask() { python3 "$HELPER" query br-lan "$1" "$2" "$3" "${4:-53}"; }
+ask() { DNS_TUN_DEADLINE="${DEADLINE:-2}" python3 "$HELPER" query br-lan "$1" "$2" "$3" "${4:-53}"; }
 expect() {
   local src="$1" name="$2" want="$3" dst="${4:-192.168.1.1}" port="${5:-53}" got
   if [[ "$src" == *:* ]]; then
     [ "$IPV6" = 1 ] || return 0
     [ "$dst" != 192.168.1.1 ] || dst=fd00::1
   fi
-  got="$(ask "$src" "$dst" "$name" "$port")"
+  local deadline=8
+  [ "$want" != noreply ] || deadline=2
+  got="$(DEADLINE="$deadline" ask "$src" "$dst" "$name" "$port")"
   case "$want" in
     blocked) [[ "$got" == "rcode=3 "* ]] || fail "$src must get NXDOMAIN for $name, got: $got" ;;
     exempt) [[ "$got" =~ ^rcode=0\ answer=203\.0\.113\.5[5-8]\ sport=53$ ]] ||

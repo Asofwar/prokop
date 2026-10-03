@@ -308,7 +308,10 @@ def query(name, src, dst, qname, dport=53):
     sport = random.randint(20000, 60000)
     ident = random.randint(0, 0xFFFF)
     os.write(fd, udp_packet(src, dst, sport, dport, build_query(qname, ident)))
-    deadline = time.time() + 2
+    # A reply normally comes within milliseconds; a test that expects one
+    # waits longer (DNS_TUN_DEADLINE) so a loaded host does not read as
+    # "noreply", while a test that expects silence keeps the short wait.
+    deadline = time.time() + float(os.environ.get("DNS_TUN_DEADLINE", "2"))
     while time.time() < deadline:
         ready, _, _ = select.select([fd], [], [], max(0, deadline - time.time()))
         if not ready:
