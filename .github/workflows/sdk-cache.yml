@@ -1,0 +1,57 @@
+name: OpenWrt SDK cache
+# Keeps the OpenWrt SDK archives build.sh downloads in the Actions cache of
+# the default branch. Release builds run on tags, and a tag run can restore
+# only entries of its own tag or of the default branch, so this is what lets
+# "Build packages" skip the ~500 MB download on a release.
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    # Unused entries are evicted after a week.
+    - cron: '17 4 * * 1,4'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  warm:
+    name: Warm OpenWrt SDK cache
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5.0.0
+        with:
+          sparse-checkout: .github/scripts
+
+      - name: Resolve OpenWrt SDK cache
+        id: sdk
+        shell: bash
+        run: bash .github/scripts/openwrt-sdk-cache.sh outputs "$RUNNER_TEMP/openwrt-sdk"
+
+      - name: Look up OpenWrt SDK archives
+        id: sdk-cache
+        if: steps.sdk.outputs.enabled == 'true'
+        uses: actions/cache/restore@v6.1.0
+        with:
+          path: ${{ steps.sdk.outputs.paths }}
+          key: ${{ steps.sdk.outputs.key }}
+          lookup-only: true
+
+      - name: Download OpenWrt SDK archives
+        if: steps.sdk.outputs.enabled == 'true' && steps.sdk-cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: bash .github/scripts/openwrt-sdk-cache.sh download "$RUNNER_TEMP/openwrt-sdk"
+
+      - name: Save OpenWrt SDK archives
+        if: steps.sdk.outputs.enabled == 'true' && steps.sdk-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6.1.0
+        with:
+          path: ${{ steps.sdk.outputs.paths }}
+          key: ${{ steps.sdk.outputs.key }}
