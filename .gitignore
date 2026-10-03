@@ -16,3 +16,6 @@ backup-router-*/
 ops/deployed-nginx/
 *-openwrt-full-config-*.tar.gz
 *-selected-config-*.tar.gz
+
+# Hardware validation evidence stays outside tracked source
+hardware-validation-*/
