@@ -35,6 +35,11 @@ import { shouldShowLoadingForRestoredAction } from '../../helpers/restoredAction
 import { getServiceAvailability } from '../../helpers/serviceAvailability';
 import { createPriorityMembersState } from './priorityMembersState';
 import {
+  renderSectionsStaleNotice,
+  sectionsAfterFailedRefresh,
+  sectionsAfterRefresh,
+} from './sectionsRefresh';
+import {
   overviewLastEvent,
   overviewRecovery,
   overviewRouting,
@@ -297,15 +302,8 @@ async function fetchDashboardSectionsOnce(mountId: number) {
       throw new Error('failed to fetch dashboard sections');
     }
 
-    const current = store.get().sectionsWidget;
-
     store.set({
-      sectionsWidget: {
-        ...current,
-        loading: false,
-        failed: false,
-        data,
-      },
+      sectionsWidget: sectionsAfterRefresh(store.get().sectionsWidget, data),
     });
 
     return true;
@@ -320,15 +318,8 @@ async function fetchDashboardSectionsOnce(mountId: number) {
       return false;
     }
 
-    const current = store.get().sectionsWidget;
-
     store.set({
-      sectionsWidget: {
-        ...current,
-        loading: false,
-        failed: current.data.length === 0,
-        data: current.data,
-      },
+      sectionsWidget: sectionsAfterFailedRefresh(store.get().sectionsWidget),
     });
 
     return false;
@@ -1787,6 +1778,7 @@ function canUpdateLatencyProgressInline(
   return (
     prev.loading === next.loading &&
     prev.failed === next.failed &&
+    prev.stale === next.stale &&
     prev.data === next.data &&
     shallowRecordEqual(
       prev.latencyFetchingSections,
@@ -1947,7 +1939,11 @@ async function renderSectionsWidget() {
   );
 
   return preserveScrollForPage(() => {
-    container.replaceChildren(...renderedWidgets);
+    const staleNotice = renderSectionsStaleNotice(sectionsWidget);
+    container.replaceChildren(
+      ...(staleNotice ? [staleNotice] : []),
+      ...renderedWidgets,
+    );
   });
 }
 

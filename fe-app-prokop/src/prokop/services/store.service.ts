@@ -179,6 +179,9 @@ export interface StoreType {
   sectionsWidget: {
     loading: boolean;
     failed: boolean;
+    // The last refresh failed and data is from updatedAt (UC-122).
+    stale: boolean;
+    updatedAt: number | null;
     data: Prokop.OutboundGroup[];
     latencyFetchingSections: Record<string, boolean>;
     latencyProgressSections: Record<string, Prokop.LatencyActionProgress>;
@@ -304,6 +307,8 @@ const initialStore: StoreType = {
   sectionsWidget: {
     loading: true,
     failed: false,
+    stale: false,
+    updatedAt: null,
     latencyFetchingSections: {},
     latencyProgressSections: {},
     selectorSwitchingSections: {},
