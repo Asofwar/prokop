@@ -133,6 +133,13 @@ hooks 1 1
 start
 [ "$(health_bridge)" = '{"status":"warning","loaded":true,"disabled_by_forkop":true}' ] ||
   fail "health with br_netfilter whose hooks Forkop holds off: $(health_bridge)"
+# Another program has turned them on again: Forkop holds nothing off.
+printf '1\n' >"$BRIDGE/bridge-nf-call-iptables"
+printf '1\n' >"$BRIDGE/bridge-nf-call-ip6tables"
+[ "$(health_bridge)" = '{"status":"warning","loaded":true,"disabled_by_forkop":false}' ] ||
+  fail "health with hooks another program turned on again: $(health_bridge)"
+hooks 1 1
+start
 stop
 [ "$(health_bridge)" = '{"status":"warning","loaded":true,"disabled_by_forkop":false}' ] ||
   fail "health with br_netfilter after the stop: $(health_bridge)"

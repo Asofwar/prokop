@@ -166,8 +166,9 @@ export function overviewWarning(
       link: details,
     };
   }
-  // A kernel-wide setting Forkop X changes while it runs; stop puts it
-  // back (diagnostics/health.uc bridge_netfilter; D-19, UC-109).
+  // A kernel-wide setting Forkop X changes while it runs; stop puts back
+  // what it changed (diagnostics/health.uc bridge_netfilter; D-19, UC-109).
+  // disabled_by_forkop: a hook still holds the 0 that Forkop X wrote.
   if (health.bridge_netfilter?.loaded) {
     return {
       title: _('br_netfilter is loaded'),
@@ -176,7 +177,7 @@ export function overviewWarning(
             'Forkop X has turned off the iptables hooks of br_netfilter (net.bridge.bridge-nf-call-iptables and -ip6tables) for transparent proxying: iptables rules do not filter bridged traffic while it runs. Stopping Forkop X restores the previous values unless another program has changed them since.',
           )
         : _(
-            'While Forkop X runs, it turns off the iptables hooks of br_netfilter (net.bridge.bridge-nf-call-iptables and -ip6tables) for transparent proxying, so iptables rules do not filter bridged traffic. Stopping Forkop X restores them.',
+            'While Forkop X runs, it turns off the iptables hooks of br_netfilter (net.bridge.bridge-nf-call-iptables and -ip6tables) that are on, for transparent proxying, so iptables rules do not filter bridged traffic. Their current values were not set by Forkop X, and stopping it does not change them.',
           ),
     };
   }

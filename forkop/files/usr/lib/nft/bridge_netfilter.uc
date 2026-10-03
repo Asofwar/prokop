@@ -6,7 +6,9 @@
 //
 // - turn_off() records the value of each hook it turns off before it writes
 //   0, once per boot: a record that is already there (an earlier start, a
-//   reload, a crash) keeps the values from before Forkop;
+//   reload, a crash) keeps the values from before Forkop. A hook first
+//   turned off by a later reload (another program has switched it on while
+//   Forkop ran) records the value it had then;
 // - restore() at stop puts a recorded value back only where the hook still
 //   holds the 0 that Forkop wrote. Something else that has set it since owns
 //   it now and it stays; a record that cannot be read changes nothing.
@@ -150,14 +152,20 @@ function restore(log) {
 }
 
 // For health: br_netfilter is loaded, its hooks now, and whether Forkop
-// holds them off (a record of values to put back).
+// holds them off: a recorded hook that still holds Forkop's 0, which stop
+// would put back.
 function status() {
     let record = read_record();
+    let held = false;
+    if (type(record) == "object")
+        for (let name in keys(record))
+            if (hook_value(name) == FORKOP_VALUE)
+                held = true;
     return {
         loaded: loaded(),
         iptables: hook_value("iptables"),
         ip6tables: hook_value("ip6tables"),
-        disabled_by_forkop: type(record) == "object" && length(keys(record)) > 0
+        disabled_by_forkop: held
     };
 }
 

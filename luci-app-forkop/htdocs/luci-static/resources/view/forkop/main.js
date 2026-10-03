@@ -6116,7 +6116,7 @@ function overviewWarning(health2) {
       text: health2.bridge_netfilter.disabled_by_forkop ? _(
         "Forkop X has turned off the iptables hooks of br_netfilter (net.bridge.bridge-nf-call-iptables and -ip6tables) for transparent proxying: iptables rules do not filter bridged traffic while it runs. Stopping Forkop X restores the previous values unless another program has changed them since."
       ) : _(
-        "While Forkop X runs, it turns off the iptables hooks of br_netfilter (net.bridge.bridge-nf-call-iptables and -ip6tables) for transparent proxying, so iptables rules do not filter bridged traffic. Stopping Forkop X restores them."
+        "While Forkop X runs, it turns off the iptables hooks of br_netfilter (net.bridge.bridge-nf-call-iptables and -ip6tables) that are on, for transparent proxying, so iptables rules do not filter bridged traffic. Their current values were not set by Forkop X, and stopping it does not change them."
       )
     };
   }

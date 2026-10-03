@@ -196,9 +196,10 @@ describe('overview br_netfilter warning', () => {
     expect(held?.title).toBe('br_netfilter is loaded');
     expect(held?.text).toMatch(/has turned off/);
     expect(held?.link).toBeUndefined();
-    expect(overviewWarning(bridge(true, false))?.text).toMatch(
-      /While Forkop X runs/,
-    );
+    const notHeld = overviewWarning(bridge(true, false))?.text;
+    expect(notHeld).toMatch(/While Forkop X runs/);
+    expect(notHeld).toMatch(/stopping it does not change them/);
+    expect(notHeld).not.toMatch(/restores/);
   });
 
   it('comes after the recovery warnings', () => {
