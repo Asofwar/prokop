@@ -10,6 +10,7 @@ let netstat = require("core.netstat");
 let dpi_strategy = require("core.dpi_strategy");
 let common = require("core.common");
 let legacy_forkop = require("core.legacy_forkop");
+let listen_address = require("singbox.listen_address");
 
 const CONFIG_NAME = getenv("PROKOP_CONFIG_NAME") || constants.PROKOP_CONFIG_NAME || "prokop";
 const LIB_DIR = getenv("PROKOP_LIB") || "/usr/lib/prokop";
@@ -1740,8 +1741,10 @@ function clash_request(args) {
     return { ok: false, error: result.status == 28 ? "clash_api_timeout" : "clash_api_unreachable" };
 }
 
+// The listen address is looked up in-process, quietly: every UI state poll
+// and every Priority probe asks for the controller (UC-148, UC-149).
 function clash_api_url() {
-    let address = replace(module_output(SINGBOX_RUNTIME_UC, [ "service-listen-address" ]), /[\r\n]+$/g, "");
+    let address = listen_address.service_listen_address(settings());
     if (address == "")
         address = "127.0.0.1";
     return address + ":" + SB_CLASH_API_CONTROLLER_PORT;
@@ -1778,8 +1781,23 @@ function clash_auth_close() {
     clash_auth_files = [];
 }
 
+// Percent-encodes a proxy tag for a controller path, byte for byte as
+// diagnostics/status.uc url-encode, without starting it (UC-148).
 function clash_urlencode(value) {
-    return replace(status_output([ "url-encode", value ], null), /[\r\n]+$/g, "");
+    value = as_string(value);
+    let encoded = "";
+    for (let i = 0; i < length(value); i++) {
+        let c = substr(value, i, 1);
+        let code = ord(c);
+        if ((code >= 48 && code <= 57) ||
+            (code >= 65 && code <= 90) ||
+            (code >= 97 && code <= 122) ||
+            c == "-" || c == "_" || c == "." || c == "~")
+            encoded += c;
+        else
+            encoded += sprintf("%%%02X", code);
+    }
+    return encoded;
 }
 
 const CLASH_FAILURE_MESSAGES = {

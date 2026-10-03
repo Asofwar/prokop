@@ -60,6 +60,8 @@ exit 0
 SH
 chmod 755 "$WORK_DIR/opkg"
 
+# The stubs change the manifest without a package database: every call asks
+# the package manager (tests/ui_state_poll_cost.sh covers the cached answer).
 ui_capabilities() {
   PATH="$WORK_DIR:$PATH" \
   PROKOP_CONFIG_NAME=prokop-ui-probe-test \
@@ -68,6 +70,8 @@ ui_capabilities() {
   PROKOP_UI_SING_BOX_VERSION_CACHE_FILE="$CACHE_FILE" \
   PROKOP_UI_SING_BOX_VARIANT_STATE_FILE="$WORK_DIR/missing-variant" \
   PROKOP_UI_SING_BOX_BIN_PATH="$PROBE_BIN" \
+  PROKOP_UI_APK_DB_FILE="$WORK_DIR/missing-apk-db" \
+  PROKOP_UI_OPKG_STATUS_FILE="$WORK_DIR/missing-opkg-status" \
   PROKOP_UI_SING_BOX_VERSION_PROBE_TIMEOUT_SECONDS=1 \
   PROKOP_UI_SING_BOX_VERSION_PROBE_FAILURE_TTL_SECONDS=30 \
   ZAPRET_PROVIDER_NFQWS_BIN="$WORK_DIR/missing-nfqws" \

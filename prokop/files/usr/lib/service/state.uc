@@ -504,20 +504,27 @@ function sing_box_exe_kind(path) {
     return basename == "sing-box (deleted)" ? "deleted" : "other";
 }
 
+// The executable link of a process, read in-process: the UI state poll scans
+// every /proc entry, and a forked readlink per entry made its cost grow with
+// the process count (UC-146). '' for a kernel thread or a gone process.
+function pid_exe_link(pid) {
+    return as_string(fs.readlink("/proc/" + as_string(pid) + "/exe"));
+}
+
 function pid_is_sing_box(pid) {
     pid = as_string(pid);
     if (match(pid, /^[0-9]+$/) == null)
         return false;
 
-    return sing_box_exe_path(command_trimmed_output_from_args([ "readlink", "/proc/" + pid + "/exe" ]));
+    return sing_box_exe_path(pid_exe_link(pid));
 }
 
 function pid_has_current_sing_box_exe(pid) {
-    return sing_box_exe_kind(command_trimmed_output_from_args([ "readlink", "/proc/" + pid + "/exe" ])) == "current";
+    return sing_box_exe_kind(pid_exe_link(pid)) == "current";
 }
 
 function pid_has_deleted_sing_box_exe(pid) {
-    return sing_box_exe_kind(command_trimmed_output_from_args([ "readlink", "/proc/" + pid + "/exe" ])) == "deleted";
+    return sing_box_exe_kind(pid_exe_link(pid)) == "deleted";
 }
 
 function process_start_ticks(stat) {
@@ -1086,8 +1093,10 @@ function sing_box_service_stable(min_age) {
     return age != null && age >= min_age;
 }
 
+// The table is only tested for presence: -t leaves out the set contents,
+// which the UI state poll would otherwise list every second (UC-147).
 function prokop_runtime_network_configured(rt_table, nft_table, mark) {
-    return command_success_from_args([ "nft", "list", "table", "inet", nft_table ]) &&
+    return command_success_from_args([ "nft", "-t", "list", "table", "inet", nft_table ]) &&
         command_success_from_args([ "ucode", "-L", LIB_DIR, LIB_DIR + "/nft/apply.uc", "tproxy-route-rule-present", rt_table, mark ]);
 }
 
