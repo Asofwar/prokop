@@ -19,7 +19,7 @@ const NFT_BATCH_FILE = getenv("FORKOP_NFT_BATCH_FILE") || "";
 // update, import the same rule sets again, and preparing thousands of subnets
 // is most of an import on the router. The version changes with the format.
 const SUBNET_CACHE_DIR = getenv("FORKOP_NFT_SUBNET_CACHE_DIR") || "/var/run/forkop/nft-subnet-cache";
-const SUBNET_CACHE_VERSION = "1";
+const SUBNET_CACHE_VERSION = "2";
 // Bounded by entries and by size: the tmpfs is RAM and holds the candidate
 // batch, config.json and the list downloads too (UC-222). An entry is about
 // the size of its rule set's JSON (100k subnets: 1.7 MB).

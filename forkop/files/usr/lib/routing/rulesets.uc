@@ -331,59 +331,6 @@ function intersect_port_filters(first, second) {
     return normalize_port_intervals(result);
 }
 
-function union_port_filters(first, second) {
-    if (first == null || second == null)
-        return null;
-
-    let result = [];
-    for (let item in first)
-        push(result, item);
-    for (let item in second)
-        push(result, item);
-
-    return normalize_port_intervals(result);
-}
-
-function extract_port_filter(rule) {
-    if (type(rule) != "object")
-        return null;
-
-    let own_filter = direct_port_filter(rule);
-    if (rule.type != "logical" || type(rule.rules) != "array")
-        return own_filter;
-
-    let mode = as_string(rule.mode);
-    if (mode == "or") {
-        let result = null;
-        let initialized = false;
-
-        for (let child in rule.rules) {
-            let child_filter = extract_port_filter(child);
-            if (!initialized) {
-                result = child_filter;
-                initialized = true;
-            }
-            else {
-                result = union_port_filters(result, child_filter);
-            }
-
-            if (result == null)
-                break;
-        }
-
-        return intersect_port_filters(own_filter, result);
-    }
-
-    let result = own_filter;
-    for (let child in rule.rules) {
-        result = intersect_port_filters(result, extract_port_filter(child));
-        if (filter_is_empty(result))
-            return result;
-    }
-
-    return result;
-}
-
 function nft_port_value(interval) {
     return interval.start == interval.end ? "" + interval.start : interval.start + "-" + interval.end;
 }
@@ -412,32 +359,89 @@ function add_ip_cidr_values_to_nft_outputs(rule, port_filter, unscoped_lines, sc
     }
 }
 
+// nft may decide an address before sing-box only when a rule matches it by
+// destination alone, with an optional port constraint: a bypass section
+// accepts it there (UC-101). A default rule of destination address matchers
+// (alternatives of one another in sing-box) and ports qualifies; invert,
+// network, source, process and any other condition do not. An OR descends
+// into its children; an AND qualifies when it is one such address rule
+// plus port rules. Anything else is left to sing-box, which still applies
+// the section's rule.
+const NFT_ADDRESS_KEYS = [ "domain", "domain_suffix", "domain_keyword", "domain_regex", "ip_cidr", "ip_is_private" ];
+
+function nft_destination_rule(rule) {
+    if (type(rule) != "object")
+        return false;
+    for (let key, value in rule) {
+        if (key == "type" ? value == "default" : key == "invert" ? value === false :
+            (index(NFT_ADDRESS_KEYS, key) >= 0 || key == "port" || key == "port_range"))
+            continue;
+        return false;
+    }
+    return true;
+}
+
+function nft_rule_has_address(rule) {
+    for (let key in NFT_ADDRESS_KEYS)
+        if (rule[key] != null)
+            return true;
+    return false;
+}
+
+// The rule's own port filter: null without ports, [] (nothing) when its
+// port values are all unusable.
+function nft_rule_port_filter(rule) {
+    let filter = direct_port_filter(rule);
+    if (filter == null && (rule.port != null || rule.port_range != null))
+        return [];
+    return filter;
+}
+
 function collect_ip_cidr_nft_outputs(rule, inherited_filter, unscoped_lines, scoped_lines) {
     if (type(rule) != "object")
         return;
 
-    let own_filter = direct_port_filter(rule);
-    let filter = intersect_port_filters(inherited_filter, own_filter);
+    if (rule.type == "logical") {
+        for (let key, value in rule)
+            if (key != "type" && key != "mode" && key != "rules" && !(key == "invert" && value === false))
+                return;
+        if (type(rule.rules) != "array")
+            return;
 
-    if (filter_is_empty(filter))
-        return;
-
-    if (rule.type == "logical" && type(rule.rules) == "array") {
-        if (as_string(rule.mode) == "and") {
-            for (let child in rule.rules) {
-                filter = intersect_port_filters(filter, extract_port_filter(child));
-                if (filter_is_empty(filter))
-                    return;
-            }
+        let mode = as_string(rule.mode);
+        if (mode == "or") {
+            for (let child in rule.rules)
+                collect_ip_cidr_nft_outputs(child, inherited_filter, unscoped_lines, scoped_lines);
+            return;
         }
+        if (mode != "and")
+            return;
 
-        add_ip_cidr_values_to_nft_outputs(rule, filter, unscoped_lines, scoped_lines);
-
-        for (let child in rule.rules)
-            collect_ip_cidr_nft_outputs(child, filter, unscoped_lines, scoped_lines);
-
+        let carrier = null;
+        let filter = inherited_filter;
+        for (let child in rule.rules) {
+            if (!nft_destination_rule(child))
+                return;
+            if (nft_rule_has_address(child)) {
+                if (carrier != null)
+                    return;
+                carrier = child;
+            }
+            filter = intersect_port_filters(filter, nft_rule_port_filter(child));
+            if (filter_is_empty(filter))
+                return;
+        }
+        if (carrier != null)
+            add_ip_cidr_values_to_nft_outputs(carrier, filter, unscoped_lines, scoped_lines);
         return;
     }
+
+    if (!nft_destination_rule(rule))
+        return;
+
+    let filter = intersect_port_filters(inherited_filter, nft_rule_port_filter(rule));
+    if (filter_is_empty(filter))
+        return;
 
     add_ip_cidr_values_to_nft_outputs(rule, filter, unscoped_lines, scoped_lines);
 }
