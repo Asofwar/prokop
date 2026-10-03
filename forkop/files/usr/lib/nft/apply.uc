@@ -1390,17 +1390,24 @@ function nft_add_inline_ip_cidr_matchers(csv, ports_csv, table, common_set, ip_p
     return nft_add_csv_chunks_to_family_sets(csv, table, common_set, default_arg(common6_set, "forkop_subnets6"), "ips", "", chunk_size_text);
 }
 
+// ensure_tproxy_route_rule(): `ip rule add fwmark M/M table <name> priority
+// 105`, <name> registered as table 105 in rt_tables.
+const TPROXY_RULE_PRIORITY = "105";
+const TPROXY_RULE_TABLE_ID = "105";
+
 function normalized_fields(line) {
     line = trim(replace(as_string(line), /\r/g, ""));
     line = replace(line, /[[:space:]]+/g, " ");
     return line == "" ? [] : split(line, " ");
 }
 
-function rule_line_has_lookup_table(fields, table) {
+// `lookup <table>`: by its rt_tables name, or by the numeric id `ip` prints
+// while /etc/iproute2/rt_tables lacks the name (UC-163).
+function rule_line_has_lookup_table(fields, table, table_id) {
     table = as_string(table);
 
     for (let i = 0; i + 1 < length(fields); i++)
-        if (fields[i] == "lookup" && fields[i + 1] == table)
+        if (fields[i] == "lookup" && (fields[i + 1] == table || fields[i + 1] == as_string(table_id)))
             return true;
 
     return false;
@@ -1422,25 +1429,21 @@ function rule_line_has_fwmark(fields, expected_mark) {
     return false;
 }
 
+// One line of `ip rule list` is one rule: Forkop's marking rule is a line
+// with its priority, from all, the fwmark/mask and the lookup of its table
+// (UC-163). A lookup and a fwmark on two different lines are two other rules.
 function has_tproxy_marking_rule_text(rule_list, table, mark) {
     let expected_mark = parse_mark_number(mark);
-    let has_lookup = false;
-    let has_fwmark = false;
 
     if (expected_mark == null)
         return false;
 
     for (let line in split(rule_list, "\n")) {
         let fields = normalized_fields(line);
-        if (length(fields) == 0)
+        if (length(fields) < 3 || fields[0] != TPROXY_RULE_PRIORITY + ":" || fields[1] != "from" || fields[2] != "all")
             continue;
 
-        if (!has_lookup && rule_line_has_lookup_table(fields, table))
-            has_lookup = true;
-        if (!has_fwmark && rule_line_has_fwmark(fields, expected_mark))
-            has_fwmark = true;
-
-        if (has_lookup && has_fwmark)
+        if (rule_line_has_lookup_table(fields, table, TPROXY_RULE_TABLE_ID) && rule_line_has_fwmark(fields, expected_mark))
             return true;
     }
 
@@ -1525,7 +1528,7 @@ function tproxy_route_rule_present(table, mark) {
 function ensure_tproxy_route_rule(table, mark, rt_tables_path) {
     rt_tables_path = as_string(rt_tables_path || RT_TABLES_FILE);
 
-    if (!ensure_rt_table_entry(rt_tables_path, "105", table)) {
+    if (!ensure_rt_table_entry(rt_tables_path, TPROXY_RULE_TABLE_ID, table)) {
         log_fatal("Failed to update route table registry. Aborted.");
         return false;
     }
@@ -1554,7 +1557,7 @@ function ensure_tproxy_route_rule(table, mark, rt_tables_path) {
 
     if (!tproxy_marking_rule4_present(table, mark)) {
         log_debug("Creating IPv4 TPROXY marking rule");
-        if (!run_args([ "ip", "-4", "rule", "add", "fwmark", as_string(mark) + "/" + as_string(mark), "table", table, "priority", "105" ]) && !tproxy_marking_rule4_present(table, mark)) {
+        if (!run_args([ "ip", "-4", "rule", "add", "fwmark", as_string(mark) + "/" + as_string(mark), "table", table, "priority", TPROXY_RULE_PRIORITY ]) && !tproxy_marking_rule4_present(table, mark)) {
             log_fatal("Failed to create IPv4 marking rule. Aborted.");
             return false;
         }
@@ -1565,7 +1568,7 @@ function ensure_tproxy_route_rule(table, mark, rt_tables_path) {
 
     if (!tproxy_marking_rule6_present(table, mark)) {
         log_debug("Creating IPv6 TPROXY marking rule");
-        if (!run_args([ "ip", "-6", "rule", "add", "fwmark", as_string(mark) + "/" + as_string(mark), "table", table, "priority", "105" ]) && !tproxy_marking_rule6_present(table, mark)) {
+        if (!run_args([ "ip", "-6", "rule", "add", "fwmark", as_string(mark) + "/" + as_string(mark), "table", table, "priority", TPROXY_RULE_PRIORITY ]) && !tproxy_marking_rule6_present(table, mark)) {
             log_fatal("Failed to create IPv6 marking rule. Aborted.");
             return false;
         }
