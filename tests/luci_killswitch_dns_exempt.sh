@@ -96,15 +96,15 @@ async function check(label, fn) {
     }
 
     // The CLI may spell both flags as core/common.uc bool_option() reads
-    // them: they show as the backend reads them, and an untouched save keeps
+    // them (in any letter case, UC-105): they show as the backend reads them, and an untouched save keeps
     // the spelling. Before, a kill-switch stored as "yes" showed unchecked
     // and an untouched save removed it.
     for (const [killSwitch, exempt, checked] of [
       ['yes', 'true', true], ['on', 'yes', true], ['true', 'on', true], ['1', 'off', false],
-      ['TRUE', '1', false], ['yes', 'no', false], ['true', 'false', false], ['on', '0', false],
+      ['TRUE', '1', true], ['yes', 'no', false], ['true', 'false', false], ['on', '0', false],
     ]) {
       const values = { kill_switch: killSwitch, [NAME]: exempt };
-      const ksOn = ['1', 'true', 'yes', 'on'].includes(killSwitch);
+      const ksOn = ['1', 'true', 'yes', 'on'].includes(killSwitch.toLowerCase());
       await check(`${version} spelled ${killSwitch}/${exempt}`, async () => {
         const fixture = rule(values);
         const env = createEnvironment({ version, config: { rule: fixture } });

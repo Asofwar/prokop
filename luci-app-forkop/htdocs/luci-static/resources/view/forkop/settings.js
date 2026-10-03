@@ -126,10 +126,20 @@ function isDownloadSectionAction(action, capabilities) {
   }
 }
 
+// core/common.uc section_enabled(): unset is on; 1, true, yes or on in any
+// letter case is on (UC-105).
+function isRuleEnabled(sec) {
+  const value = sec?.enabled;
+  if (value === undefined || value === null) return true;
+  return ["1", "true", "yes", "on"].includes(
+    (Array.isArray(value) ? value.join(" ") : `${value}`).toLowerCase(),
+  );
+}
+
 function isDownloadSection(sec, capabilities) {
   return (
     sec?.[".type"] === "section" &&
-    sec.enabled !== "0" &&
+    isRuleEnabled(sec) &&
     isDownloadSectionAction(sec.action, capabilities)
   );
 }
@@ -164,7 +174,7 @@ function describeUnavailableSection(sec, name) {
   }
 
   const label = sec.label || name;
-  if (sec.enabled === "0") {
+  if (!isRuleEnabled(sec)) {
     return {
       label: _("%s (disabled)").format(label),
       message: _(
