@@ -15,6 +15,7 @@ import {
   refreshRuntimeUiState,
   subscribeRuntimeUiState,
 } from '../runtimeUiState.service';
+import { setProkopAutostart } from '../../tabs/shared/serviceControl';
 
 function createUiState(
   status = 'running & enabled',
@@ -98,7 +99,7 @@ describe('refreshRuntimeUiState', () => {
     );
 
     const firstRefresh = refreshRuntimeUiState({ force: true });
-    const secondRefresh = refreshRuntimeUiState({ force: true });
+    const secondRefresh = refreshRuntimeUiState();
 
     expect(mocks.executeShellCommand).toHaveBeenCalledTimes(1);
 
@@ -112,6 +113,116 @@ describe('refreshRuntimeUiState', () => {
       uiState,
       uiState,
     ]);
+  });
+
+  it('runs one follow-up refresh for forced callers that join an in-flight poll', async () => {
+    const oldState = createUiState('running but disabled', 1);
+    oldState.service.prokop.enabled = 0;
+    const newState = createUiState('running & enabled', 1);
+    const rpcResolvers: Array<
+      (value: { stdout: string; stderr: string; code: number }) => void
+    > = [];
+
+    mocks.executeShellCommand.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          rpcResolvers.push(resolve);
+        }),
+    );
+
+    const poll = refreshRuntimeUiState({ force: true });
+    const firstForced = refreshRuntimeUiState({ force: true });
+    const secondForced = refreshRuntimeUiState({ force: true });
+
+    expect(mocks.executeShellCommand).toHaveBeenCalledTimes(1);
+
+    rpcResolvers[0]({ stdout: JSON.stringify(oldState), stderr: '', code: 0 });
+    await expect(poll).resolves.toEqual(oldState);
+    await vi.waitFor(() =>
+      expect(mocks.executeShellCommand).toHaveBeenCalledTimes(2),
+    );
+
+    rpcResolvers[1]({ stdout: JSON.stringify(newState), stderr: '', code: 0 });
+
+    await expect(Promise.all([firstForced, secondForced])).resolves.toEqual([
+      newState,
+      newState,
+    ]);
+    expect(store.get().servicesInfoWidget.data.prokopEnabled).toBe(1);
+  });
+
+  it('reads back autostart after a poll that started before the change', async () => {
+    const before = createUiState('running but disabled', 1);
+    before.service.prokop.enabled = 0;
+    const after = createUiState('running & enabled', 1);
+    let routerEnabled = 0;
+    let resolvePoll: () => void = () => undefined;
+
+    mocks.executeShellCommand.mockImplementation(
+      ({ args }: { args: string[] }) => {
+        if (args[0] === 'enable') {
+          routerEnabled = 1;
+          return Promise.resolve({ stdout: '', stderr: '', code: 0 });
+        }
+
+        const snapshot = routerEnabled ? after : before;
+        if (args[0] === 'get_ui_state' && !routerEnabled) {
+          return new Promise((resolve) => {
+            resolvePoll = () =>
+              resolve({
+                stdout: JSON.stringify(snapshot),
+                stderr: '',
+                code: 0,
+              });
+          });
+        }
+
+        return Promise.resolve({
+          stdout: JSON.stringify(snapshot),
+          stderr: '',
+          code: 0,
+        });
+      },
+    );
+
+    const poll = refreshRuntimeUiState();
+    const toggled = setProkopAutostart(true);
+
+    await vi.waitFor(() => expect(routerEnabled).toBe(1));
+    resolvePoll();
+    await poll;
+
+    await expect(toggled).resolves.toBe(true);
+  });
+
+  it('marks the service state unavailable after repeated failed refreshes', async () => {
+    mocks.executeShellCommand.mockResolvedValue({
+      stdout: JSON.stringify(createUiState()),
+      stderr: '',
+      code: 0,
+    });
+    await refreshRuntimeUiState({ force: true });
+    expect(store.get().servicesInfoWidget.failed).toBe(false);
+
+    mocks.executeShellCommand.mockRejectedValue(new Error('rpc timeout'));
+
+    await refreshRuntimeUiState({ force: true });
+    await refreshRuntimeUiState({ force: true });
+    expect(store.get().servicesInfoWidget.failed).toBe(false);
+
+    await refreshRuntimeUiState({ force: true });
+    expect(store.get().servicesInfoWidget).toMatchObject({
+      failed: true,
+      data: { prokopRunning: 1 },
+    });
+
+    mocks.executeShellCommand.mockResolvedValue({
+      stdout: JSON.stringify(createUiState()),
+      stderr: '',
+      code: 0,
+    });
+    await refreshRuntimeUiState({ force: true });
+    expect(store.get().servicesInfoWidget.failed).toBe(false);
   });
 
   it('notifies subscribers after applying fresh state', async () => {

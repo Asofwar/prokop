@@ -253,9 +253,10 @@ export const ProkopShellMethods = {
       Prokop.AvailableMethods.GET_READONLY_CONFIG_SECTIONS,
     ),
   getDashboardRuntimeMetadata: async () =>
-    callBaseMethod<{ urltestGroups: Record<string, unknown> }>(
-      Prokop.AvailableMethods.GET_DASHBOARD_RUNTIME_METADATA,
-    ),
+    callBaseMethod<{
+      urltestGroups: Record<string, unknown>;
+      clashControllerHosts?: unknown;
+    }>(Prokop.AvailableMethods.GET_DASHBOARD_RUNTIME_METADATA),
   getSubscriptionMetadata: async (section: string) =>
     callBaseMethod<Prokop.SubscriptionMetadata | Prokop.SubscriptionMetadata[]>(
       Prokop.AvailableMethods.GET_SUBSCRIPTION_METADATA,

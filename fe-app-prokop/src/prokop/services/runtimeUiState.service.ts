@@ -1,15 +1,25 @@
 import { ProkopShellMethods } from '../methods';
 import { Prokop } from '../types';
 import { logger } from './logger.service';
+import { store } from './store.service';
 import { applyUiStateToStore } from './uiState.service';
 
 const RUNTIME_UI_STATE_REFRESH_MIN_INTERVAL_MS = 500;
 const RUNTIME_UI_STATE_IDLE_POLL_INTERVAL_MS = 1000;
 const RUNTIME_UI_STATE_ACTIVE_POLL_INTERVAL_MS = 500;
+// After this many failed refreshes in a row the last known service state is
+// no longer shown as current (UC-122).
+const RUNTIME_UI_STATE_MAX_FAILURES = 3;
 type RuntimeUiStateListener = (uiState: Prokop.UiState) => void;
 
 let runtimeUiStateRefreshPromise: Promise<Prokop.UiState | undefined> | null =
   null;
+// A forced refresh asked for while another one is in flight runs once more
+// after it, so it observes changes made after the in-flight request was sent
+// (UC-121). Concurrent forced callers share this follow-up.
+let runtimeUiStateFollowUpPromise: Promise<Prokop.UiState | undefined> | null =
+  null;
+let runtimeUiStateFailures = 0;
 let lastRuntimeUiStateRefreshAt = 0;
 let lastRuntimeUiState: Prokop.UiState | undefined;
 let runtimeStateResumeRefreshRegistered = false;
@@ -67,33 +77,30 @@ function notifyRuntimeUiStateListeners(uiState: Prokop.UiState) {
   }
 }
 
-export async function refreshRuntimeUiState({
-  force = false,
-}: { force?: boolean } = {}): Promise<Prokop.UiState | undefined> {
-  if (!isDocumentVisible()) {
-    return undefined;
+function markRuntimeUiStateFailure() {
+  runtimeUiStateFailures += 1;
+
+  if (runtimeUiStateFailures < RUNTIME_UI_STATE_MAX_FAILURES) {
+    return;
   }
 
-  if (runtimeUiStateRefreshPromise) {
-    return runtimeUiStateRefreshPromise;
+  const servicesInfoWidget = store.get().servicesInfoWidget;
+  if (!servicesInfoWidget.failed && !servicesInfoWidget.loading) {
+    store.set({ servicesInfoWidget: { ...servicesInfoWidget, failed: true } });
   }
+}
 
-  const now = Date.now();
-  if (
-    !force &&
-    now - lastRuntimeUiStateRefreshAt < RUNTIME_UI_STATE_REFRESH_MIN_INTERVAL_MS
-  ) {
-    return undefined;
-  }
-
-  lastRuntimeUiStateRefreshAt = now;
+function startRuntimeUiStateRefresh() {
+  lastRuntimeUiStateRefreshAt = Date.now();
 
   const promise = ProkopShellMethods.getUiState()
     .then((response) => {
       if (!response.success) {
+        markRuntimeUiStateFailure();
         return undefined;
       }
 
+      runtimeUiStateFailures = 0;
       applyUiStateToStore(response.data);
       lastRuntimeUiState = response.data;
       runtimeStateHasRunningAction = hasRunningAction(response.data);
@@ -102,6 +109,7 @@ export async function refreshRuntimeUiState({
     })
     .catch((error) => {
       logger.error('[RUNTIME_UI_STATE]', 'refresh failed', error);
+      markRuntimeUiStateFailure();
       return undefined;
     })
     .finally(() => {
@@ -111,7 +119,43 @@ export async function refreshRuntimeUiState({
     });
 
   runtimeUiStateRefreshPromise = promise;
-  return runtimeUiStateRefreshPromise;
+  return promise;
+}
+
+export async function refreshRuntimeUiState({
+  force = false,
+}: { force?: boolean } = {}): Promise<Prokop.UiState | undefined> {
+  if (!isDocumentVisible()) {
+    return undefined;
+  }
+
+  if (runtimeUiStateRefreshPromise) {
+    if (!force) {
+      return runtimeUiStateRefreshPromise;
+    }
+
+    if (!runtimeUiStateFollowUpPromise) {
+      const followUp = runtimeUiStateRefreshPromise
+        .catch(() => undefined)
+        .then(() => {
+          runtimeUiStateFollowUpPromise = null;
+          return runtimeUiStateRefreshPromise ?? startRuntimeUiStateRefresh();
+        });
+      runtimeUiStateFollowUpPromise = followUp;
+    }
+
+    return runtimeUiStateFollowUpPromise;
+  }
+
+  if (
+    !force &&
+    Date.now() - lastRuntimeUiStateRefreshAt <
+      RUNTIME_UI_STATE_REFRESH_MIN_INTERVAL_MS
+  ) {
+    return undefined;
+  }
+
+  return startRuntimeUiStateRefresh();
 }
 
 export function subscribeRuntimeUiState(listener: RuntimeUiStateListener) {

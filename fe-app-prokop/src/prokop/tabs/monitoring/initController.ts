@@ -27,6 +27,7 @@ import {
 import { CustomProkopMethods, ProkopShellMethods } from '../../methods';
 import { getOutboundTagBySection } from '../../runtimeTags';
 import { getClashApiSecret } from '../../methods/custom/getClashApiSecret';
+import { getClashControllerHosts } from '../../methods/custom/getClashControllerHosts';
 import { logger, socket, store, StoreType } from '../../services';
 import { Prokop } from '../../types';
 import {
@@ -54,6 +55,7 @@ import {
   type ServiceAvailability,
 } from '../../helpers/serviceAvailability';
 import { isSectionEnabled } from '../../helpers/sectionEnabled';
+import { createRouteNamesRefresher } from './routeNamesRefresh';
 
 type MonitoringTabId = 'active' | 'closed';
 
@@ -104,6 +106,7 @@ function normalizeConnectionsPayload(value: unknown): ClashConnectionsPayload {
 }
 
 const RENDER_INTERVAL_MS = 500;
+const ROUTE_NAMES_REFRESH_INTERVAL_MS = 15000;
 const CONNECTIONS_RPC_POLL_INTERVAL_MS = 1500;
 const CLOSED_CONNECTION_LIMIT = 300;
 const ALL_FILTER_VALUE = 'all';
@@ -1851,18 +1854,24 @@ async function loadLocalDevices() {
 
 // Both roles read the same derived section view: rule labels plus the DPI
 // provider and strategy name, never the raw strategy options.
-async function loadRouteDisplayNames() {
-  try {
+const routeNamesRefresher = createRouteNamesRefresher({
+  fetchSections: async () => {
     const response = await ProkopShellMethods.getReadonlyConfigSections();
-    buildRouteDisplayNames(response.success ? response.data : []);
-  } catch (error) {
-    logger.warn('[MONITORING]', 'loadRouteDisplayNames: failed', error);
-    buildRouteDisplayNames([]);
-  } finally {
+    if (!response.success) {
+      throw new Error(response.error || 'get_readonly_config_sections failed');
+    }
+    return response.data;
+  },
+  apply: (sections) => {
+    buildRouteDisplayNames(sections);
     renderControls();
     renderConnections();
-  }
-}
+  },
+  onError: (error) => {
+    logger.warn('[MONITORING]', 'loadRouteDisplayNames: failed', error);
+  },
+  intervalMs: ROUTE_NAMES_REFRESH_INTERVAL_MS,
+});
 
 async function pollConnectionsSnapshot() {
   if (
@@ -1927,7 +1936,10 @@ function startConnectionsPolling() {
 
 async function connectToConnectionsSocket(updatesId: number) {
   const mountId = monitoringMountId;
-  const clashApiSecret = await getClashApiSecret();
+  const [clashApiSecret, clashControllerHosts] = await Promise.all([
+    getClashApiSecret(),
+    getClashControllerHosts(),
+  ]);
 
   if (
     !monitoringMounted ||
@@ -1938,7 +1950,7 @@ async function connectToConnectionsSocket(updatesId: number) {
     return;
   }
 
-  if (!canUseDirectClashApi(clashApiSecret)) {
+  if (!canUseDirectClashApi(clashApiSecret, clashControllerHosts)) {
     startConnectionsPolling();
     return;
   }
@@ -2100,7 +2112,7 @@ async function onPageMount() {
   watchServiceState();
 
   void loadLocalDevices();
-  void loadRouteDisplayNames();
+  routeNamesRefresher.start();
   void loadNodeDisplayNames();
 
   if (getCachedRuntimeUiState()) {
@@ -2139,6 +2151,7 @@ function onPageUnmount() {
   }
 
   stopConnectionsUpdates();
+  routeNamesRefresher.stop();
   serviceStateUnsubscribe?.();
   serviceStateUnsubscribe = null;
 

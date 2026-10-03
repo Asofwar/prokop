@@ -23,6 +23,7 @@ import {
 } from './partials';
 import { fetchServicesInfo } from '../../fetchers/fetchServicesInfo';
 import { getClashApiSecret } from '../../methods/custom/getClashApiSecret';
+import { getClashControllerHosts } from '../../methods/custom/getClashControllerHosts';
 import { Prokop } from '../../types';
 import {
   getCachedRuntimeUiState,
@@ -34,6 +35,11 @@ import { isTransientRpcError } from '../../helpers/isTransientRpcError';
 import { shouldShowLoadingForRestoredAction } from '../../helpers/restoredActionLoading';
 import { getServiceAvailability } from '../../helpers/serviceAvailability';
 import { createPriorityMembersState } from './priorityMembersState';
+import {
+  renderSectionsStaleNotice,
+  sectionsAfterFailedRefresh,
+  sectionsAfterRefresh,
+} from './sectionsRefresh';
 import {
   overviewLastEvent,
   overviewRecovery,
@@ -297,15 +303,8 @@ async function fetchDashboardSectionsOnce(mountId: number) {
       throw new Error('failed to fetch dashboard sections');
     }
 
-    const current = store.get().sectionsWidget;
-
     store.set({
-      sectionsWidget: {
-        ...current,
-        loading: false,
-        failed: false,
-        data,
-      },
+      sectionsWidget: sectionsAfterRefresh(store.get().sectionsWidget, data),
     });
 
     return true;
@@ -320,15 +319,8 @@ async function fetchDashboardSectionsOnce(mountId: number) {
       return false;
     }
 
-    const current = store.get().sectionsWidget;
-
     store.set({
-      sectionsWidget: {
-        ...current,
-        loading: false,
-        failed: current.data.length === 0,
-        data: current.data,
-      },
+      sectionsWidget: sectionsAfterFailedRefresh(store.get().sectionsWidget),
     });
 
     return false;
@@ -653,7 +645,10 @@ function stopActionStateWatcher() {
 
 async function connectToClashSockets(dataUpdatesId: number) {
   const mountId = dashboardMountId;
-  const clashApiSecret = await getClashApiSecret();
+  const [clashApiSecret, clashControllerHosts] = await Promise.all([
+    getClashApiSecret(),
+    getClashControllerHosts(),
+  ]);
 
   if (
     !dashboardMounted ||
@@ -664,7 +659,7 @@ async function connectToClashSockets(dataUpdatesId: number) {
     return;
   }
 
-  if (!canUseDirectClashApi(clashApiSecret)) {
+  if (!canUseDirectClashApi(clashApiSecret, clashControllerHosts)) {
     startClashRpcPolling(dataUpdatesId);
     return;
   }
@@ -1790,6 +1785,7 @@ function canUpdateLatencyProgressInline(
   return (
     prev.loading === next.loading &&
     prev.failed === next.failed &&
+    prev.stale === next.stale &&
     prev.data === next.data &&
     shallowRecordEqual(
       prev.latencyFetchingSections,
@@ -1950,7 +1946,11 @@ async function renderSectionsWidget() {
   );
 
   return preserveScrollForPage(() => {
-    container.replaceChildren(...renderedWidgets);
+    const staleNotice = renderSectionsStaleNotice(sectionsWidget);
+    container.replaceChildren(
+      ...(staleNotice ? [staleNotice] : []),
+      ...renderedWidgets,
+    );
   });
 }
 

@@ -905,6 +905,39 @@ function get_readonly_config_sections() {
     return 0;
 }
 
+// A router address for the browser: not a wildcard and not loopback (a page
+// on a loopback address is a tunnel or a local proxy, not the router).
+function router_listen_host(value) {
+    let host = lc(replace(as_string(value), /^\[(.*)\]$/, "$1"));
+    if (index([ "", "0.0.0.0", "::", "localhost", "::1" ], host) >= 0 || match(host, /^127\./) != null)
+        return null;
+    return host;
+}
+
+// Router addresses at which the Clash API controller of the running
+// configuration answers. The pages talk to the controller directly only
+// when they are served from one of them; otherwise they poll through rpcd
+// (UC-125). A controller on a wildcard answers on the addresses sing-box
+// inbounds listen on.
+function clash_controller_hosts(parsed) {
+    let api = type(parsed) == "object" && type(parsed.experimental) == "object" ? parsed.experimental.clash_api : null;
+    let address = type(api) == "object" ? match(as_string(api.external_controller), /^(.*):([0-9]+)$/) : null;
+    if (address == null)
+        return [];
+    let host = lc(replace(address[1], /^\[(.*)\]$/, "$1"));
+    if (index([ "", "0.0.0.0", "::" ], host) < 0) {
+        host = router_listen_host(host);
+        return host == null ? [] : [ host ];
+    }
+    let hosts = [];
+    for (let inbound in (type(parsed.inbounds) == "array" ? parsed.inbounds : [])) {
+        let listen = type(inbound) == "object" ? router_listen_host(inbound.listen) : null;
+        if (listen != null && index(hosts, listen) < 0)
+            push(hosts, listen);
+    }
+    return hosts;
+}
+
 function get_dashboard_runtime_metadata() {
     let path = option(settings(), "config_path", "");
     let parsed = read_json_file(path);
@@ -922,7 +955,7 @@ function get_dashboard_runtime_metadata() {
             interrupt_exist_connections: outbound.interrupt_exist_connections
         };
     }
-    write_json({ urltestGroups: groups });
+    write_json({ urltestGroups: groups, clashControllerHosts: clash_controller_hosts(parsed) });
     return 0;
 }
 
