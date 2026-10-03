@@ -33,6 +33,9 @@ const COMPONENT_ACTION_DIR = getenv("PROKOP_UI_COMPONENT_ACTION_DIR") || getenv(
 const SUBSCRIPTION_ACTION_DIR = getenv("PROKOP_UI_SUBSCRIPTION_ACTION_DIR") || getenv("PROKOP_SUBSCRIPTION_UPDATE_JOB_DIR") || "/var/run/prokop/subscription-update-jobs";
 const SING_BOX_VERSION_CACHE_FILE = getenv("PROKOP_UI_SING_BOX_VERSION_CACHE_FILE") || STATE_DIR + "/sing-box-version";
 const SING_BOX_VERSION_CACHE_LOCK_DIR = getenv("PROKOP_UI_SING_BOX_VERSION_CACHE_LOCK_DIR") || SING_BOX_VERSION_CACHE_FILE + ".lock";
+const SING_BOX_PACKAGE_CACHE_FILE = getenv("PROKOP_UI_SING_BOX_PACKAGE_CACHE_FILE") || STATE_DIR + "/sing-box-package";
+const APK_DB_FILE = getenv("PROKOP_UI_APK_DB_FILE") || "/lib/apk/db/installed";
+const OPKG_STATUS_FILE = getenv("PROKOP_UI_OPKG_STATUS_FILE") || "/usr/lib/opkg/status";
 const SING_BOX_VARIANT_STATE_FILE = getenv("PROKOP_UI_SING_BOX_VARIANT_STATE_FILE") || "/etc/prokop/sing-box-variant";
 const SING_BOX_BIN_PATH = getenv("PROKOP_UI_SING_BOX_BIN_PATH") || "/usr/bin/sing-box";
 const SING_BOX_VERSION_PROBE_TIMEOUT_SECONDS = getenv("PROKOP_UI_SING_BOX_VERSION_PROBE_TIMEOUT_SECONDS") || "1";
@@ -899,7 +902,7 @@ function sing_box_package_from_manifest(installed) {
     return "";
 }
 
-function installed_sing_box_package_name() {
+function package_manager_query_sing_box_package_name() {
     // Virtual APK provides are not package identities: Tiny provides sing-box.
     let package_name = sing_box_package_from_manifest(command_output_from_args([
         "apk", "list", "--installed", "--manifest"
@@ -926,6 +929,31 @@ function sing_box_signature() {
         return "";
 
     return join(":", [ stat.inode, stat.size, stat.mtime, stat.ctime ]);
+}
+
+function file_signature(path) {
+    let stat = fs.stat(path);
+    return stat == null ? "-" : join(":", [ stat.inode, stat.size, stat.mtime, stat.ctime ]);
+}
+
+// The UI state poll runs every second: ask the package manager only when its
+// database or the sing-box binary changed since the answer was cached
+// (UC-147). Without a package database to watch, always ask.
+function installed_sing_box_package_name() {
+    let apk_db = file_signature(APK_DB_FILE);
+    let opkg_db = file_signature(OPKG_STATUS_FILE);
+    if (apk_db == "-" && opkg_db == "-")
+        return package_manager_query_sing_box_package_name();
+
+    let key = join("|", [ sing_box_signature(), apk_db, opkg_db ]);
+    let cache = read_json_file(SING_BOX_PACKAGE_CACHE_FILE);
+    if (type(cache) == "object" && cache.key === key && type(cache.package) == "string")
+        return cache.package;
+
+    let package_name = package_manager_query_sing_box_package_name();
+    ensure_dir(STATE_DIR);
+    write_state_file(SING_BOX_PACKAGE_CACHE_FILE, { key, package: package_name });
+    return package_name;
 }
 
 function sing_box_version_info_from_output(output) {
@@ -1168,7 +1196,7 @@ function current_ui_state_json() {
     let stop_available = prokop_is_running ||
         int(trim(command_output_from_args([ "ucode", "-L", LIB_DIR, STATE_UC, "owned-sing-box-process-count" ]))) > 0 ||
         dns_configured() ||
-        command_success_from_args([ "nft", "list", "table", "inet", NFT_TABLE_NAME ]);
+        command_success_from_args([ "nft", "-t", "list", "table", "inet", NFT_TABLE_NAME ]);
 
     write_json({
         service: {

@@ -312,7 +312,7 @@ function worker() {
             next_recovery = completed + recovery_interval;
         }
 
-        command_success_from_args([ "sleep", "1" ]);
+        sleep(1000);
     }
 }
 

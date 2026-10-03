@@ -7,6 +7,7 @@ let durable = require("core.durable");
 let runtime_dns = require("singbox.dns");
 let managed_service = require("singbox.managed_service");
 let legacy_forkop = require("core.legacy_forkop");
+let listen_address = require("singbox.listen_address");
 
 const CONFIG_NAME = getenv("PROKOP_CONFIG_NAME") || "prokop";
 // Test-only config preparation failure injection. Empty in production.
@@ -149,23 +150,6 @@ function arg_bool(value) {
 function bool_option(section, key, fallback) {
     let value = object_or_empty(section)[key];
     return value == null ? !!fallback : arg_bool(value);
-}
-
-function whitespace_items(value) {
-    let result = [];
-    if (type(value) == "array") {
-        for (let item in value) {
-            item = as_string(item);
-            if (item != "")
-                push(result, item);
-        }
-        return result;
-    }
-
-    for (let item in split(trim(as_string(value)), /[ \t\r\n]+/))
-        if (item != "")
-            push(result, item);
-    return result;
 }
 
 function file_exists(path) {
@@ -516,54 +500,11 @@ function service_proxy_address(settings, purpose) {
         SB_SERVICE_MIXED_INBOUND_ADDRESS + ":" + service_proxy_port_for_purpose(purpose) : "";
 }
 
-function ip_addr_first_inet4(data) {
-    for (let line in split(as_string(data), "\n")) {
-        let matched = match(line, /inet[ \t]+([0-9.]+)\//);
-        if (matched)
-            return as_string(matched[1]);
-    }
-    return "";
-}
-
-function network_interface_ipv4(name) {
-    let data = command_output_from_args([ "ubus", "call", "network.interface." + as_string(name), "status" ]);
-    try {
-        let value = json(data);
-        let addresses = array_or_empty(object_or_empty(value)["ipv4-address"]);
-        if (length(addresses) > 0)
-            return as_string(object_or_empty(addresses[0]).address);
-    }
-    catch (e) {
-    }
-    return "";
-}
-
-function device_ipv4_address_value(device) {
-    return ip_addr_first_inet4(command_output_from_args([ "ip", "-4", "addr", "show", "dev", as_string(device) ]));
-}
-
-function service_listen_address_value(settings) {
-    let configured = option(settings, "service_listen_address", "");
-    if (configured != "") {
-        log_message("service_listen_address is set manually; automatic listen-address detection is skipped", "warn");
-        return configured;
-    }
-
-    let address = network_interface_ipv4("lan");
-    if (address != "")
-        return address;
-
-    for (let iface in whitespace_items(option(settings, "source_network_interfaces", "br-lan"))) {
-        address = network_interface_ipv4(iface);
-        if (address != "")
-            return address;
-        address = device_ipv4_address_value(iface);
-        if (address != "")
-            return address;
-    }
-
-    log_message("Failed to determine the listening IP address. Please open an issue to report this problem: https://github.com/Asofwar/prokop/issues", "error");
-    return "";
+// quiet: a read-only query (the service-listen-address mode, which Clash API
+// requests and the support report ask) leaves syslog alone; the
+// configuration generation tells about the address (UC-149).
+function service_listen_address_value(settings, quiet) {
+    return listen_address.service_listen_address(settings, quiet ? null : log_message);
 }
 
 function subscription_cache_env() {
@@ -1009,19 +950,19 @@ else if (mode == "prepare-service-disabled")
 else if (mode == "service-proxy-address")
     print(service_proxy_address(uci_settings(), ARGV[1] || "lists"), "\n");
 else if (mode == "service-listen-address") {
-    let address = service_listen_address_value(uci_settings());
+    let address = service_listen_address_value(uci_settings(), true);
     if (address == "")
         exit(1);
     print(address, "\n");
 }
 else if (mode == "device-ipv4-address") {
-    let address = device_ipv4_address_value(ARGV[1]);
+    let address = listen_address.device_ipv4_address(ARGV[1]);
     if (address == "")
         exit(1);
     print(address, "\n");
 }
 else if (mode == "ip-addr-first-inet4")
-    print(ip_addr_first_inet4(fs.readfile("/dev/stdin")), "\n");
+    print(listen_address.ip_addr_first_inet4(fs.readfile("/dev/stdin")), "\n");
 else if (mode == "version")
     print(sing_box_version(), "\n");
 else if (mode == "version-output")

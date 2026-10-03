@@ -418,7 +418,7 @@ function worker() {
     while (true) {
         for (let group in groups)
             tick_group(states[group.tag], group);
-        system("sleep 1");
+        sleep(1000);
     }
 }
 
