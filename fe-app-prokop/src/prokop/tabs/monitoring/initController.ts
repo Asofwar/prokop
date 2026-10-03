@@ -6,6 +6,7 @@ import {
 import { prettyBytes } from '../../../helpers/prettyBytes';
 import { showToast } from '../../../helpers/showToast';
 import { confirmAction } from '../../ui/confirmAction';
+import { formatDateTime } from '../../ui/time';
 import { renderStartServiceAction } from '../shared/startService';
 import { isReadonlyMode } from '../../services/accessMode.service';
 import { prokopPageUrl, readPageParams } from '../../helpers/navigation';
@@ -1018,12 +1019,10 @@ function connectionTechnicalDetails(connection: MonitoredConnection) {
   ];
 }
 
-// The Clash API gives an ISO time; shown in the browser's locale.
+// The Clash API gives an ISO time; shown in the LuCI UI language.
 function formatStarted(start: string | undefined) {
   const time = Date.parse(start || '');
-  return Number.isFinite(time)
-    ? new Date(time).toLocaleString()
-    : safeText(start);
+  return Number.isFinite(time) ? formatDateTime(time / 1000) : safeText(start);
 }
 
 function connectionDetails(connection: MonitoredConnection) {

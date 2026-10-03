@@ -2,6 +2,7 @@ import { renderLoaderCircleIcon24, renderInfoIcon24 } from '../../../../icons';
 import { svgEl } from '../../../../helpers';
 import { prettyBytes } from '../../../../helpers/prettyBytes';
 import { Prokop } from '../../../types';
+import { uiLocale } from '../../../ui/time';
 import { renderFlagEmojis } from './renderFlagEmojis';
 import { getOutboundFooterLabel } from './getOutboundFooterLabel';
 
@@ -73,7 +74,7 @@ function formatDate(seconds?: number) {
     return undefined;
   }
 
-  return date.toLocaleDateString(undefined, {
+  return date.toLocaleDateString(uiLocale(), {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',

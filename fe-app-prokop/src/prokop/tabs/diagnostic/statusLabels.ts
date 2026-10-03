@@ -63,10 +63,6 @@ export function healthStatus(level: Prokop.HealthLevel): DisplayStatus {
   }
 }
 
-export function formatTime(timestamp: number) {
-  return new Date(timestamp * 1000).toLocaleString();
-}
-
 export function renderStatusBadge(status: DisplayStatus) {
   return E(
     'span',
