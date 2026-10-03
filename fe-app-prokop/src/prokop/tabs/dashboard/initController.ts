@@ -746,14 +746,6 @@ async function connectToClashSockets(dataUpdatesId: number) {
       const parsedMsg = JSON.parse(msg);
 
       store.set({
-        trafficTotalWidget: {
-          loading: false,
-          failed: false,
-          data: {
-            downloadTotal: parsedMsg.downloadTotal,
-            uploadTotal: parsedMsg.uploadTotal,
-          },
-        },
         systemInfoWidget: {
           loading: false,
           failed: false,
@@ -784,11 +776,6 @@ async function connectToClashSockets(dataUpdatesId: number) {
 function setClashWidgetsFailed() {
   store.set({
     bandwidthWidget: { loading: false, failed: true, data: { up: 0, down: 0 } },
-    trafficTotalWidget: {
-      loading: false,
-      failed: true,
-      data: { downloadTotal: 0, uploadTotal: 0 },
-    },
     systemInfoWidget: {
       loading: false,
       failed: true,
@@ -829,14 +816,6 @@ async function pollClashConnections(dataUpdatesId: number) {
       ...(speed
         ? { bandwidthWidget: { loading: false, failed: false, data: speed } }
         : {}),
-      trafficTotalWidget: {
-        loading: false,
-        failed: false,
-        data: {
-          downloadTotal: sample.downloadTotal,
-          uploadTotal: sample.uploadTotal,
-        },
-      },
       systemInfoWidget: {
         loading: false,
         failed: false,
@@ -2080,7 +2059,7 @@ function onPageUnmount() {
   // Remove old listener
   store.unsubscribe(onStoreUpdate);
   // Clear store
-  store.reset(['bandwidthWidget', 'trafficTotalWidget', 'systemInfoWidget']);
+  store.reset(['bandwidthWidget', 'systemInfoWidget']);
 }
 
 let dashboardLifecycleRegistered = false;

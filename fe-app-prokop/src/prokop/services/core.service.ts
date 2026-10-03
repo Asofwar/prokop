@@ -58,12 +58,11 @@ function showLogNotification(notification: ProkopLogNotification) {
 }
 
 export function coreService(options: CoreServiceOptions = {}) {
-  TabServiceInstance.onChange((activeId, tabs) => {
+  TabServiceInstance.onChange((activeId) => {
     logger.info('[TAB]', activeId);
     store.set({
       tabService: {
         current: activeId || '',
-        all: tabs.map((tab) => tab.id),
       },
     });
   });

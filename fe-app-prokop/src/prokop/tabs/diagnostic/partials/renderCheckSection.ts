@@ -60,10 +60,6 @@ function stateIcon(state: Check['state']) {
   }
 }
 
-export function checkDetailsOpen(state: Check['state']) {
-  return state === 'error' || state === 'warning';
-}
-
 function renderHead(props: Check) {
   const icon = E('span', { class: 'fkp-check__icon' });
   icon.appendChild(stateIcon(props.state));
