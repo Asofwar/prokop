@@ -1730,6 +1730,40 @@ function report_ignored_legacy_domain_conditions(section) {
     }
 }
 
+// The conditions a routing rule's route rule is made of (singbox/generator.uc
+// add_combined_route_for_section): destinations, lists, ports and forced
+// device routing. The device filter (source_ip_cidr) only narrows them, so
+// a rule with nothing else gets no route rule and no nft capture and does
+// nothing. Such a configuration started before, so it is reported, not
+// refused (invariant 17, UC-102).
+const ROUTING_RULE_ACTIONS = [ "connection", "proxy", "outbound", "vpn", "bypass", "block", "zapret", "zapret2", "byedpi" ];
+
+function routing_rule_has_conditions(section) {
+    let domains = rule_conditions.domain_conditions(section);
+    for (let key in [ "domain", "domain_suffix", "domain_keyword", "domain_regex" ])
+        if (length(domains[key]) > 0)
+            return true;
+    if (length(rule_conditions.legacy_condition_values(section, "ip_cidr")) > 0)
+        return true;
+    for (let key in [ "remote_domain_lists", "remote_subnet_lists", "domain_ip_lists", "fully_routed_ips", "ports" ])
+        for (let value in list_option(section, key))
+            if (trim(as_string(value)) != "")
+                return true;
+    if (length(rule_config.text_list_values(option(section, "ports_text", ""), "comma-space")) > 0)
+        return true;
+    return length(connections.community_lists(section)) > 0 ||
+        length(connections.rule_sets(section)) > 0 ||
+        length(connections.rule_sets_with_subnets(section)) > 0;
+}
+
+function report_rule_without_conditions(section) {
+    if (!section_enabled(section) || !contains(ROUTING_RULE_ACTIONS, rule_action(section)) || routing_rule_has_conditions(section))
+        return;
+
+    log_message("Rule '" + section_name(section) + "' has no condition besides the device filter, so it matches no traffic: " +
+        "the device filter only narrows the other conditions. Add a domain, address, list or port condition, or use 'Forced device routing' to route all traffic of the devices", "warn");
+}
+
 // Interface Monitoring Delay: the trigger plan (service/initd.uc) takes
 // whole milliseconds and uses the default 2000 for anything else. Such a
 // value was accepted before, so a configuration with it is reported, not
@@ -1823,8 +1857,10 @@ function validate_runtime_config(context) {
     validate_outbound_detours_rows(detour_rows_from_sections(sections));
     validate_subscription_download_sections(sections, context);
 
-    for (let section in sections)
+    for (let section in sections) {
         report_ignored_legacy_domain_conditions(section);
+        report_rule_without_conditions(section);
+    }
     for (let section in sections)
         validate_rule(section, sections, context);
 
