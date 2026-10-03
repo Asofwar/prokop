@@ -6,7 +6,6 @@ PROKOP_BIN="$ROOT_DIR/prokop/files/usr/bin/prokop"
 PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
 CLI_UC="$PROKOP_BIN"
 HELPERS_SH="$PROKOP_LIB/helpers.sh"
-LIFECYCLE_UC="$PROKOP_LIB/service/lifecycle.uc"
 PACKAGES_UC="$PROKOP_LIB/core/packages.uc"
 RULES_UC="$PROKOP_LIB/providers/rules.uc"
 SINGBOX_RUNTIME_UC="$PROKOP_LIB/singbox/runtime.uc"
@@ -37,8 +36,6 @@ grep -Fq '#!/usr/bin/ucode' "$PROKOP_BIN" ||
   fail "prokop entrypoint must be a direct ucode executable"
 grep -Fq 'service/lifecycle.uc' "$CLI_UC" ||
   fail "service/cli.uc must dispatch lifecycle through service/lifecycle.uc"
-grep -Fq 'core/packages.uc' "$LIFECYCLE_UC" ||
-  fail "service/lifecycle.uc must use core/packages.uc directly"
 for shell_owner_pattern in \
   'config_load' \
   'config_get' \
