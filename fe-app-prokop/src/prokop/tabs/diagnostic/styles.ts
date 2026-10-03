@@ -345,7 +345,16 @@ export const styles = `
     box-sizing: border-box;
     margin: 0;
 }
-.fkp-conn__cell-label { display: none; }
+/* Visually hidden on wide screens (the column header shows it), but kept as
+   the accessible name of the control it labels. */
+.fkp-conn__cell-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
 .fkp-conn__cell--muted { color: var(--text-color-medium, gray); }
 .fkp-conn__result { overflow-wrap: break-word; }
 .fkp-conn__actions { display: flex; gap: 4px; }
@@ -367,6 +376,12 @@ export const styles = `
     .fkp-conn__row > :first-child,
     .fkp-conn__row > :nth-child(4) { grid-column: 1 / -1; }
     .fkp-conn__cell-label {
+        position: static;
+        width: auto;
+        height: auto;
+        overflow: visible;
+        clip: auto;
+        white-space: normal;
         display: block;
         font-size: 0.85em;
         color: var(--text-color-medium, gray);

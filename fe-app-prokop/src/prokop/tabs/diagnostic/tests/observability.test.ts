@@ -252,7 +252,27 @@ describe('connectivity rows', () => {
     expect(await probe(target())).toEqual({ state: 'idle' });
     connectivityTest.mockResolvedValue({ success: true, data: result() });
     expect(await probe(target())).toMatchObject({ state: 'done' });
-    connectivityTest.mockResolvedValue({ success: false, error: 'denied' });
+  });
+
+  it('tells a check that could not run from a rejected target', async () => {
+    // rpcd error or the 10 s call timeout: nothing was observed.
+    for (const response of [
+      { success: false, error: 'Operation timed out' },
+      { success: true, data: {} },
+      { success: true, data: 'not json' },
+    ]) {
+      connectivityTest.mockResolvedValue(response);
+      const failed = await probe(target());
+      expect(failed).toEqual({
+        state: 'failed',
+        message: 'The check could not run',
+      });
+      expect(resultView(failed).tone).toBe('warning');
+    }
+    connectivityTest.mockResolvedValue({
+      success: true,
+      data: { error: 'invalid_input' },
+    });
     expect(await probe(target())).toEqual({
       state: 'invalid',
       message: 'The router rejected this check',
@@ -400,6 +420,25 @@ describe('route check', () => {
         ok,
       ),
     ).toContain('does not resolve');
+  });
+
+  it('does not blame the route when the probe did not run', () => {
+    const dpi = trace({ action: { value: 'zapret', provenance: 'simulated' } });
+    for (const reach of [
+      { state: 'failed' as const, message: 'The check could not run' },
+      {
+        state: 'done' as const,
+        result: result({ status: 'error', error: 'tool_missing' }),
+      },
+    ]) {
+      const conclusion = siteConclusion(dpi, reach);
+      expect(conclusion).toContain('could not check whether the site opens');
+      expect(conclusion).not.toContain('did not open');
+      expect(conclusion).not.toContain('strategy does not work');
+      expect(probeRow(reach).provenance).toBe(
+        reach.state === 'done' ? 'observed' : 'unknown',
+      );
+    }
   });
 });
 
@@ -614,6 +653,15 @@ describe('unsupported checks and responsive layout', () => {
     expect(text(node)).toContain('need access to the Prokop configuration');
     expect(text(node)).not.toContain('Error');
     walk(node, (n) => expect(n.tag).not.toBe('details'));
+  });
+
+  it('keeps the reachability field labels as accessible names on wide screens', () => {
+    const desktop = styles.slice(
+      styles.indexOf('.fkp-conn__cell-label {'),
+      styles.indexOf('@media (max-width: 860px)'),
+    );
+    expect(desktop).not.toMatch(/display:\s*none/);
+    expect(desktop).toMatch(/clip: rect\(0 0 0 0\)/);
   });
 
   it('lets the reachability actions size to translated labels', () => {

@@ -164,8 +164,12 @@ export function siteConclusion(trace: Prokop.RouteTrace, result: RowResult) {
     return _(
       'A rule blocks this address. This is intended for ads and trackers.',
     );
-  const reachable = result.state === 'done' && result.result.status === 'ok';
-  if (reachable)
+  // Without an observed answer nothing is known about the site.
+  if (result.state !== 'done' || result.result.error === 'tool_missing')
+    return _(
+      'The router could not check whether the site opens. Try the check again.',
+    );
+  if (result.result.status === 'ok')
     return _(
       'The site opens from the router. If it does not open on a device, look at its real connections.',
     );
@@ -307,10 +311,8 @@ export function initSiteCheck(
     }
   };
 
-  // diagnostics#host=example.com (from Monitoring) checks it right away.
+  // diagnostics#host=example.com (from Monitoring) only fills the field: a
+  // link must not make the router contact a host without a click (UC-128).
   const host = readPageParams().host;
-  if (host && !input.value) {
-    input.value = host.slice(0, 253);
-    button.click();
-  }
+  if (host && !input.value) input.value = host.slice(0, 253);
 }

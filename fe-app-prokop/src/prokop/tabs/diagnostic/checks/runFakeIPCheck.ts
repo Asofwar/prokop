@@ -20,6 +20,9 @@ export async function runFakeIPCheck() {
   const routerFakeIPResponse = await ProkopShellMethods.checkFakeIP();
   const checkFakeIPResponse = await RemoteFakeIPMethods.getFakeIpCheck();
   const checkIPResponse = await RemoteFakeIPMethods.getIpCheck();
+  // check_fakeip always answers; a failed call means the router check did
+  // not run, which is not an observed FakeIP failure.
+  const routerFakeIPCheckUnavailable = !routerFakeIPResponse.success;
   const browserFakeIPCheckUnavailable = !checkFakeIPResponse.success;
   const browserFakeIPCheckMessage = checkFakeIPResponse.success
     ? ''
@@ -38,6 +41,9 @@ export async function runFakeIPCheck() {
   };
 
   const fakeIPWorks = checks.singBoxFakeIP && checks.browserFakeIP;
+  const observedFailure =
+    (!routerFakeIPCheckUnavailable && !checks.singBoxFakeIP) ||
+    (!browserFakeIPCheckUnavailable && !checks.browserFakeIP);
   const { state, description } = fakeIPWorks
     ? checks.differentIP
       ? { state: 'success' as const, description: _('Checks passed') }
@@ -45,10 +51,12 @@ export async function runFakeIPCheck() {
           state: 'warning' as const,
           description: _('FakeIP works; public IP comparison is inconclusive'),
         }
-    : browserFakeIPCheckUnavailable && checks.singBoxFakeIP
+    : !observedFailure
       ? {
           state: 'warning' as const,
-          description: _('Browser FakeIP check could not be completed'),
+          description: routerFakeIPCheckUnavailable
+            ? _('Router FakeIP check could not be completed')
+            : _('Browser FakeIP check could not be completed'),
         }
       : getMeta({
           allGood: false,
@@ -63,10 +71,16 @@ export async function runFakeIPCheck() {
     state,
     items: [
       {
-        state: checks.singBoxFakeIP ? 'success' : 'error',
-        key: checks.singBoxFakeIP
-          ? _('Sing-box FakeIP DNS works')
-          : _('Sing-box FakeIP DNS does not work'),
+        state: routerFakeIPCheckUnavailable
+          ? 'warning'
+          : checks.singBoxFakeIP
+            ? 'success'
+            : 'error',
+        key: routerFakeIPCheckUnavailable
+          ? _('Router FakeIP check could not be completed')
+          : checks.singBoxFakeIP
+            ? _('Sing-box FakeIP DNS works')
+            : _('Sing-box FakeIP DNS does not work'),
         value: routerFakeIPResponse.success ? routerFakeIPResponse.data.IP : '',
       },
       {

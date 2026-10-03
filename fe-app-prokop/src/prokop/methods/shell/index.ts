@@ -521,7 +521,7 @@ export const ProkopShellMethods = {
       Prokop.AvailableMethods.CONNECTIVITY_TEST,
       [host, type, port],
       '/usr/bin/prokop',
-      { timeout: 10000 },
+      { allowNonZeroWithStdout: true, timeout: 10000 },
     ),
   validateDpiStrategy: async (
     provider: 'zapret' | 'zapret2' | 'byedpi',
