@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-MIGRATION="$ROOT_DIR/forkop/files/usr/share/forkop/mirror-migration.sh"
+MIGRATION="$ROOT_DIR/prokop/files/usr/share/prokop/mirror-migration.sh"
 WORK_DIR="$(mktemp -d)"
 
 cleanup() {
@@ -66,20 +66,20 @@ EOF
 chmod 0755 "$WORK_DIR/bin/"*
 
 # run_migration ROOT EVENT_LOG [VAR=value...]: runs the script against a fake
-# root with stub tools, after `env -u FORKOP_MIRROR_BASE_URL` so that only the
+# root with stub tools, after `env -u PROKOP_MIRROR_BASE_URL` so that only the
 # test decides whether the variable is set.
 run_migration() {
   local root="$1"
   local events="$2"
   shift 2
   : >> "$events"
-  env -u FORKOP_MIRROR_BASE_URL -u FORKOP_PACKAGE_POSTINST \
+  env -u PROKOP_MIRROR_BASE_URL -u PROKOP_PACKAGE_POSTINST \
     PATH="$WORK_DIR/bin:$PATH" \
-    FORKOP_MIGRATION_ROOT="$root" \
-    FORKOP_MIGRATION_APK_BIN="$WORK_DIR/bin/apk" \
-    FORKOP_MIGRATION_OPKG_BIN="$WORK_DIR/bin/opkg" \
-    FORKOP_MIGRATION_CURL_BIN="$WORK_DIR/bin/curl" \
-    FORKOP_MIGRATION_UCI_BIN="$WORK_DIR/bin/uci" \
+    PROKOP_MIGRATION_ROOT="$root" \
+    PROKOP_MIGRATION_APK_BIN="$WORK_DIR/bin/apk" \
+    PROKOP_MIGRATION_OPKG_BIN="$WORK_DIR/bin/opkg" \
+    PROKOP_MIGRATION_CURL_BIN="$WORK_DIR/bin/curl" \
+    PROKOP_MIGRATION_UCI_BIN="$WORK_DIR/bin/uci" \
     MIGRATION_PLATFORM_INDEX="$WORK_DIR/platforms.tsv" \
     MIGRATION_EVENT_LOG="$events" \
     "$@" sh "$MIGRATION"
@@ -115,8 +115,8 @@ assert_no_upstream_feed() {
 assert_no_mirror_downloads() {
   local events="$1"
   local label="$2"
-  if grep -Eq 'forkop-apk\.pem|forkop/mirror/' "$events"; then
-    fail "$label: the upstream mirror key or Forkop feed was requested"
+  if grep -Eq 'prokop-apk\.pem|prokop/mirror/' "$events"; then
+    fail "$label: the upstream mirror key or Prokop feed was requested"
   fi
   if grep -Eq '^uci ' "$events"; then
     fail "$label: the package script changed UCI settings"
@@ -169,7 +169,7 @@ cat > "$root/etc/apk/repositories.d/custom.list" <<'EOF'
 https://mirror.infotechtg.ru/openwrt/releases/v25.x/v25.12.4/aarch64_generic/packages/packages.adb
 https://own-mirror.example/openwrt/releases/25.12.4/packages/aarch64_generic/luci/packages.adb
 EOF
-run_migration "$root" "$WORK_DIR/apk-off.log" FORKOP_PACKAGE_POSTINST=1 \
+run_migration "$root" "$WORK_DIR/apk-off.log" PROKOP_PACKAGE_POSTINST=1 \
   > "$WORK_DIR/apk-off.out" 2>&1 || fail "disabled mirror reconciliation failed"
 assert_no_upstream_feed "$root" "disabled mirror"
 assert_no_mirror_downloads "$WORK_DIR/apk-off.log" "disabled mirror"
@@ -238,22 +238,22 @@ run_migration "$root" "$WORK_DIR/apk-off-installer.log" MIGRATION_PACKAGE_UPDATE
 grep -Fxq 'apk update' "$WORK_DIR/apk-off-installer.log" || fail "restore outside postinst did not refresh the index"
 grep -Fxq 'https://downloads.openwrt.org/releases/25.12.4/targets/rockchip/armv8/packages/packages.adb' \
   "$root/etc/apk/repositories" || fail "restored feeds were rolled back after a refresh failure"
-grep -Fq 'Forkop mirror:' "$WORK_DIR/apk-off-installer.out" || fail "refresh failure was not reported"
+grep -Fq 'Prokop mirror:' "$WORK_DIR/apk-off-installer.out" || fail "refresh failure was not reported"
 printf 'PASS: restore outside postinst refreshes the index and keeps official feeds\n'
 
-# 3. An explicitly empty FORKOP_MIRROR_BASE_URL wins over a UCI mirror.
+# 3. An explicitly empty PROKOP_MIRROR_BASE_URL wins over a UCI mirror.
 root="$WORK_DIR/apk-env-off"
 apk_root "$root"
 printf '%s\n' 'https://mirror.infotechtg.ru/openwrt/releases/25.12.4/targets/rockchip/armv8/packages/packages.adb' \
   > "$root/etc/apk/repositories"
-run_migration "$root" "$WORK_DIR/apk-env-off.log" FORKOP_PACKAGE_POSTINST=1 FORKOP_MIRROR_BASE_URL= \
+run_migration "$root" "$WORK_DIR/apk-env-off.log" PROKOP_PACKAGE_POSTINST=1 PROKOP_MIRROR_BASE_URL= \
   MIGRATION_CONFIGURED_MIRROR=https://own-mirror.example >/dev/null 2>&1 ||
   fail "empty environment mirror failed"
 grep -Fxq 'https://downloads.openwrt.org/releases/25.12.4/targets/rockchip/armv8/packages/packages.adb' \
-  "$root/etc/apk/repositories" || fail "an empty FORKOP_MIRROR_BASE_URL did not disable the UCI mirror"
-grep -Fq 'curl' "$WORK_DIR/apk-env-off.log" && fail "an empty FORKOP_MIRROR_BASE_URL still used the UCI mirror"
+  "$root/etc/apk/repositories" || fail "an empty PROKOP_MIRROR_BASE_URL did not disable the UCI mirror"
+grep -Fq 'curl' "$WORK_DIR/apk-env-off.log" && fail "an empty PROKOP_MIRROR_BASE_URL still used the UCI mirror"
 assert_no_upstream_feed "$root" "empty environment mirror"
-printf 'PASS: an empty FORKOP_MIRROR_BASE_URL disables the mirror\n'
+printf 'PASS: an empty PROKOP_MIRROR_BASE_URL disables the mirror\n'
 
 # 4. OPKG without a mirror: the old vNN.x layout becomes the OpenWrt layout;
 # vendor feeds stay.
@@ -267,8 +267,8 @@ EOF
 cat > "$root/etc/opkg/distfeeds.conf.pre-forkop-mirror" <<'EOF'
 src/gz openwrt_core https://mirror.51343.ru/openwrt/releases/24.10.5/targets/mediatek/filogic/packages
 EOF
-run_migration "$root" "$WORK_DIR/opkg-off.log" FORKOP_PACKAGE_POSTINST=1 \
-  FORKOP_MIGRATION_APK_BIN="$WORK_DIR/bin/missing-apk" >/dev/null 2>&1 ||
+run_migration "$root" "$WORK_DIR/opkg-off.log" PROKOP_PACKAGE_POSTINST=1 \
+  PROKOP_MIGRATION_APK_BIN="$WORK_DIR/bin/missing-apk" >/dev/null 2>&1 ||
   fail "disabled OPKG reconciliation failed"
 cat > "$WORK_DIR/opkg-off-expected" <<'EOF'
 src/gz openwrt_core https://downloads.openwrt.org/releases/24.10.5/targets/mediatek/filogic/packages
@@ -289,7 +289,7 @@ apk_root "$root"
 printf '%s\n' 'https://own-mirror.example/openwrt/releases/25.12.4/targets/rockchip/armv8/packages/packages.adb' \
   > "$root/etc/apk/repositories"
 cp "$root/etc/apk/repositories" "$WORK_DIR/apk-custom-feed-before"
-run_migration "$root" "$WORK_DIR/apk-custom-feed.log" FORKOP_PACKAGE_POSTINST=1 >/dev/null 2>&1 ||
+run_migration "$root" "$WORK_DIR/apk-custom-feed.log" PROKOP_PACKAGE_POSTINST=1 >/dev/null 2>&1 ||
   fail "custom feed reconciliation failed"
 cmp -s "$WORK_DIR/apk-custom-feed-before" "$root/etc/apk/repositories" ||
   fail "a feed on a custom host was changed without a mirror setting"
@@ -297,7 +297,7 @@ assert_no_upstream_feed "$root" "custom feed"
 printf 'PASS: feeds on other hosts are never restored\n'
 
 # 6. An opted-in mirror (UCI): official and former-mirror feeds move to it,
-# vendor feeds stay, and no key or Forkop feed is installed.
+# vendor feeds stay, and no key or Prokop feed is installed.
 root="$WORK_DIR/apk-on"
 apk_root "$root"
 cat > "$root/etc/apk/repositories" <<'EOF'
@@ -340,7 +340,7 @@ grep -Fxq 'apk update' "$WORK_DIR/apk-on-again.log" &&
 printf 'PASS: idempotent opted-in mirror\n'
 
 # Turning the opted-in mirror off later keeps feeds on that custom mirror.
-run_migration "$root" "$WORK_DIR/apk-on-off.log" FORKOP_PACKAGE_POSTINST=1 >/dev/null 2>&1 ||
+run_migration "$root" "$WORK_DIR/apk-on-off.log" PROKOP_PACKAGE_POSTINST=1 >/dev/null 2>&1 ||
   fail "disabling a custom mirror failed"
 grep -Fq 'https://own-mirror.example/openwrt/releases/' "$root/etc/apk/repositories" ||
   fail "disabling the mirror rewrote feeds on the custom mirror"
@@ -350,13 +350,13 @@ root="$WORK_DIR/apk-on-postinst"
 apk_root "$root"
 printf '%s\n' 'https://downloads.openwrt.org/releases/25.12.4/targets/rockchip/armv8/packages/packages.adb' \
   > "$root/etc/apk/repositories"
-run_migration "$root" "$WORK_DIR/apk-on-postinst.log" FORKOP_PACKAGE_POSTINST=1 \
-  FORKOP_MIRROR_BASE_URL=https://env-mirror.example MIGRATION_CONFIGURED_MIRROR=https://own-mirror.example \
+run_migration "$root" "$WORK_DIR/apk-on-postinst.log" PROKOP_PACKAGE_POSTINST=1 \
+  PROKOP_MIRROR_BASE_URL=https://env-mirror.example MIGRATION_CONFIGURED_MIRROR=https://own-mirror.example \
   >/dev/null 2>&1 || fail "postinst with an opted-in mirror failed"
 grep -Fq 'apk update' "$WORK_DIR/apk-on-postinst.log" &&
   fail "package postinst recursively invoked apk update while apk owns the database lock"
 grep -Fxq 'https://env-mirror.example/openwrt/releases/25.12.4/targets/rockchip/armv8/packages/packages.adb' \
-  "$root/etc/apk/repositories" || fail "FORKOP_MIRROR_BASE_URL did not win over UCI"
+  "$root/etc/apk/repositories" || fail "PROKOP_MIRROR_BASE_URL did not win over UCI"
 assert_no_upstream_feed "$root" "postinst mirror"
 printf 'PASS: package postinst avoids nested package-manager lock\n'
 
@@ -376,7 +376,7 @@ cmp -s "$WORK_DIR/apk-on-failure-repositories" "$root/etc/apk/repositories" ||
   fail "APK repositories were not rolled back"
 cmp -s "$WORK_DIR/apk-on-failure-distfeeds" "$root/etc/apk/repositories.d/distfeeds.list" ||
   fail "APK distfeeds were not rolled back"
-grep -Fq 'Forkop mirror:' "$WORK_DIR/apk-on-failure.out" || fail "rollback was not reported"
+grep -Fq 'Prokop mirror:' "$WORK_DIR/apk-on-failure.out" || fail "rollback was not reported"
 assert_no_upstream_feed "$root" "rollback"
 printf 'PASS: mirror index failure rolls back and exits 0\n'
 
@@ -402,7 +402,7 @@ for case_name in unsupported unavailable invalid; do
   cmp -s "$WORK_DIR/apk-on-failure-distfeeds" "$root/etc/apk/repositories.d/distfeeds.list" ||
     fail "$case_name mirror changed APK distfeeds"
   grep -Fq 'apk update' "$WORK_DIR/apk-$case_name.log" && fail "$case_name mirror ran apk update"
-  grep -Fq 'Forkop mirror:' "$WORK_DIR/apk-$case_name.out" || fail "$case_name mirror was not reported"
+  grep -Fq 'Prokop mirror:' "$WORK_DIR/apk-$case_name.out" || fail "$case_name mirror was not reported"
   assert_no_upstream_feed "$root" "$case_name mirror"
 done
 printf 'PASS: unready or invalid mirrors leave feeds untouched\n'
@@ -420,7 +420,7 @@ src/gz openwrt_core https://downloads.openwrt.org/releases/24.10.5/targets/media
 src/gz openwrt_base https://mirror.51343.ru/openwrt/releases/v24.x/v24.10.5/mediatek/filogic
 src/gz vendor_custom https://packages.vendor.example/24.10/mediatek/filogic/base
 EOF
-run_migration "$root" "$WORK_DIR/opkg-on.log" FORKOP_MIGRATION_APK_BIN="$WORK_DIR/bin/missing-apk" \
+run_migration "$root" "$WORK_DIR/opkg-on.log" PROKOP_MIGRATION_APK_BIN="$WORK_DIR/bin/missing-apk" \
   MIGRATION_CONFIGURED_MIRROR=https://own-mirror.example >/dev/null 2>&1 ||
   fail "opted-in OPKG reconciliation failed"
 cat > "$WORK_DIR/opkg-on-expected" <<'EOF'
@@ -437,13 +437,13 @@ printf 'PASS: opted-in mirror moves OPKG feeds\n'
 # found and when the mirror is enabled.
 root="$WORK_DIR/no-manager"
 apk_root "$root"
-run_migration "$root" "$WORK_DIR/no-manager.log" FORKOP_MIGRATION_APK_BIN="$WORK_DIR/bin/missing-apk" \
-  FORKOP_MIGRATION_OPKG_BIN="$WORK_DIR/bin/missing-opkg" MIGRATION_CONFIGURED_MIRROR=https://own-mirror.example \
+run_migration "$root" "$WORK_DIR/no-manager.log" PROKOP_MIGRATION_APK_BIN="$WORK_DIR/bin/missing-apk" \
+  PROKOP_MIGRATION_OPKG_BIN="$WORK_DIR/bin/missing-opkg" MIGRATION_CONFIGURED_MIRROR=https://own-mirror.example \
   >/dev/null 2>&1 || fail "reconciliation without a package manager failed"
 assert_no_upstream_feed "$root" "no package manager"
-printf 'PASS: upstream key and Forkop feed are always removed\n'
+printf 'PASS: upstream key and Prokop feed are always removed\n'
 
-if grep -Eq 'forkop-apk\.pem|forkop/mirror/current|"\$UCI_BIN" -q (set|add_list|delete|commit)' "$MIGRATION"; then
-  fail "mirror-migration.sh must never install the upstream key or Forkop feed, or write UCI"
+if grep -Eq 'prokop-apk\.pem|prokop/mirror/current|"\$UCI_BIN" -q (set|add_list|delete|commit)' "$MIGRATION"; then
+  fail "mirror-migration.sh must never install the upstream key or Prokop feed, or write UCI"
 fi
 printf 'PASS: mirror reconciliation contract\n'

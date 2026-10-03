@@ -10,7 +10,7 @@ import pathlib
 import re
 import sys
 
-source = (pathlib.Path(sys.argv[1]) / 'forkop/files/usr/lib/service/lifecycle.uc').read_text()
+source = (pathlib.Path(sys.argv[1]) / 'prokop/files/usr/lib/service/lifecycle.uc').read_text()
 names = ('snapshot_dnsmasq_reload_config', 'restore_dnsmasq_reload_config',
          'discard_dnsmasq_reload_config')
 functions = []

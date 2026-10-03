@@ -5,7 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 VERSION="${1:-}"
 ARTIFACT_DIR="${2:-$ROOT_DIR/filtered-bin/release}"
 OUTPUT_DIR="${3:-$ROOT_DIR/filtered-bin/hosting}"
-RELEASE_BASE_URL="${FORKOP_RELEASE_BASE_URL:-https://asofwar.github.io/forkop}"
+RELEASE_BASE_URL="${PROKOP_RELEASE_BASE_URL:-https://asofwar.github.io/prokop}"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 
 fail() {
@@ -16,21 +16,21 @@ fail() {
 [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] ||
   fail "release version must use x.y.z format"
 [[ "$RELEASE_BASE_URL" == http://* || "$RELEASE_BASE_URL" == https://* ]] ||
-  fail "FORKOP_RELEASE_BASE_URL must use http:// or https://"
+  fail "PROKOP_RELEASE_BASE_URL must use http:// or https://"
 
 RELEASE_BASE_URL="${RELEASE_BASE_URL%/}"
-PUBLISH_ROOT="$OUTPUT_DIR/forkop"
+PUBLISH_ROOT="$OUTPUT_DIR/prokop"
 RELEASE_DIR="$PUBLISH_ROOT/releases/$VERSION"
 METADATA_DIR="$PUBLISH_ROOT/updates"
-ARCHIVE_PATH="$OUTPUT_DIR/forkop-timeweb-$VERSION.tar.gz"
+ARCHIVE_PATH="$OUTPUT_DIR/prokop-timeweb-$VERSION.tar.gz"
 
 packages=(
-  "forkop_${VERSION}.ipk"
-  "luci-app-forkop_${VERSION}.ipk"
-  "luci-i18n-forkop-ru_${VERSION}.ipk"
-  "forkop_${VERSION}.apk"
-  "luci-app-forkop_${VERSION}.apk"
-  "luci-i18n-forkop-ru_${VERSION}.apk"
+  "prokop_${VERSION}.ipk"
+  "luci-app-prokop_${VERSION}.ipk"
+  "luci-i18n-prokop-ru_${VERSION}.ipk"
+  "prokop_${VERSION}.apk"
+  "luci-app-prokop_${VERSION}.apk"
+  "luci-i18n-prokop-ru_${VERSION}.apk"
 )
 
 for package in "${packages[@]}"; do
@@ -51,9 +51,9 @@ done
   sha256sum "${packages[@]}" >SHA256SUMS
 )
 
-FORKOP_RELEASE_VERSION="$VERSION" \
-FORKOP_RELEASE_PUBLIC_URL="$RELEASE_BASE_URL" \
-FORKOP_RELEASE_PACKAGES="$(printf '%s\n' "${packages[@]}")" \
+PROKOP_RELEASE_VERSION="$VERSION" \
+PROKOP_RELEASE_PUBLIC_URL="$RELEASE_BASE_URL" \
+PROKOP_RELEASE_PACKAGES="$(printf '%s\n' "${packages[@]}")" \
 "$PYTHON_BIN" - "$METADATA_DIR/latest.json" "$RELEASE_DIR" <<'PY'
 import hashlib
 import json
@@ -61,9 +61,9 @@ import os
 import sys
 from pathlib import Path
 
-version = os.environ["FORKOP_RELEASE_VERSION"]
-base_url = os.environ["FORKOP_RELEASE_PUBLIC_URL"].rstrip("/")
-packages = os.environ["FORKOP_RELEASE_PACKAGES"].splitlines()
+version = os.environ["PROKOP_RELEASE_VERSION"]
+base_url = os.environ["PROKOP_RELEASE_PUBLIC_URL"].rstrip("/")
+packages = os.environ["PROKOP_RELEASE_PACKAGES"].splitlines()
 release_dir = Path(sys.argv[2])
 
 def release_asset(name):
@@ -90,12 +90,12 @@ PY
 
 # The version picker needs an index of what is installable. The host cannot
 # build one, so it ships in the bundle next to latest.json.
-FORKOP_RELEASE_REPO="${FORKOP_RELEASE_REPO:-Asofwar/forkop}" \
+PROKOP_RELEASE_REPO="${PROKOP_RELEASE_REPO:-Asofwar/prokop}" \
   "$PYTHON_BIN" "$ROOT_DIR/ops/hosting/build-release-catalog.py" \
     "$VERSION" "$RELEASE_DIR" "$METADATA_DIR/releases.json" \
     --base-url "$RELEASE_BASE_URL"
 
-tar -C "$OUTPUT_DIR" -czf "$ARCHIVE_PATH" forkop
+tar -C "$OUTPUT_DIR" -czf "$ARCHIVE_PATH" prokop
 
 # GitHub Pages is rebuilt from the releases by ops/pages/build-site.py; this
 # archive is for publishing the same channel on any other static host.

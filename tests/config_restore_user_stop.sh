@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-# A snapshot restore and an autotune apply while Forkop is stopped by the
+# A snapshot restore and an autotune apply while Prokop is stopped by the
 # user (UC-056, D-15(a)), against the real init.d script, service/initd.uc
 # reload-service and config/snapshots.uc.
 #
@@ -24,7 +24,7 @@ set -eu
 # behind it, the stop dropped both, and the restore guard stayed active past
 # the next start.
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-LIB="$ROOT/forkop/files/usr/lib"
+LIB="$ROOT/prokop/files/usr/lib"
 SCRIPT="$LIB/config/snapshots.uc"
 REAL_UCODE="$(command -v ucode)"
 WORK="$(mktemp -d)"
@@ -38,25 +38,25 @@ fail() {
   exit 1
 }
 
-export STATE="$WORK/state" REAL_UCODE TEST_LIB="$LIB" REAL_INITD="$ROOT/forkop/files/etc/init.d/forkop"
-export FORKOP_LIB="$LIB" FORKOP_BIN="$WORK/bin/forkop"
-export FORKOP_CONFIG_FILE="$WORK/forkop"
-export FORKOP_SNAPSHOT_DIR="$WORK/snapshots" FORKOP_SNAPSHOT_HASH_DIR="$WORK/hash"
+export STATE="$WORK/state" REAL_UCODE TEST_LIB="$LIB" REAL_INITD="$ROOT/prokop/files/etc/init.d/prokop"
+export PROKOP_LIB="$LIB" PROKOP_BIN="$WORK/bin/prokop"
+export PROKOP_CONFIG_FILE="$WORK/prokop"
+export PROKOP_SNAPSHOT_DIR="$WORK/snapshots" PROKOP_SNAPSHOT_HASH_DIR="$WORK/hash"
 # Changes staged with uci refuse a restore (UC-068): the test has its own
 # save directory, never the host's /tmp/.uci.
-export FORKOP_UCI_SAVEDIR="$WORK/uci-save"
-export FORKOP_AUTOTUNE_APPLY_STATE="$WORK/autotune-apply.json"
-export FORKOP_SNAPSHOT_LOCK_DIR="$WORK/run/config-snapshot.lock"
-export FORKOP_RUNTIME_STATE_DIR="$WORK/run/forkop"
-export FORKOP_PENDING_RELOAD_FILE="$WORK/run/forkop/reload.pending"
-export FORKOP_RELOAD_LOCK_DIR="$WORK/run/forkop.reload.lock"
-export FORKOP_RELOAD_COMMAND="$WORK/init.d" FORKOP_SERVICE_INIT="$WORK/init.d"
-export STOP_MARKER="$FORKOP_RUNTIME_STATE_DIR/stop.requested" STOP_HOLDER
-START_RECORD="$FORKOP_RUNTIME_STATE_DIR/start.explicit"
-mkdir -p "$WORK/bin" "$WORK/run/forkop" "$STATE"
+export PROKOP_UCI_SAVEDIR="$WORK/uci-save"
+export PROKOP_AUTOTUNE_APPLY_STATE="$WORK/autotune-apply.json"
+export PROKOP_SNAPSHOT_LOCK_DIR="$WORK/run/config-snapshot.lock"
+export PROKOP_RUNTIME_STATE_DIR="$WORK/run/prokop"
+export PROKOP_PENDING_RELOAD_FILE="$WORK/run/prokop/reload.pending"
+export PROKOP_RELOAD_LOCK_DIR="$WORK/run/prokop.reload.lock"
+export PROKOP_RELOAD_COMMAND="$WORK/init.d" PROKOP_SERVICE_INIT="$WORK/init.d"
+export STOP_MARKER="$PROKOP_RUNTIME_STATE_DIR/stop.requested" STOP_HOLDER
+START_RECORD="$PROKOP_RUNTIME_STATE_DIR/start.explicit"
+mkdir -p "$WORK/bin" "$WORK/run/prokop" "$STATE"
 echo absent > "$STATE/guard"
 echo up > "$STATE/runtime"
-# Forkop runs after an explicit start (service/initd.uc records it).
+# Prokop runs after an explicit start (service/initd.uc records it).
 : > "$START_RECORD"
 
 # ucode: the restore guard, the validator (a configuration marked "invalid"
@@ -81,21 +81,21 @@ case "${3:-}" in
       rm -f "$STATE/stop-takes-lock"
       echo stop > "$STOP_MARKER"
       "$REAL_UCODE" -L "$TEST_LIB" "$TEST_LIB/service/state.uc" acquire-runtime-dir-lock \
-        "$FORKOP_RELOAD_LOCK_DIR" "$STOP_HOLDER" || exit 99
+        "$PROKOP_RELOAD_LOCK_DIR" "$STOP_HOLDER" || exit 99
     fi
-    ! grep -q "marker 'invalid'" "$FORKOP_CONFIG_FILE"
+    ! grep -q "marker 'invalid'" "$PROKOP_CONFIG_FILE"
     exit $? ;;
   */diagnostics/health.uc) echo "health:$5:$6" >> "$STATE/events"; exit 0 ;;
   */service/ui.uc|*/dns/apply.uc) exit 0 ;;
 esac
 exec "$REAL_UCODE" "$@"
 STUB
-# forkop: get_status reports the modelled runtime. A reload records which
+# prokop: get_status reports the modelled runtime. A reload records which
 # configuration it loaded and repairs a runtime that is down (as the
 # lifecycle does without a stop). With stop-during-reload armed, a stop
 # overtakes the reload: the lifecycle gate under reload.lock skips it and the
 # runtime goes down.
-cat > "$WORK/bin/forkop" <<'STUB'
+cat > "$WORK/bin/prokop" <<'STUB'
 #!/bin/sh
 case "$1" in
   show_version) echo 1.0.26-test ;;
@@ -108,7 +108,7 @@ case "$1" in
       echo "lifecycle-skipped:${2:-}" >> "$STATE/events"
       exit 0
     fi
-    echo "runtime-reload:${2:-}:$(grep -o "marker '[a-z]*'" "$FORKOP_CONFIG_FILE")" >> "$STATE/events"
+    echo "runtime-reload:${2:-}:$(grep -o "marker '[a-z]*'" "$PROKOP_CONFIG_FILE")" >> "$STATE/events"
     echo up > "$STATE/runtime" ;;
 esac
 exit 0
@@ -119,25 +119,25 @@ cat > "$WORK/init.d" <<'STUB'
 action="$1"; shift
 initscript="$REAL_INITD"
 . "$REAL_INITD"
-FORKOP_LIB="$TEST_LIB"
-FORKOP_INITD_UC="$TEST_LIB/service/initd.uc"
+PROKOP_LIB="$TEST_LIB"
+PROKOP_INITD_UC="$TEST_LIB/service/initd.uc"
 [ "$action" = reload ] || exit 1
 echo "init.d-reload:${1:-}" >> "$STATE/events"
 reload_service "$@"
 STUB
-chmod +x "$WORK/bin/ucode" "$WORK/bin/forkop" "$WORK/init.d"
+chmod +x "$WORK/bin/ucode" "$WORK/bin/prokop" "$WORK/init.d"
 # Nothing here may reach the host's syslog.
 printf '#!/bin/sh\nexit 0\n' > "$WORK/bin/logger"
 chmod +x "$WORK/bin/logger"
 
-config() { printf "config settings 'settings'\n option dns_server '1.1.1.1'\n option marker '%s'\n" "$1" > "$FORKOP_CONFIG_FILE"; }
+config() { printf "config settings 'settings'\n option dns_server '1.1.1.1'\n option marker '%s'\n" "$1" > "$PROKOP_CONFIG_FILE"; }
 field() { node -e 'const r=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));const v=r[process.argv[2]];console.log(v===undefined?"":v)' "$1" "$2"; }
 snap() { PATH="$WORK/bin:$PATH" "$REAL_UCODE" -L "$LIB" "$SCRIPT" "$@"; }
 snap_id() { node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).snapshot.id))'; }
-lkg() { cat "$FORKOP_SNAPSHOT_DIR/last-known-working" 2>/dev/null || true; }
-snaps() { find "$FORKOP_SNAPSHOT_DIR" -maxdepth 1 -name '*.json' | wc -l; }
-chash() { sha256sum "$FORKOP_CONFIG_FILE" | cut -d' ' -f1; }
-marker() { grep -o "marker '[a-z]*'" "$FORKOP_CONFIG_FILE"; }
+lkg() { cat "$PROKOP_SNAPSHOT_DIR/last-known-working" 2>/dev/null || true; }
+snaps() { find "$PROKOP_SNAPSHOT_DIR" -maxdepth 1 -name '*.json' | wc -l; }
+chash() { sha256sum "$PROKOP_CONFIG_FILE" | cut -d' ' -f1; }
+marker() { grep -o "marker '[a-z]*'" "$PROKOP_CONFIG_FILE"; }
 events() { cat "$STATE/events" 2>/dev/null || true; }
 run() {
   : > "$STATE/events"
@@ -185,7 +185,7 @@ events | grep -q '^health:restore:not_started$' || fail "restore while stopped n
 user_start
 run confirm-working
 expect confirmed "" "confirm-working after the explicit start"
-grep -q "marker 'good'" "$FORKOP_SNAPSHOT_DIR/$(lkg).json" || fail "LKG after the start is not the restored configuration"
+grep -q "marker 'good'" "$PROKOP_SNAPSHOT_DIR/$(lkg).json" || fail "LKG after the start is not the restored configuration"
 config bad; snap confirm-working > /dev/null; base_lkg="$(lkg)"
 run restore "$good_id"
 expect success "" "restore of a running runtime after the stop"
@@ -228,7 +228,7 @@ events | grep -q '^lifecycle-skipped:config-restore$' || fail "fixture: the stop
 
 # 6. Autotune apply while stopped: refused before anything changes.
 config bad; base_hash="$(chash)"
-config good; cp "$FORKOP_CONFIG_FILE" "$WORK/candidate"; config bad
+config good; cp "$PROKOP_CONFIG_FILE" "$WORK/candidate"; config bad
 before="$(snaps)"
 run apply "$WORK/candidate" "$base_hash"
 expect stale service_stopped "autotune apply while stopped"
@@ -264,9 +264,9 @@ events | grep -q "^runtime-reload:config-restore:marker 'good'$" || fail "restor
 #    reload nor its rollback ends "queued" with the restore guard kept past
 #    the next start. The restore is kept for that start, as in case 1.
 stop_finishes() {
-  "$REAL_UCODE" -L "$LIB" "$LIB/service/state.uc" release-runtime-dir-lock "$FORKOP_RELOAD_LOCK_DIR" "$STOP_HOLDER"
+  "$REAL_UCODE" -L "$LIB" "$LIB/service/state.uc" release-runtime-dir-lock "$PROKOP_RELOAD_LOCK_DIR" "$STOP_HOLDER"
   echo down > "$STATE/runtime"
-  rm -f "$FORKOP_PENDING_RELOAD_FILE"
+  rm -f "$PROKOP_PENDING_RELOAD_FILE"
 }
 user_start; config bad; snap confirm-working > /dev/null; base_lkg="$(lkg)"
 : > "$STATE/stop-takes-lock"

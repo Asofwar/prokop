@@ -2,9 +2,9 @@
 set -eo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-MIGRATION="$FORKOP_LIB/config/migration.uc"
-PACKAGE_UC="$FORKOP_LIB/service/package.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+MIGRATION="$PROKOP_LIB/config/migration.uc"
+PACKAGE_UC="$PROKOP_LIB/service/package.uc"
 WORK_DIR="$(mktemp -d)"
 
 cleanup() {
@@ -38,7 +38,7 @@ cat >"$WORK_DIR/fixture.json" <<'JSON'
   ]
 }
 JSON
-FORKOP_LIB="$FORKOP_LIB" ucode -L "$FORKOP_LIB" "$MIGRATION" migrate-fixture "$WORK_DIR/fixture.json" >"$WORK_DIR/out.json" ||
+PROKOP_LIB="$PROKOP_LIB" ucode -L "$PROKOP_LIB" "$MIGRATION" migrate-fixture "$WORK_DIR/fixture.json" >"$WORK_DIR/out.json" ||
   fail "migration failed"
 node - "$WORK_DIR/out.json" <<'JS' || fail "vpn_fail_closed migration"
 const fs = require('fs');
@@ -55,7 +55,7 @@ assert(out.config.settings.applied_migrations.includes('vpn_guard_kill_switch_v1
 JS
 
 sed -i 's/"vpn_fail_closed": "1"/"vpn_fail_closed": "0"/' "$WORK_DIR/fixture.json"
-FORKOP_LIB="$FORKOP_LIB" ucode -L "$FORKOP_LIB" "$MIGRATION" migrate-fixture "$WORK_DIR/fixture.json" >"$WORK_DIR/out-off.json"
+PROKOP_LIB="$PROKOP_LIB" ucode -L "$PROKOP_LIB" "$MIGRATION" migrate-fixture "$WORK_DIR/fixture.json" >"$WORK_DIR/out-off.json"
 node - "$WORK_DIR/out-off.json" <<'JS' || fail "disabled guard migration"
 const out = JSON.parse(require('fs').readFileSync(process.argv[2], 'utf8'));
 if (out.config.section.some((s) => s.kill_switch !== undefined)) process.exit(1);
@@ -65,7 +65,7 @@ JS
 # 2. Runtime leftovers of the retired guard are removed at postinst.
 ROOT="$WORK_DIR/root"
 mkdir -p "$ROOT/etc/forkop/vpn-guard" "$ROOT/tmp/forkop-vpn-guard" "$ROOT/etc/init.d" "$ROOT/etc/rc.d" \
-  "$ROOT/etc/hotplug.d/iface" "$ROOT/lib/upgrade/keep.d" "$ROOT/usr/share/forkop" "$WORK_DIR/bin"
+  "$ROOT/etc/hotplug.d/iface" "$ROOT/lib/upgrade/keep.d" "$ROOT/usr/share/prokop" "$WORK_DIR/bin"
 printf '{"saved_offload":{"flow_offloading":"1","flow_offloading_hw":"1"}}\n' > "$ROOT/etc/forkop/vpn-guard/policy.json"
 printf '{}\n' > "$ROOT/etc/forkop/vpn-guard/exceptions.json"
 touch "$ROOT/tmp/forkop-vpn-guard/dns-0.conf" "$ROOT/etc/init.d/forkop-guard" "$ROOT/etc/hotplug.d/iface/95-forkop-guard" \
@@ -96,8 +96,8 @@ firewall.forkop_vpn_guard.path=/usr/share/forkop/vpn-guard-firewall.sh
 EOF
 
 run_cleanup() {
-  PATH="$WORK_DIR/bin:$PATH" FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state" FORKOP_LEGACY_GUARD_ROOT="$ROOT" \
-    ucode -L "$FORKOP_LIB" "$PACKAGE_UC" legacy-vpn-guard-cleanup
+  PATH="$WORK_DIR/bin:$PATH" PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state" PROKOP_LEGACY_GUARD_ROOT="$ROOT" \
+    ucode -L "$PROKOP_LIB" "$PACKAGE_UC" legacy-vpn-guard-cleanup
 }
 
 run_cleanup || fail "legacy cleanup failed"

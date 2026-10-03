@@ -5,7 +5,7 @@
 //
 // Every mode fails (non-zero exit, assertion message) unless the listing the
 // kernel returned has the expected structure. Nothing here depends on handle
-// numbers; order is checked only where Forkop relies on it.
+// numbers; order is checked only where Prokop relies on it.
 const fs = require('node:fs');
 const assert = require('node:assert/strict');
 
@@ -206,8 +206,8 @@ const modes = {
   'transition-guard'() {
     const [table, markText] = args;
     const mark = Number(markText);
-    baseChain(table, 'forkop_transition_guard', 'filter', 'prerouting', -101);
-    const rules = rulesOf(table, 'forkop_transition_guard');
+    baseChain(table, 'prokop_transition_guard', 'filter', 'prerouting', -101);
+    const rules = rulesOf(table, 'prokop_transition_guard');
     assert.equal(rules.length, 1, 'transition guard rule count');
     const m = maskedMark(rules[0]);
     assert.ok(m && m.mask === mark && m.value === mark, 'transition guard must match the FakeIP mark');
@@ -226,7 +226,7 @@ const modes = {
     baseChain(table, 'output', 'route', 'output', -151);
     const rules = rulesOf(table, 'output');
     assert.equal(rules.length, 1, 'TorrServer Direct rule count');
-    assert.equal(rules[0].comment, 'Forkop TorrServer Direct');
+    assert.equal(rules[0].comment, 'Prokop TorrServer Direct');
     assert.equal(setsMark(rules[0]), Number(markText), 'TorrServer Direct must set the outbound mark');
     if (cgroup !== '-') {
       const socket = rules[0].expr.map((e) => e.match).find((m) => m && m.left && m.left.socket);

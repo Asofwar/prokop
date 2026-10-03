@@ -1,24 +1,24 @@
 #!/bin/sh
 set -eu
 ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
-LIB="$ROOT/forkop/files/usr/lib"
+LIB="$ROOT/prokop/files/usr/lib"
 SCRIPT="$LIB/config/snapshots.uc"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT HUP INT TERM
-export FORKOP_CONFIG_FILE="$WORK/forkop"
-export FORKOP_SNAPSHOT_DIR="$WORK/snapshots"
+export PROKOP_CONFIG_FILE="$WORK/prokop"
+export PROKOP_SNAPSHOT_DIR="$WORK/snapshots"
 # Changes staged with uci refuse a restore (UC-068): the test has its own
 # save directory, never the host's /tmp/.uci.
-export FORKOP_UCI_SAVEDIR="$WORK/uci-save"
-export FORKOP_AUTOTUNE_APPLY_STATE="$WORK/autotune-apply.json"
-export FORKOP_SNAPSHOT_HASH_DIR="$WORK/hash"
-export FORKOP_SNAPSHOT_LOCK_DIR="$WORK/run/config-snapshot.lock"
-export FORKOP_LIB="$LIB"
-export FORKOP_HISTORY_FILE="$WORK/history.jsonl"
-export FORKOP_RUNTIME_STATE_DIR="$WORK/run"
-export FORKOP_PENDING_RELOAD_FILE="$WORK/run/reload.pending"
-export FORKOP_RELOAD_LOCK_DIR="$WORK/run/reload.lock"
-cat > "$FORKOP_CONFIG_FILE" <<'UCI'
+export PROKOP_UCI_SAVEDIR="$WORK/uci-save"
+export PROKOP_AUTOTUNE_APPLY_STATE="$WORK/autotune-apply.json"
+export PROKOP_SNAPSHOT_HASH_DIR="$WORK/hash"
+export PROKOP_SNAPSHOT_LOCK_DIR="$WORK/run/config-snapshot.lock"
+export PROKOP_LIB="$LIB"
+export PROKOP_HISTORY_FILE="$WORK/history.jsonl"
+export PROKOP_RUNTIME_STATE_DIR="$WORK/run"
+export PROKOP_PENDING_RELOAD_FILE="$WORK/run/reload.pending"
+export PROKOP_RELOAD_LOCK_DIR="$WORK/run/reload.lock"
+cat > "$PROKOP_CONFIG_FILE" <<'UCI'
 config settings 'settings'
  option dns_server '1.1.1.1'
  option password 'top-secret'
@@ -42,9 +42,9 @@ assert.equal('config_hash' in list[0], false);
 fs.writeFileSync(`${dir}/id`, created.snapshot.id);
 JS
 id="$(cat "$WORK/id")"
-test "$(stat -c %a "$FORKOP_SNAPSHOT_DIR")" = 700
-test "$(stat -c %a "$FORKOP_SNAPSHOT_DIR/$id.json")" = 600
-cat > "$FORKOP_CONFIG_FILE" <<'UCI'
+test "$(stat -c %a "$PROKOP_SNAPSHOT_DIR")" = 700
+test "$(stat -c %a "$PROKOP_SNAPSHOT_DIR/$id.json")" = 600
+cat > "$PROKOP_CONFIG_FILE" <<'UCI'
 config settings 'settings'
  option dns_server '8.8.8.8'
  option password 'new-secret'
@@ -72,11 +72,11 @@ STUB
 cat > "$WORK/reload" <<'STUB'
 #!/bin/sh
 if [ "${FAIL_ALL:-0}" = 1 ]; then exit 1; fi
-if [ "${FAIL_OLD_CONFIG:-0}" = 1 ] && grep -q '1.1.1.1' "$FORKOP_CONFIG_FILE"; then exit 1; fi
+if [ "${FAIL_OLD_CONFIG:-0}" = 1 ] && grep -q '1.1.1.1' "$PROKOP_CONFIG_FILE"; then exit 1; fi
 exit 0
 STUB
 chmod +x "$WORK/bin/ucode" "$WORK/reload"
-export FORKOP_RELOAD_COMMAND="$WORK/reload"
+export PROKOP_RELOAD_COMMAND="$WORK/reload"
 REAL_UCODE="$(command -v ucode)"
 PATH="$WORK/bin:$PATH" "$REAL_UCODE" -L "$LIB" "$SCRIPT" restore "$id" > "$WORK/restore.json"
 node - "$WORK/restore.json" <<'JS'
@@ -84,9 +84,9 @@ const fs = require('node:fs');
 const assert = require('node:assert/strict');
 assert.equal(JSON.parse(fs.readFileSync(process.argv[2])).status, 'success');
 JS
-grep -q '1.1.1.1' "$FORKOP_CONFIG_FILE"
-test "$(cat "$FORKOP_SNAPSHOT_DIR/last-known-working")" = "$id"
-cat > "$FORKOP_CONFIG_FILE" <<'UCI'
+grep -q '1.1.1.1' "$PROKOP_CONFIG_FILE"
+test "$(cat "$PROKOP_SNAPSHOT_DIR/last-known-working")" = "$id"
+cat > "$PROKOP_CONFIG_FILE" <<'UCI'
 config settings 'settings'
  option dns_server '8.8.8.8'
  option password 'new-secret'
@@ -97,13 +97,13 @@ const fs = require('node:fs');
 const assert = require('node:assert/strict');
 assert.equal(JSON.parse(fs.readFileSync(process.argv[2])).status, 'recovered');
 JS
-grep -q '8.8.8.8' "$FORKOP_CONFIG_FILE"
+grep -q '8.8.8.8' "$PROKOP_CONFIG_FILE"
 # The configuration put back (8.8.8.8) was never confirmed: last-known-working
 # stays where it was, it does not move to that configuration (UC-059).
-test "$(cat "$FORKOP_SNAPSHOT_DIR/last-known-working")" = "$id"
+test "$(cat "$PROKOP_SNAPSHOT_DIR/last-known-working")" = "$id"
 # Put back over the last-known-working configuration itself, it stays so.
 "$REAL_UCODE" -L "$LIB" "$SCRIPT" confirm-working > /dev/null
-confirmed_id="$(cat "$FORKOP_SNAPSHOT_DIR/last-known-working")"
+confirmed_id="$(cat "$PROKOP_SNAPSHOT_DIR/last-known-working")"
 test "$confirmed_id" != "$id"
 FAIL_OLD_CONFIG=1 PATH="$WORK/bin:$PATH" "$REAL_UCODE" -L "$LIB" "$SCRIPT" restore "$id" > "$WORK/restore-failed.json"
 node - "$WORK/restore-failed.json" <<'JS'
@@ -111,8 +111,8 @@ const fs = require('node:fs');
 const assert = require('node:assert/strict');
 assert.equal(JSON.parse(fs.readFileSync(process.argv[2])).status, 'recovered');
 JS
-recovered_id="$(cat "$FORKOP_SNAPSHOT_DIR/last-known-working")"
-grep -q '8.8.8.8' "$FORKOP_SNAPSHOT_DIR/$recovered_id.json"
+recovered_id="$(cat "$PROKOP_SNAPSHOT_DIR/last-known-working")"
+grep -q '8.8.8.8' "$PROKOP_SNAPSHOT_DIR/$recovered_id.json"
 if FAIL_ALL=1 PATH="$WORK/bin:$PATH" "$REAL_UCODE" -L "$LIB" "$SCRIPT" restore "$id" > "$WORK/restore-unknown.json"; then exit 1; fi
 node - "$WORK/restore-unknown.json" <<'JS'
 const fs = require('node:fs');
@@ -121,7 +121,7 @@ const result = JSON.parse(fs.readFileSync(process.argv[2]));
 assert.equal(result.status, 'needs_attention');
 assert.equal(result.guard, 'active');
 JS
-grep -q '8.8.8.8' "$FORKOP_CONFIG_FILE"
+grep -q '8.8.8.8' "$PROKOP_CONFIG_FILE"
 if FAIL_ALL=1 FAIL_GUARD=1 PATH="$WORK/bin:$PATH" "$REAL_UCODE" -L "$LIB" "$SCRIPT" restore "$id" > "$WORK/restore-unprotected.json"; then exit 1; fi
 node - "$WORK/restore-unprotected.json" <<'JS'
 const fs = require('node:fs');
@@ -130,32 +130,32 @@ const result = JSON.parse(fs.readFileSync(process.argv[2]));
 assert.equal(result.status, 'failed');
 assert.equal(result.reason, 'guard_unavailable');
 JS
-test "$FORKOP_SNAPSHOT_LOCK_DIR" != "$FORKOP_SNAPSHOT_DIR/.lock"
+test "$PROKOP_SNAPSHOT_LOCK_DIR" != "$PROKOP_SNAPSHOT_DIR/.lock"
 mkdir -p "$WORK/run"
 # shellcheck source=tests/helpers/wait.sh
 . "$ROOT/tests/helpers/wait.sh"
 # The holder keeps the snapshot lock until the test releases it (bounded), so
 # the checks below never race a fixed hold time.
-export FORKOP_TEST_READY="$WORK/lock-ready" FORKOP_TEST_RELEASE="$WORK/lock-release"
+export PROKOP_TEST_READY="$WORK/lock-ready" PROKOP_TEST_RELEASE="$WORK/lock-release"
 cat > "$WORK/hold-version" <<'STUB'
 #!/bin/sh
-: > "$FORKOP_TEST_READY"
+: > "$PROKOP_TEST_READY"
 n=0
-while [ ! -e "$FORKOP_TEST_RELEASE" ] && [ "$n" -lt 1200 ]; do sleep 0.05; n=$((n + 1)); done
+while [ ! -e "$PROKOP_TEST_RELEASE" ] && [ "$n" -lt 1200 ]; do sleep 0.05; n=$((n + 1)); done
 printf 'test\n'
 STUB
 chmod +x "$WORK/hold-version"
-FORKOP_BIN="$WORK/hold-version" ucode -L "$LIB" "$SCRIPT" create manual > "$WORK/held-create.json" &
+PROKOP_BIN="$WORK/hold-version" ucode -L "$LIB" "$SCRIPT" create manual > "$WORK/held-create.json" &
 holder=$!
-wait_until 30 test -f "$FORKOP_TEST_READY" || exit 1
-ls "$FORKOP_SNAPSHOT_LOCK_DIR"/owner.* >/dev/null || exit 1
+wait_until 30 test -f "$PROKOP_TEST_READY" || exit 1
+ls "$PROKOP_SNAPSHOT_LOCK_DIR"/owner.* >/dev/null || exit 1
 if ucode -L "$LIB" "$SCRIPT" create manual > "$WORK/busy.json"; then exit 1; fi
 node -e 'const r = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
 if (r.status !== "busy" || r.reason !== "snapshot_operation_in_progress") process.exit(1);' "$WORK/busy.json"
-ls "$FORKOP_SNAPSHOT_LOCK_DIR"/owner.* >/dev/null || exit 1
-: > "$FORKOP_TEST_RELEASE"
+ls "$PROKOP_SNAPSHOT_LOCK_DIR"/owner.* >/dev/null || exit 1
+: > "$PROKOP_TEST_RELEASE"
 wait "$holder"
-[ ! -e "$FORKOP_SNAPSHOT_LOCK_DIR" ] || exit 1
+[ ! -e "$PROKOP_SNAPSHOT_LOCK_DIR" ] || exit 1
 node - "$LIB" "$SCRIPT" "$WORK" <<'JS'
 const fs = require('node:fs');
 const { execFileSync } = require('node:child_process');
@@ -251,13 +251,13 @@ JS
 
 (
 # Lock scenarios use their own snapshot store so manual retention stays untouched.
-export FORKOP_SNAPSHOT_DIR="$WORK/lock-snapshots"
-LOCK_DIR="$FORKOP_SNAPSHOT_LOCK_DIR"
+export PROKOP_SNAPSHOT_DIR="$WORK/lock-snapshots"
+LOCK_DIR="$PROKOP_SNAPSHOT_LOCK_DIR"
 start_ticks() { sed 's/.*) //' "/proc/$1/stat" | awk '{print $20}'; }
 no_lock_leftovers() {
   [ ! -e "$LOCK_DIR" ] || exit 1
   for leftover in "$LOCK_DIR".new.*; do [ ! -e "$leftover" ] || exit 1; done
-  rm -f "$FORKOP_SNAPSHOT_DIR"/*.json
+  rm -f "$PROKOP_SNAPSHOT_DIR"/*.json
 }
 stale_lock() { mkdir "$LOCK_DIR"; printf '%s\n%s\n' "$1" "$2" > "$LOCK_DIR/owner.$1.$2"; }
 
@@ -301,15 +301,15 @@ no_lock_leftovers
 [ -f "$WORK/symlink-target/keep" ] || exit 1
 
 # Release must not remove a lock that was replaced while the holder ran.
-rm -f "$FORKOP_TEST_READY" "$FORKOP_TEST_RELEASE"
-FORKOP_BIN="$WORK/hold-version" ucode -L "$LIB" "$SCRIPT" create manual >/dev/null &
+rm -f "$PROKOP_TEST_READY" "$PROKOP_TEST_RELEASE"
+PROKOP_BIN="$WORK/hold-version" ucode -L "$LIB" "$SCRIPT" create manual >/dev/null &
 holder=$!
-wait_until 30 test -f "$FORKOP_TEST_READY" || exit 1
+wait_until 30 test -f "$PROKOP_TEST_READY" || exit 1
 set -- "$LOCK_DIR"/owner.*
 [ "$#" -eq 1 ] && [ -f "$1" ] || exit 1
 mv "$LOCK_DIR" "$WORK/replaced-lock"
 stale_lock "$reused_pid" "$reused_ticks"
-: > "$FORKOP_TEST_RELEASE"
+: > "$PROKOP_TEST_RELEASE"
 wait "$holder"
 [ -f "$LOCK_DIR/owner.$reused_pid.$reused_ticks" ] || exit 1
 rm -rf "$WORK/replaced-lock"
@@ -327,12 +327,12 @@ rmdir "$LOCK_DIR.new.1.1"
 no_lock_leftovers
 
 # Concurrent acquisition, from a free lock and from a stale one, never overlaps.
-export FORKOP_TEST_CS="$WORK/critical" FORKOP_TEST_OVERLAP="$WORK/overlap"
+export PROKOP_TEST_CS="$WORK/critical" PROKOP_TEST_OVERLAP="$WORK/overlap"
 cat > "$WORK/critical-version" <<'STUB'
 #!/bin/sh
-mkdir "$FORKOP_TEST_CS" 2>/dev/null || : > "$FORKOP_TEST_OVERLAP"
+mkdir "$PROKOP_TEST_CS" 2>/dev/null || : > "$PROKOP_TEST_OVERLAP"
 sleep 0.5
-rmdir "$FORKOP_TEST_CS" 2>/dev/null
+rmdir "$PROKOP_TEST_CS" 2>/dev/null
 printf 'test\n'
 STUB
 chmod +x "$WORK/critical-version"
@@ -340,20 +340,20 @@ for round in free free stale stale stale stale; do
   if [ "$round" = stale ]; then stale_lock 999999 1; fi
   pids=""
   for n in 1 2 3 4 5 6 7 8; do
-    FORKOP_BIN="$WORK/critical-version" ucode -L "$LIB" "$SCRIPT" create manual >/dev/null 2>&1 &
+    PROKOP_BIN="$WORK/critical-version" ucode -L "$LIB" "$SCRIPT" create manual >/dev/null 2>&1 &
     pids="$pids $!"
   done
   won=0
   for pid in $pids; do if wait "$pid"; then won=$((won + 1)); fi; done
   [ "$won" -ge 1 ] || exit 1
-  [ ! -e "$FORKOP_TEST_OVERLAP" ] || exit 1
+  [ ! -e "$PROKOP_TEST_OVERLAP" ] || exit 1
   no_lock_leftovers
 done
 )
-printf '{invalid' > "$FORKOP_SNAPSHOT_DIR/bad.json"
+printf '{invalid' > "$PROKOP_SNAPSHOT_DIR/bad.json"
 if ucode -L "$LIB" "$SCRIPT" diff bad >/dev/null; then exit 1; fi
 for n in 1 2 3 4 5 6 7 8 9 10 11; do
-  printf "config settings 'settings'\n option dns_server '10.0.0.%s'\n" "$n" > "$FORKOP_CONFIG_FILE"
+  printf "config settings 'settings'\n option dns_server '10.0.0.%s'\n" "$n" > "$PROKOP_CONFIG_FILE"
   ucode -L "$LIB" "$SCRIPT" create automatic >/dev/null
 done
 ucode -L "$LIB" "$SCRIPT" list > "$WORK/retention.json"

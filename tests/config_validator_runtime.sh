@@ -2,8 +2,8 @@
 set -eo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-VALIDATOR="$FORKOP_LIB/config/validator.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+VALIDATOR="$PROKOP_LIB/config/validator.uc"
 WORK_DIR="$(mktemp -d)"
 
 cleanup() {
@@ -34,7 +34,7 @@ if (input.settings.bootstrap_dns_server === undefined) input.settings.bootstrap_
 if (input.settings.yacd_secret_key === undefined) input.settings.yacd_secret_key = 'test-clash-secret';
 fs.writeFileSync(process.argv[3], JSON.stringify(input));
 JS
-  FORKOP_LIB="$FORKOP_LIB" ucode -L "$FORKOP_LIB" "$VALIDATOR" validate-runtime-fixture "$normalized" "$context"
+  PROKOP_LIB="$PROKOP_LIB" ucode -L "$PROKOP_LIB" "$VALIDATOR" validate-runtime-fixture "$normalized" "$context"
 }
 
 assert_rejects() {
@@ -234,7 +234,7 @@ cat >"$WORK_DIR/hostname-bootstrap-dns.json" <<'JSON'
 }
 JSON
 # A hostname here cannot resolve itself, so sing-box may fail to bootstrap.
-# That is reported as a warning: aborting validation would stop Forkop from
+# That is reported as a warning: aborting validation would stop Prokop from
 # starting on a configuration which was accepted when it was written.
 validate_fixture "$WORK_DIR/hostname-bootstrap-dns.json" >/dev/null ||
   fail "hostname Bootstrap DNS should warn, not abort validation"
@@ -457,7 +457,7 @@ cat >"$WORK_DIR/bad-byedpi.json" <<'JSON'
   ]
 }
 JSON
-if output="$(FORKOP_LIB="$FORKOP_LIB" ucode -L "$FORKOP_LIB" "$VALIDATOR" validate-runtime-fixture "$WORK_DIR/bad-byedpi.json" "$provider_context" 2>/dev/null)"; then
+if output="$(PROKOP_LIB="$PROKOP_LIB" ucode -L "$PROKOP_LIB" "$VALIDATOR" validate-runtime-fixture "$WORK_DIR/bad-byedpi.json" "$provider_context" 2>/dev/null)"; then
   fail "bad byedpi should be rejected"
 fi
 printf '%s\n' "$output" | grep -Fq "ByeDPI listen address and port are assigned" ||
@@ -465,11 +465,11 @@ printf '%s\n' "$output" | grep -Fq "ByeDPI listen address and port are assigned"
 
 runtime_lib="$WORK_DIR/runtime-lib"
 mkdir -p "$runtime_lib"
-ln -s "$FORKOP_LIB/core" "$runtime_lib/core"
-ln -s "$FORKOP_LIB/config" "$runtime_lib/config"
-ln -s "$FORKOP_LIB/routing" "$runtime_lib/routing"
-ln -s "$FORKOP_LIB/subscription" "$runtime_lib/subscription"
-ln -s "$FORKOP_LIB/providers" "$runtime_lib/providers"
+ln -s "$PROKOP_LIB/core" "$runtime_lib/core"
+ln -s "$PROKOP_LIB/config" "$runtime_lib/config"
+ln -s "$PROKOP_LIB/routing" "$runtime_lib/routing"
+ln -s "$PROKOP_LIB/subscription" "$runtime_lib/subscription"
+ln -s "$PROKOP_LIB/providers" "$runtime_lib/providers"
 touch "$WORK_DIR/ciadpi-provider"
 cat >"$WORK_DIR/bad-byedpi-runtime-state.json" <<'JSON'
 {
@@ -496,7 +496,7 @@ env \
   ZAPRET2_QUEUE_RANGE_SIZE="16" \
   NFT_FAKEIP_MARK="0x00000800" \
   NFT_OUTBOUND_MARK="0x00000400" \
-  FORKOP_LIB="$runtime_lib" \
+  PROKOP_LIB="$runtime_lib" \
   ucode -L "$runtime_lib" "$VALIDATOR" validate-runtime-fixture "$WORK_DIR/bad-byedpi-runtime-state.json" "{}"
 chmod 755 "$WORK_DIR/ciadpi-provider"
 if output="$(env \
@@ -514,7 +514,7 @@ if output="$(env \
   ZAPRET2_QUEUE_RANGE_SIZE="16" \
   NFT_FAKEIP_MARK="0x00000800" \
   NFT_OUTBOUND_MARK="0x00000400" \
-  FORKOP_LIB="$runtime_lib" \
+  PROKOP_LIB="$runtime_lib" \
   ucode -L "$runtime_lib" "$VALIDATOR" validate-runtime-fixture "$WORK_DIR/bad-byedpi-runtime-state.json" "{}" 2>/dev/null)"; then
   fail "executable byedpi provider should enable strategy validation"
 fi

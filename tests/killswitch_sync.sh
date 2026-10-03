@@ -2,9 +2,9 @@
 set -eo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-KS_UC="$FORKOP_LIB/killswitch/runtime.uc"
-DNS_UC="$FORKOP_LIB/dns/apply.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+KS_UC="$PROKOP_LIB/killswitch/runtime.uc"
+DNS_UC="$PROKOP_LIB/dns/apply.uc"
 WORK_DIR="$(mktemp -d)"
 
 cleanup() {
@@ -31,18 +31,18 @@ cat >"$WORK_DIR/bin/nft" <<'NFT'
 printf '%s\n' "$*" >> "$WORK_DIR/nft.log"
 case "$1 $2" in
   "list table")
-    [ "$4" = "ForkopTable" ] && { [ -e "$WORK_DIR/live-present" ]; exit $?; }
-    [ "$4" = "ForkopKillswitch" ] && { [ -e "$WORK_DIR/ks-present" ]; exit $?; }
+    [ "$4" = "ProkopTable" ] && { [ -e "$WORK_DIR/live-present" ]; exit $?; }
+    [ "$4" = "ProkopKillswitch" ] && { [ -e "$WORK_DIR/ks-present" ]; exit $?; }
     [ "$4" = "ForkopVpnGuard" ] && { [ -e "$WORK_DIR/legacy-present" ]; exit $?; }
     exit 1 ;;
   "list set")
-    printf 'table inet ForkopTable {\n\tset %s {\n\t\ttype ipv4_addr\n' "$5"
-    [ "$5" = "forkop_rule_main_subnets" ] && printf '\t\telements = { 3.3.3.0/24 }\n'
+    printf 'table inet ProkopTable {\n\tset %s {\n\t\ttype ipv4_addr\n' "$5"
+    [ "$5" = "prokop_rule_main_subnets" ] && printf '\t\telements = { 3.3.3.0/24 }\n'
     printf '\t}\n}\n'
     exit 0 ;;
   "-c -f")
     [ "${NFT_CHECK_FAIL:-0}" = "1" ] && exit 1
-    grep -q 'add table inet ForkopKillswitch' "$3" || exit 1
+    grep -q 'add table inet ProkopKillswitch' "$3" || exit 1
     exit 0 ;;
   "-f "*)
     cp "$2" "$WORK_DIR/live.nft"; touch "$WORK_DIR/ks-present"; exit 0 ;;
@@ -50,7 +50,7 @@ case "$1 $2" in
     [ "$4" = "ForkopVpnGuard" ] && { rm -f "$WORK_DIR/legacy-present"; exit 0; }
     rm -f "$WORK_DIR/ks-present"; exit 0 ;;
   "-j list")
-    printf '{"nftables":[{"metainfo":{}},{"counter":{"family":"inet","name":"ks_main","table":"ForkopKillswitch","packets":7,"bytes":420}},{"counter":{"family":"inet","name":"ks_fakeip","table":"ForkopKillswitch","packets":2,"bytes":120}}]}\n'
+    printf '{"nftables":[{"metainfo":{}},{"counter":{"family":"inet","name":"ks_main","table":"ProkopKillswitch","packets":7,"bytes":420}},{"counter":{"family":"inet","name":"ks_fakeip","table":"ProkopKillswitch","packets":2,"bytes":120}}]}\n'
     exit 0 ;;
 esac
 exit 0
@@ -78,35 +78,35 @@ JSON
 
 export WORK_DIR
 export PATH="$WORK_DIR/bin:$PATH"
-export FORKOP_LIB
+export PROKOP_LIB
 export UCI_STATE="$WORK_DIR/uci.state"
-export FORKOP_UCI_STATE_FILE="$UCI_STATE"
-export FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/run"
+export PROKOP_UCI_STATE_FILE="$UCI_STATE"
+export PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/run"
 export KILLSWITCH_STATE_DIR="$WORK_DIR/ks"
-export KILLSWITCH_NFT_INCLUDE="$WORK_DIR/nftables.d/ruleset-post/90-forkop-killswitch.nft"
+export KILLSWITCH_NFT_INCLUDE="$WORK_DIR/nftables.d/ruleset-post/90-prokop-killswitch.nft"
 export KILLSWITCH_CACHE_DIR="$WORK_DIR/cache"
 export DNSMASQ_INIT="$WORK_DIR/bin/dnsmasq-init"
-export FORKOP_KILLSWITCH_INIT="$WORK_DIR/bin/killswitch-init"
+export PROKOP_KILLSWITCH_INIT="$WORK_DIR/bin/killswitch-init"
 
 write_config() {
   cat >"$UCI_STATE" <<EOF
-forkop.settings=settings
-forkop.settings.source_network_interfaces=br-lan
-forkop.settings.config_path=$WORK_DIR/config.json
-forkop.zap=section
-forkop.zap.action=zapret
-forkop.zap.ip_cidr=1.1.1.0/24
-forkop.main=section
-forkop.main.action=connection
-forkop.main.kill_switch=$1
-forkop.main.ip_cidr=3.3.3.0/24
+prokop.settings=settings
+prokop.settings.source_network_interfaces=br-lan
+prokop.settings.config_path=$WORK_DIR/config.json
+prokop.zap=section
+prokop.zap.action=zapret
+prokop.zap.ip_cidr=1.1.1.0/24
+prokop.main=section
+prokop.main.action=connection
+prokop.main.kill_switch=$1
+prokop.main.ip_cidr=3.3.3.0/24
 dhcp.@dnsmasq[0]=dnsmasq
 dhcp.@dnsmasq[0].server=127.0.0.42
 EOF
 }
 
 ks() {
-  ucode -L "$FORKOP_LIB" "$KS_UC" "$@"
+  ucode -L "$PROKOP_LIB" "$KS_UC" "$@"
 }
 
 uci_value() {
@@ -117,17 +117,17 @@ INCLUDE="$KILLSWITCH_NFT_INCLUDE"
 SERVERS="$KILLSWITCH_STATE_DIR/dnsmasq.servers"
 BLOCKED="$KILLSWITCH_STATE_DIR/dns-blocked.servers"
 
-# 1. Forkop runtime is missing: nothing is installed and the failure is recorded.
+# 1. Prokop runtime is missing: nothing is installed and the failure is recorded.
 write_config 1
 if ks sync start; then
-  fail "sync without the live ForkopTable must fail"
+  fail "sync without the live ProkopTable must fail"
 fi
 [ ! -e "$INCLUDE" ] || fail "no policy may be installed without the live table"
 grep -Fq 'is not present' "$KILLSWITCH_STATE_DIR/state.json" || fail "missing runtime must be recorded"
 
 [ -e "$WORK_DIR/legacy-present" ] || true
 
-# 2. Successful sync while Forkop DNS is active. The retired global guard
+# 2. Successful sync while Prokop DNS is active. The retired global guard
 #    left by an upgrade is dropped only now that its replacement is live.
 touch "$WORK_DIR/live-present" "$WORK_DIR/legacy-present"
 if NFT_CHECK_FAIL=1 ks sync start; then fail "invalid policy must fail"; fi
@@ -137,7 +137,7 @@ ks sync start || fail "sync failed"
 [ -s "$INCLUDE" ] || fail "persistent fw4 include must be installed"
 cmp -s "$INCLUDE" "$WORK_DIR/live.nft" || fail "installed include must be exactly the policy applied live"
 grep -Fq 'counter name ks_main jump ks_reject' "$INCLUDE" || fail "protected section must reject"
-grep -Fq 'forkop_rule_zap_subnets return' "$INCLUDE" || fail "earlier zapret section must return"
+grep -Fq 'prokop_rule_zap_subnets return' "$INCLUDE" || fail "earlier zapret section must return"
 grep -Fq -- '-c -f' "$WORK_DIR/nft.log" || fail "policy must be validated before apply"
 grep -Fqx 'server=/example.com/' "$BLOCKED" || fail "protected domain must be prepared for dnsmasq"
 grep -Fqx 'server=/drive.example.com/#' "$BLOCKED" || fail "earlier bypass below a protected domain must be an exception"
@@ -147,15 +147,15 @@ grep -Fq '"active": true' "$KILLSWITCH_STATE_DIR/state.json" || fail "state must
 [ "$(cat "$WORK_DIR/service.log")" = "$(printf 'enable\nstart')" ] || fail "applied protection must enable and start the standby service"
 : > "$WORK_DIR/service.log"
 
-# 3. Forkop stops: dnsmasq leaves sing-box and the block list becomes active.
+# 3. Prokop stops: dnsmasq leaves sing-box and the block list becomes active.
 sed -i '/^dhcp.@dnsmasq\[0\].server=/d' "$UCI_STATE"
 printf 'dhcp.@dnsmasq[0].server=1.1.1.1\n' >> "$UCI_STATE"
 : > "$WORK_DIR/dnsmasq.log"
-ucode -L "$FORKOP_LIB" "$DNS_UC" killswitch-refresh || fail "dns refresh failed"
-cmp -s "$BLOCKED" "$SERVERS" || fail "stopped Forkop must activate the DNS block list"
+ucode -L "$PROKOP_LIB" "$DNS_UC" killswitch-refresh || fail "dns refresh failed"
+cmp -s "$BLOCKED" "$SERVERS" || fail "stopped Prokop must activate the DNS block list"
 grep -Fqx restart "$WORK_DIR/dnsmasq.log" || fail "dnsmasq must be restarted for a new block list"
 : > "$WORK_DIR/dnsmasq.log"
-ucode -L "$FORKOP_LIB" "$DNS_UC" killswitch-refresh || fail "second dns refresh failed"
+ucode -L "$PROKOP_LIB" "$DNS_UC" killswitch-refresh || fail "second dns refresh failed"
 [ ! -s "$WORK_DIR/dnsmasq.log" ] || fail "an unchanged block list must not restart dnsmasq"
 
 # 4. Status reports the live state and counters.
@@ -172,14 +172,14 @@ fi
 cmp -s "$INCLUDE" "$WORK_DIR/include.before" || fail "installed policy must survive a failed sync"
 [ -e "$WORK_DIR/ks-present" ] || fail "live policy must survive a failed sync"
 
-# 6. A stopped Forkop (no live table) keeps the protection on sync.
+# 6. A stopped Prokop (no live table) keeps the protection on sync.
 rm -f "$WORK_DIR/live-present"
 if ks sync reload; then
   fail "sync without runtime must report failure"
 fi
 [ -e "$INCLUDE" ] && [ -e "$WORK_DIR/ks-present" ] && [ -e "$BLOCKED" ] || fail "protection must survive a sync without runtime"
 
-# 7. Unchecking the option lifts everything, even while Forkop is stopped.
+# 7. Unchecking the option lifts everything, even while Prokop is stopped.
 write_config 0
 sed -i '/^dhcp.@dnsmasq\[0\].server=/d' "$UCI_STATE"
 printf 'dhcp.@dnsmasq[0].server=1.1.1.1\ndhcp.@dnsmasq[0].serversfile=%s\n' "$SERVERS" >> "$UCI_STATE"
@@ -207,7 +207,7 @@ status="$(ks status)"
 printf '%s' "$status" | grep -Fq '"pending": true' || fail "status must show configured-but-inactive protection: $status"
 
 # 9. dont_touch_dhcp: nft only, dnsmasq untouched.
-printf 'forkop.settings.dont_touch_dhcp=1\n' >> "$UCI_STATE"
+printf 'prokop.settings.dont_touch_dhcp=1\n' >> "$UCI_STATE"
 ks sync start || fail "sync with dont_touch_dhcp failed"
 [ -e "$INCLUDE" ] || fail "nft protection must still be installed"
 [ ! -e "$BLOCKED" ] || fail "DNS block list must not be prepared when dnsmasq is not managed"
@@ -221,6 +221,6 @@ ks sync start || fail "sync with a foreign servers file failed"
 [ "$(uci_value 'dhcp.@dnsmasq[0].serversfile')" = "/etc/adblock.servers" ] || fail "foreign servers file must be kept"
 grep -Fq 'DNS protection is not attached' "$KILLSWITCH_STATE_DIR/state.json" || fail "servers file conflict must be reported"
 
-[ ! -e "$FORKOP_RUNTIME_STATE_DIR/killswitch.lock" ] || fail "lock must be released"
+[ ! -e "$PROKOP_RUNTIME_STATE_DIR/killswitch.lock" ] || fail "lock must be released"
 
 printf 'killswitch_sync: PASS\n'

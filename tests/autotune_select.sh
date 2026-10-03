@@ -3,9 +3,9 @@ set -euo pipefail
 
 # DPI autotune stage 4: measurement aggregation, deterministic scoring and
 # selection (autotune/select.uc), and the interleaved tuning run through the
-# isolated path (isolation.uc tune). Nothing is ever applied to Forkop.
+# isolated path (isolation.uc tune). Nothing is ever applied to Prokop.
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT/forkop/files/usr/lib"
+LIB="$ROOT/prokop/files/usr/lib"
 # shellcheck source=tests/helpers/autotune_stubs.sh
 . "$ROOT/tests/helpers/autotune_stubs.sh"
 
@@ -125,7 +125,7 @@ tune() { ucode -L "$LIB" "$LIB/autotune/isolation.uc" tune example.com "$@" > "$
 
 # 13. one resolution, one pinned IP for every candidate; interleaving; selection
 reset_state
-CURL_STUB_PLAN="direct=reset,4600=success:120,4601=success:118" FORKOP_AUTOTUNE_PROGRESS="$WORK/progress.json" tune 3 192.0.2.53 multisplit,fake
+CURL_STUB_PLAN="direct=reset,4600=success:120,4601=success:118" PROKOP_AUTOTUNE_PROGRESS="$WORK/progress.json" tune 3 192.0.2.53 multisplit,fake
 # The last phase reported is the cleanup, after all 9 probes.
 node -e 'const p=require(process.argv[1]); if (p.phase !== "cleaning" || p.done !== 9 || p.total !== 9) process.exit(1)' "$WORK/progress.json" ||
   fail "tune progress: $(cat "$WORK/progress.json" 2>/dev/null)"
@@ -235,8 +235,8 @@ ok "a candidate queue that did not take every probe packet invalidates the run"
 reset_state; CURL_STUB_PLAN="direct=reset,4600=success:120,4601=success:118" tune 3 192.0.2.53 multisplit,fake
 json 'a.equal(r.status, "selected"); a.equal(r.production.unchanged, true); a.equal(r.applied, false);
   a.deepEqual(r.production.before, r.production.after);' "$WORK/out.json"
-! grep -vE '^nft (list tables|list table inet [A-Za-z]+|list chain inet ForkopTable forkop_transition_guard|-j list table inet [A-Za-z]+|list ruleset|-j -t list ruleset|-j list set inet ForkopTable forkop_interfaces|-f .*/(probe|switch)\.nft|delete table inet ForkopAutotuneProbe)$' "$STUB_LOG/nft.log" ||
-  fail "unexpected nft command: $(grep -vE '^nft (list|-j|-f|delete table inet ForkopAutotuneProbe)' "$STUB_LOG/nft.log" | head -3)"
+! grep -vE '^nft (list tables|list table inet [A-Za-z]+|list chain inet ProkopTable prokop_transition_guard|-j list table inet [A-Za-z]+|list ruleset|-j -t list ruleset|-j list set inet ProkopTable prokop_interfaces|-f .*/(probe|switch)\.nft|delete table inet ProkopAutotuneProbe)$' "$STUB_LOG/nft.log" ||
+  fail "unexpected nft command: $(grep -vE '^nft (list|-j|-f|delete table inet ProkopAutotuneProbe)' "$STUB_LOG/nft.log" | head -3)"
 kill -0 "$PROD_NFQWS" || fail "production nfqws stand-in signalled"
 assert_clean "no mutation"
 ok "16 production untouched: only the temporary table is created, switched and deleted"

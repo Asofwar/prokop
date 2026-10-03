@@ -12,7 +12,7 @@ import pathlib
 import re
 import sys
 
-source = (pathlib.Path(sys.argv[1]) / 'forkop/files/usr/lib/diagnostics/runtime.uc').read_text()
+source = (pathlib.Path(sys.argv[1]) / 'prokop/files/usr/lib/diagnostics/runtime.uc').read_text()
 functions = []
 for name in ['sing_box_package_from_manifest', 'sing_box_installed_package_name',
              'sing_box_live_probe_disabled', 'sing_box_capability_flags']:

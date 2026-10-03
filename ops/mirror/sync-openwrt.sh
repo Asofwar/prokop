@@ -4,7 +4,7 @@ set -euo pipefail
 UPSTREAM="${OPENWRT_UPSTREAM:-https://downloads.openwrt.org}"
 MIRROR_ROOT="${MIRROR_ROOT:-/srv/mirror/public/openwrt}"
 PLATFORMS_FILE="${OPENWRT_PLATFORMS_FILE:-}"
-DEFAULT_PLATFORMS_FILE="/etc/forkop-mirror/platforms.conf"
+DEFAULT_PLATFORMS_FILE="/etc/prokop-mirror/platforms.conf"
 LEGACY_ARCH="${OPENWRT_ARCH:-aarch64_cortex-a53}"
 LEGACY_TARGET="${OPENWRT_TARGET:-mediatek/filogic}"
 # OpenWrt 24 still uses opkg/IPK and keeps package feeds below each exact

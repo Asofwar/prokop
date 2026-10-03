@@ -2,17 +2,17 @@
 # The dependency mirror is opt-in. Without one, sing-box Extended comes from
 # its GitHub releases and Zapret-Manager runs the project's own script; with
 # one, both keep going through the mirror. Published checksums are enforced
-# either way, and every launcher Forkop writes stays recognisable as its own.
+# either way, and every launcher Prokop writes stays recognisable as its own.
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-ACTION_UC="$FORKOP_LIB/components/action.uc"
-DIAGNOSTICS_UC="$FORKOP_LIB/diagnostics/runtime.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+ACTION_UC="$PROKOP_LIB/components/action.uc"
+DIAGNOSTICS_UC="$PROKOP_LIB/diagnostics/runtime.uc"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT
 # The probes read both from the environment.
-export WORK_DIR FORKOP_LIB
+export WORK_DIR PROKOP_LIB
 
 fail() {
   printf 'FAIL: %s\n' "$1" >&2
@@ -83,7 +83,7 @@ import re
 import sys
 
 source = open(sys.argv[1], encoding='utf-8').read()
-consts = ('FORKOP_MIRROR_BASE_URL', 'ZAPRET_MANAGER_SOURCE', 'ZAPRET_MANAGER_LAUNCHER_MARKER',
+consts = ('PROKOP_MIRROR_BASE_URL', 'ZAPRET_MANAGER_SOURCE', 'ZAPRET_MANAGER_LAUNCHER_MARKER',
           'ZAPRET_MANAGER_LEGACY_MARKER', 'ZAPRET_MANAGER_BIN_DIR')
 names = ('as_string', 'shell_quote', 'command_from_args', 'command_status',
          'command_success', 'command_success_from_args', 'command_output',
@@ -92,7 +92,7 @@ names = ('as_string', 'shell_quote', 'command_from_args', 'command_status',
          'module_command', 'module_output', 'helper_output', 'make_tmp_file',
          'helper_output_input', 'helper_success_input',
          'release_asset_sha256', 'release_json_asset_sha256', 'download_checksum_ok',
-         'fetch_github_release_json', 'forkop_mirror_url', 'sing_box_extended_tag_is_stable',
+         'fetch_github_release_json', 'prokop_mirror_url', 'sing_box_extended_tag_is_stable',
          'set_sing_box_extended_release_from_json', 'resolve_sing_box_extended_release',
          'sing_box_extended_download_verified', 'zapret_manager_launcher_managed',
          'zapret_manager_url', 'zapret_manager_launcher',
@@ -113,8 +113,8 @@ prefix = r'''
 let fs = require("fs");
 let constants = require("core.constants");
 const WORK = getenv("WORK_DIR");
-const LIB_DIR = getenv("FORKOP_LIB");
-// The launchers land here (FORKOP_ZAPRET_MANAGER_BIN_DIR) instead of /usr/bin.
+const LIB_DIR = getenv("PROKOP_LIB");
+// The launchers land here (PROKOP_ZAPRET_MANAGER_BIN_DIR) instead of /usr/bin.
 const BIN = WORK + "/bin";
 let tmp_dir = WORK + "/tmp";
 let apk = false;
@@ -172,7 +172,7 @@ function run_action(fn) {
 function digest(name) {
     return split(trim(command_output_from_args([ "sha256sum", WORK + "/payload/" + name ])), " ")[0];
 }
-const MIRRORED = getenv("FORKOP_MIRROR_BASE_URL") != "";
+const MIRRORED = getenv("PROKOP_MIRROR_BASE_URL") != "";
 const MIRROR = "https://mirror.test";
 const API = "https://api.github.com/repos/shtorm-7/sing-box-extended/releases/latest";
 const TAG = "v1.14.1-extended-2.7.2";
@@ -185,7 +185,7 @@ const IPK = "sing-box-extended_" + VERSION + "_openwrt_aarch64_cortex-a53.ipk";
 const APK = "sing-box-extended_" + VERSION + "_openwrt_aarch64_cortex-a53.apk";
 const ARCHIVE = "sing-box-" + VERSION + "-linux-arm64-compressed.tar.gz";
 
-check(FORKOP_MIRROR_BASE_URL == (MIRRORED ? MIRROR : ""), "mirror setting was not normalised: " + FORKOP_MIRROR_BASE_URL);
+check(PROKOP_MIRROR_BASE_URL == (MIRRORED ? MIRROR : ""), "mirror setting was not normalised: " + PROKOP_MIRROR_BASE_URL);
 http_bodies[API] = WORK + "/github.json";
 http_bodies[MIRROR + "/forkop/sing-box-extended/latest.json"] = WORK + "/mirror.json";
 
@@ -251,7 +251,7 @@ check(outcome.release_url == (MIRRORED ? ZMS_MIRRORED : ZMS_DIRECT) && outcome.l
     "the installed Zapret-Manager was not reported");
 let launcher = "" + fs.readfile(BIN + "/zms");
 check(launcher == "" + fs.readfile(BIN + "/zmsA"), "the two launchers differ");
-check(index(launcher, "#!/bin/sh\n# Forkop X Zapret-Manager launcher\n") == 0, "the launcher lacks its marker");
+check(index(launcher, "#!/bin/sh\n# Prokop Zapret-Manager launcher\n") == 0, "the launcher lacks its marker");
 check(command_success_from_args([ "test", "-x", BIN + "/zms" ]) && command_success_from_args([ "test", "-x", BIN + "/zmsA" ]),
     "the launchers are not executable");
 if (MIRRORED) {
@@ -259,7 +259,7 @@ if (MIRRORED) {
         "the mirrored launcher does not hand the mirror to Zapret-Manager");
     check(index(launcher, "exec sh <(wget -q -O - '" + ZMS_MIRRORED + "') \"$@\"\n") >= 0,
         "the mirrored launcher does not run the mirrored script");
-    check(outcome.message == "Zapret-Manager has been installed from the Forkop mirror", "wrong mirrored install message");
+    check(outcome.message == "Zapret-Manager has been installed from the Prokop mirror", "wrong mirrored install message");
 }
 else {
     check(index(launcher, "ZAPRET_MANAGER_MIRROR") < 0, "the direct launcher exports a mirror");
@@ -272,7 +272,7 @@ fs.writefile(WORK + "/keep/" + (MIRRORED ? "mirrored" : "direct"), launcher);
 
 outcome = run_action(() => remove_zapret_manager("remove"));
 check(outcome.success && !file_exists(BIN + "/zms") && !file_exists(BIN + "/zmsA"),
-    "Forkop's own launchers were not removed: " + outcome.message);
+    "Prokop's own launchers were not removed: " + outcome.message);
 
 // Launchers from older releases carried only the mirror proxy path.
 let legacy = "#!/bin/sh\nexport ZAPRET_MANAGER_MIRROR='https://mirror.infotechtg.ru'\n" +
@@ -284,7 +284,7 @@ check(outcome.success && !file_exists(BIN + "/zms"), "a launcher from an older r
 
 fs.writefile(BIN + "/zms", "#!/bin/sh\nexec /opt/zapret-manager \"$@\"\n");
 outcome = run_action(() => remove_zapret_manager("remove"));
-check(!outcome.success && file_exists(BIN + "/zms"), "a launcher Forkop did not write was removed");
+check(!outcome.success && file_exists(BIN + "/zms"), "a launcher Prokop did not write was removed");
 fs.unlink(BIN + "/zms");
 
 print("probe: PASS\n");
@@ -293,8 +293,8 @@ UC
 # ucode reports a runtime exception but still exits 0, so the verdict is the
 # probe's own last line rather than its exit status.
 for mirror in "" "https://mirror.test/"; do
-  result="$(FORKOP_MIRROR_BASE_URL="$mirror" FORKOP_ZAPRET_MANAGER_BIN_DIR="$WORK_DIR/bin" \
-    ucode -L "$FORKOP_LIB" "$WORK_DIR/probe.uc")" || fail "the component probe failed (mirror '$mirror')"
+  result="$(PROKOP_MIRROR_BASE_URL="$mirror" PROKOP_ZAPRET_MANAGER_BIN_DIR="$WORK_DIR/bin" \
+    ucode -L "$PROKOP_LIB" "$WORK_DIR/probe.uc")" || fail "the component probe failed (mirror '$mirror')"
   [ "$result" = "probe: PASS" ] || fail "the component probe did not finish (mirror '$mirror'): $result"
 done
 

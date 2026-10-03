@@ -2,8 +2,8 @@
 set -eu
 
 ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-UPDATES_UC="$FORKOP_LIB/components/updates.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+UPDATES_UC="$PROKOP_LIB/components/updates.uc"
 WORK_DIR="$(mktemp -d)"
 FLASH_DIR="$WORK_DIR/flash"
 RUNTIME_GENERATION="$WORK_DIR/runtime-generation"
@@ -24,11 +24,11 @@ mount -t tmpfs -o size=10m tmpfs "$FLASH_DIR" ||
   fail "could not create the constrained cache filesystem"
 
 cat >"$WORK_DIR/uci.state" <<'EOF_UCI'
-forkop.settings=settings
-forkop.alpha=section
-forkop.alpha.enabled=1
-forkop.alpha.action=connection
-forkop.alpha.remote_domain_lists=https://lists.test/alpha.txt
+prokop.settings=settings
+prokop.alpha=section
+prokop.alpha.enabled=1
+prokop.alpha.action=connection
+prokop.alpha.remote_domain_lists=https://lists.test/alpha.txt
 EOF_UCI
 
 write_ruleset() {
@@ -48,7 +48,7 @@ write_generation() {
   mkdir -p "$RUNTIME_GENERATION"
   write_ruleset "$RUNTIME_GENERATION/alpha-remote-domains-ruleset.json" "$bytes"
   printf 'cached.example\n' >"$RUNTIME_GENERATION/source-1"
-  signature="$(FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state" ucode -L "$FORKOP_LIB" "$FORKOP_LIB/service/state.uc" list-update-signature)"
+  signature="$(PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state" ucode -L "$PROKOP_LIB" "$PROKOP_LIB/service/state.uc" list-update-signature)"
   ruleset_size="$(wc -c <"$RUNTIME_GENERATION/alpha-remote-domains-ruleset.json")"
   source_size="$(wc -c <"$RUNTIME_GENERATION/source-1")"
   ruleset_md5="$(md5sum "$RUNTIME_GENERATION/alpha-remote-domains-ruleset.json" | cut -d' ' -f1)"
@@ -59,16 +59,16 @@ EOF_MANIFEST
 }
 
 persist() {
-  FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state" \
-  FORKOP_PERSISTENT_LIST_CACHE_DIR="$FLASH_DIR/list-cache" \
-  FORKOP_RULESET_CACHE_DIR="$FLASH_DIR/ruleset-cache" \
-  FORKOP_PERSISTENT_LIST_CACHE_MANIFEST="$FLASH_DIR/list-cache/manifest.json" \
-  FORKOP_LIST_UPDATE_STATE_FILE="$FLASH_DIR/list-cache/last-success.timestamp" \
-  FORKOP_RUNTIME_LIST_GENERATION_DIR="$RUNTIME_GENERATION" \
-  FORKOP_PERSISTENT_LIST_CACHE_MAX_BYTES=8388608 \
-  FORKOP_PERSISTENT_LIST_CACHE_MIN_FREE_BYTES=8388608 \
-  FORKOP_LIB="$FORKOP_LIB" \
-    ucode -L "$FORKOP_LIB" "$UPDATES_UC" persist-list-cache "$1"
+  PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state" \
+  PROKOP_PERSISTENT_LIST_CACHE_DIR="$FLASH_DIR/list-cache" \
+  PROKOP_RULESET_CACHE_DIR="$FLASH_DIR/ruleset-cache" \
+  PROKOP_PERSISTENT_LIST_CACHE_MANIFEST="$FLASH_DIR/list-cache/manifest.json" \
+  PROKOP_LIST_UPDATE_STATE_FILE="$FLASH_DIR/list-cache/last-success.timestamp" \
+  PROKOP_RUNTIME_LIST_GENERATION_DIR="$RUNTIME_GENERATION" \
+  PROKOP_PERSISTENT_LIST_CACHE_MAX_BYTES=8388608 \
+  PROKOP_PERSISTENT_LIST_CACHE_MIN_FREE_BYTES=8388608 \
+  PROKOP_LIB="$PROKOP_LIB" \
+    ucode -L "$PROKOP_LIB" "$UPDATES_UC" persist-list-cache "$1"
 }
 
 write_generation 1048576

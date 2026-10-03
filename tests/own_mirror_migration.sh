@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT
 
@@ -16,7 +16,7 @@ const fixture = {
   },
   section: [{'.name': 'main', '.type': 'section',
     rule_set_with_subnets: ['https://mirror.51343.ru/forkop/lists/b4geoip-forkop/srs/valve.srs',
-      'https://custom.example/rules.srs', '/etc/forkop/local.srs'],
+      'https://custom.example/rules.srs', '/etc/prokop/local.srs'],
     remote_domain_lists: ['https://mirror.51343.ru/forkop/lists/allow-domains/Russia/inside-raw.lst'],
     remote_subnet_lists: ['https://custom.example/subnets.txt'],
   }],
@@ -26,7 +26,7 @@ const fixture = {
 console.log(JSON.stringify(fixture));
 NODE
 
-FORKOP_LIB="$FORKOP_LIB" ucode -L "$FORKOP_LIB" "$FORKOP_LIB/config/migration.uc" \
+PROKOP_LIB="$PROKOP_LIB" ucode -L "$PROKOP_LIB" "$PROKOP_LIB/config/migration.uc" \
   migrate-fixture "$WORK_DIR/fixture.json" > "$WORK_DIR/result.json"
 
 node - "$WORK_DIR/fixture.json" "$WORK_DIR/result.json" "$WORK_DIR/again.json" <<'NODE'
@@ -37,11 +37,11 @@ const out = JSON.parse(fs.readFileSync(process.argv[3], 'utf8'));
 // The former upstream mirror is dropped, not replaced: the mirror is opt-in.
 assert.equal(out.config.settings.mirror_base_url, '');
 assert(!JSON.stringify(out.config).includes('infotechtg'), 'no upstream mirror may be written');
-assert(!JSON.stringify(out.config).includes('51343.ru/forkop'), 'former mirror list URLs must be moved');
+assert(!JSON.stringify(out.config).includes('51343.ru/prokop'), 'former mirror list URLs must be moved');
 assert.deepEqual(out.config.subscription_url, before.subscription_url);
 assert.deepEqual(out.config.section[0].rule_set_with_subnets,
   ['https://raw.githubusercontent.com/Greeg0ry/b4geoip-forkop/main/srs/valve.srs',
-    'https://custom.example/rules.srs', '/etc/forkop/local.srs']);
+    'https://custom.example/rules.srs', '/etc/prokop/local.srs']);
 assert.deepEqual(out.config.section[0].remote_domain_lists,
   ['https://raw.githubusercontent.com/itdoginfo/allow-domains/main/Russia/inside-raw.lst']);
 assert.deepEqual(out.config.section[0].remote_subnet_lists, before.section[0].remote_subnet_lists);
@@ -50,7 +50,7 @@ assert(out.config.settings.applied_migrations.includes('fork_mirror_opt_in_v1'))
 fs.writeFileSync(process.argv[4], JSON.stringify(out.config));
 NODE
 
-FORKOP_LIB="$FORKOP_LIB" ucode -L "$FORKOP_LIB" "$FORKOP_LIB/config/migration.uc" \
+PROKOP_LIB="$PROKOP_LIB" ucode -L "$PROKOP_LIB" "$PROKOP_LIB/config/migration.uc" \
   migrate-fixture "$WORK_DIR/again.json" > "$WORK_DIR/again-result.json"
 node - "$WORK_DIR/again.json" "$WORK_DIR/again-result.json" <<'NODE'
 const fs = require('fs');
@@ -61,7 +61,7 @@ NODE
 
 sed 's#https://mirror.51343.ru/#https://custom-mirror.example/#g' \
   "$WORK_DIR/fixture.json" > "$WORK_DIR/custom.json"
-FORKOP_LIB="$FORKOP_LIB" ucode -L "$FORKOP_LIB" "$FORKOP_LIB/config/migration.uc" \
+PROKOP_LIB="$PROKOP_LIB" ucode -L "$PROKOP_LIB" "$PROKOP_LIB/config/migration.uc" \
   migrate-fixture "$WORK_DIR/custom.json" > "$WORK_DIR/custom-result.json"
 node - "$WORK_DIR/custom-result.json" <<'NODE'
 const fs = require('fs');

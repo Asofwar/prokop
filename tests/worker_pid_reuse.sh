@@ -13,11 +13,11 @@ set -euo pipefail
 # command line, must not get that process signalled and must not count as a
 # running worker. A recorded worker still does. The process that reused the
 # PID can run the worker's own executable (on OpenWrt /bin/sh, sleep and most
-# daemons are one busybox binary, and ucode runs every Forkop module): then
+# daemons are one busybox binary, and ucode runs every Prokop module): then
 # the command line alone tells it apart, also for a bare PID.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK_DIR="$(mktemp -d)"
 # shellcheck source=tests/helpers/wait.sh
 . "$ROOT_DIR/tests/helpers/wait.sh"
@@ -42,42 +42,42 @@ fail() {
 }
 
 mkdir -p "$WORK_DIR/bin" "$WORK_DIR/run" "$WORK_DIR/tmp" "$WORK_DIR/ui"
-printf 'forkop.settings=settings\n' >"$WORK_DIR/uci.state"
+printf 'prokop.settings=settings\n' >"$WORK_DIR/uci.state"
 
 export TMPDIR="$WORK_DIR/tmp"
 export PATH="$WORK_DIR/bin:$PATH"
 export TEST_WORK="$WORK_DIR"
-export FORKOP_LIB="$LIB"
-export FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
-export FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/run"
-export FORKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/reload.lock"
-export FORKOP_PENDING_RELOAD_FILE="$WORK_DIR/run/reload.pending"
-export FORKOP_SERVICE_INIT="$WORK_DIR/bin/init"
-export FORKOP_BIN="$WORK_DIR/bin/forkop"
-export FORKOP_LIST_UPDATE_PID_FILE="$WORK_DIR/run/list.pid"
-export FORKOP_SUBSCRIPTION_BOOTSTRAP_RETRY_PID_FILE="$WORK_DIR/run/subscription-bootstrap-retry.pid"
-export FORKOP_START_IN_PROGRESS_FILE="$WORK_DIR/run/start.in-progress"
-export FORKOP_PERSISTENT_LIST_CACHE_DIR="$WORK_DIR/list-cache"
-export FORKOP_RULESET_CACHE_DIR="$WORK_DIR/ruleset-cache"
-export FORKOP_RUNTIME_LIST_GENERATION_DIR="$WORK_DIR/list-generation"
-export FORKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR="$WORK_DIR/subscription-cache"
-export FORKOP_SUBSCRIPTION_UPDATE_JOB_DIR="$WORK_DIR/ui/subscription-actions"
+export PROKOP_LIB="$LIB"
+export PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
+export PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/run"
+export PROKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/reload.lock"
+export PROKOP_PENDING_RELOAD_FILE="$WORK_DIR/run/reload.pending"
+export PROKOP_SERVICE_INIT="$WORK_DIR/bin/init"
+export PROKOP_BIN="$WORK_DIR/bin/prokop"
+export PROKOP_LIST_UPDATE_PID_FILE="$WORK_DIR/run/list.pid"
+export PROKOP_SUBSCRIPTION_BOOTSTRAP_RETRY_PID_FILE="$WORK_DIR/run/subscription-bootstrap-retry.pid"
+export PROKOP_START_IN_PROGRESS_FILE="$WORK_DIR/run/start.in-progress"
+export PROKOP_PERSISTENT_LIST_CACHE_DIR="$WORK_DIR/list-cache"
+export PROKOP_RULESET_CACHE_DIR="$WORK_DIR/ruleset-cache"
+export PROKOP_RUNTIME_LIST_GENERATION_DIR="$WORK_DIR/list-generation"
+export PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR="$WORK_DIR/subscription-cache"
+export PROKOP_SUBSCRIPTION_UPDATE_JOB_DIR="$WORK_DIR/ui/subscription-actions"
 export TMP_SING_BOX_FOLDER="$WORK_DIR/tmp/sing-box"
 export SB_VARIANT_STATE_FILE="$WORK_DIR/sing-box-variant"
 export SB_VERSION_STATE_FILE="$WORK_DIR/sing-box-version"
-export FORKOP_UI_STATE_DIR="$WORK_DIR/ui"
-export FORKOP_UI_SERVICE_ACTION_DIR="$WORK_DIR/ui/service-actions"
-export FORKOP_UI_SERVICE_ACTION_LOCK_DIR="$WORK_DIR/ui/service-actions.lock"
-export FORKOP_UI_LATENCY_ACTION_DIR="$WORK_DIR/ui/latency-actions"
-export FORKOP_UI_COMPONENT_ACTION_DIR="$WORK_DIR/ui/component-actions"
-export FORKOP_UI_SUBSCRIPTION_ACTION_DIR="$WORK_DIR/ui/subscription-actions"
-export FORKOP_UI_SING_BOX_VERSION_CACHE_FILE="$WORK_DIR/ui/sing-box-version"
-export FORKOP_UI_SING_BOX_VARIANT_STATE_FILE="$WORK_DIR/missing-variant"
-export FORKOP_UI_SING_BOX_BIN_PATH="$WORK_DIR/missing-sing-box"
+export PROKOP_UI_STATE_DIR="$WORK_DIR/ui"
+export PROKOP_UI_SERVICE_ACTION_DIR="$WORK_DIR/ui/service-actions"
+export PROKOP_UI_SERVICE_ACTION_LOCK_DIR="$WORK_DIR/ui/service-actions.lock"
+export PROKOP_UI_LATENCY_ACTION_DIR="$WORK_DIR/ui/latency-actions"
+export PROKOP_UI_COMPONENT_ACTION_DIR="$WORK_DIR/ui/component-actions"
+export PROKOP_UI_SUBSCRIPTION_ACTION_DIR="$WORK_DIR/ui/subscription-actions"
+export PROKOP_UI_SING_BOX_VERSION_CACHE_FILE="$WORK_DIR/ui/sing-box-version"
+export PROKOP_UI_SING_BOX_VARIANT_STATE_FILE="$WORK_DIR/missing-variant"
+export PROKOP_UI_SING_BOX_BIN_PATH="$WORK_DIR/missing-sing-box"
 export ZAPRET_PROVIDER_NFQWS_BIN="$WORK_DIR/missing-nfqws"
 export ZAPRET2_PROVIDER_NFQWS2_BIN="$WORK_DIR/missing-nfqws2"
 export BYEDPI_BIN="$WORK_DIR/missing-ciadpi"
-unset FORKOP_UI_ACTION_TRACKED
+unset PROKOP_UI_ACTION_TRACKED
 
 # Nothing here may reach the host's syslog, nftables, resolver or services.
 printf '#!/bin/sh\nprintf "%%s\\n" "$*" >>"$TEST_WORK/syslog"\n' >"$WORK_DIR/bin/logger"
@@ -92,8 +92,8 @@ if [ -e "$TEST_WORK/dig.hold" ]; then
 fi
 echo 192.0.2.1
 SH
-# `forkop subscription_update`, run by a subscription job worker.
-cat >"$WORK_DIR/bin/forkop" <<'SH'
+# `prokop subscription_update`, run by a subscription job worker.
+cat >"$WORK_DIR/bin/prokop" <<'SH'
 #!/bin/sh
 while [ -e "$TEST_WORK/subscription.hold" ]; do sleep 0.05; done
 exit 0
@@ -166,7 +166,7 @@ foreign_alive() {
 }
 
 # --- list update worker ------------------------------------------------------
-LIST_PID="$FORKOP_LIST_UPDATE_PID_FILE"
+LIST_PID="$PROKOP_LIST_UPDATE_PID_FILE"
 for foreign in "$FOREIGN" "$FOREIGN_UCODE"; do
   for form in $FORMS; do
     stale_record "$LIST_PID" "$form" "$foreign"
@@ -207,7 +207,7 @@ wait_until 10 process_gone "$LIST_WORKER" || fail "stop-list-update left the rec
 rm -f "$WORK_DIR/dig.hold"
 
 # --- deferred subscription bootstrap worker ----------------------------------
-SUB_PID="$FORKOP_SUBSCRIPTION_BOOTSTRAP_RETRY_PID_FILE"
+SUB_PID="$PROKOP_SUBSCRIPTION_BOOTSTRAP_RETRY_PID_FILE"
 for foreign in "$FOREIGN" "$FOREIGN_UCODE"; do
   for form in $FORMS; do
     stale_record "$SUB_PID" "$form" "$foreign"
@@ -273,10 +273,10 @@ grep -Fxq 'retry_start_on_wan_up' "$WORK_DIR/init.log" || fail "the start retry 
 [ ! -e "$RETRY_PID" ] || fail "the start retry did not remove its pidfile before retrying"
 
 # --- UI jobs -----------------------------------------------------------------
-mkdir -p "$FORKOP_UI_SERVICE_ACTION_DIR" "$FORKOP_UI_LATENCY_ACTION_DIR" \
-  "$FORKOP_UI_COMPONENT_ACTION_DIR" "$FORKOP_UI_SUBSCRIPTION_ACTION_DIR"
+mkdir -p "$PROKOP_UI_SERVICE_ACTION_DIR" "$PROKOP_UI_LATENCY_ACTION_DIR" \
+  "$PROKOP_UI_COMPONENT_ACTION_DIR" "$PROKOP_UI_SUBSCRIPTION_ACTION_DIR"
 job_record() {
-  printf '{"success":true,"running":true,"kind":"%s","action":"%s","component":"forkop","section":"alpha","message":"running","pid":"%s","pid_ticks":"%s","started_at":1,"updated_at":null,"exit_code":null}\n' \
+  printf '{"success":true,"running":true,"kind":"%s","action":"%s","component":"prokop","section":"alpha","message":"running","pid":"%s","pid_ticks":"%s","started_at":1,"updated_at":null,"exit_code":null}\n' \
     "$2" "$3" "$FOREIGN" "$4" >"$1"
 }
 job_running() { [ "$(json_field "$1" running)" = "true" ]; }
@@ -295,23 +295,23 @@ check_job() {
   rm -f "$path"
   foreign_alive "the $label job status"
 }
-check_job service "$FORKOP_UI_SERVICE_ACTION_DIR/1-1.json" service reload ui service-action-status 1-1
-check_job latency "$FORKOP_UI_LATENCY_ACTION_DIR/1-2.json" latency latency ui latency-test-status 1-2
-check_job subscription "$FORKOP_UI_SUBSCRIPTION_ACTION_DIR/1-3.json" subscription subscription_update \
+check_job service "$PROKOP_UI_SERVICE_ACTION_DIR/1-1.json" service reload ui service-action-status 1-1
+check_job latency "$PROKOP_UI_LATENCY_ACTION_DIR/1-2.json" latency latency ui latency-test-status 1-2
+check_job subscription "$PROKOP_UI_SUBSCRIPTION_ACTION_DIR/1-3.json" subscription subscription_update \
   list subscription-update-status 1-3
-check_job component "$FORKOP_UI_COMPONENT_ACTION_DIR/1-4.json" component update list component-action-status 1-4
+check_job component "$PROKOP_UI_COMPONENT_ACTION_DIR/1-4.json" component update list component-action-status 1-4
 
 # A job records the start ticks of the worker it names.
 job="$(ui service-action-begin-if-idle reload ui)"
 [ -n "$job" ] || fail "no service action job was opened"
 ui service-action-update-pid "$job" "$FOREIGN" || fail "the service action worker was not recorded"
-[ "$(json_field "$FORKOP_UI_SERVICE_ACTION_DIR/$job.json" pid_ticks)" = "$FOREIGN_TICKS" ] ||
+[ "$(json_field "$PROKOP_UI_SERVICE_ACTION_DIR/$job.json" pid_ticks)" = "$FOREIGN_TICKS" ] ||
   fail "the service action job does not record its worker's start ticks"
-rm -f "$FORKOP_UI_SERVICE_ACTION_DIR/$job.json"
+rm -f "$PROKOP_UI_SERVICE_ACTION_DIR/$job.json"
 : >"$WORK_DIR/subscription.hold"
 list subscription-update-async alpha 1 >"$WORK_DIR/job.json" || fail "the subscription update job did not start"
 job="$(json_field "$WORK_DIR/job.json" job_id)"
-path="$FORKOP_SUBSCRIPTION_UPDATE_JOB_DIR/$job.json"
+path="$PROKOP_SUBSCRIPTION_UPDATE_JOB_DIR/$job.json"
 worker="$(json_field "$path" pid)"
 actors+=("$worker")
 [ "$(json_field "$path" pid_ticks)" = "$(start_ticks "$worker")" ] ||
@@ -321,12 +321,12 @@ wait_until 20 process_gone "$worker" || fail "the subscription update worker did
 
 # --- lifecycle worker of a start ---------------------------------------------
 ui_status() {
-  ui get-ui-state | ucode -e 'print(json(require("fs").stdin.read("all")).service.forkop.status)'
+  ui get-ui-state | ucode -e 'print(json(require("fs").stdin.read("all")).service.prokop.status)'
 }
 for foreign in "$FOREIGN" "$FOREIGN_UCODE"; do
   for form in $FORMS; do
-    stale_record "$FORKOP_START_IN_PROGRESS_FILE" "$form" "$foreign"
-    [ "$(ui_status)" != starting ] || fail "a start marker left behind ($form $foreign) keeps Forkop starting"
+    stale_record "$PROKOP_START_IN_PROGRESS_FILE" "$form" "$foreign"
+    [ "$(ui_status)" != starting ] || fail "a start marker left behind ($form $foreign) keeps Prokop starting"
   done
 done
 # The real lifecycle start, run as the CLI runs it (`ucode -L <lib>
@@ -345,23 +345,23 @@ while (fs.stat(getenv("TEST_WORK") + "/lifecycle.hold") != null)
 exit(0);
 UC
 printf 'exit(0);\n' >"$FAKE_LIB/diagnostics/health.uc"
-rm -f "$FORKOP_START_IN_PROGRESS_FILE" "$WORK_DIR/lifecycle.held"
+rm -f "$PROKOP_START_IN_PROGRESS_FILE" "$WORK_DIR/lifecycle.held"
 : >"$WORK_DIR/lifecycle.hold"
-FORKOP_LIB="$FAKE_LIB" FORKOP_MANAGED_UPGRADE_SING_BOX_MARKER="$WORK_DIR/missing-upgrade-marker" \
+PROKOP_LIB="$FAKE_LIB" PROKOP_MANAGED_UPGRADE_SING_BOX_MARKER="$WORK_DIR/missing-upgrade-marker" \
   ucode -L "$LIB" "$LIB/service/lifecycle.uc" start >/dev/null 2>&1 &
 LIFECYCLE=$!
 actors+=("$LIFECYCLE")
 wait_until 20 test -e "$WORK_DIR/lifecycle.held" || fail "the lifecycle start did not reach its first module"
-[ "$(first_line "$FORKOP_START_IN_PROGRESS_FILE")" = "$LIFECYCLE" ] ||
+[ "$(first_line "$PROKOP_START_IN_PROGRESS_FILE")" = "$LIFECYCLE" ] ||
   fail "the lifecycle start did not record itself in the start marker"
-[ "$(sed -n 2p "$FORKOP_START_IN_PROGRESS_FILE")" = "$(start_ticks "$LIFECYCLE")" ] ||
+[ "$(sed -n 2p "$PROKOP_START_IN_PROGRESS_FILE")" = "$(start_ticks "$LIFECYCLE")" ] ||
   fail "the start marker has no start ticks of the lifecycle start"
 [ "$(ui_status)" = starting ] || fail "a running lifecycle start is not reported as starting"
 rm -f "$WORK_DIR/lifecycle.hold"
 wait_until 20 process_gone "$LIFECYCLE" || fail "the lifecycle start did not finish"
 grep -q 'sing-box process ownership is ambiguous' "$WORK_DIR/syslog" ||
   fail "the lifecycle start did not end where the test expects it to"
-[ ! -e "$FORKOP_START_IN_PROGRESS_FILE" ] || fail "the finished lifecycle start left its start marker"
+[ ! -e "$PROKOP_START_IN_PROGRESS_FILE" ] || fail "the finished lifecycle start left its start marker"
 [ "$(ui_status)" != starting ] || fail "a finished lifecycle start is still reported as starting"
 
 foreign_alive "the test"

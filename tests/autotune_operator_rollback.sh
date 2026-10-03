@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # The operator's rollback of the recorded autotune apply (design H.7,
-# UC-020, UC-069): `forkop autotune_rollback` -> autotune/manager.uc rollback
+# UC-020, UC-069): `prokop autotune_rollback` -> autotune/manager.uc rollback
 # -> the Stage 5 rollback (autotune/apply.uc rollback). Only the admin CLI
 # carries it (the read-only wrapper has no grant for it, tests/acl_boundary).
 # It never runs next to a run or an apply of the worker; a rolled back
@@ -15,8 +15,8 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=tests/helpers/autotune_scheduler/setup.sh
 source "$ROOT_DIR/tests/helpers/autotune_scheduler/setup.sh"
-CLI="$ROOT_DIR/forkop/files/usr/bin/forkop"
-export FORKOP_AUTOTUNE_APPLY_STATE="$WORK/etc/autotune-apply.json"
+CLI="$ROOT_DIR/prokop/files/usr/bin/prokop"
+export PROKOP_AUTOTUNE_APPLY_STATE="$WORK/etc/autotune-apply.json"
 mkdir -p "$WORK/etc"
 rollbacks() { grep -c '^rollback$' "$WORK/tune/apply.log" 2>/dev/null || true; }
 status_with() { # status_with <apply status JSON>: the page status while apply.uc reports it
@@ -26,16 +26,16 @@ status_with() { # status_with <apply status JSON>: the page status while apply.u
 
 # 1. The CLI command: the manager's rollback, no arguments.
 grep -Fq 'autotune_rollback: [ "autotune/manager.uc", "rollback", 0 ]' "$CLI" ||
-  fail "forkop autotune_rollback must run the manager's rollback without arguments"
+  fail "prokop autotune_rollback must run the manager's rollback without arguments"
 
 # 2. Status: no apply record -> nothing to show.
-rm -f "$FORKOP_AUTOTUNE_APPLY_STATE" "$STUB_APPLY_STATUS"
+rm -f "$PROKOP_AUTOTUNE_APPLY_STATE" "$STUB_APPLY_STATUS"
 manager status >"$WORK/status.json"
 [ "$(json_get "$WORK/status.json" apply)" = null ] || fail "an apply summary without a record: $(cat "$WORK/status.json")"
 
 # A crash during verification: unresolved, the candidate is active -> can
 # be rolled back; nothing of the configuration leaves the summary.
-: >"$FORKOP_AUTOTUNE_APPLY_STATE"
+: >"$PROKOP_AUTOTUNE_APPLY_STATE"
 status_with '{"state":{"phase":"verifying","reason":null,"selected":"fake","mutation":{"section":"youtube","option":"nfqws_opt","from":"SECRET-FROM","to":"SECRET-TO"},"target":{"host":"secret.example","ip":"192.0.2.77"},"plan_config_hash":"'"$(printf 'a%.0s' $(seq 64))"'","started_at":5},"config_hash":"'"$(printf 'b%.0s' $(seq 64))"'","resolved":false,"diagnosis":"candidate_active","guards":[],"snapshot_operation":false,"service_action":null,"autotune_lock_held":false,"rollback_source_present":true}'
 node -e '
 const a = require("node:assert/strict");
@@ -109,13 +109,13 @@ a.equal(r.status, "ok"); a.equal(r.result, "rolled_back"); a.equal(r.group, "you
 a.equal(r.restored, true);' \
   "$WORK/rollback.json" || fail "rollback result: $(cat "$WORK/rollback.json")"
 [ "$(rollbacks)" = 1 ] || fail "the Stage 5 rollback did not run exactly once"
-[ "$(json_get "$FORKOP_AUTOTUNE_STATE_FILE" groups.youtube.last_apply.status)" = '"rolled_back"' ] ||
-  fail "the group does not show the rollback: $(cat "$FORKOP_AUTOTUNE_STATE_FILE")"
-[ "$(json_get "$FORKOP_AUTOTUNE_STATE_FILE" groups.youtube.last_apply.reason)" = '"operator_rollback"' ] || fail "rollback reason"
-[ "$(json_get "$FORKOP_AUTOTUNE_STATE_FILE" groups.youtube.last_apply.trigger)" = '"manual"' ] || fail "rollback trigger"
-[ "$(json_get "$FORKOP_AUTOTUNE_STATE_FILE" groups.youtube.cooldowns.fake)" -gt "$(date +%s)" ] ||
+[ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" groups.youtube.last_apply.status)" = '"rolled_back"' ] ||
+  fail "the group does not show the rollback: $(cat "$PROKOP_AUTOTUNE_STATE_FILE")"
+[ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" groups.youtube.last_apply.reason)" = '"operator_rollback"' ] || fail "rollback reason"
+[ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" groups.youtube.last_apply.trigger)" = '"manual"' ] || fail "rollback trigger"
+[ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" groups.youtube.cooldowns.fake)" -gt "$(date +%s)" ] ||
   fail "the rolled back candidate does not pause"
-[ "$(json_get "$FORKOP_AUTOTUNE_STATE_FILE" applies)" = '[]' ] || fail "an operator rollback counts as an apply"
+[ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" applies)" = '[]' ] || fail "an operator rollback counts as an apply"
 
 # 3b. A rollback that did not finish (its restore reload was only queued,
 #     the guard stays): the group card shows that, not the outcome of the
@@ -127,14 +127,14 @@ const a = require("node:assert/strict");
 const r = require(process.argv[1]);
 a.equal(r.status, "failed"); a.equal(r.result, "needs_attention"); a.equal(r.group, "youtube"); a.equal(r.restored, false);' \
   "$WORK/rollback.json" || fail "unfinished rollback result: $(cat "$WORK/rollback.json")"
-[ "$(json_get "$FORKOP_AUTOTUNE_STATE_FILE" groups.youtube.last_apply.status)" = '"needs_attention"' ] ||
-  fail "the group does not show the unfinished rollback: $(cat "$FORKOP_AUTOTUNE_STATE_FILE")"
-[ "$(json_get "$FORKOP_AUTOTUNE_STATE_FILE" groups.youtube.last_apply.reason)" = '"operator_rollback"' ] || fail "unfinished rollback reason"
-[ "$(json_get "$FORKOP_AUTOTUNE_STATE_FILE" applies)" = '[]' ] || fail "an unfinished operator rollback counts as an apply"
+[ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" groups.youtube.last_apply.status)" = '"needs_attention"' ] ||
+  fail "the group does not show the unfinished rollback: $(cat "$PROKOP_AUTOTUNE_STATE_FILE")"
+[ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" groups.youtube.last_apply.reason)" = '"operator_rollback"' ] || fail "unfinished rollback reason"
+[ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" applies)" = '[]' ] || fail "an unfinished operator rollback counts as an apply"
 
 # 3c. An unreadable record set aside while the configuration already was the
 #     last-known-working one: done, but nothing was restored; no group changes.
-before="$(cat "$FORKOP_AUTOTUNE_STATE_FILE")"
+before="$(cat "$PROKOP_AUTOTUNE_STATE_FILE")"
 printf '%s\n' '{"status":"rolled_back","phase":"rolled_back","reason":"apply_state_unreadable","mutation":null,"rollback":{"status":"not_needed","lkg":"1_1"}}' >"$WORK/tune/rollback.json"
 manager rollback >"$WORK/rollback.json" || fail "setting an unreadable record aside exited non-zero"
 node -e '
@@ -142,11 +142,11 @@ const a = require("node:assert/strict");
 const r = require(process.argv[1]);
 a.equal(r.status, "ok"); a.equal(r.reason, "apply_state_unreadable"); a.equal(r.restored, false); a.equal(r.group, null);' \
   "$WORK/rollback.json" || fail "unreadable record result: $(cat "$WORK/rollback.json")"
-[ "$(cat "$FORKOP_AUTOTUNE_STATE_FILE")" = "$before" ] || fail "setting an unreadable record aside changed a group"
+[ "$(cat "$PROKOP_AUTOTUNE_STATE_FILE")" = "$before" ] || fail "setting an unreadable record aside changed a group"
 rm -f "$WORK/tune/rollback.json"
 
 # 4. A refused rollback changes nothing in the state.
-before="$(cat "$FORKOP_AUTOTUNE_STATE_FILE")"
+before="$(cat "$PROKOP_AUTOTUNE_STATE_FILE")"
 printf '%s\n' '{"status":"failed","reason":"rollback_needs_candidate_config","diagnosis":"superseded"}' >"$WORK/tune/rollback.json"
 if manager rollback >"$WORK/rollback.json"; then fail "a refused rollback exited 0"; fi
 node -e '
@@ -154,7 +154,7 @@ const a = require("node:assert/strict");
 const r = require(process.argv[1]);
 a.equal(r.status, "failed"); a.equal(r.result, "failed"); a.equal(r.reason, "rollback_needs_candidate_config");' \
   "$WORK/rollback.json" || fail "refused rollback: $(cat "$WORK/rollback.json")"
-[ "$(cat "$FORKOP_AUTOTUNE_STATE_FILE")" = "$before" ] || fail "a refused rollback changed the autotune state"
+[ "$(cat "$PROKOP_AUTOTUNE_STATE_FILE")" = "$before" ] || fail "a refused rollback changed the autotune state"
 rm -f "$WORK/tune/rollback.json"
 
 # 5. Never next to a run of the worker.

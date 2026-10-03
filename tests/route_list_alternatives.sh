@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT
 cat >"$WORK_DIR/fixture.json" <<'JSON'
@@ -15,7 +15,7 @@ cat >"$WORK_DIR/fixture.json" <<'JSON'
 }
 JSON
 for version in 1.13.0 1.14.0; do
-  ucode -L "$FORKOP_LIB" "$FORKOP_LIB/singbox/generator.uc" generate-config-fixture \
+  ucode -L "$PROKOP_LIB" "$PROKOP_LIB/singbox/generator.uc" generate-config-fixture \
     "$WORK_DIR/fixture.json" "$WORK_DIR/config.json" 127.0.0.1 0 1 '' "$version"
   ucode -e '
     let config = json(require("fs").readfile(ARGV[0]));

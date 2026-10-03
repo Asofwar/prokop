@@ -8,7 +8,7 @@ set -euo pipefail
 # profile keeps its own selection (filters, host lists).
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT HUP INT TERM
 
@@ -31,7 +31,7 @@ print(sprintf("%J\n", {
     other_port_skipped: s("--filter-tcp=8443 --dpi-desync=fake --new --filter-tcp=443 --dpi-desync=fake")
 }));
 EOF
-FORKOP_LIB="$LIB" ucode -L "$LIB" "$WORK/cases.uc" >"$WORK/out.json"
+PROKOP_LIB="$LIB" ucode -L "$LIB" "$WORK/cases.uc" >"$WORK/out.json"
 
 node - "$WORK/out.json" <<'NODE'
 const a = require('node:assert/strict');

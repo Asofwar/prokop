@@ -2,8 +2,8 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-UI_UC="$FORKOP_LIB/service/ui.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+UI_UC="$PROKOP_LIB/service/ui.uc"
 WORK_DIR="$(mktemp -d)"
 PROBE_BIN="$WORK_DIR/sing-box"
 PROBE_COUNT="$WORK_DIR/probe-count"
@@ -27,19 +27,19 @@ fail() {
 
 cat >"$PROBE_BIN" <<'SH'
 #!/bin/sh
-printf '%s\n' "$$" >>"$FORKOP_TEST_SING_BOX_PROBE_PIDS"
-printf 'probe\n' >>"$FORKOP_TEST_SING_BOX_PROBE_COUNT"
-if [ "${FORKOP_TEST_SING_BOX_PROBE_MODE:-fast}" = "slow" ]; then
+printf '%s\n' "$$" >>"$PROKOP_TEST_SING_BOX_PROBE_PIDS"
+printf 'probe\n' >>"$PROKOP_TEST_SING_BOX_PROBE_COUNT"
+if [ "${PROKOP_TEST_SING_BOX_PROBE_MODE:-fast}" = "slow" ]; then
   exec sleep 30
 fi
 printf 'sing-box version 1.13.14\n\n'
-printf 'Tags: %s\n' "${FORKOP_TEST_SING_BOX_PROBE_TAGS:-with_quic,with_tailscale}"
+printf 'Tags: %s\n' "${PROKOP_TEST_SING_BOX_PROBE_TAGS:-with_quic,with_tailscale}"
 SH
 chmod 755 "$PROBE_BIN"
 cat >"$WORK_DIR/apk" <<'SH'
 #!/bin/sh
 if [ "$1" = "list" ] && [ "$2" = "--installed" ] && [ "$3" = "--manifest" ]; then
-  printf '%s\n' "${FORKOP_TEST_APK_MANIFEST:-}"
+  printf '%s\n' "${PROKOP_TEST_APK_MANIFEST:-}"
   exit 0
 fi
 # Tiny provides the virtual sing-box dependency. info -e cannot distinguish it.
@@ -52,7 +52,7 @@ chmod 755 "$WORK_DIR/apk"
 cat >"$WORK_DIR/opkg" <<'SH'
 #!/bin/sh
 if [ "$1" = "list-installed" ]; then
-  printf '%s\n' "${FORKOP_TEST_OPKG_MANIFEST:-}"
+  printf '%s\n' "${PROKOP_TEST_OPKG_MANIFEST:-}"
 fi
 exit 0
 SH
@@ -60,24 +60,24 @@ chmod 755 "$WORK_DIR/opkg"
 
 ui_capabilities() {
   PATH="$WORK_DIR:$PATH" \
-  FORKOP_CONFIG_NAME=forkop-ui-probe-test \
-  FORKOP_UI_STATE_DIR="$WORK_DIR/state" \
-  FORKOP_UI_COMPONENT_ACTION_DIR="$WORK_DIR/components" \
-  FORKOP_UI_SING_BOX_VERSION_CACHE_FILE="$CACHE_FILE" \
-  FORKOP_UI_SING_BOX_VARIANT_STATE_FILE="$WORK_DIR/missing-variant" \
-  FORKOP_UI_SING_BOX_BIN_PATH="$PROBE_BIN" \
-  FORKOP_UI_SING_BOX_VERSION_PROBE_TIMEOUT_SECONDS=1 \
-  FORKOP_UI_SING_BOX_VERSION_PROBE_FAILURE_TTL_SECONDS=30 \
+  PROKOP_CONFIG_NAME=prokop-ui-probe-test \
+  PROKOP_UI_STATE_DIR="$WORK_DIR/state" \
+  PROKOP_UI_COMPONENT_ACTION_DIR="$WORK_DIR/components" \
+  PROKOP_UI_SING_BOX_VERSION_CACHE_FILE="$CACHE_FILE" \
+  PROKOP_UI_SING_BOX_VARIANT_STATE_FILE="$WORK_DIR/missing-variant" \
+  PROKOP_UI_SING_BOX_BIN_PATH="$PROBE_BIN" \
+  PROKOP_UI_SING_BOX_VERSION_PROBE_TIMEOUT_SECONDS=1 \
+  PROKOP_UI_SING_BOX_VERSION_PROBE_FAILURE_TTL_SECONDS=30 \
   ZAPRET_PROVIDER_NFQWS_BIN="$WORK_DIR/missing-nfqws" \
   ZAPRET2_PROVIDER_NFQWS2_BIN="$WORK_DIR/missing-nfqws2" \
   BYEDPI_BIN="$WORK_DIR/missing-ciadpi" \
-  FORKOP_TEST_SING_BOX_PROBE_COUNT="$PROBE_COUNT" \
-  FORKOP_TEST_SING_BOX_PROBE_PIDS="$PROBE_PIDS" \
-  ucode -L "$FORKOP_LIB" "$UI_UC" get-ui-capabilities
+  PROKOP_TEST_SING_BOX_PROBE_COUNT="$PROBE_COUNT" \
+  PROKOP_TEST_SING_BOX_PROBE_PIDS="$PROBE_PIDS" \
+  ucode -L "$PROKOP_LIB" "$UI_UC" get-ui-capabilities
 }
 
-fast_first="$(FORKOP_TEST_SING_BOX_PROBE_MODE=fast ui_capabilities)"
-fast_second="$(FORKOP_TEST_SING_BOX_PROBE_MODE=fast ui_capabilities)"
+fast_first="$(PROKOP_TEST_SING_BOX_PROBE_MODE=fast ui_capabilities)"
+fast_second="$(PROKOP_TEST_SING_BOX_PROBE_MODE=fast ui_capabilities)"
 [ "$(wc -l <"$PROBE_COUNT")" -eq 1 ] ||
   fail "successful sing-box capability detection must be cached by binary signature"
 
@@ -98,7 +98,7 @@ rm -rf "$CACHE_FILE" "$CACHE_FILE.lock"
 start_seconds=$SECONDS
 workers=""
 for index in 1 2 3 4 5; do
-  FORKOP_TEST_SING_BOX_PROBE_MODE=slow ui_capabilities >"$WORK_DIR/slow-$index.json" &
+  PROKOP_TEST_SING_BOX_PROBE_MODE=slow ui_capabilities >"$WORK_DIR/slow-$index.json" &
   workers="$workers $!"
 done
 for worker in $workers; do
@@ -122,7 +122,7 @@ if (value.sing_box_extended !== 0 || value.sing_box_tiny !== 0 || value.sing_box
 NODE
 done
 
-FORKOP_TEST_SING_BOX_PROBE_MODE=slow ui_capabilities >/dev/null
+PROKOP_TEST_SING_BOX_PROBE_MODE=slow ui_capabilities >/dev/null
 [ "$(wc -l <"$PROBE_COUNT")" -eq 1 ] ||
   fail "failed sing-box probe must be cached during the retry cooldown"
 
@@ -154,29 +154,29 @@ NODE
 rm -f "$CACHE_FILE"
 for marker in tiny extended extended-compressed; do
   printf '%s\n' "$marker" >"$WORK_DIR/missing-variant"
-  regular="$(FORKOP_TEST_APK_MANIFEST='sing-box 1.13.14-r1' ui_capabilities)"
+  regular="$(PROKOP_TEST_APK_MANIFEST='sing-box 1.13.14-r1' ui_capabilities)"
   assert_capabilities "$regular" sing-box 0 0 0 1
 done
 [ "$(wc -l <"$PROBE_COUNT")" -eq 1 ] || fail "regular package build capabilities must be cached across stale markers"
-tiny="$(FORKOP_TEST_APK_MANIFEST='sing-box-tiny 1.13.14-r1' ui_capabilities)"
+tiny="$(PROKOP_TEST_APK_MANIFEST='sing-box-tiny 1.13.14-r1' ui_capabilities)"
 assert_capabilities "$tiny" sing-box-tiny 0 1 0 0
-extended="$(FORKOP_TEST_APK_MANIFEST='sing-box-extended 1.13.14-r1' ui_capabilities)"
+extended="$(PROKOP_TEST_APK_MANIFEST='sing-box-extended 1.13.14-r1' ui_capabilities)"
 assert_capabilities "$extended" sing-box-extended 1 0 0 1
-regular_opkg="$(FORKOP_TEST_OPKG_MANIFEST='sing-box - 1.13.14-r1' ui_capabilities)"
+regular_opkg="$(PROKOP_TEST_OPKG_MANIFEST='sing-box - 1.13.14-r1' ui_capabilities)"
 assert_capabilities "$regular_opkg" sing-box 0 0 0 1
-tiny_opkg="$(FORKOP_TEST_OPKG_MANIFEST='sing-box-tiny - 1.13.14-r1' ui_capabilities)"
+tiny_opkg="$(PROKOP_TEST_OPKG_MANIFEST='sing-box-tiny - 1.13.14-r1' ui_capabilities)"
 assert_capabilities "$tiny_opkg" sing-box-tiny 0 1 0 0
 [ "$(wc -l <"$PROBE_COUNT")" -eq 1 ] || fail "Tiny/Extended identity and cached regular capabilities must not trigger extra probes"
 
 rm -f "$CACHE_FILE"
-regular_without_tailscale="$(FORKOP_TEST_SING_BOX_PROBE_TAGS=with_quic FORKOP_TEST_APK_MANIFEST='sing-box 1.13.14-r1' ui_capabilities)"
+regular_without_tailscale="$(PROKOP_TEST_SING_BOX_PROBE_TAGS=with_quic PROKOP_TEST_APK_MANIFEST='sing-box 1.13.14-r1' ui_capabilities)"
 assert_capabilities "$regular_without_tailscale" sing-box 0 0 0 0
-regular_without_tailscale_cached="$(FORKOP_TEST_SING_BOX_PROBE_TAGS=with_quic FORKOP_TEST_APK_MANIFEST='sing-box 1.13.14-r1' ui_capabilities)"
+regular_without_tailscale_cached="$(PROKOP_TEST_SING_BOX_PROBE_TAGS=with_quic PROKOP_TEST_APK_MANIFEST='sing-box 1.13.14-r1' ui_capabilities)"
 [ "$regular_without_tailscale" = "$regular_without_tailscale_cached" ] || fail "regular package without Tailscale must retain cached capabilities"
 [ "$(wc -l <"$PROBE_COUNT")" -eq 2 ] || fail "regular package without Tailscale must use exactly one fresh probe"
 
 rm -f "$WORK_DIR/missing-variant"
-unknown="$(FORKOP_TEST_SING_BOX_PROBE_TAGS=with_quic FORKOP_TEST_APK_MANIFEST='sing-box-tools 1.0-r1' ui_capabilities)"
+unknown="$(PROKOP_TEST_SING_BOX_PROBE_TAGS=with_quic PROKOP_TEST_APK_MANIFEST='sing-box-tools 1.0-r1' ui_capabilities)"
 assert_capabilities "$unknown" '' 0 0 0 0
 
 # A regular package must not bypass the component-update guard; unknown
@@ -185,9 +185,9 @@ rm -f "$CACHE_FILE"
 : >"$PROBE_COUNT"
 mkdir -p "$WORK_DIR/components"
 printf '%s\n' '{"running":true,"component":"sing_box"}' >"$WORK_DIR/components/update.json"
-updating_regular="$(FORKOP_TEST_SING_BOX_PROBE_MODE=slow FORKOP_TEST_APK_MANIFEST='sing-box 1.13.14-r1' ui_capabilities)"
+updating_regular="$(PROKOP_TEST_SING_BOX_PROBE_MODE=slow PROKOP_TEST_APK_MANIFEST='sing-box 1.13.14-r1' ui_capabilities)"
 assert_capabilities "$updating_regular" sing-box 0 0 0 0
-updating_unknown="$(FORKOP_TEST_SING_BOX_PROBE_MODE=slow ui_capabilities)"
+updating_unknown="$(PROKOP_TEST_SING_BOX_PROBE_MODE=slow ui_capabilities)"
 assert_capabilities "$updating_unknown" '' 0 0 0 1
 [ ! -s "$PROBE_COUNT" ] || fail "component replacement must not execute the changing sing-box binary"
 

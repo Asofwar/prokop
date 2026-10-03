@@ -1,20 +1,20 @@
 #!/bin/sh
-# Install Forkop on a router that should take its OpenWrt packages, lists and
+# Install Prokop on a router that should take its OpenWrt packages, lists and
 # sing-box-extended from a self-hosted dependency mirror.
 #
-# The mirror is opt-in and has no default: pass its URL explicitly. Forkop
+# The mirror is opt-in and has no default: pass its URL explicitly. Prokop
 # itself still comes from the fork's release channel; the installer rewrites
 # the OpenWrt feeds only after the mirror's platform index confirms this
 # router's release and architecture, and stores the mirror in
-# forkop.settings.mirror_base_url. No mirror APK key and no forkop.list feed
+# prokop.settings.mirror_base_url. No mirror APK key and no forkop.list feed
 # are ever installed.
 #
 # Usage: router-bootstrap.sh MIRROR_URL [installer options]
 set -eu
 
-MIRROR_BASE="${1:-${FORKOP_MIRROR_BASE:-}}"
-RELEASE_BASE="${FORKOP_RELEASE_BASE_URL:-https://asofwar.github.io/forkop}"
-RELEASE_REPO="${FORKOP_RELEASE_REPO:-Asofwar/forkop}"
+MIRROR_BASE="${1:-${PROKOP_MIRROR_BASE:-}}"
+RELEASE_BASE="${PROKOP_RELEASE_BASE_URL:-https://asofwar.github.io/prokop}"
+RELEASE_REPO="${PROKOP_RELEASE_REPO:-Asofwar/prokop}"
 
 fail() {
     echo "ERROR: $*" >&2
@@ -34,15 +34,15 @@ while [ "${MIRROR_BASE%/}" != "$MIRROR_BASE" ]; do
 done
 RELEASE_BASE="${RELEASE_BASE%/}"
 
-installer="$(mktemp /tmp/forkop-install.XXXXXX)"
+installer="$(mktemp /tmp/prokop-install.XXXXXX)"
 trap 'rm -f "$installer"' EXIT INT TERM
 
 if ! wget -q -O "$installer" "$RELEASE_BASE/install.sh" || [ ! -s "$installer" ]; then
     echo "Release channel $RELEASE_BASE is unavailable, using GitHub Releases" >&2
     wget -q -O "$installer" \
         "https://github.com/$RELEASE_REPO/releases/latest/download/install.sh" ||
-        fail "Unable to download the Forkop installer"
+        fail "Unable to download the Prokop installer"
 fi
-[ -s "$installer" ] || fail "The downloaded Forkop installer is empty"
+[ -s "$installer" ] || fail "The downloaded Prokop installer is empty"
 
 sh "$installer" --mirror "$MIRROR_BASE" "$@"

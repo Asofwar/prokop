@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIFECYCLE_UC="$ROOT_DIR/forkop/files/usr/lib/service/lifecycle.uc"
+LIFECYCLE_UC="$ROOT_DIR/prokop/files/usr/lib/service/lifecycle.uc"
 fail() { printf 'FAIL: %s\n' "$1" >&2; exit 1; }
 
 # Every transition that can rewrite or tear down the live dataplane has to
@@ -29,7 +29,7 @@ awk '
   /^function reload\(reason\) \{/ { inside = 1 }
   inside && /"sing-box-process-conflict"/ && !gate_line { gate_line = NR }
   inside && /"capture-reload-state"/ && !capture_line { capture_line = NR }
-  inside && /if \(!module_success\(STATE_UC, \[ "forkop-running"/ && !running_line { running_line = NR }
+  inside && /if \(!module_success\(STATE_UC, \[ "prokop-running"/ && !running_line { running_line = NR }
   inside && /^}/ { done = 1; exit }
   END { exit done && gate_line && capture_line && running_line && gate_line < capture_line && gate_line < running_line ? 0 : 1 }
 ' "$LIFECYCLE_UC" || fail "reload must refuse an ambiguous runtime before capturing state or staging nft rules"

@@ -1,42 +1,42 @@
-# Forkop X
+# Prokop
 
-[![Releases](https://img.shields.io/github/v/release/Asofwar/forkop?label=releases)](https://github.com/Asofwar/forkop/releases)
+[![Releases](https://img.shields.io/github/v/release/Asofwar/prokop?label=releases)](https://github.com/Asofwar/prokop/releases)
 
 Прозрачная маршрутизация трафика на роутерах OpenWrt: sing-box, списки маршрутизации, подписки, обход DPI.
 
-> **Forkop — это бывший Podkop Plus.** Проект переименован и развивается как независимый форк [Podkop](https://github.com/itdoginfo/podkop).
-> Эта сборка — продолжение [Forkop](https://github.com/ushan0v/forkop) с упором на то, чтобы установка и обновление доходили до конца, а не падали на полпути.
+> **Prokop — это бывший Podkop Plus.** Проект переименован и развивается как независимый форк [Podkop](https://github.com/itdoginfo/podkop).
+> Эта сборка — продолжение [Prokop](https://github.com/ushan0v/forkop) с упором на то, чтобы установка и обновление доходили до конца, а не падали на полпути.
 > Этот репозиторий — самостоятельный форк [slayer326/forkop](https://github.com/slayer326/forkop): он ставится и обновляется только из своих релизов и не зависит от инфраструктуры upstream.
 
 ## Установка
 
 ```sh
-wget -qO- https://asofwar.github.io/forkop/install.sh | sh
+wget -qO- https://asofwar.github.io/prokop/install.sh | sh
 ```
 
-Одна команда на свежем роутере — установщик сам подтянет зависимости, ядро и списки. Поддерживаются OpenWrt 24.10 (`opkg`) и 25.12+ (`apk`); пакеты Forkop не зависят от архитектуры. Ограничение по платформам появляется только с включённым зеркалом: оно обслуживает лишь те платформы, что перечислены в его индексе.
+Одна команда на свежем роутере — установщик сам подтянет зависимости, ядро и списки. Поддерживаются OpenWrt 24.10 (`opkg`) и 25.12+ (`apk`); пакеты Prokop не зависят от архитектуры. Ограничение по платформам появляется только с включённым зеркалом: оно обслуживает лишь те платформы, что перечислены в его индексе.
 
 Если `asofwar.github.io` недоступен, тот же установщик лежит в GitHub Releases:
 
 ```sh
-wget -qO- https://github.com/Asofwar/forkop/releases/latest/download/install.sh | sh
+wget -qO- https://github.com/Asofwar/prokop/releases/latest/download/install.sh | sh
 ```
 
 Параметры установщику передаются через `sh -s --`, например `| sh -s -- --sing-box tiny`; полный список — `| sh -s -- --help`.
 
-Установщик и встроенное обновление работают через канал `https://asofwar.github.io/forkop` (GitHub Pages). Если его метаданные недоступны, они переключаются на GitHub Releases этого репозитория. Роутер с Forkop от upstream переходит на форк той же командой установки — подробности в [docs/fork-distribution.md](docs/fork-distribution.md).
+Установщик и встроенное обновление работают через канал `https://asofwar.github.io/prokop` (GitHub Pages). Если его метаданные недоступны, они переключаются на GitHub Releases этого репозитория. Роутер с Prokop от upstream переходит на форк той же командой установки — подробности в [docs/fork-distribution.md](docs/fork-distribution.md).
 
 ### Зеркало зависимостей — только по желанию
 
 По умолчанию зеркало выключено: пакеты OpenWrt идут из официальных фидов, списки, наборы правил, sing-box-extended и Zapret-Manager — из исходных репозиториев. Если до них плохо достучаться, подключите своё зеркало явно:
 
 ```sh
-wget -qO- https://asofwar.github.io/forkop/install.sh | sh -s -- --mirror https://mirror.example.org
+wget -qO- https://asofwar.github.io/prokop/install.sh | sh -s -- --mirror https://mirror.example.org
 ```
 
-На установленном роутере то же самое — `uci set forkop.settings.mirror_base_url=URL && uci commit forkop`, затем `/usr/share/forkop/mirror-migration.sh`, чтобы перевести фиды OpenWrt на зеркало; выключение — пустое значение (фиды своего зеркала возвращаются вручную из резервной копии `*.pre-forkop-mirror`, см. [docs/fork-distribution.md](docs/fork-distribution.md)). Зеркало ускоряет только зависимости: APK-ключ зеркала и его фид пакетов Forkop роутер не принимает никогда, сам Forkop всегда приходит из релизов форка. Как поднять своё зеркало — [ops/mirror/README.md](ops/mirror/README.md).
+На установленном роутере то же самое — `uci set prokop.settings.mirror_base_url=URL && uci commit prokop`, затем `/usr/share/prokop/mirror-migration.sh`, чтобы перевести фиды OpenWrt на зеркало; выключение — пустое значение (фиды своего зеркала возвращаются вручную из резервной копии `*.pre-forkop-mirror`, см. [docs/fork-distribution.md](docs/fork-distribution.md)). Зеркало ускоряет только зависимости: APK-ключ зеркала и его фид пакетов Prokop роутер не принимает никогда, сам Prokop всегда приходит из релизов форка. Как поднять своё зеркало — [ops/mirror/README.md](ops/mirror/README.md).
 
-## Чем отличается от оригинального Forkop
+## Чем отличается от оригинального Prokop
 
 ### Свой канал релизов, зеркало — по желанию
 
@@ -65,7 +65,7 @@ wget -qO- https://asofwar.github.io/forkop/install.sh | sh -s -- --mirror https:
 
 ### Безопасность рантайма
 
-Forkop никогда не трогает sing-box, который ему не принадлежит. Остановка, перезапуск и перезагрузка конфигурации отказываются работать, если владение процессом неоднозначно, — вместо того чтобы снять правила nftables и оставить чужой процесс работать без защиты. При неудачном переходе сохраняется fail-closed политика, а не открытый доступ.
+Prokop никогда не трогает sing-box, который ему не принадлежит. Остановка, перезапуск и перезагрузка конфигурации отказываются работать, если владение процессом неоднозначно, — вместо того чтобы снять правила nftables и оставить чужой процесс работать без защиты. При неудачном переходе сохраняется fail-closed политика, а не открытый доступ.
 
 ### Подписки без ограничений
 
@@ -99,7 +99,7 @@ Forkop никогда не трогает sing-box, который ему не �
 
 **Обход DPI.** Интеграция с Zapret, Zapret2 и ByeDPI как с отдельными компонентами — установка и обновление из интерфейса.
 
-**Обслуживание.** Обновление Forkop, sing-box и компонентов из LuCI. Автоматическое обновление списков и подписок по расписанию. Диагностика с проверками DNS, FakeIP, маршрутов и подключений. Отчёт для поддержки одной кнопкой.
+**Обслуживание.** Обновление Prokop, sing-box и компонентов из LuCI. Автоматическое обновление списков и подписок по расписанию. Диагностика с проверками DNS, FakeIP, маршрутов и подключений. Отчёт для поддержки одной кнопкой.
 
 ## Поддержка и совместимость
 
@@ -114,7 +114,7 @@ Forkop никогда не трогает sing-box, который ему не �
 
 1. Тег `X.Y.Z` в этом репозитории запускает workflow **Build packages**: тесты, сборка пакетов `ipk` и `apk`.
 2. Он создаёт GitHub Release: шесть пакетов, `install.sh` из того же коммита и архив канала для любого статического хостинга.
-3. После успешной сборки workflow **Publish release channel** заново собирает `https://asofwar.github.io/forkop` из последних 8 релизов: `install.sh`, `updates/latest.json`, каталог версий для отката и сами пакеты с `SHA256SUMS`. Если чего-то не хватает, публикация отменяется и остаётся предыдущая версия сайта.
+3. После успешной сборки workflow **Publish release channel** заново собирает `https://asofwar.github.io/prokop` из последних 8 релизов: `install.sh`, `updates/latest.json`, каталог версий для отката и сами пакеты с `SHA256SUMS`. Если чего-то не хватает, публикация отменяется и остаётся предыдущая версия сайта.
 
 Подробно — в [docs/fork-distribution.md](docs/fork-distribution.md) и [ops/hosting/README.md](ops/hosting/README.md).
 
@@ -124,7 +124,7 @@ Forkop никогда не трогает sing-box, который ему не �
 - Включите Pages с публикацией из Actions: **Settings → Pages → Source: GitHub Actions** или одной командой:
 
   ```sh
-  gh api -X POST repos/Asofwar/forkop/pages -f build_type=workflow
+  gh api -X POST repos/Asofwar/prokop/pages -f build_type=workflow
   ```
 
 - Выпустите релиз: `git tag -a X.Y.Z -m "X.Y.Z"` и `git push origin X.Y.Z`. Заметки к релизу берутся из `docs/releases/X.Y.Z.md`, если такой файл есть.
@@ -133,6 +133,6 @@ Forkop никогда не трогает sing-box, который ему не �
 
 ## Обратная связь
 
-Проблемы и предложения — в [Issues](https://github.com/Asofwar/forkop/issues). К отчёту полезно приложить файл из **Diagnostics → Скачать отчёт для поддержки**; перед публикацией проверьте его — там могут быть приватные данные.
+Проблемы и предложения — в [Issues](https://github.com/Asofwar/prokop/issues). К отчёту полезно приложить файл из **Diagnostics → Скачать отчёт для поддержки**; перед публикацией проверьте его — там могут быть приватные данные.
 
 Лицензия: [GPL-2.0-or-later](LICENSE).

@@ -1,7 +1,7 @@
 .idea
-fe-app-forkop/node_modules
-fe-app-forkop/.yarn/
-fe-app-forkop/.env
+fe-app-prokop/node_modules
+fe-app-prokop/.yarn/
+fe-app-prokop/.env
 .DS_Store
 AGENTS.md
 

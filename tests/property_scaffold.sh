@@ -11,7 +11,7 @@ WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT HUP INT TERM
 export PROPERTY_WORK="$WORK"
 
-node - "$ROOT_DIR/tests/helpers/property/scaffold.js" "$ROOT_DIR/forkop/files/usr/lib" <<'NODE'
+node - "$ROOT_DIR/tests/helpers/property/scaffold.js" "$ROOT_DIR/prokop/files/usr/lib" <<'NODE'
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const [scaffoldPath, lib] = process.argv.slice(2);

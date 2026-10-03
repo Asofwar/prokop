@@ -4,15 +4,15 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_SITE="$ROOT_DIR/ops/pages/build-site.py"
 PREPARE="$ROOT_DIR/ops/hosting/prepare-release.sh"
-BASE_URL="https://asofwar.github.io/forkop"
-REPOSITORY="Asofwar/forkop"
+BASE_URL="https://asofwar.github.io/prokop"
+REPOSITORY="Asofwar/prokop"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT
 # Nothing here may reach the network or leave byte code in the checkout.
 export PYTHONDONTWRITEBYTECODE=1 PYTHONPYCACHEPREFIX="$WORK_DIR/pycache"
-export FORKOP_RELEASE_CATALOG_OFFLINE=1
-unset GITHUB_TOKEN FORKOP_RELEASE_BASE_URL FORKOP_RELEASE_REPO
+export PROKOP_RELEASE_CATALOG_OFFLINE=1
+unset GITHUB_TOKEN PROKOP_RELEASE_BASE_URL PROKOP_RELEASE_REPO
 
 fail() {
   printf 'FAIL: %s\n' "$1" >&2
@@ -32,7 +32,7 @@ import sys
 from pathlib import Path
 
 work, repository = Path(sys.argv[1]), sys.argv[2]
-packages = ("forkop", "luci-app-forkop", "luci-i18n-forkop-ru")
+packages = ("prokop", "luci-app-prokop", "luci-i18n-prokop-ru")
 
 
 def release(tag, draft=False, prerelease=False, installer=True, digests=True):
@@ -88,7 +88,7 @@ SITE="$WORK_DIR/site"
 expected_files="$(printf '%s\n' \
   LATEST index.html install.sh updates/latest.json updates/releases.json \
   releases/1.10.0/SHA256SUMS releases/1.2.1/SHA256SUMS \
-  releases/{1.10.0,1.2.1}/{forkop,luci-app-forkop,luci-i18n-forkop-ru}_VERSION.{ipk,apk} |
+  releases/{1.10.0,1.2.1}/{prokop,luci-app-prokop,luci-i18n-prokop-ru}_VERSION.{ipk,apk} |
   sed -E 's#^releases/([^/]+)/(.*)_VERSION#releases/\1/\2_\1#' | sort)"
 actual_files="$(cd "$SITE" && find . -type f | sed 's#^\./##' | sort)"
 [[ "$actual_files" == "$expected_files" ]] || {
@@ -118,7 +118,7 @@ grep -Fq 'Установка' "$SITE/index.html" || fail "index.html is not the 
 # The metadata is exactly what the static hosting bundle writes for the same
 # packages: compare with prepare-release.sh, file for file.
 for version in 1.10.0 1.2.1; do
-  FORKOP_RELEASE_BASE_URL="$BASE_URL" FORKOP_RELEASE_REPO="$REPOSITORY" \
+  PROKOP_RELEASE_BASE_URL="$BASE_URL" PROKOP_RELEASE_REPO="$REPOSITORY" \
     "$PREPARE" "$version" "$WORK_DIR/assets/$version" "$WORK_DIR/bundle-$version" >/dev/null
 done
 cmp -s "$SITE/updates/latest.json" "$WORK_DIR/bundle-1.10.0/forkop/updates/latest.json" ||
@@ -234,10 +234,10 @@ must_skip older-missing "$WORK_DIR/older-missing.json" 1.2.1 1.10.0,1.2.0 --limi
 
 # The mismatch is on the last package fetched, so the others were already
 # copied into releases/1.2.0 and must be removed again.
-edit_releases older-digest '[a for a in releases[0]["assets"] if a["name"] == "luci-i18n-forkop-ru_1.2.0.apk"][0]["digest"] = "sha256:" + "0" * 64'
+edit_releases older-digest '[a for a in releases[0]["assets"] if a["name"] == "luci-i18n-prokop-ru_1.2.0.apk"][0]["digest"] = "sha256:" + "0" * 64'
 must_skip older-digest "$WORK_DIR/older-digest.json" 1.2.0 1.10.0,1.2.1
 
-edit_releases older-size '[a for a in releases[1]["assets"] if a["name"] == "forkop_1.2.1.apk"][0]["size"] += 1'
+edit_releases older-size '[a for a in releases[1]["assets"] if a["name"] == "prokop_1.2.1.apk"][0]["size"] += 1'
 must_skip older-size "$WORK_DIR/older-size.json" 1.2.1 1.10.0,1.2.0 --limit 3
 
 edit_releases none 'releases = [r for r in releases if r["draft"] or r["prerelease"] or r["tag_name"] in ("v3.0.0", "3.0.0-rc1")]'
@@ -248,9 +248,9 @@ rm -rf "$WORK_DIR/raw"
 must_fail noinstaller "$WORK_DIR/noinstaller.json"
 
 # A missing asset file is a failure too, not a skipped release.
-mv "$WORK_DIR/assets/1.2.0/forkop_1.2.0.ipk" "$WORK_DIR/forkop_1.2.0.ipk"
+mv "$WORK_DIR/assets/1.2.0/prokop_1.2.0.ipk" "$WORK_DIR/prokop_1.2.0.ipk"
 must_fail absent "$WORK_DIR/releases.json" --limit 3
-mv "$WORK_DIR/forkop_1.2.0.ipk" "$WORK_DIR/assets/1.2.0/forkop_1.2.0.ipk"
+mv "$WORK_DIR/prokop_1.2.0.ipk" "$WORK_DIR/assets/1.2.0/prokop_1.2.0.ipk"
 
 # An existing site is never overwritten or removed.
 mkdir -p "$WORK_DIR/occupied"

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# A DPI strategy is checked by the backend parser (/usr/bin/forkop
+# A DPI strategy is checked by the backend parser (/usr/bin/prokop
 # validate_*_strategy_json) before the rule editor saves it. A failed call
 # (rpcd timeout, access denied, unparsable output) refuses this Save and the
 # strategy field says the check is unavailable (LuCI drops the rejection of a
@@ -73,7 +73,7 @@ function rule(action, option, value) {
       });
 
   // The rendered NFQWS and NFQWS2 fields ask the backend at once. The ACL
-  // grants /usr/bin/forkop only with write access, so for a read-only
+  // grants /usr/bin/prokop only with write access, so for a read-only
   // session the call fails, and the field would show "Backend validation
   // unavailable ... Save again to retry" to a user who cannot save.
   for (const version of ['24.10', '25.12'])

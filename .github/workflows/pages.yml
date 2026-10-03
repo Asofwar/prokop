@@ -1,5 +1,5 @@
 name: Publish release channel
-# Rebuilds https://asofwar.github.io/forkop (install.sh, updates/*.json and the
+# Rebuilds https://asofwar.github.io/prokop (install.sh, updates/*.json and the
 # packages of the newest releases) from this repository's GitHub releases
 # after every successful "Build packages" run, or on demand.
 #
@@ -32,15 +32,15 @@ jobs:
       - name: Build the site from GitHub releases
         shell: bash
         env:
-          FORKOP_RELEASE_BASE_URL: https://asofwar.github.io/forkop
-          FORKOP_RELEASE_REPO: ${{ github.repository }}
+          PROKOP_RELEASE_BASE_URL: https://asofwar.github.io/prokop
+          PROKOP_RELEASE_REPO: ${{ github.repository }}
           GITHUB_TOKEN: ${{ github.token }}
-        run: python3 ops/pages/build-site.py --output "$RUNNER_TEMP/forkop-site"
+        run: python3 ops/pages/build-site.py --output "$RUNNER_TEMP/prokop-site"
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5.0.0
         with:
-          path: ${{ runner.temp }}/forkop-site
+          path: ${{ runner.temp }}/prokop-site
 
   deploy:
     name: Deploy to GitHub Pages

@@ -8,7 +8,7 @@
 # The reading follows libuci: CRLF line ends, an option followed by a list.
 set -eu
 ROOT="$(CDPATH="" cd -- "$(dirname -- "$0")/.." && pwd)"
-LIB="$ROOT/forkop/files/usr/lib"
+LIB="$ROOT/prokop/files/usr/lib"
 SCRIPT="$LIB/config/snapshots.uc"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT HUP INT TERM
@@ -29,15 +29,15 @@ function diff(before, after) {
   const dir = `${work}/case${run++}`;
   fs.mkdirSync(dir);
   fs.writeFileSync(`${dir}/before`, before);
-  fs.writeFileSync(`${dir}/forkop`, after);
-  const rows = JSON.parse(execFileSync('ucode', ['-L', lib, script, 'fixture-diff', `${dir}/before`, `${dir}/forkop`]));
+  fs.writeFileSync(`${dir}/prokop`, after);
+  const rows = JSON.parse(execFileSync('ucode', ['-L', lib, script, 'fixture-diff', `${dir}/before`, `${dir}/prokop`]));
   // libuci reads the same option at the reported key.
   if (uci) {
     for (const row of rows) {
       if (typeof row.section !== 'string' || !row.section.startsWith('@') ||
         typeof row.after !== 'string' || row.after === '***') continue;
-      const got = execFileSync(uci, ['-c', dir, 'get', `forkop.${row.section}.${row.option}`]).toString().trim();
-      assert.equal(got, row.after, `uci get forkop.${row.section}.${row.option}`);
+      const got = execFileSync(uci, ['-c', dir, 'get', `prokop.${row.section}.${row.option}`]).toString().trim();
+      assert.equal(got, row.after, `uci get prokop.${row.section}.${row.option}`);
     }
   }
   return rows;
@@ -117,10 +117,10 @@ function rewritten(text, assignment) {
   if (!uci) return null;
   const dir = `${work}/case${run++}`;
   fs.mkdirSync(`${dir}/save`, { recursive: true });
-  fs.writeFileSync(`${dir}/forkop`, text);
-  execFileSync(uci, ['-c', dir, '-t', `${dir}/save`, 'set', `forkop.${assignment}`]);
-  execFileSync(uci, ['-c', dir, '-t', `${dir}/save`, 'commit', 'forkop']);
-  return fs.readFileSync(`${dir}/forkop`, 'utf8');
+  fs.writeFileSync(`${dir}/prokop`, text);
+  execFileSync(uci, ['-c', dir, '-t', `${dir}/save`, 'set', `prokop.${assignment}`]);
+  execFileSync(uci, ['-c', dir, '-t', `${dir}/save`, 'commit', 'prokop']);
+  return fs.readFileSync(`${dir}/prokop`, 'utf8');
 }
 // CRLF line ends, which libuci loads (a \r is a blank to it): named and
 // anonymous headers keep their sections, no key or value takes the \r.
@@ -221,7 +221,7 @@ assert.deepEqual(same, [{ section: 'main', option: 'action', before: 'a', after:
 assert.equal(JSON.stringify(diff(many(120, 'SECRET_MARKER_a'), settings())).includes('SECRET_MARKER'), false);
 // Nor does a cut diff of the S1 secret fixture (config_snapshot_diff is
 // read-only reachable), its sections made anonymous and repeated past 100.
-const fixture = fs.readFileSync(`${lib}/../../../../tests/fixtures/readonly_secrets/forkop`, 'utf8')
+const fixture = fs.readFileSync(`${lib}/../../../../tests/fixtures/readonly_secrets/prokop`, 'utf8')
   .replace(/^config[ \t]+(\S+)[ \t]+\S+[ \t]*$/gm, 'config $1');
 const secrets = diff('', fixture + fixture + fixture);
 assert.deepEqual(secrets.at(-1), { truncated: true, total: secrets.at(-1).total });

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT
 fail() { printf 'FAIL: %s\n' "$1" >&2; exit 1; }
@@ -29,7 +29,7 @@ cat >"$WORK_DIR/bin/nft" <<'SH'
 printf '%s\n' "$*" >>"$CASE_DIR/nft.log"
 exit 1
 SH
-cat >"$WORK_DIR/bin/init-forkop" <<'SH'
+cat >"$WORK_DIR/bin/init-prokop" <<'SH'
 #!/bin/sh
 printf '%s\n' "$*" >>"$CASE_DIR/reload.log"
 SH
@@ -37,20 +37,20 @@ chmod +x "$WORK_DIR/bin/"*
 
 bootstrap_cmd() {
   env PATH="$WORK_DIR/bin:$PATH" CASE_DIR="$case_dir" BOOTSTRAP_FAIL="$bootstrap_fail" \
-    FORKOP_LIB="$FORKOP_LIB" FORKOP_UCI_STATE_FILE="$case_dir/uci.state" \
+    PROKOP_LIB="$PROKOP_LIB" PROKOP_UCI_STATE_FILE="$case_dir/uci.state" \
     TMP_SING_BOX_FOLDER="$case_dir/tmp" TMP_RULESET_FOLDER="$case_dir/rulesets" \
-    FORKOP_RUNTIME_STATE_DIR="$case_dir/run" FORKOP_RELOAD_LOCK_DIR="$case_dir/run/reload.lock" \
-    FORKOP_LIST_UPDATE_PID_FILE="$case_dir/run/list.pid" \
-    FORKOP_PERSISTENT_LIST_CACHE_DIR="$case_dir/cache" \
-    FORKOP_RULESET_CACHE_DIR="$case_dir/ruleset-cache" \
-    FORKOP_RUNTIME_LIST_GENERATION_DIR="$case_dir/generation" \
-    FORKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=0 \
-    FORKOP_SERVICE_INIT="$WORK_DIR/bin/init-forkop" \
-    ucode -L "$FORKOP_LIB" "$FORKOP_LIB/components/updates.uc" "$@"
+    PROKOP_RUNTIME_STATE_DIR="$case_dir/run" PROKOP_RELOAD_LOCK_DIR="$case_dir/run/reload.lock" \
+    PROKOP_LIST_UPDATE_PID_FILE="$case_dir/run/list.pid" \
+    PROKOP_PERSISTENT_LIST_CACHE_DIR="$case_dir/cache" \
+    PROKOP_RULESET_CACHE_DIR="$case_dir/ruleset-cache" \
+    PROKOP_RUNTIME_LIST_GENERATION_DIR="$case_dir/generation" \
+    PROKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=0 \
+    PROKOP_SERVICE_INIT="$WORK_DIR/bin/init-prokop" \
+    ucode -L "$PROKOP_LIB" "$PROKOP_LIB/components/updates.uc" "$@"
 }
 
 # The lock and its owner go through service/state.uc (core/runtime_lock.uc).
-state() { ucode -L "$FORKOP_LIB" "$FORKOP_LIB/service/state.uc" "$@"; }
+state() { ucode -L "$PROKOP_LIB" "$PROKOP_LIB/service/state.uc" "$@"; }
 
 for bootstrap_fail in 0 1; do
   case_dir="$WORK_DIR/case-$bootstrap_fail"
@@ -59,12 +59,12 @@ for bootstrap_fail in 0 1; do
   state acquire-runtime-dir-lock "$case_dir/run/reload.lock" "$$" || fail "startup could not take reload.lock"
   printf 'previous flash data\n' >"$case_dir/cache/marker"
   cat >"$case_dir/uci.state" <<'UCI'
-forkop.settings=settings
-forkop.settings.update_interval=1d
-forkop.alpha=section
-forkop.alpha.enabled=1
-forkop.alpha.action=connection
-forkop.alpha.remote_domain_lists=https://lists.test/domains.txt
+prokop.settings=settings
+prokop.settings.update_interval=1d
+prokop.alpha=section
+prokop.alpha.enabled=1
+prokop.alpha.action=connection
+prokop.alpha.remote_domain_lists=https://lists.test/domains.txt
 UCI
   status=0
   bootstrap_cmd prepare-list-cache || status=$?

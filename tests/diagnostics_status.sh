@@ -2,15 +2,15 @@
 set -eo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-DIAGNOSTICS="$ROOT_DIR/forkop/files/usr/lib/diagnostics/status.uc"
-DIAGNOSTICS_RUNTIME="$ROOT_DIR/forkop/files/usr/lib/diagnostics/runtime.uc"
-FORKOP_BIN="$ROOT_DIR/forkop/files/usr/bin/forkop"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-CLI_UC="$FORKOP_BIN"
+DIAGNOSTICS="$ROOT_DIR/prokop/files/usr/lib/diagnostics/status.uc"
+DIAGNOSTICS_RUNTIME="$ROOT_DIR/prokop/files/usr/lib/diagnostics/runtime.uc"
+PROKOP_BIN="$ROOT_DIR/prokop/files/usr/bin/prokop"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+CLI_UC="$PROKOP_BIN"
 WORK_DIR="$(mktemp -d)"
 
 status_ucode() {
-  ucode -L "$FORKOP_LIB" "$DIAGNOSTICS" "$@"
+  ucode -L "$PROKOP_LIB" "$DIAGNOSTICS" "$@"
 }
 
 cleanup() {
@@ -47,21 +47,21 @@ assert_status 1 0 0 "running but disabled"
 assert_status 0 1 1 "stopped but enabled"
 assert_status 0 0 0 "stopped & disabled"
 
-[ ! -e "$FORKOP_LIB/status_diagnostics.sh" ] ||
+[ ! -e "$PROKOP_LIB/status_diagnostics.sh" ] ||
   fail "status_diagnostics.sh shell owner must be removed"
 grep -Fq 'get_system_info: [ "diagnostics/runtime.uc", "get-system-info", 0 ]' "$CLI_UC" ||
   fail "service/cli.uc must dispatch get_system_info through diagnostics/runtime.uc"
-[ "$(FORKOP_VERSION=runtime-test ucode -L "$FORKOP_LIB" "$DIAGNOSTICS_RUNTIME" show-version)" = "runtime-test" ] ||
+[ "$(PROKOP_VERSION=runtime-test ucode -L "$PROKOP_LIB" "$DIAGNOSTICS_RUNTIME" show-version)" = "runtime-test" ] ||
   fail "diagnostics/runtime.uc show-version mode failed"
 if grep -n -E 'require\("uci"\)\.cursor|uci -q|uci", "show"|uci", "-q"' "$DIAGNOSTICS_RUNTIME" >/dev/null 2>&1; then
   fail "diagnostics/runtime.uc must use core.uci instead of owning direct UCI cursor or CLI calls"
 fi
-grep -Fq '"forkop-stably-running", RT_TABLE_NAME, NFT_TABLE_NAME, NFT_FAKEIP_MARK, RUNTIME_STABLE_MIN_AGE' "$DIAGNOSTICS_RUNTIME" ||
-  fail "diagnostics Forkop status must use stable runtime state to avoid crash-loop flicker"
+grep -Fq '"prokop-stably-running", RT_TABLE_NAME, NFT_TABLE_NAME, NFT_FAKEIP_MARK, RUNTIME_STABLE_MIN_AGE' "$DIAGNOSTICS_RUNTIME" ||
+  fail "diagnostics Prokop status must use stable runtime state to avoid crash-loop flicker"
 grep -Fq '"sing-box-service-stable",' "$DIAGNOSTICS_RUNTIME" ||
   fail "diagnostics sing-box status must use stable runtime state to avoid crash-loop flicker"
 
-masked_config="$WORK_DIR/forkop-masked"
+masked_config="$WORK_DIR/prokop-masked"
 cat >"$masked_config" <<'EOF'
 config settings 'main'
         option hwid 'device-secret'
@@ -69,17 +69,17 @@ config settings 'main'
 config subscription_url 'sub1'
         option url 'https://user:password@example.com/subscription?token=secret'
 EOF
-masked_output="$(status_ucode forkop-config-masked "$masked_config")"
+masked_output="$(status_ucode prokop-config-masked "$masked_config")"
 case "$masked_output" in
-  *device-secret*|*vless://secret*|*token=secret*|*user:password*) fail "masked Forkop config leaked a secret" ;;
+  *device-secret*|*vless://secret*|*token=secret*|*user:password*) fail "masked Prokop config leaked a secret" ;;
 esac
 case "$masked_output" in
   *"option hwid 'MASKED'"*) ;;
-  *) fail "masked Forkop config must preserve the HWID option shape" ;;
+  *) fail "masked Prokop config must preserve the HWID option shape" ;;
 esac
 case "$masked_output" in
   *"option url 'MASKED'"*) ;;
-  *) fail "masked Forkop config must mask subscription section URLs" ;;
+  *) fail "masked Prokop config must mask subscription section URLs" ;;
 esac
 
 wan_wireguard="$WORK_DIR/network-wireguard"
@@ -110,13 +110,13 @@ if (value.status !== "running but disabled" || value.dns_configured !== 1) {
 NODE
 
 {
-  printf 'Tue Jun 30 11:00:00 2026 user.notice forkop: [info] Starting Forkop\n'
+  printf 'Tue Jun 30 11:00:00 2026 user.notice prokop: [info] Starting Prokop\n'
   for i in $(seq 1 4500); do
     printf 'Tue Jun 30 11:00:%02d 2026 daemon.info unrelated[%04d]: filler filler filler filler filler filler filler filler filler filler\n' "$((i % 60))" "$i"
   done
-  printf 'Tue Jun 30 11:01:00 2026 user.notice forkop: [info] large logread marker survived stdin transport\n'
+  printf 'Tue Jun 30 11:01:00 2026 user.notice prokop: [info] large logread marker survived stdin transport\n'
 } >"$WORK_DIR/large-logread.txt"
-large_logs="$(FORKOP_LIB="$FORKOP_LIB" ucode -L "$FORKOP_LIB" "$DIAGNOSTICS_RUNTIME" forkop-logs-fixture <"$WORK_DIR/large-logread.txt")" ||
+large_logs="$(PROKOP_LIB="$PROKOP_LIB" ucode -L "$PROKOP_LIB" "$DIAGNOSTICS_RUNTIME" prokop-logs-fixture <"$WORK_DIR/large-logread.txt")" ||
   fail "diagnostics/runtime.uc must process large logread payloads through stdin without shell argument limits"
 case "$large_logs" in
   *"large logread marker survived stdin transport"*) ;;
@@ -136,14 +136,14 @@ SH
 chmod +x "$fake_bin/curl"
 uci_state="$WORK_DIR/uci-state.txt"
 cat >"$uci_state" <<'EOF'
-forkop.settings=settings
-forkop.settings.latency_test_url=https://latency.example/generate_204
+prokop.settings=settings
+prokop.settings.latency_test_url=https://latency.example/generate_204
 EOF
 FAKE_CURL_LOG="$WORK_DIR/fake-curl.log" \
-FORKOP_UCI_STATE_FILE="$uci_state" \
-FORKOP_LIB="$FORKOP_LIB" \
+PROKOP_UCI_STATE_FILE="$uci_state" \
+PROKOP_LIB="$PROKOP_LIB" \
 PATH="$fake_bin:$PATH" \
-  ucode -L "$FORKOP_LIB" "$DIAGNOSTICS_RUNTIME" clash-api get_proxy_latency proxy-out 5000 >/dev/null ||
+  ucode -L "$PROKOP_LIB" "$DIAGNOSTICS_RUNTIME" clash-api get_proxy_latency proxy-out 5000 >/dev/null ||
   fail "clash-api get_proxy_latency should use fake curl successfully"
 grep -Fq "url=https://latency.example/generate_204" "$WORK_DIR/fake-curl.log" ||
   fail "clash-api latency check must use settings.latency_test_url"
@@ -153,11 +153,11 @@ mkdir -p "$latency_action_dir"
 latency_state="$latency_action_dir/latency-1.json"
 printf '%s\n' '{"success":true,"running":true,"kind":"latency","latency_type":"proxy_list","section":"main","tag":"[]","started_at":100}' >"$latency_state"
 FAKE_CURL_LOG="$WORK_DIR/fake-curl-latencies.log" \
-FORKOP_UCI_STATE_FILE="$uci_state" \
-FORKOP_LIB="$FORKOP_LIB" \
-FORKOP_UI_LATENCY_ACTION_DIR="$latency_action_dir" \
+PROKOP_UCI_STATE_FILE="$uci_state" \
+PROKOP_LIB="$PROKOP_LIB" \
+PROKOP_UI_LATENCY_ACTION_DIR="$latency_action_dir" \
 PATH="$fake_bin:$PATH" \
-  ucode -L "$FORKOP_LIB" "$DIAGNOSTICS_RUNTIME" clash-api get_proxy_latencies '["urltest","proxy-a","provider-urltest","proxy-b"]' 5000 "$latency_state" >/dev/null ||
+  ucode -L "$PROKOP_LIB" "$DIAGNOSTICS_RUNTIME" clash-api get_proxy_latencies '["urltest","proxy-a","provider-urltest","proxy-b"]' 5000 "$latency_state" >/dev/null ||
   fail "clash-api get_proxy_latencies should update latency progress"
 JOB_STATE="$latency_state" node - <<'NODE'
 const fs = require("fs");
@@ -182,8 +182,8 @@ done
 # This test exercises API dispatch, not host process discovery. Model one
 # ready managed sing-box instance; real lock ownership is covered separately.
 mkdir -p "$WORK_DIR/latency-lib/service"
-ln -s "$FORKOP_LIB/core" "$WORK_DIR/latency-lib/core"
-ln -s "$FORKOP_LIB/diagnostics" "$WORK_DIR/latency-lib/diagnostics"
+ln -s "$PROKOP_LIB/core" "$WORK_DIR/latency-lib/core"
+ln -s "$PROKOP_LIB/diagnostics" "$WORK_DIR/latency-lib/diagnostics"
 cat >"$WORK_DIR/latency-lib/service/state.uc" <<'UC'
 if (ARGV[0] == "sing-box-service-runtime-pid") {
     print("4242\n");
@@ -197,16 +197,16 @@ if (ARGV[0] == "single-ready-sing-box-runtime" ||
 exit(64);
 UC
 printf '%s\n' '{"outbounds":[{"type":"vless","tag":"proxy-a","server":"one.test"},{"type":"trojan","tag":"proxy-b","server":"two.test"}]}' >"$WORK_DIR/automatic-config.json"
-printf 'forkop.settings.config_path=%s\n' "$WORK_DIR/automatic-config.json" >>"$uci_state"
-automatic_signature="$(FORKOP_LIB="$FORKOP_LIB" ucode -L "$FORKOP_LIB" "$DIAGNOSTICS_RUNTIME" proxy-outbounds-signature "$WORK_DIR/automatic-config.json")"
+printf 'prokop.settings.config_path=%s\n' "$WORK_DIR/automatic-config.json" >>"$uci_state"
+automatic_signature="$(PROKOP_LIB="$PROKOP_LIB" ucode -L "$PROKOP_LIB" "$DIAGNOSTICS_RUNTIME" proxy-outbounds-signature "$WORK_DIR/automatic-config.json")"
 printf '{"format":"1","signature":"%s"}\n' "$automatic_signature" >"$WORK_DIR/automatic.pending"
 FAKE_CURL_LOG="$WORK_DIR/fake-curl-automatic-latencies.log" \
-FORKOP_AUTOMATIC_LATENCY_PENDING_FILE="$WORK_DIR/automatic.pending" \
-FORKOP_UCI_STATE_FILE="$uci_state" \
-FORKOP_LIB="$WORK_DIR/latency-lib" \
-FORKOP_AUTOMATIC_LATENCY_TEST_LOCK_DIR="$WORK_DIR/automatic-latency-test.lock" \
+PROKOP_AUTOMATIC_LATENCY_PENDING_FILE="$WORK_DIR/automatic.pending" \
+PROKOP_UCI_STATE_FILE="$uci_state" \
+PROKOP_LIB="$WORK_DIR/latency-lib" \
+PROKOP_AUTOMATIC_LATENCY_TEST_LOCK_DIR="$WORK_DIR/automatic-latency-test.lock" \
 PATH="$fake_bin:$PATH" \
-  ucode -L "$FORKOP_LIB" "$DIAGNOSTICS_RUNTIME" automatic-latency-test >/dev/null ||
+  ucode -L "$PROKOP_LIB" "$DIAGNOSTICS_RUNTIME" automatic-latency-test >/dev/null ||
   fail "automatic latency test should test available proxy outbounds"
 grep -Fq '/proxies/proxy-a/delay' "$WORK_DIR/fake-curl-automatic-latencies.log" ||
   fail "automatic latency test must include ordinary proxy outbounds"
@@ -317,10 +317,10 @@ EOF
 )"
 
 printf '%s\n' "$sing_box_netstat" |
-  FORKOP_LIB="$FORKOP_LIB" ucode -L "$FORKOP_LIB" "$DIAGNOSTICS_RUNTIME" sing-box-standard-ports-listening-fixture >/dev/null ||
+  PROKOP_LIB="$PROKOP_LIB" ucode -L "$PROKOP_LIB" "$DIAGNOSTICS_RUNTIME" sing-box-standard-ports-listening-fixture >/dev/null ||
   fail "sing-box standard listeners should satisfy diagnostics"
 if printf '%s\n' "$sing_box_netstat" | sed '/0.0.0.0:1602/d' |
-  FORKOP_LIB="$FORKOP_LIB" ucode -L "$FORKOP_LIB" "$DIAGNOSTICS_RUNTIME" sing-box-standard-ports-listening-fixture >/dev/null 2>&1; then
+  PROKOP_LIB="$PROKOP_LIB" ucode -L "$PROKOP_LIB" "$DIAGNOSTICS_RUNTIME" sing-box-standard-ports-listening-fixture >/dev/null 2>&1; then
   fail "missing sing-box tproxy listener should fail diagnostics"
 fi
 

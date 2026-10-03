@@ -23,9 +23,9 @@ set -euo pipefail
 # wait lasts about its attempt count in seconds, not attempts x probe bound.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-RUNTIME_UC="$FORKOP_LIB/diagnostics/runtime.uc"
-AUTOTUNE_APPLY_UC="$FORKOP_LIB/autotune/apply.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+RUNTIME_UC="$PROKOP_LIB/diagnostics/runtime.uc"
+AUTOTUNE_APPLY_UC="$PROKOP_LIB/autotune/apply.uc"
 WORK_DIR="$(mktemp -d)"
 LISTENER_PIDS=()
 cleanup() {
@@ -72,7 +72,7 @@ while IFS= read -r module; do
   if grep -q -E '"curl"|\bCURL\b|"curl ' "$module"; then
     controller_modules+=("$module")
   fi
-done < <(grep -R -l -E 'SB_CLASH_API_CONTROLLER_PORT|clash_api_url\(|external_controller' "$FORKOP_LIB")
+done < <(grep -R -l -E 'SB_CLASH_API_CONTROLLER_PORT|clash_api_url\(|external_controller' "$PROKOP_LIB")
 printf '%s\n' "${controller_modules[@]}" | grep -Fxq "$RUNTIME_UC" ||
   fail "diagnostics/runtime.uc no longer requests the controller: update this test"
 printf '%s\n' "${controller_modules[@]}" | grep -Fxq "$AUTOTUNE_APPLY_UC" ||
@@ -242,15 +242,15 @@ chmod 0755 "$WORK_DIR/bin/curl" "$WORK_DIR/bin/logger"
 cat >"$WORK_DIR/sing-box.json" <<'JSON'
 {"outbounds":[{"type":"direct","tag":"direct"},{"type":"vless","tag":"proxy-a","server":"one.test","server_port":443}]}
 JSON
-cat >"$WORK_DIR/etc/forkop" <<EOF
+cat >"$WORK_DIR/etc/prokop" <<EOF
 config settings 'settings'
 	option service_listen_address '127.0.0.1'
 	option config_path '$WORK_DIR/sing-box.json'
 EOF
-printf '%s\n' 'forkop.settings=settings' \
-  'forkop.settings.service_listen_address=127.0.0.1' \
-  "forkop.settings.config_path=$WORK_DIR/sing-box.json" \
-  "forkop.settings.yacd_secret_key=$SECRET" >"$WORK_DIR/uci-state"
+printf '%s\n' 'prokop.settings=settings' \
+  'prokop.settings.service_listen_address=127.0.0.1' \
+  "prokop.settings.config_path=$WORK_DIR/sing-box.json" \
+  "prokop.settings.yacd_secret_key=$SECRET" >"$WORK_DIR/uci-state"
 
 # run_case NAME PORT ARGS... runs runtime.uc ARGS in the background against
 # the controller on PORT; wait_cases collects them.
@@ -264,19 +264,19 @@ run_case() {
     start="$(date +%s%N)"
     rc=0
     env PATH="$WORK_DIR/bin:$PATH" \
-      FORKOP_LIB="$FORKOP_LIB" \
-      FORKOP_CONFIG="$WORK_DIR/etc/forkop" \
-      FORKOP_CONFIG_FILE="$WORK_DIR/etc/forkop" \
-      FORKOP_UCI_STATE_FILE="$WORK_DIR/uci-state" \
-      FORKOP_UCI_LOG_FILE="$dir/uci-log" \
-      FORKOP_RUNTIME_STATE_DIR="$dir/run" \
+      PROKOP_LIB="$PROKOP_LIB" \
+      PROKOP_CONFIG="$WORK_DIR/etc/prokop" \
+      PROKOP_CONFIG_FILE="$WORK_DIR/etc/prokop" \
+      PROKOP_UCI_STATE_FILE="$WORK_DIR/uci-state" \
+      PROKOP_UCI_LOG_FILE="$dir/uci-log" \
+      PROKOP_RUNTIME_STATE_DIR="$dir/run" \
       SB_CLASH_API_CONTROLLER_PORT="$port" \
       CLASH_TEST_CURL_LOG="$dir/curl.log" \
       CLASH_TEST_REAL_CURL="$REAL_CURL" \
       CLASH_TEST_LOGGER_LOG="$dir/logger.log" \
       TMPDIR="$dir/tmp" \
       "${CASE_ENV[@]}" \
-      "$TIMEOUT_BIN" -k 2 "$WATCHDOG" "$UCODE_BIN" -L "$FORKOP_LIB" "$RUNTIME_UC" "$@" \
+      "$TIMEOUT_BIN" -k 2 "$WATCHDOG" "$UCODE_BIN" -L "$PROKOP_LIB" "$RUNTIME_UC" "$@" \
       >"$dir/out" 2>"$dir/err" </dev/null || rc=$?
     end="$(date +%s%N)"
     printf '%s %s\n' "$rc" "$(((end - start) / 1000000))" >"$dir/result"
@@ -499,7 +499,7 @@ if (mode == "sing-box-service-runtime-pid") {
 }
 exit(0);
 UC
-SIGNATURE="$(env FORKOP_LIB="$FORKOP_LIB" "$UCODE_BIN" -L "$FORKOP_LIB" "$RUNTIME_UC" proxy-outbounds-signature "$WORK_DIR/sing-box.json")"
+SIGNATURE="$(env PROKOP_LIB="$PROKOP_LIB" "$UCODE_BIN" -L "$PROKOP_LIB" "$RUNTIME_UC" proxy-outbounds-signature "$WORK_DIR/sing-box.json")"
 [ -n "$SIGNATURE" ] || fail "the proxy signature of the fixture was not produced"
 
 # run_locked_case NAME PORT [READY_ATTEMPTS]
@@ -508,12 +508,12 @@ run_locked_case() {
   mkdir -p "$dir"
   printf '{"format":"1","signature":"%s","scheduled_at":1,"failures":0,"retry_after":0}\n' "$SIGNATURE" >"$dir/pending"
   CASE_ENV=(
-    FORKOP_SERVICE_STATE_UC="$WORK_DIR/state-stub.uc"
-    FORKOP_AUTOMATIC_LATENCY_PENDING_FILE="$dir/pending"
-    FORKOP_AUTOMATIC_LATENCY_TEST_LOCK_DIR="$dir/latency.lock"
-    FORKOP_RELOAD_LOCK_DIR="$dir/reload.lock"
-    FORKOP_AUTOMATIC_LATENCY_CLASH_READY_ATTEMPTS="$attempts"
-    FORKOP_AUTOMATIC_LATENCY_RETRY_BASE_SECONDS=300
+    PROKOP_SERVICE_STATE_UC="$WORK_DIR/state-stub.uc"
+    PROKOP_AUTOMATIC_LATENCY_PENDING_FILE="$dir/pending"
+    PROKOP_AUTOMATIC_LATENCY_TEST_LOCK_DIR="$dir/latency.lock"
+    PROKOP_RELOAD_LOCK_DIR="$dir/reload.lock"
+    PROKOP_AUTOMATIC_LATENCY_CLASH_READY_ATTEMPTS="$attempts"
+    PROKOP_AUTOMATIC_LATENCY_RETRY_BASE_SECONDS=300
   )
   run_case "$name" "$port" automatic-latency-test new
   CASE_ENV=()

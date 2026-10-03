@@ -15,25 +15,25 @@ fail_test() {
   exit 1
 }
 
-dd if=/dev/zero of="$WORK_DIR/forkop.ipk" bs=1024 count=1 status=none
+dd if=/dev/zero of="$WORK_DIR/prokop.ipk" bs=1024 count=1 status=none
 dd if=/dev/zero of="$WORK_DIR/app.ipk" bs=1024 count=2 status=none
 dd if=/dev/zero of="$WORK_DIR/i18n.ipk" bs=1024 count=1 status=none
-FORKOP_BACKEND_FILE="$WORK_DIR/forkop.ipk"
-FORKOP_APP_FILE="$WORK_DIR/app.ipk"
-FORKOP_I18N_FILE="$WORK_DIR/i18n.ipk"
+PROKOP_BACKEND_FILE="$WORK_DIR/prokop.ipk"
+PROKOP_APP_FILE="$WORK_DIR/app.ipk"
+PROKOP_I18N_FILE="$WORK_DIR/i18n.ipk"
 
 pkg_is_installed() { return 0; }
 
 APK_WORLD_FILE="$WORK_DIR/apk-world"
 : >"$APK_WORLD_FILE"
 expected_required=$((4 * PACKAGE_ARCHIVE_SPACE_FACTOR + PACKAGE_INSTALL_OVERHEAD_KB + FLASH_RESERVE_KB))
-[ "$(forkop_install_required_space_kb)" -eq "$expected_required" ] ||
-  fail_test "Forkop space plan must be derived from the downloaded package sizes"
+[ "$(prokop_install_required_space_kb)" -eq "$expected_required" ] ||
+  fail_test "Prokop space plan must be derived from the downloaded package sizes"
 [ "$expected_required" -lt 15360 ] ||
-  fail_test "calculated Forkop space plan must replace the old fixed 15 MB threshold"
+  fail_test "calculated Prokop space plan must replace the old fixed 15 MB threshold"
 
 pkg_is_installed() { return 1; }
-missing_dependency_required="$(forkop_install_required_space_kb)"
+missing_dependency_required="$(prokop_install_required_space_kb)"
 [ "$missing_dependency_required" -eq "$((expected_required + 14 * MISSING_DEPENDENCY_ALLOWANCE_KB))" ] ||
   fail_test "space plan must include an allowance only for missing direct dependencies"
 pkg_is_installed() { return 0; }
@@ -60,7 +60,7 @@ ensure_flash_space >/dev/null
   ensure_flash_space >/dev/null
 )
 [ "$(cat "$WORK_DIR/world-switch")" = sing-box ] ||
-  fail_test "a stale sing-box-tiny APK world entry must force conversion before the Forkop transaction"
+  fail_test "a stale sing-box-tiny APK world entry must force conversion before the Prokop transaction"
 : >"$APK_WORLD_FILE"
 PKG_IS_APK=0
 pkg_is_installed() { return 0; }
@@ -83,29 +83,29 @@ case "$1" in
     printf '%s\n' 'Package: sing-box' 'Size: 10240'
     ;;
   remove)
-    printf '%s\n' "$*" >>"$FORKOP_TEST_PACKAGE_LOG"
+    printf '%s\n' "$*" >>"$PROKOP_TEST_PACKAGE_LOG"
     ;;
 esac
 SH
 cat >"$WORK_DIR/fake-bin/apk" <<'SH'
 #!/bin/sh
-printf '%s\n' "$*" >>"$FORKOP_TEST_PACKAGE_LOG"
+printf '%s\n' "$*" >>"$PROKOP_TEST_PACKAGE_LOG"
 SH
 chmod 0755 "$WORK_DIR/fake-bin/opkg"
 chmod 0755 "$WORK_DIR/fake-bin/apk"
-FORKOP_TEST_PACKAGE_LOG="$WORK_DIR/package-manager.log"
-export FORKOP_TEST_PACKAGE_LOG
+PROKOP_TEST_PACKAGE_LOG="$WORK_DIR/package-manager.log"
+export PROKOP_TEST_PACKAGE_LOG
 original_path="$PATH"
 PATH="$WORK_DIR/fake-bin:$PATH"
 PKG_IS_APK=0
 [ "$(package_reclaimable_space_kb sing-box)" -eq 9 ] ||
   fail_test "OPKG reclaim calculation must use 90 percent of the feed archive size"
 pkg_remove_name sing-box
-grep -Fxq 'remove --force-depends sing-box' "$FORKOP_TEST_PACKAGE_LOG" ||
+grep -Fxq 'remove --force-depends sing-box' "$PROKOP_TEST_PACKAGE_LOG" ||
   fail_test "OPKG sing-box replacement must permit its dependency to be restored by tiny"
 PKG_IS_APK=1
 pkg_remove_name sing-box
-grep -Fxq 'del --force-broken-world sing-box' "$FORKOP_TEST_PACKAGE_LOG" ||
+grep -Fxq 'del --force-broken-world sing-box' "$PROKOP_TEST_PACKAGE_LOG" ||
   fail_test "APK sing-box replacement must permit its world dependency to be restored by tiny"
 PKG_IS_APK=0
 PATH="$original_path"
@@ -225,7 +225,7 @@ if (ensure_flash_space >/dev/null 2>&1); then
 fi
 [ -s "$WORK_DIR/switches" ] || fail_test "post-conversion remeasurement must follow an authorized switch"
 
-FORKOP_LEGACY_DETECTED=1
+PROKOP_LEGACY_DETECTED=1
 interactive_terminal_available() { return 0; }
 numbered_yes_no_prompt() { return 0; }
 : >"$WORK_DIR/backups"

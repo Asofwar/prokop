@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 REPO="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
-SCRIPT="$REPO/forkop/files/usr/lib/full-uninstall.sh"
+SCRIPT="$REPO/prokop/files/usr/lib/full-uninstall.sh"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 # shellcheck source=tests/helpers/wait.sh
@@ -10,46 +10,46 @@ trap 'rm -rf "$WORK"' EXIT
 fixture() {
     ROOT="$WORK/$1"
     mkdir -p "$ROOT/etc/opkg" "$ROOT/usr/bin" "$ROOT/bin" "$ROOT/packages" \
-        "$ROOT/etc/forkop" "$ROOT/etc/sing-box" "$ROOT/etc/config" "$ROOT/usr/lib/forkop"
+        "$ROOT/etc/prokop" "$ROOT/etc/sing-box" "$ROOT/etc/config" "$ROOT/usr/lib/prokop"
     printf 'original vendor repositories\n' > "$ROOT/etc/opkg/distfeeds.conf.pre-forkop-mirror"
     printf 'https://mirror.51343.ru/openwrt/releases/test\n' > "$ROOT/etc/opkg/distfeeds.conf"
     printf 'wifi configuration\n' > "$ROOT/etc/config/wireless"
     touch "$ROOT/etc/config/wireless.apk-new"
-    touch "$ROOT/etc/config/forkop.apk-new" "$ROOT/etc/config/forkop.apk-old" \
-        "$ROOT/etc/config/forkop-opkg" "$ROOT/etc/config/forkop.opkg-new" \
-        "$ROOT/etc/config/forkop.opkg-old" "$ROOT/etc/config/forkop.opkg-dist"
+    touch "$ROOT/etc/config/prokop.apk-new" "$ROOT/etc/config/prokop.apk-old" \
+        "$ROOT/etc/config/prokop-opkg" "$ROOT/etc/config/prokop.opkg-new" \
+        "$ROOT/etc/config/prokop.opkg-old" "$ROOT/etc/config/prokop.opkg-dist"
     touch "$ROOT/etc/config/sing-box.apk-new" "$ROOT/etc/config/sing-box.apk-old" \
         "$ROOT/etc/config/sing-box-opkg" "$ROOT/etc/config/sing-box.opkg-new" \
         "$ROOT/etc/config/sing-box.opkg-old" "$ROOT/etc/config/sing-box.opkg-dist"
-    touch "$ROOT/etc/forkop/secret" "$ROOT/etc/sing-box/config.json" "$ROOT/usr/lib/forkop/test"
-    touch "$ROOT/packages/forkop" "$ROOT/packages/luci-app-forkop" "$ROOT/packages/sing-box"
-    cat > "$ROOT/usr/bin/forkop" <<'SH'
+    touch "$ROOT/etc/prokop/secret" "$ROOT/etc/sing-box/config.json" "$ROOT/usr/lib/prokop/test"
+    touch "$ROOT/packages/prokop" "$ROOT/packages/luci-app-prokop" "$ROOT/packages/sing-box"
+    cat > "$ROOT/usr/bin/prokop" <<'SH'
 #!/bin/sh
-printf '%s\n' "$*" >> "$FORKOP_UNINSTALL_ROOT/service-calls"
+printf '%s\n' "$*" >> "$PROKOP_UNINSTALL_ROOT/service-calls"
 exit "${FAIL_STOP:-0}"
 SH
     cat > "$ROOT/bin/opkg" <<'SH'
 #!/bin/sh
 case "$1" in
- status) [ -e "$FORKOP_UNINSTALL_ROOT/packages/$2" ] && echo 'Status: install ok installed';;
+ status) [ -e "$PROKOP_UNINSTALL_ROOT/packages/$2" ] && echo 'Status: install ok installed';;
  remove)
   [ "${FAIL_PACKAGE:-0}" = 0 ] || exit 1
   shift
-  for p in "$@"; do rm -f "$FORKOP_UNINSTALL_ROOT/packages/$p"; done;;
+  for p in "$@"; do rm -f "$PROKOP_UNINSTALL_ROOT/packages/$p"; done;;
  *) exit 1;;
 esac
 SH
-    chmod +x "$ROOT/usr/bin/forkop" "$ROOT/bin/opkg"
+    chmod +x "$ROOT/usr/bin/prokop" "$ROOT/bin/opkg"
 }
 
 worker_settled() {
-    status="$(cat "$ROOT"/www/forkop-uninstall.*.json)"
+    status="$(cat "$ROOT"/www/prokop-uninstall.*.json)"
     case "$status" in *'"state":"complete"'*|*'"state":"failed"'*) return 0;; esac
     return 1
 }
 
 run_case() {
-    FORKOP_UNINSTALL_ROOT="$ROOT" PATH="$ROOT/bin:$PATH" sh "$SCRIPT" start > "$ROOT/response"
+    PROKOP_UNINSTALL_ROOT="$ROOT" PATH="$ROOT/bin:$PATH" sh "$SCRIPT" start > "$ROOT/response"
     wait_until 60 worker_settled || { echo 'worker timed out'; exit 1; }
     printf '%s\n' "$status" | grep -q "\"state\":\"$1\""
 }
@@ -57,12 +57,12 @@ run_case() {
 fixture opkg
 run_case complete
 grep -qx 'original vendor repositories' "$ROOT/etc/opkg/distfeeds.conf"
-[ ! -e "$ROOT/usr/lib/forkop" ] && [ ! -e "$ROOT/etc/forkop" ] && [ ! -e "$ROOT/etc/sing-box" ]
-[ ! -e "$ROOT/packages/forkop" ]
+[ ! -e "$ROOT/usr/lib/prokop" ] && [ ! -e "$ROOT/etc/prokop" ] && [ ! -e "$ROOT/etc/sing-box" ]
+[ ! -e "$ROOT/packages/prokop" ]
 grep -qx 'wifi configuration' "$ROOT/etc/config/wireless"
 [ -e "$ROOT/etc/config/wireless.apk-new" ]
-for file in forkop.apk-new forkop.apk-old forkop-opkg forkop.opkg-new forkop.opkg-old \
-    forkop.opkg-dist sing-box.apk-new sing-box.apk-old sing-box-opkg sing-box.opkg-new \
+for file in prokop.apk-new prokop.apk-old prokop-opkg prokop.opkg-new prokop.opkg-old \
+    prokop.opkg-dist sing-box.apk-new sing-box.apk-old sing-box-opkg sing-box.opkg-new \
     sing-box.opkg-old sing-box.opkg-dist; do
     [ ! -e "$ROOT/etc/config/$file" ]
 done
@@ -71,7 +71,7 @@ grep -qx dnsmasq_restore "$ROOT/service-calls"
 fixture missing_backup
 rm "$ROOT/etc/opkg/distfeeds.conf.pre-forkop-mirror"
 run_case failed
-[ -e "$ROOT/packages/forkop" ] && [ -e "$ROOT/etc/forkop/secret" ]
+[ -e "$ROOT/packages/prokop" ] && [ -e "$ROOT/etc/prokop/secret" ]
 [ ! -e "$ROOT/service-calls" ]
 
 fixture rom_fallback
@@ -85,7 +85,7 @@ fixture failed_package
 export FAIL_PACKAGE=1
 run_case failed
 unset FAIL_PACKAGE
-[ -e "$ROOT/packages/forkop" ] && [ -e "$ROOT/usr/lib/forkop/test" ]
+[ -e "$ROOT/packages/prokop" ] && [ -e "$ROOT/usr/lib/prokop/test" ]
 
 fixture apk
 mkdir -p "$ROOT/etc/apk/repositories.d" "$ROOT/etc/apk/keys"
@@ -95,8 +95,8 @@ touch "$ROOT/etc/apk/repositories.d/forkop.list" "$ROOT/etc/apk/keys/forkop-mirr
 cat > "$ROOT/bin/apk" <<'SH'
 #!/bin/sh
 case "$1" in
- info) test -f "$FORKOP_UNINSTALL_ROOT/packages/$3";;
- del) shift; for p in "$@"; do rm -f "$FORKOP_UNINSTALL_ROOT/packages/$p"; done;;
+ info) test -f "$PROKOP_UNINSTALL_ROOT/packages/$3";;
+ del) shift; for p in "$@"; do rm -f "$PROKOP_UNINSTALL_ROOT/packages/$p"; done;;
  *) exit 1;;
 esac
 SH

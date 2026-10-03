@@ -13,28 +13,28 @@ set -euo pipefail
 # exists, without the transit rule or any action.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT HUP INT TERM
 
 # The read-only role never opens the rule editor (Settings needs the admin
 # ACL); its only view of rules, get_readonly_config_sections, does not carry
 # the hidden cascade either.
-cat >"$WORK/forkop" <<'CONF'
+cat >"$WORK/prokop" <<'CONF'
 config settings 'settings'
 config section 'rule'
 config section 'transit'
 CONF
 cat >"$WORK/state" <<'STATE'
-forkop.settings=settings
-forkop.rule=section
-forkop.rule.action=connection
-forkop.rule.outbound_detour_enabled=1
-forkop.rule.outbound_detour_section=transit
-forkop.transit=section
-forkop.transit.action=connection
+prokop.settings=settings
+prokop.rule=section
+prokop.rule.action=connection
+prokop.rule.outbound_detour_enabled=1
+prokop.rule.outbound_detour_section=transit
+prokop.transit=section
+prokop.transit.action=connection
 STATE
-FORKOP_CONFIG="$WORK/forkop" FORKOP_UCI_STATE_FILE="$WORK/state" \
+PROKOP_CONFIG="$WORK/prokop" PROKOP_UCI_STATE_FILE="$WORK/state" \
   ucode -L "$LIB" "$LIB/diagnostics/runtime.uc" get-readonly-config-sections >"$WORK/sections.json"
 grep -q '"rule"' "$WORK/sections.json" || { echo "FAIL: read-only sections are missing the rule" >&2; exit 1; }
 if grep -q 'outbound_detour' "$WORK/sections.json"; then

@@ -3,7 +3,7 @@ set -euo pipefail
 
 # DPI autotune isolation: production bypass contract and mark flow.
 #
-# 1. The contract (autotune/contract.uc) accepts the real Forkop setup and
+# 1. The contract (autotune/contract.uc) accepts the real Prokop setup and
 #    refuses every system where the probe-mark bypass is missing, ambiguous,
 #    preceded by an unsafe rule or scheduled before the probe chains, where
 #    another table, legacy iptables, policy routing or production inbound
@@ -19,12 +19,12 @@ set -euo pipefail
 #    are evaluated on the same rulesets to show they leak exactly where the
 #    old rule-order dependency is removed.
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT/forkop/files/usr/lib"
+LIB="$ROOT/prokop/files/usr/lib"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
-FORKOP_LIB="$LIB" ucode -L "$LIB" "$LIB/autotune/isolation.uc" model 172.217.20.163 > "$WORK/model.json"
-FORKOP_LIB="$LIB" ucode -L "$LIB" "$LIB/autotune/isolation.uc" model 172.217.20.163 direct > "$WORK/model-direct.json"
+PROKOP_LIB="$LIB" ucode -L "$LIB" "$LIB/autotune/isolation.uc" model 172.217.20.163 > "$WORK/model.json"
+PROKOP_LIB="$LIB" ucode -L "$LIB" "$LIB/autotune/isolation.uc" model 172.217.20.163 direct > "$WORK/model-direct.json"
 
 ROOT="$ROOT" LIB="$LIB" WORK="$WORK" node <<'JS'
 const fs = require('fs');
@@ -67,7 +67,7 @@ const MUTANT = clone(MODEL);
 MUTANT.chains[1].rules[0].set_mark = null;
 
 // ---- ruleset surgery by meaning, never by handle ------------------------
-const isRule = (x, chain) => x.rule && x.rule.table === 'ForkopTable' && x.rule.chain === chain;
+const isRule = (x, chain) => x.rule && x.rule.table === 'ProkopTable' && x.rule.chain === chain;
 const rulesOf = (listing, chain) => listing.filter((x) => isRule(x, chain)).map((x) => x.rule);
 function setRules(listing, chain, rules) {
   const first = listing.findIndex((x) => isRule(x, chain));
@@ -89,7 +89,7 @@ assert.ok(mo.some(isDesyncReturn) && mo.some(setsMark) && mo.some(isPriorityJump
 assert.ok(rulesOf(FIXTURE, 'priority_output_rules').some(isPriorityGuard));
 
 const OPTIONS = { target: TARGET, probe_saddr: '203.0.113.10', reply_dev: 'pppoe-wan',
-  sets: { forkop_interfaces: ['br-lan'] }, legacy_tables: [], uids: [0, 2147483647] };
+  sets: { prokop_interfaces: ['br-lan'] }, legacy_tables: [], uids: [0, 2147483647] };
 function contract(listing, ipRules = IPRULES, options = {}) {
   fs.writeFileSync(path.join(WORK, 'ruleset.json'), JSON.stringify({ nftables: listing }));
   fs.writeFileSync(path.join(WORK, 'context.json'), JSON.stringify({ ip_rules: ipRules, options: { ...OPTIONS, ...options } }));
@@ -105,8 +105,8 @@ function contract(listing, ipRules = IPRULES, options = {}) {
 // isolation production would mark it for FakeIP/TPROXY.
 const SETS = {
   localv4: ['0.0.0.0/8', '10.0.0.0/8', '127.0.0.0/8', '169.254.0.0/16', '172.16.0.0/12', '192.168.0.0/16', '224.0.0.0/4', '240.0.0.0/4'],
-  forkop_subnets: [`${TARGET}/32`], forkop_rule_main_subnets: [`${TARGET}/32`],
-  forkop_ports: [443], forkop_ip_ports: [[TARGET, 443]],
+  prokop_subnets: [`${TARGET}/32`], prokop_rule_main_subnets: [`${TARGET}/32`],
+  prokop_ports: [443], prokop_ip_ports: [[TARGET, 443]],
 };
 const base = { daddr: TARGET, saddr: '203.0.113.10', l4proto: 'tcp', dport: 443, oifname: 'pppoe-wan' };
 const packets = {
@@ -118,7 +118,7 @@ function flow(listing, pkt, model = MODEL, ipRules = IPRULES) {
   return outputPath({ model, production: new Production(listing, SETS), ipRules, pkt });
 }
 const leaks = (r) => r.dropped === null && (r.productionQueue !== null || (r.finalMark & FAKEIP) === FAKEIP ||
-  r.path.some((p) => p.action === 'set_mark' && !p.chain.startsWith('ForkopAutotuneProbe')) || r.route !== 'main');
+  r.path.some((p) => p.action === 'set_mark' && !p.chain.startsWith('ProkopAutotuneProbe')) || r.route !== 'main');
 
 function assertIsolated(listing, label, ipRules = IPRULES) {
   for (const [name, pkt] of Object.entries(packets)) {
@@ -129,7 +129,7 @@ function assertIsolated(listing, label, ipRules = IPRULES) {
     assert.equal(r.routeMark, PROBE, `${where}: routed with mark ${r.routeMark.toString(16)}`);
     assert.equal(r.finalMark, PROBE, `${where}: final mark ${r.finalMark.toString(16)}`);
     assert.equal(r.productionQueue, null, `${where}: production queue`);
-    assert.ok(!r.path.some((p) => p.action === 'set_mark' && !p.chain.startsWith('ForkopAutotuneProbe')), `${where}: production re-marked the probe`);
+    assert.ok(!r.path.some((p) => p.action === 'set_mark' && !p.chain.startsWith('ProkopAutotuneProbe')), `${where}: production re-marked the probe`);
     assert.ok(r.productionTerminal && isBypass(r.productionTerminal.rule), `${where}: did not end in the production bypass`);
     assert.equal(r.route, 'main', `${where}: policy route ${r.route}`);
     assert.ok(!r.path.some((p) => p.target === 'priority_output_rules'), `${where}: reached priority_output_rules`);
@@ -139,7 +139,7 @@ function assertIsolated(listing, label, ipRules = IPRULES) {
   }
 }
 
-// P0: the real Forkop output path.
+// P0: the real Prokop output path.
 assert.equal(contract(FIXTURE).ok, true, JSON.stringify(contract(FIXTURE).violations));
 assertIsolated(FIXTURE, 'P0');
 {
@@ -158,7 +158,7 @@ assertIsolated(FIXTURE, 'P0');
   const r = flow(FIXTURE, { ...packets.probe, mark: 0x01000001 });
   assert.equal(r.dropped, 'probe:output');
   const outside = flow(FIXTURE, { ...packets.injected, sport: 50000 });
-  assert.ok(!outside.path.some((p) => p.chain.startsWith('ForkopAutotuneProbe')), 'flow outside the tuple untouched');
+  assert.ok(!outside.path.some((p) => p.chain.startsWith('ProkopAutotuneProbe')), 'flow outside the tuple untouched');
   ok('unexpected tuple packets dropped; flows outside the tuple untouched');
 }
 ok('P0 real ruleset: contract ok, isolated');
@@ -178,7 +178,7 @@ const variants = {
   }, true],
   P4_reversed_tail: [(l) => { const [head, tail] = tailOf(l); return setRules(l, 'mangle_output', [...head, ...tail.reverse()]); }, true],
   P5_masked_bypass_first: [(l) => {
-    const masked = { family: 'inet', table: 'ForkopTable', chain: 'mangle_output', handle: 9001,
+    const masked = { family: 'inet', table: 'ProkopTable', chain: 'mangle_output', handle: 9001,
       expr: [{ match: { op: '==', left: { '&': [{ meta: { key: 'mark' } }, 0xff000000] }, right: PROBE } }, { counter: { packets: 0, bytes: 0 } }, { return: null }] };
     return setRules(l, 'mangle_output', [masked, ...rulesOf(l, 'mangle_output').filter((r) => !isBypass(r))]);
   }, false],
@@ -208,8 +208,8 @@ for (const [name, [mutate, oldLeaks]] of Object.entries(variants)) {
 }
 {
   const legacy = flow(variants.P1_no_desync_return[0](clone(FIXTURE)), packets.injected, LEGACY);
-  assert.equal(legacy.finalMark & FAKEIP, FAKEIP); assert.equal(legacy.route, 'forkop');
-  ok('without handle-117 semantics the old design hands injected packets to FakeIP / table forkop');
+  assert.equal(legacy.finalMark & FAKEIP, FAKEIP); assert.equal(legacy.route, 'prokop');
+  ok('without handle-117 semantics the old design hands injected packets to FakeIP / table prokop');
 }
 // Routing: a policy rule that sends unmarked traffic elsewhere. The old design
 // queued the original without re-routing (mark 0 route); the new one re-routes
@@ -237,15 +237,15 @@ const refusals = {
   N4_bypass_not_universal: [(l) => { l[bypassIdx(l)].rule.expr.unshift({ match: { op: '==', left: { payload: { protocol: 'ip', field: 'daddr' } }, right: '198.51.100.1' } }); return l; }, 'bypass_rule_missing'],
   N5_bypass_negated: [(l) => { l[bypassIdx(l)].rule.expr[0].match.op = '!='; return l; }, 'bypass_rule_missing'],
   N6_bypass_other_mark: [(l) => { l[bypassIdx(l)].rule.expr[0].match.right = 0x08000001; return l; }, 'bypass_rule_missing'],
-  N7_production_before_probe: [(l) => { chainOf(l, 'ForkopTable', 'mangle_output').prio = -152; return l; }, 'production_chain_not_after_probe'],
-  N8_production_same_priority: [(l) => { chainOf(l, 'ForkopTable', 'mangle_output').prio = -151; return l; }, 'production_chain_not_after_probe'],
-  N8b_production_priority_unknown: [(l) => { delete chainOf(l, 'ForkopTable', 'mangle_output').prio; return l; }, 'production_chain_priority_unknown'],
-  N8c_production_policy_drop: [(l) => { chainOf(l, 'ForkopTable', 'mangle_output').policy = 'drop'; return l; }, 'production_chain_policy'],
-  N9_extra_production_postrouting: [(l) => addChain(l, 'inet', 'ForkopTable', 'late_post', 'postrouting', 0, [[markSet(FAKEIP)]]), 'bypass_rule_missing'],
-  N9b_extra_production_postrouting_marks_first: [(l) => addChain(l, 'inet', 'ForkopTable', 'late_post', 'postrouting', 0,
+  N7_production_before_probe: [(l) => { chainOf(l, 'ProkopTable', 'mangle_output').prio = -152; return l; }, 'production_chain_not_after_probe'],
+  N8_production_same_priority: [(l) => { chainOf(l, 'ProkopTable', 'mangle_output').prio = -151; return l; }, 'production_chain_not_after_probe'],
+  N8b_production_priority_unknown: [(l) => { delete chainOf(l, 'ProkopTable', 'mangle_output').prio; return l; }, 'production_chain_priority_unknown'],
+  N8c_production_policy_drop: [(l) => { chainOf(l, 'ProkopTable', 'mangle_output').policy = 'drop'; return l; }, 'production_chain_policy'],
+  N9_extra_production_postrouting: [(l) => addChain(l, 'inet', 'ProkopTable', 'late_post', 'postrouting', 0, [[markSet(FAKEIP)]]), 'bypass_rule_missing'],
+  N9b_extra_production_postrouting_marks_first: [(l) => addChain(l, 'inet', 'ProkopTable', 'late_post', 'postrouting', 0,
     [[markSet(FAKEIP)], [{ match: { op: '==', left: { meta: { key: 'mark' } }, right: PROBE } }, { return: null }]]), 'unsafe_rule_before_bypass'],
-  N10_production_absent: [(l) => l.filter((x) => !((x.table && x.table.name === 'ForkopTable') || ['chain', 'rule', 'set'].some((k) => x[k] && x[k].table === 'ForkopTable'))), 'production_table_absent'],
-  N11_production_output_absent: [(l) => l.filter((x) => !((x.chain && x.chain.table === 'ForkopTable' && x.chain.name === 'mangle_output') || isRule(x, 'mangle_output'))), 'production_output_chain_absent'],
+  N10_production_absent: [(l) => l.filter((x) => !((x.table && x.table.name === 'ProkopTable') || ['chain', 'rule', 'set'].some((k) => x[k] && x[k].table === 'ProkopTable'))), 'production_table_absent'],
+  N11_production_output_absent: [(l) => l.filter((x) => !((x.chain && x.chain.table === 'ProkopTable' && x.chain.name === 'mangle_output') || isRule(x, 'mangle_output'))), 'production_output_chain_absent'],
   N12_foreign_early_marker: [(l) => addChain(l, 'inet', 'other', 'out', 'output', -200, [[markSet(1)]], { type: 'route' }), 'foreign_chain_unsafe'],
   N13_foreign_late_queue_via_jump: [(l) => [...l,
     { chain: { family: 'inet', table: 'fw4', name: 'hidden', handle: 998 } },
@@ -257,19 +257,19 @@ const refusals = {
   N17_foreign_unknown_statement: [(l) => [...l, { rule: { family: 'inet', table: 'fw4', chain: 'raw_output', handle: 993, expr: [{ xt: { type: 'target', name: 'MARK' } }] } }], 'foreign_chain_unsafe'],
   N18_foreign_daddr_rewrite: [(l) => addChain(l, 'inet', 'other', 'out', 'output', -100, [[{ mangle: { key: { payload: { protocol: 'ip', field: 'daddr' } }, value: '198.18.0.1' } }]], { type: 'route' }), 'foreign_chain_unsafe'],
   N19_foreign_dport_rewrite: [(l) => addChain(l, 'inet', 'other', 'post', 'postrouting', 0, [[{ mangle: { key: { payload: { protocol: 'th', field: 'dport' } }, value: 1602 } }]]), 'foreign_chain_unsafe'],
-  N20_same_name_other_family: [(l) => addChain(l, 'ip', 'ForkopTable', 'out', 'output', -140, [[markSet(FAKEIP)]], { type: 'route' }), 'foreign_chain_unsafe'],
-  N21_probe_name_other_family: [(l) => addChain(l, 'ip', 'ForkopAutotuneProbe', 'out', 'output', -140, [[{ queue: { num: 4000 } }]], { type: 'route' }), 'foreign_chain_unsafe'],
-  N22_reply_path_ungated_tproxy: [(l) => [...l, { rule: { family: 'inet', table: 'ForkopTable', chain: 'proxy', handle: 990,
+  N20_same_name_other_family: [(l) => addChain(l, 'ip', 'ProkopTable', 'out', 'output', -140, [[markSet(FAKEIP)]], { type: 'route' }), 'foreign_chain_unsafe'],
+  N21_probe_name_other_family: [(l) => addChain(l, 'ip', 'ProkopAutotuneProbe', 'out', 'output', -140, [[{ queue: { num: 4000 } }]], { type: 'route' }), 'foreign_chain_unsafe'],
+  N22_reply_path_ungated_tproxy: [(l) => [...l, { rule: { family: 'inet', table: 'ProkopTable', chain: 'proxy', handle: 990,
     expr: [{ match: { op: '==', left: { meta: { key: 'l4proto' } }, right: 'tcp' } }, { tproxy: { family: 'ip', port: 1602 } }] } }], 'reply_path_unsafe'],
-  N23_reply_path_wan_in_interfaces: [(l) => l, 'reply_path_unsafe', { sets: { forkop_interfaces: ['br-lan', 'pppoe-wan'] } }],
+  N23_reply_path_wan_in_interfaces: [(l) => l, 'reply_path_unsafe', { sets: { prokop_interfaces: ['br-lan', 'pppoe-wan'] } }],
   N24_reply_path_set_unknown: [(l) => l, 'reply_path_unsafe', { sets: {} }],
   N25_legacy_iptables: [(l) => l, 'legacy_iptables_present', { legacy_tables: ['mangle'] }],
   N26_foreign_reply_queue: [(l) => addChain(l, 'inet', 'other', 'pre', 'prerouting', -200,
     [[{ match: { op: '==', left: { payload: { protocol: 'tcp', field: 'sport' } }, right: 443 } }, { queue: { num: 300 } }]]), 'foreign_reply_unsafe'],
   N27_foreign_reply_fakeip_mark: [(l) => addChain(l, 'inet', 'other', 'in', 'input', 0, [[markSet(FAKEIP)]]), 'foreign_reply_unsafe'],
-  N28_reply_statement_before_gate: [(l) => [...l, { rule: { family: 'inet', table: 'ForkopTable', chain: 'mangle', handle: 989,
+  N28_reply_statement_before_gate: [(l) => [...l, { rule: { family: 'inet', table: 'ProkopTable', chain: 'mangle', handle: 989,
     expr: [markSet(FAKEIP), { match: { op: '==', left: { meta: { key: 'iifname' } }, right: 'br-lan' } }, { counter: { packets: 0, bytes: 0 } }] } }], 'reply_path_unsafe'],
-  N29_reply_wildcard_interface: [(l) => l, 'reply_path_unsafe', { sets: { forkop_interfaces: ['br-lan', 'ppp*'] } }],
+  N29_reply_wildcard_interface: [(l) => l, 'reply_path_unsafe', { sets: { prokop_interfaces: ['br-lan', 'ppp*'] } }],
   N30_foreign_probe_mark_unconfined: [(l) => addChain(l, 'inet', 'other', 'out', 'output', -200, [[markSet(PROBE)]], { type: 'route' }), 'foreign_chain_unsafe'],
   N31_port_forward_covers_probe_ports: [(l) => addChain(l, 'inet', 'other', 'dnat', 'prerouting', -100,
     [[{ match: { op: '==', left: { meta: { key: 'iifname' } }, right: 'pppoe-wan' } },
@@ -286,9 +286,9 @@ for (const [name, [mutate, code, options]] of Object.entries(refusals)) {
 
 // Accepted variants that must not be false refusals.
 const accepted = {
-  A1_torrserver_direct_sets_probe_mark: (l) => addChain(l, 'inet', 'ForkopTorrServerDirect', 'output', 'output', -151,
+  A1_torrserver_direct_sets_probe_mark: (l) => addChain(l, 'inet', 'ProkopTorrServerDirect', 'output', 'output', -151,
     [[{ match: { op: '==', left: { socket: { key: 'cgroupv2', level: 2 } }, right: 'services/torrserver' } }, markSet(PROBE), { counter: { packets: 0, bytes: 0 } }]], { type: 'route' }),
-  A2_production_postrouting_early_with_bypass: (l) => addChain(l, 'inet', 'ForkopTable', 'post', 'postrouting', -300,
+  A2_production_postrouting_early_with_bypass: (l) => addChain(l, 'inet', 'ProkopTable', 'post', 'postrouting', -300,
     [[{ match: { op: '==', left: { meta: { key: 'mark' } }, right: PROBE } }, { return: null }], [markSet(FAKEIP)]]),
   A3_foreign_dscp_and_drop: (l) => addChain(l, 'inet', 'other', 'post', 'postrouting', 0,
     [[{ mangle: { key: { payload: { protocol: 'ip', field: 'dscp' } }, value: 'cs1' } }], [{ match: { op: '==', left: { payload: { protocol: 'tcp', field: 'dport' } }, right: 25 } }, { drop: null }]]),
@@ -314,8 +314,8 @@ for (const [name, mutate] of Object.entries(accepted)) {
 const rule = (extra) => [...IPRULES, { priority: 90, src: 'all', ...extra }];
 const ipCases = {
   R1_fwmark_selects_probe: [rule({ fwmark: '0x8000000', fwmask: '0x8000000', table: '200' }), false],
-  R2_exact_fwmark: [rule({ fwmark: '0x8000000', table: 'forkop' }), false],
-  R3_negated_fwmark: [rule({ not: null, fwmark: '0x1', fwmask: '0x1', table: 'forkop' }), false],
+  R2_exact_fwmark: [rule({ fwmark: '0x8000000', table: 'prokop' }), false],
+  R3_negated_fwmark: [rule({ not: null, fwmark: '0x1', fwmask: '0x1', table: 'prokop' }), false],
   R4_fwmark_blackhole: [rule({ fwmark: '0x8000000', action: 'blackhole' }), false],
   R5_fwmark_to_main_ok: [rule({ fwmark: '0x8000000', fwmask: '0x8000000', table: 'main' }), true],
   R6_unrelated_fwmark_ok: [rule({ fwmark: '0x10000', fwmask: '0xff0000', table: '52' }), true],
@@ -323,8 +323,8 @@ const ipCases = {
   R8_not_with_other_selector: [rule({ not: null, fwmark: '0x8000000', ipproto: 'udp', table: '100' }), false],
   R9_ipproto_dport: [rule({ ipproto: 'tcp', dport: 443, table: '100' }), false],
   R10_uidrange_root: [rule({ uidrange: '0-0', table: '100' }), false],
-  R11_sport_range: [rule({ sport: '61000-61031', table: 'forkop' }), false],
-  R12_to_target: [rule({ dst: '172.217.0.0', dstlen: 16, table: 'forkop' }), false],
+  R11_sport_range: [rule({ sport: '61000-61031', table: 'prokop' }), false],
+  R12_to_target: [rule({ dst: '172.217.0.0', dstlen: 16, table: 'prokop' }), false],
   R13_to_other_ok: [rule({ dst: '10.0.0.0', dstlen: 8, table: '100' }), true],
   R14_from_wan_address: [rule({ src: '203.0.113.10', srclen: 32, table: '100' }), false],
   R15_iif_lan_ok: [rule({ iif: 'br-lan', table: '100' }), true],

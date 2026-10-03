@@ -1,7 +1,7 @@
 "use strict";
 
 // Properties of autotune hysteresis, autonomous-apply gating and candidate
-// selection over generated inputs (UC-156, safety invariant 11: Forkop never
+// selection over generated inputs (UC-156, safety invariant 11: Prokop never
 // applies an unconfirmed or different recommendation).
 // Hysteresis (autotune/hysteresis.uc) over random observation streams:
 //   - the count equals the confident recommendations of the pending candidate
@@ -17,7 +17,7 @@
 //   - adding a candidate that failed every probe never changes the choice;
 //   - one more successful probe never makes a candidate rank below one it
 //     ranked above, and a selected candidate stays selected.
-// Usage: autotune.js <forkop lib>
+// Usage: autotune.js <prokop lib>
 
 const assert = require("node:assert/strict");
 const { Rng, seedFrom, casesFrom, ucodeBatch, forAll, exercised } = require("./scaffold");
@@ -106,7 +106,7 @@ forAll("hysteresis counts confident repeats of one candidate", seed, streams, (s
       assert.equal(obs.status, "recommendation");
       assert.equal(obs.candidate, p.candidate, `step ${i}: the applied candidate is the confirmed one`);
       assert.equal(obs.confidence, "high", `step ${i}: only high confidence is applied`);
-      assert.notEqual(obs.candidate, "direct", `step ${i}: Forkop never turns DPI off by itself`);
+      assert.notEqual(obs.candidate, "direct", `step ${i}: Prokop never turns DPI off by itself`);
     }
   });
 });

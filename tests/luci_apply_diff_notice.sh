@@ -14,7 +14,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const assert = require('node:assert/strict');
 const root = process.argv[2];
-const file = path.join(root, 'luci-app-forkop/htdocs/luci-static/resources/view/forkop/configform.js');
+const file = path.join(root, 'luci-app-prokop/htdocs/luci-static/resources/view/prokop/configform.js');
 
 if (typeof String.prototype.format !== 'function') {
   // LuCI's printf-like String.format(); only %s/%d are used here.
@@ -52,8 +52,8 @@ async function saveApply(entries) {
   }
   let health = 0;
   const main = {
-    FORKOP_UCI_PACKAGE: 'forkop',
-    ForkopShellMethods: {
+    PROKOP_UCI_PACKAGE: 'prokop',
+    ProkopShellMethods: {
       snapshotCreate: async () => ({ success: true, data: { status: 'created', snapshot: { id: '1_1' } } }),
       // Before the apply: no reload yet; after it: a confirmed one.
       getHealthStatus: async () => ({

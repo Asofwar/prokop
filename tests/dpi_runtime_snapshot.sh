@@ -2,7 +2,7 @@
 set -eu
 
 ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
-LIB_DIR="$ROOT_DIR/forkop/files/usr/lib"
+LIB_DIR="$ROOT_DIR/prokop/files/usr/lib"
 SUPERVISOR="$ROOT_DIR/tests/fixtures/dpi_snapshot_supervisor.uc"
 CLI="$ROOT_DIR/tests/fixtures/dpi_snapshot_cli.uc"
 STATE_DIR="$(mktemp -d)"

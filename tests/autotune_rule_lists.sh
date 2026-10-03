@@ -32,7 +32,7 @@ echo "$5" >>"$(dirname "$0")/decompile.log"
 cp "$5.source" "$4"
 SH
 chmod +x "$WORK/sing-box"
-export FORKOP_AUTOTUNE_SINGBOX_BIN="$WORK/sing-box"
+export PROKOP_AUTOTUNE_SINGBOX_BIN="$WORK/sing-box"
 
 cat >"$WORK/yt-list.json" <<'JSON'
 {"version":3,"rules":[
@@ -76,8 +76,8 @@ check "$WORK/pin.json" 'a.equal(r.reason, "invalid_pin")' "pins are domains"
 # ---- sample ---------------------------------------------------------------------
 manager target-set ytl "" 1 "" yt-list >"$WORK/set.json"
 check "$WORK/set.json" 'a.equal(r.status, "ok"); a.equal(r.target.rule_set, "yt-list"); a.equal(r.target.sample, 3)' "list target saved"
-grep -q "option rule_set 'yt-list'" "$FORKOP_CONFIG_FILE" || fail "rule_set option written"
-if grep -A4 "autotune_target 'ytl'" "$FORKOP_CONFIG_FILE" | grep -q "option host"; then fail "a list target has no host"; fi
+grep -q "option rule_set 'yt-list'" "$PROKOP_CONFIG_FILE" || fail "rule_set option written"
+if grep -A4 "autotune_target 'ytl'" "$PROKOP_CONFIG_FILE" | grep -q "option host"; then fail "a list target has no host"; fi
 
 manager status >"$WORK/status.json"
 # Sorted: m, music, noaddr, studio, www, youtube.com; slots start at 0, 2, 4;
@@ -107,13 +107,13 @@ check "$WORK/not-dpi.json" 'a.equal(r.reason, "invalid_rule_set")' "only lists o
 reset_calls
 manager run youtube >"$WORK/run.json"
 [ "$(calls)" = 'www.youtube.com i.ytimg.com m.youtube.com studio.youtube.com www.youtube.com ' ] || fail "members are measured: $(calls)"
-[ "$(json_get "$FORKOP_AUTOTUNE_STATE_FILE" targets.ytl__1.host)" = '"m.youtube.com"' ] || fail "member summary recorded"
+[ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" targets.ytl__1.host)" = '"m.youtube.com"' ] || fail "member summary recorded"
 manager target ytl__2 >"$WORK/member.json"
 check "$WORK/member.json" 'a.equal(r.status, "ok"); a.equal(r.target.parent, "ytl"); a.equal(r.last.host, "studio.youtube.com")' "member detail"
 
 # ---- pins replace the sample -------------------------------------------------------------
 manager target-set ytl "" 1 "" yt-list "" 'music.youtube.com, other.example' >"$WORK/pins.json"
-[ "$(grep -c "list pin" "$FORKOP_CONFIG_FILE")" = 2 ] || fail "pins written as a list"
+[ "$(grep -c "list pin" "$PROKOP_CONFIG_FILE")" = 2 ] || fail "pins written as a list"
 manager status >"$WORK/pinned.json"
 check "$WORK/pinned.json" '
   const t = r.targets.find((x) => x.id === "ytl");
@@ -121,7 +121,7 @@ check "$WORK/pinned.json" '
   const m = r.targets.find((x) => x.id === "ytl__1");
   a.equal(m.host, "music.youtube.com"); a.equal(m.last, null, "a result for another domain is not shown");' "pinned members"
 manager target-set ytl "" 1 "" yt-list 2 >"$WORK/unpin.json"
-if grep -q "list pin" "$FORKOP_CONFIG_FILE"; then fail "pins removed when not given"; fi
+if grep -q "list pin" "$PROKOP_CONFIG_FILE"; then fail "pins removed when not given"; fi
 
 # ---- a binary list is decompiled, and kept while it does not change ------------------------
 manager target-set dcl "" 1 "" dc-list >/dev/null
@@ -153,9 +153,9 @@ manager target-remove dead >/dev/null
 
 # ---- a list target becomes a host target, and removal forgets its members -----------------
 manager target-remove ytl >/dev/null
-node -e 'const s=require(process.argv[1]); if (Object.keys(s.targets).some((k) => k.startsWith("ytl"))) process.exit(1)' "$FORKOP_AUTOTUNE_STATE_FILE" || fail "members forgotten on removal"
+node -e 'const s=require(process.argv[1]); if (Object.keys(s.targets).some((k) => k.startsWith("ytl"))) process.exit(1)' "$PROKOP_AUTOTUNE_STATE_FILE" || fail "members forgotten on removal"
 manager target-set dcl discord.com >"$WORK/to-host.json"
 check "$WORK/to-host.json" 'a.equal(r.target.host, "discord.com")' "list target to host target"
-if grep -A5 "autotune_target 'dcl'" "$FORKOP_CONFIG_FILE" | grep -q "rule_set"; then fail "rule_set removed from a host target"; fi
+if grep -A5 "autotune_target 'dcl'" "$PROKOP_CONFIG_FILE" | grep -q "rule_set"; then fail "rule_set removed from a host target"; fi
 
 printf 'autotune_rule_lists: PASS\n'

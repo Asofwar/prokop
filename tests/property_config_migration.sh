@@ -12,4 +12,4 @@ WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT HUP INT TERM
 export PROPERTY_WORK="$WORK"
 
-node "$ROOT_DIR/tests/helpers/property/config_migration.js" "$ROOT_DIR/forkop/files/usr/lib" "$WORK"
+node "$ROOT_DIR/tests/helpers/property/config_migration.js" "$ROOT_DIR/prokop/files/usr/lib" "$WORK"

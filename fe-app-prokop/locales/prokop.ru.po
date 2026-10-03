@@ -1,0 +1,4416 @@
+# RU translations for PROKOP package.
+# Copyright (C) 2026 THE PROKOP COPYRIGHT HOLDER
+# This file is distributed under the same license as the PROKOP package.
+# Asofwar, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROKOP\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-03 20:28+0300\n"
+"PO-Revision-Date: 2026-10-03 20:28+0300\n"
+"Last-Translator: Asofwar\n"
+"Language-Team: none\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+msgid "-- Select --"
+msgstr "-- Выберите --"
+
+msgid "%d confirmations"
+msgstr "подтверждений: %d"
+
+msgid "%d connections now"
+msgstr "Соединений сейчас: %d"
+
+msgid "%d d"
+msgstr "%d дн."
+
+msgid "%d entries without a domain name are skipped"
+msgstr "пропущено записей без доменного имени: %d"
+
+msgid "%d h"
+msgstr "%d ч"
+
+msgid "%d h ago"
+msgstr "%d ч назад"
+
+msgid "%d min ago"
+msgstr "%d мин назад"
+
+msgid "%d more groups"
+msgstr "Ещё групп: %d"
+
+msgid "%d more: refine the search"
+msgstr "ещё %d: уточните поиск"
+
+msgid "%d ms"
+msgstr "%d мс"
+
+msgid "%d node groups"
+msgstr "Групп узлов: %d"
+
+msgid "%d rules"
+msgstr "Правил: %d"
+
+msgid "%d rules · %d node groups"
+msgstr "Правил: %d · групп узлов: %d"
+
+msgid "%s (disabled)"
+msgstr "%s (отключена)"
+
+msgid "%s (not installed)"
+msgstr "%s (не установлен)"
+
+msgid "%s (provider not installed)"
+msgstr "%s (провайдер не установлен)"
+
+msgid "%s (unavailable)"
+msgstr "%s (недоступна)"
+
+msgid "%s in the rule \"%t\""
+msgstr "%s в правиле «%t»"
+
+msgid "%s is “%s”: sing-box and the firewall read it differently"
+msgstr "%s = «%s»: sing-box и файрвол читают это значение по-разному"
+
+msgid "%s is not applied again before %t"
+msgstr "%s не применяется повторно до %t"
+
+msgid "%s is not installed. Install it in Components or choose another action."
+msgstr "%s не установлен. Установите его в разделе «Компоненты» или выберите другое действие."
+
+msgid "%s: “%s” cannot be written in the current form unchanged"
+msgstr "%s: «%s» нельзя записать в текущем виде без изменения смысла"
+
+msgid "%s: not moved to the Device filter, the rule has no destination condition and does not use it"
+msgstr "%s: не переносится в «Фильтр по устройствам» — у правила нет условия назначения, и он не используется"
+
+msgid "+ Add JSON outbound"
+msgstr "+ Добавить JSON outbound"
+
+msgid "+ Add level"
+msgstr "+ Добавить уровень"
+
+msgid "+ Add priority"
+msgstr "+ Добавить приоритет"
+
+msgid "+ Add URLTest"
+msgstr "+ Добавить URLTest"
+
+msgid "0–5; 0 turns automatic changes off."
+msgstr "0–5; 0 отключает автоматические изменения."
+
+msgid "1–8 domains, spread evenly over the list; a domain without an address is replaced by the next one."
+msgstr "1–8 доменов, равномерно по списку; домен без адреса заменяется следующим."
+
+msgid "3–7 attempts per strategy and target in each check."
+msgstr "3–7 попыток на стратегию и цель в каждой проверке."
+
+msgid "A check is already running."
+msgstr "Проверка уже идёт."
+
+msgid "A configuration backup will be saved in /etc/prokop-backups. Older versions may not support all current settings."
+msgstr "Резервная копия настроек будет сохранена в /etc/prokop-backups. Старые версии могут поддерживать не все текущие настройки."
+
+msgid "A configuration change did not finish and its protection is still active. Restore a snapshot in History and recovery."
+msgstr "Изменение конфигурации не завершилось, и его защита всё ещё активна. Восстановите снимок в разделе «История и восстановление»."
+
+msgid "A configuration change is being applied. Traffic that needs DPI bypass may be blocked until it finishes."
+msgstr "Применяется изменение конфигурации. Трафик, которому нужен обход DPI, может блокироваться, пока оно не завершится."
+
+msgid "A configuration change was not confirmed. Traffic that needs DPI bypass may be blocked; see the recovery details for the next step."
+msgstr "Изменение конфигурации не подтвердилось. Трафик, которому нужен обход DPI, может блокироваться; следующий шаг указан в подробностях о восстановлении."
+
+msgid "A configuration restore did not finish: restore the last known good snapshot to finish it."
+msgstr "Восстановление конфигурации не завершено: чтобы завершить его, восстановите снимок последней рабочей конфигурации."
+
+msgid "A configuration restore did not finish. Traffic that needs DPI bypass stays blocked until you restore the last known good snapshot."
+msgstr "Восстановление конфигурации не завершено. Трафик, которому нужен обход DPI, блокируется, пока вы не восстановите снимок последней рабочей конфигурации."
+
+msgid "A domain, or a list of a DPI rule measured through a few of its domains."
+msgstr "Домен или список DPI-правила, который проверяется по нескольким его доменам."
+
+msgid "a failed change left the DPI guard in place; restart Prokop"
+msgstr "неудавшееся изменение оставило защиту DPI; перезапустите Prokop"
+
+msgid "A failed change left the DPI guard in place: restart Prokop to remove it."
+msgstr "Неудавшееся изменение оставило защиту DPI: чтобы снять её, перезапустите Prokop."
+
+msgid "A failed change left the DPI guard in place. Traffic that needs DPI bypass stays blocked until you restart Prokop."
+msgstr "Неудавшееся изменение оставило защиту DPI. Трафик, которому нужен обход DPI, блокируется, пока вы не перезапустите Prokop."
+
+msgid "A group is one Zapret DPI rule. Prokop changes only the strategy of an existing rule, for all its targets at once. It never creates or deletes rules and never turns DPI bypass off."
+msgstr "Группа — это одно DPI-правило Zapret. Prokop меняет только стратегию существующего правила, сразу для всех его целей. Он никогда не создаёт и не удаляет правила и не отключает обход DPI."
+
+msgid "A list of a DPI rule. Each check takes a few of its domains; keywords and regular expressions are skipped."
+msgstr "Список DPI-правила. Каждая проверка берёт несколько его доменов; ключевые слова и регулярные выражения пропускаются."
+
+msgid "a previous apply is not resolved"
+msgstr "предыдущее применение не завершено"
+
+msgid "A rolled back strategy is not applied again before this time passes."
+msgstr "Откаченная стратегия не применяется снова, пока не пройдёт это время."
+
+msgid "a rule applies to selected devices only; choose a device"
+msgstr "одно из правил действует только для отдельных устройств — выберите устройство"
+
+msgid "A rule blocks this address. This is intended for ads and trackers."
+msgstr "Адрес блокируется правилом. Так и задумано для рекламы и трекеров."
+
+msgid "a rule is too complex to calculate"
+msgstr "правило слишком сложное для расчёта"
+
+msgid "A safe isolated check is not possible right now."
+msgstr "Безопасная изолированная проверка сейчас невозможна."
+
+msgid "A site or service checked through the DPI rule that routes it."
+msgstr "Сайт или сервис, который проверяется через DPI-правило, по которому он идёт."
+
+msgid "a snapshot operation is in progress"
+msgstr "идёт операция со снимком"
+
+msgid "A strategy is set for the whole rule, so Prokop does not change it. You can split the targets into separate rules."
+msgstr "Стратегия задаётся на всё правило, поэтому Prokop её не меняет. Можно разнести цели по разным правилам вручную."
+
+msgid "about %d min"
+msgstr "около %d мин"
+
+msgid "Action"
+msgstr "Действие"
+
+msgid "Action required"
+msgstr "Требуется действие"
+
+msgid "Actions"
+msgstr "Действия"
+
+msgid "Active"
+msgstr "Активные"
+
+msgid "Active Bootstrap DNS"
+msgstr "Активный Bootstrap DNS"
+
+msgid "Active connections of all devices are interrupted."
+msgstr "Активные соединения всех устройств будут прерваны."
+
+msgid "Active Main DNS"
+msgstr "Активный основной DNS"
+
+msgid "Active until the next firewall reload"
+msgstr "Действует до следующей перезагрузки файрвола"
+
+msgid "Active: a change is being applied"
+msgstr "Активна: применяется изменение"
+
+msgid "Active: DPI switch not confirmed"
+msgstr "Активна: переключение DPI не подтверждено"
+
+msgid "Active: kept by a failed change"
+msgstr "Активна: осталась после неудавшегося изменения"
+
+msgid "Active: restore not finished"
+msgstr "Активна: восстановление не завершено"
+
+msgid "Add a rule"
+msgstr "Добавить правило"
+
+msgid "Add a target first"
+msgstr "Сначала добавьте цель"
+
+msgid "Add address"
+msgstr "Добавить адрес"
+
+msgid "Add at least one DNS server"
+msgstr "Добавьте хотя бы один DNS-сервер"
+
+msgid "Add prefix to nodes"
+msgstr "Добавлять префикс к узлам"
+
+msgid "Add target"
+msgstr "Добавить цель"
+
+msgid "add the interface item %s"
+msgstr "добавить интерфейс %s"
+
+msgid "add the interface item %s with the DNS resolver %s %s"
+msgstr "добавить интерфейс %s с DNS-резолвером %s %s"
+
+msgid "Add the sites that go through your DPI rules, for example youtube.com."
+msgstr "Добавьте сайты, которые идут через ваши DPI-правила, например youtube.com."
+
+msgid "Add URLs or local paths to .lst lists containing domains and subnets."
+msgstr "Добавьте URL или локальные пути к спискам .lst с доменами и подсетями."
+
+msgid "Add URLs or local paths to .lst lists containing domains. IP entries are ignored."
+msgstr "Добавьте URL или локальные пути к спискам .lst с доменами. IP игнорируются."
+
+msgid "Add URLs or local paths to .srs / .json lists. Only domain rules are supported."
+msgstr "Добавьте URL или локальные пути к спискам .srs / .json. Поддерживаются только доменные правила."
+
+msgid "Add URLs or local paths to .srs / .json lists. Subnets are ignored by default."
+msgstr "Добавьте URL или локальные пути к спискам .srs / .json. Подсети по умолчанию игнорируются."
+
+msgid "Additional marking rules found"
+msgstr "Найдены дополнительные правила маркировки"
+
+msgid "Additionally exclude servers by protocol, transport, and security. Exclude only servers matching the specified parameters."
+msgstr "Дополнительно исключать серверы по протоколу, транспорту и защите. Исключать только серверы, совпавшие по указанным параметрам."
+
+msgid "Additionally filter servers by protocol, transport, and security. Add only servers matching the specified parameters."
+msgstr "Дополнительно отбирать серверы по протоколу, транспорту и защите. Добавлять только серверы, совпавшие по указанным параметрам."
+
+msgid "Address"
+msgstr "Адрес"
+
+msgid "Address set for checking"
+msgstr "Набор адресов для проверки"
+
+msgid "Ads (Hagezi Pro)"
+msgstr "Реклама (Hagezi Pro)"
+
+msgid "Adult sites"
+msgstr "Сайты для взрослых"
+
+msgid "Advanced"
+msgstr "Дополнительно"
+
+msgid "Advanced settings"
+msgstr "Дополнительные настройки"
+
+msgid "All"
+msgstr "Все"
+
+msgid "All check results"
+msgstr "Все результаты проверки"
+
+msgid "All devices"
+msgstr "Все устройства"
+
+msgid "All events"
+msgstr "Все события"
+
+msgid "All except selected"
+msgstr "Все, кроме выбранных"
+
+msgid "All paths"
+msgstr "Все пути"
+
+msgid "All remaining except selected"
+msgstr "Все оставшиеся, кроме выбранных"
+
+msgid "All remaining servers"
+msgstr "Все оставшиеся серверы"
+
+msgid "All remaining servers means every server not already assigned to a higher-priority level."
+msgstr "Добавляет все серверы, которые не попали в уровни с более высоким приоритетом."
+
+msgid "All servers"
+msgstr "Все серверы"
+
+msgid "All traffic from these IP addresses will be routed through the section unconditionally, ignoring all other conditions."
+msgstr "Весь трафик с этих IP-адресов будет направлен через секцию безусловно, игнорируя остальные условия."
+
+msgid "All traffic: %d"
+msgstr "Весь трафик: %d"
+
+msgid "Allowed domain prefixes are full:, keyword:, and regex:"
+msgstr "Разрешённые префиксы доменов: full:, keyword: и regex:"
+
+msgid "Allows access to YACD from the WAN. Make sure to open the appropriate port in your firewall."
+msgstr "Обеспечивает доступ к YACD из WAN. Убедитесь, что в брандмауэре открыт соответствующий порт."
+
+msgid "Allows limiting the list of servers for URLTest"
+msgstr "Позволяет ограничить список серверов для URLTest"
+
+msgid "An administrator can roll it back."
+msgstr "Откатить его может администратор."
+
+msgid "an earlier rule re-resolves the address, so the route depends on its answer"
+msgstr "раньше стоит правило, которое заново разрешает адрес, поэтому маршрут зависит от его ответа"
+
+msgid "an earlier rule uses a list or pattern whose contents cannot be checked here"
+msgstr "раньше стоит правило со списком или шаблоном, содержимое которого здесь не проверить"
+
+msgid "An interrupted package update is being recovered. Avoid changes until it completes."
+msgstr "Восстанавливается прерванное обновление пакетов. Не вносите изменений, пока оно не завершится."
+
+msgid "An IP address needs no DNS"
+msgstr "Для IP-адреса DNS не нужен"
+
+msgid "and %d more"
+msgstr "и ещё %d"
+
+msgid "Anime"
+msgstr "Аниме"
+
+msgid "Another autotune operation is running."
+msgstr "Уже выполняется другая операция автоподбора."
+
+msgid "another check is running"
+msgstr "идёт другая проверка"
+
+msgid "Another check was running."
+msgstr "Шла другая проверка."
+
+msgid "Another group was changed in this run; at most one change per run."
+msgstr "В этой проверке уже изменена другая группа; не больше одного изменения за проверку."
+
+msgid "Another snapshot operation is already in progress. Changes were not applied; try again in a moment."
+msgstr "Уже выполняется другая операция со снимками. Изменения не применены, повторите через минуту."
+
+msgid "Another snapshot operation is already in progress. Try again in a moment."
+msgstr "Уже выполняется другая операция со снимками. Повторите через минуту."
+
+msgid "Answer of the router DNS"
+msgstr "Ответ DNS роутера"
+
+msgid "Any device"
+msgstr "Любое устройство"
+
+msgid "Applied, check passed"
+msgstr "Применена, проверка пройдена"
+
+msgid "Apply"
+msgstr "Применить"
+
+msgid "Apply %s"
+msgstr "Применить %s"
+
+msgid "Apply %s?"
+msgstr "Применить %s?"
+
+msgid "Apply did not finish: configuration edited"
+msgstr "Применение не завершено: конфигурацию изменили"
+
+msgid "Apply section rules only to the specified local IP addresses"
+msgstr "Применять правила секции только к указанным локальным IP-адресам"
+
+msgid "Applying a strategy"
+msgstr "Применяется стратегия"
+
+msgid "Applying changes…"
+msgstr "Применяются изменения…"
+
+msgid "Applying Prokop configuration…"
+msgstr "Применение конфигурации Prokop…"
+
+msgid "Applying the new strategy did not finish: its reload did not succeed, and the configuration was changed meanwhile. Prokop kept that change instead of rolling back. Check the rule, or restore the snapshot you need in History and recovery."
+msgstr "Применение новой стратегии не завершено: её перезагрузка не удалась, а конфигурацию тем временем изменили. Prokop сохранил это изменение вместо отката. Проверьте правило или восстановите нужный снимок в разделе «История и восстановление»."
+
+msgid "Applying…"
+msgstr "Применение…"
+
+msgid "Apps reconnect on their own; downloads and calls may drop"
+msgstr "Приложения переподключатся сами; загрузки и звонки могут оборваться"
+
+msgid "Armed"
+msgstr "Готова"
+
+msgid "Armed: DNS currently goes through Prokop"
+msgstr "Готова: сейчас DNS идёт через Prokop"
+
+msgid "At least one valid domain must be specified."
+msgstr "Нужно указать хотя бы один корректный домен."
+
+msgid "At least one valid IP or subnet must be specified."
+msgstr "Нужно указать хотя бы один корректный IP-адрес или подсеть."
+
+msgid "At most %d change(s) per day; a rolled back strategy waits %s."
+msgstr "Не больше %d изменений в сутки; откаченная стратегия ждёт %s."
+
+msgid "Auto refresh"
+msgstr "Автообновление"
+
+msgid "Automatic"
+msgstr "Автоматически"
+
+msgid "Automatic applies are disabled by the policy (0 per day)."
+msgstr "Автоматические изменения отключены политикой (0 в сутки)."
+
+msgid "Automatic apply requires high confidence."
+msgstr "Для автоматического применения нужна высокая уверенность."
+
+msgid "Automatic changes per day"
+msgstr "Автоизменений в сутки"
+
+msgid "Automatic component update checks"
+msgstr "Автоматическая проверка обновлений компонентов"
+
+msgid "Automatic recovery did not finish."
+msgstr "Автоматическое восстановление не завершилось."
+
+msgid "Automatically"
+msgstr "Автоматически"
+
+msgid "Automatically add text to the name of each server from this subscription for convenient filtering."
+msgstr "Автоматически добавлять текст к имени каждого сервера из этой подписки для удобной фильтрации."
+
+msgid "Automatically check installed components for new versions"
+msgstr "Автоматически проверять наличие новых версий установленных компонентов"
+
+msgid "Automatically select the fastest node in the current level"
+msgstr "Автовыбор самого быстрого узла уровня"
+
+msgid "Autostart is off"
+msgstr "Автозапуск выключен"
+
+msgid "Autostart is on"
+msgstr "Автозапуск включён"
+
+msgid "Autotune"
+msgstr "Автоподбор"
+
+msgid "Autotune apply"
+msgstr "Применение автоподбора"
+
+msgid "Autotune checks only the sites listed here."
+msgstr "Автоподбор проверяет только перечисленные здесь сайты."
+
+msgid "Autotune history"
+msgstr "История автоподбора"
+
+msgid "Autotune is off. To apply the recommendation, switch to \"Recommendations only\" and apply it here, or to \"Automatic\"."
+msgstr "Автоподбор выключен. Чтобы применить рекомендацию, включите режим «Только рекомендации» и примените её здесь или включите режим «Автоматически»."
+
+msgid "Autotune mode changed"
+msgstr "Изменён режим автоподбора"
+
+msgid "Autotune policy"
+msgstr "Политика автоподбора"
+
+msgid "Autotune recommendation confirmed"
+msgstr "Рекомендация автоподбора подтверждена"
+
+msgid "Autotune run"
+msgstr "Запуск автоподбора"
+
+msgid "Autotune state is unavailable"
+msgstr "Состояние автоподбора недоступно"
+
+msgid "Autotune: %s applied automatically"
+msgstr "Автоподбор: %s применена автоматически"
+
+msgid "Autotune: %s applied manually"
+msgstr "Автоподбор: %s применена вручную"
+
+msgid "Autotune: automatic apply"
+msgstr "Автоподбор: автоматическое применение"
+
+msgid "Autotune: automatic apply of %s"
+msgstr "Автоподбор: автоматическое применение %s"
+
+msgid "Autotune: manual apply"
+msgstr "Автоподбор: ручное применение"
+
+msgid "Autotune: manual apply of %s"
+msgstr "Автоподбор: ручное применение %s"
+
+msgid "Available to administrators only."
+msgstr "Доступно только администратору."
+
+msgid "Backend validation unavailable: %s. Save again to retry."
+msgstr "Проверка на роутере недоступна: %s. Сохраните ещё раз, чтобы повторить."
+
+msgid "Basics"
+msgstr "Основное"
+
+msgid "Before applying changes"
+msgstr "Перед применением изменений"
+
+msgid "Before autotune"
+msgstr "Перед автоподбором"
+
+msgid "Before restore"
+msgstr "Перед восстановлением"
+
+msgid "Best"
+msgstr "Лучшая"
+
+msgid "Block"
+msgstr "Блокировка"
+
+msgid "Block list"
+msgstr "Список блокировки"
+
+msgid "Block this section's traffic instead of sending it directly when the VPN, sing-box or Prokop itself is not running. Applies to forwarded client traffic, survives a Prokop stop, firewall reloads and reboots. Earlier Zapret and Bypass sections keep working."
+msgstr "Блокировать трафик этого раздела, а не пускать его напрямую, когда VPN, sing-box или сам Prokop не работают. Действует для трафика клиентов, сохраняется при остановке Prokop, перезагрузке файрвола и роутера. Разделы Zapret и Bypass, стоящие выше, продолжают работать."
+
+msgid "Blocked connections"
+msgstr "Заблокировано соединений"
+
+msgid "Blocking protected domains now"
+msgstr "Сейчас блокирует защищённые домены"
+
+msgid "Bootstrap DNS"
+msgstr "Bootstrap DNS"
+
+msgid "Bootstrap DNS server cannot be empty"
+msgstr "Адрес резервного DNS не может быть пустым"
+
+msgid "Bootstrap DNS server must be an IPv4 or IPv6 address with an optional port"
+msgstr "Резервный DNS должен быть адресом IPv4 или IPv6 с необязательным портом"
+
+msgid "Bootstrap DNS Servers"
+msgstr "Bootstrap DNS-серверы"
+
+msgid "Browser FakeIP check could not be completed"
+msgstr "Не удалось выполнить проверку FakeIP в браузере"
+
+msgid "Browser is not using FakeIP"
+msgstr "Браузер не использует FakeIP"
+
+msgid "Browser is using FakeIP correctly"
+msgstr "Браузер использует FakeIP"
+
+msgid "Built-in rule sets"
+msgstr "Встроенные наборы правил"
+
+msgid "Built-in rule sets #2 are not supported for DNS rules. Remove them on the What tab or choose another action."
+msgstr "Встроенные наборы правил #2 не поддерживаются для DNS-правил. Удалите их на вкладке «Что» или выберите другое действие."
+
+msgid "By flag emoji from name"
+msgstr "По эмодзи флага из названия"
+
+msgid "ByeDPI checks"
+msgstr "Проверки ByeDPI"
+
+msgid "ByeDPI listen address and port are assigned by Prokop and must not be set in the strategy."
+msgstr "Адрес и порт прослушивания ByeDPI назначаются Prokop и не должны задаваться в стратегии."
+
+msgid "ByeDPI option does not accept a compact value: %s"
+msgstr "Опция ByeDPI не принимает компактное значение: %s"
+
+msgid "ByeDPI option does not accept a value: %s"
+msgstr "Опция ByeDPI не принимает значение: %s"
+
+msgid "ByeDPI option requires a value: %s"
+msgstr "Для опции ByeDPI требуется значение: %s"
+
+msgid "ByeDPI package is installed"
+msgstr "Пакет ByeDPI установлен"
+
+msgid "ByeDPI package is not installed"
+msgstr "Пакет ByeDPI не установлен"
+
+msgid "ByeDPI provider binary is available"
+msgstr "Бинарный файл провайдера ByeDPI доступен"
+
+msgid "ByeDPI provider binary is not available"
+msgstr "Бинарный файл провайдера ByeDPI недоступен"
+
+msgid "ByeDPI sing-box outbound is configured"
+msgstr "Outbound ByeDPI в sing-box настроен"
+
+msgid "ByeDPI sing-box outbound is not configured"
+msgstr "Outbound ByeDPI в sing-box не настроен"
+
+msgid "ByeDPI Strategy"
+msgstr "Стратегия ByeDPI"
+
+msgid "ByeDPI strategy cannot be empty"
+msgstr "Стратегия ByeDPI не может быть пустой"
+
+msgid "Bypass"
+msgstr "Обход"
+
+msgid "Bypass not needed"
+msgstr "Обход не нужен"
+
+msgid "Cache File Path"
+msgstr "Путь к файлу кэша"
+
+msgid "Cache file path cannot be empty"
+msgstr "Путь к файлу кэша не может быть пустым"
+
+msgid "Calculated"
+msgstr "Расчёт"
+
+msgid "Calculated result"
+msgstr "Расчётный результат"
+
+msgid "Cancel"
+msgstr "Отмена"
+
+msgid "Cancelled"
+msgstr "Отменено"
+
+msgid "Cannot receive checks result"
+msgstr "Не удалось получить результаты проверки"
+
+msgid "Cannot save settings"
+msgstr "Не удалось сохранить настройки"
+
+msgid "Cannot save the rule"
+msgstr "Не удалось сохранить правило"
+
+msgid "Cascade connection"
+msgstr "Каскадное подключение"
+
+msgid "Change in progress"
+msgstr "Изменение выполняется"
+
+msgid "Changes"
+msgstr "Изменения"
+
+msgid "Changes are made only by scheduled checks, one group at a time."
+msgstr "Изменения вносят только плановые проверки, по одной группе за раз."
+
+msgid "Changes compare a snapshot with the saved configuration. Unsaved form edits are not included."
+msgstr "Изменения сравнивают снимок с сохранённой конфигурацией. Несохранённые правки в формах не учитываются."
+
+msgid "Changes since this snapshot"
+msgstr "Изменения после этого снимка"
+
+msgid "Check"
+msgstr "Проверить"
+
+msgid "Check 1 to 8 domains of the list."
+msgstr "Проверяйте от 1 до 8 доменов списка."
+
+msgid "Check a site or app"
+msgstr "Проверить сайт или приложение"
+
+msgid "Check address in Diagnostics"
+msgstr "Проверить адрес в Диагностике"
+
+msgid "Check all"
+msgstr "Проверить всё"
+
+msgid "Check all now"
+msgstr "Проверить все сейчас"
+
+msgid "Check completed"
+msgstr "Проверка завершена"
+
+msgid "Check every"
+msgstr "Проверять каждые"
+
+msgid "Check failed"
+msgstr "Проверка не удалась"
+
+msgid "Check failed, not rolled back: configuration edited"
+msgstr "Проверка не пройдена, откат не выполнен: конфигурацию изменили"
+
+msgid "Check failed, rollback did not finish: configuration edited"
+msgstr "Проверка не пройдена, откат не завершён: конфигурацию изменили"
+
+msgid "Check failed, rolled back automatically"
+msgstr "Проверка не пройдена, выполнен автоматический откат"
+
+msgid "Check interval"
+msgstr "Интервал проверки"
+
+msgid "Check now"
+msgstr "Проверить сейчас"
+
+msgid "Check started. Targets are measured in isolation; production traffic is not changed."
+msgstr "Проверка запущена. Цели измеряются изолированно, рабочий трафик не меняется."
+
+msgid "Check the DNS server addresses in Settings or choose another server."
+msgstr "Проверьте адреса DNS-серверов в «Настройках» или выберите другой сервер."
+
+msgid "Check the node of the rule in Monitoring → Nodes and groups."
+msgstr "Проверьте узел правила в «Мониторинг → Узлы и группы»."
+
+msgid "Check timeout after which the server is considered dead"
+msgstr "Таймаут проверки, после которого сервер считается мёртвым"
+
+msgid "Check update"
+msgstr "Проверить обновление"
+
+msgid "Check URL"
+msgstr "URL проверки"
+
+msgid "Checked"
+msgstr "Проверено"
+
+msgid "Checked %d of %d domains"
+msgstr "Проверяется доменов: %d из %d"
+
+msgid "Checking now"
+msgstr "Проверяется"
+
+msgid "Checking targets"
+msgstr "Идёт проверка целей"
+
+msgid "Checking the configuration before the change"
+msgstr "Проверка конфигурации перед изменением"
+
+msgid "Checking the real production path"
+msgstr "Проверка реального production path"
+
+msgid "Checking the recommendation"
+msgstr "Проверка рекомендации"
+
+msgid "Checking, please wait"
+msgstr "Проверяем, пожалуйста подождите"
+
+msgid "Checking…"
+msgstr "Проверяется…"
+
+msgid "Checks and changes wait until it is rolled back."
+msgstr "Проверки и изменения ждут, пока его не откатят."
+
+msgid "Checks failed"
+msgstr "Проверки не выполнены"
+
+msgid "Checks passed"
+msgstr "Проверки пройдены"
+
+msgid "Checks passed with manual DHCP"
+msgstr "Проверки пройдены с ручным DHCP"
+
+msgid "Checks run on the router and do not prove the path of a LAN client."
+msgstr "Проверки выполняются на роутере и не подтверждают маршрут клиента LAN."
+
+msgid "Checks that the parameters are valid. It does not test site reachability or bypass effectiveness."
+msgstr "Проверяет корректность параметров. Не проверяет доступность сайтов и эффективность обхода."
+
+msgid "Choose a list of a DPI rule."
+msgstr "Выберите список DPI-правила."
+
+msgid "Choose at least one domain of the list."
+msgstr "Выберите хотя бы один домен списка."
+
+msgid "Choose from the list"
+msgstr "Выбрать из списка"
+
+msgid "Choose Prokop version"
+msgstr "Выбор версии Prokop"
+
+msgid "Choose version"
+msgstr "Выбрать версию"
+
+msgid "CIDR must be between 0 and 32 for IPv4 or 0 and 128 for IPv6"
+msgstr "CIDR должен быть от 0 до 32 для IPv4 или от 0 до 128 для IPv6"
+
+msgid "Clash API secret cannot be empty"
+msgstr "Секрет Clash API не может быть пустым"
+
+msgid "Clear"
+msgstr "Очистить"
+
+msgid "Clear the cascade setting of this rule? When you save the rule, %s and %s are removed and its servers connect without a transit rule. Nothing else in the rule changes."
+msgstr "Очистить настройку каскада этого правила? При сохранении правила %s и %s будут удалены, и его серверы будут подключаться без транзитного правила. Остальное в правиле не изменится."
+
+msgid "Clear…"
+msgstr "Очистить…"
+
+msgid "Close"
+msgstr "Закрыть"
+
+msgid "Close all"
+msgstr "Закрыть все"
+
+msgid "Close all connections"
+msgstr "Закрыть все соединения"
+
+msgid "Close all connections?"
+msgstr "Закрыть все соединения?"
+
+msgid "Close connection"
+msgstr "Закрыть соединение"
+
+msgid "Close details"
+msgstr "Закрыть подробности"
+
+msgid "closed"
+msgstr "закрыто"
+
+msgid "Closed"
+msgstr "Закрытые"
+
+msgid "Command failed"
+msgstr "Команда завершилась с ошибкой"
+
+msgid "Component update available"
+msgstr "Доступно обновление компонента"
+
+msgid "Component update check interval"
+msgstr "Период проверки обновлений"
+
+msgid "Components"
+msgstr "Компоненты"
+
+msgid "compressed"
+msgstr "сжатая"
+
+msgid "Concurrent edit"
+msgstr "Параллельная правка"
+
+msgid "Conditions"
+msgstr "Условия"
+
+msgid "confidence"
+msgstr "уверенность"
+
+msgid "Confidence"
+msgstr "Уверенность"
+
+msgid "Config File Path"
+msgstr "Путь к файлу конфигурации"
+
+msgid "Configuration"
+msgstr "Конфигурация"
+
+msgid "Configuration applied successfully"
+msgstr "Конфигурация успешно применена"
+
+msgid "Configuration reload"
+msgstr "Перезагрузка конфигурации"
+
+msgid "Configuration restored and reloaded"
+msgstr "Конфигурация восстановлена и применена"
+
+msgid "Configuration restored, but Prokop is stopped: it was not started or checked. The restored configuration takes effect when Prokop is started."
+msgstr "Конфигурация восстановлена, но Prokop остановлен: он не запускался и не проверялся. Восстановленная конфигурация вступит в силу при запуске Prokop."
+
+msgid "Configuration saved. Runtime reload has not been confirmed; check History and recovery."
+msgstr "Конфигурация сохранена. Перезагрузка не подтверждена; проверьте раздел «История и восстановление»."
+
+msgid "Configuration snapshots"
+msgstr "Снимки конфигурации"
+
+msgid "Configure User-Agent in the item settings"
+msgstr "Настройте User-Agent в настройках элемента"
+
+msgid "Confirm version change"
+msgstr "Подтвердите смену версии"
+
+msgid "Confirmation"
+msgstr "Подтверждение"
+
+msgid "Confirmation %d / %d"
+msgstr "Подтверждение %d / %d"
+
+msgid "Confirmations"
+msgstr "Подтверждений"
+
+msgid "Confirming"
+msgstr "Подтверждается"
+
+msgid "Conflict"
+msgstr "Конфликт"
+
+msgid "Connect through"
+msgstr "Подключаться через"
+
+msgid "Connection"
+msgstr "Подключение"
+
+msgid "Connection ID"
+msgstr "ID соединения"
+
+msgid "Connection refused or host unreachable"
+msgstr "Соединение отклонено или узел недоступен"
+
+msgid "Connection URL"
+msgstr "URL подключения"
+
+msgid "Connections"
+msgstr "Соединения"
+
+msgid "Connections are unavailable"
+msgstr "Подключения недоступны"
+
+msgid "Connectivity probe failed"
+msgstr "Проверка соединения не прошла"
+
+msgid "Convert"
+msgstr "Конвертировать"
+
+msgid "Convert the legacy settings of this rule? When you save the rule:"
+msgstr "Конвертировать устаревшие настройки этого правила? При сохранении правила:"
+
+msgid "Convert…"
+msgstr "Конвертировать…"
+
+msgid "Copied"
+msgstr "Скопировано"
+
+msgid "Copy"
+msgstr "Копировать"
+
+msgid "Copy address"
+msgstr "Копировать адрес"
+
+msgid "Copy details"
+msgstr "Копировать сведения"
+
+msgid "Could not change autostart"
+msgstr "Не удалось изменить автозапуск"
+
+msgid "Could not compare configurations"
+msgstr "Не удалось сравнить конфигурации"
+
+msgid "Could not compare FakeIP and control public IPs"
+msgstr "Не удалось сравнить публичные IP FakeIP и контрольной проверки"
+
+msgid "Could not confirm completion. Check the removal log before retrying."
+msgstr "Не удалось подтвердить завершение. Перед повторной попыткой проверьте журнал удаления."
+
+msgid "Could not create snapshot"
+msgstr "Не удалось создать снимок"
+
+msgid "Could not delete snapshot"
+msgstr "Не удалось удалить снимок"
+
+msgid "Could not determine the current rule of each target; results of the last check are shown."
+msgstr "Не удалось определить текущее правило каждой цели; показаны результаты последней проверки."
+
+msgid "Could not load available versions"
+msgstr "Не удалось загрузить список версий"
+
+msgid "Could not load configuration snapshots"
+msgstr "Не удалось загрузить снимки конфигурации"
+
+msgid "Could not load data"
+msgstr "Не удалось загрузить данные"
+
+msgid "Could not save a pre-apply configuration snapshot. Changes were not applied."
+msgstr "Не удалось сохранить снимок перед применением. Изменения не применены."
+
+msgid "Could not start removal. Another component action may be running."
+msgstr "Не удалось начать удаление. Возможно, выполняется другая операция с компонентами."
+
+msgid "Could not start the apply"
+msgstr "Не удалось запустить применение"
+
+msgid "Could not start the check"
+msgstr "Не удалось запустить проверку"
+
+msgid "Create snapshot"
+msgstr "Создать снимок"
+
+msgid "Creating a snapshot and reloading the service"
+msgstr "Создание снимка и перезагрузка сервиса"
+
+msgid "Current section cannot be used as its own transit section"
+msgstr "Текущую секцию нельзя использовать как транзит для самой себя"
+
+msgid "Current section cannot download its own subscription"
+msgstr "Текущую секцию нельзя выбрать для скачивания её же подписки"
+
+msgid "custom list"
+msgstr "свой список"
+
+msgid "Custom outbound configurations in JSON format"
+msgstr "Пользовательские конфигурации outbound в формате JSON"
+
+msgid "custom strategy"
+msgstr "своя стратегия"
+
+msgid "Custom strategy"
+msgstr "Своя стратегия"
+
+msgid "Dashboard currently unavailable"
+msgstr "Дашборд сейчас недоступен"
+
+msgid "Debug"
+msgstr "Отладка"
+
+msgid "Dedicated cgroup unavailable"
+msgstr "Отдельная cgroup недоступна"
+
+msgid "Default address for checking server availability and latency. URLTest uses its own address."
+msgstr "Адрес по умолчанию для проверки доступности и задержки серверов. Для URLTest используется собственный адрес."
+
+msgid "default strategy"
+msgstr "стандартная стратегия"
+
+msgid "Default strategy"
+msgstr "Стратегия по умолчанию"
+
+msgid "Delay in milliseconds before reloading Prokop after interface UP"
+msgstr "Задержка в миллисекундах перед перезапуском Prokop после поднятия интерфейса"
+
+msgid "Delay value cannot be empty"
+msgstr "Значение задержки не может быть пустым"
+
+msgid "Delete"
+msgstr "Удалить"
+
+msgid "Delete snapshot?"
+msgstr "Удалить снимок?"
+
+msgid "Delete this configuration snapshot?"
+msgstr "Удалить этот снимок конфигурации?"
+
+msgid "Delete…"
+msgstr "Удалить…"
+
+msgid "Derived from configuration"
+msgstr "Определено по конфигурации"
+
+msgid "Destination"
+msgstr "Назначение"
+
+msgid "Details"
+msgstr "Сведения"
+
+msgid "Detect server country"
+msgstr "Определять страну сервера"
+
+msgid "Determining which rule routes each target…"
+msgstr "Определяется, по какому правилу идёт каждая цель…"
+
+msgid "detour must be a non-empty string"
+msgstr "detour должен быть непустой строкой"
+
+msgid "Device"
+msgstr "Устройство"
+
+msgid "Device filter"
+msgstr "Фильтр по устройствам"
+
+msgid "Device or IP"
+msgstr "Устройство или IP"
+
+msgid "Devices"
+msgstr "Устройства"
+
+msgid "Devices keep using the router without Prokop"
+msgstr "Устройства продолжат работать через роутер без Prokop"
+
+msgid "Devices may bypass the router DNS, so domain rules do not apply to them."
+msgstr "Устройства могут обходить DNS роутера, и правила по доменам к ним не применяются."
+
+msgid "DHCP has DNS server"
+msgstr "DHCP содержит DNS сервер"
+
+msgid "DHCP is managed manually"
+msgstr "DHCP управляется вручную"
+
+msgid "Diagnostics"
+msgstr "Диагностика"
+
+msgid "Diagnostics has not been run yet"
+msgstr "Диагностика ещё не запускалась"
+
+msgid "direct"
+msgstr "напрямую"
+
+msgid "Direct"
+msgstr "Напрямую"
+
+msgid "Direct connection"
+msgstr "Прямое подключение"
+
+msgid "Direct Proxy"
+msgstr "Прямой прокси"
+
+msgid "Disable"
+msgstr "Отключить"
+
+msgid "Disable autostart"
+msgstr "Отключить автостарт"
+
+msgid "Disable QUIC"
+msgstr "Отключить QUIC"
+
+msgid "Disable the QUIC protocol to improve compatibility or fix issues with video streaming"
+msgstr "Отключить QUIC протокол для улучшения совместимости или исправления видео стриминга"
+
+msgid "Disabled"
+msgstr "Выключен"
+
+msgid "Disabling interception is incompatible with action=zapret2 because Prokop sends matched traffic through NFQUEUE."
+msgstr "Отключение перехвата несовместимо с action=zapret2, потому что Prokop отправляет совпавший трафик через NFQUEUE."
+
+msgid "Display name"
+msgstr "Отображаемое имя"
+
+msgid "DNS"
+msgstr "DNS"
+
+msgid "DNS Check Interval"
+msgstr "Период проверки DNS"
+
+msgid "DNS check needs a domain name"
+msgstr "Для проверки DNS укажите доменное имя"
+
+msgid "DNS checks"
+msgstr "Проверки DNS"
+
+msgid "DNS name did not resolve"
+msgstr "DNS не разрешил имя"
+
+msgid "DNS on router"
+msgstr "DNS на роутере"
+
+msgid "DNS over HTTPS (DoH)"
+msgstr "DNS через HTTPS (DoH)"
+
+msgid "DNS over TLS (DoT)"
+msgstr "DNS через TLS (DoT)"
+
+msgid "DNS protection"
+msgstr "Защита DNS"
+
+msgid "DNS protocol"
+msgstr "Протокол DNS"
+
+msgid "DNS Protocol Type"
+msgstr "Тип протокола DNS"
+
+msgid "DNS protocol used by the resolver"
+msgstr "DNS-протокол, который будет использовать резолвер"
+
+msgid "DNS requests through section"
+msgstr "DNS-запросы через секцию"
+
+msgid "DNS Rewrite TTL"
+msgstr "Перезапись TTL для DNS"
+
+msgid "DNS server"
+msgstr "DNS-сервер"
+
+msgid "DNS server address cannot be empty"
+msgstr "Адрес DNS-сервера не может быть пустым"
+
+msgid "DNS server for checks"
+msgstr "DNS-сервер для проверок"
+
+msgid "DNS server used by the resolver"
+msgstr "DNS-сервер, который будет использовать резолвер"
+
+msgid "DNS Servers"
+msgstr "DNS-серверы"
+
+msgid "DNS Strategy"
+msgstr "Стратегия DNS"
+
+msgid "DNS through proxy"
+msgstr "DNS через прокси"
+
+msgid "DNS through section"
+msgstr "DNS через секцию"
+
+msgid "DNS Unavailability Timeout"
+msgstr "Таймаут недоступности DNS"
+
+msgid "Do not apply this section to the specified local IP addresses; matching continues with the next section."
+msgstr "Не применять эту секцию к указанным локальным IP-адресам; поиск продолжится в следующей секции."
+
+msgid "Do not test servers from these countries."
+msgstr "Не тестировать серверы из этих стран."
+
+msgid "Do not test servers whose names match the expression."
+msgstr "Не тестировать серверы, имена которых совпадают с выражением."
+
+msgid "Do not test servers with one of the selected protocols."
+msgstr "Не тестировать серверы с одним из выбранных протоколов."
+
+msgid "Do not test servers with one of the selected security types."
+msgstr "Не тестировать серверы с одним из выбранных типов защиты."
+
+msgid "Do not test servers with one of the selected transports."
+msgstr "Не тестировать серверы с одним из выбранных транспортов."
+
+msgid "Do not test specified servers."
+msgstr "Не тестировать указанные серверы."
+
+msgid "Does not work without bypass; a stable strategy was found."
+msgstr "Без обхода не работает; найдена стабильная стратегия."
+
+msgid "Domain"
+msgstr "Домен"
+
+msgid "Domain and IP lists"
+msgstr "Списки доменов и IP"
+
+msgid "Domain does not exist"
+msgstr "Домен не существует"
+
+msgid "Domain lists"
+msgstr "Списки доменов"
+
+msgid "Domain or IP address"
+msgstr "Домен или IP-адрес"
+
+msgid "Domain Resolver"
+msgstr "Резолвер доменов"
+
+msgid "Domains"
+msgstr "Домены"
+
+msgid "Domains blocked while Prokop is stopped"
+msgstr "Доменов блокируется при остановленном Prokop"
+
+msgid "Domains in rules may not resolve, or resolve past Prokop, so their rules do not apply."
+msgstr "Домены из правил могут не разрешаться или разрешаться в обход Prokop — тогда правила к ним не применяются."
+
+msgid "Domains of device-limited rules not blocked through DNS (shared by all devices)"
+msgstr "Доменов правил для отдельных устройств, не блокируемых через DNS (DNS общий для всех устройств)"
+
+msgid "Domains of the list"
+msgstr "Домены списка"
+
+msgid "Domains to check"
+msgstr "Доменов для проверки"
+
+msgid "Domains: %d"
+msgstr "Домены: %d"
+
+msgid "Dont Touch My DHCP!"
+msgstr "Отключить управление DHCP"
+
+msgid "Download"
+msgstr "Скачать"
+
+msgid "Download component packages via the selected section"
+msgstr "Скачивать пакеты компонентов через выбранную секцию"
+
+msgid "Download components through"
+msgstr "Скачивать компоненты через"
+
+msgid "Download components through a section"
+msgstr "Скачивать компоненты через секцию"
+
+msgid "Download lists through"
+msgstr "Скачивать списки через"
+
+msgid "Download lists through a section"
+msgstr "Скачивать списки через секцию"
+
+msgid "Download remote lists and rule sets via the selected section"
+msgstr "Скачивать удаленные списки и наборы правил через выбранную секцию"
+
+msgid "Download subscription through a section"
+msgstr "Скачивать подписку через секцию"
+
+msgid "Download subscriptions via the selected section"
+msgstr "Скачивать подписки через выбранную секцию"
+
+msgid "Download support report"
+msgstr "Скачать отчёт для поддержки"
+
+msgid "Download through"
+msgstr "Скачивать через"
+
+msgid "downloaded by the list update; the rule matches the addresses in them"
+msgstr "загружается при обновлении списков; правило сопоставляет адреса из него"
+
+msgid "downloaded by the list update; the rule matches the domains in them"
+msgstr "загружается при обновлении списков; правило сопоставляет домены из него"
+
+msgid "DPI"
+msgstr "DPI"
+
+msgid "DPI autotune"
+msgstr "Автоподбор DPI"
+
+msgid "DPI bypass of the rules using this provider may not work."
+msgstr "Обход DPI в правилах с этим провайдером может не работать."
+
+msgid "DPI guard"
+msgstr "Защита DPI"
+
+msgid "DPI protection is active"
+msgstr "активна защита DPI"
+
+msgid "DPI protection is holding traffic"
+msgstr "DPI-защита удерживает трафик"
+
+msgid "DPI rule groups"
+msgstr "Группы DPI-правил"
+
+msgid "DPI strategy"
+msgstr "Стратегия DPI"
+
+msgid "DPI strategy syntax check"
+msgstr "Проверка синтаксиса DPI-стратегии"
+
+msgid "Duplicate JSON outbound tag"
+msgstr "Такой тег JSON outbound уже используется"
+
+msgid "Duplicate value"
+msgstr "Дублирующееся значение"
+
+msgid "Duration"
+msgstr "Длительность"
+
+msgid "Each target is measured in isolation; production traffic is not changed. After the probes Prokop waits until their connections close, which can take a few minutes on a blocked site."
+msgstr "Каждая цель измеряется изолированно, рабочий трафик не меняется. После проб Prokop ждёт закрытия их соединений — на заблокированном сайте это может занять несколько минут."
+
+msgid "Edit"
+msgstr "Изменить"
+
+msgid "Edit rule action"
+msgstr "Изменить"
+
+msgid "Edit target"
+msgstr "Изменить цель"
+
+msgid "Edit URLTest"
+msgstr "Изменить URLTest"
+
+msgid "Edit…"
+msgstr "Изменить…"
+
+msgid "Empty response"
+msgstr "Пустой ответ"
+
+msgid "Enable"
+msgstr "Включить"
+
+msgid "Enable automatic updates for remote lists and rule sets"
+msgstr "Включить автоматическое обновление удалённых списков и наборов правил"
+
+msgid "Enable autostart"
+msgstr "Включить автостарт"
+
+msgid "Enable built-in DNS resolver for domains handled by this section"
+msgstr "Включить встроенный DNS-резолвер для доменов, обрабатываемых этой секцией"
+
+msgid "Enable it per Connection section. While Prokop or the VPN is down, protected traffic is rejected instead of leaving directly; other traffic is not affected."
+msgstr "Включается в каждом разделе Connection. Пока Prokop или VPN не работают, защищённый трафик отклоняется, а не уходит напрямую; остальной трафик не затрагивается."
+
+msgid "Enable list updates"
+msgstr "Включить обновление списков"
+
+msgid "Enable Mixed Proxy"
+msgstr "Включить смешанный прокси"
+
+msgid "Enable Mixed Proxy Authentication"
+msgstr "Включить авторизацию смешанного прокси"
+
+msgid "Enable mode 2"
+msgstr "Включить режим 2"
+
+msgid "Enable Output Network Interface"
+msgstr "Включить выходной сетевой интерфейс"
+
+msgid "Enable YACD"
+msgstr "Включить YACD"
+
+msgid "Enable YACD WAN Access"
+msgstr "Включить доступ YACD WAN"
+
+msgid "Enabled"
+msgstr "Включен"
+
+msgid "Enter a complete sing-box outbound object"
+msgstr "Введите полный объект outbound sing-box"
+
+msgid "Enter a display name"
+msgstr "Введите отображаемое имя"
+
+msgid "Enter a domain name, for example youtube.com."
+msgstr "Введите доменное имя, например youtube.com."
+
+msgid "Enter a domain or IP address"
+msgstr "Укажите домен или IP-адрес"
+
+msgid "Enter a level name"
+msgstr "Введите название уровня"
+
+msgid "Enter a port"
+msgstr "Укажите порт"
+
+msgid "Enter a strategy"
+msgstr "Введите стратегию"
+
+msgid "Enter a valid DNS server address"
+msgstr "Укажите корректный адрес DNS-сервера"
+
+msgid "Enter a valid domain or IP address"
+msgstr "Укажите корректный домен или IP-адрес"
+
+msgid "Enter an address"
+msgstr "Укажите адрес"
+
+msgid "Enter the subscription URL"
+msgstr "Введите URL подписки"
+
+msgid "Error"
+msgstr "Ошибка"
+
+msgid "Errors: %d"
+msgstr "Ошибки: %d"
+
+msgid "every %s"
+msgstr "каждые %s"
+
+msgid "Every change made since the last known working configuration is undone, your own edits included. The current configuration is kept as a \"Before restore\" snapshot in History and recovery."
+msgstr "Все изменения, сделанные после последней рабочей конфигурации, будут отменены, включая ваши собственные правки. Текущая конфигурация сохранится как снимок «Перед восстановлением» в разделе «История и восстановление»."
+
+msgid "Except: %d"
+msgstr "Кроме: %d"
+
+msgid "exceptions"
+msgstr "исключений"
+
+msgid "Exclude by proxy parameters"
+msgstr "Исключить по параметрам прокси"
+
+msgid "Exclude by regular expression"
+msgstr "Исключить по регулярному выражению"
+
+msgid "Exclude countries"
+msgstr "Исключить страны"
+
+msgid "Exclude devices"
+msgstr "Исключить устройства"
+
+msgid "Exclude NTP"
+msgstr "Исключить NTP"
+
+msgid "Exclude NTP protocol traffic from the tunnel to prevent it from being routed through the proxy or VPN"
+msgstr "Исключите трафик протокола NTP из туннеля, чтобы предотвратить его маршрутизацию через прокси-сервер или VPN."
+
+msgid "Exclude servers"
+msgstr "Исключить серверы"
+
+msgid "Exclude servers with one of the selected protocols from this level."
+msgstr "Исключить из этого уровня серверы с одним из выбранных протоколов."
+
+msgid "Exclude servers with one of the selected security types from this level."
+msgstr "Исключить из этого уровня серверы с одним из выбранных типов защиты."
+
+msgid "Exclude servers with one of the selected transports from this level."
+msgstr "Исключить из этого уровня серверы с одним из выбранных транспортов."
+
+msgid "Expecting: %s"
+msgstr "Ожидается: %s"
+
+msgid "Expires"
+msgstr "Истекает"
+
+msgid "Expose this section as a local HTTP+SOCKS proxy"
+msgstr "Открыть эту секцию как локальный HTTP+SOCKS прокси"
+
+msgid "External nfqws config files bypass Prokop queue management and explicit validation."
+msgstr "Внешние конфиги nfqws обходят управление очередями и явную валидацию Prokop."
+
+msgid "External nfqws2 config files bypass Prokop queue management and explicit validation."
+msgstr "Внешние конфиги nfqws2 обходят управление очередями и явную валидацию Prokop."
+
+msgid "Failed"
+msgstr "Ошибка"
+
+msgid "Failed to close connection"
+msgstr "Не удалось закрыть соединение"
+
+msgid "Failed to close connections"
+msgstr "Не удалось закрыть соединения"
+
+msgid "Failed to copy!"
+msgstr "Не удалось скопировать!"
+
+msgid "Failed to create support report"
+msgstr "Не удалось создать отчёт для поддержки"
+
+msgid "Failed to execute"
+msgstr "Не удалось выполнить"
+
+msgid "Failed to save URLTest settings"
+msgstr "Не удалось сохранить настройки URLTest"
+
+msgid "Failed to switch the node"
+msgstr "Не удалось переключить узел"
+
+msgid "Failed to update subscriptions"
+msgstr "Не удалось обновить подписки"
+
+msgid "FakeIP and control checks use different public IPs"
+msgstr "FakeIP и контрольная проверка используют разные публичные IP"
+
+msgid "FakeIP and control checks use the same public IP"
+msgstr "FakeIP и контрольная проверка используют один публичный IP"
+
+msgid "FakeIP checks"
+msgstr "Проверки FakeIP"
+
+msgid "FakeIP connections rejected"
+msgstr "Отклонено соединений на FakeIP"
+
+msgid "FakeIP works; only the comparison with the control address did not give an answer."
+msgstr "FakeIP работает; не удалось только сравнение с контрольным адресом."
+
+msgid "FakeIP works; public IP comparison is inconclusive"
+msgstr "FakeIP работает; сравнение публичных IP не дает однозначного результата"
+
+msgid "Faster server search interval"
+msgstr "Интервал поиска более быстрого сервера"
+
+msgid "Fastest"
+msgstr "Самый быстрый"
+
+msgid "Fatal"
+msgstr "Критическая"
+
+msgid "Firewall rules that send traffic to Prokop are missing or not hit, so rules may not apply."
+msgstr "Правила межсетевого экрана, которые направляют трафик в Prokop, отсутствуют или не срабатывают — правила могут не применяться."
+
+msgid "Fix the highlighted fields and save again."
+msgstr "Исправьте подсвеченные поля и сохраните снова."
+
+msgid "Flash"
+msgstr "Флеш-память"
+
+msgid "Follow new"
+msgstr "Следить за новыми"
+
+msgid "Following new connections"
+msgstr "Показаны только новые соединения"
+
+msgid "For a DPI rule this can mean the strategy does not work with your provider."
+msgstr "Для правила DPI это может значить, что стратегия не работает у вашего провайдера."
+
+msgid "For recommendations. Automatic apply always requires high confidence."
+msgstr "Для рекомендаций. Автоматическое применение всегда требует высокой уверенности."
+
+msgid "For whom"
+msgstr "Для кого"
+
+msgid "Forced device routing"
+msgstr "Принудительная маршрутизация устройств"
+
+msgid "From configuration"
+msgstr "Из конфигурации"
+
+msgid "From the router"
+msgstr "С роутера"
+
+msgid "Full removal"
+msgstr "Полное удаление"
+
+msgid "Fuzzing is not supported here because Prokop needs deterministic runtime validation."
+msgstr "Fuzzing здесь не поддерживается, потому что Prokop нужна предсказуемая runtime-валидация."
+
+msgid "Geo-blocked services"
+msgstr "Сервисы с геоблокировкой"
+
+msgid "Get global check"
+msgstr "Получить глобальную проверку"
+
+msgid "Global check"
+msgstr "Глобальная проверка"
+
+msgid "has no effect"
+msgstr "ни на что не влияет"
+
+msgid "Health state unavailable"
+msgstr "Состояние работоспособности недоступно"
+
+msgid "Healthy"
+msgstr "Норма"
+
+msgid "Help"
+msgstr "Справка"
+
+msgid "Hide values"
+msgstr "Скрывать значения"
+
+msgid "high"
+msgstr "высокая"
+
+msgid "Higher-level check interval"
+msgstr "Интервал проверки высших уровней"
+
+msgid "Higher-priority DNS Check"
+msgstr "Проверка верхних DNS"
+
+msgid "History"
+msgstr "История"
+
+msgid "History and recovery"
+msgstr "История и восстановление"
+
+msgid "History is kept in memory until the router restarts."
+msgstr "История хранится в памяти до перезагрузки роутера."
+
+msgid "History is unavailable"
+msgstr "История недоступна"
+
+msgid "Host"
+msgstr "Хост"
+
+msgid "How often higher priority levels are checked while a lower level is active"
+msgstr "Как часто проверять верхние уровни приоритета, пока активен нижний уровень"
+
+msgid "How often the currently selected server is checked"
+msgstr "Как часто проверяется текущий выбранный сервер"
+
+msgid "How often to check the active DNS servers."
+msgstr "Как часто проверять активные DNS-серверы."
+
+msgid "How often to check whether a higher-priority DNS server has recovered."
+msgstr "Как часто проверять, восстановился ли DNS-сервер с более высоким приоритетом."
+
+msgid "HTTP error"
+msgstr "Ошибка HTTP"
+
+msgid "HTTPS request made by the router itself"
+msgstr "HTTPS-запрос выполняет сам роутер"
+
+msgid "Idle timeout"
+msgstr "Таймаут простоя"
+
+msgid "ignored: %s is used instead"
+msgstr "не используется: вместо него используется %s"
+
+msgid "ignored: DNS rules match domains and devices only"
+msgstr "не используется: DNS-правила сопоставляют только домены и устройства"
+
+msgid "ignored: DNS rules match domains only"
+msgstr "не используется: DNS-правила сопоставляют только домены"
+
+msgid "ignored: only Connection rules use interfaces"
+msgstr "не используется: интерфейсы используют только правила-подключения"
+
+msgid "ignored: text mode reads %s instead"
+msgstr "не используется: в текстовом режиме вместо него читается %s"
+
+msgid "ignored: the backend does not read it"
+msgstr "не используется: бэкенд эту опцию не читает"
+
+msgid "ignored: the rule has interface items"
+msgstr "не используется: у правила есть заданные интерфейсы"
+
+msgid "Import subscription URLTest groups"
+msgstr "Добавлять URLTest группы из подписки"
+
+msgid "Import URLTest groups returned by this subscription provider"
+msgstr "Импортировать URLTest группы, если провайдер подписки возвращает их"
+
+msgid "In progress"
+msgstr "Выполняется"
+
+msgid "In snapshot"
+msgstr "В снимке"
+
+msgid "In use: sing-box does not answer; other names use the regular DNS"
+msgstr "Используется: sing-box не отвечает, остальные имена идут через обычный DNS"
+
+msgid "Inactive"
+msgstr "Неактивна"
+
+msgid "Include by proxy parameters"
+msgstr "Включить по параметрам прокси"
+
+msgid "Include by regular expression"
+msgstr "Включить по регулярному выражению"
+
+msgid "Include countries"
+msgstr "Включить страны"
+
+msgid "Include IP addresses and subnets"
+msgstr "Учитывать IP-адреса и подсети"
+
+msgid "Include servers"
+msgstr "Включить серверы"
+
+msgid "Info"
+msgstr "Информация"
+
+msgid "Install"
+msgstr "Установить"
+
+msgid "Install another build:"
+msgstr "Установить другую сборку:"
+
+msgid "Install Extended build"
+msgstr "Установить сборку Extended"
+
+msgid "Install selected version"
+msgstr "Установить выбранную версию"
+
+msgid "Install Tiny build"
+msgstr "Установить сборку Tiny"
+
+msgid "Installed"
+msgstr "установлена"
+
+msgid "Installed (Mirror edition)"
+msgstr "Установлен (Mirror edition)"
+
+msgid "Installed version is newer than release"
+msgstr "Установлена версия новее релиза"
+
+msgid "Interface Monitoring"
+msgstr "Мониторинг интерфейса"
+
+msgid "Interface Monitoring Delay"
+msgstr "Задержка при мониторинге интерфейсов"
+
+msgid "Interface monitoring for Bad WAN"
+msgstr "Мониторинг интерфейса для Bad WAN"
+
+msgid "Interrupt connections"
+msgstr "Прерывать соединения"
+
+msgid "Interrupt connections when priority failover switches server"
+msgstr "Разрывать соединения при переключении сервера приоритетом"
+
+msgid "Interrupt connections when URLTest switches the selected server"
+msgstr "Прерывать соединения, когда URLTest переключает выбранный сервер"
+
+msgid "Interval"
+msgstr "Интервал"
+
+msgid "Invalid Bootstrap DNS server port"
+msgstr "Некорректный порт резервного DNS"
+
+msgid "Invalid ByeDPI strategy"
+msgstr "Некорректная стратегия ByeDPI"
+
+msgid "Invalid CIDR prefix"
+msgstr "Неверный префикс CIDR"
+
+msgid "Invalid DNS server format. Examples: 8.8.8.8 or dns.example.com or dns.example.com/nicedns for DoH"
+msgstr "Неверный формат DNS-сервера. Примеры: 8.8.8.8, dns.example.com или dns.example.com/nicedns для DoH"
+
+msgid "Invalid DNS server port"
+msgstr "Некорректный порт DNS-сервера"
+
+msgid "Invalid domain address"
+msgstr "Неверный домен"
+
+msgid "Invalid format. Use an IP address or CIDR subnet"
+msgstr "Неверный формат. Используйте IP-адрес или подсеть CIDR"
+
+msgid "Invalid HY2 URL: insecure must be 0 or 1"
+msgstr "Неверный URL Hysteria2: параметр insecure должен быть 0 или 1"
+
+msgid "Invalid HY2 URL: invalid host & port"
+msgstr "Некорректный HY2 URL: некорректные хост и порт"
+
+msgid "Invalid HY2 URL: invalid port number"
+msgstr "Неверный URL Hysteria2: неверный номер порта"
+
+msgid "Invalid HY2 URL: missing credentials/server"
+msgstr "Неверный URL Hysteria2: отсутствуют учетные данные/сервер"
+
+msgid "Invalid HY2 URL: missing host"
+msgstr "Неверный URL Hysteria2: отсутствует хост"
+
+msgid "Invalid HY2 URL: missing host & port"
+msgstr "Неверный URL Hysteria2: отсутствуют хост и порт"
+
+msgid "Invalid HY2 URL: missing password"
+msgstr "Неверный URL Hysteria2: отсутствует пароль"
+
+msgid "Invalid HY2 URL: missing port"
+msgstr "Неверный URL Hysteria2: отсутствует порт"
+
+msgid "Invalid HY2 URL: must not contain spaces"
+msgstr "Неверный URL Hysteria2: не должен содержать пробелов"
+
+msgid "Invalid HY2 URL: must start with hysteria2:// or hy2://"
+msgstr "Неверный URL Hysteria2: должен начинаться с hysteria2:// или hy2://"
+
+msgid "Invalid HY2 URL: obfs-password required when obfs is set"
+msgstr "Неверный URL Hysteria2: требуется obfs-password, когда установлен obfs"
+
+msgid "Invalid HY2 URL: parsing failed"
+msgstr "Неверный URL Hysteria2: ошибка разбора"
+
+msgid "Invalid HY2 URL: sni cannot be empty"
+msgstr "Неверный URL Hysteria2: sni не может быть пустым"
+
+msgid "Invalid HY2 URL: unsupported obfs type"
+msgstr "Неверный URL Hysteria2: неподдерживаемый тип obfs"
+
+msgid "Invalid IP address"
+msgstr "Неверный IP-адрес"
+
+msgid "Invalid JSON format"
+msgstr "Неверный формат JSON"
+
+msgid "Invalid NFQWS2 strategy"
+msgstr "Некорректная стратегия NFQWS2"
+
+msgid "Invalid path format. Path must start with \"/\" and contain valid characters"
+msgstr "Неверный формат пути. Путь должен начинаться с \"/\" и содержать допустимые символы"
+
+msgid "Invalid port number. Must be between 1 and 65535"
+msgstr "Неверный номер порта. Допустимо от 1 до 65535"
+
+msgid "Invalid port or range. Use 80 or 1000-2000"
+msgstr "Неверный порт или диапазон. Используйте 80 или 1000-2000"
+
+msgid "Invalid regular expression"
+msgstr "Неверное регулярное выражение"
+
+msgid "Invalid Shadowsocks URL: decoded credentials must contain method:password"
+msgstr "Неверный URL Shadowsocks: декодированные данные должны содержать method:password"
+
+msgid "Invalid Shadowsocks URL: invalid server and port"
+msgstr "Некорректный Shadowsocks URL: некорректные сервер и порт"
+
+msgid "Invalid Shadowsocks URL: missing credentials"
+msgstr "Неверный URL Shadowsocks: отсутствуют учетные данные"
+
+msgid "Invalid Shadowsocks URL: missing method and password separator \":\""
+msgstr "Неверный URL Shadowsocks: отсутствует разделитель метода и пароля \":\""
+
+msgid "Invalid Shadowsocks URL: missing port"
+msgstr "Неверный URL Shadowsocks: отсутствует порт"
+
+msgid "Invalid Shadowsocks URL: missing server"
+msgstr "Неверный URL Shadowsocks: отсутствует сервер"
+
+msgid "Invalid Shadowsocks URL: missing server address"
+msgstr "Неверный URL Shadowsocks: отсутствует адрес сервера"
+
+msgid "Invalid Shadowsocks URL: must not contain spaces"
+msgstr "Неверный URL Shadowsocks: не должен содержать пробелов"
+
+msgid "Invalid Shadowsocks URL: must start with ss://"
+msgstr "Неверный URL Shadowsocks: должен начинаться с ss://"
+
+msgid "Invalid Shadowsocks URL: parsing failed"
+msgstr "Неверный URL Shadowsocks: ошибка разбора"
+
+msgid "Invalid SOCKS URL: invalid host and port"
+msgstr "Некорректный SOCKS URL: некорректные хост и порт"
+
+msgid "Invalid SOCKS URL: invalid port number"
+msgstr "Неверный URL SOCKS: неверный номер порта"
+
+msgid "Invalid SOCKS URL: missing host and port"
+msgstr "Неверный URL SOCKS: отсутствует хост и порт"
+
+msgid "Invalid SOCKS URL: missing hostname or IP"
+msgstr "Неверный URL SOCKS: отсутствует имя хоста или IP-адрес"
+
+msgid "Invalid SOCKS URL: missing port"
+msgstr "Неверный URL SOCKS: отсутствует порт"
+
+msgid "Invalid SOCKS URL: missing username"
+msgstr "Неверный URL SOCKS: отсутствует имя пользователя"
+
+msgid "Invalid SOCKS URL: must not contain spaces"
+msgstr "Неверный URL SOCKS: не должен содержать пробелов"
+
+msgid "Invalid SOCKS URL: must start with socks4://, socks4a://, or socks5://"
+msgstr "Неверный URL-адрес SOCKS: должен начинаться с socks4://, socks4a:// или socks5://"
+
+msgid "Invalid SOCKS URL: parsing failed"
+msgstr "Неверный URL SOCKS: парсинг не удался"
+
+msgid "Invalid Trojan URL: must not contain spaces"
+msgstr "Неверный URL Trojan: не должен содержать пробелов"
+
+msgid "Invalid Trojan URL: must start with trojan://"
+msgstr "Неверный URL Trojan: должен начинаться с trojan://"
+
+msgid "Invalid Trojan URL: parsing failed"
+msgstr "Неверный URL Trojan: ошибка разбора"
+
+msgid "Invalid URL format"
+msgstr "Неверный формат URL"
+
+msgid "Invalid VLESS URL: parsing failed"
+msgstr "Неверный URL VLESS: ошибка разбора"
+
+msgid "Invalid VMess URL: parsing failed"
+msgstr "Некорректный VMess URL: ошибка разбора"
+
+msgid "IP address of the DNS server used to resolve upstream DNS and proxies. Hostnames are not supported for Bootstrap DNS. If multiple servers are selected, a timeout switches to a backup."
+msgstr "IP-адрес DNS-сервера для разрешения вышестоящих DNS и прокси. Имена хостов не поддерживаются. Если указано несколько серверов, при тайм-ауте используется резервный."
+
+msgid "IPs"
+msgstr "IP-адреса"
+
+msgid "IPs: %d"
+msgstr "IP: %d"
+
+msgid "IPv4 only"
+msgstr "Только IPv4"
+
+msgid "IPv6 only"
+msgstr "Только IPv6"
+
+msgid "Issues detected"
+msgstr "Обнаружены проблемы"
+
+msgid "It goes directly and is not in a DPI rule. No bypass is configured for it."
+msgstr "Идёт напрямую и не входит в DPI-правило. Обход для неё не настроен."
+
+msgid "It goes through a proxy or VPN rule. DPI autotune does not apply."
+msgstr "Идёт через правило прокси или VPN. Автоподбор DPI не применим."
+
+msgid "It goes through a Zapret2 or ByeDPI rule; autotune supports Zapret rules only."
+msgstr "Идёт через правило Zapret2 или ByeDPI; автоподбор поддерживает только правила Zapret."
+
+msgid "It is blocked by a rule."
+msgstr "Блокируется правилом."
+
+msgid "It is excluded from Prokop routing."
+msgstr "Исключена из маршрутизации Prokop."
+
+msgid "It is not in a DPI rule."
+msgstr "Не входит в DPI-правило."
+
+msgid "It is not routed by a DPI rule."
+msgstr "Идёт не по DPI-правилу."
+
+msgid "It never creates or deletes rules, never turns DPI bypass off and never moves targets between rules."
+msgstr "Он никогда не создаёт и не удаляет правила, не отключает обход DPI и не переносит цели между правилами."
+
+msgid "Its measurements are deleted as well. Routing rules are not changed."
+msgstr "Её измерения тоже удаляются. Правила маршрутизации не меняются."
+
+msgid "JSON outbound"
+msgstr "JSON outbound"
+
+msgid "JSON outbound cannot be empty"
+msgstr "JSON outbound не может быть пустым"
+
+msgid "JSON outbound must be a JSON object"
+msgstr "JSON outbound должен быть JSON-объектом"
+
+msgid "JSON outbound must contain a non-empty tag field"
+msgstr "JSON outbound должен содержать непустое поле tag"
+
+msgid "JSON outbound must contain a non-empty type field"
+msgstr "JSON outbound должен содержать непустое поле type"
+
+msgid "JSON outbound settings"
+msgstr "Настройки JSON outbound"
+
+msgid "just now"
+msgstr "только что"
+
+msgid "Keep Priority before latency-sorted servers"
+msgstr "Показывать Priority перед серверами, отсортированными по задержке"
+
+msgid "Keep URLTest before latency-sorted servers"
+msgstr "Держать URLTest перед серверами, отсортированными по задержке"
+
+msgid "Keyword must not contain spaces or commas"
+msgstr "Ключевое слово не должно содержать пробелы или запятые"
+
+msgid "Keyword/regex matchers without DNS protection"
+msgstr "Правил keyword/regex без защиты DNS"
+
+msgid "Kill-switch status"
+msgstr "Состояние kill-switch"
+
+msgid "Kill-switch status is unavailable: %s"
+msgstr "Состояние kill-switch недоступно: %s"
+
+msgid "Last change"
+msgstr "Последнее изменение"
+
+msgid "last check"
+msgstr "последняя проверка"
+
+msgid "Last check"
+msgstr "Последняя проверка"
+
+msgid "Last check completed"
+msgstr "Последняя проверка завершена"
+
+msgid "Last check postponed"
+msgstr "Последняя проверка отложена"
+
+msgid "Last diagnostics: %s"
+msgstr "Последняя диагностика: %s"
+
+msgid "Last error"
+msgstr "Последняя ошибка"
+
+msgid "Last important event"
+msgstr "Последнее важное событие"
+
+msgid "Last known good"
+msgstr "Последняя рабочая"
+
+msgid "Last known good configuration"
+msgstr "Последняя рабочая конфигурация"
+
+msgid "Last recovery"
+msgstr "Последнее восстановление"
+
+msgid "Last reload"
+msgstr "Последняя перезагрузка"
+
+msgid "Last reload: %s"
+msgstr "Последняя перезагрузка: %s"
+
+msgid "Last update"
+msgstr "Последнее обновление"
+
+msgid "Latency test failed"
+msgstr "Проверка задержки не удалась"
+
+msgid "Latency test URL"
+msgstr "URL для проверки задержки"
+
+msgid "Latest version is installed"
+msgstr "Установлена последняя версия"
+
+msgid "Latest version:"
+msgstr "Последняя версия:"
+
+msgid "left"
+msgstr "осталось"
+
+msgid "Legacy settings"
+msgstr "Устаревшие настройки"
+
+msgid "less than a minute"
+msgstr "меньше минуты"
+
+msgid "Level"
+msgstr "Уровень"
+
+msgid "Level name"
+msgstr "Название уровня"
+
+msgid "List"
+msgstr "Список"
+
+msgid "List must be an HTTP(S) URL or a local .lst path"
+msgstr "Список должен быть HTTP(S) URL или локальным путём .lst"
+
+msgid "List of a rule"
+msgstr "Список из правила"
+
+msgid "List Update Frequency"
+msgstr "Частота обновления списков"
+
+msgid "Lists and updates"
+msgstr "Списки и обновления"
+
+msgid "Lists: %d"
+msgstr "Списки: %d"
+
+msgid "Loading available versions…"
+msgstr "Загрузка доступных версий…"
+
+msgid "Loading connections"
+msgstr "Загрузка соединений"
+
+msgid "Loading kill-switch status…"
+msgstr "Загрузка состояния kill-switch…"
+
+msgid "Loading..."
+msgstr "Загрузка..."
+
+msgid "Loading…"
+msgstr "Загрузка…"
+
+msgid "Log Level"
+msgstr "Уровень логов"
+
+msgid "low"
+msgstr "низкая"
+
+msgid "LuCI app"
+msgstr "Приложение LuCI"
+
+msgid "Main DNS"
+msgstr "Основной DNS"
+
+msgid "Main DNS server. If multiple servers are selected, a timeout switches to a backup."
+msgstr "Основной DNS-сервер. Если выбрать несколько, то при таймауте произойдёт переключение на резервный."
+
+msgid "Make sure devices use the router as DNS: turn off secure DNS (DoH, Private DNS) in browsers and phones."
+msgstr "Убедитесь, что устройства используют роутер как DNS: отключите защищённый DNS (DoH, «Частный DNS») в браузерах и телефонах."
+
+msgid "Make sure the provider is installed and the rule strategy is valid, then restart Prokop."
+msgstr "Убедитесь, что провайдер установлен, а стратегия правила корректна, затем перезапустите Prokop."
+
+msgid "Manual"
+msgstr "Вручную"
+
+msgid "Manual apply is available only in \"Recommendations only\" mode."
+msgstr "Ручное применение доступно только в режиме «Только рекомендации»."
+
+msgid "Manual checks only measure; changes are applied only on schedule."
+msgstr "Ручная проверка только измеряет; изменения применяются только по расписанию."
+
+msgid "manually"
+msgstr "вручную"
+
+msgid "Match destination IPs or subnets"
+msgstr "Совпадение по IP-адресам или подсетям назначения"
+
+msgid "Match destination ports. Use a single port or a range"
+msgstr "Совпадение по портам назначения. Используйте одиночный порт или диапазон"
+
+msgid "Maximum time to wait for example.com to resolve during a DNS health check."
+msgstr "Максимальное время ожидания разрешения example.com при проверке доступности DNS."
+
+msgid "measured in isolation from production traffic"
+msgstr "измерено изолированно от рабочего трафика"
+
+msgid "medium"
+msgstr "средняя"
+
+msgid "Minimum confidence"
+msgstr "Минимальная уверенность"
+
+msgid "Minimum latency difference in milliseconds that triggers switching to a faster server."
+msgstr "Минимальная разница задержки в миллисекундах, при которой произойдет переключение на более быстрый сервер."
+
+msgid "Mixed Proxy Password"
+msgstr "Пароль смешанного прокси"
+
+msgid "Mixed Proxy Port"
+msgstr "Порт смешанного прокси"
+
+msgid "Mixed Proxy Username"
+msgstr "Логин смешанного прокси"
+
+msgid "Mode"
+msgstr "Режим"
+
+msgid "Mode 2 enabled"
+msgstr "Режим 2 включён"
+
+msgid "Mode and state"
+msgstr "Режим и состояние"
+
+msgid "Monitored Interfaces"
+msgstr "Наблюдаемые интерфейсы"
+
+msgid "Monitoring"
+msgstr "Мониторинг"
+
+msgid "Monitoring view"
+msgstr "Раздел мониторинга"
+
+msgid "More details"
+msgstr "Подробнее"
+
+msgid "ms"
+msgstr "мс"
+
+msgid "Multiple sing-box processes were found or their ownership is unclear. Restart is unavailable; traffic routing was not changed. To stop all sing-box processes, use Stop Prokop, then start Prokop again."
+msgstr "Обнаружено несколько процессов sing-box или их принадлежность неясна. Перезапуск недоступен, маршрутизация трафика не изменена. Чтобы остановить все процессы sing-box, нажмите «Остановить Prokop», затем запустите Prokop заново."
+
+msgid "Must be a number in the range of 0 - 10000"
+msgstr "Должно быть числом в диапазоне 0 - 10000"
+
+msgid "Name displayed on the dashboard"
+msgstr "Имя, которое отображается в дашборде"
+
+msgid "Name shown in the priority level list"
+msgstr "Имя, которое отображается в списке уровней приоритета"
+
+msgid "Needs attention"
+msgstr "Требуется внимание"
+
+msgid "Network"
+msgstr "Сеть"
+
+msgid "Network Interface"
+msgstr "Сетевой интерфейс"
+
+msgid "Network interface settings"
+msgstr "Настройки сетевого интерфейса"
+
+msgid "never"
+msgstr "никогда"
+
+msgid "New version %s is available for %s"
+msgstr "Доступна новая версия %s для %s"
+
+msgid "News"
+msgstr "Новости"
+
+msgid "Next scheduled check"
+msgstr "Следующая плановая проверка"
+
+msgid "Next step"
+msgstr "Следующий шаг"
+
+msgid "NFQUEUE range is available"
+msgstr "Диапазон NFQUEUE свободен"
+
+msgid "NFQUEUE range overlaps with another rule"
+msgstr "Диапазон NFQUEUE пересекается с другим правилом"
+
+msgid "NFQWS Strategy"
+msgstr "Стратегия NFQWS"
+
+msgid "NFQWS strategy cannot be empty"
+msgstr "Стратегия NFQWS не может быть пустой"
+
+msgid "NFQWS2 Strategy"
+msgstr "Стратегия NFQWS2"
+
+msgid "NFQWS2 strategy cannot be empty"
+msgstr "Стратегия NFQWS2 не может быть пустой"
+
+msgid "nftables checks"
+msgstr "Проверки nftables"
+
+msgid "No"
+msgstr "Нет"
+
+msgid "No active connections"
+msgstr "Нет активных соединений"
+
+msgid "No autotune events yet"
+msgstr "Событий автоподбора пока нет"
+
+msgid "No bypass (direct)"
+msgstr "Без обхода (direct)"
+
+msgid "No change needed"
+msgstr "Менять нечего"
+
+msgid "No change was needed"
+msgstr "Изменение не потребовалось"
+
+msgid "No check has been run yet"
+msgstr "Проверка ещё не запускалась"
+
+msgid "No closed connections"
+msgstr "Нет закрытых соединений"
+
+msgid "No compatible releases available"
+msgstr "Нет доступных совместимых версий"
+
+msgid "No connections match the filters"
+msgstr "Нет соединений, подходящих под фильтры"
+
+msgid "no data"
+msgstr "нет данных"
+
+msgid "No data"
+msgstr "Нет данных"
+
+msgid "No DNS records for this name"
+msgstr "Для этого имени нет DNS-записей"
+
+msgid "No DNS server for measurements: set a plain IPv4 DNS server in Prokop or on the target."
+msgstr "Нет DNS-сервера для измерений: укажите обычный IPv4 DNS-сервер в настройках Prokop или у цели."
+
+msgid "No domain of the list has an address at the DNS server."
+msgstr "Ни один домен списка не получил адрес от DNS-сервера."
+
+msgid "No DPI rule has a downloaded list; only domains can be added."
+msgstr "Ни у одного DPI-правила нет загруженного списка; можно добавить только домены."
+
+msgid "No events of this kind"
+msgstr "Событий этого типа нет"
+
+msgid "No events recorded yet"
+msgstr "Событий пока нет"
+
+msgid "no longer supported: the configuration cannot be applied while the rule is enabled"
+msgstr "больше не поддерживается: пока правило включено, конфигурацию применить не удастся"
+
+msgid "No measurements yet."
+msgstr "Измерений пока нет."
+
+msgid "No new connections yet. Open the site or app you want to check."
+msgstr "Новых соединений пока нет. Откройте сайт или приложение, которое хотите проверить."
+
+msgid "No other marking rules found"
+msgstr "Другие правила маркировки не найдены"
+
+msgid "No recovery needed"
+msgstr "Восстановление не требуется"
+
+msgid "No reload recorded yet"
+msgstr "Перезагрузок пока не было"
+
+msgid "No rule handles it; it may need to be added to a rule."
+msgstr "Ни одно правило его не обрабатывает — возможно, адрес нужно добавить в правило."
+
+msgid "No rule matched"
+msgstr "Ни одно правило не сработало"
+
+msgid "No rules use ByeDPI"
+msgstr "Нет правил, использующих ByeDPI"
+
+msgid "No rules use Zapret"
+msgstr "Нет правил, использующих Zapret"
+
+msgid "No rules use Zapret2"
+msgstr "Нет правил, использующих Zapret2"
+
+msgid "No saved changes since this snapshot"
+msgstr "После этого снимка изменений нет"
+
+msgid "No snapshots yet"
+msgstr "Снимки ещё не создавались"
+
+msgid "No strategies were measured"
+msgstr "Стратегии не измерялись"
+
+msgid "No strategy is stable. The current strategy is kept."
+msgstr "Ни одна стратегия не стабильна. Текущая стратегия оставлена."
+
+msgid "No target is routed through a Zapret DPI rule"
+msgstr "Ни одна цель не идёт через DPI-правило Zapret"
+
+msgid "No targets yet"
+msgstr "Целей пока нет"
+
+msgid "no transit rule is selected"
+msgstr "не выбрано транзитное правило"
+
+msgid "No usable result"
+msgstr "Нет пригодного результата"
+
+msgid "Node list is empty"
+msgstr "Список узлов пуст"
+
+msgid "Nodes"
+msgstr "Узлы"
+
+msgid "Nodes and groups"
+msgstr "Узлы и группы"
+
+msgid "none"
+msgstr "нет"
+
+msgid "Normal mode"
+msgstr "Обычный режим"
+
+msgid "Not applied"
+msgstr "Не применено"
+
+msgid "Not attached: dnsmasq uses another servers file"
+msgstr "Не подключена: dnsmasq использует другой servers-файл"
+
+msgid "Not available for checking"
+msgstr "Недоступно для проверки"
+
+msgid "Not checked"
+msgstr "Не проверено"
+
+msgid "Not checked yet"
+msgstr "Ещё не проверялось"
+
+msgid "Not determined"
+msgstr "Не определено"
+
+msgid "not in the list"
+msgstr "нет в списке"
+
+msgid "Not installed"
+msgstr "Не установлено"
+
+msgid "Not managed (Dont Touch My DHCP)"
+msgstr "Не управляется (Dont Touch My DHCP)"
+
+msgid "Not needed"
+msgstr "Не требовалось"
+
+msgid "Not recorded yet"
+msgstr "Пока не записана"
+
+msgid "Not resolved"
+msgstr "Не разрешён"
+
+msgid "Not responding"
+msgstr "Не отвечает"
+
+msgid "Not running"
+msgstr "Не запущено"
+
+msgid "not set"
+msgstr "не задано"
+
+msgid "Not started"
+msgstr "Не запускался"
+
+msgid "Not supported"
+msgstr "Не поддерживается"
+
+msgid "not used"
+msgstr "не используется"
+
+msgid "Nothing found"
+msgstr "Ничего не найдено"
+
+msgid "Nothing to check"
+msgstr "Нечего проверять"
+
+msgid "Nothing was rolled back"
+msgstr "Ничего не откачено"
+
+msgid "Nothing was rolled back: the router has uncommitted uci changes of Prokop (made with \"uci set\" without a commit). Commit or revert them, then roll back again."
+msgstr "Ничего не откачено: на роутере есть незафиксированные изменения Prokop в uci (внесённые «uci set» без commit). Зафиксируйте или отмените их и повторите откат."
+
+msgid "Now"
+msgstr "Сейчас"
+
+msgid "Observed"
+msgstr "Наблюдается"
+
+msgid "Off"
+msgstr "Выключен"
+
+msgid "Only from the specified countries."
+msgstr "Только из указанных стран."
+
+msgid "Only selected"
+msgstr "Только выбранные"
+
+msgid "Only selected except exclusions"
+msgstr "Только выбранные, кроме исключений"
+
+msgid "Only servers whose names match the expression."
+msgstr "Только серверы, имена которых соответствуют выражению."
+
+msgid "Only servers with one of the selected protocols."
+msgstr "Только серверы с одним из выбранных протоколов."
+
+msgid "Only servers with one of the selected security types."
+msgstr "Только серверы с одним из выбранных типов защиты."
+
+msgid "Only servers with one of the selected transports."
+msgstr "Только серверы с одним из выбранных транспортов."
+
+msgid "Only the first %d changes are listed; %d changes in total."
+msgstr "Показаны только первые %d изменений; всего изменений: %d."
+
+msgid "Only the specified servers."
+msgstr "Только указанные серверы."
+
+msgid "Only: %d"
+msgstr "Только: %d"
+
+msgid "Open"
+msgstr "Открыть"
+
+msgid "Open History and recovery"
+msgstr "Открыть «История и восстановление»"
+
+msgid "Open LuCI"
+msgstr "Открыть LuCI"
+
+msgid "Open priority settings and enter a display name"
+msgstr "Откройте настройки приоритета и укажите отображаемое имя"
+
+msgid "Open rules"
+msgstr "Открыть правила"
+
+msgid "Open settings"
+msgstr "Открыть настройки"
+
+msgid "Operation timed out"
+msgstr "Время ожидания истекло"
+
+msgid "Option \"%s\" contains an invalid input value."
+msgstr "Параметр \"%s\" содержит некорректное значение."
+
+msgid "Optional IPv4 address. By default the first IPv4 DNS server of Prokop is used."
+msgstr "Необязательный IPv4-адрес. По умолчанию используется первый IPv4 DNS-сервер Prokop."
+
+msgid "Optional values must be attached with '=' here; a separate token would be ignored by nfqws."
+msgstr "Необязательное значение здесь нужно передавать только через '='; отдельный токен nfqws проигнорирует."
+
+msgid "Optional values must be attached with '=' here; a separate token would be ignored by nfqws2."
+msgstr "Необязательные значения здесь должны задаваться через '='; отдельный токен будет проигнорирован nfqws2."
+
+msgid "Original repositories could not be restored. Removal was cancelled before deleting packages."
+msgstr "Не удалось восстановить исходные репозитории. Удаление отменено до удаления пакетов."
+
+msgid "OS"
+msgstr "ОС"
+
+msgid "Other"
+msgstr "Другое"
+
+msgid "Other event"
+msgstr "Другое событие"
+
+msgid "Outbound chain"
+msgstr "Цепочка выходов"
+
+msgid "Outbound checks"
+msgstr "Проверки исходящих подключений"
+
+msgid "Outbound checks need access to the Prokop configuration, which this role does not have."
+msgstr "Для проверки outbound нужен доступ к конфигурации Prokop, которого у этой роли нет."
+
+msgid "outbounds must be a non-empty array of strings"
+msgstr "outbounds должен быть непустым массивом строк"
+
+msgid "Outcome unknown"
+msgstr "Результат неизвестен"
+
+msgid "Output Network Interface"
+msgstr "Выходной сетевой интерфейс"
+
+msgid "Overview"
+msgstr "Обзор"
+
+msgid "Package recovery"
+msgstr "Восстановление пакетов"
+
+msgid "Package recovery has not finished"
+msgstr "Восстановление пакетов не завершено"
+
+msgid "Panic"
+msgstr "Паника"
+
+msgid "Part of Prokop does not work as expected."
+msgstr "Часть Prokop работает не так, как ожидается."
+
+msgid "Passed checks: %d"
+msgstr "Пройденные проверки: %d"
+
+msgid "Passed: %d"
+msgstr "Пройдено: %d"
+
+msgid "Password cannot be empty"
+msgstr "Пароль не может быть пустым"
+
+msgid "Path"
+msgstr "Путь"
+
+msgid "Path cannot be empty"
+msgstr "Путь не может быть пустым"
+
+msgid "Path must be absolute (start with /)"
+msgstr "Путь должен быть абсолютным (начинаться с /)"
+
+msgid "Path must contain at least one directory (like /tmp/cache.db)"
+msgstr "Путь должен содержать хотя бы одну директорию (например /tmp/cache.db)"
+
+msgid "Path must end with cache.db"
+msgstr "Путь должен заканчиваться на cache.db"
+
+msgid "Path type"
+msgstr "Тип пути"
+
+msgid "Pause"
+msgstr "Пауза"
+
+msgid "Pause after a rollback"
+msgstr "Пауза после отката"
+
+msgid "pause after a rollback %s"
+msgstr "пауза после отката %s"
+
+msgid "Pause updates"
+msgstr "Приостановить обновление"
+
+msgid "Pending"
+msgstr "Ожидает запуска"
+
+msgid "Periodically check the current level and switch to a faster server even when the current one works."
+msgstr "Периодически проверять текущий уровень и переключаться на более быстрый сервер, даже если текущий работает."
+
+msgid "Pin on dashboard"
+msgstr "Закрепить в дашборде"
+
+msgid "Pinned domains must be domain names, at most 8."
+msgstr "Закреплённые домены — это доменные имена, не больше 8."
+
+msgid "Pinned domains: %d"
+msgstr "Закреплённых доменов: %d"
+
+msgid "Policy"
+msgstr "Политика"
+
+msgid "Policy saved"
+msgstr "Политика сохранена"
+
+msgid "Policy…"
+msgstr "Политика…"
+
+msgid "Port"
+msgstr "Порт"
+
+msgid "Port cannot be empty"
+msgstr "Порт не может быть пустым"
+
+msgid "Port for the local mixed proxy of this section"
+msgstr "Порт локального смешанного прокси для этой секции"
+
+msgid "Port must be between 1 and 65535"
+msgstr "Порт должен быть от 1 до 65535"
+
+msgid "Port range start must be less than or equal to end"
+msgstr "Начало диапазона портов должно быть меньше или равно концу"
+
+msgid "Ports"
+msgstr "Порты"
+
+msgid "Ports: %d"
+msgstr "Порты: %d"
+
+msgid "Prefer IPv4"
+msgstr "Предпочитать IPv4"
+
+msgid "Prefer IPv6"
+msgstr "Предпочитать IPv6"
+
+msgid "Prefix text"
+msgstr "Текст префикса"
+
+msgid "Preparing the change"
+msgstr "Подготовка изменения"
+
+msgid "preparing the isolated check"
+msgstr "подготовка изолированной проверки"
+
+msgid "Priority"
+msgstr "Приоритет"
+
+msgid "Priority details"
+msgstr "Детали Priority"
+
+msgid "Priority details are unavailable"
+msgstr "Детали Priority недоступны"
+
+msgid "Priority level settings"
+msgstr "Настройки уровня приоритета"
+
+msgid "Priority levels"
+msgstr "Уровни приоритета"
+
+msgid "Priority settings"
+msgstr "Настройки приоритета"
+
+msgid "Probe tool is missing on the router"
+msgstr "На роутере нет инструмента для проверки"
+
+msgid "probes done, removing the temporary rules"
+msgstr "пробы завершены, удаление временных правил"
+
+msgid "Probes per strategy"
+msgstr "Проб на стратегию"
+
+msgid "probes: %d of %d"
+msgstr "пробы: %d из %d"
+
+msgid "Profile"
+msgstr "Профиль"
+
+msgid "Prokop and sing-box have been removed. Original repositories have been restored."
+msgstr "Prokop и sing-box удалены. Исходные репозитории восстановлены."
+
+msgid "Prokop could not apply the change; see the Prokop log."
+msgstr "Prokop не смог применить изменение; подробности в журнале Prokop."
+
+msgid "Prokop does not apply recommendations in this mode."
+msgstr "В этом режиме Prokop не применяет рекомендации."
+
+msgid "Prokop Error"
+msgstr "Ошибка Prokop"
+
+msgid "Prokop is busy with another operation: the change applies when it finishes."
+msgstr "Prokop занят другой операцией: изменение применится, когда она завершится."
+
+msgid "Prokop is running"
+msgstr "Prokop работает"
+
+msgid "Prokop is stopped; start it first"
+msgstr "Prokop остановлен; сначала запустите его"
+
+msgid "Prokop is stopped: the change applies when it is started."
+msgstr "Prokop остановлен: изменение применится, когда вы его запустите."
+
+msgid "Prokop is stopped: the configuration is replaced and checked, but Prokop is not started. It takes effect when you start Prokop."
+msgstr "Prokop остановлен: конфигурация будет заменена и проверена, но Prokop не запустится. Она вступит в силу, когда вы запустите Prokop."
+
+msgid "Prokop is stopped. Start it to run the checks."
+msgstr "Prokop остановлен. Запустите его, чтобы выполнить проверки."
+
+msgid "Prokop kept or restored the previous configuration."
+msgstr "Prokop сохранил или восстановил прежнюю конфигурацию."
+
+msgid "Prokop manages ciadpi pid files itself, so pidfile options are not allowed here."
+msgstr "Prokop сам управляет pid-файлами ciadpi, поэтому параметры pidfile здесь запрещены."
+
+msgid "Prokop manages the ciadpi process lifecycle itself, so daemon mode is not allowed here."
+msgstr "Prokop сам управляет жизненным циклом ciadpi, поэтому режим daemon здесь запрещён."
+
+msgid "Prokop manages the nfqws process lifecycle itself, so daemon mode is not allowed here."
+msgstr "Prokop сам управляет жизненным циклом nfqws, поэтому режим daemon здесь запрещён."
+
+msgid "Prokop manages the nfqws2 process lifecycle itself, so daemon mode is not allowed here."
+msgstr "Prokop сам управляет жизненным циклом nfqws2, поэтому режим daemon здесь запрещён."
+
+msgid "Prokop measures the targets on schedule and applies a confirmed recommendation by itself, with a production check and automatic rollback."
+msgstr "Prokop измеряет цели по расписанию и сам применяет подтверждённую рекомендацию, с проверкой в рабочем режиме и автоматическим откатом."
+
+msgid "Prokop measures the targets on schedule and shows recommendations. It does not change rules."
+msgstr "Prokop измеряет цели по расписанию и показывает рекомендации. Правила он не меняет."
+
+msgid "Prokop needs attention"
+msgstr "Prokop требует внимания"
+
+msgid "Prokop never turns DPI bypass off by itself; remove the targets from the rule manually if you want."
+msgstr "Prokop никогда сам не отключает обход DPI; при желании уберите цели из правила вручную."
+
+msgid "Prokop never turns DPI bypass off by itself."
+msgstr "Prokop никогда сам не отключает обход DPI."
+
+msgid "Prokop reloads the configuration. If the reload fails, the previous configuration is restored automatically."
+msgstr "Prokop перезагрузит конфигурацию. Если перезагрузка не удастся, прежняя конфигурация восстановится автоматически."
+
+msgid "Prokop restores the \"Before autotune\" snapshot, reloads the service and checks that the previous strategy works."
+msgstr "Prokop восстановит снимок «Перед автоподбором», перезагрузит службу и проверит, что прежняя стратегия работает."
+
+msgid "Prokop restores the last known working configuration if the current one differs from it, and reloads the service."
+msgstr "Prokop восстановит последнюю рабочую конфигурацию, если текущая от неё отличается, и перезагрузит службу."
+
+msgid "Prokop runtime"
+msgstr "Работа Prokop"
+
+msgid "Prokop service is stopped. Start the service to display connections."
+msgstr "Служба Prokop остановлена. Запустите сервис для отображения соединений."
+
+msgid "Prokop stays stopped until you start it: reloads, restores and updates do not start it."
+msgstr "Prokop останется остановленным, пока вы его не запустите: перезагрузка конфигурации, восстановление и обновления его не запускают."
+
+msgid "Prokop stops handling traffic until it is started again."
+msgstr "Prokop перестанет обрабатывать трафик, пока его снова не запустят."
+
+msgid "Prokop was not started since the router booted: reloads, restores and updates do not start it."
+msgstr "Prokop не запускали после загрузки роутера: перезагрузка конфигурации, восстановление и обновления его не запускают."
+
+msgid "Prokop was not stopped by the user: its start failed or it stopped unexpectedly."
+msgstr "Prokop не останавливали вручную: его запуск не удался или он неожиданно остановился."
+
+msgid "Prokop will change the strategy of existing DPI rules by itself, only after several confirmations in a row, with a production check and automatic rollback."
+msgstr "Prokop будет сам менять стратегию существующих DPI-правил — только после нескольких подтверждений подряд, с проверкой в рабочем режиме и автоматическим откатом."
+
+msgid "Prokop will create a configuration snapshot, reload the service and check the new strategy with router requests sent through the queue of this rule. If the check fails, the previous configuration is restored automatically."
+msgstr "Prokop создаст снимок конфигурации, перезагрузит службу и проверит новую стратегию запросами роутера, отправленными через очередь этого правила. Если проверка не пройдёт, прежняя конфигурация восстановится автоматически."
+
+msgid "Prokop will create a configuration snapshot, reload the service and check the real production path. If the check fails, the previous configuration is restored automatically."
+msgstr "Prokop создаст снимок конфигурации, перезагрузит сервис и проверит реальный production path. Если проверка не пройдёт, предыдущая конфигурация будет восстановлена автоматически."
+
+msgid "Prokop will not modify your DHCP configuration"
+msgstr "Prokop не будет изменять вашу конфигурацию DHCP"
+
+msgid "Prokop-managed ciadpi runtime has restarted"
+msgstr "ciadpi Prokop перезапускался"
+
+msgid "Prokop-managed ciadpi runtime is not ready"
+msgstr "ciadpi Prokop не готов"
+
+msgid "Prokop-managed ciadpi runtime is not running"
+msgstr "ciadpi Prokop не запущен"
+
+msgid "Prokop-managed ciadpi runtime is ready"
+msgstr "ciadpi Prokop готов"
+
+msgid "Prokop-managed nfqws runtime is not ready"
+msgstr "NFQWS Prokop не готов"
+
+msgid "Prokop-managed nfqws runtime is not running"
+msgstr "NFQWS Prokop не запущен"
+
+msgid "Prokop-managed nfqws runtime is ready"
+msgstr "NFQWS Prokop готов"
+
+msgid "Prokop-managed nfqws2 runtime is not ready"
+msgstr "NFQWS2 Prokop не готов"
+
+msgid "Prokop-managed nfqws2 runtime is not running"
+msgstr "NFQWS2 Prokop не запущен"
+
+msgid "Prokop-managed nfqws2 runtime is ready"
+msgstr "NFQWS2 Prokop готов"
+
+msgid "Protected sections"
+msgstr "Защищённые разделы"
+
+msgid "Protection active"
+msgstr "Защита активна"
+
+msgid "Protection and recovery"
+msgstr "Защита и восстановление"
+
+msgid "Protection is active"
+msgstr "Защита активна"
+
+msgid "Protocol"
+msgstr "Протокол"
+
+msgid "Provider"
+msgstr "Провайдер"
+
+msgid "Proxy"
+msgstr "Прокси"
+
+msgid "RAM"
+msgstr "ОЗУ"
+
+msgid "Re-apply now"
+msgstr "Применить заново"
+
+msgid "Reachable"
+msgstr "Доступно"
+
+msgid "Ready"
+msgstr "Готов"
+
+msgid "Recommendation confirmed"
+msgstr "Рекомендация подтверждена"
+
+msgid "Recommendations only"
+msgstr "Только рекомендации"
+
+msgid "Recommended"
+msgstr "Рекомендовано"
+
+msgid "Recovered"
+msgstr "Восстановлено"
+
+msgid "Recovery"
+msgstr "Восстановление"
+
+msgid "Recovery details"
+msgstr "Подробнее о восстановлении"
+
+msgid "Recovery state is unavailable"
+msgstr "Состояние восстановления недоступно"
+
+msgid "Refill"
+msgstr "Сброс"
+
+msgid "Refreshing Dashboard…"
+msgstr "Обновление дашборда…"
+
+msgid "Regular expression must not contain spaces or commas"
+msgstr "Регулярное выражение не должно содержать пробелы или запятые"
+
+msgid "Removal did not finish. See the removal log in /tmp/prokop-uninstall.*/output.log."
+msgstr "Удаление не завершено. Подробности в журнале /tmp/prokop-uninstall.*/output.log."
+
+msgid "Remove"
+msgstr "Удалить"
+
+msgid "remove %s"
+msgstr "удалить %s"
+
+msgid "Remove %s from this rule? When you save the rule, it matches without them and the configuration can be applied again. Nothing else in the rule changes."
+msgstr "Удалить %s из этого правила? При сохранении правило будет работать без них, и конфигурацию снова можно будет применить. Остальное в правиле не изменится."
+
+msgid "Remove %s?"
+msgstr "Удалить %s?"
+
+msgid "Remove permanently"
+msgstr "Удалить безвозвратно"
+
+msgid "Remove Prokop and sing-box with their settings and restore the original device repositories."
+msgstr "Удалить Prokop и sing-box вместе с настройками и восстановить исходные репозитории устройства."
+
+msgid "Remove Prokop completely"
+msgstr "Полностью удалить Prokop"
+
+msgid "Remove Prokop, sing-box, their settings and cache, and restore the original device repositories?"
+msgstr "Удалить Prokop, sing-box, их настройки и кэш и восстановить исходные репозитории устройства?"
+
+msgid "Remove protection now"
+msgstr "Снять защиту сейчас"
+
+msgid "Remove servers from the specified countries from this level."
+msgstr "Исключить из уровня серверы из указанных стран."
+
+msgid "Remove servers whose names match the expression from this level."
+msgstr "Исключить из уровня серверы, имена которых соответствуют выражению."
+
+msgid "Remove target?"
+msgstr "Удалить цель?"
+
+msgid "Remove the kill-switch now? Protected traffic will be able to leave directly until Prokop applies it again on the next successful start or reload."
+msgstr "Снять kill-switch сейчас? Защищённый трафик сможет уходить напрямую, пока Prokop не применит защиту снова при следующем успешном запуске или перезагрузке."
+
+msgid "Remove the specified servers from this level."
+msgstr "Исключить из уровня указанные серверы."
+
+msgid "Remove…"
+msgstr "Удалить…"
+
+msgid "Removing Prokop…"
+msgstr "Удаление Prokop…"
+
+msgid "Removing user settings…"
+msgstr "Удаление пользовательских настроек…"
+
+msgid "Require a username and password for the local mixed proxy"
+msgstr "Требовать логин и пароль для локального смешанного прокси"
+
+msgid "Reset filters"
+msgstr "Сбросить фильтры"
+
+msgid "Resolve domain names before routing so sing-box can use real destination IPs."
+msgstr "Разрешать доменные имена перед маршрутизацией, чтобы sing-box использовал реальные IP-адреса назначения."
+
+msgid "Resolve real IP for routing"
+msgstr "Разрешать реальный IP для маршрутизации"
+
+msgid "Resource selection by hostname inside nfqws is not supported here; sing-box selects resources before NFQUEUE."
+msgstr "Выбор ресурсов по hostname внутри nfqws здесь не поддерживается; ресурсы выбирает sing-box до NFQUEUE."
+
+msgid "Resource selection by hostname inside nfqws2 is not supported here; sing-box selects resources before NFQUEUE."
+msgstr "Выбор ресурсов по hostname внутри nfqws2 здесь не поддерживается; sing-box выбирает ресурсы до NFQUEUE."
+
+msgid "Resource selection by IP or CIDR inside nfqws is not supported here; sing-box selects resources before NFQUEUE."
+msgstr "Выбор ресурсов по IP или CIDR внутри nfqws здесь не поддерживается; ресурсы выбирает sing-box до NFQUEUE."
+
+msgid "Resource selection by IP or CIDR inside nfqws2 is not supported here; sing-box selects resources before NFQUEUE."
+msgstr "Выбор ресурсов по IP или CIDR внутри nfqws2 здесь не поддерживается; sing-box выбирает ресурсы до NFQUEUE."
+
+msgid "Restart Prokop"
+msgstr "Перезапустить Prokop"
+
+msgid "Restart Prokop on the Overview. If it repeats, open the logs under Technical data."
+msgstr "Перезапустите Prokop на «Обзоре». Если ошибка повторится, откройте логи в «Технических данных»."
+
+msgid "Restart Prokop: the restart removes the DPI guard that a failed change left in place."
+msgstr "Перезапустите Prokop: перезапуск снимет защиту DPI, оставленную неудавшимся изменением."
+
+msgid "Restart Prokop. If another add-on marks traffic, make sure it does not conflict."
+msgstr "Перезапустите Prokop. Если трафик маркирует другое дополнение, убедитесь, что оно не конфликтует."
+
+msgid "Restart required"
+msgstr "Нужен перезапуск"
+
+msgid "Restore"
+msgstr "Восстановить"
+
+msgid "Restore configuration snapshot?"
+msgstr "Восстановить снимок конфигурации?"
+
+msgid "Restore did not finish: a failed change left the DPI guard in place, and the DPI guard stays active. Restart Prokop, then restore the snapshot again."
+msgstr "Восстановление не завершено: неудавшееся изменение оставило защиту DPI, и она остаётся активной. Перезапустите Prokop, затем восстановите снимок ещё раз."
+
+msgid "Restore did not finish: the configuration was changed while the snapshot was being applied."
+msgstr "Восстановление не завершено: конфигурацию изменили, пока применялся снимок."
+
+msgid "Restore did not finish: the configuration was changed while the snapshot was being applied. Prokop was reloaded, but it is not known whether with the snapshot or with the change."
+msgstr "Восстановление не завершено: конфигурацию изменили, пока применялся снимок. Prokop перезагружен, но неизвестно, со снимком или с изменением."
+
+msgid "Restore did not finish: the service was busy and only queued the reload. The DPI guard stays active; restore again when the service is idle."
+msgstr "Восстановление не завершено: служба была занята и лишь поставила перезагрузку в очередь. Защита DPI остаётся активной; повторите восстановление, когда служба освободится."
+
+msgid "Restore failed; check the recovery state before retrying"
+msgstr "Восстановление не удалось; проверьте состояние восстановления перед повтором"
+
+msgid "Restore failed; previous configuration and runtime recovered"
+msgstr "Восстановление не удалось; прежняя конфигурация и работающий сервис возвращены"
+
+msgid "Restore normal mode"
+msgstr "Вернуть обычный режим"
+
+msgid "Restore required"
+msgstr "Нужно восстановление"
+
+msgid "Restore the last known good snapshot: the restore finishes and removes the DPI guard."
+msgstr "Восстановите снимок последней рабочей конфигурации: восстановление завершится и снимет защиту DPI."
+
+msgid "Restore the snapshot you need to finish."
+msgstr "Чтобы завершить, восстановите нужный снимок."
+
+msgid "Restore was not applied: Prokop was stopped during the restore. The previous configuration is kept."
+msgstr "Восстановление не применено: Prokop был остановлен во время восстановления. Прежняя конфигурация сохранена."
+
+msgid "Restore was not applied: Prokop was stopped, and the configuration was changed during the restore."
+msgstr "Восстановление не применено: Prokop был остановлен, а конфигурацию изменили во время восстановления."
+
+msgid "Restore was not applied: the service was busy and only queued the reload. The previous configuration is kept."
+msgstr "Восстановление не применено: служба была занята и лишь поставила перезагрузку в очередь. Прежняя конфигурация сохранена."
+
+msgid "Restore was not applied: the snapshot configuration did not pass validation. The previous configuration is kept; Prokop stays stopped."
+msgstr "Восстановление не применено: конфигурация снимка не прошла проверку. Прежняя конфигурация сохранена; Prokop остаётся остановленным."
+
+msgid "Restore was not started: a failed change left the DPI guard in place, and nothing can be reloaded until Prokop is restarted. Restart Prokop, then restore the snapshot if it is still needed."
+msgstr "Восстановление не начато: неудавшееся изменение оставило защиту DPI, и до перезапуска Prokop ничего нельзя перезагрузить. Перезапустите Prokop, затем восстановите снимок, если он ещё нужен."
+
+msgid "Restore was not started: the router has uncommitted uci changes of Prokop (made with \"uci set\" without a commit). Commit or revert them, then restore again."
+msgstr "Восстановление не запущено: на роутере есть незафиксированные изменения Prokop в uci (внесённые «uci set» без commit). Зафиксируйте или отмените их и повторите восстановление."
+
+msgid "Restore…"
+msgstr "Восстановить…"
+
+msgid "Restoring the previous configuration"
+msgstr "Восстановление предыдущей конфигурации"
+
+msgid "Result"
+msgstr "Результат"
+
+msgid "Resume updates"
+msgstr "Продолжить обновление"
+
+msgid "Retry"
+msgstr "Повторить"
+
+msgid "Retry the check when this device has internet access through the router."
+msgstr "Повторите проверку, когда у этого устройства будет доступ в интернет через роутер."
+
+msgid "Retry the check. If it repeats, open the logs under Technical data."
+msgstr "Повторите проверку. Если ошибка повторится, откройте логи в «Технических данных»."
+
+msgid "Retry this check"
+msgstr "Повторить эту проверку"
+
+msgid "Roll back"
+msgstr "Откатить"
+
+msgid "Roll back %s?"
+msgstr "Откатить %s?"
+
+msgid "Roll back the last autotune change?"
+msgstr "Откатить последнее изменение автоподбора?"
+
+msgid "Roll back the last change…"
+msgstr "Откатить последнее изменение…"
+
+msgid "Rollback did not finish"
+msgstr "Откат не завершился"
+
+msgid "Rolled back"
+msgstr "Откачено"
+
+msgid "Rolled back by an administrator"
+msgstr "Откачена администратором"
+
+msgid "Rolling back the last change"
+msgstr "Откат последнего изменения"
+
+msgid "Rolling back…"
+msgstr "Откат…"
+
+msgid "Route"
+msgstr "Маршрут"
+
+msgid "Route main DNS requests through the selected section."
+msgstr "Маршрутизировать основные DNS-запросы через выбранную секцию."
+
+msgid "Route requests to this DNS server through another section."
+msgstr "Направлять запросы к этому DNS-серверу через другую секцию."
+
+msgid "Router DNS"
+msgstr "DNS роутера"
+
+msgid "Router DNS is not pointed to Prokop"
+msgstr "DNS роутера не направлен в Prokop"
+
+msgid "Router kernel route"
+msgstr "Маршрут ядра роутера"
+
+msgid "Routing"
+msgstr "Маршрутизация"
+
+msgid "Routing is paused while Prokop is stopped."
+msgstr "Маршрутизация приостановлена, пока Prokop остановлен."
+
+msgid "Routing, DNS and DPI bypass rules stop applying"
+msgstr "Правила маршрутизации, DNS и обхода DPI перестанут действовать"
+
+msgid "rule"
+msgstr "правило"
+
+msgid "Rule"
+msgstr "Правило"
+
+msgid "Rule not calculated"
+msgstr "Правило не рассчитано"
+
+msgid "Rule payload"
+msgstr "Данные правила"
+
+msgid "Rule set must be an HTTP(S) URL or a local .srs / .json path"
+msgstr "Набор правил должен быть HTTP(S) URL или локальным путём .srs / .json"
+
+msgid "Rule set settings"
+msgstr "Настройки набора правил"
+
+msgid "Rule sets"
+msgstr "Наборы правил"
+
+msgid "Rules"
+msgstr "Правила"
+
+msgid "Rules are checked from top to bottom. Drag rows to change priority."
+msgstr "Правила проверяются сверху вниз. Перетащите строки, чтобы изменить приоритет."
+
+msgid "Rules mangle counters"
+msgstr "Счётчики правил mangle"
+
+msgid "Rules mangle exist"
+msgstr "Правила mangle существуют"
+
+msgid "Rules mangle output counters"
+msgstr "Счётчики правил mangle output"
+
+msgid "Rules mangle output exist"
+msgstr "Правила mangle output существуют"
+
+msgid "Rules proxy counters"
+msgstr "Счётчики правил proxy"
+
+msgid "Rules proxy exist"
+msgstr "Правила прокси существуют"
+
+msgid "Rules that use this provider stop bypassing DPI"
+msgstr "Правила с этим провайдером перестанут обходить DPI"
+
+msgid "Run full diagnostics"
+msgstr "Запустить полную диагностику"
+
+msgid "running: traffic goes through the VPN"
+msgstr "работает: трафик идёт через VPN"
+
+msgid "Russia: blocked from outside"
+msgstr "Россия: блокируют извне"
+
+msgid "Russia: blocked inside"
+msgstr "Россия: заблокировано внутри"
+
+msgid "Save"
+msgstr "Сохранить"
+
+msgid "Save and apply with the kill-switch enabled. It is installed after the next successful Prokop start or reload."
+msgstr "Сохраните и примените настройки с включённым kill-switch. Защита устанавливается после следующего успешного запуска или перезагрузки Prokop."
+
+msgid "Saved, service stopped"
+msgstr "Сохранено, служба остановлена"
+
+msgid "Saving URLTest settings…"
+msgstr "Сохранение настроек URLTest…"
+
+msgid "Scheduled measurements are off. An administrator can still check targets manually."
+msgstr "Плановые измерения выключены. Администратор может проверить цели вручную."
+
+msgid "Search"
+msgstr "Поиск"
+
+msgid "Search domains"
+msgstr "Поиск домена"
+
+msgid "Secret of the Clash API controller used by YACD and the Prokop pages. Required: it is generated on installation and protects the controller with or without WAN access."
+msgstr "Секрет контроллера Clash API, который используют YACD и страницы Prokop. Обязателен: создаётся при установке и защищает контроллер независимо от доступа через WAN."
+
+msgid "Section name"
+msgstr "Имя секции"
+
+msgid "Security"
+msgstr "Защита"
+
+msgid "See connections to this address"
+msgstr "Смотреть соединения с этим адресом"
+
+msgid "Seen in an active connection"
+msgstr "Наблюдается в активном соединении"
+
+msgid "Select a network interface"
+msgstr "Выберите сетевой интерфейс"
+
+msgid "Select a predefined domain list"
+msgstr "Выберите готовый список доменов"
+
+msgid "Select a predefined IP rule set from b4geoip-forkop"
+msgstr "Выберите готовый набор IP-правил из b4geoip-forkop"
+
+msgid "Select a section"
+msgstr "Выберите секцию"
+
+msgid "Select a section for downloading this subscription"
+msgstr "Выберите секцию для скачивания этой подписки"
+
+msgid "Select a transit section"
+msgstr "Выберите транзитную секцию"
+
+msgid "Select an existing network interface"
+msgstr "Выберите существующий сетевой интерфейс"
+
+msgid "Select an intermediate section"
+msgstr "Выберите промежуточную секцию"
+
+msgid "Select DNS protocol to use"
+msgstr "Выберите протокол DNS"
+
+msgid "Select network interface for VPN connection"
+msgstr "Выберите сетевой интерфейс для VPN-подключения"
+
+msgid "Select or enter path for sing-box cache file. Change this ONLY if you know what you are doing"
+msgstr "Выберите или введите путь к файлу кеша sing-box. Изменяйте это, ТОЛЬКО если вы знаете, что делаете"
+
+msgid "Select path for sing-box config file. Change this ONLY if you know what you are doing"
+msgstr "Выберите путь к файлу конфигурации sing-box. Изменяйте это, ТОЛЬКО если вы знаете, что делаете"
+
+msgid "Select the fastest node"
+msgstr "Выбирать самый быстрый узел"
+
+msgid "Select the log level for sing-box"
+msgstr "Выберите уровень логов для sing-box"
+
+msgid "Select the network interface from which the traffic will originate"
+msgstr "Выберите сетевой интерфейс, с которого будет исходить трафик"
+
+msgid "Select the network interface to which the traffic will originate"
+msgstr "Выберите сетевой интерфейс, на который будет поступать трафик."
+
+msgid "Select the WAN interfaces to be monitored"
+msgstr "Выберите WAN интерфейсы для мониторинга"
+
+msgid "Selected"
+msgstr "Выбран"
+
+msgid "Selected %d of %d"
+msgstr "Выбрано %d из %d"
+
+msgid "Selector and URLTest outbounds must contain a non-empty outbounds array"
+msgstr "Selector и URLTest outbound должны содержать непустой массив outbounds"
+
+msgid "Server closed the connection without a response"
+msgstr "Сервер закрыл соединение без ответа"
+
+msgid "Server filtering"
+msgstr "Фильтрация серверов"
+
+msgid "Server group for automatic lowest-latency selection"
+msgstr "Группа серверов для автоматического выбора по наименьшей задержке"
+
+msgid "Server group for priority failover"
+msgstr "Группа автоматически выбирает рабочий узел на основе установленного приоритета."
+
+msgid "Server outbound must contain a non-empty server field"
+msgstr "Серверный outbound должен содержать непустое поле server"
+
+msgid "Server outbound must contain a numeric server_port from 1 to 65535"
+msgstr "Серверный outbound должен содержать числовой server_port от 1 до 65535"
+
+msgid "server_port must be a number from 1 to 65535"
+msgstr "server_port должен быть числом от 1 до 65535"
+
+msgid "Service"
+msgstr "Служба"
+
+msgid "Service action failed"
+msgstr "Действие сервиса не выполнено"
+
+msgid "Service actions"
+msgstr "Действия со службой"
+
+msgid "Service list"
+msgstr "Список сервисов"
+
+msgid "Service settings"
+msgstr "Служебные"
+
+msgid "Service start"
+msgstr "Запуск службы"
+
+msgid "set %s: %s"
+msgstr "задать %s: %s"
+
+msgid "Setting"
+msgstr "Параметр"
+
+msgid "Settings"
+msgstr "Настройки"
+
+msgid "Several strategies are stable with similar latency; the simplest one was chosen."
+msgstr "Несколько стратегий стабильны с близкой задержкой; выбрана самая простая."
+
+msgid "Show only connections that start from now on, active and closed"
+msgstr "Показывать только соединения, начатые с этого момента, — активные и закрытые"
+
+msgid "Show sing-box config"
+msgstr "Показать sing-box конфигурацию"
+
+msgid "Shown %d of %d"
+msgstr "Показано %d из %d"
+
+msgid "Sing-box autostart disabled"
+msgstr "Автостарт sing-box отключен"
+
+msgid "sing-box checks"
+msgstr "Проверки sing-box"
+
+msgid "Sing-box FakeIP DNS does not work"
+msgstr "FakeIP DNS sing-box не работает"
+
+msgid "Sing-box FakeIP DNS works"
+msgstr "FakeIP DNS sing-box работает"
+
+msgid "Sing-box installed"
+msgstr "Sing-box установлен"
+
+msgid "sing-box is not running"
+msgstr "sing-box не работает"
+
+msgid "sing-box is running"
+msgstr "sing-box работает"
+
+msgid "Sing-box listening ports"
+msgstr "Sing-box слушает порты"
+
+msgid "Sing-box process running"
+msgstr "Процесс sing-box запущен"
+
+msgid "Sing-box service exist"
+msgstr "Сервис sing-box существует"
+
+msgid "Sing-box version is compatible (newer than 1.12.4)"
+msgstr "Версия Sing-box совместима (новее 1.12.4)"
+
+msgid "Site, IP, device or rule"
+msgstr "Сайт, IP, устройство или правило"
+
+msgid "Snapshot actions"
+msgstr "Действия со снимком"
+
+msgid "Snapshot created"
+msgstr "Снимок создан"
+
+msgid "Snapshot deleted"
+msgstr "Снимок удалён"
+
+msgid "Snapshot restore"
+msgstr "Восстановление снимка"
+
+msgid "Snapshot saved"
+msgstr "Снимок сохранён"
+
+msgid "Snapshots: %d"
+msgstr "Снимков: %d"
+
+msgid "Some autotune settings are invalid; safe defaults are used for them."
+msgstr "Часть настроек автоподбора некорректна; для них используются безопасные значения по умолчанию."
+
+msgid "Some connections or nodes do not respond, so sites of their rules may not open."
+msgstr "Часть подключений или узлов не отвечает — сайты из их правил могут не открываться."
+
+msgid "Sort by latency"
+msgstr "Сортировать по задержке"
+
+msgid "Sort connections"
+msgstr "Сортировка соединений"
+
+msgid "Sorts servers in this section by lowest latency in the dashboard."
+msgstr "Сортирует серверы этой секции по наименьшей задержке в дашборде"
+
+msgid "Source"
+msgstr "Источник"
+
+msgid "Source Network Interface"
+msgstr "Сетевой интерфейс источника"
+
+msgid "Stability"
+msgstr "Стабильность"
+
+msgid "Stable"
+msgstr "Стабильно"
+
+msgid "Standalone ByeDPI autostart is enabled"
+msgstr "Автозапуск отдельной службы ByeDPI включен"
+
+msgid "Standalone ByeDPI is active together with Prokop ByeDPI rules"
+msgstr "Отдельная служба ByeDPI активна вместе с правилами ByeDPI в Prokop"
+
+msgid "Standalone ByeDPI service is active"
+msgstr "Отдельная служба ByeDPI активна"
+
+msgid "Standalone ByeDPI service is inactive"
+msgstr "Отдельная служба ByeDPI неактивна"
+
+msgid "Standalone Zapret is active together with Prokop Zapret rules"
+msgstr "Отдельная служба Zapret активна вместе с правилами Zapret в Prokop"
+
+msgid "Standalone Zapret service is active"
+msgstr "Отдельная служба Zapret активна"
+
+msgid "Standalone Zapret service is inactive"
+msgstr "Отдельная служба Zapret неактивна"
+
+msgid "Standalone Zapret2 autostart is enabled"
+msgstr "Автозапуск отдельной службы Zapret2 включён"
+
+msgid "Standalone Zapret2 is active together with Prokop Zapret2 rules"
+msgstr "Отдельная служба Zapret2 активна вместе с правилами Zapret2 в Prokop"
+
+msgid "Standalone Zapret2 service is active"
+msgstr "Отдельная служба Zapret2 активна"
+
+msgid "Standalone Zapret2 service is inactive"
+msgstr "Отдельная служба Zapret2 неактивна"
+
+msgid "Standby DNS for a failed sing-box"
+msgstr "Резервный DNS при сбое sing-box"
+
+msgid "Start Prokop"
+msgstr "Запустить Prokop"
+
+msgid "Start time"
+msgstr "Время начала"
+
+msgid "Started"
+msgstr "Начало"
+
+msgid "starting"
+msgstr "запуск"
+
+msgid "Starting…"
+msgstr "Запуск…"
+
+msgid "State"
+msgstr "Состояние"
+
+msgid "State unavailable"
+msgstr "Состояние недоступно"
+
+msgid "Status"
+msgstr "Состояние"
+
+msgid "Still enforced until the next successful reload"
+msgstr "Действует до следующей успешной перезагрузки"
+
+msgid "Stop"
+msgstr "Остановить"
+
+msgid "Stop checking when URLTest group is not used. Use sing-box duration format like 1d, 12h or 30m."
+msgstr "Останавливать проверку если URLTest группа не используется. Используйте формат длительности sing-box, например 1d, 12h или 30m."
+
+msgid "Stop Prokop?"
+msgstr "Остановить Prokop?"
+
+msgid "Stop Prokop…"
+msgstr "Остановить Prokop…"
+
+msgid "Stopped by user"
+msgstr "Остановлено пользователем"
+
+msgid "stopped: protected traffic is blocked"
+msgstr "остановлен: защищённый трафик блокируется"
+
+msgid "Strategy"
+msgstr "Стратегия"
+
+msgid "Strategy %s applied and checked."
+msgstr "Стратегия %s применена и проверена."
+
+msgid "Subnets from the list will be extracted and added to nftables"
+msgstr "IP-адреса и подсети из списка будут извлечены и добавлены в nftables"
+
+msgid "Subscription auto update"
+msgstr "Автообновление подписи"
+
+msgid "Subscription info:"
+msgstr "Информация о подписке:"
+
+msgid "Subscription update failed"
+msgstr "Обновление подписки завершилось ошибкой"
+
+msgid "Subscription update interval"
+msgstr "Интервал обновления подписки"
+
+msgid "Subscription URL"
+msgstr "URL подписки"
+
+msgid "Subscription URL settings"
+msgstr "Настройки URL подписки"
+
+msgid "Subscriptions updated"
+msgstr "Подписки обновлены"
+
+msgid "Succeeded"
+msgstr "Успешно"
+
+msgid "Successful"
+msgstr "Успешно"
+
+msgid "Support"
+msgstr "Поддержка"
+
+msgid "Support report contains confidential information. Do not share it in public chats."
+msgstr "Отчёт содержит конфиденциальную информацию. Не публикуйте его в открытых чатах."
+
+msgid "Switching"
+msgstr "Переключается"
+
+msgid "Syntax check is unavailable"
+msgstr "Проверка синтаксиса недоступна"
+
+msgid "Syntax is correct"
+msgstr "Синтаксис корректен"
+
+msgid "System check"
+msgstr "Проверка системы"
+
+msgid "System information"
+msgstr "Системная информация"
+
+msgid "Table exist"
+msgstr "Таблица существует"
+
+msgid "Target %d of %d"
+msgstr "Цель %d из %d"
+
+msgid "Target actions"
+msgstr "Действия с целью"
+
+msgid "Target removed"
+msgstr "Цель удалена"
+
+msgid "Target saved"
+msgstr "Цель сохранена"
+
+msgid "Targets"
+msgstr "Цели"
+
+msgid "Targets of this rule need different strategies."
+msgstr "Целям этого правила нужны разные стратегии."
+
+msgid "Targets outside DPI rules (%d)"
+msgstr "Цели вне DPI-правил (%d)"
+
+msgid "Technical data"
+msgstr "Технические данные"
+
+msgid "Technical details"
+msgstr "Технические детали"
+
+msgid "Test latency"
+msgstr "Тестирование задержки"
+
+msgid "Test latency in Monitoring → Nodes and groups, choose a working node or update the subscription."
+msgstr "Проверьте задержку в «Мониторинг → Узлы и группы», выберите рабочий узел или обновите подписку."
+
+msgid "Test only selected servers."
+msgstr "Тестировать только выбранные серверы."
+
+msgid "Test only servers with one of the selected protocols."
+msgstr "Тестировать только серверы с одним из выбранных протоколов."
+
+msgid "Test only servers with one of the selected security types."
+msgstr "Тестировать только серверы с одним из выбранных типов защиты."
+
+msgid "Test only servers with one of the selected transports."
+msgstr "Тестировать только серверы с одним из выбранных транспортов."
+
+msgid "Test servers only from the specified countries."
+msgstr "Тестировать серверы только из указанных стран."
+
+msgid "Test servers whose names match the expression."
+msgstr "Тестировать серверы, имена которых совпадают с выражением."
+
+msgid "Testing URL"
+msgstr "URL проверки"
+
+msgid "The address is blocked by a rule"
+msgstr "Адрес блокируется правилом"
+
+msgid "The autotune state was damaged and has been reset; automatic changes wait for the pause after a rollback."
+msgstr "Состояние автоподбора было повреждено и сброшено; автоматические изменения ждут окончания паузы после отката."
+
+msgid "The autotune state was restored after damage; automatic apply waits for the cooldown."
+msgstr "Состояние автоподбора восстановлено после повреждения; автоматическое применение ждёт окончания паузы."
+
+msgid "The autotune state was restored after damage. Run the check again."
+msgstr "Состояние автоподбора восстановлено после повреждения. Запустите проверку ещё раз."
+
+msgid "The best strategy is not stable for every target of the rule."
+msgstr "Лучшая стратегия стабильна не для всех целей правила."
+
+msgid "The cascade setting is cleared. Save the rule to keep the change."
+msgstr "Настройка каскада очищена. Сохраните правило, чтобы сохранить изменение."
+
+msgid "The change affects the whole group:"
+msgstr "Изменение затронет всю группу:"
+
+msgid "The change is kept and saved as a snapshot (\"Concurrent edit\")."
+msgstr "Изменение сохранено и записано снимком («Параллельная правка»)."
+
+msgid "The change is kept in the configuration, but no snapshot of it could be saved."
+msgstr "Изменение осталось в конфигурации, но записать его снимком не удалось."
+
+msgid "The change was not saved."
+msgstr "Изменение не сохранено."
+
+msgid "The check did not complete"
+msgstr "Проверка не завершилась"
+
+msgid "The check gave no usable result."
+msgstr "Проверка не дала пригодного результата."
+
+msgid "The check stopped unexpectedly"
+msgstr "Проверка неожиданно остановилась"
+
+msgid "The check was postponed. See the state above."
+msgstr "Проверка отложена. Причина — в состоянии выше."
+
+msgid "The confidence of the recommendation is below the policy minimum."
+msgstr "Уверенность рекомендации ниже минимума политики."
+
+msgid "The configuration before the change is restored."
+msgstr "Конфигурация до изменения восстановлена."
+
+msgid "The configuration was changed after the apply, so nothing was rolled back. Restore a snapshot in History and recovery if needed."
+msgstr "После применения конфигурация менялась, поэтому ничего не откачено. При необходимости восстановите снимок в разделе «История и восстановление»."
+
+msgid "The current strategy is already the best."
+msgstr "Текущая стратегия уже лучшая."
+
+msgid "The current strategy is kept."
+msgstr "Текущая стратегия оставлена."
+
+msgid "The daily limit of automatic applies is reached."
+msgstr "Исчерпан суточный лимит автоматических изменений."
+
+msgid "The damaged record is kept aside for inspection."
+msgstr "Повреждённая запись будет сохранена отдельно для разбора."
+
+msgid "The damaged record is set aside; the configuration already was the last known working one."
+msgstr "Повреждённая запись отложена в сторону; конфигурация уже была последней рабочей."
+
+msgid "The desync fwmark is managed by Prokop for loop prevention and must not be overridden here."
+msgstr "Desync fwmark управляется Prokop для защиты от циклов и не должен переопределяться здесь."
+
+msgid "The DNS server must be an IPv4 address."
+msgstr "DNS-сервер должен быть IPv4-адресом."
+
+msgid "The DPI guard stays active. Restore the snapshot you need to finish."
+msgstr "Защита DPI остаётся активной. Чтобы завершить, восстановите нужный снимок."
+
+msgid "The DPI provider of the selected section is not installed. Install it in Components or choose another section."
+msgstr "DPI-провайдер выбранной секции не установлен. Установите его в разделе «Компоненты» или выберите другую секцию."
+
+msgid "The DPI rule that routes it could not be identified safely."
+msgstr "Не удалось надёжно определить DPI-правило, по которому она идёт."
+
+msgid "The editor has no field for downloaded lists: they cannot be converted and stay as they are."
+msgstr "Для загружаемых списков в редакторе нет поля: их нельзя конвертировать, они остаются как есть."
+
+msgid "The last autotune change is not resolved."
+msgstr "Последнее изменение автоподбора не завершено."
+
+msgid "The last change (%s) can be rolled back to the configuration before it."
+msgstr "Последнее изменение (%s) можно откатить к конфигурации до него."
+
+msgid "The last change (%s) failed its check, and the automatic rollback did not finish."
+msgstr "Последнее изменение (%s) не прошло проверку, а автоматический откат не завершился."
+
+msgid "The last change (%s) passed its check, but it could not be recorded as the last known working configuration."
+msgstr "Последнее изменение (%s) прошло проверку, но его не удалось записать как последнюю рабочую конфигурацию."
+
+msgid "The last change (%s) was not checked to the end."
+msgstr "Последнее изменение (%s) не было проверено до конца."
+
+msgid "The last change (%s) was not confirmed by its check, and the configuration was changed since; the rule still uses that strategy. Until you choose another strategy for the rule, turn the rule off or restore a snapshot in History and recovery, Prokop does not record this configuration as the last known working one, and autotune applies nothing."
+msgstr "Последнее изменение (%s) не подтверждено проверкой, а конфигурацию с тех пор изменили; правило по-прежнему использует эту стратегию. Пока вы не выберете для правила другую стратегию, не отключите правило или не восстановите снимок в разделе «История и восстановление», Prokop не записывает эту конфигурацию как последнюю рабочую, а автоподбор ничего не применяет."
+
+msgid "The last change was rolled back automatically."
+msgstr "Последнее изменение было автоматически откачено."
+
+msgid "The last check failed"
+msgstr "Последняя проверка завершилась ошибкой"
+
+msgid "The last check gave no usable result. The current strategy is kept."
+msgstr "Последняя проверка не дала пригодного результата. Текущая стратегия оставлена."
+
+msgid "The last check was interrupted"
+msgstr "Последняя проверка была прервана"
+
+msgid "The last configuration change failed"
+msgstr "Последнее изменение конфигурации не удалось"
+
+msgid "The last known good snapshot cannot be deleted"
+msgstr "Последнюю рабочую конфигурацию удалить нельзя"
+
+msgid "The last known working configuration is missing; nothing was rolled back. Restore a snapshot in History and recovery first."
+msgstr "Последней рабочей конфигурации нет; ничего не откачено. Сначала восстановите снимок в разделе «История и восстановление»."
+
+msgid "The last known working configuration is restored; the damaged record is set aside."
+msgstr "Последняя рабочая конфигурация восстановлена; повреждённая запись отложена в сторону."
+
+msgid "The legacy conditions cannot be converted without changing what the rule matches:"
+msgstr "Устаревшие условия нельзя конвертировать, не изменив того, что сопоставляет правило:"
+
+msgid "The legacy settings are converted. Save the rule to keep the change."
+msgstr "Устаревшие настройки конвертированы. Сохраните правило, чтобы сохранить изменение."
+
+msgid "The list could not be read."
+msgstr "Список не удалось прочитать."
+
+msgid "The list has no domain names to check (only keywords, regular expressions or addresses)."
+msgstr "В списке нет доменных имён для проверки (только ключевые слова, регулярные выражения или адреса)."
+
+msgid "The list is long: only its first 2000 domains can be chosen."
+msgstr "Список длинный: выбрать можно только из первых 2000 доменов."
+
+msgid "The list is not downloaded on the router; update the lists or save the rule."
+msgstr "Список не загружен на роутер; обновите списки или сохраните правило."
+
+msgid "The maximum number of targets is reached."
+msgstr "Достигнуто максимальное число целей."
+
+msgid "The name does not resolve on the router, so no rule can open it. Check the DNS results above."
+msgstr "Имя не разрешается на роутере, поэтому ни одно правило его не откроет. Посмотрите результат DNS выше."
+
+msgid "The new strategy did not pass the check, but the configuration was changed during the check, so Prokop kept that change and did not roll back. The rule may still use the new strategy: check it, or restore the \"Before autotune\" snapshot in History and recovery."
+msgstr "Новая стратегия не прошла проверку, но во время проверки конфигурацию изменили, поэтому Prokop сохранил это изменение и не выполнил откат. Правило может по-прежнему использовать новую стратегию: проверьте его или восстановите снимок «Перед автоподбором» в разделе «История и восстановление»."
+
+msgid "The new strategy did not pass the check. Prokop began to restore the \"Before autotune\" snapshot, but the configuration was changed meanwhile, and Prokop kept that change. It is not known whether Prokop now runs the snapshot or the change: check the rule, or restore the snapshot you need in History and recovery."
+msgstr "Новая стратегия не прошла проверку. Prokop начал восстанавливать снимок «Перед автоподбором», но конфигурацию тем временем изменили, и Prokop сохранил это изменение. Неизвестно, работает ли Prokop сейчас со снимком или с изменением: проверьте правило или восстановите нужный снимок в разделе «История и восстановление»."
+
+msgid "The new strategy did not pass the check. Prokop restored the previous configuration automatically."
+msgstr "Новая стратегия не прошла проверку. Prokop автоматически восстановил предыдущую конфигурацию."
+
+msgid "The new strategy was not applied: the service reload failed and the previous configuration was restored automatically."
+msgstr "Новая стратегия не применена: перезагрузка сервиса не удалась, предыдущая конфигурация восстановлена автоматически."
+
+msgid "The new strategy was not applied: the service was busy and only queued the reload. The previous configuration is kept."
+msgstr "Новая стратегия не применена: служба была занята и лишь поставила перезагрузку в очередь. Прежняя конфигурация сохранена."
+
+msgid "The NFQUEUE number is assigned by Prokop for each rule and must not be overridden here."
+msgstr "Номер NFQUEUE назначается Prokop для каждого правила и не должен переопределяться здесь."
+
+msgid "The package is removed from the router."
+msgstr "Пакет будет удалён с роутера."
+
+msgid "The recommendation is not confirmed yet."
+msgstr "Рекомендация ещё не подтверждена."
+
+msgid "The recommendation is outdated: the configuration changed after the check. Run the check again."
+msgstr "Рекомендация устарела: конфигурация изменилась после проверки. Запустите проверку ещё раз."
+
+msgid "The recommended strategy is not an HTTPS (TCP/443) strategy."
+msgstr "Рекомендованная стратегия не является стратегией для HTTPS (TCP/443)."
+
+msgid "The record of the last autotune change is damaged, and the last known working configuration is missing. Restore a snapshot in History and recovery: it becomes the last known working one, and the change can then be rolled back here."
+msgstr "Запись о последнем изменении автоподбора повреждена, а последней рабочей конфигурации нет. Восстановите снимок в разделе «История и восстановление»: он станет последней рабочей конфигурацией, и тогда изменение можно будет откатить здесь."
+
+msgid "The record of the last autotune change is damaged."
+msgstr "Запись о последнем изменении автоподбора повреждена."
+
+msgid "The record of the last autotune change is damaged. Checks and changes wait until an administrator rolls it back: Prokop then makes sure the last known working configuration is active."
+msgstr "Запись о последнем изменении автоподбора повреждена. Проверки и изменения ждут, пока администратор не выполнит откат: Prokop убедится, что активна последняя рабочая конфигурация."
+
+msgid "The rollback did not finish: the configuration was changed while the \"Before autotune\" snapshot was being restored, and Prokop kept that change. It is not known whether Prokop now runs the snapshot or the change: check the rule, or restore the snapshot you need in History and recovery."
+msgstr "Откат не завершился: конфигурацию изменили, пока восстанавливался снимок «Перед автоподбором», и Prokop сохранил это изменение. Неизвестно, работает ли Prokop сейчас со снимком или с изменением: проверьте правило или восстановите нужный снимок в разделе «История и восстановление»."
+
+msgid "The rollback did not finish. Open History and recovery."
+msgstr "Откат не завершился. Откройте «История и восстановление»."
+
+msgid "The rollback failed."
+msgstr "Откат не удался."
+
+msgid "The rollback of the last change (%s) did not finish."
+msgstr "Откат последнего изменения (%s) не завершился."
+
+msgid "The route check did not complete. Try again."
+msgstr "Проверка маршрута не завершилась. Повторите попытку."
+
+msgid "The route is calculated from the configuration; DNS and the HTTPS request are made by the router itself."
+msgstr "Маршрут рассчитывается по конфигурации; DNS-запрос и HTTPS-запрос выполняет сам роутер."
+
+msgid "The router could not resolve the address."
+msgstr "Роутер не смог определить адрес."
+
+msgid "The router did not report the outcome of the rollback; it may still be running. This page shows it once the rollback ends."
+msgstr "Роутер не сообщил, чем закончился откат; возможно, он ещё выполняется. Эта страница покажет исход, когда откат закончится."
+
+msgid "The router did not respond"
+msgstr "Роутер не ответил"
+
+msgid "The router did not respond in %d s"
+msgstr "Роутер не ответил за %d с"
+
+msgid "The router DNS returned no address"
+msgstr "DNS роутера не вернул адрес"
+
+msgid "The router does not route this address through FakeIP, so Prokop cannot check a strategy change for it."
+msgstr "Роутер направляет этот адрес не через FakeIP, поэтому Prokop не может проверить для него смену стратегии."
+
+msgid "The router rejected this check"
+msgstr "Роутер отклонил эту проверку"
+
+msgid "The rule applies to the domain and all its subdomains. Use full:, keyword:, or regex: prefixes for exact match, keyword match, or regular expression."
+msgstr "Правило применяется к домену и всем его поддоменам. Для полного совпадения, совпадению по слову или регулярному выражению используйте префиксы full:, keyword: или regex:."
+
+msgid "the rule cannot use itself"
+msgstr "правило не может использовать само себя"
+
+msgid "The rule has a custom strategy; Prokop keeps it."
+msgstr "У правила своя стратегия; Prokop её не меняет."
+
+msgid "The rule has no strategy."
+msgstr "У правила нет стратегии."
+
+msgid "The rule is limited to devices: the result holds for them. Prokop checks a change with router requests sent through the queue of this rule."
+msgstr "Правило ограничено устройствами: результат относится к ним. Изменение Prokop проверяет запросами роутера, отправленными через очередь этого правила."
+
+msgid "The rule matches the same traffic as before. Closing the window without saving discards the conversion."
+msgstr "Правило сопоставляет тот же трафик, что и раньше. Закрытие окна без сохранения отменяет конвертацию."
+
+msgid "The rule strategy handles HTTPS together with other traffic in one profile; Prokop does not split it. Give HTTPS (--filter-tcp=443) its own profile."
+msgstr "Стратегия правила обрабатывает HTTPS вместе с другим трафиком в одном профиле; Prokop не разделяет его. Выделите для HTTPS (--filter-tcp=443) отдельный профиль."
+
+msgid "The rule strategy has no HTTPS (TCP/443) profile."
+msgstr "В стратегии правила нет профиля для HTTPS (TCP/443)."
+
+msgid "The rule strategy writes a filter as two words (--filter-tcp 443); write it as --filter-tcp=443."
+msgstr "В стратегии правила фильтр записан двумя словами (--filter-tcp 443); запишите его как --filter-tcp=443."
+
+msgid "The rule that routes it cannot be determined unambiguously (for example, a remote list comes first)."
+msgstr "Правило, по которому она идёт, нельзя определить однозначно (например, выше стоит удалённый список)."
+
+msgid "The rule was not removed because the page could not be saved: %s"
+msgstr "Правило не удалено, потому что страницу не удалось сохранить: %s"
+
+msgid "The rule window was closed before the save finished. Nothing was saved."
+msgstr "Окно правила закрыто до завершения сохранения. Ничего не сохранено."
+
+msgid "the rules connect through each other in a loop"
+msgstr "правила подключаются друг через друга по кругу"
+
+msgid "The same result this many checks in a row (2–10)."
+msgstr "Столько проверок подряд с одинаковым результатом (2–10)."
+
+msgid "The selected section cannot be used here. Choose another section."
+msgstr "Выбранную секцию нельзя использовать здесь. Выберите другую секцию."
+
+msgid "The selected section is disabled. Enable it or choose another section."
+msgstr "Выбранная секция отключена. Включите её или выберите другую секцию."
+
+msgid "The selected section no longer exists. Choose another section."
+msgstr "Выбранной секции больше нет. Выберите другую секцию."
+
+msgid "the service is busy"
+msgstr "служба занята"
+
+msgid "The service is busy with another operation (list or subscription update, reload or start). Nothing was changed; try again when it finishes."
+msgstr "Служба занята другой операцией (обновление списков или подписки, перезагрузка или запуск). Ничего не изменено; повторите, когда она завершится."
+
+msgid "the sing-box configuration is not available; is Prokop running?"
+msgstr "конфигурация sing-box недоступна — Prokop запущен?"
+
+msgid "The site did not open from the router. The router may take a different path than devices."
+msgstr "С роутера сайт не открылся. Роутер может ходить иначе, чем устройства."
+
+msgid "The site opens from the router. If it does not open on a device, look at its real connections."
+msgstr "С роутера сайт открывается. Если на устройстве он не открывается — посмотрите его реальные соединения."
+
+msgid "The snapshot to return to is missing; nothing was rolled back."
+msgstr "Снимка, к которому нужно вернуться, нет; ничего не откачено."
+
+msgid "The snapshot to return to is missing: restore a snapshot in History and recovery. Checks and changes wait until then."
+msgstr "Снимка, к которому нужно вернуться, нет: восстановите снимок в разделе «История и восстановление». До этого проверки и изменения ждут."
+
+msgid "The state of the last autotune change could not be read."
+msgstr "Не удалось прочитать состояние последнего изменения автоподбора."
+
+msgid "The strategy contains an error"
+msgstr "В стратегии есть ошибка"
+
+msgid "The strategy could not be applied. The previous configuration is kept."
+msgstr "Стратегию не удалось применить. Предыдущая конфигурация сохранена."
+
+msgid "The strategy is changed only after %d checks in a row with the same result."
+msgstr "Стратегия меняется только после %d проверок подряд с одинаковым результатом."
+
+msgid "The strategy is more reliable than no bypass."
+msgstr "Стратегия надёжнее, чем работа без обхода."
+
+msgid "The strategy is noticeably faster."
+msgstr "Стратегия заметно быстрее."
+
+msgid "The strategy of the DPI rule \"%s\" returns to the one before autotune."
+msgstr "Стратегия DPI-правила «%s» вернётся к той, что была до автоподбора."
+
+msgid "The strategy of the DPI rule \"%s\" will be changed."
+msgstr "Будет изменена стратегия DPI-правила «%s»."
+
+msgid "The strategy returns to the one before autotune."
+msgstr "Стратегия вернётся к той, что была до автоподбора."
+
+msgid "The strategy was not applied"
+msgstr "Стратегия не применена"
+
+msgid "The strategy was not applied: the current configuration is not yet the last known working one. Prokop records it once it starts or reloads with it; while a rule still uses a strategy that did not pass its check, it is not recorded."
+msgstr "Стратегия не применена: текущая конфигурация ещё не записана как последняя рабочая. Prokop записывает её, когда успешно запускается или перезагружается с ней; пока правило использует стратегию, не прошедшую проверку, она не записывается."
+
+msgid "The target address could not be determined reliably during the check."
+msgstr "Во время проверки не удалось надёжно определить адрес цели."
+
+msgid "The target is disabled."
+msgstr "Цель выключена."
+
+msgid "The target is reachable only through a bypass strategy."
+msgstr "Цель доступна только со стратегией обхода."
+
+msgid "The target is unreachable in every way; the problem may not be DPI."
+msgstr "Цель недоступна ни одним способом; возможно, проблема не в DPI."
+
+msgid "The targets work without bypass."
+msgstr "Цели работают без обхода."
+
+msgid "the transit rule “%s” is disabled"
+msgstr "транзитное правило «%s» отключено"
+
+msgid "the transit rule “%s” is not a Connection rule"
+msgstr "у транзитного правила «%s» действие не «Подключение»"
+
+msgid "the transit rule “%s” no longer exists"
+msgstr "транзитного правила «%s» больше нет"
+
+msgid "The unsupported settings are removed. Save the rule to keep the change."
+msgstr "Неподдерживаемые настройки удалены. Сохраните правило, чтобы сохранить изменение."
+
+msgid "The value is outside the allowed range."
+msgstr "Значение вне допустимого диапазона."
+
+msgid "There are rules using ByeDPI"
+msgstr "Есть правила, использующие ByeDPI"
+
+msgid "There are rules using Zapret"
+msgstr "Есть правила использующие Zapret"
+
+msgid "There are rules using Zapret2"
+msgstr "Есть правила, использующие Zapret2"
+
+msgid "There are unsaved changes of Prokop in this session. Save & Apply or revert them, then restore the snapshot."
+msgstr "В этом сеансе есть несохранённые изменения Prokop. Сохраните и примените их или отмените, затем восстановите снимок."
+
+msgid "There are unsaved configuration changes. Save or reset them in Settings first."
+msgstr "Есть несохранённые изменения конфигурации. Сначала сохраните или сбросьте их в «Настройках»."
+
+msgid "There is no recommendation to apply."
+msgstr "Нет рекомендации для применения."
+
+msgid "There is nothing to roll back."
+msgstr "Откатывать нечего."
+
+msgid "This browser could not reach the check service, so FakeIP for devices is not proven either way."
+msgstr "Этот браузер не смог обратиться к сервису проверки, поэтому работа FakeIP для устройств не доказана ни в одну сторону."
+
+msgid "This field must start a working ciadpi strategy; help/version options exit immediately and are not allowed here."
+msgstr "Это поле должно запускать рабочую стратегию ciadpi; параметры help/version сразу завершают процесс и здесь запрещены."
+
+msgid "This field must start a working nfqws strategy; --dry-run exits immediately and is not allowed here."
+msgstr "Это поле должно запускать рабочую стратегию nfqws; --dry-run сразу завершает процесс и здесь запрещён."
+
+msgid "This field must start a working nfqws strategy; --version exits immediately and is not allowed here."
+msgstr "Это поле должно запускать рабочую стратегию nfqws; --version сразу завершает процесс и здесь запрещён."
+
+msgid "This field must start a working nfqws2 strategy; --dry-run exits immediately and is not allowed here."
+msgstr "Это поле должно запускать рабочую стратегию nfqws2; --dry-run сразу завершает работу и здесь запрещён."
+
+msgid "This field must start a working nfqws2 strategy; --version exits immediately and is not allowed here."
+msgstr "Это поле должно запускать рабочую стратегию nfqws2; --version сразу завершает работу и здесь запрещён."
+
+msgid "This flag does not accept a value."
+msgstr "Этот флаг не принимает значение."
+
+msgid "This option requires a value."
+msgstr "Этой опции требуется значение."
+
+msgid "This permanently deletes saved sections and subscriptions. Other components remain installed."
+msgstr "Сохранённые секции и подписки будут удалены безвозвратно. Остальные компоненты останутся установленными."
+
+msgid "This rule has a cascade setting from an earlier version, which the editor no longer shows: servers of this rule connect through the rule “%s”."
+msgstr "У этого правила есть настройка каскада из прежней версии, которую редактор больше не показывает: серверы этого правила подключаются через правило «%s»."
+
+msgid "This rule has a cascade setting from an earlier version, which the editor no longer shows. Applying the configuration fails while it is set: %s."
+msgstr "У этого правила есть настройка каскада из прежней версии, которую редактор больше не показывает. Пока она задана, применить конфигурацию не удастся: %s."
+
+msgid "This rule has a hidden cascade setting from an earlier version. An administrator can clear it."
+msgstr "У этого правила есть скрытая настройка каскада из прежней версии. Администратор может её очистить."
+
+msgid "this rule is not a Connection rule"
+msgstr "у этого правила действие не «Подключение»"
+
+msgid "This rule keeps a switched-off cascade setting from an earlier version (transit rule “%s”). It has no effect."
+msgstr "У этого правила сохранилась выключенная настройка каскада из прежней версии (транзитное правило «%s»). Она ни на что не влияет."
+
+msgid "This rule keeps settings in a legacy form from an earlier version. An administrator can review and convert them."
+msgstr "Это правило хранит настройки в устаревшем виде из прежней версии. Администратор может просмотреть и конвертировать их."
+
+msgid "This rule keeps settings in a legacy form, from an earlier version, the podkop migration or the command line. The fields show what the rule matches; the legacy options stay as they are until you convert or remove them."
+msgstr "Это правило хранит настройки в устаревшем виде — из прежней версии, после миграции из podkop или из командной строки. Поля показывают, что сопоставляет правило; устаревшие опции остаются как есть, пока вы их не конвертируете или не удалите."
+
+msgid "This section has no IP lists, so it is protected through FakeIP and DNS only."
+msgstr "У раздела нет IP-списков, поэтому он защищён только через FakeIP и DNS."
+
+msgid "This strategy is already active; nothing was changed."
+msgstr "Эта стратегия уже активна; ничего не изменено."
+
+msgid "This strategy is not applied again during the pause after a rollback."
+msgstr "Во время паузы после отката эта стратегия не будет применена снова."
+
+msgid "This strategy is not supported by the installed Zapret."
+msgstr "Эта стратегия не поддерживается установленным Zapret."
+
+msgid "This strategy was rolled back recently; it waits for the cooldown."
+msgstr "Эту стратегию недавно откатывали; она ждёт окончания паузы."
+
+msgid "Time in seconds for DNS record caching (default: 60)"
+msgstr "Время в секундах для кэширования DNS записей (по умолчанию: 60)"
+
+msgid "Timed out"
+msgstr "Тайм-аут"
+
+msgid "tiny"
+msgstr "tiny"
+
+msgid "TLS or certificate error"
+msgstr "Ошибка TLS или сертификата"
+
+msgid "TLS, median"
+msgstr "TLS, медиана"
+
+msgid "Tolerance"
+msgstr "Допуск"
+
+msgid "Top level has the highest priority; lower levels are used as fallback"
+msgstr "Верхний уровень имеет самый высокий приоритет; нижние уровни используются как резерв"
+
+msgid "TorrServer Direct"
+msgstr "Прямой TorrServer"
+
+msgid "TorrServer not found"
+msgstr "TorrServer не найден"
+
+msgid "Total traffic"
+msgstr "Общий трафик"
+
+msgid "Trace"
+msgstr "Трассировка"
+
+msgid "Traffic"
+msgstr "Трафик"
+
+msgid "Traffic for this level goes directly."
+msgstr "Трафик этого уровня пойдёт напрямую."
+
+msgid "Traffic goes through the router without Prokop."
+msgstr "Трафик идёт через роутер без Prokop."
+
+msgid "Traffic of the rules does not reach sing-box, so connections through rules fail."
+msgstr "Трафик правил не доходит до sing-box, поэтому соединения через правила не работают."
+
+msgid "Transparent proxy mode is incompatible with action=byedpi because Prokop connects to ciadpi through SOCKS."
+msgstr "Режим прозрачного прокси несовместим с action=byedpi, потому что Prokop подключается к ciadpi через SOCKS."
+
+msgid "Transport"
+msgstr "Транспорт"
+
+msgid "TTL must be a positive number"
+msgstr "TTL должно быть положительным числом"
+
+msgid "TTL value cannot be empty"
+msgstr "Значение TTL не может быть пустым"
+
+msgid "Turn on"
+msgstr "Включить"
+
+msgid "Turn on automatic mode?"
+msgstr "Включить автоматический режим?"
+
+msgid "turns text mode on"
+msgstr "включает текстовый режим"
+
+msgid "turns text mode on for domains, IPs and devices"
+msgstr "включает текстовый режим для доменов, IP-адресов и устройств"
+
+msgid "Type"
+msgstr "Тип"
+
+msgid "UDP (Unprotected DNS)"
+msgstr "UDP (Незащищённый DNS)"
+
+msgid "Ukraine"
+msgstr "Украина"
+
+msgid "Unable to validate the ByeDPI strategy through the backend parser."
+msgstr "Не удалось проверить стратегию ByeDPI через backend-парсер."
+
+msgid "Unable to validate the NFQWS strategy through the backend parser."
+msgstr "Не удалось проверить стратегию NFQWS через backend-парсер."
+
+msgid "Unable to validate the NFQWS2 strategy through the backend parser."
+msgstr "Не удалось проверить стратегию NFQWS2 через backend-парсер."
+
+msgid "Unavailability timeout"
+msgstr "Таймаут недоступности"
+
+msgid "Unexpected ByeDPI strategy argument: %s"
+msgstr "Неожиданный аргумент стратегии ByeDPI: %s"
+
+msgid "Unexpected Prokop-managed ciadpi runtime is running"
+msgstr "Обнаружен лишний ciadpi Prokop"
+
+msgid "Unexpected Prokop-managed nfqws runtime is running"
+msgstr "Обнаружен лишний NFQWS Prokop"
+
+msgid "Unexpected Prokop-managed nfqws2 runtime is running"
+msgstr "Обнаружен лишний NFQWS2 Prokop"
+
+msgid "Unexpected standalone token. Use explicit flags such as --name or --name=value."
+msgstr "Неожиданный отдельный токен. Используйте явные флаги вида --имя или --имя=значение."
+
+msgid "unique UCI identifier"
+msgstr "уникальный идентификатор UCI"
+
+msgid "unknown"
+msgstr "неизвестно"
+
+msgid "Unknown"
+msgstr "Неизвестно"
+
+msgid "Unknown ByeDPI option: %s"
+msgstr "Неизвестная опция ByeDPI: %s"
+
+msgid "Unknown country"
+msgstr "Неизвестная страна"
+
+msgid "Unknown error"
+msgstr "Неизвестная ошибка"
+
+msgid "Unknown NFQWS flag."
+msgstr "Неизвестный флаг NFQWS."
+
+msgid "Unknown NFQWS2 flag."
+msgstr "Неизвестный флаг NFQWS2."
+
+msgid "unknown reason"
+msgstr "причина неизвестна"
+
+msgid "Unspecified IP address is not allowed"
+msgstr "Неуказанный IP-адрес не разрешён"
+
+msgid "Unstable"
+msgstr "Нестабильно"
+
+msgid "Unstable without bypass; a stable strategy was found."
+msgstr "Без обхода нестабильно; найдена стабильная стратегия."
+
+msgid "up to %d automatic change(s) per day"
+msgstr "до %d автоизменений в сутки"
+
+msgid "Up to 8 domains; exactly these are checked."
+msgstr "До 8 доменов; проверяются именно они."
+
+msgid "Update"
+msgstr "Обновить"
+
+msgid "Update is available"
+msgstr "Доступно обновление"
+
+msgid "Update is available:"
+msgstr "Доступна новая версия:"
+
+msgid "Update subscriptions"
+msgstr "Обновить подписки"
+
+msgid "Update this subscription automatically"
+msgstr "Автоматически обновлять эту подписку"
+
+msgid "Upload"
+msgstr "Отправлено"
+
+msgid "URL must start with vless://, vmess://, ss://, trojan://, socks4://, socks4a://, socks5://, hysteria2://, or hy2://"
+msgstr "URL должен начинаться с vless://, vmess://, ss://, trojan://, socks4://, socks4a://, socks5://, hysteria2:// или hy2://"
+
+msgid "URL must use one of the following protocols:"
+msgstr "URL должен использовать один из следующих протоколов:"
+
+msgid "URL used to check whether a server is alive"
+msgstr "URL, который используется для проверки, что сервер жив"
+
+msgid "URL used to test server latency"
+msgstr "URL который будет использоваться для тестирования задержки серверов"
+
+msgid "URLTest"
+msgstr "URLTest"
+
+msgid "URLTest details"
+msgstr "Детали URLTest"
+
+msgid "URLTest details are unavailable"
+msgstr "Детали URLTest недоступны"
+
+msgid "URLTest settings"
+msgstr "Настройки URLTest"
+
+msgid "URLTest settings reset"
+msgstr "Настройки URLTest сброшены"
+
+msgid "URLTest settings saved"
+msgstr "Настройки URLTest сохранены"
+
+msgid "Use another section as an intermediate hop to connect to servers in this section. Does not apply to network interfaces or JSON outbounds."
+msgstr "Использовать другую секцию как промежуточный узел подключения к серверам этой секции. Не применяется к сетевым интерфейсам и JSON outbound."
+
+msgid "Use sing-box duration format like 10s, 1m or 2m30s"
+msgstr "Используйте формат длительности sing-box, например 10s, 1m или 2m30s"
+
+msgid "Use sing-box duration format like 1d, 12h or 30m"
+msgstr "Используйте формат длительности sing-box, например 1d, 12h или 30m"
+
+msgid "Use source values"
+msgstr "Использовать исходные значения"
+
+msgid "used by the rule"
+msgstr "используется правилом"
+
+msgid "used by the rule together with %s"
+msgstr "используется правилом вместе с %s"
+
+msgid "used by the rule; the Network Interface field does not show it"
+msgstr "используется правилом; поле «Сетевой интерфейс» его не показывает"
+
+msgid "used by the rule: text mode is on"
+msgstr "используется правилом: включён текстовый режим"
+
+msgid "Username cannot be empty"
+msgstr "Логин не может быть пустым"
+
+msgid "Usually harmless. Retry the check later."
+msgstr "Обычно это не страшно. Повторите проверку позже."
+
+msgid "Valid"
+msgstr "Валидно"
+
+msgid "Validation errors:"
+msgstr "Ошибки валидации:"
+
+msgid "Value cannot be empty"
+msgstr "Значение не может быть пустым"
+
+msgid "Via country.is"
+msgstr "Через сервис country.is"
+
+msgid "View logs"
+msgstr "Посмотреть логи"
+
+msgid "Visible name of this section"
+msgstr "Видимое имя этой секции"
+
+msgid "vless://, vmess://, ss://, trojan://, socks4/5://, hy2/hysteria2:// links"
+msgstr "ссылки vless://, vmess://, ss://, trojan://, socks4/5://, hy2/hysteria2://"
+
+msgid "VPN kill-switch"
+msgstr "VPN kill-switch"
+
+msgid "Waiting"
+msgstr "В очереди"
+
+msgid "Waiting for a successful Prokop start or reload"
+msgstr "Ожидает успешного запуска или перезагрузки Prokop"
+
+msgid "waiting for probe connections to close: %d s (up to %d s)"
+msgstr "ожидание закрытия соединений проб: %d с (до %d с)"
+
+msgid "Waiting for the service action to finish."
+msgstr "Ожидание завершения действия со службой."
+
+msgid "Waiting for TorrServer"
+msgstr "Ожидание TorrServer"
+
+msgid "Waiting to finish"
+msgstr "Ожидает завершения"
+
+msgid "Warning"
+msgstr "Предупреждение"
+
+msgid "Warnings: %d"
+msgstr "Предупреждения: %d"
+
+msgid "What"
+msgstr "Что"
+
+msgid "What it means"
+msgstr "Что это значит"
+
+msgid "What Prokop should do when this section matches"
+msgstr "Что Prokop должен делать при совпадении этой секции"
+
+msgid "What to check"
+msgstr "Что проверять"
+
+msgid "What to do"
+msgstr "Что сделать"
+
+msgid "What was proven"
+msgstr "Что доказано"
+
+msgid "When switching to another level, test every server and select the fastest instead of the first working one."
+msgstr "При переходе на другой уровень тестировать все сервера и выбирать самый быстрый, а не первый работающий."
+
+msgid "Where to"
+msgstr "Куда"
+
+msgid "Which domains to check"
+msgstr "Какие домены проверять"
+
+msgid "Will be"
+msgstr "Будет"
+
+msgid "With another action the rule cannot use its cascade setting: saving the rule removes it, and its servers no longer connect through the rule “%s”."
+msgstr "С другим действием правило не может использовать настройку каскада: при сохранении правила она будет удалена, и его серверы перестанут подключаться через правило «%s»."
+
+msgid "With another action the rule cannot use its cascade setting: saving the rule removes the switched-off cascade setting."
+msgstr "С другим действием правило не может использовать настройку каскада: при сохранении правила выключенная настройка каскада будет удалена."
+
+msgid "Works without bypass."
+msgstr "Работает без обхода."
+
+msgid "YACD Secret Key"
+msgstr "Секретный ключ YACD"
+
+msgid "Yes"
+msgstr "Да"
+
+msgid "You can select Output Network Interface, by default autodetect"
+msgstr "Вы можете выбрать выходной сетевой интерфейс, по умолчанию он определяется автоматически."
+
+msgid "Zapret checks"
+msgstr "Проверки Zapret"
+
+msgid "Zapret hostlist templates are not supported here because Prokop does not expand them for per-rule NFQWS strategies."
+msgstr "Шаблоны hostlist zapret здесь не поддерживаются, потому что Prokop не разворачивает их для per-rule стратегий NFQWS."
+
+msgid "Zapret package is installed"
+msgstr "Пакет Zapret установлен"
+
+msgid "Zapret package is not installed"
+msgstr "Пакет Zapret не установлен"
+
+msgid "Zapret provider binary is available"
+msgstr "Бинарник провайдера Zapret доступен"
+
+msgid "Zapret provider binary is not available"
+msgstr "Бинарник провайдера Zapret недоступен"
+
+msgid "Zapret rule"
+msgstr "правило Zapret"
+
+msgid "Zapret sing-box outbound is configured"
+msgstr "sing-box outbound для Zapret настроен"
+
+msgid "Zapret sing-box outbound is not configured"
+msgstr "sing-box outbound для Zapret не настроен"
+
+msgid "Zapret2 checks"
+msgstr "Проверки Zapret2"
+
+msgid "Zapret2 hostlist templates are not supported here because Prokop does not expand them for per-rule NFQWS2 strategies."
+msgstr "Шаблоны hostlist Zapret2 здесь не поддерживаются, потому что Prokop не разворачивает их для per-rule стратегий NFQWS2."
+
+msgid "Zapret2 package is installed"
+msgstr "Пакет Zapret2 установлен"
+
+msgid "Zapret2 package is not installed"
+msgstr "Пакет Zapret2 не установлен"
+
+msgid "Zapret2 provider binary is available"
+msgstr "Бинарник провайдера Zapret2 доступен"
+
+msgid "Zapret2 provider binary is not available"
+msgstr "Бинарник провайдера Zapret2 недоступен"
+
+msgid "Zapret2 sing-box outbound is configured"
+msgstr "sing-box outbound для Zapret2 настроен"
+
+msgid "Zapret2 sing-box outbound is not configured"
+msgstr "sing-box outbound для Zapret2 не настроен"

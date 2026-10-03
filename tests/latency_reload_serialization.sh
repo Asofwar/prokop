@@ -2,7 +2,7 @@
 set -eo pipefail
 
 # Automatic latency tests query the running sing-box through the Clash API
-# and must never race a Forkop reload. Who schedules and resumes the test is
+# and must never race a Prokop reload. Who schedules and resumes the test is
 # checked in the sources. The serialization itself is checked by running the
 # production worker (diagnostics/runtime.uc automatic-latency-test) against a
 # runtime-state stub that records every lock and handoff call next to the
@@ -14,10 +14,10 @@ set -eo pipefail
 # automatic_latency_pending.sh.
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-LIFECYCLE_UC="$FORKOP_LIB/service/lifecycle.uc"
-DIAGNOSTICS_UC="$FORKOP_LIB/diagnostics/runtime.uc"
-UPDATES_UC="$FORKOP_LIB/components/updates.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+LIFECYCLE_UC="$PROKOP_LIB/service/lifecycle.uc"
+DIAGNOSTICS_UC="$PROKOP_LIB/diagnostics/runtime.uc"
+UPDATES_UC="$PROKOP_LIB/components/updates.uc"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT
 
@@ -41,14 +41,14 @@ grep -Fq 'write_state_file(AUTOMATIC_LATENCY_PENDING_FILE' "$UPDATES_UC" ||
   fail "pending marker must be written atomically"
 grep -Fq 'final_proxy_set_changed = proxy_signature_after != "" && proxy_signature_after != proxy_signature_before' "$UPDATES_UC" ||
   fail "latency scheduling must compare the final usable proxy set"
-grep -Fq 'function single_ready_sing_box_runtime()' "$FORKOP_LIB/service/state.uc" ||
+grep -Fq 'function single_ready_sing_box_runtime()' "$PROKOP_LIB/service/state.uc" ||
   fail "service state must expose the single ready sing-box predicate"
 
 # The LuCI/manual bulk action stays available and is intentionally independent
 # from the removed lifecycle scheduling.
 grep -Fq 'if (action == "get_proxy_latencies")' "$DIAGNOSTICS_UC" ||
   fail "manual LuCI bulk latency test must remain available"
-grep -Fq 'let owner_pid = current_pid();' "$FORKOP_LIB/service/ui.uc" ||
+grep -Fq 'let owner_pid = current_pid();' "$PROKOP_LIB/service/ui.uc" ||
   fail "manual LuCI latency lock must be owned by the live worker process"
 
 # --- Serialization, observed -------------------------------------------------
@@ -57,8 +57,8 @@ cat >"$WORK_DIR/config.json" <<'EOF_CONFIG'
 {"outbounds":[{"type":"direct","tag":"direct"},{"type":"vless","tag":"proxy-a","server":"one.test","server_port":443},{"type":"trojan","tag":"proxy-b","server":"two.test","server_port":443},{"type":"vmess","tag":"proxy-c","server":"three.test","server_port":443}]}
 EOF_CONFIG
 cat >"$WORK_DIR/uci.state" <<EOF_UCI
-forkop.settings=settings
-forkop.settings.config_path=$WORK_DIR/config.json
+prokop.settings=settings
+prokop.settings.config_path=$WORK_DIR/config.json
 EOF_UCI
 
 # Runtime state stub: locks are directories (a held lock fails at once, as a
@@ -73,8 +73,8 @@ function event(text) {
     fh.close();
 }
 function lock_name(p) {
-    return p == getenv("FORKOP_RELOAD_LOCK_DIR") ? "reload"
-        : p == getenv("FORKOP_AUTOMATIC_LATENCY_TEST_LOCK_DIR") ? "latency" : p;
+    return p == getenv("PROKOP_RELOAD_LOCK_DIR") ? "reload"
+        : p == getenv("PROKOP_AUTOMATIC_LATENCY_TEST_LOCK_DIR") ? "latency" : p;
 }
 if (mode == "acquire-runtime-dir-lock" || mode == "acquire-runtime-dir-lock-wait") {
     let ok = fs.stat(path) == null && fs.mkdir(path) == true;
@@ -94,7 +94,7 @@ if (mode == "single-ready-sing-box-runtime") {
 if (mode == "run-pending-reload-if-requested") {
     event("handoff");
     if (fs.stat(getenv("TEST_KEEP_PENDING_FLAG")) != null)
-        fs.writefile(getenv("FORKOP_PENDING_RELOAD_FILE"), "1\n");
+        fs.writefile(getenv("PROKOP_PENDING_RELOAD_FILE"), "1\n");
     exit(0);
 }
 if (mode == "sing-box-service-runtime-pid") {
@@ -116,7 +116,7 @@ case "$*" in
   */delay*)
     printf 'request\n' >>"$TEST_EVENTS"
     # A reload that arrives now finds reload.lock held: init.d queues it.
-    [ ! -e "$TEST_QUEUE_RELOAD_FLAG" ] || printf 'reason=on_config_change\n' >"$FORKOP_PENDING_RELOAD_FILE"
+    [ ! -e "$TEST_QUEUE_RELOAD_FLAG" ] || printf 'reason=on_config_change\n' >"$PROKOP_PENDING_RELOAD_FILE"
     printf '%s\n' '{"delay":25}'
     ;;
   *) printf '%s\n' '{}' ;;
@@ -130,16 +130,16 @@ export TEST_EVENTS="$WORK_DIR/events"
 export TEST_NOT_READY_FLAG="$WORK_DIR/not-ready"
 export TEST_KEEP_PENDING_FLAG="$WORK_DIR/keep-pending"
 export TEST_QUEUE_RELOAD_FLAG="$WORK_DIR/queue-reload"
-export FORKOP_LIB FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
-export FORKOP_SERVICE_STATE_UC="$WORK_DIR/state-stub.uc"
-export FORKOP_AUTOMATIC_LATENCY_PENDING_FILE="$WORK_DIR/automatic-latency.pending"
-export FORKOP_AUTOMATIC_LATENCY_TEST_LOCK_DIR="$WORK_DIR/latency.lock"
-export FORKOP_RELOAD_LOCK_DIR="$WORK_DIR/reload.lock"
-export FORKOP_PENDING_RELOAD_FILE="$WORK_DIR/reload.pending"
-export FORKOP_AUTOMATIC_LATENCY_BATCH_PAUSE=0
-export FORKOP_AUTOMATIC_LATENCY_CLASH_READY_ATTEMPTS=1
+export PROKOP_LIB PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
+export PROKOP_SERVICE_STATE_UC="$WORK_DIR/state-stub.uc"
+export PROKOP_AUTOMATIC_LATENCY_PENDING_FILE="$WORK_DIR/automatic-latency.pending"
+export PROKOP_AUTOMATIC_LATENCY_TEST_LOCK_DIR="$WORK_DIR/latency.lock"
+export PROKOP_RELOAD_LOCK_DIR="$WORK_DIR/reload.lock"
+export PROKOP_PENDING_RELOAD_FILE="$WORK_DIR/reload.pending"
+export PROKOP_AUTOMATIC_LATENCY_BATCH_PAUSE=0
+export PROKOP_AUTOMATIC_LATENCY_CLASH_READY_ATTEMPTS=1
 
-signature="$(ucode -L "$FORKOP_LIB" "$DIAGNOSTICS_UC" proxy-outbounds-signature "$WORK_DIR/config.json")"
+signature="$(ucode -L "$PROKOP_LIB" "$DIAGNOSTICS_UC" proxy-outbounds-signature "$WORK_DIR/config.json")"
 [ -n "$signature" ] || fail "proxy signature was not produced"
 
 # run_worker BATCH_SIZE: schedules a test for the current proxy set and runs
@@ -147,9 +147,9 @@ signature="$(ucode -L "$FORKOP_LIB" "$DIAGNOSTICS_UC" proxy-outbounds-signature 
 run_worker() {
   : >"$TEST_EVENTS"
   : >"$TEST_LOG"
-  ucode -L "$FORKOP_LIB" "$UPDATES_UC" schedule-automatic-latency-test "$signature" ||
+  ucode -L "$PROKOP_LIB" "$UPDATES_UC" schedule-automatic-latency-test "$signature" ||
     fail "the latency test was not scheduled"
-  FORKOP_AUTOMATIC_LATENCY_BATCH_SIZE="$1" ucode -L "$FORKOP_LIB" "$DIAGNOSTICS_UC" automatic-latency-test new \
+  PROKOP_AUTOMATIC_LATENCY_BATCH_SIZE="$1" ucode -L "$PROKOP_LIB" "$DIAGNOSTICS_UC" automatic-latency-test new \
     >"$WORK_DIR/worker.out" 2>&1 || {
     cat "$WORK_DIR/worker.out" >&2
     return 1
@@ -185,7 +185,7 @@ check_events() {
 # One proxy per batch: the reload lock is handed over between every batch.
 run_worker 1 || fail "a serialized latency test failed"
 check_events "batches of one" 3 2
-[ ! -e "$FORKOP_AUTOMATIC_LATENCY_PENDING_FILE" ] || fail "a completed test kept its pending marker"
+[ ! -e "$PROKOP_AUTOMATIC_LATENCY_PENDING_FILE" ] || fail "a completed test kept its pending marker"
 [ "$(grep -c '^wait reload ok$' "$TEST_EVENTS")" -eq 3 ] ||
   fail "the worker must re-acquire the reload lock after every handoff"
 
@@ -198,18 +198,18 @@ check_events "batches of two" 3 1
 # A pending reload after the handoff wins: the worker stops and keeps the marker.
 : >"$TEST_KEEP_PENDING_FLAG"
 run_worker 1 || fail "yielding to a pending reload is not a failure"
-rm -f "$TEST_KEEP_PENDING_FLAG" "$FORKOP_PENDING_RELOAD_FILE"
+rm -f "$TEST_KEEP_PENDING_FLAG" "$PROKOP_PENDING_RELOAD_FILE"
 check_events "pending reload" 1 1
-[ -s "$FORKOP_AUTOMATIC_LATENCY_PENDING_FILE" ] || fail "yielding to a reload dropped the pending marker"
-grep -Fq 'yielded to a pending Forkop reload handoff' "$TEST_LOG" || fail "the yield was not logged"
+[ -s "$PROKOP_AUTOMATIC_LATENCY_PENDING_FILE" ] || fail "yielding to a reload dropped the pending marker"
+grep -Fq 'yielded to a pending Prokop reload handoff' "$TEST_LOG" || fail "the yield was not logged"
 
 # A reload in progress: no request is made and the marker waits.
-mkdir "$FORKOP_RELOAD_LOCK_DIR"
+mkdir "$PROKOP_RELOAD_LOCK_DIR"
 run_worker 4 || fail "a deferred latency test is not a failure"
-rm -rf "$FORKOP_RELOAD_LOCK_DIR"
+rm -rf "$PROKOP_RELOAD_LOCK_DIR"
 check_events "reload in progress" 0 0
 grep -Fxq 'wait reload busy' "$TEST_EVENTS" || fail "the worker did not wait for the reload lock"
-[ -s "$FORKOP_AUTOMATIC_LATENCY_PENDING_FILE" ] || fail "a deferred test dropped its pending marker"
+[ -s "$PROKOP_AUTOMATIC_LATENCY_PENDING_FILE" ] || fail "a deferred test dropped its pending marker"
 grep -Fq 'did not finish reloading' "$TEST_LOG" || fail "the deferral was not logged"
 
 # sing-box not ready (or several sing-box processes): no request either.
@@ -218,7 +218,7 @@ run_worker 4 || fail "a deferred latency test is not a failure"
 rm -f "$TEST_NOT_READY_FLAG"
 check_events "sing-box not ready" 0 0
 grep -Fxq 'ready no' "$TEST_EVENTS" || fail "the worker did not check for one ready sing-box process"
-[ -s "$FORKOP_AUTOMATIC_LATENCY_PENDING_FILE" ] || fail "a deferred test dropped its pending marker"
+[ -s "$PROKOP_AUTOMATIC_LATENCY_PENDING_FILE" ] || fail "a deferred test dropped its pending marker"
 
 # A reload queued behind the test while it held reload.lock is applied when
 # the test lets the lock go for good, after its last batch or when it gives
@@ -233,23 +233,23 @@ check_events "reload queued during the last batch" 3 1
   sed 's/^/  event: /' "$TEST_EVENTS" >&2
   fail "the reload queued during the last batch was not applied after the test"
 }
-rm -f "$FORKOP_PENDING_RELOAD_FILE"
-printf 'reason=on_config_change\n' >"$FORKOP_PENDING_RELOAD_FILE"
+rm -f "$PROKOP_PENDING_RELOAD_FILE"
+printf 'reason=on_config_change\n' >"$PROKOP_PENDING_RELOAD_FILE"
 : >"$TEST_NOT_READY_FLAG"
 run_worker 4 || fail "a deferred latency test is not a failure"
-rm -f "$TEST_NOT_READY_FLAG" "$FORKOP_PENDING_RELOAD_FILE"
+rm -f "$TEST_NOT_READY_FLAG" "$PROKOP_PENDING_RELOAD_FILE"
 check_events "reload queued, sing-box not ready" 0 1
 
 # A duplicate request while a test runs is coalesced at once, not queued: one
 # attempt on the latency lock and nothing else.
-mkdir "$FORKOP_AUTOMATIC_LATENCY_TEST_LOCK_DIR"
+mkdir "$PROKOP_AUTOMATIC_LATENCY_TEST_LOCK_DIR"
 run_worker 4 || fail "a coalesced request is not a failure"
-rm -rf "$FORKOP_AUTOMATIC_LATENCY_TEST_LOCK_DIR"
+rm -rf "$PROKOP_AUTOMATIC_LATENCY_TEST_LOCK_DIR"
 [ "$(cat "$TEST_EVENTS")" = "try latency busy" ] || {
   sed 's/^/  event: /' "$TEST_EVENTS" >&2
   fail "a duplicate automatic latency request must be dropped after one lock attempt"
 }
 grep -Fq 'coalescing the duplicate request' "$TEST_LOG" || fail "the coalesced request was not logged"
-[ -s "$FORKOP_AUTOMATIC_LATENCY_PENDING_FILE" ] || fail "a coalesced request dropped the running test's marker"
+[ -s "$PROKOP_AUTOMATIC_LATENCY_PENDING_FILE" ] || fail "a coalesced request dropped the running test's marker"
 
 printf 'latency/reload serialization checks passed\n'

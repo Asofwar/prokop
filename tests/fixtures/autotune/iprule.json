@@ -1,1 +1,1 @@
-[{"priority":0,"src":"all","table":"local"},{"priority":105,"src":"all","fwmark":"0x4000000","fwmask":"0x4000000","table":"forkop"},{"priority":32766,"src":"all","table":"main"},{"priority":32767,"src":"all","table":"default"}]
+[{"priority":0,"src":"all","table":"local"},{"priority":105,"src":"all","fwmark":"0x4000000","fwmask":"0x4000000","table":"prokop"},{"priority":32766,"src":"all","table":"main"},{"priority":32767,"src":"all","table":"default"}]

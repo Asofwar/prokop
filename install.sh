@@ -1,12 +1,12 @@
 #!/bin/sh
 # shellcheck shell=dash
 
-RELEASE_REPO="${FORKOP_RELEASE_REPO:-Asofwar/forkop}"
-RELEASE_BASE_URL="${FORKOP_RELEASE_BASE_URL:-https://asofwar.github.io/forkop}"
-# The dependency mirror is opt-in (--mirror URL or FORKOP_MIRROR_BASE_URL).
+RELEASE_REPO="${PROKOP_RELEASE_REPO:-Asofwar/prokop}"
+RELEASE_BASE_URL="${PROKOP_RELEASE_BASE_URL:-https://asofwar.github.io/prokop}"
+# The dependency mirror is opt-in (--mirror URL or PROKOP_MIRROR_BASE_URL).
 # Empty keeps the official OpenWrt feeds and the direct download sources.
-MIRROR_BASE_URL="${FORKOP_MIRROR_BASE_URL:-}"
-MIRROR_MIGRATION_SCRIPT="/usr/share/forkop/mirror-migration.sh"
+MIRROR_BASE_URL="${PROKOP_MIRROR_BASE_URL:-}"
+MIRROR_MIGRATION_SCRIPT="/usr/share/prokop/mirror-migration.sh"
 APK_REPOSITORIES_FILE="/etc/apk/repositories"
 APK_DISTFEEDS_FILE="/etc/apk/repositories.d/distfeeds.list"
 # Upstream installations leave a feed of upstream Forkop builds and its key;
@@ -15,7 +15,7 @@ UPSTREAM_APK_REPOSITORY_FILE="/etc/apk/repositories.d/forkop.list"
 UPSTREAM_APK_KEY_FILE="/etc/apk/keys/forkop-mirror.pem"
 # Former upstream mirrors. Without an opted-in mirror the OpenWrt release feeds
 # an upstream installation moved there go back to the official release tree,
-# as /usr/share/forkop/mirror-migration.sh restores them.
+# as /usr/share/prokop/mirror-migration.sh restores them.
 LEGACY_MIRROR_REGEX='https?://mirror\.(infotechtg|51343)\.ru/'
 OFFICIAL_RELEASES_URL="https://downloads.openwrt.org/releases/"
 OFFICIAL_RELEASES_REGEX='https://downloads\.openwrt\.org/releases/'
@@ -24,8 +24,8 @@ FLASH_RESERVE_KB=1024
 PACKAGE_INSTALL_OVERHEAD_KB=512
 PACKAGE_ARCHIVE_SPACE_FACTOR=2
 MISSING_DEPENDENCY_ALLOWANCE_KB=256
-APK_WORLD_FILE="${FORKOP_APK_WORLD_FILE:-/etc/apk/world}"
-OPKG_DISTFEEDS_FILE="${FORKOP_OPKG_DISTFEEDS_FILE:-/etc/opkg/distfeeds.conf}"
+APK_WORLD_FILE="${PROKOP_APK_WORLD_FILE:-/etc/apk/world}"
+OPKG_DISTFEEDS_FILE="${PROKOP_OPKG_DISTFEEDS_FILE:-/etc/opkg/distfeeds.conf}"
 CONNECT_TIMEOUT_SECONDS=15
 METADATA_TIMEOUT_SECONDS=60
 DOWNLOAD_TIMEOUT_SECONDS=600
@@ -40,12 +40,12 @@ OPENWRT_TARGET=""
 OPENWRT_ARCHITECTURE=""
 FETCHER=""
 TMP_DIR=""
-FORKOP_WAS_ENABLED=0
-FORKOP_WAS_RUNNING=0
-FORKOP_LEGACY_DETECTED=0
+PROKOP_WAS_ENABLED=0
+PROKOP_WAS_RUNNING=0
+PROKOP_LEGACY_DETECTED=0
 LEGACY_CLEANUP_DONE=0
 LEGACY_CLEANUP_STARTED=0
-FORKOP_I18N_REQUESTED=0
+PROKOP_I18N_REQUESTED=0
 INSTALLER_LANG="ru"
 INSTALLER_LANG_EXPLICIT=0
 INSTALLER_LANG_DETECTED=0
@@ -57,25 +57,25 @@ SING_BOX_CHANGE_STARTED=0
 ALLOW_LOW_SPACE_TINY=0
 CONFIRM_LEGACY_MIGRATION=0
 
-FORKOP_RELEASE_JSON=""
-FORKOP_RELEASE_SOURCE=""
-FORKOP_RELEASE_TAG=""
-FORKOP_BACKEND_URL=""
-FORKOP_BACKEND_SHA256=""
-FORKOP_BACKEND_NAME=""
-FORKOP_BACKEND_FILE=""
-FORKOP_APP_URL=""
-FORKOP_APP_SHA256=""
-FORKOP_APP_NAME=""
-FORKOP_APP_FILE=""
-FORKOP_I18N_URL=""
-FORKOP_I18N_SHA256=""
-FORKOP_I18N_NAME=""
-FORKOP_I18N_FILE=""
-FORKOP_INSTALL_REQUIRED_KB=0
-FORKOP_PACKAGE_VERSION=""
-FORKOP_CONFIG_READY=1
-FORKOP_CONFIG_VALIDATION_ERROR=""
+PROKOP_RELEASE_JSON=""
+PROKOP_RELEASE_SOURCE=""
+PROKOP_RELEASE_TAG=""
+PROKOP_BACKEND_URL=""
+PROKOP_BACKEND_SHA256=""
+PROKOP_BACKEND_NAME=""
+PROKOP_BACKEND_FILE=""
+PROKOP_APP_URL=""
+PROKOP_APP_SHA256=""
+PROKOP_APP_NAME=""
+PROKOP_APP_FILE=""
+PROKOP_I18N_URL=""
+PROKOP_I18N_SHA256=""
+PROKOP_I18N_NAME=""
+PROKOP_I18N_FILE=""
+PROKOP_INSTALL_REQUIRED_KB=0
+PROKOP_PACKAGE_VERSION=""
+PROKOP_CONFIG_READY=1
+PROKOP_CONFIG_VALIDATION_ERROR=""
 INSTALL_MODE="clean"
 LEGACY_BRAND="$(printf '\160\157\144\153\157\160')"
 LEGACY_BACKEND_PACKAGE="${LEGACY_BRAND}-plus"
@@ -95,7 +95,7 @@ warn() {
 
 fail() {
     rollback_legacy_config_on_failure
-    restore_current_forkop_on_failure
+    restore_current_prokop_on_failure
     printf '\033[31;1m%s\033[0m\n' "$1" >&2
     exit 1
 }
@@ -104,10 +104,10 @@ usage() {
     cat <<EOF
 Usage: $0 [options]
 
-Installs or updates Forkop packages:
-  - forkop
-  - luci-app-forkop
-  - luci-i18n-forkop-ru when requested or when LuCI language is Russian
+Installs or updates Prokop packages:
+  - prokop
+  - luci-app-prokop
+  - luci-i18n-prokop-ru when requested or when LuCI language is Russian
 
 sing-box policy:
   - preserve the currently installed sing-box variant
@@ -132,14 +132,14 @@ Automation options (must be explicitly requested):
 Dependency mirror (off by default):
   --mirror URL                 Use a dependency mirror for the OpenWrt package
                                feeds, lists, rule sets and sing-box downloads.
-                               It is saved as forkop.settings.mirror_base_url.
+                               It is saved as prokop.settings.mirror_base_url.
                                Without it the official OpenWrt feeds and the
                                direct download sources are used.
 
 Environment:
-  FORKOP_MIRROR_BASE_URL       Same as --mirror (the option takes precedence)
-  FORKOP_RELEASE_BASE_URL      Release channel (default: $RELEASE_BASE_URL)
-  FORKOP_RELEASE_REPO          GitHub owner/name whose releases are used when
+  PROKOP_MIRROR_BASE_URL       Same as --mirror (the option takes precedence)
+  PROKOP_RELEASE_BASE_URL      Release channel (default: $RELEASE_BASE_URL)
+  PROKOP_RELEASE_REPO          GitHub owner/name whose releases are used when
                                the release channel is unavailable
                                (default: $RELEASE_REPO)
 EOF
@@ -248,16 +248,16 @@ validate_installer_settings() {
             ;;
     esac
     case "$release_owner" in
-        ''|*[!A-Za-z0-9-]*) fail "FORKOP_RELEASE_REPO must be a GitHub owner/name: $RELEASE_REPO" ;;
+        ''|*[!A-Za-z0-9-]*) fail "PROKOP_RELEASE_REPO must be a GitHub owner/name: $RELEASE_REPO" ;;
     esac
     case "$release_name" in
-        ''|.|..|*[!A-Za-z0-9._-]*) fail "FORKOP_RELEASE_REPO must be a GitHub owner/name: $RELEASE_REPO" ;;
+        ''|.|..|*[!A-Za-z0-9._-]*) fail "PROKOP_RELEASE_REPO must be a GitHub owner/name: $RELEASE_REPO" ;;
     esac
 
     RELEASE_BASE_URL="$(strip_trailing_slashes "$RELEASE_BASE_URL")"
     case "$RELEASE_BASE_URL" in
         https://?*|http://?*) ;;
-        *) fail "FORKOP_RELEASE_BASE_URL must use http:// or https://: $RELEASE_BASE_URL" ;;
+        *) fail "PROKOP_RELEASE_BASE_URL must use http:// or https://: $RELEASE_BASE_URL" ;;
     esac
 
     MIRROR_BASE_URL="$(strip_trailing_slashes "$MIRROR_BASE_URL")"
@@ -275,10 +275,10 @@ validate_installer_settings() {
             fail "Invalid dependency mirror URL: $MIRROR_BASE_URL (only letters, digits and . _ ~ : / % - are supported)"
             ;;
     esac
-    # Package scripts and the Forkop backend resolve the mirror from this
+    # Package scripts and the Prokop backend resolve the mirror from this
     # variable first, so they follow the same opt-in during the installation.
-    FORKOP_MIRROR_BASE_URL="$MIRROR_BASE_URL"
-    export FORKOP_MIRROR_BASE_URL
+    PROKOP_MIRROR_BASE_URL="$MIRROR_BASE_URL"
+    export PROKOP_MIRROR_BASE_URL
 }
 
 cleanup() {
@@ -307,10 +307,10 @@ read_installer_answer() {
 }
 
 init_tmp_dir() {
-    TMP_DIR="$(mktemp -d /tmp/forkop.XXXXXX 2>/dev/null || true)"
+    TMP_DIR="$(mktemp -d /tmp/prokop.XXXXXX 2>/dev/null || true)"
 
     if [ -z "$TMP_DIR" ]; then
-        TMP_DIR="/tmp/forkop.$$"
+        TMP_DIR="/tmp/prokop.$$"
         mkdir -p "$TMP_DIR" || fail "Failed to create temporary directory: $TMP_DIR"
     fi
 }
@@ -326,24 +326,24 @@ detect_fetcher() {
         return 0
     fi
 
-    fail "wget or curl is required to download Forkop"
+    fail "wget or curl is required to download Prokop"
 }
 
 run_with_deadline() {
-    forkop_deadline_seconds="$1"
+    prokop_deadline_seconds="$1"
     shift
 
-    forkop_deadline_helper="${FORKOP_DEADLINE_HELPER_PATH:-}"
-    if [ -z "$forkop_deadline_helper" ]; then
-        forkop_deadline_helper="$(install_deadline_helper_path)" || return 1
+    prokop_deadline_helper="${PROKOP_DEADLINE_HELPER_PATH:-}"
+    if [ -z "$prokop_deadline_helper" ]; then
+        prokop_deadline_helper="$(install_deadline_helper_path)" || return 1
     fi
 
-    forkop_deadline_result="$TMP_DIR/deadline-result.$$"
-    "$forkop_deadline_helper" run "$forkop_deadline_seconds" "$forkop_deadline_result" "$@"
-    forkop_deadline_status=$?
-    rm -f "$forkop_deadline_result.output" "$forkop_deadline_result.error" \
-        "$forkop_deadline_result.status" "$forkop_deadline_result.timeout"
-    return "$forkop_deadline_status"
+    prokop_deadline_result="$TMP_DIR/deadline-result.$$"
+    "$prokop_deadline_helper" run "$prokop_deadline_seconds" "$prokop_deadline_result" "$@"
+    prokop_deadline_status=$?
+    rm -f "$prokop_deadline_result.output" "$prokop_deadline_result.error" \
+        "$prokop_deadline_result.status" "$prokop_deadline_result.timeout"
+    return "$prokop_deadline_status"
 }
 
 install_deadline_helper_path() {
@@ -785,57 +785,57 @@ function env(name, fallback) {
     return as_string(value);
 }
 
-const INSTALLER_FORKOP_INIT = env("FORKOP_INSTALLER_INIT", "/etc/init.d/forkop");
-const INSTALLER_FORKOP_BIN = env("FORKOP_INSTALLER_BIN", "/usr/bin/forkop");
-const INSTALLER_FORKOP_LIB = env("FORKOP_INSTALLER_LIB", "/usr/lib/forkop");
-const INSTALLER_FORKOP_PERSISTENT_DIR = env("FORKOP_INSTALLER_PERSISTENT_DIR", "/etc/forkop");
-const INSTALLER_FORKOP_UCI_DEFAULTS = env("FORKOP_INSTALLER_UCI_DEFAULTS", "/etc/uci-defaults/50_luci-forkop");
-const INSTALLER_FORKOP_LUCI_VIEW = env("FORKOP_INSTALLER_LUCI_VIEW", "/www/luci-static/resources/view/forkop");
-const INSTALLER_MENU_JSON = env("FORKOP_INSTALLER_MENU_JSON", "/usr/share/luci/menu.d/luci-app-forkop.json");
-const INSTALLER_ACL_JSON = env("FORKOP_INSTALLER_ACL_JSON", "/usr/share/rpcd/acl.d/luci-app-forkop.json");
-const INSTALLER_RU_LMO = env("FORKOP_INSTALLER_RU_LMO", "/usr/lib/lua/luci/i18n/forkop.ru.lmo");
-const INSTALLER_EN_LMO = env("FORKOP_INSTALLER_EN_LMO", "/usr/lib/lua/luci/i18n/forkop.en.lmo");
-const INSTALLER_RU_LUA = env("FORKOP_INSTALLER_RU_LUA", "/usr/lib/lua/luci/i18n/forkop.ru.lua");
-const INSTALLER_EN_LUA = env("FORKOP_INSTALLER_EN_LUA", "/usr/lib/lua/luci/i18n/forkop.en.lua");
-const INSTALLER_RPCD_INIT = env("FORKOP_INSTALLER_RPCD_INIT", "/etc/init.d/rpcd");
-const LEGACY_BRAND = env("FORKOP_INSTALLER_LEGACY_BRAND", "");
-const LEGACY_BACKEND_PACKAGE = env("FORKOP_INSTALLER_LEGACY_BACKEND", LEGACY_BRAND + "-plus");
-const LEGACY_CONFIG_PACKAGE_ALT = env("FORKOP_INSTALLER_LEGACY_CONFIG_ALT", LEGACY_BRAND + "_plus");
-const INSTALLER_LEGACY_INIT = env("FORKOP_INSTALLER_LEGACY_INIT", "/etc/init.d/" + LEGACY_BACKEND_PACKAGE);
-const INSTALLER_LEGACY_BASE_INIT = env("FORKOP_INSTALLER_LEGACY_BASE_INIT", "/etc/init.d/" + LEGACY_BRAND);
-const INSTALLER_LEGACY_BASE_BIN = env("FORKOP_INSTALLER_LEGACY_BASE_BIN", "/usr/bin/" + LEGACY_BRAND);
-const INSTALLER_LEGACY_BASE_LIB = env("FORKOP_INSTALLER_LEGACY_BASE_LIB", "/usr/lib/" + LEGACY_BRAND);
-const INSTALLER_LEGACY_BASE_UCI_DEFAULTS = env("FORKOP_INSTALLER_LEGACY_BASE_UCI_DEFAULTS", "/etc/uci-defaults/50_luci-" + LEGACY_BRAND);
-const INSTALLER_LEGACY_BASE_LUCI_VIEW = env("FORKOP_INSTALLER_LEGACY_BASE_LUCI_VIEW", "/www/luci-static/resources/view/" + LEGACY_BRAND);
-const INSTALLER_LEGACY_BASE_MENU_JSON = env("FORKOP_INSTALLER_LEGACY_BASE_MENU_JSON", "/usr/share/luci/menu.d/luci-app-" + LEGACY_BRAND);
-const INSTALLER_LEGACY_BASE_ACL_JSON = env("FORKOP_INSTALLER_LEGACY_BASE_ACL_JSON", "/usr/share/rpcd/acl.d/luci-app-" + LEGACY_BRAND);
-const INSTALLER_LEGACY_BASE_I18N = env("FORKOP_INSTALLER_LEGACY_BASE_I18N", "/usr/lib/lua/luci/i18n/" + LEGACY_BRAND);
-const INSTALLER_LEGACY_BASE_CONFIG = env("FORKOP_INSTALLER_LEGACY_BASE_CONFIG", "/etc/config/" + LEGACY_BRAND);
-const INSTALLER_LEGACY_BASE_PERSISTENT_DIR = env("FORKOP_INSTALLER_LEGACY_BASE_PERSISTENT_DIR", "/etc/" + LEGACY_BRAND);
-const INSTALLER_LEGACY_BASE_RUNTIME_DIR = env("FORKOP_INSTALLER_LEGACY_BASE_RUNTIME_DIR", "/var/run/" + LEGACY_BRAND);
-const INSTALLER_LEGACY_BASE_TMP_DIR = env("FORKOP_INSTALLER_LEGACY_BASE_TMP_DIR", "/tmp/" + LEGACY_BRAND);
-const INSTALLER_LEGACY_TMP_PACKAGE_GLOB = env("FORKOP_INSTALLER_LEGACY_TMP_PACKAGE_GLOB", "/tmp/*" + LEGACY_BRAND + "*");
-const INSTALLER_LEGACY_SCAN_ROOTS = env("FORKOP_INSTALLER_LEGACY_SCAN_ROOTS", "/tmp /var/run /etc /usr/lib /usr/share/luci /usr/share/rpcd /www/luci-static/resources/view");
-const INSTALLER_LEGACY_BIN = env("FORKOP_INSTALLER_LEGACY_BIN", "/usr/bin/" + LEGACY_BACKEND_PACKAGE);
-const INSTALLER_LEGACY_LIB = env("FORKOP_INSTALLER_LEGACY_LIB", "/usr/lib/" + LEGACY_BACKEND_PACKAGE);
-const INSTALLER_LEGACY_UCI_DEFAULTS = env("FORKOP_INSTALLER_LEGACY_UCI_DEFAULTS", "/etc/uci-defaults/50_luci-" + LEGACY_BACKEND_PACKAGE);
-const INSTALLER_LEGACY_LUCI_VIEW = env("FORKOP_INSTALLER_LEGACY_LUCI_VIEW", "/www/luci-static/resources/view/" + LEGACY_CONFIG_PACKAGE_ALT);
-const INSTALLER_LEGACY_MENU_JSON = env("FORKOP_INSTALLER_LEGACY_MENU_JSON", "/usr/share/luci/menu.d/luci-app-" + LEGACY_BACKEND_PACKAGE + ".json");
-const INSTALLER_LEGACY_ACL_JSON = env("FORKOP_INSTALLER_LEGACY_ACL_JSON", "/usr/share/rpcd/acl.d/luci-app-" + LEGACY_BACKEND_PACKAGE + ".json");
-const INSTALLER_LEGACY_CONFIG = env("FORKOP_INSTALLER_LEGACY_CONFIG", "/etc/config/" + LEGACY_BACKEND_PACKAGE);
-const INSTALLER_LEGACY_CONFIG_ALT = env("FORKOP_INSTALLER_LEGACY_CONFIG_FILE_ALT", "/etc/config/" + LEGACY_CONFIG_PACKAGE_ALT);
-const INSTALLER_LEGACY_PERSISTENT_DIR = env("FORKOP_INSTALLER_LEGACY_PERSISTENT_DIR", "/etc/" + LEGACY_BACKEND_PACKAGE);
-const INSTALLER_LEGACY_RUNTIME_DIR = env("FORKOP_INSTALLER_LEGACY_RUNTIME_DIR", "/var/run/" + LEGACY_BACKEND_PACKAGE);
-const INSTALLER_LEGACY_TMP_DIR = env("FORKOP_INSTALLER_LEGACY_TMP_DIR", "/tmp/" + LEGACY_BACKEND_PACKAGE);
-const INSTALLER_LEGACY_TMP_ALT_DIR = env("FORKOP_INSTALLER_LEGACY_TMP_ALT_DIR", "/tmp/" + LEGACY_CONFIG_PACKAGE_ALT);
-const INSTALLER_DEADLINE_HELPER = env("FORKOP_INSTALLER_DEADLINE_HELPER", "");
-const INSTALLER_COMMAND_RESULT = env("FORKOP_INSTALLER_COMMAND_RESULT", "/tmp/forkop-installer-command");
-const INSTALLER_RC_DIR = env("FORKOP_INSTALLER_RC_DIR", "/etc/rc.d");
-const INSTALLER_START_RETRY_FILE = env("FORKOP_INSTALLER_START_RETRY_FILE", "/var/run/forkop/start.retry");
-const INSTALLER_START_RETRY_PID_FILE = env("FORKOP_INSTALLER_START_RETRY_PID_FILE", "/var/run/forkop/start-retry.pid");
-const INSTALLER_ORPHAN_PPID = env("FORKOP_INSTALLER_ORPHAN_PPID", "1");
-const INSTALLER_SERVICE_PROBE_TIMEOUT = int(env("FORKOP_INSTALLER_SERVICE_PROBE_TIMEOUT", "6")) || 6;
-const INSTALLER_SERVICE_ACTION_TIMEOUT = int(env("FORKOP_INSTALLER_SERVICE_ACTION_TIMEOUT", "60")) || 60;
+const INSTALLER_PROKOP_INIT = env("PROKOP_INSTALLER_INIT", "/etc/init.d/prokop");
+const INSTALLER_PROKOP_BIN = env("PROKOP_INSTALLER_BIN", "/usr/bin/prokop");
+const INSTALLER_PROKOP_LIB = env("PROKOP_INSTALLER_LIB", "/usr/lib/prokop");
+const INSTALLER_PROKOP_PERSISTENT_DIR = env("PROKOP_INSTALLER_PERSISTENT_DIR", "/etc/prokop");
+const INSTALLER_PROKOP_UCI_DEFAULTS = env("PROKOP_INSTALLER_UCI_DEFAULTS", "/etc/uci-defaults/50_luci-prokop");
+const INSTALLER_PROKOP_LUCI_VIEW = env("PROKOP_INSTALLER_LUCI_VIEW", "/www/luci-static/resources/view/prokop");
+const INSTALLER_MENU_JSON = env("PROKOP_INSTALLER_MENU_JSON", "/usr/share/luci/menu.d/luci-app-prokop.json");
+const INSTALLER_ACL_JSON = env("PROKOP_INSTALLER_ACL_JSON", "/usr/share/rpcd/acl.d/luci-app-prokop.json");
+const INSTALLER_RU_LMO = env("PROKOP_INSTALLER_RU_LMO", "/usr/lib/lua/luci/i18n/prokop.ru.lmo");
+const INSTALLER_EN_LMO = env("PROKOP_INSTALLER_EN_LMO", "/usr/lib/lua/luci/i18n/prokop.en.lmo");
+const INSTALLER_RU_LUA = env("PROKOP_INSTALLER_RU_LUA", "/usr/lib/lua/luci/i18n/prokop.ru.lua");
+const INSTALLER_EN_LUA = env("PROKOP_INSTALLER_EN_LUA", "/usr/lib/lua/luci/i18n/prokop.en.lua");
+const INSTALLER_RPCD_INIT = env("PROKOP_INSTALLER_RPCD_INIT", "/etc/init.d/rpcd");
+const LEGACY_BRAND = env("PROKOP_INSTALLER_LEGACY_BRAND", "");
+const LEGACY_BACKEND_PACKAGE = env("PROKOP_INSTALLER_LEGACY_BACKEND", LEGACY_BRAND + "-plus");
+const LEGACY_CONFIG_PACKAGE_ALT = env("PROKOP_INSTALLER_LEGACY_CONFIG_ALT", LEGACY_BRAND + "_plus");
+const INSTALLER_LEGACY_INIT = env("PROKOP_INSTALLER_LEGACY_INIT", "/etc/init.d/" + LEGACY_BACKEND_PACKAGE);
+const INSTALLER_LEGACY_BASE_INIT = env("PROKOP_INSTALLER_LEGACY_BASE_INIT", "/etc/init.d/" + LEGACY_BRAND);
+const INSTALLER_LEGACY_BASE_BIN = env("PROKOP_INSTALLER_LEGACY_BASE_BIN", "/usr/bin/" + LEGACY_BRAND);
+const INSTALLER_LEGACY_BASE_LIB = env("PROKOP_INSTALLER_LEGACY_BASE_LIB", "/usr/lib/" + LEGACY_BRAND);
+const INSTALLER_LEGACY_BASE_UCI_DEFAULTS = env("PROKOP_INSTALLER_LEGACY_BASE_UCI_DEFAULTS", "/etc/uci-defaults/50_luci-" + LEGACY_BRAND);
+const INSTALLER_LEGACY_BASE_LUCI_VIEW = env("PROKOP_INSTALLER_LEGACY_BASE_LUCI_VIEW", "/www/luci-static/resources/view/" + LEGACY_BRAND);
+const INSTALLER_LEGACY_BASE_MENU_JSON = env("PROKOP_INSTALLER_LEGACY_BASE_MENU_JSON", "/usr/share/luci/menu.d/luci-app-" + LEGACY_BRAND);
+const INSTALLER_LEGACY_BASE_ACL_JSON = env("PROKOP_INSTALLER_LEGACY_BASE_ACL_JSON", "/usr/share/rpcd/acl.d/luci-app-" + LEGACY_BRAND);
+const INSTALLER_LEGACY_BASE_I18N = env("PROKOP_INSTALLER_LEGACY_BASE_I18N", "/usr/lib/lua/luci/i18n/" + LEGACY_BRAND);
+const INSTALLER_LEGACY_BASE_CONFIG = env("PROKOP_INSTALLER_LEGACY_BASE_CONFIG", "/etc/config/" + LEGACY_BRAND);
+const INSTALLER_LEGACY_BASE_PERSISTENT_DIR = env("PROKOP_INSTALLER_LEGACY_BASE_PERSISTENT_DIR", "/etc/" + LEGACY_BRAND);
+const INSTALLER_LEGACY_BASE_RUNTIME_DIR = env("PROKOP_INSTALLER_LEGACY_BASE_RUNTIME_DIR", "/var/run/" + LEGACY_BRAND);
+const INSTALLER_LEGACY_BASE_TMP_DIR = env("PROKOP_INSTALLER_LEGACY_BASE_TMP_DIR", "/tmp/" + LEGACY_BRAND);
+const INSTALLER_LEGACY_TMP_PACKAGE_GLOB = env("PROKOP_INSTALLER_LEGACY_TMP_PACKAGE_GLOB", "/tmp/*" + LEGACY_BRAND + "*");
+const INSTALLER_LEGACY_SCAN_ROOTS = env("PROKOP_INSTALLER_LEGACY_SCAN_ROOTS", "/tmp /var/run /etc /usr/lib /usr/share/luci /usr/share/rpcd /www/luci-static/resources/view");
+const INSTALLER_LEGACY_BIN = env("PROKOP_INSTALLER_LEGACY_BIN", "/usr/bin/" + LEGACY_BACKEND_PACKAGE);
+const INSTALLER_LEGACY_LIB = env("PROKOP_INSTALLER_LEGACY_LIB", "/usr/lib/" + LEGACY_BACKEND_PACKAGE);
+const INSTALLER_LEGACY_UCI_DEFAULTS = env("PROKOP_INSTALLER_LEGACY_UCI_DEFAULTS", "/etc/uci-defaults/50_luci-" + LEGACY_BACKEND_PACKAGE);
+const INSTALLER_LEGACY_LUCI_VIEW = env("PROKOP_INSTALLER_LEGACY_LUCI_VIEW", "/www/luci-static/resources/view/" + LEGACY_CONFIG_PACKAGE_ALT);
+const INSTALLER_LEGACY_MENU_JSON = env("PROKOP_INSTALLER_LEGACY_MENU_JSON", "/usr/share/luci/menu.d/luci-app-" + LEGACY_BACKEND_PACKAGE + ".json");
+const INSTALLER_LEGACY_ACL_JSON = env("PROKOP_INSTALLER_LEGACY_ACL_JSON", "/usr/share/rpcd/acl.d/luci-app-" + LEGACY_BACKEND_PACKAGE + ".json");
+const INSTALLER_LEGACY_CONFIG = env("PROKOP_INSTALLER_LEGACY_CONFIG", "/etc/config/" + LEGACY_BACKEND_PACKAGE);
+const INSTALLER_LEGACY_CONFIG_ALT = env("PROKOP_INSTALLER_LEGACY_CONFIG_FILE_ALT", "/etc/config/" + LEGACY_CONFIG_PACKAGE_ALT);
+const INSTALLER_LEGACY_PERSISTENT_DIR = env("PROKOP_INSTALLER_LEGACY_PERSISTENT_DIR", "/etc/" + LEGACY_BACKEND_PACKAGE);
+const INSTALLER_LEGACY_RUNTIME_DIR = env("PROKOP_INSTALLER_LEGACY_RUNTIME_DIR", "/var/run/" + LEGACY_BACKEND_PACKAGE);
+const INSTALLER_LEGACY_TMP_DIR = env("PROKOP_INSTALLER_LEGACY_TMP_DIR", "/tmp/" + LEGACY_BACKEND_PACKAGE);
+const INSTALLER_LEGACY_TMP_ALT_DIR = env("PROKOP_INSTALLER_LEGACY_TMP_ALT_DIR", "/tmp/" + LEGACY_CONFIG_PACKAGE_ALT);
+const INSTALLER_DEADLINE_HELPER = env("PROKOP_INSTALLER_DEADLINE_HELPER", "");
+const INSTALLER_COMMAND_RESULT = env("PROKOP_INSTALLER_COMMAND_RESULT", "/tmp/prokop-installer-command");
+const INSTALLER_RC_DIR = env("PROKOP_INSTALLER_RC_DIR", "/etc/rc.d");
+const INSTALLER_START_RETRY_FILE = env("PROKOP_INSTALLER_START_RETRY_FILE", "/var/run/prokop/start.retry");
+const INSTALLER_START_RETRY_PID_FILE = env("PROKOP_INSTALLER_START_RETRY_PID_FILE", "/var/run/prokop/start-retry.pid");
+const INSTALLER_ORPHAN_PPID = env("PROKOP_INSTALLER_ORPHAN_PPID", "1");
+const INSTALLER_SERVICE_PROBE_TIMEOUT = int(env("PROKOP_INSTALLER_SERVICE_PROBE_TIMEOUT", "6")) || 6;
+const INSTALLER_SERVICE_ACTION_TIMEOUT = int(env("PROKOP_INSTALLER_SERVICE_ACTION_TIMEOUT", "60")) || 60;
 
 let installer_command_sequence = 0;
 
@@ -867,9 +867,9 @@ function installer_command_result(args, timeout_seconds) {
     };
 }
 
-let dns_owner_config = "forkop";
-let dns_owner_section = "forkop";
-let dns_owner_option_prefix = "forkop_";
+let dns_owner_config = "prokop";
+let dns_owner_section = "prokop";
+let dns_owner_option_prefix = "prokop_";
 
 function path_exists(path) {
     return fs.stat(as_string(path)) != null;
@@ -1089,7 +1089,7 @@ function installer_cancel_stale_start_retry() {
     let ticks = trim(record[1] || "");
     if (match(pid, /^[0-9]+$/) && (ticks == "" || ticks == installer_process_starttime(pid))) {
         let args = installer_process_args(pid);
-        if (installer_args_contain(args, INSTALLER_FORKOP_INIT) &&
+        if (installer_args_contain(args, INSTALLER_PROKOP_INIT) &&
             installer_args_contain(args, "retry_start_on_wan_up"))
             installer_kill_process_tree(pid);
     }
@@ -1184,9 +1184,9 @@ function select_dns_owner(legacy) {
         dns_owner_option_prefix = LEGACY_BRAND + "_";
     }
     else {
-        dns_owner_config = "forkop";
-        dns_owner_section = "forkop";
-        dns_owner_option_prefix = "forkop_";
+        dns_owner_config = "prokop";
+        dns_owner_section = "prokop";
+        dns_owner_option_prefix = "prokop_";
     }
 }
 
@@ -1212,13 +1212,13 @@ function installer_deactivate_legacy_base() {
     }
 
     if (running.value) {
-        warn("Detected a running legacy service. Stopping it before installing Forkop.\n");
+        warn("Detected a running legacy service. Stopping it before installing Prokop.\n");
         if (!installer_service_action(INSTALLER_LEGACY_BASE_INIT, "stop"))
             return false;
     }
 
     if (enabled.value) {
-        warn("Detected an enabled legacy autostart. Disabling it before installing Forkop.\n");
+        warn("Detected an enabled legacy autostart. Disabling it before installing Prokop.\n");
         if (!installer_service_action(INSTALLER_LEGACY_BASE_INIT, "disable"))
             return false;
     }
@@ -1226,14 +1226,14 @@ function installer_deactivate_legacy_base() {
 }
 
 function installer_cleanup_legacy() {
-    let forkop_installed = installer_package_installed("forkop");
+    let prokop_installed = installer_package_installed("prokop");
     let legacy_installed = LEGACY_BRAND != "" && installer_package_installed(LEGACY_BACKEND_PACKAGE);
-    let active_init = legacy_installed ? INSTALLER_LEGACY_INIT : INSTALLER_FORKOP_INIT;
-    let active_bin = legacy_installed ? INSTALLER_LEGACY_BIN : INSTALLER_FORKOP_BIN;
+    let active_init = legacy_installed ? INSTALLER_LEGACY_INIT : INSTALLER_PROKOP_INIT;
+    let active_bin = legacy_installed ? INSTALLER_LEGACY_BIN : INSTALLER_PROKOP_BIN;
 
     installer_recover_interrupted_cleanup([
         active_init,
-        INSTALLER_FORKOP_INIT,
+        INSTALLER_PROKOP_INIT,
         INSTALLER_LEGACY_INIT,
         INSTALLER_LEGACY_BASE_INIT
     ]);
@@ -1244,7 +1244,7 @@ function installer_cleanup_legacy() {
         { known: true, value: false } :
         installer_backend_status_running_state(active_bin);
     if (!enabled.known || (!running.known && !backend_running.known)) {
-        warn("Unable to determine the Forkop service state before installation.\n");
+        warn("Unable to determine the Prokop service state before installation.\n");
         return false;
     }
     let was_enabled = enabled.value;
@@ -1280,10 +1280,10 @@ function installer_cleanup_legacy() {
             packages_removed = false;
     }
 
-    if (!forkop_installed) {
-        if (!installer_remove_package_prefix("luci-i18n-forkop"))
+    if (!prokop_installed) {
+        if (!installer_remove_package_prefix("luci-i18n-prokop"))
             packages_removed = false;
-        if (!installer_remove_package("luci-app-forkop"))
+        if (!installer_remove_package("luci-app-prokop"))
             packages_removed = false;
     }
 
@@ -1305,15 +1305,15 @@ function installer_cleanup_legacy() {
             remove_path(path);
     }
 
-    if (!forkop_installed) {
-        remove_path(INSTALLER_FORKOP_LIB);
-        remove_path(INSTALLER_FORKOP_INIT);
-        remove_path(INSTALLER_FORKOP_BIN);
+    if (!prokop_installed) {
+        remove_path(INSTALLER_PROKOP_LIB);
+        remove_path(INSTALLER_PROKOP_INIT);
+        remove_path(INSTALLER_PROKOP_BIN);
         for (let path in [
-            INSTALLER_FORKOP_LUCI_VIEW,
+            INSTALLER_PROKOP_LUCI_VIEW,
             INSTALLER_MENU_JSON,
             INSTALLER_ACL_JSON,
-            INSTALLER_FORKOP_UCI_DEFAULTS,
+            INSTALLER_PROKOP_UCI_DEFAULTS,
             INSTALLER_RU_LMO,
             INSTALLER_EN_LMO,
             INSTALLER_RU_LUA,
@@ -1322,9 +1322,9 @@ function installer_cleanup_legacy() {
             remove_path(path);
     }
 
-    print("FORKOP_WAS_ENABLED=", was_enabled ? "1" : "0", "\n");
-    print("FORKOP_WAS_RUNNING=", was_running ? "1" : "0", "\n");
-    print("FORKOP_LEGACY_DETECTED=", legacy_installed ? "1" : "0", "\n");
+    print("PROKOP_WAS_ENABLED=", was_enabled ? "1" : "0", "\n");
+    print("PROKOP_WAS_RUNNING=", was_running ? "1" : "0", "\n");
+    print("PROKOP_LEGACY_DETECTED=", legacy_installed ? "1" : "0", "\n");
     return true;
 }
 
@@ -1335,8 +1335,8 @@ function installer_finalize_legacy() {
     let legacy_tailscale_dir = INSTALLER_LEGACY_PERSISTENT_DIR + "/tailscale";
     if (path_exists(legacy_tailscale_dir)) {
         let entries = fs.lsdir(legacy_tailscale_dir);
-        let forkop_tailscale_dir = INSTALLER_FORKOP_PERSISTENT_DIR + "/tailscale";
-        if (type(entries) != "array" || !run_args([ "mkdir", "-p", forkop_tailscale_dir ])) {
+        let prokop_tailscale_dir = INSTALLER_PROKOP_PERSISTENT_DIR + "/tailscale";
+        if (type(entries) != "array" || !run_args([ "mkdir", "-p", prokop_tailscale_dir ])) {
             warn("Failed to prepare legacy Tailscale state migration; the legacy directory was preserved.\n");
             return false;
         }
@@ -1344,11 +1344,11 @@ function installer_finalize_legacy() {
         for (let entry in entries) {
             entry = as_string(entry);
             let source = legacy_tailscale_dir + "/" + entry;
-            let target = forkop_tailscale_dir + "/" + entry;
+            let target = prokop_tailscale_dir + "/" + entry;
             if (path_exists(target))
                 continue;
 
-            let temporary = forkop_tailscale_dir + "/." + entry + ".forkop-migrate";
+            let temporary = prokop_tailscale_dir + "/." + entry + ".prokop-migrate";
             if (!remove_path(temporary) ||
                 !run_args([ "cp", "-a", source, temporary ]) ||
                 !run_args([ "mv", temporary, target ])) {
@@ -1412,40 +1412,40 @@ function installer_finalize_legacy() {
 }
 
 function installer_post_install() {
-    remove_globs(env("FORKOP_INSTALLER_LUCI_CACHE_GLOBS", "/var/luci-indexcache* /tmp/luci-indexcache*"));
+    remove_globs(env("PROKOP_INSTALLER_LUCI_CACHE_GLOBS", "/var/luci-indexcache* /tmp/luci-indexcache*"));
     for (let path in [
-        env("FORKOP_INSTALLER_LATEST_VERSION_CACHE", "/tmp/forkop.latest-version.cache"),
-        env("FORKOP_INSTALLER_SYSTEM_INFO_CACHE", "/var/run/forkop/system-info.json"),
-        env("FORKOP_INSTALLER_SERVER_COUNTRY_CACHE", "/var/run/forkop/server-country-cache.json"),
-        env("FORKOP_INSTALLER_SING_BOX_VERSION_CACHE", "/var/run/forkop/ui-state/sing-box-version"),
-        env("FORKOP_INSTALLER_TMP_SYSTEM_INFO_CACHE", "/tmp/forkop/system-info.json")
+        env("PROKOP_INSTALLER_LATEST_VERSION_CACHE", "/tmp/prokop.latest-version.cache"),
+        env("PROKOP_INSTALLER_SYSTEM_INFO_CACHE", "/var/run/prokop/system-info.json"),
+        env("PROKOP_INSTALLER_SERVER_COUNTRY_CACHE", "/var/run/prokop/server-country-cache.json"),
+        env("PROKOP_INSTALLER_SING_BOX_VERSION_CACHE", "/var/run/prokop/ui-state/sing-box-version"),
+        env("PROKOP_INSTALLER_TMP_SYSTEM_INFO_CACHE", "/tmp/prokop/system-info.json")
     ])
         remove_path(path);
 
     if (path_executable(INSTALLER_RPCD_INIT))
         run_args([ INSTALLER_RPCD_INIT, "reload" ]);
 
-    let config_ready = env("FORKOP_CONFIG_READY", "1") == "1";
+    let config_ready = env("PROKOP_CONFIG_READY", "1") == "1";
 
-    if (config_ready && env("FORKOP_WAS_ENABLED", "0") == "1" && path_executable(INSTALLER_FORKOP_INIT))
-        run_args([ INSTALLER_FORKOP_INIT, "enable" ]);
+    if (config_ready && env("PROKOP_WAS_ENABLED", "0") == "1" && path_executable(INSTALLER_PROKOP_INIT))
+        run_args([ INSTALLER_PROKOP_INIT, "enable" ]);
 
-    if (config_ready && env("FORKOP_WAS_RUNNING", "0") == "1" && path_executable(INSTALLER_FORKOP_INIT)) {
-        if (!run_args([ INSTALLER_FORKOP_INIT, "start" ]) &&
-            !run_args([ INSTALLER_FORKOP_INIT, "restart" ]))
-            warn("Failed to start Forkop after upgrade.\n");
+    if (config_ready && env("PROKOP_WAS_RUNNING", "0") == "1" && path_executable(INSTALLER_PROKOP_INIT)) {
+        if (!run_args([ INSTALLER_PROKOP_INIT, "start" ]) &&
+            !run_args([ INSTALLER_PROKOP_INIT, "restart" ]))
+            warn("Failed to start Prokop after upgrade.\n");
     }
 
     return true;
 }
 
 function installer_restore_previous_service() {
-    if (env("FORKOP_WAS_ENABLED", "0") == "1" && path_executable(INSTALLER_FORKOP_INIT))
-        run_args([ INSTALLER_FORKOP_INIT, "enable" ]);
+    if (env("PROKOP_WAS_ENABLED", "0") == "1" && path_executable(INSTALLER_PROKOP_INIT))
+        run_args([ INSTALLER_PROKOP_INIT, "enable" ]);
 
-    if (env("FORKOP_WAS_RUNNING", "0") == "1" && path_executable(INSTALLER_FORKOP_INIT))
-        return run_args([ INSTALLER_FORKOP_INIT, "start" ]) ||
-            run_args([ INSTALLER_FORKOP_INIT, "restart" ]);
+    if (env("PROKOP_WAS_RUNNING", "0") == "1" && path_executable(INSTALLER_PROKOP_INIT))
+        return run_args([ INSTALLER_PROKOP_INIT, "start" ]) ||
+            run_args([ INSTALLER_PROKOP_INIT, "restart" ]);
 
     return true;
 }
@@ -1458,11 +1458,11 @@ function installer_persist_mirror(value) {
         return false;
 
     let c = uci_cursor();
-    if (c == null || !uci_load("forkop") || c.get("forkop", "settings") != "settings")
+    if (c == null || !uci_load("prokop") || c.get("prokop", "settings") != "settings")
         return false;
 
     try {
-        if (!c.set("forkop", "settings", "mirror_base_url", value) || !c.commit("forkop"))
+        if (!c.set("prokop", "settings", "mirror_base_url", value) || !c.commit("prokop"))
             return false;
     }
     catch (e) {
@@ -1470,7 +1470,7 @@ function installer_persist_mirror(value) {
     }
 
     uci_cursor_state = false;
-    return uci_get("forkop.settings.mirror_base_url") == value;
+    return uci_get("prokop.settings.mirror_base_url") == value;
 }
 
 function list_has(values, needle) {
@@ -1609,11 +1609,11 @@ function asset_matches(name, kind, ext, version) {
         return false;
 
     if (kind == "backend")
-        return name == "forkop_" + version + "." + ext;
+        return name == "prokop_" + version + "." + ext;
     if (kind == "app")
-        return name == "luci-app-forkop_" + version + "." + ext;
+        return name == "luci-app-prokop_" + version + "." + ext;
     if (kind == "i18n")
-        return name == "luci-i18n-forkop-ru_" + version + "." + ext;
+        return name == "luci-i18n-prokop-ru_" + version + "." + ext;
     return false;
 }
 
@@ -1702,11 +1702,11 @@ EOF
 
 
 install_json_ucode() {
-    FORKOP_INSTALLER_LEGACY_BRAND="$LEGACY_BRAND" \
-    FORKOP_INSTALLER_LEGACY_BACKEND="$LEGACY_BACKEND_PACKAGE" \
-    FORKOP_INSTALLER_LEGACY_CONFIG_ALT="$LEGACY_CONFIG_PACKAGE_ALT" \
-    FORKOP_INSTALLER_DEADLINE_HELPER="$(install_deadline_helper_path)" \
-    FORKOP_INSTALLER_COMMAND_RESULT="$TMP_DIR/installer-command" \
+    PROKOP_INSTALLER_LEGACY_BRAND="$LEGACY_BRAND" \
+    PROKOP_INSTALLER_LEGACY_BACKEND="$LEGACY_BACKEND_PACKAGE" \
+    PROKOP_INSTALLER_LEGACY_CONFIG_ALT="$LEGACY_CONFIG_PACKAGE_ALT" \
+    PROKOP_INSTALLER_DEADLINE_HELPER="$(install_deadline_helper_path)" \
+    PROKOP_INSTALLER_COMMAND_RESULT="$TMP_DIR/installer-command" \
         ucode "$(install_json_helper_path)" "$@"
 }
 
@@ -1886,7 +1886,7 @@ commit_package_mirror_transaction() {
     MIRROR_TRANSACTION_ACTIVE=0
 }
 
-remove_upstream_forkop_repository() {
+remove_upstream_prokop_repository() {
     # The upstream feed would replace the fork's packages, and apk would trust
     # its key for every repository. Neither is ever installed by this installer.
     for upstream_file in "$UPSTREAM_APK_REPOSITORY_FILE" "$UPSTREAM_APK_KEY_FILE"; do
@@ -1940,7 +1940,7 @@ configure_opkg_mirror() {
 configure_package_mirror() {
     # Feed changes stay revertible until the package lists were updated.
     begin_package_mirror_transaction
-    remove_upstream_forkop_repository
+    remove_upstream_prokop_repository
 
     if [ -z "$MIRROR_BASE_URL" ]; then
         # Package lists, bootstrap and dependencies must not depend on the
@@ -1984,22 +1984,22 @@ opkg_installed_version() {
     opkg list-installed 2>/dev/null | awk -v pkg="$1" '$1 == pkg && $2 == "-" { print $3; exit }'
 }
 
-# Installs a Forkop package file. opkg calls an installed package of the same
+# Installs a Prokop package file. opkg calls an installed package of the same
 # version up to date and keeps it, even when it is another build of that version
 # such as an upstream release: --force-reinstall replaces it. opkg runs that as
 # a removal of the installed package (prerm "remove") before the installation,
 # so it is used only when the versions match. apk pins a package file by its
 # hash and replaces another build of the same version by itself.
-pkg_install_forkop_file() {
-    forkop_package_name="$1"
-    forkop_package_file="$2"
+pkg_install_prokop_file() {
+    prokop_package_name="$1"
+    prokop_package_file="$2"
 
-    if [ "$PKG_IS_APK" -eq 0 ] && [ -n "$FORKOP_PACKAGE_VERSION" ] &&
-        [ "$(opkg_installed_version "$forkop_package_name")" = "$FORKOP_PACKAGE_VERSION" ]; then
-        msg "Reinstalling $forkop_package_name $FORKOP_PACKAGE_VERSION from the Forkop release"
-        opkg install --force-reinstall --force-overwrite --force-downgrade "$forkop_package_file" </dev/null
+    if [ "$PKG_IS_APK" -eq 0 ] && [ -n "$PROKOP_PACKAGE_VERSION" ] &&
+        [ "$(opkg_installed_version "$prokop_package_name")" = "$PROKOP_PACKAGE_VERSION" ]; then
+        msg "Reinstalling $prokop_package_name $PROKOP_PACKAGE_VERSION from the Prokop release"
+        opkg install --force-reinstall --force-overwrite --force-downgrade "$prokop_package_file" </dev/null
     else
-        pkg_install_files "$forkop_package_file"
+        pkg_install_files "$prokop_package_file"
     fi
 }
 
@@ -2063,9 +2063,9 @@ check_root() {
 }
 
 mirror_host_name() {
-    forkop_mirror_host="${MIRROR_BASE_URL#*://}"
-    forkop_mirror_host="${forkop_mirror_host%%/*}"
-    printf '%s\n' "${forkop_mirror_host%%:*}"
+    prokop_mirror_host="${MIRROR_BASE_URL#*://}"
+    prokop_mirror_host="${prokop_mirror_host%%/*}"
+    printf '%s\n' "${prokop_mirror_host%%:*}"
 }
 
 check_mirror_platform_support() {
@@ -2077,7 +2077,7 @@ check_mirror_platform_support() {
     [ "$PKG_IS_APK" -eq 0 ] || platform_format="apk"
 
     platform_index_url="$MIRROR_BASE_URL/openwrt/forkop-platforms.tsv"
-    platform_index_error="$TMP_DIR/forkop-platforms.err"
+    platform_index_error="$TMP_DIR/prokop-platforms.err"
 
     # A failed download says nothing about what the mirror holds, so report what
     # the downloader reported instead of guessing that synchronization is behind.
@@ -2107,7 +2107,7 @@ Check that this router resolves $(mirror_host_name) and can reach it over HTTPS.
         return 0
     fi
 
-    fail "The dependency mirror $MIRROR_BASE_URL does not yet contain $OPENWRT_TARGET / $OPENWRT_ARCHITECTURE for OpenWrt $OPENWRT_RELEASE ($platform_format). Run the installer without --mirror or FORKOP_MIRROR_BASE_URL to use the official OpenWrt feeds."
+    fail "The dependency mirror $MIRROR_BASE_URL does not yet contain $OPENWRT_TARGET / $OPENWRT_ARCHITECTURE for OpenWrt $OPENWRT_RELEASE ($platform_format). Run the installer without --mirror or PROKOP_MIRROR_BASE_URL to use the official OpenWrt feeds."
 }
 
 check_system() {
@@ -2129,14 +2129,14 @@ check_system() {
 
     [ -n "$release" ] || fail "Unable to detect the OpenWrt release"
     if [ -n "$major" ] && [ "$major" -lt 24 ]; then
-        fail "Forkop requires OpenWrt 24.10 or newer"
+        fail "Prokop requires OpenWrt 24.10 or newer"
     fi
     case "$release" in
         24.10.*)
             [ "$PKG_IS_APK" -eq 0 ] || fail "OpenWrt $release must use opkg/IPK packages"
             ;;
         24.*)
-            fail "Forkop supports OpenWrt 24.10.x, but not $release"
+            fail "Prokop supports OpenWrt 24.10.x, but not $release"
             ;;
         *)
             [ "$PKG_IS_APK" -eq 1 ] || fail "OpenWrt $release is expected to use apk packages"
@@ -2173,9 +2173,9 @@ file_size_kb() {
     printf '%s\n' "$(((file_size_bytes + 1023) / 1024))"
 }
 
-forkop_install_required_space_kb() {
+prokop_install_required_space_kb() {
     archive_kb=0
-    for package_file in "$FORKOP_BACKEND_FILE" "$FORKOP_APP_FILE" "$FORKOP_I18N_FILE"; do
+    for package_file in "$PROKOP_BACKEND_FILE" "$PROKOP_APP_FILE" "$PROKOP_I18N_FILE"; do
         [ -n "$package_file" ] && [ -s "$package_file" ] || continue
         package_kb="$(file_size_kb "$package_file")" || return 1
         archive_kb=$((archive_kb + package_kb))
@@ -2203,7 +2203,7 @@ forkop_install_required_space_kb() {
 }
 
 legacy_binary_managed_sing_box_present() {
-    [ "$FORKOP_LEGACY_DETECTED" -eq 1 ] &&
+    [ "$PROKOP_LEGACY_DETECTED" -eq 1 ] &&
         [ -r /etc/init.d/sing-box ] &&
         grep -Fq 'managed sing-box service for binary variants' /etc/init.d/sing-box &&
         [ -x /usr/bin/sing-box ]
@@ -2315,13 +2315,13 @@ switch_sing_box_to_downloaded_tiny() {
 }
 
 repair_legacy_orphaned_sing_box_to_tiny() {
-    # A legacy Forkop installation may leave its binary in the overlay after
+    # A legacy Prokop installation may leave its binary in the overlay after
     # its old package has been removed. There is then no package owner from
     # which the normal low-space path can calculate reclaimable space. This
     # recovery is deliberately restricted to a confirmed legacy migration and
     # only runs after tiny is downloaded. APK additionally needs a matching
     # world request; opkg has no equivalent world state.
-    [ "$FORKOP_LEGACY_DETECTED" -eq 1 ] || return 1
+    [ "$PROKOP_LEGACY_DETECTED" -eq 1 ] || return 1
     if [ "$PKG_IS_APK" -eq 1 ] && ! apk_world_requests_sing_box_tiny; then
         return 1
     fi
@@ -2349,29 +2349,29 @@ validate_sing_box_tiny_install() {
     [ -x /etc/init.d/sing-box ] || return 1
 }
 
-restore_current_forkop_on_failure() {
+restore_current_prokop_on_failure() {
     [ "$INSTALL_MODE" = "update" ] || return 0
     [ "$LEGACY_CLEANUP_DONE" -eq 1 ] || return 0
 
-    if FORKOP_WAS_ENABLED="$FORKOP_WAS_ENABLED" FORKOP_WAS_RUNNING="$FORKOP_WAS_RUNNING" \
+    if PROKOP_WAS_ENABLED="$PROKOP_WAS_ENABLED" PROKOP_WAS_RUNNING="$PROKOP_WAS_RUNNING" \
         install_json_ucode installer-restore-previous-service; then
-        warn "The previous Forkop service state was restored after the installation failure"
+        warn "The previous Prokop service state was restored after the installation failure"
     else
-        warn "Failed to restore the previous Forkop service state automatically"
+        warn "Failed to restore the previous Prokop service state automatically"
     fi
 }
 
 ensure_flash_space() {
-    required_space="$(forkop_install_required_space_kb)" ||
-        fail "Failed to calculate the Forkop package installation size"
-    FORKOP_INSTALL_REQUIRED_KB="$required_space"
+    required_space="$(prokop_install_required_space_kb)" ||
+        fail "Failed to calculate the Prokop package installation size"
+    PROKOP_INSTALL_REQUIRED_KB="$required_space"
     available_space="$(available_flash_space_kb 2>/dev/null || true)"
 
     [ -n "$available_space" ] || fail "Unable to determine free flash space"
     pending_world_tiny=0
     if apk_world_requests_sing_box_tiny && ! sing_box_tiny_is_active; then
         pending_world_tiny=1
-        warn "APK world requests sing-box-tiny, but the installed sing-box state does not satisfy it; repairing this before installing Forkop"
+        warn "APK world requests sing-box-tiny, but the installed sing-box state does not satisfy it; repairing this before installing Prokop"
     fi
 
     if [ "$available_space" -ge "$required_space" ] && [ "$pending_world_tiny" -eq 0 ]; then
@@ -2390,7 +2390,7 @@ ensure_flash_space() {
                 msg "Flash preflight passed after repairing the legacy sing-box state. Available: ${available_space} KB, installation plan: ${required_space} KB"
                 return 0
             fi
-            fail "Free flash after repairing the legacy sing-box state is below the calculated Forkop plan. Available: ${available_space:-unknown} KB, installation plan: ${required_space} KB. sing-box-tiny remains installed."
+            fail "Free flash after repairing the legacy sing-box state is below the calculated Prokop plan. Available: ${available_space:-unknown} KB, installation plan: ${required_space} KB. sing-box-tiny remains installed."
         fi
         fail "Not enough free flash space. Available: ${available_space} KB, installation plan: ${required_space} KB. /usr/bin/sing-box is not owned by one supported package."
     fi
@@ -2410,10 +2410,10 @@ ensure_flash_space() {
     esac
     expected_after_kb=$((available_space + reclaimable_kb - tiny_required_kb))
     if [ "$expected_after_kb" -lt "$required_space" ]; then
-        fail "Not enough free flash space even after replacing $previous_package with sing-box-tiny. Available now: ${available_space} KB, reclaimable: ${reclaimable_kb} KB, tiny allowance: ${tiny_required_kb} KB, Forkop plan: ${required_space} KB."
+        fail "Not enough free flash space even after replacing $previous_package with sing-box-tiny. Available now: ${available_space} KB, reclaimable: ${reclaimable_kb} KB, tiny allowance: ${tiny_required_kb} KB, Prokop plan: ${required_space} KB."
     fi
 
-    msg "Low-space plan: ${available_space} KB free + ${reclaimable_kb} KB reclaimable - ${tiny_required_kb} KB for tiny = ${expected_after_kb} KB; Forkop plan: ${required_space} KB"
+    msg "Low-space plan: ${available_space} KB free + ${reclaimable_kb} KB reclaimable - ${tiny_required_kb} KB for tiny = ${expected_after_kb} KB; Prokop plan: ${required_space} KB"
     warn "$(installer_text low_flash_space)"
     if interactive_terminal_available; then
         numbered_yes_no_prompt "$(installer_text tiny_recovery_prompt)" ||
@@ -2435,7 +2435,7 @@ ensure_flash_space() {
         return 0
     fi
 
-    fail "Free flash after installing sing-box-tiny is below the calculated Forkop plan. Available: ${available_space:-unknown} KB, installation plan: ${required_space} KB. sing-box-tiny remains installed."
+    fail "Free flash after installing sing-box-tiny is below the calculated Prokop plan. Available: ${available_space:-unknown} KB, installation plan: ${required_space} KB. sing-box-tiny remains installed."
 }
 
 installer_is_ru() {
@@ -2463,10 +2463,10 @@ installer_text() {
             sing_box_stable) printf '%s\n' "singbox stable" ;;
             sing_box_extended) printf '%s\n' "singbox extended (если нужен xhttp)" ;;
             sing_box_skip_msg) printf '%s\n' "Пропускаю установку sing-box." ;;
-            low_flash_space) printf '%s\n' "Для установки Forkop не хватает места, но предварительный расчет подтверждает, что переход на sing-box tiny освободит достаточно flash." ;;
+            low_flash_space) printf '%s\n' "Для установки Prokop не хватает места, но предварительный расчет подтверждает, что переход на sing-box tiny освободит достаточно flash." ;;
             tiny_recovery_prompt) printf '%s\n' "Заменить установленный пакет sing-box на sing-box tiny? Это постоянное изменение; расширенные возможности, включая xhttp, станут недоступны" ;;
             tiny_recovery_warning) printf '%s\n' "Устанавливаю заранее скачанный sing-box tiny напрямую через системный пакетный менеджер." ;;
-            legacy_migration_prompt) printf '%s\n' "Перейти с legacy-версии на Forkop X? Ее пакеты будут удалены только после сохранения конфигурации и успешной предварительной проверки" ;;
+            legacy_migration_prompt) printf '%s\n' "Перейти с legacy-версии на Prokop? Ее пакеты будут удалены только после сохранения конфигурации и успешной предварительной проверки" ;;
             legacy_backup_ready) printf '%s\n' "Резервная копия legacy-конфигурации создана" ;;
             legacy_cleanup_start) printf '%s\n' "Удаляю legacy-пакеты и начинаю миграцию конфигурации" ;;
             *) printf '%s\n' "$key" ;;
@@ -2491,10 +2491,10 @@ installer_text() {
         sing_box_stable) printf '%s\n' "singbox stable" ;;
         sing_box_extended) printf '%s\n' "singbox extended (if xhttp is needed)" ;;
         sing_box_skip_msg) printf '%s\n' "Skipping sing-box installation." ;;
-        low_flash_space) printf '%s\n' "The Forkop installation plan needs more space, but preflight confirms that switching to sing-box tiny will free enough flash." ;;
+        low_flash_space) printf '%s\n' "The Prokop installation plan needs more space, but preflight confirms that switching to sing-box tiny will free enough flash." ;;
         tiny_recovery_prompt) printf '%s\n' "Replace the installed sing-box package with sing-box tiny? This is a permanent change; advanced features, including xhttp, will become unavailable" ;;
         tiny_recovery_warning) printf '%s\n' "Installing the already downloaded sing-box tiny directly through the system package manager." ;;
-        legacy_migration_prompt) printf '%s\n' "Migrate the legacy installation to Forkop X? Its packages will be removed only after configuration backup and successful preflight checks" ;;
+        legacy_migration_prompt) printf '%s\n' "Migrate the legacy installation to Prokop? Its packages will be removed only after configuration backup and successful preflight checks" ;;
         legacy_backup_ready) printf '%s\n' "Legacy configuration backup created" ;;
         legacy_cleanup_start) printf '%s\n' "Removing legacy packages and starting configuration migration" ;;
         *) printf '%s\n' "$key" ;;
@@ -2514,7 +2514,7 @@ detect_installer_language() {
         INSTALLER_LANG="en"
         INSTALLER_LANG_DETECTED=1
     fi
-    if pkg_is_installed "luci-i18n-forkop-ru"; then
+    if pkg_is_installed "luci-i18n-prokop-ru"; then
         INSTALLER_LANG="ru"
         INSTALLER_LANG_DETECTED=1
         return 0
@@ -2625,22 +2625,22 @@ fetch_github_latest_release_json() {
     printf '%s' "$response"
 }
 
-# Sets FORKOP_RELEASE_JSON and FORKOP_RELEASE_SOURCE: the release channel
+# Sets PROKOP_RELEASE_JSON and PROKOP_RELEASE_SOURCE: the release channel
 # first, the GitHub Releases of RELEASE_REPO when the channel is unavailable.
-fetch_forkop_latest_release_json() {
+fetch_prokop_latest_release_json() {
     release_url="${RELEASE_BASE_URL%/}/updates/latest.json"
     response="$(http_get "$release_url" 2>/dev/null || true)"
     if [ -n "$response" ] &&
         [ -n "$(printf '%s' "$response" | install_json_ucode release-tag 2>/dev/null)" ]; then
-        FORKOP_RELEASE_JSON="$response"
-        FORKOP_RELEASE_SOURCE="${RELEASE_BASE_URL%/}"
+        PROKOP_RELEASE_JSON="$response"
+        PROKOP_RELEASE_SOURCE="${RELEASE_BASE_URL%/}"
         return 0
     fi
 
     warn "The release channel $release_url is unavailable; using the GitHub Releases of $RELEASE_REPO"
-    FORKOP_RELEASE_JSON="$(fetch_github_latest_release_json "$RELEASE_REPO")" ||
-        fail "Failed to resolve the latest Forkop release"
-    FORKOP_RELEASE_SOURCE="GitHub Releases of $RELEASE_REPO"
+    PROKOP_RELEASE_JSON="$(fetch_github_latest_release_json "$RELEASE_REPO")" ||
+        fail "Failed to resolve the latest Prokop release"
+    PROKOP_RELEASE_SOURCE="GitHub Releases of $RELEASE_REPO"
 }
 
 release_asset_url() {
@@ -2651,39 +2651,39 @@ release_asset_url() {
     esac
 }
 
-resolve_forkop_release() {
+resolve_prokop_release() {
     asset_ext="ipk"
 
     [ "$PKG_IS_APK" -eq 1 ] && asset_ext="apk"
 
-    fetch_forkop_latest_release_json
-    FORKOP_RELEASE_TAG="$(printf '%s' "$FORKOP_RELEASE_JSON" | install_json_ucode release-tag 2>/dev/null)"
-    [ -n "$FORKOP_RELEASE_TAG" ] || fail "Failed to detect the Forkop release tag"
-    msg "Forkop release $FORKOP_RELEASE_TAG from $FORKOP_RELEASE_SOURCE"
+    fetch_prokop_latest_release_json
+    PROKOP_RELEASE_TAG="$(printf '%s' "$PROKOP_RELEASE_JSON" | install_json_ucode release-tag 2>/dev/null)"
+    [ -n "$PROKOP_RELEASE_TAG" ] || fail "Failed to detect the Prokop release tag"
+    msg "Prokop release $PROKOP_RELEASE_TAG from $PROKOP_RELEASE_SOURCE"
 
-    FORKOP_BACKEND_URL="$(printf '%s' "$FORKOP_RELEASE_JSON" | install_json_ucode release-asset-url backend "$asset_ext" 2>/dev/null)"
-    [ -n "$FORKOP_BACKEND_URL" ] || fail "The Forkop release does not contain a forkop .$asset_ext package"
-    FORKOP_BACKEND_URL="$(release_asset_url "$FORKOP_BACKEND_URL")"
-    FORKOP_BACKEND_SHA256="$(printf '%s' "$FORKOP_RELEASE_JSON" | install_json_ucode release-asset-sha256 backend "$asset_ext" 2>/dev/null)"
+    PROKOP_BACKEND_URL="$(printf '%s' "$PROKOP_RELEASE_JSON" | install_json_ucode release-asset-url backend "$asset_ext" 2>/dev/null)"
+    [ -n "$PROKOP_BACKEND_URL" ] || fail "The Prokop release does not contain a prokop .$asset_ext package"
+    PROKOP_BACKEND_URL="$(release_asset_url "$PROKOP_BACKEND_URL")"
+    PROKOP_BACKEND_SHA256="$(printf '%s' "$PROKOP_RELEASE_JSON" | install_json_ucode release-asset-sha256 backend "$asset_ext" 2>/dev/null)"
 
-    FORKOP_APP_URL="$(printf '%s' "$FORKOP_RELEASE_JSON" | install_json_ucode release-asset-url app "$asset_ext" 2>/dev/null)"
-    [ -n "$FORKOP_APP_URL" ] || fail "The Forkop release does not contain a luci-app-forkop .$asset_ext package"
-    FORKOP_APP_URL="$(release_asset_url "$FORKOP_APP_URL")"
-    FORKOP_APP_SHA256="$(printf '%s' "$FORKOP_RELEASE_JSON" | install_json_ucode release-asset-sha256 app "$asset_ext" 2>/dev/null)"
+    PROKOP_APP_URL="$(printf '%s' "$PROKOP_RELEASE_JSON" | install_json_ucode release-asset-url app "$asset_ext" 2>/dev/null)"
+    [ -n "$PROKOP_APP_URL" ] || fail "The Prokop release does not contain a luci-app-prokop .$asset_ext package"
+    PROKOP_APP_URL="$(release_asset_url "$PROKOP_APP_URL")"
+    PROKOP_APP_SHA256="$(printf '%s' "$PROKOP_RELEASE_JSON" | install_json_ucode release-asset-sha256 app "$asset_ext" 2>/dev/null)"
 
-    FORKOP_BACKEND_NAME="$(basename "$FORKOP_BACKEND_URL")"
-    FORKOP_APP_NAME="$(basename "$FORKOP_APP_URL")"
-    FORKOP_PACKAGE_VERSION="$(printf '%s\n' "$FORKOP_BACKEND_NAME" | sed 's/^forkop_//;s/\.ipk$//;s/\.apk$//')"
+    PROKOP_BACKEND_NAME="$(basename "$PROKOP_BACKEND_URL")"
+    PROKOP_APP_NAME="$(basename "$PROKOP_APP_URL")"
+    PROKOP_PACKAGE_VERSION="$(printf '%s\n' "$PROKOP_BACKEND_NAME" | sed 's/^prokop_//;s/\.ipk$//;s/\.apk$//')"
 
-    FORKOP_I18N_URL=""
-    FORKOP_I18N_NAME=""
+    PROKOP_I18N_URL=""
+    PROKOP_I18N_NAME=""
 
-    if [ "$FORKOP_I18N_REQUESTED" -eq 1 ]; then
-        FORKOP_I18N_URL="$(printf '%s' "$FORKOP_RELEASE_JSON" | install_json_ucode release-asset-url i18n "$asset_ext" 2>/dev/null)"
-        [ -n "$FORKOP_I18N_URL" ] || fail "The Forkop release does not contain a luci-i18n-forkop-ru .$asset_ext package"
-        FORKOP_I18N_URL="$(release_asset_url "$FORKOP_I18N_URL")"
-        FORKOP_I18N_SHA256="$(printf '%s' "$FORKOP_RELEASE_JSON" | install_json_ucode release-asset-sha256 i18n "$asset_ext" 2>/dev/null)"
-        FORKOP_I18N_NAME="$(basename "$FORKOP_I18N_URL")"
+    if [ "$PROKOP_I18N_REQUESTED" -eq 1 ]; then
+        PROKOP_I18N_URL="$(printf '%s' "$PROKOP_RELEASE_JSON" | install_json_ucode release-asset-url i18n "$asset_ext" 2>/dev/null)"
+        [ -n "$PROKOP_I18N_URL" ] || fail "The Prokop release does not contain a luci-i18n-prokop-ru .$asset_ext package"
+        PROKOP_I18N_URL="$(release_asset_url "$PROKOP_I18N_URL")"
+        PROKOP_I18N_SHA256="$(printf '%s' "$PROKOP_RELEASE_JSON" | install_json_ucode release-asset-sha256 i18n "$asset_ext" 2>/dev/null)"
+        PROKOP_I18N_NAME="$(basename "$PROKOP_I18N_URL")"
     fi
 }
 
@@ -2700,7 +2700,7 @@ select_sing_box_installation() {
 
     if legacy_binary_managed_sing_box_present; then
         SING_BOX_INSTALL_VARIANT="extended-compressed"
-        msg "The legacy binary-managed sing-box variant will be reinstalled for Forkop"
+        msg "The legacy binary-managed sing-box variant will be reinstalled for Prokop"
         return 0
     fi
 
@@ -2775,9 +2775,9 @@ install_selected_sing_box() {
             ;;
     esac
 
-    [ -x /usr/bin/forkop ] || fail "forkop backend must be installed before sing-box component action"
-    msg "Installing selected sing-box variant through Forkop ucode backend"
-    if ! /usr/bin/forkop component_action sing_box "$action" >"$output_file" 2>&1; then
+    [ -x /usr/bin/prokop ] || fail "prokop backend must be installed before sing-box component action"
+    msg "Installing selected sing-box variant through Prokop ucode backend"
+    if ! /usr/bin/prokop component_action sing_box "$action" >"$output_file" 2>&1; then
         cat "$output_file" >&2 2>/dev/null || true
         fail "Failed to install selected sing-box variant"
     fi
@@ -2789,7 +2789,7 @@ cleanup_legacy_installation() {
     state_file="$TMP_DIR/install-state.env"
 
     install_json_ucode installer-cleanup-legacy >"$state_file" ||
-        fail "Failed to prepare the system before Forkop package installation"
+        fail "Failed to prepare the system before Prokop package installation"
 
     # shellcheck disable=SC1090
     . "$state_file"
@@ -2797,7 +2797,7 @@ cleanup_legacy_installation() {
 }
 
 detect_legacy_installation() {
-    FORKOP_LEGACY_DETECTED=0
+    PROKOP_LEGACY_DETECTED=0
     LEGACY_CONFIG_BACKUP=""
     LEGACY_CONFIG_PATH=""
 
@@ -2814,7 +2814,7 @@ detect_legacy_installation() {
         [ "$legacy_config_present" -eq 1 ] || return 0
     fi
 
-    FORKOP_LEGACY_DETECTED=1
+    PROKOP_LEGACY_DETECTED=1
     for legacy_config_path in \
         "/etc/config/$LEGACY_BACKEND_PACKAGE" \
         "/etc/config/$LEGACY_CONFIG_PACKAGE_ALT"; do
@@ -2828,9 +2828,9 @@ detect_legacy_installation() {
 }
 
 detect_install_mode() {
-    if [ "$FORKOP_LEGACY_DETECTED" -eq 1 ]; then
+    if [ "$PROKOP_LEGACY_DETECTED" -eq 1 ]; then
         INSTALL_MODE="legacy"
-    elif pkg_is_installed "forkop"; then
+    elif pkg_is_installed "prokop"; then
         INSTALL_MODE="update"
     else
         INSTALL_MODE="clean"
@@ -2841,7 +2841,7 @@ detect_install_mode() {
 prepare_legacy_config_backup() {
     [ -n "$LEGACY_CONFIG_PATH" ] || return 0
 
-    LEGACY_CONFIG_BACKUP="/etc/.forkop-legacy-config-backup.$$"
+    LEGACY_CONFIG_BACKUP="/etc/.prokop-legacy-config-backup.$$"
     cp "$LEGACY_CONFIG_PATH" "$LEGACY_CONFIG_BACKUP" ||
         fail "Failed to back up the legacy configuration"
     chmod 0600 "$LEGACY_CONFIG_BACKUP" ||
@@ -2868,7 +2868,7 @@ rollback_legacy_config_on_failure() {
 }
 
 confirm_legacy_migration() {
-    [ "$FORKOP_LEGACY_DETECTED" -eq 1 ] || return 0
+    [ "$PROKOP_LEGACY_DETECTED" -eq 1 ] || return 0
 
     if interactive_terminal_available; then
         numbered_yes_no_prompt "$(installer_text legacy_migration_prompt)" ||
@@ -2882,7 +2882,7 @@ confirm_legacy_migration() {
 }
 
 begin_legacy_migration() {
-    [ "$FORKOP_LEGACY_DETECTED" -eq 1 ] || return 0
+    [ "$PROKOP_LEGACY_DETECTED" -eq 1 ] || return 0
 
     msg "$(installer_text legacy_cleanup_start)"
     LEGACY_CLEANUP_STARTED=1
@@ -2900,22 +2900,22 @@ decide_i18n_installation() {
 
     detect_installer_language
 
-    if pkg_is_installed "luci-i18n-forkop-ru"; then
-        FORKOP_I18N_REQUESTED=1
+    if pkg_is_installed "luci-i18n-prokop-ru"; then
+        PROKOP_I18N_REQUESTED=1
         msg "$(installer_text i18n_installed)"
         return 0
     fi
 
-    if [ "$FORKOP_LEGACY_DETECTED" -eq 1 ] &&
+    if [ "$PROKOP_LEGACY_DETECTED" -eq 1 ] &&
         pkg_is_installed "luci-i18n-${LEGACY_BACKEND_PACKAGE}-ru"; then
-        FORKOP_I18N_REQUESTED=1
+        PROKOP_I18N_REQUESTED=1
         msg "$(installer_text i18n_installed)"
         return 0
     fi
 
     if [ "$INSTALL_MODE" != "clean" ] && [ "$INSTALLER_LANG_DETECTED" -eq 1 ]; then
         if [ "$INSTALLER_LANG" = "ru" ]; then
-            FORKOP_I18N_REQUESTED=1
+            PROKOP_I18N_REQUESTED=1
             msg "$(installer_text luci_ru)"
         else
             msg "$(installer_text i18n_skip)"
@@ -2925,56 +2925,56 @@ decide_i18n_installation() {
 
     select_installer_language || fail "Installer language selection was cancelled"
     if [ "$INSTALLER_LANG" = "ru" ]; then
-        FORKOP_I18N_REQUESTED=1
+        PROKOP_I18N_REQUESTED=1
         msg "$(installer_text luci_ru)"
     else
         msg "$(installer_text i18n_skip)"
     fi
 }
 
-download_forkop_packages() {
-    FORKOP_BACKEND_FILE="$TMP_DIR/$FORKOP_BACKEND_NAME"
-    FORKOP_APP_FILE="$TMP_DIR/$FORKOP_APP_NAME"
-    FORKOP_I18N_FILE=""
+download_prokop_packages() {
+    PROKOP_BACKEND_FILE="$TMP_DIR/$PROKOP_BACKEND_NAME"
+    PROKOP_APP_FILE="$TMP_DIR/$PROKOP_APP_NAME"
+    PROKOP_I18N_FILE=""
 
-    download_with_retry "$FORKOP_BACKEND_URL" "$FORKOP_BACKEND_FILE" "$FORKOP_BACKEND_NAME" || fail "Failed to download $FORKOP_BACKEND_NAME"
-    download_with_retry "$FORKOP_APP_URL" "$FORKOP_APP_FILE" "$FORKOP_APP_NAME" || fail "Failed to download $FORKOP_APP_NAME"
-    verify_download_sha256 "$FORKOP_BACKEND_FILE" "$FORKOP_BACKEND_SHA256" "$FORKOP_BACKEND_NAME"
-    verify_download_sha256 "$FORKOP_APP_FILE" "$FORKOP_APP_SHA256" "$FORKOP_APP_NAME"
+    download_with_retry "$PROKOP_BACKEND_URL" "$PROKOP_BACKEND_FILE" "$PROKOP_BACKEND_NAME" || fail "Failed to download $PROKOP_BACKEND_NAME"
+    download_with_retry "$PROKOP_APP_URL" "$PROKOP_APP_FILE" "$PROKOP_APP_NAME" || fail "Failed to download $PROKOP_APP_NAME"
+    verify_download_sha256 "$PROKOP_BACKEND_FILE" "$PROKOP_BACKEND_SHA256" "$PROKOP_BACKEND_NAME"
+    verify_download_sha256 "$PROKOP_APP_FILE" "$PROKOP_APP_SHA256" "$PROKOP_APP_NAME"
 
-    if [ -n "$FORKOP_I18N_URL" ]; then
-        FORKOP_I18N_FILE="$TMP_DIR/$FORKOP_I18N_NAME"
-        download_with_retry "$FORKOP_I18N_URL" "$FORKOP_I18N_FILE" "$FORKOP_I18N_NAME" || fail "Failed to download $FORKOP_I18N_NAME"
-        verify_download_sha256 "$FORKOP_I18N_FILE" "$FORKOP_I18N_SHA256" "$FORKOP_I18N_NAME"
+    if [ -n "$PROKOP_I18N_URL" ]; then
+        PROKOP_I18N_FILE="$TMP_DIR/$PROKOP_I18N_NAME"
+        download_with_retry "$PROKOP_I18N_URL" "$PROKOP_I18N_FILE" "$PROKOP_I18N_NAME" || fail "Failed to download $PROKOP_I18N_NAME"
+        verify_download_sha256 "$PROKOP_I18N_FILE" "$PROKOP_I18N_SHA256" "$PROKOP_I18N_NAME"
     fi
 }
 
 install_backend_package() {
-    pkg_install_forkop_file forkop "$FORKOP_BACKEND_FILE" || fail "forkop installation failed"
+    pkg_install_prokop_file prokop "$PROKOP_BACKEND_FILE" || fail "prokop installation failed"
 
-    [ -x /usr/bin/forkop ] || fail "forkop executable is missing after package installation"
-    /usr/bin/forkop package_postinst ||
-        fail "Forkop configuration recovery or validation failed"
+    [ -x /usr/bin/prokop ] || fail "prokop executable is missing after package installation"
+    /usr/bin/prokop package_postinst ||
+        fail "Prokop configuration recovery or validation failed"
 }
 
 migrate_legacy_configuration() {
-    [ "$FORKOP_LEGACY_DETECTED" -eq 1 ] || return 0
+    [ "$PROKOP_LEGACY_DETECTED" -eq 1 ] || return 0
 
     if [ -n "$LEGACY_CONFIG_BACKUP" ]; then
-        cp "$LEGACY_CONFIG_BACKUP" /etc/config/forkop ||
+        cp "$LEGACY_CONFIG_BACKUP" /etc/config/prokop ||
             fail "Failed to restore the legacy configuration for migration"
-        chmod 0644 /etc/config/forkop ||
-            fail "Failed to set permissions on the Forkop configuration"
+        chmod 0644 /etc/config/prokop ||
+            fail "Failed to set permissions on the Prokop configuration"
 
-        msg "Migrating the legacy configuration to Forkop"
-        if ! FORKOP_CONFIG_NAME="forkop" \
-            FORKOP_LIB="/usr/lib/forkop" \
-            ucode -L /usr/lib/forkop /usr/lib/forkop/config/migration.uc migrate-podkop; then
-            cp "$LEGACY_CONFIG_BACKUP" /etc/config/forkop 2>/dev/null || true
+        msg "Migrating the legacy configuration to Prokop"
+        if ! PROKOP_CONFIG_NAME="prokop" \
+            PROKOP_LIB="/usr/lib/prokop" \
+            ucode -L /usr/lib/prokop /usr/lib/prokop/config/migration.uc migrate-podkop; then
+            cp "$LEGACY_CONFIG_BACKUP" /etc/config/prokop 2>/dev/null || true
             fail "Legacy configuration migration failed; the original configuration was restored"
         fi
     else
-        warn "The legacy package had no readable configuration; Forkop defaults will be used"
+        warn "The legacy package had no readable configuration; Prokop defaults will be used"
     fi
 
     install_json_ucode installer-finalize-legacy ||
@@ -2983,32 +2983,32 @@ migrate_legacy_configuration() {
 
 validate_installed_configuration() {
     validation_output="$TMP_DIR/config-validation.log"
-    FORKOP_CONFIG_READY=1
-    FORKOP_CONFIG_VALIDATION_ERROR=""
+    PROKOP_CONFIG_READY=1
+    PROKOP_CONFIG_VALIDATION_ERROR=""
 
-    if ! ucode -L /usr/lib/forkop /usr/lib/forkop/config/validator.uc check-requirements >"$validation_output" 2>&1 ||
-        ! ucode -L /usr/lib/forkop /usr/lib/forkop/config/validator.uc validate-runtime >>"$validation_output" 2>&1; then
-        FORKOP_CONFIG_READY=0
+    if ! ucode -L /usr/lib/prokop /usr/lib/prokop/config/validator.uc check-requirements >"$validation_output" 2>&1 ||
+        ! ucode -L /usr/lib/prokop /usr/lib/prokop/config/validator.uc validate-runtime >>"$validation_output" 2>&1; then
+        PROKOP_CONFIG_READY=0
     fi
 
-    [ "$FORKOP_CONFIG_READY" -eq 0 ] || return 0
-    FORKOP_CONFIG_VALIDATION_ERROR="$(sed -n '1p' "$validation_output" 2>/dev/null || true)"
-    [ -n "$FORKOP_CONFIG_VALIDATION_ERROR" ] || FORKOP_CONFIG_VALIDATION_ERROR="Forkop configuration validation failed"
+    [ "$PROKOP_CONFIG_READY" -eq 0 ] || return 0
+    PROKOP_CONFIG_VALIDATION_ERROR="$(sed -n '1p' "$validation_output" 2>/dev/null || true)"
+    [ -n "$PROKOP_CONFIG_VALIDATION_ERROR" ] || PROKOP_CONFIG_VALIDATION_ERROR="Prokop configuration validation failed"
 
-    warn "Forkop configuration requires attention: $FORKOP_CONFIG_VALIDATION_ERROR"
-    warn "Forkop will remain disabled. The configuration was preserved; fix it in LuCI before starting the service."
+    warn "Prokop configuration requires attention: $PROKOP_CONFIG_VALIDATION_ERROR"
+    warn "Prokop will remain disabled. The configuration was preserved; fix it in LuCI before starting the service."
 }
 
 install_ui_packages() {
-    pkg_install_forkop_file luci-app-forkop "$FORKOP_APP_FILE" || fail "luci-app-forkop installation failed"
+    pkg_install_prokop_file luci-app-prokop "$PROKOP_APP_FILE" || fail "luci-app-prokop installation failed"
 
-    if [ -n "$FORKOP_I18N_FILE" ]; then
-        pkg_install_forkop_file luci-i18n-forkop-ru "$FORKOP_I18N_FILE" || fail "luci-i18n-forkop-ru installation failed"
+    if [ -n "$PROKOP_I18N_FILE" ]; then
+        pkg_install_prokop_file luci-i18n-prokop-ru "$PROKOP_I18N_FILE" || fail "luci-i18n-prokop-ru installation failed"
     fi
 }
 
 persist_mirror_setting() {
-    # Without an opt-in the configured forkop.settings.mirror_base_url stays as
+    # Without an opt-in the configured prokop.settings.mirror_base_url stays as
     # it is; the package postinst already reconciled the feeds with it.
     [ -n "$MIRROR_BASE_URL" ] || return 0
 
@@ -3016,9 +3016,9 @@ persist_mirror_setting() {
     # so the opted-in mirror is saved only now.
     if install_json_ucode installer-persist-mirror "$MIRROR_BASE_URL"; then
         MIRROR_SETTING_SAVED=1
-        msg "Dependency mirror saved in forkop.settings.mirror_base_url: $MIRROR_BASE_URL"
+        msg "Dependency mirror saved in prokop.settings.mirror_base_url: $MIRROR_BASE_URL"
     else
-        warn "Failed to save the dependency mirror; set forkop.settings.mirror_base_url to $MIRROR_BASE_URL in LuCI or with uci"
+        warn "Failed to save the dependency mirror; set prokop.settings.mirror_base_url to $MIRROR_BASE_URL in LuCI or with uci"
     fi
 
     if [ ! -x "$MIRROR_MIGRATION_SCRIPT" ]; then
@@ -3030,21 +3030,21 @@ persist_mirror_setting() {
 }
 
 post_install() {
-    FORKOP_WAS_ENABLED="$FORKOP_WAS_ENABLED" FORKOP_WAS_RUNNING="$FORKOP_WAS_RUNNING" \
-    FORKOP_CONFIG_READY="$FORKOP_CONFIG_READY" \
+    PROKOP_WAS_ENABLED="$PROKOP_WAS_ENABLED" PROKOP_WAS_RUNNING="$PROKOP_WAS_RUNNING" \
+    PROKOP_CONFIG_READY="$PROKOP_CONFIG_READY" \
         install_json_ucode installer-post-install ||
-        fail "Failed to complete Forkop post-install actions"
+        fail "Failed to complete Prokop post-install actions"
 }
 
 print_installation_summary() {
-    msg "Forkop $FORKOP_PACKAGE_VERSION has been installed successfully"
-    msg "Forkop release source: $FORKOP_RELEASE_SOURCE ($FORKOP_RELEASE_TAG)"
+    msg "Prokop $PROKOP_PACKAGE_VERSION has been installed successfully"
+    msg "Prokop release source: $PROKOP_RELEASE_SOURCE ($PROKOP_RELEASE_TAG)"
     if [ -z "$MIRROR_BASE_URL" ]; then
-        msg "Dependency mirror: not requested; forkop.settings.mirror_base_url was left unchanged (opt in with --mirror URL)"
+        msg "Dependency mirror: not requested; prokop.settings.mirror_base_url was left unchanged (opt in with --mirror URL)"
     elif [ "$MIRROR_SETTING_SAVED" -eq 1 ]; then
         msg "Dependency mirror: $MIRROR_BASE_URL"
     else
-        warn "Dependency mirror: $MIRROR_BASE_URL was used for this installation but is not saved in forkop.settings.mirror_base_url"
+        warn "Dependency mirror: $MIRROR_BASE_URL was used for this installation but is not saved in prokop.settings.mirror_base_url"
     fi
 }
 
@@ -3072,15 +3072,15 @@ main() {
     commit_package_mirror_transaction
     ensure_bootstrap_ucode_runtime
 
-    resolve_forkop_release
-    msg "Downloading Forkop X packages before making system changes"
-    download_forkop_packages
+    resolve_prokop_release
+    msg "Downloading Prokop packages before making system changes"
+    download_prokop_packages
 
     confirm_legacy_migration
     ensure_flash_space
 
     if [ "$INSTALL_MODE" = "legacy" ]; then
-        msg "Installing the Forkop X backend before removing legacy packages"
+        msg "Installing the Prokop backend before removing legacy packages"
         install_backend_package
         begin_legacy_migration
         migrate_legacy_configuration
@@ -3096,11 +3096,11 @@ main() {
     remove_legacy_backup
 
     print_installation_summary
-    if [ "$FORKOP_CONFIG_READY" -eq 1 ]; then
-        warn "Open LuCI and review your rules before enabling Forkop"
+    if [ "$PROKOP_CONFIG_READY" -eq 1 ]; then
+        warn "Open LuCI and review your rules before enabling Prokop"
     else
-        warn "sing-box was installed, but Forkop was not enabled because its configuration is incomplete"
-        warn "Reason: $FORKOP_CONFIG_VALIDATION_ERROR"
+        warn "sing-box was installed, but Prokop was not enabled because its configuration is incomplete"
+        warn "Reason: $PROKOP_CONFIG_VALIDATION_ERROR"
     fi
 }
 

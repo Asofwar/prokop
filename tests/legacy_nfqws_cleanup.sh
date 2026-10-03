@@ -19,7 +19,7 @@ set -euo pipefail
 # a stand-in binary.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK_DIR="$(mktemp -d)"
 # shellcheck source=tests/helpers/wait.sh
 . "$ROOT_DIR/tests/helpers/wait.sh"
@@ -50,18 +50,18 @@ LEGACY="$WORK_DIR/var/run/zapret-runtime"
 mkdir -p "$WORK_DIR/bin" "$WORK_DIR/other" "$LEGACY/nfq" "$WORK_DIR/tmp"
 zapret_rule() {
   cat >"$WORK_DIR/uci.state" <<UCI
-forkop.settings=settings
-forkop.dpi=section
-forkop.dpi.enabled=$1
-forkop.dpi.action=zapret
+prokop.settings=settings
+prokop.dpi=section
+prokop.dpi.enabled=$1
+prokop.dpi.action=zapret
 UCI
 }
 zapret_rule 1
 
 export TMPDIR="$WORK_DIR/tmp"
 export PATH="$WORK_DIR/bin:$PATH"
-export FORKOP_LIB="$LIB"
-export FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
+export PROKOP_LIB="$LIB"
+export PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
 export ZAPRET_LEGACY_RUNTIME_BASE_DIR="$LEGACY"
 export ZAPRET_NFQWS_BIN="$WORK_DIR/bin/nfqws"
 export ZAPRET_PROVIDER_NFQWS_BIN="$WORK_DIR/bin/nfqws"

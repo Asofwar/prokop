@@ -13,7 +13,7 @@ set -euo pipefail
 # and service/ui.uc are the real code.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK_DIR="$(mktemp -d)"
 # shellcheck source=tests/helpers/wait.sh
 . "$ROOT_DIR/tests/helpers/wait.sh"
@@ -36,22 +36,22 @@ fail() {
 }
 
 mkdir -p "$WORK_DIR/run" "$WORK_DIR/bin" "$WORK_DIR/snapshots"
-LOCK="$WORK_DIR/run/forkop.reload.lock"
-export FORKOP_RELOAD_LOCK_DIR="$LOCK"
-export FORKOP_PENDING_RELOAD_FILE="$WORK_DIR/run/reload.pending"
-export FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/run"
-export FORKOP_UI_ACTION_TRACKED=1
-export FORKOP_CONFIG_FILE="$WORK_DIR/forkop.config"
-export FORKOP_SNAPSHOT_DIR="$WORK_DIR/snapshots"
-export FORKOP_SNAPSHOT_HASH_DIR="$WORK_DIR/hash"
-export FORKOP_SNAPSHOT_LOCK_DIR="$WORK_DIR/run/config-snapshot.lock"
-export FORKOP_HISTORY_FILE="$WORK_DIR/history.jsonl"
-export FORKOP_RELOAD_COMMAND="$WORK_DIR/bin/no-init"
-export FORKOP_SERVICE_INIT="$WORK_DIR/bin/no-init"
-export FORKOP_AUTOTUNE_APPLY_STATE="$WORK_DIR/autotune-apply.json"
-export FORKOP_AUTOTUNE_STATE_DIR="$WORK_DIR/run/autotune"
-export FORKOP_LATENCY_TEST_LOCK_DIR="$LOCK"
-export FORKOP_LIB="$LIB"
+LOCK="$WORK_DIR/run/prokop.reload.lock"
+export PROKOP_RELOAD_LOCK_DIR="$LOCK"
+export PROKOP_PENDING_RELOAD_FILE="$WORK_DIR/run/reload.pending"
+export PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/run"
+export PROKOP_UI_ACTION_TRACKED=1
+export PROKOP_CONFIG_FILE="$WORK_DIR/prokop.config"
+export PROKOP_SNAPSHOT_DIR="$WORK_DIR/snapshots"
+export PROKOP_SNAPSHOT_HASH_DIR="$WORK_DIR/hash"
+export PROKOP_SNAPSHOT_LOCK_DIR="$WORK_DIR/run/config-snapshot.lock"
+export PROKOP_HISTORY_FILE="$WORK_DIR/history.jsonl"
+export PROKOP_RELOAD_COMMAND="$WORK_DIR/bin/no-init"
+export PROKOP_SERVICE_INIT="$WORK_DIR/bin/no-init"
+export PROKOP_AUTOTUNE_APPLY_STATE="$WORK_DIR/autotune-apply.json"
+export PROKOP_AUTOTUNE_STATE_DIR="$WORK_DIR/run/autotune"
+export PROKOP_LATENCY_TEST_LOCK_DIR="$LOCK"
+export PROKOP_LIB="$LIB"
 export PATH="$WORK_DIR/bin:$PATH"
 # Nothing here may reach the host's syslog, nftables or init scripts.
 printf '#!/bin/sh\nexit 0\n' >"$WORK_DIR/bin/logger"
@@ -103,7 +103,7 @@ race() {
   local round="$1" setup="$2" gate="$WORK_DIR/gate" contender kind owner pids=() winners=0 winner=""
   shift 2
   reset_lock
-  rm -f "$gate" "$WORK_DIR"/rc.* "$FORKOP_PENDING_RELOAD_FILE"
+  rm -f "$gate" "$WORK_DIR"/rc.* "$PROKOP_PENDING_RELOAD_FILE"
   case "$setup" in
     free) ;;
     dead) mkdir "$LOCK" && : >"$LOCK/owner.$DEAD.$(start_ticks "$$")" ;;
@@ -251,7 +251,7 @@ reset_lock
 #     the stale lock and before it cleans it up.
 mkdir -p "$WORK_DIR/hook/core"
 cat >"$WORK_DIR/hook/core/process_identity.uc" <<'UC'
-let real = loadfile(getenv("FORKOP_LIB") + "/core/process_identity.uc")();
+let real = loadfile(getenv("PROKOP_LIB") + "/core/process_identity.uc")();
 let fired = false;
 let hooked = {};
 for (let name in real)
@@ -289,9 +289,9 @@ reset_lock
 #    apply and an autotune apply wait for a live lifecycle action, including
 #    one still setting up its lock, and a stale lock is none. The UI refuses
 #    a second latency test.
-printf 'config settings\n' >"$FORKOP_CONFIG_FILE"
+printf 'config settings\n' >"$PROKOP_CONFIG_FILE"
 printf 'config settings\n\toption changed 1\n' >"$WORK_DIR/candidate"
-config_hash="$(sha256sum "$FORKOP_CONFIG_FILE" | cut -d' ' -f1)"
+config_hash="$(sha256sum "$PROKOP_CONFIG_FILE" | cut -d' ' -f1)"
 snapshot_apply() { ucode -L "$LIB" "$LIB/config/snapshots.uc" apply "$WORK_DIR/candidate" "$config_hash" || true; }
 autotune_action() {
   ucode -L "$LIB" "$LIB/autotune/apply.uc" status | grep -o '"service_action": *[a-z_"]*' || true
@@ -311,7 +311,7 @@ reader_case() {
     fail "$label: autotune apply saw '$answer'"
 }
 for _ in $(seq 1 10); do ucode -L "$LIB" "$LIB/config/snapshots.uc" create manual >/dev/null; done
-: >"$FORKOP_PENDING_RELOAD_FILE"
+: >"$PROKOP_PENDING_RELOAD_FILE"
 acquire "$B" || fail "the reader lock was refused"
 reader_case "live owner" busy
 answer="$(ucode -L "$LIB" "$LIB/service/ui.uc" latency-test-async proxy main test 5000 || true)"
@@ -326,6 +326,6 @@ reader_case "previous-version live owner" busy
 reset_lock; mkdir "$LOCK"; printf '%s\n' "$DEAD" >"$LOCK/pid"
 reader_case "previous-version dead owner" free
 reset_lock
-rm -f "$FORKOP_PENDING_RELOAD_FILE"
+rm -f "$PROKOP_PENDING_RELOAD_FILE"
 
 printf 'runtime dir lock owner checks passed\n'

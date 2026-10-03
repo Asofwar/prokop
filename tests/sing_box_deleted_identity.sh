@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB_DIR="$ROOT_DIR/forkop/files/usr/lib"
+LIB_DIR="$ROOT_DIR/prokop/files/usr/lib"
 STATE_UC="$LIB_DIR/service/state.uc"
 PACKAGE_UC="$LIB_DIR/service/package.uc"
 

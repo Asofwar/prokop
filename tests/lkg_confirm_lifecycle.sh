@@ -7,8 +7,8 @@ set -euo pipefail
 #   - the configuration file is still the one it began with (an edit made
 #     meanwhile queued a reload of its own and was never run);
 #   - no DPI transition guard is installed: neither the one of a restore or
-#     an autotune apply (ForkopConfigRestoreDpiGuard) nor the one of a failed
-#     lifecycle transition (ForkopTableDpiGuard) protects a runtime that no
+#     an autotune apply (ProkopConfigRestoreDpiGuard) nor the one of a failed
+#     lifecycle transition (ProkopTableDpiGuard) protects a runtime that no
 #     reload has proved yet.
 # confirm-working itself then refuses while an unresolved autotune apply
 # names the configuration as its candidate (tests/autotune_apply.sh).
@@ -17,7 +17,7 @@ set -euo pipefail
 # the start and the reload call is a double that records its call.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 LIFECYCLE_UC="$LIB/service/lifecycle.uc"
 WORK_DIR="$(mktemp -d)"
 
@@ -41,28 +41,28 @@ fail() {
 }
 
 FAKE_LIB="$WORK_DIR/lib"
-STATE_DIR="$WORK_DIR/run/forkop"
+STATE_DIR="$WORK_DIR/run/prokop"
 mkdir -p "$WORK_DIR/bin" "$WORK_DIR/tables" "$STATE_DIR" "$WORK_DIR/tmp" "$FAKE_LIB/service"
 # Copies, not links: the doubles below replace modules inside the library.
 cp -R "$LIB/core" "$FAKE_LIB/core"
 cp "$LIFECYCLE_UC" "$FAKE_LIB/service/lifecycle.uc"
-printf "config settings 'settings'\n\toption dns_server '1.1.1.1'\n" >"$WORK_DIR/forkop.conf"
+printf "config settings 'settings'\n\toption dns_server '1.1.1.1'\n" >"$WORK_DIR/prokop.conf"
 
 export TMPDIR="$WORK_DIR/tmp"
 export PATH="$WORK_DIR/bin:$PATH"
 export TEST_WORK="$WORK_DIR" TEST_LIB="$LIB" EVENTS
-export FORKOP_LIB="$FAKE_LIB"
-export FORKOP_BIN="$WORK_DIR/bin/forkop"
-export FORKOP_SERVICE_INIT="$WORK_DIR/bin/init"
-export FORKOP_CONFIG_FILE="$WORK_DIR/forkop.conf"
-export FORKOP_RUNTIME_STATE_DIR="$STATE_DIR"
-export FORKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/forkop.reload.lock"
-export FORKOP_PENDING_RELOAD_FILE="$STATE_DIR/reload.pending"
-export FORKOP_INTERNAL_CONFIG_TRIGGER_GUARD="$WORK_DIR/run/forkop.internal-config-change"
-export FORKOP_MANAGED_UPGRADE_SING_BOX_MARKER="$WORK_DIR/run/managed-upgrade-sing-box"
-export FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
+export PROKOP_LIB="$FAKE_LIB"
+export PROKOP_BIN="$WORK_DIR/bin/prokop"
+export PROKOP_SERVICE_INIT="$WORK_DIR/bin/init"
+export PROKOP_CONFIG_FILE="$WORK_DIR/prokop.conf"
+export PROKOP_RUNTIME_STATE_DIR="$STATE_DIR"
+export PROKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/prokop.reload.lock"
+export PROKOP_PENDING_RELOAD_FILE="$STATE_DIR/reload.pending"
+export PROKOP_INTERNAL_CONFIG_TRIGGER_GUARD="$WORK_DIR/run/prokop.internal-config-change"
+export PROKOP_MANAGED_UPGRADE_SING_BOX_MARKER="$WORK_DIR/run/managed-upgrade-sing-box"
+export PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
 export TMP_SING_BOX_FOLDER="$WORK_DIR/tmp/sing-box"
-export FORKOP_UI_ACTION_TRACKED=1
+export PROKOP_UI_ACTION_TRACKED=1
 
 # Nothing here may reach the host's syslog, nftables or init scripts. nft
 # knows only the tables the test installs ($WORK_DIR/tables/<name>).
@@ -74,7 +74,7 @@ printf '%s\n' "nft $*" >>"$EVENTS"
 SH
 printf '#!/bin/sh\nexit 0\n' >"$WORK_DIR/bin/ip"
 printf '#!/bin/sh\nprintf "%%s\\n" "init $*" >>"$EVENTS"\nexit 0\n' >"$WORK_DIR/bin/init"
-printf '#!/bin/sh\nprintf "%%s\\n" "forkop $*" >>"$EVENTS"\nexit 0\n' >"$WORK_DIR/bin/forkop"
+printf '#!/bin/sh\nprintf "%%s\\n" "prokop $*" >>"$EVENTS"\nexit 0\n' >"$WORK_DIR/bin/prokop"
 chmod +x "$WORK_DIR/bin/"*
 
 # Every module records "<module> <arguments>" and succeeds, except the state
@@ -95,12 +95,12 @@ if (name == "service/state.uc" && index(mode, "runtime-dir-lock") >= 0) {
 }
 system("printf '%s\\\\n' " + q(name + " " + join(" ", ARGV)) + " >> " + q(getenv("EVENTS")));
 if ((getenv("EDIT_DURING") || "") == name + " " + mode)
-    system("printf '%s\\\\n' \"\toption dns_rewrite_ttl '30'\" >> " + q(getenv("FORKOP_CONFIG_FILE")));
+    system("printf '%s\\\\n' \"\toption dns_rewrite_ttl '30'\" >> " + q(getenv("PROKOP_CONFIG_FILE")));
 if (name == "service/state.uc" && mode == "sing-box-process-conflict")
     exit(1);
-if (name == "service/state.uc" && mode == "forkop-stably-running")
+if (name == "service/state.uc" && mode == "prokop-stably-running")
     exit(1);
-if (name == "service/state.uc" && mode == "forkop-running")
+if (name == "service/state.uc" && mode == "prokop-running")
     exit((getenv("FAKE_RUNNING") || "") == "1" ? 0 : 1);
 if (name == "service/state.uc" && mode == "has-list-update-sources")
     exit(1);
@@ -120,9 +120,9 @@ done
 reset_case() {
   : >"$EVENTS"
   : >"$WORK_DIR/syslog"
-  rm -rf "${STATE_DIR:?}"/* "$FORKOP_RELOAD_LOCK_DIR" "$WORK_DIR/tables"/*
-  printf "config settings 'settings'\n\toption dns_server '1.1.1.1'\n" >"$WORK_DIR/forkop.conf"
-  printf 'forkop.settings=settings\nforkop.settings.yacd_secret_key=0123456789abcdef\nforkop.settings.dont_touch_dhcp=1\n' \
+  rm -rf "${STATE_DIR:?}"/* "$PROKOP_RELOAD_LOCK_DIR" "$WORK_DIR/tables"/*
+  printf "config settings 'settings'\n\toption dns_server '1.1.1.1'\n" >"$WORK_DIR/prokop.conf"
+  printf 'prokop.settings=settings\nprokop.settings.yacd_secret_key=0123456789abcdef\nprokop.settings.dont_touch_dhcp=1\n' \
     >"$WORK_DIR/uci.state"
   unset EDIT_DURING FAKE_RUNNING
 }
@@ -153,17 +153,17 @@ confirmed || fail "a clean reload did not confirm the working configuration"
 
 # 2. A DPI transition guard is installed: the start or reload proves nothing
 #    for last-known-working. The guard of a restore or autotune apply
-#    (ForkopConfigRestoreDpiGuard) is how every such transaction reloads, and
+#    (ProkopConfigRestoreDpiGuard) is how every such transaction reloads, and
 #    the transaction moves last-known-working itself: that is routine and not
 #    logged. A leftover guard of a failed lifecycle transition
-#    (ForkopTableDpiGuard) refuses the start and the reload altogether
+#    (ProkopTableDpiGuard) refuses the start and the reload altogether
 #    (runtime_guard_active; tests/runtime_guard_lifecycle.sh).
 not_confirmed_logged() { grep -q 'not confirmed as last known working' "$WORK_DIR/syslog" 2>/dev/null; }
-for guard in ForkopTableDpiGuard ForkopConfigRestoreDpiGuard; do
+for guard in ProkopTableDpiGuard ProkopConfigRestoreDpiGuard; do
   for action in start reload; do
     reset_case
     : >"$WORK_DIR/tables/$guard"
-    if [ "$guard" = ForkopTableDpiGuard ]; then
+    if [ "$guard" = ProkopTableDpiGuard ]; then
       : >"$STATE_DIR/start.explicit"
       export FAKE_RUNNING=1
       [ "$(lifecycle "$action" wan-up)" != 0 ] || fail "$guard: the $action succeeded over the kept guard"
@@ -174,7 +174,7 @@ for guard in ForkopTableDpiGuard ForkopConfigRestoreDpiGuard; do
       reload_ok "$guard"
     fi
     ! confirmed || fail "$guard: the $action confirmed the working configuration under the guard"
-    if [ "$guard" = ForkopConfigRestoreDpiGuard ]; then
+    if [ "$guard" = ProkopConfigRestoreDpiGuard ]; then
       ! not_confirmed_logged || fail "$guard: the $action logged the routine transaction guard as a refusal"
     fi
   done

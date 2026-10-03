@@ -2,9 +2,9 @@
 set -eo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-NFT_APPLY_UC="$FORKOP_LIB/nft/apply.uc"
-IP_UC="$FORKOP_LIB/core/ip.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+NFT_APPLY_UC="$PROKOP_LIB/nft/apply.uc"
+IP_UC="$PROKOP_LIB/core/ip.uc"
 fail() { printf 'FAIL: %s\n' "$1" >&2; exit 1; }
 
 # The Discord community subnet list also carries shared Cloudflare Anycast
@@ -13,7 +13,7 @@ fail() { printf 'FAIL: %s\n' "$1" >&2; exit 1; }
 # Discord's own UDP media ports, while Discord's dedicated networks keep the
 # ordinary treatment.
 
-ucode -L "$FORKOP_LIB" -e '
+ucode -L "$PROKOP_LIB" -e '
 let ip = require("core.ip");
 
 // Shared Cloudflare ranges are recognised, Discord-owned ones are not.

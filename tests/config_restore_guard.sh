@@ -6,26 +6,26 @@ set -eu
 # able to reuse that guard, and the guard may only disappear after a reload
 # proved a coherent runtime.
 ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
-LIB="$ROOT/forkop/files/usr/lib"
+LIB="$ROOT/prokop/files/usr/lib"
 SCRIPT="$LIB/config/snapshots.uc"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT HUP INT TERM
 REAL_UCODE="$(command -v ucode)"
-export FORKOP_CONFIG_FILE="$WORK/forkop"
-export FORKOP_SNAPSHOT_DIR="$WORK/snapshots"
+export PROKOP_CONFIG_FILE="$WORK/prokop"
+export PROKOP_SNAPSHOT_DIR="$WORK/snapshots"
 # Changes staged with uci refuse a restore (UC-068): the test has its own
 # save directory, never the host's /tmp/.uci.
-export FORKOP_UCI_SAVEDIR="$WORK/uci-save"
-export FORKOP_AUTOTUNE_APPLY_STATE="$WORK/autotune-apply.json"
-export FORKOP_SNAPSHOT_HASH_DIR="$WORK/hash"
-export FORKOP_SNAPSHOT_LOCK_DIR="$WORK/run/config-snapshot.lock"
-export FORKOP_LIB="$LIB"
-export FORKOP_RELOAD_COMMAND="$WORK/reload"
-export FORKOP_PENDING_RELOAD_FILE="$WORK/run/reload.pending"
-export FORKOP_RELOAD_LOCK_DIR="$WORK/run/reload.lock"
-# Real history records (snapshot creation) stay out of /etc/forkop and /run/forkop.
-export FORKOP_HISTORY_FILE="$WORK/history.jsonl"
-export FORKOP_RUNTIME_STATE_DIR="$WORK/run"
+export PROKOP_UCI_SAVEDIR="$WORK/uci-save"
+export PROKOP_AUTOTUNE_APPLY_STATE="$WORK/autotune-apply.json"
+export PROKOP_SNAPSHOT_HASH_DIR="$WORK/hash"
+export PROKOP_SNAPSHOT_LOCK_DIR="$WORK/run/config-snapshot.lock"
+export PROKOP_LIB="$LIB"
+export PROKOP_RELOAD_COMMAND="$WORK/reload"
+export PROKOP_PENDING_RELOAD_FILE="$WORK/run/reload.pending"
+export PROKOP_RELOAD_LOCK_DIR="$WORK/run/reload.lock"
+# Real history records (snapshot creation) stay out of /etc/prokop and /run/prokop.
+export PROKOP_HISTORY_FILE="$WORK/history.jsonl"
+export PROKOP_RUNTIME_STATE_DIR="$WORK/run"
 export STATE="$WORK/state" REAL_UCODE
 mkdir -p "$WORK/bin" "$WORK/run" "$STATE"
 
@@ -66,10 +66,10 @@ echo "$*" >> "$STATE/reload-args"
 set -- $(cat "$STATE/plan")
 rc="${1:-0}"; shift || true
 echo "$*" > "$STATE/plan"
-echo "reload:$rc:$(grep -o "marker '[a-z]*'" "$FORKOP_CONFIG_FILE")" >> "$STATE/events"
+echo "reload:$rc:$(grep -o "marker '[a-z]*'" "$PROKOP_CONFIG_FILE")" >> "$STATE/events"
 case "$rc" in
   q|m)
-    "$REAL_UCODE" -L "$FORKOP_LIB" "$FORKOP_LIB/service/state.uc" mark-pending-reload "$FORKOP_PENDING_RELOAD_FILE" reload_busy
+    "$REAL_UCODE" -L "$PROKOP_LIB" "$PROKOP_LIB/service/state.uc" mark-pending-reload "$PROKOP_PENDING_RELOAD_FILE" reload_busy
     [ "$rc" = m ] || echo queued
     exit 0 ;;
   t) echo queued; exit 0 ;;
@@ -78,7 +78,7 @@ exit "$rc"
 STUB
 chmod +x "$WORK/bin/ucode" "$WORK/reload"
 
-config() { printf "config settings 'settings'\n option dns_server '1.1.1.1'\n option marker '%s'\n" "$1" > "$FORKOP_CONFIG_FILE"; }
+config() { printf "config settings 'settings'\n option dns_server '1.1.1.1'\n option marker '%s'\n" "$1" > "$PROKOP_CONFIG_FILE"; }
 config good
 good_id="$("$REAL_UCODE" -L "$LIB" "$SCRIPT" create manual | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).snapshot.id))')"
 
@@ -87,10 +87,10 @@ good_id="$("$REAL_UCODE" -L "$LIB" "$SCRIPT" create manual | node -e 'let s="";p
 # own library directory.
 restore() {
   echo "$2" > "$STATE/guard"; echo "$3" > "$STATE/plan"; : > "$STATE/events"
-  FORKOP_LIB="$1" PATH="$WORK/bin:$PATH" "$REAL_UCODE" -L "$1" "$1/config/snapshots.uc" restore "$good_id" > "$WORK/result.json" || true
+  PROKOP_LIB="$1" PATH="$WORK/bin:$PATH" "$REAL_UCODE" -L "$1" "$1/config/snapshots.uc" restore "$good_id" > "$WORK/result.json" || true
 }
 check() {
-  node - "$WORK/result.json" "$STATE/events" "$(cat "$STATE/guard")" "$(cat "$FORKOP_SNAPSHOT_DIR/last-known-working" 2>/dev/null)" "$good_id" "$(grep -o "marker '[a-z]*'" "$FORKOP_CONFIG_FILE")" "$1" <<'JS'
+  node - "$WORK/result.json" "$STATE/events" "$(cat "$STATE/guard")" "$(cat "$PROKOP_SNAPSHOT_DIR/last-known-working" 2>/dev/null)" "$good_id" "$(grep -o "marker '[a-z]*'" "$PROKOP_CONFIG_FILE")" "$1" <<'JS'
 const fs = require('node:fs');
 const assert = require('node:assert/strict');
 const [resultFile, eventsFile, guard, lkg, goodId, marker, expectJson] = process.argv.slice(2);
@@ -129,7 +129,7 @@ check '{"status":"success","guard":"absent","config":"good","lkgGood":true,"heal
 grep -q '^ensure-dpi-transition-guard:absent$' "$STATE/events"
 
 # 2./3. Valid guard already active: restore proceeds, succeeds, removes it, updates LKG.
-echo "stale" > "$FORKOP_SNAPSHOT_DIR/last-known-working"
+echo "stale" > "$PROKOP_SNAPSHOT_DIR/last-known-working"
 config bad; restore "$LIB" valid "0"
 check '{"status":"success","guard":"absent","config":"good","lkgGood":true,"health":"success"}'
 grep -q '^ensure-dpi-transition-guard:valid$' "$STATE/events"
@@ -152,7 +152,7 @@ check '{"status":"failed","reason":"guard_unavailable","guard":"invalid","config
 
 # 8. Queued reloads (UC-005): a reload that init.d only queued is not a
 #    completed one. Both queued -> needs_attention, guard kept, LKG untouched.
-echo "stale" > "$FORKOP_SNAPSHOT_DIR/last-known-working"
+echo "stale" > "$PROKOP_SNAPSHOT_DIR/last-known-working"
 : > "$STATE/reload-args"
 config bad; restore "$LIB" valid "q q"
 check '{"status":"needs_attention","reason":"rollback_reload_queued","guardField":"active","guard":"valid","config":"bad","lkg":"stale","noRemove":true,"health":"failure"}'
@@ -160,26 +160,26 @@ check '{"status":"needs_attention","reason":"rollback_reload_queued","guardField
 
 # 9. A lifecycle action owns reload.lock: the next restore is refused before
 #    any change (no pre-restore snapshot, no guard, no reload, no history).
-count="$(find "$FORKOP_SNAPSHOT_DIR" -name '*.json' | wc -l)"
-mkdir "$FORKOP_RELOAD_LOCK_DIR"
+count="$(find "$PROKOP_SNAPSHOT_DIR" -name '*.json' | wc -l)"
+mkdir "$PROKOP_RELOAD_LOCK_DIR"
 sleep 300 >/dev/null 2>&1 </dev/null &
 holder=$!
-echo "$holder" > "$FORKOP_RELOAD_LOCK_DIR/pid"
+echo "$holder" > "$PROKOP_RELOAD_LOCK_DIR/pid"
 restore "$LIB" valid "0"
 kill "$holder" 2>/dev/null || true
-rm -f "$FORKOP_RELOAD_LOCK_DIR/pid"; rmdir "$FORKOP_RELOAD_LOCK_DIR"
+rm -f "$PROKOP_RELOAD_LOCK_DIR/pid"; rmdir "$PROKOP_RELOAD_LOCK_DIR"
 check '{"status":"busy","reason":"service_action_in_progress","guard":"valid","config":"bad","lkg":"stale","noReload":true,"noRemove":true}'
 [ ! -s "$STATE/events" ]
-[ "$(find "$FORKOP_SNAPSHOT_DIR" -name '*.json' | wc -l)" = "$count" ]
+[ "$(find "$PROKOP_SNAPSHOT_DIR" -name '*.json' | wc -l)" = "$count" ]
 
 # 9a. The queued request is still pending but nobody owns the lock: it is no
 #     refusal (the restore's own reload takes the lock and drains it), so the
 #     recovery restore reuses the guard and completes.
-[ -e "$FORKOP_PENDING_RELOAD_FILE" ]
+[ -e "$PROKOP_PENDING_RELOAD_FILE" ]
 restore "$LIB" valid "0"
 check '{"status":"success","guard":"absent","config":"good","lkgGood":true,"health":"success"}'
-rm -f "$FORKOP_PENDING_RELOAD_FILE"
-echo "stale" > "$FORKOP_SNAPSHOT_DIR/last-known-working"
+rm -f "$PROKOP_PENDING_RELOAD_FILE"
+echo "stale" > "$PROKOP_SNAPSHOT_DIR/last-known-working"
 
 # 10. Target reload queued, rollback reload ran: recovered with the queue
 #     named; LKG never names the target. The configuration put back was never
@@ -187,32 +187,32 @@ echo "stale" > "$FORKOP_SNAPSHOT_DIR/last-known-working"
 #     last-known-working configuration itself, LKG names it again.
 config bad; restore "$LIB" valid "q 0"
 check '{"status":"recovered","reason":"target_reload_queued","guardField":"inactive","guard":"absent","config":"bad","lkg":"stale","health":"recovered"}'
-rm -f "$FORKOP_PENDING_RELOAD_FILE"
+rm -f "$PROKOP_PENDING_RELOAD_FILE"
 "$REAL_UCODE" -L "$LIB" "$SCRIPT" confirm-working > /dev/null
 restore "$LIB" valid "q 0"
 check '{"status":"recovered","reason":"target_reload_queued","guardField":"inactive","guard":"absent","config":"bad","lkgGood":false,"health":"recovered"}'
-lkg_id="$(cat "$FORKOP_SNAPSHOT_DIR/last-known-working")"
-grep -q "marker 'bad'" "$FORKOP_SNAPSHOT_DIR/$lkg_id.json"
-rm -f "$FORKOP_PENDING_RELOAD_FILE"
+lkg_id="$(cat "$PROKOP_SNAPSHOT_DIR/last-known-working")"
+grep -q "marker 'bad'" "$PROKOP_SNAPSHOT_DIR/$lkg_id.json"
+rm -f "$PROKOP_PENDING_RELOAD_FILE"
 
 # 11. Target reload failed, rollback reload queued: needs_attention.
-echo "stale" > "$FORKOP_SNAPSHOT_DIR/last-known-working"
+echo "stale" > "$PROKOP_SNAPSHOT_DIR/last-known-working"
 config bad; restore "$LIB" absent "1 q"
 check '{"status":"needs_attention","reason":"rollback_reload_queued","guardField":"active","guard":"valid","config":"bad","lkg":"stale","noRemove":true,"health":"failure"}'
-rm -f "$FORKOP_PENDING_RELOAD_FILE"
+rm -f "$PROKOP_PENDING_RELOAD_FILE"
 
 # 12. Without the acknowledgement the unique reload.pending marker still
 #     reveals both queued reloads (same second, same reason).
 config bad; restore "$LIB" valid "m m"
 check '{"status":"needs_attention","reason":"rollback_reload_queued","guardField":"active","guard":"valid","config":"bad","lkg":"stale","noRemove":true,"health":"failure"}'
-rm -f "$FORKOP_PENDING_RELOAD_FILE"
+rm -f "$PROKOP_PENDING_RELOAD_FILE"
 
 # 13. The acknowledgement alone (the holder already drained the marker) is
 #     the main detector: never success, LKG untouched.
-echo "stale" > "$FORKOP_SNAPSHOT_DIR/last-known-working"
+echo "stale" > "$PROKOP_SNAPSHOT_DIR/last-known-working"
 config bad; restore "$LIB" valid "t t"
 check '{"status":"needs_attention","reason":"rollback_reload_queued","guardField":"active","guard":"valid","config":"bad","lkg":"stale","noRemove":true,"health":"failure"}'
-[ ! -e "$FORKOP_PENDING_RELOAD_FILE" ]
+[ ! -e "$PROKOP_PENDING_RELOAD_FILE" ]
 config bad; restore "$LIB" valid "t 0"
 check '{"status":"recovered","reason":"target_reload_queued","guardField":"inactive","guard":"absent","config":"bad","lkgGood":false,"health":"recovered"}'
 

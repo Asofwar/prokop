@@ -20,7 +20,7 @@ set -eu
 # real code. The list worker is a stand-in updates.uc that records itself
 # exactly as components/updates.uc list_update_pid_begin() does and waits.
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-REAL_LIB="$ROOT/forkop/files/usr/lib"
+REAL_LIB="$ROOT/prokop/files/usr/lib"
 REAL_UCODE="$(command -v ucode)"
 WORK="$(mktemp -d)"
 cleanup() {
@@ -40,26 +40,26 @@ rm "$LIB/components/updates.uc"
 cat > "$LIB/components/updates.uc" <<'UC'
 let fs = require("fs");
 let identity = require("core.process_identity");
-identity.record(getenv("FORKOP_LIST_UPDATE_PID_FILE"), fs.readlink("/proc/self"));
+identity.record(getenv("PROKOP_LIST_UPDATE_PID_FILE"), fs.readlink("/proc/self"));
 for (let i = 0; i < 1200 && fs.stat(getenv("WORK") + "/release") == null; i++)
     system("sleep 0.05");
 UC
 
-export WORK STATE="$WORK/state" REAL_UCODE TEST_LIB="$LIB" REAL_INITD="$ROOT/forkop/files/etc/init.d/forkop"
-export FORKOP_LIB="$LIB" FORKOP_BIN="$WORK/bin/forkop"
-export FORKOP_CONFIG_FILE="$WORK/forkop"
-export FORKOP_SNAPSHOT_DIR="$WORK/snapshots" FORKOP_SNAPSHOT_HASH_DIR="$WORK/hash"
+export WORK STATE="$WORK/state" REAL_UCODE TEST_LIB="$LIB" REAL_INITD="$ROOT/prokop/files/etc/init.d/prokop"
+export PROKOP_LIB="$LIB" PROKOP_BIN="$WORK/bin/prokop"
+export PROKOP_CONFIG_FILE="$WORK/prokop"
+export PROKOP_SNAPSHOT_DIR="$WORK/snapshots" PROKOP_SNAPSHOT_HASH_DIR="$WORK/hash"
 # Changes staged with uci refuse a restore (UC-068): the test has its own
 # save directory, never the host's /tmp/.uci.
-export FORKOP_UCI_SAVEDIR="$WORK/uci-save"
-export FORKOP_SNAPSHOT_LOCK_DIR="$WORK/run/config-snapshot.lock"
-export FORKOP_RUNTIME_STATE_DIR="$WORK/run/forkop"
-export FORKOP_PENDING_RELOAD_FILE="$WORK/run/forkop/reload.pending"
-export FORKOP_RELOAD_LOCK_DIR="$WORK/run/forkop.reload.lock"
-export FORKOP_LIST_UPDATE_PID_FILE="$WORK/run/list.pid"
-export FORKOP_RELOAD_COMMAND="$WORK/init.d" FORKOP_SERVICE_INIT="$WORK/init.d"
-export FORKOP_AUTOTUNE_APPLY_STATE="$WORK/autotune-apply.json" FORKOP_AUTOTUNE_STATE_DIR="$WORK/run/autotune"
-mkdir -p "$WORK/bin" "$WORK/run/forkop" "$STATE"
+export PROKOP_UCI_SAVEDIR="$WORK/uci-save"
+export PROKOP_SNAPSHOT_LOCK_DIR="$WORK/run/config-snapshot.lock"
+export PROKOP_RUNTIME_STATE_DIR="$WORK/run/prokop"
+export PROKOP_PENDING_RELOAD_FILE="$WORK/run/prokop/reload.pending"
+export PROKOP_RELOAD_LOCK_DIR="$WORK/run/prokop.reload.lock"
+export PROKOP_LIST_UPDATE_PID_FILE="$WORK/run/list.pid"
+export PROKOP_RELOAD_COMMAND="$WORK/init.d" PROKOP_SERVICE_INIT="$WORK/init.d"
+export PROKOP_AUTOTUNE_APPLY_STATE="$WORK/autotune-apply.json" PROKOP_AUTOTUNE_STATE_DIR="$WORK/run/autotune"
+mkdir -p "$WORK/bin" "$WORK/run/prokop" "$STATE"
 echo absent > "$STATE/guard"
 
 # ucode: restore guard, validator and health are modelled, UI state is out of
@@ -91,13 +91,13 @@ case "$1 $2" in
 esac
 exit 0
 STUB
-# forkop: the runtime reload records which configuration it loaded.
-cat > "$WORK/bin/forkop" <<'STUB'
+# prokop: the runtime reload records which configuration it loaded.
+cat > "$WORK/bin/prokop" <<'STUB'
 #!/bin/sh
 case "$1" in
   show_version) echo 1.0.26-test ;;
   get_status) echo '{"running":true}' ;;
-  reload) echo "runtime-reload:${2:-}:$(grep -o "marker '[a-z]*'" "$FORKOP_CONFIG_FILE")" >> "$STATE/events" ;;
+  reload) echo "runtime-reload:${2:-}:$(grep -o "marker '[a-z]*'" "$PROKOP_CONFIG_FILE")" >> "$STATE/events" ;;
 esac
 exit 0
 STUB
@@ -107,21 +107,21 @@ cat > "$WORK/init.d" <<'STUB'
 action="$1"; shift
 initscript="$REAL_INITD"
 . "$REAL_INITD"
-FORKOP_LIB="$TEST_LIB"
-FORKOP_INITD_UC="$TEST_LIB/service/initd.uc"
+PROKOP_LIB="$TEST_LIB"
+PROKOP_INITD_UC="$TEST_LIB/service/initd.uc"
 [ "$action" = reload ] || exit 1
 echo "init.d-reload:${1:-}" >> "$STATE/events"
 reload_service "$@"
 STUB
-chmod +x "$WORK/bin/ucode" "$WORK/bin/nft" "$WORK/bin/forkop" "$WORK/init.d"
+chmod +x "$WORK/bin/ucode" "$WORK/bin/nft" "$WORK/bin/prokop" "$WORK/init.d"
 export PATH="$WORK/bin:$PATH"
 
-config() { printf "config settings 'settings'\n option dns_server '1.1.1.1'\n option marker '%s'\n" "$1" > "$FORKOP_CONFIG_FILE"; }
+config() { printf "config settings 'settings'\n option dns_server '1.1.1.1'\n option marker '%s'\n" "$1" > "$PROKOP_CONFIG_FILE"; }
 field() { node -e 'const r=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));const v=r[process.argv[2]];console.log(v===undefined?"":v)' "$1" "$2"; }
 snap() { "$REAL_UCODE" -L "$LIB" "$LIB/config/snapshots.uc" "$@"; }
-lkg() { cat "$FORKOP_SNAPSHOT_DIR/last-known-working" 2>/dev/null || true; }
-snaps() { find "$FORKOP_SNAPSHOT_DIR" -maxdepth 1 -name '*.json' | wc -l; }
-chash() { sha256sum "$FORKOP_CONFIG_FILE" | cut -d' ' -f1; }
+lkg() { cat "$PROKOP_SNAPSHOT_DIR/last-known-working" 2>/dev/null || true; }
+snaps() { find "$PROKOP_SNAPSHOT_DIR" -maxdepth 1 -name '*.json' | wc -l; }
+chash() { sha256sum "$PROKOP_CONFIG_FILE" | cut -d' ' -f1; }
 events() { cat "$STATE/events" 2>/dev/null || true; }
 autotune_action() { "$REAL_UCODE" -L "$LIB" "$LIB/autotune/apply.uc" status | grep -o '"service_action": *[a-z_"]*' || true; }
 # run <snapshots.uc args...>: result in $WORK/result.json, exit status in $rc.
@@ -139,25 +139,25 @@ unchanged() { # unchanged <what>
   { [ "$(chash)" = "$base_hash" ] && [ "$(lkg)" = "$base_lkg" ]; } || fail "$1 changed the configuration or last-known-working"
   [ "$(cat "$STATE/guard")" = absent ] || fail "$1 installed the restore guard"
   [ -z "$(events)" ] || fail "$1 acted: $(events)"
-  [ ! -e "$FORKOP_PENDING_RELOAD_FILE" ] || fail "$1 queued a reload"
+  [ ! -e "$PROKOP_PENDING_RELOAD_FILE" ] || fail "$1 queued a reload"
 }
 
 # Target snapshot "good"; production runs "bad", confirmed as last-known-working.
 config good
 good_id="$(snap create manual | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).snapshot.id))')"
-config good; cp "$FORKOP_CONFIG_FILE" "$WORK/candidate"
+config good; cp "$PROKOP_CONFIG_FILE" "$WORK/candidate"
 config bad
 snap confirm-working > /dev/null
 base_lkg="$(lkg)"; base_hash="$(chash)"
 if [ -z "$base_lkg" ] || [ "$base_lkg" = "$good_id" ]; then fail "fixture: last-known-working not set"; fi
 
-# The list worker, as `forkop list_update` starts it: it downloads and holds
+# The list worker, as `prokop list_update` starts it: it downloads and holds
 # no reload.lock.
 "$REAL_UCODE" -L "$LIB" "$LIB/components/updates.uc" list-update </dev/null >/dev/null 2>&1 &
 echo "$!" > "$WORK/worker.pid"
-for _ in $(seq 1 200); do [ -s "$FORKOP_LIST_UPDATE_PID_FILE" ] && break; sleep 0.05; done
-[ -s "$FORKOP_LIST_UPDATE_PID_FILE" ] || fail "fixture: the list worker did not record itself"
-[ ! -e "$FORKOP_RELOAD_LOCK_DIR" ] || fail "fixture: reload.lock is held"
+for _ in $(seq 1 200); do [ -s "$PROKOP_LIST_UPDATE_PID_FILE" ] && break; sleep 0.05; done
+[ -s "$PROKOP_LIST_UPDATE_PID_FILE" ] || fail "fixture: the list worker did not record itself"
+[ ! -e "$PROKOP_RELOAD_LOCK_DIR" ] || fail "fixture: reload.lock is held"
 
 # 1. Restore during the list update: busy, nothing changed.
 before="$(snaps)"
@@ -182,7 +182,7 @@ worker="$(cat "$WORK/worker.pid")"
 for _ in $(seq 1 200); do kill -0 "$worker" 2>/dev/null || break; sleep 0.05; done
 ! kill -0 "$worker" 2>/dev/null || fail "fixture: the list worker did not exit"
 : > "$WORK/worker.pid"
-[ -s "$FORKOP_LIST_UPDATE_PID_FILE" ] || fail "fixture: the dead worker's record is gone"
+[ -s "$PROKOP_LIST_UPDATE_PID_FILE" ] || fail "fixture: the dead worker's record is gone"
 [ "$(autotune_action)" = '"service_action": null' ] ||
   fail "autotune/apply.uc took a dead list worker's record for a service action: '$(autotune_action)'"
 run restore "$good_id"

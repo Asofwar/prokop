@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Forkop X is a LuCI menu subtree (admin/services/forkop/*), one view per
+# Prokop is a LuCI menu subtree (admin/services/prokop/*), one view per
 # page. This test covers the views themselves: a session that cannot read the
-# Forkop UCI package is switched to read-only mode before any page content
+# Prokop UCI package is switched to read-only mode before any page content
 # renders, status pages have no Save/Apply footer, and the configuration form
 # lives only on the Settings page, which the read-only role cannot reach.
 
@@ -13,7 +13,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const assert = require('node:assert/strict');
 const root = process.argv[2];
-const viewDir = path.join(root, 'luci-app-forkop/htdocs/luci-static/resources/view/forkop');
+const viewDir = path.join(root, 'luci-app-prokop/htdocs/luci-static/resources/view/prokop');
 const read = file => fs.readFileSync(path.join(viewDir, file), 'utf8');
 
 // LuCI module: "require x as y" directives, then `return <class>`.
@@ -34,14 +34,14 @@ function load(file, modules) {
 
 function stubs(canReadUci, calls, { stale = false } = {}) {
   const main = {
-    FORKOP_UCI_PACKAGE: 'forkop',
-    FORKOP_ACTION_PROVIDERS_AVAILABILITY_EVENT: 'x',
+    PROKOP_UCI_PACKAGE: 'prokop',
+    PROKOP_ACTION_PROVIDERS_AVAILABILITY_EVENT: 'x',
     injectGlobalStyles() {},
     coreService() { calls.push('core'); },
     setReadonlyMode(value) { calls.push(`readonly:${value}`); },
-    setForkopPage(page) { calls.push(`page:${page}`); },
+    setProkopPage(page) { calls.push(`page:${page}`); },
     store: { get: () => ({ diagnosticsSystemInfo: {} }), set() {} },
-    ForkopShellMethods: { getUiCapabilities: async () => ({ success: true, data: {} }) },
+    ProkopShellMethods: { getUiCapabilities: async () => ({ success: true, data: {} }) },
   };
   if (stale) delete main.setReadonlyMode;
   for (const tab of ['DashboardTab', 'MonitoringTab', 'DiagnosticTab', 'AutotuneTab', 'HistoryTab']) {
@@ -112,7 +112,7 @@ function stubs(canReadUci, calls, { stale = false } = {}) {
   assert(rulesSource.includes('form.GridSection,\n      "section"'), 'the rules page must host the rules grid');
   assert(!settingsSource.includes('"section"'), 'the rules moved out of Settings');
   assert(settingsSource.includes('form.TypedSection,\n      "updates"'), 'settings page lost the components tab');
-  assert.match(settingsSource, /forkopMap\.section\(form\.TypedSection, type, title\)/,
+  assert.match(settingsSource, /prokopMap\.section\(form\.TypedSection, type, title\)/,
     'settings page lost the settings tabs');
   // LuCI keys map tabs by section type: every settings tab needs its own.
   const tabTypes = [...settingsSource.matchAll(/settingsTab\("(settings_\w+)", _\("([^"]+)"\)\)/g)];
@@ -124,36 +124,36 @@ function stubs(canReadUci, calls, { stale = false } = {}) {
     assert.doesNotMatch(read(file), /form\.(Map|JSONMap)/, `${file} must not render a form`);
 
   // The old single view and its wrappers are gone.
-  for (const file of ['forkop.js', 'dashboard.js', 'diagnostic.js', 'monitoring.js'])
+  for (const file of ['prokop.js', 'dashboard.js', 'diagnostic.js', 'monitoring.js'])
     assert(!fs.existsSync(path.join(viewDir, file)), `${file} should have been removed`);
 
   // Menu subtree.
   const menu = JSON.parse(fs.readFileSync(
-    path.join(root, 'luci-app-forkop/root/usr/share/luci/menu.d/luci-app-forkop.json'), 'utf8'));
-  const parent = menu['admin/services/forkop'];
+    path.join(root, 'luci-app-prokop/root/usr/share/luci/menu.d/luci-app-prokop.json'), 'utf8'));
+  const parent = menu['admin/services/prokop'];
   assert.deepEqual(parent.action, { type: 'firstchild' },
-    'the old URL admin/services/forkop must open the first page');
-  assert.deepEqual(parent.depends.acl, ['luci-app-forkop']);
-  const children = Object.entries(menu).filter(([key]) => key.startsWith('admin/services/forkop/'));
+    'the old URL admin/services/prokop must open the first page');
+  assert.deepEqual(parent.depends.acl, ['luci-app-prokop']);
+  const children = Object.entries(menu).filter(([key]) => key.startsWith('admin/services/prokop/'));
   const order = children.sort((a, b) => a[1].order - b[1].order).map(([key]) => key.split('/').pop());
   assert.deepEqual(order, ['overview', 'rules', 'monitoring', 'diagnostics', 'autotune', 'history', 'settings']);
   for (const [key, node] of children) {
     assert.equal(node.action.type, 'view', `${key} must be a view`);
-    assert(fs.existsSync(path.join(root, 'luci-app-forkop/htdocs/luci-static/resources/view', `${node.action.path}.js`)),
+    assert(fs.existsSync(path.join(root, 'luci-app-prokop/htdocs/luci-static/resources/view', `${node.action.path}.js`)),
       `${key} points to a missing view ${node.action.path}`);
   }
-  assert.deepEqual(menu['admin/services/forkop/settings'].depends, { acl: ['luci-app-forkop-admin'] },
+  assert.deepEqual(menu['admin/services/prokop/settings'].depends, { acl: ['luci-app-prokop-admin'] },
     'Settings must be hidden from the read-only role');
-  assert.deepEqual(menu['admin/services/forkop/rules'].depends, { acl: ['luci-app-forkop-admin'] },
+  assert.deepEqual(menu['admin/services/prokop/rules'].depends, { acl: ['luci-app-prokop-admin'] },
     'Rules must be hidden from the read-only role');
   for (const key of ['overview', 'monitoring', 'diagnostics', 'autotune', 'history'])
-    assert(!menu[`admin/services/forkop/${key}`].depends,
+    assert(!menu[`admin/services/prokop/${key}`].depends,
       `${key} must stay available to the read-only role`);
 
   const acl = JSON.parse(fs.readFileSync(
-    path.join(root, 'luci-app-forkop/root/usr/share/rpcd/acl.d/luci-app-forkop.json'), 'utf8'));
-  assert.deepEqual(acl['luci-app-forkop-admin'].read.uci, ['forkop'],
-    'the Settings gate group must grant the Forkop UCI read access');
+    path.join(root, 'luci-app-prokop/root/usr/share/rpcd/acl.d/luci-app-prokop.json'), 'utf8'));
+  assert.deepEqual(acl['luci-app-prokop-admin'].read.uci, ['prokop'],
+    'the Settings gate group must grant the Prokop UCI read access');
 
   console.log('luci_readonly_view: PASS');
 })().catch(error => { console.error(error); process.exitCode = 1; });

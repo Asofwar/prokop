@@ -2,7 +2,7 @@
 set -eu
 
 ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
-NFT_UC="$ROOT_DIR/forkop/files/usr/lib/nft/apply.uc"
+NFT_UC="$ROOT_DIR/prokop/files/usr/lib/nft/apply.uc"
 STATE_DIR="$(mktemp -d)"
 trap 'rm -rf "$STATE_DIR"' EXIT HUP INT TERM
 # shellcheck source=tests/helpers/source_checks.sh
@@ -31,17 +31,17 @@ guard_source="$(source_between "$NFT_UC" '^function nft_dpi_transition_guard\(' 
 printf '%s\n' "$guard_source" >> "$STATE_DIR/guard.uc"
 
 cat >> "$STATE_DIR/guard.uc" <<'UCODE'
-if (!nft_dpi_transition_guard("ForkopTable", false))
+if (!nft_dpi_transition_guard("ProkopTable", false))
     exit(1);
 if (!present || index(applied, "hook output priority -149") < 0 ||
     index(applied, "0x01000000 drop") < 0 ||
     index(applied, "0x02000000 drop") < 0)
     exit(2);
-if (nft_dpi_transition_guard("ForkopTable", false))
+if (nft_dpi_transition_guard("ProkopTable", false))
     exit(3);
-if (!nft_dpi_transition_guard("ForkopTable", true))
+if (!nft_dpi_transition_guard("ProkopTable", true))
     exit(4);
-if (present || index(applied, "delete table inet ForkopTableDpiGuard") < 0)
+if (present || index(applied, "delete table inet ProkopTableDpiGuard") < 0)
     exit(5);
 UCODE
 

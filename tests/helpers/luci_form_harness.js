@@ -1,8 +1,8 @@
 "use strict";
 
-// Minimal LuCI runtime for driving the real Forkop view modules under node.
+// Minimal LuCI runtime for driving the real Prokop view modules under node.
 //
-// It loads luci-app-forkop/.../view/forkop/section.js (and the generated
+// It loads luci-app-prokop/.../view/prokop/section.js (and the generated
 // main.js) unchanged and replaces luci-base with a small model of the parts a
 // modal save goes through: baseclass, form.Map/JSONMap/NamedSection and the
 // AbstractValue family, the grid's modal Save/Dismiss, uci.js with its staged
@@ -27,7 +27,7 @@ const path = require("node:path");
 
 const VIEW_DIR = path.join(
   __dirname,
-  "../../luci-app-forkop/htdocs/luci-static/resources/view/forkop",
+  "../../luci-app-prokop/htdocs/luci-static/resources/view/prokop",
 );
 
 if (typeof String.prototype.format !== "function") {
@@ -112,7 +112,7 @@ function createUciStore(initial) {
   const uci = {
     data,
     // luci-base uci keeps loaded packages here; settings.js reads it directly.
-    state: { values: { forkop: data } },
+    state: { values: { prokop: data } },
     get(_config, sid, option) {
       const section = data[sid];
       if (!section) return null;
@@ -976,7 +976,7 @@ function createEnvironment({
   fs: fsOverrides = {},
 } = {}) {
   const baseclass = createBaseclass();
-  const uci = createStagedUciStore("forkop", config);
+  const uci = createStagedUciStore("prokop", config);
   const document = createDocument();
   const listeners = new Map();
   const window = {
@@ -1099,7 +1099,7 @@ function createEnvironment({
     section.createSectionContent(rules);
     return rules;
   }
-  const pageMap = new form.Map("forkop");
+  const pageMap = new form.Map("prokop");
   const grid = rulesGrid(pageMap);
 
   // The item settings modal just stacked on the modal: its Save and Close
@@ -1141,7 +1141,7 @@ function createEnvironment({
     window,
     CustomEvent: globals.CustomEvent,
     ui,
-    // view/forkop/shell.js sharing this environment's main.js and window.
+    // view/prokop/shell.js sharing this environment's main.js and window.
     shell() {
       shellModule ??= loadModule("shell.js", { baseclass, uci, main }, moduleGlobals);
       return shellModule;
@@ -1162,7 +1162,7 @@ function createEnvironment({
         },
         moduleGlobals,
       );
-      const map = new form.Map("forkop");
+      const map = new form.Map("prokop");
       const rules = rulesGrid(map);
       const tab = (type) => {
         const tabSection = map.section(form.TypedSection, type);
@@ -1196,9 +1196,9 @@ function createEnvironment({
     },
     // GridSection.renderMoreOptionsModal() for an existing rule. The modal
     // map takes `readonly` from the page map (a role that may read but not
-    // write the Forkop UCI package).
+    // write the Prokop UCI package).
     async openRule(section_id, { readonly = false } = {}) {
-      const map = new form.Map("forkop");
+      const map = new form.Map("prokop");
       const named = map.section(form.NamedSection, section_id, "section");
       map.parent = pageMap;
       if (readonly) map.readonly = true;

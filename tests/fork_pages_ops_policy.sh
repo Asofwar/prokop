@@ -43,7 +43,7 @@ grep -Fq 'Set ZAPRET_MANAGER_MIRROR' "$WORK_DIR/cache.log" ||
   fail "the Zapret-Manager cache did not explain its missing mirror URL"
 
 # router-bootstrap.sh trusts nothing from the mirror itself: no apk key, no
-# forkop feed. It only hands an explicit mirror to the fork's installer.
+# prokop feed. It only hands an explicit mirror to the fork's installer.
 for forbidden in '/etc/apk/keys' 'repositories.d' 'forkop-apk.pem' 'MIRROR_LATEST' 'uci '; do
   if grep -Fq -- "$forbidden" "$BOOTSTRAP"; then
     fail "router-bootstrap.sh still uses $forbidden"
@@ -77,7 +77,7 @@ chmod +x "$WORK_DIR/bin/wget"
 bootstrap() {
   : >"$WORK_DIR/wget.log"
   rm -f "$WORK_DIR/args"
-  env -u FORKOP_MIRROR_BASE -u FORKOP_RELEASE_BASE_URL -u FORKOP_RELEASE_REPO \
+  env -u PROKOP_MIRROR_BASE -u PROKOP_RELEASE_BASE_URL -u PROKOP_RELEASE_REPO \
     PATH="$WORK_DIR/bin:$PATH" FAKE_LOG="$WORK_DIR/wget.log" FAKE_ARGS="$WORK_DIR/args" \
     FAKE_INSTALLER="$WORK_DIR/installer" FAKE_FAIL_URL="${FAIL_URL:-}" \
     sh "$BOOTSTRAP" "$@"
@@ -95,15 +95,15 @@ fi
 
 bootstrap https://mirror.example// --sing-box tiny >/dev/null 2>&1 ||
   fail "router-bootstrap.sh failed with an explicit mirror"
-[[ "$(cat "$WORK_DIR/wget.log")" == 'https://asofwar.github.io/forkop/install.sh' ]] ||
+[[ "$(cat "$WORK_DIR/wget.log")" == 'https://asofwar.github.io/prokop/install.sh' ]] ||
   fail "router-bootstrap.sh did not take the installer from the fork channel"
 [[ "$(cat "$WORK_DIR/args")" == $'--mirror\nhttps://mirror.example\n--sing-box\ntiny' ]] ||
   fail "router-bootstrap.sh passed unexpected installer arguments: $(cat "$WORK_DIR/args")"
 
-FAIL_URL='https://asofwar.github.io/forkop/install.sh' \
+FAIL_URL='https://asofwar.github.io/prokop/install.sh' \
   bootstrap https://mirror.example >/dev/null 2>&1 ||
   fail "router-bootstrap.sh did not fall back to GitHub Releases"
-[[ "$(tail -n 1 "$WORK_DIR/wget.log")" == 'https://github.com/Asofwar/forkop/releases/latest/download/install.sh' ]] ||
+[[ "$(tail -n 1 "$WORK_DIR/wget.log")" == 'https://github.com/Asofwar/prokop/releases/latest/download/install.sh' ]] ||
   fail "router-bootstrap.sh fell back to an unexpected installer URL"
 [[ "$(head -n 2 "$WORK_DIR/args")" == $'--mirror\nhttps://mirror.example' ]] ||
   fail "router-bootstrap.sh did not pass the mirror after the fallback"

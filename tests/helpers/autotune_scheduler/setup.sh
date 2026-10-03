@@ -3,7 +3,7 @@
 # set): a library tree with the real modules and stand-ins for
 # autotune/isolation.uc and autotune/apply.uc, two DPI groups (youtube:
 # yt + ytimg, discord: dc), a target outside any group, and helpers.
-REAL_LIB="$ROOT_DIR/forkop/files/usr/lib"
+REAL_LIB="$ROOT_DIR/prokop/files/usr/lib"
 STUBS="$ROOT_DIR/tests/helpers/autotune_scheduler"
 WORK="$(mktemp -d)"
 BG_PIDS=()
@@ -30,16 +30,16 @@ for entry in "$REAL_LIB"/autotune/*; do ln -s "$entry" "$LIB/autotune/${entry##*
 ln -sf "$STUBS/isolation.uc" "$LIB/autotune/isolation.uc"
 ln -sf "$STUBS/apply.uc" "$LIB/autotune/apply.uc"
 
-export FORKOP_LIB="$LIB"
-export FORKOP_AUTOTUNE_STATE_FILE="$WORK/etc/autotune/state.json"
-export FORKOP_AUTOTUNE_LAST_DIR="$WORK/run/last"
-export FORKOP_AUTOTUNE_STATE_DIR="$WORK/run/autotune"
-export FORKOP_CONFIG_FILE="$WORK/config/forkop"
-export FORKOP_AUTOTUNE_SINGBOX_CONFIG="$WORK/sing-box.json"
-export FORKOP_AUTOTUNE_DIG="$WORK/dig"
-export FORKOP_AUTOTUNE_UCI_SAVEDIR="$WORK/uci-save" FORKOP_AUTOTUNE_TMPDIR="$WORK/tmp"
-export FORKOP_HISTORY_FILE="$WORK/etc/history.jsonl" FORKOP_RUNTIME_STATE_DIR="$WORK/run/state"
-export FORKOP_CRONTAB_FILE="$WORK/crontab" FORKOP_AUTOTUNE_CRONTAB="$WORK/crontab-cmd"
+export PROKOP_LIB="$LIB"
+export PROKOP_AUTOTUNE_STATE_FILE="$WORK/etc/autotune/state.json"
+export PROKOP_AUTOTUNE_LAST_DIR="$WORK/run/last"
+export PROKOP_AUTOTUNE_STATE_DIR="$WORK/run/autotune"
+export PROKOP_CONFIG_FILE="$WORK/config/prokop"
+export PROKOP_AUTOTUNE_SINGBOX_CONFIG="$WORK/sing-box.json"
+export PROKOP_AUTOTUNE_DIG="$WORK/dig"
+export PROKOP_AUTOTUNE_UCI_SAVEDIR="$WORK/uci-save" PROKOP_AUTOTUNE_TMPDIR="$WORK/tmp"
+export PROKOP_HISTORY_FILE="$WORK/etc/history.jsonl" PROKOP_RUNTIME_STATE_DIR="$WORK/run/state"
+export PROKOP_CRONTAB_FILE="$WORK/crontab" PROKOP_AUTOTUNE_CRONTAB="$WORK/crontab-cmd"
 export STUB_TUNE_DIR="$WORK/tune" STUB_APPLY_STATUS="$WORK/apply-status.json"
 mkdir -p "$WORK/config" "$WORK/uci-save" "$WORK/tmp" "$WORK/tune"
 
@@ -47,16 +47,16 @@ manager() { ucode -L "$LIB" "$LIB/autotune/manager.uc" "$@"; }
 calls() { if [ -e "$WORK/tune/calls.log" ]; then awk '{print $2}' "$WORK/tune/calls.log" | tr '\n' ' '; fi; }
 reset_calls() { rm -f "$WORK/tune/calls.log"; }
 json_get() { node -e 'const v=require(process.argv[1]); const r=process.argv[2].split(".").reduce((o,k)=>o==null?o:o[k],v); console.log(r===undefined?"null":JSON.stringify(r))' "$1" "$2"; }
-make_due() { node -e 'const f=process.argv[1],s=require(f);s.next_run_at=1;require("fs").writeFileSync(f,JSON.stringify(s)+"\n")' "$FORKOP_AUTOTUNE_STATE_FILE"; }
+make_due() { node -e 'const f=process.argv[1],s=require(f);s.next_run_at=1;require("fs").writeFileSync(f,JSON.stringify(s)+"\n")' "$PROKOP_AUTOTUNE_STATE_FILE"; }
 
 cat >"$WORK/crontab-cmd" <<SH
 #!/bin/sh
 cp "\$1" "$WORK/crontab"
 SH
 chmod +x "$WORK/crontab-cmd"
-printf '%s\n' '0 3 * * * /usr/bin/other-job' '# forkop-list-update line stays' >"$WORK/crontab"
+printf '%s\n' '0 3 * * * /usr/bin/other-job' '# prokop-list-update line stays' >"$WORK/crontab"
 
-cat >"$WORK/config/forkop" <<'CONF'
+cat >"$WORK/config/prokop" <<'CONF'
 config settings 'settings'
 	list dns_server 'tls://dns.example'
 	list dns_server '192.0.2.1'

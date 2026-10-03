@@ -12,7 +12,7 @@ set -euo pipefail
 # left alone.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK="$(mktemp -d)"
 # shellcheck source=tests/helpers/wait.sh
 . "$ROOT_DIR/tests/helpers/wait.sh"
@@ -59,6 +59,6 @@ process_running "$stand_in" || fail "the sing-box stand-in did not survive"
 
 # rpcd is reloaded with killall -HUP; nothing signals a process by PID so.
 source_refute "no production code may SIGHUP sing-box" -E '"kill", "-HUP"|SIGHUP reload|hup-sing-box' \
-  "$LIB" "$ROOT_DIR/forkop/files/usr/bin/forkop" "$ROOT_DIR/forkop/files/etc/init.d/forkop"
+  "$LIB" "$ROOT_DIR/prokop/files/usr/bin/prokop" "$ROOT_DIR/prokop/files/etc/init.d/prokop"
 
 printf 'sing-box SIGHUP path checks passed\n'

@@ -12,7 +12,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$ROOT_DIR/tests/helpers/autotune_scheduler/setup.sh"
 # shellcheck source=tests/helpers/wait.sh
 source "$ROOT_DIR/tests/helpers/wait.sh"
-WORKER_LOCK="$FORKOP_AUTOTUNE_STATE_DIR/worker.lock"
+WORKER_LOCK="$PROKOP_AUTOTUNE_STATE_DIR/worker.lock"
 worker_lock_free() { ! lock_held "$WORKER_LOCK"; }
 # job_state_is JOB STATE FILE: run-status of JOB, saved to FILE, reports STATE.
 job_state_is() { manager run-status "$1" >"$3" && [ "$(json_get "$3" job.state)" = "\"$2\"" ]; }
@@ -30,12 +30,12 @@ manager if-due >"$WORK/off.json"
 # ---- cron line follows the mode --------------------------------------------
 manager policy-set mode recommend >"$WORK/mode.json"
 [ "$(json_get "$WORK/mode.json" cron)" = '"ok"' ] || fail "mode change must sync cron: $(cat "$WORK/mode.json")"
-grep -Fxq '*/15 * * * * /usr/bin/forkop autotune_if_due >/dev/null 2>&1 # forkop-autotune' "$WORK/crontab" || fail "cron line missing: $(cat "$WORK/crontab")"
+grep -Fxq '*/15 * * * * /usr/bin/prokop autotune_if_due >/dev/null 2>&1 # prokop-autotune' "$WORK/crontab" || fail "cron line missing: $(cat "$WORK/crontab")"
 grep -Fxq '0 3 * * * /usr/bin/other-job' "$WORK/crontab" || fail "other cron jobs must stay"
-grep -Fxq '# forkop-list-update line stays' "$WORK/crontab" || fail "other Forkop cron jobs must stay"
+grep -Fxq '# prokop-list-update line stays' "$WORK/crontab" || fail "other Prokop cron jobs must stay"
 manager cron-sync >"$WORK/cron-again.json"
 [ "$(json_get "$WORK/cron-again.json" changed)" = 'false' ] || fail "an unchanged crontab is not rewritten"
-[ "$(grep -c forkop-autotune "$WORK/crontab")" = 1 ] || fail "one cron line only"
+[ "$(grep -c prokop-autotune "$WORK/crontab")" = 1 ] || fail "one cron line only"
 
 # ---- scheduled runs: one group in turn -------------------------------------
 before="$(date +%s)"
@@ -44,12 +44,12 @@ manager if-due >"$WORK/run1.json"
 [ "$(json_get "$WORK/run1.json" trigger)" = '"schedule"' ] || fail "scheduled trigger"
 [ "$(calls)" = 'discord.com ' ] || fail "first scheduled run tunes the first group only: $(calls)"
 [ "$(json_get "$WORK/run1.json" groups.discord.events.0.event)" = '"started"' ] || fail "hysteresis started: $(cat "$WORK/run1.json")"
-next="$(json_get "$FORKOP_AUTOTUNE_STATE_FILE" next_run_at)"
+next="$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" next_run_at)"
 [ "$next" -ge $((before + 21600)) ] && [ "$next" -le $(( $(date +%s) + 21600 )) ] || fail "next run after the interval: $next"
-[ "$(json_get "$FORKOP_AUTOTUNE_STATE_FILE" rotation)" = 1 ] || fail "rotation advances"
-[ "$(json_get "$FORKOP_AUTOTUNE_STATE_FILE" worker.result)" = '"completed"' ] || fail "worker record"
-[ "$(json_get "$FORKOP_AUTOTUNE_STATE_FILE" targets.dc.selected)" = '"multisplit"' ] || fail "summary recorded"
-[ "$(json_get "$FORKOP_AUTOTUNE_STATE_FILE" targets.dc.group)" = '"discord"' ] || fail "summary knows its group"
+[ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" rotation)" = 1 ] || fail "rotation advances"
+[ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" worker.result)" = '"completed"' ] || fail "worker record"
+[ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" targets.dc.selected)" = '"multisplit"' ] || fail "summary recorded"
+[ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" targets.dc.group)" = '"discord"' ] || fail "summary knows its group"
 [ -s "$WORK/run/last/dc.json" ] || fail "full output kept in tmpfs"
 
 reset_calls
@@ -61,19 +61,19 @@ make_due
 manager if-due >"$WORK/run2.json"
 [ "$(calls)" = 'www.youtube.com i.ytimg.com ' ] || fail "second scheduled run tunes the next group: $(calls)"
 grep -q '^tune www.youtube.com max:5 192.0.2.53$' "$WORK/tune/calls.log" || fail "the policy probe count (an upper bound) and the resolver are passed: $(cat "$WORK/tune/calls.log")"
-grep -q '^tune i.ytimg.com max:5 192.0.2.1$' "$WORK/tune/calls.log" || fail "the first plain IPv4 Forkop DNS server otherwise"
+grep -q '^tune i.ytimg.com max:5 192.0.2.1$' "$WORK/tune/calls.log" || fail "the first plain IPv4 Prokop DNS server otherwise"
 [ "$(json_get "$WORK/run2.json" groups.youtube.result.status)" = '"recommendation"' ] || fail "youtube recommendation"
-[ "$(json_get "$FORKOP_AUTOTUNE_STATE_FILE" groups.youtube.ready)" = 'false' ] || fail "one run is not enough"
+[ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" groups.youtube.ready)" = 'false' ] || fail "one run is not enough"
 
 # ---- manual run: hysteresis confirms --------------------------------------
 reset_calls
 manager run youtube >"$WORK/manual.json"
 [ "$(calls)" = 'www.youtube.com i.ytimg.com ' ] || fail "manual run of one group"
 [ "$(json_get "$WORK/manual.json" groups.youtube.events.0.event)" = '"ready"' ] || fail "second agreeing run is ready: $(cat "$WORK/manual.json")"
-[ "$(json_get "$FORKOP_AUTOTUNE_STATE_FILE" groups.youtube.ready)" = 'true' ] || fail "ready stored"
-[ "$(json_get "$FORKOP_AUTOTUNE_STATE_FILE" groups.youtube.pending.count)" = 2 ] || fail "count stored"
-[ "$(json_get "$FORKOP_AUTOTUNE_STATE_FILE" rotation)" = 2 ] || fail "manual runs do not move the rotation"
-[ "$(json_get "$FORKOP_AUTOTUNE_STATE_FILE" next_run_at)" -gt "$(date +%s)" ] || fail "manual runs do not move the schedule"
+[ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" groups.youtube.ready)" = 'true' ] || fail "ready stored"
+[ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" groups.youtube.pending.count)" = 2 ] || fail "count stored"
+[ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" rotation)" = 2 ] || fail "manual runs do not move the rotation"
+[ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" next_run_at)" -gt "$(date +%s)" ] || fail "manual runs do not move the schedule"
 manager run all >"$WORK/all.json"
 node -e 'const r=require(process.argv[1]); if (JSON.stringify(Object.keys(r.groups))!==JSON.stringify(["discord","youtube"])) process.exit(1)' "$WORK/all.json" || fail "run all: $(cat "$WORK/all.json")"
 if manager run nosuch >"$WORK/unknown.json"; then fail "an unknown group must fail"; fi
@@ -84,7 +84,7 @@ if manager run 'a b' >"$WORK/invalid.json"; then fail "an invalid scope must fai
 # ---- blockers: nothing is measured, the run is retried later ---------------
 for case in guard snapshot service unresolved lock; do
   case "$case" in
-    guard) body='{"state":null,"guards":["ForkopConfigRestoreDpiGuard"]}'; want=dpi_guard_present ;;
+    guard) body='{"state":null,"guards":["ProkopConfigRestoreDpiGuard"]}'; want=dpi_guard_present ;;
     snapshot) body='{"state":null,"guards":[],"snapshot_operation":true}'; want=snapshot_operation_active ;;
     service) body='{"state":null,"guards":[],"service_action":"reload_pending"}'; want=reload_pending ;;
     unresolved) body='{"state":{"phase":"applying"},"guards":[],"resolved":false}'; want=apply_unresolved ;;
@@ -96,9 +96,9 @@ for case in guard snapshot service unresolved lock; do
   [ "$(json_get "$WORK/blocked-$case.json" result)" = '"skipped"' ] || fail "$case must skip: $(cat "$WORK/blocked-$case.json")"
   [ "$(json_get "$WORK/blocked-$case.json" reason)" = "\"$want\"" ] || fail "$case reason: $(cat "$WORK/blocked-$case.json")"
   [ -z "$(calls)" ] || fail "$case: nothing is tuned"
-  next="$(json_get "$FORKOP_AUTOTUNE_STATE_FILE" next_run_at)"
+  next="$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" next_run_at)"
   [ "$next" -le $(( $(date +%s) + 900 )) ] && [ "$next" -gt $(( $(date +%s) + 800 )) ] || fail "$case: retried after 15 minutes ($next)"
-  [ "$(json_get "$FORKOP_AUTOTUNE_STATE_FILE" rotation)" = 2 ] || fail "$case: the group keeps its turn"
+  [ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" rotation)" = 2 ] || fail "$case: the group keeps its turn"
 done
 rm -f "$STUB_APPLY_STATUS"
 printf 'not json\n' >"$STUB_APPLY_STATUS"
@@ -107,8 +107,8 @@ make_due; manager if-due >"$WORK/blocked-invalid.json"
 rm -f "$STUB_APPLY_STATUS"
 
 # ---- no resolver: the target is not measured; cached results never confirm --
-cp "$WORK/config/forkop" "$WORK/config.dns"
-sed -i "/list dns_server/d" "$WORK/config/forkop"
+cp "$WORK/config/prokop" "$WORK/config.dns"
+sed -i "/list dns_server/d" "$WORK/config/prokop"
 printf '{"status":"inconclusive","reason":"all_failed","target":{"host":"www.youtube.com"},"candidates":[]}\n' >"$WORK/tune/www.youtube.com.json"
 reset_calls
 manager run youtube >"$WORK/no-resolver.json"
@@ -116,17 +116,17 @@ manager run youtube >"$WORK/no-resolver.json"
 [ "$(json_get "$WORK/no-resolver.json" unmeasured)" = '[{"id":"ytimg","reason":"resolver_missing"}]' ] || fail "unmeasured: $(cat "$WORK/no-resolver.json")"
 [ "$(json_get "$WORK/no-resolver.json" groups.youtube.result.status)" = '"inconclusive"' ] ||
   fail "the cached result of ytimg must not count: $(cat "$WORK/no-resolver.json")"
-[ "$(json_get "$FORKOP_AUTOTUNE_STATE_FILE" targets.ytimg.selected)" = '"fake"' ] || fail "the cached result is kept for display"
-cp "$WORK/config.dns" "$WORK/config/forkop"
+[ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" targets.ytimg.selected)" = '"fake"' ] || fail "the cached result is kept for display"
+cp "$WORK/config.dns" "$WORK/config/prokop"
 selected www.youtube.com fake high
 
 # ---- a busy tune records nothing and stops the run -------------------------
 printf '{"status":"busy","reason":"autotune_in_progress"}\n' >"$WORK/tune/discord.com.json"
-dc_before="$(json_get "$FORKOP_AUTOTUNE_STATE_FILE" targets.dc.at)"
+dc_before="$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" targets.dc.at)"
 make_due; reset_calls
 manager if-due >"$WORK/busy.json"
 [ "$(json_get "$WORK/busy.json" reason)" = '"autotune_in_progress"' ] || fail "busy tune: $(cat "$WORK/busy.json")"
-[ "$(json_get "$FORKOP_AUTOTUNE_STATE_FILE" targets.dc.at)" = "$dc_before" ] || fail "a busy tune keeps the cached result"
+[ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" targets.dc.at)" = "$dc_before" ] || fail "a busy tune keeps the cached result"
 selected discord.com multisplit high
 
 # ---- the worker lock ------------------------------------------------------
@@ -144,27 +144,27 @@ wait "$lock_holder" || true
 wait_until 30 worker_lock_free || fail "the worker lock was not released"
 
 # ---- a target edited during the run keeps the edit -------------------------
-printf '%s\n' "FORKOP_LIB='$LIB' ucode -L '$LIB' '$LIB/autotune/manager.uc' target-set ytimg img.youtube.com >/dev/null" >"$WORK/tune/www.youtube.com.hook"
+printf '%s\n' "PROKOP_LIB='$LIB' ucode -L '$LIB' '$LIB/autotune/manager.uc' target-set ytimg img.youtube.com >/dev/null" >"$WORK/tune/www.youtube.com.hook"
 manager run youtube >"$WORK/edited.json"
-[ "$(json_get "$FORKOP_AUTOTUNE_STATE_FILE" targets.ytimg)" = 'null' ] || fail "a result for the old host must not be stored: $(json_get "$FORKOP_AUTOTUNE_STATE_FILE" targets.ytimg)"
-[ "$(json_get "$FORKOP_AUTOTUNE_STATE_FILE" targets.yt.selected)" = '"fake"' ] || fail "other results are stored"
-grep -q "option host 'img.youtube.com'" "$WORK/config/forkop" || fail "the edit stays"
+[ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" targets.ytimg)" = 'null' ] || fail "a result for the old host must not be stored: $(json_get "$PROKOP_AUTOTUNE_STATE_FILE" targets.ytimg)"
+[ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" targets.yt.selected)" = '"fake"' ] || fail "other results are stored"
+grep -q "option host 'img.youtube.com'" "$WORK/config/prokop" || fail "the edit stays"
 manager target-set ytimg i.ytimg.com >/dev/null
 
 # ---- a removed target is pruned, groups of existing rules stay -----------
 manager target-remove dc >/dev/null
 manager run youtube >/dev/null
-[ "$(json_get "$FORKOP_AUTOTUNE_STATE_FILE" targets.dc)" = 'null' ] || fail "removed target pruned"
-[ "$(json_get "$FORKOP_AUTOTUNE_STATE_FILE" groups.discord.fingerprint)" != 'null' ] || fail "a group of an existing rule is kept"
-cp "$WORK/config/forkop" "$WORK/config.keep"
-sed -i "/option label 'Discord'/a\\\toption enabled '0'" "$WORK/config/forkop"
-grep -q "option enabled '0'" "$WORK/config/forkop" || fail "fixture: rule not disabled"
+[ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" targets.dc)" = 'null' ] || fail "removed target pruned"
+[ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" groups.discord.fingerprint)" != 'null' ] || fail "a group of an existing rule is kept"
+cp "$WORK/config/prokop" "$WORK/config.keep"
+sed -i "/option label 'Discord'/a\\\toption enabled '0'" "$WORK/config/prokop"
+grep -q "option enabled '0'" "$WORK/config/prokop" || fail "fixture: rule not disabled"
 manager run youtube >/dev/null
-[ "$(json_get "$FORKOP_AUTOTUNE_STATE_FILE" groups.discord.fingerprint)" != 'null' ] || fail "a disabled rule keeps its group"
-awk '/^config section .discord./{skip=1;next} /^config /{skip=0} !skip' "$WORK/config.keep" >"$WORK/config/forkop"
+[ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" groups.discord.fingerprint)" != 'null' ] || fail "a disabled rule keeps its group"
+awk '/^config section .discord./{skip=1;next} /^config /{skip=0} !skip' "$WORK/config.keep" >"$WORK/config/prokop"
 manager run youtube >/dev/null
-[ "$(json_get "$FORKOP_AUTOTUNE_STATE_FILE" groups.discord)" = 'null' ] || fail "a deleted rule loses its group"
-cp "$WORK/config.keep" "$WORK/config/forkop"
+[ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" groups.discord)" = 'null' ] || fail "a deleted rule loses its group"
+cp "$WORK/config.keep" "$WORK/config/prokop"
 manager target-set dc discord.com >/dev/null
 
 # ---- interruption: the current target finishes, the run stops -------------
@@ -195,9 +195,9 @@ if manager run-async all >"$WORK/job-busy.json"; then fail "one job at a time"; 
 [ "$(json_get "$WORK/job-busy.json" reason)" = '"autotune_worker_running"' ] || fail "busy job reason"
 wait_until 60 job_state_is "$job" finished "$WORK/job-status.json" || fail "job finished: $(cat "$WORK/job-status.json")"
 [ "$(json_get "$WORK/job-status.json" job.result.result)" = '"completed"' ] || fail "job result"
-[ "$(json_get "$FORKOP_AUTOTUNE_STATE_FILE" worker.trigger)" = '"manual"' ] || fail "job runs are manual"
-[ ! -e "$FORKOP_AUTOTUNE_STATE_DIR/run-progress.json" ] || fail "the progress is removed when the run ends"
-[ "$(json_get "$FORKOP_AUTOTUNE_STATE_FILE" targets.yt.duration_s)" != null ] || fail "the tune duration is kept for the next estimate"
+[ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" worker.trigger)" = '"manual"' ] || fail "job runs are manual"
+[ ! -e "$PROKOP_AUTOTUNE_STATE_DIR/run-progress.json" ] || fail "the progress is removed when the run ends"
+[ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" targets.yt.duration_s)" != null ] || fail "the tune duration is kept for the next estimate"
 
 STUB_TUNE_SLEEP=3 manager run-async youtube >"$WORK/job2.json"
 job2="$(node -e 'console.log(require(process.argv[1]).job)' "$WORK/job2.json")"
@@ -210,25 +210,25 @@ if manager run-status '../x' >"$WORK/job-bad.json"; then fail "invalid job ids a
 if manager run-status 1_1 >"$WORK/job-missing.json"; then fail "unknown jobs are refused"; fi
 [ "$(json_get "$WORK/job-missing.json" reason)" = '"unknown_job"' ] || fail "unknown job reason"
 
-for i in $(seq 12); do printf '{"id":"%s","state":"finished"}\n' "1_$i" >"$FORKOP_AUTOTUNE_STATE_DIR/jobs/1_$i.json"; done
+for i in $(seq 12); do printf '{"id":"%s","state":"finished"}\n' "1_$i" >"$PROKOP_AUTOTUNE_STATE_DIR/jobs/1_$i.json"; done
 # The killed worker's tune stand-in keeps the inherited lock until its sleep ends.
 wait_until 30 worker_lock_free || fail "the killed job's worker lock was not released"
 manager run-async youtube >/dev/null
-[ "$(find "$FORKOP_AUTOTUNE_STATE_DIR/jobs" -name '*.json' | wc -l)" -le 10 ] || fail "old jobs are pruned"
+[ "$(find "$PROKOP_AUTOTUNE_STATE_DIR/jobs" -name '*.json' | wc -l)" -le 10 ] || fail "old jobs are pruned"
 wait_until 30 worker_lock_free || fail "the pruning job did not finish"
 
 # ---- mode off removes the cron line ----------------------------------------
 manager policy-set mode off >/dev/null
-if grep -q forkop-autotune "$WORK/crontab"; then fail "mode off removes the cron line"; fi
+if grep -q prokop-autotune "$WORK/crontab"; then fail "mode off removes the cron line"; fi
 grep -Fxq '0 3 * * * /usr/bin/other-job' "$WORK/crontab" || fail "other cron jobs stay after removal"
 manager policy-set mode auto >/dev/null
 manager cron-remove >/dev/null
-if grep -q forkop-autotune "$WORK/crontab"; then fail "cron-remove removes the cron line"; fi
+if grep -q prokop-autotune "$WORK/crontab"; then fail "cron-remove removes the cron line"; fi
 
 # ---- no raw strategies in anything the scheduler writes -------------------
-if grep -R -E 'dpi-desync|nfqws_opt' "$FORKOP_AUTOTUNE_STATE_FILE" "$FORKOP_AUTOTUNE_STATE_DIR/jobs" >/dev/null; then
+if grep -R -E 'dpi-desync|nfqws_opt' "$PROKOP_AUTOTUNE_STATE_FILE" "$PROKOP_AUTOTUNE_STATE_DIR/jobs" >/dev/null; then
   fail "raw strategies must not reach the state or job files"
 fi
-[ "$(stat -c %a "$FORKOP_AUTOTUNE_STATE_FILE")" = 600 ] || fail "state file mode"
+[ "$(stat -c %a "$PROKOP_AUTOTUNE_STATE_FILE")" = 600 ] || fail "state file mode"
 
 echo "autotune scheduler: OK"

@@ -2,12 +2,12 @@
 set -euo pipefail
 
 MIRROR_ROOT="${MIRROR_ROOT:-/srv/mirror/public/forkop/lists}"
-LOCK_FILE="${LISTS_LOCK_FILE:-/run/lock/forkop-lists-mirror.lock}"
+LOCK_FILE="${LISTS_LOCK_FILE:-/run/lock/prokop-lists-mirror.lock}"
 STAGING="${MIRROR_ROOT}.staging"
 
 exec 9>"$LOCK_FILE"
 flock -n 9 || {
-    echo "Forkop list sync is already running" >&2
+    echo "Prokop list sync is already running" >&2
     exit 0
 }
 
@@ -30,7 +30,7 @@ download_github_tree() {
     rm -f "$archive"
 }
 
-# Source lists used by Forkop's built-in domains and subnet presets.
+# Source lists used by Prokop's built-in domains and subnet presets.
 download_github_tree "itdoginfo" "allow-domains" "main" "$STAGING/allow-domains"
 download_github_tree "Greeg0ry" "b4geoip-forkop" "main" "$STAGING/b4geoip-forkop"
 
@@ -58,4 +58,4 @@ rm -rf "${MIRROR_ROOT}.previous"
 [[ ! -d "$MIRROR_ROOT" ]] || mv "$MIRROR_ROOT" "${MIRROR_ROOT}.previous"
 mv "$STAGING" "$MIRROR_ROOT"
 
-echo "Forkop list sync completed"
+echo "Prokop list sync completed"

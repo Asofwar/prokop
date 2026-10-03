@@ -4,12 +4,12 @@
 # opt-in) and moves list and rule-set URLs on it to their direct sources.
 set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT
 
 migrate() {
-  FORKOP_LIB="$FORKOP_LIB" ucode -L "$FORKOP_LIB" "$FORKOP_LIB/config/migration.uc" \
+  PROKOP_LIB="$PROKOP_LIB" ucode -L "$PROKOP_LIB" "$PROKOP_LIB/config/migration.uc" \
     migrate-fixture "$1" > "$2"
 }
 
@@ -41,7 +41,7 @@ console.log(JSON.stringify({
       'https://mirror.infotechtg.ru/forkop/lists/b4geoip-forkop/srs/valve.srs',
       'https://raw.githubusercontent.com/Greeg0ry/b4geoip-forkop/main/srs/valve.srs',
       'https://mirror.infotechtg.ru/forkop/lists/b4geoip-forkop/srs/google.srs',
-      '/etc/forkop/local.srs',
+      '/etc/prokop/local.srs',
     ],
     remote_domain_lists: ['https://mirror.infotechtg.ru/forkop/lists/allow-domains/Russia/inside-raw.lst'],
     remote_subnet_lists: ['http://mirror.51343.ru/forkop/lists/allow-domains/Subnets/IPv4/telegram.lst',
@@ -78,7 +78,7 @@ assert.deepEqual(section.rule_set, [
 assert.deepEqual(section.rule_set_with_subnets, [
   'https://raw.githubusercontent.com/Greeg0ry/b4geoip-forkop/main/srs/valve.srs',
   'https://raw.githubusercontent.com/Greeg0ry/b4geoip-forkop/main/srs/google.srs',
-  '/etc/forkop/local.srs',
+  '/etc/prokop/local.srs',
 ], 'b4geoip URLs move to raw GitHub without duplicates');
 assert.deepEqual(section.remote_domain_lists,
   ['https://raw.githubusercontent.com/itdoginfo/allow-domains/main/Russia/inside-raw.lst']);
@@ -116,6 +116,6 @@ assert(out.settings.applied_migrations.includes('fork_mirror_opt_in_v1'));
 NODE
 
 # The shipped configuration needs no change from it.
-grep -Fq "list applied_migrations 'fork_mirror_opt_in_v1'" "$ROOT_DIR/forkop/files/etc/config/forkop" ||
+grep -Fq "list applied_migrations 'fork_mirror_opt_in_v1'" "$ROOT_DIR/prokop/files/etc/config/prokop" ||
   { echo 'FAIL: the shipped configuration must mark fork_mirror_opt_in_v1 as applied' >&2; exit 1; }
 printf 'fork mirror opt-in migration checks passed\n'

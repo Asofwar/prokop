@@ -13,7 +13,7 @@
 //     post-NAT or reinjected probe marks;
 //   - production queue ranges do not overlap, and autotune isolation refuses
 //     to run exactly when its queue range overlaps one of them.
-// Usage: marks.js <forkop lib> <work dir>
+// Usage: marks.js <prokop lib> <work dir>
 
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
@@ -24,7 +24,7 @@ const { Rng, seedFrom, casesFrom, ucodeBatch, forAll, exercised } = require("./s
 const [lib, work] = process.argv.slice(2);
 const seed = seedFrom(1560003);
 const rng = new Rng(seed);
-const env = { ...process.env, FORKOP_LIB: lib };
+const env = { ...process.env, PROKOP_LIB: lib };
 const hex = (n) => "0x" + (n >>> 0).toString(16).padStart(8, "0");
 const TAILSCALE_FWMARK_MASK = 0x00ff0000;
 
@@ -70,7 +70,7 @@ case "$1" in
 esac
 exit 0
 `, { mode: 0o755 });
-execFileSync("ucode", ["-L", lib, path.join(lib, "nft/apply.uc"), "install-dpi-transition-guard", "ForkopTable"],
+execFileSync("ucode", ["-L", lib, path.join(lib, "nft/apply.uc"), "install-dpi-transition-guard", "ProkopTable"],
   { env: { ...env, PATH: `${path.join(work, "bin")}:${process.env.PATH}` } });
 const guardRules = [...fs.readFileSync(capture, "utf8").matchAll(/meta mark & (0x[0-9a-f]+) == (0x[0-9a-f]+) drop/g)]
   .map((m) => ({ mask: Number(m[1]), value: Number(m[2]) }));
@@ -138,12 +138,12 @@ const overlaps = ([a0, a1], [b0, b1]) => a0 <= b1 && b0 <= a1;
 assert(!overlaps(range(providers.zapret), range(providers.zapret2)), "Zapret and Zapret2 queue ranges overlap");
 function isolation(queue) {
   const r = spawnSync("ucode", ["-L", lib, path.join(lib, "autotune/isolation.uc"), "none"], {
-    env: { ...env, FORKOP_AUTOTUNE_QUEUE: String(queue), FORKOP_AUTOTUNE_STATE_DIR: path.join(work, "autotune") },
+    env: { ...env, PROKOP_AUTOTUNE_QUEUE: String(queue), PROKOP_AUTOTUNE_STATE_DIR: path.join(work, "autotune") },
     encoding: "utf8",
   });
   if (r.stdout.trim() === "") return { refused: false };
   const out = JSON.parse(r.stdout);
-  assert.equal(out.reason, "queue_overlaps_forkop_range");
+  assert.equal(out.reason, "queue_overlaps_prokop_range");
   return { refused: true, last: out.queue_last };
 }
 const width = isolation(providers.zapret.queue).last - providers.zapret.queue + 1;

@@ -23,7 +23,7 @@ set -euo pipefail
 # stand-in that records its proxy and who holds reload.lock.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK_DIR="$(mktemp -d)"
 # shellcheck source=tests/helpers/wait.sh
 . "$ROOT_DIR/tests/helpers/wait.sh"
@@ -119,16 +119,16 @@ start_case() {
   : >"$EVENTS"
   rm -rf "$WORK_DIR/sing-box" "$WORK_DIR/persistent" "${RUN:?}"/*
   cat >"$WORK_DIR/uci.state" <<'UCI'
-forkop.settings=settings
-forkop.alpha=section
-forkop.alpha.enabled=1
-forkop.alpha.action=connection
-forkop.alpha.subscription_urls=https://sub.test/alpha
-forkop.alpha.subscription_url_settings={"https://sub.test/alpha":{"download_via_proxy_enabled":"1","download_via_proxy_section":"bravo"}}
-forkop.bravo=section
-forkop.bravo.enabled=1
-forkop.bravo.action=connection
-forkop.bravo.proxy_string=vless://00000000-0000-4000-8000-000000000002@bravo.example.com:443?type=tcp&encryption=none&security=tls&sni=example.com#bravo
+prokop.settings=settings
+prokop.alpha=section
+prokop.alpha.enabled=1
+prokop.alpha.action=connection
+prokop.alpha.subscription_urls=https://sub.test/alpha
+prokop.alpha.subscription_url_settings={"https://sub.test/alpha":{"download_via_proxy_enabled":"1","download_via_proxy_section":"bravo"}}
+prokop.bravo=section
+prokop.bravo.enabled=1
+prokop.bravo.action=connection
+prokop.bravo.proxy_string=vless://00000000-0000-4000-8000-000000000002@bravo.example.com:443?type=tcp&encryption=none&security=tls&sni=example.com#bravo
 UCI
   sleep 600 &
   HOLDER=$!
@@ -137,19 +137,19 @@ UCI
   state acquire-runtime-dir-lock "$RELOAD_LOCK" "$HOLDER" || fail "the holder could not take reload.lock"
 
   env PATH="$WORK_DIR/bin:$PATH" TMPDIR="$WORK_DIR/tmp" \
-    FORKOP_LIB="$LIB" \
-    FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state" \
+    PROKOP_LIB="$LIB" \
+    PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state" \
     TMP_SING_BOX_FOLDER="$WORK_DIR/sing-box" \
     TMP_RULESET_FOLDER="$WORK_DIR/sing-box/rulesets" \
     TMP_SUBSCRIPTION_FOLDER="$SUBS" \
-    FORKOP_RUNTIME_STATE_DIR="$RUN" \
-    FORKOP_RELOAD_LOCK_DIR="$RELOAD_LOCK" \
-    FORKOP_SUBSCRIPTION_UPDATE_LOCK_DIR="$RUN/subscription-update.lock" \
-    FORKOP_PENDING_RELOAD_FILE="$RUN/reload.pending" \
-    FORKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR="$PERSISTENT" \
-    FORKOP_PERSISTENT_SUBSCRIPTION_CACHE_FORMAT_FILE="$PERSISTENT/cache-format" \
-    FORKOP_SERVICE_INIT="$WORK_DIR/bin/logger" \
-    FORKOP_HISTORY_FILE="$WORK_DIR/history.jsonl" \
+    PROKOP_RUNTIME_STATE_DIR="$RUN" \
+    PROKOP_RELOAD_LOCK_DIR="$RELOAD_LOCK" \
+    PROKOP_SUBSCRIPTION_UPDATE_LOCK_DIR="$RUN/subscription-update.lock" \
+    PROKOP_PENDING_RELOAD_FILE="$RUN/reload.pending" \
+    PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR="$PERSISTENT" \
+    PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_FORMAT_FILE="$PERSISTENT/cache-format" \
+    PROKOP_SERVICE_INIT="$WORK_DIR/bin/logger" \
+    PROKOP_HISTORY_FILE="$WORK_DIR/history.jsonl" \
     SB_VARIANT_STATE_FILE="$WORK_DIR/sing-box-variant" \
     SB_VERSION_STATE_FILE="$WORK_DIR/sing-box-version" \
     ucode -L "$LIB" "$LIB/components/updates.uc" subscription-update alpha >"$WORK_DIR/update.log" 2>&1 &

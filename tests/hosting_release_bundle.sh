@@ -4,8 +4,8 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK_DIR="$(mktemp -d)"
 VERSION="1.0.2"
-BASE_URL="https://downloads.example/forkop"
-FORK_BASE_URL="https://asofwar.github.io/forkop"
+BASE_URL="https://downloads.example/prokop"
+FORK_BASE_URL="https://asofwar.github.io/prokop"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 
 cleanup() {
@@ -20,15 +20,15 @@ fail() {
 
 # The catalog builder lists only the release being built: no GitHub API call
 # and no HEAD request, so the bundle does not depend on the network.
-export FORKOP_RELEASE_CATALOG_OFFLINE=1
+export PROKOP_RELEASE_CATALOG_OFFLINE=1
 
 packages=(
-  "forkop_${VERSION}.ipk"
-  "luci-app-forkop_${VERSION}.ipk"
-  "luci-i18n-forkop-ru_${VERSION}.ipk"
-  "forkop_${VERSION}.apk"
-  "luci-app-forkop_${VERSION}.apk"
-  "luci-i18n-forkop-ru_${VERSION}.apk"
+  "prokop_${VERSION}.ipk"
+  "luci-app-prokop_${VERSION}.ipk"
+  "luci-i18n-prokop-ru_${VERSION}.ipk"
+  "prokop_${VERSION}.apk"
+  "luci-app-prokop_${VERSION}.apk"
+  "luci-i18n-prokop-ru_${VERSION}.apk"
 )
 
 mkdir -p "$WORK_DIR/artifacts"
@@ -36,20 +36,20 @@ for package in "${packages[@]}"; do
   printf 'test package: %s\n' "$package" >"$WORK_DIR/artifacts/$package"
 done
 
-FORKOP_RELEASE_BASE_URL="$BASE_URL" \
+PROKOP_RELEASE_BASE_URL="$BASE_URL" \
   "$ROOT_DIR/ops/hosting/prepare-release.sh" \
   "$VERSION" "$WORK_DIR/artifacts" "$WORK_DIR/output"
 
-[[ "$(cat "$WORK_DIR/output/forkop/LATEST")" == "$VERSION" ]] ||
+[[ "$(cat "$WORK_DIR/output/prokop/LATEST")" == "$VERSION" ]] ||
   fail "LATEST does not contain the release version"
-[[ -s "$WORK_DIR/output/forkop/install.sh" ]] || fail "install.sh was not included"
-[[ -s "$WORK_DIR/output/forkop/releases/$VERSION/SHA256SUMS" ]] ||
+[[ -s "$WORK_DIR/output/prokop/install.sh" ]] || fail "install.sh was not included"
+[[ -s "$WORK_DIR/output/prokop/releases/$VERSION/SHA256SUMS" ]] ||
   fail "SHA256SUMS was not generated"
-[[ -s "$WORK_DIR/output/forkop-timeweb-$VERSION.tar.gz" ]] ||
+[[ -s "$WORK_DIR/output/prokop-timeweb-$VERSION.tar.gz" ]] ||
   fail "Timeweb archive was not generated"
 
 for package in "${packages[@]}"; do
-  [[ -s "$WORK_DIR/output/forkop/releases/$VERSION/$package" ]] ||
+  [[ -s "$WORK_DIR/output/prokop/releases/$VERSION/$package" ]] ||
     fail "$package was not copied"
 done
 
@@ -95,13 +95,13 @@ PY
 check_metadata "$WORK_DIR/output" "$BASE_URL" ||
   fail "release metadata does not describe the bundled packages"
 
-tar -tzf "$WORK_DIR/output/forkop-timeweb-$VERSION.tar.gz" |
-  grep -Fxq 'forkop/updates/latest.json' || fail "archive does not contain latest.json"
-tar -tzf "$WORK_DIR/output/forkop-timeweb-$VERSION.tar.gz" |
-  grep -Fxq 'forkop/updates/releases.json' || fail "archive does not contain releases.json"
+tar -tzf "$WORK_DIR/output/prokop-timeweb-$VERSION.tar.gz" |
+  grep -Fxq 'prokop/updates/latest.json' || fail "archive does not contain latest.json"
+tar -tzf "$WORK_DIR/output/prokop-timeweb-$VERSION.tar.gz" |
+  grep -Fxq 'prokop/updates/releases.json' || fail "archive does not contain releases.json"
 
 # Without an explicit address the bundle describes the fork's Pages channel.
-env -u FORKOP_RELEASE_BASE_URL -u FORKOP_RELEASE_REPO \
+env -u PROKOP_RELEASE_BASE_URL -u PROKOP_RELEASE_REPO \
   "$ROOT_DIR/ops/hosting/prepare-release.sh" \
   "$VERSION" "$WORK_DIR/artifacts" "$WORK_DIR/default" >/dev/null
 check_metadata "$WORK_DIR/default" "$FORK_BASE_URL" ||

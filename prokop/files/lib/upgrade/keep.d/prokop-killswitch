@@ -1,0 +1,2 @@
+/etc/prokop/killswitch/
+/usr/share/nftables.d/ruleset-post/90-prokop-killswitch.nft

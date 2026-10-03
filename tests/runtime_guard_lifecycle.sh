@@ -2,9 +2,9 @@
 set -euo pipefail
 
 # A fail-closed guard that a failed lifecycle transition kept (UC-019):
-#   - ForkopTableDpiGuard: a reload whose DPI rollback failed keeps it
+#   - ProkopTableDpiGuard: a reload whose DPI rollback failed keeps it
 #     (service/lifecycle.uc abort_reload);
-#   - the forkop_transition_guard chain in ForkopTable: a sing-box
+#   - the prokop_transition_guard chain in ProkopTable: a sing-box
 #     transition whose rollback failed keeps it (abort_guarded_transition).
 # Both are installed create-only and drop the traffic they guard until a
 # stop removes them. A reload over them used to run a plan that never looks
@@ -20,7 +20,7 @@ set -euo pipefail
 # A refused start is not retried automatically (initd.uc start_service): no
 # retry can succeed before the restart, and each would log a fatal and
 # record a failed start. The guard of a restore or an autotune apply
-# (ForkopConfigRestoreDpiGuard) is how every such transaction reloads: the
+# (ProkopConfigRestoreDpiGuard) is how every such transaction reloads: the
 # reload goes on under it, a cold start builds the runtime (the restore of
 # a snapshot releases that guard), and only a duplicate start, which starts
 # nothing, refuses to report the guarded runtime as started.
@@ -30,7 +30,7 @@ set -euo pipefail
 # call; nft knows the tables and chains the test installs.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 LIFECYCLE_UC="$LIB/service/lifecycle.uc"
 WORK_DIR="$(mktemp -d)"
 
@@ -54,7 +54,7 @@ fail() {
 }
 
 FAKE_LIB="$WORK_DIR/lib"
-STATE_DIR="$WORK_DIR/run/forkop"
+STATE_DIR="$WORK_DIR/run/prokop"
 TABLES="$WORK_DIR/tables"
 mkdir -p "$WORK_DIR/bin" "$TABLES" "$STATE_DIR" "$WORK_DIR/tmp" "$FAKE_LIB/service"
 # Copies, not links: the doubles below replace modules inside the library.
@@ -64,18 +64,18 @@ cp "$LIFECYCLE_UC" "$FAKE_LIB/service/lifecycle.uc"
 export TMPDIR="$WORK_DIR/tmp"
 export PATH="$WORK_DIR/bin:$PATH"
 export TEST_WORK="$WORK_DIR" TEST_LIB="$LIB" EVENTS TABLES
-export FORKOP_LIB="$FAKE_LIB"
-export FORKOP_BIN="$WORK_DIR/bin/forkop"
-export FORKOP_SERVICE_INIT="$WORK_DIR/bin/init"
-export FORKOP_CONFIG_FILE="$WORK_DIR/forkop.conf"
-export FORKOP_RUNTIME_STATE_DIR="$STATE_DIR"
-export FORKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/forkop.reload.lock"
-export FORKOP_PENDING_RELOAD_FILE="$STATE_DIR/reload.pending"
-export FORKOP_INTERNAL_CONFIG_TRIGGER_GUARD="$WORK_DIR/run/forkop.internal-config-change"
-export FORKOP_MANAGED_UPGRADE_SING_BOX_MARKER="$WORK_DIR/run/managed-upgrade-sing-box"
-export FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
+export PROKOP_LIB="$FAKE_LIB"
+export PROKOP_BIN="$WORK_DIR/bin/prokop"
+export PROKOP_SERVICE_INIT="$WORK_DIR/bin/init"
+export PROKOP_CONFIG_FILE="$WORK_DIR/prokop.conf"
+export PROKOP_RUNTIME_STATE_DIR="$STATE_DIR"
+export PROKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/prokop.reload.lock"
+export PROKOP_PENDING_RELOAD_FILE="$STATE_DIR/reload.pending"
+export PROKOP_INTERNAL_CONFIG_TRIGGER_GUARD="$WORK_DIR/run/prokop.internal-config-change"
+export PROKOP_MANAGED_UPGRADE_SING_BOX_MARKER="$WORK_DIR/run/managed-upgrade-sing-box"
+export PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
 export TMP_SING_BOX_FOLDER="$WORK_DIR/tmp/sing-box"
-export FORKOP_UI_ACTION_TRACKED=1
+export PROKOP_UI_ACTION_TRACKED=1
 
 # Nothing here may reach the host's syslog, nftables or init scripts. nft
 # knows only what the test installs: a table is $TABLES/<table>, a chain is
@@ -93,7 +93,7 @@ esac
 SH
 printf '#!/bin/sh\nexit 0\n' >"$WORK_DIR/bin/ip"
 printf '#!/bin/sh\nprintf "%%s\\n" "init $*" >>"$EVENTS"\nexit 0\n' >"$WORK_DIR/bin/init"
-printf '#!/bin/sh\nprintf "%%s\\n" "forkop $*" >>"$EVENTS"\nexit 0\n' >"$WORK_DIR/bin/forkop"
+printf '#!/bin/sh\nprintf "%%s\\n" "prokop $*" >>"$EVENTS"\nexit 0\n' >"$WORK_DIR/bin/prokop"
 chmod +x "$WORK_DIR/bin/"*
 
 # Every module records "<module> <arguments>" and succeeds, except the state
@@ -118,12 +118,12 @@ let tables = getenv("TABLES");
 if (name == "nft/apply.uc" && mode == "remove-dpi-transition-guard")
     system("rm -f " + q(tables + "/" + ARGV[1] + "DpiGuard"));
 if (name == "nft/apply.uc" && mode == "nft-rebuild-runtime-from-uci")
-    system("rm -f " + q(tables + "/ForkopTable") + " " + q(tables) + "/ForkopTable.*");
+    system("rm -f " + q(tables + "/ProkopTable") + " " + q(tables) + "/ProkopTable.*");
 if (name == "service/state.uc" && mode == "sing-box-process-conflict")
     exit(1);
-if (name == "service/state.uc" && mode == "forkop-stably-running")
+if (name == "service/state.uc" && mode == "prokop-stably-running")
     exit((getenv("FAKE_STABLE") || "") == "1" ? 0 : 1);
-if (name == "service/state.uc" && mode == "forkop-running")
+if (name == "service/state.uc" && mode == "prokop-running")
     exit((getenv("FAKE_RUNNING") || "") == "1" ? 0 : 1);
 if (name == "service/state.uc" && mode == "has-list-update-sources")
     exit(1);
@@ -143,12 +143,12 @@ done
 reset_case() {
   : >"$EVENTS"
   : >"$WORK_DIR/syslog"
-  rm -rf "${STATE_DIR:?}"/* "$FORKOP_RELOAD_LOCK_DIR" "${TABLES:?}"/*
-  printf "config settings 'settings'\n\toption dns_server '1.1.1.1'\n" >"$WORK_DIR/forkop.conf"
-  printf 'forkop.settings=settings\nforkop.settings.yacd_secret_key=0123456789abcdef\nforkop.settings.dont_touch_dhcp=1\n' \
+  rm -rf "${STATE_DIR:?}"/* "$PROKOP_RELOAD_LOCK_DIR" "${TABLES:?}"/*
+  printf "config settings 'settings'\n\toption dns_server '1.1.1.1'\n" >"$WORK_DIR/prokop.conf"
+  printf 'prokop.settings=settings\nprokop.settings.yacd_secret_key=0123456789abcdef\nprokop.settings.dont_touch_dhcp=1\n' \
     >"$WORK_DIR/uci.state"
   : >"$STATE_DIR/start.explicit"
-  : >"$TABLES/ForkopTable"
+  : >"$TABLES/ProkopTable"
   unset FAKE_RUNNING FAKE_STABLE
 }
 
@@ -160,9 +160,9 @@ lifecycle() {
   timeout -s KILL 60 ucode -L "$FAKE_LIB" "$FAKE_LIB/service/lifecycle.uc" "$@" >/dev/null 2>&1 || status=$?
   printf '%s\n' "$status"
 }
-kept_dpi_guard() { : >"$TABLES/ForkopTableDpiGuard"; }
-kept_transition_guard() { : >"$TABLES/ForkopTable.forkop_transition_guard"; }
-restore_guard() { : >"$TABLES/ForkopConfigRestoreDpiGuard"; }
+kept_dpi_guard() { : >"$TABLES/ProkopTableDpiGuard"; }
+kept_transition_guard() { : >"$TABLES/ProkopTable.prokop_transition_guard"; }
+restore_guard() { : >"$TABLES/ProkopConfigRestoreDpiGuard"; }
 
 # A refused reload or start touched nothing: no plan, no DPI switch, no
 # teardown or rebuild, no confirmation; it says why and what recovers.
@@ -197,16 +197,16 @@ reset_case
 kept_dpi_guard
 export FAKE_RUNNING=1
 refused_untouched "reload under the kept DPI guard" "$(lifecycle reload wan-up)"
-logged 'restart Forkop' || fail "reload under the kept DPI guard: no restart guidance in the log"
-[ -e "$TABLES/ForkopTableDpiGuard" ] || fail "reload removed the kept DPI guard"
+logged 'restart Prokop' || fail "reload under the kept DPI guard: no restart guidance in the log"
+[ -e "$TABLES/ProkopTableDpiGuard" ] || fail "reload removed the kept DPI guard"
 for stable in 0 1; do
   reset_case
   kept_dpi_guard
   [ "$stable" = 1 ] && export FAKE_STABLE=1
   refused_untouched "start (stable=$stable) under the kept DPI guard" "$(lifecycle start)"
-  logged 'restart Forkop' || fail "start (stable=$stable) under the kept DPI guard: no restart guidance in the log"
+  logged 'restart Prokop' || fail "start (stable=$stable) under the kept DPI guard: no restart guidance in the log"
   has_event '^diagnostics/health.uc record start failure' || fail "start (stable=$stable): the refusal was not recorded as a failed start"
-  [ -e "$TABLES/ForkopTableDpiGuard" ] || fail "start (stable=$stable) removed the kept DPI guard"
+  [ -e "$TABLES/ProkopTableDpiGuard" ] || fail "start (stable=$stable) removed the kept DPI guard"
   grep -qx 'reason=runtime_guard_active' "$STATE_DIR/start.failure" 2>/dev/null ||
     fail "start (stable=$stable): the refusal did not mark the start as not to be retried"
 done
@@ -217,8 +217,8 @@ done
 reset_case
 kept_dpi_guard
 [ "$(lifecycle reload wan-up)" = 0 ] || fail "a reload of an incomplete runtime under the kept DPI guard failed"
-logged 'restarting Forkop runtime' || fail "the reload of an incomplete runtime did not restart it"
-[ ! -e "$TABLES/ForkopTableDpiGuard" ] || fail "the restart of an incomplete runtime left the kept DPI guard"
+logged 'restarting Prokop runtime' || fail "the reload of an incomplete runtime did not restart it"
+[ ! -e "$TABLES/ProkopTableDpiGuard" ] || fail "the restart of an incomplete runtime left the kept DPI guard"
 has_event '^nft/apply.uc nft-rebuild-runtime-from-uci' || fail "the restart of an incomplete runtime did not build it again"
 ! has_event '^service/reload.uc plan-state-files' || fail "the reload of an incomplete runtime planned a reload over the guard"
 
@@ -227,17 +227,17 @@ has_event '^nft/apply.uc nft-rebuild-runtime-from-uci' || fail "the restart of a
 #     lifecycle start behind the real service/initd.uc start-service.
 reset_case
 kept_dpi_guard
-cat >"$WORK_DIR/bin/forkop" <<'SH'
+cat >"$WORK_DIR/bin/prokop" <<'SH'
 #!/bin/sh
-printf '%s\n' "forkop $*" >>"$EVENTS"
-exec ucode -L "$FORKOP_LIB" "$FORKOP_LIB/service/lifecycle.uc" "$@"
+printf '%s\n' "prokop $*" >>"$EVENTS"
+exec ucode -L "$PROKOP_LIB" "$PROKOP_LIB/service/lifecycle.uc" "$@"
 SH
 status=0
-env FORKOP_START_RUNTIME_LOCK_WAIT_SECONDS=0 FORKOP_START_RETRY_DELAY_SECONDS=300 \
+env PROKOP_START_RUNTIME_LOCK_WAIT_SECONDS=0 PROKOP_START_RETRY_DELAY_SECONDS=300 \
   timeout -s KILL 60 ucode -L "$LIB" "$LIB/service/initd.uc" start-service triggered "$$" >/dev/null 2>&1 || status=$?
-printf '#!/bin/sh\nprintf "%%s\\n" "forkop $*" >>"$EVENTS"\nexit 0\n' >"$WORK_DIR/bin/forkop"
+printf '#!/bin/sh\nprintf "%%s\\n" "prokop $*" >>"$EVENTS"\nexit 0\n' >"$WORK_DIR/bin/prokop"
 [ "$status" != 0 ] || fail "init.d start under the kept DPI guard succeeded"
-has_event '^forkop start' || fail "init.d start did not run the lifecycle start"
+has_event '^prokop start' || fail "init.d start did not run the lifecycle start"
 [ ! -e "$STATE_DIR/start.retry" ] || fail "init.d scheduled a retry of a start refused for the kept guard"
 [ ! -e "$STATE_DIR/start-retry.pid" ] || fail "init.d launched a retry of a start refused for the kept guard"
 logged 'retry suppressed.*runtime_guard_active' || fail "init.d did not log why the start is not retried"
@@ -257,7 +257,7 @@ logged 'failed-transition guard is still active' || fail "duplicate start under 
 reset_case
 kept_transition_guard
 [ "$(lifecycle start)" = 0 ] || fail "a cold start over a kept transition chain failed"
-[ ! -e "$TABLES/ForkopTable.forkop_transition_guard" ] || fail "fixture: the cold start did not rebuild the production table"
+[ ! -e "$TABLES/ProkopTable.prokop_transition_guard" ] || fail "fixture: the cold start did not rebuild the production table"
 confirmed || fail "a cold start that rebuilt the production table did not confirm"
 
 # 4. The recovery the page names: a restart. Its stop removes the kept DPI
@@ -267,8 +267,8 @@ kept_dpi_guard
 kept_transition_guard
 export FAKE_STABLE=1
 [ "$(lifecycle restart)" = 0 ] || fail "the restart did not recover from the kept guards"
-[ ! -e "$TABLES/ForkopTableDpiGuard" ] || fail "the restart left the kept DPI guard"
-[ ! -e "$TABLES/ForkopTable.forkop_transition_guard" ] || fail "the restart left the kept transition chain"
+[ ! -e "$TABLES/ProkopTableDpiGuard" ] || fail "the restart left the kept DPI guard"
+[ ! -e "$TABLES/ProkopTable.prokop_transition_guard" ] || fail "the restart left the kept transition chain"
 has_event '^nft/apply.uc nft-rebuild-runtime-from-uci' || fail "the restart did not build the runtime again"
 
 # 5. The guard of a restore that ended needs_attention: a reload goes on
@@ -293,6 +293,6 @@ status="$(lifecycle start)"
 logged 'runtime_guard_active' || fail "duplicate start under the restore guard: reason not logged"
 logged 'restore the last known working snapshot' || fail "duplicate start under the restore guard: no recovery named"
 ! confirmed || fail "duplicate start under the restore guard confirmed the working configuration"
-[ -e "$TABLES/ForkopConfigRestoreDpiGuard" ] || fail "duplicate start removed the restore guard"
+[ -e "$TABLES/ProkopConfigRestoreDpiGuard" ] || fail "duplicate start removed the restore guard"
 
 echo "runtime_guard_lifecycle: PASS"

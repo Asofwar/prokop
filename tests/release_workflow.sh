@@ -17,8 +17,8 @@ grep -Fq 'elif [ -f "docs/releases/$VERSION.md" ]; then' "$workflow"
 grep -Fq 'RAW_RELEASE_NOTES="$(cat "docs/releases/$VERSION.md")"' "$workflow"
 
 # The bundle and its catalog describe the fork's channel and releases.
-grep -Fq 'FORKOP_RELEASE_BASE_URL: https://asofwar.github.io/forkop' "$workflow"
-grep -Fq 'FORKOP_RELEASE_REPO: ${{ github.repository }}' "$workflow"
+grep -Fq 'PROKOP_RELEASE_BASE_URL: https://asofwar.github.io/prokop' "$workflow"
+grep -Fq 'PROKOP_RELEASE_REPO: ${{ github.repository }}' "$workflow"
 grep -Fq 'GITHUB_TOKEN: ${{ github.token }}' "$workflow"
 # Every release carries the installer of its own commit, which the GitHub
 # Releases one-liner and the Pages channel serve.

@@ -1,9 +1,9 @@
 #!/bin/sh
 set -eu
 ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
-LIB="$ROOT/forkop/files/usr/lib"
+LIB="$ROOT/prokop/files/usr/lib"
 SCRIPT="$LIB/diagnostics/connectivity.uc"
-if ucode -L "$LIB" "$SCRIPT" fixture 'bad;touch /tmp/forkop-injected' TCP 443 0 >/dev/null; then exit 1; fi
+if ucode -L "$LIB" "$SCRIPT" fixture 'bad;touch /tmp/prokop-injected' TCP 443 0 >/dev/null; then exit 1; fi
 node - "$LIB" "$SCRIPT" <<'JS'
 const { execFileSync } = require('node:child_process');
 const assert = require('node:assert/strict');

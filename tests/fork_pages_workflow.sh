@@ -30,10 +30,10 @@ require '      id-token: write'
 require '  group: pages'
 require '  cancel-in-progress: false'
 # The site is rebuilt for the fork's address from this repository's releases.
-require '          FORKOP_RELEASE_BASE_URL: https://asofwar.github.io/forkop'
-require '          FORKOP_RELEASE_REPO: ${{ github.repository }}'
-require '        run: python3 ops/pages/build-site.py --output "$RUNNER_TEMP/forkop-site"'
-require '          path: ${{ runner.temp }}/forkop-site'
+require '          PROKOP_RELEASE_BASE_URL: https://asofwar.github.io/prokop'
+require '          PROKOP_RELEASE_REPO: ${{ github.repository }}'
+require '        run: python3 ops/pages/build-site.py --output "$RUNNER_TEMP/prokop-site"'
+require '          path: ${{ runner.temp }}/prokop-site'
 require '      name: github-pages'
 grep -Eq '^      - uses: actions/checkout@v[0-9]+\.[0-9]+\.[0-9]+$' "$WORKFLOW" ||
   fail "checkout is not pinned to an exact version"

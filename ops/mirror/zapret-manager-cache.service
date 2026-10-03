@@ -1,5 +1,5 @@
 [Unit]
-Description=Forkop Zapret-Manager allowlisted caching proxy
+Description=Prokop Zapret-Manager allowlisted caching proxy
 Wants=network-online.target
 After=network-online.target
 

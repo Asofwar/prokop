@@ -28,8 +28,8 @@ set -euo pipefail
 # source defers the apply to a new list-update worker.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-REAL_LIB="$ROOT_DIR/forkop/files/usr/lib"
-INITD="$ROOT_DIR/forkop/files/etc/init.d/forkop"
+REAL_LIB="$ROOT_DIR/prokop/files/usr/lib"
+INITD="$ROOT_DIR/prokop/files/etc/init.d/prokop"
 REAL_UCODE="$(command -v ucode)"
 WORK="$(mktemp -d)"
 # shellcheck source=tests/helpers/wait.sh
@@ -72,20 +72,20 @@ printf 'exit(1);\n' >"$LIB/singbox/ruleset_cache.uc"
 
 export WORK EVENTS REAL_UCODE REAL_INITD="$INITD" TEST_LIB="$LIB"
 export PATH="$WORK/bin:$PATH"
-export FORKOP_LIB="$LIB"
-export FORKOP_BIN="$WORK/bin/forkop"
-export FORKOP_SERVICE_INIT="$WORK/init.d"
-export FORKOP_UCI_STATE_FILE="$WORK/uci.state"
-export FORKOP_RUNTIME_STATE_DIR="$RUN"
-export FORKOP_RELOAD_LOCK_DIR="$RUN/reload.lock"
-export FORKOP_PENDING_RELOAD_FILE="$RUN/reload.pending"
-export FORKOP_LIST_UPDATE_PID_FILE="$RUN/list.pid"
-export FORKOP_INTERNAL_CONFIG_TRIGGER_GUARD="$WORK/internal-config-change"
-export FORKOP_RUNTIME_LIST_GENERATION_DIR="$WORK/generation"
-export FORKOP_PERSISTENT_LIST_CACHE_DIR="$WORK/cache"
-export FORKOP_RULESET_CACHE_DIR="$WORK/ruleset-cache"
+export PROKOP_LIB="$LIB"
+export PROKOP_BIN="$WORK/bin/prokop"
+export PROKOP_SERVICE_INIT="$WORK/init.d"
+export PROKOP_UCI_STATE_FILE="$WORK/uci.state"
+export PROKOP_RUNTIME_STATE_DIR="$RUN"
+export PROKOP_RELOAD_LOCK_DIR="$RUN/reload.lock"
+export PROKOP_PENDING_RELOAD_FILE="$RUN/reload.pending"
+export PROKOP_LIST_UPDATE_PID_FILE="$RUN/list.pid"
+export PROKOP_INTERNAL_CONFIG_TRIGGER_GUARD="$WORK/internal-config-change"
+export PROKOP_RUNTIME_LIST_GENERATION_DIR="$WORK/generation"
+export PROKOP_PERSISTENT_LIST_CACHE_DIR="$WORK/cache"
+export PROKOP_RULESET_CACHE_DIR="$WORK/ruleset-cache"
 export TMP_RULESET_FOLDER="$WORK/rulesets"
-export NFT_TABLE_NAME=forkop
+export NFT_TABLE_NAME=prokop
 MARKER="$RUN/list-update.reload"
 RULESET="$WORK/rulesets/alpha-remote-domains-ruleset.json"
 
@@ -128,7 +128,7 @@ printf '%s.example\n' "${name%.txt}" >"$output"
 SH
 cat >"$WORK/bin/nft" <<'SH'
 #!/bin/sh
-[ "$*" = '-j list table inet forkop' ] && printf '{"nftables":[]}\n'
+[ "$*" = '-j list table inet prokop' ] && printf '{"nftables":[]}\n'
 exit 0
 SH
 cat >"$WORK/bin/logger" <<'SH'
@@ -136,7 +136,7 @@ cat >"$WORK/bin/logger" <<'SH'
 printf '%s\n' "$*" >>"$WORK/log"
 SH
 # The lifecycle reload (see the header).
-cat >"$WORK/bin/forkop" <<'SH'
+cat >"$WORK/bin/prokop" <<'SH'
 #!/bin/sh
 case "$1" in
   get_status) printf '{"running":true}\n'; exit 0 ;;
@@ -144,23 +144,23 @@ case "$1" in
   *) exit 0 ;;
 esac
 reason="${2:-}"
-if [ "$reason" != list-content ] && [ -e "$FORKOP_RUNTIME_STATE_DIR/list-update.reload" ]; then
+if [ "$reason" != list-content ] && [ -e "$PROKOP_RUNTIME_STATE_DIR/list-update.reload" ]; then
   reason=list-content
 fi
 printf 'reload %s\n' "$reason" >>"$EVENTS"
 if [ "$reason" = list-content ]; then
-  if ! ucode -L "$FORKOP_LIB" "$FORKOP_LIB/components/updates.uc" apply-list-cache >/dev/null 2>&1; then
+  if ! ucode -L "$PROKOP_LIB" "$PROKOP_LIB/components/updates.uc" apply-list-cache >/dev/null 2>&1; then
     printf 'list-content apply failed\n' >>"$EVENTS"
     exit 1
   fi
-  rm -f "$FORKOP_RUNTIME_STATE_DIR/list-update.reload" "$WORK/sources.changed"
+  rm -f "$PROKOP_RUNTIME_STATE_DIR/list-update.reload" "$WORK/sources.changed"
   printf 'list-content applied\n' >>"$EVENTS"
   exit 0
 fi
 if [ -e "$WORK/sources.changed" ]; then
   rm -f "$WORK/sources.changed"
-  printf '1\n' >"$FORKOP_RUNTIME_STATE_DIR/list-update.reload"
-  ucode -L "$FORKOP_LIB" "$FORKOP_LIB/components/updates.uc" list-update </dev/null >>"$WORK/worker.log" 2>&1 &
+  printf '1\n' >"$PROKOP_RUNTIME_STATE_DIR/list-update.reload"
+  ucode -L "$PROKOP_LIB" "$PROKOP_LIB/components/updates.uc" list-update </dev/null >>"$WORK/worker.log" 2>&1 &
   printf '%s\n' "$!" >>"$WORK/bg.pids"
   printf 'list worker started\n' >>"$EVENTS"
 fi
@@ -173,8 +173,8 @@ cat >"$WORK/init.d" <<'SH'
 action="$1"; shift
 initscript="$REAL_INITD"
 . "$REAL_INITD"
-FORKOP_LIB="$TEST_LIB"
-FORKOP_INITD_UC="$TEST_LIB/service/initd.uc"
+PROKOP_LIB="$TEST_LIB"
+PROKOP_INITD_UC="$TEST_LIB/service/initd.uc"
 [ "$action" = reload ] || exit 1
 reload_service "$@"
 SH
@@ -182,12 +182,12 @@ chmod +x "$WORK/bin/"* "$WORK/init.d"
 
 set_source() {
   cat >"$WORK/uci.state" <<UCI
-forkop.settings=settings
-forkop.settings.update_interval=1d
-forkop.alpha=section
-forkop.alpha.enabled=1
-forkop.alpha.action=connection
-forkop.alpha.remote_domain_lists=https://lists.test/$1
+prokop.settings=settings
+prokop.settings.update_interval=1d
+prokop.alpha=section
+prokop.alpha.enabled=1
+prokop.alpha.action=connection
+prokop.alpha.remote_domain_lists=https://lists.test/$1
 UCI
 }
 

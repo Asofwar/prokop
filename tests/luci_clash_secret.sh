@@ -13,7 +13,7 @@ const path = require('path');
 const assert = require('assert/strict');
 const root = process.argv[2];
 const settings = fs.readFileSync(
-  path.join(root, 'luci-app-forkop/htdocs/luci-static/resources/view/forkop/settings.js'), 'utf8');
+  path.join(root, 'luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js'), 'utf8');
 
 const start = settings.indexOf('"yacd_secret_key"');
 assert(start >= 0, 'the secret option exists');

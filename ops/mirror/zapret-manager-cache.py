@@ -107,7 +107,7 @@ def download(url, target):
             parsed = validate_url(url, redirected=hop > 0)
             with closing(PinnedHTTPS(parsed.hostname, timeout=15)) as conn:
                 conn.request('GET', parsed.path + ('?' + parsed.query if parsed.query else ''),
-                             headers={'User-Agent': 'Forkop-Mirror/1.0', 'Accept-Encoding': 'identity'})
+                             headers={'User-Agent': 'Prokop-Mirror/1.0', 'Accept-Encoding': 'identity'})
                 response = conn.getresponse()
                 if response.status in (301, 302, 303, 307, 308):
                     url = urljoin(url, response.getheader('Location', ''))
@@ -194,7 +194,7 @@ class CacheHandler(BaseHTTPRequestHandler):
             self.send_header('Content-Type', 'application/octet-stream')
             self.send_header('Content-Length', str(size))
             self.send_header('Cache-Control', 'public, max-age=' + ('60' if stale else str(TTL)))
-            self.send_header('X-Forkop-Cache', 'stale' if stale else 'fresh')
+            self.send_header('X-Prokop-Cache', 'stale' if stale else 'fresh')
             self.send_header('X-Content-Type-Options', 'nosniff')
             self.end_headers()
             if body:

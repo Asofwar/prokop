@@ -12,7 +12,7 @@ set -euo pipefail
 # directory still being set up counts as held for a grace period, a dead
 # owner's lock is taken over and only the owner releases it. The previous
 # format (full-uninstall.sh, which runs while the packages are removed and
-# cannot load Forkop modules) holds the lock while its pid runs.
+# cannot load Prokop modules) holds the lock while its pid runs.
 #
 # The action is the real components/action.uc with an unknown component: it
 # takes the lock, then fails with "Unknown component action" and releases it.
@@ -23,7 +23,7 @@ set -euo pipefail
 # component action takes the lock and runs alongside the removal.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK="$(mktemp -d)"
 # shellcheck source=tests/helpers/wait.sh
 . "$ROOT_DIR/tests/helpers/wait.sh"
@@ -58,9 +58,9 @@ SH
 chmod +x "$WORK/bin/"*
 
 action() {
-  PATH="$WORK/bin:$PATH" FORKOP_RUNTIME_STATE_DIR="$WORK/run" UPDATES_LOCK_DIR="${ACTION_LOCK:-$LOCK}" \
-    FORKOP_BIN="$WORK/no-forkop" FORKOP_SERVICE_INIT="$WORK/no-init" FORKOP_OPKG_RECOVERY_DIR="$WORK/recovery" \
-    FORKOP_MANAGED_UPGRADE_SING_BOX_MARKER="$WORK/managed-upgrade" \
+  PATH="$WORK/bin:$PATH" PROKOP_RUNTIME_STATE_DIR="$WORK/run" UPDATES_LOCK_DIR="${ACTION_LOCK:-$LOCK}" \
+    PROKOP_BIN="$WORK/no-prokop" PROKOP_SERVICE_INIT="$WORK/no-init" PROKOP_OPKG_RECOVERY_DIR="$WORK/recovery" \
+    PROKOP_MANAGED_UPGRADE_SING_BOX_MARKER="$WORK/managed-upgrade" \
     ucode -L "$LIB" "$LIB/components/action.uc" component-action bogus nothing 2>/dev/null || true
 }
 state() { ucode -L "$LIB" "$LIB/service/state.uc" "$@"; }
@@ -122,7 +122,7 @@ grep -q 'Unknown component action' "$WORK/first.out" || fail "the held component
 
 # 6. full-uninstall.sh start hands the lock to its worker before it exits.
 UROOT="$WORK/root"
-ACTION_LOCK="$UROOT/var/run/forkop/component-action.lock"
+ACTION_LOCK="$UROOT/var/run/prokop/component-action.lock"
 mkdir -p "$UROOT"
 : >"$WORK/worker.hold"
 # The worker is started as `sh <job>/worker.sh worker ...`; it waits here,
@@ -138,7 +138,7 @@ esac
 exec /bin/sh "\$@"
 SH
 chmod +x "$WORK/bin/sh"
-PATH="$WORK/bin:$PATH" FORKOP_UNINSTALL_ROOT="$UROOT" FORKOP_MIRROR_BASE_URL="http://mirror.test" \
+PATH="$WORK/bin:$PATH" PROKOP_UNINSTALL_ROOT="$UROOT" PROKOP_MIRROR_BASE_URL="http://mirror.test" \
   /bin/sh "$LIB/full-uninstall.sh" start >"$WORK/uninstall.out" </dev/null ||
   fail "full-uninstall.sh start failed: $(cat "$WORK/uninstall.out")"
 wait_until 20 test -e "$WORK/worker.started" || fail "full-uninstall.sh did not start its worker"

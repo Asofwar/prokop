@@ -89,7 +89,7 @@ const references = [
     // row is parsed in the same save, after LuCI validated the Settings
     // fields (Map.save -> checkDepends -> triggerValidation, then parse).
     const loadedValues = (env) => {
-      env.uci.state.values = { forkop: JSON.parse(JSON.stringify(env.uci.data)) };
+      env.uci.state.values = { prokop: JSON.parse(JSON.stringify(env.uci.data)) };
     };
     for (const [label, value, enable, accepted] of [
       ['enabling the disabled section', 'off', '1', true],
@@ -118,11 +118,11 @@ const references = [
       const env = createEnvironment({ version, config: settingsConfig({ dns_detour_enabled: '1',
         dns_detour_section: 'dpi' }) });
       const shell = env.shell();
-      env.main.ForkopShellMethods.getUiCapabilities = () => Promise.resolve({ success: true,
+      env.main.ProkopShellMethods.getUiCapabilities = () => Promise.resolve({ success: true,
         data: { zapret_installed: 1, zapret2_installed: 1, byedpi_installed: 1 } });
       await shell.loadUiCapabilities();
       const settings = await env.openSettings(shell.uiCapabilities);
-      env.window.dispatchEvent(new env.CustomEvent(env.main.FORKOP_ACTION_PROVIDERS_AVAILABILITY_EVENT,
+      env.window.dispatchEvent(new env.CustomEvent(env.main.PROKOP_ACTION_PROVIDERS_AVAILABILITY_EVENT,
         { detail: { zapretInstalled: false, zapret2Installed: true, byedpiInstalled: true } }));
       await assert.rejects(settings.save(), /The DPI provider of the selected section is not installed/);
       assert.equal(env.uci.data.settings.dns_detour_section, 'dpi');
@@ -192,7 +192,7 @@ const references = [
       const env = createEnvironment({ version, config: settingsConfig({ dns_detour_enabled: '1',
         dns_detour_section: 'dpi' }) });
       const shell = env.shell();
-      env.main.ForkopShellMethods.getUiCapabilities = () => Promise.resolve({ success: true,
+      env.main.ProkopShellMethods.getUiCapabilities = () => Promise.resolve({ success: true,
         data: { zapret_installed: 0, zapret2_installed: 0, byedpi_installed: 0 } });
       await shell.loadUiCapabilities();
       assert.equal(shell.uiCapabilities.zapretInstalled, false);
@@ -200,7 +200,7 @@ const references = [
       await assert.rejects(settings.save(), /not installed/);
 
       // Components installed Zapret.
-      env.window.dispatchEvent(new env.CustomEvent(env.main.FORKOP_ACTION_PROVIDERS_AVAILABILITY_EVENT,
+      env.window.dispatchEvent(new env.CustomEvent(env.main.PROKOP_ACTION_PROVIDERS_AVAILABILITY_EVENT,
         { detail: { zapretInstalled: true, zapret2Installed: false, byedpiInstalled: false } }));
       assert.equal(shell.uiCapabilities.zapretInstalled, true, 'shell capabilities were not refreshed');
       // Components is a tab of the same page: Settings saves without a reload.

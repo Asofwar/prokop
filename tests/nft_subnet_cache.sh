@@ -8,7 +8,7 @@ set -euo pipefail
 # port filter is prepared anew, and a damaged cache entry is never used.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT HUP INT TERM
 fail() { printf 'FAIL: %s\n' "$1" >&2; exit 1; }
@@ -23,7 +23,7 @@ cat >"$WORK/bin/logger" <<'SH'
 printf 'logger %s\n' "$*" >>"$NFT_LOG"
 SH
 chmod +x "$WORK/bin/nft" "$WORK/bin/logger"
-export PATH="$WORK/bin:$PATH" FORKOP_NFT_SUBNET_CACHE_DIR="$WORK/cache" NFT_LOG
+export PATH="$WORK/bin:$PATH" PROKOP_NFT_SUBNET_CACHE_DIR="$WORK/cache" NFT_LOG
 
 cat >"$WORK/fixture.json" <<'JSON'
 { "section": [
@@ -42,9 +42,9 @@ entries() { find "$WORK/cache" -name '*.json' 2>/dev/null | wc -l; }
 
 import all "$WORK/rules.json" "$WORK/cold.log"
 [ "$(entries)" = 1 ] || fail "the prepared import is cached: $(ls "$WORK/cache" 2>&1)"
-grep -q '^add element inet T forkop_rule_all_subnets { 198.51.100.0/24 }' "$WORK/cold.log" || fail "IPv4 subnet added: $(cat "$WORK/cold.log")"
-grep -q '^add element inet T forkop_rule_all_subnets6 { 2001:db8::/48 }' "$WORK/cold.log" || fail "IPv6 subnet added"
-grep -q '^add element inet T forkop_rule_all_ip_ports { 203.0.113.5 . 8443 }' "$WORK/cold.log" || fail "port-scoped subnet added"
+grep -q '^add element inet T prokop_rule_all_subnets { 198.51.100.0/24 }' "$WORK/cold.log" || fail "IPv4 subnet added: $(cat "$WORK/cold.log")"
+grep -q '^add element inet T prokop_rule_all_subnets6 { 2001:db8::/48 }' "$WORK/cold.log" || fail "IPv6 subnet added"
+grep -q '^add element inet T prokop_rule_all_ip_ports { 203.0.113.5 . 8443 }' "$WORK/cold.log" || fail "port-scoped subnet added"
 
 # The same rule set again: the same commands, from the cache, without the
 # extraction (its output files are left untouched).

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT
 
@@ -36,7 +36,7 @@ SH
 cat >"$WORK_DIR/bin/nft" <<'SH'
 #!/bin/sh
 printf '%s\n' "$*" >>"$CASE_DIR/nft.log"
-if [ "$*" = '-j list table inet forkop' ]; then
+if [ "$*" = '-j list table inet prokop' ]; then
   [ "$FAIL_PHASE" != nft ] || exit 1
   printf '{"nftables":[]}\n'
   exit 0
@@ -44,7 +44,7 @@ fi
 # None of these aborted transactions is allowed to mutate nftables.
 exit 1
 SH
-cat >"$WORK_DIR/bin/init-forkop" <<'SH'
+cat >"$WORK_DIR/bin/init-prokop" <<'SH'
 #!/bin/sh
 printf '%s\n' "$*" >>"$CASE_DIR/reload.log"
 SH
@@ -59,31 +59,31 @@ for phase in download ruleset nft; do
   printf '1\n' >"$case_dir/run/list-update.reload"
   printf 'force\n' >"$case_dir/run/ruleset-refresh-after-list"
   cat >"$case_dir/uci.state" <<'UCI'
-forkop.settings=settings
-forkop.settings.update_interval=1d
-forkop.alpha=section
-forkop.alpha.enabled=1
-forkop.alpha.action=connection
-forkop.alpha.remote_domain_lists=https://lists.test/domains.txt
+prokop.settings=settings
+prokop.settings.update_interval=1d
+prokop.alpha=section
+prokop.alpha.enabled=1
+prokop.alpha.action=connection
+prokop.alpha.remote_domain_lists=https://lists.test/domains.txt
 UCI
   status=0
   generation_fail_phase=""
   [ "$phase" != nft ] || generation_fail_phase=nft-candidate-create
   env PATH="$WORK_DIR/bin:$PATH" \
-    FORKOP_LIST_GENERATION_FAIL_PHASE="$generation_fail_phase" \
-    FORKOP_RUNTIME_LIST_GENERATION_DIR="$case_dir/generation" \
-    FORKOP_RULESET_CACHE_DIR="$case_dir/ruleset-cache" \
+    PROKOP_LIST_GENERATION_FAIL_PHASE="$generation_fail_phase" \
+    PROKOP_RUNTIME_LIST_GENERATION_DIR="$case_dir/generation" \
+    PROKOP_RULESET_CACHE_DIR="$case_dir/ruleset-cache" \
     CASE_DIR="$case_dir" FAIL_PHASE="$phase" \
-    FORKOP_LIB="$FORKOP_LIB" \
-    FORKOP_UCI_STATE_FILE="$case_dir/uci.state" \
+    PROKOP_LIB="$PROKOP_LIB" \
+    PROKOP_UCI_STATE_FILE="$case_dir/uci.state" \
     TMP_RULESET_FOLDER="$case_dir/rulesets" \
-    FORKOP_RUNTIME_STATE_DIR="$case_dir/run" \
-    FORKOP_RELOAD_LOCK_DIR="$case_dir/run/reload.lock" \
-    FORKOP_LIST_UPDATE_PID_FILE="$case_dir/run/list.pid" \
-    FORKOP_PERSISTENT_LIST_CACHE_DIR="$case_dir/cache" \
-    FORKOP_SERVICE_INIT="$WORK_DIR/bin/init-forkop" \
-    NFT_TABLE_NAME=forkop \
-    ucode -L "$FORKOP_LIB" "$FORKOP_LIB/components/updates.uc" list-update >"$case_dir/output.log" 2>&1 || status="$?"
+    PROKOP_RUNTIME_STATE_DIR="$case_dir/run" \
+    PROKOP_RELOAD_LOCK_DIR="$case_dir/run/reload.lock" \
+    PROKOP_LIST_UPDATE_PID_FILE="$case_dir/run/list.pid" \
+    PROKOP_PERSISTENT_LIST_CACHE_DIR="$case_dir/cache" \
+    PROKOP_SERVICE_INIT="$WORK_DIR/bin/init-prokop" \
+    NFT_TABLE_NAME=prokop \
+    ucode -L "$PROKOP_LIB" "$PROKOP_LIB/components/updates.uc" list-update >"$case_dir/output.log" 2>&1 || status="$?"
   [ "$status" -eq 1 ] || fail "$phase failure must abort the update"
   [ -s "$case_dir/network.log" ] || fail "$phase did not reach source download"
   cmp "$case_dir/before.json" "$case_dir/rulesets/alpha-remote-domains-ruleset.json" || fail "$phase changed active rules"

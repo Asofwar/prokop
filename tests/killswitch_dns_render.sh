@@ -2,8 +2,8 @@
 set -eo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-KS_UC="$FORKOP_LIB/killswitch/runtime.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+KS_UC="$PROKOP_LIB/killswitch/runtime.uc"
 WORK_DIR="$(mktemp -d)"
 OUT="$WORK_DIR/blocked.servers"
 
@@ -82,7 +82,7 @@ export SB_LOG="$WORK_DIR/sb.log"
 export KILLSWITCH_CACHE_DIR="$WORK_DIR/cache"
 
 ks() {
-  ucode -L "$FORKOP_LIB" "$KS_UC" "$@"
+  ucode -L "$PROKOP_LIB" "$KS_UC" "$@"
 }
 
 summary="$(ks render-dns-fixture "$WORK_DIR/config.json" "main,late" "$OUT")" || fail "render failed: $summary"

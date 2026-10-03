@@ -2,8 +2,8 @@
 set -eo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-STATE_UC="$FORKOP_LIB/service/state.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+STATE_UC="$PROKOP_LIB/service/state.uc"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT
 
@@ -76,7 +76,7 @@ fi
 
 run_stop() {
   : >"$SLEEP_LOG"; : >"$LOGGER_LOG"
-  "${ISOLATE[@]}" ucode -L "$FORKOP_LIB" "$STATE_UC" stop-managed-sing-box-runtime "${1:-3}"
+  "${ISOLATE[@]}" ucode -L "$PROKOP_LIB" "$STATE_UC" stop-managed-sing-box-runtime "${1:-3}"
 }
 
 # 1. procd keeps reporting a PID that never clears: fail closed after the
@@ -114,7 +114,7 @@ stop_with_reused_pid() {
     kill -KILL "$decoy" 2>/dev/null
     wait "$decoy" 2>/dev/null
     printf "%s %s\n" "$rc" "${state:-gone}"
-  ' _ "$REAL_SLEEP" "$FORKOP_LIB" "$STATE_UC"
+  ' _ "$REAL_SLEEP" "$PROKOP_LIB" "$STATE_UC"
 }
 result="$(stop_with_reused_pid)"
 [ "${result%% *}" != 0 ] ||

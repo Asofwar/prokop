@@ -11,7 +11,7 @@ set -eu
 # restore's own reload drains it, so recovery stays possible while the
 # current configuration cannot reload and keeps failing to drain the queue.
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-LIB="$ROOT/forkop/files/usr/lib"
+LIB="$ROOT/prokop/files/usr/lib"
 SCRIPT="$LIB/config/snapshots.uc"
 REAL_UCODE="$(command -v ucode)"
 WORK="$(mktemp -d)"
@@ -22,34 +22,34 @@ cleanup() {
 trap cleanup EXIT HUP INT TERM
 fail() { printf 'FAIL: %s\n' "$1" >&2; exit 1; }
 
-export STATE="$WORK/state" REAL_UCODE TEST_LIB="$LIB" REAL_INITD="$ROOT/forkop/files/etc/init.d/forkop"
-export FORKOP_LIB="$LIB" FORKOP_BIN="$WORK/bin/forkop"
-export FORKOP_CONFIG_FILE="$WORK/forkop"
-export FORKOP_SNAPSHOT_DIR="$WORK/snapshots" FORKOP_SNAPSHOT_HASH_DIR="$WORK/hash"
+export STATE="$WORK/state" REAL_UCODE TEST_LIB="$LIB" REAL_INITD="$ROOT/prokop/files/etc/init.d/prokop"
+export PROKOP_LIB="$LIB" PROKOP_BIN="$WORK/bin/prokop"
+export PROKOP_CONFIG_FILE="$WORK/prokop"
+export PROKOP_SNAPSHOT_DIR="$WORK/snapshots" PROKOP_SNAPSHOT_HASH_DIR="$WORK/hash"
 # Changes staged with uci refuse a restore (UC-068): the test has its own
 # save directory, never the host's /tmp/.uci.
-export FORKOP_UCI_SAVEDIR="$WORK/uci-save"
-export FORKOP_AUTOTUNE_APPLY_STATE="$WORK/autotune-apply.json"
-export FORKOP_SNAPSHOT_LOCK_DIR="$WORK/run/config-snapshot.lock"
-export FORKOP_RUNTIME_STATE_DIR="$WORK/run/forkop"
-export FORKOP_PENDING_RELOAD_FILE="$WORK/run/forkop/reload.pending"
-export FORKOP_RELOAD_LOCK_DIR="$WORK/run/forkop.reload.lock"
-export FORKOP_RELOAD_COMMAND="$WORK/init.d" FORKOP_SERVICE_INIT="$WORK/init.d"
-mkdir -p "$WORK/bin" "$WORK/run/forkop" "$STATE"
+export PROKOP_UCI_SAVEDIR="$WORK/uci-save"
+export PROKOP_AUTOTUNE_APPLY_STATE="$WORK/autotune-apply.json"
+export PROKOP_SNAPSHOT_LOCK_DIR="$WORK/run/config-snapshot.lock"
+export PROKOP_RUNTIME_STATE_DIR="$WORK/run/prokop"
+export PROKOP_PENDING_RELOAD_FILE="$WORK/run/prokop/reload.pending"
+export PROKOP_RELOAD_LOCK_DIR="$WORK/run/prokop.reload.lock"
+export PROKOP_RELOAD_COMMAND="$WORK/init.d" PROKOP_SERVICE_INIT="$WORK/init.d"
+mkdir -p "$WORK/bin" "$WORK/run/prokop" "$STATE"
 echo absent > "$STATE/guard"
 
 # Lock helpers shared by the stand-ins: a live lifecycle action owns reload.lock.
 cat > "$WORK/lock.sh" <<'SH'
 hold_lock() {
-  mkdir "$FORKOP_RELOAD_LOCK_DIR"
+  mkdir "$PROKOP_RELOAD_LOCK_DIR"
   sleep 300 >/dev/null 2>&1 </dev/null &
-  echo "$!" > "$FORKOP_RELOAD_LOCK_DIR/pid"
+  echo "$!" > "$PROKOP_RELOAD_LOCK_DIR/pid"
   echo "$!" > "$STATE/holder"
 }
 release_lock() {
   kill "$(cat "$STATE/holder")" 2>/dev/null || true
-  rm -f "$STATE/holder" "$FORKOP_RELOAD_LOCK_DIR/pid"
-  rmdir "$FORKOP_RELOAD_LOCK_DIR"
+  rm -f "$STATE/holder" "$PROKOP_RELOAD_LOCK_DIR/pid"
+  rmdir "$PROKOP_RELOAD_LOCK_DIR"
 }
 SH
 export LOCK_SH="$WORK/lock.sh"
@@ -75,15 +75,15 @@ case "${3:-}" in
 esac
 exec "$REAL_UCODE" "$@"
 STUB
-# forkop: the runtime reload records which configuration it loaded; the
+# prokop: the runtime reload records which configuration it loaded; the
 # "broken" configuration fails at runtime.
-cat > "$WORK/bin/forkop" <<'STUB'
+cat > "$WORK/bin/prokop" <<'STUB'
 #!/bin/sh
 case "$1" in
   show_version) echo 1.0.26-test ;;
   get_status) echo '{"running":true}' ;;
   reload)
-    m="$(grep -o "marker '[a-z]*'" "$FORKOP_CONFIG_FILE")"
+    m="$(grep -o "marker '[a-z]*'" "$PROKOP_CONFIG_FILE")"
     echo "runtime-reload:${2:-}:$m" >> "$STATE/events"
     [ "$m" != "marker 'broken'" ] || exit 1 ;;
 esac
@@ -96,28 +96,28 @@ cat > "$WORK/init.d" <<'STUB'
 action="$1"; shift
 initscript="$REAL_INITD"
 . "$REAL_INITD"
-FORKOP_LIB="$TEST_LIB"
-FORKOP_INITD_UC="$TEST_LIB/service/initd.uc"
+PROKOP_LIB="$TEST_LIB"
+PROKOP_INITD_UC="$TEST_LIB/service/initd.uc"
 [ "$action" = reload ] || exit 1
 echo "init.d-reload:${1:-}" >> "$STATE/events"
 reload_service "$@"
 status=$?
-if [ -e "$STATE/release-after-queue" ] && [ -e "$FORKOP_PENDING_RELOAD_FILE" ]; then
+if [ -e "$STATE/release-after-queue" ] && [ -e "$PROKOP_PENDING_RELOAD_FILE" ]; then
   rm -f "$STATE/release-after-queue"; . "$LOCK_SH"; release_lock
 fi
 exit "$status"
 STUB
-chmod +x "$WORK/bin/ucode" "$WORK/bin/forkop" "$WORK/init.d"
+chmod +x "$WORK/bin/ucode" "$WORK/bin/prokop" "$WORK/init.d"
 # shellcheck source=/dev/null
 . "$LOCK_SH"
 
-config() { printf "config settings 'settings'\n option dns_server '1.1.1.1'\n option marker '%s'\n" "$1" > "$FORKOP_CONFIG_FILE"; }
+config() { printf "config settings 'settings'\n option dns_server '1.1.1.1'\n option marker '%s'\n" "$1" > "$PROKOP_CONFIG_FILE"; }
 field() { node -e 'const r=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));const v=r[process.argv[2]];console.log(v===undefined?"":v)' "$1" "$2"; }
 snap() { PATH="$WORK/bin:$PATH" "$REAL_UCODE" -L "$LIB" "$SCRIPT" "$@"; }
-lkg() { cat "$FORKOP_SNAPSHOT_DIR/last-known-working" 2>/dev/null || true; }
-snaps() { find "$FORKOP_SNAPSHOT_DIR" -maxdepth 1 -name '*.json' | wc -l; }
-chash() { sha256sum "$FORKOP_CONFIG_FILE" | cut -d' ' -f1; }
-marker() { grep -o "marker '[a-z]*'" "$FORKOP_CONFIG_FILE"; }
+lkg() { cat "$PROKOP_SNAPSHOT_DIR/last-known-working" 2>/dev/null || true; }
+snaps() { find "$PROKOP_SNAPSHOT_DIR" -maxdepth 1 -name '*.json' | wc -l; }
+chash() { sha256sum "$PROKOP_CONFIG_FILE" | cut -d' ' -f1; }
+marker() { grep -o "marker '[a-z]*'" "$PROKOP_CONFIG_FILE"; }
 events() { cat "$STATE/events" 2>/dev/null || true; }
 # run <snapshots.uc args...>: result in $WORK/result.json, exit status in $rc.
 run() {
@@ -152,7 +152,7 @@ expect busy service_action_in_progress "restore under a live reload lock"
 [ "$(snaps)" = "$before" ] || fail "busy restore created a pre-restore snapshot"
 { [ "$(chash)" = "$base_hash" ] && [ "$(lkg)" = "$base_lkg" ] && [ "$(cat "$STATE/guard")" = absent ]; } || fail "busy restore changed state"
 [ -z "$(events)" ] || fail "busy restore acted: $(events)"
-[ ! -e "$FORKOP_PENDING_RELOAD_FILE" ] || fail "busy restore queued a reload"
+[ ! -e "$PROKOP_PENDING_RELOAD_FILE" ] || fail "busy restore queued a reload"
 release_lock
 
 # 2. The lock is taken after the check and held: the target reload and the
@@ -171,7 +171,7 @@ expect needs_attention rollback_reload_queued "target and rollback reload queued
 events | grep -q '^health:restore:failure$' || fail "double queue not recorded as a failure: $(events)"
 ! events | grep -q '^health:restore:success$' || fail "double queue recorded success"
 [ "$(events | grep -c '^init.d-reload:config-restore$')" = 2 ] || fail "restore did not pass its reason to init.d: $(events)"
-[ "$(sed -n 1p "$FORKOP_PENDING_RELOAD_FILE")" = "reason=config-restore" ] || fail "queued restore reload not kept"
+[ "$(sed -n 1p "$PROKOP_PENDING_RELOAD_FILE")" = "reason=config-restore" ] || fail "queued restore reload not kept"
 
 # 3. While the lifecycle action still owns the lock the recovery restore is
 #    refused before any change. The action then ends without draining the
@@ -183,13 +183,13 @@ run restore "$good_id"
 expect busy service_action_in_progress "recovery restore under the live lock"
 { [ "$(snaps)" = "$before" ] && [ -z "$(events)" ] && [ "$(cat "$STATE/guard")" = valid ]; } || fail "busy recovery restore changed state"
 release_lock
-[ -e "$FORKOP_PENDING_RELOAD_FILE" ] || fail "fixture: the queued restore reload is gone"
+[ -e "$PROKOP_PENDING_RELOAD_FILE" ] || fail "fixture: the queued restore reload is gone"
 run restore "$good_id"
 expect success "" "recovery restore with the queued reload left behind"
 { [ "$(cat "$STATE/guard")" = absent ] && [ "$(lkg)" = "$good_id" ] && [ "$(marker)" = "marker 'good'" ]; } || fail "recovery restore did not complete"
 events | grep -q "^runtime-reload:config-restore:marker 'good'$" || fail "recovery restore did not reload the runtime: $(events)"
 events | grep -q "^runtime-reload:pending:marker 'good'$" || fail "the queued request was not drained: $(events)"
-[ ! -e "$FORKOP_PENDING_RELOAD_FILE" ] || fail "the recovery restore left reload.pending"
+[ ! -e "$PROKOP_PENDING_RELOAD_FILE" ] || fail "the recovery restore left reload.pending"
 guard_removed_only_after_reload "recovery restore"
 
 # 4. The lock holder finishes right after the target reload was queued: the
@@ -205,30 +205,30 @@ expect recovered target_reload_queued "target reload queued, rollback reload ran
 ! events | grep -q "^runtime-reload:.*marker 'good'" || fail "the queued target reached the runtime: $(events)"
 events | grep -q "^runtime-reload:config-restore:marker 'bad'$" || fail "rollback reload did not run: $(events)"
 [ "$(lkg)" != "$good_id" ] || fail "recovered restore moved last-known-working to the target"
-grep -q "marker 'bad'" "$FORKOP_SNAPSHOT_DIR/$(lkg).json" || fail "last-known-working is not the reloaded configuration"
+grep -q "marker 'bad'" "$PROKOP_SNAPSHOT_DIR/$(lkg).json" || fail "last-known-working is not the reloaded configuration"
 events | grep -q '^health:restore:recovered$' || fail "recovered restore not recorded as recovered: $(events)"
 guard_removed_only_after_reload "recovered restore"
-[ ! -e "$FORKOP_PENDING_RELOAD_FILE" ] || fail "the drained queue left reload.pending"
+[ ! -e "$PROKOP_PENDING_RELOAD_FILE" ] || fail "the drained queue left reload.pending"
 
 # 5. Autotune apply (apply mode) through the same path: busy lock -> stale
 #    before any change; a queued reload without a live owner is drained by the
 #    apply's own reload, as for a restore; lock taken after the check -> never
 #    success.
 config bad; snap confirm-working > /dev/null; base_lkg="$(lkg)"; base_hash="$(chash)"
-config good; cp "$FORKOP_CONFIG_FILE" "$WORK/candidate"; config bad
+config good; cp "$PROKOP_CONFIG_FILE" "$WORK/candidate"; config bad
 hold_lock; before="$(snaps)"
 run apply "$WORK/candidate" "$base_hash"
 expect stale service_action_in_progress "apply under a live reload lock"
 { [ "$(snaps)" = "$before" ] && [ "$(chash)" = "$base_hash" ] && [ -z "$(events)" ]; } || fail "apply under a live lock changed state"
 release_lock
-printf 'reason=reload_busy\nupdated_at=1\n' > "$FORKOP_PENDING_RELOAD_FILE"
+printf 'reason=reload_busy\nupdated_at=1\n' > "$PROKOP_PENDING_RELOAD_FILE"
 run apply "$WORK/candidate" "$base_hash"
 expect success "" "apply with a queued reload without a live owner"
 { [ "$(marker)" = "marker 'good'" ] && [ "$(lkg)" = "$base_lkg" ] && [ "$(cat "$STATE/guard")" = absent ]; } ||
   fail "apply with a queued reload without a live owner: $(cat "$WORK/result.json")"
 events | grep -q "^runtime-reload:autotune:marker 'good'$" || fail "the apply did not reload its candidate: $(events)"
 events | grep -q "^runtime-reload:pending:marker 'good'$" || fail "the apply's reload did not drain the queued reload: $(events)"
-[ ! -e "$FORKOP_PENDING_RELOAD_FILE" ] || fail "the apply left the queued reload behind"
+[ ! -e "$PROKOP_PENDING_RELOAD_FILE" ] || fail "the apply left the queued reload behind"
 config bad; before="$(snaps)"
 : > "$STATE/take-lock"
 run apply "$WORK/candidate" "$base_hash"
@@ -237,7 +237,7 @@ expect needs_attention rollback_reload_queued "apply: target and rollback reload
 ! events | grep -q '^runtime-reload:' || fail "apply double queue: a runtime reload ran"
 [ "$(events | grep -c '^init.d-reload:autotune$')" = 2 ] || fail "apply did not pass its reason to init.d: $(events)"
 events | grep -q '^health:autotune_apply:failure$' || fail "apply double queue not recorded as a failure: $(events)"
-release_lock; rm -f "$FORKOP_PENDING_RELOAD_FILE"
+release_lock; rm -f "$PROKOP_PENDING_RELOAD_FILE"
 : > "$STATE/take-lock"; : > "$STATE/release-after-queue"
 run apply "$WORK/candidate" "$base_hash"
 expect recovered target_reload_queued "apply: target reload queued, rollback ran"
@@ -251,23 +251,23 @@ guard_removed_only_after_reload "apply recovery"
 #    and retains the request; the dashboard Reload fails the same way. The
 #    retained request has no live owner, so restoring the known-good snapshot
 #    is still possible: it runs, drains the request and releases the guard.
-rm -f "$FORKOP_PENDING_RELOAD_FILE"
+rm -f "$PROKOP_PENDING_RELOAD_FILE"
 config broken; base_lkg="$(lkg)"
 : > "$STATE/take-lock"
 run restore "$good_id"
 expect needs_attention rollback_reload_queued "restore of a broken configuration during a list update"
 [ "$(cat "$STATE/guard")" = valid ] || fail "broken: guard released"
 release_lock
-PATH="$WORK/bin:$PATH" "$REAL_UCODE" -L "$LIB" "$LIB/service/state.uc" run-pending-reload-if-requested "$FORKOP_PENDING_RELOAD_FILE" "$WORK/init.d" || true
-[ "$(sed -n 1p "$FORKOP_PENDING_RELOAD_FILE")" = "reason=pending_handoff_failed" ] || fail "fixture: failed drain did not retain the request"
+PATH="$WORK/bin:$PATH" "$REAL_UCODE" -L "$LIB" "$LIB/service/state.uc" run-pending-reload-if-requested "$PROKOP_PENDING_RELOAD_FILE" "$WORK/init.d" || true
+[ "$(sed -n 1p "$PROKOP_PENDING_RELOAD_FILE")" = "reason=pending_handoff_failed" ] || fail "fixture: failed drain did not retain the request"
 rc=0; PATH="$WORK/bin:$PATH" "$WORK/init.d" reload >/dev/null 2>&1 || rc=$?
-{ [ "$rc" != 0 ] && [ -e "$FORKOP_PENDING_RELOAD_FILE" ]; } || fail "fixture: the dashboard reload of the broken configuration did not fail"
+{ [ "$rc" != 0 ] && [ -e "$PROKOP_PENDING_RELOAD_FILE" ]; } || fail "fixture: the dashboard reload of the broken configuration did not fail"
 { [ "$(marker)" = "marker 'broken'" ] && [ "$(lkg)" = "$base_lkg" ]; } || fail "fixture: broken state"
 run restore "$good_id"
 expect success "" "recovery restore while the running configuration is broken"
 [ "$rc" = 0 ] || fail "recovery restore exited $rc"
 { [ "$(cat "$STATE/guard")" = absent ] && [ "$(lkg)" = "$good_id" ] && [ "$(marker)" = "marker 'good'" ]; } || fail "broken: recovery restore did not complete"
-[ ! -e "$FORKOP_PENDING_RELOAD_FILE" ] || fail "broken: the retained request was not drained"
+[ ! -e "$PROKOP_PENDING_RELOAD_FILE" ] || fail "broken: the retained request was not drained"
 events | grep -q '^health:restore:success$' || fail "broken: recovery not recorded: $(events)"
 guard_removed_only_after_reload "broken recovery"
 
@@ -277,10 +277,10 @@ config good; snap confirm-working > /dev/null
 hold_lock; config broken
 PATH="$WORK/bin:$PATH" "$WORK/init.d" reload on_config_change >/dev/null 2>&1
 release_lock
-PATH="$WORK/bin:$PATH" "$REAL_UCODE" -L "$LIB" "$LIB/service/state.uc" run-pending-reload-if-requested "$FORKOP_PENDING_RELOAD_FILE" "$WORK/init.d" || true
-[ "$(sed -n 1p "$FORKOP_PENDING_RELOAD_FILE")" = "reason=pending_handoff_failed" ] || fail "fixture: failed config-change drain did not retain the request"
+PATH="$WORK/bin:$PATH" "$REAL_UCODE" -L "$LIB" "$LIB/service/state.uc" run-pending-reload-if-requested "$PROKOP_PENDING_RELOAD_FILE" "$WORK/init.d" || true
+[ "$(sed -n 1p "$PROKOP_PENDING_RELOAD_FILE")" = "reason=pending_handoff_failed" ] || fail "fixture: failed config-change drain did not retain the request"
 run restore "$good_id"
 expect success "" "restore after a failed config-change drain"
-{ [ "$(cat "$STATE/guard")" = absent ] && [ "$(marker)" = "marker 'good'" ] && [ ! -e "$FORKOP_PENDING_RELOAD_FILE" ]; } || fail "restore after a failed drain did not complete"
+{ [ "$(cat "$STATE/guard")" = absent ] && [ "$(marker)" = "marker 'good'" ] && [ ! -e "$PROKOP_PENDING_RELOAD_FILE" ]; } || fail "restore after a failed drain did not complete"
 
 printf 'config_restore_queued_reload: PASS\n'

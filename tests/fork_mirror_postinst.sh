@@ -7,7 +7,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_SCRIPT="$ROOT_DIR/build.sh"
-FORKOP_MAKEFILE="$ROOT_DIR/forkop/Makefile"
+PROKOP_MAKEFILE="$ROOT_DIR/prokop/Makefile"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT
 
@@ -27,12 +27,12 @@ exit "${MIGRATE_STATUS:-0}"
 EOF
 cat > "$STUB/mirror-migration.sh" <<'EOF'
 #!/bin/sh
-printf 'mirror FORKOP_PACKAGE_POSTINST=%s\n' "${FORKOP_PACKAGE_POSTINST:-}" >> "$POSTINST_EVENTS"
+printf 'mirror PROKOP_PACKAGE_POSTINST=%s\n' "${PROKOP_PACKAGE_POSTINST:-}" >> "$POSTINST_EVENTS"
 exit "${MIRROR_STATUS:-0}"
 EOF
-cat > "$STUB/forkop" <<'EOF'
+cat > "$STUB/prokop" <<'EOF'
 #!/bin/sh
-printf 'forkop %s\n' "$*" >> "$POSTINST_EVENTS"
+printf 'prokop %s\n' "$*" >> "$POSTINST_EVENTS"
 exit "${PACKAGE_POSTINST_STATUS:-0}"
 EOF
 chmod 0755 "$STUB"/*
@@ -47,8 +47,8 @@ heredoc_body() {
 }
 
 stub_paths() {
-  sed -e "s#/usr/share/forkop/mirror-migration.sh#$STUB/mirror-migration.sh#g" \
-    -e "s#/usr/bin/forkop#$STUB/forkop#g"
+  sed -e "s#/usr/share/prokop/mirror-migration.sh#$STUB/mirror-migration.sh#g" \
+    -e "s#/usr/bin/prokop#$STUB/prokop#g"
 }
 
 heredoc_body "$BUILD_SCRIPT" 'cat > "$control_dir/postinst" <<'"'"'EOF'"'" | stub_paths \
@@ -58,16 +58,16 @@ heredoc_body "$BUILD_SCRIPT" 'cat > "$scripts_dir/backend-post-install.sh" <<'"'
 heredoc_body "$BUILD_SCRIPT" 'cat > "$scripts_dir/backend-post-upgrade.sh" <<'"'"'EOF'"'" | stub_paths \
   > "$WORK_DIR/scripts/apk-post-upgrade"
 awk '
-  $0 == "define Package/forkop/postinst" { found = 1; next }
+  $0 == "define Package/prokop/postinst" { found = 1; next }
   found && $0 == "endef" { exit }
   found { gsub(/\$\$/, "$"); print }
-' "$FORKOP_MAKEFILE" | stub_paths > "$WORK_DIR/scripts/makefile-postinst"
+' "$PROKOP_MAKEFILE" | stub_paths > "$WORK_DIR/scripts/makefile-postinst"
 
 for script in ipk-postinst apk-post-install apk-post-upgrade makefile-postinst; do
   [ -s "$WORK_DIR/scripts/$script" ] || fail "$script body was not found"
   grep -Fq "$STUB/mirror-migration.sh" "$WORK_DIR/scripts/$script" ||
     fail "$script does not run mirror-migration.sh"
-  grep -Fq "$STUB/forkop package_postinst" "$WORK_DIR/scripts/$script" ||
+  grep -Fq "$STUB/prokop package_postinst" "$WORK_DIR/scripts/$script" ||
     fail "$script does not run package_postinst"
 done
 
@@ -89,20 +89,20 @@ run_postinst() {
 for script in ipk-postinst apk-post-install apk-post-upgrade makefile-postinst; do
   status="$(run_postinst "$script" 0 0 0)"
   [ "$status" -eq 0 ] || fail "$script failed on a clean upgrade (status $status)"
-  printf '%s\n' 'migrate -L /usr/lib/forkop /usr/lib/forkop/config/migration.uc migrate' \
-    'mirror FORKOP_PACKAGE_POSTINST=1' 'forkop package_postinst' > "$WORK_DIR/expected"
+  printf '%s\n' 'migrate -L /usr/lib/prokop /usr/lib/prokop/config/migration.uc migrate' \
+    'mirror PROKOP_PACKAGE_POSTINST=1' 'prokop package_postinst' > "$WORK_DIR/expected"
   cmp -s "$WORK_DIR/expected" "$WORK_DIR/events" ||
     fail "$script ran an unexpected chain: $(cat "$WORK_DIR/events")"
 
   status="$(run_postinst "$script" 0 1 0)"
   [ "$status" -eq 0 ] || fail "$script failed because the mirror reconciliation failed (status $status)"
-  grep -Fxq 'forkop package_postinst' "$WORK_DIR/events" ||
+  grep -Fxq 'prokop package_postinst' "$WORK_DIR/events" ||
     fail "$script skipped package_postinst after a mirror failure"
   grep -Fq 'Warning:' "$WORK_DIR/out" || fail "$script hid the mirror failure"
 
   status="$(run_postinst "$script" 3 0 0)"
   [ "$status" -eq 3 ] || fail "$script did not stop on a failed config migration (status $status)"
-  if grep -Eq '^(mirror|forkop) ' "$WORK_DIR/events"; then
+  if grep -Eq '^(mirror|prokop) ' "$WORK_DIR/events"; then
     fail "$script continued after a failed config migration"
   fi
 

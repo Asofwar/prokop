@@ -16,7 +16,7 @@ set -euo pipefail
 #   reads them for the generator.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT HUP INT TERM
 
@@ -48,7 +48,7 @@ generator_accepts() {
 }
 
 validator_accepts() {
-  FORKOP_LIB="$LIB" ucode -L "$LIB" "$LIB/config/validator.uc" \
+  PROKOP_LIB="$LIB" ucode -L "$LIB" "$LIB/config/validator.uc" \
     validate-runtime-fixture "$WORK/$1.json" '{}' >"$WORK/$1.val" 2>&1
 }
 
@@ -81,17 +81,17 @@ expect dns_remote_subnets reject 'at least one domain condition'
 
 # Unsupported podkop-era matchers, whatever else the rule matches.
 for key in local_domain_lists local_subnet_lists subnet_text; do
-  fixture "unsupported_$key" "$(rule b "\"action\": \"block\", \"domain\": \"example.com\", \"$key\": [\"/etc/forkop/list.lst\"]")"
+  fixture "unsupported_$key" "$(rule b "\"action\": \"block\", \"domain\": \"example.com\", \"$key\": [\"/etc/prokop/list.lst\"]")"
   expect "unsupported_$key" reject "legacy option '$key'.*no longer supported.*Remove it"
 done
 fixture unsupported_subnet "$(rule c "\"action\": \"bypass\", \"ip_cidr\": \"10.0.0.0/8\", \"subnet\": \"192.168.0.0/16\"")"
 expect unsupported_subnet reject "legacy option 'subnet'"
-fixture unsupported_dns "$(rule d "$DNS, \"domain\": \"example.com\", \"local_domain_lists\": \"/etc/forkop/list.lst\"")"
+fixture unsupported_dns "$(rule d "$DNS, \"domain\": \"example.com\", \"local_domain_lists\": \"/etc/prokop/list.lst\"")"
 expect unsupported_dns reject "legacy option 'local_domain_lists'"
 # A disabled rule is not generated and not validated.
 fixture unsupported_disabled \
   "$(rule b "\"action\": \"block\", \"domain\": \"example.com\"")" \
-  "{ \".name\": \"off\", \".type\": \"section\", \"enabled\": \"0\", \"action\": \"block\", \"domain\": \"example.net\", \"local_domain_lists\": [\"/etc/forkop/list.lst\"] }"
+  "{ \".name\": \"off\", \".type\": \"section\", \"enabled\": \"0\", \"action\": \"block\", \"domain\": \"example.net\", \"local_domain_lists\": [\"/etc/prokop/list.lst\"] }"
 expect unsupported_disabled accept
 
 # Text mode: the list is ignored and the text is read.

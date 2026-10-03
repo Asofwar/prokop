@@ -4,7 +4,7 @@ set -euo pipefail
 # Temporary names of autotune/apply.uc and the manager's stale cleanup
 # (UC-157).
 #
-# A manager run removes every forkop-autotune-apply.* in its temporary
+# A manager run removes every prokop-autotune-apply.* in its temporary
 # directory: selection and plan directories a dead run left behind. apply.uc
 # named the temporary files of its config hashes with the same prefix, so an
 # apply.uc run outside the manager (the CLI) lost its hash file to a manager
@@ -34,7 +34,7 @@ manager policy-set mode recommend >/dev/null
 printf '{"status":"selected","selected":"fake","confidence":"high","reason":"direct_failed_candidate_stable","target":{"host":"www.youtube.com","ip":"198.18.0.9"},"candidates":[]}\n' \
   >"$WORK/selection.json"
 # A selection directory of a dead run.
-mkdir -p "$WORK/tmp/forkop-autotune-apply.leftover"
+mkdir -p "$WORK/tmp/prokop-autotune-apply.leftover"
 
 PATH="$WORK/hash-bin:$PATH" ucode -L "$REAL_LIB" "$REAL_LIB/autotune/apply.uc" plan "$WORK/selection.json" 192.0.2.53 \
   >"$WORK/plan.json" 2>&1 &
@@ -46,7 +46,7 @@ hash_file="$(head -n 1 "$WORK/hashed")"
 [ -e "$hash_file" ] || fail "fixture: the file being hashed is missing"
 
 manager run youtube >"$WORK/run.json" || fail "the manager run failed: $(cat "$WORK/run.json")"
-[ ! -e "$WORK/tmp/forkop-autotune-apply.leftover" ] || fail "the manager run kept the directory of a dead run"
+[ ! -e "$WORK/tmp/prokop-autotune-apply.leftover" ] || fail "the manager run kept the directory of a dead run"
 [ -e "$hash_file" ] || fail "the manager run removed the file a running apply.uc was hashing: ${hash_file##*/}"
 
 : >"$WORK/hash.gate"

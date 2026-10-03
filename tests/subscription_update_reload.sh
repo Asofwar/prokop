@@ -2,8 +2,8 @@
 set -eo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-UPDATES_UC="$ROOT_DIR/forkop/files/usr/lib/components/updates.uc"
-REAL_LIB="$ROOT_DIR/forkop/files/usr/lib"
+UPDATES_UC="$ROOT_DIR/prokop/files/usr/lib/components/updates.uc"
+REAL_LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK_DIR="$(mktemp -d)"
 
 cleanup() {
@@ -135,24 +135,24 @@ run_update() {
   mkdir -p "$WORK_DIR/tmp"
   env \
     TMPDIR="$WORK_DIR/tmp" \
-    FORKOP_LIB="$FAKE_LIB" \
-    FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/run" \
-    FORKOP_SUBSCRIPTION_UPDATE_LOCK_DIR="$WORK_DIR/run/subscription-update.lock" \
-    FORKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/reload.lock" \
-    FORKOP_SUBSCRIPTION_UPDATE_STATE_DIR="$WORK_DIR/run/subscription-update" \
-    FORKOP_SUBSCRIPTION_UPDATE_JOB_DIR="$WORK_DIR/run/subscription-update-jobs" \
-    FORKOP_SUBSCRIPTION_LINKS_DIR="$WORK_DIR/run/subscription-links" \
-    FORKOP_SUBSCRIPTION_METADATA_DIR="$WORK_DIR/run/subscription-metadata" \
-    FORKOP_OUTBOUND_METADATA_DIR="$WORK_DIR/run/outbound-metadata" \
-    FORKOP_SECTION_CACHE_DIR="$WORK_DIR/run/section-cache" \
-    FORKOP_RUNTIME_CACHE_FORMAT_FILE="$WORK_DIR/run/cache-format" \
-    FORKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR="$WORK_DIR/persistent/subscription-cache" \
-    FORKOP_PERSISTENT_SUBSCRIPTION_CACHE_FORMAT_FILE="$WORK_DIR/persistent/subscription-cache/cache-format" \
-    FORKOP_PENDING_RELOAD_FILE="$WORK_DIR/run/reload.pending" \
+    PROKOP_LIB="$FAKE_LIB" \
+    PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/run" \
+    PROKOP_SUBSCRIPTION_UPDATE_LOCK_DIR="$WORK_DIR/run/subscription-update.lock" \
+    PROKOP_RELOAD_LOCK_DIR="$WORK_DIR/run/reload.lock" \
+    PROKOP_SUBSCRIPTION_UPDATE_STATE_DIR="$WORK_DIR/run/subscription-update" \
+    PROKOP_SUBSCRIPTION_UPDATE_JOB_DIR="$WORK_DIR/run/subscription-update-jobs" \
+    PROKOP_SUBSCRIPTION_LINKS_DIR="$WORK_DIR/run/subscription-links" \
+    PROKOP_SUBSCRIPTION_METADATA_DIR="$WORK_DIR/run/subscription-metadata" \
+    PROKOP_OUTBOUND_METADATA_DIR="$WORK_DIR/run/outbound-metadata" \
+    PROKOP_SECTION_CACHE_DIR="$WORK_DIR/run/section-cache" \
+    PROKOP_RUNTIME_CACHE_FORMAT_FILE="$WORK_DIR/run/cache-format" \
+    PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR="$WORK_DIR/persistent/subscription-cache" \
+    PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_FORMAT_FILE="$WORK_DIR/persistent/subscription-cache/cache-format" \
+    PROKOP_PENDING_RELOAD_FILE="$WORK_DIR/run/reload.pending" \
     FAKE_START_COUNT_FILE="$WORK_DIR/start-count" \
     FAKE_AUX_START_COUNT_FILE="$WORK_DIR/aux-start-count" \
-    FORKOP_RELOAD_STATE_FILE="$WORK_DIR/run/reload-state" \
-    FORKOP_RULE_CONDITION_CACHE_DIR="$WORK_DIR/run/rule-condition-cache" \
+    PROKOP_RELOAD_STATE_FILE="$WORK_DIR/run/reload-state" \
+    PROKOP_RULE_CONDITION_CACHE_DIR="$WORK_DIR/run/rule-condition-cache" \
     FAKE_CALL_LOG="$log" \
     FAKE_SUBSCRIPTION_UPDATE_SUMMARY="$summary" \
     ucode -L "$REAL_LIB" "$UPDATES_UC" subscription-update-if-due

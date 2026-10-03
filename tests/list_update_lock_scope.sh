@@ -22,7 +22,7 @@ set -euo pipefail
 # records whether reload.lock is held when it runs.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-REAL_LIB="$ROOT_DIR/forkop/files/usr/lib"
+REAL_LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK_DIR="$(mktemp -d)"
 # shellcheck source=tests/helpers/wait.sh
 . "$ROOT_DIR/tests/helpers/wait.sh"
@@ -91,15 +91,15 @@ while [ "$#" -gt 0 ]; do
 done
 printf 'new.example\n' >"$output"
 SH
-printf '#!/bin/sh\n' >"$WORK_DIR/bin/init-forkop"
-lock_state init-forkop
-cat >>"$WORK_DIR/bin/init-forkop" <<'SH'
+printf '#!/bin/sh\n' >"$WORK_DIR/bin/init-prokop"
+lock_state init-prokop
+cat >>"$WORK_DIR/bin/init-prokop" <<'SH'
 printf 'init %s lock=%s\n' "$*" "$held" >>"$EVENTS"
 SH
 cat >"$WORK_DIR/bin/nft" <<'SH'
 #!/bin/sh
 printf 'nft %s\n' "$*" >>"$EVENTS"
-[ "$*" = '-j list table inet forkop' ] && printf '{"nftables":[]}\n'
+[ "$*" = '-j list table inet prokop' ] && printf '{"nftables":[]}\n'
 exit 0
 SH
 printf '#!/bin/sh\nexit 0\n' >"$WORK_DIR/bin/logger"
@@ -118,15 +118,15 @@ run_case() {
   cp "$WORK_DIR/rulesets/alpha-remote-domains-ruleset.json" "$WORK_DIR/before.json"
   printf 'force\n' >"$RUN/ruleset-refresh-after-list"
   cat >"$WORK_DIR/uci.state" <<'UCI'
-forkop.settings=settings
-forkop.settings.update_interval=1d
-forkop.alpha=section
-forkop.alpha.enabled=1
-forkop.alpha.action=connection
-forkop.alpha.remote_domain_lists=https://lists.test/domains.txt
+prokop.settings=settings
+prokop.settings.update_interval=1d
+prokop.alpha=section
+prokop.alpha.enabled=1
+prokop.alpha.action=connection
+prokop.alpha.remote_domain_lists=https://lists.test/domains.txt
 UCI
   if [ "$proxy" = 1 ]; then
-    printf 'forkop.settings.download_lists_via_proxy=1\nforkop.settings.download_lists_via_proxy_section=alpha\n' \
+    printf 'prokop.settings.download_lists_via_proxy=1\nprokop.settings.download_lists_via_proxy_section=alpha\n' \
       >>"$WORK_DIR/uci.state"
   fi
 
@@ -136,18 +136,18 @@ UCI
   state acquire-runtime-dir-lock "$RELOAD_LOCK" "$holder" || fail "the holder could not take reload.lock"
 
   env PATH="$WORK_DIR/bin:$PATH" \
-    FORKOP_LIB="$LIB" \
-    FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state" \
-    FORKOP_RUNTIME_LIST_GENERATION_DIR="$WORK_DIR/generation" \
-    FORKOP_RULESET_CACHE_DIR="$WORK_DIR/ruleset-cache" \
+    PROKOP_LIB="$LIB" \
+    PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state" \
+    PROKOP_RUNTIME_LIST_GENERATION_DIR="$WORK_DIR/generation" \
+    PROKOP_RULESET_CACHE_DIR="$WORK_DIR/ruleset-cache" \
     TMP_RULESET_FOLDER="$WORK_DIR/rulesets" \
-    FORKOP_RUNTIME_STATE_DIR="$RUN" \
-    FORKOP_RELOAD_LOCK_DIR="$RELOAD_LOCK" \
-    FORKOP_LIST_UPDATE_PID_FILE="$RUN/list.pid" \
-    FORKOP_PENDING_RELOAD_FILE="$RUN/reload.pending" \
-    FORKOP_PERSISTENT_LIST_CACHE_DIR="$WORK_DIR/cache" \
-    FORKOP_SERVICE_INIT="$WORK_DIR/bin/init-forkop" \
-    NFT_TABLE_NAME=forkop \
+    PROKOP_RUNTIME_STATE_DIR="$RUN" \
+    PROKOP_RELOAD_LOCK_DIR="$RELOAD_LOCK" \
+    PROKOP_LIST_UPDATE_PID_FILE="$RUN/list.pid" \
+    PROKOP_PENDING_RELOAD_FILE="$RUN/reload.pending" \
+    PROKOP_PERSISTENT_LIST_CACHE_DIR="$WORK_DIR/cache" \
+    PROKOP_SERVICE_INIT="$WORK_DIR/bin/init-prokop" \
+    NFT_TABLE_NAME=prokop \
     ucode -L "$LIB" "$LIB/components/updates.uc" list-update >"$WORK_DIR/worker.log" 2>&1 &
   worker=$!
   pids+=("$worker")

@@ -8,11 +8,11 @@ set -euo pipefail
 # without one, so an upgrade never fails closed on this check.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-MIGRATION="$FORKOP_LIB/config/migration.uc"
-VALIDATOR="$FORKOP_LIB/config/validator.uc"
-DEFAULT_CONFIG="$ROOT_DIR/forkop/files/etc/config/forkop"
-SETTINGS_JS="$ROOT_DIR/luci-app-forkop/htdocs/luci-static/resources/view/forkop/settings.js"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+MIGRATION="$PROKOP_LIB/config/migration.uc"
+VALIDATOR="$PROKOP_LIB/config/validator.uc"
+DEFAULT_CONFIG="$ROOT_DIR/prokop/files/etc/config/prokop"
+SETTINGS_JS="$ROOT_DIR/luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js"
 WORK_DIR="$(mktemp -d)"
 trap '[ -n "${KEEP_WORK:-}" ] || rm -rf "$WORK_DIR"' EXIT
 
@@ -30,7 +30,7 @@ migrate() {
   cat >"$WORK_DIR/$name.json" <<JSON
 { "settings": { ".name": "settings", ".type": "settings", "config_version": "1.0.5"$settings } }
 JSON
-  "$UCODE_BIN" -L "$FORKOP_LIB" "$MIGRATION" migrate-fixture "$WORK_DIR/$name.json" >"$WORK_DIR/$name.out" ||
+  "$UCODE_BIN" -L "$PROKOP_LIB" "$MIGRATION" migrate-fixture "$WORK_DIR/$name.json" >"$WORK_DIR/$name.out" ||
     fail "migration failed for $name"
 }
 
@@ -78,8 +78,8 @@ migrate applied ', "applied_migrations": [ "clash_api_secret_v1" ]'
 cat >"$WORK_DIR/no-random.json" <<'JSON'
 { "settings": { ".name": "settings", ".type": "settings", "config_version": "1.0.5" } }
 JSON
-FORKOP_SECRET_RANDOM_SOURCE="$WORK_DIR/missing-random" \
-  "$UCODE_BIN" -L "$FORKOP_LIB" "$MIGRATION" migrate-fixture "$WORK_DIR/no-random.json" >"$WORK_DIR/no-random.out" ||
+PROKOP_SECRET_RANDOM_SOURCE="$WORK_DIR/missing-random" \
+  "$UCODE_BIN" -L "$PROKOP_LIB" "$MIGRATION" migrate-fixture "$WORK_DIR/no-random.json" >"$WORK_DIR/no-random.out" ||
   fail "migration failed without a random source"
 [ "$(field no-random yacd_secret_key)" = "<none>" ] || fail "no secret can be generated without a random source"
 field no-random applied_migrations | grep -qw clash_api_secret_v1 &&
@@ -91,7 +91,7 @@ field no-random applied_migrations | grep -qw own_dependency_mirror_v1 ||
 cat >"$WORK_DIR/podkop.json" <<'JSON'
 { "settings": { ".name": "settings", ".type": "settings", "yacd_secret_key": "podkop-secret" } }
 JSON
-"$UCODE_BIN" -L "$FORKOP_LIB" "$MIGRATION" migrate-fixture "$WORK_DIR/podkop.json" podkop >"$WORK_DIR/podkop.out" ||
+"$UCODE_BIN" -L "$PROKOP_LIB" "$MIGRATION" migrate-fixture "$WORK_DIR/podkop.json" podkop >"$WORK_DIR/podkop.out" ||
   fail "podkop migration failed"
 [ "$(field podkop yacd_secret_key)" = "podkop-secret" ] || fail "a migrated Podkop secret must be kept"
 
@@ -115,7 +115,7 @@ for (const line of fs.readFileSync(process.argv[2], 'utf8').split('\n')) {
 }
 process.stdout.write(JSON.stringify({ settings }));
 NODE
-"$UCODE_BIN" -L "$FORKOP_LIB" "$MIGRATION" migrate-fixture "$WORK_DIR/default.json" >"$WORK_DIR/default.out" ||
+"$UCODE_BIN" -L "$PROKOP_LIB" "$MIGRATION" migrate-fixture "$WORK_DIR/default.json" >"$WORK_DIR/default.out" ||
   fail "migration of the shipped config failed"
 field default yacd_secret_key | grep -Eq '^[0-9a-f]{64}$' ||
   fail "a new install must get a generated secret"
@@ -128,7 +128,7 @@ validate() {
 { "settings": { ".name": "settings", ".type": "settings", "dns_server": [ "77.88.8.8" ],
   "bootstrap_dns_server": [ "77.88.8.8" ]$settings } }
 JSON
-  FORKOP_LIB="$FORKOP_LIB" "$UCODE_BIN" -L "$FORKOP_LIB" "$VALIDATOR" validate-runtime-fixture \
+  PROKOP_LIB="$PROKOP_LIB" "$UCODE_BIN" -L "$PROKOP_LIB" "$VALIDATOR" validate-runtime-fixture \
     "$WORK_DIR/validate-$name.json" '{}'
 }
 

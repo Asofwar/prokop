@@ -10,7 +10,7 @@
 //     decided owner;
 //   - domain, domain_suffix (leading dot: subdomains only) and domain_keyword
 //     match like an independent model, case-insensitively.
-// Usage: route_resolver.js <forkop lib> <forkop.uci fixture>
+// Usage: route_resolver.js <prokop lib> <prokop.uci fixture>
 
 const assert = require("node:assert/strict");
 const { Rng, seedFrom, casesFrom, ucodeBatch, forAll, exercised } = require("./scaffold");
@@ -90,7 +90,7 @@ function target() {
 
 const UCODE = `
 let r = require("routing.resolve");
-let sections = r.parse_config(__fs.readfile(getenv("ROUTE_FORKOP_UCI")));
+let sections = r.parse_config(__fs.readfile(getenv("ROUTE_PROKOP_UCI")));
 const OUTBOUNDS = [
     { type: "direct", tag: "direct-out" },
     { type: "direct", tag: "bypass-out" },
@@ -105,7 +105,7 @@ function evaluate(input) {
     return r.resolve(config, sections, r.target(input.host, input.ip, { fakeip: input.fakeip }));
 }
 `;
-const resolve = (inputs) => ucodeBatch(lib, UCODE, inputs, { ROUTE_FORKOP_UCI: uciFixture });
+const resolve = (inputs) => ucodeBatch(lib, UCODE, inputs, { ROUTE_PROKOP_UCI: uciFixture });
 
 // Base cases: rule lists without undecidable matchers, so most are decided.
 const bases = Array.from({ length: CASES }, () => ({

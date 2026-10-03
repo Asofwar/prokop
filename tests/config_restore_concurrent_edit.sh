@@ -12,7 +12,7 @@ set -eu
 # changes anything. The lifecycle's own shutdown_correctly bookkeeping is no
 # edit.
 ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
-LIB="$ROOT/forkop/files/usr/lib"
+LIB="$ROOT/prokop/files/usr/lib"
 SCRIPT="$LIB/config/snapshots.uc"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT HUP INT TERM
@@ -21,18 +21,18 @@ fail() { printf 'FAIL: %s\n' "$1" >&2; exit 1; }
 ok() { printf 'OK: %s\n' "$1"; }
 
 mkdir -p "$WORK/bin" "$WORK/run" "$WORK/state" "$WORK/etc"
-export FORKOP_CONFIG_FILE="$WORK/etc/forkop"
-export FORKOP_SNAPSHOT_DIR="$WORK/snapshots"
-export FORKOP_SNAPSHOT_HASH_DIR="$WORK/hash"
-export FORKOP_SNAPSHOT_LOCK_DIR="$WORK/run/config-snapshot.lock"
-export FORKOP_AUTOTUNE_APPLY_STATE="$WORK/autotune-apply.json"
-export FORKOP_LIB="$LIB"
-export FORKOP_RELOAD_COMMAND="$WORK/reload"
-export FORKOP_PENDING_RELOAD_FILE="$WORK/run/reload.pending"
-export FORKOP_RELOAD_LOCK_DIR="$WORK/run/reload.lock"
-export FORKOP_HISTORY_FILE="$WORK/history.jsonl"
-export FORKOP_RUNTIME_STATE_DIR="$WORK/run"
-export FORKOP_UCI_SAVEDIR="$WORK/uci-save"
+export PROKOP_CONFIG_FILE="$WORK/etc/prokop"
+export PROKOP_SNAPSHOT_DIR="$WORK/snapshots"
+export PROKOP_SNAPSHOT_HASH_DIR="$WORK/hash"
+export PROKOP_SNAPSHOT_LOCK_DIR="$WORK/run/config-snapshot.lock"
+export PROKOP_AUTOTUNE_APPLY_STATE="$WORK/autotune-apply.json"
+export PROKOP_LIB="$LIB"
+export PROKOP_RELOAD_COMMAND="$WORK/reload"
+export PROKOP_PENDING_RELOAD_FILE="$WORK/run/reload.pending"
+export PROKOP_RELOAD_LOCK_DIR="$WORK/run/reload.lock"
+export PROKOP_HISTORY_FILE="$WORK/history.jsonl"
+export PROKOP_RUNTIME_STATE_DIR="$WORK/run"
+export PROKOP_UCI_SAVEDIR="$WORK/uci-save"
 export STATE="$WORK/state"
 
 # Guard model (absent | valid) with the real contracts of the state query,
@@ -41,7 +41,7 @@ export STATE="$WORK/state"
 # validated ($STATE/edit-in-validate, the validator then refuses the target).
 cat > "$WORK/bin/ucode" <<'STUB'
 #!/bin/sh
-edit() { sed -i "s/option marker '[a-z]*'/option marker '$1'/" "$FORKOP_CONFIG_FILE"; }
+edit() { sed -i "s/option marker '[a-z]*'/option marker '$1'/" "$PROKOP_CONFIG_FILE"; }
 case "${3:-}" in
   */nft/apply.uc)
     guard="$(cat "$STATE/guard")"
@@ -73,10 +73,10 @@ cat > "$WORK/reload" <<'STUB'
 set -- $(cat "$STATE/plan")
 step="${1:-0}"; [ $# -eq 0 ] || shift
 echo "$*" > "$STATE/plan"
-echo "reload:$step:$(grep -o "marker '[a-z]*'" "$FORKOP_CONFIG_FILE")" >> "$STATE/events"
+echo "reload:$step:$(grep -o "marker '[a-z]*'" "$PROKOP_CONFIG_FILE")" >> "$STATE/events"
 case "$step" in
-  e*) sed -i "s/option marker '[a-z]*'/option marker 'edit'/" "$FORKOP_CONFIG_FILE" ;;
-  s*) sed -i "s/option shutdown_correctly '[01]'/option shutdown_correctly '1'/" "$FORKOP_CONFIG_FILE" ;;
+  e*) sed -i "s/option marker '[a-z]*'/option marker 'edit'/" "$PROKOP_CONFIG_FILE" ;;
+  s*) sed -i "s/option shutdown_correctly '[01]'/option shutdown_correctly '1'/" "$PROKOP_CONFIG_FILE" ;;
 esac
 case "$step" in
   eq) echo queued; exit 0 ;;
@@ -88,16 +88,16 @@ STUB
 chmod +x "$WORK/bin/ucode" "$WORK/reload"
 
 config() {
-  printf "config settings 'settings'\n\toption dns_server '1.1.1.1'\n\toption shutdown_correctly '0'\n\toption marker '%s'\n" "$1" > "$FORKOP_CONFIG_FILE"
+  printf "config settings 'settings'\n\toption dns_server '1.1.1.1'\n\toption shutdown_correctly '0'\n\toption marker '%s'\n" "$1" > "$PROKOP_CONFIG_FILE"
 }
-marker() { grep -o "marker '[a-z]*'" "$FORKOP_CONFIG_FILE" | sed "s/marker '\(.*\)'/\1/"; }
+marker() { grep -o "marker '[a-z]*'" "$PROKOP_CONFIG_FILE" | sed "s/marker '\(.*\)'/\1/"; }
 field() { node -e 'const r=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));const v=process.argv[2].split(".").reduce((o,k)=>o==null?o:o[k],r);console.log(v===undefined||v===null?"":v)' "$WORK/result.json" "$1"; }
 sha() { sha256sum "$1" | cut -d' ' -f1; }
-lkg() { cat "$FORKOP_SNAPSHOT_DIR/last-known-working" 2>/dev/null || true; }
+lkg() { cat "$PROKOP_SNAPSHOT_DIR/last-known-working" 2>/dev/null || true; }
 # snapshot_holding <marker> [reason]: the id of a snapshot whose content has
 # the marker (and the given reason, if any), or nothing.
 snapshot_holding() {
-  node - "$FORKOP_SNAPSHOT_DIR" "$1" "${2:-}" <<'JS'
+  node - "$PROKOP_SNAPSHOT_DIR" "$1" "${2:-}" <<'JS'
 const fs = require('node:fs');
 const [dir, marker, reason] = process.argv.slice(2);
 for (const f of fs.readdirSync(dir).filter((f) => f.endsWith('.json'))) {
@@ -106,7 +106,7 @@ for (const f of fs.readdirSync(dir).filter((f) => f.endsWith('.json'))) {
 }
 JS
 }
-snapshot_count() { find "$FORKOP_SNAPSHOT_DIR" -name '*.json' | wc -l; }
+snapshot_count() { find "$PROKOP_SNAPSHOT_DIR" -name '*.json' | wc -l; }
 # run <mode...>: snapshots.uc with the stubs, result in $WORK/result.json.
 run() {
   : > "$STATE/events"
@@ -127,7 +127,7 @@ good_id="$("$REAL_UCODE" -L "$LIB" "$SCRIPT" create manual | node -e 'let s="";p
 #    snapshot holds (the lifecycle's own before-reload snapshot is refused by
 #    the held snapshot lock). The edit stays, is saved as a snapshot, and the
 #    guard keeps protecting the runtime that no reload proved.
-config bad; echo stale > "$FORKOP_SNAPSHOT_DIR/last-known-working"
+config bad; echo stale > "$PROKOP_SNAPSHOT_DIR/last-known-working"
 restore absent "e1"
 [ "$(field status)" = needs_attention ] || fail "edit during a failed target reload: $(cat "$WORK/result.json")"
 [ "$(field reason)" = config_changed_during_transaction ] || fail "edit during a failed target reload: $(cat "$WORK/result.json")"
@@ -157,19 +157,19 @@ ok "the saved edit restores like any snapshot and clears the guard"
 
 # 2. The target reload was only queued behind another lifecycle action, and
 #    an edit landed meanwhile: the same.
-config bad; echo stale > "$FORKOP_SNAPSHOT_DIR/last-known-working"
+config bad; echo stale > "$PROKOP_SNAPSHOT_DIR/last-known-working"
 restore absent "eq"
 [ "$(field status)" = needs_attention ] && [ "$(field reason)" = config_changed_during_transaction ] ||
   fail "edit during a queued target reload: $(cat "$WORK/result.json")"
 [ "$(marker)" = edit ] && [ "$(reloads)" = 1 ] || fail "queued target: the edit was overwritten or a rollback reload ran"
-rm -f "$FORKOP_PENDING_RELOAD_FILE"
+rm -f "$PROKOP_PENDING_RELOAD_FILE"
 ok "edit during a queued target reload -> kept, needs_attention"
 
 # 2a. An explicit stop skipped the target reload, and an edit landed
 #     meanwhile: the restore did not put the snapshot in place, so it is not
 #     reported as restored for the next start. No runtime runs that a guard
 #     could protect, so the guard goes (a kept one would outlive the start).
-config bad; echo stale > "$FORKOP_SNAPSHOT_DIR/last-known-working"
+config bad; echo stale > "$PROKOP_SNAPSHOT_DIR/last-known-working"
 restore absent "es"
 [ "$(field status)" = needs_attention ] && [ "$(field reason)" = config_changed_during_transaction ] ||
   fail "edit while a stop skipped the target reload: $(cat "$WORK/result.json")"
@@ -222,8 +222,8 @@ ok "edit while the guard is installed -> refused before the write, own guard rel
 # 7. A restore given the hash it expects to replace (the automatic rollback
 #    of autotune passes the candidate's) refuses before any change when the
 #    file is something else, and saves that file.
-config bad; expected="$(sha "$FORKOP_CONFIG_FILE")"
-config other; echo stale > "$FORKOP_SNAPSHOT_DIR/last-known-working"
+config bad; expected="$(sha "$PROKOP_CONFIG_FILE")"
+config other; echo stale > "$PROKOP_SNAPSHOT_DIR/last-known-working"
 restore absent "0" "$expected"
 [ "$(field status)" = needs_attention ] && [ "$(field reason)" = config_changed_during_transaction ] ||
   fail "unexpected configuration: $(cat "$WORK/result.json")"
@@ -240,12 +240,12 @@ ok "restore with an expected hash that the file no longer has -> needs_attention
 # 7a. The expected file restores normally; one that differs only by the
 #     lifecycle's shutdown_correctly flag counts as the expected one (the
 #     expected value may be its user fingerprint, as autotune records it).
-config bad; expected="$(sha "$FORKOP_CONFIG_FILE")"
+config bad; expected="$(sha "$PROKOP_CONFIG_FILE")"
 restore absent "0" "$expected"
 [ "$(field status)" = success ] && [ "$(marker)" = good ] || fail "expected hash: $(cat "$WORK/result.json")"
 config bad
-fingerprint="$(grep -v 'option shutdown_correctly' "$FORKOP_CONFIG_FILE" | sha256sum | cut -d' ' -f1)"
-sed -i "s/option shutdown_correctly '0'/option shutdown_correctly '1'/" "$FORKOP_CONFIG_FILE"
+fingerprint="$(grep -v 'option shutdown_correctly' "$PROKOP_CONFIG_FILE" | sha256sum | cut -d' ' -f1)"
+sed -i "s/option shutdown_correctly '0'/option shutdown_correctly '1'/" "$PROKOP_CONFIG_FILE"
 restore absent "0" "$fingerprint"
 [ "$(field status)" = success ] && [ "$(marker)" = good ] || fail "expected user fingerprint: $(cat "$WORK/result.json")"
 restore absent "0" "not-a-hash"
@@ -255,8 +255,8 @@ ok "expected hash or user fingerprint matches -> restore proceeds; malformed -> 
 
 # 8. An autotune apply (snapshots.uc apply): the candidate reload fails and an
 #    edit landed while it ran -> the same protection.
-config bad; before_hash="$(sha "$FORKOP_CONFIG_FILE")"
-sed "s/option marker 'bad'/option marker 'candidate'/" "$FORKOP_CONFIG_FILE" > "$WORK/candidate"
+config bad; before_hash="$(sha "$PROKOP_CONFIG_FILE")"
+sed "s/option marker 'bad'/option marker 'candidate'/" "$PROKOP_CONFIG_FILE" > "$WORK/candidate"
 echo absent > "$STATE/guard"; echo "e1" > "$STATE/plan"
 run apply "$WORK/candidate" "$before_hash"
 [ "$(field status)" = needs_attention ] && [ "$(field reason)" = config_changed_during_transaction ] ||
@@ -264,8 +264,8 @@ run apply "$WORK/candidate" "$before_hash"
 [ "$(marker)" = edit ] && [ "$(reloads)" = 1 ] || fail "apply: the edit was overwritten or a rollback reload ran"
 saved="$(field saved_snapshot)"
 [ -n "$saved" ] && [ "$(snapshot_holding edit concurrent-change)" != "" ] &&
-  grep -q '"reason": *"concurrent-change"' "$FORKOP_SNAPSHOT_DIR/$saved.json" &&
-  grep -q "option marker 'edit'" "$FORKOP_SNAPSHOT_DIR/$saved.json" || fail "apply: the edit is not saved: $(cat "$WORK/result.json")"
+  grep -q '"reason": *"concurrent-change"' "$PROKOP_SNAPSHOT_DIR/$saved.json" &&
+  grep -q "option marker 'edit'" "$PROKOP_SNAPSHOT_DIR/$saved.json" || fail "apply: the edit is not saved: $(cat "$WORK/result.json")"
 [ -n "$(field pre_snapshot)" ] || fail "apply: the before-autotune snapshot is not named"
 ok "autotune apply: edit during a failed candidate reload -> kept, saved, needs_attention"
 
@@ -275,10 +275,10 @@ ok "autotune apply: edit during a failed candidate reload -> kept, saved, needs_
 #    names that one: the page says so, and retention does not take it first.
 #    Without room for a snapshot the result names none (the edit stays in the
 #    file only).
-rm -rf "$FORKOP_SNAPSHOT_DIR"
+rm -rf "$PROKOP_SNAPSHOT_DIR"
 config good
 good_id="$("$REAL_UCODE" -L "$LIB" "$SCRIPT" create manual | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).snapshot.id))')"
-config good; sed -i "s/option marker 'good'/option marker 'edit'/" "$FORKOP_CONFIG_FILE"
+config good; sed -i "s/option marker 'good'/option marker 'edit'/" "$PROKOP_CONFIG_FILE"
 other="$("$REAL_UCODE" -L "$LIB" "$SCRIPT" create automatic | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).snapshot.id))')"
 [ -n "$other" ] || fail "fixture: the before-reload snapshot was not created"
 config bad
@@ -286,8 +286,8 @@ restore absent "e1"
 [ "$(field status)" = needs_attention ] && [ "$(field reason)" = config_changed_during_transaction ] ||
   fail "edit held by another snapshot: $(cat "$WORK/result.json")"
 saved="$(field saved_snapshot)"
-[ -n "$saved" ] && [ "$saved" != "$other" ] && grep -q '"reason": *"concurrent-change"' "$FORKOP_SNAPSHOT_DIR/$saved.json" &&
-  grep -q "option marker 'edit'" "$FORKOP_SNAPSHOT_DIR/$saved.json" ||
+[ -n "$saved" ] && [ "$saved" != "$other" ] && grep -q '"reason": *"concurrent-change"' "$PROKOP_SNAPSHOT_DIR/$saved.json" &&
+  grep -q "option marker 'edit'" "$PROKOP_SNAPSHOT_DIR/$saved.json" ||
   fail "the result names no Concurrent edit snapshot of the edit: $(cat "$WORK/result.json")"
 count="$(snapshot_count)"
 config bad
@@ -296,7 +296,7 @@ restore absent "e1"
   fail "the same edit is saved twice as a Concurrent edit: $(cat "$WORK/result.json"), $(snapshot_count) snapshots"
 # Retention full: 8 manual snapshots, last-known-working and the
 # pre-restore snapshot leave no room, so nothing is saved, nor named.
-rm -rf "$FORKOP_SNAPSHOT_DIR"
+rm -rf "$PROKOP_SNAPSHOT_DIR"
 for i in 1 2 3 4 5 6 7 8; do
   config "manual$(printf '%s' "$i" | tr 0-9 a-j)"
   "$REAL_UCODE" -L "$LIB" "$SCRIPT" create manual >/dev/null

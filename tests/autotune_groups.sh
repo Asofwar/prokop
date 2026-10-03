@@ -8,7 +8,7 @@ set -euo pipefail
 # someone else.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK="$(mktemp -d)"
 # A call the uci test shim refused fails the test, even one it tolerated.
 cleanup() {
@@ -22,16 +22,16 @@ trap 'exit 1' HUP INT TERM
 # Policy and targets are written through the uci CLI (UC-009).
 # shellcheck source=tests/helpers/uci_cli/select.sh
 source "$ROOT_DIR/tests/helpers/uci_cli/select.sh"
-export FORKOP_LIB="$LIB"
-export FORKOP_AUTOTUNE_STATE_FILE="$WORK/etc/autotune/state.json"
-export FORKOP_AUTOTUNE_LAST_DIR="$WORK/run/last" FORKOP_AUTOTUNE_STATE_DIR="$WORK/run/autotune"
-export FORKOP_CONFIG_FILE="$WORK/config/forkop"
-export FORKOP_AUTOTUNE_SINGBOX_CONFIG="$WORK/sing-box.json"
-export FORKOP_AUTOTUNE_DIG="$WORK/dig"
-export FORKOP_AUTOTUNE_UCI_SAVEDIR="$WORK/uci-save" FORKOP_AUTOTUNE_TMPDIR="$WORK/tmp"
-export FORKOP_HISTORY_FILE="$WORK/etc/history.jsonl" FORKOP_RUNTIME_STATE_DIR="$WORK/run/state"
+export PROKOP_LIB="$LIB"
+export PROKOP_AUTOTUNE_STATE_FILE="$WORK/etc/autotune/state.json"
+export PROKOP_AUTOTUNE_LAST_DIR="$WORK/run/last" PROKOP_AUTOTUNE_STATE_DIR="$WORK/run/autotune"
+export PROKOP_CONFIG_FILE="$WORK/config/prokop"
+export PROKOP_AUTOTUNE_SINGBOX_CONFIG="$WORK/sing-box.json"
+export PROKOP_AUTOTUNE_DIG="$WORK/dig"
+export PROKOP_AUTOTUNE_UCI_SAVEDIR="$WORK/uci-save" PROKOP_AUTOTUNE_TMPDIR="$WORK/tmp"
+export PROKOP_HISTORY_FILE="$WORK/etc/history.jsonl" PROKOP_RUNTIME_STATE_DIR="$WORK/run/state"
 # A mode change syncs the autotune cron line: never the host's crontab.
-export FORKOP_CRONTAB_FILE="$WORK/crontab" FORKOP_AUTOTUNE_CRONTAB="$WORK/crontab-cmd"
+export PROKOP_CRONTAB_FILE="$WORK/crontab" PROKOP_AUTOTUNE_CRONTAB="$WORK/crontab-cmd"
 mkdir -p "$WORK/config" "$WORK/uci-save" "$WORK/tmp"
 printf '#!/bin/sh\ncp "$1" "%s/crontab"\n' "$WORK" >"$WORK/crontab-cmd"
 chmod +x "$WORK/crontab-cmd"
@@ -66,7 +66,7 @@ UC
 ucode -L "$LIB" "$WORK/aggregate.uc" >"$WORK/aggregate.json"
 
 # ---- classification --------------------------------------------------------
-cat >"$WORK/config/forkop" <<'CONF'
+cat >"$WORK/config/prokop" <<'CONF'
 config settings 'settings'
 config section 'main'
 	option action 'connection'
@@ -140,14 +140,14 @@ ucode -L "$LIB" "$WORK/seed.uc"
 manager groups >"$WORK/groups.json"
 
 # ---- policy and targets (write) -------------------------------------------
-before="$(cat "$WORK/config/forkop")"
+before="$(cat "$WORK/config/prokop")"
 manager policy-set mode auto >"$WORK/mode.json"
 manager policy-set mode auto >"$WORK/mode-again.json"
 if manager policy-set interval 10m >"$WORK/interval.json"; then fail "a too short interval must be refused"; fi
 if manager policy-set nosuch 1 >"$WORK/unknown-option.json"; then fail "unknown options must be refused"; fi
-echo "forkop.youtube.enabled='0'" >"$WORK/uci-save/forkop"
+echo "prokop.youtube.enabled='0'" >"$WORK/uci-save/prokop"
 if manager policy-set confirmations 4 >"$WORK/staged.json"; then fail "staged UCI changes must block policy writes"; fi
-rm -f "$WORK/uci-save/forkop"
+rm -f "$WORK/uci-save/prokop"
 manager policy-set confirmations 4 >"$WORK/confirmations.json"
 manager target-set yt www.YouTube.com 1 192.0.2.53 >"$WORK/target-same.json"
 manager target-set yt m.youtube.com >"$WORK/target-new-host.json"
@@ -157,7 +157,7 @@ if manager target-set bad 'not a host' >"$WORK/target-bad.json"; then fail "inva
 manager target-remove extra >"$WORK/target-remove.json"
 if manager target-remove extra >"$WORK/target-remove-again.json"; then fail "removing a missing target must fail"; fi
 manager status >"$WORK/status.json"
-cp "$WORK/config/forkop" "$WORK/after.conf"
+cp "$WORK/config/prokop" "$WORK/after.conf"
 
 node - "$WORK" <<'NODE'
 const assert = require('node:assert/strict');
@@ -174,7 +174,7 @@ assert.deepEqual([a.direct_ok.status, a.direct_ok.candidate], ['recommendation',
   'a target that works directly accepts a candidate stable for it');
 assert.deepEqual([a.direct_only.status, a.direct_only.reason], ['conflict', 'candidate_not_stable_for_all']);
 assert.deepEqual([a.all_direct.status, a.all_direct.reason], ['direct_stable', 'direct_not_applicable'],
-  'Forkop never turns DPI off by itself');
+  'Prokop never turns DPI off by itself');
 assert.deepEqual([a.active.status, a.active.reason], ['no_change', 'candidate_already_active']);
 assert.deepEqual([a.inconclusive.status, a.inconclusive.reason], ['inconclusive', 'all_failed']);
 assert.deepEqual([a.empty.status, a.empty.reason], ['inconclusive', 'no_targets']);

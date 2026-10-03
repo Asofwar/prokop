@@ -13,10 +13,10 @@ set -eo pipefail
 # never applied and never refuses the configuration (UC-151).
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-VALIDATOR="$FORKOP_LIB/config/validator.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+VALIDATOR="$PROKOP_LIB/config/validator.uc"
 # The last commit before the validator read the overrides.
-BASELINE_REF="${FORKOP_URLTEST_OVERRIDE_BASELINE_REF:-5eaa93491b4d4435a474708dc0670416305ebc8a}"
+BASELINE_REF="${PROKOP_URLTEST_OVERRIDE_BASELINE_REF:-5eaa93491b4d4435a474708dc0670416305ebc8a}"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT
 
@@ -60,7 +60,7 @@ JS
 
 validate() {
   : >"$LOGGER_LOG"
-  PATH="$WORK_DIR/bin:$PATH" ucode -L "$FORKOP_LIB" "$VALIDATOR" validate-runtime-fixture "$WORK_DIR/$1.json" '{}'
+  PATH="$WORK_DIR/bin:$PATH" ucode -L "$PROKOP_LIB" "$VALIDATOR" validate-runtime-fixture "$WORK_DIR/$1.json" '{}'
 }
 
 # accepts <fixture>: valid, and no warning about an override.
@@ -183,15 +183,15 @@ if grep -Fq "legacy-urltest-out" "$LOGGER_LOG"; then
 fi
 
 # The generator reads the rules from the fixture and the overrides through
-# core.uci, as on a router both come from /etc/config/forkop.
+# core.uci, as on a router both come from /etc/config/prokop.
 node - "$WORK_DIR/existing.json" "$WORK_DIR/existing.state" <<'JS'
 const fs = require('fs');
 const config = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
 const lines = [];
 for (const section of config.urltest_override) {
-  lines.push(`forkop.${section['.name']}=urltest_override`);
+  lines.push(`prokop.${section['.name']}=urltest_override`);
   for (const [key, value] of Object.entries(section))
-    if (!key.startsWith('.')) lines.push(`forkop.${section['.name']}.${key}=${value}`);
+    if (!key.startsWith('.')) lines.push(`prokop.${section['.name']}.${key}=${value}`);
 }
 fs.writeFileSync(process.argv[3], lines.join('\n') + '\n');
 JS
@@ -204,9 +204,9 @@ generate() {
     "$WORK_DIR/subscription.json" "$dir/subscriptions/subs-subscription-1.json"
   printf '%s\n' 'https://singbox.example/sub' >"$dir/subscriptions/subs-subscription-1.url"
   : >"$dir/subscriptions/subs-subscription-1.user_agent"
-  FORKOP_UCI_STATE_FILE="$WORK_DIR/existing.state" \
+  PROKOP_UCI_STATE_FILE="$WORK_DIR/existing.state" \
     TMP_SUBSCRIPTION_FOLDER="$dir/subscriptions" \
-    FORKOP_SUBSCRIPTION_METADATA_DIR="$dir/metadata" \
+    PROKOP_SUBSCRIPTION_METADATA_DIR="$dir/metadata" \
     ucode -L "$lib" "$lib/singbox/generator.uc" generate-config-fixture \
     "$WORK_DIR/existing.json" "$dir/config.json" 127.0.0.1 ||
     fail "$2: the config must be generated"
@@ -218,7 +218,7 @@ process.stdout.write(JSON.stringify(groups) + "\n");
 ' "$dir/config.json" >"$dir/urltest.json"
 }
 
-generate "$FORKOP_LIB" current
+generate "$PROKOP_LIB" current
 node - "$WORK_DIR/current/urltest.json" <<'JS' || fail "the generated URLTest groups must keep the override values"
 const assert = require('assert/strict');
 const groups = Object.fromEntries(JSON.parse(require('fs').readFileSync(process.argv[2], 'utf8'))
@@ -233,9 +233,9 @@ JS
 
 if git -C "$ROOT_DIR" rev-parse --verify --quiet "$BASELINE_REF^{commit}" >/dev/null; then
   mkdir -p "$WORK_DIR/baseline-tree"
-  git -C "$ROOT_DIR" archive "$BASELINE_REF" forkop/files/usr/lib | tar -x -C "$WORK_DIR/baseline-tree" ||
+  git -C "$ROOT_DIR" archive "$BASELINE_REF" prokop/files/usr/lib | tar -x -C "$WORK_DIR/baseline-tree" ||
     fail "failed to materialize $BASELINE_REF"
-  generate "$WORK_DIR/baseline-tree/forkop/files/usr/lib" baseline
+  generate "$WORK_DIR/baseline-tree/prokop/files/usr/lib" baseline
   cmp -s "$WORK_DIR/baseline/urltest.json" "$WORK_DIR/current/urltest.json" || {
     printf 'baseline: %s\ncurrent:  %s\n' "$(cat "$WORK_DIR/baseline/urltest.json")" \
       "$(cat "$WORK_DIR/current/urltest.json")" >&2

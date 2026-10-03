@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 # Zapret-Manager launchers that older releases wrote for the former upstream
-# mirror (or that Forkop wrote for another mirror) keep downloading and running
-# the script from that host. Every package postinst rewrites Forkop's own
+# mirror (or that Prokop wrote for another mirror) keep downloading and running
+# the script from that host. Every package postinst rewrites Prokop's own
 # launchers for the current mirror setting; a launcher that is missing, not a
-# regular file or not written by Forkop is never touched, an up-to-date one is
+# regular file or not written by Prokop is never touched, an up-to-date one is
 # not rewritten, and a failed rewrite never fails the package.
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-ACTION_UC="$FORKOP_LIB/components/action.uc"
-PACKAGE_UC="$FORKOP_LIB/service/package.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+ACTION_UC="$PROKOP_LIB/components/action.uc"
+PACKAGE_UC="$PROKOP_LIB/service/package.uc"
 WORK_DIR="$(mktemp -d)"
 trap 'chmod -R u+w "$WORK_DIR" 2>/dev/null || true; rm -rf "$WORK_DIR"' EXIT
 BIN="$WORK_DIR/bin"
@@ -22,7 +22,7 @@ fail() {
 
 mkdir -p "$BIN" "$WORK_DIR/run" "$WORK_DIR/root" "$WORK_DIR/expected"
 
-# What upstream builds wrote: the former upstream mirror, no Forkop marker.
+# What upstream builds wrote: the former upstream mirror, no Prokop marker.
 cat >"$WORK_DIR/expected/legacy" <<'EOF'
 #!/bin/sh
 export ZAPRET_MANAGER_MIRROR='https://mirror.infotechtg.ru'
@@ -31,18 +31,18 @@ EOF
 # What this release writes for another (no longer configured) mirror.
 cat >"$WORK_DIR/expected/other-mirror" <<'EOF'
 #!/bin/sh
-# Forkop X Zapret-Manager launcher
+# Prokop Zapret-Manager launcher
 export ZAPRET_MANAGER_MIRROR='https://old-mirror.test'
 exec sh <(wget -q -O - 'https://old-mirror.test/zapret-manager/proxy/raw.githubusercontent.com/Screamshow/Zapret-Manager/main/Zapret-Manager.sh') "$@"
 EOF
 cat >"$WORK_DIR/expected/direct" <<'EOF'
 #!/bin/sh
-# Forkop X Zapret-Manager launcher
+# Prokop Zapret-Manager launcher
 exec sh <(wget -q -O - 'https://raw.githubusercontent.com/Screamshow/Zapret-Manager/main/Zapret-Manager.sh') "$@"
 EOF
 cat >"$WORK_DIR/expected/mirrored" <<'EOF'
 #!/bin/sh
-# Forkop X Zapret-Manager launcher
+# Prokop Zapret-Manager launcher
 export ZAPRET_MANAGER_MIRROR='https://own-mirror.test'
 exec sh <(wget -q -O - 'https://own-mirror.test/zapret-manager/proxy/raw.githubusercontent.com/Screamshow/Zapret-Manager/main/Zapret-Manager.sh') "$@"
 EOF
@@ -65,29 +65,29 @@ assert_launcher() {
 
 # reconcile MIRROR: the step components/action.uc runs for package postinst.
 reconcile() {
-  FORKOP_MIRROR_BASE_URL="$1" FORKOP_ZAPRET_MANAGER_BIN_DIR="$BIN" FORKOP_LIB="$FORKOP_LIB" \
-    ucode -L "$FORKOP_LIB" "$ACTION_UC" reconcile-zapret-manager-launchers
+  PROKOP_MIRROR_BASE_URL="$1" PROKOP_ZAPRET_MANAGER_BIN_DIR="$BIN" PROKOP_LIB="$PROKOP_LIB" \
+    ucode -L "$PROKOP_LIB" "$ACTION_UC" reconcile-zapret-manager-launchers
 }
 
 # postinst MIRROR: the whole package postinst, isolated from the host.
-printf '%s\n' "config settings 'settings'" >"$WORK_DIR/config-forkop"
-cp "$WORK_DIR/config-forkop" "$WORK_DIR/default-forkop"
-printf '%s\n' 'forkop.settings=settings' >"$WORK_DIR/config.state"
+printf '%s\n' "config settings 'settings'" >"$WORK_DIR/config-prokop"
+cp "$WORK_DIR/config-prokop" "$WORK_DIR/default-prokop"
+printf '%s\n' 'prokop.settings=settings' >"$WORK_DIR/config.state"
 postinst() {
-  FORKOP_PACKAGE_TEST_MODE=1 \
-  FORKOP_LIB="$FORKOP_LIB" \
-  FORKOP_MIRROR_BASE_URL="$1" \
-  FORKOP_ZAPRET_MANAGER_BIN_DIR="$BIN" \
-  FORKOP_CONFIG_PATH="$WORK_DIR/config-forkop" \
-  FORKOP_DEFAULT_CONFIG_PATH="$WORK_DIR/default-forkop" \
-  FORKOP_UCI_STATE_FILE="$WORK_DIR/config.state" \
-  FORKOP_PACKAGE_UPGRADE_STATE="$WORK_DIR/package-was-running" \
-  FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/run" \
-  FORKOP_EXPLICIT_START_FILE="$WORK_DIR/run/start.explicit" \
-  FORKOP_COMPONENT_UPDATE_CHECK_CACHE_DIR="$WORK_DIR/component-update-checks" \
-  FORKOP_COMPONENT_UPDATE_CHECK_STATE_FILE="$WORK_DIR/component-update-check.timestamp" \
-  FORKOP_LEGACY_GUARD_ROOT="$WORK_DIR/root" \
-    ucode -L "$FORKOP_LIB" "$PACKAGE_UC" postinst
+  PROKOP_PACKAGE_TEST_MODE=1 \
+  PROKOP_LIB="$PROKOP_LIB" \
+  PROKOP_MIRROR_BASE_URL="$1" \
+  PROKOP_ZAPRET_MANAGER_BIN_DIR="$BIN" \
+  PROKOP_CONFIG_PATH="$WORK_DIR/config-prokop" \
+  PROKOP_DEFAULT_CONFIG_PATH="$WORK_DIR/default-prokop" \
+  PROKOP_UCI_STATE_FILE="$WORK_DIR/config.state" \
+  PROKOP_PACKAGE_UPGRADE_STATE="$WORK_DIR/package-was-running" \
+  PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/run" \
+  PROKOP_EXPLICIT_START_FILE="$WORK_DIR/run/start.explicit" \
+  PROKOP_COMPONENT_UPDATE_CHECK_CACHE_DIR="$WORK_DIR/component-update-checks" \
+  PROKOP_COMPONENT_UPDATE_CHECK_STATE_FILE="$WORK_DIR/component-update-check.timestamp" \
+  PROKOP_LEGACY_GUARD_ROOT="$WORK_DIR/root" \
+    ucode -L "$PROKOP_LIB" "$PACKAGE_UC" postinst
 }
 
 # 1. Package postinst without a mirror: the upstream launchers stop naming the
@@ -120,13 +120,13 @@ postinst 'https://own-mirror.test' >"$WORK_DIR/postinst.out" 2>&1 ||
 assert_launcher zms mirrored "postinst with the same mirror"
 printf 'PASS: launchers follow an opted-in mirror\n'
 
-# 4. Launchers Forkop did not write, and links, are never touched; a missing
+# 4. Launchers Prokop did not write, and links, are never touched; a missing
 # launcher is never created.
 install_launcher zms foreign
 install_launcher zmsA legacy
 reconcile '' >/dev/null || fail "reconciling next to a foreign launcher failed"
 assert_launcher zms foreign "foreign launcher"
-assert_launcher zmsA direct "Forkop launcher next to a foreign one"
+assert_launcher zmsA direct "Prokop launcher next to a foreign one"
 
 rm -f "$BIN/zms" "$BIN/zmsA"
 cp "$WORK_DIR/expected/legacy" "$WORK_DIR/legacy-target"

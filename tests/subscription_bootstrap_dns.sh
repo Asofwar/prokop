@@ -2,8 +2,8 @@
 set -eo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-CACHE_UC="$ROOT_DIR/forkop/files/usr/lib/subscription/cache.uc"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
+CACHE_UC="$ROOT_DIR/prokop/files/usr/lib/subscription/cache.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK_DIR="$(mktemp -d)"
 
 cleanup() { rm -rf "$WORK_DIR"; }
@@ -14,7 +14,7 @@ mkdir -p "$WORK_DIR/bin"
 cat >"$WORK_DIR/bin/uci" <<'SH'
 #!/usr/bin/env bash
 if [ "${1:-}" = "-q" ]; then shift; fi
-if [ "${1:-}" = "get" ] && [ "${2:-}" = "forkop.settings.bootstrap_dns_server" ]; then
+if [ "${1:-}" = "get" ] && [ "${2:-}" = "prokop.settings.bootstrap_dns_server" ]; then
   printf '%s\n' "${BOOTSTRAP_SERVERS:-}"
   exit 0
 fi
@@ -65,13 +65,13 @@ export LOGGER_LOG="$WORK_DIR/logger.log"
 UCI_STATE="$WORK_DIR/uci.state"
 
 download() {
-  printf 'forkop.settings=settings\nforkop.settings.bootstrap_dns_server=%s\n' "$1" >"$UCI_STATE"
+  printf 'prokop.settings=settings\nprokop.settings.bootstrap_dns_server=%s\n' "$1" >"$UCI_STATE"
   BOOTSTRAP_SERVERS="$1" CURL_RESOLVE_STATUS="${2:-0}" \
-    FORKOP_UCI_STATE_FILE="$UCI_STATE" \
-    ucode -L "$FORKOP_LIB" "$CACHE_UC" download-subscription-fixture "$3" "$WORK_DIR/result" "" "" "" ""
+    PROKOP_UCI_STATE_FILE="$UCI_STATE" \
+    ucode -L "$PROKOP_LIB" "$CACHE_UC" download-subscription-fixture "$3" "$WORK_DIR/result" "" "" "" ""
 }
 
-# One URL, ordered Bootstrap DNS fallback, and no URL secret in Forkop logs.
+# One URL, ordered Bootstrap DNS fallback, and no URL secret in Prokop logs.
 : >"$NSLOOKUP_LOG"; : >"$CURL_LOG"; : >"$LOGGER_LOG"
 download '1.1.1.1 8.8.8.8' 0 'https://one.example/sub?token=secret' || fail 'bootstrap download failed'
 grep -Fxq 'one.example 1.1.1.1' "$NSLOOKUP_LOG" || fail 'first Bootstrap DNS was not tried'
@@ -104,7 +104,7 @@ grep -Fq -- '--resolve' "$CURL_LOG" && fail 'empty Bootstrap DNS list must not u
 : >"$NSLOOKUP_LOG"; : >"$CURL_LOG"
 if download '1.1.1.1' 0 'https://one.example/bootstrap-unavailable'; then fail 'unavailable Bootstrap DNS unexpectedly succeeded'; fi
 grep -Fxq 'one.example 1.1.1.1' "$NSLOOKUP_LOG" || fail 'configured Bootstrap DNS was not attempted'
-grep -Fxq 'forkop.settings.bootstrap_dns_server=1.1.1.1' "$UCI_STATE" || fail 'Bootstrap DNS configuration was changed'
+grep -Fxq 'prokop.settings.bootstrap_dns_server=1.1.1.1' "$UCI_STATE" || fail 'Bootstrap DNS configuration was changed'
 grep -Fq -- '--resolve' "$CURL_LOG" && fail 'failed Bootstrap DNS must not use --resolve'
 
 # IP literals do not require lookup or --resolve.

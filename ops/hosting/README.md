@@ -1,15 +1,15 @@
-# Канал релизов Forkop на GitHub Pages
+# Канал релизов Prokop на GitHub Pages
 
 Установщик и встроенное обновление форка читают статический канал
-`https://asofwar.github.io/forkop`. Его целиком собирает
-`ops/pages/build-site.py` из GitHub Releases репозитория `Asofwar/forkop`,
+`https://asofwar.github.io/prokop`. Его целиком собирает
+`ops/pages/build-site.py` из GitHub Releases репозитория `Asofwar/prokop`,
 а публикует workflow `.github/workflows/pages.yml`.
 
 ## Как появляется релиз
 
 1. Тег `X.Y.Z` (строго три числа) запускает workflow **Build packages**: тесты,
    сборка пакетов `ipk`/`apk`, GitHub Release с шестью пакетами, `install.sh`
-   из того же коммита и архивом `forkop-timeweb-X.Y.Z.tar.gz`.
+   из того же коммита и архивом `prokop-timeweb-X.Y.Z.tar.gz`.
 2. После успешного завершения **Build packages** запускается
    **Publish release channel** (`pages.yml`, событие `workflow_run`). Он
    скачивает пакеты последних 8 стабильных релизов, сверяет их с SHA-256,
@@ -27,7 +27,7 @@ workflow** (только с ветки по умолчанию — так тре
 ## Структура канала
 
 ```text
-https://asofwar.github.io/forkop/
+https://asofwar.github.io/prokop/
 ├── index.html               страница с командой установки
 ├── install.sh               установщик из самого нового релиза
 ├── LATEST                   номер самой новой версии
@@ -36,12 +36,12 @@ https://asofwar.github.io/forkop/
 │   └── releases.json        каталог версий для выбора и отката в LuCI
 └── releases/
     └── X.Y.Z/
-        ├── forkop_X.Y.Z.ipk
-        ├── luci-app-forkop_X.Y.Z.ipk
-        ├── luci-i18n-forkop-ru_X.Y.Z.ipk
-        ├── forkop_X.Y.Z.apk
-        ├── luci-app-forkop_X.Y.Z.apk
-        ├── luci-i18n-forkop-ru_X.Y.Z.apk
+        ├── prokop_X.Y.Z.ipk
+        ├── luci-app-prokop_X.Y.Z.ipk
+        ├── luci-i18n-prokop-ru_X.Y.Z.ipk
+        ├── prokop_X.Y.Z.apk
+        ├── luci-app-prokop_X.Y.Z.apk
+        ├── luci-i18n-prokop-ru_X.Y.Z.apk
         └── SHA256SUMS
 ```
 
@@ -53,35 +53,35 @@ https://asofwar.github.io/forkop/
 
 ## Проверка после публикации
 
-- `https://asofwar.github.io/forkop/install.sh`
-- `https://asofwar.github.io/forkop/updates/latest.json`
-- `https://asofwar.github.io/forkop/updates/releases.json`
-- `https://asofwar.github.io/forkop/releases/X.Y.Z/SHA256SUMS`
+- `https://asofwar.github.io/prokop/install.sh`
+- `https://asofwar.github.io/prokop/updates/latest.json`
+- `https://asofwar.github.io/prokop/updates/releases.json`
+- `https://asofwar.github.io/prokop/releases/X.Y.Z/SHA256SUMS`
 
 ## Локальная сборка сайта
 
 ```sh
-GITHUB_TOKEN=... python3 ops/pages/build-site.py --output /tmp/forkop-site
+GITHUB_TOKEN=... python3 ops/pages/build-site.py --output /tmp/prokop-site
 ```
 
-Параметры по умолчанию: репозиторий `Asofwar/forkop`
-(`--repository` или `FORKOP_RELEASE_REPO`), адрес канала
-`https://asofwar.github.io/forkop` (`--base-url` или
-`FORKOP_RELEASE_BASE_URL`), 8 последних релизов (`--limit`). Для проверки без
+Параметры по умолчанию: репозиторий `Asofwar/prokop`
+(`--repository` или `PROKOP_RELEASE_REPO`), адрес канала
+`https://asofwar.github.io/prokop` (`--base-url` или
+`PROKOP_RELEASE_BASE_URL`), 8 последних релизов (`--limit`). Для проверки без
 сети есть `--releases-json FILE` и `--assets-dir DIR` (файлы
 `DIR/X.Y.Z/<имя>`), см. `tests/fork_pages_site.sh`.
 
 ## Другой статический хостинг
 
 Тот же канал можно выложить на любой статический хостинг. Каждый релиз
-содержит архив `forkop-timeweb-X.Y.Z.tar.gz` (артефакт сборки
+содержит архив `prokop-timeweb-X.Y.Z.tar.gz` (артефакт сборки
 `timeweb-files-X.Y.Z`), подготовленный `prepare-release.sh`; в CI он собирается
-для адреса `https://asofwar.github.io/forkop`. Для своего адреса подготовьте
+для адреса `https://asofwar.github.io/prokop`. Для своего адреса подготовьте
 архив локально и распакуйте его в корень сайта так, чтобы получился каталог
-`forkop/`:
+`prokop/`:
 
 ```sh
-FORKOP_RELEASE_BASE_URL=https://example.com/forkop \
+PROKOP_RELEASE_BASE_URL=https://example.com/prokop \
   ./ops/hosting/prepare-release.sh X.Y.Z filtered-bin/release filtered-bin/hosting
 ```
 
@@ -90,9 +90,9 @@ FORKOP_RELEASE_BASE_URL=https://example.com/forkop \
 Установщику адрес передаётся переменной окружения:
 
 ```sh
-wget -qO- https://example.com/forkop/install.sh | FORKOP_RELEASE_BASE_URL=https://example.com/forkop sh
+wget -qO- https://example.com/prokop/install.sh | PROKOP_RELEASE_BASE_URL=https://example.com/prokop sh
 ```
 
 Встроенное обновление на роутере читает адрес по умолчанию
-`FORKOP_RELEASE_BASE_URL` из `forkop/files/usr/lib/core/constants.uc`; чтобы
+`PROKOP_RELEASE_BASE_URL` из `prokop/files/usr/lib/core/constants.uc`; чтобы
 оно следовало за другим хостингом, этот адрес меняется в собранных пакетах.

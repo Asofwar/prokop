@@ -8,10 +8,10 @@ set -euo pipefail
 # the process list of a support report cannot capture it.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-GENERATOR="$FORKOP_LIB/singbox/generator.uc"
-RUNTIME_UC="$FORKOP_LIB/diagnostics/runtime.uc"
-STATE_UC="$FORKOP_LIB/service/state.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+GENERATOR="$PROKOP_LIB/singbox/generator.uc"
+RUNTIME_UC="$PROKOP_LIB/diagnostics/runtime.uc"
+STATE_UC="$PROKOP_LIB/service/state.uc"
 WORK_DIR="$(mktemp -d)"
 trap '[ -n "${KEEP_WORK:-}" ] || rm -rf "$WORK_DIR"' EXIT
 
@@ -37,7 +37,7 @@ generate() {
   ]
 }
 JSON
-  "$UCODE_BIN" -L "$FORKOP_LIB" "$GENERATOR" generate-config-fixture \
+  "$UCODE_BIN" -L "$PROKOP_LIB" "$GENERATOR" generate-config-fixture \
     "$WORK_DIR/$name.json" "$WORK_DIR/$name.config.json" 192.0.2.1 0 1 '' 1.12.0 ||
     fail "generator failed for $name"
 }
@@ -108,15 +108,15 @@ chmod 0755 "$WORK_DIR/bin/curl" "$WORK_DIR/bin/logger"
 
 write_state() {
   local secret_line="$1"
-  cat >"$WORK_DIR/etc/forkop" <<EOF
+  cat >"$WORK_DIR/etc/prokop" <<EOF
 config settings 'settings'
 	option service_listen_address '127.0.0.1'
 	option enable_yacd '0'
 EOF
   {
-    printf '%s\n' 'forkop.settings=settings' \
-      'forkop.settings.service_listen_address=127.0.0.1' \
-      'forkop.settings.enable_yacd=0'
+    printf '%s\n' 'prokop.settings=settings' \
+      'prokop.settings.service_listen_address=127.0.0.1' \
+      'prokop.settings.enable_yacd=0'
     [ -z "$secret_line" ] || printf '%s\n' "$secret_line"
   } >"$WORK_DIR/uci-state"
 }
@@ -124,22 +124,22 @@ EOF
 backend() {
   : >"$WORK_DIR/curl.log"
   env PATH="$WORK_DIR/bin:$PATH" \
-    FORKOP_LIB="$FORKOP_LIB" \
-    FORKOP_CONFIG="$WORK_DIR/etc/forkop" \
-    FORKOP_CONFIG_FILE="$WORK_DIR/etc/forkop" \
-    FORKOP_UCI_STATE_FILE="$WORK_DIR/uci-state" \
-    FORKOP_UCI_LOG_FILE="$WORK_DIR/uci-log" \
-    FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/run" \
+    PROKOP_LIB="$PROKOP_LIB" \
+    PROKOP_CONFIG="$WORK_DIR/etc/prokop" \
+    PROKOP_CONFIG_FILE="$WORK_DIR/etc/prokop" \
+    PROKOP_UCI_STATE_FILE="$WORK_DIR/uci-state" \
+    PROKOP_UCI_LOG_FILE="$WORK_DIR/uci-log" \
+    PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/run" \
     CLASH_TEST_CURL_LOG="$WORK_DIR/curl.log" \
     CLASH_TEST_SECRET="${CLASH_TEST_SECRET:-}" \
     TMPDIR="$WORK_DIR/tmp" \
-    "$UCODE_BIN" -L "$FORKOP_LIB" "$RUNTIME_UC" "$@"
+    "$UCODE_BIN" -L "$PROKOP_LIB" "$RUNTIME_UC" "$@"
 }
 mkdir -p "$WORK_DIR/tmp"
 
 # The secret is configured, YACD and WAN access are off: the controller
 # requires the token, so readiness must send it.
-write_state "forkop.settings.yacd_secret_key=$SECRET"
+write_state "prokop.settings.yacd_secret_key=$SECRET"
 CLASH_TEST_SECRET="$SECRET" backend clash-api-ready >/dev/null 2>&1 ||
   fail "readiness must authenticate whenever a secret is configured (got 401)"
 grep -q '^ARGV:.*/proxies' "$WORK_DIR/curl.log" || fail "readiness did not query the controller"
@@ -160,7 +160,7 @@ grep -q '^HEADER-FILE-MODE: 600$' "$WORK_DIR/curl.log" || fail "set_group_proxy 
 grep '^ARGV:' "$WORK_DIR/curl.log" | grep -q "$SECRET" && fail "set_group_proxy put the secret on the command line"
 
 # A whitespace-only secret is no secret: nothing is sent.
-write_state "forkop.settings.yacd_secret_key=   "
+write_state "prokop.settings.yacd_secret_key=   "
 backend clash-api-ready >/dev/null 2>&1 || fail "readiness without a secret must not require one"
 grep -q 'HEADER-FILE\|Authorization' "$WORK_DIR/curl.log" && fail "no Authorization header without a secret"
 
@@ -169,9 +169,9 @@ grep -q 'HEADER-FILE\|Authorization' "$WORK_DIR/curl.log" && fail "no Authorizat
 # The otherwise unmasked support report keeps the Clash secret out: support
 # never needs it (D-1). The config file, the raw global check and the raw
 # sing-box config all carry it.
-write_state "forkop.settings.yacd_secret_key=$SECRET"
-printf "\toption yacd_secret_key '%s'\n\toption config_path '%s'\n" "$SECRET" "$WORK_DIR/sing-box.json" >>"$WORK_DIR/etc/forkop"
-printf 'forkop.settings.config_path=%s\n' "$WORK_DIR/sing-box.json" >>"$WORK_DIR/uci-state"
+write_state "prokop.settings.yacd_secret_key=$SECRET"
+printf "\toption yacd_secret_key '%s'\n\toption config_path '%s'\n" "$SECRET" "$WORK_DIR/sing-box.json" >>"$WORK_DIR/etc/prokop"
+printf 'prokop.settings.config_path=%s\n' "$WORK_DIR/sing-box.json" >>"$WORK_DIR/uci-state"
 printf '{"experimental":{"clash_api":{"external_controller":"127.0.0.1:9090","secret":"%s"}}}\n' "$SECRET" >"$WORK_DIR/sing-box.json"
 backend support-report >"$WORK_DIR/report.txt" 2>&1 </dev/null || true
 grep -Fq 'CONFIDENTIAL SUPPORT REPORT' "$WORK_DIR/report.txt" || fail "the support report was not produced"
@@ -181,9 +181,9 @@ grep -Fq "$SECRET" "$WORK_DIR/report.txt" && fail "the support report must not c
 # A user secret with a quote or a backslash appears JSON-escaped in the raw
 # sing-box config; that form must be masked too.
 ESCAPED_SECRET='Qu0teMark"Back\slash'
-write_state "forkop.settings.yacd_secret_key=$ESCAPED_SECRET"
-printf "\toption yacd_secret_key '%s'\n\toption config_path '%s'\n" "$ESCAPED_SECRET" "$WORK_DIR/sing-box.json" >>"$WORK_DIR/etc/forkop"
-printf 'forkop.settings.config_path=%s\n' "$WORK_DIR/sing-box.json" >>"$WORK_DIR/uci-state"
+write_state "prokop.settings.yacd_secret_key=$ESCAPED_SECRET"
+printf "\toption yacd_secret_key '%s'\n\toption config_path '%s'\n" "$ESCAPED_SECRET" "$WORK_DIR/sing-box.json" >>"$WORK_DIR/etc/prokop"
+printf 'prokop.settings.config_path=%s\n' "$WORK_DIR/sing-box.json" >>"$WORK_DIR/uci-state"
 "$UCODE_BIN" -e 'require("fs").writefile(ARGV[0], sprintf("{\"experimental\":{\"clash_api\":{\"secret\":%J}}}\n", ARGV[1]));' \
   "$WORK_DIR/sing-box.json" "$ESCAPED_SECRET"
 grep -Fq 'Back\\slash' "$WORK_DIR/sing-box.json" || fail "the fixture must hold the JSON-escaped secret"
@@ -201,7 +201,7 @@ signature() {
   cat >"$WORK_DIR/sig.json" <<JSON
 { "settings": { "enable_yacd": "0", "yacd_secret_key": "$1" }, "runtime": { "mwan3_active": "0" }, "section": [] }
 JSON
-  "$UCODE_BIN" -L "$FORKOP_LIB" "$STATE_UC" sing-box-signature-fixture "$WORK_DIR/sig.json"
+  "$UCODE_BIN" -L "$PROKOP_LIB" "$STATE_UC" sing-box-signature-fixture "$WORK_DIR/sig.json"
 }
 [ "$(signature one)" != "$(signature two)" ] ||
   fail "the sing-box reload signature must follow the Clash secret regardless of YACD"

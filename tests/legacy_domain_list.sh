@@ -10,7 +10,7 @@ set -euo pipefail
 #   keeps the same exact matches instead of dropping them.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT HUP INT TERM
 
@@ -34,7 +34,7 @@ generate() {
     generate-config-fixture "$1" "$2" 127.0.0.1 0 >/dev/null
 }
 generate "$WORK/fixture.json" "$WORK/legacy.json"
-FORKOP_LIB="$LIB" ucode -L "$LIB" "$LIB/config/validator.uc" validate-runtime-fixture "$WORK/fixture.json" '{}' ||
+PROKOP_LIB="$LIB" ucode -L "$LIB" "$LIB/config/validator.uc" validate-runtime-fixture "$WORK/fixture.json" '{}' ||
   { echo "FAIL: validator rejected legacy list domain" >&2; exit 1; }
 
 node - "$ROOT_DIR" "$WORK" <<'NODE'
@@ -44,7 +44,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const { execFileSync } = require('node:child_process');
 const [root, work] = process.argv.slice(2);
-const lib = path.join(root, 'forkop/files/usr/lib');
+const lib = path.join(root, 'prokop/files/usr/lib');
 
 // Backend: generated sing-box rules, in rule order.
 const rules = (file) => JSON.parse(fs.readFileSync(file, 'utf8')).route.rules
@@ -72,7 +72,7 @@ assert.deepEqual(canonical.mixed.domain, ['legacy.example']);
 assert.deepEqual(canonical.mixed.domain_suffix, ['text-sfx.example', 'sfx.example']);
 
 // LuCI editor: load the rule's domain text with the real section.js code.
-const source = fs.readFileSync(path.join(root, 'luci-app-forkop/htdocs/luci-static/resources/view/forkop/section.js'), 'utf8');
+const source = fs.readFileSync(path.join(root, 'luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js'), 'utf8');
 function fn(name) {
   const start = source.indexOf(`function ${name}(`);
   assert(start >= 0, `${name} not found`);
@@ -92,7 +92,7 @@ const parseValueList = (value) => value.split(/\n/).map((l) => l.split('//')[0].
 function loadText(section) {
   const store = { rule: section };
   const context = {
-    UCI_PACKAGE: 'forkop',
+    UCI_PACKAGE: 'prokop',
     main: { parseValueList },
     uci: { get: (_c, sid, key) => store[sid]?.[key] },
     L: { toArray: (v) => (v == null ? [] : Array.isArray(v) ? v : [v]) },

@@ -3,21 +3,21 @@ set -euo pipefail
 
 # An explicit stop against a start that is still at work (UC-012).
 #
-# A start holds reload.lock for all of `forkop start`, and a stop waits for
+# A start holds reload.lock for all of `prokop start`, and a stop waits for
 # that lock only for a bounded time. Neither the start that holds the lock
-# nor one that still waits for it may bring Forkop back after the stop: a
+# nor one that still waits for it may bring Prokop back after the stop: a
 # failed start must not schedule its automatic retry, a retry must not run
 # after a stop, a start requested before the stop must not run after it, and
 # a start that outlives the stop's wait abandons its remaining phases.
 #
 # Part 1 runs the real init script behind an rc.common stand-in that holds
 # fd 1000 like procd.sh (so start detaches its worker, as on a router) and
-# the real service/initd.uc; `forkop` is a double. Part 2 runs the real
+# the real service/initd.uc; `prokop` is a double. Part 2 runs the real
 # service/lifecycle.uc start with every module it calls replaced by a double.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
-REAL_INITD="$ROOT_DIR/forkop/files/etc/init.d/forkop"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
+REAL_INITD="$ROOT_DIR/prokop/files/etc/init.d/prokop"
 REAL_UCODE="$(command -v ucode)"
 WORK_DIR="$(mktemp -d)"
 # shellcheck source=tests/helpers/wait.sh
@@ -47,46 +47,46 @@ fail() {
   exit 1
 }
 
-mkdir -p "$WORK_DIR/bin" "$WORK_DIR/run/forkop" "$WORK_DIR/tmp"
-printf 'forkop.settings=settings\n' >"$WORK_DIR/uci.state"
+mkdir -p "$WORK_DIR/bin" "$WORK_DIR/run/prokop" "$WORK_DIR/tmp"
+printf 'prokop.settings=settings\n' >"$WORK_DIR/uci.state"
 
 export TMPDIR="$WORK_DIR/tmp"
 export PATH="$WORK_DIR/bin:$PATH"
 export TEST_WORK="$WORK_DIR" EVENTS REAL_INITD REAL_UCODE
 export TEST_LIB="$LIB"
-export RC_PROCD_LOCK="$WORK_DIR/procd_forkop.lock"
-export RELOAD_LOCK="$WORK_DIR/run/forkop.reload.lock"
-export STATE_DIR="$WORK_DIR/run/forkop"
+export RC_PROCD_LOCK="$WORK_DIR/procd_prokop.lock"
+export RELOAD_LOCK="$WORK_DIR/run/prokop.reload.lock"
+export STATE_DIR="$WORK_DIR/run/prokop"
 export STOP_MARKER="$STATE_DIR/stop.requested"
-export FORKOP_LIB="$LIB"
-export FORKOP_BIN="$WORK_DIR/bin/forkop"
-export FORKOP_SERVICE_INIT="$WORK_DIR/bin/init"
-export FORKOP_RELOAD_LOCK_DIR="$RELOAD_LOCK"
-export FORKOP_RUNTIME_STATE_DIR="$STATE_DIR"
-export FORKOP_PENDING_RELOAD_FILE="$STATE_DIR/reload.pending"
-export FORKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
-export FORKOP_START_RETRY_DELAY_SECONDS=300
-export FORKOP_STOP_RUNTIME_LOCK_WAIT_SECONDS=20
-export FORKOP_UI_ACTION_TRACKED=1
+export PROKOP_LIB="$LIB"
+export PROKOP_BIN="$WORK_DIR/bin/prokop"
+export PROKOP_SERVICE_INIT="$WORK_DIR/bin/init"
+export PROKOP_RELOAD_LOCK_DIR="$RELOAD_LOCK"
+export PROKOP_RUNTIME_STATE_DIR="$STATE_DIR"
+export PROKOP_PENDING_RELOAD_FILE="$STATE_DIR/reload.pending"
+export PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state"
+export PROKOP_START_RETRY_DELAY_SECONDS=300
+export PROKOP_STOP_RUNTIME_LOCK_WAIT_SECONDS=20
+export PROKOP_UI_ACTION_TRACKED=1
 
 # Nothing here may reach the host's syslog, nftables or init scripts.
 printf '#!/bin/sh\nprintf "%%s\\n" "$*" >>"$TEST_WORK/syslog"\n' >"$WORK_DIR/bin/logger"
 printf '#!/bin/sh\nexit 1\n' >"$WORK_DIR/bin/nft"
 printf '#!/bin/sh\nexit 0\n' >"$WORK_DIR/bin/ip"
 
-# `forkop` behind initd.uc. start can be held at a gate, exits with
+# `prokop` behind initd.uc. start can be held at a gate, exits with
 # start.status and brings the modelled runtime up on success; stop records
 # whether it runs inside reload.lock.
-cat >"$WORK_DIR/bin/forkop" <<'SH'
+cat >"$WORK_DIR/bin/prokop" <<'SH'
 #!/bin/sh
 ev() { printf '%s\n' "$1" >>"$EVENTS"; }
 case "$1" in
   start)
-    ev "forkop start"
+    ev "prokop start"
     while [ -e "$TEST_WORK/start.gate-armed" ] && [ ! -e "$TEST_WORK/start.gate" ]; do sleep 0.05; done
     status="$(cat "$TEST_WORK/start.status" 2>/dev/null || echo 0)"
     [ "$status" != 0 ] || : >"$TEST_WORK/runtime.up"
-    ev "forkop start exit $status"
+    ev "prokop start exit $status"
     exit "$status"
     ;;
   stop)
@@ -94,8 +94,8 @@ case "$1" in
     cmd=""
     [ -z "$owner" ] || cmd="$(tr '\0' ' ' <"/proc/$owner/cmdline" 2>/dev/null || true)"
     case "$cmd" in
-      *"service/initd.uc stop-service"*) ev "forkop stop (locked)" ;;
-      *) ev "forkop stop (unlocked)" ;;
+      *"service/initd.uc stop-service"*) ev "prokop stop (locked)" ;;
+      *) ev "prokop stop (unlocked)" ;;
     esac
     rm -f "$TEST_WORK/runtime.up"
     ;;
@@ -106,7 +106,7 @@ esac
 exit 0
 SH
 
-# /etc/init.d/forkop as procd runs it: rc.common with fd 1000 open and
+# /etc/init.d/prokop as procd runs it: rc.common with fd 1000 open and
 # flocked (procd.sh procd_lock); bash stands in for busybox ash.
 cat >"$WORK_DIR/bin/init" <<'SH'
 #!/bin/sh
@@ -121,8 +121,8 @@ flock 1000
 initscript="$REAL_INITD"
 # shellcheck disable=SC1090
 . "$REAL_INITD"
-FORKOP_LIB="$TEST_LIB"
-FORKOP_INITD_UC="$TEST_LIB/service/initd.uc"
+PROKOP_LIB="$TEST_LIB"
+PROKOP_INITD_UC="$TEST_LIB/service/initd.uc"
 case "$action" in
   start) start_service "$@"; service_started ;;
   stop) stop_service "$@" ;;
@@ -190,7 +190,7 @@ release_reload_lock() {
 }
 
 launch_stop() {
-  start_actor "$FORKOP_SERVICE_INIT" stop
+  start_actor "$PROKOP_SERVICE_INIT" stop
   STOP_ACTOR="$LAST_ACTOR"
 }
 
@@ -231,27 +231,27 @@ reset_case() {
 
 # 1. The detached start holds reload.lock while an explicit stop waits for
 #    it, and then fails: it schedules no retry, the stop runs after it under
-#    the lock, and nothing starts Forkop after the stop.
+#    the lock, and nothing starts Prokop after the stop.
 reset_case
 printf '1\n' >"$WORK_DIR/start.status"
 : >"$WORK_DIR/start.gate-armed"
-start_actor "$FORKOP_SERVICE_INIT" start
+start_actor "$PROKOP_SERVICE_INIT" start
 START_ACTOR="$LAST_ACTOR"
-wait_until 10 has_event "forkop start" || fail "the detached start worker did not run forkop start"
-[ -d "$RELOAD_LOCK" ] || fail "the start worker runs forkop start without reload.lock"
+wait_until 10 has_event "prokop start" || fail "the detached start worker did not run prokop start"
+[ -d "$RELOAD_LOCK" ] || fail "the start worker runs prokop start without reload.lock"
 launch_stop
 wait_until 10 in_lock_wait "$STOP_ACTOR" || fail "the stop did not wait for the start's reload.lock"
 [ -s "$STOP_MARKER" ] || fail "the stop did not record the stop request before waiting"
 : >"$WORK_DIR/start.gate"
 finish "stop during a failing start" "$STOP_ACTOR"
 wait_until 20 start_worker_gone "$START_ACTOR" || fail "the start worker did not finish"
-before "forkop start exit 1" "forkop stop (locked)" || fail "the stop did not run after the start under reload.lock"
+before "prokop start exit 1" "prokop stop (locked)" || fail "the stop did not run after the start under reload.lock"
 retry_scheduled && fail "a start that failed during an explicit stop scheduled its automatic retry"
 grep -q 'scheduled an automatic retry' "$WORK_DIR/syslog" &&
   fail "a start that failed during an explicit stop announced an automatic retry"
 grep -q 'stop was requested; no automatic retry' "$WORK_DIR/syslog" ||
   fail "the start did not log why it schedules no retry"
-[ "$(grep -c '^forkop start$' "$EVENTS")" = 1 ] || fail "Forkop was started again after the explicit stop"
+[ "$(grep -c '^prokop start$' "$EVENTS")" = 1 ] || fail "Prokop was started again after the explicit stop"
 [ -e "$STOP_MARKER" ] || fail "the explicit stop is no longer recorded"
 
 # 2. A start that still waits for reload.lock when the stop is requested does
@@ -259,7 +259,7 @@ grep -q 'stop was requested; no automatic retry' "$WORK_DIR/syslog" ||
 reset_case
 printf '0\n' >"$WORK_DIR/start.status"
 hold_reload_lock
-start_actor "$FORKOP_SERVICE_INIT" start
+start_actor "$PROKOP_SERVICE_INIT" start
 START_ACTOR="$LAST_ACTOR"
 wait_until 10 in_lock_wait "$START_ACTOR" || fail "the detached start did not wait for reload.lock"
 launch_stop
@@ -267,9 +267,9 @@ wait_until 10 in_lock_wait "$STOP_ACTOR" || fail "the stop did not wait for relo
 release_reload_lock
 finish "stop requested after a waiting start" "$STOP_ACTOR"
 wait_until 60 start_worker_gone "$START_ACTOR" || fail "the start worker did not finish"
-no_event '^forkop start' || fail "a start requested before the explicit stop ran after it"
-[ ! -e "$WORK_DIR/runtime.up" ] || fail "Forkop runs after the explicit stop"
-has_event "forkop stop (locked)" || fail "the stop did not run under reload.lock"
+no_event '^prokop start' || fail "a start requested before the explicit stop ran after it"
+[ ! -e "$WORK_DIR/runtime.up" ] || fail "Prokop runs after the explicit stop"
+has_event "prokop stop (locked)" || fail "the stop did not run under reload.lock"
 grep -q 'start skipped: a stop was requested after it' "$WORK_DIR/syslog" ||
   fail "the skipped start was not logged"
 retry_scheduled && fail "a start skipped for an explicit stop scheduled a retry"
@@ -280,12 +280,12 @@ reset_case
 printf '0\n' >"$WORK_DIR/start.status"
 printf 'earlier\n' >"$STOP_MARKER"
 hold_reload_lock
-start_actor "$FORKOP_SERVICE_INIT" start
+start_actor "$PROKOP_SERVICE_INIT" start
 START_ACTOR="$LAST_ACTOR"
 wait_until 10 in_lock_wait "$START_ACTOR" || fail "the detached start did not wait for reload.lock"
 release_reload_lock
 wait_until 30 start_worker_gone "$START_ACTOR" || fail "the start worker did not finish"
-has_event "forkop start exit 0" || fail "a start after an earlier stop did not run"
+has_event "prokop start exit 0" || fail "a start after an earlier stop did not run"
 [ ! -e "$STOP_MARKER" ] || fail "a start after an earlier stop kept the explicit stop"
 
 # 3. A retry that a failed start scheduled while the stop waited for
@@ -300,29 +300,29 @@ finish "stop with a retry scheduled meanwhile" "$STOP_ACTOR"
 wait_until 10 process_gone "$RETRY_WORKER" || fail "the stop left the retry scheduled meanwhile running"
 [ ! -e "$STATE_DIR/start.retry" ] || fail "the stop left the retry scheduled meanwhile pending"
 
-# 4. The WAN-up retry after an explicit stop does not start Forkop, and the
+# 4. The WAN-up retry after an explicit stop does not start Prokop, and the
 #    WAN-up handler cancels the scheduled retry.
 reset_case
 printf '1\n' >"$STOP_MARKER"
 printf 'reason=start_failed\n' >"$STATE_DIR/start.retry"
 initd retry-start-on-wan-up >/dev/null 2>&1 || fail "the WAN-up retry after a stop failed"
-no_event '^forkop start' || fail "the WAN-up retry started Forkop after an explicit stop"
+no_event '^prokop start' || fail "the WAN-up retry started Prokop after an explicit stop"
 [ ! -e "$STATE_DIR/start.retry" ] || fail "the WAN-up retry after a stop stayed pending"
-grep -q 'retry skipped: Forkop was stopped' "$WORK_DIR/syslog" || fail "the skipped WAN-up retry was not logged"
+grep -q 'retry skipped: Prokop was stopped' "$WORK_DIR/syslog" || fail "the skipped WAN-up retry was not logged"
 reset_case
 printf '1\n' >"$STOP_MARKER"
 fake_scheduled_retry
 initd handle-wan-up >/dev/null 2>&1 || fail "WAN-up after a stop failed"
 wait_until 10 process_gone "$RETRY_WORKER" || fail "WAN-up after a stop kept the scheduled retry"
 [ ! -e "$STATE_DIR/start.retry" ] || fail "WAN-up after a stop kept the retry pending"
-no_event '^forkop start' || fail "WAN-up started Forkop after an explicit stop"
+no_event '^prokop start' || fail "WAN-up started Prokop after an explicit stop"
 # The retry's own start (reason "triggered") does not run once a stop was
 # requested, even if the stop came after the retry's check.
 reset_case
 printf '0\n' >"$WORK_DIR/start.status"
 printf '1\n' >"$STOP_MARKER"
 initd start-service triggered >/dev/null 2>&1 && fail "the retry's start after an explicit stop succeeded"
-no_event '^forkop start' || fail "the retry's start ran after an explicit stop"
+no_event '^prokop start' || fail "the retry's start ran after an explicit stop"
 [ -e "$STOP_MARKER" ] || fail "the retry's start ended the explicit stop"
 # A retry's start that fails because a stop was requested while it ran is
 # not a failed recovery.
@@ -331,7 +331,7 @@ printf '1\n' >"$WORK_DIR/start.status"
 : >"$WORK_DIR/start.gate-armed"
 start_actor sh -c 'exec "$0" -L "$1" "$1/service/initd.uc" start-service triggered >/dev/null 2>&1' "$REAL_UCODE" "$LIB"
 RETRY_START_ACTOR="$LAST_ACTOR"
-wait_until 10 has_event "forkop start" || fail "the retry's start did not run forkop start"
+wait_until 10 has_event "prokop start" || fail "the retry's start did not run prokop start"
 printf 'stop\n' >"$STOP_MARKER"
 : >"$WORK_DIR/start.gate"
 wait_until 20 process_gone "$RETRY_START_ACTOR" || fail "the retry's start did not finish"
@@ -354,7 +354,7 @@ grep -q 'automatic recovery attempt failed' "$WORK_DIR/syslog" &&
 # network I/O of the caches) and before sing-box is started.
 FAKE_LIB="$WORK_DIR/fake-lib"
 mkdir -p "$FAKE_LIB"
-printf 'forkop.settings=settings\nforkop.settings.yacd_secret_key=0123456789abcdef\nforkop.settings.dont_touch_dhcp=1\n' >"$WORK_DIR/uci.state"
+printf 'prokop.settings=settings\nprokop.settings.yacd_secret_key=0123456789abcdef\nprokop.settings.dont_touch_dhcp=1\n' >"$WORK_DIR/uci.state"
 
 # Every module the start calls: records "<module> <mode>", can be held at a
 # gate, and succeeds unless it is FAKE_FAIL. Locks go to the real
@@ -384,8 +384,8 @@ if (gate != "" && gate == name + " " + mode) {
 }
 if ((getenv("FAKE_FAIL") || "") == name + " " + mode)
     exit(1);
-if (name == "service/state.uc" && (mode == "has-list-update-sources" || mode == "forkop-stably-running" ||
-    mode == "sing-box-process-conflict" || mode == "forkop-running"))
+if (name == "service/state.uc" && (mode == "has-list-update-sources" || mode == "prokop-stably-running" ||
+    mode == "sing-box-process-conflict" || mode == "prokop-running"))
     exit(1);
 exit(0);
 UC
@@ -399,7 +399,7 @@ for module in service/state.uc subscription/cache.uc config/validator.uc nft/app
 done
 
 run_lifecycle_start() {
-  start_actor env FORKOP_LIB="$FAKE_LIB" FAKE_GATE="$1" FAKE_FAIL="${FAKE_FAIL:-}" \
+  start_actor env PROKOP_LIB="$FAKE_LIB" FAKE_GATE="$1" FAKE_FAIL="${FAKE_FAIL:-}" \
     ucode -L "$LIB" "$LIB/service/lifecycle.uc" start
   LIFECYCLE_ACTOR="$LAST_ACTOR"
 }

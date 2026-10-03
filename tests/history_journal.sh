@@ -1,15 +1,15 @@
 #!/bin/sh
 set -eu
-# Persistent history (/etc/forkop/history.jsonl): significant events survive
+# Persistent history (/etc/prokop/history.jsonl): significant events survive
 # reboots, the journal stays within its cap without rewriting on every
 # event, autotune applies keep their own kind, and snapshots mark the
 # last-known-working one.
 ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 TEST_DIR="$(mktemp -d)"
 trap 'rm -rf "$TEST_DIR"' EXIT HUP INT TERM
-HEALTH="$ROOT/forkop/files/usr/lib/diagnostics/health.uc"
-export FORKOP_RUNTIME_STATE_DIR="$TEST_DIR/run"
-export FORKOP_HISTORY_FILE="$TEST_DIR/etc/history.jsonl"
+HEALTH="$ROOT/prokop/files/usr/lib/diagnostics/health.uc"
+export PROKOP_RUNTIME_STATE_DIR="$TEST_DIR/run"
+export PROKOP_HISTORY_FILE="$TEST_DIR/etc/history.jsonl"
 
 fail() { printf 'FAIL: %s\n' "$1" >&2; exit 1; }
 
@@ -21,7 +21,7 @@ ucode "$HEALTH" record start success
 ucode "$HEALTH" record autotune_apply recovered
 ucode "$HEALTH" record snapshot_create success
 if ucode "$HEALTH" record probe success; then fail "unknown event kinds must be refused"; fi
-[ "$(wc -l < "$FORKOP_HISTORY_FILE")" -eq 3 ] || fail "each recorded event must append exactly one journal line"
+[ "$(wc -l < "$PROKOP_HISTORY_FILE")" -eq 3 ] || fail "each recorded event must append exactly one journal line"
 
 ucode "$HEALTH" history > "$TEST_DIR/history.json"
 node - "$TEST_DIR/history.json" <<'JS'
@@ -43,23 +43,23 @@ ucode "$HEALTH" get > "$TEST_DIR/health.json" 2>/dev/null || true
 # keeps the newest 150, so appends stay cheap.
 i=0
 while [ "$i" -lt 197 ]; do
-  printf '{"kind":"reload","status":"success","timestamp":%d}\n' "$i" >> "$FORKOP_HISTORY_FILE"
+  printf '{"kind":"reload","status":"success","timestamp":%d}\n' "$i" >> "$PROKOP_HISTORY_FILE"
   i=$((i + 1))
 done
 ucode "$HEALTH" record reload success
-[ "$(wc -l < "$FORKOP_HISTORY_FILE")" -eq 201 ] && fail "journal over the cap must be trimmed"
-[ "$(wc -l < "$FORKOP_HISTORY_FILE")" -eq 150 ] || fail "trimmed journal must keep the newest 150 records"
+[ "$(wc -l < "$PROKOP_HISTORY_FILE")" -eq 201 ] && fail "journal over the cap must be trimmed"
+[ "$(wc -l < "$PROKOP_HISTORY_FILE")" -eq 150 ] || fail "trimmed journal must keep the newest 150 records"
 ucode "$HEALTH" record restore success
-[ "$(wc -l < "$FORKOP_HISTORY_FILE")" -eq 151 ] || fail "journal under the cap must only be appended to"
-tail -n 1 "$FORKOP_HISTORY_FILE" | grep -q '"kind": *"restore"' || fail "newest event must be last"
+[ "$(wc -l < "$PROKOP_HISTORY_FILE")" -eq 151 ] || fail "journal under the cap must only be appended to"
+tail -n 1 "$PROKOP_HISTORY_FILE" | grep -q '"kind": *"restore"' || fail "newest event must be last"
 
 # Corrupt lines are skipped, not fatal.
-printf 'not json\n' >> "$FORKOP_HISTORY_FILE"
+printf 'not json\n' >> "$PROKOP_HISTORY_FILE"
 ucode "$HEALTH" history > /dev/null || fail "corrupt journal lines must not break history"
 
 # An autotune apply is a configuration transaction for last_reload.
 cat > "$TEST_DIR/fixture.json" <<'JSON'
-{"ui":{"service":{"forkop":{"running":1,"dns_configured":1},"sing_box":{"running":1}}},"guard":false,"package_pending":false,"events":[{"kind":"reload","status":"success","timestamp":10},{"kind":"autotune_apply","status":"success","timestamp":20}]}
+{"ui":{"service":{"prokop":{"running":1,"dns_configured":1},"sing_box":{"running":1}}},"guard":false,"package_pending":false,"events":[{"kind":"reload","status":"success","timestamp":10},{"kind":"autotune_apply","status":"success","timestamp":20}]}
 JSON
 ucode "$HEALTH" fixture "$TEST_DIR/fixture.json" | grep -q '"kind": *"autotune_apply"' ||
   fail "autotune apply must count as the last reload"
@@ -69,11 +69,11 @@ SNAP="$TEST_DIR/snapshots"
 mkdir -p "$SNAP"
 hash=$(printf 'x' | sha256sum | cut -c1-64)
 for id in 1_a 2_b; do
-  printf '{"id":"%s","created_at":%s,"kind":"automatic","reason":"before-reload","config_hash":"%s","forkop_version":"1.0.0","content":"x"}' \
+  printf '{"id":"%s","created_at":%s,"kind":"automatic","reason":"before-reload","config_hash":"%s","prokop_version":"1.0.0","content":"x"}' \
     "$id" "${id%%_*}" "$hash" > "$SNAP/$id.json"
 done
 printf '2_b\n' > "$SNAP/last-known-working"
-FORKOP_SNAPSHOT_DIR="$SNAP" ucode -L "$ROOT/forkop/files/usr/lib" "$ROOT/forkop/files/usr/lib/config/snapshots.uc" list > "$TEST_DIR/list.json"
+PROKOP_SNAPSHOT_DIR="$SNAP" ucode -L "$ROOT/prokop/files/usr/lib" "$ROOT/prokop/files/usr/lib/config/snapshots.uc" list > "$TEST_DIR/list.json"
 node - "$TEST_DIR/list.json" <<'JS'
 const assert = require('node:assert/strict');
 const list = JSON.parse(require('node:fs').readFileSync(process.argv[2]));
@@ -81,7 +81,7 @@ assert.deepEqual(list.map((item) => [item.id, item.is_lkg]), [['1_a', false], ['
 JS
 
 # The CLI exposes history as a read command.
-grep -q 'get_history: \[ "diagnostics/health.uc", "history", 0 \]' "$ROOT/forkop/files/usr/bin/forkop" ||
-  fail "forkop get_history must dispatch to health.uc history"
+grep -q 'get_history: \[ "diagnostics/health.uc", "history", 0 \]' "$ROOT/prokop/files/usr/bin/prokop" ||
+  fail "prokop get_history must dispatch to health.uc history"
 
 echo "history journal checks passed"

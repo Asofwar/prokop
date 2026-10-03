@@ -7,7 +7,7 @@
 // synthetic lines with such names, stat_fields() must return the state,
 // the parent pid and the start ticks the line encodes, and start_ticks()
 // and parent_pid() must read the same fields.
-// Usage: proc_stat.js <forkop lib>
+// Usage: proc_stat.js <prokop lib>
 
 const assert = require("node:assert/strict");
 const { Rng, seedFrom, casesFrom, ucodeBatch, forAll, exercised } = require("./scaffold");

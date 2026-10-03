@@ -16,7 +16,7 @@ set -euo pipefail
 # 3. No module other than core/process_identity.uc splits a stat line.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK="$(mktemp -d)"
 # shellcheck source=tests/helpers/source_checks.sh
 . "$ROOT_DIR/tests/helpers/source_checks.sh"

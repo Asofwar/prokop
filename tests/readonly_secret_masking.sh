@@ -8,12 +8,12 @@ set -euo pipefail
 # No marker may reach any read-only output.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-CLI_UC="$ROOT_DIR/forkop/files/usr/bin/forkop"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-STATUS_UC="$FORKOP_LIB/diagnostics/status.uc"
-SNAPSHOTS_UC="$FORKOP_LIB/config/snapshots.uc"
+CLI_UC="$ROOT_DIR/prokop/files/usr/bin/prokop"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+STATUS_UC="$PROKOP_LIB/diagnostics/status.uc"
+SNAPSHOTS_UC="$PROKOP_LIB/config/snapshots.uc"
 FIXTURES="$ROOT_DIR/tests/fixtures/readonly_secrets"
-ACL="$ROOT_DIR/luci-app-forkop/root/usr/share/rpcd/acl.d/luci-app-forkop.json"
+ACL="$ROOT_DIR/luci-app-prokop/root/usr/share/rpcd/acl.d/luci-app-prokop.json"
 WORK_DIR="$(mktemp -d)"
 trap '[ -n "${KEEP_WORK:-}" ] || rm -rf "$WORK_DIR"' EXIT
 
@@ -41,9 +41,9 @@ $label: $found"
 # Fixture files: the config points at the sing-box fixture.
 mkdir -p "$WORK_DIR/etc" "$WORK_DIR/run" "$WORK_DIR/tmp/sing-box" "$WORK_DIR/bin"
 cp "$FIXTURES/sing-box.json" "$WORK_DIR/sing-box.json"
-sed "s|@SING_BOX_CONFIG@|$WORK_DIR/sing-box.json|" "$FIXTURES/forkop" >"$WORK_DIR/etc/forkop"
+sed "s|@SING_BOX_CONFIG@|$WORK_DIR/sing-box.json|" "$FIXTURES/prokop" >"$WORK_DIR/etc/prokop"
 sed "s|@WAN_PROTO@|pppoe|" "$FIXTURES/network" >"$WORK_DIR/etc/network"
-[ "$(grep -o 'SECRET_MARKER_[0-9]*' "$WORK_DIR/etc/forkop" | sort -u | wc -l)" -ge 49 ] || fail "fixture config lost its markers"
+[ "$(grep -o 'SECRET_MARKER_[0-9]*' "$WORK_DIR/etc/prokop" | sort -u | wc -l)" -ge 49 ] || fail "fixture config lost its markers"
 
 # The backend reads UCI through core/uci.uc; the committed fixture state file
 # carries the same data (lists joined by spaces, as the fixture reader
@@ -51,10 +51,10 @@ sed "s|@WAN_PROTO@|pppoe|" "$FIXTURES/network" >"$WORK_DIR/etc/network"
 # Where the CLI exists, the state file must match the UCI fixtures.
 if UCI_BIN="$(command -v uci)"; then
   mkdir -p "$WORK_DIR/pristine"
-  cp "$FIXTURES/forkop" "$FIXTURES/network" "$WORK_DIR/pristine/"
-  "$UCI_BIN" -c "$WORK_DIR/pristine" -X show forkop >"$WORK_DIR/forkop.show" || fail "uci could not parse the fixture config"
+  cp "$FIXTURES/prokop" "$FIXTURES/network" "$WORK_DIR/pristine/"
+  "$UCI_BIN" -c "$WORK_DIR/pristine" -X show prokop >"$WORK_DIR/prokop.show" || fail "uci could not parse the fixture config"
   "$UCI_BIN" -c "$WORK_DIR/pristine" -X show network >"$WORK_DIR/network.show" || fail "uci could not parse the network fixture"
-  node - "$WORK_DIR/forkop.show" "$WORK_DIR/network.show" >"$WORK_DIR/uci-state.expected" <<'NODE'
+  node - "$WORK_DIR/prokop.show" "$WORK_DIR/network.show" >"$WORK_DIR/uci-state.expected" <<'NODE'
 const fs = require('node:fs');
 for (const file of process.argv.slice(2)) {
   const text = fs.readFileSync(file, 'utf8');
@@ -93,7 +93,7 @@ NODE
 fi
 sed -e "s|@SING_BOX_CONFIG@|$WORK_DIR/sing-box.json|" -e "s|@WAN_PROTO@|pppoe|" \
   "$FIXTURES/uci-state" >"$WORK_DIR/uci-state"
-grep -q '^forkop.settings.yacd_secret_key=SECRET_MARKER_02$' "$WORK_DIR/uci-state" ||
+grep -q '^prokop.settings.yacd_secret_key=SECRET_MARKER_02$' "$WORK_DIR/uci-state" ||
   fail "fixture UCI state was not generated"
 
 cat >"$WORK_DIR/bin/sing-box" <<'SH'
@@ -106,37 +106,37 @@ esac
 SH
 chmod 0755 "$WORK_DIR/bin/sing-box"
 ln -s "$UCODE_BIN" "$WORK_DIR/bin/ucode"
-cat >"$WORK_DIR/bin/forkop" <<EOF
+cat >"$WORK_DIR/bin/prokop" <<EOF
 #!/bin/sh
 exec "$UCODE_BIN" "$CLI_UC" "\$@"
 EOF
-chmod 0755 "$WORK_DIR/bin/forkop"
+chmod 0755 "$WORK_DIR/bin/prokop"
 
-export FORKOP_LIB
-export FORKOP_BIN="$WORK_DIR/bin/forkop"
-export FORKOP_CONFIG="$WORK_DIR/etc/forkop"
-export FORKOP_CONFIG_FILE="$WORK_DIR/etc/forkop"
-export FORKOP_UCI_STATE_FILE="$WORK_DIR/uci-state"
-export FORKOP_UCI_LOG_FILE="$WORK_DIR/uci-log"
-export FORKOP_RUNTIME_STATE_DIR="$WORK_DIR/run"
-export FORKOP_SYSTEM_INFO_CACHE_FILE="$WORK_DIR/run/system-info.json"
-export FORKOP_SNAPSHOT_DIR="$WORK_DIR/snapshots"
-export FORKOP_SNAPSHOT_HASH_DIR="$WORK_DIR/run/snapshot-hash"
-export FORKOP_SNAPSHOT_LOCK_DIR="$WORK_DIR/run/config-snapshot.lock"
-export FORKOP_DIAGNOSTICS_SING_BOX_BIN_PATH="$WORK_DIR/bin/sing-box"
-export FORKOP_UI_SING_BOX_BIN_PATH="$WORK_DIR/bin/sing-box"
-export FORKOP_HISTORY_FILE="$WORK_DIR/history.jsonl"
-export FORKOP_AUTOTUNE_STATE_FILE="$WORK_DIR/autotune/state.json"
-export FORKOP_AUTOTUNE_STATE_DIR="$WORK_DIR/run/autotune"
-export FORKOP_AUTOTUNE_LAST_DIR="$WORK_DIR/run/autotune/last"
-export FORKOP_AUTOTUNE_UCI_SAVEDIR="$WORK_DIR/uci-save"
-export FORKOP_AUTOTUNE_TMPDIR="$WORK_DIR/tmp"
+export PROKOP_LIB
+export PROKOP_BIN="$WORK_DIR/bin/prokop"
+export PROKOP_CONFIG="$WORK_DIR/etc/prokop"
+export PROKOP_CONFIG_FILE="$WORK_DIR/etc/prokop"
+export PROKOP_UCI_STATE_FILE="$WORK_DIR/uci-state"
+export PROKOP_UCI_LOG_FILE="$WORK_DIR/uci-log"
+export PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/run"
+export PROKOP_SYSTEM_INFO_CACHE_FILE="$WORK_DIR/run/system-info.json"
+export PROKOP_SNAPSHOT_DIR="$WORK_DIR/snapshots"
+export PROKOP_SNAPSHOT_HASH_DIR="$WORK_DIR/run/snapshot-hash"
+export PROKOP_SNAPSHOT_LOCK_DIR="$WORK_DIR/run/config-snapshot.lock"
+export PROKOP_DIAGNOSTICS_SING_BOX_BIN_PATH="$WORK_DIR/bin/sing-box"
+export PROKOP_UI_SING_BOX_BIN_PATH="$WORK_DIR/bin/sing-box"
+export PROKOP_HISTORY_FILE="$WORK_DIR/history.jsonl"
+export PROKOP_AUTOTUNE_STATE_FILE="$WORK_DIR/autotune/state.json"
+export PROKOP_AUTOTUNE_STATE_DIR="$WORK_DIR/run/autotune"
+export PROKOP_AUTOTUNE_LAST_DIR="$WORK_DIR/run/autotune/last"
+export PROKOP_AUTOTUNE_UCI_SAVEDIR="$WORK_DIR/uci-save"
+export PROKOP_AUTOTUNE_TMPDIR="$WORK_DIR/tmp"
 export TMP_SING_BOX_FOLDER="$WORK_DIR/tmp/sing-box"
 export PATH="$WORK_DIR/bin:$PATH"
 
 # Snapshot of an empty configuration, so the diff lists every fixture option.
 : >"$WORK_DIR/empty"
-snapshot_id="$(FORKOP_CONFIG_FILE="$WORK_DIR/empty" "$UCODE_BIN" -L "$FORKOP_LIB" "$SNAPSHOTS_UC" create manual |
+snapshot_id="$(PROKOP_CONFIG_FILE="$WORK_DIR/empty" "$UCODE_BIN" -L "$PROKOP_LIB" "$SNAPSHOTS_UC" create manual |
   node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>process.stdout.write(JSON.parse(s).snapshot.id))')" ||
   fail "could not create the baseline snapshot"
 
@@ -158,8 +158,8 @@ fi
 node - "$ACL" "$snapshot_id" >"$WORK_DIR/commands" <<'NODE'
 const fs = require('node:fs');
 const [acl, snapshotId] = process.argv.slice(2);
-const files = JSON.parse(fs.readFileSync(acl, 'utf8'))['luci-app-forkop'].read.file;
-const prefix = '/usr/libexec/forkop-ro ';
+const files = JSON.parse(fs.readFileSync(acl, 'utf8'))['luci-app-prokop'].read.file;
+const prefix = '/usr/libexec/prokop-ro ';
 const samples = {
   config_snapshot_diff: snapshotId,
   route_trace: '192.0.2.1 192.0.2.10 TCP 443',
@@ -185,18 +185,18 @@ done <"$WORK_DIR/commands"
 
 # Validator messages quote the rejected value; the masked check keeps only
 # the verdict.
-cat >"$WORK_DIR/etc/forkop-invalid" <<'EOF'
+cat >"$WORK_DIR/etc/prokop-invalid" <<'EOF'
 config settings 'settings'
 	option dns_type 'doh'
 	list dns_server 'https://SECRET_MARKER_150@dns.example:0/SECRET_MARKER_151'
 	list bootstrap_dns_server '77.88.8.8'
 EOF
-printf '%s\n' 'forkop.settings=settings' 'forkop.settings.dns_type=doh' \
-  'forkop.settings.dns_server=https://SECRET_MARKER_150@dns.example:0/SECRET_MARKER_151' \
-  'forkop.settings.bootstrap_dns_server=77.88.8.8' >"$WORK_DIR/uci-state-invalid"
-FORKOP_CONFIG="$WORK_DIR/etc/forkop-invalid" FORKOP_UCI_STATE_FILE="$WORK_DIR/uci-state-invalid" \
+printf '%s\n' 'prokop.settings=settings' 'prokop.settings.dns_type=doh' \
+  'prokop.settings.dns_server=https://SECRET_MARKER_150@dns.example:0/SECRET_MARKER_151' \
+  'prokop.settings.bootstrap_dns_server=77.88.8.8' >"$WORK_DIR/uci-state-invalid"
+PROKOP_CONFIG="$WORK_DIR/etc/prokop-invalid" PROKOP_UCI_STATE_FILE="$WORK_DIR/uci-state-invalid" \
   "${ISOLATE[@]}" "$TIMEOUT_BIN" 60 "$UCODE_BIN" "$CLI_UC" global_check masked >"$WORK_DIR/invalid.out" 2>&1 </dev/null || true
-grep -Fq 'Forkop configuration validation failed' "$WORK_DIR/invalid.out" ||
+grep -Fq 'Prokop configuration validation failed' "$WORK_DIR/invalid.out" ||
   fail "global_check masked must report the failed validation"
 check_output "global_check masked (validation failure)" "$WORK_DIR/invalid.out"
 
@@ -239,7 +239,7 @@ grep -Fq '"option": "outbound_jsons"' "$WORK_DIR/out.config_snapshot_diff_$snaps
 for proto in static pppoe pppoa l2tp pptp 3g qmi ncm mbim modemmanager wireguard openvpn dhcp; do
   sed "s|@WAN_PROTO@|$proto|" "$FIXTURES/network" >"$WORK_DIR/network.$proto"
   out="$WORK_DIR/wan.$proto"
-  "$UCODE_BIN" -L "$FORKOP_LIB" "$STATUS_UC" wan-config-masked "$WORK_DIR/network.$proto" >"$out" 2>&1 || true
+  "$UCODE_BIN" -L "$PROKOP_LIB" "$STATUS_UC" wan-config-masked "$WORK_DIR/network.$proto" >"$out" 2>&1 || true
   check_output "wan-config-masked ($proto)" "$out"
   grep -Fq "option proto '$proto'" "$out" || fail "masked WAN config lost the protocol ($proto)"
   grep -Fq "option device 'eth1'" "$out" || fail "masked WAN config lost the device ($proto)"
@@ -255,36 +255,36 @@ config settings 'settings'
 	list rule_set 'https:/SECRET_MARKER_183@rules.example/x.srs'
 	list rule_set 'SECRET_MARKER_184:pw@rules.example/x.srs'
 	list rule_set 'https://cdn.example/gh/user/repo@main/rules.srs'
-	list rule_set '/etc/forkop/local.srs'
+	list rule_set '/etc/prokop/local.srs'
 EOF
-"$UCODE_BIN" -L "$FORKOP_LIB" "$STATUS_UC" forkop-config-masked "$WORK_DIR/hand-edited" >"$WORK_DIR/backend-hand-edited" ||
-  fail "forkop-config-masked failed on the hand-edited config"
-check_output "forkop-config-masked (hand-edited)" "$WORK_DIR/backend-hand-edited"
+"$UCODE_BIN" -L "$PROKOP_LIB" "$STATUS_UC" prokop-config-masked "$WORK_DIR/hand-edited" >"$WORK_DIR/backend-hand-edited" ||
+  fail "prokop-config-masked failed on the hand-edited config"
+check_output "prokop-config-masked (hand-edited)" "$WORK_DIR/backend-hand-edited"
 grep -Fxq "	option enabled '1'" "$WORK_DIR/backend-hand-edited" || fail "safe option lost its value"
 grep -Fq "list rule_set 'https://cdn.example/gh/user/repo@main/rules.srs'" "$WORK_DIR/backend-hand-edited" ||
   fail "an @ inside a URL path must stay visible"
-grep -Fq "list rule_set '/etc/forkop/local.srs'" "$WORK_DIR/backend-hand-edited" ||
+grep -Fq "list rule_set '/etc/prokop/local.srs'" "$WORK_DIR/backend-hand-edited" ||
   fail "a local list path must stay visible"
 
 # Private resolvers carry the account ID in the first host label.
 for server in SECRET_MARKER_185.dns.controld.com tls://SECRET_MARKER_186.d.adguard-dns.com:853 \
   https://SECRET_MARKER_187.dns.controld.com/x quic://SECRET_MARKER_188.d.adguard-dns.com; do
   out="$WORK_DIR/dns-server.out"
-  "$UCODE_BIN" -L "$FORKOP_LIB" "$STATUS_UC" mask-dns-server "$server" >"$out" 2>&1 || true
+  "$UCODE_BIN" -L "$PROKOP_LIB" "$STATUS_UC" mask-dns-server "$server" >"$out" 2>&1 || true
   check_output "mask-dns-server ($server)" "$out"
 done
 for server in 1.1.1.1 dns.adguard-dns.com tls://dns.google 2001:4860:4860::8888; do
-  [ "$("$UCODE_BIN" -L "$FORKOP_LIB" "$STATUS_UC" mask-dns-server "$server")" = "$server" ] ||
+  [ "$("$UCODE_BIN" -L "$PROKOP_LIB" "$STATUS_UC" mask-dns-server "$server")" = "$server" ] ||
     fail "public DNS server $server must stay visible"
 done
 
 # The frontend copy (admin "mask values" toggle) masks exactly like the
 # backend. Node imports the TypeScript module directly when it can strip
 # types (Node >= 22.18); older Node skips this comparison.
-MASK_TS="$ROOT_DIR/fe-app-forkop/src/forkop/tabs/diagnostic/helpers/maskDiagnostics.ts"
-"$UCODE_BIN" -L "$FORKOP_LIB" "$STATUS_UC" forkop-config-masked "$FORKOP_CONFIG" >"$WORK_DIR/backend-forkop" ||
-  fail "forkop-config-masked failed"
-"$UCODE_BIN" -L "$FORKOP_LIB" "$STATUS_UC" mask-sing-box-config "$WORK_DIR/sing-box.json" >"$WORK_DIR/backend-sing-box" ||
+MASK_TS="$ROOT_DIR/fe-app-prokop/src/prokop/tabs/diagnostic/helpers/maskDiagnostics.ts"
+"$UCODE_BIN" -L "$PROKOP_LIB" "$STATUS_UC" prokop-config-masked "$PROKOP_CONFIG" >"$WORK_DIR/backend-prokop" ||
+  fail "prokop-config-masked failed"
+"$UCODE_BIN" -L "$PROKOP_LIB" "$STATUS_UC" mask-sing-box-config "$WORK_DIR/sing-box.json" >"$WORK_DIR/backend-sing-box" ||
   fail "mask-sing-box-config failed"
 if node -e 'import(process.argv[1]).then(() => process.exit(0), () => process.exit(1))' "$MASK_TS" 2>/dev/null; then
   node --input-type=module - "$MASK_TS" "$WORK_DIR" <<'NODE' || fail "frontend masking differs from the backend"
@@ -293,8 +293,8 @@ import assert from 'node:assert/strict';
 const [module, dir] = process.argv.slice(2);
 const { maskGlobalCheckText, formatMaskedSingBoxConfig } = await import(module);
 assert.equal(
-  maskGlobalCheckText(readFileSync(`${dir}/etc/forkop`, 'utf8')),
-  readFileSync(`${dir}/backend-forkop`, 'utf8'),
+  maskGlobalCheckText(readFileSync(`${dir}/etc/prokop`, 'utf8')),
+  readFileSync(`${dir}/backend-prokop`, 'utf8'),
 );
 assert.equal(
   maskGlobalCheckText(readFileSync(`${dir}/hand-edited`, 'utf8')),
@@ -303,7 +303,7 @@ assert.equal(
 // The admin toggle masks the raw global check text: the raw validator
 // message quotes the rejected value, masked mode keeps only the verdict.
 const rawValidation = [
-  '🧪 Forkop configuration validation',
+  '🧪 Prokop configuration validation',
   "❌ Invalid main DNS server 'SECRET_MARKER_189'",
   'SECRET_MARKER_190',
   '━━━━━━━━━━━━━━━━━━━━━━━━━━━',
@@ -312,8 +312,8 @@ const rawValidation = [
 assert.equal(
   maskGlobalCheckText(rawValidation),
   [
-    '🧪 Forkop configuration validation',
-    '❌ Forkop configuration validation failed',
+    '🧪 Prokop configuration validation',
+    '❌ Prokop configuration validation failed',
     '━━━━━━━━━━━━━━━━━━━━━━━━━━━',
     '📄 WAN config',
   ].join('\n'),

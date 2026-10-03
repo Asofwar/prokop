@@ -2,10 +2,10 @@
 set -eo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-PARSER="$ROOT_DIR/forkop/files/usr/lib/subscription/parser.uc"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-GENERATOR="$ROOT_DIR/forkop/files/usr/lib/singbox/generator.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+PARSER="$ROOT_DIR/prokop/files/usr/lib/subscription/parser.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+GENERATOR="$ROOT_DIR/prokop/files/usr/lib/singbox/generator.uc"
 WORK_DIR="$(mktemp -d)"
 
 cleanup() {
@@ -37,7 +37,7 @@ normalize_link() {
   local output="$WORK_DIR/$label.json"
 
   printf '%s\n' "$link" >"$input"
-  ucode -L "$FORKOP_LIB" "$PARSER" normalize-uri-list "$input" "$output"
+  ucode -L "$PROKOP_LIB" "$PARSER" normalize-uri-list "$input" "$output"
   printf '%s\n' "$output"
 }
 
@@ -83,7 +83,7 @@ cat >"$singbox_input" <<'JSON'
   ]
 }
 JSON
-ucode -L "$FORKOP_LIB" "$PARSER" normalize-content "$singbox_input" "$singbox_output"
+ucode -L "$PROKOP_LIB" "$PARSER" normalize-content "$singbox_input" "$singbox_output"
 assert_contains "$singbox_output" '"type": "hysteria2"' "sing-box HY2 type"
 assert_contains "$singbox_output" '"alpn": [ "h3" ]' "sing-box HY2 ALPN"
 assert_contains "$singbox_output" '"enabled": true' "sing-box HY2 TLS enabled"
@@ -108,13 +108,13 @@ cat >"$singbox_missing_tls_input" <<'JSON'
   ]
 }
 JSON
-ucode -L "$FORKOP_LIB" "$PARSER" normalize-content "$singbox_missing_tls_input" "$singbox_missing_tls_output"
+ucode -L "$PROKOP_LIB" "$PARSER" normalize-content "$singbox_missing_tls_input" "$singbox_missing_tls_output"
 assert_contains "$singbox_missing_tls_output" '"enabled": true' "sing-box HY2 missing TLS enabled"
 
 for fingerprint in randomizedalpn randomizednoalpn; do
   fingerprint_output="$WORK_DIR/$fingerprint.json"
   normalize_link "$fingerprint" "vless://11111111-1111-4111-8111-111111111111@example.com:443?security=tls&sni=example.com&fp=$fingerprint" >/dev/null
-  ucode -L "$FORKOP_LIB" "$PARSER" normalize-uri-list "$WORK_DIR/$fingerprint.in" "$fingerprint_output"
+  ucode -L "$PROKOP_LIB" "$PARSER" normalize-uri-list "$WORK_DIR/$fingerprint.in" "$fingerprint_output"
   assert_contains "$fingerprint_output" '"fingerprint": "randomized"' "uTLS $fingerprint normalization"
 done
 
@@ -147,7 +147,7 @@ cat >"$generator_fixture" <<'JSON'
 }
 JSON
 TMP_SUBSCRIPTION_FOLDER="$WORK_DIR/subscriptions" \
-  ucode -L "$FORKOP_LIB" "$GENERATOR" generate-config-fixture \
+  ucode -L "$PROKOP_LIB" "$GENERATOR" generate-config-fixture \
     "$generator_fixture" "$generator_output" "127.0.0.1" "0"
 assert_contains "$generator_output" '"type": "hysteria2"' "generated stale HY2 type"
 if grep -Fq '"utls"' "$generator_output"; then

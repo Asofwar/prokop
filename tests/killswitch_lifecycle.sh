@@ -2,12 +2,12 @@
 set -eo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-LIFECYCLE="$FORKOP_LIB/service/lifecycle.uc"
-PACKAGE_UC="$FORKOP_LIB/service/package.uc"
-FULL_UNINSTALL="$FORKOP_LIB/full-uninstall.sh"
-VALIDATOR_UC="$FORKOP_LIB/config/validator.uc"
-FORKOP_BIN="$ROOT_DIR/forkop/files/usr/bin/forkop"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+LIFECYCLE="$PROKOP_LIB/service/lifecycle.uc"
+PACKAGE_UC="$PROKOP_LIB/service/package.uc"
+FULL_UNINSTALL="$PROKOP_LIB/full-uninstall.sh"
+VALIDATOR_UC="$PROKOP_LIB/config/validator.uc"
+PROKOP_BIN="$ROOT_DIR/prokop/files/usr/bin/prokop"
 WORK_DIR="$(mktemp -d)"
 
 cleanup() {
@@ -74,16 +74,16 @@ UCODE
 ucode "$WORK_DIR/sync.uc" || fail "kill-switch sync failure must only warn"
 
 # Uninstall paths lift the protection; an upgrade keeps it.
-function_body "$LIFECYCLE" uninstall | awk '/KILLSWITCH_UC, \[ "disable"/ { d = NR } /rm", "-rf", "\/usr\/lib\/forkop"/ { r = NR } END { exit !(d && r && d < r) }' ||
+function_body "$LIFECYCLE" uninstall | awk '/KILLSWITCH_UC, \[ "disable"/ { d = NR } /rm", "-rf", "\/usr\/lib\/prokop"/ { r = NR } END { exit !(d && r && d < r) }' ||
   fail "uninstall must lift the kill-switch before removing the libraries"
 prerm_body="$(function_body "$PACKAGE_UC" prerm_cleanup)"
 printf '%s\n' "$prerm_body" | grep -Fq 'as_string(action) == "remove" && path_exists(KILLSWITCH_UC)' ||
   fail "package removal (and only removal) must lift the kill-switch"
 grep -Fq '"$BIN" killswitch_disable' "$FULL_UNINSTALL" || fail "full uninstall must lift the kill-switch"
-grep -Fq '/usr/share/nftables.d/ruleset-post/90-forkop-killswitch.nft' "$FULL_UNINSTALL" ||
+grep -Fq '/usr/share/nftables.d/ruleset-post/90-prokop-killswitch.nft' "$FULL_UNINSTALL" ||
   fail "full uninstall must remove the fw4 include"
 for command in killswitch_status killswitch_sync killswitch_disable; do
-  grep -Fq "$command: [ \"killswitch/runtime.uc\"" "$FORKOP_BIN" || fail "CLI must dispatch $command"
+  grep -Fq "$command: [ \"killswitch/runtime.uc\"" "$PROKOP_BIN" || fail "CLI must dispatch $command"
 done
 
 # A direct priority level contradicts the kill-switch.
@@ -105,13 +105,13 @@ cat >"$WORK_DIR/direct.json" <<'JSON'
   ]
 }
 JSON
-if output="$(FORKOP_LIB="$FORKOP_LIB" ucode -L "$FORKOP_LIB" "$VALIDATOR_UC" validate-runtime-fixture "$WORK_DIR/direct.json" "{}" 2>&1)"; then
+if output="$(PROKOP_LIB="$PROKOP_LIB" ucode -L "$PROKOP_LIB" "$VALIDATOR_UC" validate-runtime-fixture "$WORK_DIR/direct.json" "{}" 2>&1)"; then
   fail "kill-switch with a direct priority level must be rejected"
 fi
 printf '%s' "$output" | grep -Fq 'enables the VPN kill-switch' || fail "unexpected validator message: $output"
 
 sed 's/"kill_switch": "1",//' "$WORK_DIR/direct.json" > "$WORK_DIR/direct-off.json"
-output="$(FORKOP_LIB="$FORKOP_LIB" ucode -L "$FORKOP_LIB" "$VALIDATOR_UC" validate-runtime-fixture "$WORK_DIR/direct-off.json" "{}" 2>&1)" ||
+output="$(PROKOP_LIB="$PROKOP_LIB" ucode -L "$PROKOP_LIB" "$VALIDATOR_UC" validate-runtime-fixture "$WORK_DIR/direct-off.json" "{}" 2>&1)" ||
   fail "a direct priority level stays valid without the kill-switch: $output"
 
 printf 'killswitch_lifecycle: PASS\n'

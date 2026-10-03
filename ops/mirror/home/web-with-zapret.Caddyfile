@@ -10,7 +10,7 @@
         respond @private 404
         respond /healthz "ok\n" 200
         handle /zapret-manager/proxy/* {
-            reverse_proxy forkop-zapret-cache:9081
+            reverse_proxy prokop-zapret-cache:9081
         }
         handle {
             file_server

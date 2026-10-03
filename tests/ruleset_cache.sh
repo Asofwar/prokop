@@ -3,13 +3,13 @@ set -eu
 set -o pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-FORKOP_LIB="$ROOT_DIR/forkop/files/usr/lib"
-RULESET_CACHE_UC="$FORKOP_LIB/singbox/ruleset_cache.uc"
+PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+RULESET_CACHE_UC="$PROKOP_LIB/singbox/ruleset_cache.uc"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT
-export FORKOP_RULESET_RUNTIME_CACHE_DIR="$WORK_DIR/runtime-cache"
-export FORKOP_RULESET_RUNTIME_MANIFEST="$WORK_DIR/runtime-manifest.json"
-export FORKOP_PERSISTENT_LIST_CACHE_DIR="$WORK_DIR/list-cache"
+export PROKOP_RULESET_RUNTIME_CACHE_DIR="$WORK_DIR/runtime-cache"
+export PROKOP_RULESET_RUNTIME_MANIFEST="$WORK_DIR/runtime-manifest.json"
+export PROKOP_PERSISTENT_LIST_CACHE_DIR="$WORK_DIR/list-cache"
 
 fail() {
   printf 'FAIL: %s\n' "$1" >&2
@@ -59,9 +59,9 @@ cp "$WORK_DIR/config.json" "$WORK_DIR/config-prune.json"
 PATH="$WORK_DIR/bin:$PATH" \
 RULESET_TEST_SOURCE_JSON="$WORK_DIR/source.json" \
 RULESET_TEST_SOURCE_SRS="$WORK_DIR/source.srs" \
-FORKOP_RULESET_CACHE_DIR="$WORK_DIR/cache" \
-FORKOP_RULESET_CACHE_MANIFEST="$WORK_DIR/cache/manifest.json" \
-  ucode -L "$FORKOP_LIB" "$RULESET_CACHE_UC" materialize-config "$WORK_DIR/config.json"
+PROKOP_RULESET_CACHE_DIR="$WORK_DIR/cache" \
+PROKOP_RULESET_CACHE_MANIFEST="$WORK_DIR/cache/manifest.json" \
+  ucode -L "$PROKOP_LIB" "$RULESET_CACHE_UC" materialize-config "$WORK_DIR/config.json"
 
 if ! ucode -e '
   let fs = require("fs");
@@ -95,9 +95,9 @@ PATH="$WORK_DIR/bin:$PATH" \
 RULESET_TEST_SOURCE_JSON="$WORK_DIR/source.json" \
 RULESET_TEST_SOURCE_SRS="$WORK_DIR/source.srs" \
 RULESET_TEST_DECOMPILE_LOG="$WORK_DIR/decompile.log" \
-FORKOP_RULESET_CACHE_DIR="$WORK_DIR/cache" \
-FORKOP_RULESET_CACHE_MANIFEST="$WORK_DIR/cache/manifest.json" \
-  ucode -L "$FORKOP_LIB" "$RULESET_CACHE_UC" refresh >/dev/null 2>&1 && fail "an identical refresh must report no change" || true
+PROKOP_RULESET_CACHE_DIR="$WORK_DIR/cache" \
+PROKOP_RULESET_CACHE_MANIFEST="$WORK_DIR/cache/manifest.json" \
+  ucode -L "$PROKOP_LIB" "$RULESET_CACHE_UC" refresh >/dev/null 2>&1 && fail "an identical refresh must report no change" || true
 [ ! -s "$WORK_DIR/decompile.log" ] || fail "an identical download was validated again: $(cat "$WORK_DIR/decompile.log")"
 # Changed bytes are still validated before they replace the cache.
 printf 'mock-srs changed\n' >"$WORK_DIR/source.srs"
@@ -105,9 +105,9 @@ PATH="$WORK_DIR/bin:$PATH" \
 RULESET_TEST_SOURCE_JSON="$WORK_DIR/source.json" \
 RULESET_TEST_SOURCE_SRS="$WORK_DIR/source.srs" \
 RULESET_TEST_DECOMPILE_LOG="$WORK_DIR/decompile.log" \
-FORKOP_RULESET_CACHE_DIR="$WORK_DIR/cache" \
-FORKOP_RULESET_CACHE_MANIFEST="$WORK_DIR/cache/manifest.json" \
-  ucode -L "$FORKOP_LIB" "$RULESET_CACHE_UC" refresh >/dev/null 2>&1 || fail "a changed rule set must report a change"
+PROKOP_RULESET_CACHE_DIR="$WORK_DIR/cache" \
+PROKOP_RULESET_CACHE_MANIFEST="$WORK_DIR/cache/manifest.json" \
+  ucode -L "$PROKOP_LIB" "$RULESET_CACHE_UC" refresh >/dev/null 2>&1 || fail "a changed rule set must report a change"
 grep -q . "$WORK_DIR/decompile.log" || fail "a changed download must be validated"
 printf 'mock-srs\n' >"$WORK_DIR/source.srs"
 cat >"$WORK_DIR/bin/sing-box" <<'EOF'
@@ -119,9 +119,9 @@ EOF
 PATH="$WORK_DIR/bin:$PATH" \
 RULESET_TEST_SOURCE_JSON="$WORK_DIR/source.json" \
 RULESET_TEST_SOURCE_SRS="$WORK_DIR/source.srs" \
-FORKOP_RULESET_CACHE_DIR="$WORK_DIR/cache" \
-FORKOP_RULESET_CACHE_MANIFEST="$WORK_DIR/cache/manifest.json" \
-  ucode -L "$FORKOP_LIB" "$RULESET_CACHE_UC" refresh >/dev/null 2>&1 || true
+PROKOP_RULESET_CACHE_DIR="$WORK_DIR/cache" \
+PROKOP_RULESET_CACHE_MANIFEST="$WORK_DIR/cache/manifest.json" \
+  ucode -L "$PROKOP_LIB" "$RULESET_CACHE_UC" refresh >/dev/null 2>&1 || true
 
 printf 'orphan\n' >"$WORK_DIR/cache/aaaaaaaaaaaa.srs"
 printf 'orphan validation\n' >"$WORK_DIR/cache/aaaaaaaaaaaa.srs.validated"
@@ -130,9 +130,9 @@ printf '{"version":1,"rules":[]}\n' >"$WORK_DIR/cache/empty-cccccccccccc.json"
 PATH="$WORK_DIR/bin:$PATH" \
 RULESET_TEST_SOURCE_JSON="$WORK_DIR/source.json" \
 RULESET_TEST_SOURCE_SRS="$WORK_DIR/source.srs" \
-FORKOP_RULESET_CACHE_DIR="$WORK_DIR/cache" \
-FORKOP_RULESET_CACHE_MANIFEST="$WORK_DIR/cache/manifest.json" \
-  ucode -L "$FORKOP_LIB" "$RULESET_CACHE_UC" materialize-config "$WORK_DIR/config-prune.json"
+PROKOP_RULESET_CACHE_DIR="$WORK_DIR/cache" \
+PROKOP_RULESET_CACHE_MANIFEST="$WORK_DIR/cache/manifest.json" \
+  ucode -L "$PROKOP_LIB" "$RULESET_CACHE_UC" materialize-config "$WORK_DIR/config-prune.json"
 for orphan in aaaaaaaaaaaa.srs aaaaaaaaaaaa.srs.validated bbbbbbbbbbbb.json empty-cccccccccccc.json; do
   [ ! -e "$WORK_DIR/cache/$orphan" ] ||
     fail "materialization must prune stale managed rule-set cache file $orphan"
@@ -150,10 +150,10 @@ printf 'keep\n' >"$WORK_DIR/cache/user-file.download.1.2"
 PATH="$WORK_DIR/bin:$PATH" \
 RULESET_TEST_SOURCE_JSON="$WORK_DIR/source.json" \
 RULESET_TEST_SOURCE_SRS="$WORK_DIR/source.srs" \
-FORKOP_RULESET_CACHE_DIR="$WORK_DIR/cache" \
-FORKOP_RULESET_CACHE_MANIFEST="$WORK_DIR/cache/manifest.json" \
-FORKOP_RULESET_CACHE_TEMP_MAX_AGE=0 \
-  ucode -L "$FORKOP_LIB" "$RULESET_CACHE_UC" materialize-config "$WORK_DIR/config-prune.json"
+PROKOP_RULESET_CACHE_DIR="$WORK_DIR/cache" \
+PROKOP_RULESET_CACHE_MANIFEST="$WORK_DIR/cache/manifest.json" \
+PROKOP_RULESET_CACHE_TEMP_MAX_AGE=0 \
+  ucode -L "$PROKOP_LIB" "$RULESET_CACHE_UC" materialize-config "$WORK_DIR/config-prune.json"
 for temporary in aaaaaaaaaaaa.srs.download.1.2 aaaaaaaaaaaa.srs.download.1.2.validated manifest.json.1.2.tmp .validate-aaaaaaaaaaaa.json; do
   [ ! -e "$WORK_DIR/cache/$temporary" ] ||
     fail "stale rule-set temporary file was not removed: $temporary"
@@ -179,9 +179,9 @@ EOF
 PATH="$WORK_DIR/bin:$PATH" \
 RULESET_TEST_SOURCE_JSON="$WORK_DIR/partial-old.json" \
 RULESET_TEST_SOURCE_SRS="$WORK_DIR/source.srs" \
-FORKOP_RULESET_CACHE_DIR="$WORK_DIR/partial-cache" \
-FORKOP_RULESET_CACHE_MANIFEST="$WORK_DIR/partial-cache/manifest.json" \
-  ucode -L "$FORKOP_LIB" "$RULESET_CACHE_UC" materialize-config "$WORK_DIR/partial-config.json"
+PROKOP_RULESET_CACHE_DIR="$WORK_DIR/partial-cache" \
+PROKOP_RULESET_CACHE_MANIFEST="$WORK_DIR/partial-cache/manifest.json" \
+  ucode -L "$PROKOP_LIB" "$RULESET_CACHE_UC" materialize-config "$WORK_DIR/partial-config.json"
 good_path="$(ucode -e 'let fs=require("fs"); let c=json(fs.readfile(ARGV[0])); print(c.route.rule_set[0].path)' "$WORK_DIR/partial-config.json")"
 bad_path="$(ucode -e 'let fs=require("fs"); let c=json(fs.readfile(ARGV[0])); print(c.route.rule_set[1].path)' "$WORK_DIR/partial-config.json")"
 cat >"$WORK_DIR/bin/curl" <<'EOF'
@@ -204,9 +204,9 @@ EOF
 chmod +x "$WORK_DIR/bin/curl"
 PATH="$WORK_DIR/bin:$PATH" \
 RULESET_TEST_SOURCE_JSON="$WORK_DIR/partial-new.json" \
-FORKOP_RULESET_CACHE_DIR="$WORK_DIR/partial-cache" \
-FORKOP_RULESET_CACHE_MANIFEST="$WORK_DIR/partial-cache/manifest.json" \
-  ucode -L "$FORKOP_LIB" "$RULESET_CACHE_UC" refresh >/dev/null 2>&1 ||
+PROKOP_RULESET_CACHE_DIR="$WORK_DIR/partial-cache" \
+PROKOP_RULESET_CACHE_MANIFEST="$WORK_DIR/partial-cache/manifest.json" \
+  ucode -L "$PROKOP_LIB" "$RULESET_CACHE_UC" refresh >/dev/null 2>&1 ||
   fail "a changed rule set must request reload even when another source failed"
 grep -Fq 'new.test' "$good_path" || fail "successful rule-set refresh was not committed"
 grep -Fq 'old.test' "$bad_path" || fail "failed rule-set refresh did not retain last-known-good data"
@@ -221,9 +221,9 @@ EOF
 chmod +x "$WORK_DIR/bin/curl"
 PATH="$WORK_DIR/bin:$PATH" \
 RULESET_TEST_SOURCE_JSON="$WORK_DIR/source.json" \
-FORKOP_RULESET_CACHE_DIR="$WORK_DIR/cache" \
-FORKOP_RULESET_CACHE_MANIFEST="$WORK_DIR/cache/manifest.json" \
-  ucode -L "$FORKOP_LIB" "$RULESET_CACHE_UC" materialize-config "$WORK_DIR/offline.json" 2>/dev/null
+PROKOP_RULESET_CACHE_DIR="$WORK_DIR/cache" \
+PROKOP_RULESET_CACHE_MANIFEST="$WORK_DIR/cache/manifest.json" \
+  ucode -L "$PROKOP_LIB" "$RULESET_CACHE_UC" materialize-config "$WORK_DIR/offline.json" 2>/dev/null
 ucode -e '
   let fs = require("fs");
   let value = json(fs.readfile(ARGV[0])).route.rule_set[0];
@@ -245,18 +245,18 @@ chmod +x "$WORK_DIR/bin/curl"
 PATH="$WORK_DIR/bin:$PATH" \
 RULESET_TEST_SOURCE_JSON="$WORK_DIR/source.json" \
 RULESET_TEST_CURL_CALLS="$WORK_DIR/curl.calls" \
-FORKOP_RULESET_CACHE_DIR="$WORK_DIR/cache" \
-FORKOP_RULESET_CACHE_MANIFEST="$WORK_DIR/cache/manifest.json" \
-  ucode -L "$FORKOP_LIB" "$RULESET_CACHE_UC" materialize-config "$WORK_DIR/cache-only.json" cache-only 2>/dev/null
+PROKOP_RULESET_CACHE_DIR="$WORK_DIR/cache" \
+PROKOP_RULESET_CACHE_MANIFEST="$WORK_DIR/cache/manifest.json" \
+  ucode -L "$PROKOP_LIB" "$RULESET_CACHE_UC" materialize-config "$WORK_DIR/cache-only.json" cache-only 2>/dev/null
 [ ! -s "$WORK_DIR/curl.calls" ] ||
   fail "proxy-only cold start must not attempt a direct rule-set download before the service proxy is ready"
 
 fallback="$({
-  FORKOP_MIRROR_BASE_URL='https://mirror.test'
+  PROKOP_MIRROR_BASE_URL='https://mirror.test'
   SRS_MAIN_URL='https://mirror.test/forkop/lists/rulesets/community'
   SRS_FALLBACK_MAIN_URL='https://upstream.test/community'
-  export FORKOP_MIRROR_BASE_URL SRS_MAIN_URL SRS_FALLBACK_MAIN_URL
-  ucode -L "$FORKOP_LIB" "$RULESET_CACHE_UC" fallback-urls \
+  export PROKOP_MIRROR_BASE_URL SRS_MAIN_URL SRS_FALLBACK_MAIN_URL
+  ucode -L "$PROKOP_LIB" "$RULESET_CACHE_UC" fallback-urls \
     'https://mirror.test/forkop/lists/rulesets/community/youtube.srs'
 })"
 [ "$fallback" = 'https://upstream.test/community/youtube.srs' ] ||
@@ -266,7 +266,7 @@ fallback="$({
 # from a former upstream mirror keep direct fallbacks with no mirror or with
 # another one, and a direct raw GitHub source falls back to jsDelivr.
 fallback_urls() {
-  FORKOP_MIRROR_BASE_URL="$1" ucode -L "$FORKOP_LIB" "$RULESET_CACHE_UC" fallback-urls "$2"
+  PROKOP_MIRROR_BASE_URL="$1" ucode -L "$PROKOP_LIB" "$RULESET_CACHE_UC" fallback-urls "$2"
 }
 B4_RAW='https://raw.githubusercontent.com/Greeg0ry/b4geoip-forkop/main/srs/valve.srs'
 B4_CDN='https://cdn.jsdelivr.net/gh/Greeg0ry/b4geoip-forkop@main/srs/valve.srs'
@@ -298,9 +298,9 @@ before="$(find "$WORK_DIR/cache" -maxdepth 1 -type f -name '*.srs' -exec md5sum 
 PATH="$WORK_DIR/bin:$PATH" \
 RULESET_TEST_SOURCE_JSON="$WORK_DIR/source.json" \
 RULESET_TEST_SOURCE_SRS="$WORK_DIR/source.srs" \
-FORKOP_RULESET_CACHE_DIR="$WORK_DIR/cache" \
-FORKOP_RULESET_CACHE_MANIFEST="$WORK_DIR/cache/manifest.json" \
-  ucode -L "$FORKOP_LIB" "$RULESET_CACHE_UC" refresh >/dev/null 2>&1 || true
+PROKOP_RULESET_CACHE_DIR="$WORK_DIR/cache" \
+PROKOP_RULESET_CACHE_MANIFEST="$WORK_DIR/cache/manifest.json" \
+  ucode -L "$PROKOP_LIB" "$RULESET_CACHE_UC" refresh >/dev/null 2>&1 || true
 after="$(find "$WORK_DIR/cache" -maxdepth 1 -type f -name '*.srs' -exec md5sum {} \;)"
 [ "$before" = "$after" ] || fail "an unchanged cached rule set must remain stable"
 
@@ -332,24 +332,24 @@ EOF_QUOTA_CURL
 chmod +x "$WORK_DIR/bin/curl"
 PATH="$WORK_DIR/bin:$PATH" \
 RULESET_TEST_SOURCE_JSON="$WORK_DIR/quota-old.json" \
-FORKOP_RULESET_CACHE_DIR="$WORK_DIR/quota-cache" \
-FORKOP_RULESET_CACHE_MANIFEST="$WORK_DIR/quota-cache/manifest.json" \
-FORKOP_RULESET_RUNTIME_CACHE_DIR="$WORK_DIR/quota-runtime" \
-FORKOP_RULESET_RUNTIME_MANIFEST="$WORK_DIR/quota-runtime-manifest.json" \
-FORKOP_PERSISTENT_LIST_CACHE_DIR="$WORK_DIR/quota-list-cache" \
-  ucode -L "$FORKOP_LIB" "$RULESET_CACHE_UC" materialize-config "$WORK_DIR/quota-config.json"
+PROKOP_RULESET_CACHE_DIR="$WORK_DIR/quota-cache" \
+PROKOP_RULESET_CACHE_MANIFEST="$WORK_DIR/quota-cache/manifest.json" \
+PROKOP_RULESET_RUNTIME_CACHE_DIR="$WORK_DIR/quota-runtime" \
+PROKOP_RULESET_RUNTIME_MANIFEST="$WORK_DIR/quota-runtime-manifest.json" \
+PROKOP_PERSISTENT_LIST_CACHE_DIR="$WORK_DIR/quota-list-cache" \
+  ucode -L "$PROKOP_LIB" "$RULESET_CACHE_UC" materialize-config "$WORK_DIR/quota-config.json"
 persistent_path="$(ucode -e 'let fs=require("fs"); print(json(fs.readfile(ARGV[0])).route.rule_set[0].path)' "$WORK_DIR/quota-config.json")"
 grep -Fq 'quota-old.test' "$persistent_path" || fail "initial rule-set was not persisted"
 persistent_md5="$(md5sum "$persistent_path" | cut -d' ' -f1)"
 PATH="$WORK_DIR/bin:$PATH" \
 RULESET_TEST_SOURCE_JSON="$WORK_DIR/quota-new.json" \
-FORKOP_RULESET_CACHE_DIR="$WORK_DIR/quota-cache" \
-FORKOP_RULESET_CACHE_MANIFEST="$WORK_DIR/quota-cache/manifest.json" \
-FORKOP_RULESET_RUNTIME_CACHE_DIR="$WORK_DIR/quota-runtime" \
-FORKOP_RULESET_RUNTIME_MANIFEST="$WORK_DIR/quota-runtime-manifest.json" \
-FORKOP_PERSISTENT_LIST_CACHE_DIR="$WORK_DIR/quota-list-cache" \
-FORKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=8390000 \
-  ucode -L "$FORKOP_LIB" "$RULESET_CACHE_UC" refresh >/dev/null
+PROKOP_RULESET_CACHE_DIR="$WORK_DIR/quota-cache" \
+PROKOP_RULESET_CACHE_MANIFEST="$WORK_DIR/quota-cache/manifest.json" \
+PROKOP_RULESET_RUNTIME_CACHE_DIR="$WORK_DIR/quota-runtime" \
+PROKOP_RULESET_RUNTIME_MANIFEST="$WORK_DIR/quota-runtime-manifest.json" \
+PROKOP_PERSISTENT_LIST_CACHE_DIR="$WORK_DIR/quota-list-cache" \
+PROKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=8390000 \
+  ucode -L "$PROKOP_LIB" "$RULESET_CACHE_UC" refresh >/dev/null
 [ "$persistent_md5" = "$(md5sum "$persistent_path" | cut -d' ' -f1)" ] ||
   fail "RAM-only rule-set refresh replaced the persistent last-known-good copy"
 cp "$WORK_DIR/quota-config.json" "$WORK_DIR/quota-rematerialized.json"
@@ -357,13 +357,13 @@ cp "$WORK_DIR/quota-config.json" "$WORK_DIR/quota-rematerialized.json"
 cat >"$WORK_DIR/quota-rematerialized.json" <<'EOF_QUOTA_REMATERIALIZE'
 {"route":{"rule_set":[{"type":"remote","tag":"quota","format":"source","url":"https://quota.test/rules.json"}]}}
 EOF_QUOTA_REMATERIALIZE
-FORKOP_RULESET_CACHE_DIR="$WORK_DIR/quota-cache" \
-FORKOP_RULESET_CACHE_MANIFEST="$WORK_DIR/quota-cache/manifest.json" \
-FORKOP_RULESET_RUNTIME_CACHE_DIR="$WORK_DIR/quota-runtime" \
-FORKOP_RULESET_RUNTIME_MANIFEST="$WORK_DIR/quota-runtime-manifest.json" \
-FORKOP_PERSISTENT_LIST_CACHE_DIR="$WORK_DIR/quota-list-cache" \
-FORKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=8390000 \
-  ucode -L "$FORKOP_LIB" "$RULESET_CACHE_UC" materialize-config "$WORK_DIR/quota-rematerialized.json" cache-only
+PROKOP_RULESET_CACHE_DIR="$WORK_DIR/quota-cache" \
+PROKOP_RULESET_CACHE_MANIFEST="$WORK_DIR/quota-cache/manifest.json" \
+PROKOP_RULESET_RUNTIME_CACHE_DIR="$WORK_DIR/quota-runtime" \
+PROKOP_RULESET_RUNTIME_MANIFEST="$WORK_DIR/quota-runtime-manifest.json" \
+PROKOP_PERSISTENT_LIST_CACHE_DIR="$WORK_DIR/quota-list-cache" \
+PROKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=8390000 \
+  ucode -L "$PROKOP_LIB" "$RULESET_CACHE_UC" materialize-config "$WORK_DIR/quota-rematerialized.json" cache-only
 runtime_path="$(ucode -e 'let fs=require("fs"); print(json(fs.readfile(ARGV[0])).route.rule_set[0].path)' "$WORK_DIR/quota-rematerialized.json")"
 grep -Fq 'quota-new.test' "$runtime_path" || fail "reload did not retain the newer RAM-only rule-set"
 case "$runtime_path" in
@@ -375,13 +375,13 @@ esac
 # persistent cache without requiring another rule change or service reload.
 PATH="$WORK_DIR/bin:$PATH" \
 RULESET_TEST_SOURCE_JSON="$WORK_DIR/quota-new.json" \
-FORKOP_RULESET_CACHE_DIR="$WORK_DIR/quota-cache" \
-FORKOP_RULESET_CACHE_MANIFEST="$WORK_DIR/quota-cache/manifest.json" \
-FORKOP_RULESET_RUNTIME_CACHE_DIR="$WORK_DIR/quota-runtime" \
-FORKOP_RULESET_RUNTIME_MANIFEST="$WORK_DIR/quota-runtime-manifest.json" \
-FORKOP_PERSISTENT_LIST_CACHE_DIR="$WORK_DIR/quota-list-cache" \
-FORKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=33554432 \
-  ucode -L "$FORKOP_LIB" "$RULESET_CACHE_UC" refresh >/dev/null 2>&1 || true
+PROKOP_RULESET_CACHE_DIR="$WORK_DIR/quota-cache" \
+PROKOP_RULESET_CACHE_MANIFEST="$WORK_DIR/quota-cache/manifest.json" \
+PROKOP_RULESET_RUNTIME_CACHE_DIR="$WORK_DIR/quota-runtime" \
+PROKOP_RULESET_RUNTIME_MANIFEST="$WORK_DIR/quota-runtime-manifest.json" \
+PROKOP_PERSISTENT_LIST_CACHE_DIR="$WORK_DIR/quota-list-cache" \
+PROKOP_PERSISTENT_LIST_CACHE_AVAILABLE_BYTES=33554432 \
+  ucode -L "$PROKOP_LIB" "$RULESET_CACHE_UC" refresh >/dev/null 2>&1 || true
 grep -Fq 'quota-new.test' "$persistent_path" ||
   fail "runtime rule-set was not promoted when flash space became available"
 [ ! -e "$runtime_path" ] || fail "promoted runtime rule-set copy was not removed"
@@ -419,16 +419,16 @@ b4_start() {
     "$B4_RAW" >"$cache/config.json"
   : >"$WORK_DIR/b4.calls"
   PATH="$WORK_DIR/bin:$PATH" \
-  FORKOP_MIRROR_BASE_URL="$1" \
+  PROKOP_MIRROR_BASE_URL="$1" \
   RULESET_TEST_SERVED_PREFIX="$2" \
   RULESET_TEST_CURL_CALLS="$WORK_DIR/b4.calls" \
   RULESET_TEST_SOURCE_JSON="$WORK_DIR/source.json" \
   RULESET_TEST_SOURCE_SRS="$WORK_DIR/source.srs" \
-  FORKOP_RULESET_CACHE_DIR="$cache/persistent" \
-  FORKOP_RULESET_CACHE_MANIFEST="$cache/persistent/manifest.json" \
-  FORKOP_RULESET_RUNTIME_CACHE_DIR="$cache/runtime" \
-  FORKOP_RULESET_RUNTIME_MANIFEST="$cache/runtime.json" \
-    ucode -L "$FORKOP_LIB" "$RULESET_CACHE_UC" materialize-config "$cache/config.json" 2>/dev/null
+  PROKOP_RULESET_CACHE_DIR="$cache/persistent" \
+  PROKOP_RULESET_CACHE_MANIFEST="$cache/persistent/manifest.json" \
+  PROKOP_RULESET_RUNTIME_CACHE_DIR="$cache/runtime" \
+  PROKOP_RULESET_RUNTIME_MANIFEST="$cache/runtime.json" \
+    ucode -L "$PROKOP_LIB" "$RULESET_CACHE_UC" materialize-config "$cache/config.json" 2>/dev/null
   ucode -e 'let fs = require("fs"); print(json(fs.readfile(ARGV[0])).route.rule_set[0].path, "\n");' \
     "$cache/config.json"
 }

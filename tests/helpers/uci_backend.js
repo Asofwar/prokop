@@ -11,7 +11,7 @@ const path = require("node:path");
 const { execFileSync, spawnSync } = require("node:child_process");
 
 const ROOT = path.join(__dirname, "../..");
-const LIB = path.join(ROOT, "forkop/files/usr/lib");
+const LIB = path.join(ROOT, "prokop/files/usr/lib");
 
 const SETTINGS = {
   ".name": "settings",
@@ -60,7 +60,7 @@ print(sprintf("%J\\n", out));
 `;
 
 function tempDir() {
-  return fs.mkdtempSync(path.join(os.tmpdir(), "forkop-legacy-"));
+  return fs.mkdtempSync(path.join(os.tmpdir(), "prokop-legacy-"));
 }
 
 // What the generator and nft read as the conditions of every rule.
@@ -116,7 +116,7 @@ function validate(data) {
     const result = spawnSync(
       "ucode",
       ["-L", LIB, path.join(LIB, "config/validator.uc"), "validate-runtime-fixture", fixture, "{}"],
-      { env: Object.assign({}, process.env, { FORKOP_LIB: LIB }) },
+      { env: Object.assign({}, process.env, { PROKOP_LIB: LIB }) },
     );
     return { ok: result.status === 0, message: `${result.stdout}${result.stderr}`.trim() };
   } finally {

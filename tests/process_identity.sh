@@ -2,7 +2,7 @@
 set -eu
 
 ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
-LIB_DIR="$ROOT_DIR/forkop/files/usr/lib"
+LIB_DIR="$ROOT_DIR/prokop/files/usr/lib"
 CLI="$ROOT_DIR/tests/fixtures/process_identity_cli.uc"
 STATE_DIR="$(mktemp -d)"
 # shellcheck source=tests/helpers/wait.sh
@@ -39,7 +39,7 @@ ucode -L "$LIB_DIR" "$CLI" record "$PID_FILE" "$foreign_pid"
 ucode -L "$LIB_DIR" "$LIB_DIR/core/pidfile_cli.uc" record "$foreign_pid" "$STATE_DIR/child.pid"
 [ "$(wc -l < "$STATE_DIR/child.pid")" -eq 2 ] || exit 1
 
-# A live but unrelated PID must never be signalled as a Forkop ucode worker.
+# A live but unrelated PID must never be signalled as a Prokop ucode worker.
 if ucode -L "$LIB_DIR" "$CLI" signal "$PID_FILE" ucode worker KILL; then
     exit 1
 fi

@@ -7,7 +7,7 @@ set -euo pipefail
 # a target that is not a plain host/address) stays undecidable: never guessed.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT_DIR/forkop/files/usr/lib"
+LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT HUP INT TERM
 
@@ -25,14 +25,14 @@ grep -qxF "\$6" "\$5" && echo "match rules.[0]: domain/domain_suffix=<binary>"
 exit 0
 EOF
 chmod +x "$WORK/sing-box"
-export FORKOP_RULESET_MATCH_BIN="$WORK/sing-box"
+export PROKOP_RULESET_MATCH_BIN="$WORK/sing-box"
 
 printf 'youtube.com\nwww.youtube.com\n' >"$WORK/youtube.srs"
 printf 'example.org\n' >"$WORK/other.srs"
 printf '203.0.113.7\n' >"$WORK/addresses.srs"
 printf '!fail\n' >"$WORK/broken.srs"
 
-cat >"$WORK/forkop" <<'EOF'
+cat >"$WORK/prokop" <<'EOF'
 config settings 'settings'
 config section 'youtube'
 	option action 'zapret'
@@ -57,7 +57,7 @@ EOF
 resolve() {
     printf '%s' "$2" >"$WORK/$1.json"
     : >"$WORK/calls"
-    FORKOP_LIB="$LIB" ucode -L "$LIB" "$WORK/resolve.uc" "$WORK/forkop" "$WORK/$1.json"
+    PROKOP_LIB="$LIB" ucode -L "$LIB" "$WORK/resolve.uc" "$WORK/prokop" "$WORK/$1.json"
 }
 expect() { # name json want
     local got

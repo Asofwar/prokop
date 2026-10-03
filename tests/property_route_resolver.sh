@@ -12,4 +12,4 @@ trap 'rm -rf "$WORK"' EXIT HUP INT TERM
 export PROPERTY_WORK="$WORK"
 
 node "$ROOT_DIR/tests/helpers/property/route_resolver.js" \
-  "$ROOT_DIR/forkop/files/usr/lib" "$ROOT_DIR/tests/helpers/route_owner/forkop.uci"
+  "$ROOT_DIR/prokop/files/usr/lib" "$ROOT_DIR/tests/helpers/route_owner/prokop.uci"

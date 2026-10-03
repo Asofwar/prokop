@@ -86,11 +86,11 @@ const seedFrom = (fallback) => envInt("PROPERTY_SEED", fallback);
 const casesFrom = (fallback) => envInt("PROPERTY_CASES", fallback);
 
 // Runs every input through `function evaluate(input)` of a ucode program in
-// one ucode process with the Forkop library on the module path; returns the
+// one ucode process with the Prokop library on the module path; returns the
 // results in input order. `body` may require() production modules. Temporary
 // files go to $PROPERTY_WORK (the calling test's work directory) or $TMPDIR.
 function ucodeBatch(lib, body, inputs, env = {}) {
-  const dir = fs.mkdtempSync(path.join(process.env.PROPERTY_WORK || os.tmpdir(), "forkop-property-"));
+  const dir = fs.mkdtempSync(path.join(process.env.PROPERTY_WORK || os.tmpdir(), "prokop-property-"));
   try {
     const script = path.join(dir, "batch.uc");
     const input = path.join(dir, "input.json");
@@ -103,7 +103,7 @@ print(sprintf("%J\\n", __out));
 `);
     fs.writeFileSync(input, JSON.stringify(inputs));
     const out = execFileSync("ucode", ["-L", lib, script, input], {
-      env: { ...process.env, FORKOP_LIB: lib, ...env },
+      env: { ...process.env, PROKOP_LIB: lib, ...env },
       maxBuffer: 256 * 1024 * 1024,
     });
     const results = JSON.parse(out.toString());
