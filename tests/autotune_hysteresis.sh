@@ -36,6 +36,10 @@ let out = {
   resets: run([ rec("multisplit"), { status: "conflict", fingerprint: "fp1" }, rec("multisplit"),
     { status: "direct_stable" }, rec("multisplit"), { status: "no_change" } ]),
   medium_policy: run([ rec("fake", "medium"), rec("fake", "medium") ], { confirmations: 2, min_confidence: "medium" }),
+  // AT-2: with min_confidence medium, medium runs confirm the Apply button
+  // but only high runs count for automatic apply.
+  medium_auto: run([ rec("fake", "medium"), rec("fake", "medium"), rec("fake", "high"), rec("fake", "high"), rec("fake", "high") ],
+    { confirmations: 3, min_confidence: "medium", apply_min_confidence: "high" }),
   // D-11a: "Check now" three times in a row is ready for a manual apply,
   // never for an automatic one; scheduled runs add their own count.
   manual: run([ { ...rec("multisplit"), manual: true }, { ...rec("multisplit"), manual: true },
@@ -55,6 +59,9 @@ node - "$WORK/h.json" <<'NODE'
 const assert = require('node:assert/strict');
 const r = JSON.parse(require('node:fs').readFileSync(process.argv[2], 'utf8'));
 const brief = (run) => run.steps.map((s) => [s.events.join('+'), s.count, s.ready]);
+assert.deepEqual(r.medium_auto.steps.map((s) => [s.count, s.ready, s.scheduled, s.ready_auto]),
+  [[1, false, 0, false], [2, false, 0, false], [3, true, 1, false], [3, true, 2, false], [3, true, 3, true]],
+  'medium runs never count toward automatic apply (AT-2)');
 
 assert.deepEqual(brief(r.confirm), [['started', 1, false], ['confirmed', 2, false], ['ready', 3, true], ['ready', 3, true]],
   'the same candidate three times in a row becomes ready; the count stops at the requirement');

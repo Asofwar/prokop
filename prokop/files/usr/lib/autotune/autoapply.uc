@@ -41,9 +41,9 @@ function decide(ctx) {
     if (r.candidate == "direct") return { apply: false, reason: "direct_not_applicable" };
     // A custom strategy is kept whatever the confirmations say.
     if (ctx.custom === true) return { apply: false, reason: "custom_strategy_kept" };
-    if (ctx.group == null || ctx.group.ready_auto !== true) return { apply: false, reason: "not_confirmed" };
     if (!policy_module.confidence_at_least(r.confidence, p.apply_min_confidence || "high"))
         return { apply: false, reason: "confidence_too_low" };
+    if (ctx.group == null || ctx.group.ready_auto !== true) return { apply: false, reason: "not_confirmed" };
     if (ctx.cooldown_until != null && ctx.now < ctx.cooldown_until) return { apply: false, reason: "candidate_in_cooldown" };
     if (type(ctx.recovered_at) == "int" && ctx.now < ctx.recovered_at + int(p.cooldown_seconds))
         return { apply: false, reason: "state_recovered" };

@@ -47,7 +47,11 @@ function observe(group, observation, policy, now, trigger) {
     if (obs.fingerprint != null) group.fingerprint = obs.fingerprint;
 
     let scheduled = trigger == "schedule";
-    let start = (candidate) => ({ candidate, count: 1, scheduled: scheduled ? 1 : 0, confidence: obs.confidence,
+    // Automatic apply counts only scheduled runs at its own confidence
+    // (always high): min_confidence medium lets medium runs confirm a
+    // recommendation for the Apply button, never for auto mode (AT-2).
+    let auto_counted = scheduled && policy_module.confidence_at_least(obs.confidence, policy.apply_min_confidence || "high");
+    let start = (candidate) => ({ candidate, count: 1, scheduled: auto_counted ? 1 : 0, confidence: obs.confidence,
         first_seen: now, last_seen: now, inconclusive_streak: 0 });
 
     if (obs.status == "recommendation" && obs.candidate) {
@@ -56,7 +60,7 @@ function observe(group, observation, policy, now, trigger) {
             if (confident) {
                 // A pending count from before D-11a has no scheduled count:
                 // it starts at 0, never at the full count.
-                let counted = int(pending.scheduled) + (scheduled ? 1 : 0);
+                let counted = int(pending.scheduled) + (auto_counted ? 1 : 0);
                 pending = { ...pending, count: pending.count >= required ? required : pending.count + 1,
                     scheduled: counted >= required ? required : counted,
                     confidence: obs.confidence, last_seen: now, inconclusive_streak: 0 };
