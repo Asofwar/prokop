@@ -65,14 +65,16 @@ release = {
 json.dump(release, open(os.path.join(work, 'github.json'), 'w'))
 
 # The mirror copy, as ops/mirror/sync-sing-box-extended.sh writes it: only the
-# OpenWrt packages, addressed under the mirror, every other field kept.
+# OpenWrt packages and the Linux compressed archives, addressed under the
+# mirror, every other field kept.
 prefix = '/forkop/sing-box-extended/releases/' + tag + '/'
 mirror = dict(release)
 mirror['html_url'] = prefix
 mirror['assets'] = []
 for asset in release['assets']:
     name = asset['name']
-    if name.startswith('sing-box-extended_') and '_openwrt_' in name and name.endswith(('.apk', '.ipk')):
+    if (name.startswith('sing-box-extended_') and '_openwrt_' in name and name.endswith(('.apk', '.ipk'))) or \
+            (name.startswith('sing-box-') and '-linux-' in name and name.endswith('-compressed.tar.gz')):
         copy = dict(asset)
         copy['browser_download_url'] = prefix + name
         mirror['assets'].append(copy)
@@ -216,10 +218,15 @@ check(release != null && release.asset_name == APK && release.asset_sha256 == di
     "the apk package was not selected on an apk system");
 apk = false;
 
+// The compressed binary variant comes from the mirror too (UPD-1): the
+// mirror used to carry only the OpenWrt packages, and this variant could not
+// be installed or updated at all with a mirror configured.
+release = resolve_sing_box_extended_release(true);
+check(release != null && release.asset_url == (MIRRORED ? MIRROR_FILES : GH) + ARCHIVE &&
+    release.asset_sha256 == digest(ARCHIVE),
+    "the compressed archive for this architecture was not selected: " + (release ? release.asset_url : "none"));
+
 if (!MIRRORED) {
-    release = resolve_sing_box_extended_release(true);
-    check(release != null && release.asset_url == GH + ARCHIVE && release.asset_sha256 == digest(ARCHIVE),
-        "the compressed archive for this architecture was not selected from GitHub");
 
     // A rate-limited API answer is not a release.
     http_bodies[API] = WORK + "/limited.json";

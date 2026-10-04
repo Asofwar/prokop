@@ -192,8 +192,40 @@ function sing_box_version_output() {
     return command_exists("sing-box") ? command_output_from_args([ "sing-box", "version" ]) : "";
 }
 
+function module_command(args) {
+    let command_args = [ "ucode", "-L", LIB_DIR ];
+    for (let arg in args)
+        push(command_args, arg);
+    return command_from_args(command_args);
+}
+
+function module_success(args) {
+    return command_status(module_command(args)) == 0;
+}
+
+// The compressed variant is installed with every sing-box package removed
+// (components/action.uc). A package installed since, by hand or from LuCI
+// Software, replaced its binary: the marker then describes a binary that is
+// gone, with its version and its features (A11).
+let sing_box_package_present_cache = null;
+
+function sing_box_package_present() {
+    if (sing_box_package_present_cache == null) {
+        sing_box_package_present_cache = false;
+        for (let name in [ "sing-box-extended", "sing-box-tiny", "sing-box" ])
+            if (module_success([ LIB_DIR + "/core/packages.uc", "installed", name ])) {
+                sing_box_package_present_cache = true;
+                break;
+            }
+    }
+    return sing_box_package_present_cache;
+}
+
 function sing_box_marker_is(value) {
-    return file_first_line(SB_VARIANT_STATE_FILE) == as_string(value);
+    let marker = file_first_line(SB_VARIANT_STATE_FILE);
+    if (marker != as_string(value))
+        return false;
+    return marker != "extended-compressed" || !sing_box_package_present();
 }
 
 function sing_box_version_state() {
@@ -284,17 +316,6 @@ function sing_box_supports_tailscale(version, version_output) {
     if (version_output != "")
         return output_has_build_tag(version_output, "with_tailscale");
     return output_has_build_tag(sing_box_version_output(), "with_tailscale");
-}
-
-function module_command(args) {
-    let command_args = [ "ucode", "-L", LIB_DIR ];
-    for (let arg in args)
-        push(command_args, arg);
-    return command_from_args(command_args);
-}
-
-function module_success(args) {
-    return command_status(module_command(args)) == 0;
 }
 
 function sing_box_package_installed(name) {

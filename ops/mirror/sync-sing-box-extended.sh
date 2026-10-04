@@ -25,7 +25,7 @@ destination="$MIRROR_ROOT/releases/$tag"
 rm -rf "$staging"
 mkdir -p "$staging" "$MIRROR_ROOT/releases"
 
-jq -r '.assets[] | select(.name | test("^sing-box-extended_.*_openwrt_.*\\.(apk|ipk)$")) | [.name, .browser_download_url] | @tsv' \
+jq -r '.assets[] | select(.name | test("^sing-box-extended_.*_openwrt_.*\\.(apk|ipk)$|^sing-box-.*-linux-.*-compressed\\.tar\\.gz$")) | [.name, .browser_download_url] | @tsv' \
     <<< "$release_json" |
     while IFS=$'\t' read -r name url; do
         [[ -n "$name" && -n "$url" ]] || continue
@@ -40,19 +40,24 @@ compgen -G "$staging/*.ipk" >/dev/null || {
     echo "No sing-box-extended IPK assets were mirrored" >&2
     exit 1
 }
+# The compressed binary variant installs from these archives (UPD-1).
+compgen -G "$staging/*-compressed.tar.gz" >/dev/null || {
+    echo "No sing-box-extended compressed archives were mirrored" >&2
+    exit 1
+}
 
 jq --arg tag "$tag" '
     .html_url = ("/forkop/sing-box-extended/releases/" + $tag + "/")
     | .assets = [
         .assets[]
-        | select(.name | test("^sing-box-extended_.*_openwrt_.*\\.(apk|ipk)$"))
+        | select(.name | test("^sing-box-extended_.*_openwrt_.*\\.(apk|ipk)$|^sing-box-.*-linux-.*-compressed\\.tar\\.gz$"))
         | .browser_download_url = ("/forkop/sing-box-extended/releases/" + $tag + "/" + .name)
       ]
 ' <<< "$release_json" > "$staging/release.json"
 
 (
     cd "$staging"
-    sha256sum ./*.apk ./*.ipk > SHA256SUMS
+    sha256sum ./*.apk ./*.ipk ./*-compressed.tar.gz > SHA256SUMS
 )
 
 rm -rf "$destination"
