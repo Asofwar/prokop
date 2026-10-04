@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-04 22:26+0000\n"
-"PO-Revision-Date: 2026-10-04 22:26+0000\n"
+"POT-Creation-Date: 2026-10-04 23:37+0000\n"
+"PO-Revision-Date: 2026-10-04 23:37+0000\n"
 "Last-Translator: Asofwar <7397608+Asofwar@users.noreply.github.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -2484,6 +2484,10 @@ msgstr ""
 msgid "For recommendations. Automatic apply always requires high confidence."
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:940
+msgid "For routers with 256 MB of memory or less and an unstable connection: sing-box finds dead client connections with keep-alive probes and ends idle UDP sessions after 60 seconds instead of 5 minutes, so they do not pile up in memory"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8396
 msgid "For whom"
 msgstr ""
@@ -3423,6 +3427,10 @@ msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:63
 msgid "low"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:939
+msgid "Low memory mode"
 msgstr ""
 
 #: src/prokop/tabs/diagnostic/initController.ts:761

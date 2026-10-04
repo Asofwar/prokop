@@ -188,7 +188,7 @@ let uci_safe_options = {
     shutdown_correctly: true, sort_by_latency: true, source_network_interfaces: true,
     subscription_update_enabled: true, subscription_update_interval: true,
     switch_to_faster_same_priority: true, tag: true, tolerance: true,
-    torrserver_direct_enabled: true, update_interval: true, urltest_check_interval: true,
+    torrserver_direct_enabled: true, tproxy_low_memory: true, update_interval: true, urltest_check_interval: true,
     urltest_enabled: true, urltest_exclude_countries: true, urltest_filter_mode: true,
     urltest_include_countries: true, urltest_tolerance: true, urltests: true,
     user_domain_list_type: true

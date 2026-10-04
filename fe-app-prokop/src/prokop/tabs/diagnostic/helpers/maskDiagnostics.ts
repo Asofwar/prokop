@@ -159,6 +159,7 @@ export const UCI_SAFE_OPTIONS = new Set([
   'tag',
   'tolerance',
   'torrserver_direct_enabled',
+  'tproxy_low_memory',
   'update_interval',
   'urltest_check_interval',
   'urltest_enabled',

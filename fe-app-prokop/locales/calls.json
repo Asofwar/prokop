@@ -4175,6 +4175,13 @@
     ]
   },
   {
+    "call": "For routers with 256 MB of memory or less and an unstable connection: sing-box finds dead client connections with keep-alive probes and ends idle UDP sessions after 60 seconds instead of 5 minutes, so they do not pile up in memory",
+    "key": "For routers with 256 MB of memory or less and an unstable connection: sing-box finds dead client connections with keep-alive probes and ends idle UDP sessions after 60 seconds instead of 5 minutes, so they do not pile up in memory",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:940"
+    ]
+  },
+  {
     "call": "For whom",
     "key": "For whom",
     "places": [
@@ -5773,6 +5780,13 @@
     "key": "low",
     "places": [
       "src/prokop/tabs/autotune/model.ts:63"
+    ]
+  },
+  {
+    "call": "Low memory mode",
+    "key": "Low memory mode",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:939"
     ]
   },
   {

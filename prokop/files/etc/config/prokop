@@ -52,6 +52,7 @@ config settings 'settings'
         option log_level 'warn'
         option exclude_ntp '0'
         option intercept_client_dns '1'
+        option tproxy_low_memory '0'
 
 #config section 'subscription_example'
 #        option label 'Subscription'

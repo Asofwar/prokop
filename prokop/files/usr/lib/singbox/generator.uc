@@ -492,13 +492,26 @@ function base_config(settings, service_address, runtime_context) {
     });
 
     runtime_context = object_or_empty(runtime_context);
+    // B9, opt-in: on a router with little memory and an unstable upstream,
+    // half-open client connections and idle UDP sessions piled up in sing-box
+    // (one report: 1300+ of them, 120 MB RSS on a 256 MB router). Keep-alive finds
+    // the dead ones, UDP sessions end after a minute instead of five. Every
+    // sing-box from 1.12.0 (SB_REQUIRED_VERSION) knows these listen fields.
+    let low_memory = option(settings, "tproxy_low_memory", "0") == "1";
+    function tproxy_inbound(tag, listen) {
+        let inbound = { type: "tproxy", tag, listen, listen_port: runtime_constants.TPROXY_INBOUND_PORT, tcp_fast_open: !low_memory, udp_fragment: true };
+        if (low_memory) {
+            inbound.tcp_keep_alive = "30s";
+            inbound.tcp_keep_alive_interval = "15s";
+            inbound.udp_timeout = "60s";
+        }
+        return inbound;
+    }
     // Without IPv6 on the router there is no ::1 to listen on, and no IPv6
     // traffic to take (core/ipv6.uc, A1).
-    let inbounds = [
-        { type: "tproxy", tag: runtime_constants.TPROXY_INBOUND_TAG, listen: runtime_constants.TPROXY_INBOUND_ADDRESS, listen_port: runtime_constants.TPROXY_INBOUND_PORT, tcp_fast_open: true, udp_fragment: true }
-    ];
+    let inbounds = [ tproxy_inbound(runtime_constants.TPROXY_INBOUND_TAG, runtime_constants.TPROXY_INBOUND_ADDRESS) ];
     if (ipv6.available())
-        push(inbounds, { type: "tproxy", tag: runtime_constants.TPROXY_INBOUND6_TAG, listen: runtime_constants.TPROXY_INBOUND6_ADDRESS, listen_port: runtime_constants.TPROXY_INBOUND_PORT, tcp_fast_open: true, udp_fragment: true });
+        push(inbounds, tproxy_inbound(runtime_constants.TPROXY_INBOUND6_TAG, runtime_constants.TPROXY_INBOUND6_ADDRESS));
     push(inbounds, { type: "direct", tag: runtime_constants.DNS_INBOUND_TAG, listen: runtime_constants.DNS_INBOUND_ADDRESS, listen_port: runtime_constants.DNS_INBOUND_PORT });
     if (runtime_context.source_aware_dns)
         push(inbounds, { type: "direct", tag: runtime_constants.SOURCE_DNS_INBOUND_TAG, listen: runtime_constants.SOURCE_DNS_INBOUND_ADDRESS, listen_port: runtime_constants.SOURCE_DNS_INBOUND_PORT });

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-04 22:26+0000\n"
-"PO-Revision-Date: 2026-10-04 22:26+0000\n"
+"POT-Creation-Date: 2026-10-04 23:37+0000\n"
+"PO-Revision-Date: 2026-10-04 23:37+0000\n"
 "Last-Translator: Asofwar\n"
 "Language-Team: none\n"
 "Language: ru\n"
@@ -1724,6 +1724,9 @@ msgstr "Для правила DPI это может значить, что ст�
 msgid "For recommendations. Automatic apply always requires high confidence."
 msgstr "Для рекомендаций. Автоматическое применение всегда требует высокой уверенности."
 
+msgid "For routers with 256 MB of memory or less and an unstable connection: sing-box finds dead client connections with keep-alive probes and ends idle UDP sessions after 60 seconds instead of 5 minutes, so they do not pile up in memory"
+msgstr "Для роутеров с памятью 256 МБ и меньше и нестабильным подключением: sing-box находит оборванные соединения клиентов проверками keep-alive и закрывает простаивающие UDP-сессии через 60 секунд вместо 5 минут, чтобы они не копились в памяти"
+
 msgid "For whom"
 msgstr "Для кого"
 
@@ -2383,6 +2386,9 @@ msgstr "Уровень логов"
 
 msgid "low"
 msgstr "низкая"
+
+msgid "Low memory mode"
+msgstr "Режим малой памяти"
 
 msgid "LuCI app"
 msgstr "Приложение LuCI"

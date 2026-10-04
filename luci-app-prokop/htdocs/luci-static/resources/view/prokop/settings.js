@@ -930,6 +930,19 @@ function createSettingsContent(sections, capabilities) {
   o.value("0", _("Never"));
   o.default = "1";
   o.rmempty = false;
+
+  // B9: keep-alive and a shorter UDP timeout on the tproxy inbound
+  // (singbox/generator.uc base_config).
+  o = sections.network.option(
+    form.Flag,
+    "tproxy_low_memory",
+    _("Low memory mode"),
+    _(
+      "For routers with 256 MB of memory or less and an unstable connection: sing-box finds dead client connections with keep-alive probes and ends idle UDP sessions after 60 seconds instead of 5 minutes, so they do not pile up in memory",
+    ),
+  );
+  o.default = "0";
+  o.rmempty = false;
 }
 
 const EntryPoint = {
