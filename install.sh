@@ -163,6 +163,12 @@ PROKOP_PACKAGE_VERSION=""
 PROKOP_CONFIG_READY=1
 PROKOP_CONFIG_VALIDATION_ERROR=""
 INSTALL_MODE="clean"
+UPDATE_ROLLBACK_DIR=""
+UPDATE_ROLLBACK_VERSION=""
+UPDATE_ROLLBACK_PACKAGES=""
+UPDATE_ROLLBACK_CONFIG=""
+UPDATE_PACKAGES_STARTED=0
+UPDATE_CONFIG_FILE="/etc/config/prokop"
 LEGACY_BRAND="$(printf '\160\157\144\153\157\160')"
 LEGACY_BACKEND_PACKAGE="${LEGACY_BRAND}-plus"
 LEGACY_CONFIG_PACKAGE_ALT="${LEGACY_BRAND}_plus"
@@ -195,6 +201,7 @@ warn() {
 fail() {
     legacy_forkop_on_failure
     rollback_legacy_config_on_failure
+    rollback_current_update
     restore_current_prokop_on_failure
     printf '\033[31;1m%s\033[0m\n' "$1" >&2
     exit 1
@@ -2839,6 +2846,112 @@ validate_sing_box_tiny_install() {
     [ -x /etc/init.d/sing-box ] || return 1
 }
 
+# B8: an update keeps what it replaces, before it changes anything: the
+# configuration and the package files of the installed Prokop release, from
+# the GitHub Releases of RELEASE_REPO (checked by SHA-256). An update that
+# fails after it started to install packages reinstalls them from those files,
+# without the network, and puts the configuration back; the service state is
+# restored after it (restore_current_prokop_on_failure). A release that cannot
+# be fetched does not stop the update, the installer is the way off a broken
+# build: the failure then says what was not rolled back.
+prepare_current_update_rollback() {
+    [ "$INSTALL_MODE" = "update" ] || return 0
+    UPDATE_ROLLBACK_DIR="$TMP_DIR/update-rollback"
+    UPDATE_ROLLBACK_VERSION=""
+    UPDATE_ROLLBACK_PACKAGES=""
+    UPDATE_ROLLBACK_CONFIG=""
+    rm -rf "$UPDATE_ROLLBACK_DIR"
+    if ! (umask 077 && mkdir -p "$UPDATE_ROLLBACK_DIR"); then
+        warn "Failed to create the update rollback directory; a failed update will not be rolled back"
+        UPDATE_ROLLBACK_DIR=""
+        return 0
+    fi
+
+    installed_version="$(pkg_installed_version prokop)"
+    installed_tag="${installed_version%%-*}"
+    case "$installed_tag" in
+        ''|*[!0-9.]*|.*|*.|*..*)
+            warn "The installed Prokop version '${installed_version}' is not a release; a failed update will not be rolled back"
+            return 0
+            ;;
+    esac
+
+    asset_ext="ipk"
+    [ "$PKG_IS_APK" -eq 1 ] && asset_ext="apk"
+    kinds="backend:prokop app:luci-app-prokop"
+    pkg_is_installed luci-i18n-prokop-ru && kinds="$kinds i18n:luci-i18n-prokop-ru"
+    release_json="$(http_get "https://api.github.com/repos/${RELEASE_REPO}/releases/tags/${installed_tag}" 2>/dev/null || true)"
+    packages=""
+    for entry in $kinds; do
+        kind="${entry%%:*}"
+        package_name="${entry#*:}"
+        url="$(printf '%s' "$release_json" | install_json_ucode release-asset-url "$kind" "$asset_ext" 2>/dev/null || true)"
+        expected="$(printf '%s' "$release_json" | install_json_ucode release-asset-sha256 "$kind" "$asset_ext" 2>/dev/null | tr 'A-F' 'a-f' || true)"
+        if [ -z "$url" ] || [ "${#expected}" -ne 64 ]; then
+            warn "Prokop $installed_tag packages are not published in $RELEASE_REPO; a failed update will not reinstall them"
+            return 0
+        fi
+        url="$(release_asset_url "$url")"
+        file="$UPDATE_ROLLBACK_DIR/$(basename "$url")"
+        if ! download_with_retry "$url" "$file" "$(basename "$url") (rollback)" ||
+            [ "$(sha256sum "$file" 2>/dev/null | awk '{print $1}')" != "$expected" ]; then
+            rm -f "$file"
+            warn "Failed to keep the Prokop $installed_tag packages; a failed update will not reinstall them"
+            return 0
+        fi
+        packages="$packages $package_name:$file"
+    done
+
+    if [ -f "$UPDATE_CONFIG_FILE" ]; then
+        if ! cp "$UPDATE_CONFIG_FILE" "$UPDATE_ROLLBACK_DIR/prokop.config"; then
+            warn "Failed to keep the Prokop configuration; a failed update will not be rolled back"
+            return 0
+        fi
+        UPDATE_ROLLBACK_CONFIG="$UPDATE_ROLLBACK_DIR/prokop.config"
+    fi
+    UPDATE_ROLLBACK_VERSION="$installed_version"
+    UPDATE_ROLLBACK_PACKAGES="$packages"
+    msg "Prokop $installed_tag packages and configuration are kept to roll back a failed update"
+}
+
+rollback_current_update() {
+    [ "$INSTALL_MODE" = "update" ] || return 0
+    [ "$UPDATE_PACKAGES_STARTED" -eq 1 ] || return 0
+    # Once: a failure inside the rollback must not start it again.
+    UPDATE_PACKAGES_STARTED=0
+    if [ -z "$UPDATE_ROLLBACK_PACKAGES" ]; then
+        warn "The previous Prokop packages were not kept; Prokop was left as the failed update installed it. Run the installer again."
+        return 0
+    fi
+
+    warn "Reinstalling the previous Prokop packages after the installation failure"
+    rollback_ok=1
+    for entry in $UPDATE_ROLLBACK_PACKAGES; do
+        package_name="${entry%%:*}"
+        file="${entry#*:}"
+        # A package the update had not replaced yet stays as it is: opkg
+        # would run a reinstall as a removal first.
+        [ "$(pkg_installed_version "$package_name")" = "$UPDATE_ROLLBACK_VERSION" ] && continue
+        if ! pkg_install_files "$file"; then
+            warn "Failed to reinstall $package_name $UPDATE_ROLLBACK_VERSION"
+            rollback_ok=0
+        fi
+    done
+    if [ "$rollback_ok" -ne 1 ]; then
+        warn "The previous Prokop was not fully reinstalled; its packages are in $UPDATE_ROLLBACK_DIR"
+        return 0
+    fi
+    if [ -n "$UPDATE_ROLLBACK_CONFIG" ]; then
+        if cp "$UPDATE_ROLLBACK_CONFIG" "$UPDATE_CONFIG_FILE" && chmod 0600 "$UPDATE_CONFIG_FILE"; then
+            :
+        else
+            warn "The previous Prokop was reinstalled, but its configuration could not be restored from $UPDATE_ROLLBACK_CONFIG"
+            return 0
+        fi
+    fi
+    warn "The previous Prokop $UPDATE_ROLLBACK_VERSION and its configuration were restored after the installation failure"
+}
+
 restore_current_prokop_on_failure() {
     [ "$INSTALL_MODE" = "update" ] || return 0
     [ "$LEGACY_CLEANUP_DONE" -eq 1 ] || return 0
@@ -4347,6 +4460,7 @@ download_prokop_packages() {
 }
 
 install_backend_package() {
+    [ "$INSTALL_MODE" = "update" ] && UPDATE_PACKAGES_STARTED=1
     pkg_install_prokop_file prokop "$PROKOP_BACKEND_FILE" || fail "prokop installation failed"
 
     [ -x /usr/bin/prokop ] || fail "prokop executable is missing after package installation"
@@ -4481,6 +4595,7 @@ main() {
     resolve_prokop_release
     msg "Downloading Prokop packages before making system changes"
     download_prokop_packages
+    prepare_current_update_rollback
 
     confirm_legacy_migration
     ensure_flash_space
