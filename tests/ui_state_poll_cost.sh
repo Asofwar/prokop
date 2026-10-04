@@ -165,6 +165,12 @@ calls:
 $(cat "$CALLS")"
 cp "$CALLS" "$WORK_DIR/first-calls.log"
 
+# 1a. One state.uc process and one procd query answer every runtime question
+#     of a poll (optimization 1 of the 2026-10-04 audit).
+[ "$(calls ubus)" = 1 ] || fail "the UI state poll asked procd more than once: $(grep '^ubus ' "$CALLS")"
+[ "$(grep -c '/service/state\.uc ' "$CALLS" || true)" = 1 ] ||
+  fail "the UI state poll started state.uc more than once: $(grep '/service/state\.uc ' "$CALLS")"
+
 # 2. No readlink process per /proc entry (UC-146), and the nft table checks
 #    leave the set contents out (UC-147).
 [ "$(calls readlink)" = 0 ] || fail "the UI state poll forked readlink: $(grep '^readlink ' "$CALLS" | head -5)"

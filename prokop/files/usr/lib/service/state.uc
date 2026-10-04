@@ -482,8 +482,19 @@ function sing_box_service_pid() {
         print(pid, "\n");
 }
 
+// The UI state snapshot (ui-runtime-state) asks procd once and reuses the
+// answer; every other mode observes procd afresh on each call, as the
+// transitions and their double observations need.
+let service_list_memo = null;
+let mode_memoizes_service_list = false;
+
 function sing_box_service_pid_runtime() {
-    let data = command_output_from_args([ "ubus", "call", "service", "list", "{\"name\":\"sing-box\"}" ]);
+    let data = service_list_memo;
+    if (data == null) {
+        data = command_output_from_args([ "ubus", "call", "service", "list", "{\"name\":\"sing-box\"}" ]);
+        if (mode_memoizes_service_list)
+            service_list_memo = data;
+    }
     try {
         return sing_box_service_pid_from_value(json(data));
     }
@@ -1146,6 +1157,20 @@ function prokop_stably_running(rt_table, nft_table, mark, min_age) {
 
 function stop_requested() {
     return fs.stat(STOP_REQUESTED_FILE) != null;
+}
+
+// Everything the UI state poll needs from this module in one process: the
+// same answers as prokop-stably-running, sing-box-service-stable,
+// sing-box-process-conflict and owned-sing-box-process-count, with one
+// procd query instead of five (optimization 1 of the 2026-10-04 audit).
+function write_ui_runtime_state(rt_table, nft_table, mark, min_age) {
+    let prokop = prokop_stably_running(rt_table, nft_table, mark, min_age);
+    print(sprintf("%J\n", {
+        prokop_running: prokop,
+        sing_box_running: prokop || sing_box_service_stable(min_age),
+        process_conflict: sing_box_process_conflict(),
+        owned_sing_box_processes: prokop ? 1 : length(owned_sing_box_processes(prokop_sing_box_config_path()))
+    }));
 }
 
 // Whether work that holds reload.lock (a subscription update, a DNS-failover
@@ -2295,6 +2320,10 @@ else if (mode == "stop-owned-sing-box-runtime")
     exit(stop_owned_sing_box_and_wait(ARGV[1]) ? 0 : 1);
 else if (mode == "foreign-sing-box-present")
     exit(foreign_sing_box_present() ? 0 : 1);
+else if (mode == "ui-runtime-state") {
+    mode_memoizes_service_list = true;
+    write_ui_runtime_state(ARGV[1], ARGV[2], ARGV[3], ARGV[4]);
+}
 else if (mode == "owned-sing-box-process-count")
     print(length(owned_sing_box_processes(prokop_sing_box_config_path())), "\n");
 else if (mode == "managed-upgrade-marker-fresh")

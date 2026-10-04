@@ -1167,13 +1167,21 @@ function stopped_for_component_action(running) {
     return false;
 }
 
+// One state.uc process answers all runtime questions of a poll.
+function ui_runtime_state() {
+    let value = parse_json_or_null(command_output_from_args([ "ucode", "-L", LIB_DIR, STATE_UC, "ui-runtime-state",
+        RT_TABLE_NAME, NFT_TABLE_NAME, NFT_FAKEIP_MARK, RUNTIME_STABLE_MIN_AGE ]));
+    return type(value) == "object" ? value : {};
+}
+
 function current_ui_state_json() {
     refresh_action_dirs();
 
     let capabilities = capability_flags();
-    let prokop_is_running = prokop_running() ? 1 : 0;
+    let runtime = ui_runtime_state();
+    let prokop_is_running = runtime.prokop_running === true ? 1 : 0;
     let prokop_is_enabled = service_enabled() ? 1 : 0;
-    let sing_box_is_running = prokop_is_running ? 1 : (sing_box_running() ? 1 : 0);
+    let sing_box_is_running = prokop_is_running || runtime.sing_box_running === true ? 1 : 0;
     let sing_box_is_enabled = sing_box_enabled() ? 1 : 0;
     let prokop_status = service_status_text(prokop_is_running, prokop_is_enabled);
     let sing_box_status = service_status_text(sing_box_is_running, sing_box_is_enabled);
@@ -1193,14 +1201,14 @@ function current_ui_state_json() {
     else if (stopped_for_component_action(prokop_is_running))
         prokop_status = "restarting";
 
-    let restart_blocked = module_success(STATE_UC, [ "sing-box-process-conflict" ]);
+    let restart_blocked = runtime.process_conflict === true;
     // Health requires sole procd ownership, but Stop has to stay reachable
     // exactly when that check fails: something is still intercepting traffic
     // and the user needs a way to take it down. A Stop ends Prokop's
     // interception and the sing-box that Prokop owns, not a sing-box of
     // another program: that one does not keep Stop offered (UC-213).
     let stop_available = prokop_is_running ||
-        int(trim(command_output_from_args([ "ucode", "-L", LIB_DIR, STATE_UC, "owned-sing-box-process-count" ]))) > 0 ||
+        int(runtime.owned_sing_box_processes || 0) > 0 ||
         dns_configured() ||
         command_success_from_args([ "nft", "-t", "list", "table", "inet", NFT_TABLE_NAME ]);
 
