@@ -10,9 +10,22 @@ function loggableUrl(url: string): string {
   return url.split('?')[0];
 }
 
+// A stream that was open and dropped (sing-box restarts on every reload) is
+// opened again after 1, 2, 4, 8 and 15 s (C13). Only when that fails, or
+// when the first connection fails, do the subscribers hear of it and fall
+// back to polling through rpcd.
+const RECONNECT_DELAYS_MS = [1000, 2000, 4000, 8000, 15000];
+
 class SocketManager {
   private static instance: SocketManager;
   private sockets = new Map<string, WebSocket>();
+  // URLs whose stream has been open since they were subscribed, and the
+  // reconnect in progress for one that dropped.
+  private opened = new Set<string>();
+  private reconnects = new Map<
+    string,
+    { attempt: number; timer: ReturnType<typeof setTimeout> | null }
+  >();
   private listeners = new Map<string, Set<Listener>>();
   private connected = new Map<string, boolean>();
   private errorListeners = new Map<string, Set<ErrorListener>>();
@@ -45,6 +58,7 @@ class SocketManager {
     }
 
     this.sockets.clear();
+    this.clearReconnects();
     this.listeners.clear();
     this.errorListeners.clear();
     this.connected.clear();
@@ -74,7 +88,10 @@ class SocketManager {
     if (!this.errorListeners.has(url)) this.errorListeners.set(url, new Set());
 
     ws.addEventListener('open', () => {
+      if (this.sockets.get(url) !== ws) return;
       this.connected.set(url, true);
+      this.opened.add(url);
+      this.reconnects.delete(url);
       logger.info('[SOCKET]', 'Connected to', loggableUrl(url));
     });
 
@@ -96,15 +113,59 @@ class SocketManager {
     });
 
     ws.addEventListener('close', () => {
+      // A socket replaced by a reconnect, or one disconnect() closed.
+      if (this.sockets.get(url) !== ws) return;
       this.connected.set(url, false);
+      // Gone from the map: a later subscribe() or reconnect opens it again.
+      this.sockets.delete(url);
       logger.warn('[SOCKET]', `Disconnected: ${loggableUrl(url)}`);
+      if (this.scheduleReconnect(url)) return;
       this.triggerError(url, 'Connection closed');
     });
 
     ws.addEventListener('error', (err) => {
+      if (this.sockets.get(url) !== ws) return;
       logger.error('[SOCKET]', `Socket error for ${loggableUrl(url)}:`, err);
+      // An error on a stream that was open is followed by its close, which
+      // reconnects.
+      if (this.opened.has(url)) return;
       this.triggerError(url, err);
     });
+  }
+
+  private scheduleReconnect(url: string): boolean {
+    if (!this.opened.has(url) || !this.listeners.get(url)?.size) return false;
+    const state = this.reconnects.get(url) || { attempt: 0, timer: null };
+    if (state.attempt >= RECONNECT_DELAYS_MS.length) {
+      this.reconnects.delete(url);
+      this.opened.delete(url);
+      return false;
+    }
+    const delay = RECONNECT_DELAYS_MS[state.attempt];
+    state.attempt += 1;
+    state.timer = setTimeout(() => {
+      state.timer = null;
+      if (this.reconnects.get(url) !== state || this.sockets.has(url)) return;
+      this.connect(url);
+    }, delay);
+    this.reconnects.set(url, state);
+    logger.info(
+      '[SOCKET]',
+      `Reconnecting to ${loggableUrl(url)} in ${delay} ms (attempt ${state.attempt})`,
+    );
+    return true;
+  }
+
+  private clearReconnect(url: string) {
+    const state = this.reconnects.get(url);
+    if (state?.timer) clearTimeout(state.timer);
+    this.reconnects.delete(url);
+    this.opened.delete(url);
+  }
+
+  private clearReconnects() {
+    for (const url of [...this.reconnects.keys()]) this.clearReconnect(url);
+    this.opened.clear();
   }
 
   subscribe(url: string, listener: Listener, onError?: ErrorListener): void {
@@ -148,17 +209,19 @@ class SocketManager {
 
   disconnect(url: string): void {
     const ws = this.sockets.get(url);
-    if (ws) {
-      ws.close();
-      this.sockets.delete(url);
-      this.listeners.delete(url);
-      this.errorListeners.delete(url);
-      this.connected.delete(url);
-    }
+    this.clearReconnect(url);
+    this.sockets.delete(url);
+    this.listeners.delete(url);
+    this.errorListeners.delete(url);
+    this.connected.delete(url);
+    ws?.close();
   }
 
   disconnectAll(): void {
-    for (const url of this.sockets.keys()) {
+    for (const url of new Set([
+      ...this.sockets.keys(),
+      ...this.reconnects.keys(),
+    ])) {
       this.disconnect(url);
     }
   }

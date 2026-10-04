@@ -51,6 +51,70 @@ describe('socket service', () => {
     expect(onError).toHaveBeenCalledOnce();
   });
 
+  // C13: sing-box restarts on every reload and drops the stream; the page
+  // opens it again instead of polling through rpcd for good.
+  it('reconnects a stream that was open and dropped', () => {
+    vi.useFakeTimers();
+    try {
+      const onMessage = vi.fn();
+      const onError = vi.fn();
+      socket.subscribe('ws://router.test/traffic', onMessage, onError);
+      FakeWebSocket.instances[0].emit('open');
+      FakeWebSocket.instances[0].emit('error');
+      FakeWebSocket.instances[0].emit('close');
+      expect(onError).not.toHaveBeenCalled();
+      expect(FakeWebSocket.instances).toHaveLength(1);
+
+      vi.advanceTimersByTime(1000);
+      expect(FakeWebSocket.instances).toHaveLength(2);
+      FakeWebSocket.instances[1].emit('open');
+      expect(onError).not.toHaveBeenCalled();
+
+      // Opened again: the next drop starts from the shortest delay.
+      FakeWebSocket.instances[1].emit('close');
+      vi.advanceTimersByTime(1000);
+      expect(FakeWebSocket.instances).toHaveLength(3);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('gives up and reports the drop when the stream does not come back', () => {
+    vi.useFakeTimers();
+    try {
+      const onError = vi.fn();
+      socket.subscribe('ws://router.test/traffic', vi.fn(), onError);
+      FakeWebSocket.instances[0].emit('open');
+      FakeWebSocket.instances[0].emit('close');
+      for (const delay of [1000, 2000, 4000, 8000, 15000]) {
+        vi.advanceTimersByTime(delay);
+        FakeWebSocket.instances[FakeWebSocket.instances.length - 1].emit(
+          'close',
+        );
+      }
+      expect(FakeWebSocket.instances).toHaveLength(6);
+      expect(onError).toHaveBeenCalledOnce();
+      vi.advanceTimersByTime(60000);
+      expect(FakeWebSocket.instances).toHaveLength(6);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('never reconnects a stream it was asked to disconnect', () => {
+    vi.useFakeTimers();
+    try {
+      socket.subscribe('ws://router.test/traffic', vi.fn(), vi.fn());
+      FakeWebSocket.instances[0].emit('open');
+      FakeWebSocket.instances[0].emit('close');
+      socket.disconnect('ws://router.test/traffic');
+      vi.advanceTimersByTime(60000);
+      expect(FakeWebSocket.instances).toHaveLength(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   // UC-036: the Clash secret travels as the token query parameter of the
   // controller WebSocket URL; it must never reach the console or the logger.
   it('never logs the query string of a socket URL', () => {
