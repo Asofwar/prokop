@@ -520,6 +520,25 @@ describe('overview state', () => {
     );
   });
 
+  // OBS-6: with dont_touch_dhcp the user points the router's DNS; that is
+  // no warning.
+  it('says neutrally that the user manages router DNS', () => {
+    const state = overviewState(
+      input({
+        health: health({
+          dns: { status: 'unknown', configured: false, user_managed: true },
+        }),
+      }),
+    );
+    const lines = state.lines.map((line) => line.text);
+    expect(lines).toContain('Router DNS is managed by you');
+    expect(lines).not.toContain('Router DNS is not pointed to Prokop');
+    expect(
+      state.lines.find((line) => line.text === 'Router DNS is managed by you')
+        ?.tone,
+    ).toBeUndefined();
+  });
+
   // UC-021: missing or unknown health is never shown as healthy.
   it('does not call a running Prokop healthy while its health is unknown', () => {
     for (const value of [null, health({ overall: 'unknown' })]) {

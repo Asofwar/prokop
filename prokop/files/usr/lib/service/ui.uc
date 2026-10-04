@@ -890,6 +890,12 @@ function dns_configured() {
     return index(uci_core.get("dhcp.@dnsmasq[0].server"), SB_DNS_INBOUND_ADDRESS) >= 0;
 }
 
+// dont_touch_dhcp: the user points dnsmasq themselves; Prokop leaves
+// /etc/config/dhcp alone (OBS-6).
+function dhcp_user_managed() {
+    return index([ "1", "true", "yes", "on" ], lc(as_string(uci_core.get("prokop.settings.dont_touch_dhcp")))) >= 0;
+}
+
 function marker_is(expected) {
     return first_line(SING_BOX_VARIANT_STATE_FILE) == as_string(expected);
 }
@@ -1205,6 +1211,7 @@ function current_ui_state_json() {
                 enabled: prokop_is_enabled,
                 status: prokop_status,
                 dns_configured: dns_configured() ? 1 : 0,
+                dhcp_user_managed: dhcp_user_managed() ? 1 : 0,
                 stopped_by_user: stopped_by_user(prokop_is_running) ? 1 : 0,
                 not_started: not_started(prokop_is_running) ? 1 : 0,
                 restart_blocked: restart_blocked ? 1 : 0,

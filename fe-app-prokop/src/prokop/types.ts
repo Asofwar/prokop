@@ -36,7 +36,7 @@ export namespace Prokop {
   export interface HealthStatus {
     overall: HealthLevel;
     service: { prokop: HealthLevel; sing_box: HealthLevel };
-    dns: { status: HealthLevel; configured?: boolean };
+    dns: { status: HealthLevel; configured?: boolean; user_managed?: boolean };
     dpi: { status: HealthLevel };
     lists: { status: HealthLevel };
     // runtime: a guard that a failed lifecycle transition kept (only a
@@ -917,6 +917,8 @@ export namespace Prokop {
     enabled: number;
     status: string;
     dns_configured?: number;
+    // dont_touch_dhcp: the user points the router's DNS (OBS-6).
+    dhcp_user_managed?: number;
     // 1 while an explicit stop holds Prokop down (D-15): not a failure.
     stopped_by_user?: number;
     // 1 while Prokop is down and nobody started it since boot (D-15): not a

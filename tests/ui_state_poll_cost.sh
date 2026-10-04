@@ -155,7 +155,7 @@ for _ in $(seq 1 50); do
 done
 
 # 1. The UI state of a running Prokop, byte for byte.
-expected='{ "service": { "prokop": { "running": 1, "enabled": 0, "status": "running but disabled", "dns_configured": 0, "stopped_by_user": 0, "not_started": 0, "restart_blocked": 0, "stop_available": 1 }, "sing_box": { "running": 1, "enabled": 0, "status": "running but disabled" } }, "capabilities": { "sing_box_extended": 1, "sing_box_tiny": 0, "sing_box_compressed": 0, "sing_box_tailscale": 1, "sing_box_package": "sing-box-extended", "zapret_installed": 0, "zapret2_installed": 0, "byedpi_installed": 0 }, "actions": { "service": [ ], "latency": [ ], "component": [ ], "subscription": [ ] } }'
+expected='{ "service": { "prokop": { "running": 1, "enabled": 0, "status": "running but disabled", "dns_configured": 0, "dhcp_user_managed": 0, "stopped_by_user": 0, "not_started": 0, "restart_blocked": 0, "stop_available": 1 }, "sing_box": { "running": 1, "enabled": 0, "status": "running but disabled" } }, "capabilities": { "sing_box_extended": 1, "sing_box_tiny": 0, "sing_box_compressed": 0, "sing_box_tailscale": 1, "sing_box_package": "sing-box-extended", "zapret_installed": 0, "zapret2_installed": 0, "byedpi_installed": 0 }, "actions": { "service": [ ], "latency": [ ], "component": [ ], "subscription": [ ] } }'
 first="$(ui_state)"
 [ "$first" = "$expected" ] || fail "get-ui-state of a running Prokop changed:
 expected: $expected

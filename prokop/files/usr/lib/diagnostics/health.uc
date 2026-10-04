@@ -328,8 +328,10 @@ function health(ui, guards, package_pending, events, reload_busy, bridge) {
             prokop: service_status,
             sing_box: sing_box.running == null ? "unknown" : sing_box.running == 1 ? "ok" : "error"
         },
-        dns: { status: prokop.dns_configured == 0 ? "warning" : "unknown",
-            configured: prokop.dns_configured == 1 },
+        // Not pointed at Prokop is a warning, unless the user manages the
+        // router's DNS themselves (dont_touch_dhcp, OBS-6).
+        dns: { status: prokop.dns_configured == 0 && prokop.dhcp_user_managed != 1 ? "warning" : "unknown",
+            configured: prokop.dns_configured == 1, user_managed: prokop.dhcp_user_managed == 1 },
         dpi: { status: guard ? "transitioning" : "unknown" },
         lists: { status: "unknown" },
         guard: { active: guard, runtime: guards.runtime === true, restore: guards.restore === true },

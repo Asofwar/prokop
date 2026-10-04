@@ -168,4 +168,17 @@ const fs = require('node:fs');
 assert.equal(JSON.parse(fs.readFileSync(process.argv[2])).events.length, 10);
 JS
 test "$(grep -c '"kind": *"reload"' "$PROKOP_HISTORY_FILE")" = 12
+# OBS-6: dont_touch_dhcp is a supported setting, not a standing warning.
+for managed in 0 1; do
+  printf '{"ui":{"service":{"prokop":{"running":1,"dns_configured":0,"dhcp_user_managed":%s},"sing_box":{"running":1}}},"guard":false,"package_pending":false,"events":[]}\n' "$managed" > "$TEST_DIR/fixture.json"
+  ucode -L "$ROOT/prokop/files/usr/lib" "$ROOT/prokop/files/usr/lib/diagnostics/health.uc" fixture "$TEST_DIR/fixture.json" > "$TEST_DIR/output.json"
+  node - "$TEST_DIR/output.json" "$managed" <<'JS'
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const value = JSON.parse(fs.readFileSync(process.argv[2]));
+const managed = process.argv[3] === '1';
+assert.equal(value.dns.status, managed ? 'unknown' : 'warning');
+assert.equal(value.dns.user_managed, managed);
+JS
+done
 printf 'health_status: PASS\n'

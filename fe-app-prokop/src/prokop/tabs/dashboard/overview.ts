@@ -308,6 +308,8 @@ export function overviewState(input: OverviewInput): OverviewState {
         text: _('Router DNS is not pointed to Prokop'),
         tone: 'warning',
       });
+    } else if (health?.dns?.user_managed && !health.dns.configured) {
+      lines.push({ text: _('Router DNS is managed by you') });
     }
   }
   lines.push({
