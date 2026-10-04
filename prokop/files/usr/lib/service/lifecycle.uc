@@ -466,7 +466,24 @@ function confirm_working_config(initial_fingerprint) {
         log_message("Working configuration not confirmed as last known working: a failed transition kept its fail-closed guard", "info");
         return false;
     }
-    let result = module_capture(LIB_DIR + "/config/snapshots.uc", [ "confirm-working" ]);
+    // The proof: the configuration this start or reload ran, in a private
+    // file (it holds secrets, never an argument). confirm-working reads the
+    // configuration once under its lock and snapshots that content only if
+    // it is still this one: a Save & Apply between the check above and the
+    // snapshot is never named last-known-working (CFG-1).
+    let proof = sprintf("%s/lkg-proof.%d.%d", RUNTIME_STATE_DIR, clock()[0], clock()[1]);
+    fs.unlink(proof);
+    let written = fs.mkdir(RUNTIME_STATE_DIR, 0700) != null || fs.stat(RUNTIME_STATE_DIR)?.type == "directory";
+    let handle = written ? fs.open(proof, "wx", 0600) : null;
+    written = handle != null && handle.write(as_string(initial_fingerprint)) != null;
+    if (handle != null) handle.close();
+    if (!written) {
+        fs.unlink(proof);
+        log_message("Working configuration not confirmed as last known working: proof_unavailable", "info");
+        return false;
+    }
+    let result = module_capture(LIB_DIR + "/config/snapshots.uc", [ "confirm-working", "lifecycle", proof ]);
+    fs.unlink(proof);
     let answer = null;
     try { answer = json(result.output); } catch (e) { answer = null; }
     if (type(answer) == "object" && answer.status == "not_confirmed")

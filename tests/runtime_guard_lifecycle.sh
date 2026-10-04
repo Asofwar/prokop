@@ -153,7 +153,7 @@ reset_case() {
 }
 
 has_event() { grep -q "$1" "$EVENTS" 2>/dev/null; }
-confirmed() { grep -qx 'config/snapshots.uc confirm-working' "$EVENTS" 2>/dev/null; }
+confirmed() { grep -q '^config/snapshots.uc confirm-working lifecycle ' "$EVENTS" 2>/dev/null; }
 logged() { grep -q "$1" "$WORK_DIR/syslog" 2>/dev/null; }
 lifecycle() {
   local status=0

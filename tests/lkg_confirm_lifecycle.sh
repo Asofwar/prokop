@@ -127,7 +127,7 @@ reset_case() {
   unset EDIT_DURING FAKE_RUNNING
 }
 
-confirmed() { grep -qx 'config/snapshots.uc confirm-working' "$EVENTS" 2>/dev/null; }
+confirmed() { grep -q '^config/snapshots.uc confirm-working lifecycle ' "$EVENTS" 2>/dev/null; }
 lifecycle() {
   local status=0
   timeout -s KILL 60 ucode -L "$FAKE_LIB" "$FAKE_LIB/service/lifecycle.uc" "$@" >/dev/null 2>&1 || status=$?
@@ -147,6 +147,8 @@ reload_ok() {
 reset_case
 [ "$(lifecycle start)" = 0 ] || fail "a clean start failed"
 confirmed || fail "a clean start did not confirm the working configuration"
+# The proof of the configuration it ran (CFG-1) is private and gone after.
+! ls "$STATE_DIR"/lkg-proof.* >/dev/null 2>&1 || fail "the start left its proof file behind"
 reset_case
 reload_ok "clean reload"
 confirmed || fail "a clean reload did not confirm the working configuration"

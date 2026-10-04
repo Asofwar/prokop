@@ -860,6 +860,16 @@ function autotune_objection(content) {
     if (!candidate && record.applied !== true) candidate = runs_strategy(content, record.mutation);
     return candidate ? "autotune_apply_unresolved" : null;
 }
+// The configuration as service/lifecycle.uc external_config_fingerprint
+// compares it: without the shutdown_correctly lines the service itself
+// writes.
+function config_fingerprint(content) {
+    let lines = [];
+    for (let line in split(content, "\n"))
+        if (match(line, /^[ \t]*option[ \t]+shutdown_correctly([ \t]|$)/) == null)
+            push(lines, line);
+    return join("\n", lines);
+}
 // config/migration.uc, loaded when a snapshot may need it (D-16).
 let migration_module = null;
 function migrations() {
@@ -1252,12 +1262,24 @@ else if (mode == "confirm-working") {
     // just verified its candidate in production, with the id of its
     // before-autotune snapshot, which this snapshot may not push out: the
     // rollback returns to it.
+    // "lifecycle": the start or reload, with the path of its proof, the
+    // configuration it ran (service/lifecycle.uc external_config_fingerprint).
+    // The configuration is read once, here under the lock: what is
+    // snapshotted is exactly what was compared, so an edit saved after the
+    // start or reload checked its configuration never becomes
+    // last-known-working (CFG-1). Without an argument (by hand) the
+    // configuration read is confirmed as it is.
     let content = read_config();
-    let objection = content == null || value(ARGV[1]) == "autotune" ? null : autotune_objection(content);
+    let lifecycle = value(ARGV[1]) == "lifecycle";
+    let proof = lifecycle ? fs.readfile(value(ARGV[2])) : null;
+    let objection = null;
+    if (lifecycle && proof == null) objection = "proof_unavailable";
+    else if (lifecycle && content != null && config_fingerprint(content) != proof) objection = "config_changed";
+    else if (content != null && value(ARGV[1]) != "autotune") objection = autotune_objection(content);
     if (objection != null) answer = { status: "not_confirmed", reason: objection };
     else {
         let keep = value(ARGV[1]) == "autotune" && valid_id(value(ARGV[2])) ? [ value(ARGV[2]) ] : [];
-        let found = create("automatic", "last-known-working", true, keep);
+        let found = create("automatic", "last-known-working", true, keep, content);
         if (found.snapshot != null &&
             (trim(value(fs.readfile(LKG))) == found.snapshot.id || atomic(LKG, found.snapshot.id + "\n")))
             answer = { status: "confirmed" };
