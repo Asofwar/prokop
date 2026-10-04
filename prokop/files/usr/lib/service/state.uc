@@ -1115,7 +1115,8 @@ function sing_box_runtime_ports_ready() {
         command_output_from_args([ "netstat", "-ln" ]),
         SB_DNS_INBOUND_ADDRESS,
         SB_TPROXY_INBOUND_PORT,
-        SB_TPROXY_INBOUND6_ADDRESS
+        SB_TPROXY_INBOUND6_ADDRESS,
+        require("core.ipv6").available()
     );
 }
 

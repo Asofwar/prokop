@@ -4,6 +4,7 @@ let fs = require("fs");
 let common = require("core.common");
 let durable = require("core.durable");
 let core_ip = require("core.ip");
+let ipv6 = require("core.ipv6");
 let uci_core = require("core.uci");
 let rule_config = require("config.rule");
 let connections = require("config.connections");
@@ -1447,7 +1448,7 @@ function tproxy_route6_present(table) {
 }
 
 function tproxy_route_present(table) {
-    return tproxy_route4_present(table) && tproxy_route6_present(table);
+    return tproxy_route4_present(table) && (!ipv6.available() || tproxy_route6_present(table));
 }
 
 function tproxy_marking_rule4_present(table, mark) {
@@ -1459,7 +1460,7 @@ function tproxy_marking_rule6_present(table, mark) {
 }
 
 function tproxy_marking_rule_present(table, mark) {
-    return tproxy_marking_rule4_present(table, mark) && tproxy_marking_rule6_present(table, mark);
+    return tproxy_marking_rule4_present(table, mark) && (!ipv6.available() || tproxy_marking_rule6_present(table, mark));
 }
 
 function tproxy_route_rule_present(table, mark) {
@@ -1485,7 +1486,11 @@ function ensure_tproxy_route_rule(table, mark, rt_tables_path) {
         log_debug("IPv4 TPROXY route already exists");
     }
 
-    if (!tproxy_route6_present(table)) {
+    // IPv6 is disabled on this router (core/ipv6.uc): IPv4 only.
+    let with_ipv6 = ipv6.available();
+    if (!with_ipv6)
+        log_debug("IPv6 is disabled: no IPv6 TPROXY route and rule");
+    else if (!tproxy_route6_present(table)) {
         log_debug("Added IPv6 TPROXY route");
         if (!run_args([ "ip", "-6", "route", "add", "local", "::/0", "dev", "lo", "table", table ]) && !tproxy_route6_present(table)) {
             log_fatal("Failed to add IPv6 route for tproxy. Aborted.");
@@ -1507,14 +1512,14 @@ function ensure_tproxy_route_rule(table, mark, rt_tables_path) {
         log_debug("IPv4 TPROXY marking rule already exists");
     }
 
-    if (!tproxy_marking_rule6_present(table, mark)) {
+    if (with_ipv6 && !tproxy_marking_rule6_present(table, mark)) {
         log_debug("Creating IPv6 TPROXY marking rule");
         if (!run_args([ "ip", "-6", "rule", "add", "fwmark", as_string(mark) + "/" + as_string(mark), "table", table, "priority", TPROXY_RULE_PRIORITY ]) && !tproxy_marking_rule6_present(table, mark)) {
             log_fatal("Failed to create IPv6 marking rule. Aborted.");
             return false;
         }
     }
-    else {
+    else if (with_ipv6) {
         log_debug("IPv6 TPROXY marking rule already exists");
     }
 

@@ -1,4 +1,6 @@
-function sing_box_standard_ports_listening(netstat, dns_address, tproxy_port, tproxy6_address) {
+// ipv6: false when IPv6 is disabled on the router (core/ipv6.uc): no
+// tproxy6-in is expected then.
+function sing_box_standard_ports_listening(netstat, dns_address, tproxy_port, tproxy6_address, ipv6) {
     netstat = netstat == null ? "" : "" + netstat;
     dns_address = dns_address == null ? require("core.dns_inbound").ADDRESS : "" + dns_address;
     tproxy_port = tproxy_port == null ? "1602" : "" + tproxy_port;
@@ -8,7 +10,8 @@ function sing_box_standard_ports_listening(netstat, dns_address, tproxy_port, tp
     let tproxy_suffix = ":" + tproxy_port;
     let tproxy4_ok = index(netstat, "0.0.0.0" + tproxy_suffix) >= 0 ||
         index(netstat, "127.0.0.1" + tproxy_suffix) >= 0;
-    let tproxy6_ok = index(netstat, tproxy6_address + tproxy_suffix) >= 0 ||
+    let tproxy6_ok = ipv6 === false ||
+        index(netstat, tproxy6_address + tproxy_suffix) >= 0 ||
         index(netstat, "[" + tproxy6_address + "]" + tproxy_suffix) >= 0 ||
         index(netstat, "0:0:0:0:0:0:0:1" + tproxy_suffix) >= 0 ||
         index(netstat, ":::" + tproxy_port) >= 0;

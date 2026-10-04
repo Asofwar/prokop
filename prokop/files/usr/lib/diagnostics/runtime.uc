@@ -1404,7 +1404,8 @@ function sing_box_standard_ports_listening(netstat_data) {
         netstat_data,
         SB_DNS_INBOUND_ADDRESS,
         SB_TPROXY_INBOUND_PORT,
-        SB_TPROXY_INBOUND6_ADDRESS
+        SB_TPROXY_INBOUND6_ADDRESS,
+        require("core.ipv6").available()
     );
 }
 
