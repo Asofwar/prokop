@@ -538,9 +538,18 @@ function outbound_uses_xhttp(outbound) {
         lc(as_string(outbound.transport.type || "")) == "xhttp";
 }
 
+function outbound_uses_vless_encryption(outbound) {
+    if (type(outbound) != "object" || lc(as_string(outbound.type || "")) != "vless")
+        return false;
+    let encryption = as_string(outbound.encryption || "");
+    return encryption != "" && encryption != "none";
+}
+
 function ensure_explicit_outbound_supported(outbound, source, name) {
     if (!runtime_supports_xhttp && outbound_uses_xhttp(outbound))
         runtime_generate_unsupported(as_string(source) + " '" + as_string(name) + "' uses XHTTP transport, but sing-box-extended is not installed");
+    if (!runtime_supports_xhttp && outbound_uses_vless_encryption(outbound))
+        runtime_generate_unsupported(as_string(source) + " '" + as_string(name) + "' uses VLESS encryption, but sing-box-extended is not installed");
 }
 
 function subscription_outbound_display_name(outbound) {
@@ -591,6 +600,10 @@ function compatible_subscription_outbounds(outbounds, section_name) {
             continue;
         if (!runtime_supports_xhttp && outbound_uses_xhttp(outbound)) {
             warn_skipped_subscription_outbound(section_name, outbound, "XHTTP requires sing-box-extended");
+            continue;
+        }
+        if (!runtime_supports_xhttp && outbound_uses_vless_encryption(outbound)) {
+            warn_skipped_subscription_outbound(section_name, outbound, "VLESS encryption requires sing-box-extended");
             continue;
         }
         push(retained, outbound);
