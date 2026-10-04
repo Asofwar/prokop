@@ -2105,7 +2105,14 @@ function nft_killswitch_render_sections(sections, settings, live_table, ks_table
 function nft_rebuild_runtime_from_uci(rt_table, table, localv4_set, common_set, port_set, ip_port_set, interface_set, fakeip_mark, outbound_mark, fakeip_range, tproxy_port, zapret_bin, zapret_route_mark_base, zapret_queue_base, zapret_desync_mark, zapret_desync_mark_postnat, zapret2_bin, zapret2_route_mark_base, zapret2_queue_base, zapret2_desync_mark, zapret2_desync_mark_postnat, localv6_set, common6_set, ip_port6_set, fakeip6_range, tproxy6_address) {
     log_debug("Applying nftables runtime rules");
 
-    if (nft_table_present(table) && !nft_delete_table(table))
+    // In a batch the table may be gone by the commit (fw4 flush, a stop
+    // meanwhile): 'add' before 'delete' makes the delete always valid
+    // (NET-10), as the kill-switch batch does.
+    if (NFT_BATCH_FILE != "") {
+        if (!run_args([ "nft", "add", "table", "inet", table ]) || !nft_delete_table(table))
+            return false;
+    }
+    else if (nft_table_present(table) && !nft_delete_table(table))
         return false;
 
     return nft_create_full_runtime_from_uci(rt_table, table, localv4_set, common_set, port_set, ip_port_set, interface_set, fakeip_mark, outbound_mark, fakeip_range, tproxy_port, zapret_bin, zapret_route_mark_base, zapret_queue_base, zapret_desync_mark, zapret_desync_mark_postnat, zapret2_bin, zapret2_route_mark_base, zapret2_queue_base, zapret2_desync_mark, zapret2_desync_mark_postnat, localv6_set, common6_set, ip_port6_set, fakeip6_range, tproxy6_address);

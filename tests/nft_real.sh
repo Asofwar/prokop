@@ -259,15 +259,16 @@ candidate() {
   nft_uc nft-populate-runtime-sets-from-uci "${populate_args[@]}" || fail "$batch: nft-populate-runtime-sets-from-uci failed"
   unset PROKOP_UCI_STATE_FILE PROKOP_NFT_BATCH_FILE
 }
-first_command() { grep -v '^#' "$1" | head -n 1; }
+# The first two commands, on one line.
+first_commands() { grep -v '^#' "$1" | head -n 2 | paste -sd ';' -; }
 
 # -- empty configuration: fresh start --
 cat >"$WORK_DIR/empty.uci" <<'EOF'
 prokop.settings=settings
 EOF
 candidate "$WORK_DIR/empty.uci" "$WORK_DIR/empty.nft"
-[ "$(first_command "$WORK_DIR/empty.nft")" = "add table inet $TABLE" ] ||
-  fail "a fresh start must not delete a table that is not there"
+[ "$(first_commands "$WORK_DIR/empty.nft")" = "add table inet $TABLE;delete table inet $TABLE" ] ||
+  fail "a fresh start must not delete a table that is not there before adding it"
 check_batch "$WORK_DIR/empty.nft" "empty configuration"
 commit_batch "$WORK_DIR/empty.json" "empty configuration"
 check tables "$WORK_DIR/empty.json" "$TABLE"
@@ -343,7 +344,9 @@ nft add set inet "$TABLE" "$COMMON" '{ type ipv4_addr; flags interval; }' &&
   nft add rule inet "$TABLE" mangle ip daddr "@$COMMON" meta mark set "$FAKEIP_MARK" counter ||
   fail "could not build the older release's table"
 candidate "$WORK_DIR/connections.uci" "$WORK_DIR/connections.nft" connections_lists
-[ "$(first_command "$WORK_DIR/connections.nft")" = "delete table inet $TABLE" ] ||
+# 'add' before 'delete' (NET-10): the delete is valid also when the table
+# is gone by the commit.
+[ "$(first_commands "$WORK_DIR/connections.nft")" = "add table inet $TABLE;delete table inet $TABLE" ] ||
   fail "a reload candidate must replace the live table in the same transaction"
 for set in prokop_rule_main_subnets prokop_rule_main_subnets6; do
   [ "$(grep -c "^add element inet $TABLE $set { " "$WORK_DIR/connections.nft")" -gt 2 ] ||

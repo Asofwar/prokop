@@ -370,4 +370,20 @@ nft list set inet "$TABLE" "$INTERFACES" | grep -q '"lan@1"' || fail "the interf
 expect captured lan 192.168.1.60 93.184.216.34 tcp 443
 ok "interface names such as lan@1 and 10g are quoted for nft (NET-9)"
 
+# ---- NET-10: the table vanishes between building and committing a reload -----
+
+# A reload built its batch with a bare 'delete table' when the table was
+# there. When it was gone by the commit (fw4 flush, a stop meanwhile), the
+# whole batch failed with "No such file or directory" and the reload with it.
+batch="$WORK_DIR/reload.nft"
+printf '# Prokop nft candidate\n' >"$batch"
+nft list table inet "$TABLE" >/dev/null || fail "the table of the previous case is gone"
+PROKOP_UCI_STATE_FILE="$WORK_DIR/ifnames.uci" PROKOP_NFT_BATCH_FILE="$batch" \
+  nft_uc nft-rebuild-runtime-from-uci "${rebuild_args[@]}" || fail "the reload candidate was not built"
+nft delete table inet "$TABLE"
+nft_uc nft-commit-candidate-batch "$batch" 2>"$batch.err" ||
+  fail "the reload failed once the table was gone before its commit: $(cat "$batch.err")"
+nft list table inet "$TABLE" >/dev/null || fail "the reload did not create the table"
+ok "a reload commits when its table vanished after the batch was built (NET-10)"
+
 printf 'real nft dataplane checks passed\n'
