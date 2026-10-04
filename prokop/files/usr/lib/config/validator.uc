@@ -915,6 +915,62 @@ function bootstrap_dns_server_value_valid(value) {
         core_ip.valid_ip(core_url.host(value));
 }
 
+// The router's own addresses, from netifd: a DNS server there is dnsmasq.
+let router_addresses_cache = null;
+function router_addresses() {
+    if (router_addresses_cache != null)
+        return router_addresses_cache;
+    router_addresses_cache = [];
+    let dump = null;
+    try {
+        dump = json(command_output_from_args([ "ubus", "call", "network.interface", "dump" ]) || "{}");
+    }
+    catch (e) {
+        dump = null;
+    }
+    for (let iface in (type(dump?.interface) == "array" ? dump.interface : [])) {
+        let entries = [];
+        for (let key in [ "ipv4-address", "ipv6-address" ])
+            for (let entry in (type(iface[key]) == "array" ? iface[key] : []))
+                push(entries, entry);
+        for (let entry in (type(iface["ipv6-prefix-assignment"]) == "array" ? iface["ipv6-prefix-assignment"] : []))
+            push(entries, entry?.["local-address"]);
+        for (let entry in entries)
+            if (type(entry?.address) == "string" && entry.address != "")
+                push(router_addresses_cache, lc(entry.address));
+    }
+    return router_addresses_cache;
+}
+
+// A DNS server that sends sing-box's queries back to it (NET-5). While
+// Prokop runs, dnsmasq forwards to sing-box: a DNS server on the router
+// itself (127.0.0.1, ::1, its LAN or WAN address) is dnsmasq, which asks
+// sing-box again, and all DNS of the router and the LAN stops. Not a loop
+// when dnsmasq keeps its own servers (dont_touch_dhcp), except for
+// sing-box's own DNS listener.
+function dns_server_loop_reason(value, settings) {
+    let host = lc(core_url.host(trim(as_string(value))));
+    if (host == "")
+        return null;
+    if (host == lc(require("core.dns_inbound").ADDRESS))
+        return "is sing-box's own DNS listener";
+    if (bool_option(settings, "dont_touch_dhcp", false))
+        return null;
+    if (host == "localhost" || host == "::1" || host == "0:0:0:0:0:0:0:1" ||
+        (core_ip.valid_ipv4(host) && substr(host, 0, 4) == "127."))
+        return "is this router (loopback)";
+    if (index(router_addresses(), host) >= 0)
+        return "is an address of this router";
+    return null;
+}
+
+function validate_dns_server_not_loop(value, settings, label) {
+    let reason = dns_server_loop_reason(value, settings);
+    if (reason != null)
+        fail_validation(label + " '" + value + "' " + reason + ": dnsmasq forwards DNS to sing-box while Prokop runs, so the queries would loop and all DNS would stop. " +
+            "Use an external DNS server, or enable dont_touch_dhcp to keep dnsmasq's own servers. Aborted.");
+}
+
 function dns_setting_values(settings, key) {
     let values = [];
     for (let value in option_list_values(settings, key)) {
@@ -943,6 +999,8 @@ function validate_dns_settings(settings, sections, context) {
     for (let value in main_servers)
         if (!dns_server_value_valid(value))
             fail_validation("Invalid main DNS server '" + value + "'. Aborted.");
+        else
+            validate_dns_server_not_loop(value, settings, "Main DNS server");
     for (let value in bootstrap_servers)
         if (!dns_server_value_valid(value))
             fail_validation("Invalid Bootstrap DNS server '" + value + "'. Aborted.");
@@ -952,6 +1010,8 @@ function validate_dns_settings(settings, sections, context) {
         // would stop Prokop from starting on an existing configuration.
         else if (!bootstrap_dns_server_value_valid(value))
             log_message("Bootstrap DNS server '" + value + "' is not a plain IP address; hostnames and URLs need an independent resolver and may fail to bootstrap", "warn");
+    for (let value in bootstrap_servers)
+        validate_dns_server_not_loop(value, settings, "Bootstrap DNS server");
 
     if (length(main_servers) > 1 || length(bootstrap_servers) > 1) {
         validate_required_duration_option(option(settings, "dns_check_interval", "10s"), "settings.dns_check_interval");
@@ -1395,6 +1455,7 @@ function validate_dns_action(section, sections, context) {
     let dns_server = option(section, "dns_server", "");
     if (!dns_server_value_valid(dns_server))
         fail_validation("DNS rule '" + name + "' has an invalid DNS server '" + dns_server + "'. Aborted.");
+    validate_dns_server_not_loop(dns_server, settings_section(), "DNS rule '" + name + "' DNS server");
     if (length(connections.rule_sets_with_subnets(section)) > 0)
         fail_validation("DNS rule '" + name + "' can use domain-only rule sets, but subnet extraction is enabled. Disable 'Include IP addresses and subnets'. Aborted.");
     if (!dns_action_has_domain_matchers(section) && length(list_option(section, "fully_routed_ips")) == 0)
