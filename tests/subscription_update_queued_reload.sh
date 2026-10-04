@@ -19,6 +19,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 UPDATES_UC="$ROOT_DIR/prokop/files/usr/lib/components/updates.uc"
 REAL_LIB="$ROOT_DIR/prokop/files/usr/lib"
 WORK_DIR="$(mktemp -d)"
+: >"$WORK_DIR/start.explicit"
 
 cleanup() {
   rm -rf "$WORK_DIR"
@@ -128,6 +129,7 @@ run_update() {
     TMPDIR="$WORK_DIR/tmp" \
     PROKOP_LIB="$FAKE_LIB" \
     PROKOP_RUNTIME_STATE_DIR="$RUN" \
+    PROKOP_EXPLICIT_START_FILE="$WORK_DIR/start.explicit" \
     PROKOP_SUBSCRIPTION_UPDATE_LOCK_DIR="$RUN/subscription-update.lock" \
     PROKOP_RELOAD_LOCK_DIR="$RUN/reload.lock" \
     PROKOP_SUBSCRIPTION_UPDATE_STATE_DIR="$RUN/subscription-update" \

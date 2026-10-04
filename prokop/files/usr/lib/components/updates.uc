@@ -12,6 +12,7 @@ const LIB_DIR = getenv("PROKOP_LIB") || "/usr/lib/prokop";
 const STATE_UC = getenv("PROKOP_STATE_UC") || LIB_DIR + "/service/state.uc";
 const BIN_PATH = getenv("PROKOP_BIN") || "/usr/bin/prokop";
 const CRONTAB_FILE = getenv("PROKOP_CRONTAB_FILE") || "/etc/crontabs/root";
+const CRON_INIT = getenv("PROKOP_CRON_INIT") || "/etc/init.d/cron";
 // The shortest step of the due check of an interval of an hour or more
 // (due_check_cron_schedule_text).
 const DUE_CHECK_MIN_STEP_MINUTES = 5;
@@ -20,6 +21,8 @@ const TMP_RULESET_FOLDER = getenv("TMP_RULESET_FOLDER") || TMP_SING_BOX_FOLDER +
 const RUNTIME_LIST_GENERATION_DIR = getenv("PROKOP_RUNTIME_LIST_GENERATION_DIR") || TMP_SING_BOX_FOLDER + "/list-generation";
 const TMP_SUBSCRIPTION_FOLDER = getenv("TMP_SUBSCRIPTION_FOLDER") || TMP_SING_BOX_FOLDER + "/subscriptions";
 const RUNTIME_STATE_DIR = getenv("PROKOP_RUNTIME_STATE_DIR") || "/var/run/prokop";
+const STOP_REQUESTED_FILE = getenv("PROKOP_STOP_REQUESTED_FILE") || RUNTIME_STATE_DIR + "/stop.requested";
+const EXPLICIT_START_FILE = getenv("PROKOP_EXPLICIT_START_FILE") || RUNTIME_STATE_DIR + "/start.explicit";
 const PERSISTENT_LIST_CACHE_DIR = getenv("PROKOP_PERSISTENT_LIST_CACHE_DIR") || "/etc/prokop/list-cache";
 const PERSISTENT_RULESET_CACHE_DIR = getenv("PROKOP_RULESET_CACHE_DIR") || "/etc/prokop/ruleset-cache";
 const PERSISTENT_LIST_CACHE_MANIFEST = getenv("PROKOP_PERSISTENT_LIST_CACHE_MANIFEST") || PERSISTENT_LIST_CACHE_DIR + "/manifest.json";
@@ -1789,6 +1792,30 @@ function remove_cron_jobs(list_marker, subscription_marker, component_marker) {
     log_cron_apply_result(result);
 }
 
+// OpenWrt's cron service does not start crond without a crontab: on a fresh
+// router Prokop's first jobs were written and never ran until a reboot (A6).
+// An enabled cron service that is not running is started; a disabled one is
+// left alone and the log says that the scheduled updates do not run. Only
+// an OpenWrt (rc.common) init script is called.
+function ensure_crond_running(crontab, markers) {
+    let scheduled = false;
+    for (let marker in markers)
+        if (as_string(marker) != "" && index(as_string(crontab), as_string(marker)) >= 0)
+            scheduled = true;
+    if (!scheduled || index(as_string(fs.readfile(CRON_INIT, 256)), "/etc/rc.common") < 0)
+        return;
+    if (!command_success_from_args([ CRON_INIT, "enabled" ])) {
+        log_message("The cron service is disabled: Prokop's scheduled updates do not run", "warn");
+        return;
+    }
+    if (command_success_from_args([ CRON_INIT, "running" ]))
+        return;
+    if (command_success_from_args([ CRON_INIT, "start" ]))
+        log_message("Started the cron service for Prokop's scheduled updates", "info");
+    else
+        log_message("Could not start the cron service: Prokop's scheduled updates do not run", "warn");
+}
+
 function refresh_cron_from_sources(settings, sections, bin, list_marker, subscription_marker, component_marker) {
     let crontab = read_crontab();
     if (crontab == null)
@@ -1807,6 +1834,7 @@ function refresh_cron_from_sources(settings, sections, bin, list_marker, subscri
         exit(1);
 
     log_cron_apply_result(result);
+    ensure_crond_running(result.crontab, [ list_marker, subscription_marker, component_marker, "# prokop-autotune" ]);
     // 2: an invalid interval in the settings, which the crontab was written
     // without Prokop's jobs for (service/lifecycle.uc fails the start or
     // reload on it); 1: the crontab could not be read or written.
@@ -4324,7 +4352,18 @@ function list_update_after_start() {
     exit(status == 1 ? 0 : 1);
 }
 
+// The scheduled updates (cron) run only for a Prokop that was started and
+// not stopped since (D-15): a disabled autostart left the cron jobs in
+// place, and after a reboot the lists and subscriptions were downloaded for
+// a Prokop that nobody started (OBS-4). Their next tick after a start runs
+// them. Not logged: it would be every tick.
+function scheduled_updates_paused() {
+    return fs.stat(STOP_REQUESTED_FILE) != null || fs.stat(EXPLICIT_START_FILE) == null;
+}
+
 function list_update_if_due() {
+    if (scheduled_updates_paused())
+        exit(0);
     let interval = settings_update_interval(uci_settings());
     if (interval == "")
         exit(1);
@@ -4786,6 +4825,8 @@ function subscription_update_common(force, target_section, target_source_index) 
 }
 
 function subscription_update_if_due() {
+    if (scheduled_updates_paused())
+        exit(0);
     log_message("Starting due subscription update", "info");
     exit(subscription_update_common(false, "", ""));
 }

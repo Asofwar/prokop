@@ -43,7 +43,9 @@ export PROKOP_AUTOTUNE_UCI_SAVEDIR="$WORK/uci-save" PROKOP_AUTOTUNE_TMPDIR="$WOR
 export PROKOP_HISTORY_FILE="$WORK/etc/history.jsonl" PROKOP_RUNTIME_STATE_DIR="$WORK/run/state"
 export PROKOP_CRONTAB_FILE="$WORK/crontab" PROKOP_AUTOTUNE_CRONTAB="$WORK/crontab-cmd"
 export STUB_TUNE_DIR="$WORK/tune" STUB_APPLY_STATUS="$WORK/apply-status.json"
-mkdir -p "$WORK/config" "$WORK/uci-save" "$WORK/tmp" "$WORK/tune"
+mkdir -p "$WORK/config" "$WORK/uci-save" "$WORK/tmp" "$WORK/tune" "$PROKOP_RUNTIME_STATE_DIR"
+# Prokop was started (the scheduled run waits for a start, OBS-4).
+: >"$PROKOP_RUNTIME_STATE_DIR/start.explicit"
 
 manager() { ucode -L "$LIB" "$LIB/autotune/manager.uc" "$@"; }
 calls() { if [ -e "$WORK/tune/calls.log" ]; then awk '{print $2}' "$WORK/tune/calls.log" | tr '\n' ' '; fi; }

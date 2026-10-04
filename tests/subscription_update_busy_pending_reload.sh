@@ -23,6 +23,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REAL_LIB="$ROOT_DIR/prokop/files/usr/lib"
 REAL_INITD="$ROOT_DIR/prokop/files/etc/init.d/prokop"
 WORK_DIR="$(mktemp -d)"
+: >"$WORK_DIR/start.explicit"
 # shellcheck source=tests/helpers/wait.sh
 . "$ROOT_DIR/tests/helpers/wait.sh"
 # shellcheck source=tests/helpers/owned_processes.sh
@@ -57,6 +58,8 @@ export SUB_LOCK="$WORK_DIR/run/prokop/subscription-update.lock"
 export PROKOP_RELOAD_LOCK_DIR="$RELOAD_LOCK"
 export PROKOP_SUBSCRIPTION_UPDATE_LOCK_DIR="$SUB_LOCK"
 export PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/run/prokop"
+# Prokop was started: the scheduled update waits for a start (OBS-4).
+export PROKOP_EXPLICIT_START_FILE="$WORK_DIR/start.explicit"
 export PROKOP_PENDING_RELOAD_FILE="$WORK_DIR/run/prokop/reload.pending"
 export PROKOP_SERVICE_INIT="$WORK_DIR/bin/init"
 export PROKOP_BIN="$WORK_DIR/bin/prokop"

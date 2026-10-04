@@ -37,6 +37,21 @@ manager cron-sync >"$WORK/cron-again.json"
 [ "$(json_get "$WORK/cron-again.json" changed)" = 'false' ] || fail "an unchanged crontab is not rewritten"
 [ "$(grep -c prokop-autotune "$WORK/crontab")" = 1 ] || fail "one cron line only"
 
+# ---- no scheduled run for a stopped Prokop (OBS-4) ---------------------------
+# A disabled autostart keeps the cron line; after a reboot nobody started
+# Prokop, and an explicit stop holds as well.
+mv "$PROKOP_RUNTIME_STATE_DIR/start.explicit" "$WORK/start.explicit"
+manager if-due >"$WORK/not-started.json"
+[ "$(json_get "$WORK/not-started.json" reason)" = '"prokop_stopped"' ] ||
+  fail "a scheduled run for a Prokop not started since boot: $(cat "$WORK/not-started.json")"
+mv "$WORK/start.explicit" "$PROKOP_RUNTIME_STATE_DIR/start.explicit"
+: >"$PROKOP_RUNTIME_STATE_DIR/stop.requested"
+manager if-due >"$WORK/stopped.json"
+[ "$(json_get "$WORK/stopped.json" reason)" = '"prokop_stopped"' ] ||
+  fail "a scheduled run after an explicit stop: $(cat "$WORK/stopped.json")"
+rm -f "$PROKOP_RUNTIME_STATE_DIR/stop.requested"
+[ "$(calls)" = '' ] || fail "a stopped Prokop was tuned: $(calls)"
+
 # ---- scheduled runs: one group in turn -------------------------------------
 before="$(date +%s)"
 manager if-due >"$WORK/run1.json"
