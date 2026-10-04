@@ -125,4 +125,18 @@ if ucode -L "$LIB_DIR" "$CLI" promote-child "$STATE_DIR/foreign-child.pid" "$STA
 fi
 kill -0 "$foreign_pid"
 
+# A process that is already gone is not polled for its start time: the
+# record fails at once instead of sleeping 0.1 s fifty times.
+gone_pid="$(sh -c 'echo $$')"
+while kill -0 "$gone_pid" 2>/dev/null; do gone_pid=$((gone_pid + 7)); done
+mkdir -p "$STATE_DIR/sleep-bin"
+printf '#!/bin/sh\necho "$*" >>"%s/sleeps"\n' "$STATE_DIR" >"$STATE_DIR/sleep-bin/sleep"
+chmod +x "$STATE_DIR/sleep-bin/sleep"
+if PATH="$STATE_DIR/sleep-bin:$PATH" ucode -L "$LIB_DIR" "$LIB_DIR/core/pidfile_cli.uc" record "$gone_pid" "$STATE_DIR/gone.pid"; then
+    echo 'a gone process was recorded' >&2; exit 1
+fi
+if [ -s "$STATE_DIR/sleeps" ]; then
+    echo "recording a gone process still polls: $(wc -l <"$STATE_DIR/sleeps") sleeps" >&2; exit 1
+fi
+
 printf 'process_identity: PASS\n'

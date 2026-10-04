@@ -60,9 +60,13 @@ function record(path, pid) {
     // A process just started may not show its start time yet: asked again
     // every 0.1 s for up to 5 s, as before, without a whole second for one
     // that shows it at once (a start of N DPI rules waited up to N seconds).
+    // A process that is already gone has nothing to wait for: polling it
+    // outlived the stop of its rule.
     let ticks = "";
     for (let attempt = 0; attempt < 50 && ticks == ""; attempt++) {
         ticks = start_ticks(pid);
+        if (ticks == "" && fs.stat("/proc/" + pid) == null)
+            break;
         if (ticks == "")
             system("sleep 0.1 2>/dev/null || sleep 1");
     }

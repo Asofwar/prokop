@@ -371,7 +371,9 @@ reset_state; export CURL_STUB_PENDING=forever; run_probe multisplit 1
 json 'a.equal(r.status, "completed"); a.equal(r.teardown.drain.settled, false); a.equal(r.teardown.drain.queue_pending, 1); a.equal(r.cleanup.status, "clean");' "$WORK/out.json"
 assert_clean "pending timeout"
 ok "drain timeout proceeds to the release and teardown"
-reset_state; export CURL_STUB_SOCKET=2 CURL_STUB_CLOSING=2 PROKOP_AUTOTUNE_DRAIN_TIMEOUT=6 PROKOP_AUTOTUNE_HOLD_TIMEOUT=8; run_probe multisplit 1
+# TIME_WAIT outlasts the drain and the nfqws stop by seconds, so a slow runner
+# still finds a socket when the hold starts.
+reset_state; export CURL_STUB_SOCKET=6 CURL_STUB_CLOSING=2 PROKOP_AUTOTUNE_DRAIN_TIMEOUT=6 PROKOP_AUTOTUNE_HOLD_TIMEOUT=12; run_probe multisplit 1
 json '
 a.equal(r.status, "completed");
 a.equal(r.teardown.drain.settled, true); a.ok(r.teardown.drain.waited_s >= 1, "drain waited for the closing socket");
