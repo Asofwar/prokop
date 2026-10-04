@@ -145,14 +145,8 @@ grep -Fq '1.2.3' "$SDK/root/usr/lib/prokop/core/constants.uc" ||
 cmp -s "$BUILD/ipk/conffiles" "$SDK/control/conffiles" ||
   fail "the SDK package's conffiles differ: $(cat "$SDK/control/conffiles")"
 
-# A release with a package revision, as build.sh takes it.
-sdk_stage 1.2.3-4 "$WORK_DIR/sdk-revision" ||
-  fail "the SDK recipe refused the release version 1.2.3-4: $(cat "$WORK_DIR/make.log")"
-[ "$(cat "$WORK_DIR/sdk-revision/version")" = '1.2.3|4' ] ||
-  fail "the SDK package of 1.2.3-4 must be version 1.2.3, release 4: $(cat "$WORK_DIR/sdk-revision/version")"
-grep -Fq '1.2.3-4' "$WORK_DIR/sdk-revision/root/usr/lib/prokop/core/constants.uc" ||
-  fail "the SDK package of 1.2.3-4 must report 1.2.3-4, as build.sh's does"
-for version in 1.2 1.2.3-r4 1.2.3-; do
+# x.y.z only, as build.sh, the updater and the installer (UPD-8).
+for version in 1.2 1.2.3-4 1.2.3-r4 1.2.3-; do
   if sdk_stage "$version" "$WORK_DIR/sdk-invalid"; then
     fail "the SDK recipe must refuse the release version $version"
   fi
@@ -170,15 +164,13 @@ luci_version() {
   make -s -C "$ROOT_DIR/luci-app-prokop" -f "$WORK_DIR/sdk/version.mk" TOPDIR="$WORK_DIR/sdk" \
     PROKOP_PACKAGE_VERSION="$1" version 2>"$WORK_DIR/make.log"
 }
-for version in 1.2.3 1.2.3-4; do
-  expected="1.2.3||$version"
-  [ "$version" = 1.2.3 ] || expected="1.2.3|4|$version"
-  actual="$(luci_version "$version")" || fail "the LuCI app's recipe refused $version: $(cat "$WORK_DIR/make.log")"
-  [ "$actual" = "$expected" ] || fail "the LuCI app's recipe reads $version as $actual, not $expected"
+actual="$(luci_version 1.2.3)" || fail "the LuCI app's recipe refused 1.2.3: $(cat "$WORK_DIR/make.log")"
+[ "$actual" = "1.2.3||1.2.3" ] || fail "the LuCI app's recipe reads 1.2.3 as $actual, not 1.2.3||1.2.3"
+for version in 1.2.3-4 1.2.3-r4; do
+  if luci_version "$version" >/dev/null; then
+    fail "the LuCI app's recipe must refuse the release version $version"
+  fi
 done
-if luci_version 1.2.3-r4 >/dev/null; then
-  fail "the LuCI app's recipe must refuse the release version 1.2.3-r4"
-fi
 
 # ---- package scripts --------------------------------------------------------
 

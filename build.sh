@@ -7,16 +7,16 @@ usage() {
   cat <<EOF
 Usage: $(basename "$0") <version> [output-directory]
 
-Build Prokop IPK and APK packages. The version must use x.y.z or x.y.z-N,
-where N is a numeric package revision.
+Build Prokop IPK and APK packages. The version must use x.y.z: the
+updater, the installer and the release catalog accept nothing else.
 EOF
 }
 
 validate_release_version() {
   local version="$1"
 
-  if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+)?$ ]]; then
-    echo "Expected release version in the form x.y.z or x.y.z-N (numeric package revision)" >&2
+  if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    echo "Expected release version in the form x.y.z" >&2
     return 1
   fi
 }
@@ -45,8 +45,7 @@ RELEASE_VERSION="$1"
 OUTPUT_DIR="${2:-$ROOT_DIR/dist/release-final}"
 
 validate_release_version "$RELEASE_VERSION" || exit 2
-# APK package revisions use -r, while public and IPK versions retain -<revision>.
-APK_INTERNAL_VERSION="${RELEASE_VERSION/-/\-r}"
+APK_INTERNAL_VERSION="$RELEASE_VERSION"
 
 BUILD_DIR="${BUILD_DIR:-$ROOT_DIR/.build}"
 SDK_CACHE_BASE="${XDG_CACHE_HOME:-${HOME:-/var/cache}}"

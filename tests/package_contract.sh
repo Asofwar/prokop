@@ -113,14 +113,9 @@ grep -Fq "command_exists(\"nft\")" "$ROOT_DIR/prokop/files/usr/lib/config/valida
 
 grep -Fq "must use x.y.z format" "$PROKOP_MAKEFILE" ||
   fail "prokop/Makefile must enforce the three-part release version contract"
-apk_version_expression="$(sed -n '/^APK_INTERNAL_VERSION=/p' "$BUILD_SCRIPT")"
-for release_version in 1.0.6 1.0.6-2; do
-  actual_version="$(RELEASE_VERSION="$release_version" bash -c "$apk_version_expression; printf '%s' \"\$APK_INTERNAL_VERSION\"")"
-  expected_version="$release_version"
-  [ "$release_version" != 1.0.6-2 ] || expected_version=1.0.6-r2
-  [ "$actual_version" = "$expected_version" ] ||
-    fail "APK version normalization: expected $expected_version, got $actual_version"
-done
+# Release versions are x.y.z only (UPD-8): the APK carries it unchanged.
+grep -Fxq 'APK_INTERNAL_VERSION="$RELEASE_VERSION"' "$BUILD_SCRIPT" ||
+  fail "the APK package version must be the release version"
 grep -Fq "option component_update_check_enabled '1'" "$PROKOP_CONFIG" ||
   fail "new installations must enable component update checks by default"
 grep -Fq "option config_version '1.0.5'" "$PROKOP_CONFIG" ||

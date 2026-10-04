@@ -5,14 +5,12 @@ PKG_NAME:=luci-app-prokop
 PROKOP_SOURCE_VERSION:=$(or $(PROKOP_PACKAGE_VERSION),$(PROKOP_VERSION))
 PROKOP_HAS_RELEASE_VERSION:=$(if $(filter dev,$(PROKOP_SOURCE_VERSION)),,$(PROKOP_SOURCE_VERSION))
 PROKOP_COMPILED_VERSION:=$(if $(PROKOP_HAS_RELEASE_VERSION),$(PROKOP_SOURCE_VERSION),$(or $(PROKOP_SOURCE_VERSION),dev))
-PROKOP_RELEASE_VERSION_VALID:=$(if $(PROKOP_HAS_RELEASE_VERSION),$(shell printf '%s\n' '$(PROKOP_SOURCE_VERSION)' | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+)?$$' && printf '1'),1)
+PROKOP_RELEASE_VERSION_VALID:=$(if $(PROKOP_HAS_RELEASE_VERSION),$(shell printf '%s\n' '$(PROKOP_SOURCE_VERSION)' | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$$' && printf '1'),1)
 
 ifeq ($(PROKOP_RELEASE_VERSION_VALID),)
-$(error PROKOP_PACKAGE_VERSION and PROKOP_VERSION must use x.y.z format, or x.y.z-N with a numeric package revision N)
+$(error PROKOP_PACKAGE_VERSION and PROKOP_VERSION must use x.y.z format: the updater, the installer and the release catalog accept nothing else)
 endif
 
-# A release x.y.z-N is version x.y.z, package release N, as in
-# prokop/Makefile.
 PKG_VERSION:=$(or $(firstword $(subst -, ,$(PROKOP_HAS_RELEASE_VERSION))),0.0.0)
 PKG_RELEASE:=$(word 2,$(subst -, ,$(PROKOP_HAS_RELEASE_VERSION)))
 PKG_PO_VERSION:=$(PKG_VERSION)
