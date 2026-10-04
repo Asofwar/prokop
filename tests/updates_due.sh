@@ -44,6 +44,19 @@ assert_status 0 "never-run update should be due" 100 0 60
 assert_status 0 "expired update should be due" 100 30 60
 assert_status 1 "fresh update should not be due" 100 50 60
 assert_status 1 "future timestamp should not be due" 100 130 60
+# The next cron tick comes a little less than one interval after the last
+# run was recorded at its end: due all the same (OBS-1).
+T0=1700000000
+assert_status 0 "a daily update one tick later should be due" $((T0 + 86400)) $((T0 + 40)) 86400
+assert_status 0 "an hourly update one tick later should be due" $((T0 + 3600)) $((T0 + 90)) 3600
+assert_status 1 "a daily update half a day later should not be due" $((T0 + 43200)) "$T0" 86400
+assert_status 1 "an hourly update ten minutes early should not be due" $((T0 + 3000)) "$T0" 3600
+assert_status 0 "a minute update one tick later should be due" $((T0 + 60)) $((T0 + 5)) 60
+# The subscriptions decide with their own copy (subscription/cache.uc): the
+# same function.
+due_function() { awk '/^function update_due_status\(/,/^}/' "$1"; }
+[ "$(due_function "$UPDATES_UC")" = "$(due_function "$PROKOP_LIB/subscription/cache.uc")" ] ||
+  fail "subscription/cache.uc update_due_status differs from components/updates.uc"
 assert_status 0 "invalid last-run timestamp should be treated as never-run" 100 invalid 60
 assert_status 2 "invalid current timestamp should fail" invalid 0 60
 assert_status 2 "invalid interval should fail" 100 0 invalid

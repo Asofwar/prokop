@@ -1306,7 +1306,13 @@ function update_due_status(now_value, last_run_value, interval_value) {
     if (last_run == null)
         last_run = 0;
 
-    if (last_run > 0 && now - last_run < interval)
+    // The last run is recorded when its work ends, so the next cron tick
+    // comes a little less than one interval later: it is due all the same,
+    // or every update ran at twice its interval (OBS-1).
+    let tolerance = int(interval / 10);
+    if (tolerance > 300)
+        tolerance = 300;
+    if (last_run > 0 && now - last_run < interval - tolerance)
         return 1;
 
     return 0;
