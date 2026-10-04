@@ -748,16 +748,27 @@ function urltest_leaf_candidate_outbound(outbound) {
     return t != "selector" && t != "urltest" && t != "dns" && t != "block";
 }
 
+// Where the suffix search of each base stopped last time, for one taken map
+// (a generation uses one): every suffix below it was taken then and still is
+// (tags are never released), so the result is the smallest free one, as
+// before, without scanning the same suffixes again (5 000 equal names:
+// quadratic to linear).
+let unique_tag_memo = { taken: null, next: {} };
+
 function unique_tag(base, taken) {
     base = as_string(base);
     if (base == "")
         base = "server";
     if (!taken[base])
         return base;
-    for (let i = 1; i < 100000; i++) {
+    if (unique_tag_memo.taken !== taken)
+        unique_tag_memo = { taken, next: {} };
+    for (let i = int(unique_tag_memo.next[base] || 1); i < 100000; i++) {
         let candidate = base + "-" + i;
-        if (!taken[candidate])
+        if (!taken[candidate]) {
+            unique_tag_memo.next[base] = i + 1;
             return candidate;
+        }
     }
     return base + "-overflow";
 }
