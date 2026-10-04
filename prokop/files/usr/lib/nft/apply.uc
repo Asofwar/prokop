@@ -2003,14 +2003,25 @@ function nft_table_set_elements(output) {
 
 let live_table_sets = {};
 
+function nft_set_elements_from_set(table, set_name) {
+    let output = command_output_quiet_from_args([ "nft", "list", "set", "inet", table, set_name ]);
+    if (output == "")
+        return null;
+    let found = match(output, /elements = \{([^}]*)\}/);
+    return found == null ? "" : trim(replace(found[1], /[[:space:]]+/g, " "));
+}
+
 function nft_set_elements_from_table(table, set_name) {
-    // A missing set is an error (null).
     if (!exists(live_table_sets, table)) {
         let output = command_output_quiet_from_args([ "nft", "list", "table", "inet", table ]);
         live_table_sets[table] = output == "" ? null : nft_table_set_elements(output);
     }
     let sets = live_table_sets[table];
-    return sets == null || !exists(sets, set_name) ? null : sets[set_name];
+    if (sets != null && exists(sets, set_name))
+        return sets[set_name];
+    // Not in the table listing: asked on its own, so a listing this parser
+    // does not read never loses a set. A missing set is an error (null).
+    return nft_set_elements_from_set(table, set_name);
 }
 
 function killswitch_interface_elements(settings) {

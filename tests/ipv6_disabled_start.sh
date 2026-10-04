@@ -111,7 +111,8 @@ inbounds >"$WORK/inbounds"
 ! grep -qx tproxy6-in "$WORK/inbounds" || fail "sing-box listens on ::1 with IPv6 disabled"
 grep -qx tproxy-in "$WORK/inbounds" || fail "the IPv4 TPROXY inbound is missing with IPv6 disabled"
 sysctl 0 0
-inbounds | grep -qx tproxy6-in || fail "the IPv6 TPROXY inbound is missing with IPv6 enabled"
+inbounds >"$WORK/inbounds"
+grep -qx tproxy6-in "$WORK/inbounds" || fail "the IPv6 TPROXY inbound is missing with IPv6 enabled"
 
 # 4. sing-box is ready without a ::1 listener when IPv6 is disabled.
 netstat_v4='tcp 0 0 127.0.0.42:53 0.0.0.0:* LISTEN 1/sing-box

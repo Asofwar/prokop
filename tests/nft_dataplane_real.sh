@@ -366,7 +366,8 @@ prokop.web.action=vpn
 prokop.web.ports=443
 EOF
 apply_config "$WORK_DIR/ifnames.uci"
-nft list set inet "$TABLE" "$INTERFACES" | grep -q '"lan@1"' || fail "the interface lan@1 is not in the capture set"
+# Read in full before matching: a grep -q ending nft early is a SIGPIPE.
+grep -q '"lan@1"' <<<"$(nft list set inet "$TABLE" "$INTERFACES")" || fail "the interface lan@1 is not in the capture set"
 expect captured lan 192.168.1.60 93.184.216.34 tcp 443
 ok "interface names such as lan@1 and 10g are quoted for nft (NET-9)"
 
