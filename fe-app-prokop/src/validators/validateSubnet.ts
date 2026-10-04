@@ -18,8 +18,10 @@ export function validateSubnet(value: string): ValidationResult {
     };
   }
 
-  if (cidr) {
-    if (!/^\d+$/.test(cidr)) {
+  if (cidr !== undefined) {
+    // No empty prefix ('1.2.3.4/') and no leading zero ('/08'), which
+    // sing-box refuses (FE-6).
+    if (!/^(?:0|[1-9]\d{0,2})$/.test(cidr)) {
       return {
         valid: false,
         message: _('Invalid CIDR prefix'),

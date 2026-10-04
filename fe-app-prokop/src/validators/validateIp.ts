@@ -7,17 +7,41 @@ export function isIPv4(ip: string): boolean {
   return ipRegex.test(ip);
 }
 
+// The hextets themselves, as the router parses them (core/ip.uc), not the
+// browser's URL parser, which takes 'fd00::1]?' or '::1]#junk' (FE-6).
+function ipv6PartsCount(parts: string[]): number {
+  let count = 0;
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i];
+    if (part.includes('.')) {
+      if (i !== parts.length - 1 || !isIPv4(part)) return -1;
+      count += 2;
+    } else if (/^[0-9A-Fa-f]{1,4}$/.test(part)) {
+      count++;
+    } else {
+      return -1;
+    }
+  }
+  return count;
+}
+
 export function isIPv6(ip: string): boolean {
-  if (!ip.includes(':') || ip.includes('%')) {
+  if (!ip.includes(':')) {
     return false;
   }
 
-  try {
-    new URL(`http://[${ip}]/`);
-    return true;
-  } catch (_e) {
+  const marker = ip.indexOf('::');
+  if (marker < 0) {
+    return ipv6PartsCount(ip.split(':')) === 8;
+  }
+  const left = ip.slice(0, marker);
+  const right = ip.slice(marker + 2);
+  if (right.includes('::')) {
     return false;
   }
+  const leftCount = left === '' ? 0 : ipv6PartsCount(left.split(':'));
+  const rightCount = right === '' ? 0 : ipv6PartsCount(right.split(':'));
+  return leftCount >= 0 && rightCount >= 0 && leftCount + rightCount < 8;
 }
 
 export function validateIP(ip: string): ValidationResult {

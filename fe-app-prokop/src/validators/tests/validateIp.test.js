@@ -43,12 +43,22 @@ describe('validateIP IPv6', () => {
     ['ULA', 'fc00::1'],
     ['Documentation prefix', '2001:db8::1'],
     ['Full form', '2001:0db8:0000:0000:0000:ff00:0042:8329'],
+    ['Embedded IPv4', '::ffff:192.0.2.1'],
+    ['Unspecified', '::'],
   ];
 
   const invalidIPv6Addresses = [
     ['Bad hex', '2001:db8::zzzz'],
     ['Two compression markers', '2001::db8::1'],
     ['Zone id', 'fe80::1%eth0'],
+    // FE-6: what the browser's URL parser lets through.
+    ['Bracket and query', 'fd00::1]?'],
+    ['Bracket and fragment', '::1]#junk'],
+    ['Too many hextets', '1:2:3:4:5:6:7:8:9'],
+    ['Too few hextets', '1:2:3:4:5:6:7'],
+    ['Compression with eight hextets', '1:2:3:4::5:6:7:8'],
+    ['Five-digit hextet', '2001:db8::10000'],
+    ['IPv4 not last', '::192.0.2.1:1'],
   ];
 
   describe.each(validIPv6Addresses)('Valid IPv6: %s', (_desc, ip) => {

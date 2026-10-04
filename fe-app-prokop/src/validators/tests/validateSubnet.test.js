@@ -30,6 +30,10 @@ export const invalidSubnets = [
   ['Forbidden ::', '::'],
   ['Invalid IPv6 CIDR', '2001:db8::1/129'],
   ['Invalid IPv6 address', '2001:db8::zzzz/64'],
+  // FE-6
+  ['Empty prefix', '1.2.3.4/'],
+  ['Leading zero prefix', '10.0.0.0/08'],
+  ['IPv6 with bracket', 'fd00::1]?/64'],
 ];
 
 describe('validateSubnet', () => {
