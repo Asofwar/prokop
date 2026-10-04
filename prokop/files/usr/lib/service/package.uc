@@ -363,17 +363,21 @@ function nft_table_present(name) {
 // Prokop's interception that is in place, one entry each: its nft table, or
 // its fwmark rule at priority 105 that routes marked traffic to the table of
 // its sing-box listener (by the table's name, or by number once rt_tables
-// lost it).
+// lost it, or under another name of table 105 with Prokop's fwmark: iproute2
+// shows the last rt_tables name of an id, Podkop's for one, NET-3).
 function interception_left() {
     let left = [];
     let table = constants.NFT_TABLE_NAME || "ProkopTable";
     if (nft_table_present(table))
         push(left, "nft table inet " + table);
     let lookup = constants.RT_TABLE_NAME || "prokop";
+    let mark = hex(constants.NFT_FAKEIP_MARK || "0x04000000");
     for (let family in [ "4", "6" ])
         for (let line in split(command_capture_from_args([ "ip", "-" + family, "rule", "show" ]).output, "\n")) {
             let rule = match(line, /^105:.*[ \t]lookup[ \t]+([^ \t]+)/);
-            if (rule != null && (rule[1] == lookup || rule[1] == "105")) {
+            let fwmark = match(line, /[ \t]fwmark[ \t]+(0x[0-9a-fA-F]+)\/(0x[0-9a-fA-F]+)/);
+            if (rule != null && (rule[1] == lookup || rule[1] == "105" ||
+                (fwmark != null && hex(fwmark[1]) == mark && hex(fwmark[2]) == mark))) {
                 push(left, "IPv" + family + " rule 105");
                 break;
             }

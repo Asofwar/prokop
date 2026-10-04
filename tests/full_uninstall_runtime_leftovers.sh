@@ -209,6 +209,15 @@ says_left rule:6 'IPv6 rule 105'
 if printf '%s\n' "$status" | grep -Fq 'ProkopTable'; then
   fail "$CASE: the status names a table that is gone: $status"
 fi
+# Under another name of table 105 (Podkop's entry after Prokop's, NET-3):
+# the rule with Prokop's fwmark is still Prokop's.
+CASE="IPv6 rule under another table name"
+fixture rule_other_name
+printf 'rule6\n' >"$ROOT/stop-leaves"
+printf '105:\tfrom all fwmark 0x4000000/0x4000000 lookup podkop\n' >"$ROOT/rules6"
+run_removal
+refused_at_stop
+says_left rule:6 'IPv6 rule 105'
 CASE="table only"
 fixture table_only
 printf 'table\n' >"$ROOT/stop-leaves"

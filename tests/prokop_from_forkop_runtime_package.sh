@@ -41,10 +41,10 @@ exit 0
 SH
 done
 # ip: Prokop's route and rule are in place, listed under the name iproute2
-# gives table 105 (the first rt_tables entry for it).
+# gives table 105: the last rt_tables entry for it (NET-3).
 cat >"$WORK_DIR/bin/ip" <<'SH'
 #!/bin/sh
-name="$(awk '$1 == "105" { print $2; exit }' "$RT_TABLES")"
+name="$(awk '$1 == "105" { n = $2 } END { print n }' "$RT_TABLES")"
 case "$*" in
   "route list table prokop") echo 'local default dev lo scope host' ;;
   "-6 route list table prokop") echo 'local default dev lo metric 1024 pref medium' ;;
@@ -81,12 +81,17 @@ route_rule() {
 }
 
 # 1. A Prokop start next to the stopped, still installed old package: Prokop's
-#    entry is placed before the old one, which stays.
+#    entry is added, the old one stays, and Prokop's rule is found under
+#    either name.
 legacy_installed
 rt_tables '105 forkop'
 route_rule || fail "route rule setup failed next to the installed old package"
-[ "$(awk '$1 == "105" { print $2; exit }' "$RT_TABLES")" = prokop ] || fail "Prokop's entry must come first"
+grep -Fxq '105 prokop' "$RT_TABLES" || fail "Prokop's entry must be added"
 grep -Fxq '105 forkop' "$RT_TABLES" || fail "the old package's entry must stay while it is installed"
+rt_tables '105 prokop' '105 forkop'
+: >"$WORK_DIR/commands.log"
+route_rule || fail "route rule setup failed with the old entry last"
+[ "$(grep -c '^105 ' "$RT_TABLES")" = 2 ] || fail "the entries must not be rewritten"
 grep -Fxq '200 custom' "$RT_TABLES" || fail "unrelated entries must stay"
 : >"$WORK_DIR/commands.log"
 route_rule || fail "a second route rule setup failed"

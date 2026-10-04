@@ -179,8 +179,9 @@ transaction_running() {
 UNINSTALL_TRANSACTION_WAIT=60
 
 # LEFT: what of Prokop is still in place (UC-028), comma-separated: its nft
-# table and its fwmark rule at priority 105 (by the table's name, or by
-# number once rt_tables lost it), which divert traffic to a listener the
+# table and its fwmark rule at priority 105 (by the table's name, by number
+# once rt_tables lost it, or by Prokop's fwmark under another name of table
+# 105, such as Podkop's: NET-3), which divert traffic to a listener the
 # packages take away. With "all" also its lines in the crontab, which would
 # call a removed /usr/bin/prokop, and what the removal itself takes away:
 # the TorrServer Direct table, the kill-switch table and its fw4 loader,
@@ -202,7 +203,7 @@ find_left_behind() {
     fi
     for family in 4 6; do
         if ip "-$family" rule show 2>/dev/null |
-            grep -Eq '^105:.*[[:space:]]lookup[[:space:]]+(prokop|105)([[:space:]]|$)'; then
+            grep -Eq '^105:.*[[:space:]](lookup[[:space:]]+(prokop|105)([[:space:]]|$)|fwmark[[:space:]]+0x0*4000000/0x0*4000000[[:space:]])'; then
             left_behind "rule:$family" "IPv$family rule 105"
         fi
     done

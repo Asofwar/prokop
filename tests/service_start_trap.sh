@@ -131,14 +131,8 @@ awk '
   fail "failed runtime cleanup must stop partial runtime, roll back DNS, and mark clean shutdown"
 grep -Fq 'cleanup_failed_runtime();' "$LIFECYCLE_UC" ||
   fail "service failure paths must use failed runtime cleanup"
-require_pattern "tproxy-marking-rule4-present" \
-  "service stop must use direct ucode IPv4 tproxy marking rule check"
-require_pattern "tproxy-marking-rule6-present" \
-  "service stop must use direct ucode IPv6 tproxy marking rule check"
-require_pattern "tproxy-route4-present" \
-  "service stop must use direct ucode IPv4 tproxy route check"
-require_pattern "tproxy-route6-present" \
-  "service stop must use direct ucode IPv6 tproxy route check"
+require_pattern '"remove-tproxy-route-rule", RT_TABLE_NAME, NFT_FAKEIP_MARK' \
+  "service stop must remove the tproxy route and marking rules through nft/apply.uc"
 grep -Fq 'require("core.uci")' "$LIFECYCLE_UC" ||
   fail "service/lifecycle.uc must use core.uci for lifecycle UCI state"
 if grep -n -E 'uci -q|require\("uci"\)\.cursor|function uci_|uci_set\(' "$LIFECYCLE_UC" >/dev/null 2>&1; then

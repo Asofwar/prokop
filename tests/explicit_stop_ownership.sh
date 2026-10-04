@@ -249,11 +249,17 @@ $fake_header
 ev("dns " + mode);
 exit(0);
 UC
-# The fwmark rule at priority 105 is present while \$IP_RULE_FILE exists.
+# The fwmark rule at priority 105 is present while \$IP_RULE_FILE exists;
+# remove-tproxy-route-rule takes it away.
 cat >"$LIB/nft/apply.uc" <<UC
 $fake_header
 if (mode == "tproxy-marking-rule4-present")
     exit(fs.stat(getenv("IP_RULE_FILE")) != null ? 0 : 1);
+if (mode == "remove-tproxy-route-rule") {
+    ev("nft " + mode);
+    fs.unlink(getenv("IP_RULE_FILE"));
+    exit(0);
+}
 exit(mode == "remove-dpi-transition-guard" ? 0 : 1);
 UC
 mkdir -p "$LIB/components" "$LIB/autotune" "$LIB/providers/zapret" "$LIB/providers/zapret2" "$LIB/providers/byedpi"

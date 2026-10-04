@@ -1310,13 +1310,35 @@ function normalized_fields(line) {
     return line == "" ? [] : split(line, " ");
 }
 
-// `lookup <table>`: by its rt_tables name, or by the numeric id `ip` prints
-// while /etc/iproute2/rt_tables lacks the name (UC-163).
+// The rt_tables file the TPROXY table is registered in (ensure-tproxy-
+// route-rule may name another one).
+let rt_tables_path_in_use = RT_TABLES_FILE;
+
+// Every name rt_tables gives table_id. iproute2 names an id by the LAST
+// entry for it (NET-3): with Podkop's `105 podkop`, or the entry of the
+// package before the rename, after Prokop's, `ip rule` shows Prokop's rule
+// under that name.
+function rt_table_names(table_id) {
+    let names = [];
+    let files = [ rt_tables_path_in_use ];
+    for (let conf in ((fs.glob ? fs.glob(rt_tables_path_in_use + ".d/*.conf") : null) ?? []))
+        push(files, conf);
+    for (let file in files)
+        for (let line in split(as_string(fs.readfile(file) ?? ""), "\n")) {
+            let fields = normalized_fields(line);
+            if (length(fields) >= 2 && fields[0] == as_string(table_id) && index(names, fields[1]) < 0)
+                push(names, fields[1]);
+        }
+    return names;
+}
+
+// `lookup <table>`: by any rt_tables name of its id, or by the numeric id
+// `ip` prints while rt_tables lacks a name (UC-163).
 function rule_line_has_lookup_table(fields, table, table_id) {
-    table = as_string(table);
+    let names = [ as_string(table), as_string(table_id), ...rt_table_names(table_id) ];
 
     for (let i = 0; i + 1 < length(fields); i++)
-        if (fields[i] == "lookup" && (fields[i + 1] == table || fields[i + 1] == as_string(table_id)))
+        if (fields[i] == "lookup" && index(names, fields[i + 1]) >= 0)
             return true;
 
     return false;
@@ -1354,6 +1376,23 @@ function has_tproxy_marking_rule_text(rule_list, table, mark) {
 
         if (rule_line_has_lookup_table(fields, table, TPROXY_RULE_TABLE_ID) && rule_line_has_fwmark(fields, expected_mark))
             return true;
+    }
+
+    return false;
+}
+
+// Another program's rule on Prokop's table id (Podkop uses table 105 too):
+// the table's route is then not Prokop's alone to flush.
+function has_foreign_table_rule_text(rule_list, table, mark) {
+    let expected_mark = provider_marks.parse_number(mark);
+
+    for (let line in split(rule_list, "\n")) {
+        let fields = normalized_fields(line);
+        if (length(fields) < 2 || !rule_line_has_lookup_table(fields, table, TPROXY_RULE_TABLE_ID))
+            continue;
+        if (fields[0] == TPROXY_RULE_PRIORITY + ":" && expected_mark != null && rule_line_has_fwmark(fields, expected_mark))
+            continue;
+        return true;
     }
 
     return false;
@@ -1402,51 +1441,35 @@ function write_rt_tables(path, data) {
     return durable.durable_rewrite(as_string(path), data, 0644);
 }
 
-// iproute2 names a table id by the first entry for it. An entry the product
-// before the rename left for the same id (core/legacy_forkop.uc) would make
-// `ip rule` show Prokop's rule under the old name, and Prokop would never find
-// its own rule. It goes once that package is gone; while it is installed,
-// Prokop's entry is placed before it.
+// The entry the package before the rename left for the same id
+// (core/legacy_forkop.uc) goes once that package is gone. Which entry
+// comes first does not matter: Prokop's rule is found under any name of
+// its id (rt_table_names).
 function ensure_rt_table_entry(path, table_id, table_name) {
     let data = fs.readfile(path);
     data = data == null ? "" : as_string(data);
-    let own = as_string(table_id) + " " + as_string(table_name);
     let lines = split(data, "\n");
     if (length(lines) > 0 && lines[length(lines) - 1] == "")
         pop(lines);
 
-    let legacy_at = -1;
-    let own_at = -1;
-    for (let i = 0; i < length(lines); i++) {
-        let fields = normalized_fields(lines[i]);
-        if (legacy_at < 0 && legacy_rt_table_line(fields, table_id))
-            legacy_at = i;
-        if (own_at < 0 && length(fields) >= 2 && fields[0] == as_string(table_id) && fields[1] == as_string(table_name))
-            own_at = i;
-    }
-    if (legacy_at < 0) {
-        if (own_at >= 0)
-            return true;
-        push(lines, own);
-        return write_rt_tables(path, join("\n", lines) + "\n");
-    }
-
-    let result = [];
     let strip_legacy = !legacy.installed();
-    if (!strip_legacy && own_at >= 0 && own_at < legacy_at)
-        return true;
-    for (let i = 0; i < length(lines); i++) {
-        let fields = normalized_fields(lines[i]);
-        if (length(fields) >= 2 && fields[0] == as_string(table_id) && fields[1] == as_string(table_name))
+    let result = [];
+    let own = false;
+    for (let line in lines) {
+        let fields = normalized_fields(line);
+        if (strip_legacy && legacy_rt_table_line(fields, table_id))
             continue;
-        if (legacy_rt_table_line(fields, table_id)) {
-            if (i == legacy_at)
-                push(result, own);
-            if (strip_legacy)
+        if (length(fields) >= 2 && fields[0] == as_string(table_id) && fields[1] == as_string(table_name)) {
+            if (own)
                 continue;
+            own = true;
         }
-        push(result, lines[i]);
+        push(result, line);
     }
+    if (!own)
+        push(result, as_string(table_id) + " " + as_string(table_name));
+    if (length(result) == length(lines) && own)
+        return true;
     return write_rt_tables(path, join("\n", result) + "\n");
 }
 
@@ -1480,6 +1503,7 @@ function tproxy_route_rule_present(table, mark) {
 
 function ensure_tproxy_route_rule(table, mark, rt_tables_path) {
     rt_tables_path = as_string(rt_tables_path || RT_TABLES_FILE);
+    rt_tables_path_in_use = rt_tables_path;
 
     if (!ensure_rt_table_entry(rt_tables_path, TPROXY_RULE_TABLE_ID, table)) {
         log_fatal("Failed to update route table registry. Aborted.");
@@ -1535,6 +1559,29 @@ function ensure_tproxy_route_rule(table, mark, rt_tables_path) {
     }
 
     return true;
+}
+
+// Stop: Prokop's marking rules go; the table's route is flushed only when
+// no other program's rule looks it up (Podkop's table 105, NET-3).
+function remove_tproxy_route_rule(table, mark) {
+    let ok = true;
+    for (let family in [ "4", "6" ]) {
+        let rule_present = family == "4" ? tproxy_marking_rule4_present : tproxy_marking_rule6_present;
+        if (rule_present(table, mark) &&
+            !run_args([ "ip", "-" + family, "rule", "del", "fwmark", as_string(mark) + "/" + as_string(mark), "table", table, "priority", TPROXY_RULE_PRIORITY ]))
+            ok = false;
+
+        let route_present = family == "4" ? tproxy_route4_present : tproxy_route6_present;
+        if (!route_present(table))
+            continue;
+        if (has_foreign_table_rule_text(command_output_quiet_from_args([ "ip", "-" + family, "rule", "list" ]), table, mark)) {
+            log_debug("IPv" + family + " TPROXY table " + TPROXY_RULE_TABLE_ID + " is used by another program's rule; its route stays");
+            continue;
+        }
+        if (!run_args(family == "4" ? [ "ip", "route", "flush", "table", table ] : [ "ip", "-6", "route", "flush", "table", table ]))
+            ok = false;
+    }
+    return ok;
 }
 
 // br_netfilter's iptables hooks: off while Prokop runs, put back at stop
@@ -2570,6 +2617,8 @@ else if (mode == "nft-table-present-fixture")
     exit(nft_table_present(ARGV[1]) ? 0 : 1);
 else if (mode == "ensure-tproxy-route-rule")
     exit(ensure_tproxy_route_rule(ARGV[1], ARGV[2], ARGV[3]) ? 0 : 1);
+else if (mode == "remove-tproxy-route-rule")
+    exit(remove_tproxy_route_rule(ARGV[1], ARGV[2]) ? 0 : 1);
 else if (mode == "tproxy-route-present")
     exit(tproxy_route_present(ARGV[1]) ? 0 : 1);
 else if (mode == "tproxy-route4-present")
