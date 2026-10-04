@@ -937,6 +937,10 @@ function nft_create_runtime_base(table, localv4_set, common_set, port_set, ip_po
         !nft_add_rule(table, "dns_redirect", [ "iifname", "@" + as_string(interface_set), "ip", "saddr", "@" + DNS_SOURCE_SET, "udp", "dport", "53", "counter", "redirect", "to", ":" + as_string(runtime_constants.SOURCE_DNS_INBOUND_PORT) ]) ||
         !nft_add_rule(table, "dns_redirect", [ "iifname", "@" + as_string(interface_set), "ip6", "saddr", "@" + DNS_SOURCE6_SET, "tcp", "dport", "53", "counter", "redirect", "to", ":" + as_string(runtime_constants.SOURCE_DNS_INBOUND_PORT) ]) ||
         !nft_add_rule(table, "dns_redirect", [ "iifname", "@" + as_string(interface_set), "ip6", "saddr", "@" + DNS_SOURCE6_SET, "udp", "dport", "53", "counter", "redirect", "to", ":" + as_string(runtime_constants.SOURCE_DNS_INBOUND_PORT) ]) ||
+        // Every capture rule below matches the source interfaces only: WAN
+        // and other traffic leaves at the first rule instead of passing
+        // every rule of every section (audit optimization 21).
+        !nft_add_rule(table, "mangle", [ "iifname", "!=", "@" + as_string(interface_set), "return" ]) ||
         // Answers are never captured (NET-1): capture goes by destination,
         // and the answer of a connection that a host in a captured list
         // opened to the router or to a LAN server went to sing-box too.

@@ -215,6 +215,11 @@ if grep -Fq $'prokop_dns_sources\tudp\tdport\t53\tmeta\tmark' "$NFT_LOG"; then
 fi
 assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tProkopTable\tmangle\tiifname\t@prokop_interfaces\tip6\tdaddr\t@localv6\tip6\tdaddr\t!=\tfc00::/18\treturn' "runtime local6 return preserves FakeIP6 capture"
 assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tProkopTable\tmangle\tjump\tpriority_rules' "runtime priority jump"
+# Traffic from other interfaces leaves mangle at its first rule; answers and
+# the router's own addresses before any capture rule (NET-1, NET-2).
+[ "$(grep -F $'\tProkopTable\tmangle\t' "$NFT_LOG" | grep -F $'\trule\t' | head -n 4 | cut -f7- | tr '\t' ' ' | paste -sd ';' -)" = \
+  'iifname != @prokop_interfaces return;ct direction reply return;ct status dnat return;fib daddr type local return' ] ||
+  fail "mangle does not start with the interface, answer, DNAT and local address returns"
 assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tProkopTable\tmangle\tiifname\t@prokop_interfaces\tip\tdaddr\t198.18.0.0/15\tmeta\tl4proto\ttcp\tmeta\tmark\tset\t0x00100000\tcounter' "runtime fakeip tcp rule"
 assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tProkopTable\tmangle\tiifname\t@prokop_interfaces\tip6\tdaddr\tfc00::/18\tmeta\tl4proto\ttcp\tmeta\tmark\tset\t0x00100000\tcounter' "runtime fakeip6 tcp rule"
 # Nothing ever filled the shared capture sets of the releases before the
