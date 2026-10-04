@@ -49,6 +49,8 @@ migrating-from-forkop'
 #   main.js: browser storage keys bundled from legacyStorage.ts.
 #   constants.uc: zapret runtime directory older Forkop builds used; Prokop
 #     still cleans it up (ZAPRET_LEGACY_RUNTIME_BASE_DIR).
+#   full-uninstall.sh: the marker line of zms/zmsA launchers Forkop wrote,
+#     which full removal deletes (legacy_forkop.ZAPRET_MANAGER_MARKER).
 #   ops READMEs: the old repository/channel name and the host-side names a
 #     mirror operator renames when upgrading a pre-rename mirror host.
 FILE_PATTERNS="$(cat <<'EOF'
@@ -61,6 +63,7 @@ ops/mirror/README.md	from `forkop` to `prokop`
 ops/mirror/README.md	asofwar/forkop
 ops/mirror/README.md	renamed forkop
 prokop/files/usr/lib/components/action.uc	zapret_manager_forkop_marker
+prokop/files/usr/lib/full-uninstall.sh	forkop x\) zapret-manager launcher
 ops/hosting/README.md	asofwar\.github\.io/forkop
 ops/hosting/README.md	asofwar/forkop
 ops/hosting/README.md	репозиторий `forkop`
