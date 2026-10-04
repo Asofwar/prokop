@@ -1062,6 +1062,8 @@ function session(package_name, config_file, cli) {
         },
         // The commit failed because someone else changed the file.
         conflict: function() { return backend.conflict != null && backend.conflict(); },
+        // Something was edited (also when the edits ended where it began).
+        changed: function() { return dirty; },
         close
     };
 }

@@ -258,7 +258,7 @@ grep -Fq 'mode == "retry-start-on-wan-up"' "$INITD_UC" ||
   fail "service/initd.uc must expose the complete WAN retry entrypoint"
 grep -Fq 'mode == "retry-start-on-wan-up-action"' "$INITD_UC" ||
   fail "service/initd.uc must expose the WAN retry decision fixture"
-grep -Fq 'schedule_start_retry(START_RETRY_PID_FILE, START_RETRY_DELAY_SECONDS)' "$INITD_UC" ||
+grep -Fq 'schedule_start_retry(START_RETRY_PID_FILE, as_string(delay))' "$INITD_UC" ||
   fail "failed service start must schedule a retry even if WAN is already up"
 grep -Fq 'start_failure_blocks_retry(START_FAILURE_FILE)' "$INITD_UC" ||
   fail "terminal rule-set source failure must suppress automatic start retry"

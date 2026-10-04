@@ -515,7 +515,7 @@ function dnsmasq_configure(force) {
     return restart_dnsmasq();
 }
 
-function dnsmasq_restore(force, quiet) {
+function dnsmasq_restore(force, quiet, failsafe) {
     if (no_dnsmasq_settings())
         return true;
     if (legacy_runtime_owns_dnsmasq()) {
@@ -545,10 +545,16 @@ function dnsmasq_restore(force, quiet) {
 
     dnsmasq_cleanup_legacy_instance();
     dnsmasq_restore_default_instance();
-    killswitch_dns_apply(true);
+    let changed = killswitch_dns_apply(true);
+    changed = dhcp.changed() || changed;
     if (!commit_dhcp())
         return false;
 
+    // The failsafe after every failed start restarts dnsmasq (and its DHCP)
+    // only when it changed something: a start that never reached dnsmasq
+    // left nothing to restore (LC-4).
+    if (failsafe && !changed)
+        return true;
     return restart_dnsmasq();
 }
 
@@ -574,7 +580,7 @@ function failsafe_restore() {
         log("Rolling back Prokop DNS changes in dnsmasq", "warn");
     }
 
-    return dnsmasq_restore("force", true);
+    return dnsmasq_restore("force", true, true);
 }
 
 function run_mode(mode) {

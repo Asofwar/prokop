@@ -127,8 +127,11 @@ initd() {
   env PROKOP_LIB="$FAKE_LIB" ucode -L "$REAL_LIB" "$REAL_LIB/service/initd.uc" "$@" >"$WORK_DIR/out" 2>&1
 }
 
+# reload.lock (taken by the command-line lifecycle itself, LC-3) is no runtime.
+runtime_events() { grep -Ev '^service/state.uc (acquire|release)-runtime-dir-lock' "$EVENTS" || true; }
+
 refused_quietly() {
-  if grep -Eq '^service/state.uc|^dns/apply.uc|^nft/apply.uc|^prokop ' "$EVENTS"; then
+  if runtime_events | grep -Eq '^service/state.uc|^dns/apply.uc|^nft/apply.uc|^prokop '; then
     fail "$1 reached the runtime"
   fi
   [ ! -e "$RUN/start.explicit" ] || fail "$1 was recorded as an explicit start"
@@ -188,7 +191,7 @@ reset_case
 legacy running table
 lifecycle stop || fail "a stop next to the running old product failed"
 grep -Fq 'Prokop has no runtime to stop' "$WORK_DIR/syslog" || fail "the skipped stop must be logged"
-if grep -Eq '^service/state.uc|^dns/apply.uc|^nft/apply.uc|^singbox/|^providers/' "$EVENTS"; then
+if runtime_events | grep -Eq '^service/state.uc|^dns/apply.uc|^nft/apply.uc|^singbox/|^providers/'; then
   fail "a stop next to the running old product touched shared state"
 fi
 reset_case

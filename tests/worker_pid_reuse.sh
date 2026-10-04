@@ -335,12 +335,14 @@ done
 # <lib>/service/lifecycle.uc start`), records itself in the start marker, and
 # ui.uc reports a start in progress while it runs and no longer once it has
 # ended. Every module the start calls is a double; the first one it calls
-# (the sing-box conflict check) holds it, then reports a conflict, so the
-# start refuses and ends.
+# after taking reload.lock (the sing-box conflict check) holds it, then
+# reports a conflict, so the start refuses and ends.
 FAKE_LIB="$WORK_DIR/fake-lib"
 mkdir -p "$FAKE_LIB/service" "$FAKE_LIB/diagnostics"
 cat >"$FAKE_LIB/service/state.uc" <<'UC'
 let fs = require("fs");
+if (index(ARGV[0] ?? "", "runtime-dir-lock") >= 0)
+    exit(0);
 fs.writefile(getenv("TEST_WORK") + "/lifecycle.held", "");
 while (fs.stat(getenv("TEST_WORK") + "/lifecycle.hold") != null)
     system("sleep 0.05");

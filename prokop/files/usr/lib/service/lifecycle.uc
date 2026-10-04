@@ -5,6 +5,7 @@ let constants = require("core.constants");
 let uci_core = require("core.uci");
 let common = require("core.common");
 let process_identity = require("core.process_identity");
+let runtime_lock = require("core.runtime_lock");
 let refresh_worker = require("core.refresh_worker");
 let legacy = require("core.legacy_forkop");
 
@@ -41,6 +42,7 @@ const RUNTIME_LISTS_PENDING_FILE = getenv("PROKOP_RUNTIME_LISTS_PENDING_FILE") |
 const RULESET_REFRESH_AFTER_LIST_FILE = getenv("PROKOP_RULESET_REFRESH_AFTER_LIST_FILE") || RUNTIME_STATE_DIR + "/ruleset-refresh-after-list";
 const START_IN_PROGRESS_FILE = getenv("PROKOP_START_IN_PROGRESS_FILE") || RUNTIME_STATE_DIR + "/start.in-progress";
 const START_FAILURE_FILE = getenv("PROKOP_START_FAILURE_FILE") || RUNTIME_STATE_DIR + "/start.failure";
+const START_RETRY_FILE = getenv("PROKOP_START_RETRY_FILE") || RUNTIME_STATE_DIR + "/start.retry";
 // An explicit stop (service/state.uc runtime-apply-allowed; UC-012). It stays
 // in effect until an explicit start or restart: no reload brings back the
 // runtime it took down (reload_skipped_after_stop; D-15, UC-056).
@@ -754,7 +756,8 @@ function validate_start_config() {
 }
 
 // Taken inside reload.lock, which service/initd.uc holds around `prokop start`
-// and `prokop reload` (global lock order: service/state.uc). The one process
+// and `prokop reload`, or this process for a command-line call
+// (acquire_cli_reload_lock; global lock order: service/state.uc). The one process
 // that downloads under subscription-update.lock without reload.lock is the
 // deferred subscription bootstrap retry, which holds the lock for as long as
 // its requests take (a forced subscription update waiting for the lock takes
@@ -2788,8 +2791,72 @@ function disable_service() {
     return command_status_from_args([ SERVICE_INIT, "disable" ]);
 }
 
+// `prokop start|stop|reload|restart` (main as well) run under reload.lock
+// (LC-3). service/initd.uc takes it around them for init.d, the UI, procd
+// triggers and every internal caller, so this process runs under the lock of
+// an ancestor. Run from the command line it takes the lock itself: a start or
+// reload that never gets it changes nothing and fails, and a stop goes on
+// without it after the same wait as service/initd.uc stop_service (the work
+// that holds the lock gives way to the stop request the stop writes). A stop
+// that service/initd.uc already let go without the lock does not wait again
+// (PROKOP_RELOAD_LOCK_WAIVED).
+const CLI_RELOAD_LOCK_WAIT_SECONDS = getenv("PROKOP_CLI_RELOAD_LOCK_WAIT_SECONDS") || "30";
+let cli_reload_lock_held = false;
+
+function reload_lock_held_by_caller() {
+    let owner = runtime_lock.owner(RELOAD_LOCK_DIR);
+    if (owner == "")
+        return false;
+    let pid = owner_pid();
+    for (let depth = 0; depth < 16 && pid != "" && pid != "0"; depth++) {
+        if (pid == owner)
+            return true;
+        pid = process_identity.parent_pid(pid);
+    }
+    return false;
+}
+
+function acquire_cli_reload_lock(mode) {
+    if (reload_lock_held_by_caller())
+        return true;
+    if (mode == "stop" && getenv("PROKOP_RELOAD_LOCK_WAIVED") == "1")
+        return true;
+    if (module_success(STATE_UC, [ "acquire-runtime-dir-lock-wait", RELOAD_LOCK_DIR, owner_pid(), CLI_RELOAD_LOCK_WAIT_SECONDS ])) {
+        cli_reload_lock_held = true;
+        return true;
+    }
+    if (mode == "stop") {
+        log_message("Prokop stop did not get the runtime lock within " + CLI_RELOAD_LOCK_WAIT_SECONDS +
+            " s; stopping without it, the work that holds it will not start the runtime again", "warn");
+        return true;
+    }
+    let message = "Prokop " + mode + " refused: another start, stop, reload or update held the runtime lock for " +
+        CLI_RELOAD_LOCK_WAIT_SECONDS + " s; nothing was changed. Try again, or run " + SERVICE_INIT + " " +
+        (mode == "main" ? "start" : mode) + ", which waits or queues it";
+    log_message(message, "error");
+    warn(message + "\n");
+    return false;
+}
+
+// A reload that init.d queued while this process held the lock runs once it
+// is released, as service/initd.uc reload_finish does.
+function release_cli_reload_lock(mode, status) {
+    if (!cli_reload_lock_held)
+        return;
+    cli_reload_lock_held = false;
+    module_success(STATE_UC, [ "release-runtime-dir-lock", RELOAD_LOCK_DIR, owner_pid() ]);
+    if (status == 0 && mode != "stop" && fs.stat(PENDING_RELOAD_FILE) != null)
+        module_success(STATE_UC, [ "run-pending-reload-if-requested", PENDING_RELOAD_FILE, SERVICE_INIT ]);
+}
+
 let mode = ARGV[0] || "";
 let status = 1;
+let cli_lock_mode = mode == "start" || mode == "main" || mode == "stop" || mode == "reload" || mode == "restart";
+
+if (cli_lock_mode && !acquire_cli_reload_lock(mode)) {
+    release_start_subscription_update_lock();
+    exit(1);
+}
 
 // "main" is kept as a compatibility alias of start. It must take the same
 // gated path: start_main() alone rebuilds the live nftables policy without
@@ -2799,7 +2866,12 @@ if (mode == "start" || mode == "main") {
     // start() ends an earlier explicit stop: a stop request now was made
     // during this start, and a start it abandoned or cut short did not fail
     // (UC-012). The stop records nothing either.
-    if (status == 0 || fs.stat(STOP_REQUESTED_FILE) == null)
+    // A start that keeps failing is retried with a backoff
+    // (service/initd.uc start_retry_delay): its history on flash records the
+    // first failure of the series, not each retry (LC-4).
+    let failed_retry = status != 0 &&
+        match(as_string(fs.readfile(START_RETRY_FILE)), /(^|\n)reason=(start_failed|wan_retry_failed)(\n|$)/) != null;
+    if ((status == 0 || fs.stat(STOP_REQUESTED_FILE) == null) && !failed_retry)
         module_success(LIB_DIR + "/diagnostics/health.uc", [ "record", "start", status == 0 ? "success" : "failure" ]);
     if (status == 0)
         confirm_working_config(startup_config_fingerprint);
@@ -2840,4 +2912,6 @@ else {
 }
 
 release_start_subscription_update_lock();
+if (cli_lock_mode)
+    release_cli_reload_lock(mode, status);
 exit(status);

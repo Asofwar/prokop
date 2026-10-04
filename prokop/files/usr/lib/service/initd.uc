@@ -30,6 +30,13 @@ const START_RETRY_FILE = getenv("PROKOP_START_RETRY_FILE") || RUNTIME_STATE_DIR 
 const START_RETRY_PID_FILE = getenv("PROKOP_START_RETRY_PID_FILE") || RUNTIME_STATE_DIR + "/start-retry.pid";
 const START_FAILURE_FILE = getenv("PROKOP_START_FAILURE_FILE") || RUNTIME_STATE_DIR + "/start.failure";
 const START_RETRY_DELAY_SECONDS = getenv("PROKOP_START_RETRY_DELAY_SECONDS") || "30";
+// A start that keeps failing (WAN down at the first boot without a cache,
+// unreachable subscriptions, a sing-box runtime error) is retried after
+// START_RETRY_DELAY_SECONDS, then after twice as long each time, up to this
+// (LC-4). The series starts over when WAN comes up and ends with a start
+// that succeeds.
+const RC_D_DIR = getenv("PROKOP_RC_D_DIR") || "/etc/rc.d";
+const START_RETRY_MAX_DELAY_SECONDS = getenv("PROKOP_START_RETRY_MAX_DELAY_SECONDS") || "1800";
 // procd.sh holds its lock on fd 1000 for every init.d call, so start_service
 // detaches the start and init.d exits 0 before the start has run (UC-013). A
 // caller that needs the outcome runs start-and-wait: it passes a request id
@@ -268,14 +275,38 @@ function mark_pending_reload(path, reason) {
     return write_text_file(path, "reason=" + reason + "\nupdated_at=" + as_string(int(now[0])) + "\nrequest=" + request + "\n");
 }
 
-function mark_start_retry(path, reason) {
+function mark_start_retry(path, reason, attempts) {
     path = as_string(path || START_RETRY_FILE);
     reason = as_string(reason || "start_failed");
 
     if (!ensure_parent_dir(path))
         return false;
 
-    return write_text_file(path, "reason=" + reason + "\nupdated_at=" + current_epoch() + "\n");
+    let data = "reason=" + reason + "\nupdated_at=" + current_epoch() + "\n";
+    if (numeric_text(as_string(attempts)))
+        data += "attempts=" + as_string(attempts) + "\n";
+    return write_text_file(path, data);
+}
+
+// Failed starts in the current retry series: 0 without one (no retry, or the
+// retry of a deferred start), 1 for a record of the previous version.
+function start_retry_attempts(path) {
+    let data = fs.readfile(as_string(path || START_RETRY_FILE));
+    if (data == null || match(data, /(^|\n)reason=(start_failed|wan_retry_failed)(\n|$)/) == null)
+        return 0;
+    let recorded = match(data, /(^|\n)attempts=([0-9]+)(\n|$)/);
+    return recorded != null ? int(recorded[2], 10) : 1;
+}
+
+// The delay before the retry that follows failed start number `attempts`.
+function start_retry_delay(attempts) {
+    let delay = numeric_text(START_RETRY_DELAY_SECONDS) ? int(START_RETRY_DELAY_SECONDS, 10) : 30;
+    let limit = numeric_text(START_RETRY_MAX_DELAY_SECONDS) ? int(START_RETRY_MAX_DELAY_SECONDS, 10) : 1800;
+    if (delay < 1)
+        delay = 1;
+    for (let n = 1; n < int(attempts) && delay < limit; n++)
+        delay *= 2;
+    return delay > limit ? limit : delay;
 }
 
 // The retry of a deferred start (start_service) records the stop request
@@ -713,7 +744,7 @@ function status_service() {
 }
 
 function service_is_enabled() {
-    return file_exists("/etc/rc.d/S99" + SERVICE_NAME);
+    return file_exists(RC_D_DIR + "/S99" + SERVICE_NAME);
 }
 
 function retry_start_on_wan_up_action(runtime_running_value, service_enabled_value, retry_pending_value, stop_requested_value) {
@@ -812,6 +843,14 @@ function handle_wan_up(owner_pid) {
     if (action == "skip_running" || action == "skip_stopped") {
         drop_start_retry(action == "skip_running" ? 0 : 1);
         return 0;
+    }
+
+    // WAN came up: the start runs now, and its retries start over from the
+    // shortest delay instead of the one scheduled behind a long backoff.
+    if (action == "start" && start_retry_attempts(START_RETRY_FILE) > 0) {
+        cancel_scheduled_start_retry(START_RETRY_PID_FILE);
+        let recorded = match(as_string(fs.readfile(START_RETRY_FILE)), /(^|\n)reason=([a-z_]+)/);
+        mark_start_retry(START_RETRY_FILE, recorded != null ? recorded[2] : "start_failed", 0);
     }
 
     return retry_start_on_wan_up(owner_pid);
@@ -1028,9 +1067,12 @@ function start_service(reason, owner_pid) {
             command_success_from_args([ "logger", "-t", SERVICE_NAME, "[error] Prokop startup retry suppressed because all rule-set download sources failed; see the fatal startup error in LuCI logs" ]);
     }
     else {
-        mark_start_retry(START_RETRY_FILE, as_string(reason) == "triggered" ? "wan_retry_failed" : "start_failed");
-        schedule_start_retry(START_RETRY_PID_FILE, START_RETRY_DELAY_SECONDS);
-        command_success_from_args([ "logger", "-t", SERVICE_NAME, "[warn] Prokop start failed; scheduled an automatic retry" ]);
+        let attempts = start_retry_attempts(START_RETRY_FILE) + 1;
+        let delay = start_retry_delay(attempts);
+        mark_start_retry(START_RETRY_FILE, as_string(reason) == "triggered" ? "wan_retry_failed" : "start_failed", attempts);
+        schedule_start_retry(START_RETRY_PID_FILE, as_string(delay));
+        command_success_from_args([ "logger", "-t", SERVICE_NAME, "[warn] Prokop start failed; scheduled an automatic retry in " +
+            delay + " s (failed starts in a row: " + attempts + ")" ]);
     }
     finish_external_service_action("start", plan.job_id, status);
     return status;
@@ -1175,7 +1217,9 @@ function stop_service(owner_pid) {
     // A start that held reload.lock meanwhile and failed, or one that did not
     // get it, may have scheduled its retry before it saw this stop request.
     drop_start_retry(1);
-    let status = command_status_from_args([ BIN_PATH, "stop" ]);
+    // Without the lock the lifecycle does not wait for it once more (LC-3).
+    let status = command_status_from_args(locked ? [ BIN_PATH, "stop" ] :
+        [ "env", "PROKOP_RELOAD_LOCK_WAIVED=1", BIN_PATH, "stop" ]);
     // A refused stop (2) changed nothing and the runtime runs on: withdraw
     // the stop request recorded above, before the lock goes (UC-217).
     if (status == 2) {
@@ -1398,7 +1442,11 @@ else if (mode == "wan-up-action")
 else if (mode == "service-enabled")
     exit(service_is_enabled() ? 0 : 1);
 else if (mode == "mark-start-retry")
-    exit(mark_start_retry(ARGV[1], ARGV[2]) ? 0 : 1);
+    exit(mark_start_retry(ARGV[1], ARGV[2], ARGV[3]) ? 0 : 1);
+else if (mode == "start-retry-attempts")
+    print(start_retry_attempts(ARGV[1]), "\n");
+else if (mode == "start-retry-delay")
+    print(start_retry_delay(ARGV[1]), "\n");
 else if (mode == "clear-start-retry")
     clear_start_retry(ARGV[1]);
 else if (mode == "start-retry-pending")

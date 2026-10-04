@@ -94,6 +94,15 @@ for mode in "restore force" failsafe-restore killswitch-refresh; do
   [ "$STATUS" = 0 ] || fail "$mode without Prokop settings failed"
   committed && fail "$mode without Prokop settings committed dhcp"
 done
+# The failsafe after each failed start restarts dnsmasq, and its DHCP, only
+# for a change (LC-4).
+dns_apply failsafe-restore
+restarted && fail "a failsafe that changed nothing restarted dnsmasq"
+fixture "${complete[@]}"
+dns_apply failsafe-restore
+[ "$STATUS" = 0 ] && committed || fail "the failsafe did not restore the Prokop dnsmasq settings"
+restarted || fail "the failsafe that restored dnsmasq settings did not restart dnsmasq"
+fixture 'dhcp.@dnsmasq[0].server=1.1.1.1'
 ok "dhcp settings that do not change are not written"
 
 # b. A restore puts back what the configure found.

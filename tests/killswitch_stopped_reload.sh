@@ -17,14 +17,8 @@ PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
 INITD_UC="$PROKOP_LIB/service/initd.uc"
 LIFECYCLE_UC="$PROKOP_LIB/service/lifecycle.uc"
 WORK_DIR="$(mktemp -d)"
-# shellcheck source=tests/helpers/wait.sh
-. "$ROOT_DIR/tests/helpers/wait.sh"
-# shellcheck source=tests/helpers/owned_processes.sh
-. "$ROOT_DIR/tests/helpers/owned_processes.sh"
 
-HOLDER=""
 cleanup() {
-  [ -z "$HOLDER" ] || owned_kill TERM "$HOLDER" || true
   rm -rf "$WORK_DIR"
 }
 trap cleanup EXIT
@@ -109,21 +103,16 @@ reload() {
 }
 
 # init.d holds reload.lock while service/lifecycle.uc reloads, recorded the
-# way core/runtime_lock records an owner.
+# way core/runtime_lock records an owner. The owner is this shell, an
+# ancestor of the lifecycle as init.d is (LC-3).
 hold_reload_lock() {
-  sleep 300 &
-  HOLDER=$!
-  wait_until 5 test -r "/proc/$HOLDER/stat" || fail "the reload.lock holder did not start"
   local ticks
-  ticks="$(awk '{ sub(/^.*\) /, ""); print $20 }' "/proc/$HOLDER/stat")"
+  ticks="$(awk '{ sub(/^.*\) /, ""); print $20 }' "/proc/$$/stat")"
   mkdir -p "$PROKOP_RELOAD_LOCK_DIR"
-  printf '%s\n%s\n' "$HOLDER" "$ticks" >"$PROKOP_RELOAD_LOCK_DIR/owner.$HOLDER.$ticks"
+  printf '%s\n%s\n' "$$" "$ticks" >"$PROKOP_RELOAD_LOCK_DIR/owner.$$.$ticks"
 }
 
 release_reload_lock() {
-  owned_kill TERM "$HOLDER" || true
-  wait "$HOLDER" 2>/dev/null || true
-  HOLDER=""
   rm -rf "$PROKOP_RELOAD_LOCK_DIR"
 }
 
