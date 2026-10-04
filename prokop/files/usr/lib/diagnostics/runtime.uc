@@ -601,12 +601,18 @@ function check_nft() {
     return 0;
 }
 
+// The log goes straight from logread into the renderer: no temporary copy
+// of the whole log in /tmp and no mktemp process.
+function logread_capture(args) {
+    return command_capture("logread 2>/dev/null | " + command_from_args(module_args(STATUS_UC, args)));
+}
+
 function check_logs() {
     if (!command_exists("logread")) {
         nolog_failure("Error: logread command not found");
         return 1;
     }
-    let rendered = status_capture([ "prokop-logs" ], command_output_from_args([ "logread" ]));
+    let rendered = logread_capture([ "prokop-logs" ]);
     if (rendered.output != "")
         print(rendered.output);
     if (rendered.status != 0) {
@@ -621,7 +627,7 @@ function check_sing_box_logs() {
         nolog_failure("Error: logread command not found");
         return 1;
     }
-    let rendered = status_capture([ "matching-log-tail", "sing-box", "100" ], command_output_from_args([ "logread" ]));
+    let rendered = logread_capture([ "matching-log-tail", "sing-box", "100" ]);
     if (rendered.output != "")
         print(rendered.output);
     if (rendered.status != 0) {

@@ -797,6 +797,8 @@ function render_matching_log_tail(needle, max_lines) {
     print_lines(filtered, start, length(filtered));
 }
 
+const PROKOP_LOG_MAX_LINES = 500;
+
 function render_prokop_logs() {
     let lines = split(read_stdin(), "\n");
     let filtered = [];
@@ -827,6 +829,10 @@ function render_prokop_logs() {
         exit(1);
 
     if (start >= 0) {
+        if (length(filtered) - start > PROKOP_LOG_MAX_LINES) {
+            start = length(filtered) - PROKOP_LOG_MAX_LINES;
+            print_line("Showing the last " + PROKOP_LOG_MAX_LINES + " lines since Prokop started");
+        }
         print_lines(filtered, start, length(filtered));
         return;
     }
