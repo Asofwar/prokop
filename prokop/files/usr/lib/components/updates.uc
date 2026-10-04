@@ -1370,19 +1370,37 @@ function duration_to_seconds(value) {
     print(seconds, "\n");
 }
 
+// A minute and an hour of this router for its hourly and daily jobs, so
+// that routers do not all ask the mirror and jsDelivr at 00:00 (audit
+// 2026-10-04, optimization 10). Stable: taken from the address of the LAN
+// bridge, never written anywhere. Without one, 00:00 as before.
+const CRON_SEED_FILE = getenv("PROKOP_CRON_SEED_FILE") || "/sys/class/net/br-lan/address";
+let cron_offset_value = null;
+function cron_offset() {
+    if (cron_offset_value != null)
+        return cron_offset_value;
+    let seed = trim(as_string(fs.readfile(CRON_SEED_FILE)));
+    let hash = 5381;
+    for (let i = 0; i < length(seed); i++)
+        hash = (hash * 33 + ord(seed, i)) % 2147483647;
+    cron_offset_value = seed == "" ? { minute: 0, hour: 0 } : { minute: hash % 60, hour: int(hash / 60) % 24 };
+    return cron_offset_value;
+}
+
 function due_check_cron_schedule_text(value) {
     let seconds = arg_number(value);
 
     if (seconds <= 60)
         return "* * * * *";
 
+    let offset = cron_offset();
     if (seconds % 86400 == 0)
-        return "0 0 * * *";
+        return offset.minute + " " + offset.hour + " * * *";
 
     if (seconds % 3600 == 0) {
         let hours = seconds / 3600;
         if (hours >= 1 && hours <= 23)
-            return hours == 1 ? "0 * * * *" : "0 */" + hours + " * * *";
+            return hours == 1 ? offset.minute + " * * * *" : offset.minute + " */" + hours + " * * *";
     }
 
     // An hour or more that is no whole number of hours or days (90m, 25h):
