@@ -200,7 +200,7 @@ function evaluate(measured) {
 }
 
 if (sourcepath(1) != null && sourcepath(1) != "")
-    return { aggregate, select, evaluate, schedule, base_order, stability, median, policy,
+    return { aggregate, select, evaluate, schedule, base_order, stability, median, policy, network_failure,
         MIN_PROBES, MAX_PROBES };
 
 let fs = require("fs");

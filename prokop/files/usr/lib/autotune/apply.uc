@@ -409,6 +409,13 @@ function path_probe(host, config) {
 }
 function check(checks, name, ok, detail) { push(checks, { name, ok: !!ok, detail: detail == null ? null : detail }); return !!ok; }
 
+// Every failed probe died before the TCP connection was up: the WAN, not
+// the candidate, failed the verification (AT-3).
+function network_unavailable(probes, successes) {
+    return successes < length(probes) &&
+        length(filter(probes, (p) => p.class != "success" && !select_module.network_failure(p))) == 0;
+}
+
 // ---- marked verification of a device-limited rule ---------------------------
 
 function remove_verify_table() {
@@ -479,9 +486,10 @@ function marked_traffic(plan, owner, checks, result) {
     let successes = length(filter(probes, (p) => p.class == "success"));
     let t = {
         mode: "rule_mark",
-        probes: map(probes, (p) => ({ class: p.class, http_status: p.http_status, remote_ip: p.remote_ip,
+        probes: map(probes, (p) => ({ class: p.class, connect: p.connect, http_status: p.http_status, remote_ip: p.remote_ip,
             time_appconnect_ms: p.time_appconnect_ms, curl_exit_code: p.curl_exit_code })),
         stability: select_module.stability(successes, length(probes)),
+        network_unavailable: network_unavailable(probes, successes),
         marked_packets: marked,
         queue_packets: before_q && after_q ? after_q.id_sequence - before_q.id_sequence : null,
         queue_rule_packets: before_c != null && after_c != null ? after_c - before_c : null
@@ -555,9 +563,10 @@ function verify_production(plan, expected_opt, traffic) {
     let after_q = queue_entry(plan.owner.queue), after_c = queue_rule_counter(plan.owner);
     let successes = length(filter(probes, (p) => p.class == "success"));
     let t = {
-        probes: map(probes, (p) => ({ class: p.class, http_status: p.http_status, remote_ip: p.remote_ip,
+        probes: map(probes, (p) => ({ class: p.class, connect: p.connect, http_status: p.http_status, remote_ip: p.remote_ip,
             time_appconnect_ms: p.time_appconnect_ms, curl_exit_code: p.curl_exit_code })),
         stability: select_module.stability(successes, length(probes)),
+        network_unavailable: network_unavailable(probes, successes),
         queue_packets: before_q && after_q ? after_q.id_sequence - before_q.id_sequence : null,
         queue_rule_packets: before_c != null && after_c != null ? after_c - before_c : null
     };
@@ -962,7 +971,8 @@ function apply(plan_file, resolver) {
         audit.rollback_available = true; audit.finished_at = now();
         state_write(audit); return audit;
     }
-    if (!v.ok) return rollback_to(audit, p, "verification_failed");
+    if (!v.ok) return rollback_to(audit, p, type(v.traffic) == "object" && v.traffic.network_unavailable === true ?
+        "verification_network_unavailable" : "verification_failed");
     audit.applied = true;
     // Confirm exactly the verified configuration, never a later edit.
     if (fingerprint(fs.readfile(CONFIG_FILE)) != candidate.fingerprint) {

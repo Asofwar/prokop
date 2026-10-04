@@ -61,6 +61,10 @@ function decide(ctx) {
 function outcome(result) {
     let status = type(result) == "object" ? as_string(result.status) : "";
     if (status == "applied") return { status, counted: true, cooldown: false, reset: true, history: "success" };
+    // The WAN dropped during the verification: rolled back, but the
+    // candidate is not to blame and the daily budget is not spent (AT-3).
+    if (status == "rolled_back" && as_string(result.reason) == "verification_network_unavailable")
+        return { status, counted: false, cooldown: false, reset: true, history: "recovered" };
     if (status == "rolled_back") return { status, counted: true, cooldown: true, reset: true, history: "recovered" };
     if (status == "no_change_required") return { status, counted: false, cooldown: false, reset: true, history: null };
     // Nothing was changed: the plan went stale or another autotune ran.

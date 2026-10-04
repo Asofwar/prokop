@@ -55,7 +55,8 @@ print(sprintf("%J\n", {
   limit_old: d({ applies: [ { at: 100000 - 86400, counted: true } ] }),
   limit_uncounted: d({ applies: [ { at: 99000, counted: false } ] }),
   outcomes: map([ { status: "applied" }, { status: "rolled_back" }, { status: "no_change_required" }, { status: "stale" },
-    { status: "busy" }, { status: "failed" }, { status: "needs_attention" }, null ], (r) => a.outcome(r))
+    { status: "busy" }, { status: "failed" }, { status: "needs_attention" }, null,
+    { status: "rolled_back", reason: "verification_network_unavailable" } ], (r) => a.outcome(r))
 }));
 UC
 ucode -L "$LIB" "$WORK/pure.uc" >"$WORK/pure.json"
@@ -80,6 +81,7 @@ assert.deepEqual(o, [
   ['failed', true, true, true, 'failure'],
   ['needs_attention', true, true, true, 'failure'],
   ['unknown', true, true, true, 'failure'],
+  ['rolled_back', false, false, true, 'recovered'],
 ]);
 NODE
 

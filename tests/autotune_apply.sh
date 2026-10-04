@@ -142,6 +142,7 @@ remote="${PROD_REMOTE:-198.18.0.5}"
 case "$mode" in
   success) echo "0|51000|$remote|404|0.020|0.110|0.150|0.151|" ;;
   reset) echo "35|51000|$remote|000|0.020|0.000000|0.000000|0.050|Recv failure: Connection reset by peer"; exit 35 ;;
+  connect_timeout) echo "28|0||000|0.000000|0.000000|0.000000|5.001|Connection timed out after 5001 milliseconds"; exit 28 ;;
 esac
 SH
 cat > "$WORK/bin/dig" <<'SH'
@@ -506,6 +507,15 @@ a.ok(r.rollback.runtime.ok); a.ok(!r.verification.ok);
 [ "$(dpi_args)" = "$ZAPRET_NFQWS_BIN --qnum=4000 --dpi-desync-fwmark=0x40000000 $FAKE " ] || fail "old runtime not restored"
 { [ ! -e "$NFT_STATE/tables/ProkopConfigRestoreDpiGuard" ] && [ ! -e "$PROKOP_SNAPSHOT_LOCK_DIR" ]; } || fail "guard or lock left after rollback"
 ok "11/12 verification failure -> standard restore of the pre-apply snapshot -> rolled_back"
+# AT-3: the WAN dropped during the verification: rolled back all the same,
+# under a reason that does not blame the candidate.
+reset_apply; plan_ready; export PROD_PLAN=connect_timeout; at apply "$WORK/plan.json"
+json 'a.equal(r.status, "rolled_back", JSON.stringify(r).slice(0, 500)); a.equal(r.reason, "verification_network_unavailable");
+a.equal(r.verification.traffic.network_unavailable, true); a.equal(r.rollback.status, "success");' "$WORK/out.json"
+[ "$(chash)" = "$PRE_HASH" ] || fail "rollback config hash after a WAN drop"
+reset_apply; plan_ready; export PROD_PLAN="success|connect_timeout|reset"; at apply "$WORK/plan.json"
+json 'a.equal(r.status, "rolled_back"); a.equal(r.reason, "verification_failed"); a.equal(r.verification.traffic.network_unavailable, false);' "$WORK/out.json"
+ok "AT-3 verification lost to connect failures only -> verification_network_unavailable"
 reset_apply; plan_ready; export PROD_QUEUE_BUMP=0; at apply "$WORK/plan.json"
 json 'a.equal(r.status, "rolled_back"); const c = r.verification.checks.find((x) => x.name === "traffic_dpi_queue"); a.equal(c.ok, false);
   a.equal(r.verification.checks.find((x) => x.name === "traffic_transport").ok, true);' "$WORK/out.json"
