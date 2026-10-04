@@ -329,4 +329,29 @@ expect_answer inbound 93.184.220.5 192.168.1.1 2222
 expect_answer forwarded-reply 93.184.220.6 192.168.1.60 8443
 ok "answers of connections from captured addresses to the router and to LAN servers go direct (NET-1)"
 
+# ---- NET-2: the router's own addresses are never captured -------------------
+
+# Only private ranges were exempt from capture. A LAN client (or a router
+# process) reaching the router by its WAN address (hairpin, router.lan's
+# global IPv6 address) on a captured port was sent to sing-box, as was
+# Tailscale and carrier-grade NAT space (100.64.0.0/10).
+python3 "$PACKETS" address br-lan:1 81.2.3.4/32 || fail "the router's WAN address could not be added"
+cat >"$WORK_DIR/own.uci" <<'EOF'
+prokop.settings=settings
+prokop.web=section
+prokop.web.action=vpn
+prokop.web.ports=443 22
+EOF
+apply_config "$WORK_DIR/own.uci"
+# Control: the ports are captured for any other address.
+expect captured lan 192.168.1.60 93.184.216.34 tcp 443
+expect captured local 93.184.216.34 tcp 443
+expect direct lan 192.168.1.60 81.2.3.4 tcp 443
+expect direct lan 192.168.1.60 81.2.3.4 tcp 22
+expect direct local 81.2.3.4 tcp 443
+expect direct lan 192.168.1.60 100.100.1.1 tcp 443
+expect direct lan 192.168.1.60 100.64.10.2 tcp 22
+expect direct local 100.100.1.1 tcp 443
+ok "the router's own addresses and 100.64.0.0/10 go direct (NET-2)"
+
 printf 'real nft dataplane checks passed\n'

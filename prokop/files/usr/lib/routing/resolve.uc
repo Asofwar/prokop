@@ -26,7 +26,7 @@ const FAKEIP_PREFIX = [ "198.18.0.0", 15 ];
 // The local and reserved IPv4 ranges nft returns early for, before any rule
 // chain (nft/apply.uc LOCALV4_RANGES, 240.0.0.0-255.255.255.255 written as
 // its prefix): such a destination never reaches sing-box.
-const LOCALV4_RANGES = [ "0.0.0.0/8", "10.0.0.0/8", "127.0.0.0/8", "169.254.0.0/16", "172.16.0.0/12", "192.0.0.0/24", "192.0.2.0/24", "192.88.99.0/24", "192.168.0.0/16", "198.51.100.0/24", "203.0.113.0/24", "224.0.0.0/4", "240.0.0.0/4" ];
+const LOCALV4_RANGES = [ "0.0.0.0/8", "10.0.0.0/8", "100.64.0.0/10", "127.0.0.0/8", "169.254.0.0/16", "172.16.0.0/12", "192.0.0.0/24", "192.0.2.0/24", "192.88.99.0/24", "192.168.0.0/16", "198.51.100.0/24", "203.0.113.0/24", "224.0.0.0/4", "240.0.0.0/4" ];
 const LEGACY_CONNECTION_ACTIONS = [ "proxy", "outbound", "vpn" ];
 const RULESET_MATCH_BIN = getenv("PROKOP_RULESET_MATCH_BIN") || "/usr/bin/sing-box";
 function seconds_setting(value, fallback) {

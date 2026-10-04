@@ -501,6 +501,8 @@ function nft_insert_rule(table, chain, args) {
 let LOCALV4_RANGES = [
     "0.0.0.0/8",
     "10.0.0.0/8",
+    // Carrier-grade NAT and Tailscale (NET-2).
+    "100.64.0.0/10",
     "127.0.0.0/8",
     "169.254.0.0/16",
     "172.16.0.0/12",
@@ -939,6 +941,9 @@ function nft_create_runtime_base(table, localv4_set, common_set, port_set, ip_po
         // opened to the router or to a LAN server went to sing-box too.
         !nft_add_rule(table, "mangle", [ "ct", "direction", "reply", "return" ]) ||
         !nft_add_rule(table, "mangle", [ "ct", "status", "dnat", "return" ]) ||
+        // The router's own addresses (its WAN address, the global IPv6
+        // address of router.lan) go direct (NET-2); FakeIP is never local.
+        !nft_add_rule(table, "mangle", [ "fib", "daddr", "type", "local", "return" ]) ||
         !nft_add_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), "ip", "daddr", "@" + as_string(localv4_set), "return" ]) ||
         !nft_add_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), "ip6", "daddr", "@" + as_string(localv6_set), "ip6", "daddr", "!=", fakeip6_range, "return" ]) ||
         !nft_add_rule(table, "mangle", [ "jump", "priority_rules" ]) ||
@@ -951,6 +956,7 @@ function nft_create_runtime_base(table, localv4_set, common_set, port_set, ip_po
         !nft_add_rule(table, "proxy", [ "meta", "mark", "&", fakeip_mark, "==", fakeip_mark, "meta", "l4proto", "tcp", "tproxy", "ip6", "to", core_ip.format_ipv6_tproxy_target(tproxy6_address, tproxy_port), "counter" ]) ||
         !nft_add_rule(table, "proxy", [ "meta", "mark", "&", fakeip_mark, "==", fakeip_mark, "meta", "l4proto", "udp", "tproxy", "ip6", "to", core_ip.format_ipv6_tproxy_target(tproxy6_address, tproxy_port), "counter" ]) ||
         !nft_add_rule(table, "mangle_output", [ "ct", "direction", "reply", "return" ]) ||
+        !nft_add_rule(table, "mangle_output", [ "fib", "daddr", "type", "local", "return" ]) ||
         !nft_add_rule(table, "mangle_output", [ "ip", "daddr", "@" + as_string(localv4_set), "return" ]) ||
         !nft_add_rule(table, "mangle_output", [ "ip6", "daddr", "@" + as_string(localv6_set), "ip6", "daddr", "!=", fakeip6_range, "return" ]) ||
         nft_prokop_mark_match_args(outbound_mark) == null ||

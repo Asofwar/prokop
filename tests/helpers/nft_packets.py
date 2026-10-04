@@ -6,6 +6,9 @@ network namespace (tests/nft_dataplane_real.sh).
       creates a persistent TUN interface standing in for the LAN bridge with
       the router's address, brings it and lo up and routes everything else
       out of it (the router's default route)
+  address LABEL ADDR4/PREFIX
+      gives the router one more address, on an alias LABEL of an interface
+      such as br-lan:1 (its WAN address in the tests)
   lan IFNAME SRC DST tcp|udp DPORT
       a LAN client SRC sends one packet (a TCP SYN or a UDP datagram) to
       DST:DPORT; it enters the router through IFNAME (prerouting)
@@ -66,17 +69,28 @@ def sockaddr_in(ip):
     return struct.pack("HH4s8x", socket.AF_INET, 0, socket.inet_aton(ip))
 
 
+def ifaddr_request(name, ip):
+    return struct.pack("16sH2s4s8s", name.encode(), socket.AF_INET, b"\0\0", socket.inet_aton(ip), b"\0" * 8)
+
+
+def prefix_mask(prefix):
+    return socket.inet_ntoa(struct.pack("!I", (0xFFFFFFFF << (32 - int(prefix))) & 0xFFFFFFFF))
+
+
+def address(label, addr4):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    ip, prefix = addr4.split("/")
+    fcntl.ioctl(sock, SIOCSIFADDR, ifaddr_request(label, ip))
+    fcntl.ioctl(sock, SIOCSIFNETMASK, ifaddr_request(label, prefix_mask(prefix)))
+    interface_up(sock, label)
+
+
 def setup(name, addr4):
     os.close(open_tun(name, persist=True))
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    address, prefix = addr4.split("/")
-    mask = socket.inet_ntoa(struct.pack("!I", (0xFFFFFFFF << (32 - int(prefix))) & 0xFFFFFFFF))
-
-    def ifaddr(ip):
-        return struct.pack("16sH2s4s8s", name.encode(), socket.AF_INET, b"\0\0", socket.inet_aton(ip), b"\0" * 8)
-
-    fcntl.ioctl(sock, SIOCSIFADDR, ifaddr(address))
-    fcntl.ioctl(sock, SIOCSIFNETMASK, ifaddr(mask))
+    ip, prefix = addr4.split("/")
+    fcntl.ioctl(sock, SIOCSIFADDR, ifaddr_request(name, ip))
+    fcntl.ioctl(sock, SIOCSIFNETMASK, ifaddr_request(name, prefix_mask(prefix)))
     interface_up(sock, name)
     interface_up(sock, "lo")
     # struct rtentry: the default route out of the TUN interface.
@@ -177,7 +191,7 @@ def forwarded_reply(name, client, server, port):
 
 
 def main(argv):
-    commands = {"setup": setup, "lan": lan, "local": local, "inbound": inbound,
+    commands = {"setup": setup, "address": address, "lan": lan, "local": local, "inbound": inbound,
                 "forwarded-reply": forwarded_reply}
     if len(argv) < 2 or argv[1] not in commands:
         sys.stderr.write(__doc__)
