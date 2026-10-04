@@ -575,8 +575,29 @@ function available_package_version(package_name) {
     return opkg_package_version_from_list(package_name, command_output_from_args([ "opkg", "list", package_name ]));
 }
 
+const PKG_LIST_UPDATE_TIMEOUT = int(getenv("PROKOP_PKG_LIST_UPDATE_TIMEOUT") || "180");
+const PKG_LOCK_RETRIES = int(getenv("PROKOP_PKG_LOCK_RETRIES") || "15");
+
+// The list update gets a deadline: a feed that never answers held the
+// component action forever. When another opkg or apk (LuCI Software, cron)
+// holds the package database lock, it is retried every 2 s instead of
+// failing at once (A4).
 function pkg_list_update_command() {
-    return is_apk() ? "apk update </dev/null" : "opkg update </dev/null";
+    let update = is_apk() ? "apk update" : "opkg update";
+    let script = "tries=0; " +
+        "while :; do " +
+        "out=$(mktemp \"${TMPDIR:-/tmp}/prokop-pkg-update.XXXXXX\") || exit 1; " +
+        update + " </dev/null >\"$out\" 2>&1 & child=$!; " +
+        "elapsed=0; while kill -0 \"$child\" 2>/dev/null && [ \"$elapsed\" -lt " + PKG_LIST_UPDATE_TIMEOUT + " ]; do sleep 1; elapsed=$((elapsed + 1)); done; " +
+        "timed_out=0; if kill -0 \"$child\" 2>/dev/null; then timed_out=1; kill -TERM \"$child\" 2>/dev/null; sleep 1; kill -KILL \"$child\" 2>/dev/null; fi; " +
+        "wait \"$child\"; rc=$?; cat \"$out\"; " +
+        "if [ \"$timed_out\" -eq 1 ]; then rm -f \"$out\"; echo \"" + update + " did not finish in " + PKG_LIST_UPDATE_TIMEOUT + " s\"; exit 124; fi; " +
+        "if [ \"$rc\" -ne 0 ] && [ \"$tries\" -lt " + PKG_LOCK_RETRIES + " ] && " +
+        "grep -Eq 'Could not lock|Unable to lock database|Resource temporarily unavailable' \"$out\"; then " +
+        "rm -f \"$out\"; tries=$((tries + 1)); echo \"Package database is locked; retrying ($tries/" + PKG_LOCK_RETRIES + ")\"; sleep 2; continue; fi; " +
+        "rm -f \"$out\"; exit \"$rc\"; " +
+        "done";
+    return command_from_args([ "sh", "-c", script ]);
 }
 
 function pkg_install_name_command(package_name) {
@@ -1472,6 +1493,9 @@ function install_zapret_like(component, action, runtime_module, resolve_fn, labe
 
     if (!ensure_package_tool("unzip", "unzip", component, action))
         action_fail(component, action, "Failed to install unzip");
+    // The package's dependencies (kmod-nft-queue and the like) come from the
+    // feeds: on opkg the lists are gone after every reboot (UPD-5).
+    run_logged("Updating package lists before " + label + " installation", pkg_list_update_command());
     let pkg = download_and_extract_zip_package(release, component);
     if (pkg == null)
         action_fail(component, action, "Failed to download " + label + " package", current_version, release.version, "", release.release_url || "");
@@ -1520,6 +1544,7 @@ function install_byedpi(action) {
         check_success("byedpi", current_version, release.version, release.release_url || "");
     }
 
+    run_logged("Updating package lists before ByeDPI installation", pkg_list_update_command());
     let pkg = download_byedpi_package(release);
     if (pkg == null)
         action_fail("byedpi", action, "Failed to download ByeDPI package");

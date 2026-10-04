@@ -2203,12 +2203,32 @@ pkg_is_installed() {
     fi
 }
 
+# A deadline, and a package database lock held by another opkg or apk (LuCI
+# Software, cron) waited out for up to 15 x 2 s instead of failing the
+# install at once (A4).
 pkg_list_update() {
-    if [ "$PKG_IS_APK" -eq 1 ]; then
-        apk update </dev/null
-    else
-        opkg update </dev/null
-    fi
+    pkg_update_tries=0
+    while :; do
+        pkg_update_log="$TMP_DIR/pkg-update.$$"
+        if [ "$PKG_IS_APK" -eq 1 ]; then
+            run_with_deadline "${PKG_LIST_UPDATE_TIMEOUT_SECONDS:-180}" apk update </dev/null >"$pkg_update_log" 2>&1
+        else
+            run_with_deadline "${PKG_LIST_UPDATE_TIMEOUT_SECONDS:-180}" opkg update </dev/null >"$pkg_update_log" 2>&1
+        fi
+        pkg_update_status=$?
+        cat "$pkg_update_log"
+        if [ "$pkg_update_status" -ne 0 ] && [ "$pkg_update_tries" -lt "${PKG_LOCK_RETRIES:-15}" ] &&
+            grep -Eq 'Could not lock|Unable to lock database|Resource temporarily unavailable' "$pkg_update_log"; then
+            rm -f "$pkg_update_log"
+            pkg_update_tries=$((pkg_update_tries + 1))
+            echo "Package database is locked; retrying ($pkg_update_tries/${PKG_LOCK_RETRIES:-15})"
+            sleep 2
+            continue
+        fi
+        rm -f "$pkg_update_log"
+        [ "$pkg_update_status" -ne 124 ] || echo "Package list update did not finish in ${PKG_LIST_UPDATE_TIMEOUT_SECONDS:-180} s" >&2
+        return "$pkg_update_status"
+    done
 }
 
 rollback_package_mirror() {
