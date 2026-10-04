@@ -2452,6 +2452,27 @@ function install_sing_box_extended(action, compressed) {
     action_success("sing_box", action, label + " has been installed", new_version, latest_version, 1, "latest", release.release_url);
 }
 
+// B7: the package of a stable or tiny sing-box comes from the package feed.
+// It is downloaded into the temporary directory while the running variant
+// still serves, so a feed that does not answer, or a package that would not
+// fit, refuses the change before Prokop is stopped for it. Returns the path,
+// "" when the download failed.
+function fetch_repository_package(package_name, package_version) {
+    let dir = tmp_dir + "/feed-" + package_name;
+    command_success_from_args([ "rm", "-rf", dir ]);
+    if (!ensure_dir(dir))
+        return "";
+    let command = is_apk() ?
+        command_from_args([ "apk", "fetch", "-o", dir, package_name + "=" + package_version ]) + " </dev/null" :
+        "cd " + shell_quote(dir) + " && " + command_from_args([ "opkg", "download", package_name ]) + " </dev/null";
+    let files = run_logged("Downloading " + package_name + " package", command) ? (fs.glob(dir + "/*") || []) : [];
+    if (length(files) != 1 || file_bytes(files[0]) <= 0) {
+        command_success_from_args([ "rm", "-rf", dir ]);
+        return "";
+    }
+    return files[0];
+}
+
 function install_package_sing_box(action, tiny) {
     let package_name = tiny ? "sing-box-tiny" : "sing-box";
     let conflict = tiny ? "sing-box" : "sing-box-tiny";
@@ -2482,6 +2503,18 @@ function install_package_sing_box(action, tiny) {
         latest_version = installed_package_version(package_name);
     if (latest_version == "")
         action_fail("sing_box", action, "Failed to resolve " + (tiny ? "tiny" : "stable") + " sing-box package version", current_version);
+
+    init_tmp_dir() || action_fail("sing_box", action, "Failed to create temporary directory", current_version, latest_version);
+    let package_file = fetch_repository_package(package_name, latest_version);
+    if (package_file == "")
+        action_fail("sing_box", action, "Failed to download the " + package_name + " package; the current sing-box was kept" +
+            out_of_space_hint(last_logged_output), current_version, latest_version);
+    // The package unpacks to about three times its size; the current binary
+    // stays as the backup until the new one runs.
+    let space_error = component_install_space_error(label, file_bytes(package_file) * 3);
+    command_success_from_args([ "rm", "-rf", tmp_dir + "/feed-" + package_name ]);
+    if (space_error != "")
+        action_fail("sing_box", action, space_error, current_version, latest_version);
 
     let previous_variant = sing_box_runtime_output("variant", []);
     let previous_marker = sing_box_runtime_output("read-variant-marker", []);

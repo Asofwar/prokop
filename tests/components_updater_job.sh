@@ -221,6 +221,10 @@ case "${1:-}" in
   update)
     : >"${FAKE_OPKG_UPDATED:?}"
     ;;
+  download)
+    [ -z "${FAKE_FEED_DOWN:-}" ] || exit 1
+    printf 'ipk' >"${2}_1.2.3_all.ipk"
+    ;;
   install|remove)
     ;;
   *)
@@ -259,7 +263,46 @@ if (firstList < 0) fail('initial stable sing-box package list lookup missing');
 if (update <= firstList) fail('package list update must happen after empty initial lookup');
 if (secondList <= update) fail('stable sing-box version must be resolved again after package list update');
 if (install <= secondList) fail('stable sing-box install must happen after post-update version resolve');
+const download = lines.indexOf('opkg download sing-box');
+if (download <= secondList || download >= install) fail('B7: the stable sing-box package must be downloaded before the change starts');
 NODE
+
+# B7: a feed that does not deliver the package, or a package that would not
+# fit on the storage, refuses the change before anything is stopped, removed
+# or installed.
+feed_refusal() {
+  local what="$1"
+  shift
+  rm -f "$WORK_DIR/opkg.log" "$WORK_DIR/opkg.updated"
+  set +e
+  env PATH="$package_runtime_bin:$PATH" \
+    PROKOP_LIB="$package_runtime_lib" \
+    PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/package-runtime" \
+    PROKOP_BIN="$WORK_DIR/missing-prokop" \
+    PROKOP_SERVICE_INIT="$WORK_DIR/missing-init" \
+    FAKE_OPKG_LOG="$WORK_DIR/opkg.log" \
+    FAKE_OPKG_UPDATED="$WORK_DIR/opkg.updated" "$@" \
+    ucode -L "$package_runtime_lib" "$ACTION_UC" component-action sing_box install_stable >"$WORK_DIR/feed-refusal.out" 2>&1
+  local status=$?
+  set -e
+  [ "$status" -ne 0 ] || fail "$what: the change was not refused"
+  grep -q '^opkg download sing-box$' "$WORK_DIR/opkg.log" || fail "$what: no download was tried"
+  if grep -Eq '^opkg (install|remove) ' "$WORK_DIR/opkg.log"; then
+    fail "$what: the change went on: $(cat "$WORK_DIR/opkg.log")"
+  fi
+}
+feed_refusal "a feed without the package" FAKE_FEED_DOWN=1
+grep -q 'Failed to download the sing-box package; the current sing-box was kept' "$WORK_DIR/feed-refusal.out" ||
+  fail "a failed download does not say that the current sing-box was kept: $(cat "$WORK_DIR/feed-refusal.out")"
+mkdir -p "$WORK_DIR/df-bin"
+cat >"$WORK_DIR/df-bin/df" <<'SH'
+#!/bin/sh
+printf 'Filesystem 1K-blocks Used Available Use%% Mounted on\noverlayfs 10000 9900 100 99%% /overlay\n'
+SH
+chmod +x "$WORK_DIR/df-bin/df"
+feed_refusal "a package that does not fit" PATH="$WORK_DIR/df-bin:$package_runtime_bin:$PATH"
+grep -q 'Not enough free space on the router' "$WORK_DIR/feed-refusal.out" ||
+  fail "the space refusal is not described: $(cat "$WORK_DIR/feed-refusal.out")"
 
 cat >"$package_runtime_bin/apk" <<'SH'
 #!/usr/bin/env sh
@@ -271,6 +314,9 @@ case "${1:-}" in
     ;;
   update|add|fix|del)
     exit 0
+    ;;
+  fetch)
+    printf 'apk' >"$3/${4%%=*}-${4#*=}.apk"
     ;;
   *)
     exit 1
@@ -287,6 +333,8 @@ PROKOP_SERVICE_INIT="$WORK_DIR/missing-init" \
 FAKE_APK_LOG="$WORK_DIR/apk.log" \
 ucode -L "$package_runtime_lib" "$ACTION_UC" component-action sing_box install_stable >/dev/null
 set -e
+grep -Eq '^apk fetch -o .*/feed-sing-box sing-box=1\.2\.3-r1$' "$WORK_DIR/apk.log" ||
+  fail "B7: APK stable action must download the exact package before the change: $(cat "$WORK_DIR/apk.log")"
 grep -Fxq 'apk add sing-box=1.2.3-r1' "$WORK_DIR/apk.log" ||
   fail "APK stable action must request the exact sing-box package version"
 # The exact version is installed first; only then is the same package named
