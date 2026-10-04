@@ -326,6 +326,17 @@ function punycode_encode(codepoints) {
     return "xn--" + output;
 }
 
+// Code points that render as nothing: a domain copied with one looks right
+// but never matches (U+00AD soft hyphen, U+034F, Mongolian and Unicode
+// variation selectors, U+200B..U+200F zero-width and direction marks,
+// U+202A..U+202E, U+2060..U+2064, U+FEFF). The page refuses them too
+// (validateDomain.ts, FE-4).
+function invisible_codepoint(cp) {
+    return cp == 0xad || cp == 0x34f || (cp >= 0x180b && cp <= 0x180f) ||
+        (cp >= 0x200b && cp <= 0x200f) || (cp >= 0x202a && cp <= 0x202e) ||
+        (cp >= 0x2060 && cp <= 0x2064) || (cp >= 0xfe00 && cp <= 0xfe0f) || cp == 0xfeff;
+}
+
 function label_to_ascii(value) {
     value = as_string(value);
     if (value == "")
@@ -334,6 +345,9 @@ function label_to_ascii(value) {
     let codepoints = utf8_codepoints(value);
     if (codepoints == null)
         return null;
+    for (let cp in codepoints)
+        if (invisible_codepoint(cp))
+            return null;
 
     let ascii = codepoints_to_ascii_label(codepoints);
     if (ascii != null)

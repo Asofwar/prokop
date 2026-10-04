@@ -1,9 +1,19 @@
 import { ValidationResult } from './types';
 
+// What the router accepts in a domain (config/domain.uc, FE-4): letters,
+// digits and hyphens of any script, and dots. Nothing the browser would drop
+// or decode before checking: an invisible character (zero-width space, soft
+// hyphen) the router keeps and then never matches, or `?`, `#`, `%` that
+// the router refuses.
+const INVISIBLE =
+  /[\u00ad\u034f\u180b-\u180f\u200b-\u200f\u202a-\u202e\u2060-\u2064\ufe00-\ufe0f\ufeff]/u;
+const HOSTNAME_CHARACTERS = /^[\p{L}\p{M}\p{N}.-]+$/u;
+
 function asciiHostname(hostname: string): string | null {
   if (
     !hostname ||
-    /[\s@:/]/.test(hostname) ||
+    INVISIBLE.test(hostname) ||
+    !HOSTNAME_CHARACTERS.test(hostname) ||
     hostname.startsWith('.') ||
     hostname.endsWith('.')
   ) {
@@ -41,13 +51,21 @@ function validAsciiDomain(hostname: string, requireDot = true): boolean {
   }
 
   const tld = parts[parts.length - 1];
-  return /^(?:[a-z]{2,}|xn--[a-z0-9-]{2,59})$/.test(tld);
+  // Digits are allowed with a letter (.i2p); an all-digit one would be an
+  // address.
+  return (
+    /^(?:[a-z0-9]{2,63}|xn--[a-z0-9-]{2,59})$/.test(tld) && /[a-z]/.test(tld)
+  );
 }
 
 export function validateDomain(
   domain: string,
   allowDotTLD = false,
 ): ValidationResult {
+  // Before trim(): it drops U+FEFF, which the router keeps.
+  if (INVISIBLE.test(`${domain || ''}`)) {
+    return { valid: false, message: _('Invalid domain address') };
+  }
   const normalized = `${domain || ''}`.trim();
 
   if (allowDotTLD) {

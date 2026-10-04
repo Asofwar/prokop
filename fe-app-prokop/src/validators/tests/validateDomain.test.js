@@ -16,6 +16,8 @@ export const validDomains = [
   ['Adguard dns', 'dns.adguard-dns.com'],
   ['Nextdns dns', 'dns.nextdns.io/xxxxxxx'],
   ['Long domain (63 chars in label)', 'a'.repeat(63) + '.com'],
+  // A10: digits in the top-level label.
+  ['Digits in TLD', 'example.i2p'],
 ];
 
 export const invalidDomains = [
@@ -31,6 +33,16 @@ export const invalidDomains = [
   ['With protocol (not allowed)', 'http://example.com'],
   ['Too long label (>63 chars)', 'a'.repeat(64) + '.com'],
   ['Too long domain (>253 chars)', Array(40).fill('abcdef').join('.') + '.com'],
+  // FE-4: what the browser would drop or decode, and the router keeps or
+  // refuses.
+  ['Zero-width space', '\u200byoutube.com'],
+  ['Soft hyphen', 'exam\u00adple.com'],
+  ['Byte order mark', 'example.com\ufeff'],
+  ['Query', 'example.com?x=1'],
+  ['Fragment', 'example.com#a'],
+  ['Percent-encoded', 'ex%41mple.com'],
+  ['Underscore', 'ex_ample.com'],
+  ['All-digit TLD', 'example.123'],
 ];
 
 export const dotTLDTests = [

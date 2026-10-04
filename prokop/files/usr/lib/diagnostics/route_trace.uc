@@ -22,11 +22,16 @@ function capture(args) {
     let data = pipe.read("all");
     return pipe.close() == 0 && data != null ? data : "";
 }
+// A top-level label: letters, digits and hyphens with at least one letter
+// (.i2p, punycode xn--p1ai), never all digits, which would be an address.
+function valid_tld(v) {
+    return match(v, /^[A-Za-z0-9-]{2,63}$/) != null && match(v, /[A-Za-z]/) != null;
+}
 function valid_domain(v) {
     if (length(v) > 253 || match(v, /^[A-Za-z0-9.-]+$/) == null)
         return false;
     let labels = split(v, ".");
-    if (length(labels) < 2 || match(labels[length(labels) - 1], /^[A-Za-z]{2,63}$/) == null)
+    if (length(labels) < 2 || !valid_tld(labels[length(labels) - 1]))
         return false;
     for (let label in labels)
         if (length(label) < 1 || length(label) > 63 ||
