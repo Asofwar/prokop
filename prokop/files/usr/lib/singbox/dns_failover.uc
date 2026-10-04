@@ -111,29 +111,31 @@ function failure_threshold(settings_value) {
     return value > 0 ? value : 3;
 }
 
-function probe_port(kind, index_value, timeout_seconds) {
+// A server answers when the health query gets an address. With
+// dns_strategy ipv6_only sing-box answers A queries with no address at
+// all, and every server looked down (NET-7): the query is AAAA then.
+function probe_health_port(port, timeout_seconds) {
+    let ipv6_only = common.option(settings(), "dns_strategy", "") == "ipv6_only";
     let args = [
-        "dig", "-p", as_string(runtime_dns.health_port(kind, index_value)),
+        "dig", "-p", as_string(port),
         "@" + runtime_dns.DNS_HEALTH_ADDRESS,
-        CHECK_DOMAIN, "A", "+short",
+        CHECK_DOMAIN, ipv6_only ? "AAAA" : "A", "+short",
         "+timeout=" + as_string(timeout_seconds), "+tries=1"
     ];
-    for (let line in split(command_output_from_args(args), "\n"))
-        if (core_ip.valid_ipv4(trim(as_string(line))))
+    for (let line in split(command_output_from_args(args), "\n")) {
+        line = trim(as_string(line));
+        if (ipv6_only ? core_ip.valid_ipv6(line) : core_ip.valid_ipv4(line))
             return true;
+    }
     return false;
 }
 
+function probe_port(kind, index_value, timeout_seconds) {
+    return probe_health_port(runtime_dns.health_port(kind, index_value), timeout_seconds);
+}
+
 function probe_canonical_main(timeout_seconds) {
-    let args = [
-        "dig", "-p", as_string(runtime_dns.health_port("active", 0)),
-        "@" + runtime_dns.DNS_HEALTH_ADDRESS, CHECK_DOMAIN, "A", "+short",
-        "+timeout=" + as_string(timeout_seconds), "+tries=1"
-    ];
-    for (let line in split(command_output_from_args(args), "\n"))
-        if (core_ip.valid_ipv4(trim(as_string(line))))
-            return true;
-    return false;
+    return probe_health_port(runtime_dns.health_port("active", 0), timeout_seconds);
 }
 
 function verification_plan(previous, candidate) {
@@ -390,6 +392,8 @@ else if (mode == "verify-state")
     exit(verify_state(ARGV[1]) ? 0 : 1);
 else if (mode == "commit-state")
     exit(commit_state(ARGV[1]) ? 0 : 1);
+else if (mode == "probe")
+    exit(probe_port(ARGV[1], int(ARGV[2] || 0), 1) ? 0 : 1);
 else if (mode == "select-fixture")
     select_fixture(ARGV[1], ARGV[2], ARGV[3], ARGV[4]);
 else if (mode == "confirmation-fixture")
