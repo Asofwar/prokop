@@ -420,6 +420,18 @@ function urldecode(value) {
     });
 }
 
+// RFC 3986 percent-decoding only: '+' stays '+'. For the userinfo of a link
+// and the body of an ss:// link, where '+' is a character of the password or
+// of standard base64 (SB-1); urldecode() is for query strings and names.
+function percent_decode(value) {
+    value = as_string(value);
+    if (index(value, "%") < 0)
+        return value;
+    return replace(value, /%([0-9A-Fa-f][0-9A-Fa-f])/g, function(all, hex_value) {
+        return chr(hex(hex_value));
+    });
+}
+
 let fragment_prefix_decode_cache = {};
 let fragment_decode_cache = {};
 let query_parse_cache = {};
@@ -534,18 +546,20 @@ function parse_url(url) {
 
     let slash_pos = index(rest, "/");
     let authority = slash_pos >= 0 ? substr(rest, 0, slash_pos) : rest;
-    let userinfo = "";
+    let userinfo_raw = "";
     let hostport = authority;
     let at_pos = rindex(authority, "@");
     if (at_pos >= 0) {
-        userinfo = urldecode(substr(authority, 0, at_pos));
+        userinfo_raw = substr(authority, 0, at_pos);
         hostport = substr(authority, at_pos + 1);
     }
 
     let host_port = parse_host_port(hostport);
     return {
         scheme: scheme,
-        userinfo: userinfo,
+        userinfo: percent_decode(userinfo_raw),
+        // Still encoded: split at ':' before decoding (SOCKS user:password).
+        userinfo_raw: userinfo_raw,
         host: host_port[0] || "",
         port: host_port[1],
         query: parse_query(query),
@@ -832,16 +846,19 @@ function process_socks(raw, url) {
         return null;
 
     let username = "", password = "";
-    if (url.userinfo != "") {
-        let colon = index(url.userinfo, ":");
+    // Split while still encoded and decoded once: a '%3A' is part of the
+    // user name, a '+' or '%25' of the password (SB-9).
+    let userinfo = as_string(url.userinfo_raw);
+    if (userinfo != "") {
+        let colon = index(userinfo, ":");
         if (colon >= 0) {
-            username = urldecode(substr(url.userinfo, 0, colon));
-            password = urldecode(substr(url.userinfo, colon + 1));
+            username = percent_decode(substr(userinfo, 0, colon));
+            password = percent_decode(substr(userinfo, colon + 1));
             if (username == password)
                 password = "";
         }
         else {
-            username = urldecode(url.userinfo);
+            username = percent_decode(userinfo);
         }
     }
 
@@ -909,7 +926,7 @@ function process_shadowsocks(raw) {
         hostport = substr(decoded, at_pos + 1);
     }
 
-    userinfo = urldecode(userinfo);
+    userinfo = percent_decode(userinfo);
     if (!is_shadowsocks_userinfo_format(userinfo)) {
         let decoded = base64_decode(userinfo);
         if (!decoded)

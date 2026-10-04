@@ -210,7 +210,9 @@ function serialize_shadowsocks(outbound) {
     if (as_string(outbound.method) == "" || as_string(outbound.password) == "" ||
         as_string(outbound.server) == "" || outbound.server_port == null)
         return "";
-    let userinfo = base64_encode(as_string(outbound.method) + ":" + as_string(outbound.password));
+    // SIP002: the userinfo is URL-safe base64 ('+' and '/' would need
+    // percent-encoding there).
+    let userinfo = replace(replace(base64_encode(as_string(outbound.method) + ":" + as_string(outbound.password)), /\+/g, "-"), /\//g, "_");
     return userinfo == "" ? "" :
         "ss://" + userinfo + "@" + host_port(outbound.server, outbound.server_port) + fragment(outbound);
 }
