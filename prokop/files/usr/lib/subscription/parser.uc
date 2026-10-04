@@ -1271,9 +1271,31 @@ let clash_nested_keys = {
     headers: true
 };
 
+// A YAML comment: '#' at the start or after a space, outside quotes. It is
+// not part of the value (SB-4: 'password: abc # old' kept the comment).
+function strip_yaml_comment(value) {
+    let quote = "", escaped = false;
+    for (let i = 0; i < length(value); i++) {
+        let char = substr(value, i, 1);
+        if (quote != "") {
+            if (escaped)
+                escaped = false;
+            else if (char == "\\" && quote == "\"")
+                escaped = true;
+            else if (char == quote)
+                quote = "";
+        }
+        else if ((char == "\"" || char == "'") && (i == 0 || match(substr(value, i - 1, 1), /[ \t:,{\[]/)))
+            quote = char;
+        else if (char == "#" && (i == 0 || match(substr(value, i - 1, 1), /[ \t]/)))
+            return rtrim(substr(value, 0, i));
+    }
+    return value;
+}
+
 function parse_clash_block_line(record, line) {
     let indent = leading_indent(line);
-    let text = trim(line);
+    let text = trim(strip_yaml_comment(line));
     if (text == "")
         return;
 
@@ -1303,7 +1325,12 @@ function parse_clash_block_line(record, line) {
     let full_key = key;
     if (record.context != "" && indent > record.context_indent)
         full_key = record.context + "." + key;
-    set_record_field(record, full_key, value);
+    // An inline map in a block entry ('reality-opts: {public-key: ...}'),
+    // as in a flow-style entry (SB-4).
+    if (substr(value, 0, 1) == "{" && substr(value, length(value) - 1) == "}")
+        parse_clash_map(record, value, full_key + ".");
+    else
+        set_record_field(record, full_key, value);
 }
 
 function is_clash_proxies_header(line) {
