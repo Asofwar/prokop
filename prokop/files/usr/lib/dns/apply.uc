@@ -347,8 +347,23 @@ function killswitch_dns_status() {
     return true;
 }
 
+// dnsmasq's conditional forwarders (server=/domain/ip, /domain/ local-only):
+// they stay next to sing-box (NET-8), only the plain upstreams make way.
+function conditional_servers(values) {
+    return filter(words(values), (server) => substr(server, 0, 1) == "/" && !is_sing_box_dns(server));
+}
+
+function conditional_servers_kept() {
+    let current = dnsmasq_default_servers();
+    for (let server in conditional_servers(uci_get("dhcp.@dnsmasq[0].prokop_server")))
+        if (!list_has(current, server))
+            return false;
+    return true;
+}
+
 function dnsmasq_default_config_is_complete() {
     return dnsmasq_default_has_prokop_dns() &&
+        conditional_servers_kept() &&
         uci_get("dhcp.@dnsmasq[0].noresolv") == "1" &&
         uci_get("dhcp.@dnsmasq[0].cachesize") == "0" &&
         !dnsmasq_legacy_instance_exists();
@@ -447,7 +462,11 @@ function dnsmasq_configure_default_instance() {
         backup_dnsmasq_config_option("cachesize");
     }
 
-    uci_set("dhcp.@dnsmasq[0].server", [ SB_DNS_INBOUND_ADDRESS ]);
+    let conditional = conditional_servers(uci_get("dhcp.@dnsmasq[0].prokop_server"));
+    for (let server in conditional_servers(dnsmasq_default_servers()))
+        if (index(conditional, server) < 0)
+            push(conditional, server);
+    uci_set("dhcp.@dnsmasq[0].server", [ SB_DNS_INBOUND_ADDRESS, ...conditional ]);
     uci_set("dhcp.@dnsmasq[0].noresolv", "1");
     uci_set("dhcp.@dnsmasq[0].cachesize", "0");
 }
