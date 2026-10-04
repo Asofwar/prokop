@@ -188,19 +188,20 @@ function priority_groups_from_cache() {
     return result;
 }
 
+// The answer and the exit status of a clash-api request, read through a
+// pipe: no mktemp process and no temporary file on every probe, every 5 s
+// per group (audit 2026-10-04, optimization 5).
 function module_capture(args) {
-    let output_path = trim(command_output_from_args([ "mktemp" ]));
-    if (output_path == "")
-        return { status: 1, output: "" };
-
     let command = command_from_args([ "ucode", "-L", LIB_DIR, DIAGNOSTICS_UC, "clash-api" ]);
     for (let arg in args)
         command += " " + shell_quote(arg);
 
-    let status = command_status(command + " >" + shell_quote(output_path) + " 2>&1");
-    let output = as_string(fs.readfile(output_path) || "");
-    remove_file(output_path);
-    return { status, output };
+    let pipe = fs.popen(command + " 2>&1", "r");
+    if (pipe == null)
+        return { status: 1, output: "" };
+    let output = as_string(pipe.read("all") || "");
+    let status = pipe.close();
+    return { status: type(status) == "int" ? status : 1, output };
 }
 
 function parse_delay_output(output) {
