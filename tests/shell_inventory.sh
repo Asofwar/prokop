@@ -46,6 +46,7 @@ expected_shell_scripts="$(
   printf '%s\n' \
     'luci-app-prokop/root/etc/uci-defaults/50_luci-prokop' \
     'prokop/files/etc/init.d/prokop' \
+    'prokop/files/etc/init.d/prokop-dns-failsafe' \
     'prokop/files/etc/init.d/prokop-killswitch' \
     'prokop/files/etc/init.d/prokop-torrserver-direct' \
     'prokop/files/usr/lib/full-uninstall.sh' \
