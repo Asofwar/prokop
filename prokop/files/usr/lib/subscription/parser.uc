@@ -3002,6 +3002,7 @@ function parse_subscription_source_entry_tsv(entry) {
 
 function module_exports() {
     return {
+        parse_share_link,
         parse_subscription_source_entry,
         validate_subscription,
         normalize_content_validated,
