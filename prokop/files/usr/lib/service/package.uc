@@ -29,6 +29,7 @@ const SING_BOX_BIN = env("PROKOP_SING_BOX_BIN", "/usr/bin/sing-box");
 const SING_BOX_CRONET = env("PROKOP_SING_BOX_CRONET", "/usr/lib/libcronet.so");
 const SING_BOX_MANAGED_MARKER = env("SB_MANAGED_SERVICE_MARKER", "Prokop managed sing-box service for binary variants");
 const TORRSERVER_DIRECT_INIT = env("PROKOP_TORRSERVER_DIRECT_INIT", "/etc/init.d/prokop-torrserver-direct");
+const DNS_FAILSAFE_INIT = env("PROKOP_DNS_FAILSAFE_INIT", "/etc/init.d/prokop-dns-failsafe");
 const RC_D_DIR = env("PROKOP_RC_D_DIR", "/etc/rc.d");
 // The rc.d links of releases whose prokop-torrserver-direct had START=100
 // and STOP=9: rc.common's disable (S??, K??) never removes them, and its
@@ -275,6 +276,15 @@ function torrserver_direct_postinst() {
         command_success_from_args([ TORRSERVER_DIRECT_INIT, "enable" ]);
     if (on && command_success_from_args([ TORRSERVER_DIRECT_INIT, "enabled" ]))
         command_success_from_args([ TORRSERVER_DIRECT_INIT, "restart" ]);
+}
+
+// The boot hook that hands DNS back to dnsmasq when Prokop will not start
+// (LC-1) must run whatever autostart is: always enabled. OpenWrt's default
+// postinst enables it on a first install only, build.sh's packages never.
+function dns_failsafe_postinst() {
+    if (path_exists(DNS_FAILSAFE_INIT) &&
+        !command_success_from_args([ DNS_FAILSAFE_INIT, "enabled" ]))
+        command_success_from_args([ DNS_FAILSAFE_INIT, "enable" ]);
 }
 
 function remember_upgrade_state(action) {
@@ -683,6 +693,7 @@ function postinst_restore() {
         return false;
     }
     torrserver_direct_postinst();
+    dns_failsafe_postinst();
 
     // Only an explicit start since boot lets a reload start a runtime that
     // is down (service/initd.uc EXPLICIT_START_FILE; D-15(a)), and a previous

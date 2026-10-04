@@ -93,7 +93,7 @@ for link in S00sysfixtime S10boot S11sysctl S12log S19dnsmasq S19firewall S20net
   ln -s "../init.d/${link#???}" "$RC_D/$link"
 done
 
-for name in prokop prokop-killswitch prokop-torrserver-direct; do
+for name in prokop prokop-killswitch prokop-torrserver-direct prokop-dns-failsafe; do
   rc "$name" enable || fail "$name: enable failed"
   rc "$name" enabled || fail "$name: enabled does not see the links enable made"
 done
@@ -128,8 +128,17 @@ if [ "$torrserver_stop" -gt "$(position K network)" ] || [ "$torrserver_stop" -g
 $shutdown"
 fi
 
-# 4. disable takes away every link that enable made.
-for name in prokop prokop-killswitch prokop-torrserver-direct; do
+# 4. The DNS failsafe (LC-1) runs before dnsmasq reads its configuration at
+#    boot, after the log is up.
+failsafe_start="$(position S prokop-dns-failsafe)"
+[ -n "$failsafe_start" ] || fail "no start link for prokop-dns-failsafe: $boot"
+if [ "$failsafe_start" -gt "$(position S dnsmasq)" ] || [ "$failsafe_start" -lt "$(position S log)" ]; then
+  fail "prokop-dns-failsafe does not run between the log and dnsmasq:
+$boot"
+fi
+
+# 5. disable takes away every link that enable made.
+for name in prokop prokop-killswitch prokop-torrserver-direct prokop-dns-failsafe; do
   rc "$name" disable
   ! rc "$name" enabled || fail "$name: still enabled after disable"
   if order S | grep -qE "^S[0-9]+$name\$" || order K | grep -qE "^K[0-9]+$name\$"; then

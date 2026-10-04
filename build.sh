@@ -196,6 +196,7 @@ build_backend_root() {
   install -m 0755 "$ROOT_DIR/prokop/files/etc/init.d/prokop" "$output_root/etc/init.d/prokop"
   install -m 0755 "$ROOT_DIR/prokop/files/etc/init.d/prokop-torrserver-direct" "$output_root/etc/init.d/prokop-torrserver-direct"
   install -m 0755 "$ROOT_DIR/prokop/files/etc/init.d/prokop-killswitch" "$output_root/etc/init.d/prokop-killswitch"
+  install -m 0755 "$ROOT_DIR/prokop/files/etc/init.d/prokop-dns-failsafe" "$output_root/etc/init.d/prokop-dns-failsafe"
   install -d "$output_root/lib/upgrade/keep.d"
   install -m 0644 "$ROOT_DIR/prokop/files/lib/upgrade/keep.d/prokop-killswitch" "$output_root/lib/upgrade/keep.d/prokop-killswitch"
   install -d "$output_root/usr/share/nftables.d/ruleset-post"
@@ -216,6 +217,7 @@ build_backend_root() {
     "$output_root/etc/init.d/prokop" \
     "$output_root/etc/init.d/prokop-torrserver-direct" \
     "$output_root/etc/init.d/prokop-killswitch" \
+    "$output_root/etc/init.d/prokop-dns-failsafe" \
     "$output_root/usr/bin/prokop" \
     "$output_root/usr/libexec/prokop-ro" \
     "$output_root/usr/share/prokop/mirror-migration.sh"

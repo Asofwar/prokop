@@ -1724,6 +1724,17 @@ function abort_guarded_transition(status, stage_path, backup_path, guard_active)
     return status == 0 ? 1 : status;
 }
 
+// A start refused before it built anything leaves dnsmasq as it was. After a
+// boot that is still the forwarding to sing-box the last run committed, and
+// without a running sing-box the LAN has no DNS (LC-1): hand DNS back to
+// dnsmasq unless a Prokop runtime is in fact up.
+function restore_dns_after_refused_start() {
+    if (module_success(STATE_UC, [ "prokop-running", RT_TABLE_NAME, NFT_TABLE_NAME, NFT_FAKEIP_MARK ]))
+        return;
+    if (dnsmasq_restore(false) != 0)
+        log_message("Could not hand DNS back to dnsmasq after the refused start", "warn");
+}
+
 function start_inner() {
     clear_start_failure();
     // A current installer/updater may have recorded one exact, procd-owned
@@ -1738,6 +1749,7 @@ function start_inner() {
         ])) {
         log_message("Refusing Prokop start: managed upgrade sing-box provenance did not resolve safely", "fatal");
         release_start_subscription_update_lock();
+        restore_dns_after_refused_start();
         return 1;
     }
 
@@ -1747,6 +1759,7 @@ function start_inner() {
     if (module_success(STATE_UC, [ "sing-box-process-conflict" ])) {
         log_message("Refusing Prokop start: sing-box process ownership is ambiguous; preserving the existing runtime", "fatal");
         release_start_subscription_update_lock();
+        restore_dns_after_refused_start();
         return 1;
     }
 
@@ -1757,6 +1770,7 @@ function start_inner() {
         log_message("Refusing Prokop start: a failed transition kept the fail-closed DPI guard (runtime_guard_active); restart Prokop to recover", "fatal");
         mark_start_failure_not_retryable("runtime_guard_active");
         release_start_subscription_update_lock();
+        restore_dns_after_refused_start();
         return 1;
     }
 

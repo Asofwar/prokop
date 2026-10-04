@@ -489,6 +489,7 @@ run() {
         /etc/config/sing-box.opkg-old /etc/config/sing-box.opkg-dist \
         /usr/bin/prokop /usr/libexec/prokop-ro /usr/bin/sing-box /usr/lib/libcronet.so \
         /etc/init.d/prokop /etc/init.d/prokop-killswitch /etc/init.d/prokop-torrserver-direct \
+        /etc/init.d/prokop-dns-failsafe \
         /etc/init.d/sing-box /etc/uci-defaults/50_luci-prokop \
         /usr/share/luci/menu.d/luci-app-prokop.json /usr/share/rpcd/acl.d/luci-app-prokop.json \
         /usr/share/nftables.d/ruleset-post/90-prokop-killswitch-loader.nft \
@@ -500,6 +501,7 @@ run() {
     # TorrServer Direct had START=100 and STOP=9 never removed its links
     # (S100, K9; UC-161).
     rm -f "$ROOT"/etc/rc.d/[SK][0-9][0-9]prokop "$ROOT"/etc/rc.d/[SK][0-9][0-9]prokop-killswitch \
+        "$ROOT"/etc/rc.d/[SK][0-9][0-9]prokop-dns-failsafe \
         "$ROOT"/etc/rc.d/[SK][0-9][0-9]prokop-torrserver-direct \
         "$ROOT/etc/rc.d/S100prokop-torrserver-direct" "$ROOT/etc/rc.d/K9prokop-torrserver-direct"
     # Whatever the kill-switch left (its removal above failed or an older

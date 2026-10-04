@@ -64,6 +64,7 @@ let stop_marker_present = false;
 let explicit_start_recorded = false;
 let legacy_active = false;
 let legacy_checks = 0;
+let dns_restores = 0;
 function as_string(value) { return value == null ? "" : "" + value; }
 function bool_text(value) { return value == "1"; }
 function die(message) { warn("FAIL: " + message + "\n"); exit(1); }
@@ -113,6 +114,8 @@ function clear_start_failure() { }
 function mark_start_failure_not_retryable(reason) { }
 function start_impl() { cold_starts++; return 23; }
 function cleanup_failed_runtime() { cleanups++; }
+// A refused start hands DNS back to dnsmasq unless Prokop runs (LC-1).
+function restore_dns_after_refused_start() { dns_restores++; }
 function runtime_is_running() { return retry_running; }
 function service_is_enabled() { return retry_enabled; }
 function start_retry_pending(path) { return retry_pending; }
@@ -177,6 +180,7 @@ function reset_probe() {
     explicit_start_recorded = false;
     legacy_active = false;
     legacy_checks = 0;
+    dns_restores = 0;
 }
 '''
 cases = r'''
@@ -193,6 +197,7 @@ check(released == 0 && cold_starts == 0 && cleanups == 0, "a refused start touch
 
 reset_probe();
 check(start() == 0, "duplicate stable start was not successful");
+check(dns_restores == 0, "a duplicate start of a running Prokop touched dnsmasq");
 check(join(",", calls) == "sing-box-process-conflict,prokop-stably-running" && legacy_checks == 1,
     "stable check bypassed ownership guard");
 check(released == 1 && cold_starts == 0 && cleanups == 0,
@@ -224,6 +229,7 @@ for (let stable in [ true, false ]) {
     check(released == 1 && cold_starts == 0 && cleanups == 0,
         "a start over the kept DPI guard changed the retained fail-closed runtime");
     check(index(join("\n", logs), "runtime_guard_active") >= 0, "the kept DPI guard refusal gave no reason");
+    check(dns_restores == 1, "a start refused for the kept DPI guard left DNS pointed at sing-box");
 }
 
 // The guard of an unfinished restore: a duplicate start starts nothing and
@@ -251,6 +257,7 @@ check(start() == 1, "unresolved managed upgrade was accepted");
 check(join(",", calls) == "wait-managed-upgrade-sing-box-exit" &&
     released == 1 && cold_starts == 0 && cleanups == 0,
     "unresolved managed upgrade changed existing runtime");
+check(dns_restores == 1, "a start refused for the managed upgrade left DNS pointed at sing-box");
 
 reset_probe();
 conflict = true;
@@ -258,6 +265,7 @@ check(start() == 1, "ambiguous runtime was adopted");
 check(join(",", calls) == "sing-box-process-conflict" &&
     released == 1 && cold_starts == 0 && cleanups == 0,
     "ambiguous runtime reached stable adoption or cleanup");
+check(dns_restores == 1, "a start refused for an ambiguous sing-box left DNS pointed at sing-box");
 
 // Every part of the full stable-runtime predicate remains mandatory. A partial
 // runtime follows the original guarded cold-start path, never the success path.

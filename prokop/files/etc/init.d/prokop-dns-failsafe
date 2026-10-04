@@ -1,0 +1,36 @@
+#!/bin/sh /etc/rc.common
+# shellcheck disable=SC2034
+
+# While Prokop runs, dnsmasq forwards every query to sing-box (127.0.0.42),
+# and that setting is kept in /etc/config/dhcp. Only Prokop's own stop takes
+# it back; a reboot or a power loss is no stop. With autostart switched off
+# (/etc/init.d/prokop disable) nothing starts sing-box after the boot, and
+# dnsmasq would forward the whole LAN's DNS to an address nobody listens on
+# (LC-1).
+#
+# This runs at boot before dnsmasq (S19) and, when Prokop will not start,
+# restores dnsmasq's own upstream servers, as Prokop's stop does. It changes
+# nothing when dnsmasq does not forward to sing-box or when Prokop
+# autostarts (Prokop's start configures dnsmasq itself). A kill-switch that
+# is armed keeps its local block list (dns/apply.uc restore).
+
+START=18
+
+PROKOP_LIB="/usr/lib/prokop"
+DNS_APPLY_UC="$PROKOP_LIB/dns/apply.uc"
+PROKOP_INIT="/etc/init.d/prokop"
+
+boot() {
+    [ -r "$DNS_APPLY_UC" ] || return 0
+    [ -x "$PROKOP_INIT" ] && "$PROKOP_INIT" enabled && return 0
+    ucode -L "$PROKOP_LIB" "$DNS_APPLY_UC" restore >/dev/null 2>&1 || true
+    return 0
+}
+
+start() {
+    return 0
+}
+
+stop() {
+    return 0
+}
