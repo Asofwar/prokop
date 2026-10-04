@@ -1,4 +1,5 @@
 import { asText } from '../../../helpers/asText';
+import { isPageHidden } from '../../../helpers/isPageHidden';
 import {
   canUseDirectClashApi,
   getClashWsStreamUrl,
@@ -1929,6 +1930,7 @@ function startConnectionsPolling() {
 
   void pollConnectionsSnapshot();
   connectionsPollTimer = setInterval(() => {
+    if (isPageHidden()) return;
     void pollConnectionsSnapshot();
   }, CONNECTIONS_RPC_POLL_INTERVAL_MS);
 }
@@ -2132,7 +2134,7 @@ async function onPageMount() {
   document.addEventListener('copy', handleMonitoringValueCopy);
 
   renderTimer = setInterval(() => {
-    if (monitoringPaused) {
+    if (monitoringPaused || isPageHidden()) {
       return;
     }
 

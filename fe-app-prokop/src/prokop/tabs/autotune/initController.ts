@@ -1,4 +1,5 @@
 import { asText } from '../../../helpers/asText';
+import { isPageHidden } from '../../../helpers/isPageHidden';
 import { onMount, preserveScrollForPage } from '../../../helpers';
 import { replaceChildrenKeepingFocus } from '../../../helpers/replaceChildrenKeepingFocus';
 import { showToast } from '../../../helpers/showToast';
@@ -1539,7 +1540,7 @@ function onPageMount() {
   renderAll();
   void loadAll();
   refreshTimer = setInterval(() => {
-    if (busy) return;
+    if (busy || isPageHidden()) return;
     const plan = refreshPlan(
       Date.now(),
       statusLoadedAt,

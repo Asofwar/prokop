@@ -1,3 +1,4 @@
+import { isPageHidden } from '../../../helpers/isPageHidden';
 import type { Prokop } from '../../types';
 
 interface RouteNamesRefresherOptions {
@@ -5,10 +6,6 @@ interface RouteNamesRefresherOptions {
   apply: (sections: Prokop.ConfigSection[]) => void;
   onError?: (error: unknown) => void;
   intervalMs: number;
-}
-
-function isPageHidden() {
-  return typeof document !== 'undefined' && document.hidden === true;
 }
 
 // Rule labels and DPI strategy names come from the saved configuration, which

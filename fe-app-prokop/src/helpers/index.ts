@@ -9,3 +9,4 @@ export * from './preserveScrollForPage';
 export * from './parseQueryString';
 export * from './svgEl';
 export * from './insertIf';
+export * from './isPageHidden';

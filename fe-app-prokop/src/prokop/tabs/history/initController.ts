@@ -1,4 +1,5 @@
 import { asText } from '../../../helpers/asText';
+import { isPageHidden } from '../../../helpers/isPageHidden';
 import { onMount, preserveScrollForPage } from '../../../helpers';
 import { replaceChildrenKeepingFocus } from '../../../helpers/replaceChildrenKeepingFocus';
 import { showToast } from '../../../helpers/showToast';
@@ -440,7 +441,7 @@ function onPageMount() {
   renderAll();
   void loadAll();
   refreshTimer = setInterval(() => {
-    if (!snapshotBusy) void loadAll();
+    if (!snapshotBusy && !isPageHidden()) void loadAll();
   }, REFRESH_INTERVAL_MS);
 }
 

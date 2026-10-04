@@ -1,4 +1,5 @@
 import { asText } from '../../../helpers/asText';
+import { isPageHidden } from '../../../helpers/isPageHidden';
 import {
   canUseDirectClashApi,
   getClashWsStreamUrl,
@@ -842,6 +843,7 @@ function startClashRpcPolling(dataUpdatesId: number) {
   lastConnectionsSample = null;
   void pollClashConnections(dataUpdatesId);
   clashRpcPollTimer = setInterval(() => {
+    if (isPageHidden()) return;
     void pollClashConnections(dataUpdatesId);
   }, CLASH_RPC_POLL_INTERVAL_MS);
 }
@@ -909,6 +911,7 @@ function startDashboardDataUpdates() {
     void connectToClashSockets(dataUpdatesId);
   }
   sectionsRefreshTimer = setInterval(() => {
+    if (isPageHidden()) return;
     void fetchDashboardSections();
   }, SECTIONS_REFRESH_INTERVAL_MS);
 }
@@ -2021,6 +2024,7 @@ async function onPageMount() {
     void refreshHealth(mountId);
     void refreshAutotune(mountId);
     healthRefreshTimer = setInterval(() => {
+      if (isPageHidden()) return;
       void refreshHealth(mountId);
       if (Date.now() - autotuneLoadedAt >= AUTOTUNE_REFRESH_INTERVAL_MS)
         void refreshAutotune(mountId);
