@@ -355,13 +355,67 @@ function enum_valid(value, start_index) {
     return false;
 }
 
+// sing-box matches domain_regex with Go RE2 (FE-5): the check takes RE2
+// syntax, as the page does (section.js re2Pattern). RE2 has no
+// backreferences and no lookaround: refused. Its groups that POSIX regcomp
+// lacks are read for the check only: (?:x) and (?flags:x) as (x), a flag
+// group (?i) as nothing, a named group (?P<n>x) or (?<n>x) as (x). null:
+// not RE2.
+function re2_check_pattern(pattern) {
+    let out = "", in_class = false;
+    for (let i = 0; i < length(pattern); i++) {
+        let c = substr(pattern, i, 1);
+        if (c == "\\") {
+            let n = substr(pattern, i + 1, 1);
+            if (match(n, /^[1-9]$/) != null) return null;
+            out += c + n;
+            i++;
+            continue;
+        }
+        if (in_class) {
+            if (c == "]") in_class = false;
+            out += c;
+            continue;
+        }
+        if (c == "[") {
+            in_class = true;
+            out += c;
+            // A ] right after [ or [^ is a literal.
+            if (substr(pattern, i + 1, 1) == "^") { out += "^"; i++; }
+            if (substr(pattern, i + 1, 1) == "]") { out += "]"; i++; }
+            continue;
+        }
+        if (c != "(" || substr(pattern, i + 1, 1) != "?") {
+            out += c;
+            continue;
+        }
+        let rest = substr(pattern, i + 2);
+        let named = match(rest, /^P?<[A-Za-z_][A-Za-z0-9_]*>/);
+        let flags = match(rest, /^[imsU-]*[:)]/);
+        if (named != null) {
+            out += "(";
+            i += 1 + length(named[0]);
+        }
+        else if (flags != null) {
+            if (substr(flags[0], length(flags[0]) - 1) == ":") out += "(";
+            i += 1 + length(flags[0]);
+        }
+        else
+            return null;
+    }
+    return out;
+}
+
 function regex_valid(pattern) {
     pattern = as_string(pattern);
     if (pattern == "")
         return true;
 
+    let checked = re2_check_pattern(pattern);
+    if (checked == null)
+        return false;
     try {
-        regexp(pattern);
+        regexp(checked);
         return true;
     }
     catch (e) {

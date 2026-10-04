@@ -5579,13 +5579,73 @@ function refreshOptionChoices(option, choices) {
   });
 }
 
+// sing-box matches domain_regex with Go RE2, and the router checks it the
+// same way (config/validator.uc re2_check_pattern, FE-5): no
+// backreferences or lookaround; (?:x), flag groups (?i) and named groups
+// are RE2 and accepted. Returns the pattern as JavaScript checks it, or null.
+function re2Pattern(pattern) {
+  let out = "";
+  let inClass = false;
+  for (let i = 0; i < pattern.length; i++) {
+    const c = pattern[i];
+    if (c === "\\") {
+      const n = pattern[i + 1] ?? "";
+      if (/^[1-9]$/.test(n)) return null;
+      out += c + n;
+      i++;
+      continue;
+    }
+    if (inClass) {
+      if (c === "]") inClass = false;
+      out += c;
+      continue;
+    }
+    if (c === "[") {
+      inClass = true;
+      out += c;
+      if (pattern[i + 1] === "^") {
+        out += "^";
+        i++;
+      }
+      if (pattern[i + 1] === "]") {
+        out += "]";
+        i++;
+      }
+      continue;
+    }
+    if (c !== "(" || pattern[i + 1] !== "?") {
+      out += c;
+      continue;
+    }
+    const rest = pattern.slice(i + 2);
+    const named = rest.match(/^P?<[A-Za-z_][A-Za-z0-9_]*>/);
+    const flags = rest.match(/^[imsU-]*[:)]/);
+    if (named) {
+      out += "(";
+      i += 1 + named[0].length;
+    } else if (flags) {
+      if (flags[0].endsWith(":")) out += "(";
+      i += 1 + flags[0].length;
+    } else {
+      return null;
+    }
+  }
+  return out;
+}
+
 function validateRegex(_section_id, value) {
   if (!value || !value.length) {
     return true;
   }
 
+  const checked = re2Pattern(value);
+  if (checked === null) {
+    return _(
+      "Invalid regular expression: backreferences and lookaround are not supported",
+    );
+  }
   try {
-    new RegExp(value);
+    new RegExp(checked);
     return true;
   } catch (_error) {
     return _("Invalid regular expression");
