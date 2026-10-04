@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-04 21:22+0000\n"
-"PO-Revision-Date: 2026-10-04 21:22+0000\n"
+"POT-Creation-Date: 2026-10-04 21:42+0000\n"
+"PO-Revision-Date: 2026-10-04 21:42+0000\n"
 "Last-Translator: Asofwar\n"
 "Language-Team: none\n"
 "Language: ru\n"
@@ -19,6 +19,18 @@ msgstr ""
 
 msgid "-- Select --"
 msgstr "-- Выберите --"
+
+msgid "{count} domains of client-limited rules are not blocked through DNS (it is shared by all clients); only their IP lists and FakeIP answers are blocked while Prokop is stopped"
+msgstr "Доменов из правил с ограничением по клиентам не блокируется через DNS (он общий для всех клиентов): {count}. Пока Prokop остановлен, блокируются только их IP-списки и ответы FakeIP"
+
+msgid "{count} domains of device-limited rules of other VPN sections are not blocked by the standby resolver for a dead sing-box (DNS is shared by all clients)"
+msgstr "Доменов из правил других VPN-секций с ограничением по устройствам не блокирует резервный резолвер при упавшем sing-box (DNS общий для всех клиентов): {count}"
+
+msgid "{count} domains of rules with excluded devices are blocked through DNS for the excluded devices as well (it is shared by all clients) while Prokop is stopped"
+msgstr "Доменов из правил с исключёнными устройствами, которые, пока Prokop остановлен, блокируются через DNS и для исключённых устройств (он общий для всех клиентов): {count}"
+
+msgid "{keyword} keyword, {regex} regex and {inverted} inverted domain matchers cannot be enforced through DNS while Prokop is stopped"
+msgstr "Пока Prokop остановлен, через DNS нельзя применить условия по домену: по ключевому слову — {keyword}, по regex — {regex}, инвертированных — {inverted}"
 
 msgid "%d confirmations"
 msgstr "подтверждений: %d"
@@ -1043,6 +1055,9 @@ msgstr "Копировать адрес"
 msgid "Copy details"
 msgstr "Копировать сведения"
 
+msgid "Could not adopt {file}"
+msgstr "Не удалось перенять {file}"
+
 msgid "Could not change autostart"
 msgstr "Не удалось изменить автозапуск"
 
@@ -1075,6 +1090,9 @@ msgstr "Не удалось загрузить данные"
 
 msgid "Could not refresh. Showing data from %s"
 msgstr "Не удалось обновить. Показаны данные на %s"
+
+msgid "Could not remove the saved policy that the first kill-switch build had removed"
+msgstr "Не удалось удалить сохранённую политику, которую убрала первая сборка kill-switch"
 
 msgid "Could not save a pre-apply configuration snapshot: it could not be written. Check the free space on the router. Changes were not applied."
 msgstr "Не удалось сохранить снимок перед применением: его не удалось записать. Проверьте свободное место на роутере. Изменения не применены."
@@ -1309,6 +1327,12 @@ msgstr "DNS через секцию"
 
 msgid "DNS Unavailability Timeout"
 msgstr "Таймаут недоступности DNS"
+
+msgid "dnsmasq already uses servers file {file}; DNS protection is not attached"
+msgstr "dnsmasq уже использует файл серверов {file}; защита DNS не подключена"
+
+msgid "dnsmasq still uses the {product} kill-switch servers file {file}, kept while {product} is installed or active; DNS protection is not attached"
+msgstr "dnsmasq всё ещё использует файл серверов kill-switch {product} ({file}), он сохраняется, пока {product} установлен или работает; защита DNS не подключена"
 
 msgid "Do not apply this section to the specified local IP addresses; matching continues with the next section."
 msgstr "Не применять эту секцию к указанным локальным IP-адресам; поиск продолжится в следующей секции."
@@ -1979,6 +2003,9 @@ msgstr "Неверный порт или диапазон. Используйт�
 msgid "Invalid regular expression"
 msgstr "Неверное регулярное выражение"
 
+msgid "Invalid regular expression: backreferences and lookaround are not supported"
+msgstr "Неверное регулярное выражение: обратные ссылки и lookaround не поддерживаются"
+
 msgid "Invalid Shadowsocks URL: decoded credentials must contain method:password"
 msgstr "Неверный URL Shadowsocks: декодированные данные должны содержать method:password"
 
@@ -2221,6 +2248,9 @@ msgstr "Показывать Priority перед серверами, отсор�
 
 msgid "Keep URLTest before latency-sorted servers"
 msgstr "Держать URLTest перед серверами, отсортированными по задержке"
+
+msgid "keeping the previous protection"
+msgstr "предыдущая защита сохранена"
 
 msgid "Keyword must not contain spaces or commas"
 msgstr "Ключевое слово не должно содержать пробелы или запятые"
@@ -3050,6 +3080,9 @@ msgstr "Prokop восстановит последнюю рабочую конф
 msgid "Prokop runtime"
 msgstr "Работа Prokop"
 
+msgid "Prokop runtime table {table} is not present"
+msgstr "Нет таблицы Prokop {table}"
+
 msgid "Prokop service is stopped. Start the service to display connections."
 msgstr "Служба Prokop остановлена. Запустите сервис для отображения соединений."
 
@@ -3127,6 +3160,9 @@ msgstr "Защита активна"
 
 msgid "Protection and recovery"
 msgstr "Защита и восстановление"
+
+msgid "Protection could not be removed completely"
+msgstr "Защиту не удалось снять полностью"
 
 msgid "Protection is active"
 msgstr "Защита активна"
@@ -3424,6 +3460,9 @@ msgstr "Направлять запросы к этому DNS-серверу ч�
 
 msgid "Router DNS"
 msgstr "DNS роутера"
+
+msgid "Router DNS is managed by you"
+msgstr "DNS роутера настраиваете вы"
 
 msgid "Router DNS is not pointed to Prokop"
 msgstr "DNS роутера не направлен в Prokop"
@@ -3980,6 +4019,9 @@ msgstr "Тестировать серверы, имена которых сов�
 msgid "Testing URL"
 msgstr "URL проверки"
 
+msgid "The {product} kill-switch policy {table} could not be removed completely"
+msgstr "Политику kill-switch {product} ({table}) не удалось удалить полностью"
+
 msgid "The action stopped unexpectedly and its outcome is unknown; check the status before trying again."
 msgstr "Действие неожиданно прервалось, и его результат неизвестен; проверьте состояние, прежде чем повторять."
 
@@ -4121,14 +4163,23 @@ msgstr "Не удалось надёжно определить DPI-правил
 msgid "The editor has no field for downloaded lists: they cannot be converted and stay as they are."
 msgstr "Для загружаемых списков в редакторе нет поля: их нельзя конвертировать, они остаются как есть."
 
+msgid "The firewall policy could not be applied"
+msgstr "Не удалось применить политику файрвола"
+
 msgid "The interrupted Prokop update was rolled back; no new update was attempted"
 msgstr "Прерванное обновление Prokop откачено; новое обновление не запускалось"
 
 msgid "The interval must be at least 1h: automatic updates run at most once an hour. An update started by hand always runs."
 msgstr "Интервал должен быть не меньше 1h: автоматические обновления выполняются не чаще раза в час. Обновление, запущенное вручную, выполняется всегда."
 
+msgid "The kill-switch action failed"
+msgstr "Действие kill-switch не выполнено"
+
 msgid "the kill-switch loader in /usr/share/nftables.d/ruleset-post"
 msgstr "загрузчик kill-switch в /usr/share/nftables.d/ruleset-post"
+
+msgid "The kill-switch service could not be started; DNS will not fail over to the standby resolver if sing-box dies"
+msgstr "Не удалось запустить службу kill-switch: если sing-box упадёт, DNS не переключится на резервный резолвер"
 
 msgid "The last autotune change is not resolved."
 msgstr "Последнее изменение автоподбора не завершено."
@@ -4235,6 +4286,12 @@ msgstr "Уведомление скрыто, больше в правиле ни
 msgid "The package is removed from the router."
 msgstr "Пакет будет удалён с роутера."
 
+msgid "the previous DNS block list stays in place"
+msgstr "предыдущий список блокировки DNS остаётся"
+
+msgid "The Prokop configuration could not be read"
+msgstr "Не удалось прочитать конфигурацию Prokop"
+
 msgid "The recommendation is not confirmed yet."
 msgstr "Рекомендация ещё не подтверждена."
 
@@ -4337,6 +4394,9 @@ msgstr "Окно правила закрыто до завершения сох�
 msgid "the rules connect through each other in a loop"
 msgstr "правила подключаются друг через друга по кругу"
 
+msgid "The runtime does not match the configuration yet"
+msgstr "Работающий Prokop ещё не соответствует конфигурации"
+
 msgid "The same result this many checks in a row (2–10)."
 msgstr "Столько проверок подряд с одинаковым результатом (2–10)."
 
@@ -4378,6 +4438,12 @@ msgstr "Снимка, к которому нужно вернуться, нет:
 
 msgid "The snapshot was not found or cannot be read."
 msgstr "Снимок не найден или не читается."
+
+msgid "The standby resolver for a dead sing-box"
+msgstr "Резервный резолвер при упавшем sing-box"
+
+msgid "The standby resolver for a dead sing-box blocks the protected names only, not those of the other VPN sections"
+msgstr "Резервный резолвер при упавшем sing-box блокирует только защищённые имена, но не имена других VPN-секций"
 
 msgid "The state of the last autotune change could not be read."
 msgstr "Не удалось прочитать состояние последнего изменения автоподбора."
@@ -4601,6 +4667,9 @@ msgstr "Транспорт"
 msgid "TTL must be a positive number"
 msgstr "TTL должно быть положительным числом"
 
+msgid "TTL must be at most 2147483647 seconds"
+msgstr "TTL не может быть больше 2147483647 секунд"
+
 msgid "TTL value cannot be empty"
 msgstr "Значение TTL не может быть пустым"
 
@@ -4639,6 +4708,9 @@ msgstr "Таймаут недоступности"
 
 msgid "Unexpected ByeDPI strategy argument: %s"
 msgstr "Неожиданный аргумент стратегии ByeDPI: %s"
+
+msgid "Unexpected failure"
+msgstr "Непредвиденная ошибка"
 
 msgid "Unexpected Prokop-managed ciadpi runtime is running"
 msgstr "Обнаружен лишний ciadpi Prokop"

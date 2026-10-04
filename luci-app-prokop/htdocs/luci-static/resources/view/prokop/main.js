@@ -10,16 +10,37 @@ function isIPv4(ip) {
   const ipRegex = /^(?:(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])$/;
   return ipRegex.test(ip);
 }
+function ipv6PartsCount(parts) {
+  let count = 0;
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i];
+    if (part.includes(".")) {
+      if (i !== parts.length - 1 || !isIPv4(part)) return -1;
+      count += 2;
+    } else if (/^[0-9A-Fa-f]{1,4}$/.test(part)) {
+      count++;
+    } else {
+      return -1;
+    }
+  }
+  return count;
+}
 function isIPv6(ip) {
-  if (!ip.includes(":") || ip.includes("%")) {
+  if (!ip.includes(":")) {
     return false;
   }
-  try {
-    new URL(`http://[${ip}]/`);
-    return true;
-  } catch (_e) {
+  const marker = ip.indexOf("::");
+  if (marker < 0) {
+    return ipv6PartsCount(ip.split(":")) === 8;
+  }
+  const left = ip.slice(0, marker);
+  const right = ip.slice(marker + 2);
+  if (right.includes("::")) {
     return false;
   }
+  const leftCount = left === "" ? 0 : ipv6PartsCount(left.split(":"));
+  const rightCount = right === "" ? 0 : ipv6PartsCount(right.split(":"));
+  return leftCount >= 0 && rightCount >= 0 && leftCount + rightCount < 8;
 }
 function validateIP(ip) {
   if (isIPv4(ip) || isIPv6(ip)) {
@@ -29,8 +50,17 @@ function validateIP(ip) {
 }
 
 // src/validators/validateDomain.ts
+function hasInvisible(value) {
+  for (const ch of value) {
+    const cp = ch.codePointAt(0) ?? 0;
+    if (cp === 173 || cp === 847 || cp >= 6155 && cp <= 6159 || cp >= 8203 && cp <= 8207 || cp >= 8234 && cp <= 8238 || cp >= 8288 && cp <= 8292 || cp >= 65024 && cp <= 65039 || cp === 65279)
+      return true;
+  }
+  return false;
+}
+var HOSTNAME_CHARACTERS = /^[\p{L}\p{M}\p{N}.-]+$/u;
 function asciiHostname(hostname) {
-  if (!hostname || /[\s@:/]/.test(hostname) || hostname.startsWith(".") || hostname.endsWith(".")) {
+  if (!hostname || hasInvisible(hostname) || !HOSTNAME_CHARACTERS.test(hostname) || hostname.startsWith(".") || hostname.endsWith(".")) {
     return null;
   }
   try {
@@ -57,9 +87,12 @@ function validAsciiDomain(hostname, requireDot = true) {
     return false;
   }
   const tld = parts[parts.length - 1];
-  return /^(?:[a-z]{2,}|xn--[a-z0-9-]{2,59})$/.test(tld);
+  return /^(?:[a-z0-9]{2,63}|xn--[a-z0-9-]{2,59})$/.test(tld) && /[a-z]/.test(tld);
 }
 function validateDomain(domain, allowDotTLD = false) {
+  if (hasInvisible(`${domain || ""}`)) {
+    return { valid: false, message: _("Invalid domain address") };
+  }
   const normalized = `${domain || ""}`.trim();
   if (allowDotTLD) {
     const dotTld = normalized.startsWith(".") ? normalized.slice(1) : "";
@@ -238,8 +271,8 @@ function validateSubnet(value) {
       message: _("Unspecified IP address is not allowed")
     };
   }
-  if (cidr) {
-    if (!/^\d+$/.test(cidr)) {
+  if (cidr !== void 0) {
+    if (!/^(?:0|[1-9]\d{0,2})$/.test(cidr)) {
       return {
         valid: false,
         message: _("Invalid CIDR prefix")
@@ -1183,10 +1216,27 @@ function shouldRefuseCommand(command, args) {
 }
 
 // src/helpers/executeShellCommand.ts
+var sharedRuns = /* @__PURE__ */ new Map();
+function startExec(command, args, shared) {
+  if (!shared) return fs.exec(command, args);
+  const key = JSON.stringify([command, ...args]);
+  let run = sharedRuns.get(key);
+  if (!run) {
+    run = Promise.resolve(fs.exec(command, args));
+    const started = run;
+    sharedRuns.set(key, started);
+    const forget = () => {
+      if (sharedRuns.get(key) === started) sharedRuns.delete(key);
+    };
+    started.then(forget, forget);
+  }
+  return run;
+}
 async function executeShellCommand({
   command: requestedCommand,
   args,
-  timeout = COMMAND_TIMEOUT
+  timeout = COMMAND_TIMEOUT,
+  shared = false
 }) {
   const command = resolveReadonlyCommand(requestedCommand);
   if (shouldRefuseCommand(command, args)) {
@@ -1194,7 +1244,7 @@ async function executeShellCommand({
   }
   try {
     return await withTimeout(
-      fs.exec(command, args),
+      startExec(command, args, shared),
       timeout,
       [command, ...args].join(" ")
     );
@@ -1296,6 +1346,11 @@ function svgEl(tag, attrs = {}, children = []) {
 // src/helpers/insertIf.ts
 function insertIf(condition, elements) {
   return condition ? elements : [];
+}
+
+// src/helpers/isPageHidden.ts
+function isPageHidden() {
+  return typeof document !== "undefined" && document.hidden === true;
 }
 
 // src/icons/renderLoaderCircleIcon24.ts
@@ -2458,7 +2513,8 @@ async function callBaseMethod(method, args = [], command = "/usr/bin/prokop", op
     const response = await executeShellCommand({
       command,
       args: [method, ...args],
-      timeout: options.timeout ?? 15e3
+      timeout: options.timeout ?? 15e3,
+      ...options.shared ? { shared: true } : {}
     });
     const exitCode = response.code ?? 0;
     if (exitCode !== 0 && !(options.allowNonZeroWithStdout && response.stdout)) {
@@ -2915,7 +2971,7 @@ var ProkopShellMethods = {
     Prokop.AvailableMethods.GET_UI_STATE,
     [],
     "/usr/bin/prokop",
-    { timeout: GET_UI_STATE_RPC_TIMEOUT_MS }
+    { timeout: GET_UI_STATE_RPC_TIMEOUT_MS, shared: true }
   ),
   getHealthStatus: async () => callBaseMethod(
     Prokop.AvailableMethods.GET_HEALTH_STATUS
@@ -5427,8 +5483,20 @@ function hasRunningAction(uiState) {
     (actions) => actions.some((action) => action.running)
   );
 }
+var RUNTIME_UI_STATE_MAX_BACKOFF_MS = 1e4;
+function runtimeUiStatePollDelay(running, failures) {
+  const base = running ? RUNTIME_UI_STATE_ACTIVE_POLL_INTERVAL_MS : RUNTIME_UI_STATE_IDLE_POLL_INTERVAL_MS;
+  if (failures <= 0) return base;
+  return Math.min(
+    RUNTIME_UI_STATE_MAX_BACKOFF_MS,
+    RUNTIME_UI_STATE_IDLE_POLL_INTERVAL_MS * 2 ** failures
+  );
+}
 function getNextPollDelay() {
-  return runtimeStateHasRunningAction ? RUNTIME_UI_STATE_ACTIVE_POLL_INTERVAL_MS : RUNTIME_UI_STATE_IDLE_POLL_INTERVAL_MS;
+  return runtimeUiStatePollDelay(
+    runtimeStateHasRunningAction,
+    runtimeUiStateFailures
+  );
 }
 function scheduleRuntimeUiStatePoll(delay = getNextPollDelay()) {
   if (!runtimeStatePollingStarted || runtimeStatePollTimer || typeof window === "undefined") {
@@ -5796,9 +5864,14 @@ function coreService(options = {}) {
 function loggableUrl(url) {
   return url.split("?")[0];
 }
+var RECONNECT_DELAYS_MS = [1e3, 2e3, 4e3, 8e3, 15e3];
 var SocketManager = class _SocketManager {
   constructor() {
     this.sockets = /* @__PURE__ */ new Map();
+    // URLs whose stream has been open since they were subscribed, and the
+    // reconnect in progress for one that dropped.
+    this.opened = /* @__PURE__ */ new Set();
+    this.reconnects = /* @__PURE__ */ new Map();
     this.listeners = /* @__PURE__ */ new Map();
     this.connected = /* @__PURE__ */ new Map();
     this.errorListeners = /* @__PURE__ */ new Map();
@@ -5824,6 +5897,7 @@ var SocketManager = class _SocketManager {
       }
     }
     this.sockets.clear();
+    this.clearReconnects();
     this.listeners.clear();
     this.errorListeners.clear();
     this.connected.clear();
@@ -5848,7 +5922,10 @@ var SocketManager = class _SocketManager {
     if (!this.listeners.has(url)) this.listeners.set(url, /* @__PURE__ */ new Set());
     if (!this.errorListeners.has(url)) this.errorListeners.set(url, /* @__PURE__ */ new Set());
     ws.addEventListener("open", () => {
+      if (this.sockets.get(url) !== ws) return;
       this.connected.set(url, true);
+      this.opened.add(url);
+      this.reconnects.delete(url);
       logger.info("[SOCKET]", "Connected to", loggableUrl(url));
     });
     ws.addEventListener("message", (event) => {
@@ -5868,14 +5945,51 @@ var SocketManager = class _SocketManager {
       }
     });
     ws.addEventListener("close", () => {
+      if (this.sockets.get(url) !== ws) return;
       this.connected.set(url, false);
+      this.sockets.delete(url);
       logger.warn("[SOCKET]", `Disconnected: ${loggableUrl(url)}`);
+      if (this.scheduleReconnect(url)) return;
       this.triggerError(url, "Connection closed");
     });
     ws.addEventListener("error", (err) => {
+      if (this.sockets.get(url) !== ws) return;
       logger.error("[SOCKET]", `Socket error for ${loggableUrl(url)}:`, err);
+      if (this.opened.has(url)) return;
       this.triggerError(url, err);
     });
+  }
+  scheduleReconnect(url) {
+    if (!this.opened.has(url) || !this.listeners.get(url)?.size) return false;
+    const state = this.reconnects.get(url) || { attempt: 0, timer: null };
+    if (state.attempt >= RECONNECT_DELAYS_MS.length) {
+      this.reconnects.delete(url);
+      this.opened.delete(url);
+      return false;
+    }
+    const delay = RECONNECT_DELAYS_MS[state.attempt];
+    state.attempt += 1;
+    state.timer = setTimeout(() => {
+      state.timer = null;
+      if (this.reconnects.get(url) !== state || this.sockets.has(url)) return;
+      this.connect(url);
+    }, delay);
+    this.reconnects.set(url, state);
+    logger.info(
+      "[SOCKET]",
+      `Reconnecting to ${loggableUrl(url)} in ${delay} ms (attempt ${state.attempt})`
+    );
+    return true;
+  }
+  clearReconnect(url) {
+    const state = this.reconnects.get(url);
+    if (state?.timer) clearTimeout(state.timer);
+    this.reconnects.delete(url);
+    this.opened.delete(url);
+  }
+  clearReconnects() {
+    for (const url of [...this.reconnects.keys()]) this.clearReconnect(url);
+    this.opened.clear();
   }
   subscribe(url, listener, onError) {
     if (!this.errorListeners.has(url)) {
@@ -5913,16 +6027,18 @@ var SocketManager = class _SocketManager {
   }
   disconnect(url) {
     const ws = this.sockets.get(url);
-    if (ws) {
-      ws.close();
-      this.sockets.delete(url);
-      this.listeners.delete(url);
-      this.errorListeners.delete(url);
-      this.connected.delete(url);
-    }
+    this.clearReconnect(url);
+    this.sockets.delete(url);
+    this.listeners.delete(url);
+    this.errorListeners.delete(url);
+    this.connected.delete(url);
+    ws?.close();
   }
   disconnectAll() {
-    for (const url of this.sockets.keys()) {
+    for (const url of /* @__PURE__ */ new Set([
+      ...this.sockets.keys(),
+      ...this.reconnects.keys()
+    ])) {
       this.disconnect(url);
     }
   }
@@ -7580,6 +7696,8 @@ function overviewState(input) {
         text: _("Router DNS is not pointed to Prokop"),
         tone: "warning"
       });
+    } else if (health2?.dns?.user_managed && !health2.dns.configured) {
+      lines.push({ text: _("Router DNS is managed by you") });
     }
   }
   lines.push({
@@ -9514,6 +9632,7 @@ function startClashRpcPolling(dataUpdatesId) {
   lastConnectionsSample = null;
   void pollClashConnections(dataUpdatesId);
   clashRpcPollTimer = setInterval(() => {
+    if (isPageHidden()) return;
     void pollClashConnections(dataUpdatesId);
   }, CLASH_RPC_POLL_INTERVAL_MS);
 }
@@ -9563,6 +9682,7 @@ function startDashboardDataUpdates() {
     void connectToClashSockets(dataUpdatesId);
   }
   sectionsRefreshTimer = setInterval(() => {
+    if (isPageHidden()) return;
     void fetchDashboardSections();
   }, SECTIONS_REFRESH_INTERVAL_MS);
 }
@@ -10473,6 +10593,7 @@ async function onPageMount() {
     void refreshHealth(mountId3);
     void refreshAutotune(mountId3);
     healthRefreshTimer = setInterval(() => {
+      if (isPageHidden()) return;
       void refreshHealth(mountId3);
       if (Date.now() - autotuneLoadedAt >= AUTOTUNE_REFRESH_INTERVAL_MS)
         void refreshAutotune(mountId3);
@@ -15604,9 +15725,6 @@ function render3() {
 }
 
 // src/prokop/tabs/monitoring/routeNamesRefresh.ts
-function isPageHidden() {
-  return typeof document !== "undefined" && document.hidden === true;
-}
 function createRouteNamesRefresher({
   fetchSections,
   apply,
@@ -17096,6 +17214,7 @@ function startConnectionsPolling() {
   }
   void pollConnectionsSnapshot();
   connectionsPollTimer = setInterval(() => {
+    if (isPageHidden()) return;
     void pollConnectionsSnapshot();
   }, CONNECTIONS_RPC_POLL_INTERVAL_MS);
 }
@@ -17251,7 +17370,7 @@ async function onPageMount3() {
   document.addEventListener("selectionchange", flushRenderAfterSelection);
   document.addEventListener("copy", handleMonitoringValueCopy);
   renderTimer = setInterval(() => {
-    if (monitoringPaused) {
+    if (monitoringPaused || isPageHidden()) {
       return;
     }
     renderConnections();
@@ -20846,7 +20965,7 @@ function onPageMount5() {
   renderAll();
   void loadAll();
   refreshTimer = setInterval(() => {
-    if (!snapshotBusy) void loadAll();
+    if (!snapshotBusy && !isPageHidden()) void loadAll();
   }, REFRESH_INTERVAL_MS);
 }
 function onPageUnmount5() {
@@ -22404,7 +22523,7 @@ function onPageMount6() {
   renderAll2();
   void loadAll2();
   refreshTimer2 = setInterval(() => {
-    if (busy) return;
+    if (busy || isPageHidden()) return;
     const plan = refreshPlan(
       Date.now(),
       statusLoadedAt,

@@ -5,14 +5,29 @@ import { ValidationResult } from './types';
 // or decode before checking: an invisible character (zero-width space, soft
 // hyphen) the router keeps and then never matches, or `?`, `#`, `%` that
 // the router refuses.
-const INVISIBLE =
-  /[\u00ad\u034f\u180b-\u180f\u200b-\u200f\u202a-\u202e\u2060-\u2064\ufe00-\ufe0f\ufeff]/u;
+function hasInvisible(value: string): boolean {
+  for (const ch of value) {
+    const cp = ch.codePointAt(0) ?? 0;
+    if (
+      cp === 0xad ||
+      cp === 0x34f ||
+      (cp >= 0x180b && cp <= 0x180f) ||
+      (cp >= 0x200b && cp <= 0x200f) ||
+      (cp >= 0x202a && cp <= 0x202e) ||
+      (cp >= 0x2060 && cp <= 0x2064) ||
+      (cp >= 0xfe00 && cp <= 0xfe0f) ||
+      cp === 0xfeff
+    )
+      return true;
+  }
+  return false;
+}
 const HOSTNAME_CHARACTERS = /^[\p{L}\p{M}\p{N}.-]+$/u;
 
 function asciiHostname(hostname: string): string | null {
   if (
     !hostname ||
-    INVISIBLE.test(hostname) ||
+    hasInvisible(hostname) ||
     !HOSTNAME_CHARACTERS.test(hostname) ||
     hostname.startsWith('.') ||
     hostname.endsWith('.')
@@ -63,7 +78,7 @@ export function validateDomain(
   allowDotTLD = false,
 ): ValidationResult {
   // Before trim(): it drops U+FEFF, which the router keeps.
-  if (INVISIBLE.test(`${domain || ''}`)) {
+  if (hasInvisible(`${domain || ''}`)) {
     return { valid: false, message: _('Invalid domain address') };
   }
   const normalized = `${domain || ''}`.trim();
