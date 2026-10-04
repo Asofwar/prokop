@@ -1196,7 +1196,14 @@ function nft_prepare_chunks(path, kind, ports_csv, chunk_size_text, chunks_path,
         exit(1);
 }
 
+// A few invalid entries by name, the rest counted on one line: each log
+// line is a logger process, and a broken list has thousands of them
+// (audit optimization 24).
+const INVALID_ELEMENTS_LOGGED = 5;
+
 function nft_log_invalid_elements(invalid) {
+    let logged = 0;
+    let skipped = 0;
     for (let item in invalid) {
         let separator = index(item, "\t");
         if (separator < 0)
@@ -1204,9 +1211,17 @@ function nft_log_invalid_elements(invalid) {
 
         let value = substr(item, 0, separator);
         let message = substr(item, separator + 1);
-        if (value != "")
+        if (value == "")
+            continue;
+        if (logged < INVALID_ELEMENTS_LOGGED) {
             log_debug("'" + value + "' " + message);
+            logged++;
+        }
+        else
+            skipped++;
     }
+    if (skipped > 0)
+        log_debug("... and " + skipped + " more invalid entries skipped");
 }
 
 function nft_add_chunks_to_set(table, set_name, chunks, invalid) {

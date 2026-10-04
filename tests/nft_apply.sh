@@ -421,6 +421,12 @@ nft_ucode nft-add-file-chunks-to-set "$input" ProkopTable prokop_subnets ips "" 
 assert_contains "$NFT_LOG" $'nft\tadd\telement\tinet\tProkopTable\tprokop_subnets\t{ 198.51.100.1,203.0.113.0/24 }' "nft chunked ips"
 assert_contains "$LOGGER_LOG" "[debug] 'bad-value' is not IP or CIDR" "invalid element log"
 assert_contains "$LOGGER_LOG" "[debug] Adding 2 elements to nft set prokop_subnets" "chunk count log"
+# A broken list: five entries by name, the rest on one line.
+: > "$LOGGER_LOG"
+{ printf '198.51.100.1\n'; for i in $(seq 1 40); do printf 'bad-%s\n' "$i"; done; } >"$WORK_DIR/broken.txt"
+nft_ucode nft-add-file-chunks-to-set "$WORK_DIR/broken.txt" ProkopTable prokop_subnets ips "" 2
+[ "$(grep -c "is not IP or CIDR" "$LOGGER_LOG")" = 5 ] || fail "a broken list logged $(grep -c "is not IP or CIDR" "$LOGGER_LOG") invalid entries by name"
+assert_contains "$LOGGER_LOG" "[debug] ... and 35 more invalid entries skipped" "invalid entries summary"
 
 : > "$NFT_LOG"
 ports_input="$WORK_DIR/ip-ports.txt"
