@@ -298,4 +298,35 @@ expect captured local "$FAKE_ADDRESS" udp 443
 nft delete table inet ProkopTestForeign
 ok "a foreign output hook ORing its bits into sing-box's mark does not send sing-box's own traffic back to it (UC-104)"
 
+# ---- NET-1: answers are never captured -------------------------------------
+
+# Capture goes by destination address. The answers of a connection that a
+# host in a captured list opened to the router (SSH, LuCI, a WireGuard
+# server, ACME) or to a LAN server through it went to sing-box as well,
+# and the connection never came up. Packets in conntrack reply direction
+# are no longer marked, in prerouting and in the router's output.
+expect_answer() { # expect_answer KIND CLIENT SERVER PORT
+  local kind="$1" client="$2" server="$3" port="$4" key
+  python3 "$PACKETS" "$kind" br-lan "$client" "$server" "$port" || fail "could not send the $kind connection $client -> $server:$port"
+  key="\"$client . tcp . $((40000 + port % 20000))\""
+  set_elements seen | grep -Fq "$key" || fail "the answer of the $kind connection $client -> $server:$port did not reach the hooks"
+  ! set_elements marked | grep -Fq "$key" || fail "the answer of the $kind connection $client -> $server:$port was captured for sing-box"
+  nft flush set inet ProkopTestObserve seen
+  nft flush set inet ProkopTestObserve marked
+}
+printf '1\n' >/proc/sys/net/ipv4/ip_forward || fail "forwarding could not be enabled in the namespace"
+cat >"$WORK_DIR/answers.uci" <<'EOF'
+prokop.settings=settings
+prokop.cf=section
+prokop.cf.action=vpn
+prokop.cf.ip_cidr=93.184.220.0/24
+EOF
+apply_config "$WORK_DIR/answers.uci"
+# Control: new connections to the list are still captured.
+expect captured lan 192.168.1.60 93.184.220.5 tcp 22
+expect captured local 93.184.220.5 tcp 22
+expect_answer inbound 93.184.220.5 192.168.1.1 2222
+expect_answer forwarded-reply 93.184.220.6 192.168.1.60 8443
+ok "answers of connections from captured addresses to the router and to LAN servers go direct (NET-1)"
+
 printf 'real nft dataplane checks passed\n'

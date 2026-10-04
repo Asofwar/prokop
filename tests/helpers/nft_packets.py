@@ -12,6 +12,17 @@ network namespace (tests/nft_dataplane_real.sh).
   local DST tcp|udp DPORT [MARK]
       a process on the router sends one packet to DST:DPORT from a socket
       with that SO_MARK (0 by default, like ciadpi's upstream sockets)
+  inbound IFNAME SRC LOCAL PORT
+      a remote host SRC opens a TCP connection to a socket of the router
+      listening on LOCAL:PORT; the router answers with a SYN-ACK to
+      SRC:SPORT (output, conntrack reply direction)
+  forwarded-reply IFNAME CLIENT SERVER PORT
+      a remote host CLIENT opens a TCP connection to the LAN host
+      SERVER:PORT through the router, and SERVER answers with a SYN-ACK to
+      CLIENT:SPORT; both enter through IFNAME (prerouting, the answer in
+      conntrack reply direction)
+
+SPORT is 40000 + PORT % 20000, as for every packet sent here.
 
 Where the packets go afterwards does not matter: the test reads what the
 hooks did to them.
@@ -89,15 +100,20 @@ def checksum(data):
     return ~total & 0xFFFF
 
 
-def ipv4_packet(src, dst, proto, dport):
-    sport = 40000 + (dport % 20000)
+def source_port(dport):
+    return 40000 + (dport % 20000)
+
+
+def ipv4_packet(src, dst, proto, dport, sport=None, flags=0x02, seq=1, ack=0):
+    if sport is None:
+        sport = source_port(dport)
     if proto == "udp":
         number = socket.IPPROTO_UDP
         payload = b"prokop"
         l4 = struct.pack("!HHHH", sport, dport, 8 + len(payload), 0) + payload
     else:
         number = socket.IPPROTO_TCP
-        l4 = struct.pack("!HHIIBBHHH", sport, dport, 1, 0, 5 << 4, 0x02, 65535, 0, 0)
+        l4 = struct.pack("!HHIIBBHHH", sport, dport, seq, ack, 5 << 4, flags, 65535, 0, 0)
     pseudo = socket.inet_aton(src) + socket.inet_aton(dst) + struct.pack("!BBH", 0, number, len(l4))
     csum = checksum(pseudo + l4)
     if proto == "udp":
@@ -134,8 +150,35 @@ def local(dst, proto, dport, mark="0"):
     sock.close()
 
 
+def inbound(name, src, local_addr, port):
+    port = int(port)
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server.bind((local_addr, port))
+    server.listen(1)
+    fd = open_tun(name)
+    try:
+        os.write(fd, ipv4_packet(src, local_addr, "tcp", port))
+        # The kernel answers the SYN at once, within the write.
+    finally:
+        os.close(fd)
+        server.close()
+
+
+def forwarded_reply(name, client, server, port):
+    port = int(port)
+    sport = source_port(port)
+    fd = open_tun(name)
+    try:
+        os.write(fd, ipv4_packet(client, server, "tcp", port, sport=sport))
+        os.write(fd, ipv4_packet(server, client, "tcp", sport, sport=port, flags=0x12, seq=1000, ack=2))
+    finally:
+        os.close(fd)
+
+
 def main(argv):
-    commands = {"setup": setup, "lan": lan, "local": local}
+    commands = {"setup": setup, "lan": lan, "local": local, "inbound": inbound,
+                "forwarded-reply": forwarded_reply}
     if len(argv) < 2 or argv[1] not in commands:
         sys.stderr.write(__doc__)
         return 2
