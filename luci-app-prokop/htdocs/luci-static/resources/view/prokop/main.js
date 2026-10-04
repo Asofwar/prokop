@@ -7419,6 +7419,10 @@ function rollbackResultView(result) {
     };
   return { tone: "error", text: _("The rollback failed."), attention: false };
 }
+function refreshPlan(now, statusLoadedAt2, running, intervals) {
+  const due = now - statusLoadedAt2 >= (running ? intervals.running : intervals.idle);
+  return { status: due, history: due && !running };
+}
 
 // src/prokop/tabs/dashboard/overview.ts
 function lastEvent(health2) {
@@ -21159,22 +21163,26 @@ function timeNode(timestamp) {
     asText(formatRelativeTime(timestamp))
   );
 }
-async function loadStatus() {
+async function loadStatus(withHistory = true) {
   const id = mountId2;
   statusLoadedAt = Date.now();
   const [statusResponse, historyResponse] = await Promise.allSettled([
     ProkopShellMethods.autotuneStatus(),
-    ProkopShellMethods.getHistory()
+    withHistory ? ProkopShellMethods.getHistory() : Promise.resolve(null)
   ]);
   if (!mounted2 || id !== mountId2) return;
   const next = statusResponse.status === "fulfilled" && statusResponse.value.success ? statusResponse.value.data : null;
   status = next && next.status === "ok" && next.policy ? next : null;
   statusFailed = !status;
-  const events = historyResponse.status === "fulfilled" && historyResponse.value.success ? historyResponse.value.data : null;
-  history3 = events && Array.isArray(events.events) ? events : null;
-  historyFailed2 = !history3;
+  if (withHistory) {
+    const events = historyResponse.status === "fulfilled" && historyResponse.value?.success ? historyResponse.value.data : null;
+    history3 = events && Array.isArray(events.events) ? events : null;
+    historyFailed2 = !history3;
+  }
   resumeApply();
   renderAll2();
+  if (!withHistory && status?.worker?.state !== "running" && runningScope === null)
+    void loadStatus(true);
 }
 async function loadGroups() {
   if (liveLoading) return;
@@ -21272,7 +21280,6 @@ async function pollJob(jobId) {
       showToast(_("The check stopped unexpectedly"), "error", 8e3);
       return;
     }
-    if (mounted2) void loadStatus();
   }
 }
 function toastType(tone) {
@@ -22398,9 +22405,13 @@ function onPageMount6() {
   void loadAll2();
   refreshTimer2 = setInterval(() => {
     if (busy) return;
-    const running = status?.worker?.state === "running";
-    if (Date.now() - statusLoadedAt >= (running ? RUNNING_REFRESH_INTERVAL_MS : REFRESH_INTERVAL_MS2))
-      void loadStatus();
+    const plan = refreshPlan(
+      Date.now(),
+      statusLoadedAt,
+      runningScope !== null || status?.worker?.state === "running",
+      { running: RUNNING_REFRESH_INTERVAL_MS, idle: REFRESH_INTERVAL_MS2 }
+    );
+    if (plan.status) void loadStatus(plan.history);
     if (Date.now() - liveLoadedAt > GROUPS_REFRESH_INTERVAL_MS)
       void loadGroups();
   }, RUNNING_REFRESH_INTERVAL_MS);

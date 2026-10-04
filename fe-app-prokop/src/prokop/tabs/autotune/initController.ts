@@ -38,6 +38,7 @@ import {
   modeLabel,
   MODES,
   mutationErrorText,
+  refreshPlan,
   outsideReasonText,
   recordedApplyView,
   rollbackConfirmation,
@@ -124,12 +125,13 @@ function timeNode(timestamp: number) {
   );
 }
 
-async function loadStatus() {
+// withHistory false: a refresh while a check runs keeps the history it has.
+async function loadStatus(withHistory = true) {
   const id = mountId;
   statusLoadedAt = Date.now();
   const [statusResponse, historyResponse] = await Promise.allSettled([
     ProkopShellMethods.autotuneStatus(),
-    ProkopShellMethods.getHistory(),
+    withHistory ? ProkopShellMethods.getHistory() : Promise.resolve(null),
   ]);
   if (!mounted || id !== mountId) return;
 
@@ -139,14 +141,23 @@ async function loadStatus() {
       : null;
   status = next && next.status === 'ok' && next.policy ? next : null;
   statusFailed = !status;
-  const events =
-    historyResponse.status === 'fulfilled' && historyResponse.value.success
-      ? historyResponse.value.data
-      : null;
-  history = events && Array.isArray(events.events) ? events : null;
-  historyFailed = !history;
+  if (withHistory) {
+    const events =
+      historyResponse.status === 'fulfilled' && historyResponse.value?.success
+        ? historyResponse.value.data
+        : null;
+    history = events && Array.isArray(events.events) ? events : null;
+    historyFailed = !history;
+  }
   resumeApply();
   renderAll();
+  // A scheduled check has just ended: its result is in the history now.
+  if (
+    !withHistory &&
+    status?.worker?.state !== 'running' &&
+    runningScope === null
+  )
+    void loadStatus(true);
 }
 
 async function loadGroups() {
@@ -257,7 +268,7 @@ async function pollJob(jobId: string) {
       showToast(_('The check stopped unexpectedly'), 'error', 8000);
       return;
     }
-    if (mounted) void loadStatus();
+    // The progress is followed by the page's refresh tick, not here too.
   }
 }
 
@@ -1529,12 +1540,13 @@ function onPageMount() {
   void loadAll();
   refreshTimer = setInterval(() => {
     if (busy) return;
-    const running = status?.worker?.state === 'running';
-    if (
-      Date.now() - statusLoadedAt >=
-      (running ? RUNNING_REFRESH_INTERVAL_MS : REFRESH_INTERVAL_MS)
-    )
-      void loadStatus();
+    const plan = refreshPlan(
+      Date.now(),
+      statusLoadedAt,
+      runningScope !== null || status?.worker?.state === 'running',
+      { running: RUNNING_REFRESH_INTERVAL_MS, idle: REFRESH_INTERVAL_MS },
+    );
+    if (plan.status) void loadStatus(plan.history);
     if (Date.now() - liveLoadedAt > GROUPS_REFRESH_INTERVAL_MS)
       void loadGroups();
   }, RUNNING_REFRESH_INTERVAL_MS);

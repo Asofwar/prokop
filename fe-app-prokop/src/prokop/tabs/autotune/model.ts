@@ -1640,3 +1640,17 @@ export function rollbackResultView(
     };
   return { tone: 'error', text: _('The rollback failed.'), attention: false };
 }
+
+// What the page reloads on its refresh tick (audit 2026-10-04): while a
+// check runs, the status (with its progress) every few seconds, but not the
+// history, which changes only when the check ends and is then reloaded.
+export function refreshPlan(
+  now: number,
+  statusLoadedAt: number,
+  running: boolean,
+  intervals: { running: number; idle: number },
+) {
+  const due =
+    now - statusLoadedAt >= (running ? intervals.running : intervals.idle);
+  return { status: due, history: due && !running };
+}

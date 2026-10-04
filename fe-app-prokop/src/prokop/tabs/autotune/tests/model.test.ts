@@ -14,6 +14,7 @@ import {
   mutationErrorText,
   outsideReasonText,
   recordedApplyView,
+  refreshPlan,
   rollbackConfirmation,
   rollbackResultView,
   strategyLabel,
@@ -1469,5 +1470,31 @@ describe('S9 autotune texts', () => {
     );
     expect(recommend.badge.label).toBe('Recommendation confirmed');
     expect(recommend.applyCandidate).toBe('multisplit');
+  });
+});
+
+// Audit 2026-10-04: while a check runs, the refresh follows its progress
+// without reloading the history every few seconds.
+describe('refreshPlan', () => {
+  const intervals = { running: 3000, idle: 15000 };
+  it('reloads the status often and the history never while a check runs', () => {
+    expect(refreshPlan(10000, 6000, true, intervals)).toEqual({
+      status: true,
+      history: false,
+    });
+    expect(refreshPlan(10000, 8000, true, intervals)).toEqual({
+      status: false,
+      history: false,
+    });
+  });
+  it('reloads both at the idle interval otherwise', () => {
+    expect(refreshPlan(20000, 4000, false, intervals)).toEqual({
+      status: true,
+      history: true,
+    });
+    expect(refreshPlan(10000, 4000, false, intervals)).toEqual({
+      status: false,
+      history: false,
+    });
   });
 });
