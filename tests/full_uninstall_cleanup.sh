@@ -107,4 +107,17 @@ chmod +x "$ROOT/bin/apk"
 run_case complete
 grep -qx 'original apk repositories' "$ROOT/etc/apk/repositories.d/distfeeds.list"
 [ ! -e "$ROOT/etc/apk/repositories.d/forkop.list" ] && [ ! -e "$ROOT/etc/apk/keys/forkop-mirror.pem" ]
+# zms and zmsA run a remote script as root: Prokop's launchers are removed,
+# a foreign one stays. DPI packages stay, and the removal says so (UPD-6).
+fixture dpi
+printf '#!/bin/sh\n# Prokop Zapret-Manager launcher\nexec sh <(wget -q -O - x) "$@"\n' > "$ROOT/usr/bin/zms"
+printf '#!/bin/sh\nexec /opt/zapret-manager "$@"\n' > "$ROOT/usr/bin/zmsA"
+touch "$ROOT/packages/zapret" "$ROOT/packages/byedpi"
+run_case complete || { cat "$ROOT"/tmp/prokop-uninstall.*/output.log; exit 1; }
+[ ! -e "$ROOT/usr/bin/zms" ] || { echo "Prokop's Zapret-Manager launcher was left behind"; exit 1; }
+[ -e "$ROOT/usr/bin/zmsA" ] || { echo "a foreign zmsA was removed"; exit 1; }
+[ -e "$ROOT/packages/zapret" ] && [ -e "$ROOT/packages/byedpi" ] || { echo "DPI packages must not be removed"; exit 1; }
+grep -Fq 'Still installed: zapret byedpi.' "$ROOT"/tmp/prokop-uninstall.*/output.log ||
+    { echo "the DPI packages left must be reported"; cat "$ROOT"/tmp/prokop-uninstall.*/output.log; exit 1; }
+
 printf 'Full uninstall checks passed\n'

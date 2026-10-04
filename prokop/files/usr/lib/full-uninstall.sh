@@ -499,6 +499,15 @@ run() {
         /usr/share/nftables.d/ruleset-post/90-prokop-killswitch.nft; do
         rm -f "$ROOT$file"
     done
+    # zms and zmsA download and run a remote script as root at every start:
+    # the launchers Prokop (or Forkop) wrote go with it. One someone else
+    # wrote stays (UPD-6).
+    for launcher in /usr/bin/zms /usr/bin/zmsA; do
+        if [ -f "$ROOT$launcher" ] &&
+            grep -Eq '^# (Prokop|Forkop X) Zapret-Manager launcher$|/zapret-manager/proxy/' "$ROOT$launcher"; then
+            rm -f "$ROOT$launcher"
+        fi
+    done
     remove_backups
     # The rc.d links of the removed services. The disable of a release whose
     # TorrServer Direct had START=100 and STOP=9 never removed its links
@@ -554,6 +563,17 @@ run() {
     if [ -n "$LEFT" ]; then
         echo "Prokop was removed, but this is still in place: $LEFT." >&2
         return 1
+    fi
+    # DPI packages are not Prokop's to remove: the user may run them on their
+    # own. Prokop disabled their services, so say they are still there.
+    DPI_LEFT=""
+    for package in zapret zapret2 byedpi; do
+        if installed "$package"; then DPI_LEFT="$DPI_LEFT $package"; fi
+    done
+    if [ -n "$DPI_LEFT" ]; then
+        if [ "$MANAGER" = apk ]; then remove_command="apk del"; else remove_command="opkg remove"; fi
+        printf 'Still installed:%s. Prokop disabled their services; enable them again or remove them with: %s%s\n' \
+            "$DPI_LEFT" "$remove_command" "$DPI_LEFT" >&2
     fi
     PHASE=complete
     state complete
