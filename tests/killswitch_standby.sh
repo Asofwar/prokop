@@ -68,6 +68,14 @@ ks() {
   ucode -L "$PROKOP_LIB" "$KS_UC" "$@"
 }
 
+# timed_watch N INTERVAL_MS: runs N watcher passes, prints the elapsed ms.
+timed_watch() {
+  local started
+  started="$(date +%s%N)"
+  PROKOP_KILLSWITCH_WATCH_ITERATIONS="$1" PROKOP_KILLSWITCH_WATCH_INTERVAL_MS="$2" ks watch || true
+  echo $(( ($(date +%s%N) - started) / 1000000 ))
+}
+
 cat >"$UCI_STATE" <<'EOF'
 prokop.settings=settings
 prokop.settings.source_network_interfaces=br-lan awg_server
@@ -106,6 +114,10 @@ grep -Fqx "no-resolv" "$conf" || fail "an original noresolv must be kept"
 touch "$WORK_DIR/ks-present" "$WORK_DIR/sing-box-alive"
 PROKOP_KILLSWITCH_WATCH_ITERATIONS=3 ks watch || fail "watch failed"
 [ ! -s "$WORK_DIR/ks_dns" ] || fail "no redirect while sing-box answers"
+# While sing-box answers and nothing is redirected, the watcher waits five
+# intervals between passes (optimization 6 of the 2026-10-04 audit).
+elapsed="$(timed_watch 3 300)"
+[ "$elapsed" -ge 3000 ] || fail "a healthy watcher must wait 5 intervals per pass (3 passes took ${elapsed} ms)"
 
 # sing-box dies: two failed probes are not enough, the third switches.
 rm -f "$WORK_DIR/sing-box-alive"
@@ -116,6 +128,9 @@ grep -Fq 'iifname @ks_interfaces udp dport 53 counter redirect to :18054' "$WORK
   fail "dead sing-box must redirect client UDP DNS to the standby"
 grep -Fq 'tcp dport 53 counter redirect to :18054' "$WORK_DIR/ks_dns" || fail "TCP DNS must be redirected too"
 grep -Fq -- '-D -p udp --dport 53' "$WORK_DIR/conntrack.log" || fail "stale DNS NAT bindings must be flushed"
+# On the standby resolver the watcher checks every interval.
+elapsed="$(timed_watch 3 300)"
+[ "$elapsed" -lt 3000 ] || fail "a watcher on the standby must check every interval (3 passes took ${elapsed} ms)"
 
 # A respawned watcher keeps the redirect while sing-box is still dead.
 PROKOP_KILLSWITCH_WATCH_ITERATIONS=1 ks watch

@@ -156,6 +156,10 @@ const STRICT_LEGACY_REASONS = { "package removal": true };
 // Test-only bounds for the watcher loop; production runs it forever.
 const WATCH_ITERATIONS = int(getenv("PROKOP_KILLSWITCH_WATCH_ITERATIONS") || "0");
 const WATCH_INTERVAL_MS = int(getenv("PROKOP_KILLSWITCH_WATCH_INTERVAL_MS") || "2000");
+// While sing-box answers, nothing is redirected and no restart is under way,
+// the watcher checks this much less often (dig and nft every 10 s instead of
+// every 2 s); the first unanswered probe brings it back to every pass.
+const WATCH_QUIET_INTERVAL_MS = int(getenv("PROKOP_KILLSWITCH_WATCH_QUIET_INTERVAL_MS") || sprintf("%d", WATCH_INTERVAL_MS * 5));
 
 // Route-rule keys that do not narrow a rule below "every client, every port".
 // Only such rules may carve an exception out of a protected domain.
@@ -1534,10 +1538,11 @@ function watch() {
 
         if (!policy_saved()) {
             standby = false;
-            sleep(WATCH_INTERVAL_MS * 2);
+            sleep(WATCH_QUIET_INTERVAL_MS);
             continue;
         }
 
+        let quiet = false;
         let forwarding = dnsmasq_forwards_to_sing_box();
         if (!forwarding || fs.stat(DNS_BLOCKED_FILE) == null) {
             // Prokop is stopped and dnsmasq answers with the block list
@@ -1545,6 +1550,7 @@ function watch() {
             standby = false;
             failures = 0;
             successes = 0;
+            quiet = true;
         }
         else if (runtime_lock.busy(RELOAD_LOCK_DIR) && !standby) {
             // Prokop is restarting sing-box on purpose; its own transition
@@ -1558,6 +1564,7 @@ function watch() {
                 standby = false;
                 log_message("Kill-switch: sing-box answers DNS again; client DNS goes through Prokop", "info");
             }
+            quiet = !standby;
         }
         else {
             failures++;
@@ -1575,6 +1582,8 @@ function watch() {
             let exempt = standby ? null : exempt_redirect(forwarding);
             let tag = exempt == null ? "" : exempt.tag;
             let current = exempt_redirect_tag(listed);
+            if (tag != "")
+                quiet = false;
             if (standby_redirected(listed) != standby || current != tag) {
                 if (!set_dns_chain(standby, exempt))
                     log_message("Kill-switch: could not switch client DNS to the " +
@@ -1586,7 +1595,7 @@ function watch() {
             }
         }
 
-        sleep(WATCH_INTERVAL_MS);
+        sleep(quiet ? WATCH_QUIET_INTERVAL_MS : WATCH_INTERVAL_MS);
     }
     return 0;
 }
