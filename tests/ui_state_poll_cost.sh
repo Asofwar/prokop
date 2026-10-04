@@ -165,6 +165,9 @@ calls:
 $(cat "$CALLS")"
 cp "$CALLS" "$WORK_DIR/first-calls.log"
 
+# 1b. The answer is kept for the health poll (optimization 2).
+[ "$(cat "$WORK_DIR/ui/current.json")" = "$first" ] || fail "get-ui-state did not keep its answer for the health poll"
+
 # 1a. One state.uc process and one procd query answer every runtime question
 #     of a poll (optimization 1 of the 2026-10-04 audit).
 [ "$(calls ubus)" = 1 ] || fail "the UI state poll asked procd more than once: $(grep '^ubus ' "$CALLS")"

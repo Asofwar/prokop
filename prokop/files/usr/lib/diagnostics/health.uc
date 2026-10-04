@@ -9,6 +9,9 @@ const EVENT_FILE = RUNTIME_DIR + "/health-events.json";
 const PACKAGE_PENDING = getenv("PROKOP_OPKG_RECOVERY_DIR") || "/etc/prokop/opkg-package-set-recovery";
 const SNAPSHOT_LOCK = getenv("PROKOP_SNAPSHOT_LOCK_DIR") || "/var/run/prokop/config-snapshot.lock";
 const RELOAD_LOCK = getenv("PROKOP_RELOAD_LOCK_DIR") || "/var/run/prokop.reload.lock";
+// The last answer of service/ui.uc get-ui-state.
+const UI_STATE_FILE = (getenv("PROKOP_UI_STATE_DIR") || "/var/run/prokop/ui-state") + "/current.json";
+const UI_STATE_MAX_AGE = 3;
 // Significant events survive reboots in a small journal on flash. Only
 // recorded events land there (starts, reloads, restores, autotune applies,
 // manual snapshot changes), never probes or measurements. When the journal
@@ -378,15 +381,25 @@ if (mode == "fixture") {
 if (mode != "get")
     exit(1);
 
-let ui = {};
-try {
-    ui = json(capture([ "ucode", "-L", LIB_DIR, LIB_DIR + "/service/ui.uc", "get-ui-state" ]));
+// An open Prokop page asks for the UI state every second; an answer at most
+// UI_STATE_MAX_AGE seconds old saves this poll the whole chain again.
+let ui = null;
+let cached = fs.stat(UI_STATE_FILE);
+if (cached != null && cached.type == "file" && time() - cached.mtime >= 0 && time() - cached.mtime <= UI_STATE_MAX_AGE) {
+    try { ui = json(fs.readfile(UI_STATE_FILE)); } catch (e) { ui = null; }
 }
-catch (e) {}
+if (type(ui) != "object") {
+    try {
+        ui = json(capture([ "ucode", "-L", LIB_DIR, LIB_DIR + "/service/ui.uc", "get-ui-state" ]));
+    }
+    catch (e) {}
+}
+if (type(ui) != "object")
+    ui = {};
 let guards = {
-    runtime: command_ok([ "nft", "list", "table", "inet", "ProkopTableDpiGuard" ]) ||
+    runtime: command_ok([ "nft", "-t", "list", "table", "inet", "ProkopTableDpiGuard" ]) ||
         command_ok([ "nft", "list", "chain", "inet", "ProkopTable", "prokop_transition_guard" ]),
-    restore: command_ok([ "nft", "list", "table", "inet", "ProkopConfigRestoreDpiGuard" ])
+    restore: command_ok([ "nft", "-t", "list", "table", "inet", "ProkopConfigRestoreDpiGuard" ])
 };
 if (guards.restore)
     guards.transaction = snapshot_operation_active();

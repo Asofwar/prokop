@@ -14,6 +14,7 @@ const SERVICE_NAME = getenv("PROKOP_SERVICE_NAME") || "prokop";
 const STATE_UC = LIB_DIR + "/service/state.uc";
 const UI_UC = LIB_DIR + "/service/ui.uc";
 const STATE_DIR = getenv("PROKOP_UI_STATE_DIR") || "/var/run/prokop/ui-state";
+const CURRENT_STATE_FILE = STATE_DIR + "/current.json";
 const PENDING_RELOAD_FILE = getenv("PROKOP_PENDING_RELOAD_FILE") || "/var/run/prokop/reload.pending";
 const RELOAD_LOCK_DIR = getenv("PROKOP_RELOAD_LOCK_DIR") || "/var/run/prokop.reload.lock";
 const START_IN_PROGRESS_FILE = getenv("PROKOP_START_IN_PROGRESS_FILE") || "/var/run/prokop/start.in-progress";
@@ -1212,7 +1213,7 @@ function current_ui_state_json() {
         dns_configured() ||
         command_success_from_args([ "nft", "-t", "list", "table", "inet", NFT_TABLE_NAME ]);
 
-    write_json({
+    let state = {
         service: {
             prokop: {
                 running: prokop_is_running,
@@ -1233,7 +1234,14 @@ function current_ui_state_json() {
         },
         capabilities,
         actions: action_state_from_dirs()
-    });
+    };
+    let text = sprintf("%J", state);
+    print(text, "\n");
+    // The health poll reuses an answer this fresh instead of asking again
+    // (diagnostics/health.uc, optimization 2 of the 2026-10-04 audit).
+    let tmp = CURRENT_STATE_FILE + "." + current_pid();
+    if (fs.writefile(tmp, text) == null || !fs.rename(tmp, CURRENT_STATE_FILE))
+        fs.unlink(tmp);
 }
 
 function service_action_expected_running_value(action) {
