@@ -4,11 +4,14 @@ set -eo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SECTION_JS="$ROOT_DIR/luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js"
 MAIN_JS="$ROOT_DIR/luci-app-prokop/htdocs/luci-static/resources/view/prokop/main.js"
+# main.js is minified; the option catalogue is read from its source.
+CONSTANTS_TS="$ROOT_DIR/fe-app-prokop/src/constants.ts"
 
-node - "$SECTION_JS" "$MAIN_JS" <<'NODE'
+node - "$SECTION_JS" "$CONSTANTS_TS" "$MAIN_JS" <<'NODE'
 const fs = require("fs");
 const section = fs.readFileSync(process.argv[2], "utf8");
 const main = fs.readFileSync(process.argv[3], "utf8");
+const bundle = fs.readFileSync(process.argv[4], "utf8");
 
 function fail(message) {
   console.error(`FAIL: ${message}`);
@@ -35,7 +38,7 @@ for (const option of currentSecondaryOptions) {
   }
 }
 
-const secondaryOptions = main.match(/var SECONDARY_RULESET_OPTIONS = \{([\s\S]*?)\n\};/);
+const secondaryOptions = main.match(/export const SECONDARY_RULESET_OPTIONS = \{([\s\S]*?)\n\};/);
 if (!secondaryOptions) {
   fail('secondary built-in rule set options are missing');
 }
@@ -85,7 +88,7 @@ for (const removed of [
   "Regional options cannot be used together",
   "Previous selections have been removed",
 ]) {
-  if (section.includes(removed) || main.includes(removed)) {
+  if (section.includes(removed) || main.includes(removed) || bundle.includes(removed)) {
     fail(`built-in rule set restriction remains: ${removed}`);
   }
 }
