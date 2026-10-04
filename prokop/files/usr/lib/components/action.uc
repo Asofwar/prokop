@@ -1582,6 +1582,17 @@ function zapret_manager_launcher_managed(source) {
         !legacy_forkop.installed();
 }
 
+// Binaries and scripts from the mirror run as root, and the mirror publishes
+// the digests along with them: over http:// anyone on the path could swap
+// both. They come only from an https:// mirror, and a configured mirror is
+// never bypassed, so an http:// one refuses them (UPD-2). OpenWrt feed
+// packages through the mirror keep their signatures and are not affected.
+function mirror_refuses_executables() {
+    return PROKOP_MIRROR_BASE_URL != "" && lc(substr(PROKOP_MIRROR_BASE_URL, 0, 8)) != "https://";
+}
+
+const INSECURE_MIRROR_MESSAGE = "The configured mirror uses http://; binaries and scripts are installed only from an https:// mirror";
+
 // A configured mirror proxies the script and the downloads it makes;
 // without one the launcher runs the project's own script.
 function zapret_manager_url() {
@@ -1606,6 +1617,8 @@ function install_zapret_manager(action) {
     let zmsa = ZAPRET_MANAGER_BIN_DIR + "/zmsA";
     let current_version = file_exists(zms) ? "installed" : "not installed";
 
+    if (mirror_refuses_executables())
+        action_fail(component, action, INSECURE_MIRROR_MESSAGE, current_version);
     if (!download_with_retry(manager_url, manager_file, "Zapret-Manager"))
         action_fail(component, action, mirrored ? "Failed to download Zapret-Manager from the mirror" :
             "Failed to download Zapret-Manager", current_version);
@@ -1836,6 +1849,10 @@ function set_sing_box_extended_release_from_json(release_json, compressed) {
 // assets cut down to the OpenWrt packages; without a mirror the release comes
 // from GitHub itself. A configured mirror is never bypassed.
 function resolve_sing_box_extended_release(compressed) {
+    if (mirror_refuses_executables()) {
+        updates_log(INSECURE_MIRROR_MESSAGE, "error");
+        return null;
+    }
     let release_json = PROKOP_MIRROR_BASE_URL != "" ?
         http_get(PROKOP_MIRROR_BASE_URL + "/forkop/sing-box-extended/latest.json") :
         fetch_github_release_json("shtorm-7", "sing-box-extended");

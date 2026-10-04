@@ -130,7 +130,7 @@ expect_settings_rejected() {
   fi
 }
 expect_settings_accepted "Asofwar/prokop" "https://asofwar.github.io/prokop"
-expect_settings_accepted "some-org/repo.name_1" "http://releases.example/prokop"
+expect_settings_accepted "some-org/repo.name_1" "https://releases.example/prokop"
 expect_settings_accepted "Asofwar/prokop" "https://asofwar.github.io/prokop//"
 [ "$RELEASE_BASE_URL" = "https://asofwar.github.io/prokop" ] ||
   fail_test "trailing slashes must be stripped from the release channel"
@@ -138,7 +138,8 @@ for bad_repo in "" "Asofwar" "Asofwar/" "/prokop" "a/b/c" "../prokop" "Asofwar/.
   "Asofwar/fork op" "Asofwar/prokop;id" "Aso.fwar/prokop" "Asofwar/prokop?x=1"; do
   expect_settings_rejected "$bad_repo" "https://asofwar.github.io/prokop"
 done
-for bad_base in "asofwar.github.io/prokop" "ftp://asofwar.github.io/prokop" "https://" "https:///"; do
+# Packages and their checksums come from the release base together (UPD-2).
+for bad_base in "http://releases.example/prokop" "asofwar.github.io/prokop" "ftp://asofwar.github.io/prokop" "https://" "https:///"; do
   expect_settings_rejected "Asofwar/prokop" "$bad_base"
 done
 

@@ -87,7 +87,7 @@ import re
 import sys
 
 source = open(sys.argv[1], encoding='utf-8').read()
-consts = ('PROKOP_MIRROR_BASE_URL', 'ZAPRET_MANAGER_SOURCE', 'ZAPRET_MANAGER_LAUNCHER_MARKER',
+consts = ('PROKOP_MIRROR_BASE_URL', 'INSECURE_MIRROR_MESSAGE', 'ZAPRET_MANAGER_SOURCE', 'ZAPRET_MANAGER_LAUNCHER_MARKER',
           'ZAPRET_MANAGER_FORKOP_MARKER', 'ZAPRET_MANAGER_LEGACY_MARKER', 'ZAPRET_MANAGER_BIN_DIR')
 names = ('as_string', 'shell_quote', 'command_from_args', 'command_status',
          'command_success', 'command_success_from_args', 'command_output',
@@ -96,7 +96,8 @@ names = ('as_string', 'shell_quote', 'command_from_args', 'command_status',
          'module_command', 'module_output', 'helper_output', 'make_tmp_file',
          'helper_output_input', 'helper_success_input',
          'release_asset_object_sha256', 'release_json_asset_sha256', 'download_checksum_ok',
-         'fetch_github_release_json', 'prokop_mirror_url', 'sing_box_extended_tag_is_stable',
+         'fetch_github_release_json', 'prokop_mirror_url', 'mirror_refuses_executables',
+         'sing_box_extended_tag_is_stable',
          'set_sing_box_extended_release_from_json', 'resolve_sing_box_extended_release',
          'sing_box_extended_download_verified', 'zapret_manager_launcher_managed',
          'zapret_manager_url', 'zapret_manager_launcher',
@@ -189,6 +190,21 @@ const ZMS_MIRRORED = MIRROR + "/zapret-manager/proxy/raw.githubusercontent.com/S
 const IPK = "sing-box-extended_" + VERSION + "_openwrt_aarch64_cortex-a53.ipk";
 const APK = "sing-box-extended_" + VERSION + "_openwrt_aarch64_cortex-a53.apk";
 const ARCHIVE = "sing-box-" + VERSION + "-linux-arm64-compressed.tar.gz";
+
+// An http:// mirror could swap a binary and the digest it publishes with it:
+// binaries and scripts are refused from it, not fetched around it (UPD-2).
+if (index(PROKOP_MIRROR_BASE_URL, "http://") == 0) {
+    check(resolve_sing_box_extended_release(false) == null && resolve_sing_box_extended_release(true) == null,
+        "a sing-box Extended release was resolved from an http:// mirror");
+    check(length(http_log) == 0, "an http:// mirror was asked for a binary release: " + join(" ", http_log));
+    command_success_from_args([ "mkdir", "-p", BIN ]);
+    let refused = run_action(() => install_zapret_manager("install"));
+    check(!refused.success && index(refused.message, "https://") >= 0,
+        "Zapret-Manager was installed from an http:// mirror: " + refused.message);
+    check(length(download_log) == 0 && !file_exists(BIN + "/zms"), "an http:// mirror script was downloaded or installed");
+    print("probe: PASS\n");
+    exit(0);
+}
 
 check(PROKOP_MIRROR_BASE_URL == (MIRRORED ? MIRROR : ""), "mirror setting was not normalised: " + PROKOP_MIRROR_BASE_URL);
 http_bodies[API] = WORK + "/github.json";
@@ -311,7 +327,7 @@ UC
 
 # ucode reports a runtime exception but still exits 0, so the verdict is the
 # probe's own last line rather than its exit status.
-for mirror in "" "https://mirror.test/"; do
+for mirror in "" "https://mirror.test/" "http://mirror.test/"; do
   result="$(PROKOP_MIRROR_BASE_URL="$mirror" PROKOP_ZAPRET_MANAGER_BIN_DIR="$WORK_DIR/bin" \
     ucode -L "$PROKOP_LIB" "$WORK_DIR/probe.uc")" || fail "the component probe failed (mirror '$mirror')"
   [ "$result" = "probe: PASS" ] || fail "the component probe did not finish (mirror '$mirror'): $result"

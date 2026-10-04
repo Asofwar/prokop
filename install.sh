@@ -357,9 +357,11 @@ validate_installer_settings() {
     esac
 
     RELEASE_BASE_URL="$(strip_trailing_slashes "$RELEASE_BASE_URL")"
+    # The Prokop packages and the catalog with their checksums come from
+    # here together: over http:// anyone on the path could swap both (UPD-2).
     case "$RELEASE_BASE_URL" in
-        https://?*|http://?*) ;;
-        *) fail "PROKOP_RELEASE_BASE_URL must use http:// or https://: $RELEASE_BASE_URL" ;;
+        https://?*) ;;
+        *) fail "PROKOP_RELEASE_BASE_URL must use https://: $RELEASE_BASE_URL" ;;
     esac
 
     MIRROR_BASE_URL="$(strip_trailing_slashes "$MIRROR_BASE_URL")"
@@ -376,6 +378,11 @@ validate_installer_settings() {
         *[!A-Za-z0-9._~:/%-]*)
             fail "Invalid dependency mirror URL: $MIRROR_BASE_URL (only letters, digits and . _ ~ : / % - are supported)"
             ;;
+    esac
+    # OpenWrt feed packages are signed and may come over http://; binaries
+    # and scripts the mirror serves unsigned are refused from it (UPD-2).
+    case "$MIRROR_BASE_URL" in
+        http://*) warn "The mirror uses http://: OpenWrt packages come from it, but sing-box-extended and Zapret-Manager are installed only from an https:// mirror" ;;
     esac
     # Package scripts and the Prokop backend resolve the mirror from this
     # variable first, so they follow the same opt-in during the installation.

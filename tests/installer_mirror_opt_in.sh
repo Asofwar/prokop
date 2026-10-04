@@ -77,9 +77,25 @@ done
 output="$(run_installer 'parse_args --mirror "https://mirror.example/a+b"; validate_installer_settings' 2>&1)" || true
 printf '%s\n' "$output" | grep -Fq 'only letters, digits and . _ ~ : / % - are supported' ||
   fail_test "an unsupported mirror URL character must be named in the error: $output"
-output="$(run_installer 'parse_args --mirror "http://Mirror-1.example:8080/my_path/~x/%7Ey/"; validate_installer_settings; printf "%s\n" "$MIRROR_BASE_URL"')"
+output="$(run_installer 'parse_args --mirror "http://Mirror-1.example:8080/my_path/~x/%7Ey/"; validate_installer_settings; printf "%s\n" "$MIRROR_BASE_URL"' | tail -n 1)"
 [ "$output" = "http://Mirror-1.example:8080/my_path/~x/%7Ey" ] ||
   fail_test "a mirror URL of letters, digits and . _ ~ : / % - must be accepted: $output"
+# An http:// mirror serves the signed OpenWrt feeds, but the installer says
+# that binaries and scripts will not come from it; the Prokop release base,
+# which carries the packages and their checksums together, must be https://
+# (UPD-2).
+output="$(run_installer 'parse_args --mirror "http://mirror.example"; validate_installer_settings' 2>&1)"
+printf '%s\n' "$output" | grep -Fq 'installed only from an https:// mirror' ||
+  fail_test "an http:// mirror must be reported as not used for binaries: $output"
+output="$(run_installer 'parse_args --mirror "https://mirror.example"; validate_installer_settings' 2>&1)"
+if printf '%s\n' "$output" | grep -Fq 'https:// mirror'; then
+  fail_test "an https:// mirror must not be warned about: $output"
+fi
+if run_installer 'validate_installer_settings' PROKOP_RELEASE_BASE_URL=http://releases.example >"$WORK_DIR/out" 2>&1; then
+  fail_test "an http:// release base must be refused"
+fi
+grep -Fq 'PROKOP_RELEASE_BASE_URL must use https://' "$WORK_DIR/out" ||
+  fail_test "the refused release base must be explained: $(cat "$WORK_DIR/out")"
 # install.sh and mirror-migration.sh accept the same characters.
 mirror_charset() {
   awk '
