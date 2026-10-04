@@ -93,7 +93,7 @@ for link in S00sysfixtime S10boot S11sysctl S12log S19dnsmasq S19firewall S20net
   ln -s "../init.d/${link#???}" "$RC_D/$link"
 done
 
-for name in prokop prokop-killswitch prokop-torrserver-direct prokop-dns-failsafe; do
+for name in prokop prokop-killswitch prokop-torrserver-direct prokop-dns-failsafe prokop-fw-watch; do
   rc "$name" enable || fail "$name: enable failed"
   rc "$name" enabled || fail "$name: enabled does not see the links enable made"
 done
@@ -138,7 +138,7 @@ $boot"
 fi
 
 # 5. disable takes away every link that enable made.
-for name in prokop prokop-killswitch prokop-torrserver-direct prokop-dns-failsafe; do
+for name in prokop prokop-killswitch prokop-torrserver-direct prokop-dns-failsafe prokop-fw-watch; do
   rc "$name" disable
   ! rc "$name" enabled || fail "$name: still enabled after disable"
   if order S | grep -qE "^S[0-9]+$name\$" || order K | grep -qE "^K[0-9]+$name\$"; then

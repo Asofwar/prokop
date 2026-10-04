@@ -928,7 +928,7 @@ function createSettingsContent(sections, capabilities) {
   o.value("auto", _("When a rule has the kill-switch"));
   o.value("1", _("Always"));
   o.value("0", _("Never"));
-  o.default = "auto";
+  o.default = "1";
   o.rmempty = false;
 }
 

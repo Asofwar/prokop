@@ -1,0 +1,23 @@
+#!/bin/sh /etc/rc.common
+# shellcheck disable=SC2034
+
+# `fw4 flush` (a firewall stop or restart) deletes ProkopTable with every
+# other nftables table. This service watches fw4's state file and reloads
+# Prokop when the table is gone while Prokop should run (NET-4,
+# service/fw_watch.uc). It changes nothing while Prokop is stopped, so it
+# stays enabled whatever Prokop's autostart is.
+
+START=99
+STOP=10
+USE_PROCD=1
+
+PROKOP_LIB="/usr/lib/prokop"
+FW_WATCH_UC="$PROKOP_LIB/service/fw_watch.uc"
+
+start_service() {
+    [ -r "$FW_WATCH_UC" ] || return 0
+    procd_open_instance watch
+    procd_set_param command /usr/bin/ucode -L "$PROKOP_LIB" "$FW_WATCH_UC" watch
+    procd_set_param respawn 3600 5 0
+    procd_close_instance
+}

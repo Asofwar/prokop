@@ -402,14 +402,15 @@ printf 'prokop.settings.intercept_client_dns=0\n' >>"$WORK_DIR/dns-intercept.uci
 apply_config "$WORK_DIR/dns-intercept.uci"
 # A new client each time: a NAT binding stays with its connection.
 expect_dns direct 192.168.1.61 8.8.8.8 udp
+# Without the option the intercept is on, a kill-switch or not.
 printf '%s\n' prokop.settings=settings prokop.web=section prokop.web.action=vpn \
   prokop.web.domain=example.com >"$WORK_DIR/dns-intercept-off.uci"
 apply_config "$WORK_DIR/dns-intercept-off.uci"
-expect_dns direct 192.168.1.62 8.8.8.8 udp
-printf 'prokop.settings.intercept_client_dns=1\n' >>"$WORK_DIR/dns-intercept-off.uci"
+expect_dns redirected 192.168.1.62 8.8.8.8 udp
+printf 'prokop.settings.intercept_client_dns=auto\n' >>"$WORK_DIR/dns-intercept-off.uci"
 apply_config "$WORK_DIR/dns-intercept-off.uci"
-expect_dns redirected 192.168.1.63 8.8.8.8 udp
-ok "client DNS to foreign servers goes to the router while a rule has the kill-switch or when asked; LAN resolvers stay (NET-6)"
+expect_dns direct 192.168.1.63 8.8.8.8 udp
+ok "client DNS to foreign servers goes to the router by default, with auto only while a rule has the kill-switch; LAN resolvers stay (NET-6)"
 
 # ---- NET-10: the table vanishes between building and committing a reload -----
 

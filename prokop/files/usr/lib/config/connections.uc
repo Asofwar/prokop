@@ -302,11 +302,11 @@ function is_connections_action(action) {
 // NET-6: a client with its own DNS server (8.8.8.8 hard-coded in a TV, an
 // IoT device, Android without Private DNS) gets real addresses and passes
 // by the domain rules and the kill-switch. intercept_client_dns sends its
-// plain DNS (port 53) to the router's dnsmasq: "auto" (the default) while a
-// section has the kill-switch, "1" always, "0" never. nft/apply.uc builds the
+// plain DNS (port 53) to the router's dnsmasq: "1" always (the default),
+// "auto" while a section has the kill-switch, "0" never. nft/apply.uc builds the
 // rules; service/state.uc signs the decision.
 function client_dns_intercept_enabled(settings, sections) {
-    let value = lc(option(settings, "intercept_client_dns", "auto"));
+    let value = lc(option(settings, "intercept_client_dns", "1"));
     if (index([ "1", "true", "yes", "on" ], value) >= 0)
         return true;
     if (value != "auto")

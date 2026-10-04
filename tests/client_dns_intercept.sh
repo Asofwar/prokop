@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 # NET-6: intercept_client_dns decides whether client DNS to foreign servers
-# goes to the router's dnsmasq: "auto" (default) while a section has the
-# kill-switch, "1" always, "0" never. A change of the decision changes the
+# goes to the router's dnsmasq: "1" always (the default), "auto" while a
+# section has the kill-switch, "0" never. A change of the decision changes the
 # nft signatures, so a reload rebuilds the table (nft/apply.uc and
 # service/state.uc agree). The packets are checked in nft_dataplane_real.sh.
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -18,7 +18,9 @@ let plain = { ".name": "b", action: "connection" };
 let off_ks = { ".name": "c", action: "vpn", kill_switch: "1", enabled: "0" };
 let dns = { ".name": "d", action: "dns", kill_switch: "1" };
 let cases = [
-    [ {}, [ ks ], true ], [ {}, [ plain ], false ], [ {}, [ off_ks ], false ], [ {}, [ dns ], false ],
+    [ {}, [ ks ], true ], [ {}, [ plain ], true ],
+    [ { intercept_client_dns: "auto" }, [ ks ], true ], [ { intercept_client_dns: "auto" }, [ plain ], false ],
+    [ { intercept_client_dns: "auto" }, [ off_ks ], false ], [ { intercept_client_dns: "auto" }, [ dns ], false ],
     [ { intercept_client_dns: "auto" }, [ plain, ks ], true ],
     [ { intercept_client_dns: "1" }, [ plain ], true ], [ { intercept_client_dns: "0" }, [ ks ], false ],
     [ { intercept_client_dns: "bogus" }, [ ks ], false ]

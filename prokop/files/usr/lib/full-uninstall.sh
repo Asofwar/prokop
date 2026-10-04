@@ -436,6 +436,11 @@ run() {
         return 1
     fi
     if [ -x "$ROOT/etc/init.d/prokop" ]; then "$ROOT/etc/init.d/prokop" disable; fi
+    # The firewall watcher (NET-4) would reload a Prokop that is going away.
+    if [ -x "$ROOT/etc/init.d/prokop-fw-watch" ]; then
+        "$ROOT/etc/init.d/prokop-fw-watch" stop || true
+        "$ROOT/etc/init.d/prokop-fw-watch" disable || true
+    fi
     # The package's second service: its stop removes its nft table (UC-083).
     if [ -x "$ROOT/etc/init.d/prokop-torrserver-direct" ]; then
         "$ROOT/etc/init.d/prokop-torrserver-direct" stop
@@ -492,7 +497,7 @@ run() {
         /etc/config/sing-box.opkg-old /etc/config/sing-box.opkg-dist \
         /usr/bin/prokop /usr/libexec/prokop-ro /usr/bin/sing-box /usr/lib/libcronet.so \
         /etc/init.d/prokop /etc/init.d/prokop-killswitch /etc/init.d/prokop-torrserver-direct \
-        /etc/init.d/prokop-dns-failsafe \
+        /etc/init.d/prokop-dns-failsafe /etc/init.d/prokop-fw-watch \
         /etc/init.d/sing-box /etc/uci-defaults/50_luci-prokop \
         /usr/share/luci/menu.d/luci-app-prokop.json /usr/share/rpcd/acl.d/luci-app-prokop.json \
         /usr/share/nftables.d/ruleset-post/90-prokop-killswitch-loader.nft \
@@ -514,6 +519,7 @@ run() {
     # (S100, K9; UC-161).
     rm -f "$ROOT"/etc/rc.d/[SK][0-9][0-9]prokop "$ROOT"/etc/rc.d/[SK][0-9][0-9]prokop-killswitch \
         "$ROOT"/etc/rc.d/[SK][0-9][0-9]prokop-dns-failsafe \
+        "$ROOT"/etc/rc.d/[SK][0-9][0-9]prokop-fw-watch \
         "$ROOT"/etc/rc.d/[SK][0-9][0-9]prokop-torrserver-direct \
         "$ROOT/etc/rc.d/S100prokop-torrserver-direct" "$ROOT/etc/rc.d/K9prokop-torrserver-direct"
     # Whatever the kill-switch left (its removal above failed or an older

@@ -30,6 +30,7 @@ const SING_BOX_CRONET = env("PROKOP_SING_BOX_CRONET", "/usr/lib/libcronet.so");
 const SING_BOX_MANAGED_MARKER = env("SB_MANAGED_SERVICE_MARKER", "Prokop managed sing-box service for binary variants");
 const TORRSERVER_DIRECT_INIT = env("PROKOP_TORRSERVER_DIRECT_INIT", "/etc/init.d/prokop-torrserver-direct");
 const DNS_FAILSAFE_INIT = env("PROKOP_DNS_FAILSAFE_INIT", "/etc/init.d/prokop-dns-failsafe");
+const FW_WATCH_INIT = env("PROKOP_FW_WATCH_INIT", "/etc/init.d/prokop-fw-watch");
 const RC_D_DIR = env("PROKOP_RC_D_DIR", "/etc/rc.d");
 // The rc.d links of releases whose prokop-torrserver-direct had START=100
 // and STOP=9: rc.common's disable (S??, K??) never removes them, and its
@@ -287,6 +288,23 @@ function dns_failsafe_postinst() {
         command_success_from_args([ DNS_FAILSAFE_INIT, "enable" ]);
 }
 
+// The firewall watcher (NET-4) reloads Prokop when fw4 took ProkopTable
+// away; it does nothing while Prokop is stopped, so it is always enabled,
+// and it is restarted on the new code. It stops before the package change
+// stops Prokop: a reload must not meet a half-replaced package.
+function fw_watch_postinst() {
+    if (!path_exists(FW_WATCH_INIT))
+        return;
+    if (!command_success_from_args([ FW_WATCH_INIT, "enabled" ]))
+        command_success_from_args([ FW_WATCH_INIT, "enable" ]);
+    command_success_from_args([ FW_WATCH_INIT, "restart" ]);
+}
+
+function stop_fw_watch() {
+    if (path_exists(FW_WATCH_INIT))
+        command_success_from_args([ FW_WATCH_INIT, "stop" ]);
+}
+
 function remember_upgrade_state(action) {
     // An explicit removal is unambiguous: nothing should be restored later.
     if (as_string(action) == "remove") {
@@ -449,6 +467,7 @@ function prerm_cleanup(action, version) {
 
     remember_upgrade_state(action);
     if (!PACKAGE_TEST_MODE) {
+        stop_fw_watch();
         // Prokop's own stop for the package change, not the user's
         // (service/initd.uc stop_request_source).
         let removal = as_string(action) == "remove";
@@ -698,6 +717,7 @@ function postinst_restore() {
     }
     torrserver_direct_postinst();
     dns_failsafe_postinst();
+    fw_watch_postinst();
 
     // Only an explicit start since boot lets a reload start a runtime that
     // is down (service/initd.uc EXPLICIT_START_FILE; D-15(a)), and a previous

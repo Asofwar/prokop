@@ -51,7 +51,7 @@ config settings 'settings'
         option cache_path '/tmp/sing-box/cache.db'
         option log_level 'warn'
         option exclude_ntp '0'
-        option intercept_client_dns 'auto'
+        option intercept_client_dns '1'
 
 #config section 'subscription_example'
 #        option label 'Subscription'

@@ -666,7 +666,7 @@ br-lan tun0
 [settings.exclude_ntp]
 1
 [settings.intercept_client_dns]
-0
+1
 [rule.text_rule.action]
 bypass
 [rule.text_rule.ip_cidr]
@@ -738,7 +738,7 @@ br-lan tun0
 [settings.exclude_ntp]
 1
 [settings.intercept_client_dns]
-0
+1
 [rule.enabled.action]
 bypass
 [rule.enabled.ip_cidr]
@@ -774,7 +774,7 @@ br-lan
 [settings.exclude_ntp]
 0
 [settings.intercept_client_dns]
-0
+1
 EOF_EXPECTED
 expected_signature="$(md5sum "$WORK_DIR/signature-defaults-expected.txt" | awk '{print $1}')"
 assert_eq "$expected_signature" \
