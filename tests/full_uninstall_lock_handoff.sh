@@ -4,7 +4,7 @@ set -euo pipefail
 # full-uninstall.sh start hands its locks to the worker in order (UC-157
 # follow-up).
 #
-# The starter takes the removal lock (/tmp/prokop-full-uninstall.lock) and
+# The starter takes the removal lock (/var/run/prokop/full-uninstall.lock) and
 # the component action lock, starts the worker in the background, names the
 # worker in both lock records and exits. A worker that failed at once (no
 # original repositories to restore, no package manager) could reach its
@@ -60,7 +60,7 @@ export PATH="$WORK/bin:$PATH" PROKOP_MIRROR_BASE_URL="http://mirror.test"
 # original to restore, so the worker fails at once.
 fixture() {
   UROOT="$WORK/root-$1"
-  LOCK="$UROOT/tmp/prokop-full-uninstall.lock"
+  LOCK="$UROOT/var/run/prokop/full-uninstall.lock"
   ACTION_LOCK="$UROOT/var/run/prokop/component-action.lock"
   mkdir -p "$UROOT/etc/opkg" "$UROOT/tmp" "$UROOT/www" "$UROOT/var/run/prokop"
   printf 'src/gz openwrt http://mirror.test/openwrt/releases/test\n' >"$UROOT/etc/opkg/distfeeds.conf"
@@ -125,5 +125,27 @@ for job in "$UROOT"/tmp/prokop-uninstall.*; do
 done
 wait_until 20 grep -Fq '"state":"failed","phase":"preflight"' "$UROOT"/www/prokop-uninstall.*.json ||
   fail "3: the removal did not fail its preflight"
+
+# 4. A removal lock whose removal was killed is taken over (CFG-3); one
+#    whose removal runs is not.
+fixture stale
+"$REAL_SLEEP" 0 &
+dead=$!
+wait "$dead" || true
+mkdir "$LOCK"
+printf '%s\n' "$dead" >"$LOCK/pid"
+sh "$SCRIPT" start >"$WORK/start.out" </dev/null || fail "4: a stale removal lock refused the removal: $(cat "$WORK/start.out")"
+grep -Fq '"success":true' "$WORK/start.out" || fail "4: start did not report the removal: $(cat "$WORK/start.out")"
+wait_until 20 test ! -e "$LOCK" || fail "4: the removal lock was left behind"
+fixture running
+sh -c 'while :; do "$1" 1; done' "$UROOT/full-uninstall.sh" "$REAL_SLEEP" &
+running=$!
+pids+=("$running")
+wait_until 20 grep -q full-uninstall "/proc/$running/cmdline" || fail "5: the running removal did not start"
+mkdir "$LOCK"
+printf '%s\n' "$running" >"$LOCK/pid"
+sh "$SCRIPT" start >"$WORK/start.out" </dev/null && fail "5: a second removal started next to a running one"
+grep -Fq 'Removal is already running' "$WORK/start.out" || fail "5: the second removal does not say why: $(cat "$WORK/start.out")"
+[ "$(cat "$LOCK/pid")" = "$running" ] || fail "5: the second removal took the lock of the running one"
 
 printf 'full_uninstall_lock_handoff: ok\n'

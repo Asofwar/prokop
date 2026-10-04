@@ -31,7 +31,7 @@ fixture() {
         "$ROOT/www/luci-static/resources/view/forkop" "$ROOT/usr/share/luci/menu.d" "$ROOT/usr/share/rpcd/acl.d" \
         "$ROOT/etc/uci-defaults" "$ROOT/usr/lib/lua/luci/i18n" "$ROOT/usr/share/nftables.d/ruleset-post" \
         "$ROOT/lib/upgrade/keep.d" "$ROOT/tmp/forkop-killswitch" "$ROOT/var/run/forkop" "$ROOT/etc/crontabs" \
-        "$ROOT/etc/iproute2" "$ROOT/tables" "$ROOT/tmp/prokop-full-uninstall.lock" \
+        "$ROOT/etc/iproute2" "$ROOT/tables" "$ROOT/var/run/prokop/full-uninstall.lock" \
         "$ROOT/var/run/prokop/component-action.lock"
     printf 'original vendor repositories\n' >"$ROOT/etc/opkg/distfeeds.conf.pre-forkop-mirror"
     printf 'https://mirror.51343.ru/openwrt/releases/test\n' >"$ROOT/etc/opkg/distfeeds.conf"

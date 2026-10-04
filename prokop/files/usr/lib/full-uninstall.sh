@@ -15,7 +15,9 @@ BIN="$ROOT/usr/bin/prokop"
 # inherited variable it assigned (a LIB, a RUNNING) would change the
 # environment of the init and package scripts it runs.
 UNINSTALL_LIB="$ROOT/usr/lib/prokop"
-LOCK="$ROOT/tmp/prokop-full-uninstall.lock"
+# Only root writes in /var/run/prokop; the lock holds while the process its
+# pid file names runs (/usr/bin/prokop full_uninstall_running, CFG-3).
+LOCK="$ROOT/var/run/prokop/full-uninstall.lock"
 COMPONENT_LOCK="$ROOT/var/run/prokop/component-action.lock"
 PACKAGES="luci-i18n-prokop-ru luci-app-prokop prokop sing-box sing-box-tiny sing-box-extended"
 PHASE=preflight
@@ -542,9 +544,9 @@ run() {
     while IFS='|' read -r file source; do
         rm -f "${file}.pre-forkop-mirror"
     done < "$JOB/repositories"
-    # Leave the component lock intact until finish() releases it.
+    # Leave the locks intact until finish() releases them.
     for item in "$ROOT"/var/run/prokop/*; do
-        [ "$item" = "$COMPONENT_LOCK" ] || rm -rf "$item"
+        [ "$item" = "$COMPONENT_LOCK" ] || [ "$item" = "$LOCK" ] || rm -rf "$item"
     done
     # Success only when nothing of Prokop is left (UC-028).
     find_left_behind all
@@ -556,12 +558,31 @@ run() {
     state complete
 }
 
+# The removal lock names a running starter or worker of a removal, or was
+# made within the last minute and has no pid yet.
+removal_lock_held() {
+    holder="$(cat "$LOCK/pid" 2>/dev/null || true)"
+    case "$holder" in
+        '' | *[!0-9]*)
+            [ -z "$(find "$LOCK" -maxdepth 0 -mmin +1 2>/dev/null)" ]
+            return
+            ;;
+    esac
+    case "$(tr '\0' ' ' 2>/dev/null <"/proc/$holder/cmdline")" in
+        *full-uninstall* | */worker.sh\ worker\ *) return 0 ;;
+    esac
+    return 1
+}
+
 case "${1:-}" in
     start)
         mkdir -p "$ROOT/tmp" "$ROOT/www" "$ROOT/var/run/prokop"
         if ! mkdir "$LOCK" 2>/dev/null; then
-            echo '{"success":false,"message":"Removal is already running"}'
-            exit 1
+            # A removal that was killed left its lock: taken over.
+            if removal_lock_held || ! { rm -f "$LOCK/pid"; rmdir "$LOCK" 2>/dev/null && mkdir "$LOCK" 2>/dev/null; }; then
+                echo '{"success":false,"message":"Removal is already running"}'
+                exit 1
+            fi
         fi
         if ! mkdir "$COMPONENT_LOCK" 2>/dev/null; then
             rmdir "$LOCK"

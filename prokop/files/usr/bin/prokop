@@ -274,7 +274,15 @@ function run_spec(command, spec, user_args) {
 // packages or its runtime, and could bring back what the removal takes away.
 // The list names what may run, so a command added later is refused until it
 // is known to be harmless here.
-const FULL_UNINSTALL_LOCK = "/tmp/prokop-full-uninstall.lock";
+//
+// The lock is a directory in /var/run/prokop (only root writes there) whose
+// pid file names the removal's starter or worker (full-uninstall.sh). It
+// counts only while that process runs: a removal killed by SIGKILL, or by a
+// HUP when its SSH session closed, blocked every start, reload and restart
+// until a reboot, and so could any user with a mkdir in /tmp (CFG-3). A lock
+// without a pid file yet is the starter's own, for a minute.
+const FULL_UNINSTALL_LOCK = getenv("PROKOP_FULL_UNINSTALL_LOCK") || "/var/run/prokop/full-uninstall.lock";
+const FULL_UNINSTALL_LOCK_SETUP_SECONDS = 60;
 const ALLOWED_DURING_FULL_UNINSTALL = [
     // The removal's own steps: init.d stop, the kill-switch removal, the
     // dnsmasq restore, the package's prerm; a second removal answers itself.
@@ -295,8 +303,21 @@ const ALLOWED_DURING_FULL_UNINSTALL = [
     "validate_byedpi_strategy_json"
 ];
 
+function full_uninstall_running() {
+    let lock = fs.lstat(FULL_UNINSTALL_LOCK);
+    if (lock == null || lock.type != "directory")
+        return false;
+    let pid = trim(as_string(fs.readfile(FULL_UNINSTALL_LOCK + "/pid")));
+    if (match(pid, /^[1-9][0-9]*$/) == null) {
+        let age = time() - int(lock.mtime || 0);
+        return age >= 0 && age < FULL_UNINSTALL_LOCK_SETUP_SECONDS;
+    }
+    let argv = join(" ", split(as_string(fs.readfile("/proc/" + pid + "/cmdline")), "\u0000"));
+    return index(argv, "full-uninstall") >= 0 || index(argv, "/worker.sh worker ") >= 0;
+}
+
 function refused_during_full_uninstall(command, user_args) {
-    if (fs.stat(FULL_UNINSTALL_LOCK) == null)
+    if (!full_uninstall_running())
         return false;
     // The Clash API reads with get_*; its other actions change the runtime.
     if (command == "clash_api")

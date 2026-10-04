@@ -15,57 +15,25 @@
 # Now the CLI names what may run during a removal, the commands that only
 # read and the steps the removal runs itself, and refuses everything else,
 # a command added later too. The test runs every command of command_spec
-# against stub modules, with and without the removal's lock; the lock lives
-# in a private /tmp of a user and mount namespace, never in the host's /tmp.
+# against stub modules, with and without the removal's lock.
+#
+# The lock counts only while the removal that its pid file names runs
+# (CFG-3): a removal killed by SIGKILL, or by a HUP when its SSH session
+# closed, left /tmp/prokop-full-uninstall.lock behind and blocked every
+# start, reload and restart until a reboot, as could any user's mkdir.
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CLI="$ROOT_DIR/prokop/files/usr/bin/prokop"
-NAMESPACE=(unshare --user --map-root-user --mount --propagation private)
-
-namespaces() { printf '%s %s' "$(readlink /proc/self/ns/user)" "$(readlink /proc/self/ns/mnt)"; }
-
-if [ "${1:-}" != "--in-namespace" ]; then
-  skip() {
-    printf 'SKIP: full_uninstall_command_gate: %s\n' "$1"
-    exit 0
-  }
-  command -v unshare >/dev/null 2>&1 || skip 'unshare is not installed'
-  probe_status=0
-  probe="$("${NAMESPACE[@]}" sh -c 'mount -t tmpfs tmpfs /tmp' 2>&1)" || probe_status=$?
-  [ "$probe_status" = 0 ] || skip "a private user+mount namespace with its own /tmp is unavailable: $probe"
-  PROKOP_GATE_HOST_NAMESPACES="$(namespaces)" exec "${NAMESPACE[@]}" bash "$0" --in-namespace
-fi
-
-# ---- inside the namespace ---------------------------------------------------
-
-refuse() {
-  printf 'FAIL: --in-namespace is only for the private namespace this test creates (%s)\n' "$1" >&2
-  exit 1
-}
-# Never mount over the caller's /tmp: only a new user namespace that maps
-# nothing but root, with a new mount namespace, is accepted.
-mapfile -t uid_map </proc/self/uid_map
-read -r map_inside _ map_count <<<"${uid_map[0]:-}"
-if [ "${#uid_map[@]}" != 1 ] || [ "$map_inside" != 0 ] || [ "$map_count" != 1 ]; then
-  refuse "not a user namespace mapping only root: ${uid_map[*]:-}"
-fi
-read -r host_user host_mnt <<<"${PROKOP_GATE_HOST_NAMESPACES:-}"
-read -r own_user own_mnt <<<"$(namespaces)"
-if [ -z "${host_user:-}" ] || [ "$own_user" = "$host_user" ] || [ "$own_mnt" = "${host_mnt:-}" ]; then
-  refuse "the user or mount namespace is not new"
-fi
-# The checkout may itself be under /tmp, which the private /tmp hides: the
-# CLI is read before and copied into it.
-exec 3<"$CLI"
-mount -t tmpfs -o mode=1777 tmpfs /tmp || refuse "cannot mount a private /tmp"
-
-export TMPDIR=/tmp
 WORK="$(mktemp -d)"
-CLI="$WORK/prokop"
-cat <&3 >"$CLI"
-exec 3<&-
-LOCK=/tmp/prokop-full-uninstall.lock
+holder=""
+cleanup() {
+  [ -z "$holder" ] || kill -KILL "$holder" 2>/dev/null || true
+  rm -rf "$WORK"
+}
+trap cleanup EXIT
+LOCK="$WORK/full-uninstall.lock"
+export PROKOP_FULL_UNINSTALL_LOCK="$LOCK"
 LIB="$WORK/lib"
 export GATE_RAN="$WORK/ran"
 
@@ -156,9 +124,16 @@ for spec in "${specs[@]}"; do
   expect_ran "$command" a1 a2 a3 a4 a5 a6 a7
 done
 
-# 2. During a removal only the allowed ones do.
+# 2. During a removal only the allowed ones do. Its worker holds the lock.
 CASE="removal running"
+bash -c 'while :; do sleep 1; done' "$WORK/job/worker.sh" worker job &
+holder=$!
+for _ in $(seq 100); do
+  tr '\0' ' ' <"/proc/$holder/cmdline" | grep -q 'worker.sh worker' && break
+  sleep 0.05
+done
 mkdir "$LOCK"
+printf '%s\n' "$holder" >"$LOCK/pid"
 for spec in "${specs[@]}"; do
   read -r command _ <<<"$spec"
   [ "$command" = clash_api ] && continue
@@ -180,5 +155,24 @@ run no_such_command
 if [ "$rc" = 0 ] || ! grep -Fq 'Available commands' "$WORK/out"; then
   fail "$CASE: an unknown command did not get the usage"
 fi
+
+# 3. A lock whose removal no longer runs (killed, or a pid that another
+#    process reuses) blocks nothing; one just made, without a pid yet, does.
+kill -KILL "$holder"
+wait "$holder" 2>/dev/null || true
+CASE="removal killed"
+expect_ran start
+expect_ran reload
+sleep 300 &
+holder=$!
+printf '%s\n' "$holder" >"$LOCK/pid"
+CASE="pid reused"
+expect_ran start
+rm -f "$LOCK/pid"
+CASE="lock being set up"
+expect_refused start
+touch -d '-2 minutes' "$LOCK"
+CASE="lock never set up"
+expect_ran start
 
 printf 'full_uninstall_command_gate: ok\n'

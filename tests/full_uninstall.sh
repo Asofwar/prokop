@@ -6,7 +6,7 @@ trap 'rm -rf "$WORK_DIR"' EXIT
 # Run only against this fresh fake root, never against the host filesystem.
 FAKE_ROOT="$WORK_DIR/root"
 mkdir -p "$FAKE_ROOT/etc/opkg" "$FAKE_ROOT/etc/config" "$FAKE_ROOT/www" \
-  "$FAKE_ROOT/tmp/prokop-full-uninstall.lock" "$FAKE_ROOT/var/run/prokop/component-action.lock" \
+  "$FAKE_ROOT/var/run/prokop/full-uninstall.lock" "$FAKE_ROOT/var/run/prokop/component-action.lock" \
   "$WORK_DIR/job" "$WORK_DIR/bin"
 printf '%s\n' 'src/gz openwrt https://mirror.51343.ru/openwrt/releases/test' > "$FAKE_ROOT/etc/opkg/distfeeds.conf"
 printf '%s\n' 'keep my subscriptions' > "$FAKE_ROOT/etc/config/prokop"
@@ -23,14 +23,14 @@ fi
 grep -Fq 'Cannot restore original repositories' "$WORK_DIR/log"
 grep -Fq '"state":"failed","phase":"preflight"' "$FAKE_ROOT/www/state.json"
 grep -Fxq 'keep my subscriptions' "$FAKE_ROOT/etc/config/prokop"
-test ! -d "$FAKE_ROOT/tmp/prokop-full-uninstall.lock"
+test ! -d "$FAKE_ROOT/var/run/prokop/full-uninstall.lock"
 test ! -d "$FAKE_ROOT/var/run/prokop/component-action.lock"
 
 # fresh_root FEED: a fake root whose only feed is FEED, without saved originals.
 fresh_root() {
   rm -rf "$FAKE_ROOT" "$WORK_DIR/job"
   mkdir -p "$FAKE_ROOT/etc/opkg" "$FAKE_ROOT/etc/config" "$FAKE_ROOT/www" \
-    "$FAKE_ROOT/tmp/prokop-full-uninstall.lock" "$FAKE_ROOT/var/run/prokop/component-action.lock" \
+    "$FAKE_ROOT/var/run/prokop/full-uninstall.lock" "$FAKE_ROOT/var/run/prokop/component-action.lock" \
     "$WORK_DIR/job"
   printf '%s\n' "$1" > "$FAKE_ROOT/etc/opkg/distfeeds.conf"
   printf '%s\n' 'keep my subscriptions' > "$FAKE_ROOT/etc/config/prokop"
