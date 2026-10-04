@@ -671,7 +671,11 @@ function render_global_dns_check(dont_touch_dhcp) {
         : "";
     let dump_dhcp_config = false;
 
-    if (bootstrap_dns_server != "") {
+    // A main DNS server given as an address needs no bootstrap resolver: the
+    // check does not run, which is no failure (OBS-5).
+    if (bootstrap_dns_server != "" && value.bootstrap_dns_required === 0)
+        print_line("\u2796 Bootstrap DNS: " + bootstrap_dns_server + " (not used: the main DNS server is an IP address)");
+    else if (bootstrap_dns_server != "") {
         print_line((flag_is_one(value.bootstrap_dns_status) ? "\u2705 Bootstrap DNS: " : "\u274c Bootstrap DNS: ") + bootstrap_dns_server + bootstrap_position);
     }
 
