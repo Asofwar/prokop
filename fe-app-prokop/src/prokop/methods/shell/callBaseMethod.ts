@@ -4,6 +4,7 @@ import { Prokop } from '../../types';
 interface CallBaseMethodOptions {
   allowNonZeroWithStdout?: boolean;
   timeout?: number;
+  shared?: boolean;
 }
 
 export async function callBaseMethod<T>(
@@ -17,6 +18,7 @@ export async function callBaseMethod<T>(
       command,
       args: [method as string, ...args],
       timeout: options.timeout ?? 15000,
+      ...(options.shared ? { shared: true } : {}),
     });
     const exitCode = response.code ?? 0;
 

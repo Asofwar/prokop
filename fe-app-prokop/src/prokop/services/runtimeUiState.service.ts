@@ -42,10 +42,27 @@ function hasRunningAction(uiState: Prokop.UiState) {
   );
 }
 
-function getNextPollDelay() {
-  return runtimeStateHasRunningAction
+// After a failed or timed-out poll the next one waits longer, doubling up
+// to RUNTIME_UI_STATE_MAX_BACKOFF_MS, so a router under load is not asked
+// again every second (FE-8).
+const RUNTIME_UI_STATE_MAX_BACKOFF_MS = 10000;
+
+export function runtimeUiStatePollDelay(running: boolean, failures: number) {
+  const base = running
     ? RUNTIME_UI_STATE_ACTIVE_POLL_INTERVAL_MS
     : RUNTIME_UI_STATE_IDLE_POLL_INTERVAL_MS;
+  if (failures <= 0) return base;
+  return Math.min(
+    RUNTIME_UI_STATE_MAX_BACKOFF_MS,
+    RUNTIME_UI_STATE_IDLE_POLL_INTERVAL_MS * 2 ** failures,
+  );
+}
+
+function getNextPollDelay() {
+  return runtimeUiStatePollDelay(
+    runtimeStateHasRunningAction,
+    runtimeUiStateFailures,
+  );
 }
 
 function scheduleRuntimeUiStatePoll(delay = getNextPollDelay()) {

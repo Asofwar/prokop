@@ -10,6 +10,29 @@ interface ExecuteShellCommandParams {
   command: string;
   args: string[];
   timeout?: number;
+  // A read polled again and again (get_ui_state): while one run is still
+  // going, even after its caller gave up waiting, a new call waits for that
+  // run instead of starting another, so slow answers never pile up runs on
+  // the router (FE-8).
+  shared?: boolean;
+}
+
+const sharedRuns = new Map<string, Promise<ExecuteShellCommandResponse>>();
+
+function startExec(command: string, args: string[], shared: boolean) {
+  if (!shared) return fs.exec(command, args);
+  const key = JSON.stringify([command, ...args]);
+  let run = sharedRuns.get(key);
+  if (!run) {
+    run = Promise.resolve(fs.exec(command, args));
+    const started = run;
+    sharedRuns.set(key, started);
+    const forget = () => {
+      if (sharedRuns.get(key) === started) sharedRuns.delete(key);
+    };
+    started.then(forget, forget);
+  }
+  return run;
 }
 
 interface ExecuteShellCommandResponse {
@@ -22,6 +45,7 @@ export async function executeShellCommand({
   command: requestedCommand,
   args,
   timeout = COMMAND_TIMEOUT,
+  shared = false,
 }: ExecuteShellCommandParams): Promise<ExecuteShellCommandResponse> {
   const command = resolveReadonlyCommand(requestedCommand);
 
@@ -31,7 +55,7 @@ export async function executeShellCommand({
 
   try {
     return await withTimeout(
-      fs.exec(command, args),
+      startExec(command, args, shared),
       timeout,
       [command, ...args].join(' '),
     );

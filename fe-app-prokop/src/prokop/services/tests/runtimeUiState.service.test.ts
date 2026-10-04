@@ -13,6 +13,7 @@ import { store } from '../store.service';
 import {
   getCachedRuntimeUiState,
   refreshRuntimeUiState,
+  runtimeUiStatePollDelay,
   subscribeRuntimeUiState,
 } from '../runtimeUiState.service';
 import { setProkopAutostart } from '../../tabs/shared/serviceControl';
@@ -76,6 +77,7 @@ describe('refreshRuntimeUiState', () => {
       command: '/usr/bin/prokop',
       args: ['get_ui_state'],
       timeout: 3000,
+      shared: true,
     });
     expect(store.get().servicesInfoWidget.data).toMatchObject({
       prokopRunning: 0,
@@ -284,5 +286,18 @@ describe('refreshRuntimeUiState', () => {
 
     expect(getCachedRuntimeUiState()).toEqual(uiState);
     expect(mocks.executeShellCommand).not.toHaveBeenCalled();
+  });
+});
+
+// FE-8: a router that answers slowly or not at all is asked less often.
+describe('runtimeUiStatePollDelay', () => {
+  it('polls at the usual pace while answers come', () => {
+    expect(runtimeUiStatePollDelay(false, 0)).toBe(1000);
+    expect(runtimeUiStatePollDelay(true, 0)).toBe(500);
+  });
+  it('backs off after failed polls, up to ten seconds', () => {
+    expect(runtimeUiStatePollDelay(false, 1)).toBe(2000);
+    expect(runtimeUiStatePollDelay(true, 2)).toBe(4000);
+    expect(runtimeUiStatePollDelay(false, 10)).toBe(10000);
   });
 });

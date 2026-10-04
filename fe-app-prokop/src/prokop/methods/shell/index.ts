@@ -352,7 +352,7 @@ export const ProkopShellMethods = {
       Prokop.AvailableMethods.GET_UI_STATE,
       [],
       '/usr/bin/prokop',
-      { timeout: GET_UI_STATE_RPC_TIMEOUT_MS },
+      { timeout: GET_UI_STATE_RPC_TIMEOUT_MS, shared: true },
     ),
   getHealthStatus: async () =>
     callBaseMethod<Prokop.HealthStatus>(
