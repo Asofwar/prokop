@@ -171,6 +171,14 @@ cleaned_up() {
   grep -q '^prokop restore_dnsmasq' "$EVENTS" || fail "$1: dnsmasq was not restored"
 }
 
+# An upgrade keeps the managed sing-box: no package brings it back (A7).
+upgrade_cleaned_up() {
+  [ -e "$PROKOP_SING_BOX_INIT" ] || fail "$1: the upgrade removed the managed sing-box init script"
+  [ -e "$PROKOP_SING_BOX_BIN" ] || fail "$1: the upgrade removed the managed sing-box binary"
+  ! grep -q '^sing-box init disable$' "$EVENTS" || fail "$1: the upgrade disabled the managed sing-box"
+  grep -q '^prokop restore_dnsmasq' "$EVENTS" || fail "$1: dnsmasq was not restored"
+}
+
 # 1. Upgrade: the stop was refused and ProkopTable is still in place.
 reset_case
 printf 'ProkopTable\n' >"$NFT_TABLE_FILE"
@@ -215,7 +223,7 @@ logged "interception left at removal" "still intercepts traffic"
 #    nothing can be left without a listener, so prerm cleans up.
 reset_case
 [ "$(STOP_STATUS=2 prerm upgrade 1.0.40)" = 0 ] || fail "prerm failed although no interception was left"
-cleaned_up "refused stop without interception"
+upgrade_cleaned_up "refused stop without interception"
 reset_case
 [ "$(STOP_STATUS=2 prerm remove)" = 0 ] || fail "prerm failed although no interception was left at removal"
 [ "$(grep -c '^prokop stop' "$EVENTS")" = 1 ] || fail "a removal stopped Prokop again although nothing was left"
@@ -224,7 +232,7 @@ cleaned_up "refused removal stop without interception"
 # 5. The stop succeeded: prerm cleans up as before.
 reset_case
 [ "$(STOP_STATUS=0 prerm upgrade 1.0.40)" = 0 ] || fail "prerm failed after a successful stop"
-cleaned_up "successful stop"
+upgrade_cleaned_up "successful stop"
 
 # 6. A refused upgrade stop to a release without the kill-switch. apk keeps
 #    the installed Prokop when its pre-upgrade fails: the kill-switch stays

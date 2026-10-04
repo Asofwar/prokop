@@ -519,7 +519,12 @@ function prerm_cleanup(action, version) {
         // The DNS configuration outlives the package. Whatever a removal
         // could not take down is gone after a reboot.
         restore_dnsmasq_if_needed();
-        remove_managed_sing_box(intercepting);
+        // The managed sing-box (a binary variant Prokop installed itself,
+        // not a package) goes with a removal only: no package brings it
+        // back, so an upgrade that took it left the new release without a
+        // core (A7).
+        if (removal)
+            remove_managed_sing_box(intercepting);
         if (intercepting)
             log_warning("Prokop could not be stopped for its removal and still intercepts traffic until a reboot; its DNS was restored");
         if (removal) {

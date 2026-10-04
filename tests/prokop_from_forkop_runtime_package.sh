@@ -140,7 +140,7 @@ prerm_sing_box() {
   PROKOP_KILLSWITCH_UC="$WORK_DIR/missing-killswitch.uc" PROKOP_DNS_APPLY_UC="$WORK_DIR/missing-dns.uc" \
   PROKOP_SING_BOX_INIT="$WORK_DIR/sb/init" PROKOP_SING_BOX_BIN="$WORK_DIR/sb/sing-box" \
   PROKOP_SING_BOX_CRONET="$WORK_DIR/sb/libcronet.so" \
-    ucode -L "$LIB" "$PACKAGE_UC" prerm upgrade || fail "prerm with a managed sing-box failed"
+    ucode -L "$LIB" "$PACKAGE_UC" prerm "${1:-remove}" || fail "prerm with a managed sing-box failed"
 }
 legacy_installed
 managed_sing_box 'Forkop managed sing-box service for binary variants'
@@ -148,6 +148,10 @@ prerm_sing_box
 [ -e "$WORK_DIR/sb/init" ] && [ -e "$WORK_DIR/sb/sing-box" ] && [ -e "$WORK_DIR/sb/libcronet.so" ] ||
   fail "the old package's managed sing-box must stay while it is installed"
 legacy_removed
+# An upgrade keeps it: no package brings it back (A7).
+prerm_sing_box upgrade
+[ -e "$WORK_DIR/sb/init" ] && [ -e "$WORK_DIR/sb/sing-box" ] && [ -e "$WORK_DIR/sb/libcronet.so" ] ||
+  fail "an upgrade removed the managed sing-box"
 prerm_sing_box
 [ ! -e "$WORK_DIR/sb/init" ] && [ ! -e "$WORK_DIR/sb/sing-box" ] && [ ! -e "$WORK_DIR/sb/libcronet.so" ] ||
   fail "a managed sing-box with the old marker is Prokop's once the old package is gone"
