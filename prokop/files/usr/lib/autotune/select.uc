@@ -17,6 +17,11 @@
 //      so network jitter never promotes a more complex strategy.
 // Candidate id is the final tie breaker. Only stable candidates can be
 // selected; otherwise the result is inconclusive.
+//
+// A probe that failed before the TCP connection was up (connect timeout or
+// failure, DNS) says nothing about the strategy: no candidate can repair it
+// (see isolation.uc). It is reported but not counted against the candidate,
+// so one network hiccup cannot hand the win to a heavier strategy (AT-1).
 
 const STABLE_RATIO = 0.8;          // 3/3, 4/5, 5/6, 6/7
 const UNSTABLE_RATIO = 0.5;        // 2/3, 3/5, 3/6, 4/7
@@ -45,21 +50,29 @@ function stability(successes, attempted) {
     return "failed";
 }
 
+function network_failure(p) {
+    if (p.class == "success") return false;
+    if (p.class == "dns_failure") return true;
+    let stage = as_string(p.connect);
+    return stage != "" && stage != "ok" && stage != "not_attempted";
+}
+
 // Per-candidate aggregate over its probe records (probe.uc records). Latency
 // medians use successful probes only; failures are counted by class.
 function aggregate(candidate, probes) {
-    let ok = [], classes = {};
+    let ok = [], classes = {}, network = 0;
     for (let p in probes) {
         if (p.class == "success") push(ok, p);
         else classes[as_string(p.class)] = (classes[as_string(p.class)] || 0) + 1;
+        if (network_failure(p)) network++;
     }
     let failure_classes = [];
     for (let name in sort(keys(classes))) push(failure_classes, { class: name, count: classes[name] });
     let pick = (key) => { let v = []; for (let p in ok) push(v, int(p[key])); return median(v); };
-    let attempted = length(probes), success = length(ok);
+    let attempted = length(probes) - network, success = length(ok);
     return {
         id: candidate.id, supported: true, complexity: int(candidate.rank),
-        attempted, success, failure_count: attempted - success,
+        attempted, success, failure_count: length(probes) - success, network_failures: network,
         success_ratio: attempted > 0 ? (success * 1.0) / attempted : 0,
         stability: stability(success, attempted),
         median_connect_ms: pick("time_connect_ms"),
@@ -135,8 +148,11 @@ function select(candidates) {
     // Confidence: high when the choice is fully reliable and clearly separated
     // (it is direct, or direct failed outright); medium when the choice rests
     // on a partial ratio, a latency difference or an unstable control.
+    // A failed control counts only when enough of its probes reached the
+    // server: network failures are not evidence against direct either.
     let full = choice.success_ratio == 1.0 && choice.attempted >= MIN_PROBES;
-    let separated = choice.id == "direct" || (direct != null && direct.stability == "failed") ||
+    let separated = choice.id == "direct" ||
+        (direct != null && direct.stability == "failed" && direct.attempted >= MIN_PROBES) ||
         (direct == null && reason == "simplest_stable");
     result.confidence = full && separated && reason != "materially_faster" ? "high" : "medium";
     return result;

@@ -113,6 +113,15 @@ ok('12 equal rank and latency -> lexical candidate id');
 r = evaluate(measured({ direct: S3('tcp_reset'), multisplit: S3(400), fake: S3(300), fakedsplit: S3(290) }));
 assert.equal(r.selected, 'fake', 'fakedsplit is within tolerance of fake, so the simpler fake stays');
 ok('latency tolerance applies against the current choice, not a global minimum');
+// AT-1: a probe that never reached the server is not the strategy's failure.
+r = evaluate(measured({ direct: [...S3('tls_failure'), 'tls_failure', 'tls_failure'], multisplit: [100, 100, 100, 100, 'connect_timeout'],
+  fake: [100, 100, 100, 100, 100], fake_multidisorder: [100, 100, 100, 100, 100] }));
+assert.deepEqual([r.selected, r.reason, r.confidence], ['multisplit', 'direct_failed_candidate_stable', 'high']);
+assert.deepEqual([cand(r, 'multisplit').attempted, cand(r, 'multisplit').network_failures, cand(r, 'multisplit').failure_count], [4, 1, 1]);
+r = evaluate(measured({ direct: ['connect_timeout', 'connect_timeout', 'tls_failure'], multisplit: S3(100) }));
+assert.deepEqual([r.selected, r.reason, r.confidence], ['multisplit', 'direct_failed_candidate_stable', 'medium'],
+  'a control that reached the server once is not enough for high confidence');
+ok('AT-1 connect-stage failures do not count against a candidate or the control');
 fs.writeFileSync(`${WORK}/pure.count`, String(checks));
 JS
 node "$WORK/cases.js" "$LIB" "$WORK"
