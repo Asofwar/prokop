@@ -1392,8 +1392,16 @@ function mark_pending_reload(reason) {
     ]);
 }
 
+// A reload queued behind this action (a Save & Apply meanwhile) runs once it
+// ends, also when it failed or timed out (LC-5): the queued configuration is
+// not the one that failed. Except after a failed start or restart, whose
+// retry or next start applies the whole configuration and drains the queue
+// itself (service/initd.uc start_service), and after an explicit stop or for
+// a Prokop not started since boot, which no reload brings back (D-15).
 function run_pending_reload_after_service_action(action, success) {
-    if (!success || !service_action_allows_pending_reload(action) || fs.stat(STATE_UC) == null)
+    if (!service_action_allows_pending_reload(action) || fs.stat(STATE_UC) == null)
+        return;
+    if (!success && (action != "reload" || fs.stat(STOP_REQUESTED_FILE) != null || fs.stat(EXPLICIT_START_FILE) == null))
         return;
 
     if (!consume_pending_reload())
