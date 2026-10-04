@@ -111,7 +111,17 @@ printf '#!/bin/sh\nexec python3 "%s" dig "$@"\n' "$HELPER" >"$WORK_DIR/bin/dig"
 # Only to learn which live sets the render reads; never on PATH otherwise.
 cat >"$WORK_DIR/stub/nft" <<'EOF'
 #!/bin/sh
-if [ "$1 $2" = "list set" ]; then printf 'table inet %s {\n\tset %s {\n\t\ttype ipv4_addr\n\t}\n}\n' "$4" "$5"; fi
+# The live table with every set a rule section of the UCI state can have.
+if [ "$1 $2" = "list table" ]; then
+  printf 'table inet %s {\n' "$4"
+  for section in $(sed -n 's/^prokop\.\([A-Za-z0-9_]*\)=section$/\1/p' "$PROKOP_UCI_STATE_FILE"); do
+    for suffix in subnets subnets6 ip_ports ip6_ports udp_ip_ports udp_ip6_ports ports sources sources6 \
+      fully_sources fully_sources6 excluded_sources excluded_sources6; do
+      printf '\tset prokop_rule_%s_%s {\n\t\ttype ipv4_addr\n\t}\n' "$section" "$suffix"
+    done
+  done
+  printf '}\n'
+fi
 exit 0
 EOF
 chmod 0755 "$WORK_DIR/bin/"* "$WORK_DIR/stub/nft"

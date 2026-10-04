@@ -1966,14 +1966,51 @@ function killswitch_counter_name(section) {
     return "ks_" + as_string(section[".name"]);
 }
 
+// The elements of every set of a table, from one `nft list table` (audit
+// optimization 23: one nft process instead of one per set and section).
+// An empty set has no "elements" clause and yields "".
+function nft_table_set_elements(output) {
+    let sets = {};
+    let current = null;
+    let collecting = null;
+    for (let line in split(as_string(output), "\n")) {
+        if (collecting != null) {
+            let end = index(line, "}");
+            collecting += " " + (end >= 0 ? substr(line, 0, end) : line);
+            if (end >= 0) {
+                sets[current] = trim(replace(collecting, /[[:space:]]+/g, " "));
+                collecting = null;
+            }
+            continue;
+        }
+        let set = match(line, /^[[:space:]]*set ([A-Za-z0-9_]+) \{[[:space:]]*$/);
+        if (set != null) {
+            current = set[1];
+            sets[current] = "";
+            continue;
+        }
+        let elements = current != null ? match(line, /^[[:space:]]*elements = \{(.*)$/) : null;
+        if (elements == null)
+            continue;
+        let end = index(elements[1], "}");
+        if (end >= 0)
+            sets[current] = trim(replace(substr(elements[1], 0, end), /[[:space:]]+/g, " "));
+        else
+            collecting = elements[1];
+    }
+    return sets;
+}
+
+let live_table_sets = {};
+
 function nft_set_elements_from_table(table, set_name) {
-    // A missing set is an error (null). An existing empty set has no
-    // "elements" clause and yields "".
-    let output = command_output_quiet_from_args([ "nft", "list", "set", "inet", table, set_name ]);
-    if (output == "")
-        return null;
-    let found = match(output, /elements = \{([^}]*)\}/);
-    return found == null ? "" : trim(replace(found[1], /[[:space:]]+/g, " "));
+    // A missing set is an error (null).
+    if (!exists(live_table_sets, table)) {
+        let output = command_output_quiet_from_args([ "nft", "list", "table", "inet", table ]);
+        live_table_sets[table] = output == "" ? null : nft_table_set_elements(output);
+    }
+    let sets = live_table_sets[table];
+    return sets == null || !exists(sets, set_name) ? null : sets[set_name];
 }
 
 function killswitch_interface_elements(settings) {

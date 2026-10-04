@@ -47,21 +47,27 @@ mkdir -p "$WORK_DIR/bin"
 cat >"$WORK_DIR/bin/nft" <<'NFT'
 #!/usr/bin/env bash
 printf 'nft %s\n' "$*" >> "${NFT_LOG:?}"
-if [ "$1" = "list" ] && [ "$2" = "set" ] && [ "$4" = "ProkopTable" ]; then
-  name="$5"
-  case " ${NFT_MISSING_SETS:-} " in
-    *" $name "*) echo "Error: No such file or directory" >&2; exit 1 ;;
-  esac
-  printf 'table inet ProkopTable {\n\tset %s {\n\t\ttype ipv4_addr\n\t\tflags interval\n\t\tauto-merge\n' "$name"
-  case "$name" in
-    prokop_rule_vpn_main_subnets)
-      printf '\t\telements = { 3.3.3.0/24, 3.3.4.0/24,\n\t\t\t     3.3.5.1 }\n' ;;
-    prokop_rule_zapret_first_subnets)
-      printf '\t\telements = { 3.3.3.0/25 }\n' ;;
-    prokop_rule_vpn_last_fully_sources)
-      printf '\t\telements = { 192.168.1.50 }\n' ;;
-  esac
-  printf '\t}\n}\n'
+# The live ProkopTable: every set of the fixture's sections, some filled.
+if [ "$1" = "list" ] && [ "$2" = "table" ] && [ "$4" = "ProkopTable" ]; then
+  printf 'table inet ProkopTable {\n'
+  for section in zapret_first bypass_x vpn_main vpn_plain vpn_last; do
+    for suffix in subnets subnets6 ip_ports ip6_ports udp_ip_ports udp_ip6_ports ports sources sources6 \
+      fully_sources fully_sources6 excluded_sources excluded_sources6; do
+      name="prokop_rule_${section}_$suffix"
+      case " ${NFT_MISSING_SETS:-} " in *" $name "*) continue ;; esac
+      printf '\tset %s {\n\t\ttype ipv4_addr\n\t\tflags interval\n\t\tauto-merge\n' "$name"
+      case "$name" in
+        prokop_rule_vpn_main_subnets)
+          printf '\t\telements = { 3.3.3.0/24, 3.3.4.0/24,\n\t\t\t     3.3.5.1 }\n' ;;
+        prokop_rule_zapret_first_subnets)
+          printf '\t\telements = { 3.3.3.0/25 }\n' ;;
+        prokop_rule_vpn_last_fully_sources)
+          printf '\t\telements = { 192.168.1.50 }\n' ;;
+      esac
+      printf '\t}\n'
+    done
+  done
+  printf '\tchain mangle {\n\t\ttype filter hook prerouting priority mangle + 1; policy accept;\n\t}\n}\n'
 fi
 NFT
 chmod 0755 "$WORK_DIR/bin/nft"
@@ -94,6 +100,8 @@ JSON
 
 summary="$(ucode -L "$PROKOP_LIB" "$NFT_RUNTIME" killswitch-render-fixture "$WORK_DIR/fixture.json" ProkopTable ProkopKillswitch "$OUT" 198.18.0.0/15 fc00::/18)" ||
   fail "render failed: $summary"
+# One listing of the live table for all sets (audit optimization 23).
+[ "$(grep -c '^nft list' "$NFT_LOG")" = 1 ] || fail "the render listed the live table $(grep -c '^nft list' "$NFT_LOG") times"
 
 printf '%s' "$summary" | grep -Fq '"sections": [ "domains_only", "vpn_main", "vpn_last" ]' ||
   fail "summary must list exactly the enabled protected connection sections: $summary"
