@@ -47,17 +47,6 @@ let url_host = runtime_url.host;
 
 const CONFIG_NAME = "prokop";
 
-// One seed per generated configuration, so every provider group on this
-// router rotates together and the result is stable until the next generation.
-// The environment override exists so tests can pin it.
-function urltest_start_seed() {
-    if (provider_urltest_start_seed == "")
-        provider_urltest_start_seed = trim(as_string(
-            getenv("PROKOP_URLTEST_START_SEED") || fs.readfile("/proc/sys/kernel/random/uuid")
-        ));
-    return provider_urltest_start_seed;
-}
-
 function parent_dir(path) {
     path = as_string(path);
     let slash = rindex(path, "/");
@@ -80,6 +69,37 @@ function ensure_dir(path) {
 
 function ensure_parent_dir(path) {
     return ensure_dir(parent_dir(path));
+}
+
+// One seed per boot, kept on tmpfs: every provider group on this router
+// rotates together, and a reload that changes nothing else produces the same
+// config, so sing-box is not restarted for nothing. A reboot picks a new one.
+// The environment override exists so tests can pin it.
+const URLTEST_SEED_FILE = getenv("PROKOP_URLTEST_SEED_FILE") ||
+    (getenv("PROKOP_RUNTIME_STATE_DIR") || "/var/run/prokop") + "/urltest-seed";
+
+function valid_urltest_seed(seed) {
+    return match(seed, /^[A-Za-z0-9-]{8,64}$/) != null;
+}
+
+function urltest_start_seed() {
+    if (provider_urltest_start_seed != "")
+        return provider_urltest_start_seed;
+
+    let seed = trim(as_string(getenv("PROKOP_URLTEST_START_SEED") || ""));
+    if (seed == "") {
+        seed = trim(as_string(fs.readfile(URLTEST_SEED_FILE) || ""));
+        if (!valid_urltest_seed(seed)) {
+            seed = trim(as_string(fs.readfile("/proc/sys/kernel/random/uuid") || ""));
+            let tmp_path = URLTEST_SEED_FILE + ".tmp";
+            // A seed that cannot be saved still works for this generation.
+            if (valid_urltest_seed(seed) && ensure_parent_dir(URLTEST_SEED_FILE) &&
+                fs.writefile(tmp_path, seed + "\n") != null && !fs.rename(tmp_path, URLTEST_SEED_FILE))
+                fs.unlink(tmp_path);
+        }
+    }
+    provider_urltest_start_seed = seed;
+    return provider_urltest_start_seed;
 }
 
 function atomic_write_json_file(path, value) {
