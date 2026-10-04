@@ -108,6 +108,13 @@ export namespace Prokop {
     reason: string;
     prokop_version: string;
     is_lkg?: boolean;
+    // Why delete refuses it (CFG-2): the last known good one, the one an
+    // autotune apply may still roll back to, or the one Save & Apply took
+    // before its reload ran.
+    protected_reason?:
+      | 'lkg_protected'
+      | 'autotune_rollback_protected'
+      | 'apply_snapshot_protected';
     migration?: SnapshotMigration;
   }
 

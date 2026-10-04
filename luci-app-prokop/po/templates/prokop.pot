@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-04 20:31+0000\n"
-"PO-Revision-Date: 2026-10-04 20:31+0000\n"
+"POT-Creation-Date: 2026-10-04 21:16+0000\n"
+"PO-Revision-Date: 2026-10-04 21:16+0000\n"
 "Last-Translator: Asofwar <7397608+Asofwar@users.noreply.github.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -527,7 +527,7 @@ msgid "An IP address needs no DNS"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/configform.js:342
-#: src/prokop/tabs/history/model.ts:417
+#: src/prokop/tabs/history/model.ts:440
 msgid "and %d more"
 msgstr ""
 
@@ -560,7 +560,7 @@ msgstr ""
 msgid "Another snapshot operation is already in progress. Changes were not applied; try again in a moment."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:435
+#: src/prokop/tabs/history/model.ts:458
 msgid "Another snapshot operation is already in progress. Try again in a moment."
 msgstr ""
 
@@ -1374,11 +1374,11 @@ msgstr ""
 msgid "Configuration reload"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:678
+#: src/prokop/tabs/history/model.ts:710
 msgid "Configuration restored and reloaded"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:688
+#: src/prokop/tabs/history/model.ts:720
 msgid "Configuration restored, but Prokop is stopped: it was not started or checked. The restored configuration takes effect when Prokop is started."
 msgstr ""
 
@@ -1511,11 +1511,11 @@ msgstr ""
 msgid "Could not confirm completion. Check the removal log before retrying."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:547
+#: src/prokop/tabs/history/model.ts:579
 msgid "Could not create snapshot"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:474
+#: src/prokop/tabs/history/model.ts:506
 msgid "Could not delete snapshot"
 msgstr ""
 
@@ -3719,7 +3719,7 @@ msgstr ""
 msgid "No saved changes since this snapshot"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:428
+#: src/prokop/tabs/history/initController.ts:426
 msgid "No snapshots yet"
 msgstr ""
 
@@ -3865,7 +3865,7 @@ msgid "Not running"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/configform.js:332
-#: src/prokop/tabs/history/model.ts:361
+#: src/prokop/tabs/history/model.ts:384
 msgid "not set"
 msgstr ""
 
@@ -3949,7 +3949,7 @@ msgstr ""
 msgid "Only servers with one of the selected transports."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:404
+#: src/prokop/tabs/history/model.ts:427
 msgid "Only the first %d changes are listed; %d changes in total."
 msgstr ""
 
@@ -4341,7 +4341,7 @@ msgstr ""
 msgid "Prokop is stopped: the change applies when it is started."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:617
+#: src/prokop/tabs/history/model.ts:649
 msgid "Prokop is stopped: the configuration is replaced and checked, but Prokop is not started. It takes effect when you start Prokop."
 msgstr ""
 
@@ -4391,7 +4391,7 @@ msgstr ""
 msgid "Prokop never turns DPI bypass off by itself."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:620
+#: src/prokop/tabs/history/model.ts:652
 msgid "Prokop reloads the configuration. If the reload fails, the previous configuration is restored automatically."
 msgstr ""
 
@@ -4739,27 +4739,27 @@ msgstr ""
 msgid "Restore configuration snapshot?"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:797
+#: src/prokop/tabs/history/model.ts:829
 msgid "Restore did not finish: a failed change left the DPI guard in place, and the DPI guard stays active. Restart Prokop, then restore the snapshot again."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:788
+#: src/prokop/tabs/history/model.ts:820
 msgid "Restore did not finish: the configuration was changed while the snapshot was being applied."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:787
+#: src/prokop/tabs/history/model.ts:819
 msgid "Restore did not finish: the configuration was changed while the snapshot was being applied. Prokop was reloaded, but it is not known whether with the snapshot or with the change."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:805
+#: src/prokop/tabs/history/model.ts:837
 msgid "Restore did not finish: the service was busy and only queued the reload. The DPI guard stays active; restore again when the service is idle."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:814
+#: src/prokop/tabs/history/model.ts:846
 msgid "Restore failed; check the recovery state before retrying"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:703
+#: src/prokop/tabs/history/model.ts:735
 msgid "Restore failed; previous configuration and runtime recovered"
 msgstr ""
 
@@ -4775,64 +4775,64 @@ msgstr ""
 msgid "Restore the last known good snapshot: the restore finishes and removes the DPI guard."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:787
+#: src/prokop/tabs/history/model.ts:819
 msgid "Restore the snapshot you need to finish."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:761
+#: src/prokop/tabs/history/model.ts:793
 msgid "Restore was not applied: Prokop was stopped during the restore. The previous configuration is kept."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:784
+#: src/prokop/tabs/history/model.ts:816
 msgid "Restore was not applied: Prokop was stopped, and the configuration was changed during the restore."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:734
-#: src/prokop/tabs/history/model.ts:735
+#: src/prokop/tabs/history/model.ts:766
+#: src/prokop/tabs/history/model.ts:767
 msgid "Restore was not applied: the configuration file could not be written. The previous configuration is kept."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:700
+#: src/prokop/tabs/history/model.ts:732
 msgid "Restore was not applied: the service was busy and only queued the reload. The previous configuration is kept."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:758
+#: src/prokop/tabs/history/model.ts:790
 msgid "Restore was not applied: the snapshot configuration did not pass validation. The previous configuration is kept; Prokop stays stopped."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:712
+#: src/prokop/tabs/history/model.ts:744
 msgid "Restore was not started: a failed change left the DPI guard in place, and nothing can be reloaded until Prokop is restarted. Restart Prokop, then restore the snapshot if it is still needed."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:571
+#: src/prokop/tabs/history/model.ts:603
 msgid "Restore was not started: the configuration was changed while the restore was starting. Nothing was changed; check the change and try again."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:567
+#: src/prokop/tabs/history/model.ts:599
 msgid "Restore was not started: the current configuration could not be read. Nothing was changed."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:559
+#: src/prokop/tabs/history/model.ts:591
 msgid "Restore was not started: the current configuration could not be saved as a snapshot first. Nothing was changed. Check the free space on the router."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:575
+#: src/prokop/tabs/history/model.ts:607
 msgid "Restore was not started: the DPI guard that protects traffic during the restore could not be installed. Nothing was changed."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:722
+#: src/prokop/tabs/history/model.ts:754
 msgid "Restore was not started: the router has uncommitted uci changes of Prokop (made with \"uci set\" without a commit). Commit or revert them, then restore again."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:563
+#: src/prokop/tabs/history/model.ts:595
 msgid "Restore was not started: the snapshot is missing or damaged. Nothing was changed."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:579
+#: src/prokop/tabs/history/model.ts:611
 msgid "Restore was not started: the snapshot storage could not be locked. Nothing was changed."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:585
+#: src/prokop/tabs/history/model.ts:617
 msgid "Restore was not started: the snapshot was saved by an older version of Prokop, and its configuration could not be migrated to this version. Nothing was changed."
 msgstr ""
 
@@ -5352,27 +5352,27 @@ msgid "Snapshot created"
 msgstr ""
 
 #: src/prokop/ui/status.ts:145
-#: src/prokop/tabs/history/model.ts:452
+#: src/prokop/tabs/history/model.ts:475
 msgid "Snapshot deleted"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:511
+#: src/prokop/tabs/history/model.ts:543
 msgid "Snapshot not saved: at most %d manual snapshots are kept, so that the automatic snapshots taken before a restore, Save & Apply or autotune always have room. Delete a manual snapshot you no longer need, then try again."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:505
+#: src/prokop/tabs/history/model.ts:537
 msgid "Snapshot not saved: at most %d manual snapshots are kept, so that the automatic snapshots taken before a restore, Save & Apply or autotune always have room. There are %d manual snapshots now: delete %d you no longer need, then try again."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:529
+#: src/prokop/tabs/history/model.ts:561
 msgid "Snapshot not saved: it could not be written. Check the free space on the router."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:520
+#: src/prokop/tabs/history/model.ts:552
 msgid "Snapshot not saved: the configuration file could not be read."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:537
+#: src/prokop/tabs/history/model.ts:569
 msgid "Snapshot not saved: the snapshot storage could not be locked. Try again in a moment."
 msgstr ""
 
@@ -5380,7 +5380,7 @@ msgstr ""
 msgid "Snapshot restore"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:487
+#: src/prokop/tabs/history/model.ts:519
 msgid "Snapshot saved"
 msgstr ""
 
@@ -5759,11 +5759,11 @@ msgstr ""
 msgid "The change affects the whole group:"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:775
+#: src/prokop/tabs/history/model.ts:807
 msgid "The change is kept and saved as a snapshot (\"Concurrent edit\")."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:776
+#: src/prokop/tabs/history/model.ts:808
 msgid "The change is kept in the configuration, but no snapshot of it could be saved."
 msgstr ""
 
@@ -5836,11 +5836,11 @@ msgstr ""
 msgid "The configuration before the change is restored."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:652
+#: src/prokop/tabs/history/model.ts:684
 msgid "The configuration of the snapshot was migrated from Prokop %s to %s."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:657
+#: src/prokop/tabs/history/model.ts:689
 msgid "The configuration of the snapshot was migrated to Prokop %s."
 msgstr ""
 
@@ -5877,12 +5877,12 @@ msgstr ""
 msgid "The DNS server must be an IPv4 address."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:734
-#: src/prokop/tabs/history/model.ts:748
+#: src/prokop/tabs/history/model.ts:766
+#: src/prokop/tabs/history/model.ts:780
 msgid "The DPI guard of an earlier restore stays active."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:788
+#: src/prokop/tabs/history/model.ts:820
 msgid "The DPI guard stays active. Restore the snapshot you need to finish."
 msgstr ""
 
@@ -5962,11 +5962,11 @@ msgstr ""
 msgid "The last configuration change failed"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:415
+#: src/prokop/tabs/history/model.ts:345
 msgid "The last known good snapshot cannot be deleted"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:461
+#: src/prokop/tabs/history/model.ts:484
 msgid "The last known good snapshot cannot be deleted: it is the configuration Prokop returns to after a failed change."
 msgstr ""
 
@@ -6222,7 +6222,7 @@ msgstr ""
 msgid "the service is busy"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:432
+#: src/prokop/tabs/history/model.ts:455
 msgid "The service is busy with another operation (list or subscription update, reload or start). Nothing was changed; try again when it finishes."
 msgstr ""
 
@@ -6250,7 +6250,7 @@ msgstr ""
 msgid "The snapshot to return to is missing: restore a snapshot in History and recovery. Checks and changes wait until then."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:469
+#: src/prokop/tabs/history/model.ts:501
 msgid "The snapshot was not found or cannot be read."
 msgstr ""
 
@@ -6362,7 +6362,7 @@ msgstr ""
 msgid "There are rules using Zapret2"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:606
+#: src/prokop/tabs/history/model.ts:638
 msgid "There are unsaved changes of Prokop in this session. Save & Apply or revert them, then restore the snapshot."
 msgstr ""
 
@@ -6452,11 +6452,19 @@ msgstr ""
 msgid "This section has no IP lists, so it is protected through FakeIP and DNS only."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:639
+#: src/prokop/tabs/history/model.ts:351
+msgid "This snapshot cannot be deleted until the saved change has been applied"
+msgstr ""
+
+#: src/prokop/tabs/history/model.ts:347
+msgid "This snapshot cannot be deleted while the autotune change can still be rolled back to it"
+msgstr ""
+
+#: src/prokop/tabs/history/model.ts:671
 msgid "This snapshot was saved by an older version of Prokop. Before the restore, its configuration is migrated to the current version %s, as an upgrade migrates it: settings retired since then are updated. The snapshot itself is not changed; the changes listed above compare the snapshot as it was saved."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:634
+#: src/prokop/tabs/history/model.ts:666
 msgid "This snapshot was saved by Prokop %s. Before the restore, its configuration is migrated to the current version %s, as an upgrade migrates it: settings retired since then are updated. The snapshot itself is not changed; the changes listed above compare the snapshot as it was saved."
 msgstr ""
 
@@ -6636,7 +6644,6 @@ msgstr ""
 msgid "unique UCI identifier"
 msgstr ""
 
-#: src/prokop/helpers/singBoxVariant.ts:28
 #: src/prokop/services/systemInfo.service.ts:10
 #: src/prokop/services/systemInfo.service.ts:11
 #: src/prokop/services/systemInfo.service.ts:12
@@ -6646,6 +6653,7 @@ msgstr ""
 #: src/prokop/services/systemInfo.service.ts:22
 #: src/prokop/services/systemInfo.service.ts:33
 #: src/prokop/services/systemInfo.service.ts:34
+#: src/prokop/helpers/singBoxVariant.ts:28
 #: src/prokop/tabs/diagnostic/initController.ts:739
 #: src/prokop/tabs/updates/initController.ts:343
 msgid "unknown"

@@ -28,6 +28,13 @@ describe('snapshot delete toast', () => {
     expect(lkg.type).toBe('warning');
     expect(lkg.text).toContain('last known good');
 
+    const rollback = deleteSnapshotToast({
+      status: 'failed',
+      reason: 'autotune_rollback_protected',
+    });
+    expect(rollback.type).toBe('warning');
+    expect(rollback.text).toContain('rolled back');
+
     const missing = deleteSnapshotToast({
       status: 'failed',
       reason: 'invalid_snapshot',

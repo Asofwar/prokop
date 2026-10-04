@@ -20143,6 +20143,22 @@ function snapshotReasonLabel(reason) {
       return _("Other");
   }
 }
+function protectedSnapshotText(reason) {
+  switch (reason) {
+    case "lkg_protected":
+      return _("The last known good snapshot cannot be deleted");
+    case "autotune_rollback_protected":
+      return _(
+        "This snapshot cannot be deleted while the autotune change can still be rolled back to it"
+      );
+    case "apply_snapshot_protected":
+      return _(
+        "This snapshot cannot be deleted until the saved change has been applied"
+      );
+    default:
+      return "";
+  }
+}
 function snapshotRows(snapshots2) {
   return snapshots2.slice().sort((a, b) => b.created_at - a.created_at).map((snapshot) => ({
     id: snapshot.id,
@@ -20150,7 +20166,10 @@ function snapshotRows(snapshots2) {
     // The badge already says "last known good" for such snapshots.
     reason: snapshot.is_lkg && snapshot.reason === "last-known-working" ? "" : snapshotReasonLabel(snapshot.reason),
     lkg: Boolean(snapshot.is_lkg),
-    canDelete: !snapshot.is_lkg
+    canDelete: !snapshot.is_lkg && !snapshot.protected_reason,
+    protectedText: protectedSnapshotText(
+      snapshot.protected_reason ?? (snapshot.is_lkg ? "lkg_protected" : void 0)
+    )
   }));
 }
 function diffValue(value) {
@@ -20213,6 +20232,12 @@ function deleteSnapshotToast(result) {
       text: _(
         "The last known good snapshot cannot be deleted: it is the configuration Prokop returns to after a failed change."
       ),
+      type: "warning",
+      duration: 8e3
+    };
+  if (result?.reason === "autotune_rollback_protected" || result?.reason === "apply_snapshot_protected")
+    return {
+      text: `${protectedSnapshotText(result.reason)}.`,
       type: "warning",
       duration: 8e3
     };
@@ -20792,9 +20817,7 @@ function renderSnapshots() {
                   danger: true
                 },
                 {
-                  label: row.canDelete ? _("Delete\u2026") : _(
-                    "The last known good snapshot cannot be deleted"
-                  ),
+                  label: row.canDelete ? _("Delete\u2026") : row.protectedText,
                   onClick: () => void deleteSnapshot(row.id, label),
                   disabled: snapshotBusy || !row.canDelete,
                   danger: row.canDelete

@@ -412,9 +412,7 @@ function renderSnapshots() {
                         {
                           label: row.canDelete
                             ? _('Delete…')
-                            : _(
-                                'The last known good snapshot cannot be deleted',
-                              ),
+                            : row.protectedText,
                           onClick: () => void deleteSnapshot(row.id, label),
                           disabled: snapshotBusy || !row.canDelete,
                           danger: row.canDelete,

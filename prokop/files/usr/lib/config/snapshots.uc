@@ -281,6 +281,20 @@ function autotune_rollback_snapshot() {
         record.phase == "needs_attention" || (record.phase == "failed" && record.rollback_available === true);
     return rollback ? record.pre_snapshot : null;
 }
+// Why delete refuses a snapshot, or null (UC-119, CFG-2): the
+// last-known-working one, the before-autotune one that the recorded
+// autotune apply may still roll back to (autotune_rollback_snapshot), and
+// the one Save & Apply took until the reload of its change has run
+// (trim_retention keeps the same ones).
+let protected_ids = null;
+function protected_reason(id, working) {
+    if (id == working) return "lkg_protected";
+    if (protected_ids == null)
+        protected_ids = { rollback: autotune_rollback_snapshot(), applying: trim(value(fs.readfile(APPLY_SNAPSHOT))) };
+    if (id == protected_ids.rollback) return "autotune_rollback_protected";
+    if (id == protected_ids.applying) return "apply_snapshot_protected";
+    return null;
+}
 // Retention (D-14, UC-022). Nothing removes a manual snapshot, and create
 // refuses one more beyond MANUAL_LIMIT, so RESERVED places stay for the
 // automatic safety snapshots: before a restore, before Save & Apply or a
@@ -1161,7 +1175,10 @@ let mode = value(ARGV[0]);
 if (mode == "list") {
     let result = fs.stat(ROOT) == null ? [] : list_snapshots(true);
     let live = settings_schema(read_config()), current = null;
+    let working = trim(value(fs.readfile(LKG)));
     for (let item in result) {
+        let reason = protected_reason(item.id, working);
+        if (reason != null) item.protected_reason = reason;
         if (schema_behind(item.schema, live)) {
             if (current == null) current = prokop_version();
             item.migration = { from: item.prokop_version, to: current };
@@ -1215,11 +1232,12 @@ if (mode == "create") {
         success([ "ucode", "-L", LIB_DIR, LIB_DIR + "/diagnostics/health.uc", "record", "snapshot_create", "success" ]);
 }
 else if (mode == "delete") {
-    // A refusal says why (UC-119); the snapshot that is the last known
-    // working configuration is never deleted.
+    // A refusal says why (UC-119); a protected snapshot (protected_reason)
+    // is never deleted.
     let id = value(ARGV[1]);
     if (!valid_id(id)) answer = { status: "failed", reason: "invalid_input" };
-    else if (id == trim(value(fs.readfile(LKG)))) answer = { status: "failed", reason: "lkg_protected" };
+    else if (protected_reason(id, trim(value(fs.readfile(LKG)))) != null)
+        answer = { status: "failed", reason: protected_reason(id, trim(value(fs.readfile(LKG)))) };
     else if (read_snapshot(id, true) == null) answer = { status: "failed", reason: "invalid_snapshot" };
     else if (!fs.unlink(snapshot_path(id))) answer = { status: "failed", reason: "delete_failed" };
     else {

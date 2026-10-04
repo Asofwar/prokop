@@ -338,7 +338,26 @@ export function snapshotReasonLabel(reason: string) {
   }
 }
 
-// Newest first; the last-known-good snapshot cannot be deleted.
+// Why a snapshot cannot be deleted, as the menu and the refusal say it.
+export function protectedSnapshotText(reason: string | undefined) {
+  switch (reason) {
+    case 'lkg_protected':
+      return _('The last known good snapshot cannot be deleted');
+    case 'autotune_rollback_protected':
+      return _(
+        'This snapshot cannot be deleted while the autotune change can still be rolled back to it',
+      );
+    case 'apply_snapshot_protected':
+      return _(
+        'This snapshot cannot be deleted until the saved change has been applied',
+      );
+    default:
+      return '';
+  }
+}
+
+// Newest first; protected snapshots (last known good, autotune rollback,
+// Save & Apply) cannot be deleted.
 export function snapshotRows(snapshots: Prokop.SnapshotMetadata[]) {
   return snapshots
     .slice()
@@ -352,7 +371,11 @@ export function snapshotRows(snapshots: Prokop.SnapshotMetadata[]) {
           ? ''
           : snapshotReasonLabel(snapshot.reason),
       lkg: Boolean(snapshot.is_lkg),
-      canDelete: !snapshot.is_lkg,
+      canDelete: !snapshot.is_lkg && !snapshot.protected_reason,
+      protectedText: protectedSnapshotText(
+        snapshot.protected_reason ??
+          (snapshot.is_lkg ? 'lkg_protected' : undefined),
+      ),
     }));
 }
 
@@ -461,6 +484,15 @@ export function deleteSnapshotToast(
       text: _(
         'The last known good snapshot cannot be deleted: it is the configuration Prokop returns to after a failed change.',
       ),
+      type: 'warning',
+      duration: 8000,
+    };
+  if (
+    result?.reason === 'autotune_rollback_protected' ||
+    result?.reason === 'apply_snapshot_protected'
+  )
+    return {
+      text: `${protectedSnapshotText(result.reason)}.`,
       type: 'warning',
       duration: 8000,
     };

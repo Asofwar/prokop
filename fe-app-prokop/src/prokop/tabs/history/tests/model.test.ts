@@ -527,6 +527,32 @@ describe('snapshots', () => {
     expect(rows[0].reason).toBe('');
   });
 
+  // CFG-2: the snapshot an autotune apply may still roll back to, and the
+  // one Save & Apply took before its reload, cannot be deleted either.
+  it('disables Delete for every protected snapshot and says why', () => {
+    const rows = snapshotRows([
+      {
+        ...snapshot('1_a', 10, 'before-autotune'),
+        protected_reason: 'autotune_rollback_protected',
+      },
+      {
+        ...snapshot('2_b', 20, 'before-apply'),
+        protected_reason: 'apply_snapshot_protected',
+      },
+      snapshot('3_c', 30, 'last-known-working', true),
+      snapshot('4_d', 40, 'manual'),
+    ]);
+    expect(rows.map((row) => [row.id, row.canDelete])).toEqual([
+      ['4_d', true],
+      ['3_c', false],
+      ['2_b', false],
+      ['1_a', false],
+    ]);
+    expect(rows[1].protectedText).toContain('last known good');
+    expect(rows[2].protectedText).toContain('saved change');
+    expect(rows[3].protectedText).toContain('autotune');
+  });
+
   it('shows list changes readably', () => {
     expect(
       diffRows([

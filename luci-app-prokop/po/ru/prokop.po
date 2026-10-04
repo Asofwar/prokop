@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-04 20:31+0000\n"
-"PO-Revision-Date: 2026-10-04 20:31+0000\n"
+"POT-Creation-Date: 2026-10-04 21:16+0000\n"
+"PO-Revision-Date: 2026-10-04 21:16+0000\n"
 "Last-Translator: Asofwar\n"
 "Language-Team: none\n"
 "Language: ru\n"
@@ -4522,6 +4522,12 @@ msgstr "Это правило хранит настройки в устарев�
 
 msgid "This section has no IP lists, so it is protected through FakeIP and DNS only."
 msgstr "У раздела нет IP-списков, поэтому он защищён только через FakeIP и DNS."
+
+msgid "This snapshot cannot be deleted until the saved change has been applied"
+msgstr "Этот снимок нельзя удалить, пока сохранённое изменение не применено"
+
+msgid "This snapshot cannot be deleted while the autotune change can still be rolled back to it"
+msgstr "Этот снимок нельзя удалить, пока к нему можно откатить изменение автотюна"
 
 msgid "This snapshot was saved by an older version of Prokop. Before the restore, its configuration is migrated to the current version %s, as an upgrade migrates it: settings retired since then are updated. The snapshot itself is not changed; the changes listed above compare the snapshot as it was saved."
 msgstr "Этот снимок сохранён более старой версией Prokop. Перед восстановлением его конфигурация переносится на текущую версию %s так же, как при обновлении: устаревшие с тех пор настройки обновляются. Сам снимок не меняется; изменения в списке выше сравнивают снимок в том виде, в каком он был сохранён."
