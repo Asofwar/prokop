@@ -57,11 +57,14 @@ function record(path, pid) {
     pid = as_string(pid);
     if (match(pid, /^[1-9][0-9]*$/) == null)
         return false;
+    // A process just started may not show its start time yet: asked again
+    // every 0.1 s for up to 5 s, as before, without a whole second for one
+    // that shows it at once (a start of N DPI rules waited up to N seconds).
     let ticks = "";
-    for (let attempt = 0; attempt < 5 && ticks == ""; attempt++) {
+    for (let attempt = 0; attempt < 50 && ticks == ""; attempt++) {
         ticks = start_ticks(pid);
         if (ticks == "")
-            system("sleep 1");
+            system("sleep 0.1 2>/dev/null || sleep 1");
     }
     if (ticks == "")
         return false;

@@ -17,24 +17,6 @@ interface ExecuteShellCommandParams {
   shared?: boolean;
 }
 
-const sharedRuns = new Map<string, Promise<ExecuteShellCommandResponse>>();
-
-function startExec(command: string, args: string[], shared: boolean) {
-  if (!shared) return fs.exec(command, args);
-  const key = JSON.stringify([command, ...args]);
-  let run = sharedRuns.get(key);
-  if (!run) {
-    run = Promise.resolve(fs.exec(command, args));
-    const started = run;
-    sharedRuns.set(key, started);
-    const forget = () => {
-      if (sharedRuns.get(key) === started) sharedRuns.delete(key);
-    };
-    started.then(forget, forget);
-  }
-  return run;
-}
-
 interface ExecuteShellCommandResponse {
   stdout: string;
   stderr: string;
@@ -65,4 +47,23 @@ export async function executeShellCommand({
 
     return { stdout: '', stderr: error?.message, code };
   }
+}
+
+// Below the read-only check above, which runs before any exec.
+const sharedRuns = new Map<string, Promise<ExecuteShellCommandResponse>>();
+
+function startExec(command: string, args: string[], shared: boolean) {
+  if (!shared) return fs.exec(command, args);
+  const key = JSON.stringify([command, ...args]);
+  let run = sharedRuns.get(key);
+  if (!run) {
+    run = Promise.resolve(fs.exec(command, args));
+    const started = run;
+    sharedRuns.set(key, started);
+    const forget = () => {
+      if (sharedRuns.get(key) === started) sharedRuns.delete(key);
+    };
+    started.then(forget, forget);
+  }
+  return run;
 }

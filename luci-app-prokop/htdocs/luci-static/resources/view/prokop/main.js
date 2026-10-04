@@ -1216,22 +1216,6 @@ function shouldRefuseCommand(command, args) {
 }
 
 // src/helpers/executeShellCommand.ts
-var sharedRuns = /* @__PURE__ */ new Map();
-function startExec(command, args, shared) {
-  if (!shared) return fs.exec(command, args);
-  const key = JSON.stringify([command, ...args]);
-  let run = sharedRuns.get(key);
-  if (!run) {
-    run = Promise.resolve(fs.exec(command, args));
-    const started = run;
-    sharedRuns.set(key, started);
-    const forget = () => {
-      if (sharedRuns.get(key) === started) sharedRuns.delete(key);
-    };
-    started.then(forget, forget);
-  }
-  return run;
-}
 async function executeShellCommand({
   command: requestedCommand,
   args,
@@ -1253,6 +1237,22 @@ async function executeShellCommand({
     const code = typeof error?.code === "number" ? error.code : 1;
     return { stdout: "", stderr: error?.message, code };
   }
+}
+var sharedRuns = /* @__PURE__ */ new Map();
+function startExec(command, args, shared) {
+  if (!shared) return fs.exec(command, args);
+  const key = JSON.stringify([command, ...args]);
+  let run = sharedRuns.get(key);
+  if (!run) {
+    run = Promise.resolve(fs.exec(command, args));
+    const started = run;
+    sharedRuns.set(key, started);
+    const forget = () => {
+      if (sharedRuns.get(key) === started) sharedRuns.delete(key);
+    };
+    started.then(forget, forget);
+  }
+  return run;
 }
 
 // src/helpers/onMount.ts
