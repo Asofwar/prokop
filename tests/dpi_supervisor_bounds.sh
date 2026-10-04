@@ -12,7 +12,7 @@ WORK_DIR="$(mktemp -d)"
 supervisor_pid=""
 cleanup() {
   if [ -n "$supervisor_pid" ]; then
-    kill -- "-$supervisor_pid" 2>/dev/null || true
+    owned_kill KILL "$supervisor_pid" || :
   fi
   rm -rf "$WORK_DIR"
 }
@@ -25,6 +25,8 @@ fail() {
 
 # shellcheck source=tests/helpers/wait.sh
 . "$ROOT_DIR/tests/helpers/wait.sh"
+# shellcheck source=tests/helpers/owned_processes.sh
+. "$ROOT_DIR/tests/helpers/owned_processes.sh"
 
 # Module: trimming, backoff, counters.
 cat >"$WORK_DIR/module.uc" <<'UC'
@@ -120,8 +122,8 @@ wait_until 30 backed_off || {
   cat "$log" >&2
   fail "a binary that keeps failing was not backed off"
 }
-kill -- "-$supervisor_pid" 2>/dev/null || true
-wait "$supervisor_pid" 2>/dev/null || true
+owned_kill KILL "$supervisor_pid" || :
+wait "$supervisor_pid" 2>/dev/null || :
 supervisor_pid=""
 
 grep -q 'respawning in 1 seconds' "$log" || grep -q 'log trimmed by Prokop' "$log" ||

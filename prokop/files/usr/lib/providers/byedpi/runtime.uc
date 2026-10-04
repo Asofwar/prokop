@@ -226,12 +226,19 @@ function stop_runtime() {
             BYEDPI_BIN, [ BYEDPI_BIN, "--ip", BYEDPI_LISTEN_ADDRESS, "--port" ]
         );
     }
-    for (let pidfile in pidfiles_in_dir(BYEDPI_PID_DIR))
+    let pids = [];
+    for (let pidfile in pidfiles_in_dir(BYEDPI_PID_DIR)) {
+        push(pids, file_first_line(pidfile));
         kill_pidfile_process(pidfile, "", true);
-    for (let pidfile in pidfiles_in_dir(BYEDPI_CHILD_PID_DIR))
+    }
+    for (let pidfile in pidfiles_in_dir(BYEDPI_CHILD_PID_DIR)) {
+        push(pids, file_first_line(pidfile));
         kill_pidfile_process(pidfile, "", false);
+    }
 
-    command_success_from_args([ "sleep", "1" ]);
+    // Up to a second for them to exit on TERM; nothing to wait for without
+    // rules (opt. 11).
+    respawn.poll(() => length(filter(pids, runtime_pid_running)) == 0, 1);
 
     for (let pidfile in pidfiles_in_dir(BYEDPI_PID_DIR))
         kill_pidfile_process(pidfile, "9", true);
@@ -278,7 +285,7 @@ function supervisor(section, port, raw_opt, child_pidfile) {
     }
 }
 
-function start_rule(section, index_value) {
+function launch_rule(section, index_value) {
     let name = section_name(section);
     let port = rule_port(index_value);
     let raw_opt = normalize_strategy(option(section, "byedpi_cmd_opts", ""));
@@ -308,21 +315,34 @@ function start_rule(section, index_value) {
         log_message("ciadpi failed to start for rule '" + name + "'. Check " + logfile + ". Aborted.", "fatal");
         exit(1);
     }
+    return { name, pid, child_pidfile, logfile };
+}
 
-    command_success_from_args([ "sleep", "1" ]);
-    if (!runtime_pid_running(pid)) {
-        log_message("ciadpi failed to start for rule '" + name + "'. Check " + logfile + ". Aborted.", "fatal");
-        exit(1);
-    }
+function rule_child_running(rule) {
+    return runtime_pid_running(file_first_line(rule.child_pidfile));
+}
 
-    let child_pid = file_first_line(child_pidfile);
-    for (let attempt = 0; attempt < 4 && (child_pid == "" || !runtime_pid_running(child_pid)); attempt++) {
-        command_success_from_args([ "sleep", "1" ]);
-        child_pid = file_first_line(child_pidfile);
-    }
-    if (child_pid == "" || !runtime_pid_running(child_pid)) {
-        log_message("ciadpi supervisor started for rule '" + name + "', but ciadpi is not running. Check " + logfile + ". Aborted.", "fatal");
-        exit(1);
+// All supervisors start at once and are then watched together: ciadpi of
+// every rule up within 5 s, and still up a second after the start, which is
+// when a strategy it rejects has made it exit (opt. 12).
+function verify_rules(rules, started) {
+    respawn.poll(() => {
+        for (let rule in rules)
+            if (!runtime_pid_running(rule.pid) || !rule_child_running(rule))
+                return !runtime_pid_running(rule.pid);
+        return true;
+    }, 5);
+    respawn.settle(started, 1);
+
+    for (let rule in rules) {
+        if (!runtime_pid_running(rule.pid)) {
+            log_message("ciadpi failed to start for rule '" + rule.name + "'. Check " + rule.logfile + ". Aborted.", "fatal");
+            exit(1);
+        }
+        if (!rule_child_running(rule)) {
+            log_message("ciadpi supervisor started for rule '" + rule.name + "', but ciadpi is not running. Check " + rule.logfile + ". Aborted.", "fatal");
+            exit(1);
+        }
     }
 }
 
@@ -355,11 +375,14 @@ function start_runtime() {
         exit(1);
     }
 
+    let started = respawn.monotonic_seconds();
+    let rules = [];
     let index_value = 1;
     for (let section in sections) {
-        start_rule(section, index_value);
+        push(rules, launch_rule(section, index_value));
         index_value++;
     }
+    verify_rules(rules, started);
 }
 
 function live_pid_count(path) {

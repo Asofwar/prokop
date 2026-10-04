@@ -195,7 +195,11 @@ function bounded_command_output_from_args(args, timeout_seconds) {
     // it is unset): not a fixed name in /tmp that others can guess.
     let script = "tmp=$(mktemp \"${TMPDIR:-/tmp}/prokop-validator-version.XXXXXX\" 2>/dev/null) || exit 1; " + command_from_args(args) +
         " >\"$tmp\" 2>/dev/null & child=$!; " +
-        "elapsed=0; while kill -0 \"$child\" 2>/dev/null && [ \"$elapsed\" -lt " + as_string(timeout_seconds) + " ]; do sleep 1; elapsed=$((elapsed + 1)); done; " +
+        // Polled every 0.1 s: a whole second per call was the floor of every
+        // start and reload (opt. 13). BusyBox without fractional sleep falls
+        // back to whole seconds; the deadline is wall clock either way.
+        "deadline=$(($(date +%s) + " + as_string(timeout_seconds) + ")); " +
+        "while kill -0 \"$child\" 2>/dev/null && [ \"$(date +%s)\" -le \"$deadline\" ]; do sleep 0.1 2>/dev/null || sleep 1; done; " +
         "if kill -0 \"$child\" 2>/dev/null; then kill -KILL \"$child\" 2>/dev/null; fi; " +
         "wait \"$child\"; rc=$?; " +
         "if [ \"$rc\" -eq 0 ]; then cat \"$tmp\"; fi; rm -f \"$tmp\"; exit \"$rc\"";
@@ -2129,8 +2133,12 @@ function check_runtime_requirements() {
     if (!command_exists("nft"))
         fail_requirement("Required nftables executable 'nft' is missing. Install package 'nftables-json' and start Prokop again. Aborted.", "error");
 
-    let sing_box_version_output = command_exists("sing-box") ? bounded_command_output_from_args([ "sing-box", "version" ], 5) : "";
-    let sing_box_version = sing_box_compressed_marker_set(ctx) ? sing_box_version_state(ctx) : first_line_last_field(sing_box_version_output);
+    // The compressed binary unpacks 30-40 MB into RAM to answer `version`:
+    // its version is the one recorded at install, and it is not run (opt. 14).
+    let sing_box_compressed = sing_box_compressed_marker_set(ctx);
+    let sing_box_version = sing_box_compressed ? sing_box_version_state(ctx) : "";
+    if (!sing_box_compressed && command_exists("sing-box"))
+        sing_box_version = first_line_last_field(bounded_command_output_from_args([ "sing-box", "version" ], 5));
     if (sing_box_version == "")
         sing_box_version = installed_sing_box_version();
     let coreutils_base64_version = first_line_field_from_text(command_output("base64 --version 2>/dev/null"), 4);

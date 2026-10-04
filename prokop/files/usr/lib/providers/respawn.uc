@@ -1,6 +1,8 @@
 // What a DPI provider supervisor keeps between respawns (OBS-3): the log it
 // appends to stays bounded, a binary that keeps failing is restarted less
 // and less often, and the number of restarts is kept for the status.
+// Starts and stops of the providers poll for their processes instead of
+// sleeping whole seconds per rule (opt. 11, 12).
 
 let fs = require("fs");
 
@@ -67,7 +69,27 @@ function restart_count(log_dir) {
 }
 
 function monotonic_seconds() {
-    return clock(true)[0];
+    let now = clock(true);
+    return now[0] + now[1] / 1000000000.0;
+}
+
+// Calls `fn` every 0.1 s until it returns true or `seconds` have passed, and
+// returns its last answer. BusyBox without fractional sleep falls back to
+// whole seconds; the deadline is the monotonic clock either way.
+function poll(fn, seconds) {
+    let deadline = monotonic_seconds() + seconds;
+    while (true) {
+        if (fn())
+            return true;
+        if (monotonic_seconds() >= deadline)
+            return false;
+        system("sleep 0.1 2>/dev/null || sleep 1");
+    }
+}
+
+// Waits out what is left of `seconds` since `since`.
+function settle(since, seconds) {
+    poll(() => false, since + seconds - monotonic_seconds());
 }
 
 return {
@@ -76,5 +98,7 @@ return {
     next_delay,
     record_restart,
     restart_count,
-    monotonic_seconds
+    monotonic_seconds,
+    poll,
+    settle
 };
