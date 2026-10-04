@@ -9,6 +9,20 @@ let object_or_empty = common.object_or_empty;
 
 const COUNTRY_IS_URL = getenv("PROKOP_COUNTRY_IS_URL") || "https://api.country.is/";
 const COUNTRY_IS_BATCH_SIZE = 100;
+// Server names are resolved this many at a time, each in its own process.
+const RESOLVE_PARALLEL = 16;
+// Country lookup runs inside config generation, under the service lock. One
+// budget covers every section of a generation; servers left over keep no
+// country this time and are retried on the next generation.
+const LOOKUP_BUDGET_SECONDS = int(getenv("PROKOP_COUNTRY_BUDGET_SECONDS") || "20", 10);
+
+let lookup_deadline = null;
+
+function budget_left() {
+    if (lookup_deadline == null)
+        lookup_deadline = time() + (LOOKUP_BUDGET_SECONDS > 0 ? LOOKUP_BUDGET_SECONDS : 20);
+    return lookup_deadline - time();
+}
 
 function shell_quote(value) {
     return "'" + replace(as_string(value), /'/g, "'\\''") + "'";
@@ -167,23 +181,68 @@ function resolve_service_host(host, resolver) {
     ]));
 }
 
-function resolve_server(value) {
-    let server = normalized_server(value);
-    if (server == "")
-        return "";
-    if (valid_ipv4(server) || valid_ipv6(server))
-        return server;
+function address_from_outputs(a_output, aaaa_output, nslookup_output) {
+    let address = first_ipv4_line(a_output);
+    if (address == "")
+        address = first_ipv6_line(aaaa_output);
+    if (address == "")
+        address = first_nslookup_address(nslookup_output);
+    return address;
+}
 
-    let output = command_output_from_args([ "dig", "+short", server, "A", "+time=2", "+tries=1" ]);
-    let address = first_ipv4_line(output);
-    if (address == "") {
-        output = command_output_from_args([ "dig", "+short", server, "AAAA", "+time=2", "+tries=1" ]);
-        address = first_ipv6_line(output);
+// Resolves names RESOLVE_PARALLEL at a time: a slow DNS server costs one
+// timeout per batch instead of one per server. Returns { name: address }.
+function resolve_servers(names) {
+    let result = {};
+    let pending = [];
+    for (let name in names) {
+        let server = normalized_server(name);
+        if (server == "")
+            continue;
+        if (valid_ipv4(server) || valid_ipv6(server))
+            result[server] = server;
+        else
+            push(pending, server);
     }
-    if (address != "")
-        return address;
+    if (length(pending) == 0)
+        return result;
 
-    return first_nslookup_address(command_output_from_args([ "nslookup", server ]));
+    let dir = trim(command_output_from_args([ "mktemp", "-d" ]));
+    if (dir == "")
+        return result;
+
+    let skipped = 0;
+    for (let start = 0; start < length(pending); start += RESOLVE_PARALLEL) {
+        if (budget_left() <= 0) {
+            skipped = length(pending) - start;
+            break;
+        }
+        let batch = slice(pending, start, start + RESOLVE_PARALLEL);
+        let jobs = [];
+        for (let i = 0; i < length(batch); i++) {
+            let base = shell_quote(dir + "/" + i);
+            let host = shell_quote(batch[i]);
+            push(jobs, "{ dig +short " + host + " A +time=2 +tries=1 >" + base + ".a 2>/dev/null; " +
+                "dig +short " + host + " AAAA +time=2 +tries=1 >" + base + ".aaaa 2>/dev/null; " +
+                "[ -s " + base + ".a ] || [ -s " + base + ".aaaa ] || " +
+                "nslookup " + host + " >" + base + ".ns 2>/dev/null; } &");
+        }
+        system("( " + join(" ", jobs) + " wait ) >/dev/null 2>&1");
+        for (let i = 0; i < length(batch); i++) {
+            let base = dir + "/" + i;
+            let address = address_from_outputs(fs.readfile(base + ".a"), fs.readfile(base + ".aaaa"),
+                fs.readfile(base + ".ns"));
+            if (address != "")
+                result[batch[i]] = address;
+            remove_file(base + ".a");
+            remove_file(base + ".aaaa");
+            remove_file(base + ".ns");
+        }
+    }
+    fs.rmdir(dir);
+    if (skipped > 0)
+        warn(sprintf("Server country lookup ran out of time; %d servers left without a country until the next reload\n", skipped));
+    return result;
 }
 
 function lookup_ip_batch(ips, resolver) {
@@ -244,6 +303,10 @@ function lookup_ip_batch(ips, resolver) {
 function lookup_ips(ips, resolver) {
     let result = {};
     for (let start = 0; start < length(ips); start += COUNTRY_IS_BATCH_SIZE) {
+        if (budget_left() <= 0) {
+            warn("Server country lookup ran out of time before the country service was asked\n");
+            break;
+        }
         let batch = slice(ips, start, start + COUNTRY_IS_BATCH_SIZE);
         let response = lookup_ip_batch(batch, resolver);
         for (let ip, country in response.countries)
@@ -296,8 +359,9 @@ function detect(servers, previous_state, resolver) {
         push(pending_tags_by_server[server], tag_name);
     }
 
+    let addresses = resolve_servers(keys(pending_tags_by_server));
     for (let server, tags in pending_tags_by_server) {
-        let ip = resolve_server(server);
+        let ip = as_string(addresses[server] || "");
         if (!public_ip(ip))
             continue;
         if (!tags_by_ip[ip]) {
