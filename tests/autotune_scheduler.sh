@@ -228,8 +228,9 @@ job="$(node -e 'console.log(require(process.argv[1]).job)' "$WORK/job.json")"
 [[ "$job" =~ ^[0-9]+_[0-9]+$ ]] || fail "job id: $(cat "$WORK/job.json")"
 wait_until 30 job_state_is "$job" running "$WORK/job-status.json" || fail "job running: $(cat "$WORK/job-status.json")"
 # While it runs the status shows every target of the run, the one measured
-# now and the phase of its tune.
-running_target() { manager status >"$WORK/progress.json" && node -e 'const w=require(process.argv[1]).worker; if (!w.progress || !w.progress.items.some((i) => i.state === "running")) process.exit(1)' "$WORK/progress.json"; }
+# now and the phase of its tune. The tune reports its phase a moment after
+# the run marks its target running: wait for both.
+running_target() { manager status >"$WORK/progress.json" && node -e 'const w=require(process.argv[1]).worker; if (!w.progress || !w.progress.items.some((i) => i.state === "running") || !w.tune) process.exit(1)' "$WORK/progress.json"; }
 wait_until 30 running_target || fail "progress while running: $(cat "$WORK/progress.json")"
 node -e 'const w=require(process.argv[1]).worker, a=require("node:assert/strict");
   a.equal(w.progress.total, 2); a.deepEqual(w.progress.items.map((i) => i.host), ["www.youtube.com", "i.ytimg.com"]);
