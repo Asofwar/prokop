@@ -526,12 +526,11 @@ function validate_staged_list_download(path, format) {
     if (format != "srs")
         return true;
 
-    let output = path + ".json";
-    remove_file(output);
-    let ok = command_success_from_args([ "sing-box", "rule-set", "decompile", path, "-o", output ]) &&
-        valid_list_ruleset_file(output);
-    remove_file(output);
-    return ok;
+    // A match query parses the whole binary list and fails on any damage,
+    // with about half the peak memory of decompiling a large list to JSON,
+    // which is what ran routers with 256 MB out of memory on a list update.
+    // It exits 0 whether or not the query matched.
+    return command_success_from_args([ "sing-box", "rule-set", "match", "-f", "binary", path, "prokop.invalid" ]);
 }
 
 // The lock owner is this ucode process. `sh -c 'echo $PPID'` names it only
@@ -568,7 +567,7 @@ function generation_file_valid(root, entry) {
         return { valid: false, reason: "rule-set file '" + name + "' is not valid JSON", key: "json-" + name };
     if (kind == "source" && as_string(entry.url) == "")
         return { valid: false, reason: "source file '" + name + "' has no identity", key: "source-identity-" + name };
-    // The manifest checksum was verified above. Decompiling the same SRS on
+    // The manifest checksum was verified above. Parsing the same SRS on
     // every cache check is expensive on routers, so remember a successful
     // schema check for this exact content in the boot-local runtime directory.
     // Fresh downloads still pass through full validation before publication.
@@ -4993,6 +4992,8 @@ else if (mode == "safe-remote-source-identity")
     print(safe_remote_source_identity(ARGV[1], ARGV[2]), "\n");
 else if (mode == "jsdelivr-fallback-url")
     print(jsdelivr_fallback_url(ARGV[1]), "\n");
+else if (mode == "validate-list-download")
+    exit(validate_staged_list_download(ARGV[1], ARGV[2]) ? 0 : 1);
 else if (mode == "github-raw-fallback-url")
     print(github_raw_fallback_url(ARGV[1]), "\n");
 else if (mode == "due-check-cron-schedule")
