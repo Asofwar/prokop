@@ -1,3 +1,4 @@
+import { asText } from '../../../../helpers/asText';
 import { renderLoaderCircleIcon24, renderInfoIcon24 } from '../../../../icons';
 import { svgEl } from '../../../../helpers';
 import { prettyBytes } from '../../../../helpers/prettyBytes';
@@ -120,7 +121,7 @@ function renderMetadataAction(label: string, url?: string) {
       title: label,
       'aria-label': label,
     },
-    label,
+    asText(label),
   );
 }
 
@@ -168,7 +169,7 @@ function renderSubscriptionMetadata(
         ? E(
             'div',
             { class: 'fkp_dashboard-page__subscription-meta__title' },
-            title,
+            asText(title),
           )
         : '',
       rows.length
@@ -185,7 +186,7 @@ function renderSubscriptionMetadata(
                     {
                       class: 'fkp_dashboard-page__subscription-meta__fact-key',
                     },
-                    row.label,
+                    asText(row.label),
                   ),
                   E(
                     'span',
@@ -193,7 +194,7 @@ function renderSubscriptionMetadata(
                       class:
                         'fkp_dashboard-page__subscription-meta__fact-value',
                     },
-                    row.value,
+                    asText(row.value),
                   ),
                 ],
               ),
@@ -212,7 +213,7 @@ function renderSubscriptionMetadata(
       ? E(
           'blockquote',
           { class: 'fkp_dashboard-page__subscription-meta__announce' },
-          metadata.announce,
+          asText(metadata.announce),
         )
       : '',
   ]);
@@ -244,9 +245,11 @@ function renderSubscriptionUpdateAction(
         onUpdateSubscription(section);
       },
     },
-    subscriptionUpdating
-      ? [renderLoaderCircleIcon24(), _('Update subscriptions')]
-      : _('Update subscriptions'),
+    asText(
+      subscriptionUpdating
+        ? [renderLoaderCircleIcon24(), _('Update subscriptions')]
+        : _('Update subscriptions'),
+    ),
   );
 }
 
@@ -303,7 +306,9 @@ function renderDefaultState({
           E(
             'div',
             { class: 'fkp_dashboard-page__priority-members__level' },
-            `${_('Priority')} #${member.levelIndex + 1}: ${member.levelName}`,
+            asText(
+              `${_('Priority')} #${member.levelIndex + 1}: ${member.levelName}`,
+            ),
           ),
         );
       }
@@ -325,7 +330,7 @@ function renderDefaultState({
             E(
               'span',
               { class: 'fkp_dashboard-page__priority-members__order' },
-              String(index + 1),
+              asText(String(index + 1)),
             ),
             E(
               'span',
@@ -339,9 +344,11 @@ function renderDefaultState({
                   ? 'fkp_dashboard-page__outbound-grid__item__latency--green'
                   : 'fkp_dashboard-page__outbound-grid__item__latency--empty',
               },
-              member.latency
-                ? _('%d ms').replace('%d', String(member.latency))
-                : '—',
+              asText(
+                member.latency
+                  ? _('%d ms').replace('%d', String(member.latency))
+                  : '—',
+              ),
             ),
           ],
         ),
@@ -357,7 +364,7 @@ function renderDefaultState({
         click: (event: Event) => event.stopPropagation(),
       },
       [
-        E('summary', {}, `${_('Nodes')}: ${members.length}`),
+        E('summary', {}, asText(`${_('Nodes')}: ${members.length}`)),
         E(
           'div',
           { class: 'fkp_dashboard-page__priority-members__list' },
@@ -522,9 +529,11 @@ function renderDefaultState({
           E(
             'div',
             { class: getLatencyClass() },
-            outbound.latency
-              ? _('%d ms').replace('%d', String(outbound.latency))
-              : '—',
+            asText(
+              outbound.latency
+                ? _('%d ms').replace('%d', String(outbound.latency))
+                : '—',
+            ),
           ),
         ]),
         ...(priorityMembers ? [priorityMembers] : []),
@@ -551,7 +560,7 @@ function renderDefaultState({
         {
           class: 'fkp_dashboard-page__outbound-section__title-section__title',
         },
-        section.displayName,
+        asText(section.displayName),
       ),
       E(
         'div',
@@ -589,7 +598,7 @@ function renderDefaultState({
                             class:
                               'dashboard-sections-grid-item-test-latency__label',
                           },
-                          getLatencyTestLabel(latencyProgress),
+                          asText(getLatencyTestLabel(latencyProgress)),
                         ),
                       ]
                     : E(

@@ -1,3 +1,4 @@
+import { asText } from '../../../helpers/asText';
 import { openProkopPage } from '../../helpers/navigation';
 import { renderOverflowMenu } from '../../ui/overflowMenu';
 import { renderStatus, statusTone } from '../../ui/status';
@@ -49,7 +50,7 @@ function linkButton(label: string, onClick: () => void) {
       class: 'btn cbi-button fkp-overview__link',
       click: onClick,
     },
-    label,
+    asText(label),
   );
 }
 
@@ -61,7 +62,7 @@ function renderLines(lines: OverviewLine[]) {
       E(
         'li',
         { class: line.tone ? `fkp-overview__line--${line.tone}` : '' },
-        line.text,
+        asText(line.text),
       ),
     ),
   );
@@ -75,7 +76,7 @@ function card(
 ) {
   return E('section', { class: 'fkp-overview__card' }, [
     E('div', { class: 'fkp-overview__head' }, [
-      E('h3', { class: 'fkp-overview__title' }, title),
+      E('h3', { class: 'fkp-overview__title' }, asText(title)),
       ...headerExtra,
     ]),
     ...body,
@@ -87,8 +88,8 @@ function card(
 
 function renderWarning(warning: OverviewWarning) {
   return E('section', { class: 'fkp-overview__warning', role: 'alert' }, [
-    E('strong', {}, warning.title),
-    E('p', {}, warning.text),
+    E('strong', {}, asText(warning.title)),
+    E('p', {}, asText(warning.text)),
     ...(warning.link
       ? [
           linkButton(warning.link.label, () =>
@@ -160,7 +161,7 @@ function renderStateCard(
             disabled: actions.serviceBusy ? true : undefined,
             click: actions.onStart,
           },
-          actions.serviceBusy ? _('Starting…') : _('Start Prokop'),
+          asText(actions.serviceBusy ? _('Starting…') : _('Start Prokop')),
         ),
       );
     }
@@ -217,10 +218,10 @@ function renderRoutingCard(routing: OverviewRouting, readonly: boolean) {
     _('Routing'),
     [
       ...(routing.summary
-        ? [E('p', { class: 'fkp-overview__summary' }, routing.summary)]
+        ? [E('p', { class: 'fkp-overview__summary' }, asText(routing.summary))]
         : []),
       ...(routing.live
-        ? [E('p', { class: 'fkp-overview__hint' }, routing.live)]
+        ? [E('p', { class: 'fkp-overview__hint' }, asText(routing.live))]
         : []),
       ...(routing.groups.length
         ? [
@@ -229,13 +230,17 @@ function renderRoutingCard(routing: OverviewRouting, readonly: boolean) {
               { class: 'fkp-overview__groups' },
               routing.groups.map((group) =>
                 E('li', {}, [
-                  E('span', { class: 'fkp-overview__group-name' }, group.name),
+                  E(
+                    'span',
+                    { class: 'fkp-overview__group-name' },
+                    asText(group.name),
+                  ),
                   E('span', { class: 'fkp-overview__group-node' }, [
                     `${group.node} · `,
                     E(
                       'span',
                       { class: `fkp-status--${group.tone}` },
-                      group.latency,
+                      asText(group.latency),
                     ),
                   ]),
                 ]),
@@ -248,7 +253,7 @@ function renderRoutingCard(routing: OverviewRouting, readonly: boolean) {
             E(
               'p',
               { class: 'fkp-overview__hint' },
-              _('%d more groups').replace('%d', String(routing.more)),
+              asText(_('%d more groups').replace('%d', String(routing.more))),
             ),
           ]
         : []),
@@ -326,10 +331,10 @@ function renderEventCard(event: OverviewEvent | null) {
             E(
               'span',
               { class: `fkp-status--${event.outcome.tone}` },
-              event.outcome.label,
+              asText(event.outcome.label),
             ),
           ]),
-          E('p', { class: 'fkp-overview__hint' }, event.time),
+          E('p', { class: 'fkp-overview__hint' }, asText(event.time)),
         ]
       : [E('p', { class: 'fkp-overview__hint' }, _('No events recorded yet'))],
     [linkButton(_('All events'), () => openProkopPage('history'))],

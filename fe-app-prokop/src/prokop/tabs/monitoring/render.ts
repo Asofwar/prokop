@@ -1,3 +1,4 @@
+import { asText } from '../../../helpers/asText';
 import { isReadonlyMode } from '../../services/accessMode.service';
 import { renderNodes } from '../dashboard/render';
 import { readMonitoringView, showMonitoringView } from './views';
@@ -23,7 +24,7 @@ function renderViewSwitch(current: string) {
           'aria-pressed': current === view ? 'true' : 'false',
           click: () => showMonitoringView(view as 'connections' | 'nodes'),
         },
-        label,
+        asText(label),
       ),
     ),
   );
@@ -48,7 +49,7 @@ function renderConnectionsView(hidden: boolean) {
                 'btn cbi-button fkp_monitoring-page__tab fkp_monitoring-page__tab--active',
               type: 'button',
             },
-            `${_('Active')} 0`,
+            asText(`${_('Active')} 0`),
           ),
           E(
             'button',
@@ -57,7 +58,7 @@ function renderConnectionsView(hidden: boolean) {
               class: 'btn cbi-button fkp_monitoring-page__tab',
               type: 'button',
             },
-            `${_('Closed')} 0`,
+            asText(`${_('Closed')} 0`),
           ),
           E(
             'button',

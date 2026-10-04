@@ -1,3 +1,4 @@
+import { asText } from '../../../helpers/asText';
 import { ProkopShellMethods } from '../../methods';
 import type { Prokop } from '../../types';
 import type { StatusTone } from './statusLabels';
@@ -165,7 +166,7 @@ interface Row {
 
 function field(label: string, control: HTMLElement, extraClass = '') {
   return E('label', { class: `fkp-conn__cell ${extraClass}`.trim() }, [
-    E('span', { class: 'fkp-conn__cell-label' }, label),
+    E('span', { class: 'fkp-conn__cell-label' }, asText(label)),
     control,
   ]);
 }
@@ -236,7 +237,11 @@ export function initConnectivityMatrix() {
       'select',
       { class: 'cbi-input-select' },
       TYPES.map((kind) =>
-        E('option', { value: kind, selected: row.target.type === kind }, kind),
+        E(
+          'option',
+          { value: kind, selected: row.target.type === kind },
+          asText(kind),
+        ),
       ),
     ) as HTMLSelectElement;
     const port = E('input', {
@@ -282,7 +287,7 @@ export function initConnectivityMatrix() {
             class: `fkp-conn__result fkp-diag-text--${view.tone}`,
             role: 'status',
           },
-          view.text,
+          asText(view.text),
         ),
       ]),
       E('div', { class: 'fkp-conn__actions' }, [

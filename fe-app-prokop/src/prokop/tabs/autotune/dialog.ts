@@ -1,3 +1,4 @@
+import { asText } from '../../../helpers/asText';
 const LABELABLE = new Set(['INPUT', 'SELECT', 'TEXTAREA']);
 let fieldCount = 0;
 
@@ -18,9 +19,11 @@ export function field(label: string, control: HTMLElement, hint?: string) {
   }
 
   return [
-    E('label', labelAttrs, label),
+    E('label', labelAttrs, asText(label)),
     control,
-    ...(hint ? [E('div', { class: 'fkp-autotune__field-hint' }, hint)] : []),
+    ...(hint
+      ? [E('div', { class: 'fkp-autotune__field-hint' }, asText(hint))]
+      : []),
   ];
 }
 
@@ -36,7 +39,7 @@ export function modalActions(onSave: () => void, saveLabel: string) {
     E(
       'button',
       { type: 'button', class: 'btn cbi-button-action', click: onSave },
-      saveLabel,
+      asText(saveLabel),
     ),
   ]);
 }

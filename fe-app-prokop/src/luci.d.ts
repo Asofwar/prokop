@@ -52,10 +52,14 @@ declare global {
   const _ = (_key: string) => string;
 
   const ui = {
-    showModal: (_title: string, _content: HTMLElement) => undefined,
+    // LuCI renders a string title as HTML: pass non-literal titles through asText().
+    showModal: (
+      _title: string | (Node | string)[],
+      _content: HTMLElement | (Node | string)[],
+    ) => undefined,
     hideModal: () => undefined,
     addNotification: (
-      _title: string,
+      _title: string | (Node | string)[],
       _children: HtmlElement | HtmlElement[],
       ..._classNames: string[]
     ) => HTMLElement,

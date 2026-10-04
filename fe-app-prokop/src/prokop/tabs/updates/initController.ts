@@ -1,3 +1,4 @@
+import { asText } from '../../../helpers/asText';
 import { onMount, preserveScrollForPage } from '../../../helpers';
 import { PROKOP_ACTION_PROVIDERS_AVAILABILITY_EVENT } from '../../../constants';
 import { normalizeCompiledVersion } from '../../../helpers/normalizeCompiledVersion';
@@ -1153,11 +1154,11 @@ function renderComponentCard(card: ComponentCard) {
 
   // 1. Header (displays Title, Current Version, no badges)
   const headerChildren: Node[] = [
-    E('b', { class: 'fkp_updates-page__component__title' }, card.title),
+    E('b', { class: 'fkp_updates-page__component__title' }, asText(card.title)),
     E(
       'span',
       { class: 'fkp_updates-page__component__header-version' },
-      card.version,
+      asText(card.version),
     ),
   ];
   const header = E(
@@ -1189,7 +1190,7 @@ function renderComponentCard(card: ComponentCard) {
               target: '_blank',
               rel: 'noopener noreferrer',
             },
-            versionToShow || _('Open'),
+            asText(versionToShow || _('Open')),
           ),
         );
       } else if (versionToShow) {
@@ -1211,7 +1212,7 @@ function renderComponentCard(card: ComponentCard) {
               target: '_blank',
               rel: 'noopener noreferrer',
             },
-            versionToShow || _('Open'),
+            asText(versionToShow || _('Open')),
           ),
         );
       } else if (versionToShow) {
@@ -1224,7 +1225,7 @@ function renderComponentCard(card: ComponentCard) {
         E(
           'span',
           { class: 'fkp_updates-page__component__info-label' },
-          labelText,
+          asText(labelText),
         ),
       ];
       if (latestValueNodes.length > 0) {

@@ -346,13 +346,11 @@ function renderHiddenCascadeNotice(option, section_id) {
   const confirm = () => {
     actions.textContent = "";
     actions.append(
-      E(
-        "p",
-        {},
+      E("p", {}, [
         _(
           "Clear the cascade setting of this rule? When you save the rule, %s and %s are removed and its servers connect without a transit rule. Nothing else in the rule changes.",
         ).format("outbound_detour_enabled", "outbound_detour_section"),
-      ),
+      ]),
       E("div", { class: "fkp-legacy-settings__buttons" }, [
         E(
           "button",
@@ -1414,11 +1412,9 @@ function outboundJsonDisplayTag(value) {
 }
 
 function outboundJsonListItemLabel(value) {
-  return E(
-    "span",
-    { class: "fkp-dynlist-label" },
+  return E("span", { class: "fkp-dynlist-label" }, [
     outboundJsonDisplayTag(value) || _("JSON outbound"),
-  );
+  ]);
 }
 
 function cleanFormSectionData(sectionData) {
@@ -3469,11 +3465,9 @@ function addPriorityGroupItemOptions(itemSection, options = {}) {
     });
   };
   o.renderListItemLabel = function (groupId, itemId) {
-    return E(
-      "span",
-      { class: "fkp-dynlist-label" },
-      this.inputValueForItem(groupId, itemId),
-    );
+    return E("span", { class: "fkp-dynlist-label" }, [
+      this.inputValueForItem(groupId, itemId) ?? "",
+    ]);
   };
 }
 
@@ -3579,7 +3573,7 @@ function renderStackedJsonSettingsModal(title, map, onSave) {
         [
           E("strong", {}, _("Cannot save settings")),
           E("div", {}, _("Fix the highlighted fields and save again.")),
-          message ? E("small", {}, message) : "",
+          message ? E("small", {}, [message]) : "",
         ],
       );
       buttonRow.parentNode.insertBefore(validationSummary, buttonRow);
@@ -5077,7 +5071,7 @@ function renderLegacyConditionsNotice(option, section_id) {
         class: ["btn", "cbi-button", className].filter(Boolean).join(" "),
         click,
       },
-      label,
+      [label],
     );
 
   const render = (message) => {
@@ -5086,9 +5080,9 @@ function renderLegacyConditionsNotice(option, section_id) {
     const confirm = (question, lines, note, label, className, apply) => {
       actions.textContent = "";
       actions.append(
-        E("p", {}, question),
+        E("p", {}, [question]),
         lines.length ? listItems(lines) : "",
-        note ? E("p", {}, note) : "",
+        note ? E("p", {}, [note]) : "",
         E("div", { class: "fkp-legacy-settings__buttons" }, [
           actionButton(_("Cancel"), "", () => render(message)),
           " ",
@@ -5099,7 +5093,7 @@ function renderLegacyConditionsNotice(option, section_id) {
 
     node.textContent = "";
     if (message) {
-      node.append(E("p", {}, message));
+      node.append(E("p", {}, [message]));
     }
     if (!state) {
       return;
@@ -5118,7 +5112,7 @@ function renderLegacyConditionsNotice(option, section_id) {
         {},
         state.findings.map(({ key, value, effect }) =>
           E("li", {}, [
-            E("code", {}, key),
+            E("code", {}, [key]),
             value ? ` = ${value}` : "",
             ` — ${effect}`,
           ]),
@@ -8254,14 +8248,14 @@ function renderRetiredRuleSetsNotice(option, section_id) {
         class: ["btn", "cbi-button", className].filter(Boolean).join(" "),
         click,
       },
-      label,
+      [label],
     );
   // Staged like any other edit of the rule: Save keeps it, Dismiss of the
   // modal restores the notice.
   const done = (message) => {
     uci.unset(UCI_PACKAGE, section_id, "retired_rule_sets");
     node.textContent = "";
-    node.append(E("p", {}, message));
+    node.append(E("p", {}, [message]));
   };
 
   const render = () => {
@@ -8908,11 +8902,9 @@ function createSectionContent(section) {
     }
   };
   o.renderListItemLabel = function (section_id, itemId) {
-    return E(
-      "span",
-      { class: "fkp-dynlist-label" },
-      this.inputValueForItem(section_id, itemId),
-    );
+    return E("span", { class: "fkp-dynlist-label" }, [
+      this.inputValueForItem(section_id, itemId) ?? "",
+    ]);
   };
   o.onListChange = refreshDashboardFilterChoiceWidgets;
 
@@ -8946,11 +8938,9 @@ function createSectionContent(section) {
     return childItemInputValue(section_id, value, "priority_group", "name");
   };
   o.renderListItemLabel = function (section_id, itemId) {
-    return E(
-      "span",
-      { class: "fkp-dynlist-label" },
-      this.inputValueForItem(section_id, itemId),
-    );
+    return E("span", { class: "fkp-dynlist-label" }, [
+      this.inputValueForItem(section_id, itemId) ?? "",
+    ]);
   };
   o.onListChange = refreshDashboardFilterChoiceWidgets;
 
@@ -10047,13 +10037,11 @@ function configureSectionSection(sectionRef, options = {}) {
         restoreStagedUciState(staged);
         ui.addNotification(
           null,
-          E(
-            "p",
-            {},
+          E("p", {}, [
             _(
               "The rule was not removed because the page could not be saved: %s",
             ).format(error?.message || error),
-          ),
+          ]),
           "error",
         );
       },

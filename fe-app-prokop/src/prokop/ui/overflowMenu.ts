@@ -1,3 +1,4 @@
+import { asText } from '../../helpers/asText';
 export interface OverflowMenuItem {
   label: string;
   onClick: () => void;
@@ -41,7 +42,7 @@ export function renderOverflowMenu(label: string, items: OverflowMenuItem[]) {
               item.onClick();
             },
           },
-          item.label,
+          asText(item.label),
         ),
       ),
     ),

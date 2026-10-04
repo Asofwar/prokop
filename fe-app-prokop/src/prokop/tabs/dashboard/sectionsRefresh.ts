@@ -1,3 +1,4 @@
+import { asText } from '../../../helpers/asText';
 import type { StoreType } from '../../services/store.service';
 import type { Prokop } from '../../types';
 
@@ -48,9 +49,11 @@ export function renderSectionsStaleNotice(sectionsWidget: SectionsWidget) {
   return E(
     'div',
     { class: 'alert-message warning', role: 'status' },
-    _('Could not refresh. Showing data from %s').replace(
-      '%s',
-      formatSectionsUpdatedAt(sectionsWidget.updatedAt),
+    asText(
+      _('Could not refresh. Showing data from %s').replace(
+        '%s',
+        formatSectionsUpdatedAt(sectionsWidget.updatedAt),
+      ),
     ),
   );
 }

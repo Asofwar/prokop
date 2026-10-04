@@ -272,7 +272,7 @@ function startPage(pageId) {
 
 function renderPage(title, content) {
   return E("div", { class: "fkp-page" }, [
-    E("h2", { name: "content" }, title),
+    E("h2", { name: "content" }, [title]),
     content,
   ]);
 }

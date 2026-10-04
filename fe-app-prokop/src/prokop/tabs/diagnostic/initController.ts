@@ -1,3 +1,4 @@
+import { asText } from '../../../helpers/asText';
 import { onMount, preserveScrollForPage } from '../../../helpers';
 import { showToast } from '../../../helpers/showToast';
 import { runDnsCheck } from './checks/runDnsCheck';
@@ -557,7 +558,9 @@ function renderDiagnosticRunActionWidget() {
     container!.replaceChildren(renderedAction);
     if (lastRun) lastRun.textContent = lastRunText(localStorage);
     reason?.replaceChildren(
-      ...(blocked ? [E('span', {}, blocked.text), ...blocked.actions] : []),
+      ...(blocked
+        ? [E('span', {}, asText(blocked.text)), ...blocked.actions]
+        : []),
     );
   });
 }

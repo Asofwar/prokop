@@ -1,3 +1,4 @@
+import { asText } from '../../../helpers/asText';
 import { onMount, preserveScrollForPage } from '../../../helpers';
 import { replaceChildrenKeepingFocus } from '../../../helpers/replaceChildrenKeepingFocus';
 import { showToast } from '../../../helpers/showToast';
@@ -119,7 +120,7 @@ function timeNode(timestamp: number) {
   return E(
     'span',
     { class: 'fkp-autotune__time', title: formatTime(timestamp) },
-    formatRelativeTime(timestamp),
+    asText(formatRelativeTime(timestamp)),
   );
 }
 
@@ -421,7 +422,7 @@ function select(name: string, choices: [string, string][], value: string) {
       E(
         'option',
         { value: key, selected: key === value ? true : undefined },
-        label,
+        asText(label),
       ),
     ),
   ) as HTMLSelectElement;
@@ -547,7 +548,7 @@ function showTargetEditor(target?: Prokop.AutotuneTarget) {
   kind.value = target?.rule_set ? 'list' : 'host';
   const ruleSet = E('select', { class: 'cbi-input-select', name: 'rule_set' }, [
     ...lists.map((l) =>
-      E('option', { value: l.tag }, ruleListLabel(l.tag, lists)),
+      E('option', { value: l.tag }, asText(ruleListLabel(l.tag, lists))),
     ),
     // A configured list the routing no longer sends to a DPI rule.
     ...(target?.rule_set && !lists.some((l) => l.tag === target.rule_set)
@@ -555,7 +556,7 @@ function showTargetEditor(target?: Prokop.AutotuneTarget) {
           E(
             'option',
             { value: target.rule_set },
-            ruleListLabel(target.rule_set, lists),
+            asText(ruleListLabel(target.rule_set, lists)),
           ),
         ]
       : []),
@@ -706,7 +707,7 @@ function showTargetEditor(target?: Prokop.AutotuneTarget) {
   ruleSet.addEventListener('change', showKind);
   showKind();
 
-  ui.showModal(target ? _('Edit target') : _('Add target'), [
+  ui.showModal(asText(target ? _('Edit target') : _('Add target')), [
     E('div', { class: 'fkp-autotune__form' }, [
       ...field(
         _('What to check'),
@@ -752,11 +753,13 @@ function showCandidates(target: Prokop.AutotuneTarget) {
   const last = target.last;
   if (!last) return;
   const rows = candidateRows(last);
-  ui.showModal(`${target.host ?? target.id}: ${_('last check')}`, [
+  ui.showModal(asText(`${target.host ?? target.id}: ${_('last check')}`), [
     E(
       'p',
       { class: 'fkp-autotune__muted' },
-      `${formatTime(last.at)} · ${_('measured in isolation from production traffic')}`,
+      asText(
+        `${formatTime(last.at)} · ${_('measured in isolation from production traffic')}`,
+      ),
     ),
     rows.length
       ? E('div', { class: 'fkp-autotune__table-wrap' }, [
@@ -772,11 +775,11 @@ function showCandidates(target: Prokop.AutotuneTarget) {
                 E(
                   'td',
                   { class: 'td' },
-                  row.selected ? `${row.name} ★` : row.name,
+                  asText(row.selected ? `${row.name} ★` : row.name),
                 ),
-                E('td', { class: 'td' }, row.result),
+                E('td', { class: 'td' }, asText(row.result)),
                 E('td', { class: 'td' }, renderStatus(row.stability)),
-                E('td', { class: 'td' }, row.latency),
+                E('td', { class: 'td' }, asText(row.latency)),
               ]),
             ),
           ]),
@@ -854,14 +857,18 @@ function renderState() {
                   disabled: locked() ? true : undefined,
                   click: () => void setMode(mode),
                 },
-                modeLabel(mode),
+                asText(modeLabel(mode)),
               ),
             ),
           ),
     ],
     [
       '',
-      E('p', { class: 'fkp-autotune__muted' }, modeDescription(policy.mode)),
+      E(
+        'p',
+        { class: 'fkp-autotune__muted' },
+        asText(modeDescription(policy.mode)),
+      ),
     ],
     [_('Policy'), policySummary(policy)],
   ];
@@ -919,7 +926,7 @@ function renderState() {
       recorded.attention
         ? E('div', { class: 'fkp-autotune__alert', role: 'alert' }, [
             E('strong', {}, _('Action required')),
-            E('p', {}, recorded.text),
+            E('p', {}, asText(recorded.text)),
             ...(readonly && status.apply?.rollback
               ? [
                   E(
@@ -949,8 +956,8 @@ function renderState() {
       'dl',
       { class: 'fkp-autotune__facts' },
       facts.flatMap(([label, value]) => [
-        E('dt', {}, label),
-        E('dd', {}, value),
+        E('dt', {}, asText(label)),
+        E('dd', {}, asText(value)),
       ]),
     ),
   );
@@ -981,7 +988,9 @@ function renderState() {
                 : undefined,
               click: () => void runCheck('all'),
             },
-            runningScope === 'all' ? _('Checking…') : _('Check all now'),
+            asText(
+              runningScope === 'all' ? _('Checking…') : _('Check all now'),
+            ),
           ),
           ...(status.apply?.rollback
             ? [
@@ -993,9 +1002,11 @@ function renderState() {
                     disabled: locked() ? true : undefined,
                     click: () => void rollbackApply(),
                   },
-                  rollingBack
-                    ? _('Rolling back…')
-                    : _('Roll back the last change…'),
+                  asText(
+                    rollingBack
+                      ? _('Rolling back…')
+                      : _('Roll back the last change…'),
+                  ),
                 ),
               ]
             : []),
@@ -1022,20 +1033,20 @@ function renderRunProgress(run: RunProgressView) {
   return E('div', { class: 'fkp-autotune__run' }, [
     E('div', { class: 'fkp-autotune__row' }, [
       renderStatus({ label: _('Checking targets'), tone: 'loading' }),
-      E('strong', {}, `${run.percent}%`),
+      E('strong', {}, asText(`${run.percent}%`)),
       ...(run.remaining
         ? [
             E(
               'span',
               { class: 'fkp-autotune__muted' },
-              `${_('left')}: ${run.remaining}`,
+              asText(`${_('left')}: ${run.remaining}`),
             ),
           ]
         : []),
     ]),
     bar,
     E('div', {}, [
-      E('strong', {}, run.title),
+      E('strong', {}, asText(run.title)),
       ...(run.phase ? [' — ', run.phase] : []),
     ]),
     E(
@@ -1051,9 +1062,9 @@ function renderRunProgress(run: RunProgressView) {
             E(
               'span',
               { class: 'fkp-autotune__run-icon' },
-              icon[item.state] ?? '·',
+              asText(icon[item.state] ?? '·'),
             ),
-            E('span', { class: 'fkp-autotune__what' }, item.host),
+            E('span', { class: 'fkp-autotune__what' }, asText(item.host)),
             renderStatus({ label: item.text, tone: item.tone }),
           ],
         ),
@@ -1091,7 +1102,7 @@ function renderApplyNotice(view: ApplyResultView) {
     return renderStatus({ label: view.text, tone: view.tone });
   return E('div', { class: 'fkp-autotune__alert', role: 'alert' }, [
     E('strong', {}, _('Action required')),
-    E('p', {}, view.text),
+    E('p', {}, asText(view.text)),
     E(
       'button',
       {
@@ -1137,7 +1148,7 @@ function renderGroup(card: GroupCard) {
       E(
         'span',
         { class: 'fkp-autotune__name' },
-        `${card.title} · ${_('Zapret rule')}`,
+        asText(`${card.title} · ${_('Zapret rule')}`),
       ),
       renderStatus(card.badge),
     ]),
@@ -1145,12 +1156,12 @@ function renderGroup(card: GroupCard) {
       'dl',
       { class: 'fkp-autotune__facts' },
       facts.flatMap(([label, value]) => [
-        E('dt', {}, label),
-        E('dd', {}, value),
+        E('dt', {}, asText(label)),
+        E('dd', {}, asText(value)),
       ]),
     ),
     ...card.explanation.map((text) =>
-      E('p', { class: 'fkp-autotune__text' }, text),
+      E('p', { class: 'fkp-autotune__text' }, asText(text)),
     ),
     ...(card.manualHint
       ? [
@@ -1188,9 +1199,11 @@ function renderGroup(card: GroupCard) {
                       disabled: locked() ? true : undefined,
                       click: () => void applyGroup(card),
                     },
-                    _('Apply %s').replace(
-                      '%s',
-                      strategyLabel(card.applyCandidate),
+                    asText(
+                      _('Apply %s').replace(
+                        '%s',
+                        strategyLabel(card.applyCandidate),
+                      ),
                     ),
                   ),
                 ]
@@ -1203,7 +1216,9 @@ function renderGroup(card: GroupCard) {
                 disabled: locked() ? true : undefined,
                 click: () => void runCheck(card.id),
               },
-              runningScope === card.id ? _('Checking…') : _('Check now'),
+              asText(
+                runningScope === card.id ? _('Checking…') : _('Check now'),
+              ),
             ),
             E(
               'button',
@@ -1273,9 +1288,11 @@ function renderGroups() {
             E(
               'summary',
               {},
-              _('Targets outside DPI rules (%d)').replace(
-                '%d',
-                String(outside.length),
+              asText(
+                _('Targets outside DPI rules (%d)').replace(
+                  '%d',
+                  String(outside.length),
+                ),
               ),
             ),
             E(
@@ -1287,9 +1304,11 @@ function renderGroups() {
                     E(
                       'strong',
                       {},
-                      status?.targets.find((t) => t.id === item.id)?.rule_set
-                        ? ruleListLabel(item.host, status?.lists)
-                        : item.host,
+                      asText(
+                        status?.targets.find((t) => t.id === item.id)?.rule_set
+                          ? ruleListLabel(item.host, status?.lists)
+                          : item.host,
+                      ),
                     ),
                     ' — ',
                     outsideReasonText(item.reason),
@@ -1366,14 +1385,14 @@ function renderTargets() {
             const target = byId.get(row.id)!;
             return E('li', { class: 'fkp-autotune__item' }, [
               E('span', { class: 'fkp-autotune__what' }, [
-                E('strong', {}, row.host),
+                E('strong', {}, asText(row.host)),
                 ...(row.resolver
                   ? [
                       ' ',
                       E(
                         'span',
                         { class: 'fkp-autotune__muted' },
-                        `DNS ${row.resolver}`,
+                        asText(`DNS ${row.resolver}`),
                       ),
                     ]
                   : []),
@@ -1420,7 +1439,7 @@ function renderTargets() {
                             E(
                               'p',
                               { class: 'fkp-autotune__muted' },
-                              row.list.note,
+                              asText(row.list.note),
                             ),
                           ]
                         : []),
@@ -1473,9 +1492,9 @@ function renderHistory() {
               E(
                 'span',
                 { class: 'fkp-autotune__time', title: item.time },
-                item.relative,
+                asText(item.relative),
               ),
-              E('span', { class: 'fkp-autotune__what' }, item.title),
+              E('span', { class: 'fkp-autotune__what' }, asText(item.title)),
               renderStatus(item.outcome),
             ]),
           ),

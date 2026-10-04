@@ -62,13 +62,13 @@ function badge(text, tone) {
     {
       style: `display: inline-block; padding: 0.1em 0.6em; border-radius: 1em; color: #fff; background: ${STATUS_COLORS[tone] || STATUS_COLORS.off}; font-weight: bold;`,
     },
-    text,
+    [text],
   );
 }
 
 function line(label, value) {
   return E("div", { style: "margin: 0.2em 0;" }, [
-    E("strong", {}, `${label}: `),
+    E("strong", {}, [`${label}: `]),
     value,
   ]);
 }
@@ -95,14 +95,14 @@ function messagesBlock(state) {
   if (state.last_error) {
     items.push(
       E("div", { style: `color: ${STATUS_COLORS.error};` }, [
-        E("strong", {}, `${_("Last error")}: `),
+        E("strong", {}, [`${_("Last error")}: `]),
         `${state.last_error} (${formatTime(state.last_error_at)})`,
       ]),
     );
   }
   (Array.isArray(state.warnings) ? state.warnings : []).forEach((warning) => {
     items.push(
-      E("div", { style: `color: ${STATUS_COLORS.warn};` }, `⚠ ${warning}`),
+      E("div", { style: `color: ${STATUS_COLORS.warn};` }, [`⚠ ${warning}`]),
     );
   });
   return items;
@@ -258,7 +258,7 @@ function renderSectionStatus(section_id, status) {
     }
   }
 
-  return E("div", {}, children.concat(messagesBlock(state)));
+  return E("div", {}, [...children, ...messagesBlock(state)]);
 }
 
 function renderGlobalStatus(status, actions) {
@@ -324,10 +324,10 @@ function renderGlobalStatus(status, actions) {
   children.push(...messagesBlock(state));
 
   if (actions) {
-    children.push(E("div", { style: "margin-top: 0.75em;" }, actions));
+    children.push(E("div", { style: "margin-top: 0.75em;" }, [...actions]));
   }
 
-  return E("div", {}, children);
+  return E("div", {}, [...children]);
 }
 
 function statusWidget(render) {
@@ -343,13 +343,11 @@ function statusWidget(render) {
       .catch((error) => {
         dom.content(
           container,
-          E(
-            "em",
-            {},
+          E("em", {}, [
             _("Kill-switch status is unavailable: %s").format(
               error && error.message ? error.message : `${error}`,
             ),
-          ),
+          ]),
         );
       });
 
@@ -365,7 +363,7 @@ function actionButton(label, style, handler) {
       style: "margin-right: 0.5em;",
       click: ui.createHandlerFn(null, handler),
     },
-    label,
+    [label],
   );
 }
 
@@ -381,7 +379,7 @@ function globalActions(status, refresh, readonly) {
         runCommand("killswitch_sync")
           .then(() => refresh(true))
           .catch((error) =>
-            ui.addNotification(null, E("p", {}, error.message), "error"),
+            ui.addNotification(null, E("p", {}, [`${error.message}`]), "error"),
           ),
       ),
     );
@@ -401,7 +399,7 @@ function globalActions(status, refresh, readonly) {
         return runCommand("killswitch_disable")
           .then(() => refresh(true))
           .catch((error) =>
-            ui.addNotification(null, E("p", {}, error.message), "error"),
+            ui.addNotification(null, E("p", {}, [`${error.message}`]), "error"),
           );
       }),
     );

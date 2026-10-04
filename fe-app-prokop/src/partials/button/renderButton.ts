@@ -1,3 +1,4 @@
+import { asText } from '../../helpers/asText';
 import { insertIf } from '../../helpers';
 import { renderLoaderCircleIcon24 } from '../../icons';
 
@@ -69,6 +70,6 @@ export function renderButton({
       disabled: getDisabled(),
       click: onClick,
     },
-    [...insertIf(hasIcon, [getWrappedIcon()]), E('span', {}, text)],
+    [...insertIf(hasIcon, [getWrappedIcon()]), E('span', {}, asText(text))],
   );
 }

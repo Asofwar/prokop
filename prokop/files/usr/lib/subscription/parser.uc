@@ -1707,7 +1707,9 @@ function metadata_clean_text(value, max, decode_base64) {
     for (let i = 0; i < length(value); i++) {
         let char = substr(value, i, 1);
         let code = ord(char);
-        if (code < 32 || code == 127)
+        // Angle brackets never belong in a title or announcement; dropping
+        // them keeps provider text from carrying markup into any UI.
+        if (code < 32 || code == 127 || char == "<" || char == ">")
             char = " ";
 
         if (char == " ") {

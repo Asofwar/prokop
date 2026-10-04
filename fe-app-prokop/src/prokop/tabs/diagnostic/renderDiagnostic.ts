@@ -1,9 +1,10 @@
+import { asText } from '../../../helpers/asText';
 import { isReadonlyMode } from '../../services/accessMode.service';
 
 function card(id: string, title: string, hint: string, body: Node[]) {
   return E('section', { class: 'fkp-diag-card', id }, [
-    E('h3', { class: 'fkp-diag-card__title' }, title),
-    hint ? E('p', { class: 'fkp-diag-hint' }, hint) : '',
+    E('h3', { class: 'fkp-diag-card__title' }, asText(title)),
+    hint ? E('p', { class: 'fkp-diag-hint' }, asText(hint)) : '',
     ...body,
   ]);
 }
@@ -148,7 +149,7 @@ export function render() {
           E(
             'button',
             { id: 'connectivity-add', type: 'button', class: 'btn cbi-button' },
-            `+ ${_('Add address')}`,
+            asText(`+ ${_('Add address')}`),
           ),
           E(
             'button',

@@ -1,3 +1,4 @@
+import { asText } from '../../../helpers/asText';
 import { showToast } from '../../../helpers/showToast';
 import { isReadonlyMode } from '../../services/accessMode.service';
 import { serviceActionNotice } from '../../helpers/serviceActionNotice';
@@ -38,7 +39,7 @@ export function renderStartServiceAction(): HTMLElement[] {
         }
       },
     },
-    starting ? _('Starting…') : _('Start Prokop'),
+    asText(starting ? _('Starting…') : _('Start Prokop')),
   );
 
   return [button];

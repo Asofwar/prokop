@@ -1,8 +1,9 @@
+import { asText } from '../../../helpers/asText';
 export function render() {
   const card = (title: string, body: Node[], actions?: Node) =>
     E('section', { class: 'fkp-autotune__card' }, [
       E('div', { class: 'fkp-autotune__head' }, [
-        E('h3', { class: 'fkp-autotune__title' }, title),
+        E('h3', { class: 'fkp-autotune__title' }, asText(title)),
         ...(actions ? [actions] : []),
       ]),
       ...body,

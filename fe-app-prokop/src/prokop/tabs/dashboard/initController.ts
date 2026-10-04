@@ -1,3 +1,4 @@
+import { asText } from '../../../helpers/asText';
 import {
   canUseDirectClashApi,
   getClashWsStreamUrl,
@@ -1102,7 +1103,7 @@ function renderDetailsUrl(value: unknown) {
   const url = `${value ?? ''}`.trim();
 
   if (!/^https?:\/\//i.test(url)) {
-    return E('span', {}, formatUrlTestModalValue(value));
+    return E('span', {}, asText(formatUrlTestModalValue(value)));
   }
 
   return E(
@@ -1113,7 +1114,7 @@ function renderDetailsUrl(value: unknown) {
       target: '_blank',
       rel: 'noopener noreferrer',
     },
-    url,
+    asText(url),
   );
 }
 
@@ -1139,7 +1140,7 @@ function renderDetailsMemberName(member: Prokop.UrlTestMember) {
     E(
       'span',
       { class: 'fkp_dashboard-page__urltest-details__country-badge' },
-      countryFlag,
+      asText(countryFlag),
     ),
     ...renderFlagEmojis(member.displayName),
   ];
@@ -1152,7 +1153,7 @@ function renderUrlTestSelectedValue(info: Prokop.UrlTestInfo) {
   const name = formatUrlTestModalValue(selectedName);
 
   if (name === _('No')) {
-    return E('span', {}, name);
+    return E('span', {}, asText(name));
   }
 
   return E(
@@ -1162,14 +1163,14 @@ function renderUrlTestSelectedValue(info: Prokop.UrlTestInfo) {
       E(
         'span',
         { class: 'fkp_dashboard-page__urltest-details__selected-name' },
-        selectedMember ? renderDetailsMemberName(selectedMember) : name,
+        asText(selectedMember ? renderDetailsMemberName(selectedMember) : name),
       ),
       ...(selectedMember?.type
         ? [
             E(
               'span',
               { class: 'fkp_dashboard-page__urltest-details__selected-type' },
-              selectedMember.type,
+              asText(selectedMember.type),
             ),
           ]
         : []),
@@ -1178,7 +1179,7 @@ function renderUrlTestSelectedValue(info: Prokop.UrlTestInfo) {
             E(
               'span',
               { class: getUrlTestLatencyClass(selectedMember.latency) },
-              formatUrlTestLatency(selectedMember.latency),
+              asText(formatUrlTestLatency(selectedMember.latency)),
             ),
           ]
         : []),
@@ -1218,11 +1219,11 @@ function renderUrlTestInfoModal(outbound: Prokop.Outbound) {
       { class: 'fkp_dashboard-page__urltest-details__params' },
       fields.map(({ label, value, children }) =>
         E('div', { class: 'fkp_dashboard-page__urltest-details__param' }, [
-          E('dt', {}, label),
+          E('dt', {}, asText(label)),
           E(
             'dd',
             {},
-            children || [E('span', {}, formatUrlTestModalValue(value))],
+            children || [E('span', {}, asText(formatUrlTestModalValue(value)))],
           ),
         ]),
       ),
@@ -1266,7 +1267,7 @@ function renderUrlTestInfoModal(outbound: Prokop.Outbound) {
                                 class:
                                   'fkp_dashboard-page__urltest-details__row-type',
                               },
-                              member.type,
+                              asText(member.type),
                             ),
                           ]
                         : []),
@@ -1281,7 +1282,7 @@ function renderUrlTestInfoModal(outbound: Prokop.Outbound) {
                       E(
                         'span',
                         { class: getUrlTestLatencyClass(member.latency) },
-                        formatUrlTestLatency(member.latency),
+                        asText(formatUrlTestLatency(member.latency)),
                       ),
                     ],
                   ),
@@ -1451,7 +1452,7 @@ function renderUrlTestEditorModal(outbound: Prokop.Outbound) {
   actionButtons.push(resetButton, saveButton, cancelButton);
 
   ui.showModal(
-    `${_('Edit URLTest')}: ${info.displayName}`,
+    asText(`${_('Edit URLTest')}: ${info.displayName}`),
     E('div', {}, [
       E('div', { class: 'fkp_dashboard-page__urltest-details__params' }, [
         row(_('Testing URL'), url),
@@ -1477,9 +1478,11 @@ function handleShowUrlTestInfo(outbound: Prokop.Outbound) {
   }
 
   ui.showModal(
-    `${_('URLTest details')}: ${
-      outbound.urlTestInfo.displayName || outbound.displayName
-    }`,
+    asText(
+      `${_('URLTest details')}: ${
+        outbound.urlTestInfo.displayName || outbound.displayName
+      }`,
+    ),
     renderUrlTestInfoModal(outbound),
   );
 }
@@ -1491,7 +1494,7 @@ function renderPrioritySelectedValue(info: Prokop.PriorityInfo) {
   const name = formatUrlTestModalValue(selectedName);
 
   if (name === _('No')) {
-    return E('span', {}, name);
+    return E('span', {}, asText(name));
   }
 
   return E(
@@ -1510,14 +1513,16 @@ function renderPrioritySelectedValue(info: Prokop.PriorityInfo) {
             .filter(Boolean)
             .join(' '),
         },
-        selectedMember ? renderPriorityMemberName(selectedMember) : name,
+        asText(
+          selectedMember ? renderPriorityMemberName(selectedMember) : name,
+        ),
       ),
       ...(selectedMember?.type
         ? [
             E(
               'span',
               { class: 'fkp_dashboard-page__urltest-details__selected-type' },
-              selectedMember.type,
+              asText(selectedMember.type),
             ),
           ]
         : []),
@@ -1526,7 +1531,7 @@ function renderPrioritySelectedValue(info: Prokop.PriorityInfo) {
             E(
               'span',
               { class: getUrlTestLatencyClass(selectedMember.latency) },
-              formatUrlTestLatency(selectedMember.latency),
+              asText(formatUrlTestLatency(selectedMember.latency)),
             ),
           ]
         : []),
@@ -1541,12 +1546,12 @@ function renderPriorityMemberName(member: Prokop.PriorityMember) {
     E(
       'span',
       { class: 'fkp_dashboard-page__urltest-details__priority-number' },
-      `#${member.levelIndex + 1}`,
+      asText(`#${member.levelIndex + 1}`),
     ),
     E(
       'span',
       { class: 'fkp_dashboard-page__urltest-details__priority-level' },
-      levelName,
+      asText(levelName),
     ),
     E(
       'span',
@@ -1610,11 +1615,11 @@ function renderPriorityInfoModal(outbound: Prokop.Outbound) {
       { class: 'fkp_dashboard-page__urltest-details__params' },
       fields.map(({ label, value, children }) =>
         E('div', { class: 'fkp_dashboard-page__urltest-details__param' }, [
-          E('dt', {}, label),
+          E('dt', {}, asText(label)),
           E(
             'dd',
             {},
-            children || [E('span', {}, formatUrlTestModalValue(value))],
+            children || [E('span', {}, asText(formatUrlTestModalValue(value)))],
           ),
         ]),
       ),
@@ -1665,7 +1670,7 @@ function renderPriorityInfoModal(outbound: Prokop.Outbound) {
                                 class:
                                   'fkp_dashboard-page__urltest-details__row-type',
                               },
-                              member.type,
+                              asText(member.type),
                             ),
                           ]
                         : []),
@@ -1680,7 +1685,7 @@ function renderPriorityInfoModal(outbound: Prokop.Outbound) {
                       E(
                         'span',
                         { class: getUrlTestLatencyClass(member.latency) },
-                        formatUrlTestLatency(member.latency),
+                        asText(formatUrlTestLatency(member.latency)),
                       ),
                     ],
                   ),
@@ -1718,9 +1723,11 @@ function handleShowPriorityInfo(outbound: Prokop.Outbound) {
   }
 
   ui.showModal(
-    `${_('Priority details')}: ${
-      outbound.priorityInfo.displayName || outbound.displayName
-    }`,
+    asText(
+      `${_('Priority details')}: ${
+        outbound.priorityInfo.displayName || outbound.displayName
+      }`,
+    ),
     renderPriorityInfoModal(outbound),
   );
 }

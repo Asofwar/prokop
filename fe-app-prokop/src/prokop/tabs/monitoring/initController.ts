@@ -1,3 +1,4 @@
+import { asText } from '../../../helpers/asText';
 import {
   canUseDirectClashApi,
   getClashWsStreamUrl,
@@ -620,7 +621,7 @@ function renderDeviceFilterOptions() {
   const options = [
     E('option', { value: ALL_FILTER_VALUE }, _('All devices')),
     ...sourceIps.map((ip) =>
-      E('option', { value: ip }, getDeviceFilterLabel(ip)),
+      E('option', { value: ip }, asText(getDeviceFilterLabel(ip))),
     ),
   ];
 
@@ -660,7 +661,7 @@ function renderPathFilterOptions() {
         'optgroup',
         { label: _('Path type') },
         PATH_KINDS.map((kind) =>
-          E('option', { value: `kind:${kind}` }, pathKindLabel(kind)),
+          E('option', { value: `kind:${kind}` }, asText(pathKindLabel(kind))),
         ),
       ),
       ...(rules.length
@@ -669,7 +670,7 @@ function renderPathFilterOptions() {
               'optgroup',
               { label: _('Rule') },
               rules.map((rule) =>
-                E('option', { value: `rule:${rule.name}` }, rule.label),
+                E('option', { value: `rule:${rule.name}` }, asText(rule.label)),
               ),
             ),
           ]
@@ -697,16 +698,18 @@ function renderFilterBar() {
     E(
       'span',
       {},
-      [
-        following ? _('Following new connections') : '',
-        active
-          ? _('Shown %d of %d')
-              .replace('%d', String(shown))
-              .replace('%d', String(total))
-          : '',
-      ]
-        .filter(Boolean)
-        .join(' · '),
+      asText(
+        [
+          following ? _('Following new connections') : '',
+          active
+            ? _('Shown %d of %d')
+                .replace('%d', String(shown))
+                .replace('%d', String(total))
+            : '',
+        ]
+          .filter(Boolean)
+          .join(' · '),
+      ),
     ),
     ...(active
       ? [
@@ -734,8 +737,12 @@ function setButtonActive(button: HTMLElement | null, active: boolean) {
 
 function renderTabButtonContent(label: string, count: number) {
   return [
-    E('span', { class: 'fkp_monitoring-page__tab-label' }, label),
-    E('span', { class: 'fkp_monitoring-page__tab-badge' }, String(count)),
+    E('span', { class: 'fkp_monitoring-page__tab-label' }, asText(label)),
+    E(
+      'span',
+      { class: 'fkp_monitoring-page__tab-badge' },
+      asText(String(count)),
+    ),
   ];
 }
 
@@ -848,7 +855,7 @@ function renderValue(value: string, className = '') {
         .join(' '),
       title: text,
     },
-    text,
+    asText(text),
   );
 
   element.setAttribute('data-copy-value', text);
@@ -867,7 +874,7 @@ function renderSourceValue(source: ReturnType<typeof getSourceCellParts>) {
           'fkp_monitoring-page__value fkp_monitoring-page__source-value fkp_monitoring-page__source-value--ip-only',
         title: fullText,
       },
-      source.primary || '-',
+      asText(source.primary || '-'),
     );
 
     element.setAttribute('data-copy-value', fullText);
@@ -882,8 +889,12 @@ function renderSourceValue(source: ReturnType<typeof getSourceCellParts>) {
       title: fullText,
     },
     [
-      E('span', { class: 'fkp_monitoring-page__source-name' }, source.primary),
-      E('span', { class: 'fkp_monitoring-page__source-ip' }, source.ip),
+      E(
+        'span',
+        { class: 'fkp_monitoring-page__source-name' },
+        asText(source.primary),
+      ),
+      E('span', { class: 'fkp_monitoring-page__source-ip' }, asText(source.ip)),
     ],
   );
 
@@ -902,7 +913,7 @@ function renderTableCell(label: string, children: (Node | string)[]) {
 }
 
 function renderSecondary(text: string) {
-  return E('span', { class: 'fkp_monitoring-page__secondary' }, text);
+  return E('span', { class: 'fkp_monitoring-page__secondary' }, asText(text));
 }
 
 function renderPathCell(path: ConnectionPath) {
@@ -913,7 +924,7 @@ function renderPathCell(path: ConnectionPath) {
       {
         class: `fkp_monitoring-page__path-kind fkp_monitoring-page__path-kind--${summary.kind}`,
       },
-      summary.kindLabel,
+      asText(summary.kindLabel),
     ),
     ...(summary.primary
       ? [renderValue(summary.primary, 'fkp_monitoring-page__route')]
@@ -1036,8 +1047,8 @@ function connectionDetails(connection: MonitoredConnection) {
 
 function detailRow(label: string, value: Node | string) {
   return E('div', { class: 'fkp_monitoring-page__detail-row' }, [
-    E('dt', {}, label),
-    E('dd', {}, value),
+    E('dt', {}, asText(label)),
+    E('dd', {}, asText(value)),
   ]);
 }
 
@@ -1075,7 +1086,7 @@ function renderConnectionDetailsPanel() {
   container.replaceChildren(
     E('div', { class: 'fkp_monitoring-page__details' }, [
       E('div', { class: 'fkp_monitoring-page__details-head' }, [
-        E('h3', {}, target.primary),
+        E('h3', {}, asText(target.primary)),
         E(
           'button',
           {
@@ -1250,7 +1261,9 @@ function renderStateRow(
               .filter(Boolean)
               .join(' '),
           },
-          actions.length ? [E('span', {}, text), ...actions] : text,
+          asText(
+            actions.length ? [E('span', {}, asText(text)), ...actions] : text,
+          ),
         ),
       ],
     ),

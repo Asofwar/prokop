@@ -1,3 +1,4 @@
+import { asText } from '../../../helpers/asText';
 import { ProkopShellMethods } from '../../methods';
 import { prokopPageUrl, readPageParams } from '../../helpers/navigation';
 import { Prokop } from '../../types';
@@ -195,19 +196,19 @@ export function siteConclusion(trace: Prokop.RouteTrace, result: RowResult) {
 
 function renderRow(row: SiteRow) {
   return [
-    E('dt', {}, row.label),
+    E('dt', {}, asText(row.label)),
     E('dd', {}, [
       // Value and its provenance on one line; neutral values keep the text colour.
       E('span', { class: 'fkp-site__value' }, [
         E(
           'span',
           row.tone === 'neutral' ? {} : { class: `fkp-diag-text--${row.tone}` },
-          row.value,
+          asText(row.value),
         ),
         ' ',
         renderProvenance(row.provenance),
       ]),
-      row.note ? E('small', {}, row.note) : '',
+      row.note ? E('small', {}, asText(row.note)) : '',
     ]),
   ];
 }
@@ -245,7 +246,9 @@ export function initSiteCheck(
     .then((devices) => {
       if (!device) return;
       for (const [ip, name] of Object.entries(devices || {}))
-        device.appendChild(E('option', { value: ip }, `${name || ip} (${ip})`));
+        device.appendChild(
+          E('option', { value: ip }, asText(`${name || ip} (${ip})`)),
+        );
     })
     .catch(() => {
       /* the selector keeps "Any device" */
@@ -281,7 +284,7 @@ export function initSiteCheck(
         E(
           'p',
           { class: 'fkp-site__conclusion' },
-          siteConclusion(trace.data, reach),
+          asText(siteConclusion(trace.data, reach)),
         ),
         E('div', { class: 'fkp-diag-actions' }, [
           E(
@@ -298,7 +301,9 @@ export function initSiteCheck(
               E(
                 'p',
                 { class: 'fkp-diag-hint' },
-                `${_('Router kernel route')}: ${trace.data.interface.value}`,
+                asText(
+                  `${_('Router kernel route')}: ${trace.data.interface.value}`,
+                ),
               ),
             ]
           : []),

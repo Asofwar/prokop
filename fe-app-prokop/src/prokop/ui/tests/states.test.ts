@@ -83,7 +83,7 @@ describe('state blocks', () => {
 });
 
 describe('confirmAction', () => {
-  let shown: { title: string; content: FakeNode } | null;
+  let shown: { title: unknown; content: FakeNode } | null;
 
   beforeEach(() => {
     shown = null;
@@ -113,7 +113,8 @@ describe('confirmAction', () => {
       danger: true,
     });
 
-    expect(shown!.title).toBe('Stop Prokop?');
+    // Titles go to LuCI as text children, never as an HTML string.
+    expect(shown!.title).toEqual(['Stop Prokop?']);
     expect(text(shown!.content)).toContain('Routing rules stop applying');
     expect(button('Stop').attrs.class).toContain('cbi-button-negative');
     (button('Stop').attrs.click as () => void)();

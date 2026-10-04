@@ -1,3 +1,4 @@
+import { asText } from '../../../helpers/asText';
 import { executeShellCommand } from '../../../helpers/executeShellCommand';
 import { renderButton } from '../../../partials';
 import { releaseLacksKillSwitch } from './killSwitchRelease';
@@ -43,7 +44,7 @@ function confirmVersionChange(
   ui.showModal(
     _('Confirm version change'),
     E('div', {}, [
-      E('p', {}, `${currentVersion} → ${version}`),
+      E('p', {}, asText(`${currentVersion} → ${version}`)),
       E(
         'p',
         {},
@@ -107,7 +108,9 @@ export async function showReleaseSelector(
         E(
           'option',
           { value: release.version },
-          `${release.version}${installed ? ` — ${_('Installed')}` : ''}`,
+          asText(
+            `${release.version}${installed ? ` — ${_('Installed')}` : ''}`,
+          ),
         ),
       );
     }

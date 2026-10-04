@@ -1,3 +1,4 @@
+import { asText } from '../../helpers/asText';
 import { TabServiceInstance } from './tab.service';
 import { store } from './store.service';
 import { logger } from './logger.service';
@@ -42,7 +43,7 @@ function showLogNotification(notification: ProkopLogNotification) {
 
     ui.addNotification(
       _('Component update available'),
-      E('div', {}, message),
+      E('div', {}, asText(message)),
       'warning',
       'fkp-component-update-notification',
     );
@@ -51,7 +52,7 @@ function showLogNotification(notification: ProkopLogNotification) {
 
   ui.addNotification(
     _('Prokop Error'),
-    E('div', {}, notification.line),
+    E('div', {}, asText(notification.line)),
     'error',
     'fkp-log-error-notification',
   );

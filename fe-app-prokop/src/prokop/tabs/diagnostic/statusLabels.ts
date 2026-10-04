@@ -1,3 +1,4 @@
+import { asText } from '../../../helpers/asText';
 export { eventKindLabel } from '../../ui/status';
 import type { IDiagnosticsChecksStoreItem } from '../../services';
 
@@ -36,6 +37,6 @@ export function renderStatusBadge(status: DisplayStatus) {
   return E(
     'span',
     { class: `fkp-diag-badge fkp-diag-badge--${status.tone}` },
-    status.text,
+    asText(status.text),
   );
 }

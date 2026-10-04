@@ -1,3 +1,4 @@
+import { asText } from '../../helpers/asText';
 import { renderButton } from '../button/renderButton';
 import { copyToClipboard } from '../../helpers/copyToClipboard';
 import { downloadAsTxt } from '../../helpers/downloadAsTxt';
@@ -303,7 +304,7 @@ export function renderModal(
         E(
           'span',
           { class: 'fkp-partial-modal__checkbox-text' },
-          options.autoRefreshLabel ?? _('Auto refresh'),
+          asText(options.autoRefreshLabel ?? _('Auto refresh')),
         ),
       ]) as HTMLElement,
     );
@@ -327,7 +328,7 @@ export function renderModal(
         E(
           'span',
           { class: 'fkp-partial-modal__checkbox-text' },
-          options.maskValuesLabel ?? _('Hide values'),
+          asText(options.maskValuesLabel ?? _('Hide values')),
         ),
       ]) as HTMLElement,
     );

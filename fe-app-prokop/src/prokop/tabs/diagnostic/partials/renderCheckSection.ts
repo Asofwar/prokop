@@ -1,3 +1,4 @@
+import { asText } from '../../../../helpers/asText';
 import {
   renderCheckIcon24,
   renderCircleAlertIcon24,
@@ -65,7 +66,7 @@ function renderHead(props: Check) {
   icon.appendChild(stateIcon(props.state));
   return E('div', { class: 'fkp-check__head' }, [
     icon,
-    E('b', { class: 'fkp-check__title' }, props.title),
+    E('b', { class: 'fkp-check__title' }, asText(props.title)),
     renderStatusBadge(checkStatus(props.state)),
   ]);
 }
@@ -74,8 +75,8 @@ function renderItems(props: Check) {
   return props.items.map((item) =>
     E('div', { class: `fkp-check__item fkp-diag-text--${item.state}` }, [
       itemIcon(item.state),
-      E('b', {}, item.key),
-      E('span', {}, item.value),
+      E('b', {}, asText(item.key)),
+      E('span', {}, asText(item.value)),
     ]),
   );
 }
@@ -109,7 +110,7 @@ export function renderCheckSection(props: Check, handlers: CheckHandlers) {
       ? [
           E('dl', { class: 'fkp-check__advice' }, [
             E('dt', {}, _('What it means')),
-            E('dd', {}, advice.meaning),
+            E('dd', {}, asText(advice.meaning)),
             E('dt', {}, _('What was proven')),
             E(
               'dd',
@@ -117,14 +118,20 @@ export function renderCheckSection(props: Check, handlers: CheckHandlers) {
               E(
                 'ul',
                 {},
-                provenFacts(props).map((fact) => E('li', {}, fact)),
+                provenFacts(props).map((fact) => E('li', {}, asText(fact))),
               ),
             ),
             E('dt', {}, _('What to do')),
-            E('dd', {}, advice.action),
+            E('dd', {}, asText(advice.action)),
           ]),
         ]
-      : [E('div', { class: 'fkp-check__description' }, props.description)]),
+      : [
+          E(
+            'div',
+            { class: 'fkp-check__description' },
+            asText(props.description),
+          ),
+        ]),
     E('div', { class: 'fkp-check__actions' }, [
       E(
         'button',
@@ -152,7 +159,11 @@ export function renderCheckSection(props: Check, handlers: CheckHandlers) {
     props.items.length
       ? E('details', { class: 'fkp-check__details' }, [
           E('summary', {}, _('All check results')),
-          E('div', { class: 'fkp-check__description' }, props.description),
+          E(
+            'div',
+            { class: 'fkp-check__description' },
+            asText(props.description),
+          ),
           ...renderItems(props),
         ])
       : '',
@@ -169,12 +180,20 @@ export function renderCheckRow(props: Check) {
       renderHead(props),
       // An unsupported check explains why instead of pretending to have run.
       props.state === 'unsupported'
-        ? E('div', { class: 'fkp-check__description' }, props.description)
+        ? E(
+            'div',
+            { class: 'fkp-check__description' },
+            asText(props.description),
+          )
         : '',
       props.state === 'success' && props.items.length
         ? E('details', { class: 'fkp-check__details' }, [
             E('summary', {}, _('Details')),
-            E('div', { class: 'fkp-check__description' }, props.description),
+            E(
+              'div',
+              { class: 'fkp-check__description' },
+              asText(props.description),
+            ),
             ...renderItems(props),
           ])
         : '',
@@ -187,7 +206,13 @@ export function renderChecks(checks: Check[], handlers: CheckHandlers) {
   const summary = checkSummary(checks);
   return [
     ...(summary.text
-      ? [E('p', { class: 'fkp-diag-summary', role: 'status' }, summary.text)]
+      ? [
+          E(
+            'p',
+            { class: 'fkp-diag-summary', role: 'status' },
+            asText(summary.text),
+          ),
+        ]
       : []),
     ...groups.attention.map((check) => renderCheckSection(check, handlers)),
     ...groups.other.map(renderCheckRow),
@@ -197,9 +222,11 @@ export function renderChecks(checks: Check[], handlers: CheckHandlers) {
             E(
               'summary',
               {},
-              _('Passed checks: %d').replace(
-                '%d',
-                String(groups.passed.length),
+              asText(
+                _('Passed checks: %d').replace(
+                  '%d',
+                  String(groups.passed.length),
+                ),
               ),
             ),
             ...groups.passed.map(renderCheckRow),

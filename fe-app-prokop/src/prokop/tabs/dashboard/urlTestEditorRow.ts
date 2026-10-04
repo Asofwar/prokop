@@ -1,3 +1,4 @@
+import { asText } from '../../../helpers/asText';
 let nextFieldId = 0;
 
 // One URLTest editor parameter: the label names its control (for/id), so
@@ -9,7 +10,7 @@ export function renderUrlTestEditorRow(label: string, control: HTMLElement) {
   }
 
   return E('div', { class: 'fkp_dashboard-page__urltest-details__param' }, [
-    E('label', { for: control.id }, label),
+    E('label', { for: control.id }, asText(label)),
     control,
   ]);
 }

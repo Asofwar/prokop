@@ -1,3 +1,4 @@
+import { asText } from '../../../../helpers/asText';
 import { insertIf } from '../../../../helpers';
 
 interface IRenderSystemInfoRow {
@@ -40,10 +41,10 @@ export function renderSystemInfo({ items }: IRenderSystemInfoProps) {
         'div',
         { class: 'fkp_diagnostic-page__right-bar__system-info__row' },
         [
-          E('b', {}, item.key),
+          E('b', {}, asText(item.key)),
           E('div', {}, [
-            E('span', {}, item.value),
-            E('span', { class: tagClass }, item?.tag?.label),
+            E('span', {}, asText(item.value)),
+            E('span', { class: tagClass }, asText(item?.tag?.label)),
           ]),
         ],
       );

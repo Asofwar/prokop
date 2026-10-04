@@ -1,3 +1,4 @@
+import { asText } from '../../helpers/asText';
 // Shared status words and tones: a page maps the raw values of its backend
 // module to this small semantic set and takes the label and tone from one
 // place, so the same state never reads differently on two pages.
@@ -184,7 +185,7 @@ export function renderStatus(view: { label: string; tone: StatusTone }) {
   return E(
     'span',
     { class: `fkp-status fkp-status--${view.tone}` },
-    view.label,
+    asText(view.label),
   );
 }
 
@@ -195,6 +196,6 @@ export function renderProvenance(provenance: Provenance) {
       class: `fkp-provenance fkp-provenance--${provenance}`,
       title: provenanceDescription(provenance),
     },
-    provenanceLabel(provenance),
+    asText(provenanceLabel(provenance)),
   );
 }

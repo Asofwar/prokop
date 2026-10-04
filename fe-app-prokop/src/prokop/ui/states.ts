@@ -1,3 +1,4 @@
+import { asText } from '../../helpers/asText';
 interface StateAction {
   label: string;
   onClick: () => void;
@@ -14,7 +15,7 @@ function renderAction(action?: StateAction) {
         class: 'btn cbi-button',
         click: () => action.onClick(),
       },
-      action.label,
+      asText(action.label),
     ),
   ];
 }
@@ -25,8 +26,8 @@ export function renderEmptyState(
   action?: StateAction,
 ) {
   return E('div', { class: 'fkp-state fkp-state--empty' }, [
-    E('div', { class: 'fkp-state__title' }, title),
-    ...(hint ? [E('div', { class: 'fkp-state__hint' }, hint)] : []),
+    E('div', { class: 'fkp-state__title' }, asText(title)),
+    ...(hint ? [E('div', { class: 'fkp-state__hint' }, asText(hint))] : []),
     ...renderAction(action),
   ]);
 }
@@ -35,7 +36,7 @@ export function renderLoadingState(label = _('Loading…')) {
   return E(
     'div',
     { class: 'fkp-state fkp-state--loading', role: 'status' },
-    E('div', { class: 'fkp-state__title' }, label),
+    E('div', { class: 'fkp-state__title' }, asText(label)),
   );
 }
 
@@ -45,7 +46,7 @@ export function renderErrorState(
   details?: string,
 ) {
   return E('div', { class: 'fkp-state fkp-state--error', role: 'alert' }, [
-    E('div', { class: 'fkp-state__title' }, title),
+    E('div', { class: 'fkp-state__title' }, asText(title)),
     ...renderAction(
       onRetry ? { label: _('Retry'), onClick: onRetry } : undefined,
     ),
@@ -56,6 +57,6 @@ export function renderErrorState(
 export function renderTechnicalDetails(text: string) {
   return E('details', { class: 'fkp-tech' }, [
     E('summary', {}, _('Technical details')),
-    E('pre', { class: 'fkp-tech__content' }, text),
+    E('pre', { class: 'fkp-tech__content' }, asText(text)),
   ]);
 }

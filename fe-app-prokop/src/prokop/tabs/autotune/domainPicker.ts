@@ -1,3 +1,4 @@
+import { asText } from '../../../helpers/asText';
 // Pinned domains of a rule-list target: the domains of the list with a
 // search box, at most MAX_PINNED checked. The domains come from the router
 // (autotune/manager.uc list-domains) when a list is chosen.
@@ -81,7 +82,7 @@ export function createDomainPicker(
                 E(
                   'span',
                   { class: 'fkp-autotune__muted' },
-                  `(${_('not in the list')})`,
+                  asText(`(${_('not in the list')})`),
                 ),
               ]
             : []),
@@ -93,7 +94,7 @@ export function createDomainPicker(
             E(
               'div',
               { class: 'fkp-autotune__muted' },
-              note || _('Nothing found'),
+              asText(note || _('Nothing found')),
             ),
           ]),
     );

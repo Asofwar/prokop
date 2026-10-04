@@ -72,9 +72,9 @@ describe('dashboard sections refresh state', () => {
 
     const notice = renderSectionsStaleNotice(
       widget({ data: [group], stale: true, updatedAt: 1000 }),
-    ) as unknown as { children: string };
-    expect(notice.children).toBe(
+    ) as unknown as { children: string[] };
+    expect(notice.children).toEqual([
       `Could not refresh. Showing data from ${formatSectionsUpdatedAt(1000)}`,
-    );
+    ]);
   });
 });

@@ -1,3 +1,4 @@
+import { asText } from '../../helpers/asText';
 interface ConfirmActionOptions {
   title: string;
   message: string;
@@ -36,21 +37,21 @@ export function confirmAction(options: ConfirmActionOptions): Promise<boolean> {
         class: `btn ${options.danger ? 'cbi-button-negative' : 'cbi-button-action'}`,
         click: () => finish(true),
       },
-      options.confirmLabel,
+      asText(options.confirmLabel),
     );
 
     const content = E('div', { class: 'fkp-confirm' }, [
-      E('p', {}, options.message),
+      E('p', {}, asText(options.message)),
       ...(options.consequences?.length
         ? [
             E(
               'ul',
               { class: 'fkp-confirm__consequences' },
-              options.consequences.map((line) => E('li', {}, line)),
+              options.consequences.map((line) => E('li', {}, asText(line))),
             ),
           ]
         : []),
-      ...(options.notes ?? []).map((line) => E('p', {}, line)),
+      ...(options.notes ?? []).map((line) => E('p', {}, asText(line))),
       // LuCI's Escape handler clicks the first '.right > button' of the
       // modal, so Cancel must stay first in a '.right' container (UC-134).
       E('div', { class: 'right fkp-confirm__actions' }, [
@@ -59,7 +60,7 @@ export function confirmAction(options: ConfirmActionOptions): Promise<boolean> {
       ]),
     ]);
 
-    ui.showModal(options.title, content);
+    ui.showModal(asText(options.title), content);
     // Another dialog replacing this one detaches the content; that counts
     // as cancel. LuCI's hideModal() only hides the overlay and never
     // detaches it, so Escape is handled by the Cancel button above.

@@ -885,12 +885,26 @@ function getProxyUrlName(url) {
   }
 }
 
+// src/helpers/asText.ts
+function isNode(value) {
+  return typeof value === "object" && value !== null && "nodeType" in value;
+}
+function asText(value) {
+  const parts = Array.isArray(value) ? value : [value];
+  const children = [];
+  for (const part of parts) {
+    if (part === null || part === void 0) continue;
+    children.push(isNode(part) ? part : String(part));
+  }
+  return children;
+}
+
 // src/prokop/tabs/dashboard/partials/renderFlagEmojis.ts
 var FLAG_EMOJI_PATTERN = /([\u{1f1e6}-\u{1f1ff}]{2}|\u{1f3f4}[\u{e0061}-\u{e007a}]+\u{e007f})/gu;
 var EXACT_FLAG_EMOJI_PATTERN = /^([\u{1f1e6}-\u{1f1ff}]{2}|\u{1f3f4}[\u{e0061}-\u{e007a}]+\u{e007f})$/u;
 function renderFlagEmojis(value) {
   return value.split(FLAG_EMOJI_PATTERN).filter(Boolean).map(
-    (part) => EXACT_FLAG_EMOJI_PATTERN.test(part) ? E("span", { class: "fkp_dashboard-page__flag-emoji" }, part) : part
+    (part) => EXACT_FLAG_EMOJI_PATTERN.test(part) ? E("span", { class: "fkp_dashboard-page__flag-emoji" }, asText(part)) : part
   );
 }
 
@@ -1948,7 +1962,7 @@ function renderMetadataAction(label, url) {
       title: label,
       "aria-label": label
     },
-    label
+    asText(label)
   );
 }
 function renderSubscriptionMetadata(metadata) {
@@ -1984,7 +1998,7 @@ function renderSubscriptionMetadata(metadata) {
       title ? E(
         "div",
         { class: "fkp_dashboard-page__subscription-meta__title" },
-        title
+        asText(title)
       ) : "",
       rows.length ? E(
         "div",
@@ -1999,14 +2013,14 @@ function renderSubscriptionMetadata(metadata) {
                 {
                   class: "fkp_dashboard-page__subscription-meta__fact-key"
                 },
-                row.label
+                asText(row.label)
               ),
               E(
                 "span",
                 {
                   class: "fkp_dashboard-page__subscription-meta__fact-value"
                 },
-                row.value
+                asText(row.value)
               )
             ]
           )
@@ -2021,7 +2035,7 @@ function renderSubscriptionMetadata(metadata) {
     metadata.announce ? E(
       "blockquote",
       { class: "fkp_dashboard-page__subscription-meta__announce" },
-      metadata.announce
+      asText(metadata.announce)
     ) : ""
   ]);
 }
@@ -2045,7 +2059,9 @@ function renderSubscriptionUpdateAction(section, subscriptionUpdating, onUpdateS
         onUpdateSubscription(section);
       }
     },
-    subscriptionUpdating ? [renderLoaderCircleIcon24(), _("Update subscriptions")] : _("Update subscriptions")
+    asText(
+      subscriptionUpdating ? [renderLoaderCircleIcon24(), _("Update subscriptions")] : _("Update subscriptions")
+    )
   );
 }
 function getLatencyTestLabel(latencyProgress) {
@@ -2090,7 +2106,9 @@ function renderDefaultState({
           E(
             "div",
             { class: "fkp_dashboard-page__priority-members__level" },
-            `${_("Priority")} #${member.levelIndex + 1}: ${member.levelName}`
+            asText(
+              `${_("Priority")} #${member.levelIndex + 1}: ${member.levelName}`
+            )
           )
         );
       }
@@ -2107,7 +2125,7 @@ function renderDefaultState({
             E(
               "span",
               { class: "fkp_dashboard-page__priority-members__order" },
-              String(index + 1)
+              asText(String(index + 1))
             ),
             E(
               "span",
@@ -2119,7 +2137,9 @@ function renderDefaultState({
               {
                 class: member.latency ? "fkp_dashboard-page__outbound-grid__item__latency--green" : "fkp_dashboard-page__outbound-grid__item__latency--empty"
               },
-              member.latency ? _("%d ms").replace("%d", String(member.latency)) : "\u2014"
+              asText(
+                member.latency ? _("%d ms").replace("%d", String(member.latency)) : "\u2014"
+              )
             )
           ]
         )
@@ -2134,7 +2154,7 @@ function renderDefaultState({
         click: (event) => event.stopPropagation()
       },
       [
-        E("summary", {}, `${_("Nodes")}: ${members.length}`),
+        E("summary", {}, asText(`${_("Nodes")}: ${members.length}`)),
         E(
           "div",
           { class: "fkp_dashboard-page__priority-members__list" },
@@ -2261,7 +2281,9 @@ function renderDefaultState({
           E(
             "div",
             { class: getLatencyClass() },
-            outbound.latency ? _("%d ms").replace("%d", String(outbound.latency)) : "\u2014"
+            asText(
+              outbound.latency ? _("%d ms").replace("%d", String(outbound.latency)) : "\u2014"
+            )
           )
         ]),
         ...priorityMembers ? [priorityMembers] : []
@@ -2282,7 +2304,7 @@ function renderDefaultState({
         {
           class: "fkp_dashboard-page__outbound-section__title-section__title"
         },
-        section.displayName
+        asText(section.displayName)
       ),
       E(
         "div",
@@ -2315,7 +2337,7 @@ function renderDefaultState({
                   {
                     class: "dashboard-sections-grid-item-test-latency__label"
                   },
-                  getLatencyTestLabel(latencyProgress)
+                  asText(getLatencyTestLabel(latencyProgress))
                 )
               ] : E(
                 "span",
@@ -5707,7 +5729,7 @@ function showLogNotification(notification) {
     const message = _("New version %s is available for %s").replace("%s", notification.version).replace("%s", componentDisplayName(notification.component));
     ui.addNotification(
       _("Component update available"),
-      E("div", {}, message),
+      E("div", {}, asText(message)),
       "warning",
       "fkp-component-update-notification"
     );
@@ -5715,7 +5737,7 @@ function showLogNotification(notification) {
   }
   ui.addNotification(
     _("Prokop Error"),
-    E("div", {}, notification.line),
+    E("div", {}, asText(notification.line)),
     "error",
     "fkp-log-error-notification"
   );
@@ -6060,9 +6082,11 @@ function renderSectionsStaleNotice(sectionsWidget) {
   return E(
     "div",
     { class: "alert-message warning", role: "status" },
-    _("Could not refresh. Showing data from %s").replace(
-      "%s",
-      formatSectionsUpdatedAt(sectionsWidget.updatedAt)
+    asText(
+      _("Could not refresh. Showing data from %s").replace(
+        "%s",
+        formatSectionsUpdatedAt(sectionsWidget.updatedAt)
+      )
     )
   );
 }
@@ -6182,7 +6206,7 @@ function renderStatus(view) {
   return E(
     "span",
     { class: `fkp-status fkp-status--${view.tone}` },
-    view.label
+    asText(view.label)
   );
 }
 function renderProvenance(provenance) {
@@ -6192,7 +6216,7 @@ function renderProvenance(provenance) {
       class: `fkp-provenance fkp-provenance--${provenance}`,
       title: provenanceDescription(provenance)
     },
-    provenanceLabel(provenance)
+    asText(provenanceLabel(provenance))
   );
 }
 
@@ -7823,7 +7847,7 @@ function renderOverflowMenu(label, items) {
               item.onClick();
             }
           },
-          item.label
+          asText(item.label)
         )
       )
     )
@@ -7855,7 +7879,7 @@ function linkButton(label, onClick) {
       class: "btn cbi-button fkp-overview__link",
       click: onClick
     },
-    label
+    asText(label)
   );
 }
 function renderLines(lines) {
@@ -7866,7 +7890,7 @@ function renderLines(lines) {
       (line) => E(
         "li",
         { class: line.tone ? `fkp-overview__line--${line.tone}` : "" },
-        line.text
+        asText(line.text)
       )
     )
   );
@@ -7874,7 +7898,7 @@ function renderLines(lines) {
 function card(title, body, footer = [], headerExtra = []) {
   return E("section", { class: "fkp-overview__card" }, [
     E("div", { class: "fkp-overview__head" }, [
-      E("h3", { class: "fkp-overview__title" }, title),
+      E("h3", { class: "fkp-overview__title" }, asText(title)),
       ...headerExtra
     ]),
     ...body,
@@ -7883,8 +7907,8 @@ function card(title, body, footer = [], headerExtra = []) {
 }
 function renderWarning(warning) {
   return E("section", { class: "fkp-overview__warning", role: "alert" }, [
-    E("strong", {}, warning.title),
-    E("p", {}, warning.text),
+    E("strong", {}, asText(warning.title)),
+    E("p", {}, asText(warning.text)),
     ...warning.link ? [
       linkButton(
         warning.link.label,
@@ -7945,7 +7969,7 @@ function renderStateCard(state, actions, restartRequired) {
             disabled: actions.serviceBusy ? true : void 0,
             click: actions.onStart
           },
-          actions.serviceBusy ? _("Starting\u2026") : _("Start Prokop")
+          asText(actions.serviceBusy ? _("Starting\u2026") : _("Start Prokop"))
         )
       );
     }
@@ -7993,21 +8017,25 @@ function renderRoutingCard(routing, readonly) {
   return card(
     _("Routing"),
     [
-      ...routing.summary ? [E("p", { class: "fkp-overview__summary" }, routing.summary)] : [],
-      ...routing.live ? [E("p", { class: "fkp-overview__hint" }, routing.live)] : [],
+      ...routing.summary ? [E("p", { class: "fkp-overview__summary" }, asText(routing.summary))] : [],
+      ...routing.live ? [E("p", { class: "fkp-overview__hint" }, asText(routing.live))] : [],
       ...routing.groups.length ? [
         E(
           "ul",
           { class: "fkp-overview__groups" },
           routing.groups.map(
             (group) => E("li", {}, [
-              E("span", { class: "fkp-overview__group-name" }, group.name),
+              E(
+                "span",
+                { class: "fkp-overview__group-name" },
+                asText(group.name)
+              ),
               E("span", { class: "fkp-overview__group-node" }, [
                 `${group.node} \xB7 `,
                 E(
                   "span",
                   { class: `fkp-status--${group.tone}` },
-                  group.latency
+                  asText(group.latency)
                 )
               ])
             ])
@@ -8018,7 +8046,7 @@ function renderRoutingCard(routing, readonly) {
         E(
           "p",
           { class: "fkp-overview__hint" },
-          _("%d more groups").replace("%d", String(routing.more))
+          asText(_("%d more groups").replace("%d", String(routing.more)))
         )
       ] : []
     ],
@@ -8080,10 +8108,10 @@ function renderEventCard(event) {
         E(
           "span",
           { class: `fkp-status--${event.outcome.tone}` },
-          event.outcome.label
+          asText(event.outcome.label)
         )
       ]),
-      E("p", { class: "fkp-overview__hint" }, event.time)
+      E("p", { class: "fkp-overview__hint" }, asText(event.time))
     ] : [E("p", { class: "fkp-overview__hint" }, _("No events recorded yet"))],
     [linkButton(_("All events"), () => openProkopPage("history"))]
   );
@@ -8194,7 +8222,7 @@ function renderUrlTestEditorRow(label, control) {
     control.id = `fkp-urltest-field-${++nextFieldId}`;
   }
   return E("div", { class: "fkp_dashboard-page__urltest-details__param" }, [
-    E("label", { for: control.id }, label),
+    E("label", { for: control.id }, asText(label)),
     control
   ]);
 }
@@ -8384,7 +8412,7 @@ function renderButton({
       disabled: getDisabled(),
       click: onClick
     },
-    [...insertIf(hasIcon, [getWrappedIcon()]), E("span", {}, text)]
+    [...insertIf(hasIcon, [getWrappedIcon()]), E("span", {}, asText(text))]
   );
 }
 
@@ -8616,7 +8644,7 @@ ${currentText}
         E(
           "span",
           { class: "fkp-partial-modal__checkbox-text" },
-          options.autoRefreshLabel ?? _("Auto refresh")
+          asText(options.autoRefreshLabel ?? _("Auto refresh"))
         )
       ])
     );
@@ -8635,7 +8663,7 @@ ${currentText}
         E(
           "span",
           { class: "fkp-partial-modal__checkbox-text" },
-          options.maskValuesLabel ?? _("Hide values")
+          asText(options.maskValuesLabel ?? _("Hide values"))
         )
       ])
     );
@@ -8769,18 +8797,18 @@ function confirmAction(options) {
         class: `btn ${options.danger ? "cbi-button-negative" : "cbi-button-action"}`,
         click: () => finish(true)
       },
-      options.confirmLabel
+      asText(options.confirmLabel)
     );
     const content = E("div", { class: "fkp-confirm" }, [
-      E("p", {}, options.message),
+      E("p", {}, asText(options.message)),
       ...options.consequences?.length ? [
         E(
           "ul",
           { class: "fkp-confirm__consequences" },
-          options.consequences.map((line) => E("li", {}, line))
+          options.consequences.map((line) => E("li", {}, asText(line)))
         )
       ] : [],
-      ...(options.notes ?? []).map((line) => E("p", {}, line)),
+      ...(options.notes ?? []).map((line) => E("p", {}, asText(line))),
       // LuCI's Escape handler clicks the first '.right > button' of the
       // modal, so Cancel must stay first in a '.right' container (UC-134).
       E("div", { class: "right fkp-confirm__actions" }, [
@@ -8788,7 +8816,7 @@ function confirmAction(options) {
         confirmButton
       ])
     ]);
-    ui.showModal(options.title, content);
+    ui.showModal(asText(options.title), content);
     if (typeof MutationObserver === "function") {
       observer = new MutationObserver(() => {
         if (!content.isConnected) finish(false, false);
@@ -8882,7 +8910,7 @@ function renderStartServiceAction() {
         }
       }
     },
-    starting ? _("Starting\u2026") : _("Start Prokop")
+    asText(starting ? _("Starting\u2026") : _("Start Prokop"))
   );
   return [button];
 }
@@ -9675,7 +9703,7 @@ function formatUrlTestLatency(latency) {
 function renderDetailsUrl(value) {
   const url = `${value ?? ""}`.trim();
   if (!/^https?:\/\//i.test(url)) {
-    return E("span", {}, formatUrlTestModalValue(value));
+    return E("span", {}, asText(formatUrlTestModalValue(value)));
   }
   return E(
     "a",
@@ -9685,7 +9713,7 @@ function renderDetailsUrl(value) {
       target: "_blank",
       rel: "noopener noreferrer"
     },
-    url
+    asText(url)
   );
 }
 function getDetectedCountryFlag(country) {
@@ -9706,7 +9734,7 @@ function renderDetailsMemberName(member) {
     E(
       "span",
       { class: "fkp_dashboard-page__urltest-details__country-badge" },
-      countryFlag
+      asText(countryFlag)
     ),
     ...renderFlagEmojis(member.displayName)
   ];
@@ -9716,7 +9744,7 @@ function renderUrlTestSelectedValue(info) {
   const selectedName = selectedMember?.displayName || info.selectedName || info.selectedCode || "";
   const name = formatUrlTestModalValue(selectedName);
   if (name === _("No")) {
-    return E("span", {}, name);
+    return E("span", {}, asText(name));
   }
   return E(
     "span",
@@ -9725,20 +9753,20 @@ function renderUrlTestSelectedValue(info) {
       E(
         "span",
         { class: "fkp_dashboard-page__urltest-details__selected-name" },
-        selectedMember ? renderDetailsMemberName(selectedMember) : name
+        asText(selectedMember ? renderDetailsMemberName(selectedMember) : name)
       ),
       ...selectedMember?.type ? [
         E(
           "span",
           { class: "fkp_dashboard-page__urltest-details__selected-type" },
-          selectedMember.type
+          asText(selectedMember.type)
         )
       ] : [],
       ...selectedMember ? [
         E(
           "span",
           { class: getUrlTestLatencyClass(selectedMember.latency) },
-          formatUrlTestLatency(selectedMember.latency)
+          asText(formatUrlTestLatency(selectedMember.latency))
         )
       ] : []
     ]
@@ -9769,11 +9797,11 @@ function renderUrlTestInfoModal(outbound) {
       { class: "fkp_dashboard-page__urltest-details__params" },
       fields.map(
         ({ label, value, children }) => E("div", { class: "fkp_dashboard-page__urltest-details__param" }, [
-          E("dt", {}, label),
+          E("dt", {}, asText(label)),
           E(
             "dd",
             {},
-            children || [E("span", {}, formatUrlTestModalValue(value))]
+            children || [E("span", {}, asText(formatUrlTestModalValue(value)))]
           )
         ])
       )
@@ -9810,7 +9838,7 @@ function renderUrlTestInfoModal(outbound) {
                       {
                         class: "fkp_dashboard-page__urltest-details__row-type"
                       },
-                      member.type
+                      asText(member.type)
                     )
                   ] : []
                 ]
@@ -9824,7 +9852,7 @@ function renderUrlTestInfoModal(outbound) {
                   E(
                     "span",
                     { class: getUrlTestLatencyClass(member.latency) },
-                    formatUrlTestLatency(member.latency)
+                    asText(formatUrlTestLatency(member.latency))
                   )
                 ]
               )
@@ -9980,7 +10008,7 @@ function renderUrlTestEditorModal(outbound) {
   );
   actionButtons.push(resetButton, saveButton, cancelButton);
   ui.showModal(
-    `${_("Edit URLTest")}: ${info.displayName}`,
+    asText(`${_("Edit URLTest")}: ${info.displayName}`),
     E("div", {}, [
       E("div", { class: "fkp_dashboard-page__urltest-details__params" }, [
         row(_("Testing URL"), url),
@@ -10004,7 +10032,9 @@ function handleShowUrlTestInfo(outbound) {
     return;
   }
   ui.showModal(
-    `${_("URLTest details")}: ${outbound.urlTestInfo.displayName || outbound.displayName}`,
+    asText(
+      `${_("URLTest details")}: ${outbound.urlTestInfo.displayName || outbound.displayName}`
+    ),
     renderUrlTestInfoModal(outbound)
   );
 }
@@ -10013,7 +10043,7 @@ function renderPrioritySelectedValue(info) {
   const selectedName = selectedMember?.displayName || info.selectedName || info.selectedCode || "";
   const name = formatUrlTestModalValue(selectedName);
   if (name === _("No")) {
-    return E("span", {}, name);
+    return E("span", {}, asText(name));
   }
   return E(
     "span",
@@ -10027,20 +10057,22 @@ function renderPrioritySelectedValue(info) {
             selectedMember ? "fkp_dashboard-page__urltest-details__priority-name" : ""
           ].filter(Boolean).join(" ")
         },
-        selectedMember ? renderPriorityMemberName(selectedMember) : name
+        asText(
+          selectedMember ? renderPriorityMemberName(selectedMember) : name
+        )
       ),
       ...selectedMember?.type ? [
         E(
           "span",
           { class: "fkp_dashboard-page__urltest-details__selected-type" },
-          selectedMember.type
+          asText(selectedMember.type)
         )
       ] : [],
       ...selectedMember ? [
         E(
           "span",
           { class: getUrlTestLatencyClass(selectedMember.latency) },
-          formatUrlTestLatency(selectedMember.latency)
+          asText(formatUrlTestLatency(selectedMember.latency))
         )
       ] : []
     ]
@@ -10052,12 +10084,12 @@ function renderPriorityMemberName(member) {
     E(
       "span",
       { class: "fkp_dashboard-page__urltest-details__priority-number" },
-      `#${member.levelIndex + 1}`
+      asText(`#${member.levelIndex + 1}`)
     ),
     E(
       "span",
       { class: "fkp_dashboard-page__urltest-details__priority-level" },
-      levelName
+      asText(levelName)
     ),
     E(
       "span",
@@ -10111,11 +10143,11 @@ function renderPriorityInfoModal(outbound) {
       { class: "fkp_dashboard-page__urltest-details__params" },
       fields.map(
         ({ label, value, children }) => E("div", { class: "fkp_dashboard-page__urltest-details__param" }, [
-          E("dt", {}, label),
+          E("dt", {}, asText(label)),
           E(
             "dd",
             {},
-            children || [E("span", {}, formatUrlTestModalValue(value))]
+            children || [E("span", {}, asText(formatUrlTestModalValue(value)))]
           )
         ])
       )
@@ -10158,7 +10190,7 @@ function renderPriorityInfoModal(outbound) {
                       {
                         class: "fkp_dashboard-page__urltest-details__row-type"
                       },
-                      member.type
+                      asText(member.type)
                     )
                   ] : []
                 ]
@@ -10172,7 +10204,7 @@ function renderPriorityInfoModal(outbound) {
                   E(
                     "span",
                     { class: getUrlTestLatencyClass(member.latency) },
-                    formatUrlTestLatency(member.latency)
+                    asText(formatUrlTestLatency(member.latency))
                   )
                 ]
               )
@@ -10207,7 +10239,9 @@ function handleShowPriorityInfo(outbound) {
     return;
   }
   ui.showModal(
-    `${_("Priority details")}: ${outbound.priorityInfo.displayName || outbound.displayName}`,
+    asText(
+      `${_("Priority details")}: ${outbound.priorityInfo.displayName || outbound.displayName}`
+    ),
     renderPriorityInfoModal(outbound)
   );
 }
@@ -11375,8 +11409,8 @@ var DashboardTab = {
 // src/prokop/tabs/diagnostic/renderDiagnostic.ts
 function card2(id, title, hint, body) {
   return E("section", { class: "fkp-diag-card", id }, [
-    E("h3", { class: "fkp-diag-card__title" }, title),
-    hint ? E("p", { class: "fkp-diag-hint" }, hint) : "",
+    E("h3", { class: "fkp-diag-card__title" }, asText(title)),
+    hint ? E("p", { class: "fkp-diag-hint" }, asText(hint)) : "",
     ...body
   ]);
 }
@@ -11517,7 +11551,7 @@ function render2() {
           E(
             "button",
             { id: "connectivity-add", type: "button", class: "btn cbi-button" },
-            `+ ${_("Add address")}`
+            asText(`+ ${_("Add address")}`)
           ),
           E(
             "button",
@@ -12334,7 +12368,7 @@ function renderStatusBadge(status2) {
   return E(
     "span",
     { class: `fkp-diag-badge fkp-diag-badge--${status2.tone}` },
-    status2.text
+    asText(status2.text)
   );
 }
 
@@ -12492,7 +12526,7 @@ function renderHead(props) {
   icon.appendChild(stateIcon(props.state));
   return E("div", { class: "fkp-check__head" }, [
     icon,
-    E("b", { class: "fkp-check__title" }, props.title),
+    E("b", { class: "fkp-check__title" }, asText(props.title)),
     renderStatusBadge(checkStatus(props.state))
   ]);
 }
@@ -12500,8 +12534,8 @@ function renderItems(props) {
   return props.items.map(
     (item) => E("div", { class: `fkp-check__item fkp-diag-text--${item.state}` }, [
       itemIcon(item.state),
-      E("b", {}, item.key),
-      E("span", {}, item.value)
+      E("b", {}, asText(item.key)),
+      E("span", {}, asText(item.value))
     ])
   );
 }
@@ -12523,7 +12557,7 @@ function renderCheckSection(props, handlers) {
     ...advice ? [
       E("dl", { class: "fkp-check__advice" }, [
         E("dt", {}, _("What it means")),
-        E("dd", {}, advice.meaning),
+        E("dd", {}, asText(advice.meaning)),
         E("dt", {}, _("What was proven")),
         E(
           "dd",
@@ -12531,13 +12565,19 @@ function renderCheckSection(props, handlers) {
           E(
             "ul",
             {},
-            provenFacts(props).map((fact) => E("li", {}, fact))
+            provenFacts(props).map((fact) => E("li", {}, asText(fact)))
           )
         ),
         E("dt", {}, _("What to do")),
-        E("dd", {}, advice.action)
+        E("dd", {}, asText(advice.action))
       ])
-    ] : [E("div", { class: "fkp-check__description" }, props.description)],
+    ] : [
+      E(
+        "div",
+        { class: "fkp-check__description" },
+        asText(props.description)
+      )
+    ],
     E("div", { class: "fkp-check__actions" }, [
       E(
         "button",
@@ -12565,7 +12605,11 @@ function renderCheckSection(props, handlers) {
     ]),
     props.items.length ? E("details", { class: "fkp-check__details" }, [
       E("summary", {}, _("All check results")),
-      E("div", { class: "fkp-check__description" }, props.description),
+      E(
+        "div",
+        { class: "fkp-check__description" },
+        asText(props.description)
+      ),
       ...renderItems(props)
     ]) : ""
   ]);
@@ -12578,10 +12622,18 @@ function renderCheckRow(props) {
     [
       renderHead(props),
       // An unsupported check explains why instead of pretending to have run.
-      props.state === "unsupported" ? E("div", { class: "fkp-check__description" }, props.description) : "",
+      props.state === "unsupported" ? E(
+        "div",
+        { class: "fkp-check__description" },
+        asText(props.description)
+      ) : "",
       props.state === "success" && props.items.length ? E("details", { class: "fkp-check__details" }, [
         E("summary", {}, _("Details")),
-        E("div", { class: "fkp-check__description" }, props.description),
+        E(
+          "div",
+          { class: "fkp-check__description" },
+          asText(props.description)
+        ),
         ...renderItems(props)
       ]) : ""
     ]
@@ -12591,7 +12643,13 @@ function renderChecks(checks, handlers) {
   const groups = groupChecks(checks);
   const summary = checkSummary(checks);
   return [
-    ...summary.text ? [E("p", { class: "fkp-diag-summary", role: "status" }, summary.text)] : [],
+    ...summary.text ? [
+      E(
+        "p",
+        { class: "fkp-diag-summary", role: "status" },
+        asText(summary.text)
+      )
+    ] : [],
     ...groups.attention.map((check) => renderCheckSection(check, handlers)),
     ...groups.other.map(renderCheckRow),
     ...groups.passed.length ? [
@@ -12599,9 +12657,11 @@ function renderChecks(checks, handlers) {
         E(
           "summary",
           {},
-          _("Passed checks: %d").replace(
-            "%d",
-            String(groups.passed.length)
+          asText(
+            _("Passed checks: %d").replace(
+              "%d",
+              String(groups.passed.length)
+            )
           )
         ),
         ...groups.passed.map(renderCheckRow)
@@ -12635,10 +12695,10 @@ function renderSystemInfo({ items }) {
         "div",
         { class: "fkp_diagnostic-page__right-bar__system-info__row" },
         [
-          E("b", {}, item.key),
+          E("b", {}, asText(item.key)),
           E("div", {}, [
-            E("span", {}, item.value),
-            E("span", { class: tagClass }, item?.tag?.label)
+            E("span", {}, asText(item.value)),
+            E("span", { class: tagClass }, asText(item?.tag?.label))
           ])
         ]
       );
@@ -13032,7 +13092,7 @@ async function probe(target) {
 }
 function field(label, control, extraClass = "") {
   return E("label", { class: `fkp-conn__cell ${extraClass}`.trim() }, [
-    E("span", { class: "fkp-conn__cell-label" }, label),
+    E("span", { class: "fkp-conn__cell-label" }, asText(label)),
     control
   ]);
 }
@@ -13097,7 +13157,11 @@ function initConnectivityMatrix() {
       "select",
       { class: "cbi-input-select" },
       TYPES.map(
-        (kind) => E("option", { value: kind, selected: row.target.type === kind }, kind)
+        (kind) => E(
+          "option",
+          { value: kind, selected: row.target.type === kind },
+          asText(kind)
+        )
       )
     );
     const port = E("input", {
@@ -13140,7 +13204,7 @@ function initConnectivityMatrix() {
             class: `fkp-conn__result fkp-diag-text--${view.tone}`,
             role: "status"
           },
-          view.text
+          asText(view.text)
         )
       ]),
       E("div", { class: "fkp-conn__actions" }, [
@@ -13358,19 +13422,19 @@ function siteConclusion(trace, result) {
 }
 function renderRow(row) {
   return [
-    E("dt", {}, row.label),
+    E("dt", {}, asText(row.label)),
     E("dd", {}, [
       // Value and its provenance on one line; neutral values keep the text colour.
       E("span", { class: "fkp-site__value" }, [
         E(
           "span",
           row.tone === "neutral" ? {} : { class: `fkp-diag-text--${row.tone}` },
-          row.value
+          asText(row.value)
         ),
         " ",
         renderProvenance(row.provenance)
       ]),
-      row.note ? E("small", {}, row.note) : ""
+      row.note ? E("small", {}, asText(row.note)) : ""
     ])
   ];
 }
@@ -13396,7 +13460,9 @@ function initSiteCheck(loadDevices) {
   void loadDevices?.().then((devices) => {
     if (!device) return;
     for (const [ip, name] of Object.entries(devices || {}))
-      device.appendChild(E("option", { value: ip }, `${name || ip} (${ip})`));
+      device.appendChild(
+        E("option", { value: ip }, asText(`${name || ip} (${ip})`))
+      );
   }).catch(() => {
   });
   input.onkeydown = (event) => {
@@ -13428,7 +13494,7 @@ function initSiteCheck(loadDevices) {
         E(
           "p",
           { class: "fkp-site__conclusion" },
-          siteConclusion(trace.data, reach)
+          asText(siteConclusion(trace.data, reach))
         ),
         E("div", { class: "fkp-diag-actions" }, [
           E(
@@ -13444,7 +13510,9 @@ function initSiteCheck(loadDevices) {
           E(
             "p",
             { class: "fkp-diag-hint" },
-            `${_("Router kernel route")}: ${trace.data.interface.value}`
+            asText(
+              `${_("Router kernel route")}: ${trace.data.interface.value}`
+            )
           )
         ] : []
       );
@@ -14402,7 +14470,7 @@ function renderDiagnosticRunActionWidget() {
     container.replaceChildren(renderedAction);
     if (lastRun) lastRun.textContent = lastRunText(localStorage);
     reason?.replaceChildren(
-      ...blocked ? [E("span", {}, blocked.text), ...blocked.actions] : []
+      ...blocked ? [E("span", {}, asText(blocked.text)), ...blocked.actions] : []
     );
   });
 }
@@ -15362,7 +15430,7 @@ function renderViewSwitch(current) {
           "aria-pressed": current === view ? "true" : "false",
           click: () => showMonitoringView(view)
         },
-        label
+        asText(label)
       )
     )
   );
@@ -15385,7 +15453,7 @@ function renderConnectionsView(hidden) {
               class: "btn cbi-button fkp_monitoring-page__tab fkp_monitoring-page__tab--active",
               type: "button"
             },
-            `${_("Active")} 0`
+            asText(`${_("Active")} 0`)
           ),
           E(
             "button",
@@ -15394,7 +15462,7 @@ function renderConnectionsView(hidden) {
               class: "btn cbi-button fkp_monitoring-page__tab",
               type: "button"
             },
-            `${_("Closed")} 0`
+            asText(`${_("Closed")} 0`)
           ),
           E(
             "button",
@@ -15974,7 +16042,7 @@ function renderDeviceFilterOptions() {
   const options = [
     E("option", { value: ALL_FILTER_VALUE }, _("All devices")),
     ...sourceIps.map(
-      (ip) => E("option", { value: ip }, getDeviceFilterLabel(ip))
+      (ip) => E("option", { value: ip }, asText(getDeviceFilterLabel(ip)))
     )
   ];
   select2.replaceChildren(...options);
@@ -16009,7 +16077,7 @@ function renderPathFilterOptions() {
         "optgroup",
         { label: _("Path type") },
         PATH_KINDS.map(
-          (kind) => E("option", { value: `kind:${kind}` }, pathKindLabel(kind))
+          (kind) => E("option", { value: `kind:${kind}` }, asText(pathKindLabel(kind)))
         )
       ),
       ...rules.length ? [
@@ -16017,7 +16085,7 @@ function renderPathFilterOptions() {
           "optgroup",
           { label: _("Rule") },
           rules.map(
-            (rule) => E("option", { value: `rule:${rule.name}` }, rule.label)
+            (rule) => E("option", { value: `rule:${rule.name}` }, asText(rule.label))
           )
         )
       ] : []
@@ -16042,10 +16110,12 @@ function renderFilterBar() {
     E(
       "span",
       {},
-      [
-        following ? _("Following new connections") : "",
-        active ? _("Shown %d of %d").replace("%d", String(shown)).replace("%d", String(total)) : ""
-      ].filter(Boolean).join(" \xB7 ")
+      asText(
+        [
+          following ? _("Following new connections") : "",
+          active ? _("Shown %d of %d").replace("%d", String(shown)).replace("%d", String(total)) : ""
+        ].filter(Boolean).join(" \xB7 ")
+      )
     ),
     ...active ? [
       E(
@@ -16068,8 +16138,12 @@ function setButtonActive(button, active) {
 }
 function renderTabButtonContent(label, count) {
   return [
-    E("span", { class: "fkp_monitoring-page__tab-label" }, label),
-    E("span", { class: "fkp_monitoring-page__tab-badge" }, String(count))
+    E("span", { class: "fkp_monitoring-page__tab-label" }, asText(label)),
+    E(
+      "span",
+      { class: "fkp_monitoring-page__tab-badge" },
+      asText(String(count))
+    )
   ];
 }
 function renderControls() {
@@ -16162,7 +16236,7 @@ function renderValue(value, className = "") {
       class: ["fkp_monitoring-page__value", className].filter(Boolean).join(" "),
       title: text
     },
-    text
+    asText(text)
   );
   element.setAttribute("data-copy-value", text);
   return element;
@@ -16176,7 +16250,7 @@ function renderSourceValue(source) {
         class: "fkp_monitoring-page__value fkp_monitoring-page__source-value fkp_monitoring-page__source-value--ip-only",
         title: fullText
       },
-      source.primary || "-"
+      asText(source.primary || "-")
     );
     element2.setAttribute("data-copy-value", fullText);
     return element2;
@@ -16188,8 +16262,12 @@ function renderSourceValue(source) {
       title: fullText
     },
     [
-      E("span", { class: "fkp_monitoring-page__source-name" }, source.primary),
-      E("span", { class: "fkp_monitoring-page__source-ip" }, source.ip)
+      E(
+        "span",
+        { class: "fkp_monitoring-page__source-name" },
+        asText(source.primary)
+      ),
+      E("span", { class: "fkp_monitoring-page__source-ip" }, asText(source.ip))
     ]
   );
   element.setAttribute("data-copy-value", fullText);
@@ -16203,7 +16281,7 @@ function renderTableCell(label, children) {
   return cell;
 }
 function renderSecondary(text) {
-  return E("span", { class: "fkp_monitoring-page__secondary" }, text);
+  return E("span", { class: "fkp_monitoring-page__secondary" }, asText(text));
 }
 function renderPathCell(path) {
   const summary = pathSummary(path);
@@ -16213,7 +16291,7 @@ function renderPathCell(path) {
       {
         class: `fkp_monitoring-page__path-kind fkp_monitoring-page__path-kind--${summary.kind}`
       },
-      summary.kindLabel
+      asText(summary.kindLabel)
     ),
     ...summary.primary ? [renderValue(summary.primary, "fkp_monitoring-page__route")] : [],
     ...summary.secondary ? [renderSecondary(summary.secondary)] : []
@@ -16318,8 +16396,8 @@ function connectionDetails(connection) {
 }
 function detailRow(label, value) {
   return E("div", { class: "fkp_monitoring-page__detail-row" }, [
-    E("dt", {}, label),
-    E("dd", {}, value)
+    E("dt", {}, asText(label)),
+    E("dd", {}, asText(value))
   ]);
 }
 function closeConnectionDetails() {
@@ -16347,7 +16425,7 @@ function renderConnectionDetailsPanel() {
   container.replaceChildren(
     E("div", { class: "fkp_monitoring-page__details" }, [
       E("div", { class: "fkp_monitoring-page__details-head" }, [
-        E("h3", {}, target.primary),
+        E("h3", {}, asText(target.primary)),
         E(
           "button",
           {
@@ -16494,7 +16572,9 @@ function renderStateRow(text, className = "", actions = []) {
           {
             class: ["fkp_monitoring-page__state", className].filter(Boolean).join(" ")
           },
-          actions.length ? [E("span", {}, text), ...actions] : text
+          asText(
+            actions.length ? [E("span", {}, asText(text)), ...actions] : text
+          )
         )
       ]
     )
@@ -18109,7 +18189,7 @@ function confirmVersionChange(currentVersion, version, install) {
   ui.showModal(
     _("Confirm version change"),
     E("div", {}, [
-      E("p", {}, `${currentVersion} \u2192 ${version}`),
+      E("p", {}, asText(`${currentVersion} \u2192 ${version}`)),
       E(
         "p",
         {},
@@ -18162,7 +18242,9 @@ async function showReleaseSelector(currentVersion, install) {
         E(
           "option",
           { value: release.version },
-          `${release.version}${installed ? ` \u2014 ${_("Installed")}` : ""}`
+          asText(
+            `${release.version}${installed ? ` \u2014 ${_("Installed")}` : ""}`
+          )
         )
       );
     }
@@ -19247,11 +19329,11 @@ function renderComponentCard(card3) {
   const serviceRuntimeActionLoading = isServiceRuntimeActionLoading();
   const systemInfoLoading = isSystemInfoLoading();
   const headerChildren = [
-    E("b", { class: "fkp_updates-page__component__title" }, card3.title),
+    E("b", { class: "fkp_updates-page__component__title" }, asText(card3.title)),
     E(
       "span",
       { class: "fkp_updates-page__component__header-version" },
-      card3.version
+      asText(card3.version)
     )
   ];
   const header = E(
@@ -19277,7 +19359,7 @@ function renderComponentCard(card3) {
               target: "_blank",
               rel: "noopener noreferrer"
             },
-            versionToShow || _("Open")
+            asText(versionToShow || _("Open"))
           )
         );
       } else if (versionToShow) {
@@ -19298,7 +19380,7 @@ function renderComponentCard(card3) {
               target: "_blank",
               rel: "noopener noreferrer"
             },
-            versionToShow || _("Open")
+            asText(versionToShow || _("Open"))
           )
         );
       } else if (versionToShow) {
@@ -19310,7 +19392,7 @@ function renderComponentCard(card3) {
         E(
           "span",
           { class: "fkp_updates-page__component__info-label" },
-          labelText
+          asText(labelText)
         )
       ];
       if (latestValueNodes.length > 0) {
@@ -19760,7 +19842,7 @@ var UpdatesTab = {
 function render5() {
   const card3 = (title, body, actions) => E("section", { class: "fkp-history__card" }, [
     E("div", { class: "fkp-history__head" }, [
-      E("h3", { class: "fkp-history__title" }, title),
+      E("h3", { class: "fkp-history__title" }, asText(title)),
       ...actions ? [actions] : []
     ]),
     ...body
@@ -19801,14 +19883,14 @@ function renderAction(action) {
         class: "btn cbi-button",
         click: () => action.onClick()
       },
-      action.label
+      asText(action.label)
     )
   ];
 }
 function renderEmptyState(title, hint, action) {
   return E("div", { class: "fkp-state fkp-state--empty" }, [
-    E("div", { class: "fkp-state__title" }, title),
-    ...hint ? [E("div", { class: "fkp-state__hint" }, hint)] : [],
+    E("div", { class: "fkp-state__title" }, asText(title)),
+    ...hint ? [E("div", { class: "fkp-state__hint" }, asText(hint))] : [],
     ...renderAction(action)
   ]);
 }
@@ -19816,12 +19898,12 @@ function renderLoadingState2(label = _("Loading\u2026")) {
   return E(
     "div",
     { class: "fkp-state fkp-state--loading", role: "status" },
-    E("div", { class: "fkp-state__title" }, label)
+    E("div", { class: "fkp-state__title" }, asText(label))
   );
 }
 function renderErrorState(title, onRetry, details) {
   return E("div", { class: "fkp-state fkp-state--error", role: "alert" }, [
-    E("div", { class: "fkp-state__title" }, title),
+    E("div", { class: "fkp-state__title" }, asText(title)),
     ...renderAction(
       onRetry ? { label: _("Retry"), onClick: onRetry } : void 0
     ),
@@ -19831,7 +19913,7 @@ function renderErrorState(title, onRetry, details) {
 function renderTechnicalDetails(text) {
   return E("details", { class: "fkp-tech" }, [
     E("summary", {}, _("Technical details")),
-    E("pre", { class: "fkp-tech__content" }, text)
+    E("pre", { class: "fkp-tech__content" }, asText(text))
   ]);
 }
 
@@ -20455,7 +20537,7 @@ function renderState() {
       "dl",
       { class: "fkp-history__facts" },
       recoveryRows(health, snapshots).flatMap((row) => [
-        E("dt", {}, row.label),
+        E("dt", {}, asText(row.label)),
         E("dd", {}, renderStatus({ label: row.value, tone: row.tone }))
       ])
     )
@@ -20476,7 +20558,7 @@ function renderHistory() {
             renderHistory();
           }
         },
-        historyFilterLabel(item)
+        asText(historyFilterLabel(item))
       )
     )
   );
@@ -20506,9 +20588,9 @@ function renderHistory() {
           E(
             "span",
             { class: "fkp-history__time", title: item.time },
-            item.relative
+            asText(item.relative)
           ),
-          E("span", { class: "fkp-history__what" }, item.title),
+          E("span", { class: "fkp-history__what" }, asText(item.title)),
           renderStatus(item.outcome),
           ...item.details.length ? [
             E(
@@ -20531,7 +20613,7 @@ function renderDiffTable(diff) {
   }
   return E("div", { class: "fkp-history__diff-wrap" }, [
     // UC-062: a cut list says it is not the whole change.
-    ...diff.total > rows.length ? [E("p", {}, diffTruncatedText(diff))] : [],
+    ...diff.total > rows.length ? [E("p", {}, asText(diffTruncatedText(diff)))] : [],
     E("table", { class: "table fkp-history__diff" }, [
       E("tr", { class: "tr table-titles" }, [
         E("th", { class: "th" }, _("Setting")),
@@ -20540,9 +20622,9 @@ function renderDiffTable(diff) {
       ]),
       ...rows.map(
         (row) => E("tr", { class: "tr" }, [
-          E("td", { class: "td" }, row.where),
-          E("td", { class: "td" }, row.snapshot),
-          E("td", { class: "td" }, row.current)
+          E("td", { class: "td" }, asText(row.where)),
+          E("td", { class: "td" }, asText(row.snapshot)),
+          E("td", { class: "td" }, asText(row.current))
         ])
       )
     ])
@@ -20846,7 +20928,7 @@ var HistoryTab = {
 function render6() {
   const card3 = (title, body, actions) => E("section", { class: "fkp-autotune__card" }, [
     E("div", { class: "fkp-autotune__head" }, [
-      E("h3", { class: "fkp-autotune__title" }, title),
+      E("h3", { class: "fkp-autotune__title" }, asText(title)),
       ...actions ? [actions] : []
     ]),
     ...body
@@ -20932,7 +21014,7 @@ function createDomainPicker(initial, load, errorText) {
             E(
               "span",
               { class: "fkp-autotune__muted" },
-              `(${_("not in the list")})`
+              asText(`(${_("not in the list")})`)
             )
           ] : []
         ]);
@@ -20941,7 +21023,7 @@ function createDomainPicker(initial, load, errorText) {
         E(
           "div",
           { class: "fkp-autotune__muted" },
-          note || _("Nothing found")
+          asText(note || _("Nothing found"))
         )
       ]
     );
@@ -20989,9 +21071,9 @@ function field2(label, control, hint) {
     control.setAttribute("aria-labelledby", labelId);
   }
   return [
-    E("label", labelAttrs, label),
+    E("label", labelAttrs, asText(label)),
     control,
-    ...hint ? [E("div", { class: "fkp-autotune__field-hint" }, hint)] : []
+    ...hint ? [E("div", { class: "fkp-autotune__field-hint" }, asText(hint))] : []
   ];
 }
 function modalActions(onSave, saveLabel) {
@@ -21004,7 +21086,7 @@ function modalActions(onSave, saveLabel) {
     E(
       "button",
       { type: "button", class: "btn cbi-button-action", click: onSave },
-      saveLabel
+      asText(saveLabel)
     )
   ]);
 }
@@ -21047,7 +21129,7 @@ function timeNode(timestamp) {
   return E(
     "span",
     { class: "fkp-autotune__time", title: formatDateTime(timestamp) },
-    formatRelativeTime(timestamp)
+    asText(formatRelativeTime(timestamp))
   );
 }
 async function loadStatus() {
@@ -21304,7 +21386,7 @@ function select(name, choices, value) {
       ([key, label]) => E(
         "option",
         { value: key, selected: key === value ? true : void 0 },
-        label
+        asText(label)
       )
     )
   );
@@ -21423,14 +21505,14 @@ function showTargetEditor(target) {
   kind.value = target?.rule_set ? "list" : "host";
   const ruleSet = E("select", { class: "cbi-input-select", name: "rule_set" }, [
     ...lists.map(
-      (l) => E("option", { value: l.tag }, ruleListLabel(l.tag, lists))
+      (l) => E("option", { value: l.tag }, asText(ruleListLabel(l.tag, lists)))
     ),
     // A configured list the routing no longer sends to a DPI rule.
     ...target?.rule_set && !lists.some((l) => l.tag === target.rule_set) ? [
       E(
         "option",
         { value: target.rule_set },
-        ruleListLabel(target.rule_set, lists)
+        asText(ruleListLabel(target.rule_set, lists))
       )
     ] : []
   ]);
@@ -21567,7 +21649,7 @@ function showTargetEditor(target) {
   choice.addEventListener("change", showKind);
   ruleSet.addEventListener("change", showKind);
   showKind();
-  ui.showModal(target ? _("Edit target") : _("Add target"), [
+  ui.showModal(asText(target ? _("Edit target") : _("Add target")), [
     E("div", { class: "fkp-autotune__form" }, [
       ...field2(
         _("What to check"),
@@ -21609,11 +21691,13 @@ function showCandidates(target) {
   const last = target.last;
   if (!last) return;
   const rows = candidateRows(last);
-  ui.showModal(`${target.host ?? target.id}: ${_("last check")}`, [
+  ui.showModal(asText(`${target.host ?? target.id}: ${_("last check")}`), [
     E(
       "p",
       { class: "fkp-autotune__muted" },
-      `${formatDateTime(last.at)} \xB7 ${_("measured in isolation from production traffic")}`
+      asText(
+        `${formatDateTime(last.at)} \xB7 ${_("measured in isolation from production traffic")}`
+      )
     ),
     rows.length ? E("div", { class: "fkp-autotune__table-wrap" }, [
       E("table", { class: "table fkp-autotune__table" }, [
@@ -21628,11 +21712,11 @@ function showCandidates(target) {
             E(
               "td",
               { class: "td" },
-              row.selected ? `${row.name} \u2605` : row.name
+              asText(row.selected ? `${row.name} \u2605` : row.name)
             ),
-            E("td", { class: "td" }, row.result),
+            E("td", { class: "td" }, asText(row.result)),
             E("td", { class: "td" }, renderStatus(row.stability)),
-            E("td", { class: "td" }, row.latency)
+            E("td", { class: "td" }, asText(row.latency))
           ])
         )
       ])
@@ -21700,14 +21784,18 @@ function renderState2() {
               disabled: locked() ? true : void 0,
               click: () => void setMode(mode)
             },
-            modeLabel(mode)
+            asText(modeLabel(mode))
           )
         )
       )
     ],
     [
       "",
-      E("p", { class: "fkp-autotune__muted" }, modeDescription(policy.mode))
+      E(
+        "p",
+        { class: "fkp-autotune__muted" },
+        asText(modeDescription(policy.mode))
+      )
     ],
     [_("Policy"), policySummary(policy)]
   ];
@@ -21760,7 +21848,7 @@ function renderState2() {
       _("Last change"),
       recorded.attention ? E("div", { class: "fkp-autotune__alert", role: "alert" }, [
         E("strong", {}, _("Action required")),
-        E("p", {}, recorded.text),
+        E("p", {}, asText(recorded.text)),
         ...readonly && status.apply?.rollback ? [
           E(
             "p",
@@ -21786,8 +21874,8 @@ function renderState2() {
       "dl",
       { class: "fkp-autotune__facts" },
       facts.flatMap(([label, value]) => [
-        E("dt", {}, label),
-        E("dd", {}, value)
+        E("dt", {}, asText(label)),
+        E("dd", {}, asText(value))
       ])
     )
   );
@@ -21813,7 +21901,9 @@ function renderState2() {
           title: !status.targets.length ? _("Add a target first") : void 0,
           click: () => void runCheck("all")
         },
-        runningScope === "all" ? _("Checking\u2026") : _("Check all now")
+        asText(
+          runningScope === "all" ? _("Checking\u2026") : _("Check all now")
+        )
       ),
       ...status.apply?.rollback ? [
         E(
@@ -21824,7 +21914,9 @@ function renderState2() {
             disabled: locked() ? true : void 0,
             click: () => void rollbackApply()
           },
-          rollingBack ? _("Rolling back\u2026") : _("Roll back the last change\u2026")
+          asText(
+            rollingBack ? _("Rolling back\u2026") : _("Roll back the last change\u2026")
+          )
         )
       ] : []
     ]
@@ -21847,18 +21939,18 @@ function renderRunProgress(run) {
   return E("div", { class: "fkp-autotune__run" }, [
     E("div", { class: "fkp-autotune__row" }, [
       renderStatus({ label: _("Checking targets"), tone: "loading" }),
-      E("strong", {}, `${run.percent}%`),
+      E("strong", {}, asText(`${run.percent}%`)),
       ...run.remaining ? [
         E(
           "span",
           { class: "fkp-autotune__muted" },
-          `${_("left")}: ${run.remaining}`
+          asText(`${_("left")}: ${run.remaining}`)
         )
       ] : []
     ]),
     bar,
     E("div", {}, [
-      E("strong", {}, run.title),
+      E("strong", {}, asText(run.title)),
       ...run.phase ? [" \u2014 ", run.phase] : []
     ]),
     E(
@@ -21874,9 +21966,9 @@ function renderRunProgress(run) {
             E(
               "span",
               { class: "fkp-autotune__run-icon" },
-              icon[item.state] ?? "\xB7"
+              asText(icon[item.state] ?? "\xB7")
             ),
-            E("span", { class: "fkp-autotune__what" }, item.host),
+            E("span", { class: "fkp-autotune__what" }, asText(item.host)),
             renderStatus({ label: item.text, tone: item.tone })
           ]
         )
@@ -21911,7 +22003,7 @@ function renderApplyNotice(view) {
     return renderStatus({ label: view.text, tone: view.tone });
   return E("div", { class: "fkp-autotune__alert", role: "alert" }, [
     E("strong", {}, _("Action required")),
-    E("p", {}, view.text),
+    E("p", {}, asText(view.text)),
     E(
       "button",
       {
@@ -21953,7 +22045,7 @@ function renderGroup(card3) {
       E(
         "span",
         { class: "fkp-autotune__name" },
-        `${card3.title} \xB7 ${_("Zapret rule")}`
+        asText(`${card3.title} \xB7 ${_("Zapret rule")}`)
       ),
       renderStatus(card3.badge)
     ]),
@@ -21961,12 +22053,12 @@ function renderGroup(card3) {
       "dl",
       { class: "fkp-autotune__facts" },
       facts.flatMap(([label, value]) => [
-        E("dt", {}, label),
-        E("dd", {}, value)
+        E("dt", {}, asText(label)),
+        E("dd", {}, asText(value))
       ])
     ),
     ...card3.explanation.map(
-      (text) => E("p", { class: "fkp-autotune__text" }, text)
+      (text) => E("p", { class: "fkp-autotune__text" }, asText(text))
     ),
     ...card3.manualHint ? [
       E(
@@ -21995,9 +22087,11 @@ function renderGroup(card3) {
               disabled: locked() ? true : void 0,
               click: () => void applyGroup(card3)
             },
-            _("Apply %s").replace(
-              "%s",
-              strategyLabel(card3.applyCandidate)
+            asText(
+              _("Apply %s").replace(
+                "%s",
+                strategyLabel(card3.applyCandidate)
+              )
             )
           )
         ] : [],
@@ -22009,7 +22103,9 @@ function renderGroup(card3) {
             disabled: locked() ? true : void 0,
             click: () => void runCheck(card3.id)
           },
-          runningScope === card3.id ? _("Checking\u2026") : _("Check now")
+          asText(
+            runningScope === card3.id ? _("Checking\u2026") : _("Check now")
+          )
         ),
         E(
           "button",
@@ -22067,9 +22163,11 @@ function renderGroups() {
         E(
           "summary",
           {},
-          _("Targets outside DPI rules (%d)").replace(
-            "%d",
-            String(outside.length)
+          asText(
+            _("Targets outside DPI rules (%d)").replace(
+              "%d",
+              String(outside.length)
+            )
           )
         ),
         E(
@@ -22081,7 +22179,9 @@ function renderGroups() {
                 E(
                   "strong",
                   {},
-                  status?.targets.find((t) => t.id === item.id)?.rule_set ? ruleListLabel(item.host, status?.lists) : item.host
+                  asText(
+                    status?.targets.find((t) => t.id === item.id)?.rule_set ? ruleListLabel(item.host, status?.lists) : item.host
+                  )
                 ),
                 " \u2014 ",
                 outsideReasonText(item.reason)
@@ -22149,13 +22249,13 @@ function renderTargets() {
         const target = byId.get(row.id);
         return E("li", { class: "fkp-autotune__item" }, [
           E("span", { class: "fkp-autotune__what" }, [
-            E("strong", {}, row.host),
+            E("strong", {}, asText(row.host)),
             ...row.resolver ? [
               " ",
               E(
                 "span",
                 { class: "fkp-autotune__muted" },
-                `DNS ${row.resolver}`
+                asText(`DNS ${row.resolver}`)
               )
             ] : []
           ]),
@@ -22195,7 +22295,7 @@ function renderTargets() {
                 E(
                   "p",
                   { class: "fkp-autotune__muted" },
-                  row.list.note
+                  asText(row.list.note)
                 )
               ] : [],
               ...row.list.members.length ? [
@@ -22237,9 +22337,9 @@ function renderHistory2() {
           E(
             "span",
             { class: "fkp-autotune__time", title: item.time },
-            item.relative
+            asText(item.relative)
           ),
-          E("span", { class: "fkp-autotune__what" }, item.title),
+          E("span", { class: "fkp-autotune__what" }, asText(item.title)),
           renderStatus(item.outcome)
         ])
       )

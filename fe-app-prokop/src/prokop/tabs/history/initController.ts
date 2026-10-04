@@ -1,3 +1,4 @@
+import { asText } from '../../../helpers/asText';
 import { onMount, preserveScrollForPage } from '../../../helpers';
 import { replaceChildrenKeepingFocus } from '../../../helpers/replaceChildrenKeepingFocus';
 import { showToast } from '../../../helpers/showToast';
@@ -105,7 +106,7 @@ function renderState() {
       'dl',
       { class: 'fkp-history__facts' },
       recoveryRows(health, snapshots).flatMap((row) => [
-        E('dt', {}, row.label),
+        E('dt', {}, asText(row.label)),
         E('dd', {}, renderStatus({ label: row.value, tone: row.tone })),
       ]),
     ),
@@ -127,7 +128,7 @@ function renderHistory() {
             renderHistory();
           },
         },
-        historyFilterLabel(item),
+        asText(historyFilterLabel(item)),
       ),
     ),
   );
@@ -165,9 +166,9 @@ function renderHistory() {
               E(
                 'span',
                 { class: 'fkp-history__time', title: item.time },
-                item.relative,
+                asText(item.relative),
               ),
-              E('span', { class: 'fkp-history__what' }, item.title),
+              E('span', { class: 'fkp-history__what' }, asText(item.title)),
               renderStatus(item.outcome),
               ...(item.details.length
                 ? [
@@ -197,7 +198,9 @@ function renderDiffTable(diff: SnapshotDiff) {
 
   return E('div', { class: 'fkp-history__diff-wrap' }, [
     // UC-062: a cut list says it is not the whole change.
-    ...(diff.total > rows.length ? [E('p', {}, diffTruncatedText(diff))] : []),
+    ...(diff.total > rows.length
+      ? [E('p', {}, asText(diffTruncatedText(diff)))]
+      : []),
     E('table', { class: 'table fkp-history__diff' }, [
       E('tr', { class: 'tr table-titles' }, [
         E('th', { class: 'th' }, _('Setting')),
@@ -206,9 +209,9 @@ function renderDiffTable(diff: SnapshotDiff) {
       ]),
       ...rows.map((row) =>
         E('tr', { class: 'tr' }, [
-          E('td', { class: 'td' }, row.where),
-          E('td', { class: 'td' }, row.snapshot),
-          E('td', { class: 'td' }, row.current),
+          E('td', { class: 'td' }, asText(row.where)),
+          E('td', { class: 'td' }, asText(row.snapshot)),
+          E('td', { class: 'td' }, asText(row.current)),
         ]),
       ),
     ]),
