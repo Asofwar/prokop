@@ -921,8 +921,9 @@ function nft_create_runtime_base(table, localv4_set, common_set, port_set, ip_po
         !nft_create_ifname_set(table, interface_set))
         return false;
 
+    // Quoted: 'lan@1' or '10g' unquoted are a syntax error for nft (NET-9).
     for (let interface in whitespace_values(source_interfaces))
-        if (!nft_add_set_elements(table, interface_set, interface))
+        if (!nft_add_set_elements(table, interface_set, sprintf("%J", interface)))
             return false;
 
     if (!nft_create_chain(table, "dns_redirect", "{ type nat hook prerouting priority -101; policy accept; }") ||

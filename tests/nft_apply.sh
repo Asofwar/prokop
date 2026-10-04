@@ -199,8 +199,8 @@ assert_contains "$NFT_LOG" $'nft\tadd\tset\tinet\tProkopTable\tlocalv6\t{ type i
 assert_contains "$NFT_LOG" '0.0.0.0/8,10.0.0.0/8,100.64.0.0/10,127.0.0.0/8' "runtime localv4 elements"
 assert_contains "$NFT_LOG" '::/128,::1/128,64:ff9b::/96' "runtime localv6 elements"
 assert_contains "$NFT_LOG" $'nft\tadd\tset\tinet\tProkopTable\tprokop_interfaces\t{ type ifname; flags interval; }' "runtime interface set"
-assert_contains "$NFT_LOG" $'nft\tadd\telement\tinet\tProkopTable\tprokop_interfaces\t{ br-lan }' "runtime br-lan interface"
-assert_contains "$NFT_LOG" $'nft\tadd\telement\tinet\tProkopTable\tprokop_interfaces\t{ tun0 }' "runtime tun0 interface"
+assert_contains "$NFT_LOG" $'nft\tadd\telement\tinet\tProkopTable\tprokop_interfaces\t{ "br-lan" }' "runtime br-lan interface"
+assert_contains "$NFT_LOG" $'nft\tadd\telement\tinet\tProkopTable\tprokop_interfaces\t{ "tun0" }' "runtime tun0 interface"
 assert_contains "$NFT_LOG" $'nft\tadd\tchain\tinet\tProkopTable\tmangle\t{ type filter hook prerouting priority -149; policy accept; }' "runtime mangle chain runs after Tailscale connmark restore"
 assert_contains "$NFT_LOG" $'nft\tadd\tchain\tinet\tProkopTable\tpriority_rules\t{ }' "runtime priority chain"
 assert_contains "$NFT_LOG" $'nft\tadd\tchain\tinet\tProkopTable\tpriority_output_rules\t{ }' "runtime priority output chain"
@@ -239,8 +239,8 @@ EOF_UCI
 : > "$NFT_LOG"
 PROKOP_UCI_STATE_FILE="$WORK_DIR/runtime-base-uci.state" \
   nft_ucode nft-create-runtime-base-from-uci ProkopTable localv4 prokop_subnets prokop_ports prokop_ip_ports prokop_interfaces 0x00100000 0x00200000 198.18.0.0/15 1602
-assert_contains "$NFT_LOG" $'nft\tadd\telement\tinet\tProkopTable\tprokop_interfaces\t{ br-lan }' "runtime base from UCI br-lan interface"
-assert_contains "$NFT_LOG" $'nft\tadd\telement\tinet\tProkopTable\tprokop_interfaces\t{ tun0 }' "runtime base from UCI tun0 interface"
+assert_contains "$NFT_LOG" $'nft\tadd\telement\tinet\tProkopTable\tprokop_interfaces\t{ "br-lan" }' "runtime base from UCI br-lan interface"
+assert_contains "$NFT_LOG" $'nft\tadd\telement\tinet\tProkopTable\tprokop_interfaces\t{ "tun0" }' "runtime base from UCI tun0 interface"
 assert_contains "$NFT_LOG" $'nft\tinsert\trule\tinet\tProkopTable\tmangle\tudp\tdport\t123\treturn' "runtime base from UCI ntp exclusion"
 
 : > "$NFT_LOG"

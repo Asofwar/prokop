@@ -172,6 +172,16 @@ cat >"$WORK_DIR/bad-dns-duration.json" <<'JSON'
 JSON
 assert_rejects "bad DNS interval" "$WORK_DIR/bad-dns-duration.json" "settings.dns_check_interval"
 
+# NET-9: interface names nft and Linux accept, and nothing else.
+for bad in 'lan}' 'averylonginterface0' 'br/lan'; do
+  printf '{ "settings": { ".name": "settings", ".type": "settings", "source_network_interfaces": "br-lan %s" }, "section": [] }\n' "$bad" \
+    >"$WORK_DIR/bad-ifname.json"
+  assert_rejects "bad source interface $bad" "$WORK_DIR/bad-ifname.json" "Invalid source network interface"
+done
+printf '{ "settings": { ".name": "settings", ".type": "settings", "source_network_interfaces": [ "br-lan", "lan@1", "10g", "wg*" ] }, "section": [] }\n' \
+  >"$WORK_DIR/good-ifname.json"
+validate_fixture "$WORK_DIR/good-ifname.json" >/dev/null 2>&1 || fail "valid source interfaces were rejected"
+
 cat >"$WORK_DIR/bad-dns-server.json" <<'JSON'
 {
   "settings": {

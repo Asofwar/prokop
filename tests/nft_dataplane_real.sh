@@ -354,4 +354,20 @@ expect direct lan 192.168.1.60 100.64.10.2 tcp 22
 expect direct local 100.100.1.1 tcp 443
 ok "the router's own addresses and 100.64.0.0/10 go direct (NET-2)"
 
+# ---- NET-9: interface names nft would read as something else ------------------
+
+# The source interfaces went into the nft set unquoted: 'lan@1' (a VLAN
+# device) or '10g' are a syntax error there, and the whole start failed.
+cat >"$WORK_DIR/ifnames.uci" <<'EOF'
+prokop.settings=settings
+prokop.settings.source_network_interfaces=br-lan lan@1 10g wg*
+prokop.web=section
+prokop.web.action=vpn
+prokop.web.ports=443
+EOF
+apply_config "$WORK_DIR/ifnames.uci"
+nft list set inet "$TABLE" "$INTERFACES" | grep -q '"lan@1"' || fail "the interface lan@1 is not in the capture set"
+expect captured lan 192.168.1.60 93.184.216.34 tcp 443
+ok "interface names such as lan@1 and 10g are quoted for nft (NET-9)"
+
 printf 'real nft dataplane checks passed\n'

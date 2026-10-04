@@ -923,7 +923,7 @@ function router_addresses() {
     router_addresses_cache = [];
     let dump = null;
     try {
-        dump = json(command_output_from_args([ "ubus", "call", "network.interface", "dump" ]) || "{}");
+        dump = json(command_output(command_from_args([ "ubus", "call", "network.interface", "dump" ]) + " 2>/dev/null") || "{}");
     }
     catch (e) {
         dump = null;
@@ -1887,11 +1887,23 @@ function validate_urltest_overrides(sections) {
     }
 }
 
+// A Linux interface name (at most 15 characters, no spaces or slashes),
+// optionally ending in nft's wildcard '*' (NET-9).
+function validate_source_network_interfaces(settings) {
+    for (let value in split(trim(as_string(option(settings, "source_network_interfaces", "br-lan"))), /[ \t\r\n]+/)) {
+        if (value == "")
+            continue;
+        if (length(value) > 15 || match(value, /^[A-Za-z0-9_.@:+-]+\*?$/) == null || value == "." || value == "..")
+            fail_validation("Invalid source network interface '" + value + "'. Use interface names such as br-lan, lan@1 or wg*. Aborted.");
+    }
+}
+
 function validate_runtime_config(context) {
     let settings = settings_section();
     let sections = sections_by_type("section");
 
     validate_runtime_mark_ranges_context(context);
+    validate_source_network_interfaces(settings);
     validate_dns_settings(settings, sections, context);
     validate_list_update_settings(settings);
     validate_http_url_option(option(settings, "latency_test_url", DEFAULT_LATENCY_TEST_URL) || DEFAULT_LATENCY_TEST_URL, "settings.latency_test_url");
