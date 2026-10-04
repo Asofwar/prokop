@@ -936,6 +936,16 @@ function validate_duration_option(value, label) {
     fail_validation("Invalid duration value for " + label + ": " + value + ". Use sing-box duration format like 1d, 12h or 30m. Aborted.");
 }
 
+// sing-box refuses a URLTest group whose interval is longer than its
+// idle_timeout; without an idle_timeout of its own Prokop sets it (A2).
+function validate_urltest_idle_not_shorter(interval, idle_timeout, label) {
+    let interval_seconds = duration_to_seconds_value(interval);
+    let idle_seconds = duration_to_seconds_value(idle_timeout);
+    if (interval_seconds != null && idle_seconds != null && interval_seconds > idle_seconds)
+        fail_validation("The idle_timeout " + idle_timeout + " of " + label + " is shorter than its check interval " +
+            interval + ", which sing-box refuses. Make idle_timeout at least the check interval or clear it. Aborted.");
+}
+
 function validate_required_duration_option(value, label) {
     if (as_string(value) == "")
         fail_validation("Missing duration value for " + label + ". Use sing-box duration format like 1d, 12h or 30m. Aborted.");
@@ -1609,8 +1619,11 @@ function validate_rule(section, sections, context) {
             validate_urltest_tolerance_value(connections.urltest_tolerance(section, urltest_id), name, urltest_id);
             validate_http_url_option(connections.urltest_testing_url(section, urltest_id), "rule." + name + ".urltest." + urltest_id + ".testing_url");
             let idle_timeout = connections.urltest_idle_timeout(section, urltest_id);
-            if (idle_timeout != "")
+            if (idle_timeout != "") {
                 validate_required_duration_option(idle_timeout, "rule." + name + ".urltest." + urltest_id + ".idle_timeout");
+                validate_urltest_idle_not_shorter(connections.urltest_check_interval(section, urltest_id), idle_timeout,
+                    "rule." + name + ".urltest." + urltest_id);
+            }
 
             if (contains([ "include", "mixed" ], urltest_filter_mode)) {
                 for (let value in connections.urltest_include_regex(section, urltest_id))
@@ -1932,6 +1945,7 @@ function validate_urltest_overrides(sections) {
         // Written as they are: sing-box refuses an empty or unreadable duration.
         validate_required_duration_option(option(override, "check_interval", ""), label + " (check_interval)");
         validate_required_duration_option(option(override, "idle_timeout", ""), label + " (idle_timeout)");
+        validate_urltest_idle_not_shorter(option(override, "check_interval", ""), option(override, "idle_timeout", ""), label);
 
         // Written as int(tolerance): NaN for text, which sing-box refuses like
         // a number outside 0..65535.

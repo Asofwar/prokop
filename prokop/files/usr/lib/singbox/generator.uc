@@ -921,6 +921,8 @@ function add_subscription_source_with_state(config, section, source_index, sourc
     return added;
 }
 
+// Seconds of a sing-box duration ("90s", "1h30m", a bare number of
+// seconds), null when unreadable.
 function duration_to_seconds(value) {
     value = as_string(value);
     if (value == "")
@@ -928,22 +930,17 @@ function duration_to_seconds(value) {
     if (match(value, /^[0-9]+$/) != null)
         return int(value, 10);
 
-    let suffix = substr(value, length(value) - 1);
-    let number = substr(value, 0, length(value) - 1);
-    if (match(number, /^[0-9]+$/) == null)
-        return null;
-
-    let multiplier = null;
-    if (suffix == "s")
-        multiplier = 1;
-    else if (suffix == "m")
-        multiplier = 60;
-    else if (suffix == "h")
-        multiplier = 3600;
-    else if (suffix == "d")
-        multiplier = 86400;
-
-    return multiplier == null ? null : int(number, 10) * multiplier;
+    let multipliers = { ns: 0.000000001, us: 0.000001, ms: 0.001, s: 1, m: 60, h: 3600, d: 86400 };
+    let total = 0.0;
+    let rest = value;
+    while (rest != "") {
+        let matched = match(rest, /^([0-9]+(\.[0-9]+)?)(ns|us|ms|s|m|h|d)/);
+        if (!matched)
+            return null;
+        total += matched[1] * multipliers[matched[3]];
+        rest = substr(rest, length(matched[0]));
+    }
+    return total;
 }
 
 function urltest_check_interval(section, urltest_id) {
@@ -951,23 +948,19 @@ function urltest_check_interval(section, urltest_id) {
     return interval != "" ? interval : "3m";
 }
 
-function legacy_urltest_idle_timeout(section, urltest_id) {
-    if (urltest_id != "urltest")
-        return "";
-
-    let settings = connections.urltest_settings(section, urltest_id);
-    if (type(settings) == "object" && as_string(settings[".type"] || "") == "urltest")
-        return "";
-
+// sing-box refuses a URLTest group whose interval is longer than its
+// idle_timeout (30m unless set). A group with a longer interval and no
+// idle_timeout of its own gets the interval as idle_timeout, whatever its
+// id (A2); one with a shorter idle_timeout of its own is refused by the
+// validator.
+function urltest_idle_timeout(section, urltest_id) {
+    let configured = connections.urltest_idle_timeout(section, urltest_id);
+    if (configured != "")
+        return configured;
     let interval = urltest_check_interval(section, urltest_id);
     let interval_seconds = duration_to_seconds(interval);
     let default_idle_seconds = duration_to_seconds(runtime_constants.URLTEST_DEFAULT_IDLE_TIMEOUT);
-    return interval_seconds != null && interval_seconds > default_idle_seconds ? interval : "";
-}
-
-function urltest_idle_timeout(section, urltest_id) {
-    let configured = connections.urltest_idle_timeout(section, urltest_id);
-    return configured != "" ? configured : legacy_urltest_idle_timeout(section, urltest_id);
+    return interval_seconds != null && default_idle_seconds != null && interval_seconds > default_idle_seconds ? interval : "";
 }
 
 function supported_urltest_filter_mode(mode) {
