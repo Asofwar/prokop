@@ -187,6 +187,29 @@ ok "9 unsupported candidates excluded with their reason, never probed or failed"
 reset_state; CURL_STUB_PLAN="direct=reset,4600=tls,4601=reset" tune 3 192.0.2.53 multisplit,fake
 json 'a.equal(r.status, "inconclusive"); a.equal(r.reason, "all_failed"); a.equal(r.selected, null); a.equal(r.cleanup.status, "clean");' "$WORK/out.json"
 ok "all candidates failed -> inconclusive"
+
+# A candidate failed whatever its remaining probes give is not probed
+# further; the control is always measured in full, and the outcome is the
+# full run's (select.uc settled_failed).
+reset_state; CURL_STUB_PLAN="direct=reset,4600=success:120,4601=reset" PROKOP_AUTOTUNE_PROGRESS="$WORK/progress.json" tune 3 192.0.2.53 multisplit,fake
+json '
+a.equal(r.status, "selected"); a.equal(r.selected, "multisplit"); a.equal(r.confidence, "high");
+a.deepEqual(r.pruned, ["fake"]);
+const count = (id) => r.probes.filter((p) => p.candidate === id).length;
+a.deepEqual([count("direct"), count("multisplit"), count("fake")], [3, 3, 2]);
+a.equal(r.candidates.find((c) => c.id === "fake").stability, "failed");
+' "$WORK/out.json"
+node -e 'const p=require(process.argv[1]); if (p.done !== 8 || p.total !== 8) process.exit(1)' "$WORK/progress.json" ||
+  fail "pruned progress: $(cat "$WORK/progress.json" 2>/dev/null)"
+assert_clean "tune pruned"
+cat >"$WORK/settled.uc" <<'UC'
+let s = require("autotune.select");
+let f = { class: "tcp_reset", connect: "ok" }, ok = { class: "success", connect: "ok" }, net = { class: "connect_timeout", connect: "timeout" };
+print(join(",", [ s.settled_failed([ f ], 2), s.settled_failed([ f, f ], 1), s.settled_failed([ net, net ], 1),
+    s.settled_failed([ ok, f, f, f ], 3), s.settled_failed([ ok, f, f, f, f ], 2) ]));
+UC
+[ "$(ucode -L "$LIB" "$WORK/settled.uc")" = "false,true,false,false,true" ] || fail "settled_failed bounds"
+ok "a candidate that can only fail is not probed further; the control is measured in full"
 }
 cases_4() {
 reset_state; CURL_STUB_PLAN="direct=connect_timeout,4600=connect_timeout,4601=connect_timeout" tune 3 192.0.2.53 multisplit,fake

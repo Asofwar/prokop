@@ -918,7 +918,7 @@ function tune(host, probes, resolver, list, ip) {
     let result = { status: "failed", reason: null, target: null, selected: null, confidence: null,
         isolation: { table: TABLE, chains: [ MARK_CHAIN + "@" + MARK_PRIORITY, CHAIN + "@" + PRIORITY ],
             queues: null, port_range: PORT_RANGE, probe_mark: PROBE_MARK, desync_mark: DESYNC_MARK },
-        contract: null, timeline, schedule: null, candidates: [], excluded: [], probes: [],
+        contract: null, timeline, schedule: null, candidates: [], excluded: [], pruned: [], probes: [],
         teardown: null, production: null, cleanup: null, applied: false };
     let at_most = substr(as_string(probes), 0, 4) == "max:";
     probes = int((at_most ? substr(as_string(probes), 4) : probes) || select_module.MIN_PROBES);
@@ -997,6 +997,17 @@ function tune(host, probes, resolver, list, ip) {
             let round = [];
             for (let id in result.schedule[r]) {
                 if (interrupted) return "interrupted";
+                // A candidate already failed whatever its remaining probes
+                // give is not probed further (select.uc settled_failed). The
+                // control (direct) is always measured in full: the selection
+                // relies on its failures.
+                let remaining = length(result.schedule) - r;
+                if (id != "direct" && index(result.pruned, id) < 0 &&
+                    select_module.settled_failed(records[id], remaining)) {
+                    push(result.pruned, id);
+                    total_probes -= remaining;
+                }
+                if (index(result.pruned, id) >= 0) continue;
                 let slot = by_id[id];
                 let comment = slot.queue == null ? "direct" : "probe";
                 if (id != current) {

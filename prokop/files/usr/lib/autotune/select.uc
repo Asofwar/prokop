@@ -57,6 +57,21 @@ function network_failure(p) {
     return stage != "" && stage != "ok" && stage != "not_attempted";
 }
 
+// Can the candidate still be anything but "failed" after `remaining` more
+// probes? Its best case is every remaining probe succeeding; network
+// failures leave the ratio between the worst and the best case. A candidate
+// failed even in its best case is failed whatever it measures next, so a
+// run stops probing it (optimization, audit 2026-10-04): its stability, the
+// selection and the reason stay what the full run would give.
+function settled_failed(probes, remaining) {
+    let successes = 0, failures = 0;
+    for (let p in probes) {
+        if (p.class == "success") successes++;
+        else if (!network_failure(p)) failures++;
+    }
+    return stability(successes + remaining, successes + failures + remaining) == "failed";
+}
+
 // Per-candidate aggregate over its probe records (probe.uc records). Latency
 // medians use successful probes only; failures are counted by class.
 function aggregate(candidate, probes) {
@@ -201,7 +216,7 @@ function evaluate(measured) {
 
 if (sourcepath(1) != null && sourcepath(1) != "")
     return { aggregate, select, evaluate, schedule, base_order, stability, median, policy, network_failure,
-        MIN_PROBES, MAX_PROBES };
+        settled_failed, MIN_PROBES, MAX_PROBES };
 
 let fs = require("fs");
 let mode = ARGV[0] || "";
