@@ -486,6 +486,16 @@ reset_state; run_probe multisplit 1
 json 'a.equal(r.status, "completed"); a.equal(r.production.unchanged, true); a.match(r.production.before.prokop_table_hash, /^[0-9a-f]{64}$/);
   a.deepEqual(r.production.before.queues, ["4000:29676"]); a.equal(r.production.before.zapret_children.length, 1);' "$WORK/out.json"
 ok "live counter changes are not a production change"
+# The pid of a candidate is the shell's fork until it execs nfqws; a start
+# seen before the exec waits for it instead of failing the run.
+mkdir -p "$WORK/real" && mv "$WORK/bin/nfqws" "$WORK/real/nfqws"
+printf '#!/bin/bash\nsleep 1.5\nexec -a "%s" "%s" "$@"\n' "$WORK/bin/nfqws" "$WORK/real/nfqws" >"$WORK/bin/nfqws"
+chmod +x "$WORK/bin/nfqws"
+reset_state; run_probe multisplit 1
+json 'a.equal(r.status, "completed"); a.equal(r.cleanup.status, "clean");' "$WORK/out.json"
+assert_clean "slow exec"
+mv "$WORK/real/nfqws" "$WORK/bin/nfqws"
+ok "a candidate still in its shell before the exec is waited for"
 }
 
 # The groups of cases run at once, each on stand-ins of its own (a fresh

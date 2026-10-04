@@ -802,13 +802,19 @@ function start_candidate(entry) {
             pause();
         return { failure: "nfqws_start_failed" };
     }
-    let listener = null;
+    // The pid is the shell's fork until it execs nfqws: on a loaded router
+    // the first look can still find the shell. Only a process that is gone
+    // (or a reused pid) fails the start at once.
+    let recorded = identity.read_record(entry.pidfile);
+    let ticks = type(recorded) == "object" ? recorded.ticks : null;
+    let listener = null, running = false;
     for (let i = 0; i <= LISTENER_WAIT && listener == null; i++) {
-        if (identity.matches(entry.pidfile, NFQWS, entry.argv, true, true) == "") return { failure: "nfqws_start_failed" };
-        listener = queue_entry(entry.queue);
+        running = identity.matches(entry.pidfile, NFQWS, entry.argv, true, true) != "";
+        if (!running && identity.start_ticks(pid) != ticks) return { failure: "nfqws_start_failed" };
+        if (running) listener = queue_entry(entry.queue);
         if (listener == null) pause();
     }
-    if (listener == null) return { failure: "nfqws_listener_missing" };
+    if (listener == null) return { failure: running ? "nfqws_listener_missing" : "nfqws_start_failed" };
     return { pid, listener };
 }
 
