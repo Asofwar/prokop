@@ -26,9 +26,11 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CLI="$ROOT_DIR/prokop/files/usr/bin/prokop"
 WORK="$(mktemp -d)"
+# shellcheck source=tests/helpers/owned_processes.sh
+. "$ROOT_DIR/tests/helpers/owned_processes.sh"
 holder=""
 cleanup() {
-  [ -z "$holder" ] || kill -KILL "$holder" 2>/dev/null || true
+  [ -z "$holder" ] || owned_kill KILL "$holder" || true
   rm -rf "$WORK"
 }
 trap cleanup EXIT
