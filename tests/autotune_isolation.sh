@@ -75,6 +75,12 @@ expect_class empty_reply http_transport_failure ok ok failed
 json 'a.equal(r.probes[0].http_status, 0); a.equal(r.probes[0].curl_exit_code, 52);' "$WORK/out.json"
 ucode -L "$LIB" "$LIB/autotune/probe.uc" classify 6 0 0 0 "Could not resolve host" > "$WORK/c.json"
 json 'a.equal(r.class, "dns_failure");' "$WORK/c.json"
+# The probe stops reading after 64 KiB (--max-filesize): curl's 63 after a
+# handshake and an HTTP status is a working transport; before them it is not.
+ucode -L "$LIB" "$LIB/autotune/probe.uc" classify 63 0.03 0.06 200 "Exceeded the maximum allowed file size" > "$WORK/c.json"
+json 'a.equal(r.class, "success"); a.equal(r.http, "ok");' "$WORK/c.json"
+ucode -L "$LIB" "$LIB/autotune/probe.uc" classify 63 0.03 0 0 "Exceeded the maximum allowed file size" > "$WORK/c.json"
+json 'a.notEqual(r.class, "success");' "$WORK/c.json"
 
 # Success details and HTTP status as information only.
 reset_state; export CURL_STUB_MODE=forbidden; run_probe multisplit 3
@@ -92,6 +98,7 @@ grep -qx -- '--local-port' <<<"$args" || fail "curl without dedicated source por
 grep -qx -- '61000-61063' <<<"$args" || fail "curl without the dedicated source-port range"
 grep -qx -- 'example.com:443:93.184.216.34' <<<"$args" || fail "curl without pinned address"
 grep -qx -- '/dev/null' <<<"$args" || fail "curl keeps the body"
+grep -A1 -x -- '--max-filesize' <<<"$args" | grep -qx 65536 || fail "curl reads the whole answer"
 ! grep -qxE -- '-b|-c|-D|-H|-u|--cookie|--cookie-jar|--dump-header|-i|-v' <<<"$args" || fail "curl records headers or cookies"
 grep -qx -- '@192.0.2.53' "$STUB_LOG/dig.args" || fail "dig not pinned to the upstream resolver"
 batch="$(cat "$NFT_STATE/last.nft")"

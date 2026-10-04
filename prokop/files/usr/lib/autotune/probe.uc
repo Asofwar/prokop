@@ -10,6 +10,10 @@ const CURL = getenv("PROKOP_AUTOTUNE_CURL") || "curl";
 const DIG = getenv("PROKOP_AUTOTUNE_DIG") || "dig";
 const CONNECT_TIMEOUT = "5";
 const MAX_TIME = "10";
+// The probe reads at most this much of the answer: what a DPI that cuts a
+// connection after its first kilobytes needs to show, without downloading a
+// whole page on every probe (audit 2026-10-04).
+const PROBE_MAX_BYTES = "65536";
 const FIELDS = "%{exitcode}|%{local_port}|%{remote_ip}|%{http_code}|%{time_connect}|%{time_appconnect}|%{time_starttransfer}|%{time_total}|%{errormsg}";
 
 function as_string(value) { return value == null ? "" : "" + value; }
@@ -127,7 +131,9 @@ function classify(r) {
     let refused = match(err, /refused/) != null;
     let result = { class: "unknown_failure", connect: "not_attempted", tls: "not_attempted", http: "not_attempted" };
 
-    if (code == 0) {
+    // 63: the response passed PROBE_MAX_BYTES and curl stopped reading it;
+    // the transport carried the request and the first part of the answer.
+    if (code == 0 || (code == 63 && handshaken && int(r.http_code) > 0)) {
         result.connect = "ok"; result.tls = "ok";
         if (int(r.http_code) > 0) { result.http = "ok"; result.class = "success"; }
         else { result.http = "failed"; result.class = "http_transport_failure"; }
@@ -182,7 +188,7 @@ function probe(options) {
     if (!valid_host(host) || (!options.production && !valid_ipv4(ip)) || match(path, /^\/[A-Za-z0-9._~\/-]*$/) == null)
         return { class: "invalid_input" };
     let args = [ CURL, "-s", "-o", "/dev/null", "--ipv4", "--noproxy", "*", "--proto", "=https",
-        "--connect-timeout", CONNECT_TIMEOUT, "--max-time", MAX_TIME, "-w", FIELDS ];
+        "--connect-timeout", CONNECT_TIMEOUT, "--max-time", MAX_TIME, "--max-filesize", PROBE_MAX_BYTES, "-w", FIELDS ];
     if (!options.production) push(args, "--resolve", host + ":443:" + ip);
     if (options.port_range && !options.production) push(args, "--local-port", as_string(options.port_range));
     push(args, "https://" + host + path);
