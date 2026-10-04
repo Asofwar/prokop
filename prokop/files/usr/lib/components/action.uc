@@ -41,6 +41,8 @@ let tmp_dir = "";
 let lock_held = false;
 let prokop_was_running = false;
 let last_logged_output = "";
+// Memory kept free for the router itself when a download goes to RAM.
+const COMPONENT_MEMORY_RESERVE_KIB = int(getenv("PROKOP_COMPONENT_MEMORY_RESERVE_KIB") || "16384");
 let prokop_stopped_for_sing_box_change = false;
 let prokop_stopped_for_upgrade = false;
 let managed_upgrade_marker_written = false;
@@ -168,6 +170,84 @@ function available_kib(path) {
     let columns = split(trim(fields[length(fields) - 1]), /[ \t]+/);
     return length(columns) >= 4 && match(as_string(columns[3]), /^[0-9]+$/) != null ?
         int(columns[3]) : -1;
+}
+
+// MemAvailable from the kernel (MemFree on kernels without it); -1 when the
+// file cannot be read. Tests point PROKOP_MEMINFO_PATH elsewhere.
+function memory_available_kib() {
+    let text = read_file(getenv("PROKOP_MEMINFO_PATH") || "/proc/meminfo");
+    let free = -1;
+    for (let line in split(text, "\n")) {
+        let m = match(line, /^(MemAvailable|MemFree):[ \t]+([0-9]+)/);
+        if (m == null)
+            continue;
+        if (m[1] == "MemAvailable")
+            return int(m[2]);
+        free = int(m[2]);
+    }
+    return free;
+}
+
+// Whether `path` lives on a tmpfs, by the longest mount point that holds it.
+function path_on_tmpfs(path) {
+    path = as_string(path);
+    let best = "";
+    let best_type = "";
+    for (let line in split(read_file(getenv("PROKOP_MOUNTS_PATH") || "/proc/mounts"), "\n")) {
+        let fields = split(trim(line), /[ \t]+/);
+        if (length(fields) < 3)
+            continue;
+        let mount_point = fields[1];
+        let inside = mount_point == "/" || path == mount_point ||
+            substr(path, 0, length(mount_point) + 1) == mount_point + "/";
+        if (inside && length(mount_point) >= length(best)) {
+            best = mount_point;
+            best_type = fields[2];
+        }
+    }
+    return best_type == "tmpfs" || best_type == "ramfs";
+}
+
+// A component download lands in the temporary directory, and is unpacked
+// there too: `factor` counts those copies. On a tmpfs every copy is RAM the
+// router has to spare, so a download that would leave it short is refused
+// before it starts (UPD-7, B3). An unknown size refuses nothing.
+function component_download_space_error(label, size_bytes, factor, dir) {
+    size_bytes = int(size_bytes || 0);
+    if (size_bytes <= 0)
+        return "";
+    let needed_kib = int(size_bytes * factor / 1024) + 1024;
+    let tmp_kib = available_kib(dir);
+    if (tmp_kib >= 0 && tmp_kib < needed_kib)
+        return "Not enough free space in /tmp to download " + as_string(label) + ": " +
+            as_string(tmp_kib) + " KiB available where " + as_string(needed_kib) + " KiB is needed";
+    if (!path_on_tmpfs(dir))
+        return "";
+    // What stays for the router's own processes once the files are in RAM.
+    let needed_memory_kib = needed_kib + COMPONENT_MEMORY_RESERVE_KIB;
+    let memory_kib = memory_available_kib();
+    if (memory_kib >= 0 && memory_kib < needed_memory_kib)
+        return "Not enough free memory to download " + as_string(label) + ": " +
+            as_string(memory_kib) + " KiB available where " + as_string(needed_memory_kib) + " KiB is needed";
+    return "";
+}
+
+// Room on the overlay for `bytes` of newly installed files, checked while
+// the running variant is still in place (UPD-7, B3).
+function component_install_space_error(label, bytes) {
+    let needed_kib = int(int(bytes || 0) / 1024) + 2048;
+    let overlay_kib = available_kib("/usr");
+    if (overlay_kib >= 0 && overlay_kib < needed_kib)
+        return "Not enough free space on the router's storage to install " + as_string(label) + ": " +
+            as_string(overlay_kib) + " KiB available where " + as_string(needed_kib) + " KiB is needed";
+    return "";
+}
+
+// A package manager or tar that ran out of room says so in its own words;
+// the failure message names the cause instead of a bare "failed".
+function out_of_space_hint(output) {
+    return match(as_string(output), /No space left on device|Only have [0-9]+kb available|[Nn]ot enough (free )?space|ENOSPC/) != null ?
+        ": the router ran out of storage space" : "";
 }
 
 function now_seconds() {
@@ -890,34 +970,53 @@ function release_asset_object_sha256(asset) {
     return "";
 }
 
-// The checksum a release document publishes for the asset whose `key` field
-// equals `value`; empty when it publishes none.
-function release_json_asset_sha256(release_json, key, value) {
+// The size in bytes GitHub reports for an asset; 0 when it reports none.
+function release_asset_object_size(asset) {
+    return type(asset) == "object" && type(asset.size) == "int" && asset.size > 0 ? asset.size : 0;
+}
+
+// The asset record in a release document whose `key` field equals `value`.
+function release_json_asset(release_json, key, value) {
     let release = parse_json_object(release_json);
     for (let asset in (type(release.assets) == "array" ? release.assets : []))
         if (type(asset) == "object" && as_string(asset[key]) == as_string(value))
-            return release_asset_object_sha256(asset);
-    return "";
+            return asset;
+    return null;
 }
 
-// The checksum GitHub publishes for the asset downloaded from `url`, in a
-// release document or a list of releases; empty when it publishes none.
-function release_url_asset_sha256(releases_json, url) {
+// The checksum published for that asset; empty when it publishes none.
+function release_json_asset_sha256(release_json, key, value) {
+    return release_asset_object_sha256(release_json_asset(release_json, key, value));
+}
+
+// The asset record for the download at `url`, in a release document or a
+// list of releases; null when none matches.
+function release_url_asset(releases_json, url) {
     let value = null;
     try {
         value = json(as_string(releases_json));
     }
     catch (e) {
-        return "";
+        return null;
     }
     for (let release in (type(value) == "array" ? value : [ value ])) {
         if (type(release) != "object" || type(release.assets) != "array")
             continue;
         for (let asset in release.assets)
             if (type(asset) == "object" && as_string(asset.browser_download_url) == as_string(url))
-                return release_asset_object_sha256(asset);
+                return asset;
     }
-    return "";
+    return null;
+}
+
+// The checksum GitHub publishes for the asset downloaded from `url`; empty
+// when it publishes none.
+function release_url_asset_sha256(releases_json, url) {
+    return release_asset_object_sha256(release_url_asset(releases_json, url));
+}
+
+function release_url_asset_size(releases_json, url) {
+    return release_asset_object_size(release_url_asset(releases_json, url));
 }
 
 // An empty expectation means the source published no checksum to compare.
@@ -1352,6 +1451,7 @@ function resolve_zapret_release(arch) {
         bundle_name: fields[1],
         bundle_url: fields[2],
         bundle_sha256: release_url_asset_sha256(release_json, fields[2]),
+        bundle_size: release_url_asset_size(release_json, fields[2]),
         release_url: fields[3],
         version
     };
@@ -1373,6 +1473,7 @@ function resolve_zapret2_release(arch) {
         bundle_name: fields[1],
         bundle_url: fields[2],
         bundle_sha256: release_url_asset_sha256(releases_json, fields[2]),
+        bundle_size: release_url_asset_size(releases_json, fields[2]),
         release_url: fields[3],
         version
     };
@@ -1430,6 +1531,7 @@ function resolve_byedpi_release(arch) {
         package_name: fields[1],
         package_url: fields[2],
         package_sha256: release_url_asset_sha256(releases_json, fields[2]),
+        package_size: release_url_asset_size(releases_json, fields[2]),
         release_url: fields[3],
         version: extract_arch_package_version(fields[1], fields[0])
     };
@@ -1496,12 +1598,20 @@ function install_zapret_like(component, action, runtime_module, resolve_fn, labe
     // The package's dependencies (kmod-nft-queue and the like) come from the
     // feeds: on opkg the lists are gone after every reboot (UPD-5).
     run_logged("Updating package lists before " + label + " installation", pkg_list_update_command());
+    // The bundle, the package taken out of it and the package manager's
+    // working copy (UPD-7, B3).
+    let space_error = component_download_space_error(label, release.bundle_size, 3, tmp_dir);
+    if (space_error != "")
+        action_fail(component, action, space_error, current_version, release.version, "", release.release_url || "");
     let pkg = download_and_extract_zip_package(release, component);
     if (pkg == null)
         action_fail(component, action, "Failed to download " + label + " package", current_version, release.version, "", release.release_url || "");
+    space_error = component_install_space_error(label, file_bytes(pkg.file) * 3);
+    if (space_error != "")
+        action_fail(component, action, space_error, current_version, pkg.version, "", release.release_url || "");
 
     if (!run_logged("Installing " + label + " package " + pkg.name, pkg_install_files_command([ pkg.file ])))
-        action_fail(component, action, "Failed to install " + label + " package", current_version, pkg.version, "", release.release_url || "");
+        action_fail(component, action, "Failed to install " + label + " package" + out_of_space_hint(last_logged_output), current_version, pkg.version, "", release.release_url || "");
 
     disable_standalone_service(component);
     let restarted = restart_prokop_after_successful_change();
@@ -1545,11 +1655,17 @@ function install_byedpi(action) {
     }
 
     run_logged("Updating package lists before ByeDPI installation", pkg_list_update_command());
+    let space_error = component_download_space_error("ByeDPI", release.package_size, 2, tmp_dir);
+    if (space_error != "")
+        action_fail("byedpi", action, space_error, current_version, release.version);
     let pkg = download_byedpi_package(release);
     if (pkg == null)
         action_fail("byedpi", action, "Failed to download ByeDPI package");
+    space_error = component_install_space_error("ByeDPI", file_bytes(pkg.file) * 3);
+    if (space_error != "")
+        action_fail("byedpi", action, space_error, current_version, pkg.version);
     if (!run_logged("Installing ByeDPI package " + pkg.name, pkg_install_files_command([ pkg.file ])))
-        action_fail("byedpi", action, "Failed to install ByeDPI package", current_version, pkg.version);
+        action_fail("byedpi", action, "Failed to install ByeDPI package" + out_of_space_hint(last_logged_output), current_version, pkg.version);
 
     disable_standalone_service("byedpi");
     let restarted = restart_prokop_after_successful_change();
@@ -1841,7 +1957,8 @@ function set_sing_box_extended_release_from_json(release_json, compressed) {
         asset_url: prokop_mirror_url(asset_url),
         asset_name: path_basename(asset_url),
         // The mirror copies the GitHub asset records, digests included.
-        asset_sha256: release_json_asset_sha256(release_json, "browser_download_url", asset_url)
+        asset_sha256: release_json_asset_sha256(release_json, "browser_download_url", asset_url),
+        asset_size: release_asset_object_size(release_json_asset(release_json, "browser_download_url", asset_url))
     };
 }
 
@@ -2050,11 +2167,21 @@ function install_sing_box_extended_package(action) {
         check_success("sing_box", normalize_sing_box_version(current_version), normalize_sing_box_version(latest_version), release.release_url);
     }
 
+    let space_error = component_download_space_error("sing-box-extended", release.asset_size, 2, tmp_dir);
+    if (space_error != "")
+        action_fail("sing_box", action, space_error, current_version, latest_version);
     let package_file = tmp_dir + "/" + release.asset_name;
     if (!download_with_retry(release.asset_url, package_file, release.asset_name))
         action_fail("sing_box", action, "Failed to download sing-box-extended package", current_version, latest_version);
     if (!sing_box_extended_download_verified(release, package_file))
         action_fail("sing_box", action, "Downloaded sing-box-extended package failed checksum verification", current_version, latest_version);
+    // The package unpacks to about three times its size; with the current
+    // binary kept as the backup, the overlay has to hold both.
+    space_error = component_install_space_error("sing-box-extended", file_bytes(package_file) * 3);
+    if (space_error != "") {
+        remove_file(package_file);
+        action_fail("sing_box", action, space_error, current_version, latest_version);
+    }
 
     if (!run_logged("Updating package lists before sing-box-extended package installation", pkg_list_update_command()))
         action_fail("sing_box", action, "Failed to update package lists", current_version, latest_version);
@@ -2114,7 +2241,7 @@ function install_sing_box_extended_package(action) {
 
     if (!run_logged("Installing sing-box-extended package " + release.asset_name, pkg_install_files_command([ package_file ]))) {
         restore_sing_box_after_failed_extended_package_install(current_variant, backup_binary, backup_cronet, previous_marker, previous_version_state, package_file, cronet_touched);
-        action_fail("sing_box", action, "Failed to install sing-box-extended package", current_version, latest_version);
+        action_fail("sing_box", action, "Failed to install sing-box-extended package" + out_of_space_hint(last_logged_output), current_version, latest_version);
     }
     remove_file(package_file);
 
@@ -2170,6 +2297,10 @@ function install_sing_box_extended(action, compressed) {
         check_success("sing_box", normalize_sing_box_version(current_version), normalize_sing_box_version(latest_version), release.release_url);
     }
 
+    // The archive, the binary and libcronet.so all sit in /tmp at once.
+    let space_error = component_download_space_error(label, release.asset_size, 3, tmp_dir);
+    if (space_error != "")
+        action_fail("sing_box", action, space_error, current_version, latest_version);
     let archive_file = tmp_dir + "/" + release.asset_name;
     if (!download_with_retry(release.asset_url, archive_file, release.asset_name))
         action_fail("sing_box", action, "Failed to download " + label, current_version, latest_version);
@@ -2191,9 +2322,10 @@ function install_sing_box_extended(action, compressed) {
         for (let line in split(read_file(extract_error), "\n"))
             if (trim(as_string(line)) != "")
                 updates_log(line);
+        let hint = out_of_space_hint(read_file(extract_error));
         remove_file(tmp_binary);
         remove_file(archive_file);
-        action_fail("sing_box", action, "Failed to extract " + label, current_version, latest_version);
+        action_fail("sing_box", action, "Failed to extract " + label + hint, current_version, latest_version);
     }
 
     if (cronet_path != "") {
@@ -2204,14 +2336,23 @@ function install_sing_box_extended(action, compressed) {
             for (let line in split(read_file(extract_error), "\n"))
                 if (trim(as_string(line)) != "")
                     updates_log(line);
+            let hint = out_of_space_hint(read_file(extract_error));
             remove_file(tmp_binary);
             remove_file(tmp_cronet);
             remove_file(archive_file);
-            action_fail("sing_box", action, "Failed to extract libcronet.so from sing-box-extended archive", current_version, latest_version);
+            action_fail("sing_box", action, "Failed to extract libcronet.so from sing-box-extended archive" + hint, current_version, latest_version);
         }
     }
 
     remove_file(archive_file);
+    // Refused while the running variant is untouched: the binary and the
+    // library are copied to the overlay next to their backups (UPD-7).
+    space_error = component_install_space_error(label, file_bytes(tmp_binary) + file_bytes(tmp_cronet));
+    if (space_error != "") {
+        remove_file(tmp_binary);
+        remove_file(tmp_cronet);
+        action_fail("sing_box", action, space_error, current_version, latest_version);
+    }
     if (!stop_prokop_before_sing_box_change())
         action_fail("sing_box", action, SING_BOX_CHANGE_STOP_REFUSED, current_version, latest_version);
     let new_version = validate_sing_box_extended_binary(tmp_binary, tmp_dir);

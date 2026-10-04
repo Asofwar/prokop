@@ -29,7 +29,7 @@ import sys
 
 source = open(sys.argv[1], encoding='utf-8').read()
 names = ('as_string', 'shell_quote', 'command_from_args', 'command_output', 'command_output_from_args',
-         'remove_file', 'file_nonempty', 'release_asset_object_sha256', 'release_url_asset_sha256',
+         'remove_file', 'file_nonempty', 'release_asset_object_sha256', 'release_url_asset', 'release_url_asset_sha256',
          'download_checksum_ok', 'download_and_extract_zip_package', 'download_byedpi_package')
 parts = []
 for name in names:
