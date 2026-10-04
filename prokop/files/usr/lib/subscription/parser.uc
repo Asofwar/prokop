@@ -55,7 +55,8 @@ function is_supported_share_link(line) {
         starts_with(line, "socks://") ||
         starts_with(line, "socks4://") ||
         starts_with(line, "socks4a://") ||
-        starts_with(line, "socks5://");
+        starts_with(line, "socks5://") ||
+        starts_with(line, "socks5h://");
 }
 
 function split_csv(value) {
@@ -578,8 +579,10 @@ function normalize_utls_fingerprint(value) {
         edge: true,
         safari: true,
         "360": true,
+        qq: true,
         ios: true,
         android: true,
+        random: true,
         randomized: true,
         randomizedalpn: true,
         randomizednoalpn: true
@@ -637,10 +640,14 @@ function add_tls(url, security, default_tls) {
     return [tls, true];
 }
 
+// Returns null for plain TCP and false for a transport sing-box has no
+// equivalent of (kcp, quic, ...): such a node is skipped, not sent over TCP.
 function add_transport(url) {
     let query = object_or_empty(url.query);
-    let transport = query.type || "";
-    if (transport == "" || transport == "tcp")
+    let transport = lc(as_string(query.type || ""));
+    if (transport == "splithttp")
+        transport = "xhttp";
+    if (transport == "" || transport == "tcp" || transport == "raw")
         return null;
 
     let path = query.path || "";
@@ -712,7 +719,7 @@ function add_transport(url) {
         return result;
     }
 
-    return null;
+    return false;
 }
 
 function valid_port(port) {
@@ -811,6 +818,8 @@ function process_vless(raw, url) {
         outbound.tls = tls_result[0];
 
     let transport = add_transport(url);
+    if (transport === false)
+        return null;
     if (transport)
         outbound.transport = transport;
     return outbound;
@@ -836,6 +845,8 @@ function process_trojan(raw, url) {
         outbound.tls = tls_result[0];
 
     let transport = add_transport(url);
+    if (transport === false)
+        return null;
     if (transport)
         outbound.transport = transport;
     return outbound;
@@ -869,7 +880,10 @@ function process_socks(raw, url) {
         server: url.host,
         server_port: url.port
     };
+    // socks5h only says the proxy resolves names; sing-box always lets it.
     let version = substr(url.scheme, 5);
+    if (version == "5h")
+        version = "5";
     if (version != "")
         outbound.version = version;
     if (username != "")
@@ -1079,6 +1093,10 @@ function process_vmess_json(raw, decoded) {
             outbound.transport.path = string_value(vmess.path);
         if (string_value(vmess.host) != "")
             outbound.transport.host = split_csv(string_value(vmess.host));
+    }
+    else if (network != "" && network != "tcp" && network != "raw") {
+        // kcp, quic and the like have no sing-box transport: skip the node.
+        return null;
     }
 
     return outbound;
@@ -1426,7 +1444,10 @@ function add_clash_tls(outbound, options) {
     outbound.tls = tls;
 }
 
+// False for a network the node cannot be built for (h2, http, kcp, ...).
 function add_clash_transport(outbound, options) {
+    if (options.network == "" || options.network == "tcp")
+        return true;
     if (options.network == "ws") {
         outbound.transport = {
             type: "ws",
@@ -1440,6 +1461,9 @@ function add_clash_transport(outbound, options) {
         if (options.grpc_service_name != "")
             outbound.transport.service_name = options.grpc_service_name;
     }
+    else
+        return false;
+    return true;
 }
 
 function parse_clash_record(record) {
@@ -1488,7 +1512,8 @@ function parse_clash_record(record) {
         if (as_string(record.alterId || record["alter-id"]) != "")
             outbound.alter_id = int(record.alterId || record["alter-id"]);
         add_clash_tls(outbound, options);
-        add_clash_transport(outbound, options);
+        if (!add_clash_transport(outbound, options))
+            return null;
         return outbound;
     }
     if (proxy_type == "vless") {
@@ -1506,7 +1531,8 @@ function parse_clash_record(record) {
         if (packet_encoding != "")
             outbound.packet_encoding = packet_encoding;
         add_clash_tls(outbound, options);
-        add_clash_transport(outbound, options);
+        if (!add_clash_transport(outbound, options))
+            return null;
         return outbound;
     }
     if (proxy_type == "trojan") {
@@ -1516,7 +1542,8 @@ function parse_clash_record(record) {
         let outbound = { type: "trojan", tag: name, server: server, server_port: port, password: password };
         options.always = true;
         add_clash_tls(outbound, options);
-        add_clash_transport(outbound, options);
+        if (!add_clash_transport(outbound, options))
+            return null;
         return outbound;
     }
     if (proxy_type == "hysteria2" || proxy_type == "hy2") {
@@ -2172,7 +2199,11 @@ function xray_tls_from_stream(stream, network) {
 function xray_transport_from_stream(stream) {
     stream = object_or_empty(stream);
     let network = lc(as_string(stream.network || ""));
-    if (network == "" || network == "tcp")
+    if (network == "splithttp") {
+        network = "xhttp";
+        stream = { ...stream, xhttpSettings: stream.xhttpSettings || stream.splithttpSettings };
+    }
+    if (network == "" || network == "tcp" || network == "raw")
         return null;
 
     if (network == "ws") {
@@ -2243,7 +2274,7 @@ function xray_transport_from_stream(stream) {
         return result;
     }
 
-    return null;
+    return false;
 }
 
 function xray_display_name(original_tag) {
@@ -2312,6 +2343,8 @@ function convert_xray_vless(outbound, tag) {
 
     let stream = object_or_empty(outbound.streamSettings);
     let transport = xray_transport_from_stream(stream);
+    if (transport === false)
+        return null;
     let tls = xray_tls_from_stream(stream, lc(as_string(stream.network || "")));
     if (tls)
         result.tls = tls;

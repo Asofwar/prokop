@@ -1701,7 +1701,7 @@ function manual_link_outbound(link, tag_name) {
     let outbound = share_link_parser.parse_share_link(trim(as_string(link)));
     if (type(outbound) != "object") {
         let scheme = url_scheme(link);
-        if (index([ "vmess", "ss", "vless", "trojan", "hysteria2", "hy2", "socks4", "socks4a", "socks5" ], scheme) < 0)
+        if (index([ "vmess", "ss", "vless", "trojan", "hysteria2", "hy2", "socks4", "socks4a", "socks5", "socks5h" ], scheme) < 0)
             runtime_generate_unsupported("manual proxy link scheme is not supported by sing-box config generation yet");
         runtime_generate_unsupported("manual " + scheme + " proxy link is invalid");
     }
