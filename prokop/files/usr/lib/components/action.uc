@@ -879,6 +879,26 @@ function release_json_asset_sha256(release_json, key, value) {
     return "";
 }
 
+// The checksum GitHub publishes for the asset downloaded from `url`, in a
+// release document or a list of releases; empty when it publishes none.
+function release_url_asset_sha256(releases_json, url) {
+    let value = null;
+    try {
+        value = json(as_string(releases_json));
+    }
+    catch (e) {
+        return "";
+    }
+    for (let release in (type(value) == "array" ? value : [ value ])) {
+        if (type(release) != "object" || type(release.assets) != "array")
+            continue;
+        for (let asset in release.assets)
+            if (type(asset) == "object" && as_string(asset.browser_download_url) == as_string(url))
+                return release_asset_object_sha256(asset);
+    }
+    return "";
+}
+
 // An empty expectation means the source published no checksum to compare.
 function download_checksum_ok(path, expected) {
     expected = as_string(expected);
@@ -1310,6 +1330,7 @@ function resolve_zapret_release(arch) {
         arch: fields[0],
         bundle_name: fields[1],
         bundle_url: fields[2],
+        bundle_sha256: release_url_asset_sha256(release_json, fields[2]),
         release_url: fields[3],
         version
     };
@@ -1330,6 +1351,7 @@ function resolve_zapret2_release(arch) {
         arch: fields[0],
         bundle_name: fields[1],
         bundle_url: fields[2],
+        bundle_sha256: release_url_asset_sha256(releases_json, fields[2]),
         release_url: fields[3],
         version
     };
@@ -1339,6 +1361,13 @@ function download_and_extract_zip_package(release, component) {
     let bundle_file = tmp_dir + "/" + release.bundle_name;
     if (!download_with_retry(release.bundle_url, bundle_file, release.bundle_name))
         return null;
+    // GitHub publishes a digest for each asset: a bundle that does not match
+    // it is not installed as root (UPD-4).
+    if (!download_checksum_ok(bundle_file, release.bundle_sha256)) {
+        updates_log("Downloaded " + release.bundle_name + " does not match its published sha256", "error");
+        remove_file(bundle_file);
+        return null;
+    }
 
     let inner_package_path = is_apk() ?
         select_inner_package_path(bundle_file, component, "", "apk") :
@@ -1379,6 +1408,7 @@ function resolve_byedpi_release(arch) {
         arch: fields[0],
         package_name: fields[1],
         package_url: fields[2],
+        package_sha256: release_url_asset_sha256(releases_json, fields[2]),
         release_url: fields[3],
         version: extract_arch_package_version(fields[1], fields[0])
     };
@@ -1388,6 +1418,11 @@ function download_byedpi_package(release) {
     let package_file = tmp_dir + "/" + release.package_name;
     if (!download_with_retry(release.package_url, package_file, release.package_name) || !file_nonempty(package_file))
         return null;
+    if (!download_checksum_ok(package_file, release.package_sha256)) {
+        updates_log("Downloaded " + release.package_name + " does not match its published sha256", "error");
+        remove_file(package_file);
+        return null;
+    }
     let version = as_string(release.version || "");
     if (version == "")
         version = extract_arch_package_version(release.package_name, release.arch);
