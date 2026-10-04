@@ -584,7 +584,7 @@ function log_file_lines(path, level, prefix) {
 
 function sing_box_check(config_path, output_path) {
     let status = command_status(
-        command_from_args([ "sing-box", "-c", config_path, "check" ]) +
+        command_from_args(common.sing_box_check_args(config_path)) +
         " >" + shell_quote(output_path) + " 2>&1"
     );
     let reason = status == 0 ? "" : trim(as_string(fs.readfile(output_path) || ""));

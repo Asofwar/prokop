@@ -478,7 +478,7 @@ function check_proxy() {
     }
 
     nolog("Checking sing-box configuration...");
-    if (!command_success_from_args([ "sing-box", "-c", sing_box_config_path, "check" ])) {
+    if (!command_success_from_args(common.sing_box_check_args(sing_box_config_path))) {
         nolog_failure("Invalid configuration");
         return 1;
     }

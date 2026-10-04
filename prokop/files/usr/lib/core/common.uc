@@ -234,6 +234,16 @@ function shell_quote(value) {
     return "'" + replace(as_string(value), /'/g, "'\\''") + "'";
 }
 
+// `sing-box check` of a candidate config runs while the working sing-box
+// still serves traffic: a second Go runtime that parses every outbound can
+// push a 128-256 MB router into the OOM killer. A soft heap limit and a
+// more eager GC keep its peak down (B1); a check that needs more still runs.
+function sing_box_check_args(config_path) {
+    return [ "env", "GOMEMLIMIT=" + (getenv("PROKOP_SING_BOX_CHECK_GOMEMLIMIT") || "32MiB"),
+        "GOGC=" + (getenv("PROKOP_SING_BOX_CHECK_GOGC") || "25"),
+        "sing-box", "-c", as_string(config_path), "check" ];
+}
+
 // A command line that runs args[0] with exactly these arguments.
 function shell_command(args) {
     return join(" ", map(args, shell_quote));
@@ -266,5 +276,6 @@ return {
     clash_api_secret,
     random_hex_secret,
     shell_quote,
-    shell_command
+    shell_command,
+    sing_box_check_args
 };
