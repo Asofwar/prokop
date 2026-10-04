@@ -2098,35 +2098,56 @@ function source_file_exists(path) {
     return fs.readfile(path) != null;
 }
 
+// The local files of a section's domain_ip_lists, into its ruleset. Remote
+// lists are downloaded by the list updater (components/updates.uc), which
+// writes local and remote entries into the same ruleset: a section with both
+// keeps that set as it is, or the rebuild dropped the downloaded entries
+// until the next update (A8). A local file that is gone or unreadable keeps
+// the previous set instead of a smaller one, and the new set replaces the
+// old one in one rename.
 function rebuild_local_domain_ip_list_ruleset(section_name, references, domains_only) {
     let ruleset_path = domain_ip_list_ruleset_path(section_name);
-    let has_local = false;
+    let has_local = false, has_remote = false;
 
     for (let reference in references) {
-        if (reference_is_local(reference)) {
+        if (reference_is_local(reference))
             has_local = true;
-            break;
-        }
+        else if (as_string(reference) != "")
+            has_remote = true;
     }
 
     if (!has_local)
         return;
+    let previous = source_rulesets.has_rules(ruleset_path);
+    if (has_remote && previous)
+        return;
 
-    fs.unlink(ruleset_path);
-    source_rulesets.create_source(ruleset_path);
+    let missing = [];
+    for (let reference in references)
+        if (reference_is_local(reference) && !source_file_exists(as_string(reference)))
+            push(missing, as_string(reference));
+    for (let reference in missing)
+        warn("local domain/IP list not found: ", reference, "\n");
+    if (length(missing) > 0 && previous) {
+        warn("keeping the previous domain/IP list set of rule ", section_name, "\n");
+        return;
+    }
 
+    let staging = ruleset_path + ".new";
+    fs.unlink(staging);
+    source_rulesets.create_source(staging);
     for (let reference in references) {
         reference = as_string(reference);
-        if (!reference_is_local(reference))
+        if (!reference_is_local(reference) || index(missing, reference) >= 0)
             continue;
-        if (!source_file_exists(reference)) {
-            warn("local domain/IP list not found: ", reference, "\n");
-            continue;
-        }
 
-        source_rulesets.import_plain_list(reference, ruleset_path, "domain_suffix", "domains", "5000");
+        source_rulesets.import_plain_list(reference, staging, "domain_suffix", "domains", "5000");
         if (!domains_only)
-            source_rulesets.import_plain_list(reference, ruleset_path, "ip_cidr", "subnets", "5000");
+            source_rulesets.import_plain_list(reference, staging, "ip_cidr", "subnets", "5000");
+    }
+    if (!fs.rename(staging, ruleset_path)) {
+        fs.unlink(staging);
+        warn("could not replace the domain/IP list set of rule ", section_name, "\n");
     }
 }
 
