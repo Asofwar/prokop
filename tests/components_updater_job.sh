@@ -288,9 +288,12 @@ ucode -L "$package_runtime_lib" "$ACTION_UC" component-action sing_box install_s
 set -e
 grep -Fxq 'apk add sing-box=1.2.3-r1' "$WORK_DIR/apk.log" ||
   fail "APK stable action must request the exact sing-box package version"
-if grep -Fxq 'apk add sing-box' "$WORK_DIR/apk.log"; then
-  fail "APK stable action must not use the provider-selecting unversioned package name"
-fi
+# The exact version is installed first; only then is the same package named
+# without a version, which drops the "sing-box=1.2.3-r1" pin from
+# /etc/apk/world so apk upgrade keeps updating it (UPD-3).
+[ "$(grep -Fxn -e 'apk add sing-box=1.2.3-r1' -e 'apk add sing-box' "$WORK_DIR/apk.log" | cut -d: -f2 | head -n 2 | tr '\n' '|')" = \
+  'apk add sing-box=1.2.3-r1|apk add sing-box|' ] ||
+  fail "APK stable action must install the exact version, then unpin it: $(cat "$WORK_DIR/apk.log")"
 
 release_json="$(cat <<'JSON'
 {

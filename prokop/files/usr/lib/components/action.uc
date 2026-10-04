@@ -591,9 +591,15 @@ function pkg_install_name_downgrade(package_name, package_version) {
         if (package_version == "")
             return false;
         let package_spec = package_name + "=" + package_version;
-        if (pkg_is_installed(package_name))
-            return command_success(command_from_args([ "apk", "add", "--force-reinstall", "--upgrade", package_spec ]) + " </dev/null");
-        return command_success(command_from_args([ "apk", "add", package_spec ]) + " </dev/null");
+        let installed = pkg_is_installed(package_name)
+            ? command_success(command_from_args([ "apk", "add", "--force-reinstall", "--upgrade", package_spec ]) + " </dev/null")
+            : command_success(command_from_args([ "apk", "add", package_spec ]) + " </dev/null");
+        // apk keeps "name=version" in /etc/apk/world: apk upgrade and LuCI
+        // Software would never update the package again, security releases
+        // included (UPD-3). The same version, named without one, unpins it.
+        if (installed && !command_success(command_from_args([ "apk", "add", package_name ]) + " </dev/null"))
+            updates_log("Could not unpin " + package_name + " in /etc/apk/world; apk upgrade will keep version " + package_version, "warn");
+        return installed;
     }
 
     return command_success(command_from_args([ "opkg", "install", "--force-overwrite", "--force-reinstall", "--force-downgrade", package_name ]) + " </dev/null") ||
