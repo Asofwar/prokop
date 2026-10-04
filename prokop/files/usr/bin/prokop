@@ -265,7 +265,11 @@ function run_spec(command, spec, user_args) {
     for (let i = 0; i < count; i++)
         push(args, user_args[i] || "");
 
-    return normalize_status(system(command_from_args(args)));
+    // Started directly, without a shell in between (optimization 9 of the
+    // 2026-10-04 audit); a signal ends it with 128 + the signal number, as
+    // a shell reported it.
+    let status = system(args);
+    return status < 0 ? 128 - status : normalize_status(status);
 }
 
 // While a full removal runs (full-uninstall.sh holds this lock), only the
