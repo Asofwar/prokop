@@ -51,7 +51,7 @@ printf 'nft %s\n' "$*" >> "${NFT_LOG:?}"
 if [ "$1" = "list" ] && [ "$2" = "table" ] && [ "$4" = "ProkopTable" ]; then
   printf 'table inet ProkopTable {\n'
   for section in zapret_first bypass_x vpn_main vpn_plain vpn_last; do
-    for suffix in subnets subnets6 ip_ports ip6_ports udp_ip_ports udp_ip6_ports ports sources sources6 \
+    for suffix in subnets subnets6 ip_ports ip6_ports port_subnets port_subnets6 subnet_ports udp_port_subnets udp_port_subnets6 udp_subnet_ports ports sources sources6 \
       fully_sources fully_sources6 excluded_sources excluded_sources6; do
       name="prokop_rule_${section}_$suffix"
       case " ${NFT_MISSING_SETS:-} " in *" $name "*) continue ;; esac

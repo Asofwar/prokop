@@ -200,6 +200,10 @@ expect captured lan 192.168.1.60 93.184.220.5 tcp 443
 expect captured lan 192.168.1.60 93.184.220.5 udp 443
 expect captured lan 192.168.1.60 203.0.114.9 tcp 8443
 expect captured lan 192.168.1.60 93.184.221.7 tcp 443
+# ip+port: the subnet only on the section's port (optimization 22 keeps
+# subnets and ports in two sets).
+expect direct lan 192.168.1.60 93.184.221.7 tcp 80
+expect direct lan 192.168.1.60 203.0.114.9 tcp 443
 expect direct local 93.184.220.5 tcp 443
 expect direct local 93.184.220.5 udp 443
 expect direct local 203.0.114.9 tcp 8443

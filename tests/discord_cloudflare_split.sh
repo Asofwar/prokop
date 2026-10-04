@@ -44,10 +44,9 @@ awk '
   /^function nft_add_community_subnet_file_for_section\(/ { inside = 1 }
   inside && /nft_community_subnet_lines\(filepath, service, true\)/  { shared = NR }
   inside && /nft_community_subnet_lines\(filepath, service, false\)/ { dedicated = NR }
-  inside && /sets\.udp_ip_ports, sets\.udp_ip6_ports/ { udp = NR }
-  inside && /DISCORD_VOICE_PORTS_NFT/ { ports = NR }
+  inside && /sets\.udp_port_subnets, sets\.udp_port_subnets6/ { udp = NR }
   inside && /^}/ { done = 1; exit }
-  END { exit done && shared && dedicated && udp && ports && udp > shared ? 0 : 1 }
+  END { exit done && shared && dedicated && udp && udp > shared ? 0 : 1 }
 ' "$NFT_APPLY_UC" || fail "shared Cloudflare ranges must be added to the UDP port sets with the Discord media ports"
 
 # Any other service keeps the untouched path, so the dedicated Cloudflare list
@@ -63,9 +62,11 @@ awk '
   END { exit done && matched ? 0 : 1 }
 ' "$NFT_APPLY_UC" || fail "the UDP-scoped rules must be gated on the Discord list"
 
-grep -Fq 'udp_ip_ports: prefix + "_udp_ip_ports"' "$NFT_APPLY_UC" ||
-  fail "each section needs its own UDP-scoped ip/port sets"
-grep -Fq 'nft_create_ipv4_port_set(table, sets.udp_ip_ports)' "$NFT_APPLY_UC" ||
+grep -Fq 'nft_add_subnet_ports(table, sets.udp_subnet_ports, core_ip.DISCORD_VOICE_PORTS_NFT)' "$NFT_APPLY_UC" ||
+  fail "the UDP-scoped port set must hold the Discord media ports"
+grep -Fq 'udp_port_subnets: prefix + "_udp_port_subnets"' "$NFT_APPLY_UC" ||
+  fail "each section needs its own UDP-scoped subnet and port sets"
+grep -Fq 'nft_create_ipv4_set(table, sets.udp_port_subnets)' "$NFT_APPLY_UC" ||
   fail "the UDP-scoped sets must be created with the other priority sets"
 
 grep -Fq 'CLOUDFLARE_SHARED_CIDRS' "$IP_UC" ||

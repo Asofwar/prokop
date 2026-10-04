@@ -365,12 +365,17 @@ check set "$json" "$TABLE" prokop_rule_main_sources6 fd00:1::/64
 check set "$json" "$TABLE" prokop_rule_main_excluded_sources 192.168.1.5
 check set "$json" "$TABLE" prokop_rule_main_fully_sources 192.168.1.20
 check set "$json" "$TABLE" prokop_rule_main_fully_sources6 fd00:1::20
-check set "$json" "$TABLE" prokop_rule_ports_ip_ports '93.184.217.0/24 . 443' '93.184.217.0/24 . 8443-8444' \
-  '149.154.160.0/20 . 443' '66.22.192.0/18 . 8443-8444' '93.184.222.0/24 . 443'
-check set "$json" "$TABLE" prokop_rule_ports_ip6_ports '2606:2800:221::/48 . 443' '2001:67c:4e8::/48 . 8443-8444' \
-  '2606:2800:223::/48 . 8443-8444'
-check set "$json" "$TABLE" prokop_rule_ports_udp_ip_ports '162.159.0.0/16 . 3478'
-check set "$json" "$TABLE" prokop_rule_ports_udp_ip6_ports '2606:4700::/32 . 3478'
+# The section's own ports: subnets and ports in two plain sets; only the rule
+# set, which narrows the ports itself, keeps address . port pairs.
+check set "$json" "$TABLE" prokop_rule_ports_port_subnets 93.184.217.0/24 149.154.160.0/20 66.22.192.0/18
+check set "$json" "$TABLE" prokop_rule_ports_port_subnets6 2606:2800:221::/48 2001:67c:4e8::/48
+check set "$json" "$TABLE" prokop_rule_ports_subnet_ports 443 8443-8444
+check set "$json" "$TABLE" prokop_rule_ports_ip_ports '93.184.222.0/24 . 443'
+check set "$json" "$TABLE" prokop_rule_ports_ip6_ports '2606:2800:223::/48 . 8443-8444'
+check set "$json" "$TABLE" prokop_rule_ports_udp_port_subnets 162.159.0.0/16
+check set "$json" "$TABLE" prokop_rule_ports_udp_port_subnets6 2606:4700::/32
+check set "$json" "$TABLE" prokop_rule_ports_udp_subnet_ports 3478
+check verdicts "$json" "$TABLE" priority_rules prokop_rule_ports_port_subnets "accept-mark:$(hex_to_dec "$FAKEIP_MARK")"
 check set "$json" "$TABLE" prokop_rule_portonly_ports 5000-5010
 check set "$json" "$TABLE" prokop_dns_sources 192.168.1.0/24 192.168.2.40
 check set "$json" "$TABLE" prokop_dns_sources6 fd00:1::/64
@@ -408,7 +413,8 @@ check production "$json" "$TABLE" "$OUTBOUND_MARK" no
 check set "$json" "$TABLE" prokop_rule_lan_subnets 93.184.218.0/24
 check set "$json" "$TABLE" prokop_rule_lan_subnets6 2606:2800:224::/48
 check set "$json" "$TABLE" prokop_rule_lan_fully_sources 192.168.1.30
-check set "$json" "$TABLE" prokop_rule_lanports_ip_ports '93.184.225.0/24 . 22'
+check set "$json" "$TABLE" prokop_rule_lanports_port_subnets 93.184.225.0/24
+check set "$json" "$TABLE" prokop_rule_lanports_subnet_ports 22
 check set "$json" "$TABLE" prokop_rule_bye_subnets 93.184.220.0/24
 check set "$json" "$TABLE" prokop_rule_vpn_subnets 93.184.218.0/23
 # A bypass rule above a capture rule for the same addresses decides first.

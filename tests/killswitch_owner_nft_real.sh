@@ -84,7 +84,7 @@ cat >"$WORK_DIR/stub/nft" <<'EOF'
 if [ "$1 $2" = "list table" ]; then
   printf 'table inet %s {\n' "$4"
   for section in $(sed -n 's/^prokop\.\([A-Za-z0-9_]*\)=section$/\1/p' "$PROKOP_UCI_STATE_FILE"); do
-    for suffix in subnets subnets6 ip_ports ip6_ports udp_ip_ports udp_ip6_ports ports sources sources6 \
+    for suffix in subnets subnets6 ip_ports ip6_ports port_subnets port_subnets6 subnet_ports udp_port_subnets udp_port_subnets6 udp_subnet_ports ports sources sources6 \
       fully_sources fully_sources6 excluded_sources excluded_sources6; do
       printf '\tset prokop_rule_%s_%s {\n\t\ttype ipv4_addr\n\t}\n' "$section" "$suffix"
     done

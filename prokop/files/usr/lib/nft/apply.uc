@@ -605,8 +605,16 @@ function section_priority_sets(section) {
         ports: prefix + "_ports",
         ip_ports: prefix + "_ip_ports",
         ip6_ports: prefix + "_ip6_ports",
-        udp_ip_ports: prefix + "_udp_ip_ports",
-        udp_ip6_ports: prefix + "_udp_ip6_ports",
+        // A section's own ports over its subnets: two plain sets of N + P
+        // elements instead of N x P address . port pairs (optimization 22
+        // of the 2026-10-04 audit). Rule sets with their own ports keep the
+        // pair sets above.
+        port_subnets: prefix + "_port_subnets",
+        port_subnets6: prefix + "_port_subnets6",
+        subnet_ports: prefix + "_subnet_ports",
+        udp_port_subnets: prefix + "_udp_port_subnets",
+        udp_port_subnets6: prefix + "_udp_port_subnets6",
+        udp_subnet_ports: prefix + "_udp_subnet_ports",
         sources: prefix + "_sources",
         sources6: prefix + "_sources6",
         excluded_sources: prefix + "_excluded_sources",
@@ -657,8 +665,11 @@ function section_priority_needs_plain_ip_rules(section) {
 }
 
 function section_priority_needs_ip_port_rules(section) {
-    return section_has_nft_ip_matchers(section) &&
-        (section_rule_ports_csv(section) != "" || length(connections.rule_sets_with_subnets(section)) > 0);
+    return section_has_nft_ip_matchers(section) && length(connections.rule_sets_with_subnets(section)) > 0;
+}
+
+function section_priority_needs_port_subnet_rules(section) {
+    return section_has_nft_ip_matchers(section) && section_rule_ports_csv(section) != "";
 }
 
 // Shared Cloudflare ranges from the Discord list are routed for Discord's own
@@ -693,8 +704,12 @@ function nft_create_priority_sets(table, sets) {
         nft_create_inet_service_set(table, sets.ports) &&
         nft_create_ipv4_port_set(table, sets.ip_ports) &&
         nft_create_ipv6_port_set(table, sets.ip6_ports) &&
-        nft_create_ipv4_port_set(table, sets.udp_ip_ports) &&
-        nft_create_ipv6_port_set(table, sets.udp_ip6_ports) &&
+        nft_create_ipv4_set(table, sets.port_subnets) &&
+        nft_create_ipv6_set(table, sets.port_subnets6) &&
+        nft_create_inet_service_set(table, sets.subnet_ports) &&
+        nft_create_ipv4_set(table, sets.udp_port_subnets) &&
+        nft_create_ipv6_set(table, sets.udp_port_subnets6) &&
+        nft_create_inet_service_set(table, sets.udp_subnet_ports) &&
         nft_create_ipv4_set(table, sets.sources) &&
         nft_create_ipv6_set(table, sets.sources6) &&
         nft_create_ipv4_set(table, sets.excluded_sources) &&
@@ -795,6 +810,18 @@ function nft_add_fully_routed_priority_rules(table, section, interface_set, loca
         nft_add_rule(table, "priority_rules", nft_fully_routed_priority_args(section, 6, interface_set, localv6_set, fakeip6_range, "udp", mark));
 }
 
+// The ports of a section for its port_subnets, valid ones only, as the
+// address . port pairs took them (the validator refuses invalid ones).
+function nft_add_subnet_ports(table, port_set, ports_csv) {
+    let ports = [];
+    for (let port in split(as_string(ports_csv), ",")) {
+        let normalized = normalize_port_condition_value(trim(port));
+        if (normalized != null && index(ports, normalized) < 0)
+            push(ports, normalized);
+    }
+    return length(ports) == 0 || nft_add_set_elements(table, port_set, join(",", ports));
+}
+
 function nft_add_section_priority_rules(table, section, interface_set, localv4_set, localv6_set, mark, fakeip_range, fakeip6_range) {
     if (!section_needs_priority_sets(section))
         return true;
@@ -821,6 +848,11 @@ function nft_add_section_priority_rules(table, section, interface_set, localv4_s
     let needs_plain_ip_rules = section_priority_needs_plain_ip_rules(section);
     let needs_ip_port_rules = section_priority_needs_ip_port_rules(section);
     let needs_udp_ip_port_rules = section_priority_needs_udp_ip_port_rules(section);
+    let needs_port_subnet_rules = section_priority_needs_port_subnet_rules(section);
+    if (needs_port_subnet_rules && !nft_add_subnet_ports(table, sets.subnet_ports, section_rule_ports_csv(section)))
+        return false;
+    if (needs_udp_ip_port_rules && !nft_add_subnet_ports(table, sets.udp_subnet_ports, core_ip.DISCORD_VOICE_PORTS_NFT))
+        return false;
     let has_port_only_matchers = section_has_nft_port_only_matchers(section);
     let match_ip4 = [ "ip", "daddr", "@" + as_string(sets.subnets) ];
     let match_ip6 = [ "ip6", "daddr", "@" + as_string(sets.subnets6) ];
@@ -828,8 +860,12 @@ function nft_add_section_priority_rules(table, section, interface_set, localv4_s
     let match_ip_port4_udp = [ "ip", "daddr", ".", "udp", "dport", "@" + as_string(sets.ip_ports) ];
     let match_ip_port6_tcp = [ "ip6", "daddr", ".", "tcp", "dport", "@" + as_string(sets.ip6_ports) ];
     let match_ip_port6_udp = [ "ip6", "daddr", ".", "udp", "dport", "@" + as_string(sets.ip6_ports) ];
-    let match_udp_ip_port4 = [ "ip", "daddr", ".", "udp", "dport", "@" + as_string(sets.udp_ip_ports) ];
-    let match_udp_ip_port6 = [ "ip6", "daddr", ".", "udp", "dport", "@" + as_string(sets.udp_ip6_ports) ];
+    let match_port_subnet4_tcp = [ "ip", "daddr", "@" + as_string(sets.port_subnets), "tcp", "dport", "@" + as_string(sets.subnet_ports) ];
+    let match_port_subnet4_udp = [ "ip", "daddr", "@" + as_string(sets.port_subnets), "udp", "dport", "@" + as_string(sets.subnet_ports) ];
+    let match_port_subnet6_tcp = [ "ip6", "daddr", "@" + as_string(sets.port_subnets6), "tcp", "dport", "@" + as_string(sets.subnet_ports) ];
+    let match_port_subnet6_udp = [ "ip6", "daddr", "@" + as_string(sets.port_subnets6), "udp", "dport", "@" + as_string(sets.subnet_ports) ];
+    let match_udp_port_subnet4 = [ "ip", "daddr", "@" + as_string(sets.udp_port_subnets), "udp", "dport", "@" + as_string(sets.udp_subnet_ports) ];
+    let match_udp_port_subnet6 = [ "ip6", "daddr", "@" + as_string(sets.udp_port_subnets6), "udp", "dport", "@" + as_string(sets.udp_subnet_ports) ];
     let match_port4_tcp = [ "tcp", "dport", "@" + as_string(sets.ports) ];
     let match_port4_udp = [ "udp", "dport", "@" + as_string(sets.ports) ];
     let match_port6_tcp = [ "tcp", "dport", "@" + as_string(sets.ports) ];
@@ -839,9 +875,11 @@ function nft_add_section_priority_rules(table, section, interface_set, localv4_s
     // never fast-paths it, sing-box applies the rule to the real address in
     // UCI order (UC-029), as for fully routed devices above.
     if (section_priority_action(section) == "bypass") {
-        for (let match4 in [ match_ip4, match_ip_port4_tcp, match_ip_port4_udp, match_udp_ip_port4, match_port4_tcp, match_port4_udp ])
+        for (let match4 in [ match_ip4, match_ip_port4_tcp, match_ip_port4_udp, match_port4_tcp, match_port4_udp,
+                match_port_subnet4_tcp, match_port_subnet4_udp, match_udp_port_subnet4 ])
             splice(match4, 0, 0, "ip", "daddr", "!=", fakeip_range);
-        for (let match6 in [ match_ip6, match_ip_port6_tcp, match_ip_port6_udp, match_udp_ip_port6, match_port6_tcp, match_port6_udp ])
+        for (let match6 in [ match_ip6, match_ip_port6_tcp, match_ip_port6_udp, match_port6_tcp, match_port6_udp,
+                match_port_subnet6_tcp, match_port_subnet6_udp, match_udp_port_subnet6 ])
             splice(match6, 0, 0, "ip6", "daddr", "!=", fakeip6_range);
     }
 
@@ -857,9 +895,16 @@ function nft_add_section_priority_rules(table, section, interface_set, localv4_s
             !add_output_pair(match_ip_port4_udp, match_ip_port6_udp)))
         return false;
 
+    if (needs_port_subnet_rules &&
+        (!nft_add_priority_rule_pair(table, "priority_rules", section, interface_set, localv4_set, localv6_set, match_port_subnet4_tcp, match_port_subnet6_tcp, mark) ||
+            !nft_add_priority_rule_pair(table, "priority_rules", section, interface_set, localv4_set, localv6_set, match_port_subnet4_udp, match_port_subnet6_udp, mark) ||
+            !add_output_pair(match_port_subnet4_tcp, match_port_subnet6_tcp) ||
+            !add_output_pair(match_port_subnet4_udp, match_port_subnet6_udp)))
+        return false;
+
     if (needs_udp_ip_port_rules &&
-        (!nft_add_priority_rule_pair(table, "priority_rules", section, interface_set, localv4_set, localv6_set, match_udp_ip_port4, match_udp_ip_port6, mark) ||
-            !add_output_pair(match_udp_ip_port4, match_udp_ip_port6)))
+        (!nft_add_priority_rule_pair(table, "priority_rules", section, interface_set, localv4_set, localv6_set, match_udp_port_subnet4, match_udp_port_subnet6, mark) ||
+            !add_output_pair(match_udp_port_subnet4, match_udp_port_subnet6)))
         return false;
 
     if (has_port_only_matchers &&
@@ -1309,12 +1354,19 @@ function nft_add_csv_chunks_to_family_sets(csv, table, ipv4_set, ipv6_set, kind,
     return nft_add_values_to_family_sets_once(nft_csv_values(csv), table, ipv4_set, ipv6_set, kind, ports_csv, chunk_size_text);
 }
 
+// Subnets limited to the section's ports: the ports are added once with
+// the section's rules (nft_add_section_priority_rules); a second add of an
+// interval in the same batch is refused by the kernel.
+function nft_add_values_to_port_subnets(values, table, ipv4_set, ipv6_set, chunk_size_text) {
+    return nft_add_values_to_family_sets_once(values, table, ipv4_set, ipv6_set, "ips", "", chunk_size_text);
+}
+
 function nft_add_inline_ip_cidr_matchers(csv, ports_csv, table, common_set, ip_port_set, chunk_size_text, common6_set, ip_port6_set) {
     if (as_string(csv) == "")
         return true;
 
     if (as_string(ports_csv) != "")
-        return nft_add_csv_chunks_to_family_sets(csv, table, ip_port_set, default_arg(ip_port6_set, "prokop_ip6_ports"), "ip-port-from-ip", ports_csv, chunk_size_text);
+        return nft_add_values_to_port_subnets(nft_csv_values(csv), table, ip_port_set, ip_port6_set, chunk_size_text);
 
     return nft_add_csv_chunks_to_family_sets(csv, table, common_set, default_arg(common6_set, "prokop_subnets6"), "ips", "", chunk_size_text);
 }
@@ -2325,7 +2377,7 @@ function nft_populate_runtime_set_for_section(section, deferred_sections, table,
         if (!nft_add_section_fully_routed_sources(section, table, 5000))
             return false;
 
-        if (!nft_add_inline_ip_cidr_matchers(ip_values, ports, table, sets.subnets, sets.ip_ports, 5000, sets.subnets6, sets.ip6_ports))
+        if (!nft_add_inline_ip_cidr_matchers(ip_values, ports, table, sets.subnets, sets.port_subnets, 5000, sets.subnets6, sets.port_subnets6))
             return false;
 
         if (ports != "" && !section_has_destination_matchers(section) &&
@@ -2344,7 +2396,7 @@ function nft_add_subnet_file_for_section(section, filepath, table, common_set, i
         return true;
 
     if (ports != "")
-        return nft_add_file_chunks_to_family_sets(filepath, table, sets.ip_ports, sets.ip6_ports, "ip-port-from-ip", ports, chunk_size_text);
+        return nft_add_values_to_port_subnets(nft_trimmed_lines(filepath), table, sets.port_subnets, sets.port_subnets6, chunk_size_text);
 
     return nft_add_file_chunks_to_family_sets(filepath, table, sets.subnets, sets.subnets6, "ips", "", chunk_size_text);
 }
@@ -2523,14 +2575,12 @@ function nft_add_community_subnet_file_for_section(section, service, filepath, t
 
     let ok = true;
     if (length(shared) > 0 &&
-        !nft_add_values_to_family_sets(shared, table, sets.udp_ip_ports, sets.udp_ip6_ports,
-            "ip-port-from-ip", core_ip.DISCORD_VOICE_PORTS_NFT, chunk_size_text))
+        !nft_add_values_to_port_subnets(shared, table, sets.udp_port_subnets, sets.udp_port_subnets6, chunk_size_text))
         ok = false;
 
     if (length(dedicated) > 0) {
         if (ports != "") {
-            if (!nft_add_values_to_family_sets(dedicated, table, sets.ip_ports, sets.ip6_ports,
-                "ip-port-from-ip", ports, chunk_size_text))
+            if (!nft_add_values_to_port_subnets(dedicated, table, sets.port_subnets, sets.port_subnets6, chunk_size_text))
                 ok = false;
         }
         else if (!nft_add_values_to_family_sets(dedicated, table, sets.subnets, sets.subnets6,

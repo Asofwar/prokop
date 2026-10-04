@@ -524,9 +524,13 @@ assert_contains "$NFT_LOG" $'nft\tadd\telement\tinet\tProkopTable\tprokop_rule_i
 
 : > "$NFT_LOG"
 nft_ucode nft-add-subnet-file-for-section-fixture "$WORK_DIR/populate-fixture.json" ports_only "$plain_subnets" ProkopTable prokop_subnets prokop_ip_ports 3
-assert_contains "$NFT_LOG" $'198.51.100.210 . 53,198.51.100.210 . 853,198.51.100.210 . 5353' "plain subnet import scoped first chunk"
-assert_contains "$NFT_LOG" $'203.0.113.0/24 . 53,203.0.113.0/24 . 853,203.0.113.0/24 . 5353' "plain subnet import scoped second chunk"
-assert_contains "$NFT_LOG" $'2001:db8::210 . 53,2001:db8::210 . 853,2001:db8::210 . 5353' "plain subnet6 import scoped chunk"
+# A section's own ports keep the subnets in a plain set: N + P elements,
+# not N x P address . port pairs (optimization 22 of the 2026-10-04 audit).
+assert_contains "$NFT_LOG" $'nft\tadd\telement\tinet\tProkopTable\tprokop_rule_ports_only_port_subnets\t{ 198.51.100.210,203.0.113.0/24 }' "plain subnet import with section ports"
+assert_contains "$NFT_LOG" $'nft\tadd\telement\tinet\tProkopTable\tprokop_rule_ports_only_port_subnets6\t{ 2001:db8::210 }' "plain subnet6 import with section ports"
+if grep -Fq ' . ' "$NFT_LOG"; then
+  fail "a list under section ports must not build address . port pairs"
+fi
 
 json_ruleset="$WORK_DIR/subnets-ruleset.json"
 cat >"$json_ruleset" <<'JSON'
@@ -580,14 +584,12 @@ nft_ucode nft-add-community-subnet-file-for-section-fixture "$WORK_DIR/populate-
 if grep -Fq 'prokop_discord_subnets' "$NFT_LOG"; then
   fail "discord community with section ports should not use the discord nft set"
 fi
-assert_contains "$NFT_LOG" $'198.51.100.210 . 53,198.51.100.210 . 853,198.51.100.210 . 5353' "discord community with ports uses scoped import"
+assert_contains "$NFT_LOG" $'nft\tadd\telement\tinet\tProkopTable\tprokop_rule_ports_only_port_subnets\t{ 198.51.100.210,203.0.113.0/24 }' "discord community with ports uses the port subnets"
 
 : > "$NFT_LOG"
 nft_ucode nft-populate-runtime-sets-fixture "$WORK_DIR/populate-fixture.json" 1 "deferred" ProkopTable prokop_subnets prokop_ports prokop_ip_ports prokop_interfaces localv4 0x00100000
-assert_contains "$NFT_LOG" $'198.51.100.1 . 80,198.51.100.1 . 443-444,203.0.113.0/24 . 80' "populate inline ip-port first chunk"
-assert_contains "$NFT_LOG" $'203.0.113.0/24 . 443-444' "populate inline ip-port second chunk"
-assert_contains "$NFT_LOG" $'nft\tadd\telement\tinet\tProkopTable\tprokop_rule_inline_ip_ports\t{ 198.51.100.1 . 80,198.51.100.1 . 443-444,203.0.113.0/24 . 80,203.0.113.0/24 . 443-444 }' "populate inline priority ip-port set"
-assert_contains "$NFT_LOG" $'nft\tadd\telement\tinet\tProkopTable\tprokop_rule_inline_ip6_ports\t{ 2001:db8::1 . 80,2001:db8::1 . 443-444 }' "populate inline priority ip6-port set"
+assert_contains "$NFT_LOG" $'nft\tadd\telement\tinet\tProkopTable\tprokop_rule_inline_port_subnets\t{ 198.51.100.1,203.0.113.0/24 }' "populate inline priority port subnets"
+assert_contains "$NFT_LOG" $'nft\tadd\telement\tinet\tProkopTable\tprokop_rule_inline_port_subnets6\t{ 2001:db8::1 }' "populate inline priority port subnets6"
 assert_contains "$NFT_LOG" $'nft\tadd\telement\tinet\tProkopTable\tprokop_rule_inline_no_ports_subnets\t{ 198.51.100.200 }' "populate inline ip without ports"
 assert_contains "$NFT_LOG" $'nft\tadd\telement\tinet\tProkopTable\tprokop_rule_inline_no_ports_subnets6\t{ 2001:db8::200 }' "populate inline ip6 without ports"
 assert_contains "$NFT_LOG" $'nft\tadd\telement\tinet\tProkopTable\tprokop_rule_ports_only_ports\t{ 53,853,5353 }' "populate ports-only set"
