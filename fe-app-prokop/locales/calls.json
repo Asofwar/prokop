@@ -877,6 +877,13 @@
     ]
   },
   {
+    "call": "Always",
+    "key": "Always",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:929"
+    ]
+  },
+  {
     "call": "An administrator can roll it back.",
     "key": "An administrator can roll it back.",
     "places": [
@@ -2919,6 +2926,13 @@
     ]
   },
   {
+    "call": "Devices with their own DNS server (8.8.8.8 in a TV, IoT devices) bypass domain rules and the kill-switch. Their plain DNS on port 53 is sent to the router instead. DNS to local addresses (Pi-hole) and DNS over TLS stay untouched",
+    "key": "Devices with their own DNS server (8.8.8.8 in a TV, IoT devices) bypass domain rules and the kill-switch. Their plain DNS on port 53 is sent to the router instead. DNS to local addresses (Pi-hole) and DNS over TLS stay untouched",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:924"
+    ]
+  },
+  {
     "call": "DHCP has DNS server",
     "key": "DHCP has DNS server",
     "places": [
@@ -4597,6 +4611,13 @@
     ]
   },
   {
+    "call": "Intercept client DNS",
+    "key": "Intercept client DNS",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:923"
+    ]
+  },
+  {
     "call": "Interface Monitoring",
     "key": "Interface Monitoring",
     "places": [
@@ -6027,6 +6048,13 @@
     "key": "never",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:86"
+    ]
+  },
+  {
+    "call": "Never",
+    "key": "Never",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:930"
     ]
   },
   {
@@ -11929,6 +11957,13 @@
     "key": "What was proven",
     "places": [
       "src/prokop/tabs/diagnostic/partials/renderCheckSection.ts:114"
+    ]
+  },
+  {
+    "call": "When a rule has the kill-switch",
+    "key": "When a rule has the kill-switch",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:928"
     ]
   },
   {

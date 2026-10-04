@@ -177,7 +177,7 @@ let uci_safe_options = {
     exclude_regex: true, fastest_check_interval: true, filter_mode: true, group: true,
     hide_detour_outbounds: true, hide_urltest_group_outbounds: true, idle_timeout: true,
     include_countries: true, include_outbounds: true, include_regex: true,
-    include_subnets: true, include_urltest_groups: true, interface: true, interfaces: true,
+    include_subnets: true, include_urltest_groups: true, intercept_client_dns: true, interface: true, interfaces: true,
     interrupt_exist_connections: true, label: true, list_update_enabled: true, log_level: true,
     mixed_proxy_auth_enabled: true, mixed_proxy_enabled: true, mixed_proxy_port: true,
     name: true, node_prefix: true, order: true, outbound_detour_enabled: true,

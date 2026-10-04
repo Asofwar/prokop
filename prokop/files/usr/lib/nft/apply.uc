@@ -1737,6 +1737,7 @@ function nft_runtime_signature_from_settings_and_sections(settings, sections) {
 
     body = signature_add_value(body, "settings.source_network_interfaces", option(settings, "source_network_interfaces", "br-lan"));
     body = signature_add_value(body, "settings.exclude_ntp", bool_option(settings, "exclude_ntp", false) ? "1" : "0");
+    body = signature_add_value(body, "settings.intercept_client_dns", connections.client_dns_intercept_enabled(settings, sections) ? "1" : "0");
 
     for (let section in sections)
         body = nft_rule_signature_body(body, object_or_empty(section));
@@ -1792,11 +1793,34 @@ function nft_create_provider_output_rules_from_uci(table, action, provider_bin, 
     );
 }
 
+// NET-6 (config/connections.uc client_dns_intercept_enabled): plain DNS of
+// clients to foreign servers goes to the router's dnsmasq. DNS to the LAN
+// (a Pi-hole), to the router itself and DoT (853) are left alone. The rules
+// of one table, after its source-aware DNS redirect.
+function client_dns_intercept_rules(interface_set, localv4_set, localv6_set) {
+    let rules = [];
+    for (let family in [ [ "ip", localv4_set ], [ "ip6", localv6_set ] ])
+        for (let proto in [ "udp", "tcp" ])
+            push(rules, [ "iifname", "@" + as_string(interface_set), family[0], "daddr", "!=", "@" + as_string(family[1]),
+                "fib", "daddr", "type", "!=", "local", proto, "dport", "53", "counter", "redirect", "to", ":53" ]);
+    return rules;
+}
+
+function nft_add_client_dns_intercept_from_uci(table, interface_set, localv4_set, localv6_set) {
+    if (!connections.client_dns_intercept_enabled(uci_settings(), uci_sections("section")))
+        return true;
+    for (let rule in client_dns_intercept_rules(interface_set, localv4_set, default_arg(localv6_set, "localv6")))
+        if (!nft_add_rule(table, "dns_redirect", rule))
+            return false;
+    return true;
+}
+
 function nft_create_full_runtime_from_uci(rt_table, table, localv4_set, common_set, port_set, ip_port_set, interface_set, fakeip_mark, outbound_mark, fakeip_range, tproxy_port, zapret_bin, zapret_route_mark_base, zapret_queue_base, zapret_desync_mark, zapret_desync_mark_postnat, zapret2_bin, zapret2_route_mark_base, zapret2_queue_base, zapret2_desync_mark, zapret2_desync_mark_postnat, localv6_set, common6_set, ip_port6_set, fakeip6_range, tproxy6_address) {
     log_debug("Building nftables runtime model");
 
     return ensure_tproxy_route_rule(rt_table, fakeip_mark) &&
         nft_create_runtime_base_from_uci(table, localv4_set, common_set, port_set, ip_port_set, interface_set, fakeip_mark, outbound_mark, fakeip_range, tproxy_port, localv6_set, common6_set, ip_port6_set, fakeip6_range, tproxy6_address) &&
+        nft_add_client_dns_intercept_from_uci(table, interface_set, localv4_set, localv6_set) &&
         nft_add_section_priority_rules_from_sections(uci_sections("section"), table, interface_set, localv4_set, localv6_set, fakeip_mark, fakeip_range, fakeip6_range) &&
         nft_create_provider_output_rules_from_uci(table, "zapret", zapret_bin, zapret_route_mark_base, zapret_queue_base, zapret_desync_mark, zapret_desync_mark_postnat) &&
         nft_create_provider_output_rules_from_uci(table, "zapret2", zapret2_bin, zapret2_route_mark_base, zapret2_queue_base, zapret2_desync_mark, zapret2_desync_mark_postnat) &&
@@ -2162,6 +2186,14 @@ function nft_killswitch_render_sections(sections, settings, live_table, ks_table
         "add rule " + t + " " + KILLSWITCH_FORWARD_CHAIN + " ip6 daddr @localv6 return",
         "add rule " + t + " " + KILLSWITCH_FORWARD_CHAIN + " jump " + KILLSWITCH_POLICY_CHAIN
     );
+    // NET-6: client DNS to foreign servers goes to the router's dnsmasq,
+    // which answers with the block list while Prokop is stopped. After
+    // Prokop's own redirect (-101): the first redirect of a connection wins.
+    if (connections.client_dns_intercept_enabled(settings, sections)) {
+        push(lines, "add chain " + t + " ks_dns_intercept { type nat hook prerouting priority -100; policy accept; }");
+        for (let rule in client_dns_intercept_rules(KILLSWITCH_INTERFACE_SET, "localv4", "localv6"))
+            push(lines, "add rule " + t + " ks_dns_intercept " + join(" ", rule));
+    }
 
     let element_lines = [];
     let ok = true;

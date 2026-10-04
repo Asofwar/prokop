@@ -914,6 +914,22 @@ function createSettingsContent(sections, capabilities) {
   );
   o.default = "0";
   o.rmempty = false;
+
+  // NET-6: plain DNS (port 53) of clients to their own servers goes to the
+  // router's dnsmasq (nft/apply.uc client_dns_intercept_rules).
+  o = sections.network.option(
+    form.ListValue,
+    "intercept_client_dns",
+    _("Intercept client DNS"),
+    _(
+      "Devices with their own DNS server (8.8.8.8 in a TV, IoT devices) bypass domain rules and the kill-switch. Their plain DNS on port 53 is sent to the router instead. DNS to local addresses (Pi-hole) and DNS over TLS stay untouched",
+    ),
+  );
+  o.value("auto", _("When a rule has the kill-switch"));
+  o.value("1", _("Always"));
+  o.value("0", _("Never"));
+  o.default = "auto";
+  o.rmempty = false;
 }
 
 const EntryPoint = {

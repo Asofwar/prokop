@@ -122,6 +122,7 @@ export const UCI_SAFE_OPTIONS = new Set([
   'include_regex',
   'include_subnets',
   'include_urltest_groups',
+  'intercept_client_dns',
   'interface',
   'interfaces',
   'interrupt_exist_connections',

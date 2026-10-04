@@ -665,6 +665,8 @@ cat >"$WORK_DIR/signature-expected.txt" <<'EOF_EXPECTED'
 br-lan tun0
 [settings.exclude_ntp]
 1
+[settings.intercept_client_dns]
+0
 [rule.text_rule.action]
 bypass
 [rule.text_rule.ip_cidr]
@@ -735,6 +737,8 @@ cat >"$WORK_DIR/signature-uci-expected.txt" <<'EOF_EXPECTED'
 br-lan tun0
 [settings.exclude_ntp]
 1
+[settings.intercept_client_dns]
+0
 [rule.enabled.action]
 bypass
 [rule.enabled.ip_cidr]
@@ -768,6 +772,8 @@ cat >"$WORK_DIR/signature-defaults-expected.txt" <<'EOF_EXPECTED'
 [settings.source_network_interfaces]
 br-lan
 [settings.exclude_ntp]
+0
+[settings.intercept_client_dns]
 0
 EOF_EXPECTED
 expected_signature="$(md5sum "$WORK_DIR/signature-defaults-expected.txt" | awk '{print $1}')"

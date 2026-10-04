@@ -211,7 +211,9 @@ ks sync start || fail "sync from the real live table failed"
 nft list table inet ProkopKillswitch >/dev/null 2>&1 || fail "the synced policy is not live"
 [ -s "$EXEMPT" ] || fail "the groups of excluded devices must be saved"
 cp "$STATE_DIR/policy.nft" "$WORK_DIR/policy.exempt"
-if grep -q redirect "$WORK_DIR/policy.exempt"; then fail "the saved firewall policy redirects nothing"; fi
+# Only the client DNS intercept (NET-6) is static; the redirects of excluded
+# devices are the watcher's.
+if grep redirect "$WORK_DIR/policy.exempt" | grep -vq ' ks_dns_intercept '; then fail "the saved firewall policy redirects nothing"; fi
 grep -q ' ks_exempt_guard ' "$WORK_DIR/policy.exempt" || fail "the saved firewall policy guards the resolvers of excluded devices"
 
 # Prokop stops: dnsmasq answers with the shared block list.

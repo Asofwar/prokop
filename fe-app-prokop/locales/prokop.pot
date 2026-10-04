@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-04 21:42+0000\n"
-"PO-Revision-Date: 2026-10-04 21:42+0000\n"
+"POT-Creation-Date: 2026-10-04 22:26+0000\n"
+"PO-Revision-Date: 2026-10-04 22:26+0000\n"
 "Last-Translator: Asofwar <7397608+Asofwar@users.noreply.github.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -528,6 +528,10 @@ msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2923
 msgid "Allows limiting the list of servers for URLTest"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:929
+msgid "Always"
 msgstr ""
 
 #: src/prokop/tabs/autotune/initController.ts:947
@@ -1741,6 +1745,10 @@ msgstr ""
 msgid "Devices may bypass the router DNS, so domain rules do not apply to them."
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:924
+msgid "Devices with their own DNS server (8.8.8.8 in a TV, IoT devices) bypass domain rules and the kill-switch. Their plain DNS on port 53 is sent to the router instead. DNS to local addresses (Pi-hole) and DNS over TLS stay untouched"
+msgstr ""
+
 #: src/prokop/tabs/diagnostic/checks/getDnsCheckPresentation.ts:41
 msgid "DHCP has DNS server"
 msgstr ""
@@ -2732,6 +2740,10 @@ msgstr ""
 msgid "Installed version is newer than release"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:923
+msgid "Intercept client DNS"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:629
 msgid "Interface Monitoring"
 msgstr ""
@@ -3572,6 +3584,10 @@ msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:86
 msgid "never"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:930
+msgid "Never"
 msgstr ""
 
 #: src/prokop/services/core.service.ts:40
@@ -7044,6 +7060,10 @@ msgstr ""
 
 #: src/prokop/tabs/diagnostic/partials/renderCheckSection.ts:114
 msgid "What was proven"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:928
+msgid "When a rule has the kill-switch"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3353

@@ -1485,6 +1485,7 @@ function nft_runtime_signature_body(settings, sections) {
 
     body = signature_add_value(body, "settings.source_network_interfaces", option(settings, "source_network_interfaces", "br-lan"));
     body = signature_add_value(body, "settings.exclude_ntp", bool_option(settings, "exclude_ntp", false) ? "1" : "0");
+    body = signature_add_value(body, "settings.intercept_client_dns", connections.client_dns_intercept_enabled(settings, sections) ? "1" : "0");
 
     for (let section in sections) {
         section = object_or_empty(section);

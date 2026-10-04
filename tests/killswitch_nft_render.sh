@@ -151,6 +151,18 @@ fi
 grep -Fq 'prokop_rule_vpn_main_subnets6 is missing' "$WORK_DIR/partial.json" || fail "missing set must be reported"
 [ ! -e "$WORK_DIR/partial.nft" ] || fail "failed render must not write a policy"
 
+# NET-6: with a protected section, client DNS to foreign servers goes to the
+# router's dnsmasq (block list while Prokop is stopped), after Prokop's own
+# redirect; LAN resolvers and the router stay; off when asked.
+assert_contains "$OUT" "add chain $T ks_dns_intercept { type nat hook prerouting priority -100; policy accept; }" "client DNS intercept chain"
+assert_contains "$OUT" "add rule $T ks_dns_intercept iifname @ks_interfaces ip daddr != @localv4 fib daddr type != local udp dport 53 counter redirect to :53" "client DNS intercept IPv4 UDP"
+assert_contains "$OUT" "add rule $T ks_dns_intercept iifname @ks_interfaces ip6 daddr != @localv6 fib daddr type != local tcp dport 53 counter redirect to :53" "client DNS intercept IPv6 TCP"
+sed 's/"source_network_interfaces": "br-lan awg_server"/"source_network_interfaces": "br-lan awg_server", "intercept_client_dns": "0"/' \
+  "$WORK_DIR/fixture.json" > "$WORK_DIR/no-intercept.json"
+ucode -L "$PROKOP_LIB" "$NFT_RUNTIME" killswitch-render-fixture "$WORK_DIR/no-intercept.json" ProkopTable ProkopKillswitch "$WORK_DIR/no-intercept.nft" >/dev/null ||
+  fail "render with intercept_client_dns=0 failed"
+assert_not_contains "$WORK_DIR/no-intercept.nft" "ks_dns_intercept" "client DNS intercept off when asked"
+
 sed 's/"source_network_interfaces": "br-lan awg_server"/"source_network_interfaces": "br-lan awg_server", "exclude_ntp": "1"/' \
   "$WORK_DIR/fixture.json" > "$WORK_DIR/ntp.json"
 ucode -L "$PROKOP_LIB" "$NFT_RUNTIME" killswitch-render-fixture "$WORK_DIR/ntp.json" ProkopTable ProkopKillswitch "$WORK_DIR/ntp.nft" >/dev/null ||

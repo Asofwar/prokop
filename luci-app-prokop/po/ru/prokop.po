@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-04 21:42+0000\n"
-"PO-Revision-Date: 2026-10-04 21:42+0000\n"
+"POT-Creation-Date: 2026-10-04 22:26+0000\n"
+"PO-Revision-Date: 2026-10-04 22:26+0000\n"
 "Last-Translator: Asofwar\n"
 "Language-Team: none\n"
 "Language: ru\n"
@@ -379,6 +379,9 @@ msgstr "Обеспечивает доступ к YACD из WAN. Убедитес
 
 msgid "Allows limiting the list of servers for URLTest"
 msgstr "Позволяет ограничить список серверов для URLTest"
+
+msgid "Always"
+msgstr "Всегда"
 
 msgid "An administrator can roll it back."
 msgstr "Откатить его может администратор."
@@ -1211,6 +1214,9 @@ msgstr "Устройства продолжат работать через ро
 msgid "Devices may bypass the router DNS, so domain rules do not apply to them."
 msgstr "Устройства могут обходить DNS роутера, и правила по доменам к ним не применяются."
 
+msgid "Devices with their own DNS server (8.8.8.8 in a TV, IoT devices) bypass domain rules and the kill-switch. Their plain DNS on port 53 is sent to the router instead. DNS to local addresses (Pi-hole) and DNS over TLS stay untouched"
+msgstr "Устройства со своим DNS-сервером (8.8.8.8 в телевизоре, IoT) обходят доменные правила и kill-switch. Их обычный DNS на порт 53 отправляется на роутер. DNS на локальные адреса (Pi-hole) и DNS over TLS не трогаются"
+
 msgid "DHCP has DNS server"
 msgstr "DHCP содержит DNS сервер"
 
@@ -1898,6 +1904,9 @@ msgstr "Установлен (Mirror edition)"
 msgid "Installed version is newer than release"
 msgstr "Установлена версия новее релиза"
 
+msgid "Intercept client DNS"
+msgstr "Перехват DNS клиентов"
+
 msgid "Interface Monitoring"
 msgstr "Мониторинг интерфейса"
 
@@ -2488,6 +2497,9 @@ msgstr "Настройки сетевого интерфейса"
 
 msgid "never"
 msgstr "никогда"
+
+msgid "Never"
+msgstr "Никогда"
 
 msgid "New version %s is available for %s"
 msgstr "Доступна новая версия %s для %s"
@@ -4918,6 +4930,9 @@ msgstr "Что сделать"
 
 msgid "What was proven"
 msgstr "Что доказано"
+
+msgid "When a rule has the kill-switch"
+msgstr "Когда у правила включён kill-switch"
 
 msgid "When switching to another level, test every server and select the fastest instead of the first working one."
 msgstr "При переходе на другой уровень тестировать все сервера и выбирать самый быстрый, а не первый работающий."

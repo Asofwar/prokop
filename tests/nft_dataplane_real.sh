@@ -375,6 +375,42 @@ grep -q '"lan@1"' <<<"$(nft list set inet "$TABLE" "$INTERFACES")" || fail "the 
 expect captured lan 192.168.1.60 93.184.216.34 tcp 443
 ok "interface names such as lan@1 and 10g are quoted for nft (NET-9)"
 
+# ---- NET-6: client DNS to foreign servers goes to the router -----------------
+
+# seen holds the destination after NAT: a redirected query arrives at the
+# router's own address on port 53.
+expect_dns() { # expect_dns redirected|direct SRC DST PROTO
+  local want="$1" src="$2" dst="$3" proto="$4" elements
+  python3 "$PACKETS" lan br-lan "$src" "$dst" "$proto" 53 || fail "could not send DNS to $dst from the LAN"
+  elements="$(set_elements seen)"
+  if grep -Fq "\"192.168.1.1 . $proto . 53\"" <<<"$elements" && ! grep -Fq "\"$dst . $proto . 53\"" <<<"$elements"; then
+    [ "$want" = redirected ] || fail "DNS to $dst over $proto was redirected to the router; it must go direct"
+  else
+    [ "$want" = direct ] || fail "DNS to $dst over $proto was not redirected to the router: $elements"
+  fi
+  nft flush set inet ProkopTestObserve seen
+  nft flush set inet ProkopTestObserve marked
+}
+printf '%s\n' prokop.settings=settings prokop.web=section prokop.web.action=vpn \
+  prokop.web.domain=example.com prokop.web.kill_switch=1 >"$WORK_DIR/dns-intercept.uci"
+apply_config "$WORK_DIR/dns-intercept.uci"
+expect_dns redirected 192.168.1.60 8.8.8.8 udp
+expect_dns redirected 192.168.1.60 8.8.8.8 tcp
+# A resolver in the LAN (a Pi-hole) stays as it is.
+expect_dns direct 192.168.1.60 192.168.1.53 udp
+printf 'prokop.settings.intercept_client_dns=0\n' >>"$WORK_DIR/dns-intercept.uci"
+apply_config "$WORK_DIR/dns-intercept.uci"
+# A new client each time: a NAT binding stays with its connection.
+expect_dns direct 192.168.1.61 8.8.8.8 udp
+printf '%s\n' prokop.settings=settings prokop.web=section prokop.web.action=vpn \
+  prokop.web.domain=example.com >"$WORK_DIR/dns-intercept-off.uci"
+apply_config "$WORK_DIR/dns-intercept-off.uci"
+expect_dns direct 192.168.1.62 8.8.8.8 udp
+printf 'prokop.settings.intercept_client_dns=1\n' >>"$WORK_DIR/dns-intercept-off.uci"
+apply_config "$WORK_DIR/dns-intercept-off.uci"
+expect_dns redirected 192.168.1.63 8.8.8.8 udp
+ok "client DNS to foreign servers goes to the router while a rule has the kill-switch or when asked; LAN resolvers stay (NET-6)"
+
 # ---- NET-10: the table vanishes between building and committing a reload -----
 
 # A reload built its batch with a bare 'delete table' when the table was
