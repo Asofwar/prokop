@@ -47,6 +47,15 @@ instance_owners="$(grep -R -l -F 'procd_open_instance' "$LIB" | sed "s|^$LIB/||"
   fail "the managed sing-box init script text has more than one copy: $(printf '%s\n' "$instance_owners" | tr '\n' ' ')"
 ok "the managed sing-box init script text has one copy, without procd_set_param file"
 
+# B10: sing-box gets 10 s after SIGTERM to write its FakeIP cache, inside the
+# 15 s a controlled transition waits for it to end.
+term_timeout="$(ucode -L "$LIB" -e 'print(require("singbox.managed_service").text())' |
+  sed -n 's/^ *procd_set_param term_timeout \([0-9]*\)$/\1/p')"
+[ -n "$term_timeout" ] || fail "the managed sing-box init script sets no term_timeout"
+{ [ "$term_timeout" -gt 5 ] && [ "$term_timeout" -lt 15 ]; } ||
+  fail "term_timeout $term_timeout is not between procd's 5 s and the 15 s transition wait"
+ok "the managed sing-box init script gives sing-box $term_timeout s to stop"
+
 # ---- 2. every writer writes the same script ---------------------------------------
 
 if ! unshare -rm true 2>/dev/null; then

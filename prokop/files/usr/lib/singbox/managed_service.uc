@@ -16,6 +16,12 @@ let durable = require("core.durable");
 
 const INIT_SCRIPT = "/etc/init.d/sing-box";
 const MARKER = getenv("SB_MANAGED_SERVICE_MARKER") || "Prokop managed sing-box service for binary variants";
+// Seconds procd gives sing-box after SIGTERM before SIGKILL (its default is
+// 5): on a stop sing-box writes the FakeIP cache (store_fakeip), which a
+// slow flash did not finish in 5 s, and every client got new fake addresses
+// after the restart. Shorter than the 15 s a controlled transition waits for
+// sing-box to end (service/state.uc), so a stop still completes in it.
+const TERM_TIMEOUT = "10";
 
 function text() {
     return "#!/bin/sh /etc/rc.common\n" +
@@ -38,6 +44,7 @@ function text() {
         "    procd_set_param limits core=\"unlimited\"\n" +
         "    procd_set_param limits nofile=\"1000000 1000000\"\n" +
         "    procd_set_param respawn\n" +
+        "    procd_set_param term_timeout " + TERM_TIMEOUT + "\n" +
         "    procd_close_instance\n" +
         "}\n\n" +
         "service_triggers() {\n" +
