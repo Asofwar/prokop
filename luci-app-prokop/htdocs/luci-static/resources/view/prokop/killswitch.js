@@ -43,9 +43,16 @@ function loadStatus(force) {
 function runCommand(command) {
   return fs.exec(PROKOP_BIN, [command]).then((result) => {
     if (!result || result.code !== 0) {
+      // The router's own output stays as detail after a translated lead
+      // (FE-10).
+      const detail = (
+        (result && (result.stderr || result.stdout)) ||
+        ""
+      ).trim();
       throw new Error(
-        ((result && (result.stderr || result.stdout)) || "").trim() ||
-          _("Command failed"),
+        detail
+          ? `${_("The kill-switch action failed")}: ${detail}`
+          : _("Command failed"),
       );
     }
     return result;
@@ -90,21 +97,118 @@ function stateOf(status) {
   return status && status.state ? status.state : {};
 }
 
+function format(template, values) {
+  return Object.keys(values).reduce(
+    (text, key) => text.split(`{${key}}`).join(`${values[key]}`),
+    template,
+  );
+}
+
+// The page says in the interface language what the router recorded as a
+// code with parameters (killswitch/runtime.uc, FE-10). A detail is the
+// router's own text, shown as it is; a code this page does not know falls
+// back to the English message.
+function codedMessage(item, fallback) {
+  const p = item && typeof item === "object" ? item : {};
+  const keep = _("keeping the previous protection");
+  const texts = {
+    config_unreadable: () =>
+      `${_("The Prokop configuration could not be read")}; ${keep}`,
+    runtime_table_missing: () =>
+      `${format(_("Prokop runtime table {table} is not present"), p)}; ${keep}`,
+    runtime_behind: () =>
+      `${_("The runtime does not match the configuration yet")}: ${p.detail}; ${keep}`,
+    nft_failed: () =>
+      `${_("The firewall policy could not be applied")}: ${p.detail}; ${keep}`,
+    teardown_incomplete: () => _("Protection could not be removed completely"),
+    unexpected: () => `${_("Unexpected failure")}: ${p.detail}`,
+    legacy_adopt_failed: () => format(_("Could not adopt {file}"), p),
+    legacy_saved_policy: () =>
+      _(
+        "Could not remove the saved policy that the first kill-switch build had removed",
+      ),
+    legacy_nft_incomplete: () =>
+      format(
+        _("The {product} kill-switch policy {table} could not be removed completely"),
+        p,
+      ),
+    dns_list_failed: () =>
+      `${p.detail}; ${_("the previous DNS block list stays in place")}`,
+    uncovered_matchers: () =>
+      format(
+        _(
+          "{keyword} keyword, {regex} regex and {inverted} inverted domain matchers cannot be enforced through DNS while Prokop is stopped",
+        ),
+        p,
+      ),
+    client_limited: () =>
+      format(
+        _(
+          "{count} domains of client-limited rules are not blocked through DNS (it is shared by all clients); only their IP lists and FakeIP answers are blocked while Prokop is stopped",
+        ),
+        p,
+      ),
+    standby_scope: () =>
+      `${_("The standby resolver for a dead sing-box blocks the protected names only, not those of the other VPN sections")}: ${p.detail}`,
+    standby_unreadable: () =>
+      `${_("The standby resolver for a dead sing-box")}: ${p.detail}`,
+    standby_client_limited: () =>
+      format(
+        _(
+          "{count} domains of device-limited rules of other VPN sections are not blocked by the standby resolver for a dead sing-box (DNS is shared by all clients)",
+        ),
+        p,
+      ),
+    excluded_devices: () =>
+      format(
+        _(
+          "{count} domains of rules with excluded devices are blocked through DNS for the excluded devices as well (it is shared by all clients) while Prokop is stopped",
+        ),
+        p,
+      ),
+    dnsmasq_conflict: () =>
+      format(
+        _(
+          "dnsmasq already uses servers file {file}; DNS protection is not attached",
+        ),
+        p,
+      ),
+    dnsmasq_legacy: () =>
+      format(
+        _(
+          "dnsmasq still uses the {product} kill-switch servers file {file}, kept while {product} is installed or active; DNS protection is not attached",
+        ),
+        p,
+      ),
+    service_start_failed: () =>
+      _(
+        "The kill-switch service could not be started; DNS will not fail over to the standby resolver if sing-box dies",
+      ),
+  };
+  const text = texts[p.code];
+  return text ? text() : `${fallback || ""}`;
+}
+
 function messagesBlock(state) {
   const items = [];
   if (state.last_error) {
     items.push(
       E("div", { style: `color: ${STATUS_COLORS.error};` }, [
         E("strong", {}, [`${_("Last error")}: `]),
-        `${state.last_error} (${formatTime(state.last_error_at)})`,
+        `${codedMessage(state.last_error_code, state.last_error)} (${formatTime(state.last_error_at)})`,
       ]),
     );
   }
-  (Array.isArray(state.warnings) ? state.warnings : []).forEach((warning) => {
-    items.push(
-      E("div", { style: `color: ${STATUS_COLORS.warn};` }, [`⚠ ${warning}`]),
-    );
-  });
+  const codes = Array.isArray(state.warning_codes) ? state.warning_codes : [];
+  (Array.isArray(state.warnings) ? state.warnings : []).forEach(
+    (warning, index) => {
+      items.push(
+        E("div", { style: `color: ${STATUS_COLORS.warn};` }, [
+          `⚠ ${codedMessage(codes[index], warning)}`,
+        ]),
+      );
+    },
+  );
   return items;
 }
 

@@ -117,6 +117,10 @@ fi
 cmp -s "$POLICY" "$WORK_DIR/policy.applied" || fail "the previous protection must stay while the configuration waits for a reload"
 grep -Fq 'reload' "$KILLSWITCH_STATE_DIR/state.json" || fail "the kept protection must say that a reload is needed"
 grep -Fq 'reload Prokop first' "$WORK_DIR/sync.err" || fail "a manual refresh must tell why it kept the protection"
+# FE-10: the page translates the error by its code; the detail is kept.
+node -e 'const s = JSON.parse(require("fs").readFileSync(process.argv[1])); const c = s.last_error_code || {};
+  if (c.code !== "runtime_behind" || !String(c.detail).includes("reload")) process.exit(1)' "$KILLSWITCH_STATE_DIR/state.json" ||
+  fail "the kept protection has no error code for the page: $(cat "$KILLSWITCH_STATE_DIR/state.json")"
 printf 'ok - a manual refresh waits for the reload of a committed change\n'
 
 # The reload applied it.
@@ -124,6 +128,7 @@ applied
 ks sync manual || fail "a manual refresh after the reload failed"
 bypass_first && fail "the refreshed policy must follow the applied order"
 grep -Fq '"last_error": ""' "$KILLSWITCH_STATE_DIR/state.json" || fail "a successful refresh must clear the error"
+grep -Fq '"last_error_code": null' "$KILLSWITCH_STATE_DIR/state.json" || fail "a successful refresh must clear the error code"
 printf 'ok - a manual refresh follows the applied configuration\n'
 
 # A reload whose list source changed leaves the rebuild of the table to the

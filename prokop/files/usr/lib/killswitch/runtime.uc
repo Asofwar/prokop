@@ -387,9 +387,12 @@ function write_state(state) {
     return write_durable(STATE_FILE, sprintf("%.2J", state) + "\n");
 }
 
-function record_error(message) {
+// code and params: what the page translates (killswitch.js, FE-10); the
+// message stays English for the log and for an older page.
+function record_error(message, code, params) {
     let state = read_state();
     state.last_error = as_string(message);
+    state.last_error_code = code ? { code, ...(params || {}) } : null;
     state.last_error_at = now();
     write_state(state);
     log_message("Kill-switch: " + as_string(message), "error");
@@ -1951,6 +1954,7 @@ function teardown(reason, release_legacy) {
         reason: as_string(reason),
         updated_at: now(),
         last_error: ok ? "" : "protection could not be removed completely",
+        last_error_code: ok ? null : { code: "teardown_incomplete" },
         last_error_at: ok ? 0 : now()
     });
     log_message("Kill-switch protection removed: " + as_string(reason), ok ? "info" : "error");
@@ -2026,20 +2030,21 @@ function sync_locked(reason, manual) {
             return 0;
         if (!config_readable()) {
             drop_exemption("the Prokop configuration could not be read");
-            record_error("the Prokop configuration could not be read; keeping the previous protection");
+            record_error("the Prokop configuration could not be read; keeping the previous protection", "config_unreadable");
             return 1;
         }
         return teardown("no section has the kill-switch enabled", release_legacy) ? 0 : 1;
     }
 
     if (!live_table_present()) {
-        record_error("Prokop runtime table " + LIVE_TABLE + " is not present; keeping the previous protection");
+        record_error("Prokop runtime table " + LIVE_TABLE + " is not present; keeping the previous protection",
+            "runtime_table_missing", { table: LIVE_TABLE });
         return 1;
     }
 
     let behind = runtime_behind_config(manual);
     if (behind != "") {
-        record_error(behind + "; keeping the previous protection");
+        record_error(behind + "; keeping the previous protection", "runtime_behind", { detail: behind });
         if (manual)
             warn("Kill-switch not refreshed: " + behind + "\n");
         return 1;
@@ -2050,50 +2055,63 @@ function sync_locked(reason, manual) {
 
     let nft_result = apply_nft_policy(any_section_exempts_devices(sections));
     if (!nft_result.ok) {
-        record_error(nft_result.error + "; keeping the previous protection");
+        record_error(nft_result.error + "; keeping the previous protection", "nft_failed", { detail: as_string(nft_result.error) });
         return 1;
     }
     remove_legacy_guard_table();
 
-    let warnings = [];
+    let warnings = [], warning_codes = [];
+    // A warning: the English text for the log, the code and parameters for
+    // the page to translate (FE-10).
+    let warn_about = (text, code, params) => {
+        push(warnings, text);
+        push(warning_codes, { code, ...(params || {}) });
+    };
     // This policy is live: it replaces the old kill-switch, whose servers file
     // dnsmasq leaves in the commit that attaches this one.
     let release_legacy = legacy_present() && legacy_release_allowed(true);
     if (release_legacy && !legacy_nft_release())
-        push(warnings, "the " + legacy.PRODUCT + " kill-switch policy " + LEGACY_TABLE + " could not be removed completely");
+        warn_about("the " + legacy.PRODUCT + " kill-switch policy " + LEGACY_TABLE + " could not be removed completely",
+            "legacy_nft_incomplete", { product: legacy.PRODUCT, table: LEGACY_TABLE });
     let dns_result = sync_dns(settings, names, config, vpn_section_names(sections), unrouted, sections, release_legacy);
     if (release_legacy)
         legacy_dir_release();
     if (!dns_result.ok)
-        push(warnings, as_string(dns_result.error) + "; the previous DNS block list stays in place");
+        warn_about(as_string(dns_result.error) + "; the previous DNS block list stays in place",
+            "dns_list_failed", { detail: as_string(dns_result.error) });
     else if (dns_result.warning)
-        push(warnings, as_string(dns_result.warning));
+        warn_about(as_string(dns_result.warning), "dns_warning", { detail: as_string(dns_result.warning) });
     if (dns_result.ok && dns_result.managed) {
         if (dns_result.uncovered_keyword > 0 || dns_result.uncovered_regex > 0 || dns_result.uncovered_inverted > 0)
-            push(warnings, sprintf("%d keyword, %d regex and %d inverted domain matchers cannot be enforced through DNS while Prokop is stopped",
-                dns_result.uncovered_keyword, dns_result.uncovered_regex, dns_result.uncovered_inverted));
+            warn_about(sprintf("%d keyword, %d regex and %d inverted domain matchers cannot be enforced through DNS while Prokop is stopped",
+                dns_result.uncovered_keyword, dns_result.uncovered_regex, dns_result.uncovered_inverted),
+                "uncovered_matchers", { keyword: int(dns_result.uncovered_keyword), regex: int(dns_result.uncovered_regex),
+                    inverted: int(dns_result.uncovered_inverted) });
         if (dns_result.client_limited > 0)
-            push(warnings, sprintf("%d domains of client-limited rules are not blocked through DNS (it is shared by all clients); only their IP lists and FakeIP answers are blocked while Prokop is stopped",
-                dns_result.client_limited));
+            warn_about(sprintf("%d domains of client-limited rules are not blocked through DNS (it is shared by all clients); only their IP lists and FakeIP answers are blocked while Prokop is stopped",
+                dns_result.client_limited), "client_limited", { count: int(dns_result.client_limited) });
         if (dns_result.standby_error)
-            push(warnings, "the standby resolver for a dead sing-box blocks the protected names only, not those of the other VPN sections: " +
-                as_string(dns_result.standby_error));
+            warn_about("the standby resolver for a dead sing-box blocks the protected names only, not those of the other VPN sections: " +
+                as_string(dns_result.standby_error), "standby_scope", { detail: as_string(dns_result.standby_error) });
         if (dns_result.standby_unreadable)
-            push(warnings, "the standby resolver for a dead sing-box: " + as_string(dns_result.standby_unreadable));
+            warn_about("the standby resolver for a dead sing-box: " + as_string(dns_result.standby_unreadable),
+                "standby_unreadable", { detail: as_string(dns_result.standby_unreadable) });
         if (dns_result.standby_client_limited > 0)
-            push(warnings, sprintf("%d domains of device-limited rules of other VPN sections are not blocked by the standby resolver for a dead sing-box (DNS is shared by all clients)",
-                dns_result.standby_client_limited));
+            warn_about(sprintf("%d domains of device-limited rules of other VPN sections are not blocked by the standby resolver for a dead sing-box (DNS is shared by all clients)",
+                dns_result.standby_client_limited), "standby_client_limited", { count: int(dns_result.standby_client_limited) });
         if (dns_result.excluded_devices > 0)
-            push(warnings, sprintf("%d domains of rules with excluded devices are blocked through DNS for the excluded devices as well (it is shared by all clients) while Prokop is stopped",
-                dns_result.excluded_devices));
+            warn_about(sprintf("%d domains of rules with excluded devices are blocked through DNS for the excluded devices as well (it is shared by all clients) while Prokop is stopped",
+                dns_result.excluded_devices), "excluded_devices", { count: int(dns_result.excluded_devices) });
         for (let warning in array_or_empty(dns_result.exempt_warnings))
-            push(warnings, as_string(warning));
+            warn_about(as_string(warning), "exempt", { detail: as_string(warning) });
         let ds = dns_status();
         if (ds.conflict)
-            push(warnings, "dnsmasq already uses servers file " + as_string(ds.serversfile) + "; DNS protection is not attached");
+            warn_about("dnsmasq already uses servers file " + as_string(ds.serversfile) + "; DNS protection is not attached",
+                "dnsmasq_conflict", { file: as_string(ds.serversfile) });
         else if (ds.legacy_attached)
-            push(warnings, "dnsmasq still uses the " + legacy.PRODUCT + " kill-switch servers file " + as_string(ds.serversfile) +
-                ", kept while " + legacy.PRODUCT + " is installed or active; DNS protection is not attached");
+            warn_about("dnsmasq still uses the " + legacy.PRODUCT + " kill-switch servers file " + as_string(ds.serversfile) +
+                ", kept while " + legacy.PRODUCT + " is installed or active; DNS protection is not attached",
+                "dnsmasq_legacy", { product: legacy.PRODUCT, file: as_string(ds.serversfile) });
     }
 
     let state = {
@@ -2117,7 +2135,9 @@ function sync_locked(reason, manual) {
             sections: object_or_empty(dns_result.sections)
         } : object_or_empty(read_state().dns),
         warnings,
+        warning_codes,
         last_error: "",
+        last_error_code: null,
         last_error_at: 0
     };
     // Only with an exemption (D-23): the state of every other configuration
@@ -2131,7 +2151,8 @@ function sync_locked(reason, manual) {
     // The service runs the resolvers of the groups the state names.
     write_state(state);
     if (!service_control([ "enable", "start" ])) {
-        push(warnings, "the kill-switch service could not be started; DNS will not fail over to the standby resolver if sing-box dies");
+        warn_about("the kill-switch service could not be started; DNS will not fail over to the standby resolver if sing-box dies",
+            "service_start_failed");
         write_state(state);
     }
     log_message(sprintf("Kill-switch protection refreshed for %s (%s)", join(", ", names), as_string(reason)), "info");
@@ -2177,7 +2198,7 @@ function with_lock(callback, options) {
         status = callback();
     }
     catch (e) {
-        record_error("unexpected failure: " + as_string(e));
+        record_error("unexpected failure: " + as_string(e), "unexpected", { detail: as_string(e) });
         status = 1;
     }
     if (locked)
@@ -2258,13 +2279,13 @@ function postinst() {
         let state = read_state();
         if (first_include != null && length(first_include) > 0) {
             if (fs.readfile(NFT_POLICY) != first_include && !write_durable(NFT_POLICY, first_include)) {
-                record_error("could not adopt " + LEGACY_NFT_INCLUDE);
+                record_error("could not adopt " + LEGACY_NFT_INCLUDE, "legacy_adopt_failed", { file: LEGACY_NFT_INCLUDE });
                 return 1;
             }
         }
         else if (policy_saved() && int(state.format) < STATE_FORMAT && state.active === false) {
             if (!fs.unlink(NFT_POLICY)) {
-                record_error("could not remove the saved policy the first kill-switch build had removed");
+                record_error("could not remove the saved policy the first kill-switch build had removed", "legacy_saved_policy");
                 return 1;
             }
             log_message("Kill-switch: the saved policy predates its removal by the first kill-switch build and is removed", "info");
