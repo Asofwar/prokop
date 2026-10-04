@@ -2867,24 +2867,59 @@ function shell_quote(value) {
     return "'" + replace(as_string(value), /'/g, "'\\''") + "'";
 }
 
+const GZIP_MAX_BYTES = int(getenv("PROKOP_SUBSCRIPTION_MAX_BYTES") || "16777216");
+
 function gzip_decode_file(input_file, output_file) {
     if (as_string(input_file) == "" || as_string(output_file) == "" || !fs.stat(input_file))
+        return false;
+
+    // Only a gzip stream is unpacked; anything else is not run through gzip.
+    let head = fs.open(input_file, "r");
+    let magic = head ? head.read(2) : null;
+    if (head)
+        head.close();
+    if (magic == null || length(magic) < 2 || ord(magic, 0) != 0x1f || ord(magic, 1) != 0x8b)
         return false;
 
     for (let command in [ "gzip -dc", "gunzip -c", "zcat" ]) {
         let pipe = fs.popen(command + " " + shell_quote(input_file) + " 2>/dev/null", "r");
         if (!pipe)
             continue;
-
-        let data = pipe.read("all");
-        let status = pipe.close();
-        if (status == 0 && data != null && data != "") {
-            if (fs.writefile(output_file, data))
-                return true;
-            fs.unlink(output_file);
+        let output = fs.open(output_file, "w");
+        if (!output) {
+            pipe.close();
             return false;
         }
+
+        // Streamed with a cap: a small gzip bomb would otherwise unpack into
+        // memory whole (OBS-2).
+        let size = 0, written = true, too_big = false;
+        while (true) {
+            let chunk = pipe.read(65536);
+            if (chunk == null || chunk == "")
+                break;
+            size += length(chunk);
+            if (size > GZIP_MAX_BYTES) {
+                too_big = true;
+                break;
+            }
+            if (output.write(chunk) == null) {
+                written = false;
+                break;
+            }
+        }
+        let closed = output.close();
+        let status = pipe.close();
+        if (too_big) {
+            fs.unlink(output_file);
+            warn(sprintf("Subscription content unpacks to more than %d bytes; ignored\n", GZIP_MAX_BYTES));
+            return false;
+        }
+        if (status == 0 && written && closed !== false && size > 0)
+            return true;
         fs.unlink(output_file);
+        if (!written)
+            return false;
     }
 
     return false;

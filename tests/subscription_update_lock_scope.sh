@@ -72,7 +72,8 @@ while [ "$#" -gt 0 ]; do
   case "$1" in
     -o) output="$2"; shift 2 ;;
     -D) headers="$2"; shift 2 ;;
-    -H|-x|--connect-timeout|--speed-time|--speed-limit|--resolve) shift 2 ;;
+    -K) url="$(sed -n 's/^url = "\(.*\)"$/\1/p' "$2")"; shift 2 ;;
+    -H|-x|--connect-timeout|--speed-time|--speed-limit|--resolve|--max-time|--max-filesize|--proto-redir|--max-redirs) shift 2 ;;
     -*) shift ;;
     *) url="$1"; shift ;;
   esac
@@ -208,6 +209,57 @@ if grep -q '^curl ' "$EVENTS"; then
 fi
 }
 
+cases_5() {
+# 5. A scheduled update that finds another update still downloading skips
+#    this tick: requests do not pile up behind a slow provider (OBS-2).
+: >"$EVENTS"
+cat >"$WORK_DIR/uci.state" <<UCI
+prokop.settings=settings
+prokop.alpha=section
+prokop.alpha.enabled=1
+prokop.alpha.action=connection
+prokop.alpha.subscription_urls=https://sub.test/alpha
+UCI
+due_update() {
+  env PATH="$WORK_DIR/bin:$PATH" TMPDIR="$WORK_DIR/tmp" \
+    PROKOP_LIB="$LIB" \
+    PROKOP_UCI_STATE_FILE="$WORK_DIR/uci.state" \
+    TMP_SING_BOX_FOLDER="$WORK_DIR/sing-box" \
+    TMP_RULESET_FOLDER="$WORK_DIR/sing-box/rulesets" \
+    TMP_SUBSCRIPTION_FOLDER="$SUBS" \
+    PROKOP_RUNTIME_STATE_DIR="$RUN" \
+    PROKOP_RELOAD_LOCK_DIR="$RELOAD_LOCK" \
+    PROKOP_SUBSCRIPTION_UPDATE_LOCK_DIR="$RUN/subscription-update.lock" \
+    PROKOP_PENDING_RELOAD_FILE="$RUN/reload.pending" \
+    PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR="$PERSISTENT" \
+    PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_FORMAT_FILE="$PERSISTENT/cache-format" \
+    PROKOP_SERVICE_INIT="$WORK_DIR/bin/logger" \
+    PROKOP_HISTORY_FILE="$WORK_DIR/history.jsonl" \
+    SB_VARIANT_STATE_FILE="$WORK_DIR/sing-box-variant" \
+    SB_VERSION_STATE_FILE="$WORK_DIR/sing-box-version" \
+    ucode -L "$LIB" "$LIB/components/updates.uc" subscription-update-if-due >"$WORK_DIR/update.log" 2>&1
+}
+# Scheduled updates run only after an explicit start.
+: >"$RUN/start.explicit"
+sleep 600 &
+FLIGHT=$!
+pids+=("$FLIGHT")
+state acquire-runtime-dir-lock "$RUN/subscription-flight.lock" "$FLIGHT" || fail "the test could not take the flight lock"
+due_update || fail "a skipped scheduled update must exit 0: $(cat "$WORK_DIR/update.log")"
+if grep -q '^curl ' "$EVENTS"; then
+  fail "a scheduled update downloaded while another update was downloading"
+fi
+[ "$(state runtime-dir-lock-owner "$RUN/subscription-flight.lock")" = "$FLIGHT" ] ||
+  fail "the skipped update took the flight lock from its holder"
+state release-runtime-dir-lock "$RUN/subscription-flight.lock" "$FLIGHT"
+owned_kill KILL "$FLIGHT" || true
+wait "$FLIGHT" 2>/dev/null || true
+# With nobody downloading, the same scheduled update does download.
+due_update || fail "the scheduled update failed: $(cat "$WORK_DIR/update.log")"
+grep -q "^curl https://sub.test/alpha" "$EVENTS" || fail "the scheduled update did not download once the flight lock was free: $(cat "$WORK_DIR/update.log")"
+[ ! -e "$RUN/subscription-flight.lock" ] || fail "the scheduled update left the flight lock behind"
+}
+
 # The cases run at once, each in a work directory of its own: a waiting
 # update polls reload.lock every 2 s, so one after another they took most
 # of 20 s. The update of a case is told apart by its own lock path.
@@ -222,6 +274,6 @@ case_group() {
   update_fixture
   "cases_$1"
 }
-run_case_groups "$WORK_DIR/case-groups" case_group 1 2 3 4
+run_case_groups "$WORK_DIR/case-groups" case_group 1 2 3 4 5
 
 printf 'subscription update lock scope checks passed\n'

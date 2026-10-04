@@ -75,7 +75,7 @@ function ensure_parent_dir(path) {
 // rotates together, and a reload that changes nothing else produces the same
 // config, so sing-box is not restarted for nothing. A reboot picks a new one.
 // The environment override exists so tests can pin it.
-const URLTEST_SEED_FILE = getenv("PROKOP_URLTEST_SEED_FILE") ||
+let urltest_seed_file = getenv("PROKOP_URLTEST_SEED_FILE") ||
     (getenv("PROKOP_RUNTIME_STATE_DIR") || "/var/run/prokop") + "/urltest-seed";
 
 function valid_urltest_seed(seed) {
@@ -88,13 +88,13 @@ function urltest_start_seed() {
 
     let seed = trim(as_string(getenv("PROKOP_URLTEST_START_SEED") || ""));
     if (seed == "") {
-        seed = trim(as_string(fs.readfile(URLTEST_SEED_FILE) || ""));
+        seed = urltest_seed_file != "" ? trim(as_string(fs.readfile(urltest_seed_file) || "")) : "";
         if (!valid_urltest_seed(seed)) {
             seed = trim(as_string(fs.readfile("/proc/sys/kernel/random/uuid") || ""));
-            let tmp_path = URLTEST_SEED_FILE + ".tmp";
+            let tmp_path = urltest_seed_file + ".tmp";
             // A seed that cannot be saved still works for this generation.
-            if (valid_urltest_seed(seed) && ensure_parent_dir(URLTEST_SEED_FILE) &&
-                fs.writefile(tmp_path, seed + "\n") != null && !fs.rename(tmp_path, URLTEST_SEED_FILE))
+            if (urltest_seed_file != "" && valid_urltest_seed(seed) && ensure_parent_dir(urltest_seed_file) &&
+                fs.writefile(tmp_path, seed + "\n") != null && !fs.rename(tmp_path, urltest_seed_file))
                 fs.unlink(tmp_path);
         }
     }
@@ -2918,6 +2918,9 @@ function generate_config(output_path, service_address, mwan3_active, supports_xh
 
 function generate_config_fixture(fixture_path, output_path, service_address, mwan3_active, supports_xhttp, deferred_sections, sing_box_version) {
     use_fixture_cursor(fixture_path);
+    // A fixture run keeps out of the router's runtime state unless pointed at one.
+    if (!getenv("PROKOP_URLTEST_SEED_FILE") && !getenv("PROKOP_RUNTIME_STATE_DIR"))
+        urltest_seed_file = "";
     runtime_subscription.set_section_cache_dir(output_path + ".section-cache");
     runtime_ruleset_folder = output_path + ".rulesets";
     generate_config(output_path, service_address, mwan3_active, supports_xhttp, deferred_sections, sing_box_version);

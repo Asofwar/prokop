@@ -88,7 +88,8 @@ while [ "$#" -gt 0 ]; do
     -o) output="$2"; shift 2 ;;
     -D) headers="$2"; shift 2 ;;
     -x) proxy="$2"; shift 2 ;;
-    -H|--connect-timeout|--speed-time|--speed-limit|--resolve) shift 2 ;;
+    -K) url="$(sed -n 's/^url = "\(.*\)"$/\1/p' "$2")"; shift 2 ;;
+    -H|--connect-timeout|--speed-time|--speed-limit|--resolve|--max-time|--max-filesize|--proto-redir|--max-redirs) shift 2 ;;
     -*) shift ;;
     *) url="$1"; shift ;;
   esac

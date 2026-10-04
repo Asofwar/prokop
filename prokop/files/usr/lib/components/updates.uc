@@ -46,6 +46,9 @@ const LIST_UPDATE_PID_FILE = getenv("PROKOP_LIST_UPDATE_PID_FILE") || "/var/run/
 const SUBSCRIPTION_UPDATE_STATE_DIR = getenv("PROKOP_SUBSCRIPTION_UPDATE_STATE_DIR") || RUNTIME_STATE_DIR + "/subscription-update";
 const SUBSCRIPTION_JOB_DIR = getenv("PROKOP_SUBSCRIPTION_UPDATE_JOB_DIR") || "/var/run/prokop/subscription-update-jobs";
 const SUBSCRIPTION_UPDATE_LOCK_DIR = getenv("PROKOP_SUBSCRIPTION_UPDATE_LOCK_DIR") || RUNTIME_STATE_DIR + "/subscription-update.lock";
+// Held for a whole update, downloads included, and only ever tried, never
+// waited for: it sits outside the lock order (OBS-2).
+const SUBSCRIPTION_FLIGHT_LOCK_DIR = getenv("PROKOP_SUBSCRIPTION_FLIGHT_LOCK_DIR") || RUNTIME_STATE_DIR + "/subscription-flight.lock";
 const SUBSCRIPTION_LINKS_DIR = getenv("PROKOP_SUBSCRIPTION_LINKS_DIR") || RUNTIME_STATE_DIR + "/subscription-links";
 const SUBSCRIPTION_METADATA_DIR = getenv("PROKOP_SUBSCRIPTION_METADATA_DIR") || RUNTIME_STATE_DIR + "/subscription-metadata";
 const OUTBOUND_METADATA_DIR = getenv("PROKOP_OUTBOUND_METADATA_DIR") || RUNTIME_STATE_DIR + "/outbound-metadata";
@@ -4788,16 +4791,12 @@ function acquire_subscription_update_locks(force) {
     return "";
 }
 
-function subscription_update_common(force, target_section, target_source_index) {
-    if (!subscription_cache_success([ "ensure-runtime-dirs" ]))
-        exit(1);
-
-    force = !!force;
+function subscription_update_flight(force, target_section, target_source_index, prefetch) {
     // The downloads run before any lock is taken (UC-057): under reload.lock
     // every retry and request profile of every source would hold back DNS
     // failover and runtime recovery. They write nothing but a private
     // directory; the cache is committed from it under both locks below.
-    subscription_prefetch_dir = subscription_prefetch(force, target_section, target_source_index);
+    subscription_prefetch_dir = prefetch ? subscription_prefetch(force, target_section, target_source_index) : "";
 
     let busy = acquire_subscription_update_locks(force);
     if (busy != "") {
@@ -4822,6 +4821,26 @@ function subscription_update_common(force, target_section, target_source_index) 
     if (ok && subscription_outbounds_changed)
         module_background([ DIAGNOSTICS_UC, "automatic-latency-test", "new" ]);
     return ok ? 0 : 1;
+}
+
+// One update downloads at a time: a scheduled update that finds another one
+// still fetching (a slow provider) skips this tick instead of starting a
+// second set of requests. A forced update still runs; it only leaves the
+// downloads to the running one's lock order, without a prefetch of its own.
+function subscription_update_common(force, target_section, target_source_index) {
+    if (!subscription_cache_success([ "ensure-runtime-dirs" ]))
+        exit(1);
+
+    force = !!force;
+    let flight = acquire_runtime_lock(SUBSCRIPTION_FLIGHT_LOCK_DIR, false);
+    if (!flight && !force) {
+        log_message("Subscription update is already downloading; skipping this run", "info");
+        return 0;
+    }
+    let status = subscription_update_flight(force, target_section, target_source_index, flight);
+    if (flight)
+        release_runtime_lock(SUBSCRIPTION_FLIGHT_LOCK_DIR);
+    return status;
 }
 
 function subscription_update_if_due() {

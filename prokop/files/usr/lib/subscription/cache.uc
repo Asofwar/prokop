@@ -1557,12 +1557,47 @@ function curl_resolve_address(address) {
     return core_ip.ip_family(address) == 6 ? "[" + address + "]" : address;
 }
 
-function subscription_curl_args(url, filepath, http_proxy_address, headers_filepath, effective_user_agent, effective_hwid, resolve) {
+// A provider that trickles bytes or sends an endless body cannot hold an
+// update, or the lock it may run under, or fill tmpfs (OBS-2).
+const SUBSCRIPTION_MAX_TIME = int(getenv("PROKOP_SUBSCRIPTION_MAX_TIME") || "120");
+const SUBSCRIPTION_MAX_BYTES = int(getenv("PROKOP_SUBSCRIPTION_MAX_BYTES") || "16777216");
+
+function curl_config_value(value) {
+    value = replace(as_string(value), /[\r\n]/g, "");
+    return "\"" + replace(replace(value, /\\/g, "\\\\"), /"/g, "\\\"") + "\"";
+}
+
+// The URL (often with an access token) and the HWID go to curl in a 0600
+// config file, not on its command line, where every user of the router could
+// read them in /proc (CFG-4). The caller removes config_path afterwards.
+function subscription_curl_args(url, filepath, http_proxy_address, headers_filepath, effective_user_agent, effective_hwid, resolve, config_path) {
+    let config = [ "url = " + curl_config_value(url) ];
+    for (let header in [
+        "User-Agent: " + get_subscription_user_agent(effective_user_agent),
+        "X-HWID: " + get_subscription_hwid(effective_hwid),
+        "X-Device-OS: OpenWrt Linux",
+        "X-Device-Model: " + get_device_model(),
+        "X-Ver-OS: " + get_kernel_version(),
+        "Accept-Language: ru-RU,en,*",
+        "X-Device-Locale: EN"
+    ])
+        push(config, "header = " + curl_config_value(header));
+    unlink_path(config_path);
+    if (fs.writefile(config_path, join("\n", config) + "\n") == null || !fs.chmod(config_path, 0600)) {
+        unlink_path(config_path);
+        return null;
+    }
+
     let args = [
         "curl", "-f", "-sS",
         "--connect-timeout", "15",
         "--speed-time", "15",
-        "--speed-limit", "1"
+        "--speed-limit", "1",
+        "--max-time", as_string(SUBSCRIPTION_MAX_TIME),
+        "--max-filesize", as_string(SUBSCRIPTION_MAX_BYTES),
+        // Providers move subscriptions behind redirects; follow them, but
+        // only to https and not in a loop.
+        "-L", "--proto-redir", "=https", "--max-redirs", "5"
     ];
 
     if (http_proxy_address != "") {
@@ -1580,20 +1615,28 @@ function subscription_curl_args(url, filepath, http_proxy_address, headers_filep
 
     push(args, "-o");
     push(args, filepath);
-    for (let header in [
-        "User-Agent: " + get_subscription_user_agent(effective_user_agent),
-        "X-HWID: " + get_subscription_hwid(effective_hwid),
-        "X-Device-OS: OpenWrt Linux",
-        "X-Device-Model: " + get_device_model(),
-        "X-Ver-OS: " + get_kernel_version(),
-        "Accept-Language: ru-RU,en,*",
-        "X-Device-Locale: EN"
-    ]) {
-        push(args, "-H");
-        push(args, header);
-    }
-    push(args, url);
+    push(args, "-K");
+    push(args, config_path);
     return args;
+}
+
+// curl's exit status for one request; 2 (failed to start) when its config
+// could not be written.
+function run_subscription_curl(url, filepath, http_proxy_address, headers_filepath, effective_user_agent, effective_hwid, resolve) {
+    let config_path = filepath + ".curl";
+    let args = subscription_curl_args(url, filepath, http_proxy_address, headers_filepath,
+        effective_user_agent, effective_hwid, resolve, config_path);
+    if (args == null)
+        return 2;
+    let status = command_status_from_args(args);
+    unlink_path(config_path);
+    // An older curl does not apply --max-filesize to a body of unknown size.
+    let info = fs.stat(filepath);
+    if (status == 0 && info != null && info.size > SUBSCRIPTION_MAX_BYTES) {
+        log_message(sprintf("Subscription response is larger than %d bytes; ignored", SUBSCRIPTION_MAX_BYTES), "warn");
+        return 63;
+    }
+    return status;
 }
 
 // The response of a request that prefetch-request made, as
@@ -1647,16 +1690,16 @@ function download_subscription(url, filepath, http_proxy_address, headers_filepa
         unlink_path(headers_tmpfile);
 
     for (let attempt = 1; attempt <= retries; attempt++) {
-        let status = command_status_from_args(subscription_curl_args(
+        let status = run_subscription_curl(
             url, tmpfile, http_proxy_address, headers_tmpfile, effective_user_agent, effective_hwid, null
-        ));
+        );
         if (status == 6) {
             let resolved = bootstrap_resolve_subscription_host(url);
             if (resolved != null) {
                 log_message("Downloading subscription using bootstrap-resolved address", "info");
-                status = command_status_from_args(subscription_curl_args(
+                status = run_subscription_curl(
                     url, tmpfile, http_proxy_address, headers_tmpfile, effective_user_agent, effective_hwid, resolved
-                ));
+                );
             }
         }
         if (status == 0 && file_nonempty(tmpfile)) {

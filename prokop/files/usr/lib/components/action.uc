@@ -772,7 +772,10 @@ function http_get_once(url, output_path, proxy_address, timeout) {
     timeout = as_string(timeout || "30");
 
     if (command_exists("curl")) {
-        let args = [ "curl", "--connect-timeout", "5", "-m", timeout, "-fsSL" ];
+        // A stalled transfer is cut after 30 s below 1 KiB/s, so a slow but
+        // moving download may use the whole -m budget (B4).
+        let args = [ "curl", "--connect-timeout", "5", "-m", timeout, "-fsSL",
+            "--speed-time", "30", "--speed-limit", "1024" ];
         if (proxy_address != "") {
             push(args, "-x");
             push(args, "http://" + proxy_address);
@@ -820,15 +823,19 @@ function http_get(url) {
     return "";
 }
 
+// Package archives run to tens of megabytes: on a slow uplink 120 s was not
+// enough to finish one that was still arriving (B4).
+const COMPONENT_DOWNLOAD_TIMEOUT = "600";
+
 function download_file_once(url, output_path) {
     let proxy_address = service_proxy_address();
     if (proxy_address != "") {
-        if (http_get_once(url, output_path, proxy_address, "120"))
+        if (http_get_once(url, output_path, proxy_address, COMPONENT_DOWNLOAD_TIMEOUT))
             return true;
         remove_file(output_path);
         updates_log("Download via service proxy failed for " + as_string(url) + "; retrying directly", "warn");
     }
-    return http_get_once(url, output_path, "", "120");
+    return http_get_once(url, output_path, "", COMPONENT_DOWNLOAD_TIMEOUT);
 }
 
 function download_with_retry(url, output_path, label) {
