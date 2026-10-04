@@ -72,7 +72,10 @@ manager if-due >"$WORK/not-due.json"
 [ "$(json_get "$WORK/not-due.json" reason)" = '"not_due"' ] || fail "not due: $(cat "$WORK/not-due.json")"
 [ -z "$(calls)" ] || fail "a run that is not due does not tune"
 
-make_due
+# AT-4: a next run set before the clock jumped back is due now, not on the
+# far date it holds.
+node -e 'const f=process.argv[1],s=require(f);s.next_run_at=Math.floor(Date.now()/1000)+10*86400;require("fs").writeFileSync(f,JSON.stringify(s)+"\n")' "$PROKOP_AUTOTUNE_STATE_FILE"
+rm -f "$PROKOP_AUTOTUNE_STATE_DIR/postponed.json"
 manager if-due >"$WORK/run2.json"
 [ "$(calls)" = 'www.youtube.com i.ytimg.com ' ] || fail "second scheduled run tunes the next group: $(calls)"
 grep -q '^tune www.youtube.com max:5 192.0.2.53$' "$WORK/tune/calls.log" || fail "the policy probe count (an upper bound) and the resolver are passed: $(cat "$WORK/tune/calls.log")"

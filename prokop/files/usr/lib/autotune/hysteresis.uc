@@ -46,6 +46,15 @@ function observe(group, observation, policy, now, trigger) {
     }
     if (obs.fingerprint != null) group.fingerprint = obs.fingerprint;
 
+    // A cooldown that ends further away than a whole cooldown from now was
+    // set before the clock jumped back: it ends a cooldown from now (AT-4).
+    if (type(group.cooldowns) == "object" && int(policy.cooldown_seconds) > 0) {
+        group.cooldowns = { ...group.cooldowns };
+        for (let id in keys(group.cooldowns))
+            if (type(group.cooldowns[id]) == "int" && group.cooldowns[id] > now + int(policy.cooldown_seconds))
+                group.cooldowns[id] = now + int(policy.cooldown_seconds);
+    }
+
     let scheduled = trigger == "schedule";
     // Automatic apply counts only scheduled runs at its own confidence
     // (always high): min_confidence medium lets medium runs confirm a

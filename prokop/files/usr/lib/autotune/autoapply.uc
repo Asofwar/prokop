@@ -22,6 +22,8 @@ const DAY = 86400;
 
 function as_string(v) { return v == null ? "" : "" + v; }
 
+// An apply stamped later than now (the clock jumped back) still counts: it
+// happened within the last day (AT-4).
 function applies_today(applies, now) {
     let count = 0;
     for (let a in type(applies) == "array" ? applies : [])

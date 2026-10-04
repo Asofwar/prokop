@@ -950,7 +950,10 @@ function if_due() {
     if (fs.stat(STOP_REQUESTED_FILE) != null || fs.stat(EXPLICIT_START_FILE) == null)
         return { status: "ok", result: "skipped", reason: "prokop_stopped" };
     let state = with_postponed(state_module.read());
-    if (state.next_run_at != null && now() < state.next_run_at)
+    // A next run further away than one interval was set before the clock
+    // jumped back: it is due now instead of waiting for that date (AT-4).
+    if (state.next_run_at != null && now() < state.next_run_at &&
+        state.next_run_at <= now() + read.policy.interval_seconds + RETRY_SECONDS)
         return { status: "ok", result: "skipped", reason: "not_due", next_run_at: state.next_run_at };
     if (length(filter(read.targets, (t) => t.enabled)) == 0) return { status: "ok", result: "skipped", reason: "no_targets" };
     return run("auto", "schedule");

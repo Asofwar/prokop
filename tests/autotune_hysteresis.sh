@@ -45,6 +45,10 @@ let out = {
   manual: run([ { ...rec("multisplit"), manual: true }, { ...rec("multisplit"), manual: true },
     { ...rec("multisplit"), manual: true }, rec("multisplit"), rec("multisplit"), rec("multisplit") ])
 };
+// AT-4: a cooldown set before the clock jumped back ends a cooldown from now.
+let jumped = h.start_cooldown(h.empty_group(), "fake", 3600, 1000000);
+let seen = h.observe(jumped, rec("fake"), { confirmations: 3, min_confidence: "high", cooldown_seconds: 3600 }, 500, "schedule").group;
+out.clock_back = { until: h.cooldown_until(seen, "fake"), original: jumped.cooldowns.fake };
 let g = h.start_cooldown(h.empty_group(), "multisplit", 3600, 100);
 g = h.start_cooldown(g, "fake", 60, 100);
 out.cooldown = { active: h.in_cooldown(g, "multisplit", 200), other: h.in_cooldown(g, "direct", 200),
@@ -59,6 +63,7 @@ node - "$WORK/h.json" <<'NODE'
 const assert = require('node:assert/strict');
 const r = JSON.parse(require('node:fs').readFileSync(process.argv[2], 'utf8'));
 const brief = (run) => run.steps.map((s) => [s.events.join('+'), s.count, s.ready]);
+assert.deepEqual(r.clock_back, { until: 4100, original: 1003600 }, 'a cooldown after the clock jumped back is cut to one cooldown (AT-4)');
 assert.deepEqual(r.medium_auto.steps.map((s) => [s.count, s.ready, s.scheduled, s.ready_auto]),
   [[1, false, 0, false], [2, false, 0, false], [3, true, 1, false], [3, true, 2, false], [3, true, 3, true]],
   'medium runs never count toward automatic apply (AT-2)');
