@@ -2748,6 +2748,36 @@ function reload_reason_fixture(reason) {
     print(reason, "\n");
 }
 
+// B6: a restart stops Prokop before it starts it again, and a configuration
+// that the start then refuses left the router without its working runtime.
+// While Prokop runs, the restart first checks what the start will use, with
+// the old runtime still serving: the Prokop configuration and a sing-box
+// configuration generated and checked from cached data (no downloads). A
+// refusal keeps the running Prokop and says why.
+function restart_candidate_status() {
+    if (!module_success(STATE_UC, [ "prokop-running", RT_TABLE_NAME, NFT_TABLE_NAME, NFT_FAKEIP_MARK ]))
+        return 0;
+
+    let status = validate_start_config();
+    if (status != 0) {
+        log_message("Restart refused: the configuration is invalid; the running Prokop is kept", "fatal");
+        return status;
+    }
+
+    let stage_path = trim(command_output_from_args([ "mktemp" ]));
+    if (stage_path == "") {
+        log_message("Restart refused: no temporary file for the configuration check; the running Prokop is kept", "fatal");
+        return 1;
+    }
+    let result = module_capture(SINGBOX_UC, [ "prepare-config-stage", "0", "0", "1", "", stage_path ]);
+    discard_singbox_config_stage(stage_path);
+    if (result.status != 0) {
+        log_message("Restart refused: the new sing-box configuration did not pass its check; the running Prokop is kept", "fatal");
+        return result.status;
+    }
+    return 0;
+}
+
 function restart() {
     if (legacy_start_refused("restart"))
         return 1;
@@ -2761,8 +2791,12 @@ function restart() {
         return 1;
     }
 
+    let status = restart_candidate_status();
+    if (status != 0)
+        return status;
+
     let selector_state = capture_selector_state();
-    let status = stop_impl(false);
+    status = stop_impl(false);
     if (status != 0)
         return status;
 
