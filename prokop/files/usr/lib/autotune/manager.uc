@@ -318,8 +318,14 @@ function applicable(aggregate, sections, name) {
     let entry = catalog.find(aggregate.candidate);
     let section = resolver.find_section(sections, name);
     if (entry == null || section == null) return aggregate;
-    let splice = dpi_strategy.tcp443_splice(dpi_strategy.effective(section.options.nfqws_opt), entry.nfqws_opt);
-    return splice.error ? { ...aggregate, status: "not_applicable", reason: splice.error } : aggregate;
+    let current = dpi_strategy.effective(section.options.nfqws_opt);
+    let splice = dpi_strategy.tcp443_splice(current, entry.nfqws_opt);
+    if (splice.error) return { ...aggregate, status: "not_applicable", reason: splice.error };
+    // The rule already runs what the candidate would make of it (the
+    // default strategy is such a case): nothing to recommend, the same
+    // answer apply.uc plan gives (AT-5, UC-202).
+    if (splice.opt == current) return { ...aggregate, status: "no_change", reason: "candidate_already_active" };
+    return aggregate;
 }
 
 function compute_groups(sections, targets, state) {
@@ -707,7 +713,10 @@ function apply_group(name, aggregate, full, dns_resolver, trigger) {
     let selection = dir + "/selection.json", plan_file = dir + "/plan.json";
     let plan = fs.writefile(selection, sprintf("%J\n", full)) != null ? run_tool("apply", [ "plan", selection, dns_resolver ]) : null;
     if (plan == null) record.reason = "plan_unavailable";
-    else if (plan.status == "no_change_required") { record.status = "no_change_required"; record.reason = plan.reason; }
+    // The confirmations start over: the same no-op is not offered again
+    // on every pass (AT-5).
+    else if (plan.status == "no_change_required") { record.status = "no_change_required"; record.reason = plan.reason;
+        record.outcome = autoapply.outcome({ status: "no_change_required" }); }
     else if (plan.status != "ready") record.reason = "plan_" + as_string(plan.status) + ":" + as_string(plan.reason);
     // The plan must change exactly the rule and candidate this group
     // confirmed; routing edits since the classification make it void.

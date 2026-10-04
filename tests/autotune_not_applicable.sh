@@ -55,4 +55,18 @@ manager run youtube >"$WORK/fixed.json"
 [ "$(json_get "$WORK/fixed.json" groups.youtube.result.status)" = '"recommendation"' ] ||
   fail "a strategy with its own HTTPS profile takes the recommendation: $(cat "$WORK/fixed.json")"
 
+# AT-5 (UC-202): the rule runs the default strategy, and the recommendation
+# would turn it into the same text. That is no change, not a recommendation
+# that stays on the page for ever.
+sed -i "s|option nfqws_opt '--filter-tcp=80 --dpi-desync=multisplit --new --filter-tcp=443 --dpi-desync=multisplit[^']*'|option nfqws_opt ''|" \
+  "$PROKOP_CONFIG_FILE"
+grep -Fq "option nfqws_opt ''" "$PROKOP_CONFIG_FILE" || fail "fixture: the youtube rule did not get the default strategy"
+export ZAPRET_DEFAULT_NFQWS_OPT='--filter-tcp=443 --dpi-desync=fake --dpi-desync-fooling=badsum --dpi-desync-fake-tls-mod=rnd,dupsid,sni=www.google.com'
+manager run youtube >"$WORK/default.json"
+[ "$(json_get "$WORK/default.json" groups.youtube.result.status)" = '"no_change"' ] ||
+  fail "a recommendation equal to the default strategy is no change: $(cat "$WORK/default.json")"
+[ "$(json_get "$WORK/default.json" groups.youtube.result.reason)" = '"candidate_already_active"' ] || fail "the reason apply.uc gives"
+[ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" groups.youtube.pending)" = null ] || fail "nothing stays pending for a no-op"
+unset ZAPRET_DEFAULT_NFQWS_OPT
+
 echo "autotune not applicable: OK"
