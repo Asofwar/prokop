@@ -25,11 +25,22 @@ umask 022
 state="$WORK_DIR/run"
 mkdir -p "$WORK_DIR/sing-box/subscriptions" "$state/section-cache"
 chmod 755 "$WORK_DIR/sing-box/subscriptions" "$state/section-cache"
-TMP_SING_BOX_FOLDER="$WORK_DIR/sing-box" \
+# mkdir and chmod run in-process (optimization 20 of the 2026-10-04 audit):
+# stubs that log a call stand in for the commands.
+mkdir -p "$WORK_DIR/bin"
+for tool in mkdir chmod; do
+  printf '#!/bin/sh
+echo "%s $*" >>"%s/shell-calls"
+' "$tool" "$WORK_DIR" >"$WORK_DIR/bin/$tool"
+done
+/bin/chmod +x "$WORK_DIR/bin/mkdir" "$WORK_DIR/bin/chmod"
+PATH="$WORK_DIR/bin:$PATH" \
+  TMP_SING_BOX_FOLDER="$WORK_DIR/sing-box" \
   TMP_RULESET_FOLDER="$WORK_DIR/sing-box/rulesets" \
   TMP_SUBSCRIPTION_FOLDER="$WORK_DIR/sing-box/subscriptions" \
   PROKOP_RUNTIME_STATE_DIR="$state" \
   ucode -L "$PROKOP_LIB" "$PROKOP_LIB/subscription/cache.uc" ensure-runtime-dirs
+[ ! -e "$WORK_DIR/shell-calls" ] || fail "runtime directories made through the shell: $(cat "$WORK_DIR/shell-calls")"
 
 for dir in "$WORK_DIR/sing-box/subscriptions" "$state/subscription-update" \
   "$state/subscription-metadata" \

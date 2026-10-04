@@ -624,11 +624,33 @@ function log_message(message, level) {
     command_success_from_args([ "logger", "-t", "prokop", "[" + level + "] " + as_string(message) ]);
 }
 
+// In-process mkdir -p and chmod: an update ran about a dozen shells for
+// them per source (optimization 20 of the 2026-10-04 audit). A ucode
+// without fs.chmod falls back to the shell.
 function ensure_dir(path) {
-    run_silent("mkdir -p " + shell_quote(path));
+    path = as_string(path);
+    let stat = fs.stat(path);
+    if (stat != null && stat.type == "directory")
+        return;
+    let current = substr(path, 0, 1) == "/" ? "" : ".";
+    for (let part in split(path, "/")) {
+        if (part == "")
+            continue;
+        current += "/" + part;
+        if (fs.stat(current) == null && !fs.mkdir(current, 0o755) && fs.stat(current) == null) {
+            run_silent("mkdir -p " + shell_quote(path));
+            return;
+        }
+    }
 }
 
 function chmod_path(path, mode) {
+    if (type(fs.chmod) == "function" && match(as_string(mode), /^[0-7]{3,4}$/)) {
+        if (fs.chmod(as_string(path), int(as_string(mode), 8)))
+            return;
+        if (fs.stat(as_string(path)) == null)
+            return;
+    }
     run_silent("chmod " + shell_quote(mode) + " " + shell_quote(path));
 }
 
