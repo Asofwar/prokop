@@ -632,15 +632,22 @@ function chmod_path(path, mode) {
     run_silent("chmod " + shell_quote(mode) + " " + shell_quote(path));
 }
 
+// Subscription caches hold credentials and token URLs. A 0700 directory
+// keeps them private whatever mode a file inside was written with.
+function ensure_private_dir(path) {
+    ensure_dir(path);
+    chmod_path(path, "700");
+}
+
 function ensure_runtime_dirs() {
     ensure_dir(TMP_SING_BOX_FOLDER);
     ensure_dir(TMP_RULESET_FOLDER);
-    ensure_dir(TMP_SUBSCRIPTION_FOLDER);
+    ensure_private_dir(TMP_SUBSCRIPTION_FOLDER);
     ensure_dir(PROKOP_RUNTIME_STATE_DIR);
-    ensure_dir(PROKOP_SUBSCRIPTION_UPDATE_STATE_DIR);
-    ensure_dir(PROKOP_SUBSCRIPTION_METADATA_DIR);
-    ensure_dir(PROKOP_OUTBOUND_METADATA_DIR);
-    ensure_dir(PROKOP_SECTION_CACHE_DIR);
+    ensure_private_dir(PROKOP_SUBSCRIPTION_UPDATE_STATE_DIR);
+    ensure_private_dir(PROKOP_SUBSCRIPTION_METADATA_DIR);
+    ensure_private_dir(PROKOP_OUTBOUND_METADATA_DIR);
+    ensure_private_dir(PROKOP_SECTION_CACHE_DIR);
 }
 
 function clear_subscription_runtime_cache() {

@@ -663,7 +663,8 @@ function publish_section_cache(temp_config_path) {
     let entries = fs.lsdir(source_dir);
     if (type(entries) != "array")
         return true;
-    if (!ensure_dir(SECTION_CACHE_DIR))
+    // Section caches hold full share links: keep them away from other users.
+    if (!ensure_dir(SECTION_CACHE_DIR) || !fs.chmod(SECTION_CACHE_DIR, 0700))
         return false;
 
     for (let entry in entries) {
@@ -678,7 +679,8 @@ function publish_section_cache(temp_config_path) {
 
         let target = SECTION_CACHE_DIR + "/" + entry;
         let temporary = target + ".tmp";
-        if (fs.writefile(temporary, data) == null || !fs.rename(temporary, target)) {
+        if (fs.writefile(temporary, data) == null || !fs.chmod(temporary, 0600) ||
+            !fs.rename(temporary, target)) {
             remove_file(temporary);
             return false;
         }

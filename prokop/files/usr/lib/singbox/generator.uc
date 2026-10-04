@@ -91,7 +91,8 @@ function atomic_write_json_file(path, value) {
     // A write that failed half-way leaves no partial copy (UC-159). A full
     // filesystem can take the write and keep none of it: read back first.
     let data = sprintf("%J\n", value);
-    if (fs.writefile(tmp_path, data) == null || fs.readfile(tmp_path) !== data || !fs.rename(tmp_path, path)) {
+    if (fs.writefile(tmp_path, data) == null || !fs.chmod(tmp_path, 0600) ||
+        fs.readfile(tmp_path) !== data || !fs.rename(tmp_path, path)) {
         fs.unlink(tmp_path);
         return false;
     }
