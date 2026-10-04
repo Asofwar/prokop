@@ -994,6 +994,16 @@ function validate_dns_settings(settings, sections, context) {
     if (!contains([ "prefer_ipv4", "ipv4_only", "prefer_ipv6", "ipv6_only" ], dns_strategy))
         fail_validation("Unsupported DNS strategy '" + dns_strategy + "'. Use prefer_ipv4, ipv4_only, prefer_ipv6, or ipv6_only. Aborted.");
 
+    // FE-9: sing-box takes the TTL as a 32-bit number and refuses a larger
+    // one; DNS caps a TTL at 2^31 - 1 (RFC 2181). A value that is not a
+    // whole number of seconds was always replaced by 60 (core/common.uc
+    // int_option): say so instead of refusing a configuration that ran.
+    let rewrite_ttl = trim(option(settings, "dns_rewrite_ttl", "60"));
+    if (match(rewrite_ttl, /^[0-9]+$/) == null)
+        log_message("DNS Rewrite TTL '" + rewrite_ttl + "' is not a whole number of seconds; 60 is used", "warn");
+    else if (length(rewrite_ttl) > 10 || +rewrite_ttl > 2147483647)
+        fail_validation("DNS Rewrite TTL '" + rewrite_ttl + "' is too large. Use at most 2147483647 seconds. Aborted.");
+
     let main_servers = dns_setting_values(settings, "dns_server");
     let bootstrap_servers = dns_setting_values(settings, "bootstrap_dns_server");
     if (length(main_servers) == 0)

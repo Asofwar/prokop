@@ -472,9 +472,13 @@ function createSettingsContent(sections, capabilities) {
       return _("TTL value cannot be empty");
     }
 
-    const ttl = parseInt(value);
-    if (isNaN(ttl) || ttl < 0) {
+    // Whole seconds only, as the router takes them (FE-9): parseInt read
+    // "1.5" as 1 and "60s" as 60, which the router replaced by 60.
+    if (!/^\d+$/.test(`${value}`.trim())) {
       return _("TTL must be a positive number");
+    }
+    if (Number(`${value}`.trim()) > 2147483647) {
+      return _("TTL must be at most 2147483647 seconds");
     }
 
     return true;
