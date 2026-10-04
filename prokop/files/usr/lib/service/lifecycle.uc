@@ -176,6 +176,12 @@ let dpi_guard_active = false;
 // Set once the reload in progress has given way to a stop request
 // (reload_gives_way_to_stop).
 let reload_stop_abandoned = false;
+// The reload in progress stopped the Priority and DNS failover workers
+// before its sing-box transition (LC-2), and whether it began to replace the
+// live sing-box config. Until that commit the live config and section-cache
+// are still the running generation, so a failed reload restarts the workers.
+let reload_workers_stopped = false;
+let reload_singbox_commit_started = false;
 
 function shell_quote(value) {
     return "'" + replace(as_string(value), /'/g, "'\\''") + "'";
@@ -1545,6 +1551,29 @@ function abandon_reload_for_stop(stage_path, backup_path) {
     return 0;
 }
 
+// A reload that failed before replacing the live sing-box config leaves the
+// old sing-box running with its own config and section-cache: the workers it
+// stopped go back to watching that runtime (LC-2).
+function resume_reload_workers() {
+    if (!reload_workers_stopped)
+        return;
+    reload_workers_stopped = false;
+    if (reload_singbox_commit_started) {
+        log_message("Priority and DNS failover stay stopped: the failed reload had already replaced the sing-box config; the next successful reload or restart starts them", "warn");
+        return;
+    }
+    // sing_box_runtime_pid() is defined further down.
+    let pid = module_capture(STATE_UC, [ "sing-box-service-runtime-pid" ]);
+    if (pid.status != 0 || trim(pid.output) == "") {
+        log_message("Priority and DNS failover stay stopped: sing-box is not running after the failed reload", "warn");
+        return;
+    }
+    if (module_status(PRIORITY_UC, [ "start-runtime" ]) != 0)
+        log_message("Could not restart the Priority runtime after a failed reload", "warn");
+    if (module_status(DNS_FAILOVER_UC, [ "start-runtime" ]) != 0)
+        log_message("Could not restart the DNS failover runtime after a failed reload", "warn");
+}
+
 function abort_reload(status, runtime_changed) {
     if (reload_gives_way_to_stop("its rollback"))
         return abandon_reload_for_stop("", "");
@@ -1612,8 +1641,10 @@ function abort_reload(status, runtime_changed) {
 
     if (runtime_changed && !(dpi_rollback_attempted && dpi_restored))
         cleanup_failed_runtime();
-    else
+    else {
         remove_file(RELOAD_STATE_SNAPSHOT_FILE);
+        resume_reload_workers();
+    }
 
     return status;
 }
@@ -1622,9 +1653,35 @@ function abort_reload_after_dns_failure(status) {
     return abort_reload(status, false);
 }
 
+// A transition that failed before commit-config-stage made its backup left
+// the live config untouched; sing-box may still be stopped for the commit.
+function restart_uncommitted_singbox() {
+    let pid = module_capture(STATE_UC, [ "sing-box-service-runtime-pid" ]);
+    if (pid.status == 0 && trim(pid.output) != "")
+        return true;
+    if (reload_gives_way_to_stop("the sing-box restart"))
+        return false;
+    log_message("Starting the previous sing-box again: the failed transition never replaced its config", "warn");
+    return module_status(STATE_UC, [
+        "start-managed-sing-box-runtime",
+        as_string(getenv("PROKOP_SING_BOX_RELOAD_PID_TIMEOUT") || "15")
+    ]) == 0 && module_status(STATE_UC, [
+        "wait-prokop-stable-start",
+        RT_TABLE_NAME,
+        NFT_TABLE_NAME,
+        NFT_FAKEIP_MARK,
+        as_string(SING_BOX_START_STABLE_MIN_AGE),
+        as_string(SING_BOX_START_VERIFY_TIMEOUT)
+    ]) == 0;
+}
+
 function abort_guarded_transition(status, stage_path, backup_path, guard_active) {
     nft_candidate_finish(false);
     discard_singbox_config_stage(stage_path);
+    // commit-config-stage copies the live config to the backup before it
+    // writes anything, so without a backup the live config and section-cache
+    // are still the old generation.
+    reload_singbox_commit_started = fs.stat(backup_path) != null;
 
     if (reload_gives_way_to_stop("its rollback"))
         return abandon_reload_for_stop("", backup_path);
@@ -1636,6 +1693,15 @@ function abort_guarded_transition(status, stage_path, backup_path, guard_active)
     // coherent and the temporary packet guard can be removed directly. A
     // backup exists only after commit-config-stage has copied the old config.
     if (fs.stat(backup_path) == null) {
+        // The old sing-box may already have been stopped for the commit; it
+        // comes back on its unchanged config before the guard is lifted.
+        if (!restart_uncommitted_singbox()) {
+            if (reload_stop_abandoned)
+                return abandon_reload_for_stop("", backup_path);
+            log_message("The previous sing-box did not come back after a failed transition; retaining the fail-closed nft guard", "fatal");
+            remove_file(RELOAD_STATE_SNAPSHOT_FILE);
+            return status == 0 ? 1 : status;
+        }
         if (module_success(NFT_UC, [
             "remove-transition-guard",
             NFT_TABLE_NAME,
@@ -2351,9 +2417,12 @@ function reload(reason) {
     let sing_box_config_path = "";
     let sing_box_config_hash_before = "";
     let sing_box_pid_before = "";
+    reload_workers_stopped = false;
+    reload_singbox_commit_started = false;
     if (needs_singbox_transition) {
         module_success(DNS_FAILOVER_UC, [ "stop-runtime" ]);
         module_success(PRIORITY_UC, [ "stop-runtime" ]);
+        reload_workers_stopped = true;
         status = module_status(SINGBOX_UC, [ "configure-service" ]);
         if (status != 0)
             return abort_reload(status, false);
@@ -2493,6 +2562,7 @@ function reload(reason) {
             log_message("Failed to restart DNS failover runtime after sing-box reload", "fatal");
             return abort_guarded_transition(status, staged_singbox_config, staged_singbox_backup, transition_guard_active);
         }
+        reload_workers_stopped = false;
         if (reload_gives_way_to_stop("the DPI providers and the nft table"))
             return abandon_reload_for_stop(staged_singbox_config, staged_singbox_backup);
         status = switch_dpi_runtime(plan);
