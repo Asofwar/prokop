@@ -860,7 +860,7 @@ function session_copy(package_name, config_file, cli) {
     // it cannot be had, or (conflict) when other commits kept replacing the
     // file for SESSION_LOCK_SECONDS.
     let lock_file = function() {
-        let deadline = time() + SESSION_LOCK_SECONDS;
+        let deadline = clock(true)[0] + SESSION_LOCK_SECONDS;
         for (;;) {
             let lock = fs.open(file, "r");
             if (lock == null || !lock.lock("x")) {
@@ -873,7 +873,7 @@ function session_copy(package_name, config_file, cli) {
             if (now != null && held != null && now.inode == held.inode)
                 return lock;
             lock.close();
-            if (time() > deadline) {
+            if (clock(true)[0] > deadline) {
                 conflict = true;
                 return null;
             }

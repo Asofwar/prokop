@@ -2502,12 +2502,19 @@ sync_time() {
         return 0
     fi
 
+    # One bounded query: without an answer (WAN down, NTP blocked) `ntpd -q`
+    # never returns, and the installer would hang here.
     ntpd -q \
         -p 194.190.168.1 \
         -p 216.239.35.0 \
         -p 216.239.35.4 \
         -p 162.159.200.1 \
-        -p 162.159.200.123 >/dev/null 2>&1 || true
+        -p 162.159.200.123 >/dev/null 2>&1 &
+    ntpd_pid=$!
+    (sleep 15; kill -KILL "$ntpd_pid" 2>/dev/null) >/dev/null 2>&1 &
+    ntpd_watchdog=$!
+    wait "$ntpd_pid" 2>/dev/null || true
+    kill "$ntpd_watchdog" 2>/dev/null || true
 }
 
 check_root() {

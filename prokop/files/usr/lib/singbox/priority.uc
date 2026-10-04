@@ -70,8 +70,10 @@ function log_message(message, level) {
     command_success_from_args([ "logger", "-t", "prokop", "[" + level + "] priority: " + as_string(message) ]);
 }
 
+// The monotonic clock: these are only check deadlines, and the wall clock
+// steps when NTP sets it at boot (B5).
 function now_seconds() {
-    return int(clock()[0]);
+    return int(clock(true)[0]);
 }
 
 function duration_to_milliseconds(value, fallback_ms) {

@@ -172,8 +172,10 @@ function commit_state(path) {
     return fs.rename(path, STATE_FILE);
 }
 
+// The monotonic clock: these are only check deadlines, and the wall clock
+// steps when NTP sets it at boot (B5).
 function now_seconds() {
-    return int(clock()[0]);
+    return int(clock(true)[0]);
 }
 
 function choose_index(kind, state, current_index, timeout_seconds, recovery) {

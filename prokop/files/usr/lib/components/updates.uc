@@ -4725,16 +4725,18 @@ function acquire_subscription_update_locks(force) {
         if (!force)
             return "subscription_update_busy";
         if (deadline == null) {
-            deadline = now_seconds() + SUBSCRIPTION_LOCK_WAIT_SECONDS;
+            // The monotonic clock: NTP stepping the wall clock at boot
+            // cut this wait short (LC-6).
+            deadline = clock(true)[0] + SUBSCRIPTION_LOCK_WAIT_SECONDS;
             log_message("Another subscription download holds the subscription update lock; waiting for it without the reload lock", "info");
         }
-        let remaining = deadline - now_seconds();
+        let remaining = deadline - clock(true)[0];
         if (remaining <= 0 || !acquire_runtime_lock(SUBSCRIPTION_UPDATE_LOCK_DIR, true, remaining))
             return "subscription_update_busy";
         release_runtime_lock(SUBSCRIPTION_UPDATE_LOCK_DIR);
         // The wait may get the lock only as the bound runs out; reload.lock
         // is then still tried once (a wait of 0 s is a single attempt).
-        remaining = deadline - now_seconds();
+        remaining = deadline - clock(true)[0];
         if (!acquire_runtime_lock(RELOAD_LOCK_DIR, true, remaining > 0 ? remaining : 0))
             return "reload_busy";
     }

@@ -1240,7 +1240,9 @@ function service_action_reached_expected_state(action) {
 function service_action_wait_for_expected_state(action, timeout, settle_seconds) {
     timeout = arg_number(timeout || SERVICE_ACTION_TIMEOUT_SECONDS);
     settle_seconds = arg_number(settle_seconds || SERVICE_ACTION_SETTLE_SECONDS);
-    let deadline = now_seconds() + timeout;
+    // The monotonic clock: NTP stepping the wall clock at boot cut this
+    // wait short (LC-6).
+    let deadline = clock(true)[0] + timeout;
     let stable_seconds = 0;
 
     while (true) {
@@ -1253,7 +1255,7 @@ function service_action_wait_for_expected_state(action, timeout, settle_seconds)
             stable_seconds = 0;
         }
 
-        if (now_seconds() >= deadline)
+        if (clock(true)[0] >= deadline)
             return false;
         system("sleep 1");
     }

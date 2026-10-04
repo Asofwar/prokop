@@ -179,6 +179,13 @@ function current_epoch() {
     return as_string(int(clock()[0]));
 }
 
+// Seconds of the monotonic clock: deadlines and waits. The wall clock steps
+// when NTP sets it at boot (routers without an RTC start in the past), which
+// cut a wait short or stretched it (LC-6).
+function monotonic_seconds() {
+    return int(clock(true)[0]);
+}
+
 function bool_text(value) {
     value = lc(as_string(value));
     return value == "1" || value == "true" || value == "yes" || value == "on";
@@ -249,11 +256,10 @@ function acquire_runtime_dir_lock(lock_dir, owner_pid) {
 
 function acquire_runtime_dir_lock_wait(lock_dir, owner_pid, timeout) {
     timeout = int(timeout || 0);
-    let started_at = int(current_epoch(), 10) || 0;
+    let started_at = monotonic_seconds();
 
     while (!acquire_runtime_dir_lock(lock_dir, owner_pid)) {
-        let now = int(current_epoch(), 10) || started_at;
-        if (now - started_at >= timeout)
+        if (monotonic_seconds() - started_at >= timeout)
             return false;
         command_success_from_args([ "sleep", "1" ]);
     }
@@ -1118,9 +1124,9 @@ function start_and_wait(action, reason, timeout, ui_job) {
     let status = command_status(command_from_args(args) + " </dev/null >/dev/null 2>&1");
 
     let result = read_start_result(path);
-    let deadline = int(current_epoch(), 10) + timeout;
+    let deadline = monotonic_seconds() + timeout;
     let deferred = false;
-    while (status == 0 && (result == null || result === "deferred") && int(current_epoch(), 10) < deadline) {
+    while (status == 0 && (result == null || result === "deferred") && monotonic_seconds() < deadline) {
         if (result === "deferred" && !deferred) {
             deferred = true;
             if (as_string(ui_job) != "" && file_exists(UI_UC))
@@ -1148,9 +1154,9 @@ function start_and_wait(action, reason, timeout, ui_job) {
     if (result != 0)
         return result;
     let settle = numeric_text(START_SETTLE_SECONDS) ? int(START_SETTLE_SECONDS, 10) : 30;
-    let settle_deadline = int(current_epoch(), 10) + settle;
+    let settle_deadline = monotonic_seconds() + settle;
     while (!runtime_is_running()) {
-        if (int(current_epoch(), 10) >= settle_deadline)
+        if (monotonic_seconds() >= settle_deadline)
             return 1;
         command_success_from_args([ "sleep", "1" ]);
     }

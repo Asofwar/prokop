@@ -253,12 +253,16 @@ function time_sync_needed(year) {
     return int(year) < 2024;
 }
 
+// One query, bounded: it runs under reload.lock, and `ntpd -q` without an
+// answer (WAN down, NTP blocked) never returns (A5).
+const NTPD_QUERY_TIMEOUT_SECONDS = getenv("PROKOP_NTPD_QUERY_TIMEOUT_SECONDS") || "15";
+
 function sync_time_if_needed() {
     if (!time_sync_needed(current_year()))
         return;
 
-    command_success_from_args([
-        "/usr/sbin/ntpd",
+    let ntpd = command_from_args([
+        getenv("PROKOP_NTPD") || "/usr/sbin/ntpd",
         "-q",
         "-p", "194.190.168.1",
         "-p", "216.239.35.0",
@@ -266,6 +270,11 @@ function sync_time_if_needed() {
         "-p", "162.159.200.1",
         "-p", "162.159.200.123"
     ]);
+    let timeout = numeric_text(NTPD_QUERY_TIMEOUT_SECONDS) ? NTPD_QUERY_TIMEOUT_SECONDS : "15";
+    let script = ntpd + " >/dev/null 2>&1 & child=$!; " +
+        "(sleep " + timeout + "; kill -KILL \"$child\" 2>/dev/null) >/dev/null 2>&1 & watchdog=$!; " +
+        "wait \"$child\"; rc=$?; kill \"$watchdog\" 2>/dev/null; exit \"$rc\"";
+    command_success_from_args([ "sh", "-c", script ]);
 }
 
 // Unique per write, as in service/initd.uc: a caller comparing markers sees a
@@ -354,11 +363,12 @@ function acquire_runtime_dir_lock(lock_dir, owner_pid) {
 function acquire_runtime_dir_lock_wait(lock_dir, owner_pid, timeout) {
     let timeout_text = as_string(timeout == null ? "300" : timeout);
     timeout = numeric_text(timeout_text) ? int(timeout_text, 10) : 300;
-    let start = int(current_epoch(), 10) || 0;
+    // The monotonic clock: NTP stepping the wall clock at boot cut this
+    // wait short (LC-6).
+    let start = clock(true)[0];
 
     while (!acquire_runtime_dir_lock(lock_dir, owner_pid)) {
-        let now = int(current_epoch(), 10) || start;
-        if (now - start >= timeout)
+        if (clock(true)[0] - start >= timeout)
             return false;
         command_success_from_args([ "sleep", "2" ]);
     }
