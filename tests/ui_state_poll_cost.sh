@@ -84,6 +84,7 @@ esac'
 logged_stub netstat 'printf "%s\n" "udp 0 0 127.0.0.42:53 0.0.0.0:* " "tcp 0 0 0.0.0.0:1602 0.0.0.0:* LISTEN" "tcp 0 0 :::1602 :::* LISTEN"'
 logged_stub curl 'for arg in "$@"; do last="$arg"; done
 case "$last" in
+  */version) printf "%s\n" "{\"version\":\"sing-box 1.12.0\"}" ;;
   */proxies) printf "%s\n" "{\"proxies\":{\"direct\":{\"type\":\"Direct\"},\"main-out\":{\"type\":\"VLESS\"}}}" ;;
   */connections) printf "%s\n" "{\"downloadTotal\":1,\"uploadTotal\":2,\"connections\":[]}" ;;
   *) printf "%s\n" "{\"delay\":42}" ;;

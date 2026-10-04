@@ -1541,11 +1541,29 @@ function clash_auth_args() {
     let secret = common.clash_api_secret(settings());
     if (secret == "")
         return [];
-    let path = trim(command_output_from_args([ "mktemp" ]));
-    if (path == "")
-        return null;
+    // Created here, in a private directory of the runtime state, rather
+    // than by a mktemp process on every call (a Priority probe asks every
+    // 5 s; audit 2026-10-04, optimization 4). "wx": never an existing file.
+    // Where that directory cannot be made, a mktemp file as before.
+    let dir = RUNTIME_STATE_DIR + "/clash-auth";
+    if (fs.stat(RUNTIME_STATE_DIR) == null)
+        fs.mkdir(RUNTIME_STATE_DIR, 0755);
+    if (fs.stat(dir) == null)
+        fs.mkdir(dir, 0700);
+    let path = null, fh = null;
+    if (fs.stat(dir)?.type == "directory" && fs.chmod(dir, 0700))
+        for (let attempt = 0; attempt < 8 && fh == null; attempt++) {
+            let now = clock();
+            path = sprintf("%s/%d.%d.%d", dir, now[0], now[1], attempt);
+            fh = fs.open(path, "wx", 0600);
+        }
+    if (fh == null) {
+        path = trim(command_output_from_args([ "mktemp" ]));
+        if (path == "")
+            return null;
+        fh = fs.open(path, "w", 0600);
+    }
     push(clash_auth_files, path);
-    let fh = fs.open(path, "w", 0600);
     if (fh == null || !fs.chmod(path, 0600) || fh.write("Authorization: Bearer " + secret + "\n") == null) {
         if (fh != null)
             fh.close();
@@ -1685,8 +1703,24 @@ function clash_proxy_type_map(base_url, auth) {
     return proxies == null ? null : clash_proxy_types(proxies);
 }
 
+// Ready: the controller answers GET /version, a few bytes, not the whole
+// proxy list (about 143 KB with 400 nodes) every second while sing-box
+// starts (audit 2026-10-04, optimization 3).
 function clash_api_ready() {
-    let ready = clash_proxy_type_map(clash_api_url(), clash_auth_args()) != null;
+    let auth = clash_auth_args();
+    let ready = false;
+    if (auth != null) {
+        let args = clash_curl();
+        for (let item in auth) push(args, item);
+        push(args, clash_api_url() + "/version");
+        try {
+            let value = json(command_output(command_from_args(args)));
+            ready = type(value) == "object" && value.version != null;
+        }
+        catch (e) {
+            ready = false;
+        }
+    }
     clash_auth_close();
     return ready;
 }

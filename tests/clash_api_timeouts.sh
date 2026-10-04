@@ -173,6 +173,10 @@ while (true) {
     }
     if (mode != "hang") {
         let request = conn.recv(8192) || "";
+        if (match(request, /^GET \/version HTTP/)) {
+            answer(conn, '{"version":"sing-box 1.12.0"}');
+            continue;
+        }
         if (match(request, /^GET \/proxies HTTP/)) {
             answer(conn, sprintf("%J", { proxies: maps[mode] }));
             continue;

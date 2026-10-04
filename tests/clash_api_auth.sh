@@ -98,7 +98,10 @@ if [ -n "${CLASH_TEST_SECRET:-}" ] && [ "$auth" != "Authorization: Bearer $CLASH
   printf '{"message":"Unauthorized"}\n'
   exit 0
 fi
-printf '{"proxies":{"direct":{"type":"Direct"},"main-out":{"type":"VLESS"}}}\n'
+case "$*" in
+  */version) printf '{"version":"sing-box 1.12.0"}\n' ;;
+  *) printf '{"proxies":{"direct":{"type":"Direct"},"main-out":{"type":"VLESS"}}}\n' ;;
+esac
 SH
 cat >"$WORK_DIR/bin/logger" <<'SH'
 #!/bin/sh
@@ -142,12 +145,18 @@ mkdir -p "$WORK_DIR/tmp"
 write_state "prokop.settings.yacd_secret_key=$SECRET"
 CLASH_TEST_SECRET="$SECRET" backend clash-api-ready >/dev/null 2>&1 ||
   fail "readiness must authenticate whenever a secret is configured (got 401)"
-grep -q '^ARGV:.*/proxies' "$WORK_DIR/curl.log" || fail "readiness did not query the controller"
+grep -q '^ARGV:.*/version' "$WORK_DIR/curl.log" || fail "readiness did not query the controller"
+# Optimization 3: readiness reads the version, not the whole proxy list.
+! grep -q '^ARGV:.*/proxies' "$WORK_DIR/curl.log" || fail "readiness fetched the whole proxy list"
 grep '^ARGV:' "$WORK_DIR/curl.log" | grep -q "$SECRET" &&
   fail "the Clash secret must not appear on the curl command line"
 grep -q '^HEADER-FILE-MODE: 600$' "$WORK_DIR/curl.log" ||
   fail "the Authorization header must come from a private (0600) file"
-[ -z "$(find "$WORK_DIR/tmp" -type f)" ] || fail "the header file must be removed after the request"
+[ -z "$(find "$WORK_DIR/tmp" "$WORK_DIR/run" -type f -path '*auth*' 2>/dev/null; find "$WORK_DIR/tmp" -type f)" ] ||
+  fail "the header file must be removed after the request"
+# Optimization 4: the header file is made in-process, in a private directory.
+! grep -q '^ARGV:.*mktemp' "$WORK_DIR/curl.log" || fail "mktemp ran"
+[ "$(stat -c %a "$WORK_DIR/run/clash-auth")" = 700 ] || fail "the header directory is not private"
 
 out="$(CLASH_TEST_SECRET="$SECRET" backend clash-api get_proxies 2>/dev/null)" ||
   fail "get_proxies failed"
