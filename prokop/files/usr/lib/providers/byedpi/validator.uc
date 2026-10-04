@@ -122,6 +122,18 @@ function controlled_option_failure(token, next_token) {
             [ base ]
         );
 
+    // ciadpi's debug output goes to the rule log in RAM, a line per
+    // connection (OBS-3); only level 0 is accepted.
+    if (base == "--debug" || token == "-x" || match(token, /^-x.+/) != null) {
+        let level = token == "--debug" || token == "-x" ? as_string(next_token) :
+            (base == "--debug" ? substr(token, length("--debug=")) : substr(token, 2));
+        if (level != "0")
+            return validation_failure(
+                "ByeDPI debug output fills the router's memory through the rule log, so only --debug 0 is allowed here.",
+                [ base == "--debug" ? "--debug" : "-x" ]
+            );
+    }
+
     if (token == "--help" || token == "-h" || match(token, /^-h.+/) != null ||
         token == "--version" || token == "-v" || match(token, /^-v.+/) != null)
         return validation_failure(

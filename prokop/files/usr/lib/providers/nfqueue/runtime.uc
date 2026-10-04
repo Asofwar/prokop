@@ -8,6 +8,7 @@ let runtime_constants = require("singbox.constants");
 let runtime_snapshot = require("providers.runtime_snapshot");
 let provider_marks = require("providers.marks");
 let process_identity = require("core.process_identity");
+let respawn = require("providers.respawn");
 
 const CONFIG_NAME = getenv("PROKOP_CONFIG_NAME") || constants.PROKOP_CONFIG_NAME || "prokop";
 const LIB_DIR = getenv("PROKOP_LIB") || "/usr/lib/prokop";
@@ -381,17 +382,29 @@ function supervisor_command(cfg, queue, raw_opt, child_pidfile) {
         " \"$child\" " + shell_quote(child_pidfile) + "; wait $child; rc=$?; rm -f " + shell_quote(child_pidfile) + "; exit $rc";
 }
 
+// The supervisor's output is the rule's log: it is trimmed before every
+// respawn, and a binary that keeps failing waits longer each time (OBS-3).
 function supervisor(cfg, section, queue, raw_opt, child_pidfile) {
+    let logfile = cfg.log_dir + "/" + as_string(section) + ".log";
+    let delay = 0;
     while (true) {
+        respawn.trim_log(logfile);
         if (!provider_available(cfg)) {
-            print(command_output_from_args([ "date", "+%Y-%m-%d %H:%M:%S" ]), " Provider ", cfg.binary, " is not executable; retrying in ", cfg.respawn_delay, " seconds\n");
-            command_success_from_args([ "sleep", cfg.respawn_delay ]);
+            delay = respawn.next_delay(delay, cfg.respawn_delay, 0);
+            print(trim(command_output_from_args([ "date", "+%Y-%m-%d %H:%M:%S" ])), " Provider ", cfg.binary, " is not executable; retrying in ", delay, " seconds\n");
+            fs.stdout.flush();
+            command_success_from_args([ "sleep", "" + delay ]);
             continue;
         }
 
+        let started = respawn.monotonic_seconds();
         let rc = command_status("sh -c " + shell_quote(supervisor_command(cfg, queue, raw_opt, child_pidfile)));
-        print(command_output_from_args([ "date", "+%Y-%m-%d %H:%M:%S" ]), " ", cfg.binary_name, " for rule ", as_string(section), " exited with code ", rc, "; respawning in ", cfg.respawn_delay, " seconds\n");
-        command_success_from_args([ "sleep", cfg.respawn_delay ]);
+        delay = respawn.next_delay(delay, cfg.respawn_delay, respawn.monotonic_seconds() - started);
+        respawn.record_restart(logfile);
+        respawn.trim_log(logfile);
+        print(trim(command_output_from_args([ "date", "+%Y-%m-%d %H:%M:%S" ])), " ", cfg.binary_name, " for rule ", as_string(section), " exited with code ", rc, "; respawning in ", delay, " seconds\n");
+        fs.stdout.flush();
+        command_success_from_args([ "sleep", "" + delay ]);
     }
 }
 
@@ -599,6 +612,8 @@ function status_json(cfg) {
     let legacy_runtime = legacy_runtime_path_present(cfg);
     let luci_installed = luci_app_installed(cfg);
     let config_state = runtime_config_status(cfg, sections);
+    let restarts = respawn.restart_count(cfg.log_dir);
+    let unstable = configured && restarts > 0;
     let conflict = running > expected || queue_overlap || legacy_runtime;
     let ready = configured &&
         provider &&
@@ -617,6 +632,8 @@ function status_json(cfg) {
         message = "legacy zapret runtime paths are still present and should be migrated";
     else if (running > expected || supervisors > expected)
         message = "unexpected Prokop-managed " + cfg.binary_name + " processes are running without matching action=" + cfg.action + " rules";
+    else if (configured && unstable)
+        message = "Prokop-managed " + cfg.binary_name + " has restarted " + restarts + " times after exiting; check the strategy and the rule log in " + cfg.log_dir;
     else if (configured && !ready)
         message = "action=" + cfg.action + " is configured, but the Prokop-managed " + cfg.binary_name + " runtime is not ready";
     else if (standalone_conflict)
@@ -639,6 +656,8 @@ function status_json(cfg) {
         expected_process_count: expected,
         running_process_count: running,
         supervisor_process_count: supervisors,
+        restart_count: restarts,
+        runtime_unstable: unstable,
         standalone_service_enabled: standalone_enabled,
         standalone_service_running: standalone_running,
         standalone_config_present: standalone_config,

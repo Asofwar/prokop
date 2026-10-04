@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-03 22:36+0000\n"
-"PO-Revision-Date: 2026-10-03 22:36+0000\n"
+"POT-Creation-Date: 2026-10-04 20:31+0000\n"
+"PO-Revision-Date: 2026-10-04 20:31+0000\n"
 "Last-Translator: Asofwar\n"
 "Language-Team: none\n"
 "Language: ru\n"
@@ -3095,6 +3095,9 @@ msgstr "ciadpi Prokop не запущен"
 msgid "Prokop-managed ciadpi runtime is ready"
 msgstr "ciadpi Prokop готов"
 
+msgid "Prokop-managed nfqws runtime has restarted"
+msgstr "nfqws Prokop перезапускался"
+
 msgid "Prokop-managed nfqws runtime is not ready"
 msgstr "NFQWS Prokop не готов"
 
@@ -3103,6 +3106,9 @@ msgstr "NFQWS Prokop не запущен"
 
 msgid "Prokop-managed nfqws runtime is ready"
 msgstr "NFQWS Prokop готов"
+
+msgid "Prokop-managed nfqws2 runtime has restarted"
+msgstr "nfqws2 Prokop перезапускался"
 
 msgid "Prokop-managed nfqws2 runtime is not ready"
 msgstr "NFQWS2 Prokop не готов"

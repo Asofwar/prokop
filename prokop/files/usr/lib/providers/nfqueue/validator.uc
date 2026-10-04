@@ -193,6 +193,11 @@ function unsupported_reason(kind, token) {
     if (kind == "nfqws2" && token == "--intercept=0")
         return "nfqws2 interception must stay enabled for Prokop-managed action=zapret2 rules.";
 
+    // Debug output goes to the rule log in RAM, a line per packet (OBS-3);
+    // syslog keeps it in the bounded system log.
+    if (base == "--debug" && token != "--debug=0" && token != "--debug=syslog")
+        return name + " debug output fills the router's memory through the rule log; only --debug=syslog or --debug=0 is allowed.";
+
     if (base == "--daemon")
         return "Prokop manages the " + name + " process lifecycle itself. The strategy must not daemonize " + name + ".";
     if (base == "--dry-run")

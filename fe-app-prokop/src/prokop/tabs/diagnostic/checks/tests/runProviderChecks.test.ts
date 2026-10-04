@@ -83,6 +83,37 @@ describe('provider diagnostics checks', () => {
     ).toBe(false);
   });
 
+  it.each([
+    ['Zapret', runZapretCheck, mocks.getZapretStatus, 'nfqws'],
+    ['Zapret2', runZapret2Check, mocks.getZapret2Status, 'nfqws2'],
+  ] as const)(
+    'shows %s supervisor restarts as a warning with the count',
+    async (_name, run, getStatus, binary) => {
+      getStatus.mockResolvedValue({
+        success: true,
+        data: {
+          ...zapretOkData,
+          provider_path: `/usr/bin/${binary}`,
+          restart_count: 3,
+          runtime_unstable: true,
+        },
+      });
+
+      await expect(run()).resolves.toBeUndefined();
+
+      const result = mocks.updateCheckStore.mock.calls.slice(-1)[0]?.[0];
+      expect(result.items).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            state: 'warning',
+            key: `Prokop-managed ${binary} runtime has restarted`,
+            value: '3',
+          }),
+        ]),
+      );
+    },
+  );
+
   it('keeps Zapret outbound failures visible and red', async () => {
     mocks.getZapretStatus.mockResolvedValue({
       success: true,

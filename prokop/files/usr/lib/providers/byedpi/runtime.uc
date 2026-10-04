@@ -6,6 +6,7 @@ let uci_core = require("core.uci");
 let runtime_constants = require("singbox.constants");
 let runtime_snapshot = require("providers.runtime_snapshot");
 let process_identity = require("core.process_identity");
+let respawn = require("providers.respawn");
 let validator_module = null;
 
 const CONFIG_NAME = getenv("PROKOP_CONFIG_NAME") || "prokop";
@@ -251,17 +252,29 @@ function supervisor_command(port, raw_opt, child_pidfile) {
         " \"$child\" " + shell_quote(child_pidfile) + "; wait $child; rc=$?; rm -f " + shell_quote(child_pidfile) + "; exit $rc";
 }
 
+// The supervisor's output is the rule's log: it is trimmed before every
+// respawn, and a binary that keeps failing waits longer each time (OBS-3).
 function supervisor(section, port, raw_opt, child_pidfile) {
+    let logfile = BYEDPI_LOG_DIR + "/" + as_string(section) + ".log";
+    let delay = 0;
     while (true) {
+        respawn.trim_log(logfile);
         if (!provider_available()) {
-            print(command_output_from_args([ "date", "+%Y-%m-%d %H:%M:%S" ]), " Provider ", BYEDPI_BIN, " is not executable; retrying in ", BYEDPI_RESPAWN_DELAY, " seconds\n");
-            command_success_from_args([ "sleep", BYEDPI_RESPAWN_DELAY ]);
+            delay = respawn.next_delay(delay, BYEDPI_RESPAWN_DELAY, 0);
+            print(trim(command_output_from_args([ "date", "+%Y-%m-%d %H:%M:%S" ])), " Provider ", BYEDPI_BIN, " is not executable; retrying in ", delay, " seconds\n");
+            fs.stdout.flush();
+            command_success_from_args([ "sleep", "" + delay ]);
             continue;
         }
 
+        let started = respawn.monotonic_seconds();
         let rc = command_status("sh -c " + shell_quote(supervisor_command(port, raw_opt, child_pidfile)));
-        print(command_output_from_args([ "date", "+%Y-%m-%d %H:%M:%S" ]), " ciadpi for rule ", as_string(section), " exited with code ", rc, "; respawning in ", BYEDPI_RESPAWN_DELAY, " seconds\n");
-        command_success_from_args([ "sleep", BYEDPI_RESPAWN_DELAY ]);
+        delay = respawn.next_delay(delay, BYEDPI_RESPAWN_DELAY, respawn.monotonic_seconds() - started);
+        respawn.record_restart(logfile);
+        respawn.trim_log(logfile);
+        print(trim(command_output_from_args([ "date", "+%Y-%m-%d %H:%M:%S" ])), " ciadpi for rule ", as_string(section), " exited with code ", rc, "; respawning in ", delay, " seconds\n");
+        fs.stdout.flush();
+        command_success_from_args([ "sleep", "" + delay ]);
     }
 }
 
@@ -362,23 +375,7 @@ function live_pid_count(path) {
 }
 
 function restart_count() {
-    let count = 0;
-    if (fs.stat(BYEDPI_LOG_DIR) == null)
-        return count;
-
-    let output = command_output_from_args([ "find", BYEDPI_LOG_DIR, "-maxdepth", "1", "-type", "f", "-name", "*.log" ]);
-    for (let path in split(output, "\n")) {
-        path = trim(as_string(path));
-        if (path == "")
-            continue;
-        let data = fs.readfile(path);
-        if (data == null)
-            continue;
-        for (let line in split(data, "\n"))
-            if (match(as_string(line), /ciadpi for rule .* exited with code/) != null)
-                count++;
-    }
-    return count;
+    return respawn.restart_count(BYEDPI_LOG_DIR);
 }
 
 function runtime_tag(base, postfix) {

@@ -11974,6 +11974,8 @@ async function runZapretCheck() {
   const expectedProcesses = Number(data.expected_process_count || 0);
   const runningProcesses = Number(data.running_process_count || 0);
   const supervisorProcesses = Number(data.supervisor_process_count || 0);
+  const restartCount = Number(data.restart_count || 0);
+  const runtimeUnstable = Boolean(data.runtime_unstable);
   const prokopRuntimeReady = !hasZapretRules || runningProcesses === expectedProcesses && supervisorProcesses === expectedProcesses;
   const unexpectedRuntime = !hasZapretRules && (runningProcesses > 0 || supervisorProcesses > 0);
   const outboundsConfigured = Boolean(data.outbounds_configured);
@@ -11994,9 +11996,9 @@ async function runZapretCheck() {
       value: ""
     },
     {
-      state: unexpectedRuntime || !prokopRuntimeReady ? "error" : "success",
-      key: hasZapretRules ? prokopRuntimeReady ? _("Prokop-managed nfqws runtime is ready") : _("Prokop-managed nfqws runtime is not ready") : unexpectedRuntime ? _("Unexpected Prokop-managed nfqws runtime is running") : _("Prokop-managed nfqws runtime is not running"),
-      value: hasZapretRules ? `${runningProcesses}/${expectedProcesses}` : ""
+      state: unexpectedRuntime || !prokopRuntimeReady ? "error" : runtimeUnstable ? "warning" : "success",
+      key: hasZapretRules ? !prokopRuntimeReady ? _("Prokop-managed nfqws runtime is not ready") : runtimeUnstable ? _("Prokop-managed nfqws runtime has restarted") : _("Prokop-managed nfqws runtime is ready") : unexpectedRuntime ? _("Unexpected Prokop-managed nfqws runtime is running") : _("Prokop-managed nfqws runtime is not running"),
+      value: hasZapretRules ? prokopRuntimeReady && runtimeUnstable ? `${restartCount}` : `${runningProcesses}/${expectedProcesses}` : ""
     },
     {
       state: queueOverlap ? "error" : "success",
@@ -12056,6 +12058,8 @@ async function runZapret2Check() {
   const expectedProcesses = Number(data.expected_process_count || 0);
   const runningProcesses = Number(data.running_process_count || 0);
   const supervisorProcesses = Number(data.supervisor_process_count || 0);
+  const restartCount = Number(data.restart_count || 0);
+  const runtimeUnstable = Boolean(data.runtime_unstable);
   const prokopRuntimeReady = !hasZapret2Rules || runningProcesses === expectedProcesses && supervisorProcesses === expectedProcesses;
   const unexpectedRuntime = !hasZapret2Rules && (runningProcesses > 0 || supervisorProcesses > 0);
   const outboundsConfigured = Boolean(data.outbounds_configured);
@@ -12080,9 +12084,9 @@ async function runZapret2Check() {
       value: ""
     },
     {
-      state: unexpectedRuntime || !prokopRuntimeReady ? "error" : "success",
-      key: hasZapret2Rules ? prokopRuntimeReady ? _("Prokop-managed nfqws2 runtime is ready") : _("Prokop-managed nfqws2 runtime is not ready") : unexpectedRuntime ? _("Unexpected Prokop-managed nfqws2 runtime is running") : _("Prokop-managed nfqws2 runtime is not running"),
-      value: hasZapret2Rules ? `${runningProcesses}/${expectedProcesses}` : ""
+      state: unexpectedRuntime || !prokopRuntimeReady ? "error" : runtimeUnstable ? "warning" : "success",
+      key: hasZapret2Rules ? !prokopRuntimeReady ? _("Prokop-managed nfqws2 runtime is not ready") : runtimeUnstable ? _("Prokop-managed nfqws2 runtime has restarted") : _("Prokop-managed nfqws2 runtime is ready") : unexpectedRuntime ? _("Unexpected Prokop-managed nfqws2 runtime is running") : _("Prokop-managed nfqws2 runtime is not running"),
+      value: hasZapret2Rules ? prokopRuntimeReady && runtimeUnstable ? `${restartCount}` : `${runningProcesses}/${expectedProcesses}` : ""
     },
     {
       state: queueOverlap ? "error" : "success",

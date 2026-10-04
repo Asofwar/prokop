@@ -1140,6 +1140,8 @@ export namespace Prokop {
     expected_process_count: number;
     running_process_count: number;
     supervisor_process_count: number;
+    restart_count: number;
+    runtime_unstable: 0 | 1;
     standalone_service_enabled: 0 | 1;
     standalone_service_running: 0 | 1;
     standalone_config_present: 0 | 1;
