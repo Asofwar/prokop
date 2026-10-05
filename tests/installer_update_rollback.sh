@@ -46,12 +46,29 @@ release_json() {
 JSON
 }
 
+RELEASE_BASE_URL="https://channel.example"
+catalog_json() {
+  local name
+  printf '{ "format": 1, "releases": [ { "tag_name": "2.12.0", "assets": ['
+  for name in prokop luci-app-prokop luci-i18n-prokop-ru; do
+    [ "$name" = prokop ] || printf ','
+    printf '{ "name": "%s_2.12.0.ipk", "sha256": "%s", "browser_download_url": "%s/releases/2.12.0/%s_2.12.0.ipk" }' \
+      "$name" "$(sha "${name}_2.12.0.ipk")" "${CATALOG_BASE:-https://channel.example}" "$name"
+  done
+  printf '] } ] }\n'
+}
+
 # Doubles: the network answers from $ASSETS, the package manager records.
 http_get() {
   printf 'GET %s\n' "$1" >>"$LOG"
   [ -z "${NETWORK_DOWN:-}" ] || return 1
   case "$1" in
-    https://api.github.com/repos/Asofwar/prokop/releases/tags/2.12.0) release_json ;;
+    https://api.github.com/repos/Asofwar/prokop/releases/tags/2.12.0)
+      [ -z "${GITHUB_LIMITED:-}" ] || { printf '{"message":"API rate limit exceeded"}'; return 0; }
+      release_json ;;
+    https://channel.example/updates/releases.json)
+      [ -n "${CATALOG:-}" ] || return 1
+      catalog_json ;;
     *) return 1 ;;
   esac
 }
@@ -77,7 +94,7 @@ reset_case() {
   UPDATE_PACKAGES_STARTED=0
   INSTALLED=([prokop]=2.12.0-r1 [luci-app-prokop]=2.12.0-r1 [luci-i18n-prokop-ru]=2.12.0-r1)
   printf "config settings 'settings'\n\toption marker 'old'\n" >"$UPDATE_CONFIG_FILE"
-  unset NETWORK_DOWN INSTALL_FAILS I18N_SHA
+  unset NETWORK_DOWN INSTALL_FAILS I18N_SHA CATALOG CATALOG_BASE GITHUB_LIMITED
 }
 # The update installs new packages and changes the configuration, then fails.
 failed_update() {
@@ -208,5 +225,20 @@ printf '%s\n' "$main_body" | grep -Fq "trap 'on_installer_signal 129' HUP" ||
 sed -n '/^install_backend_package() {$/,/^}$/p' "$ROOT_DIR/install.sh" |
   awk '/UPDATE_PACKAGES_STARTED=1/ {s=NR} /trap .. HUP/ {t=NR} /pkg_install_prokop_file/ {i=NR} END {exit !(s && t && i > t)}' ||
   fail_test "an update does not ignore hangups before it replaces packages"
+
+# 8. UPD-13: the channel catalog is asked first, so a spent GitHub API
+#    limit does not stop the rollback from being prepared; a catalog that
+#    points outside the release directory is not trusted.
+reset_case
+CATALOG=1
+GITHUB_LIMITED=1
+prepare_current_update_rollback
+[ -n "$UPDATE_ROLLBACK_PACKAGES" ] || fail_test "the catalog did not provide the rollback packages: $(cat "$LOG")"
+if grep -Fq 'api.github.com' "$LOG"; then fail_test "the GitHub API was asked although the catalog answered: $(cat "$LOG")"; fi
+reset_case
+CATALOG=1
+CATALOG_BASE="https://elsewhere.example"
+prepare_current_update_rollback
+[ -z "$UPDATE_ROLLBACK_PACKAGES" ] || fail_test "a catalog URL outside the release directory was used"
 
 printf 'Installer update rollback tests passed\n'

@@ -2058,6 +2058,21 @@ function github_message() {
         print(as_string(value.message), "\n");
 }
 
+// One release of the channel catalog (updates/releases.json, format 1).
+function release_catalog_entry(version) {
+    let catalog = read_stdin_json();
+    if (!release_version_valid(version) || type(catalog) != "object" ||
+        catalog.format != 1 || type(catalog.releases) != "array")
+        return;
+    for (let release in catalog.releases) {
+        if (type(release) == "object" && as_string(release.tag_name) == version &&
+            type(release.assets) == "array") {
+            print(sprintf("%J", release), "\n");
+            return;
+        }
+    }
+}
+
 function release_tag() {
     let release = read_stdin_json();
     if (type(release) == "object" && release.tag_name != null)
@@ -2104,6 +2119,8 @@ if (mode == "github-message")
     github_message();
 else if (mode == "release-tag")
     release_tag();
+else if (mode == "release-catalog-entry")
+    release_catalog_entry(ARGV[1]);
 else if (mode == "release-asset-url")
     release_asset_url(ARGV[1], ARGV[2]);
 else if (mode == "release-asset-sha256")
@@ -2848,7 +2865,8 @@ validate_sing_box_tiny_install() {
 
 # B8: an update keeps what it replaces, before it changes anything: the
 # configuration and the package files of the installed Prokop release, from
-# the GitHub Releases of RELEASE_REPO (checked by SHA-256). An update that
+# the release channel catalog or the GitHub Releases of RELEASE_REPO (checked
+# by SHA-256). An update that
 # fails after it started to install packages reinstalls them from those files,
 # without the network, and puts the configuration back; the service state is
 # restored after it (restore_current_prokop_on_failure). A release that cannot
@@ -2880,7 +2898,15 @@ prepare_current_update_rollback() {
     [ "$PKG_IS_APK" -eq 1 ] && asset_ext="apk"
     kinds="backend:prokop app:luci-app-prokop"
     pkg_is_installed luci-i18n-prokop-ru && kinds="$kinds i18n:luci-i18n-prokop-ru"
-    release_json="$(http_get "https://api.github.com/repos/${RELEASE_REPO}/releases/tags/${installed_tag}" 2>/dev/null || true)"
+    # The channel catalog first, as the updater does: the GitHub API allows
+    # 60 requests an hour per address and is often spent behind CGNAT.
+    release_base="${RELEASE_BASE_URL%/}/releases/${installed_tag}/"
+    release_json="$(http_get "${RELEASE_BASE_URL%/}/updates/releases.json" 2>/dev/null |
+        install_json_ucode release-catalog-entry "$installed_tag" 2>/dev/null || true)"
+    if [ -z "$release_json" ]; then
+        release_base=""
+        release_json="$(http_get "https://api.github.com/repos/${RELEASE_REPO}/releases/tags/${installed_tag}" 2>/dev/null || true)"
+    fi
     packages=""
     for entry in $kinds; do
         kind="${entry%%:*}"
@@ -2892,6 +2918,14 @@ prepare_current_update_rollback() {
             return 0
         fi
         url="$(release_asset_url "$url")"
+        # A catalog entry names files of this release's own directory only.
+        case "$url" in
+            "$release_base"*) ;;
+            *)
+                warn "Prokop $installed_tag packages are not published in $RELEASE_REPO; a failed update will not reinstall them"
+                return 0
+                ;;
+        esac
         file="$UPDATE_ROLLBACK_DIR/$(basename "$url")"
         if ! download_with_retry "$url" "$file" "$(basename "$url") (rollback)" ||
             [ "$(sha256sum "$file" 2>/dev/null | awk '{print $1}')" != "$expected" ]; then
