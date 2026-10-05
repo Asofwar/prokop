@@ -88,6 +88,13 @@ if [ -z "$SING_BOX" ] || [ ! -x "$SING_BOX" ]; then
   exit 0
 fi
 
+# sing-box marks its outbound connections (route.default_mark), which needs
+# root as on the router.
+if [ "$(id -u)" -ne 0 ]; then
+  printf 'list_proxy_cold_start: OK (real sing-box not run: it needs root to mark its connections)\n'
+  exit 0
+fi
+
 # 3. The real sing-box and the real list update.
 mkdir -p "$WORK/bin" "$WORK/run" "$WORK/cache" "$WORK/rulesets" "$WORK/www"
 ln -s "$SING_BOX" "$WORK/bin/sing-box"
