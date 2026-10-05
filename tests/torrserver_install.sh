@@ -466,6 +466,30 @@ rm -rf "${PROC:?}/778"
 action torrserver start
 expect_success "start after the other TorrServer went"
 
+# --- 6c. The card's state is never an hour old (TS-4, TS-5) ---------------------------
+# System info is cached for an hour; TorrServer's fields are read afresh
+# over it, from one pass (card-status), so a stopped TorrServer offers Start
+# at once.
+sysinfo() { # sysinfo <field>
+  ucode -L "$LIB" "$LIB/diagnostics/runtime.uc" get-system-info 2>/dev/null |
+    node -e 'let s = ""; process.stdin.on("data", (d) => s += d).on("end", () => process.stdout.write(String(JSON.parse(s)[process.argv[1]])));' "$1"
+}
+[ "$(sysinfo torrserver_service_running)" = 1 ] || fail "system info must show TorrServer running"
+[ -s "$WORK/run/system-info.json" ] || fail "fixture: system info was not cached"
+"$WORK/bin/torrserver-init" stop
+[ "$(sysinfo torrserver_service_running)" = 0 ] || fail "a stopped TorrServer must show at once, not after the cache expires"
+[ "$(sysinfo torrserver_installed)" = 1 ] && [ "$(sysinfo torrserver_version)" = MatriX.146 ] || fail "system info must keep the installed TorrServer"
+[ "$(sysinfo torrserver_recommended_cache_mib)" = 128 ] || fail "system info must give the recommended cache for 1 GiB"
+mkdir -p "$PROC/779"
+printf '/usr/bin/torrserver\0' >"$PROC/779/cmdline"
+[ "$(sysinfo torrserver_foreign)" = 1 ] && [ "$(sysinfo torrserver_running)" = 1 ] ||
+  fail "another TorrServer must show at once (and TorrServer Direct must see it)"
+rm -rf "${PROC:?}/779"
+[ "$(sysinfo torrserver_foreign)" = 0 ] || fail "a TorrServer that went must show at once"
+ucode -L "$LIB" "$MANAGER" card-status | grep -Fq '"direct"' || fail "card-status must carry TorrServer Direct's state"
+action torrserver start
+expect_success "start after the cached state"
+
 # --- 7. Removal keeps the settings ----------------------------------------------------
 action torrserver remove
 expect_success "remove"

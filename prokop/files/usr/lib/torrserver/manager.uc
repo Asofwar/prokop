@@ -10,6 +10,7 @@
 // someone installed by other means is never overwritten, stopped or removed.
 
 let fs = require("fs");
+let procs = require("torrserver.procs");
 
 const DIR = getenv("PROKOP_TORRSERVER_DIR") || "/opt/torrserver";
 const BIN = DIR + "/torrserver";
@@ -28,7 +29,7 @@ const API_URL = getenv("PROKOP_TORRSERVER_API_URL") || "http://127.0.0.1:" + POR
 const ECHO_URL = API_URL + "/echo";
 const MEMINFO_PATH = getenv("PROKOP_MEMINFO_PATH") || "/proc/meminfo";
 // Where processes are read (tests point it at a fake tree).
-const PROC_DIR = getenv("PROKOP_PROC_DIR") || "/proc";
+const PROC_DIR = procs.PROC_DIR;
 const RELEASE_OWNER = "YouROK";
 const RELEASE_REPO = "TorrServer";
 
@@ -93,31 +94,26 @@ function managed(verify) {
     return !verify || file_sha256(BIN) == value.sha256;
 }
 
-function is_torrserver_cmdline(value) {
-    value = lc(replace(text(value), /\x00/g, " "));
-    return match(value, /(^|[/ ])torrserver([^/ ]*)?( |$)/) != null;
-}
-
 function process_exe(pid) {
     return replace(text(fs.readlink(PROC_DIR + "/" + pid + "/exe")), / \(deleted\)$/, "");
 }
 
-// Every TorrServer process: the one run from BIN, and any other.
+// Every TorrServer process: the one run from BIN, and any other; `named`
+// lists every process named TorrServer, as TorrServer Direct looks for it.
 function processes() {
     let own = [];
     let other = [];
-    for (let cmdline_path in fs.glob(PROC_DIR + "/[0-9]*/cmdline")) {
-        let m = match(cmdline_path, /\/([0-9]+)\/cmdline$/);
-        if (m == null) continue;
-        let pid = m[1];
-        let cmdline = read(cmdline_path);
-        let exe = process_exe(pid);
-        if (exe == BIN)
+    let named = [];
+    procs.each_process(function(pid, cmdline) {
+        let is_named = procs.is_torrserver_cmdline(cmdline);
+        if (is_named)
+            push(named, pid);
+        if (process_exe(pid) == BIN)
             push(own, pid);
-        else if (is_torrserver_cmdline(cmdline))
+        else if (is_named)
             push(other, pid);
-    }
-    return { own, other };
+    });
+    return { own, other, named };
 }
 
 // Settings that suit a router: the RAM cache sized to the router's memory
@@ -181,10 +177,10 @@ function port_owned_by(pids) {
     return false;
 }
 
-function status() {
+function status(found) {
     let value = marker();
     let is_managed = managed(false);
-    let found = processes();
+    found = found || processes();
     let binary_present = fs.stat(BIN) != null;
     return {
         installed: is_managed ? 1 : 0,
@@ -369,6 +365,14 @@ function apply_recommended_now(seconds) {
 let mode = ARGV[0] || "status";
 if (mode == "status")
     print(sprintf("%J\n", status()));
+else if (mode == "card-status") {
+    // The card's TorrServer and TorrServer Direct, from one pass over /proc
+    // (diagnostics/runtime.uc, on every page load: TS-4).
+    let found = processes();
+    let value = status(found);
+    value.direct = procs.status_of(procs.discover_from(found.named));
+    print(sprintf("%J\n", value));
+}
 else if (mode == "managed")
     exit(managed(true) ? 0 : 1);
 else if (mode == "managed-quick")

@@ -943,6 +943,27 @@ function openwrt_release() {
     return "unknown";
 }
 
+// The card's TorrServer and TorrServer Direct fields, from one process and
+// one pass over /proc (torrserver/manager.uc card-status).
+function torrserver_fields() {
+    let status = parse_json_or_null(module_output(LIB_DIR + "/torrserver/manager.uc", [ "card-status" ]));
+    if (type(status) != "object")
+        status = {};
+    let direct = type(status.direct) == "object" ? status.direct : {};
+    return {
+        torrserver_running: int(direct.running || 0),
+        torrserver_installed: int(status.installed || 0),
+        torrserver_version: "" + (status.version || ""),
+        torrserver_service_running: int(status.running || 0),
+        torrserver_foreign: int(status.foreign || 0),
+        torrserver_port: "" + (status.port || ""),
+        torrserver_recommended_cache_mib: int(status.recommended_cache_mib || 0),
+        torrserver_direct_available: int(direct.available || 0),
+        torrserver_direct_enabled: int(direct.enabled || 0),
+        torrserver_direct_active: int(direct.active || 0)
+    };
+}
+
 function build_system_info() {
     let prokop_latest_version = first_line_value("/tmp/prokop.latest-version.cache", "unknown");
     let luci_app_version = get_luci_app_version();
@@ -984,12 +1005,7 @@ function build_system_info() {
     let direct_proxy_address = direct_proxy_enabled
         ? trim(module_output(SINGBOX_RUNTIME_UC, [ "service-listen-address" ]))
         : "";
-    let torrserver_direct_status = parse_json_or_null(module_output(LIB_DIR + "/torrserver/direct.uc", [ "status" ]));
-    if (type(torrserver_direct_status) != "object")
-        torrserver_direct_status = {};
-    let torrserver_status = parse_json_or_null(module_output(LIB_DIR + "/torrserver/manager.uc", [ "status" ]));
-    if (type(torrserver_status) != "object")
-        torrserver_status = {};
+    let torrserver = torrserver_fields();
 
     return {
         prokop_version: PROKOP_VERSION,
@@ -1013,16 +1029,7 @@ function build_system_info() {
         direct_proxy_enabled,
         direct_proxy_address,
         direct_proxy_port,
-        torrserver_running: int(torrserver_direct_status.running || 0),
-        torrserver_installed: int(torrserver_status.installed || 0),
-        torrserver_version: "" + (torrserver_status.version || ""),
-        torrserver_service_running: int(torrserver_status.running || 0),
-        torrserver_foreign: int(torrserver_status.foreign || 0),
-        torrserver_port: "" + (torrserver_status.port || ""),
-        torrserver_recommended_cache_mib: int(torrserver_status.recommended_cache_mib || 0),
-        torrserver_direct_available: int(torrserver_direct_status.available || 0),
-        torrserver_direct_enabled: int(torrserver_direct_status.enabled || 0),
-        torrserver_direct_active: int(torrserver_direct_status.active || 0),
+        ...torrserver,
         openwrt_version: openwrt_release(),
         device_model,
         generated_at: int(clock()[0])
@@ -1031,7 +1038,13 @@ function build_system_info() {
 
 function get_system_info() {
     if (system_info_cache_is_valid()) {
-        print(as_string(fs.readfile(SYSTEM_INFO_CACHE_FILE)));
+        // TorrServer's state is read afresh over the cached rest: a server
+        // that stopped or a foreign one that went shows at once, not up to
+        // an hour later (TS-4, TS-5).
+        let cached = read_json_file(SYSTEM_INFO_CACHE_FILE);
+        for (let key, value in torrserver_fields())
+            cached[key] = value;
+        print(sprintf("%J", cached), "\n");
         return 0;
     }
 
