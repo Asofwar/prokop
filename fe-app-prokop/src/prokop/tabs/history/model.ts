@@ -169,6 +169,8 @@ const CATEGORY: Record<string, Exclude<HistoryFilter, 'all'>> = {
   restore: 'config',
   snapshot_create: 'config',
   snapshot_delete: 'config',
+  snapshot_clear: 'config',
+  history_clear: 'config',
   start: 'service',
   recovery: 'service',
   cron_refresh: 'service',
@@ -363,13 +365,17 @@ export function protectedSnapshotText(reason: string | undefined) {
       return _(
         'This snapshot cannot be deleted until the saved change has been applied',
       );
+    case 'restore_guard_protected':
+      return _(
+        'This snapshot cannot be deleted while the DPI guard of an unfinished restore is active',
+      );
     default:
       return '';
   }
 }
 
 // Newest first; protected snapshots (last known good, autotune rollback,
-// Save & Apply) cannot be deleted.
+// Save & Apply, an unfinished restore's guard) cannot be deleted.
 export function snapshotRows(snapshots: Prokop.SnapshotMetadata[]) {
   return snapshots
     .slice()
@@ -473,10 +479,11 @@ export function snapshotBusyText(reason?: string) {
 }
 
 // Manual snapshots stop two short of the snapshot store's size
-// (config/snapshots.uc MANUAL_LIMIT, D-14): the two places stay for the
+// (config/snapshots.uc manual_limit, D-14): the two places stay for the
 // automatic snapshots a restore, Save & Apply and autotune take. The backend
-// names its limit with the refusal; this only stands in for a missing one.
-const MANUAL_SNAPSHOT_LIMIT = 8;
+// names its limit with the refusal; this only stands in for a missing one
+// (the default store of 20, config/retention.uc).
+const MANUAL_SNAPSHOT_LIMIT = 18;
 
 // What "Delete" did. A refusal says why (UC-119): the last known good
 // snapshot is never deleted, and one that is gone or unreadable cannot be.
@@ -501,7 +508,8 @@ export function deleteSnapshotToast(
     };
   if (
     result?.reason === 'autotune_rollback_protected' ||
-    result?.reason === 'apply_snapshot_protected'
+    result?.reason === 'apply_snapshot_protected' ||
+    result?.reason === 'restore_guard_protected'
   )
     return {
       text: `${protectedSnapshotText(result.reason)}.`,
@@ -858,5 +866,215 @@ export function restoreResultToast(
     text: _('Restore failed; check the recovery state before retrying'),
     type: 'error',
     duration: 8000,
+  };
+}
+
+// The bounds of the History page's limits (config/retention.uc): the
+// backend refuses anything else.
+export const RETENTION_BOUNDS = {
+  history: { min: 20, max: 200 },
+  snapshots: { min: 6, max: 50 },
+} as const;
+
+// Shown when the backend did not say (an older backend): its defaults.
+export const DEFAULT_RETENTION: Prokop.HistoryRetention = {
+  history_limit: 50,
+  snapshot_limit: 20,
+  manual_snapshot_limit: 18,
+};
+
+// How many history records the list shows at first, and adds per "Show
+// more"; how many snapshots it shows while collapsed.
+export const HISTORY_PAGE_SIZE = 10;
+export const SNAPSHOTS_COLLAPSED = 5;
+
+export type RetentionInput =
+  | { ok: true; history: number; snapshots: number }
+  | { ok: false; message: string };
+
+function whole(text: string): number | null {
+  const value = text.trim();
+  return /^[0-9]{1,4}$/.test(value) ? Number(value) : null;
+}
+
+// The two fields of the Retention card, checked as the backend checks them.
+export function parseRetentionInput(
+  history: string,
+  snapshots: string,
+): RetentionInput {
+  const h = whole(history);
+  const s = whole(snapshots);
+  const { history: hb, snapshots: sb } = RETENTION_BOUNDS;
+  if (h === null || h < hb.min || h > hb.max)
+    return {
+      ok: false,
+      message: _('History records: enter a whole number from %d to %d.')
+        .replace('%d', String(hb.min))
+        .replace('%d', String(hb.max)),
+    };
+  if (s === null || s < sb.min || s > sb.max)
+    return {
+      ok: false,
+      message: _('Snapshots: enter a whole number from %d to %d.')
+        .replace('%d', String(sb.min))
+        .replace('%d', String(sb.max)),
+    };
+  return { ok: true, history: h, snapshots: s };
+}
+
+// Automatic snapshots that "Clear" (and a lowered limit) may remove:
+// neither manual nor protected ones.
+export function removableSnapshots(snapshots: Prokop.SnapshotMetadata[]) {
+  return snapshots.filter(
+    (snapshot) =>
+      snapshot.kind !== 'manual' &&
+      !snapshot.is_lkg &&
+      !snapshot.protected_reason,
+  );
+}
+
+// What lowering the limits will remove, said before the user confirms it.
+// The snapshot count is the oldest removable automatic snapshots beyond the
+// new size (manual ones never count against it while more are left than
+// fit).
+export function retentionConsequences(
+  input: { history: number; snapshots: number },
+  current: Prokop.HistoryRetention,
+  snapshots: Prokop.SnapshotMetadata[] | null,
+  historyCount: number,
+): string[] {
+  const lines: string[] = [];
+  if (input.history < current.history_limit && historyCount > input.history)
+    lines.push(
+      _(
+        'Only the newest %d history records are kept; older ones are deleted.',
+      ).replace('%d', String(input.history)),
+    );
+  if (snapshots && input.snapshots < current.snapshot_limit) {
+    const manual = snapshots.filter((s) => s.kind === 'manual').length;
+    const size = Math.max(input.snapshots, manual + 2);
+    const excess = Math.max(0, snapshots.length - size);
+    const removed = Math.min(excess, removableSnapshots(snapshots).length);
+    if (removed > 0)
+      lines.push(
+        _('%d oldest automatic snapshots are deleted.').replace(
+          '%d',
+          String(removed),
+        ),
+      );
+    if (manual > input.snapshots - 2)
+      lines.push(
+        _(
+          'There are %d manual snapshots, more than the %d that fit: none is deleted, but no new manual snapshot can be saved until you delete some.',
+        )
+          .replace('%d', String(manual))
+          .replace('%d', String(Math.max(0, input.snapshots - 2))),
+      );
+  }
+  return lines;
+}
+
+// What "Save" of the Retention card did.
+export function retentionToast(
+  result: Prokop.RetentionResult | undefined,
+): SnapshotToast {
+  if (result?.status === 'saved') {
+    const removed: string[] = [];
+    if (result.removed_events)
+      removed.push(
+        _('history records deleted: %d').replace(
+          '%d',
+          String(result.removed_events),
+        ),
+      );
+    if (result.removed_snapshots)
+      removed.push(
+        _('snapshots deleted: %d').replace(
+          '%d',
+          String(result.removed_snapshots),
+        ),
+      );
+    return {
+      text: removed.length
+        ? `${_('Retention limits saved')}; ${removed.join(', ')}.`
+        : _('Retention limits saved'),
+      type: 'success',
+      duration: 5000,
+    };
+  }
+  if (result?.status === 'busy')
+    return {
+      text: snapshotBusyText(result.reason),
+      type: 'warning',
+      duration: 6000,
+    };
+  if (result?.reason === 'invalid_input')
+    return {
+      text: _('The limits are out of range. Nothing was changed.'),
+      type: 'warning',
+      duration: 6000,
+    };
+  return {
+    text: _(
+      'Could not save the retention limits. Check the free space on the router.',
+    ),
+    type: 'error',
+    duration: 8000,
+  };
+}
+
+// What "Clear" of the snapshots did. Manual and protected snapshots stay.
+export function clearSnapshotsToast(
+  result: Prokop.SnapshotClearResult | undefined,
+): SnapshotToast {
+  if (result?.status === 'cleared') {
+    const removed = result.removed ?? 0;
+    const kept = (result.kept ?? 0) + (result.manual ?? 0);
+    return {
+      text: removed
+        ? kept
+          ? _(
+              'Automatic snapshots deleted: %d. Kept: %d (manual and protected).',
+            )
+              .replace('%d', String(removed))
+              .replace('%d', String(kept))
+          : _('Automatic snapshots deleted: %d.').replace('%d', String(removed))
+        : _('Nothing to delete: only manual and protected snapshots are left.'),
+      type: removed ? 'success' : 'warning',
+      duration: 6000,
+    };
+  }
+  if (result?.status === 'busy')
+    return {
+      text: snapshotBusyText(result.reason),
+      type: 'warning',
+      duration: 6000,
+    };
+  return {
+    text: _('Could not delete all automatic snapshots'),
+    type: 'error',
+    duration: 6000,
+  };
+}
+
+// What "Clear" of the history did. The recovery state does not depend on
+// the journal: a failed change still asks for recovery.
+export function clearHistoryToast(
+  result: Prokop.HistoryClearResult | undefined,
+): SnapshotToast {
+  if (result?.status === 'cleared')
+    return { text: _('History cleared'), type: 'success', duration: 3000 };
+  if (result?.status === 'busy')
+    return {
+      text: _(
+        'The history is being written right now. Nothing was changed; try again in a moment.',
+      ),
+      type: 'warning',
+      duration: 6000,
+    };
+  return {
+    text: _('Could not clear the history'),
+    type: 'error',
+    duration: 6000,
   };
 }

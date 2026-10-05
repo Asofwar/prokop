@@ -142,12 +142,14 @@ export namespace Prokop {
     prokop_version: string;
     is_lkg?: boolean;
     // Why delete refuses it (CFG-2): the last known good one, the one an
-    // autotune apply may still roll back to, or the one Save & Apply took
-    // before its reload ran.
+    // autotune apply may still roll back to, the one Save & Apply took
+    // before its reload ran, or a pre-restore or concurrent-edit one while
+    // the DPI guard of an unfinished restore stands.
     protected_reason?:
       | 'lkg_protected'
       | 'autotune_rollback_protected'
-      | 'apply_snapshot_protected';
+      | 'apply_snapshot_protected'
+      | 'restore_guard_protected';
     migration?: SnapshotMigration;
   }
 
@@ -185,10 +187,49 @@ export namespace Prokop {
     notices?: MigrationNotice[];
   }
 
+  // How much the History page keeps (config/retention.uc): the newest
+  // history records and the snapshot store, of which manual snapshots may
+  // take manual_snapshot_limit places.
+  export interface HistoryRetention {
+    history_limit: number;
+    snapshot_limit: number;
+    manual_snapshot_limit: number;
+  }
+
   export interface HistoryResult {
     // false: no journal on flash yet, events come from runtime memory.
     persistent: boolean;
     events: HistoryEvent[];
+    retention?: HistoryRetention;
+  }
+
+  // config/snapshots.uc retention: the limits were stored and the journal
+  // and the snapshot store shrank to them.
+  export interface RetentionResult {
+    status: 'saved' | 'failed' | 'busy';
+    reason?: string;
+    history_limit?: number;
+    snapshot_limit?: number;
+    removed_snapshots?: number;
+    removed_events?: number;
+  }
+
+  // config/snapshots.uc clear: automatic snapshots that nothing protects
+  // went; kept: protected automatic ones; manual: manual ones (never
+  // removed).
+  export interface SnapshotClearResult {
+    status: 'cleared' | 'failed' | 'busy';
+    reason?: string;
+    removed?: number;
+    kept?: number;
+    manual?: number;
+  }
+
+  // diagnostics/health.uc clear.
+  export interface HistoryClearResult {
+    status: 'cleared' | 'failed' | 'busy';
+    reason?: string;
+    removed?: number;
   }
   // autotune/manager.uc: policy, targets and cached results. Strategy
   // identities are catalog candidate ids, never raw strategies.
@@ -661,6 +702,9 @@ export namespace Prokop {
     CONFIG_SNAPSHOT_DIFF = 'config_snapshot_diff',
     CONFIG_SNAPSHOT_RESTORE = 'config_snapshot_restore',
     CONFIG_SNAPSHOT_DELETE = 'config_snapshot_delete',
+    CONFIG_SNAPSHOT_CLEAR = 'config_snapshot_clear',
+    HISTORY_CLEAR = 'history_clear',
+    HISTORY_RETENTION_SET = 'history_retention_set',
     CONNECTIVITY_TEST = 'connectivity_test',
     VALIDATE_NFQWS_STRATEGY_JSON = 'validate_nfqws_strategy_json',
     VALIDATE_NFQWS2_STRATEGY_JSON = 'validate_nfqws2_strategy_json',

@@ -110,6 +110,9 @@ function show_help() {
     print("    config_snapshot_diff   Show masked changes since a snapshot\n");
     print("    config_snapshot_restore Restore a snapshot with reload and rollback\n");
     print("    config_snapshot_delete Delete a snapshot\n");
+    print("    config_snapshot_clear  Delete automatic snapshots that nothing protects\n");
+    print("    history_clear          Clear the history journal\n");
+    print("    history_retention_set  Set how many history records and snapshots are kept\n");
     print("    connectivity_test      Run a router-originated DNS/TCP probe\n");
     print("    autotune_status         Get autotune policy, targets and cached results\n");
     print("    autotune_target         Get the last full autotune result of a target\n");
@@ -214,6 +217,9 @@ function command_spec(command) {
         config_snapshot_diff: [ "config/snapshots.uc", "diff", 1 ],
         config_snapshot_restore: [ "config/snapshots.uc", "restore", 1 ],
         config_snapshot_delete: [ "config/snapshots.uc", "delete", 1 ],
+        config_snapshot_clear: [ "config/snapshots.uc", "clear", 0 ],
+        history_clear: [ "diagnostics/health.uc", "clear", 0 ],
+        history_retention_set: [ "config/snapshots.uc", "retention", 2 ],
         connectivity_test: [ "diagnostics/connectivity.uc", "test", 3 ],
         get_readonly_config_sections: [ "diagnostics/runtime.uc", "get-readonly-config-sections", 0 ],
         get_dashboard_runtime_metadata: [ "diagnostics/runtime.uc", "get-dashboard-runtime-metadata", 0 ],

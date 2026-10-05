@@ -145,6 +145,10 @@ export function eventKindLabel(kind: string): string {
       return _('Snapshot created');
     case 'snapshot_delete':
       return _('Snapshot deleted');
+    case 'snapshot_clear':
+      return _('Automatic snapshots cleared');
+    case 'history_clear':
+      return _('History cleared');
     case 'cron_refresh':
       return _('Scheduled jobs update');
     case 'config_migration':

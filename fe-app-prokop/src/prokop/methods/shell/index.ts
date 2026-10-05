@@ -504,6 +504,27 @@ export const ProkopShellMethods = {
       '/usr/bin/prokop',
       { allowNonZeroWithStdout: true },
     ),
+  snapshotClear: async () =>
+    callBaseMethod<Prokop.SnapshotClearResult>(
+      Prokop.AvailableMethods.CONFIG_SNAPSHOT_CLEAR,
+      [],
+      '/usr/bin/prokop',
+      { allowNonZeroWithStdout: true },
+    ),
+  historyClear: async () =>
+    callBaseMethod<Prokop.HistoryClearResult>(
+      Prokop.AvailableMethods.HISTORY_CLEAR,
+      [],
+      '/usr/bin/prokop',
+      { allowNonZeroWithStdout: true },
+    ),
+  historyRetentionSet: async (history: number, snapshots: number) =>
+    callBaseMethod<Prokop.RetentionResult>(
+      Prokop.AvailableMethods.HISTORY_RETENTION_SET,
+      [String(history), String(snapshots)],
+      '/usr/bin/prokop',
+      { allowNonZeroWithStdout: true },
+    ),
   connectivityTest: async (host: string, type: string, port: string) =>
     callBaseMethod<Prokop.ConnectivityResult>(
       Prokop.AvailableMethods.CONNECTIVITY_TEST,

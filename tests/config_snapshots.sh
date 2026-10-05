@@ -371,7 +371,10 @@ done
 )
 printf '{invalid' > "$PROKOP_SNAPSHOT_DIR/bad.json"
 if ucode -L "$LIB" "$SCRIPT" diff bad >/dev/null; then exit 1; fi
-for n in 1 2 3 4 5 6 7 8 9 10 11; do
+# The default store holds 20 snapshots (config/retention.uc).
+n=0
+while [ "$n" -lt 25 ]; do
+  n=$((n + 1))
   printf "config settings 'settings'\n option dns_server '10.0.0.%s'\n" "$n" > "$PROKOP_CONFIG_FILE"
   ucode -L "$LIB" "$SCRIPT" create automatic >/dev/null
 done
@@ -380,7 +383,7 @@ node - "$WORK/retention.json" "$id" <<'JS'
 const fs = require('node:fs');
 const assert = require('node:assert/strict');
 const rows = JSON.parse(fs.readFileSync(process.argv[2]));
-assert.equal(rows.length, 10);
+assert.equal(rows.length, 20);
 assert.ok(rows.some(row => row.id === process.argv[3] && row.kind === 'manual'));
 JS
 printf 'config_snapshots: PASS\n'

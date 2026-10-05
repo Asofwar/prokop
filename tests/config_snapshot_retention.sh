@@ -1,7 +1,8 @@
 #!/bin/sh
 set -eu
 
-# Snapshot retention (D-14 (a)+(b), UC-022, UC-225). RETENTION is 10, and two
+# Snapshot retention (D-14 (a)+(b), UC-022, UC-225). The store holds 10
+# snapshots here (config/retention.uc, set on the History page), and two
 # places are reserved for the automatic safety snapshots: before a restore,
 # before Save & Apply (and a reload), before an autotune apply, the
 # last-known-working one and a concurrent edit. Manual snapshots stop at
@@ -39,6 +40,8 @@ export PROKOP_HISTORY_FILE="$WORK/history.jsonl"
 export PROKOP_RUNTIME_STATE_DIR="$WORK/run"
 export PROKOP_UCI_SAVEDIR="$WORK/uci-save"
 export STATE="$WORK/state"
+export PROKOP_RETENTION_FILE="$WORK/retention.json"
+printf '{"history_limit":50,"snapshot_limit":10}\n' > "$PROKOP_RETENTION_FILE"
 
 # The restore guard, validation and the history are recorded, not run; no
 # fail-closed guard of a failed lifecycle transition is installed.

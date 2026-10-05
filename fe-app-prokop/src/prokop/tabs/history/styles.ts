@@ -64,6 +64,29 @@ export const styles = `
     color: var(--fkp-tone-success);
     font-size: 0.85em;
 }
+.fkp-history__more {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--fkp-space-2);
+    padding-top: var(--fkp-space-2);
+    border-top: 1px solid var(--fkp-border);
+}
+.fkp-history__retention {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--fkp-space-2) var(--fkp-space-4);
+}
+.fkp-history__field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--fkp-space-1);
+    min-width: 0;
+}
+.fkp-history__field input { width: 8em; max-width: 100%; }
+.fkp-history__error { margin: 0; color: var(--fkp-tone-error); overflow-wrap: anywhere; }
 .fkp-history__diff-wrap { width: 0; min-width: 100%; overflow-x: auto; }
 .fkp-history__diff { width: 100%; }
 .fkp-history__diff td { overflow-wrap: anywhere; vertical-align: top; }

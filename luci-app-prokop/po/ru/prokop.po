@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-05 12:59+0000\n"
-"PO-Revision-Date: 2026-10-05 12:59+0000\n"
+"POT-Creation-Date: 2026-10-05 21:29+0300\n"
+"PO-Revision-Date: 2026-10-05 21:29+0300\n"
 "Last-Translator: Asofwar\n"
 "Language-Team: none\n"
 "Language: ru\n"
@@ -19,6 +19,9 @@ msgstr ""
 
 msgid "-- Select --"
 msgstr "-- Выберите --"
+
+msgid "{count} addresses of excluded devices cannot be read; those devices stay blocked through DNS while Prokop is stopped"
+msgstr "Не удалось прочитать адреса исключённых устройств ({count}); пока Prokop остановлен, эти устройства блокируются через DNS"
 
 msgid "{count} domains of client-limited rules are not blocked through DNS (it is shared by all clients); only their IP lists and FakeIP answers are blocked while Prokop is stopped"
 msgstr "Доменов из правил с ограничением по клиентам не блокируется через DNS (он общий для всех клиентов): {count}. Пока Prokop остановлен, блокируются только их IP-списки и ответы FakeIP"
@@ -68,11 +71,20 @@ msgstr "%d мс"
 msgid "%d node groups"
 msgstr "Групп узлов: %d"
 
-msgid "%d of %d checks passed"
-msgstr "Пройдено проверок: %d из %d"
+msgid "%d of %d"
+msgstr "%d из %d"
 
 msgid "%d of %d checks failed"
 msgstr "Не прошло проверок: %d из %d"
+
+msgid "%d of %d checks passed"
+msgstr "Пройдено проверок: %d из %d"
+
+msgid "%d of %d, manual %d of %d"
+msgstr "%d из %d, ручных %d из %d"
+
+msgid "%d oldest automatic snapshots are deleted."
+msgstr "Будут удалены самые старые автоматические снимки: %d."
 
 msgid "%d rules"
 msgstr "Правил: %d"
@@ -122,6 +134,12 @@ msgstr "%s = «%s»: sing-box и файрвол читают это значен
 msgid "%s is not applied again before %t"
 msgstr "%s не применяется повторно до %t"
 
+msgid "%s is not available in this Prokop build"
+msgstr "%s недоступен в этой сборке Prokop"
+
+msgid "%s is not installed"
+msgstr "%s не установлен"
+
 msgid "%s is not installed. Install it in Components or choose another action."
 msgstr "%s не установлен. Установите его в разделе «Компоненты» или выберите другое действие."
 
@@ -143,11 +161,35 @@ msgstr "получено %s"
 msgid "%s s"
 msgstr "%s с"
 
+msgid "%s was installed, but Prokop did not start cleanly"
+msgstr "%s установлен, но Prokop запустился с ошибками"
+
 msgid "%s: “%s” cannot be written in the current form unchanged"
 msgstr "%s: «%s» нельзя записать в текущем виде без изменения смысла"
 
 msgid "%s: not moved to the Device filter, the rule has no destination condition and does not use it"
 msgstr "%s: не переносится в «Фильтр по устройствам» — у правила нет условия назначения, и он не используется"
+
+msgid "%s: the action failed. The details are in the system log"
+msgstr "%s: действие не выполнено. Подробности в системном журнале"
+
+msgid "%s: the change failed, and the previous state could not be restored. Check the system log"
+msgstr "%s: изменение не удалось, и прежнее состояние восстановить не получилось. Проверьте системный журнал"
+
+msgid "%s: the change failed; the previous version was kept"
+msgstr "%s: изменение не удалось; прежняя версия сохранена"
+
+msgid "%s: the download failed. Check the internet connection and try again"
+msgstr "%s: не удалось скачать. Проверьте подключение к интернету и повторите"
+
+msgid "%s: the downloaded file does not match its published checksum; it was not installed"
+msgstr "%s: скачанный файл не совпадает с опубликованной контрольной суммой; он не установлен"
+
+msgid "%s: the release could not be checked. Check the internet connection and try again"
+msgstr "%s: не удалось проверить релиз. Проверьте подключение к интернету и повторите"
+
+msgid "%s: the router ran out of storage space"
+msgstr "%s: на роутере закончилось место"
 
 msgid "%s/s"
 msgstr "%s/с"
@@ -175,6 +217,9 @@ msgstr "25 соединений на торрент, отключение чер
 
 msgid "3–7 attempts per strategy and target in each check."
 msgstr "3–7 попыток на стратегию и цель в каждой проверке."
+
+msgid "A check failed and the last one gave no result; one more failure rolls the change back."
+msgstr "Одна проверка не прошла, последняя не дала результата; ещё одна неудача откатит изменение."
 
 msgid "A check is already running."
 msgstr "Проверка уже идёт."
@@ -226,6 +271,9 @@ msgstr "Группа — это одно DPI-правило Zapret. Prokop ме�
 
 msgid "A list of a DPI rule. Each check takes a few of its domains; keywords and regular expressions are skipped."
 msgstr "Список DPI-правила. Каждая проверка берёт несколько его доменов; ключевые слова и регулярные выражения пропускаются."
+
+msgid "A list source; the details are in the system log"
+msgstr "Источник списка; подробности в системном журнале"
 
 msgid "A POST to this address, for ntfy, Gotify and similar services. The saved address is never shown on the page"
 msgstr "POST-запрос на этот адрес, для ntfy, Gotify и похожих сервисов. Сохранённый адрес на странице не показывается"
@@ -406,6 +454,9 @@ msgstr "Все события"
 
 msgid "All except selected"
 msgstr "Все, кроме выбранных"
+
+msgid "All history records are deleted; the history then shows one record, that it was cleared."
+msgstr "Все записи истории будут удалены; в истории останется одна запись — об очистке."
 
 msgid "All paths"
 msgstr "Все пути"
@@ -590,6 +641,18 @@ msgstr "В автоматическом режиме изменённая стр
 msgid "Automatic recovery did not finish."
 msgstr "Автоматическое восстановление не завершилось."
 
+msgid "Automatic snapshots cleared"
+msgstr "Автоматические снимки удалены"
+
+msgid "Automatic snapshots deleted: %d."
+msgstr "Удалено автоматических снимков: %d."
+
+msgid "Automatic snapshots deleted: %d. Kept: %d (manual and protected)."
+msgstr "Удалено автоматических снимков: %d. Оставлено: %d (ручные и защищённые)."
+
+msgid "Automatic snapshots that nothing protects are deleted: %d now."
+msgstr "Будут удалены автоматические снимки, которые ничем не защищены. Сейчас таких: %d."
+
 msgid "Automatically"
 msgstr "Автоматически"
 
@@ -656,9 +719,6 @@ msgstr "Автоподбор: %s применена вручную"
 msgid "Autotune: %s passed the observation"
 msgstr "Автоподбор: %s прошла наблюдение"
 
-msgid "Autotune: the observation of %s ended without a result"
-msgstr "Автоподбор: наблюдение за %s закончилось без результата"
-
 msgid "Autotune: automatic apply"
 msgstr "Автоподбор: автоматическое применение"
 
@@ -682,6 +742,9 @@ msgstr "Автоподбор: ручной откат"
 
 msgid "Autotune: manual rollback of %s"
 msgstr "Автоподбор: ручной откат %s"
+
+msgid "Autotune: the observation of %s ended without a result"
+msgstr "Автоподбор: наблюдение за %s закончилось без результата"
 
 msgid "Available to administrators only."
 msgstr "Доступно только администратору."
@@ -767,8 +830,14 @@ msgstr "Встроенные наборы правил тех же сервис�
 msgid "Built-in rule sets of the same services: %s. They were not added; the rule editor offers them."
 msgstr "Встроенные наборы правил тех же сервисов: %s. Они не добавлены; редактор правила предлагает их добавить."
 
+msgid "Built-in subnet list: %s"
+msgstr "Встроенный список подсетей: %s"
+
 msgid "By flag emoji from name"
 msgstr "По эмодзи флага из названия"
+
+msgid "by the router's usual route"
+msgstr "обычным маршрутом роутера"
 
 msgid "ByeDPI checks"
 msgstr "Проверки ByeDPI"
@@ -821,11 +890,11 @@ msgstr "Путь к файлу кэша"
 msgid "Cache file path cannot be empty"
 msgstr "Путь к файлу кэша не может быть пустым"
 
-msgid "Cache: an eighth of the router memory, 32 to 256 MB"
-msgstr "Кэш: восьмая часть памяти роутера, от 32 до 256 МБ"
-
 msgid "Cache: %s MB, an eighth of the router memory"
 msgstr "Кэш: %s МБ, восьмая часть памяти роутера"
+
+msgid "Cache: an eighth of the router memory, 32 to 256 MB"
+msgstr "Кэш: восьмая часть памяти роутера, от 32 до 256 МБ"
 
 msgid "Calculated"
 msgstr "Расчёт"
@@ -956,9 +1025,6 @@ msgstr "Идёт проверка целей"
 msgid "Checking that it works"
 msgstr "Проверка работы"
 
-msgid "Restoring after the failure"
-msgstr "Восстановление после ошибки"
-
 msgid "Checking the configuration before the change"
 msgstr "Проверка конфигурации перед изменением"
 
@@ -1022,6 +1088,9 @@ msgstr "Секрет Clash API не может быть пустым"
 msgid "Clear"
 msgstr "Очистить"
 
+msgid "Clear history?"
+msgstr "Очистить историю?"
+
 msgid "Clear the cascade setting of this rule? When you save the rule, %s and %s are removed and its servers connect without a transit rule. Nothing else in the rule changes."
 msgstr "Очистить настройку каскада этого правила? При сохранении правила %s и %s будут удалены, и его серверы будут подключаться без транзитного правила. Остальное в правиле не изменится."
 
@@ -1054,6 +1123,9 @@ msgstr "Закрытые"
 
 msgid "Command failed"
 msgstr "Команда завершилась с ошибкой"
+
+msgid "Component"
+msgstr "Компонент"
 
 msgid "Component update available"
 msgstr "Доступно обновление компонента"
@@ -1117,6 +1189,9 @@ msgstr "Снимки конфигурации"
 
 msgid "Configure User-Agent in the item settings"
 msgstr "Настройте User-Agent в настройках элемента"
+
+msgid "configured source"
+msgstr "заданный источник"
 
 msgid "Confirm version change"
 msgstr "Подтвердите смену версии"
@@ -1193,6 +1268,9 @@ msgstr "Не удалось перенять {file}"
 msgid "Could not change autostart"
 msgstr "Не удалось изменить автозапуск"
 
+msgid "Could not clear the history"
+msgstr "Не удалось очистить историю"
+
 msgid "Could not compare configurations"
 msgstr "Не удалось сравнить конфигурации"
 
@@ -1204,6 +1282,9 @@ msgstr "Не удалось подтвердить завершение. Пер�
 
 msgid "Could not create snapshot"
 msgstr "Не удалось создать снимок"
+
+msgid "Could not delete all automatic snapshots"
+msgstr "Не удалось удалить все автоматические снимки"
 
 msgid "Could not delete snapshot"
 msgstr "Не удалось удалить снимок"
@@ -1223,8 +1304,14 @@ msgstr "Не удалось загрузить данные"
 msgid "Could not refresh. Showing data from %s"
 msgstr "Не удалось обновить. Показаны данные на %s"
 
+msgid "could not remove {file}"
+msgstr "не удалось удалить {file}"
+
 msgid "Could not remove the saved policy that the first kill-switch build had removed"
 msgstr "Не удалось удалить сохранённую политику, которую убрала первая сборка kill-switch"
+
+msgid "could not save {file}; the policy is active until the next firewall reload"
+msgstr "не удалось сохранить {file}; правила действуют до следующей перезагрузки брандмауэра"
 
 msgid "Could not save a pre-apply configuration snapshot: it could not be written. Check the free space on the router. Changes were not applied."
 msgstr "Не удалось сохранить снимок перед применением: его не удалось записать. Проверьте свободное место на роутере. Изменения не применены."
@@ -1238,6 +1325,12 @@ msgstr "Не удалось сохранить снимок перед прим�
 msgid "Could not save a pre-apply configuration snapshot. Changes were not applied."
 msgstr "Не удалось сохранить снимок перед применением. Изменения не применены."
 
+msgid "could not save the block lists of excluded devices; they stay blocked through DNS while Prokop is stopped"
+msgstr "не удалось сохранить списки блокировки исключённых устройств; пока Prokop остановлен, они блокируются через DNS"
+
+msgid "Could not save the retention limits. Check the free space on the router."
+msgstr "Не удалось сохранить лимиты хранения. Проверьте свободное место на роутере."
+
 msgid "Could not start removal. Another component action may be running."
 msgstr "Не удалось начать удаление. Возможно, выполняется другая операция с компонентами."
 
@@ -1249,6 +1342,9 @@ msgstr "Не удалось запустить проверку"
 
 msgid "Could not start the lists update"
 msgstr "Не удалось запустить обновление списков"
+
+msgid "could not write {file}"
+msgstr "не удалось записать {file}"
 
 msgid "Count a server as working only when a 32 KB download through it over HTTPS completes, not only when it answers. Finds servers that connect but pass no data. Each check downloads 32 KB; a server that fails is skipped for a minute."
 msgstr "Считать сервер рабочим, только когда через него по HTTPS полностью загружаются 32 КБ, а не только когда он отвечает. Так находятся серверы, которые подключаются, но не пропускают данные. Каждая проверка загружает 32 КБ; сервер, не прошедший её, пропускается на минуту."
@@ -1313,50 +1409,17 @@ msgstr "Значение задержки не может быть пустым"
 msgid "Delete"
 msgstr "Удалить"
 
+msgid "Delete automatic snapshots?"
+msgstr "Удалить автоматические снимки?"
+
 msgid "Delete snapshot?"
 msgstr "Удалить снимок?"
-
-msgid "Delete the saved token"
-msgstr "Удалить сохранённый токен"
-
-msgid "TorrServer"
-msgstr "TorrServer"
-
-msgid "Protect TorrServer with a password"
-msgstr "Защитить TorrServer паролем"
-
-msgid "TorrServer's web page and API then ask for this user name and password, also apps that use its API (Lampa, MSX); stream and playlist links stay open. Applies to the TorrServer that Prokop installed"
-msgstr "Веб-страница и API TorrServer будут спрашивать это имя и пароль, в том числе у приложений, которые работают через API (Lampa, MSX). Ссылки на потоки и плейлисты остаются открытыми. Касается TorrServer, установленного Prokop"
-
-msgid "TorrServer user name"
-msgstr "Имя пользователя TorrServer"
-
-msgid "Use 1 to 64 Latin letters, digits, dots, dashes, _ or @"
-msgstr "От 1 до 64 латинских букв, цифр, точек, дефисов, _ или @"
-
-msgid "TorrServer password"
-msgstr "Пароль TorrServer"
-
-msgid "The saved password is never shown on the page"
-msgstr "Сохранённый пароль на странице не показывается"
-
-msgid "Use up to 128 characters, without line breaks"
-msgstr "До 128 символов, без переносов строк"
 
 msgid "Delete the saved password"
 msgstr "Удалить сохранённый пароль"
 
-msgid "Enter a password"
-msgstr "Введите пароль"
-
-msgid "Run TorrServer in a jail"
-msgstr "Запускать TorrServer в изоляции"
-
-msgid "procd's jail (ujail): TorrServer sees only its program, its data, its disk cache and what it needs to resolve names and check certificates. A disk cache folder changed in TorrServer is seen after TorrServer restarts. If the jail cannot be set up, TorrServer does not start"
-msgstr "Изоляция procd (ujail): TorrServer видит только свою программу, свои данные, кэш на диске и то, что нужно для DNS и проверки сертификатов. Новую папку кэша, заданную в TorrServer, он увидит после перезапуска. Если изоляцию не удаётся настроить, TorrServer не запускается"
-
-msgid "Not available: this firmware has no procd-ujail. Install the procd-ujail package to use it"
-msgstr "Недоступно: в прошивке нет procd-ujail. Чтобы включить, установите пакет procd-ujail"
+msgid "Delete the saved token"
+msgstr "Удалить сохранённый токен"
 
 msgid "Delete the saved webhook URL"
 msgstr "Удалить сохранённый адрес webhook"
@@ -1408,9 +1471,6 @@ msgstr "Устройства продолжат работать через ро
 
 msgid "Devices may bypass the router DNS, so domain rules do not apply to them."
 msgstr "Устройства могут обходить DNS роутера, и правила по доменам к ним не применяются."
-
-msgid "Off by default. Devices with their own DNS server (8.8.8.8 in a TV, IoT devices) bypass domain rules and the kill-switch; when on, everything they send to port 53 of an outside server goes to the router's DNS instead. This also catches a VPN whose server uses port 53 and a DNS server in the LAN that asks outside servers itself: add their addresses to the exclusions. DNS to local addresses (Pi-hole), to the router's IPv6 prefixes and DNS over TLS stay untouched"
-msgstr "По умолчанию выключено. Устройства со своим DNS-сервером (8.8.8.8 в телевизоре, IoT) обходят доменные правила и kill-switch; при включении всё, что они отправляют на порт 53 внешнего сервера, уходит на DNS роутера. Под перехват попадают и VPN, чей сервер работает на порту 53, и DNS-сервер в локальной сети, который сам обращается к внешним серверам: добавьте их адреса в исключения. DNS на локальные адреса (Pi-hole), на IPv6-префиксы роутера и DNS over TLS не трогаются"
 
 msgid "DHCP has DNS server"
 msgstr "DHCP содержит DNS сервер"
@@ -1547,6 +1607,12 @@ msgstr "Таймаут недоступности DNS"
 msgid "dnsmasq already uses servers file {file}; DNS protection is not attached"
 msgstr "dnsmasq уже использует файл серверов {file}; защита DNS не подключена"
 
+msgid "dnsmasq could not be refreshed"
+msgstr "не удалось обновить dnsmasq"
+
+msgid "dnsmasq is not managed by Prokop (dont_touch_dhcp): protected domains are guarded by the firewall and FakeIP only"
+msgstr "dnsmasq не управляется Prokop (dont_touch_dhcp): защищённые домены охраняются только брандмауэром и FakeIP"
+
 msgid "dnsmasq still uses the {product} kill-switch servers file {file}, kept while {product} is installed or active; DNS protection is not attached"
 msgstr "dnsmasq всё ещё использует файл серверов kill-switch {product} ({file}), он сохраняется, пока {product} установлен или работает; защита DNS не подключена"
 
@@ -1577,11 +1643,17 @@ msgstr "Без обхода не работает; найдена стабиль
 msgid "Domain"
 msgstr "Домен"
 
+msgid "Domain and IP list"
+msgstr "Список доменов и IP"
+
 msgid "Domain and IP lists"
 msgstr "Списки доменов и IP"
 
 msgid "Domain does not exist"
 msgstr "Домен не существует"
+
+msgid "Domain list"
+msgstr "Список доменов"
 
 msgid "Domain lists"
 msgstr "Списки доменов"
@@ -1799,6 +1871,9 @@ msgstr "Введите название уровня"
 msgid "Enter a number from 1 to 30"
 msgstr "Введите число от 1 до 30"
 
+msgid "Enter a password"
+msgstr "Введите пароль"
+
 msgid "Enter a port"
 msgstr "Укажите порт"
 
@@ -1868,6 +1943,9 @@ msgstr "Исключить из этого уровня серверы с одн
 msgid "Exclude servers with one of the selected transports from this level."
 msgstr "Исключить из этого уровня серверы с одним из выбранных транспортов."
 
+msgid "Excluded devices"
+msgstr "Исключённые устройства"
+
 msgid "Excluded devices resolve these names while Prokop is stopped"
 msgstr "Исключённые устройства разрешают эти имена, пока Prokop остановлен"
 
@@ -1898,6 +1976,9 @@ msgstr "Ошибка на этапе «%s»"
 msgid "Failed at “%s” after %s"
 msgstr "Ошибка на этапе «%s» через %s"
 
+msgid "Failed to apply direct routing for TorrServer"
+msgstr "Не удалось применить прямую маршрутизацию TorrServer"
+
 msgid "Failed to close connection"
 msgstr "Не удалось закрыть соединение"
 
@@ -1910,11 +1991,14 @@ msgstr "Не удалось скопировать!"
 msgid "Failed to create support report"
 msgstr "Не удалось создать отчёт для поддержки"
 
+msgid "Failed to create the folder %s"
+msgstr "Не удалось создать папку %s"
+
 msgid "Failed to download TorrServer"
 msgstr "Не удалось скачать TorrServer"
 
-msgid "Failed to apply direct routing for TorrServer"
-msgstr "Не удалось применить прямую маршрутизацию TorrServer"
+msgid "Failed to execute"
+msgstr "Не удалось выполнить"
 
 msgid "Failed to install TorrServer"
 msgstr "Не удалось установить TorrServer"
@@ -1925,12 +2009,6 @@ msgstr "Не удалось установить TorrServer, и прежнюю �
 msgid "Failed to install TorrServer; the previous version was restored"
 msgstr "Не удалось установить TorrServer; прежняя версия восстановлена"
 
-msgid "Failed to create the folder %s"
-msgstr "Не удалось создать папку %s"
-
-msgid "Failed to execute"
-msgstr "Не удалось выполнить"
-
 msgid "Failed to read the latest TorrServer release. Check the internet connection and try again"
 msgstr "Не удалось получить последний выпуск TorrServer. Проверьте доступ в интернет и повторите"
 
@@ -1940,17 +2018,17 @@ msgstr "Не удалось узнать, куда установлен TorrServ
 msgid "Failed to remove TorrServer"
 msgstr "Не удалось удалить TorrServer"
 
-msgid "Failed to save TorrServer on the router's storage; nothing was installed"
-msgstr "Не удалось сохранить TorrServer в памяти роутера; ничего не установлено"
-
 msgid "Failed to save the direct routing setting for TorrServer"
 msgstr "Не удалось сохранить настройку прямой маршрутизации TorrServer"
 
-msgid "Failed to set the installed TorrServer aside for the update; it runs on unchanged"
-msgstr "Не удалось отложить установленный TorrServer для обновления; он работает без изменений"
+msgid "Failed to save TorrServer on the router's storage; nothing was installed"
+msgstr "Не удалось сохранить TorrServer в памяти роутера; ничего не установлено"
 
 msgid "Failed to save URLTest settings"
 msgstr "Не удалось сохранить настройки URLTest"
+
+msgid "Failed to set the installed TorrServer aside for the update; it runs on unchanged"
+msgstr "Не удалось отложить установленный TorrServer для обновления; он работает без изменений"
 
 msgid "Failed to stop TorrServer"
 msgstr "Не удалось остановить TorrServer"
@@ -1961,11 +2039,14 @@ msgstr "Не удалось переключить узел"
 msgid "Failed to update subscriptions"
 msgstr "Не удалось обновить подписки"
 
-msgid "Failed twice in a row, rolled back"
-msgstr "Дважды подряд не прошла проверку, выполнен откат"
+msgid "Failed to update the package lists. Check the internet connection and try again"
+msgstr "Не удалось обновить списки пакетов. Проверьте подключение к интернету и повторите"
 
 msgid "Failed too many checks, rolled back"
 msgstr "Слишком много проверок не прошло, выполнен откат"
+
+msgid "Failed twice in a row, rolled back"
+msgstr "Дважды подряд не прошла проверку, выполнен откат"
 
 msgid "FakeIP and control checks use different public IPs"
 msgstr "FakeIP и контрольная проверка используют разные публичные IP"
@@ -2090,11 +2171,26 @@ msgstr "История"
 msgid "History and recovery"
 msgstr "История и восстановление"
 
+msgid "History cleared"
+msgstr "История очищена"
+
 msgid "History is kept in memory until the router restarts."
 msgstr "История хранится в памяти до перезагрузки роутера."
 
 msgid "History is unavailable"
 msgstr "История недоступна"
+
+msgid "History records"
+msgstr "Записи истории"
+
+msgid "history records deleted: %d"
+msgstr "удалено записей истории: %d"
+
+msgid "History records: enter a whole number from %d to %d."
+msgstr "Записи истории: введите целое число от %d до %d."
+
+msgid "History: %d to %d records. Snapshots: %d to %d, two places of them stay for the automatic snapshots taken before a restore, Save & Apply or autotune. Older records and automatic snapshots beyond the limits are deleted automatically; manual and protected snapshots are never deleted automatically."
+msgstr "История: от %d до %d записей. Снимки: от %d до %d, из них два места всегда остаются для автоматических снимков перед восстановлением, «Сохранить и применить» или автоподбором. Старые записи и автоматические снимки сверх лимита удаляются автоматически; ручные и защищённые снимки автоматически не удаляются никогда."
 
 msgid "Host"
 msgstr "Хост"
@@ -2123,11 +2219,11 @@ msgstr "HTTPS-запрос выполняет сам роутер"
 msgid "Idle timeout"
 msgstr "Таймаут простоя"
 
-msgid "If the VPN kill-switch is enabled, its sections stay blocked until Prokop is started."
-msgstr "Если включён VPN kill-switch, его секции остаются заблокированными, пока Prokop не запущен."
-
 msgid "If a setting changes, TorrServer restarts its torrents: playback stops for a few seconds"
 msgstr "Если настройка меняется, TorrServer перезапускает торренты: просмотр прервётся на несколько секунд"
+
+msgid "If the VPN kill-switch is enabled, its sections stay blocked until Prokop is started."
+msgstr "Если включён VPN kill-switch, его секции остаются заблокированными, пока Prokop не запущен."
 
 msgid "ignored: %s is used instead"
 msgstr "не используется: вместо него используется %s"
@@ -2222,11 +2318,8 @@ msgstr "Установка"
 msgid "Intercept client DNS"
 msgstr "Перехват DNS клиентов"
 
-msgid "Not intercepted"
-msgstr "Без перехвата"
-
-msgid "Used while client DNS is intercepted. DNS from these devices or to these servers is never intercepted: a DNS server in the LAN, the server of a VPN on port 53. An IPv4 or IPv6 address or subnet"
-msgstr "Действует, когда перехват DNS включён. DNS от этих устройств и к этим серверам никогда не перехватывается: DNS-сервер в локальной сети, сервер VPN на порту 53. IPv4- или IPv6-адрес либо подсеть"
+msgid "Intercepting client DNS is off by default now: it also caught VPNs and DNS servers in the LAN that use port 53. It was on here and was turned off; turn it on again under Settings > Network if you need it."
+msgstr "Перехват DNS клиентов теперь по умолчанию выключен: он задевал и VPN, и DNS-серверы в локальной сети, работающие на порту 53. Здесь он был включён и выключен обновлением; при необходимости включите его снова в разделе «Настройки» > «Сеть»."
 
 msgid "Interface Monitoring"
 msgstr "Мониторинг интерфейса"
@@ -2576,65 +2669,20 @@ msgstr "только что"
 msgid "KB"
 msgstr "КБ"
 
+msgid "Keep history records"
+msgstr "Хранить записей истории"
+
 msgid "Keep Priority before latency-sorted servers"
 msgstr "Показывать Priority перед серверами, отсортированными по задержке"
+
+msgid "Keep snapshots"
+msgstr "Хранить снимков"
 
 msgid "Keep URLTest before latency-sorted servers"
 msgstr "Держать URLTest перед серверами, отсортированными по задержке"
 
 msgid "keeping the previous protection"
 msgstr "предыдущая защита сохранена"
-
-msgid "Prokop has not applied the lists of its configuration yet"
-msgstr "Prokop ещё не применил списки своей конфигурации"
-
-msgid "the configuration changed since Prokop last applied it; reload Prokop first"
-msgstr "конфигурация изменилась после последнего применения; сначала перезагрузите Prokop"
-
-msgid "the firewall policy could not be built"
-msgstr "не удалось собрать правила брандмауэра"
-
-msgid "the firewall refused the built policy"
-msgstr "брандмауэр отклонил собранные правила"
-
-msgid "the firewall did not take the policy"
-msgstr "брандмауэр не принял правила"
-
-msgid "could not save {file}; the policy is active until the next firewall reload"
-msgstr "не удалось сохранить {file}; правила действуют до следующей перезагрузки брандмауэра"
-
-msgid "dnsmasq is not managed by Prokop (dont_touch_dhcp): protected domains are guarded by the firewall and FakeIP only"
-msgstr "dnsmasq не управляется Prokop (dont_touch_dhcp): защищённые домены охраняются только брандмауэром и FakeIP"
-
-msgid "{count} addresses of excluded devices cannot be read; those devices stay blocked through DNS while Prokop is stopped"
-msgstr "Не удалось прочитать адреса исключённых устройств ({count}); пока Prokop остановлен, эти устройства блокируются через DNS"
-
-msgid "the excluded devices form more than {groups} groups with different blocked names; {count} device addresses stay blocked through DNS while Prokop is stopped"
-msgstr "исключённые устройства образуют больше {groups} групп с разными блокируемыми именами; пока Prokop остановлен, адреса устройств ({count}) блокируются через DNS"
-
-msgid "could not save the block lists of excluded devices; they stay blocked through DNS while Prokop is stopped"
-msgstr "не удалось сохранить списки блокировки исключённых устройств; пока Prokop остановлен, они блокируются через DNS"
-
-msgid "could not remove {file}"
-msgstr "не удалось удалить {file}"
-
-msgid "could not write {file}"
-msgstr "не удалось записать {file}"
-
-msgid "the sing-box configuration {file} cannot be read"
-msgstr "не удаётся прочитать конфигурацию sing-box {file}"
-
-msgid "protected sections {sections} are not routed by the running Prokop yet (subscription not loaded), so their domains are unknown"
-msgstr "защищённые секции {sections} ещё не маршрутизируются запущенным Prokop (подписка не загружена), поэтому их домены неизвестны"
-
-msgid "dnsmasq could not be refreshed"
-msgstr "не удалось обновить dnsmasq"
-
-msgid "the details are in the system log"
-msgstr "подробности в системном журнале"
-
-msgid "Excluded devices"
-msgstr "Исключённые устройства"
 
 msgid "Keyword must not contain spaces or commas"
 msgstr "Ключевое слово не должно содержать пробелы или запятые"
@@ -2729,14 +2777,14 @@ msgstr "Список должен быть HTTP(S) URL или локальным
 msgid "List of a rule"
 msgstr "Список из правила"
 
+msgid "List source"
+msgstr "Источник списка"
+
 msgid "List Update Frequency"
 msgstr "Частота обновления списков"
 
 msgid "List update frequency was %s, shorter than the 1 h minimum of automatic updates: set to %s."
 msgstr "Частота обновления списков была %s — меньше минимума автоматических обновлений в 1 ч: установлена %s."
-
-msgid "Intercepting client DNS is off by default now: it also caught VPNs and DNS servers in the LAN that use port 53. It was on here and was turned off; turn it on again under Settings > Network if you need it."
-msgstr "Перехват DNS клиентов теперь по умолчанию выключен: он задевал и VPN, и DNS-серверы в локальной сети, работающие на порту 53. Здесь он был включён и выключен обновлением; при необходимости включите его снова в разделе «Настройки» > «Сеть»."
 
 msgid "Lists and updates"
 msgstr "Списки и обновления"
@@ -2780,6 +2828,9 @@ msgstr "низкая"
 msgid "Low memory mode"
 msgstr "Режим малой памяти"
 
+msgid "Lower the retention limits?"
+msgstr "Уменьшить лимиты хранения?"
+
 msgid "LuCI app"
 msgstr "Приложение LuCI"
 
@@ -2806,6 +2857,9 @@ msgstr "Ручная проверка только измеряет; измен�
 
 msgid "Manual selection"
 msgstr "Ручной выбор"
+
+msgid "Manual snapshots are kept."
+msgstr "Ручные снимки останутся."
 
 msgid "manually"
 msgstr "вручную"
@@ -3089,6 +3143,9 @@ msgstr "Недоступно для проверки"
 msgid "Not available in read-only mode."
 msgstr "Недоступно в режиме только для чтения."
 
+msgid "Not available: this firmware has no procd-ujail. Install the procd-ujail package to use it"
+msgstr "Недоступно: в прошивке нет procd-ujail. Чтобы включить, установите пакет procd-ujail"
+
 msgid "Not checked"
 msgstr "Не проверено"
 
@@ -3104,6 +3161,9 @@ msgstr "Не определено"
 msgid "Not enough free memory to download TorrServer"
 msgstr "Недостаточно свободной памяти, чтобы скачать TorrServer"
 
+msgid "Not enough free space for %s: %s KiB free, %s KiB needed"
+msgstr "Недостаточно места для %s: свободно %s КиБ, нужно %s КиБ"
+
 msgid "Not enough free space for TorrServer: %s KiB free, %s KiB needed"
 msgstr "Недостаточно места для TorrServer: свободно %s КиБ, нужно %s КиБ"
 
@@ -3112,6 +3172,9 @@ msgstr "нет в списке"
 
 msgid "Not installed"
 msgstr "Не установлено"
+
+msgid "Not intercepted"
+msgstr "Без перехвата"
 
 msgid "Not managed (Dont Touch My DHCP)"
 msgstr "Не управляется (Dont Touch My DHCP)"
@@ -3152,6 +3215,9 @@ msgstr "Ничего не найдено"
 msgid "Nothing to check"
 msgstr "Нечего проверять"
 
+msgid "Nothing to delete: only manual and protected snapshots are left."
+msgstr "Удалять нечего: остались только ручные и защищённые снимки."
+
 msgid "Nothing was rolled back"
 msgstr "Ничего не откачено"
 
@@ -3188,26 +3254,26 @@ msgstr "Наблюдение остановлено: автоматически�
 msgid "Observation stopped: not enough checks in a day"
 msgstr "Наблюдение остановлено: за сутки не набралось проверок"
 
-msgid "Observation stopped: the checks passed, but the configuration was not recorded as the last known working one"
-msgstr "Наблюдение остановлено: проверки пройдены, но конфигурация не записана как последняя рабочая"
-
-msgid "Observation stopped: the configuration was edited"
-msgstr "Наблюдение остановлено: конфигурация изменена"
-
-msgid "Observation stopped: the rule or its strategy was edited"
-msgstr "Наблюдение остановлено: правило или его стратегия изменены"
+msgid "Observation stopped: the change needs attention after a rollback"
+msgstr "Наблюдение остановлено: после отката изменение требует внимания"
 
 msgid "Observation stopped: the change was rolled back"
 msgstr "Наблюдение остановлено: изменение откатили"
 
-msgid "Observation stopped: the change needs attention after a rollback"
-msgstr "Наблюдение остановлено: после отката изменение требует внимания"
+msgid "Observation stopped: the checks passed, but the configuration was not recorded as the last known working one"
+msgstr "Наблюдение остановлено: проверки пройдены, но конфигурация не записана как последняя рабочая"
+
+msgid "Observation stopped: the rule or its strategy was edited"
+msgstr "Наблюдение остановлено: правило или его стратегия изменены"
 
 msgid "Observed"
 msgstr "Наблюдается"
 
 msgid "Off"
 msgstr "Выключен"
+
+msgid "Off by default. Devices with their own DNS server (8.8.8.8 in a TV, IoT devices) bypass domain rules and the kill-switch; when on, everything they send to port 53 of an outside server goes to the router's DNS instead. This also catches a VPN whose server uses port 53 and a DNS server in the LAN that asks outside servers itself: add their addresses to the exclusions. DNS to local addresses (Pi-hole), to the router's IPv6 prefixes and DNS over TLS stay untouched"
+msgstr "По умолчанию выключено. Устройства со своим DNS-сервером (8.8.8.8 в телевизоре, IoT) обходят доменные правила и kill-switch; при включении всё, что они отправляют на порт 53 внешнего сервера, уходит на DNS роутера. Под перехват попадают и VPN, чей сервер работает на порту 53, и DNS-сервер в локальной сети, который сам обращается к внешним серверам: добавьте их адреса в исключения. DNS на локальные адреса (Pi-hole), на IPv6-префиксы роутера и DNS over TLS не трогаются"
 
 msgid "Only from the specified countries."
 msgstr "Только из указанных стран."
@@ -3232,6 +3298,9 @@ msgstr "Только серверы с одним из выбранных тра
 
 msgid "Only the first %d changes are listed; %d changes in total."
 msgstr "Показаны только первые %d изменений; всего изменений: %d."
+
+msgid "Only the newest %d history records are kept; older ones are deleted."
+msgstr "Останутся только последние записи истории (%d), более старые будут удалены."
 
 msgid "Only the specified servers."
 msgstr "Только указанные серверы."
@@ -3482,8 +3551,17 @@ msgstr "Проб на стратегию"
 msgid "probes: %d of %d"
 msgstr "пробы: %d из %d"
 
+msgid "procd's jail (ujail): TorrServer sees only its program, its data, its disk cache and what it needs to resolve names and check certificates. A disk cache folder changed in TorrServer is seen after TorrServer restarts. If the jail cannot be set up, TorrServer does not start"
+msgstr "Изоляция procd (ujail): TorrServer видит только свою программу, свои данные, кэш на диске и то, что нужно для DNS и проверки сертификатов. Новую папку кэша, заданную в TorrServer, он увидит после перезапуска. Если изоляцию не удаётся настроить, TorrServer не запускается"
+
 msgid "Profile"
 msgstr "Профиль"
+
+msgid "Prokop %s is not published in this release channel, so it cannot be kept for a rollback; the update was refused"
+msgstr "Prokop %s не опубликован в этом канале релизов, поэтому его нельзя сохранить для отката; обновление отменено"
+
+msgid "Prokop %s is not published in this release channel, so it cannot be kept for a rollback; the update was refused. Run the one-line installer instead: %s"
+msgstr "Prokop %s не опубликован в этом канале релизов, поэтому его нельзя сохранить для отката; обновление отменено. Запустите установщик одной командой: %s"
 
 msgid "Prokop 1.0.31 and older have no VPN kill-switch. If it is enabled, the installation removes its protection, and protected traffic is no longer blocked while Prokop is stopped."
 msgstr "В Prokop 1.0.31 и более ранних версиях нет VPN kill-switch. Если он включён, установка снимет его защиту, и защищённый трафик больше не будет блокироваться, пока Prokop остановлен."
@@ -3502,6 +3580,9 @@ msgstr "Ошибка Prokop"
 
 msgid "Prokop has been installed"
 msgstr "Prokop установлен"
+
+msgid "Prokop has not applied the lists of its configuration yet"
+msgstr "Prokop ещё не применил списки своей конфигурации"
 
 msgid "Prokop has turned off the iptables hooks of br_netfilter (net.bridge.bridge-nf-call-iptables and -ip6tables) for transparent proxying: iptables rules do not filter bridged traffic while it runs. Stopping Prokop restores the previous values unless another program has changed them since."
 msgstr "Prokop отключил хуки iptables модуля br_netfilter (net.bridge.bridge-nf-call-iptables и -ip6tables) для прозрачного проксирования: пока он работает, правила iptables не фильтруют трафик через мост. Остановка Prokop вернёт прежние значения, если их с тех пор не изменила другая программа."
@@ -3608,6 +3689,9 @@ msgstr "Prokop не запускали после загрузки роутер�
 msgid "Prokop was not stopped by the user: its start failed or it stopped unexpectedly."
 msgstr "Prokop не останавливали вручную: его запуск не удался или он неожиданно остановился."
 
+msgid "Prokop was not stopped: another sing-box process runs on the router; the current sing-box was kept"
+msgstr "Prokop не остановлен: на роутере работает другой процесс sing-box; текущий sing-box оставлен"
+
 msgid "Prokop was removed, but this is still in place: %s. See the removal log in /tmp/prokop-uninstall.*/output.log."
 msgstr "Prokop удалён, но осталось: %s. Подробности в журнале /tmp/prokop-uninstall.*/output.log."
 
@@ -3659,8 +3743,14 @@ msgstr "NFQWS2 Prokop не запущен"
 msgid "Prokop-managed nfqws2 runtime is ready"
 msgstr "NFQWS2 Prokop готов"
 
+msgid "Protect TorrServer with a password"
+msgstr "Защитить TorrServer паролем"
+
 msgid "Protected sections"
 msgstr "Защищённые разделы"
+
+msgid "protected sections {sections} are not routed by the running Prokop yet (subscription not loaded), so their domains are unknown"
+msgstr "защищённые секции {sections} ещё не маршрутизируются запущенным Prokop (подписка не загружена), поэтому их домены неизвестны"
 
 msgid "Protection active"
 msgstr "Защита активна"
@@ -3920,6 +4010,9 @@ msgstr "Восстановление не начато: снимок сохра�
 msgid "Restore…"
 msgstr "Восстановить…"
 
+msgid "Restoring after the failure"
+msgstr "Восстановление после ошибки"
+
 msgid "Restoring the previous configuration"
 msgstr "Восстановление предыдущей конфигурации"
 
@@ -3928,6 +4021,12 @@ msgstr "Результат"
 
 msgid "Resume updates"
 msgstr "Продолжить обновление"
+
+msgid "Retention"
+msgstr "Хранение"
+
+msgid "Retention limits saved"
+msgstr "Лимиты хранения сохранены"
 
 msgid "Retired rule sets"
 msgstr "Выведенные наборы правил"
@@ -4016,6 +4115,12 @@ msgstr "правило"
 msgid "Rule"
 msgstr "Правило"
 
+msgid "rule “%s”"
+msgstr "правило «%s»"
+
+msgid "rule “%s”: %s"
+msgstr "правило «%s»: %s"
+
 msgid "Rule “%s”: a subscription source now sends the User-Agent set in its settings. Earlier versions ignored it and chose one automatically; clear the field to go back to automatic selection."
 msgstr "Правило «%s»: источник подписки теперь отправляет User-Agent, заданный в его настройках. Прежние версии его не учитывали и подбирали User-Agent автоматически; чтобы вернуть автоподбор, очистите это поле."
 
@@ -4033,6 +4138,9 @@ msgstr "Правило не рассчитано"
 
 msgid "Rule payload"
 msgstr "Данные правила"
+
+msgid "Rule set"
+msgstr "Набор правил"
 
 msgid "Rule set must be an HTTP(S) URL or a local .srs / .json path"
 msgstr "Набор правил должен быть HTTP(S) URL или локальным путём .srs / .json"
@@ -4072,6 +4180,9 @@ msgstr "Правила с этим провайдером перестанут �
 
 msgid "Run full diagnostics"
 msgstr "Запустить полную диагностику"
+
+msgid "Run TorrServer in a jail"
+msgstr "Запускать TorrServer в изоляции"
 
 msgid "Running"
 msgstr "Работает"
@@ -4277,8 +4388,17 @@ msgstr "Настройки"
 msgid "Several strategies are stable with similar latency; the simplest one was chosen."
 msgstr "Несколько стратегий стабильны с близкой задержкой; выбрана самая простая."
 
+msgid "Show all"
+msgstr "Показать все"
+
 msgid "Show connections of this device"
 msgstr "Показать соединения устройства"
+
+msgid "Show fewer"
+msgstr "Свернуть"
+
+msgid "Show more"
+msgstr "Показать ещё"
 
 msgid "Show only connections that start from now on, active and closed"
 msgstr "Показывать только соединения, начатые с этого момента, — активные и закрытые"
@@ -4288,6 +4408,9 @@ msgstr "Показать sing-box конфигурацию"
 
 msgid "Shown %d of %d"
 msgstr "Показано %d из %d"
+
+msgid "Shown: the %d addresses with the most traffic of %d."
+msgstr "Показаны %d адресов с наибольшим трафиком из %d."
 
 msgid "Sing-box autostart disabled"
 msgstr "Автостарт sing-box отключен"
@@ -4358,8 +4481,20 @@ msgstr "Снимок сохранён"
 msgid "Snapshot storage is full: delete a manual snapshot in History and recovery. Changes were not applied."
 msgstr "Хранилище снимков заполнено: удалите ручной снимок на странице «История и восстановление». Изменения не применены."
 
+msgid "Snapshots"
+msgstr "Снимки"
+
+msgid "Snapshots and the recovery state are not changed: a failed change still asks for recovery."
+msgstr "Снимки и состояние восстановления не меняются: неудачное изменение по-прежнему потребует восстановления."
+
+msgid "snapshots deleted: %d"
+msgstr "удалено снимков: %d"
+
 msgid "Snapshots: %d"
 msgstr "Снимков: %d"
+
+msgid "Snapshots: enter a whole number from %d to %d."
+msgstr "Снимки: введите целое число от %d до %d."
 
 msgid "Some autotune settings are invalid; safe defaults are used for them."
 msgstr "Часть настроек автоподбора некорректна; для них используются безопасные значения по умолчанию."
@@ -4384,42 +4519,6 @@ msgstr "Сетевой интерфейс источника"
 
 msgid "Sources that could not be downloaded:"
 msgstr "Источники, которые не удалось скачать:"
-
-msgid "configured source"
-msgstr "заданный источник"
-
-msgid "rule “%s”"
-msgstr "правило «%s»"
-
-msgid "rule “%s”: %s"
-msgstr "правило «%s»: %s"
-
-msgid "List source"
-msgstr "Источник списка"
-
-msgid "Domain and IP list"
-msgstr "Список доменов и IP"
-
-msgid "Rule set"
-msgstr "Набор правил"
-
-msgid "Domain list"
-msgstr "Список доменов"
-
-msgid "Subnet list (JSON)"
-msgstr "Список подсетей (JSON)"
-
-msgid "Subnet list (SRS)"
-msgstr "Список подсетей (SRS)"
-
-msgid "Subnet list (text)"
-msgstr "Список подсетей (текст)"
-
-msgid "Built-in subnet list: %s"
-msgstr "Встроенный список подсетей: %s"
-
-msgid "A list source; the details are in the system log"
-msgstr "Источник списка; подробности в системном журнале"
 
 msgid "Speed"
 msgstr "Скорость"
@@ -4535,6 +4634,15 @@ msgstr "Стратегия"
 msgid "Strategy %s applied and checked."
 msgstr "Стратегия %s применена и проверена."
 
+msgid "Subnet list (JSON)"
+msgstr "Список подсетей (JSON)"
+
+msgid "Subnet list (SRS)"
+msgstr "Список подсетей (SRS)"
+
+msgid "Subnet list (text)"
+msgstr "Список подсетей (текст)"
+
 msgid "Subnets from the list will be extracted and added to nftables"
 msgstr "IP-адреса и подсети из списка будут извлечены и добавлены в nftables"
 
@@ -4631,18 +4739,6 @@ msgstr "Telegram не принял токен бота"
 msgid "Telegram refused the message text"
 msgstr "Telegram не принял текст сообщения"
 
-msgid "The server gave an answer that could not be read"
-msgstr "Ответ сервера не удалось разобрать"
-
-msgid "The server's address could not be found through the bootstrap DNS servers"
-msgstr "Не удалось найти адрес сервера через Bootstrap DNS-серверы"
-
-msgid "by the router's usual route"
-msgstr "обычным маршрутом роутера"
-
-msgid "This address uses http:// over the internet: the messages and any token in the address are sent unencrypted. Use https:// if the service supports it"
-msgstr "Адрес использует http:// через интернет: сообщения и токен в адресе передаются без шифрования. Используйте https://, если сервис его поддерживает"
-
 msgid "Telegram refused the request"
 msgstr "Telegram отклонил запрос"
 
@@ -4675,6 +4771,9 @@ msgstr "URL проверки"
 
 msgid "The {product} kill-switch policy {table} could not be removed completely"
 msgstr "Политику kill-switch {product} ({table}) не удалось удалить полностью"
+
+msgid "The action failed. The details are in the system log"
+msgstr "Действие не выполнено. Подробности в системном журнале"
 
 msgid "The action stopped unexpectedly and its outcome is unknown; check the status before trying again."
 msgstr "Действие неожиданно прервалось, и его результат неизвестен; проверьте состояние, прежде чем повторять."
@@ -4751,14 +4850,17 @@ msgstr "Проверка неожиданно остановилась"
 msgid "The check was invalid: a strategy did not process every packet. It will be repeated."
 msgstr "Проверка недействительна: стратегия обработала не все пакеты. Она будет повторена."
 
-msgid "The check was invalid: its probe ports were still busy. It will be repeated."
-msgstr "Проверка недействительна: порты проверки ещё были заняты. Она будет повторена."
-
 msgid "The check was invalid: a strategy process stopped during it. It will be repeated."
 msgstr "Проверка недействительна: процесс стратегии остановился во время неё. Она будет повторена."
 
+msgid "The check was invalid: its probe ports were still busy. It will be repeated."
+msgstr "Проверка недействительна: порты проверки ещё были заняты. Она будет повторена."
+
 msgid "The check was postponed. See the state above."
 msgstr "Проверка отложена. Причина — в состоянии выше."
+
+msgid "The checks passed; the configuration is recorded as the last known working one at the next check."
+msgstr "Проверки пройдены; конфигурация будет записана как последняя рабочая при следующей проверке."
 
 msgid "The Clash API credentials could not be prepared."
 msgstr "Не удалось подготовить учётные данные Clash API."
@@ -4784,6 +4886,9 @@ msgstr "резервная копия настроек в /etc/prokop-backups"
 msgid "The configuration before the change is restored."
 msgstr "Конфигурация до изменения восстановлена."
 
+msgid "the configuration changed since Prokop last applied it; reload Prokop first"
+msgstr "конфигурация изменилась после последнего применения; сначала перезагрузите Prokop"
+
 msgid "The configuration of the snapshot was migrated from Prokop %s to %s."
 msgstr "Конфигурация снимка перенесена с Prokop %s на %s."
 
@@ -4792,6 +4897,9 @@ msgstr "Конфигурация снимка перенесена на Prokop %
 
 msgid "The configuration was changed after the apply, so nothing was rolled back. Restore a snapshot in History and recovery if needed."
 msgstr "После применения конфигурация менялась, поэтому ничего не откачено. При необходимости восстановите снимок в разделе «История и восстановление»."
+
+msgid "The configured mirror uses http://; programs are installed only from an https:// mirror"
+msgstr "Указанное зеркало использует http://; программы устанавливаются только с зеркала https://"
 
 msgid "The connection to the router may drop for a moment while Prokop is installed and restarted; the progress is kept and the page picks it up again."
 msgstr "Пока Prokop устанавливается и перезапускается, связь с роутером может ненадолго пропасть: ход обновления сохраняется, и страница подхватит его снова."
@@ -4813,6 +4921,9 @@ msgstr "Повреждённая запись отложена в сторону
 
 msgid "The desync fwmark is managed by Prokop for loop prevention and must not be overridden here."
 msgstr "Desync fwmark управляется Prokop для защиты от циклов и не должен переопределяться здесь."
+
+msgid "the details are in the system log"
+msgstr "подробности в системном журнале"
 
 msgid "the direct proxy"
 msgstr "прямой прокси"
@@ -4841,8 +4952,20 @@ msgstr "Не удалось надёжно определить DPI-правил
 msgid "The editor has no field for downloaded lists: they cannot be converted and stay as they are."
 msgstr "Для загружаемых списков в редакторе нет поля: их нельзя конвертировать, они остаются как есть."
 
+msgid "the excluded devices form more than {groups} groups with different blocked names; {count} device addresses stay blocked through DNS while Prokop is stopped"
+msgstr "исключённые устройства образуют больше {groups} групп с разными блокируемыми именами; пока Prokop остановлен, адреса устройств ({count}) блокируются через DNS"
+
+msgid "the firewall did not take the policy"
+msgstr "брандмауэр не принял правила"
+
 msgid "The firewall policy could not be applied"
 msgstr "Не удалось применить политику файрвола"
+
+msgid "the firewall policy could not be built"
+msgstr "не удалось собрать правила брандмауэра"
+
+msgid "the firewall refused the built policy"
+msgstr "брандмауэр отклонил собранные правила"
 
 msgid "The header has no value"
 msgstr "У заголовка нет значения"
@@ -4855,6 +4978,9 @@ msgstr "Заголовок не должен содержать управляю
 
 msgid "The header name contains characters that are not allowed"
 msgstr "В имени заголовка недопустимые символы"
+
+msgid "The history is being written right now. Nothing was changed; try again in a moment."
+msgstr "Сейчас в историю идёт запись. Ничего не изменено; повторите чуть позже."
 
 msgid "The interrupted Prokop update was rolled back; no new update was attempted"
 msgstr "Прерванное обновление Prokop откачено; новое обновление не запускалось"
@@ -4886,9 +5012,6 @@ msgstr "Последнее изменение (%s) не прошло прове�
 msgid "The last change (%s) passed its check, but it could not be recorded as the last known working configuration."
 msgstr "Последнее изменение (%s) прошло проверку, но его не удалось записать как последнюю рабочую конфигурацию."
 
-msgid "The checks passed; the configuration is recorded as the last known working one at the next check."
-msgstr "Проверки пройдены; конфигурация будет записана как последняя рабочая при следующей проверке."
-
 msgid "The last change (%s) was not checked to the end."
 msgstr "Последнее изменение (%s) не было проверено до конца."
 
@@ -4909,9 +5032,6 @@ msgstr "Последняя проверка завершилась ошибко�
 
 msgid "The last check failed; one more failure in a row rolls the change back."
 msgstr "Последняя проверка не прошла; ещё одна неудача подряд откатит изменение."
-
-msgid "A check failed and the last one gave no result; one more failure rolls the change back."
-msgstr "Одна проверка не прошла, последняя не дала результата; ещё одна неудача откатит изменение."
 
 msgid "the last check found Prokop stopped"
 msgstr "при последней проверке Prokop был остановлен"
@@ -4937,6 +5057,9 @@ msgstr "Последнюю рабочую конфигурацию удалит�
 msgid "The last known good snapshot cannot be deleted: it is the configuration Prokop returns to after a failed change."
 msgstr "Снимок последней рабочей конфигурации удалить нельзя: к нему Prokop возвращается после неудачного изменения."
 
+msgid "The last known good snapshot, the one an autotune change can still roll back to, the one of an unapplied change and those an unfinished restore needs are kept."
+msgstr "Останутся последний рабочий снимок, снимок, к которому ещё можно откатить автоподбор, снимок неприменённого изменения и снимки, нужные незавершённому восстановлению."
+
 msgid "The last known working configuration is missing; nothing was rolled back. Restore a snapshot in History and recovery first."
 msgstr "Последней рабочей конфигурации нет; ничего не откачено. Сначала восстановите снимок в разделе «История и восстановление»."
 
@@ -4954,6 +5077,9 @@ msgstr "Устаревшие условия нельзя конвертиров�
 
 msgid "The legacy settings are converted. Save the rule to keep the change."
 msgstr "Устаревшие настройки конвертированы. Сохраните правило, чтобы сохранить изменение."
+
+msgid "The limits are out of range. Nothing was changed."
+msgstr "Лимиты вне допустимого диапазона. Ничего не изменено."
 
 msgid "the lines marked \"# prokop-\" in /etc/crontabs/root"
 msgstr "строки с пометкой «# prokop-» в /etc/crontabs/root"
@@ -4984,6 +5110,9 @@ msgstr "mixed proxy правила %s"
 
 msgid "The name does not resolve on the router, so no rule can open it. Check the DNS results above."
 msgstr "Имя не разрешается на роутере, поэтому ни одно правило его не откроет. Посмотрите результат DNS выше."
+
+msgid "The new limits apply at once."
+msgstr "Новые лимиты применяются сразу."
 
 msgid "The new strategy did not pass the check, but the configuration was changed during the check, so Prokop kept that change and did not roll back. The rule may still use the new strategy: check it, or restore the \"Before autotune\" snapshot in History and recovery."
 msgstr "Новая стратегия не прошла проверку, но во время проверки конфигурацию изменили, поэтому Prokop сохранил это изменение и не выполнил откат. Правило может по-прежнему использовать новую стратегию: проверьте его или восстановите снимок «Перед автоподбором» в разделе «История и восстановление»."
@@ -5084,6 +5213,9 @@ msgstr "Роутер не смог определить адрес."
 msgid "The router could not set up the traffic counters; the system log says why."
 msgstr "Роутер не смог включить счётчики трафика; причина в системном журнале."
 
+msgid "The router counts no new addresses: its list of addresses is full. New devices are missing until addresses idle for 7 days leave it."
+msgstr "Роутер не считает новые адреса: список адресов заполнен. Новых устройств не будет видно, пока из него не уйдут адреса, простаивавшие 7 дней."
+
 msgid "The router did not report the outcome of the rollback; it may still be running. This page shows it once the rollback ends."
 msgstr "Роутер не сообщил, чем закончился откат; возможно, он ещё выполняется. Эта страница покажет исход, когда откат закончится."
 
@@ -5150,6 +5282,9 @@ msgstr "Столько проверок подряд с одинаковым р�
 msgid "The saved interval %s is shorter than 1h: it runs every hour, and saving the settings sets it to 1h."
 msgstr "Сохранённый интервал %s меньше 1h: обновление выполняется раз в час, а при сохранении настроек интервал станет 1h."
 
+msgid "The saved password is never shown on the page"
+msgstr "Сохранённый пароль на странице не показывается"
+
 msgid "The selected section cannot be used here. Choose another section."
 msgstr "Выбранную секцию нельзя использовать здесь. Выберите другую секцию."
 
@@ -5165,11 +5300,20 @@ msgstr "Сервер ответил HTTP %s"
 msgid "The server could not be reached"
 msgstr "Нет связи с сервером"
 
+msgid "The server gave an answer that could not be read"
+msgstr "Ответ сервера не удалось разобрать"
+
+msgid "The server's address could not be found through the bootstrap DNS servers"
+msgstr "Не удалось найти адрес сервера через Bootstrap DNS-серверы"
+
 msgid "the service is busy"
 msgstr "служба занята"
 
 msgid "The service is busy with another operation (list or subscription update, reload or start). Nothing was changed; try again when it finishes."
 msgstr "Служба занята другой операцией (обновление списков или подписки, перезагрузка или запуск). Ничего не изменено; повторите, когда она завершится."
+
+msgid "the sing-box configuration {file} cannot be read"
+msgstr "не удаётся прочитать конфигурацию sing-box {file}"
 
 msgid "the sing-box configuration is not available; is Prokop running?"
 msgstr "конфигурация sing-box недоступна — Prokop запущен?"
@@ -5273,6 +5417,9 @@ msgstr "Обновление удалило из встроенных набор
 msgid "The value is outside the allowed range."
 msgstr "Значение вне допустимого диапазона."
 
+msgid "There are %d manual snapshots, more than the %d that fit: none is deleted, but no new manual snapshot can be saved until you delete some."
+msgstr "Ручных снимков %d, а помещается %d: ни один не будет удалён, но новый ручной снимок нельзя будет сохранить, пока вы не удалите лишние."
+
 msgid "There are rules using ByeDPI"
 msgstr "Есть правила, использующие ByeDPI"
 
@@ -5293,6 +5440,12 @@ msgstr "Нет рекомендации для применения."
 
 msgid "There is nothing to roll back."
 msgstr "Откатывать нечего."
+
+msgid "They count what a device sends through the router and receives from it, DNS and this page included, also packets the firewall drops afterwards; traffic between devices of the LAN is not seen. An address idle for 7 days starts again from zero, and names are those of the current leases."
+msgstr "Считается то, что устройство отправляет через роутер и получает от него, включая DNS и эту страницу, а также пакеты, которые затем отбросит файрвол; трафик между устройствами локальной сети не виден. Адрес, простаивавший 7 дней, начинает счёт с нуля; имена берутся из текущих аренд."
+
+msgid "This address uses http:// over the internet: the messages and any token in the address are sent unencrypted. Use https:// if the service supports it"
+msgstr "Адрес использует http:// через интернет: сообщения и токен в адресе передаются без шифрования. Используйте https://, если сервис его поддерживает"
 
 msgid "This browser could not reach the check service, so FakeIP for devices is not proven either way."
 msgstr "Этот браузер не смог обратиться к сервису проверки, поэтому работа FakeIP для устройств не доказана ни в одну сторону."
@@ -5315,6 +5468,9 @@ msgstr "Это поле должно запускать рабочую стра�
 msgid "This field must start a working nfqws2 strategy; --version exits immediately and is not allowed here."
 msgstr "Это поле должно запускать рабочую стратегию nfqws2; --version сразу завершает работу и здесь запрещён."
 
+msgid "This firmware has no kmod-nft-socket package, which direct routing for TorrServer needs"
+msgstr "В этой прошивке нет пакета kmod-nft-socket, нужного для прямой маршрутизации TorrServer"
+
 msgid "This flag does not accept a value."
 msgstr "Этот флаг не принимает значение."
 
@@ -5326,6 +5482,12 @@ msgstr "Страница загружена из кеша браузера: эт
 
 msgid "This permanently deletes saved sections and subscriptions. Other components remain installed."
 msgstr "Сохранённые секции и подписки будут удалены безвозвратно. Остальные компоненты останутся установленными."
+
+msgid "This Prokop build cannot install TorrServer"
+msgstr "Эта сборка Prokop не умеет устанавливать TorrServer"
+
+msgid "This Prokop build has no direct routing for TorrServer"
+msgstr "В этой сборке Prokop нет прямой маршрутизации для TorrServer"
 
 msgid "This rule has a cascade setting from an earlier version, which the editor no longer shows: servers of this rule connect through the rule “%s”."
 msgstr "У этого правила есть настройка каскада из прежней версии, которую редактор больше не показывает: серверы этого правила подключаются через правило «%s»."
@@ -5360,6 +5522,9 @@ msgstr "Этот снимок нельзя удалить, пока сохран
 msgid "This snapshot cannot be deleted while the autotune change can still be rolled back to it"
 msgstr "Этот снимок нельзя удалить, пока к нему можно откатить изменение автотюна"
 
+msgid "This snapshot cannot be deleted while the DPI guard of an unfinished restore is active"
+msgstr "Этот снимок нельзя удалить, пока активна DPI-защита незавершённого восстановления"
+
 msgid "This snapshot was saved by an older version of Prokop. Before the restore, its configuration is migrated to the current version %s, as an upgrade migrates it: settings retired since then are updated. The snapshot itself is not changed; the changes listed above compare the snapshot as it was saved."
 msgstr "Этот снимок сохранён более старой версией Prokop. Перед восстановлением его конфигурация переносится на текущую версию %s так же, как при обновлении: устаревшие с тех пор настройки обновляются. Сам снимок не меняется; изменения в списке выше сравнивают снимок в том виде, в каком он был сохранён."
 
@@ -5381,29 +5546,11 @@ msgstr "Эту стратегию недавно откатывали; она ж
 msgid "This TorrServer was not installed by Prokop; Prokop left it as it is"
 msgstr "Этот TorrServer установлен не через Prokop; Prokop оставил его как есть"
 
-msgid "This Prokop build cannot install TorrServer"
-msgstr "Эта сборка Prokop не умеет устанавливать TorrServer"
-
-msgid "This firmware has no kmod-nft-socket package, which direct routing for TorrServer needs"
-msgstr "В этой прошивке нет пакета kmod-nft-socket, нужного для прямой маршрутизации TorrServer"
-
-msgid "This Prokop build has no direct routing for TorrServer"
-msgstr "В этой сборке Prokop нет прямой маршрутизации для TorrServer"
-
 msgid "Through rules"
 msgstr "Через правила"
 
 msgid "Through rules: what sing-box counted for connections seen while this page is open; traffic that no rule sends to sing-box is not split."
 msgstr "Через правила: что насчитал sing-box по соединениям, замеченным, пока открыта эта страница; трафик, который ни одно правило не отправляет в sing-box, не разбивается."
-
-msgid "They count what a device sends through the router and receives from it, DNS and this page included, also packets the firewall drops afterwards; traffic between devices of the LAN is not seen. An address idle for 7 days starts again from zero, and names are those of the current leases."
-msgstr "Считается то, что устройство отправляет через роутер и получает от него, включая DNS и эту страницу, а также пакеты, которые затем отбросит файрвол; трафик между устройствами локальной сети не виден. Адрес, простаивавший 7 дней, начинает счёт с нуля; имена берутся из текущих аренд."
-
-msgid "The router counts no new addresses: its list of addresses is full. New devices are missing until addresses idle for 7 days leave it."
-msgstr "Роутер не считает новые адреса: список адресов заполнен. Новых устройств не будет видно, пока из него не уйдут адреса, простаивавшие 7 дней."
-
-msgid "Shown: the %d addresses with the most traffic of %d."
-msgstr "Показаны %d адресов с наибольшим трафиком из %d."
 
 msgid "through the rule"
 msgstr "через правило"
@@ -5429,11 +5576,14 @@ msgstr "Допуск"
 msgid "Top level has the highest priority; lower levels are used as fallback"
 msgstr "Верхний уровень имеет самый высокий приоритет; нижние уровни используются как резерв"
 
-msgid "TorrServer %s did not start and was removed"
-msgstr "TorrServer %s не запустился и был удалён"
+msgid "TorrServer"
+msgstr "TorrServer"
 
 msgid "TorrServer %s did not start"
 msgstr "TorrServer %s не запустился"
+
+msgid "TorrServer %s did not start and was removed"
+msgstr "TorrServer %s не запустился и был удалён"
 
 msgid "TorrServer %s did not start, and the previous version %s did not start again either"
 msgstr "TorrServer %s не запустился, и прежняя версия %s тоже не запустилась"
@@ -5443,60 +5593,6 @@ msgstr "TorrServer %s не запустился; снова работает п�
 
 msgid "TorrServer did not take the recommended settings"
 msgstr "TorrServer не принял рекомендуемые настройки"
-
-msgid "Prokop %s is not published in this release channel, so it cannot be kept for a rollback; the update was refused. Run the one-line installer instead: %s"
-msgstr "Prokop %s не опубликован в этом канале релизов, поэтому его нельзя сохранить для отката; обновление отменено. Запустите установщик одной командой: %s"
-
-msgid "Prokop %s is not published in this release channel, so it cannot be kept for a rollback; the update was refused"
-msgstr "Prokop %s не опубликован в этом канале релизов, поэтому его нельзя сохранить для отката; обновление отменено"
-
-msgid "Not enough free space for %s: %s KiB free, %s KiB needed"
-msgstr "Недостаточно места для %s: свободно %s КиБ, нужно %s КиБ"
-
-msgid "%s: the router ran out of storage space"
-msgstr "%s: на роутере закончилось место"
-
-msgid "Prokop was not stopped: another sing-box process runs on the router; the current sing-box was kept"
-msgstr "Prokop не остановлен: на роутере работает другой процесс sing-box; текущий sing-box оставлен"
-
-msgid "The configured mirror uses http://; programs are installed only from an https:// mirror"
-msgstr "Указанное зеркало использует http://; программы устанавливаются только с зеркала https://"
-
-msgid "%s: the change failed, and the previous state could not be restored. Check the system log"
-msgstr "%s: изменение не удалось, и прежнее состояние восстановить не получилось. Проверьте системный журнал"
-
-msgid "%s: the change failed; the previous version was kept"
-msgstr "%s: изменение не удалось; прежняя версия сохранена"
-
-msgid "%s was installed, but Prokop did not start cleanly"
-msgstr "%s установлен, но Prokop запустился с ошибками"
-
-msgid "Failed to update the package lists. Check the internet connection and try again"
-msgstr "Не удалось обновить списки пакетов. Проверьте подключение к интернету и повторите"
-
-msgid "%s: the downloaded file does not match its published checksum; it was not installed"
-msgstr "%s: скачанный файл не совпадает с опубликованной контрольной суммой; он не установлен"
-
-msgid "%s: the download failed. Check the internet connection and try again"
-msgstr "%s: не удалось скачать. Проверьте подключение к интернету и повторите"
-
-msgid "%s: the release could not be checked. Check the internet connection and try again"
-msgstr "%s: не удалось проверить релиз. Проверьте подключение к интернету и повторите"
-
-msgid "%s is not installed"
-msgstr "%s не установлен"
-
-msgid "%s is not available in this Prokop build"
-msgstr "%s недоступен в этой сборке Prokop"
-
-msgid "Component"
-msgstr "Компонент"
-
-msgid "%s: the action failed. The details are in the system log"
-msgstr "%s: действие не выполнено. Подробности в системном журнале"
-
-msgid "The action failed. The details are in the system log"
-msgstr "Действие не выполнено. Подробности в системном журнале"
 
 msgid "TorrServer Direct"
 msgstr "Прямой TorrServer"
@@ -5519,8 +5615,17 @@ msgstr "TorrServer будет остановлен, его программа у
 msgid "TorrServer is stopped; start it to apply the settings"
 msgstr "TorrServer остановлен; запустите его, чтобы применить настройки"
 
+msgid "TorrServer password"
+msgstr "Пароль TorrServer"
+
 msgid "TorrServer publishes no build for this router's CPU"
 msgstr "Для процессора этого роутера нет сборки TorrServer"
+
+msgid "TorrServer user name"
+msgstr "Имя пользователя TorrServer"
+
+msgid "TorrServer's web page and API then ask for this user name and password, also apps that use its API (Lampa, MSX); stream and playlist links stay open. Applies to the TorrServer that Prokop installed"
+msgstr "Веб-страница и API TorrServer будут спрашивать это имя и пароль, в том числе у приложений, которые работают через API (Lampa, MSX). Ссылки на потоки и плейлисты остаются открытыми. Касается TorrServer, установленного Prokop"
 
 msgid "Total traffic"
 msgstr "Общий трафик"
@@ -5651,9 +5756,6 @@ msgstr "Без обхода нестабильно; найдена стабил�
 msgid "Up to 8 domains; exactly these are checked."
 msgstr "До 8 доменов; проверяются именно они."
 
-msgid "UPnP off: TorrServer does not open ports on the router"
-msgstr "UPnP выключен: TorrServer не открывает порты на роутере"
-
 msgid "Update"
 msgstr "Обновить"
 
@@ -5677,6 +5779,9 @@ msgstr "Списки обновляются…"
 
 msgid "Updating package lists"
 msgstr "Обновление списков пакетов"
+
+msgid "UPnP off: TorrServer does not open ports on the router"
+msgstr "UPnP выключен: TorrServer не открывает порты на роутере"
 
 msgid "URL must start with vless://, vmess://, ss://, trojan://, socks4://, socks4a://, socks5://, hysteria2://, or hy2://"
 msgstr "URL должен начинаться с vless://, vmess://, ss://, trojan://, socks4://, socks4a://, socks5://, hysteria2:// или hy2://"
@@ -5708,6 +5813,9 @@ msgstr "Настройки URLTest сброшены"
 msgid "URLTest settings saved"
 msgstr "Настройки URLTest сохранены"
 
+msgid "Use 1 to 64 Latin letters, digits, dots, dashes, _ or @"
+msgstr "От 1 до 64 латинских букв, цифр, точек, дефисов, _ или @"
+
 msgid "Use a numeric ID or @channel"
 msgstr "Укажите числовой ID или @канал"
 
@@ -5732,6 +5840,9 @@ msgstr "Используйте формат длительности sing-box, �
 msgid "Use source values"
 msgstr "Использовать исходные значения"
 
+msgid "Use up to 128 characters, without line breaks"
+msgstr "До 128 символов, без переносов строк"
+
 msgid "used by the rule"
 msgstr "используется правилом"
 
@@ -5743,6 +5854,9 @@ msgstr "используется правилом; поле «Сетевой и�
 
 msgid "used by the rule: text mode is on"
 msgstr "используется правилом: включён текстовый режим"
+
+msgid "Used while client DNS is intercepted. DNS from these devices or to these servers is never intercepted: a DNS server in the LAN, the server of a VPN on port 53. An IPv4 or IPv6 address or subnet"
+msgstr "Действует, когда перехват DNS включён. DNS от этих устройств и к этим серверам никогда не перехватывается: DNS-сервер в локальной сети, сервер VPN на порту 53. IPv4- или IPv6-адрес либо подсеть"
 
 msgid "User-Agent"
 msgstr "User-Agent"

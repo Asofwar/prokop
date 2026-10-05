@@ -143,7 +143,8 @@ transaction_of() {
         case "${module#"$UNINSTALL_LIB/"} $mode" in
             "config/snapshots.uc create" | "config/snapshots.uc delete" | \
             "config/snapshots.uc restore" | "config/snapshots.uc apply" | \
-            "config/snapshots.uc confirm-working" | \
+            "config/snapshots.uc confirm-working" | "config/snapshots.uc clear" | \
+            "config/snapshots.uc retention" | \
             "autotune/apply.uc apply" | "autotune/apply.uc rollback" | \
             "autotune/isolation.uc run" | "autotune/isolation.uc tune" | "autotune/isolation.uc cleanup" | \
             "autotune/manager.uc run" | "autotune/manager.uc run-async" | "autotune/manager.uc run-job" | \

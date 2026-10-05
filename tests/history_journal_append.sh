@@ -71,7 +71,7 @@ for n in 1 2 3 4 5 6 7 8; do
   [ "$(kinds | grep -c "^autotune_apply:success:c$n\$" || true)" -eq 1 ] ||
     fail "concurrent records lost c$n: $(kinds | grep autotune_apply | tr '\n' ' ')"
 done
-[ "$(wc -l < "$PROKOP_HISTORY_FILE")" -le 200 ] || fail "the journal outgrew its cap"
+[ "$(wc -l < "$PROKOP_HISTORY_FILE")" -le 62 ] || fail "the journal outgrew its cap"
 for tmp in "$WORK"/etc/*.tmp; do
   [ ! -e "$tmp" ] || fail "a rotation left its temporary file: ${tmp##*/}"
 done
@@ -106,7 +106,7 @@ holder=""
 [ "$(wc -l < "$PROKOP_HISTORY_FILE")" -eq 201 ] || fail "a record without the lock rotated the journal: $(wc -l < "$PROKOP_HISTORY_FILE") lines"
 # With the lock free again, the next record rotates.
 record reload failure
-[ "$(wc -l < "$PROKOP_HISTORY_FILE")" -le 150 ] || fail "the next record did not rotate the journal: $(wc -l < "$PROKOP_HISTORY_FILE") lines"
+[ "$(wc -l < "$PROKOP_HISTORY_FILE")" -le 50 ] || fail "the next record did not rotate the journal: $(wc -l < "$PROKOP_HISTORY_FILE") lines"
 [ "$(kinds | tail -n 2 | tr '\n' ' ')" = "restore:success: reload:failure: " ] || fail "the rotation lost records: $(kinds | tail -n 2 | tr '\n' ' ')"
 
 printf 'history_journal_append: PASS\n'

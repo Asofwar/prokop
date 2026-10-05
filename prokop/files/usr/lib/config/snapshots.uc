@@ -37,11 +37,13 @@ const AUTOTUNE_LKG_OBSERVATION = "observation_pending";
 // cursor through it (autotune/apply.uc and manager.uc check it too, with the
 // override PROKOP_AUTOTUNE_UCI_SAVEDIR). Tests that restore set it.
 const UCI_SAVEDIR = getenv("PROKOP_UCI_SAVEDIR") || "/tmp/.uci";
-const RETENTION = 10;
-// Places that manual snapshots never take: they stay for the automatic
-// safety snapshots (D-14, UC-022). See trim_retention.
-const RESERVED = 2;
-const MANUAL_LIMIT = RETENTION - RESERVED;
+// How many snapshots the store holds (config/retention.uc, set on the
+// History page) and the places of it that manual snapshots never take: they
+// stay for the automatic safety snapshots (D-14, UC-022). See trim_retention.
+let retention = require("config.retention");
+const RESERVED = retention.RESERVED;
+function retention_limit() { return retention.limits().snapshots; }
+function manual_limit() { return retention_limit() - RESERVED; }
 const GUARD_SETTLE_SECONDS = int(getenv("PROKOP_RUNTIME_GUARD_SETTLE_SECONDS") || "30");
 
 function value(v) { return v == null ? "" : "" + v; }
@@ -93,6 +95,8 @@ function ensure_root() {
 // The lock is a runtime directory holding one "owner.<pid>.<start ticks>"
 // record. The name is unique per process lifetime, so unlinking a stale or
 // own record by name can never remove the record of a lock that replaced it.
+// The modes that take the lock.
+const OPERATIONS = [ "create", "delete", "restore", "apply", "confirm-working", "clear", "retention" ];
 let lock_record = null;
 let lock_busy = false;   // set when a live snapshot operation owns the lock
 function owner_pid() {
@@ -102,7 +106,7 @@ function owner_pid() {
 function active_entry(name) {
     let parsed = match(value(name), /^owner\.([1-9][0-9]*)\.([0-9]+)$/);
     if (parsed == null) return false;
-    for (let operation in [ "create", "delete", "restore", "apply", "confirm-working" ])
+    for (let operation in OPERATIONS)
         if (identity.matches_record({ pid: parsed[1], ticks: parsed[2] }, "ucode",
             [ "ucode", "-L", LIB_DIR, LIB_DIR + "/config/snapshots.uc", operation ], false, true) != "")
             return true;
@@ -284,55 +288,111 @@ function autotune_rollback_snapshot() {
         record.phase == "needs_attention" || (record.phase == "failed" && record.rollback_available === true);
     return rollback ? record.pre_snapshot : null;
 }
+// Install uses ensure semantics: after needs_attention the guard from the
+// failed restore is still active and must protect the recovery restore too.
+// It is removed only after a reload proved a coherent runtime.
+function restore_guard(remove) {
+    return success([ "ucode", "-L", LIB_DIR, LIB_DIR + "/nft/apply.uc",
+        remove ? "remove-dpi-transition-guard" : "ensure-dpi-transition-guard", "ProkopConfigRestore" ]);
+}
+// "absent", "valid" or "invalid"; empty when the state is unknown.
+function restore_guard_state() {
+    return trim(capture([ "ucode", "-L", LIB_DIR, LIB_DIR + "/nft/apply.uc",
+        "dpi-transition-guard-state", "ProkopConfigRestore" ]));
+}
+// The snapshots that an active restore guard may still need: while the
+// guard of a restore (or of an autotune apply) that ended needs_attention
+// stands, or its state cannot be read, the configuration it was taken over
+// (pre-restore) and an edit committed during it (concurrent-change) are the
+// ways back the recovery offers. Read only when such a snapshot is next in
+// line, since it asks nft.
+function guard_needs(item, ctx) {
+    if (item.reason != "pre-restore" && item.reason != "concurrent-change") return false;
+    if (ctx.guard == null) ctx.guard = restore_guard_state();
+    return ctx.guard != "absent";
+}
 // Why delete refuses a snapshot, or null (UC-119, CFG-2): the
 // last-known-working one, the before-autotune one that the recorded
 // autotune apply may still roll back to (autotune_rollback_snapshot), and
-// the one Save & Apply took until the reload of its change has run
-// (trim_retention keeps the same ones).
+// the one Save & Apply took until the reload of its change has run, and one
+// that an active restore guard may still need (guard_needs)
+// (trim_retention keeps the same ones). reason: the snapshot's own.
 let protected_ids = null;
-function protected_reason(id, working) {
+function protected_reason(id, working, reason) {
     if (id == working) return "lkg_protected";
     if (protected_ids == null)
         protected_ids = { rollback: autotune_rollback_snapshot(), applying: trim(value(fs.readfile(APPLY_SNAPSHOT))) };
     if (id == protected_ids.rollback) return "autotune_rollback_protected";
     if (id == protected_ids.applying) return "apply_snapshot_protected";
+    if (guard_needs({ reason }, protected_ids)) return "restore_guard_protected";
     return null;
 }
+// Whether retention, or "Clear", may remove a snapshot: never a manual one,
+// nor the last-known-working one, nor the before-autotune one that the
+// recorded autotune apply may still roll back to (an automatic snapshot
+// taken during its verification, or after it applied, would otherwise push
+// it out next to many manual ones), nor one that the running operation still
+// needs (keep), nor the one that Save & Apply took before LuCI applied its
+// change, until the reload of that change has taken its own snapshot: the
+// reload's snapshot comes right after the commit and would otherwise take
+// the restore point of the change it applies, and the list of the change
+// that the page shows once the reload has run (configform.js); nor one that
+// an active restore guard may still need (guard_needs).
+function removable(item, keep, ctx) {
+    if (ctx.working == null) {
+        ctx.working = trim(value(fs.readfile(LKG)));
+        ctx.rollback = autotune_rollback_snapshot();
+        ctx.applying = trim(value(fs.readfile(APPLY_SNAPSHOT)));
+    }
+    return item.kind != "manual" && item.id != ctx.working && item.id != ctx.rollback && item.id != ctx.applying &&
+        index(keep || [], item.id) < 0 && !guard_needs(item, ctx);
+}
 // Retention (D-14, UC-022). Nothing removes a manual snapshot, and create
-// refuses one more beyond MANUAL_LIMIT, so RESERVED places stay for the
+// refuses one more beyond manual_limit(), so RESERVED places stay for the
 // automatic safety snapshots: before a restore, before Save & Apply or a
 // reload, before an autotune apply, the last-known-working one and a
 // concurrent edit. Only automatic snapshots rotate, oldest first and among
-// themselves; never the last-known-working one, nor the before-autotune one
-// that the recorded autotune apply may still roll back to (an automatic
-// snapshot taken during its verification, or after it applied, would
-// otherwise push it out next to many manual ones), nor one that the running
-// operation still needs (keep), nor the one that Save & Apply took before
-// LuCI applied its change, until the reload of that change has taken its own
-// snapshot: the reload's snapshot comes right after the commit and would
-// otherwise take the restore point of the change it applies, and the list
-// of the change that the page shows once the reload has run (configform.js).
-// The store holds RETENTION snapshots, or manual + RESERVED while more
-// manual ones are left from before the limit.
+// themselves, and only those that removable() allows.
+// The store holds retention_limit() snapshots, or manual + RESERVED while
+// more manual ones are left from before the limit (an upgrade, or a limit
+// the user lowered).
+// room: the store makes room for one more snapshot (create); without it, it
+// only shrinks to its size (a lowered limit).
 // automatic: a safety snapshot is never refused for room. When nothing but
 // manual, protected and kept snapshots is left, it is taken beyond that
 // size; the next automatic snapshot replaces it, and once the protected ones
 // rotate again the store returns to its size.
-function trim_retention(keep, automatic) {
+// The number of snapshots removed, or -1 when room could not be made.
+function trim_retention(keep, automatic, room) {
     let all = list_snapshots();
-    let working = trim(value(fs.readfile(LKG)));
-    let rollback = autotune_rollback_snapshot();
-    let applying = trim(value(fs.readfile(APPLY_SNAPSHOT)));
-    let limit = max(RETENTION, manual_count(all) + RESERVED);
-    while (length(all) >= limit) {
+    let ctx = {};
+    let limit = max(retention_limit(), manual_count(all) + RESERVED);
+    let removed = 0;
+    if (room == null) room = true;
+    while (room ? length(all) >= limit : length(all) > limit) {
         let candidate = null;
         for (let item in all)
-            if (item.kind != "manual" && item.id != working && item.id != rollback && item.id != applying &&
-                index(keep || [], item.id) < 0) { candidate = item; break; }
-        if (candidate == null || !fs.unlink(snapshot_path(candidate.id))) return automatic;
+            if (removable(item, keep, ctx)) { candidate = item; break; }
+        if (candidate == null || !fs.unlink(snapshot_path(candidate.id))) return automatic || !room ? removed : -1;
+        removed++;
         all = list_snapshots();
     }
-    return true;
+    return removed;
+}
+// "Clear" on the History page: every automatic snapshot that retention may
+// remove goes (removable), oldest first. Manual snapshots stay, so do the
+// protected ones; the answer says how many went and how many were kept.
+function clear_snapshots() {
+    let ctx = {}, removed = 0, kept = 0, manual = 0, failed = 0;
+    for (let item in list_snapshots()) {
+        if (item.kind == "manual") manual++;
+        else if (!removable(item, [], ctx)) kept++;
+        else if (fs.unlink(snapshot_path(item.id))) removed++;
+        else failed++;
+    }
+    let answer = { status: failed ? "failed" : "cleared", removed, kept, manual };
+    if (failed) answer.reason = "delete_failed";
+    return answer;
 }
 // dedupe: true returns any snapshot that already holds the configuration, a
 // reason only one of that reason. A new snapshot records the release that
@@ -353,9 +413,9 @@ function create(kind, reason, dedupe, keep, content) {
     // another manual one: the user deletes one first, or more while more are
     // left from before the limit (the page says how many).
     let manual = kind == "manual" ? manual_count(list_snapshots()) : 0;
-    if (manual >= MANUAL_LIMIT)
-        return { status: "failed", reason: "manual_limit_reached", limit: MANUAL_LIMIT, manual };
-    if (!trim_retention(keep, kind != "manual")) return { status: "failed", reason: "retention_full" };
+    if (kind == "manual" && manual >= manual_limit())
+        return { status: "failed", reason: "manual_limit_reached", limit: manual_limit(), manual };
+    if (trim_retention(keep, kind != "manual") < 0) return { status: "failed", reason: "retention_full" };
     let id = sprintf("%d_%d", clock()[0], clock()[1]);
     let snapshot = { id, created_at: int(clock()[0]), kind, reason,
         config_hash: hash, prokop_version: prokop_version(), schema: settings_schema(content), content };
@@ -494,18 +554,6 @@ function diff(before, after) {
     }
     if (total > DIFF_ROWS) push(result, { truncated: true, total });
     return result;
-}
-// Install uses ensure semantics: after needs_attention the guard from the
-// failed restore is still active and must protect the recovery restore too.
-// It is removed only after a reload proved a coherent runtime.
-function restore_guard(remove) {
-    return success([ "ucode", "-L", LIB_DIR, LIB_DIR + "/nft/apply.uc",
-        remove ? "remove-dpi-transition-guard" : "ensure-dpi-transition-guard", "ProkopConfigRestore" ]);
-}
-// "absent", "valid" or "invalid"; empty when the state is unknown.
-function restore_guard_state() {
-    return trim(capture([ "ucode", "-L", LIB_DIR, LIB_DIR + "/nft/apply.uc",
-        "dpi-transition-guard-state", "ProkopConfigRestore" ]));
 }
 // A lifecycle action (subscription update, WAN-up reload, start, a
 // pending-reload drain) owns the reload lock, and a running list update gets
@@ -1199,7 +1247,7 @@ if (mode == "list") {
     let live = settings_schema(read_config()), current = null;
     let working = trim(value(fs.readfile(LKG)));
     for (let item in result) {
-        let reason = protected_reason(item.id, working);
+        let reason = protected_reason(item.id, working, item.reason);
         if (reason != null) item.protected_reason = reason;
         if (schema_behind(item.schema, live)) {
             if (current == null) current = prokop_version();
@@ -1222,7 +1270,7 @@ if (mode == "fixture-diff") {
     print(sprintf("%J\n", diff(value(fs.readfile(ARGV[1])), value(fs.readfile(ARGV[2])))));
     exit(0);
 }
-if (index([ "create", "delete", "restore", "apply", "confirm-working" ], mode) < 0) exit(1);
+if (index(OPERATIONS, mode) < 0) exit(1);
 if (!acquire()) {
     print(sprintf("%J\n", lock_busy ?
         { status: "busy", reason: "snapshot_operation_in_progress" } :
@@ -1258,9 +1306,9 @@ else if (mode == "delete") {
     // is never deleted.
     let id = value(ARGV[1]);
     if (!valid_id(id)) answer = { status: "failed", reason: "invalid_input" };
-    else if (protected_reason(id, trim(value(fs.readfile(LKG)))) != null)
-        answer = { status: "failed", reason: protected_reason(id, trim(value(fs.readfile(LKG)))) };
     else if (read_snapshot(id, true) == null) answer = { status: "failed", reason: "invalid_snapshot" };
+    else if (protected_reason(id, trim(value(fs.readfile(LKG))), metadata(read_snapshot(id, false)).reason) != null)
+        answer = { status: "failed", reason: protected_reason(id, trim(value(fs.readfile(LKG))), metadata(read_snapshot(id, false)).reason) };
     else if (!fs.unlink(snapshot_path(id))) answer = { status: "failed", reason: "delete_failed" };
     else {
         answer = { status: "deleted" };
@@ -1296,6 +1344,40 @@ else if (mode == "apply") {
     // outcome is known only after its production verification. The manager
     // records the apply once, with that outcome (UC-060).
     answer = do_apply(ARGV[1], ARGV[2], ARGV[3]);
+}
+else if (mode == "clear") {
+    // "Clear" on the History page (clear_snapshots): a history event when
+    // anything went.
+    answer = clear_snapshots();
+    if (answer.removed > 0)
+        success([ "ucode", "-L", LIB_DIR, LIB_DIR + "/diagnostics/health.uc", "record", "snapshot_clear",
+            answer.status == "cleared" ? "success" : "failure" ]);
+}
+else if (mode == "retention") {
+    // The limits of the History page (config/retention.uc): the history
+    // journal and the snapshot store shrink to them at once. A lowered
+    // snapshot limit removes only what retention may remove (removable):
+    // manual and protected snapshots stay, and the store holds more until
+    // they go. Under the snapshot lock, so no other snapshot operation runs
+    // meanwhile.
+    let history = retention.parse(ARGV[1], retention.HISTORY);
+    let snapshots = retention.parse(ARGV[2], retention.SNAPSHOTS);
+    if (history == null || snapshots == null)
+        answer = { status: "failed", reason: "invalid_input",
+            history: retention.HISTORY, snapshots: retention.SNAPSHOTS };
+    else if (!retention.save(history, snapshots))
+        answer = { status: "failed", reason: "write_failed" };
+    else {
+        let journal = {};
+        try {
+            journal = json(capture([ "ucode", "-L", LIB_DIR, LIB_DIR + "/diagnostics/health.uc", "prune" ]));
+        }
+        catch (e) {}
+        answer = { status: "saved", history_limit: history, snapshot_limit: snapshots,
+            removed_snapshots: trim_retention([], true, false),
+            removed_events: type(journal) == "object" && type(journal.removed) == "int" ? journal.removed : 0 };
+        if (type(journal) != "object" || journal.status != "pruned") answer.history_pruned = false;
+    }
 }
 else if (mode == "confirm-working") {
     // A start or reload of the lifecycle; "autotune": the apply that has

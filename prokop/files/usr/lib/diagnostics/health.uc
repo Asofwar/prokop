@@ -14,9 +14,12 @@ const UI_STATE_FILE = (getenv("PROKOP_UI_STATE_DIR") || "/var/run/prokop/ui-stat
 const UI_STATE_MAX_AGE = 3;
 // Significant events survive reboots in a small journal on flash. Only
 // recorded events land there (starts, reloads, restores, autotune applies,
-// manual snapshot changes), never probes or measurements. When the journal
-// outgrows its cap it is rewritten once to the newest HISTORY_KEEP records,
-// flushed to flash before and after the rename (UC-025).
+// manual snapshot changes), never probes or measurements. It keeps the
+// newest records up to the limit the user sets on the History page
+// (config/retention.uc): the history shows that many, and once the journal
+// outgrows it by history_slack() records, or HISTORY_MAX_BYTES, it is
+// rewritten once to the newest ones, flushed to flash before and after the
+// rename (UC-025), so appends stay cheap.
 const HISTORY_FILE = getenv("PROKOP_HISTORY_FILE") || "/etc/prokop/history.jsonl";
 // Serializes the records of concurrent writers (UC-073): a rotation reads the
 // journal and replaces it, an append between the two would be lost. An
@@ -26,9 +29,9 @@ const HISTORY_LOCK = RUNTIME_DIR + "/history.lock";
 // and start, reload and autotune record their events synchronously: a
 // record waits this long, then goes without the lock.
 const HISTORY_LOCK_WAIT_MS = int(getenv("PROKOP_HISTORY_LOCK_WAIT_MS") || "5000");
-const HISTORY_MAX = 200;
 const HISTORY_MAX_BYTES = 65536;
-const HISTORY_KEEP = 150;
+function history_limit() { return require("config.retention").limits().history; }
+function history_slack(limit) { return max(10, int(limit / 4)); }
 // An autotune apply and its rollback have kinds of their own, never restore
 // (UC-060, design H.6); autotune_observation: an automatic apply passed the
 // observation after it (success), or it ended without a verdict (failure,
@@ -36,10 +39,12 @@ const HISTORY_KEEP = 150;
 // update the scheduled jobs and went on without them. config_migration: a
 // package upgrade migrated the configuration and changed what it does in a
 // way the user should know about; its notices say how
-// (config/migration.uc).
+// (config/migration.uc). snapshot_clear: "Clear" removed the automatic
+// snapshots that nothing protects (config/snapshots.uc clear);
+// history_clear: the journal was cleared, the one record it then holds.
 const EVENT_KINDS = [ "start", "reload", "restore", "autotune_apply", "autotune_rollback", "snapshot_create",
     "snapshot_delete", "autotune_mode", "autotune_recommendation", "autotune_run", "cron_refresh",
-    "config_migration", "autotune_observation" ];
+    "config_migration", "autotune_observation", "snapshot_clear", "history_clear" ];
 // The notices of a config_migration event, in the shape the History page
 // reads: a known code, a UCI section name, ids of rule sets or options.
 // Anything else is dropped; an event keeps at most MIGRATION_NOTICES_MAX of
@@ -165,7 +170,24 @@ function history_events(all) {
         if (valid_event(event))
             push(result, event_view(event));
     }
-    return !all && length(result) > HISTORY_MAX ? slice(result, length(result) - HISTORY_MAX) : result;
+    let limit = history_limit();
+    return !all && length(result) > limit ? slice(result, length(result) - limit) : result;
+}
+
+// The newest `limit` of `events` as journal lines, and fewer while they
+// would not fit HISTORY_MAX_BYTES with room for the next appends.
+function history_lines(events, limit) {
+    let kept = slice(events, max(0, length(events) - limit));
+    let lines = map(kept, (item) => sprintf("%J\n", item));
+    let size = 0;
+    for (let line in lines) size += length(line);
+    while (length(lines) > 1 && size > HISTORY_MAX_BYTES * 3 / 4)
+        size -= length(shift(lines));
+    return join("", lines);
+}
+
+function history_rewrite(lines) {
+    return durable.durable_replace(sprintf("%s.%d.tmp", HISTORY_FILE, clock()[1]), HISTORY_FILE, lines);
 }
 
 // The journal ends in the middle of a line: an append that a power cut or a
@@ -197,12 +219,10 @@ function append_history(event, rotate) {
         return true;
     let stat = fs.stat(HISTORY_FILE);
     let events = history_events(true) || [];
-    if ((stat != null && stat.size <= HISTORY_MAX_BYTES) && length(events) <= HISTORY_MAX)
+    let limit = history_limit();
+    if ((stat != null && stat.size <= HISTORY_MAX_BYTES) && length(events) <= limit + history_slack(limit))
         return true;
-    let lines = "";
-    for (let item in slice(events, max(0, length(events) - HISTORY_KEEP)))
-        lines += sprintf("%J\n", item);
-    return durable.durable_replace(sprintf("%s.%d.tmp", HISTORY_FILE, clock()[1]), HISTORY_FILE, lines);
+    return history_rewrite(history_lines(events, limit));
 }
 
 function event_state() {
@@ -234,6 +254,30 @@ function notify_event(event) {
     catch (e) {}
 }
 
+// HISTORY_LOCK, held: the open file; null when it cannot be opened (an
+// unwritable runtime directory); false when another writer held it for
+// HISTORY_LOCK_WAIT_MS.
+function history_lock() {
+    let lock = fs.open(HISTORY_LOCK, "ae");
+    for (let waited = 0; lock != null; waited += 50) {
+        if (lock.lock("xn"))
+            return lock;
+        if (waited >= HISTORY_LOCK_WAIT_MS) {
+            lock.close();
+            return false;
+        }
+        sleep(50);
+    }
+    return null;
+}
+
+function history_unlock(lock) {
+    if (lock) {
+        lock.lock("u");
+        lock.close();
+    }
+}
+
 // details: the extra fields of the kind, as JSON text (config_migration:
 // { "notices": [ ... ] }).
 function record_event(kind, status, trigger, candidate, details) {
@@ -251,18 +295,9 @@ function record_event(kind, status, trigger, candidate, details) {
     // Without the lock (an unwritable runtime directory) as before. A lock
     // held longer than HISTORY_LOCK_WAIT_MS: the event is recorded without
     // it, but the journal is not rotated under its holder.
-    let lock = fs.open(HISTORY_LOCK, "ae");
-    let rotate = lock == null;
-    for (let waited = 0; lock != null && !rotate; waited += 50) {
-        if (lock.lock("xn"))
-            rotate = true;
-        else if (waited >= HISTORY_LOCK_WAIT_MS) {
-            lock.close();
-            lock = null;
-        }
-        else
-            sleep(50);
-    }
+    let lock = history_lock();
+    let rotate = lock !== false;
+    if (lock === false) lock = null;
     // The journal is best effort: a full or read-only flash must not stop
     // health from recording the event.
     append_history(event, rotate);
@@ -277,10 +312,7 @@ function record_event(kind, status, trigger, candidate, details) {
         fs.unlink(path);
         result = 1;
     }
-    if (lock) {
-        lock.lock("u");
-        lock.close();
-    }
+    history_unlock(lock);
     notify_event(event);
     return result;
 }
@@ -336,9 +368,10 @@ function health(ui, guards, package_pending, events, reload_busy, bridge) {
     // config_migration event changes nothing in the runtime: a package
     // upgrade that does not start Prokop again (stopped by the user) leaves
     // it last, and a failed change before it still counts.
+    // Clearing snapshots or the journal changes no configuration either.
     let last = null;
     for (let i = length(events) - 1; i >= 0 && last == null; i--)
-        if (events[i].kind != "cron_refresh" && events[i].kind != "config_migration")
+        if (index([ "cron_refresh", "config_migration", "snapshot_clear", "history_clear" ], events[i].kind) < 0)
             last = events[i];
     let last_reload = null;
     for (let i = length(events) - 1; i >= 0; i--)
@@ -398,12 +431,52 @@ let mode = ARGV[0] || "";
 if (mode == "record")
     exit(record_event(as_string(ARGV[1]), as_string(ARGV[2]), as_string(ARGV[3]), as_string(ARGV[4]),
         as_string(ARGV[5])));
+// retention: what the History page shows next to the lists, the limits
+// the user set (config/retention.uc) and how many manual snapshots fit.
 if (mode == "history") {
     let events = history_events();
-    print(sprintf("%J\n", events == null ?
+    let retention = require("config.retention");
+    let limits = retention.limits();
+    let result = events == null ?
         { persistent: false, events: event_state() } :
-        { persistent: true, events }));
+        { persistent: true, events };
+    result.retention = { history_limit: limits.history, snapshot_limit: limits.snapshots,
+        manual_snapshot_limit: limits.snapshots - retention.RESERVED };
+    print(sprintf("%J\n", result));
     exit(0);
+}
+// "Clear" on the History page: the journal keeps one record, that it was
+// cleared. The runtime events stay: health still sees a failed change and
+// asks for recovery (recovery.pending), whatever the journal holds. Only
+// under the lock, never over another writer's rotation.
+// prune: the journal shrinks to the limit at once (a lowered limit,
+// config/snapshots.uc retention). Both print { status, removed }.
+if (mode == "clear" || mode == "prune") {
+    fs.mkdir(RUNTIME_DIR, 0700);
+    let lock = history_lock();
+    if (!lock) {
+        print(sprintf("%J\n", { status: lock === false ? "busy" : "failed", reason: "history_lock_unavailable" }));
+        exit(1);
+    }
+    let events = history_events(true);
+    let removed = 0, written = true;
+    if (mode == "clear") {
+        removed = length(events ?? []);
+        let dir = replace(HISTORY_FILE, /\/[^\/]*$/, "");
+        if (dir != "" && fs.stat(dir) == null)
+            fs.mkdir(dir, 0755);
+        written = history_rewrite(sprintf("%J\n", event_view({ kind: "history_clear", status: "success",
+            timestamp: int(clock()[0]) })));
+    }
+    else if (events != null && length(events) > history_limit()) {
+        let lines = history_lines(events, history_limit());
+        removed = length(events) - length(filter(split(lines, "\n"), (line) => line != ""));
+        written = history_rewrite(lines);
+    }
+    history_unlock(lock);
+    print(sprintf("%J\n", written ? { status: mode == "clear" ? "cleared" : "pruned", removed } :
+        { status: "failed", reason: "write_failed" }));
+    exit(written ? 0 : 1);
 }
 if (mode == "fixture") {
     let input = read_object(ARGV[1]);

@@ -41,18 +41,23 @@ JS
 # The runtime events (health) see the same kinds.
 ucode -L "$ROOT/prokop/files/usr/lib" "$HEALTH" get > "$TEST_DIR/health.json" 2>/dev/null || true
 
-# Cap: the journal is rewritten only when it outgrows 200 records and then
-# keeps the newest 150, so appends stay cheap.
+# Cap (config/retention.uc, default 50 records): the history shows the
+# newest 50, and the journal is rewritten only when it outgrows them by a
+# quarter (12 records here), then keeps the newest 50, so appends stay cheap.
 i=0
-while [ "$i" -lt 197 ]; do
+while [ "$i" -lt 58 ]; do
   printf '{"kind":"reload","status":"success","timestamp":%d}\n' "$i" >> "$PROKOP_HISTORY_FILE"
   i=$((i + 1))
 done
 ucode -L "$ROOT/prokop/files/usr/lib" "$HEALTH" record reload success
-[ "$(wc -l < "$PROKOP_HISTORY_FILE")" -eq 201 ] && fail "journal over the cap must be trimmed"
-[ "$(wc -l < "$PROKOP_HISTORY_FILE")" -eq 150 ] || fail "trimmed journal must keep the newest 150 records"
+[ "$(wc -l < "$PROKOP_HISTORY_FILE")" -eq 62 ] || fail "journal within the slack must only be appended to"
+ucode -L "$ROOT/prokop/files/usr/lib" "$HEALTH" history > "$TEST_DIR/capped.json"
+node -e 'const v=JSON.parse(require("fs").readFileSync(process.argv[1]));if(v.events.length!==50||v.events[0].timestamp!==9||v.retention.history_limit!==50||v.retention.snapshot_limit!==20||v.retention.manual_snapshot_limit!==18)process.exit(1)' "$TEST_DIR/capped.json" ||
+  fail "history must show the newest 50 records and the limits: $(cat "$TEST_DIR/capped.json")"
+ucode -L "$ROOT/prokop/files/usr/lib" "$HEALTH" record reload success
+[ "$(wc -l < "$PROKOP_HISTORY_FILE")" -eq 50 ] || fail "trimmed journal must keep the newest 50 records"
 ucode -L "$ROOT/prokop/files/usr/lib" "$HEALTH" record restore success
-[ "$(wc -l < "$PROKOP_HISTORY_FILE")" -eq 151 ] || fail "journal under the cap must only be appended to"
+[ "$(wc -l < "$PROKOP_HISTORY_FILE")" -eq 51 ] || fail "journal under the cap must only be appended to"
 tail -n 1 "$PROKOP_HISTORY_FILE" | grep -q '"kind": *"restore"' || fail "newest event must be last"
 
 # Corrupt lines are skipped, not fatal.

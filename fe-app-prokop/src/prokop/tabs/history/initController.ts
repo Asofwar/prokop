@@ -18,19 +18,29 @@ import {
   renderLoadingState,
 } from '../../ui/states';
 import {
+  clearHistoryToast,
+  clearSnapshotsToast,
   createSnapshotToast,
+  DEFAULT_RETENTION,
   deleteSnapshotToast,
   diffRows,
   diffTruncatedText,
   historyFilterLabel,
   historyItems,
+  HISTORY_PAGE_SIZE,
+  parseRetentionInput,
   recoveryRows,
+  removableSnapshots,
+  RETENTION_BOUNDS,
+  retentionConsequences,
+  retentionToast,
   restoreConfirmMessage,
   restoreMigrationNote,
   restorePreview,
   restoreResultToast,
   snapshotDiff,
   snapshotRows,
+  SNAPSHOTS_COLLAPSED,
   unsavedChangesBlockRestore,
   unsavedChangesText,
   type HistoryFilter,
@@ -53,6 +63,14 @@ let historyFailed = false;
 let snapshots: Prokop.SnapshotMetadata[] | null = null;
 let snapshotsFailed = false;
 let snapshotBusy = false;
+// How many history records the list shows; whether the snapshot list shows
+// all of them. Both keep the page short.
+let historyShown = HISTORY_PAGE_SIZE;
+let snapshotsExpanded = false;
+// The Retention card's fields while the user edits them, so a refresh does
+// not overwrite what is typed.
+let retentionDraft: { history: string; snapshots: string } | null = null;
+let retentionError = '';
 
 async function loadAll() {
   const id = mountId;
@@ -126,12 +144,38 @@ function renderHistory() {
           'aria-pressed': item === filter ? 'true' : 'false',
           click: () => {
             filter = item;
+            historyShown = HISTORY_PAGE_SIZE;
             renderHistory();
           },
         },
         asText(historyFilterLabel(item)),
       ),
     ),
+  );
+
+  const readonly = isReadonlyMode();
+  replace(
+    'history-actions',
+    ...(readonly
+      ? []
+      : [
+          E(
+            'button',
+            {
+              type: 'button',
+              class: 'btn cbi-button',
+              disabled:
+                snapshotBusy || !history?.persistent || !history.events.length
+                  ? true
+                  : undefined,
+              title: history?.persistent
+                ? undefined
+                : _('History is kept in memory until the router restarts.'),
+              click: () => void clearHistory(),
+            },
+            _('Clear…'),
+          ),
+        ]),
   );
 
   if (historyFailed || !history) {
@@ -145,6 +189,7 @@ function renderHistory() {
   }
 
   const items = historyItems(history.events, filter);
+  const visible = items.slice(0, historyShown);
   const notes = history.persistent
     ? []
     : [
@@ -162,7 +207,7 @@ function renderHistory() {
       ? E(
           'ul',
           { class: 'fkp-history__list' },
-          items.map((item) =>
+          visible.map((item) =>
             E('li', { class: 'fkp-history__event' }, [
               E(
                 'span',
@@ -188,6 +233,31 @@ function renderHistory() {
             ? _('No events recorded yet')
             : _('No events of this kind'),
         ),
+    ...(items.length > visible.length
+      ? [
+          E('div', { class: 'fkp-history__more' }, [
+            E(
+              'span',
+              { class: 'fkp-history__hint' },
+              _('Shown %d of %d')
+                .replace('%d', String(visible.length))
+                .replace('%d', String(items.length)),
+            ),
+            E(
+              'button',
+              {
+                type: 'button',
+                class: 'btn cbi-button',
+                click: () => {
+                  historyShown += HISTORY_PAGE_SIZE;
+                  renderHistory();
+                },
+              },
+              _('Show more'),
+            ),
+          ]),
+        ]
+      : []),
   );
 }
 
@@ -253,6 +323,8 @@ async function runSnapshotAction(action: () => Promise<void>) {
   if (snapshotBusy) return;
   snapshotBusy = true;
   renderSnapshots();
+  renderHistory();
+  renderRetention(true);
   try {
     await action();
   } catch (error) {
@@ -326,6 +398,232 @@ async function deleteSnapshot(id: string, label: string) {
   });
 }
 
+async function clearSnapshots() {
+  const removable = removableSnapshots(snapshots ?? []).length;
+  const confirmed = await confirmAction({
+    title: _('Delete automatic snapshots?'),
+    message: _(
+      'Automatic snapshots that nothing protects are deleted: %d now.',
+    ).replace('%d', String(removable)),
+    consequences: [
+      _('Manual snapshots are kept.'),
+      _(
+        'The last known good snapshot, the one an autotune change can still roll back to, the one of an unapplied change and those an unfinished restore needs are kept.',
+      ),
+    ],
+    confirmLabel: _('Delete'),
+    danger: true,
+  });
+  if (!confirmed) return;
+
+  await runSnapshotAction(async () => {
+    const result = await ProkopShellMethods.snapshotClear();
+    const toast = clearSnapshotsToast(result.success ? result.data : undefined);
+    showToast(toast.text, toast.type, toast.duration);
+  });
+}
+
+async function clearHistory() {
+  const confirmed = await confirmAction({
+    title: _('Clear history?'),
+    message: _(
+      'All history records are deleted; the history then shows one record, that it was cleared.',
+    ),
+    consequences: [
+      _(
+        'Snapshots and the recovery state are not changed: a failed change still asks for recovery.',
+      ),
+    ],
+    confirmLabel: _('Clear'),
+    danger: true,
+  });
+  if (!confirmed) return;
+
+  await runSnapshotAction(async () => {
+    const result = await ProkopShellMethods.historyClear();
+    const toast = clearHistoryToast(result.success ? result.data : undefined);
+    showToast(toast.text, toast.type, toast.duration);
+  });
+}
+
+function currentRetention(): Prokop.HistoryRetention {
+  return history?.retention ?? DEFAULT_RETENTION;
+}
+
+async function saveRetention() {
+  const draft = retentionDraft;
+  if (!draft) return;
+  const input = parseRetentionInput(draft.history, draft.snapshots);
+  if (!input.ok) {
+    retentionError = input.message;
+    renderRetention(true);
+    return;
+  }
+  retentionError = '';
+  const consequences = retentionConsequences(
+    input,
+    currentRetention(),
+    snapshots,
+    history?.events.length ?? 0,
+  );
+  if (consequences.length) {
+    const confirmed = await confirmAction({
+      title: _('Lower the retention limits?'),
+      message: _('The new limits apply at once.'),
+      consequences,
+      confirmLabel: _('Save'),
+      danger: true,
+    });
+    if (!confirmed) return;
+  }
+
+  await runSnapshotAction(async () => {
+    const result = await ProkopShellMethods.historyRetentionSet(
+      input.history,
+      input.snapshots,
+    );
+    const data = result.success ? result.data : undefined;
+    if (data?.status === 'saved') retentionDraft = null;
+    const toast = retentionToast(data);
+    showToast(toast.text, toast.type, toast.duration);
+  });
+}
+
+// force: also while one of its fields has focus (a refresh leaves a field
+// the user is typing in alone).
+function renderRetention(force = false) {
+  const container = document.getElementById('history-retention');
+  if (
+    !force &&
+    container &&
+    container.contains(document.activeElement) &&
+    document.activeElement?.tagName === 'INPUT'
+  )
+    return;
+
+  if (historyFailed || !history) {
+    replace(
+      'history-retention',
+      historyFailed
+        ? renderErrorState(_('History is unavailable'), () => void loadAll())
+        : renderLoadingState(),
+    );
+    return;
+  }
+
+  const limits = currentRetention();
+  const manual = snapshots?.filter((s) => s.kind === 'manual').length;
+  const usage = E('dl', { class: 'fkp-history__facts' }, [
+    E('dt', {}, _('History records')),
+    E(
+      'dd',
+      {},
+      _('%d of %d')
+        .replace('%d', String(history.events.length))
+        .replace('%d', String(limits.history_limit)),
+    ),
+    E('dt', {}, _('Snapshots')),
+    E(
+      'dd',
+      {},
+      snapshots
+        ? _('%d of %d, manual %d of %d')
+            .replace('%d', String(snapshots.length))
+            .replace('%d', String(limits.snapshot_limit))
+            .replace('%d', String(manual))
+            .replace('%d', String(limits.manual_snapshot_limit))
+        : _('Unknown'),
+    ),
+  ]);
+
+  if (isReadonlyMode()) {
+    replace('history-retention', usage);
+    return;
+  }
+
+  const draft = retentionDraft ?? {
+    history: String(limits.history_limit),
+    snapshots: String(limits.snapshot_limit),
+  };
+  const field = (
+    id: string,
+    label: string,
+    value: string,
+    bounds: { min: number; max: number },
+    onInput: (value: string) => void,
+  ) => {
+    const input = E('input', {
+      id,
+      class: 'cbi-input-text',
+      type: 'number',
+      min: String(bounds.min),
+      max: String(bounds.max),
+      step: '1',
+      value,
+    }) as HTMLInputElement;
+    input.oninput = () => onInput(input.value);
+    return E('label', { class: 'fkp-history__field' }, [
+      E('span', {}, asText(label)),
+      input,
+    ]);
+  };
+  const update = (patch: Partial<{ history: string; snapshots: string }>) => {
+    retentionDraft = { ...draft, ...retentionDraft, ...patch };
+    retentionError = '';
+  };
+
+  replace(
+    'history-retention',
+    usage,
+    E('div', { class: 'fkp-history__retention' }, [
+      field(
+        'history-retention-history',
+        _('Keep history records'),
+        draft.history,
+        RETENTION_BOUNDS.history,
+        (value) => update({ history: value }),
+      ),
+      field(
+        'history-retention-snapshots',
+        _('Keep snapshots'),
+        draft.snapshots,
+        RETENTION_BOUNDS.snapshots,
+        (value) => update({ snapshots: value }),
+      ),
+      E(
+        'button',
+        {
+          type: 'button',
+          class: 'btn cbi-button cbi-button-save',
+          disabled: snapshotBusy ? true : undefined,
+          click: () => void saveRetention(),
+        },
+        _('Save'),
+      ),
+    ]),
+    E(
+      'p',
+      { class: 'fkp-history__hint' },
+      _(
+        'History: %d to %d records. Snapshots: %d to %d, two places of them stay for the automatic snapshots taken before a restore, Save & Apply or autotune. Older records and automatic snapshots beyond the limits are deleted automatically; manual and protected snapshots are never deleted automatically.',
+      )
+        .replace('%d', String(RETENTION_BOUNDS.history.min))
+        .replace('%d', String(RETENTION_BOUNDS.history.max))
+        .replace('%d', String(RETENTION_BOUNDS.snapshots.min))
+        .replace('%d', String(RETENTION_BOUNDS.snapshots.max)),
+    ),
+    ...(retentionError
+      ? [
+          E(
+            'p',
+            { class: 'fkp-history__error', role: 'alert' },
+            asText(retentionError),
+          ),
+        ]
+      : []),
+  );
+}
+
 async function createSnapshot() {
   await runSnapshotAction(async () => {
     const result = await ProkopShellMethods.snapshotCreate('manual');
@@ -351,6 +649,24 @@ function renderSnapshots() {
             },
             _('Create snapshot'),
           ),
+          E(
+            'button',
+            {
+              type: 'button',
+              class: 'btn cbi-button',
+              disabled:
+                snapshotBusy || !removableSnapshots(snapshots ?? []).length
+                  ? true
+                  : undefined,
+              title: removableSnapshots(snapshots ?? []).length
+                ? undefined
+                : _(
+                    'Nothing to delete: only manual and protected snapshots are left.',
+                  ),
+              click: () => void clearSnapshots(),
+            },
+            _('Clear…'),
+          ),
         ]),
   );
 
@@ -368,13 +684,16 @@ function renderSnapshots() {
   }
 
   const rows = snapshotRows(snapshots);
+  const shownRows = snapshotsExpanded
+    ? rows
+    : rows.slice(0, SNAPSHOTS_COLLAPSED);
   replace(
     'history-snapshots',
     rows.length
       ? E(
           'ul',
           { class: 'fkp-history__list' },
-          rows.map((row) => {
+          shownRows.map((row) => {
             const label = row.reason ? `${row.time} · ${row.reason}` : row.time;
             return E('li', { class: 'fkp-history__snapshot' }, [
               E('span', { class: 'fkp-history__what' }, [
@@ -425,6 +744,31 @@ function renderSnapshots() {
           }),
         )
       : renderEmptyState(_('No snapshots yet')),
+    ...(rows.length > SNAPSHOTS_COLLAPSED
+      ? [
+          E('div', { class: 'fkp-history__more' }, [
+            E(
+              'span',
+              { class: 'fkp-history__hint' },
+              _('Shown %d of %d')
+                .replace('%d', String(shownRows.length))
+                .replace('%d', String(rows.length)),
+            ),
+            E(
+              'button',
+              {
+                type: 'button',
+                class: 'btn cbi-button',
+                click: () => {
+                  snapshotsExpanded = !snapshotsExpanded;
+                  renderSnapshots();
+                },
+              },
+              snapshotsExpanded ? _('Show fewer') : _('Show all'),
+            ),
+          ]),
+        ]
+      : []),
   );
 }
 
@@ -432,12 +776,17 @@ function renderAll() {
   renderState();
   renderHistory();
   renderSnapshots();
+  renderRetention();
 }
 
 function onPageMount() {
   onPageUnmount();
   mounted = true;
   mountId += 1;
+  historyShown = HISTORY_PAGE_SIZE;
+  snapshotsExpanded = false;
+  retentionDraft = null;
+  retentionError = '';
   renderAll();
   void loadAll();
   refreshTimer = setInterval(() => {

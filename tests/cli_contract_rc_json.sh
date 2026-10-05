@@ -109,6 +109,9 @@ config_snapshot_list           | json          | run
 config_snapshot_diff           | json          | run: no output and rc 1 for a missing snapshot
 config_snapshot_restore        | json-status:success,recovered,restored_not_started | covered: config_snapshots, config_restore_guard
 config_snapshot_delete         | json-status:deleted | run
+config_snapshot_clear          | json-status:cleared | run; covered: history_retention
+history_clear                  | json-status:cleared | run; covered: history_retention
+history_retention_set          | json-status:saved | run; covered: history_retention
 connectivity_test              | json-error    | run: {error: invalid_input} rc 1
 get_readonly_config_sections   | json          | run
 get_dashboard_runtime_metadata | json          | run
@@ -229,6 +232,7 @@ export PROKOP_SNAPSHOT_DIR="${WORK:?}/snapshots"
 export PROKOP_SNAPSHOT_HASH_DIR="${WORK:?}/run/snapshot-hash"
 export PROKOP_SNAPSHOT_LOCK_DIR="${WORK:?}/run/config-snapshot.lock"
 export PROKOP_HISTORY_FILE="${WORK:?}/history.jsonl"
+export PROKOP_RETENTION_FILE="${WORK:?}/retention.json"
 export PROKOP_OPKG_RECOVERY_DIR="${WORK:?}/opkg-recovery"
 export PROKOP_AUTOTUNE_APPLY_STATE="${WORK:?}/autotune-apply.json"
 export PROKOP_AUTOTUNE_STATE_DIR="${WORK:?}/run/autotune"
@@ -444,6 +448,10 @@ printf '%s\n' "$snapshot" >"$PROKOP_SNAPSHOT_DIR/last-known-working"
 expect config_snapshot_delete 1 lkg_protected -- "$snapshot"
 rm -f "$PROKOP_SNAPSHOT_DIR/last-known-working"
 expect config_snapshot_delete 0 "" -- "$snapshot"
+expect config_snapshot_clear 0 "" --
+expect history_retention_set 1 invalid_input -- 5 20
+expect history_retention_set 0 "" -- 50 20
+expect history_clear 0 "" --
 
 # --- Read views, validators and inputs ----------------------------------------------------------
 expect show_version 0 "" --

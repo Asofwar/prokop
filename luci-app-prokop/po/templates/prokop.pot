@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-05 12:59+0000\n"
-"PO-Revision-Date: 2026-10-05 12:59+0000\n"
+"POT-Creation-Date: 2026-10-05 18:29+0300\n"
+"PO-Revision-Date: 2026-10-05 18:29+0300\n"
 "Last-Translator: Asofwar <7397608+Asofwar@users.noreply.github.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -23,6 +23,10 @@ msgstr ""
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3345
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:308
 msgid "-- Select --"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:152
+msgid "{count} addresses of excluded devices cannot be read; those devices stay blocked through DNS while Prokop is stopped"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:255
@@ -94,12 +98,24 @@ msgstr ""
 msgid "%d node groups"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:463
-msgid "%d of %d checks passed"
+#: src/prokop/tabs/history/initController.ts:521
+msgid "%d of %d"
 msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:479
 msgid "%d of %d checks failed"
+msgstr ""
+
+#: src/prokop/tabs/autotune/model.ts:463
+msgid "%d of %d checks passed"
+msgstr ""
+
+#: src/prokop/tabs/history/initController.ts:530
+msgid "%d of %d, manual %d of %d"
+msgstr ""
+
+#: src/prokop/tabs/history/model.ts:960
+msgid "%d oldest automatic snapshots are deleted."
 msgstr ""
 
 #: src/prokop/tabs/dashboard/overview.ts:357
@@ -171,6 +187,14 @@ msgstr ""
 msgid "%s is not applied again before %t"
 msgstr ""
 
+#: src/prokop/tabs/updates/componentActionToast.ts:380
+msgid "%s is not available in this Prokop build"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts:375
+msgid "%s is not installed"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4467
 msgid "%s is not installed. Install it in Components or choose another action."
 msgstr ""
@@ -199,12 +223,44 @@ msgstr ""
 msgid "%s s"
 msgstr ""
 
+#: src/prokop/tabs/updates/componentActionToast.ts:340
+msgid "%s was installed, but Prokop did not start cleanly"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4819
 msgid "%s: “%s” cannot be written in the current form unchanged"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5156
 msgid "%s: not moved to the Device filter, the rule has no destination condition and does not use it"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts:419
+msgid "%s: the action failed. The details are in the system log"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts:325
+msgid "%s: the change failed, and the previous state could not be restored. Check the system log"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts:332
+msgid "%s: the change failed; the previous version was kept"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts:362
+msgid "%s: the download failed. Check the internet connection and try again"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts:355
+msgid "%s: the downloaded file does not match its published checksum; it was not installed"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts:369
+msgid "%s: the release could not be checked. Check the internet connection and try again"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts:306
+msgid "%s: the router ran out of storage space"
 msgstr ""
 
 #: src/helpers/prettyBytes.ts:26
@@ -241,6 +297,10 @@ msgstr ""
 
 #: src/prokop/tabs/autotune/initController.ts:552
 msgid "3–7 attempts per strategy and target in each check."
+msgstr ""
+
+#: src/prokop/tabs/autotune/model.ts:448
+msgid "A check failed and the last one gave no result; one more failure rolls the change back."
 msgstr ""
 
 #: src/prokop/tabs/autotune/initController.ts:255
@@ -311,6 +371,10 @@ msgstr ""
 
 #: src/prokop/tabs/autotune/initController.ts:704
 msgid "A list of a DPI rule. Each check takes a few of its domains; keywords and regular expressions are skipped."
+msgstr ""
+
+#: src/prokop/tabs/updates/listsUpdateStatus.ts:56
+msgid "A list source; the details are in the system log"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:276
@@ -545,7 +609,7 @@ msgstr ""
 msgid "After a change Prokop keeps checking it for %s; a strategy that fails twice in a row is rolled back."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:193
+#: src/prokop/tabs/history/model.ts:195
 msgid "All"
 msgstr ""
 
@@ -566,6 +630,10 @@ msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2302
 msgid "All except selected"
+msgstr ""
+
+#: src/prokop/tabs/history/initController.ts:429
+msgid "All history records are deleted; the history then shows one record, that it was cleared."
 msgstr ""
 
 #: src/prokop/tabs/monitoring/initController.ts:738
@@ -629,7 +697,7 @@ msgid "An IP address needs no DNS"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/configform.js:342
-#: src/prokop/tabs/history/model.ts:452
+#: src/prokop/tabs/history/model.ts:458
 msgid "and %d more"
 msgstr ""
 
@@ -666,7 +734,7 @@ msgstr ""
 msgid "Another snapshot operation is already in progress. Changes were not applied; try again in a moment."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:470
+#: src/prokop/tabs/history/model.ts:476
 msgid "Another snapshot operation is already in progress. Try again in a moment."
 msgstr ""
 
@@ -694,7 +762,7 @@ msgstr ""
 msgid "Applied and checked, but not confirmed as the working configuration"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:333
+#: src/prokop/tabs/history/model.ts:335
 msgid "Applied by reload"
 msgstr ""
 
@@ -818,6 +886,22 @@ msgstr ""
 msgid "Automatic recovery did not finish."
 msgstr ""
 
+#: src/prokop/ui/status.ts:149
+msgid "Automatic snapshots cleared"
+msgstr ""
+
+#: src/prokop/tabs/history/model.ts:1041
+msgid "Automatic snapshots deleted: %d."
+msgstr ""
+
+#: src/prokop/tabs/history/model.ts:1036
+msgid "Automatic snapshots deleted: %d. Kept: %d (manual and protected)."
+msgstr ""
+
+#: src/prokop/tabs/history/initController.ts:405
+msgid "Automatic snapshots that nothing protects are deleted: %d now."
+msgstr ""
+
 #: src/prokop/tabs/autotune/initController.ts:607
 msgid "Automatically"
 msgstr ""
@@ -843,7 +927,7 @@ msgstr ""
 msgid "Autostart is on"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:191
+#: src/prokop/tabs/history/model.ts:193
 msgid "Autotune"
 msgstr ""
 
@@ -897,52 +981,52 @@ msgstr ""
 msgid "Autotune state is unavailable"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:282
+#: src/prokop/tabs/history/model.ts:284
 msgid "Autotune: %s applied automatically"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:281
+#: src/prokop/tabs/history/model.ts:283
 msgid "Autotune: %s applied manually"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:267
+#: src/prokop/tabs/history/model.ts:269
 msgid "Autotune: %s passed the observation"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:268
-msgid "Autotune: the observation of %s ended without a result"
-msgstr ""
-
-#: src/prokop/tabs/history/model.ts:277
+#: src/prokop/tabs/history/model.ts:279
 msgid "Autotune: automatic apply"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:287
+#: src/prokop/tabs/history/model.ts:289
 msgid "Autotune: automatic apply of %s"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:295
+#: src/prokop/tabs/history/model.ts:297
 msgid "Autotune: automatic rollback"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:299
+#: src/prokop/tabs/history/model.ts:301
 msgid "Autotune: automatic rollback of %s"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:276
+#: src/prokop/tabs/history/model.ts:278
 msgid "Autotune: manual apply"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:286
+#: src/prokop/tabs/history/model.ts:288
 msgid "Autotune: manual apply of %s"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:294
+#: src/prokop/tabs/history/model.ts:296
 msgid "Autotune: manual rollback"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:298
+#: src/prokop/tabs/history/model.ts:300
 msgid "Autotune: manual rollback of %s"
+msgstr ""
+
+#: src/prokop/tabs/history/model.ts:270
+msgid "Autotune: the observation of %s ended without a result"
 msgstr ""
 
 #: src/prokop/tabs/diagnostic/renderDiagnostic.ts:26
@@ -965,15 +1049,15 @@ msgstr ""
 msgid "Basics"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:336
+#: src/prokop/tabs/history/model.ts:338
 msgid "Before applying changes"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:342
+#: src/prokop/tabs/history/model.ts:344
 msgid "Before autotune"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:338
+#: src/prokop/tabs/history/model.ts:340
 msgid "Before restore"
 msgstr ""
 
@@ -1060,12 +1144,20 @@ msgstr ""
 msgid "Built-in rule sets of the same services: %s. They match more than the removed sets (domains and other addresses of these services), so they were not added."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:217
+#: src/prokop/tabs/history/model.ts:219
 msgid "Built-in rule sets of the same services: %s. They were not added; the rule editor offers them."
+msgstr ""
+
+#: src/prokop/tabs/updates/listsUpdateStatus.ts:45
+msgid "Built-in subnet list: %s"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2319
 msgid "By flag emoji from name"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:176
+msgid "by the router's usual route"
 msgstr ""
 
 #: src/prokop/tabs/diagnostic/helpers/getCheckTitle.ts:15
@@ -1141,19 +1233,19 @@ msgstr ""
 msgid "Cache file path cannot be empty"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:929
-msgid "Cache: an eighth of the router memory, 32 to 256 MB"
-msgstr ""
-
 #: src/prokop/tabs/updates/initController.ts:925
 msgid "Cache: %s MB, an eighth of the router memory"
 msgstr ""
 
-#: src/prokop/ui/status.ts:167
+#: src/prokop/tabs/updates/initController.ts:929
+msgid "Cache: an eighth of the router memory, 32 to 256 MB"
+msgstr ""
+
+#: src/prokop/ui/status.ts:171
 msgid "Calculated"
 msgstr ""
 
-#: src/prokop/ui/status.ts:180
+#: src/prokop/ui/status.ts:184
 msgid "Calculated result"
 msgstr ""
 
@@ -1206,7 +1298,7 @@ msgstr ""
 msgid "Change in progress"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:401
+#: src/prokop/tabs/history/initController.ts:720
 msgid "Changes"
 msgstr ""
 
@@ -1214,7 +1306,7 @@ msgstr ""
 msgid "Changes are made only by scheduled checks, one group at a time."
 msgstr ""
 
-#: src/prokop/tabs/history/render.ts:26
+#: src/prokop/tabs/history/render.ts:30
 msgid "Changes compare a snapshot with the saved configuration. Unsaved form edits are not included."
 msgstr ""
 
@@ -1222,7 +1314,7 @@ msgstr ""
 msgid "Changes per day: at most %d; a rolled back strategy waits %s."
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:236
+#: src/prokop/tabs/history/initController.ts:306
 msgid "Changes since this snapshot"
 msgstr ""
 
@@ -1347,10 +1439,6 @@ msgstr ""
 msgid "Checking that it works"
 msgstr ""
 
-#: src/prokop/tabs/updates/componentProgress.ts:46
-msgid "Restoring after the failure"
-msgstr ""
-
 #: src/prokop/tabs/autotune/model.ts:1237
 msgid "Checking the configuration before the change"
 msgstr ""
@@ -1450,7 +1538,12 @@ msgid "Clash API secret cannot be empty"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:368
+#: src/prokop/tabs/history/initController.ts:437
 msgid "Clear"
+msgstr ""
+
+#: src/prokop/tabs/history/initController.ts:428
+msgid "Clear history?"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:350
@@ -1458,15 +1551,17 @@ msgid "Clear the cascade setting of this rule? When you save the rule, %s and %s
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:342
+#: src/prokop/tabs/history/initController.ts:176
+#: src/prokop/tabs/history/initController.ts:668
 msgid "Clear…"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3738
 #: src/partials/modal/renderModal.ts:284
 #: src/prokop/tabs/autotune/initController.ts:826
+#: src/prokop/tabs/history/initController.ts:316
 #: src/prokop/tabs/dashboard/initController.ts:1316
 #: src/prokop/tabs/dashboard/initController.ts:1717
-#: src/prokop/tabs/history/initController.ts:246
 #: src/prokop/tabs/updates/releaseSelector.ts:151
 msgid "Close"
 msgstr ""
@@ -1508,6 +1603,10 @@ msgstr ""
 msgid "Command failed"
 msgstr ""
 
+#: src/prokop/tabs/updates/componentActionToast.ts:410
+msgid "Component"
+msgstr ""
+
 #: src/prokop/services/core.service.ts:47
 msgid "Component update available"
 msgstr ""
@@ -1516,7 +1615,7 @@ msgstr ""
 msgid "Component update check interval"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:236
+#: src/prokop/tabs/history/model.ts:238
 msgid "Component update check interval was %s, shorter than the 1 h minimum of automatic updates: set to %s."
 msgstr ""
 
@@ -1528,7 +1627,7 @@ msgstr ""
 msgid "compressed"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:347
+#: src/prokop/tabs/history/model.ts:349
 msgid "Concurrent edit"
 msgstr ""
 
@@ -1549,7 +1648,7 @@ msgstr ""
 msgid "Config File Path"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:187
+#: src/prokop/tabs/history/model.ts:189
 msgid "Configuration"
 msgstr ""
 
@@ -1558,7 +1657,7 @@ msgstr ""
 msgid "Configuration applied successfully"
 msgstr ""
 
-#: src/prokop/ui/status.ts:151
+#: src/prokop/ui/status.ts:155
 msgid "Configuration migrated by the update"
 msgstr ""
 
@@ -1566,11 +1665,11 @@ msgstr ""
 msgid "Configuration reload"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:722
+#: src/prokop/tabs/history/model.ts:730
 msgid "Configuration restored and reloaded"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:732
+#: src/prokop/tabs/history/model.ts:740
 msgid "Configuration restored, but Prokop is stopped: it was not started or checked. The restored configuration takes effect when Prokop is started."
 msgstr ""
 
@@ -1586,12 +1685,16 @@ msgstr ""
 msgid "Configuration saved. Runtime reload has not been confirmed; check History and recovery."
 msgstr ""
 
-#: src/prokop/tabs/history/render.ts:21
+#: src/prokop/tabs/history/render.ts:25
 msgid "Configuration snapshots"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5858
 msgid "Configure User-Agent in the item settings"
+msgstr ""
+
+#: src/prokop/tabs/updates/listsUpdateStatus.ts:17
+msgid "configured source"
 msgstr ""
 
 #: src/prokop/tabs/updates/releaseSelector.ts:45
@@ -1698,8 +1801,12 @@ msgstr ""
 msgid "Could not change autostart"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:232
-#: src/prokop/tabs/history/initController.ts:299
+#: src/prokop/tabs/history/model.ts:1076
+msgid "Could not clear the history"
+msgstr ""
+
+#: src/prokop/tabs/history/initController.ts:302
+#: src/prokop/tabs/history/initController.ts:371
 msgid "Could not compare configurations"
 msgstr ""
 
@@ -1711,11 +1818,15 @@ msgstr ""
 msgid "Could not confirm completion. Check the removal log before retrying."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:591
+#: src/prokop/tabs/history/model.ts:599
 msgid "Could not create snapshot"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:518
+#: src/prokop/tabs/history/model.ts:1054
+msgid "Could not delete all automatic snapshots"
+msgstr ""
+
+#: src/prokop/tabs/history/model.ts:526
 msgid "Could not delete snapshot"
 msgstr ""
 
@@ -1728,17 +1839,17 @@ msgstr ""
 msgid "Could not load available versions"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:362
+#: src/prokop/tabs/history/initController.ts:678
 msgid "Could not load configuration snapshots"
 msgstr ""
 
+#: src/prokop/tabs/history/initController.ts:332
 #: src/prokop/tabs/diagnostic/initController.ts:591
 #: src/prokop/tabs/diagnostic/initController.ts:595
 #: src/prokop/tabs/diagnostic/initController.ts:631
 #: src/prokop/tabs/diagnostic/initController.ts:635
 #: src/prokop/tabs/diagnostic/initController.ts:671
 #: src/prokop/tabs/diagnostic/initController.ts:675
-#: src/prokop/tabs/history/initController.ts:260
 msgid "Could not load data"
 msgstr ""
 
@@ -1746,8 +1857,16 @@ msgstr ""
 msgid "Could not refresh. Showing data from %s"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:179
+msgid "could not remove {file}"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:233
 msgid "Could not remove the saved policy that the first kill-switch build had removed"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:135
+msgid "could not save {file}; the policy is active until the next firewall reload"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/configform.js:107
@@ -1766,6 +1885,14 @@ msgstr ""
 msgid "Could not save a pre-apply configuration snapshot. Changes were not applied."
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:171
+msgid "could not save the block lists of excluded devices; they stay blocked through DNS while Prokop is stopped"
+msgstr ""
+
+#: src/prokop/tabs/history/model.ts:1018
+msgid "Could not save the retention limits. Check the free space on the router."
+msgstr ""
+
 #: src/prokop/tabs/updates/fullUninstall.ts:44
 msgid "Could not start removal. Another component action may be running."
 msgstr ""
@@ -1782,6 +1909,10 @@ msgstr ""
 
 #: src/prokop/tabs/updates/listsUpdate.ts:78
 msgid "Could not start the lists update"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:179
+msgid "could not write {file}"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3477
@@ -1804,7 +1935,7 @@ msgstr ""
 msgid "Create a bot with @BotFather and paste its token. The saved token is never shown on the page"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:352
+#: src/prokop/tabs/history/initController.ts:650
 msgid "Create snapshot"
 msgstr ""
 
@@ -1864,79 +1995,36 @@ msgstr ""
 msgid "Delay value cannot be empty"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:317
+#: src/prokop/tabs/history/initController.ts:389
+#: src/prokop/tabs/history/initController.ts:414
 msgid "Delete"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:315
+#: src/prokop/tabs/history/initController.ts:404
+msgid "Delete automatic snapshots?"
+msgstr ""
+
+#: src/prokop/tabs/history/initController.ts:387
 msgid "Delete snapshot?"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:252
-msgid "Delete the saved token"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/settings.js:46
-msgid "TorrServer"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:35
-msgid "Protect TorrServer with a password"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:36
-msgid "TorrServer's web page and API then ask for this user name and password, also apps that use its API (Lampa, MSX); stream and playlist links stay open. Applies to the TorrServer that Prokop installed"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:46
-msgid "TorrServer user name"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:54
-msgid "Use 1 to 64 Latin letters, digits, dots, dashes, _ or @"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:61
-msgid "TorrServer password"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:62
-msgid "The saved password is never shown on the page"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:69
-msgid "Use up to 128 characters, without line breaks"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:71
 msgid "Delete the saved password"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:78
-msgid "Enter a password"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:88
-msgid "Run TorrServer in a jail"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:90
-msgid "procd's jail (ujail): TorrServer sees only its program, its data, its disk cache and what it needs to resolve names and check certificates. A disk cache folder changed in TorrServer is seen after TorrServer restarts. If the jail cannot be set up, TorrServer does not start"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:93
-msgid "Not available: this firmware has no procd-ujail. Install the procd-ujail package to use it"
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:252
+msgid "Delete the saved token"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:287
 msgid "Delete the saved webhook URL"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:316
+#: src/prokop/tabs/history/initController.ts:388
 msgid "Delete this configuration snapshot?"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:415
+#: src/prokop/tabs/history/initController.ts:734
 msgid "Delete…"
 msgstr ""
 
@@ -1944,7 +2032,7 @@ msgstr ""
 msgid "Delivered"
 msgstr ""
 
-#: src/prokop/ui/status.ts:178
+#: src/prokop/ui/status.ts:182
 msgid "Derived from configuration"
 msgstr ""
 
@@ -1975,8 +2063,6 @@ msgstr ""
 msgid "detour must be a non-empty string"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/initController.ts:797
-#: src/prokop/tabs/diagnostic/renderDiagnostic.ts:83
 #: src/prokop/tabs/monitoring/devicesView.ts:141
 #: src/prokop/tabs/monitoring/devicesView.ts:298
 #: src/prokop/tabs/monitoring/initController.ts:1059
@@ -1984,6 +2070,8 @@ msgstr ""
 #: src/prokop/tabs/monitoring/initController.ts:1182
 #: src/prokop/tabs/monitoring/initController.ts:1367
 #: src/prokop/tabs/monitoring/render.ts:88
+#: src/prokop/tabs/diagnostic/initController.ts:797
+#: src/prokop/tabs/diagnostic/renderDiagnostic.ts:83
 msgid "Device"
 msgstr ""
 
@@ -2010,10 +2098,6 @@ msgstr ""
 
 #: src/prokop/tabs/diagnostic/checkCards.ts:96
 msgid "Devices may bypass the router DNS, so domain rules do not apply to them."
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:961
-msgid "Off by default. Devices with their own DNS server (8.8.8.8 in a TV, IoT devices) bypass domain rules and the kill-switch; when on, everything they send to port 53 of an outside server goes to the router's DNS instead. This also catches a VPN whose server uses port 53 and a DNS server in the LAN that asks outside servers itself: add their addresses to the exclusions. DNS to local addresses (Pi-hole), to the router's IPv6 prefixes and DNS over TLS stay untouched"
 msgstr ""
 
 #: src/prokop/tabs/diagnostic/checks/getDnsCheckPresentation.ts:47
@@ -2214,6 +2298,14 @@ msgstr ""
 msgid "dnsmasq already uses servers file {file}; DNS protection is not attached"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:199
+msgid "dnsmasq could not be refreshed"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:144
+msgid "dnsmasq is not managed by Prokop (dont_touch_dhcp): protected domains are guarded by the firewall and FakeIP only"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:287
 msgid "dnsmasq still uses the {product} kill-switch servers file {file}, kept while {product} is installed or active; DNS protection is not attached"
 msgstr ""
@@ -2255,6 +2347,10 @@ msgstr ""
 msgid "Domain"
 msgstr ""
 
+#: src/prokop/tabs/updates/listsUpdateStatus.ts:32
+msgid "Domain and IP list"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9829
 #: src/prokop/tabs/updates/listsUpdate.ts:98
 msgid "Domain and IP lists"
@@ -2262,6 +2358,10 @@ msgstr ""
 
 #: src/prokop/tabs/diagnostic/connectivityMatrix.ts:98
 msgid "Domain does not exist"
+msgstr ""
+
+#: src/prokop/tabs/updates/listsUpdateStatus.ts:34
+msgid "Domain list"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9850
@@ -2566,6 +2666,10 @@ msgstr ""
 msgid "Enter a number from 1 to 30"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:78
+msgid "Enter a password"
+msgstr ""
+
 #: src/prokop/tabs/diagnostic/connectivityMatrix.ts:89
 msgid "Enter a port"
 msgstr ""
@@ -2664,6 +2768,10 @@ msgstr ""
 msgid "Exclude servers with one of the selected transports from this level."
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:245
+msgid "Excluded devices"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9329
 msgid "Excluded devices resolve these names while Prokop is stopped"
 msgstr ""
@@ -2706,6 +2814,10 @@ msgstr ""
 msgid "Failed at “%s” after %s"
 msgstr ""
 
+#: src/prokop/tabs/updates/componentActionToast.ts:170
+msgid "Failed to apply direct routing for TorrServer"
+msgstr ""
+
 #: src/prokop/tabs/monitoring/initController.ts:1729
 #: src/prokop/tabs/monitoring/initController.ts:1744
 msgid "Failed to close connection"
@@ -2724,12 +2836,21 @@ msgstr ""
 msgid "Failed to create support report"
 msgstr ""
 
+#: src/prokop/tabs/updates/componentActionToast.ts:112
+msgid "Failed to create the folder %s"
+msgstr ""
+
 #: src/prokop/tabs/updates/componentActionToast.ts:220
 msgid "Failed to download TorrServer"
 msgstr ""
 
-#: src/prokop/tabs/updates/componentActionToast.ts:170
-msgid "Failed to apply direct routing for TorrServer"
+#: src/prokop/methods/shell/index.ts:192
+#: src/prokop/methods/shell/index.ts:198
+#: src/prokop/tabs/updates/componentActionToast.ts:391
+#: src/prokop/tabs/updates/initController.ts:698
+#: src/prokop/tabs/updates/initController.ts:781
+#: src/prokop/tabs/updates/initController.ts:1013
+msgid "Failed to execute"
 msgstr ""
 
 #: src/prokop/tabs/updates/componentActionToast.ts:139
@@ -2744,19 +2865,6 @@ msgstr ""
 msgid "Failed to install TorrServer; the previous version was restored"
 msgstr ""
 
-#: src/prokop/tabs/updates/componentActionToast.ts:112
-msgid "Failed to create the folder %s"
-msgstr ""
-
-#: src/prokop/methods/shell/index.ts:192
-#: src/prokop/methods/shell/index.ts:198
-#: src/prokop/tabs/updates/componentActionToast.ts:391
-#: src/prokop/tabs/updates/initController.ts:698
-#: src/prokop/tabs/updates/initController.ts:781
-#: src/prokop/tabs/updates/initController.ts:1013
-msgid "Failed to execute"
-msgstr ""
-
 #: src/prokop/tabs/updates/componentActionToast.ts:179
 msgid "Failed to read the latest TorrServer release. Check the internet connection and try again"
 msgstr ""
@@ -2769,20 +2877,20 @@ msgstr ""
 msgid "Failed to remove TorrServer"
 msgstr ""
 
-#: src/prokop/tabs/updates/componentActionToast.ts:117
-msgid "Failed to save TorrServer on the router's storage; nothing was installed"
-msgstr ""
-
 #: src/prokop/tabs/updates/componentActionToast.ts:166
 msgid "Failed to save the direct routing setting for TorrServer"
 msgstr ""
 
-#: src/prokop/tabs/updates/componentActionToast.ts:124
-msgid "Failed to set the installed TorrServer aside for the update; it runs on unchanged"
+#: src/prokop/tabs/updates/componentActionToast.ts:117
+msgid "Failed to save TorrServer on the router's storage; nothing was installed"
 msgstr ""
 
 #: src/prokop/tabs/dashboard/initController.ts:1428
 msgid "Failed to save URLTest settings"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts:124
+msgid "Failed to set the installed TorrServer aside for the update; it runs on unchanged"
 msgstr ""
 
 #: src/prokop/tabs/updates/componentActionToast.ts:255
@@ -2802,12 +2910,16 @@ msgstr ""
 msgid "Failed to update subscriptions"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:472
-msgid "Failed twice in a row, rolled back"
+#: src/prokop/tabs/updates/componentActionToast.ts:348
+msgid "Failed to update the package lists. Check the internet connection and try again"
 msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:473
 msgid "Failed too many checks, rolled back"
+msgstr ""
+
+#: src/prokop/tabs/autotune/model.ts:472
+msgid "Failed twice in a row, rolled back"
 msgstr ""
 
 #: src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:105
@@ -2897,7 +3009,7 @@ msgstr ""
 msgid "Forced device routing"
 msgstr ""
 
-#: src/prokop/ui/status.ts:165
+#: src/prokop/ui/status.ts:169
 msgid "From configuration"
 msgstr ""
 
@@ -2972,7 +3084,7 @@ msgstr ""
 msgid "Higher-priority DNS Check"
 msgstr ""
 
-#: src/prokop/tabs/history/render.ts:16
+#: src/prokop/tabs/history/render.ts:17
 msgid "History"
 msgstr ""
 
@@ -2980,13 +3092,36 @@ msgstr ""
 msgid "History and recovery"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:154
+#: src/prokop/ui/status.ts:151
+#: src/prokop/tabs/history/model.ts:1066
+msgid "History cleared"
+msgstr ""
+
+#: src/prokop/tabs/history/initController.ts:173
+#: src/prokop/tabs/history/initController.ts:199
 msgid "History is kept in memory until the router restarts."
 msgstr ""
 
 #: src/prokop/tabs/autotune/initController.ts:1521
-#: src/prokop/tabs/history/initController.ts:141
+#: src/prokop/tabs/history/initController.ts:185
+#: src/prokop/tabs/history/initController.ts:508
 msgid "History is unavailable"
+msgstr ""
+
+#: src/prokop/tabs/history/initController.ts:517
+msgid "History records"
+msgstr ""
+
+#: src/prokop/tabs/history/model.ts:985
+msgid "history records deleted: %d"
+msgstr ""
+
+#: src/prokop/tabs/history/model.ts:911
+msgid "History records: enter a whole number from %d to %d."
+msgstr ""
+
+#: src/prokop/tabs/history/initController.ts:607
+msgid "History: %d to %d records. Snapshots: %d to %d, two places of them stay for the automatic snapshots taken before a restore, Save & Apply or autotune. Older records and automatic snapshots beyond the limits are deleted automatically; manual and protected snapshots are never deleted automatically."
 msgstr ""
 
 #: src/prokop/tabs/monitoring/initController.ts:1091
@@ -3027,12 +3162,12 @@ msgstr ""
 msgid "Idle timeout"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:202
-msgid "If the VPN kill-switch is enabled, its sections stay blocked until Prokop is started."
-msgstr ""
-
 #: src/prokop/tabs/updates/initController.ts:934
 msgid "If a setting changes, TorrServer restarts its torrents: playback stops for a few seconds"
+msgstr ""
+
+#: src/prokop/tabs/dashboard/overview.ts:202
+msgid "If the VPN kill-switch is enabled, its sections stay blocked until Prokop is started."
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4894
@@ -3082,7 +3217,7 @@ msgstr ""
 msgid "In progress"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:208
+#: src/prokop/tabs/history/initController.ts:278
 msgid "In snapshot"
 msgstr ""
 
@@ -3170,12 +3305,8 @@ msgstr ""
 msgid "Intercept client DNS"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:974
-msgid "Not intercepted"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:975
-msgid "Used while client DNS is intercepted. DNS from these devices or to these servers is never intercepted: a DNS server in the LAN, the server of a VPN on port 53. An IPv4 or IPv6 address or subnet"
+#: src/prokop/tabs/history/model.ts:249
+msgid "Intercepting client DNS is off by default now: it also caught VPNs and DNS servers in the LAN that use port 53. It was on here and was turned off; turn it on again under Settings > Network if you need it."
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:653
@@ -3659,8 +3790,16 @@ msgstr ""
 msgid "KB"
 msgstr ""
 
+#: src/prokop/tabs/history/initController.ts:581
+msgid "Keep history records"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3497
 msgid "Keep Priority before latency-sorted servers"
+msgstr ""
+
+#: src/prokop/tabs/history/initController.ts:588
+msgid "Keep snapshots"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2998
@@ -3669,75 +3808,6 @@ msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:218
 msgid "keeping the previous protection"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:113
-msgid "Prokop has not applied the lists of its configuration yet"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:118
-msgid "the configuration changed since Prokop last applied it; reload Prokop first"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:122
-msgid "the firewall policy could not be built"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:125
-msgid "the firewall refused the built policy"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:129
-msgid "the firewall did not take the policy"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:135
-msgid "could not save {file}; the policy is active until the next firewall reload"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:144
-msgid "dnsmasq is not managed by Prokop (dont_touch_dhcp): protected domains are guarded by the firewall and FakeIP only"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:152
-msgid "{count} addresses of excluded devices cannot be read; those devices stay blocked through DNS while Prokop is stopped"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:162
-msgid "the excluded devices form more than {groups} groups with different blocked names; {count} device addresses stay blocked through DNS while Prokop is stopped"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:171
-msgid "could not save the block lists of excluded devices; they stay blocked through DNS while Prokop is stopped"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:179
-msgid "could not remove {file}"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:179
-msgid "could not write {file}"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:185
-msgid "the sing-box configuration {file} cannot be read"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:191
-msgid "protected sections {sections} are not routed by the running Prokop yet (subscription not loaded), so their domains are unknown"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:199
-msgid "dnsmasq could not be refreshed"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:209
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:230
-msgid "the details are in the system log"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:245
-msgid "Excluded devices"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5810
@@ -3793,8 +3863,8 @@ msgstr ""
 msgid "Last important event"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:388
-#: src/prokop/tabs/history/model.ts:340
+#: src/prokop/tabs/history/initController.ts:707
+#: src/prokop/tabs/history/model.ts:342
 msgid "Last known good"
 msgstr ""
 
@@ -3822,8 +3892,8 @@ msgstr ""
 msgid "Last update"
 msgstr ""
 
-#: src/prokop/methods/shell/index.ts:662
 #: src/prokop/methods/shell/index.ts:683
+#: src/prokop/methods/shell/index.ts:704
 #: src/prokop/tabs/dashboard/initController.ts:1061
 #: src/prokop/tabs/dashboard/latencyJob.ts:9
 msgid "Latency test failed"
@@ -3875,16 +3945,16 @@ msgstr ""
 msgid "List of a rule"
 msgstr ""
 
+#: src/prokop/tabs/updates/listsUpdateStatus.ts:31
+msgid "List source"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:773
 msgid "List Update Frequency"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:239
+#: src/prokop/tabs/history/model.ts:241
 msgid "List update frequency was %s, shorter than the 1 h minimum of automatic updates: set to %s."
-msgstr ""
-
-#: src/prokop/tabs/history/model.ts:247
-msgid "Intercepting client DNS is off by default now: it also caught VPNs and DNS servers in the LAN that use port 53. It was on here and was turned off; turn it on again under Settings > Network if you need it."
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/settings.js:36
@@ -3941,12 +4011,13 @@ msgstr ""
 #: src/prokop/tabs/autotune/render.ts:26
 #: src/prokop/tabs/autotune/render.ts:30
 #: src/prokop/tabs/autotune/render.ts:34
+#: src/prokop/tabs/history/render.ts:14
+#: src/prokop/tabs/history/render.ts:20
+#: src/prokop/tabs/history/render.ts:34
+#: src/prokop/tabs/history/render.ts:39
 #: src/prokop/tabs/dashboard/overview.ts:515
 #: src/prokop/tabs/dashboard/render.ts:16
 #: src/prokop/tabs/diagnostic/initController.ts:741
-#: src/prokop/tabs/history/render.ts:14
-#: src/prokop/tabs/history/render.ts:18
-#: src/prokop/tabs/history/render.ts:30
 msgid "Loading…"
 msgstr ""
 
@@ -3960,6 +4031,10 @@ msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:997
 msgid "Low memory mode"
+msgstr ""
+
+#: src/prokop/tabs/history/initController.ts:471
+msgid "Lower the retention limits?"
 msgstr ""
 
 #: src/prokop/tabs/diagnostic/initController.ts:761
@@ -3982,7 +4057,7 @@ msgstr ""
 msgid "Make sure the provider is installed and the rule strategy is valid, then restart Prokop."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:328
+#: src/prokop/tabs/history/model.ts:330
 msgid "Manual"
 msgstr ""
 
@@ -3996,6 +4071,10 @@ msgstr ""
 
 #: src/prokop/tabs/dashboard/partials/getOutboundFooterLabel.ts:10
 msgid "Manual selection"
+msgstr ""
+
+#: src/prokop/tabs/history/initController.ts:409
+msgid "Manual snapshots are kept."
 msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:697
@@ -4100,9 +4179,9 @@ msgstr ""
 
 #: src/prokop/ui/status.ts:34
 #: src/prokop/ui/status.ts:113
-#: src/prokop/tabs/diagnostic/statusLabels.ts:24
 #: src/prokop/tabs/history/model.ts:79
 #: src/prokop/tabs/history/model.ts:82
+#: src/prokop/tabs/diagnostic/statusLabels.ts:24
 msgid "Needs attention"
 msgstr ""
 
@@ -4194,7 +4273,7 @@ msgstr ""
 msgid "No autotune events yet"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:220
+#: src/prokop/tabs/history/model.ts:222
 msgid "No built-in rule set replaces them."
 msgstr ""
 
@@ -4264,12 +4343,12 @@ msgstr ""
 msgid "No DPI rule has a downloaded list; only domains can be added."
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:189
+#: src/prokop/tabs/history/initController.ts:234
 msgid "No events of this kind"
 msgstr ""
 
+#: src/prokop/tabs/history/initController.ts:233
 #: src/prokop/tabs/dashboard/overviewCards.ts:339
-#: src/prokop/tabs/history/initController.ts:188
 msgid "No events recorded yet"
 msgstr ""
 
@@ -4294,8 +4373,8 @@ msgstr ""
 msgid "No recovery needed"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:410
 #: src/prokop/tabs/history/model.ts:152
+#: src/prokop/tabs/dashboard/overview.ts:410
 msgid "No reload recorded yet"
 msgstr ""
 
@@ -4303,8 +4382,8 @@ msgstr ""
 msgid "No rule handles it; it may need to be added to a rule."
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/siteCheck.ts:110
 #: src/prokop/tabs/monitoring/connectionView.ts:168
+#: src/prokop/tabs/diagnostic/siteCheck.ts:110
 msgid "No rule matched"
 msgstr ""
 
@@ -4320,12 +4399,12 @@ msgstr ""
 msgid "No rules use Zapret2"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:197
-#: src/prokop/tabs/history/initController.ts:298
+#: src/prokop/tabs/history/initController.ts:267
+#: src/prokop/tabs/history/initController.ts:370
 msgid "No saved changes since this snapshot"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:427
+#: src/prokop/tabs/history/initController.ts:746
 msgid "No snapshots yet"
 msgstr ""
 
@@ -4405,6 +4484,10 @@ msgstr ""
 msgid "Not available in read-only mode."
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:93
+msgid "Not available: this firmware has no procd-ujail. Install the procd-ujail package to use it"
+msgstr ""
+
 #: src/prokop/ui/status.ts:38
 #: src/prokop/tabs/autotune/model.ts:83
 #: src/prokop/tabs/autotune/model.ts:598
@@ -4424,14 +4507,18 @@ msgstr ""
 msgid "Not delivered"
 msgstr ""
 
-#: src/prokop/ui/status.ts:169
-#: src/prokop/ui/status.ts:182
+#: src/prokop/ui/status.ts:173
+#: src/prokop/ui/status.ts:186
 #: src/prokop/tabs/autotune/model.ts:52
 msgid "Not determined"
 msgstr ""
 
 #: src/prokop/tabs/updates/componentActionToast.ts:218
 msgid "Not enough free memory to download TorrServer"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts:298
+msgid "Not enough free space for %s: %s KiB free, %s KiB needed"
 msgstr ""
 
 #: src/prokop/tabs/updates/componentActionToast.ts:212
@@ -4452,6 +4539,10 @@ msgstr ""
 #: src/prokop/tabs/updates/initController.ts:1367
 #: src/prokop/tabs/updates/initController.ts:1433
 msgid "Not installed"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:974
+msgid "Not intercepted"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:327
@@ -4493,7 +4584,7 @@ msgid "Not running"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/configform.js:332
-#: src/prokop/tabs/history/model.ts:396
+#: src/prokop/tabs/history/model.ts:402
 msgid "not set"
 msgstr ""
 
@@ -4518,6 +4609,11 @@ msgstr ""
 msgid "Nothing to check"
 msgstr ""
 
+#: src/prokop/tabs/history/initController.ts:663
+#: src/prokop/tabs/history/model.ts:1042
+msgid "Nothing to delete: only manual and protected snapshots are left."
+msgstr ""
+
 #: src/prokop/tabs/autotune/model.ts:1791
 #: src/prokop/tabs/autotune/model.ts:1797
 #: src/prokop/tabs/autotune/model.ts:1806
@@ -4540,7 +4636,7 @@ msgstr ""
 
 #: src/prokop/tabs/autotune/initController.ts:1158
 #: src/prokop/tabs/autotune/model.ts:1217
-#: src/prokop/tabs/history/initController.ts:209
+#: src/prokop/tabs/history/initController.ts:279
 msgid "Now"
 msgstr ""
 
@@ -4572,26 +4668,23 @@ msgstr ""
 msgid "Observation stopped: not enough checks in a day"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:538
-msgid "Observation stopped: the checks passed, but the configuration was not recorded as the last known working one"
-msgstr ""
-
-msgid "Observation stopped: the configuration was edited"
-msgstr ""
-
-#: src/prokop/tabs/autotune/model.ts:501
-msgid "Observation stopped: the rule or its strategy was edited"
+#: src/prokop/tabs/autotune/model.ts:516
+msgid "Observation stopped: the change needs attention after a rollback"
 msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:510
 msgid "Observation stopped: the change was rolled back"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:516
-msgid "Observation stopped: the change needs attention after a rollback"
+#: src/prokop/tabs/autotune/model.ts:538
+msgid "Observation stopped: the checks passed, but the configuration was not recorded as the last known working one"
 msgstr ""
 
-#: src/prokop/ui/status.ts:163
+#: src/prokop/tabs/autotune/model.ts:501
+msgid "Observation stopped: the rule or its strategy was edited"
+msgstr ""
+
+#: src/prokop/ui/status.ts:167
 msgid "Observed"
 msgstr ""
 
@@ -4600,6 +4693,10 @@ msgstr ""
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:495
 #: src/prokop/tabs/autotune/model.ts:17
 msgid "Off"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:961
+msgid "Off by default. Devices with their own DNS server (8.8.8.8 in a TV, IoT devices) bypass domain rules and the kill-switch; when on, everything they send to port 53 of an outside server goes to the router's DNS instead. This also catches a VPN whose server uses port 53 and a DNS server in the LAN that asks outside servers itself: add their addresses to the exclusions. DNS to local addresses (Pi-hole), to the router's IPv6 prefixes and DNS over TLS stay untouched"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3279
@@ -4632,8 +4729,12 @@ msgstr ""
 msgid "Only servers with one of the selected transports."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:439
+#: src/prokop/tabs/history/model.ts:445
 msgid "Only the first %d changes are listed; %d changes in total."
+msgstr ""
+
+#: src/prokop/tabs/history/model.ts:949
+msgid "Only the newest %d history records are kept; older ones are deleted."
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3287
@@ -4680,8 +4781,8 @@ msgid "Open TorrServer"
 msgstr ""
 
 #: src/helpers/withTimeout.ts:7
-#: src/prokop/methods/shell/index.ts:631
-#: src/prokop/methods/shell/index.ts:721
+#: src/prokop/methods/shell/index.ts:652
+#: src/prokop/methods/shell/index.ts:742
 msgid "Operation timed out"
 msgstr ""
 
@@ -4713,7 +4814,7 @@ msgstr ""
 msgid "OS"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:349
+#: src/prokop/tabs/history/model.ts:351
 #: src/prokop/tabs/monitoring/connectionView.ts:122
 msgid "Other"
 msgstr ""
@@ -4722,7 +4823,7 @@ msgstr ""
 msgid "other %d: %s"
 msgstr ""
 
-#: src/prokop/ui/status.ts:153
+#: src/prokop/ui/status.ts:157
 msgid "Other event"
 msgstr ""
 
@@ -4993,8 +5094,20 @@ msgstr ""
 msgid "probes: %d of %d"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:90
+msgid "procd's jail (ujail): TorrServer sees only its program, its data, its disk cache and what it needs to resolve names and check certificates. A disk cache folder changed in TorrServer is seen after TorrServer restarts. If the jail cannot be set up, TorrServer does not start"
+msgstr ""
+
 #: src/prokop/tabs/dashboard/partials/renderSections.ts:156
 msgid "Profile"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts:291
+msgid "Prokop %s is not published in this release channel, so it cannot be kept for a rollback; the update was refused"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts:286
+msgid "Prokop %s is not published in this release channel, so it cannot be kept for a rollback; the update was refused. Run the one-line installer instead: %s"
 msgstr ""
 
 #: src/prokop/tabs/updates/releaseSelector.ts:60
@@ -5017,8 +5130,12 @@ msgstr ""
 msgid "Prokop Error"
 msgstr ""
 
-#: src/prokop/methods/shell/index.ts:871
+#: src/prokop/methods/shell/index.ts:892
 msgid "Prokop has been installed"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:113
+msgid "Prokop has not applied the lists of its configuration yet"
 msgstr ""
 
 #: src/prokop/tabs/dashboard/overview.ts:187
@@ -5058,7 +5175,7 @@ msgstr ""
 msgid "Prokop is stopped: the change applies when it is started."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:661
+#: src/prokop/tabs/history/model.ts:669
 msgid "Prokop is stopped: the configuration is replaced and checked, but Prokop is not started. It takes effect when you start Prokop."
 msgstr ""
 
@@ -5108,7 +5225,7 @@ msgstr ""
 msgid "Prokop never turns DPI bypass off by itself."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:664
+#: src/prokop/tabs/history/model.ts:672
 msgid "Prokop reloads the configuration. If the reload fails, the previous configuration is restored automatically."
 msgstr ""
 
@@ -5162,6 +5279,10 @@ msgstr ""
 
 #: src/prokop/tabs/dashboard/overview.ts:256
 msgid "Prokop was not stopped by the user: its start failed or it stopped unexpectedly."
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts:311
+msgid "Prokop was not stopped: another sing-box process runs on the router; the current sing-box was kept"
 msgstr ""
 
 #: src/prokop/tabs/updates/fullUninstallStatus.ts:100
@@ -5232,8 +5353,16 @@ msgstr ""
 msgid "Prokop-managed nfqws2 runtime is ready"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:35
+msgid "Protect TorrServer with a password"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:501
 msgid "Protected sections"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:191
+msgid "protected sections {sections} are not routed by the running Prokop yet (subscription not loaded), so their domains are unknown"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:379
@@ -5327,7 +5456,7 @@ msgstr ""
 msgid "Recovery details"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:96
+#: src/prokop/tabs/history/initController.ts:114
 msgid "Recovery state is unavailable"
 msgstr ""
 
@@ -5491,35 +5620,35 @@ msgstr ""
 msgid "Restarting Prokop"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:301
+#: src/prokop/tabs/history/initController.ts:373
 msgid "Restore"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:293
+#: src/prokop/tabs/history/initController.ts:365
 msgid "Restore configuration snapshot?"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:841
+#: src/prokop/tabs/history/model.ts:849
 msgid "Restore did not finish: a failed change left the DPI guard in place, and the DPI guard stays active. Restart Prokop, then restore the snapshot again."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:832
+#: src/prokop/tabs/history/model.ts:840
 msgid "Restore did not finish: the configuration was changed while the snapshot was being applied."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:831
+#: src/prokop/tabs/history/model.ts:839
 msgid "Restore did not finish: the configuration was changed while the snapshot was being applied. Prokop was reloaded, but it is not known whether with the snapshot or with the change."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:849
+#: src/prokop/tabs/history/model.ts:857
 msgid "Restore did not finish: the service was busy and only queued the reload. The DPI guard stays active; restore again when the service is idle."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:858
+#: src/prokop/tabs/history/model.ts:866
 msgid "Restore failed; check the recovery state before retrying"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:747
+#: src/prokop/tabs/history/model.ts:755
 msgid "Restore failed; previous configuration and runtime recovered"
 msgstr ""
 
@@ -5535,69 +5664,73 @@ msgstr ""
 msgid "Restore the last known good snapshot: the restore finishes and removes the DPI guard."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:831
+#: src/prokop/tabs/history/model.ts:839
 msgid "Restore the snapshot you need to finish."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:805
+#: src/prokop/tabs/history/model.ts:813
 msgid "Restore was not applied: Prokop was stopped during the restore. The previous configuration is kept."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:828
+#: src/prokop/tabs/history/model.ts:836
 msgid "Restore was not applied: Prokop was stopped, and the configuration was changed during the restore."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:778
-#: src/prokop/tabs/history/model.ts:779
+#: src/prokop/tabs/history/model.ts:786
+#: src/prokop/tabs/history/model.ts:787
 msgid "Restore was not applied: the configuration file could not be written. The previous configuration is kept."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:744
+#: src/prokop/tabs/history/model.ts:752
 msgid "Restore was not applied: the service was busy and only queued the reload. The previous configuration is kept."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:802
+#: src/prokop/tabs/history/model.ts:810
 msgid "Restore was not applied: the snapshot configuration did not pass validation. The previous configuration is kept; Prokop stays stopped."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:756
+#: src/prokop/tabs/history/model.ts:764
 msgid "Restore was not started: a failed change left the DPI guard in place, and nothing can be reloaded until Prokop is restarted. Restart Prokop, then restore the snapshot if it is still needed."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:615
+#: src/prokop/tabs/history/model.ts:623
 msgid "Restore was not started: the configuration was changed while the restore was starting. Nothing was changed; check the change and try again."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:611
+#: src/prokop/tabs/history/model.ts:619
 msgid "Restore was not started: the current configuration could not be read. Nothing was changed."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:603
+#: src/prokop/tabs/history/model.ts:611
 msgid "Restore was not started: the current configuration could not be saved as a snapshot first. Nothing was changed. Check the free space on the router."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:619
+#: src/prokop/tabs/history/model.ts:627
 msgid "Restore was not started: the DPI guard that protects traffic during the restore could not be installed. Nothing was changed."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:766
+#: src/prokop/tabs/history/model.ts:774
 msgid "Restore was not started: the router has uncommitted uci changes of Prokop (made with \"uci set\" without a commit). Commit or revert them, then restore again."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:607
+#: src/prokop/tabs/history/model.ts:615
 msgid "Restore was not started: the snapshot is missing or damaged. Nothing was changed."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:623
+#: src/prokop/tabs/history/model.ts:631
 msgid "Restore was not started: the snapshot storage could not be locked. Nothing was changed."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:629
+#: src/prokop/tabs/history/model.ts:637
 msgid "Restore was not started: the snapshot was saved by an older version of Prokop, and its configuration could not be migrated to this version. Nothing was changed."
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:408
+#: src/prokop/tabs/history/initController.ts:727
 msgid "Restore…"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentProgress.ts:46
+msgid "Restoring after the failure"
 msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:1243
@@ -5611,6 +5744,15 @@ msgstr ""
 
 #: src/prokop/tabs/monitoring/initController.ts:882
 msgid "Resume updates"
+msgstr ""
+
+#: src/prokop/tabs/history/render.ts:38
+msgid "Retention"
+msgstr ""
+
+#: src/prokop/tabs/history/model.ts:999
+#: src/prokop/tabs/history/model.ts:1000
+msgid "Retention limits saved"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9749
@@ -5674,9 +5816,9 @@ msgstr ""
 msgid "Rolling back…"
 msgstr ""
 
+#: src/prokop/tabs/monitoring/initController.ts:1190
 #: src/prokop/tabs/diagnostic/siteCheck.ts:81
 #: src/prokop/tabs/diagnostic/siteCheck.ts:106
-#: src/prokop/tabs/monitoring/initController.ts:1190
 msgid "Route"
 msgstr ""
 
@@ -5735,19 +5877,27 @@ msgstr ""
 msgid "Rule"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:230
+#: src/prokop/tabs/updates/listsUpdateStatus.ts:21
+msgid "rule “%s”"
+msgstr ""
+
+#: src/prokop/tabs/updates/listsUpdateStatus.ts:25
+msgid "rule “%s”: %s"
+msgstr ""
+
+#: src/prokop/tabs/history/model.ts:232
 msgid "Rule “%s”: a subscription source now sends the User-Agent set in its settings. Earlier versions ignored it and chose one automatically; clear the field to go back to automatic selection."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:251
+#: src/prokop/tabs/history/model.ts:253
 msgid "Rule “%s”: changed by the update."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:211
+#: src/prokop/tabs/history/model.ts:213
 msgid "Rule “%s”: the retired rule sets %s were removed from Built-in rule sets #2, their source no longer publishes them."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:223
+#: src/prokop/tabs/history/model.ts:225
 msgid "Rule “%s”: the subscription settings %s were removed. This version always generates the HWID from the router and hides nodes of imported URLTest groups and cascades."
 msgstr ""
 
@@ -5757,6 +5907,10 @@ msgstr ""
 
 #: src/prokop/tabs/monitoring/initController.ts:1094
 msgid "Rule payload"
+msgstr ""
+
+#: src/prokop/tabs/updates/listsUpdateStatus.ts:33
+msgid "Rule set"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8285
@@ -5813,6 +5967,10 @@ msgstr ""
 msgid "Run full diagnostics"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:88
+msgid "Run TorrServer in a jail"
+msgstr ""
+
 #: src/prokop/tabs/updates/initController.ts:1429
 msgid "Running"
 msgstr ""
@@ -5832,6 +5990,8 @@ msgstr ""
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3747
 #: src/prokop/tabs/autotune/initController.ts:562
 #: src/prokop/tabs/autotune/initController.ts:764
+#: src/prokop/tabs/history/initController.ts:474
+#: src/prokop/tabs/history/initController.ts:601
 #: src/prokop/tabs/dashboard/initController.ts:1448
 msgid "Save"
 msgstr ""
@@ -5852,7 +6012,7 @@ msgstr ""
 msgid "Saving URLTest settings…"
 msgstr ""
 
-#: src/prokop/ui/status.ts:149
+#: src/prokop/ui/status.ts:153
 msgid "Scheduled jobs update"
 msgstr ""
 
@@ -5888,7 +6048,7 @@ msgstr ""
 msgid "See connections to this address"
 msgstr ""
 
-#: src/prokop/ui/status.ts:176
+#: src/prokop/ui/status.ts:180
 msgid "Seen in an active connection"
 msgstr ""
 
@@ -6052,14 +6212,14 @@ msgstr ""
 msgid "server_port must be a number from 1 to 65535"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:189
+#: src/prokop/tabs/history/model.ts:191
 msgid "Service"
 msgstr ""
 
 #: src/prokop/helpers/serviceActionNotice.ts:30
 #: src/prokop/helpers/serviceActionNotice.ts:31
-#: src/prokop/methods/shell/index.ts:542
-#: src/prokop/methods/shell/index.ts:592
+#: src/prokop/methods/shell/index.ts:563
+#: src/prokop/methods/shell/index.ts:613
 msgid "Service action failed"
 msgstr ""
 
@@ -6088,7 +6248,7 @@ msgstr ""
 msgid "set %s: %s"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:207
+#: src/prokop/tabs/history/initController.ts:277
 msgid "Setting"
 msgstr ""
 
@@ -6101,8 +6261,20 @@ msgstr ""
 msgid "Several strategies are stable with similar latency; the simplest one was chosen."
 msgstr ""
 
+#: src/prokop/tabs/history/initController.ts:767
+msgid "Show all"
+msgstr ""
+
 #: src/prokop/tabs/monitoring/devicesView.ts:123
 msgid "Show connections of this device"
+msgstr ""
+
+#: src/prokop/tabs/history/initController.ts:767
+msgid "Show fewer"
+msgstr ""
+
+#: src/prokop/tabs/history/initController.ts:256
+msgid "Show more"
 msgstr ""
 
 #: src/prokop/tabs/monitoring/render.ts:75
@@ -6114,8 +6286,14 @@ msgstr ""
 msgid "Show sing-box config"
 msgstr ""
 
+#: src/prokop/tabs/history/initController.ts:242
+#: src/prokop/tabs/history/initController.ts:753
 #: src/prokop/tabs/monitoring/initController.ts:784
 msgid "Shown %d of %d"
+msgstr ""
+
+#: src/prokop/tabs/monitoring/devicesView.ts:259
+msgid "Shown: the %d addresses with the most traffic of %d."
 msgstr ""
 
 #: src/prokop/tabs/diagnostic/checks/runSingBoxCheck.ts:77
@@ -6166,7 +6344,7 @@ msgstr ""
 msgid "Site, IP, device or rule"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:406
+#: src/prokop/tabs/history/initController.ts:725
 msgid "Snapshot actions"
 msgstr ""
 
@@ -6175,27 +6353,27 @@ msgid "Snapshot created"
 msgstr ""
 
 #: src/prokop/ui/status.ts:147
-#: src/prokop/tabs/history/model.ts:487
+#: src/prokop/tabs/history/model.ts:494
 msgid "Snapshot deleted"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:555
+#: src/prokop/tabs/history/model.ts:563
 msgid "Snapshot not saved: at most %d manual snapshots are kept, so that the automatic snapshots taken before a restore, Save & Apply or autotune always have room. Delete a manual snapshot you no longer need, then try again."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:549
+#: src/prokop/tabs/history/model.ts:557
 msgid "Snapshot not saved: at most %d manual snapshots are kept, so that the automatic snapshots taken before a restore, Save & Apply or autotune always have room. There are %d manual snapshots now: delete %d you no longer need, then try again."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:573
+#: src/prokop/tabs/history/model.ts:581
 msgid "Snapshot not saved: it could not be written. Check the free space on the router."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:564
+#: src/prokop/tabs/history/model.ts:572
 msgid "Snapshot not saved: the configuration file could not be read."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:581
+#: src/prokop/tabs/history/model.ts:589
 msgid "Snapshot not saved: the snapshot storage could not be locked. Try again in a moment."
 msgstr ""
 
@@ -6203,7 +6381,7 @@ msgstr ""
 msgid "Snapshot restore"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:531
+#: src/prokop/tabs/history/model.ts:539
 msgid "Snapshot saved"
 msgstr ""
 
@@ -6211,8 +6389,24 @@ msgstr ""
 msgid "Snapshot storage is full: delete a manual snapshot in History and recovery. Changes were not applied."
 msgstr ""
 
+#: src/prokop/tabs/history/initController.ts:525
+msgid "Snapshots"
+msgstr ""
+
+#: src/prokop/tabs/history/initController.ts:433
+msgid "Snapshots and the recovery state are not changed: a failed change still asks for recovery."
+msgstr ""
+
+#: src/prokop/tabs/history/model.ts:992
+msgid "snapshots deleted: %d"
+msgstr ""
+
 #: src/prokop/tabs/dashboard/overview.ts:414
 msgid "Snapshots: %d"
+msgstr ""
+
+#: src/prokop/tabs/history/model.ts:918
+msgid "Snapshots: enter a whole number from %d to %d."
 msgstr ""
 
 #: src/prokop/tabs/autotune/initController.ts:984
@@ -6245,54 +6439,6 @@ msgstr ""
 
 #: src/prokop/tabs/updates/listsUpdate.ts:112
 msgid "Sources that could not be downloaded:"
-msgstr ""
-
-#: src/prokop/tabs/updates/listsUpdateStatus.ts:17
-msgid "configured source"
-msgstr ""
-
-#: src/prokop/tabs/updates/listsUpdateStatus.ts:21
-msgid "rule “%s”"
-msgstr ""
-
-#: src/prokop/tabs/updates/listsUpdateStatus.ts:25
-msgid "rule “%s”: %s"
-msgstr ""
-
-#: src/prokop/tabs/updates/listsUpdateStatus.ts:31
-msgid "List source"
-msgstr ""
-
-#: src/prokop/tabs/updates/listsUpdateStatus.ts:32
-msgid "Domain and IP list"
-msgstr ""
-
-#: src/prokop/tabs/updates/listsUpdateStatus.ts:33
-msgid "Rule set"
-msgstr ""
-
-#: src/prokop/tabs/updates/listsUpdateStatus.ts:34
-msgid "Domain list"
-msgstr ""
-
-#: src/prokop/tabs/updates/listsUpdateStatus.ts:35
-msgid "Subnet list (JSON)"
-msgstr ""
-
-#: src/prokop/tabs/updates/listsUpdateStatus.ts:36
-msgid "Subnet list (SRS)"
-msgstr ""
-
-#: src/prokop/tabs/updates/listsUpdateStatus.ts:37
-msgid "Subnet list (text)"
-msgstr ""
-
-#: src/prokop/tabs/updates/listsUpdateStatus.ts:45
-msgid "Built-in subnet list: %s"
-msgstr ""
-
-#: src/prokop/tabs/updates/listsUpdateStatus.ts:56
-msgid "A list source; the details are in the system log"
 msgstr ""
 
 #: src/prokop/tabs/monitoring/devicesView.ts:147
@@ -6460,6 +6606,18 @@ msgstr ""
 msgid "Strategy %s applied and checked."
 msgstr ""
 
+#: src/prokop/tabs/updates/listsUpdateStatus.ts:35
+msgid "Subnet list (JSON)"
+msgstr ""
+
+#: src/prokop/tabs/updates/listsUpdateStatus.ts:36
+msgid "Subnet list (SRS)"
+msgstr ""
+
+#: src/prokop/tabs/updates/listsUpdateStatus.ts:37
+msgid "Subnet list (text)"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4148
 msgid "Subnets from the list will be extracted and added to nftables"
 msgstr ""
@@ -6472,8 +6630,8 @@ msgstr ""
 msgid "Subscription info:"
 msgstr ""
 
-#: src/prokop/methods/shell/index.ts:919
-#: src/prokop/methods/shell/index.ts:939
+#: src/prokop/methods/shell/index.ts:940
+#: src/prokop/methods/shell/index.ts:960
 msgid "Subscription update failed"
 msgstr ""
 
@@ -6592,22 +6750,6 @@ msgstr ""
 msgid "Telegram refused the message text"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:120
-msgid "The server gave an answer that could not be read"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:122
-msgid "The server's address could not be found through the bootstrap DNS servers"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:176
-msgid "by the router's usual route"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:57
-msgid "This address uses http:// over the internet: the messages and any token in the address are sent unencrypted. Use https:// if the service supports it"
-msgstr ""
-
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:129
 msgid "Telegram refused the request"
 msgstr ""
@@ -6653,6 +6795,10 @@ msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:238
 msgid "The {product} kill-switch policy {table} could not be removed completely"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts:423
+msgid "The action failed. The details are in the system log"
 msgstr ""
 
 #: src/prokop/helpers/actionReason.ts:57
@@ -6715,11 +6861,11 @@ msgstr ""
 msgid "The change affects the whole group:"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:819
+#: src/prokop/tabs/history/model.ts:827
 msgid "The change is kept and saved as a snapshot (\"Concurrent edit\")."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:820
+#: src/prokop/tabs/history/model.ts:828
 msgid "The change is kept in the configuration, but no snapshot of it could be saved."
 msgstr ""
 
@@ -6756,16 +6902,20 @@ msgstr ""
 msgid "The check was invalid: a strategy did not process every packet. It will be repeated."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:114
-msgid "The check was invalid: its probe ports were still busy. It will be repeated."
-msgstr ""
-
 #: src/prokop/tabs/autotune/model.ts:118
 msgid "The check was invalid: a strategy process stopped during it. It will be repeated."
 msgstr ""
 
+#: src/prokop/tabs/autotune/model.ts:114
+msgid "The check was invalid: its probe ports were still busy. It will be repeated."
+msgstr ""
+
 #: src/prokop/tabs/autotune/initController.ts:265
 msgid "The check was postponed. See the state above."
+msgstr ""
+
+#: src/prokop/tabs/autotune/model.ts:438
+msgid "The checks passed; the configuration is recorded as the last known working one at the next check."
 msgstr ""
 
 #: src/prokop/helpers/actionReason.ts:69
@@ -6800,16 +6950,24 @@ msgstr ""
 msgid "The configuration before the change is restored."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:696
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:118
+msgid "the configuration changed since Prokop last applied it; reload Prokop first"
+msgstr ""
+
+#: src/prokop/tabs/history/model.ts:704
 msgid "The configuration of the snapshot was migrated from Prokop %s to %s."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:701
+#: src/prokop/tabs/history/model.ts:709
 msgid "The configuration of the snapshot was migrated to Prokop %s."
 msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:1747
 msgid "The configuration was changed after the apply, so nothing was rolled back. Restore a snapshot in History and recovery if needed."
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts:318
+msgid "The configured mirror uses http://; programs are installed only from an https:// mirror"
 msgstr ""
 
 #: src/prokop/tabs/updates/componentProgress.ts:550
@@ -6841,6 +6999,11 @@ msgstr ""
 msgid "The desync fwmark is managed by Prokop for loop prevention and must not be overridden here."
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:209
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:230
+msgid "the details are in the system log"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9428
 msgid "the direct proxy"
 msgstr ""
@@ -6857,12 +7020,12 @@ msgstr ""
 msgid "The downloaded TorrServer does not run on this router; nothing was installed"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:778
-#: src/prokop/tabs/history/model.ts:792
+#: src/prokop/tabs/history/model.ts:786
+#: src/prokop/tabs/history/model.ts:800
 msgid "The DPI guard of an earlier restore stays active."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:832
+#: src/prokop/tabs/history/model.ts:840
 msgid "The DPI guard stays active. Restore the snapshot you need to finish."
 msgstr ""
 
@@ -6879,8 +7042,24 @@ msgstr ""
 msgid "The editor has no field for downloaded lists: they cannot be converted and stay as they are."
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:162
+msgid "the excluded devices form more than {groups} groups with different blocked names; {count} device addresses stay blocked through DNS while Prokop is stopped"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:129
+msgid "the firewall did not take the policy"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:227
 msgid "The firewall policy could not be applied"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:122
+msgid "the firewall policy could not be built"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:125
+msgid "the firewall refused the built policy"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2531
@@ -6897,6 +7076,10 @@ msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2525
 msgid "The header name contains characters that are not allowed"
+msgstr ""
+
+#: src/prokop/tabs/history/model.ts:1069
+msgid "The history is being written right now. Nothing was changed; try again in a moment."
 msgstr ""
 
 #: src/prokop/tabs/updates/componentActionToast.ts:56
@@ -6939,10 +7122,6 @@ msgstr ""
 msgid "The last change (%s) passed its check, but it could not be recorded as the last known working configuration."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:438
-msgid "The checks passed; the configuration is recorded as the last known working one at the next check."
-msgstr ""
-
 #: src/prokop/tabs/autotune/model.ts:1550
 msgid "The last change (%s) was not checked to the end."
 msgstr ""
@@ -6972,10 +7151,6 @@ msgstr ""
 msgid "The last check failed; one more failure in a row rolls the change back."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:448
-msgid "A check failed and the last one gave no result; one more failure rolls the change back."
-msgstr ""
-
 #: src/prokop/tabs/autotune/model.ts:417
 msgid "the last check found Prokop stopped"
 msgstr ""
@@ -7002,12 +7177,16 @@ msgstr ""
 msgid "The last configuration change failed"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:357
+#: src/prokop/tabs/history/model.ts:359
 msgid "The last known good snapshot cannot be deleted"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:496
+#: src/prokop/tabs/history/model.ts:503
 msgid "The last known good snapshot cannot be deleted: it is the configuration Prokop returns to after a failed change."
+msgstr ""
+
+#: src/prokop/tabs/history/initController.ts:410
+msgid "The last known good snapshot, the one an autotune change can still roll back to, the one of an unapplied change and those an unfinished restore needs are kept."
 msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:1763
@@ -7032,6 +7211,10 @@ msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5357
 msgid "The legacy settings are converted. Save the rule to keep the change."
+msgstr ""
+
+#: src/prokop/tabs/history/model.ts:1013
+msgid "The limits are out of range. Nothing was changed."
 msgstr ""
 
 #: src/prokop/tabs/updates/fullUninstallStatus.ts:20
@@ -7073,6 +7256,10 @@ msgstr ""
 
 #: src/prokop/tabs/diagnostic/siteCheck.ts:161
 msgid "The name does not resolve on the router, so no rule can open it. Check the DNS results above."
+msgstr ""
+
+#: src/prokop/tabs/history/initController.ts:472
+msgid "The new limits apply at once."
 msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:1454
@@ -7209,6 +7396,10 @@ msgstr ""
 msgid "The router could not set up the traffic counters; the system log says why."
 msgstr ""
 
+#: src/prokop/tabs/monitoring/devicesView.ts:251
+msgid "The router counts no new addresses: its list of addresses is full. New devices are missing until addresses idle for 7 days leave it."
+msgstr ""
+
 #: src/prokop/tabs/autotune/model.ts:1680
 msgid "The router did not report the outcome of the rollback; it may still be running. This page shows it once the rollback ends."
 msgstr ""
@@ -7299,6 +7490,10 @@ msgstr ""
 msgid "The saved interval %s is shorter than 1h: it runs every hour, and saving the settings sets it to 1h."
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:62
+msgid "The saved password is never shown on the page"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:490
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:198
 msgid "The selected section cannot be used here. Choose another section."
@@ -7322,12 +7517,24 @@ msgstr ""
 msgid "The server could not be reached"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:120
+msgid "The server gave an answer that could not be read"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:122
+msgid "The server's address could not be found through the bootstrap DNS servers"
+msgstr ""
+
 #: src/prokop/tabs/autotune/model.ts:1133
 msgid "the service is busy"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:467
+#: src/prokop/tabs/history/model.ts:473
 msgid "The service is busy with another operation (list or subscription update, reload or start). Nothing was changed; try again when it finishes."
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:185
+msgid "the sing-box configuration {file} cannot be read"
 msgstr ""
 
 #: src/prokop/tabs/diagnostic/siteCheck.ts:31
@@ -7354,7 +7561,7 @@ msgstr ""
 msgid "The snapshot to return to is missing: restore a snapshot in History and recovery. Checks and changes wait until then."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:513
+#: src/prokop/tabs/history/model.ts:521
 msgid "The snapshot was not found or cannot be read."
 msgstr ""
 
@@ -7472,6 +7679,10 @@ msgstr ""
 msgid "The value is outside the allowed range."
 msgstr ""
 
+#: src/prokop/tabs/history/model.ts:967
+msgid "There are %d manual snapshots, more than the %d that fit: none is deleted, but no new manual snapshot can be saved until you delete some."
+msgstr ""
+
 #: src/prokop/tabs/diagnostic/checks/runByedpiCheck.ts:78
 msgid "There are rules using ByeDPI"
 msgstr ""
@@ -7484,7 +7695,7 @@ msgstr ""
 msgid "There are rules using Zapret2"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:650
+#: src/prokop/tabs/history/model.ts:658
 msgid "There are unsaved changes of Prokop in this session. Save & Apply or revert them, then restore the snapshot."
 msgstr ""
 
@@ -7498,6 +7709,14 @@ msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:1784
 msgid "There is nothing to roll back."
+msgstr ""
+
+#: src/prokop/tabs/monitoring/devicesView.ts:223
+msgid "They count what a device sends through the router and receives from it, DNS and this page included, also packets the firewall drops afterwards; traffic between devices of the LAN is not seen. An address idle for 7 days starts again from zero, and names are those of the current leases."
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:57
+msgid "This address uses http:// over the internet: the messages and any token in the address are sent unencrypted. Use https:// if the service supports it"
 msgstr ""
 
 #: src/prokop/tabs/diagnostic/checkCards.ts:78
@@ -7528,6 +7747,10 @@ msgstr ""
 msgid "This field must start a working nfqws2 strategy; --version exits immediately and is not allowed here."
 msgstr ""
 
+#: src/prokop/tabs/updates/componentActionToast.ts:152
+msgid "This firmware has no kmod-nft-socket package, which direct routing for TorrServer needs"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6927
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7304
 msgid "This flag does not accept a value."
@@ -7544,6 +7767,14 @@ msgstr ""
 
 #: src/prokop/tabs/updates/fullUninstall.ts:113
 msgid "This permanently deletes saved sections and subscriptions. Other components remain installed."
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts:104
+msgid "This Prokop build cannot install TorrServer"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts:147
+msgid "This Prokop build has no direct routing for TorrServer"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:312
@@ -7582,19 +7813,23 @@ msgstr ""
 msgid "This section has no IP lists, so it is protected through FakeIP and DNS only."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:363
+#: src/prokop/tabs/history/model.ts:365
 msgid "This snapshot cannot be deleted until the saved change has been applied"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:359
+#: src/prokop/tabs/history/model.ts:361
 msgid "This snapshot cannot be deleted while the autotune change can still be rolled back to it"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:683
+#: src/prokop/tabs/history/model.ts:369
+msgid "This snapshot cannot be deleted while the DPI guard of an unfinished restore is active"
+msgstr ""
+
+#: src/prokop/tabs/history/model.ts:691
 msgid "This snapshot was saved by an older version of Prokop. Before the restore, its configuration is migrated to the current version %s, as an upgrade migrates it: settings retired since then are updated. The snapshot itself is not changed; the changes listed above compare the snapshot as it was saved."
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:678
+#: src/prokop/tabs/history/model.ts:686
 msgid "This snapshot was saved by Prokop %s. Before the restore, its configuration is migrated to the current version %s, as an upgrade migrates it: settings retired since then are updated. The snapshot itself is not changed; the changes listed above compare the snapshot as it was saved."
 msgstr ""
 
@@ -7619,18 +7854,6 @@ msgstr ""
 msgid "This TorrServer was not installed by Prokop; Prokop left it as it is"
 msgstr ""
 
-#: src/prokop/tabs/updates/componentActionToast.ts:104
-msgid "This Prokop build cannot install TorrServer"
-msgstr ""
-
-#: src/prokop/tabs/updates/componentActionToast.ts:152
-msgid "This firmware has no kmod-nft-socket package, which direct routing for TorrServer needs"
-msgstr ""
-
-#: src/prokop/tabs/updates/componentActionToast.ts:147
-msgid "This Prokop build has no direct routing for TorrServer"
-msgstr ""
-
 #: src/prokop/tabs/monitoring/devicesView.ts:151
 #: src/prokop/tabs/monitoring/devicesView.ts:302
 msgid "Through rules"
@@ -7638,18 +7861,6 @@ msgstr ""
 
 #: src/prokop/tabs/monitoring/devicesView.ts:233
 msgid "Through rules: what sing-box counted for connections seen while this page is open; traffic that no rule sends to sing-box is not split."
-msgstr ""
-
-#: src/prokop/tabs/monitoring/devicesView.ts:223
-msgid "They count what a device sends through the router and receives from it, DNS and this page included, also packets the firewall drops afterwards; traffic between devices of the LAN is not seen. An address idle for 7 days starts again from zero, and names are those of the current leases."
-msgstr ""
-
-#: src/prokop/tabs/monitoring/devicesView.ts:251
-msgid "The router counts no new addresses: its list of addresses is full. New devices are missing until addresses idle for 7 days leave it."
-msgstr ""
-
-#: src/prokop/tabs/monitoring/devicesView.ts:259
-msgid "Shown: the %d addresses with the most traffic of %d."
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:174
@@ -7686,12 +7897,16 @@ msgstr ""
 msgid "Top level has the highest priority; lower levels are used as fallback"
 msgstr ""
 
-#: src/prokop/tabs/updates/componentActionToast.ts:253
-msgid "TorrServer %s did not start and was removed"
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/settings.js:46
+msgid "TorrServer"
 msgstr ""
 
 #: src/prokop/tabs/updates/componentActionToast.ts:143
 msgid "TorrServer %s did not start"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts:253
+msgid "TorrServer %s did not start and was removed"
 msgstr ""
 
 #: src/prokop/tabs/updates/componentActionToast.ts:245
@@ -7704,78 +7919,6 @@ msgstr ""
 
 #: src/prokop/tabs/updates/componentActionToast.ts:262
 msgid "TorrServer did not take the recommended settings"
-msgstr ""
-
-#: src/prokop/tabs/updates/componentActionToast.ts:286
-msgid "Prokop %s is not published in this release channel, so it cannot be kept for a rollback; the update was refused. Run the one-line installer instead: %s"
-msgstr ""
-
-#: src/prokop/tabs/updates/componentActionToast.ts:291
-msgid "Prokop %s is not published in this release channel, so it cannot be kept for a rollback; the update was refused"
-msgstr ""
-
-#: src/prokop/tabs/updates/componentActionToast.ts:298
-msgid "Not enough free space for %s: %s KiB free, %s KiB needed"
-msgstr ""
-
-#: src/prokop/tabs/updates/componentActionToast.ts:306
-msgid "%s: the router ran out of storage space"
-msgstr ""
-
-#: src/prokop/tabs/updates/componentActionToast.ts:311
-msgid "Prokop was not stopped: another sing-box process runs on the router; the current sing-box was kept"
-msgstr ""
-
-#: src/prokop/tabs/updates/componentActionToast.ts:318
-msgid "The configured mirror uses http://; programs are installed only from an https:// mirror"
-msgstr ""
-
-#: src/prokop/tabs/updates/componentActionToast.ts:325
-msgid "%s: the change failed, and the previous state could not be restored. Check the system log"
-msgstr ""
-
-#: src/prokop/tabs/updates/componentActionToast.ts:332
-msgid "%s: the change failed; the previous version was kept"
-msgstr ""
-
-#: src/prokop/tabs/updates/componentActionToast.ts:340
-msgid "%s was installed, but Prokop did not start cleanly"
-msgstr ""
-
-#: src/prokop/tabs/updates/componentActionToast.ts:348
-msgid "Failed to update the package lists. Check the internet connection and try again"
-msgstr ""
-
-#: src/prokop/tabs/updates/componentActionToast.ts:355
-msgid "%s: the downloaded file does not match its published checksum; it was not installed"
-msgstr ""
-
-#: src/prokop/tabs/updates/componentActionToast.ts:362
-msgid "%s: the download failed. Check the internet connection and try again"
-msgstr ""
-
-#: src/prokop/tabs/updates/componentActionToast.ts:369
-msgid "%s: the release could not be checked. Check the internet connection and try again"
-msgstr ""
-
-#: src/prokop/tabs/updates/componentActionToast.ts:375
-msgid "%s is not installed"
-msgstr ""
-
-#: src/prokop/tabs/updates/componentActionToast.ts:380
-msgid "%s is not available in this Prokop build"
-msgstr ""
-
-#: src/prokop/tabs/updates/componentActionToast.ts:410
-msgid "Component"
-msgstr ""
-
-#: src/prokop/tabs/updates/componentActionToast.ts:419
-msgid "%s: the action failed. The details are in the system log"
-msgstr ""
-
-#: src/prokop/tabs/updates/componentActionToast.ts:423
-msgid "The action failed. The details are in the system log"
 msgstr ""
 
 #: src/prokop/tabs/updates/componentActionToast.ts:25
@@ -7807,8 +7950,20 @@ msgstr ""
 msgid "TorrServer is stopped; start it to apply the settings"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:61
+msgid "TorrServer password"
+msgstr ""
+
 #: src/prokop/tabs/updates/componentActionToast.ts:174
 msgid "TorrServer publishes no build for this router's CPU"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:46
+msgid "TorrServer user name"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:36
+msgid "TorrServer's web page and API then ask for this user name and password, also apps that use its API (Lampa, MSX); stream and playlist links stay open. Applies to the TorrServer that Prokop installed"
 msgstr ""
 
 #: src/prokop/tabs/monitoring/render.ts:109
@@ -7964,6 +8119,7 @@ msgstr ""
 
 #: src/prokop/ui/status.ts:44
 #: src/prokop/ui/status.ts:119
+#: src/prokop/tabs/history/initController.ts:535
 #: src/prokop/tabs/history/model.ts:160
 msgid "Unknown"
 msgstr ""
@@ -8010,10 +8166,6 @@ msgstr ""
 msgid "Up to 8 domains; exactly these are checked."
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:933
-msgid "UPnP off: TorrServer does not open ports on the router"
-msgstr ""
-
 #: src/prokop/tabs/updates/initController.ts:1048
 msgid "Update"
 msgstr ""
@@ -8046,6 +8198,10 @@ msgstr ""
 
 #: src/prokop/tabs/updates/componentProgress.ts:22
 msgid "Updating package lists"
+msgstr ""
+
+#: src/prokop/tabs/updates/initController.ts:933
+msgid "UPnP off: TorrServer does not open ports on the router"
 msgstr ""
 
 #: src/validators/validateProxyUrl.ts:42
@@ -8091,6 +8247,10 @@ msgstr ""
 msgid "URLTest settings saved"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:54
+msgid "Use 1 to 64 Latin letters, digits, dots, dashes, _ or @"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:269
 msgid "Use a numeric ID or @channel"
 msgstr ""
@@ -8128,6 +8288,10 @@ msgstr ""
 msgid "Use source values"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:69
+msgid "Use up to 128 characters, without line breaks"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4825
 msgid "used by the rule"
 msgstr ""
@@ -8142,6 +8306,10 @@ msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4883
 msgid "used by the rule: text mode is on"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:975
+msgid "Used while client DNS is intercepted. DNS from these devices or to these servers is never intercepted: a DNS server in the LAN, the server of a VPN on port 53. An IPv4 or IPv6 address or subnet"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2816
