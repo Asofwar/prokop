@@ -1409,11 +1409,15 @@ function rt_table_names(table_id) {
     return names;
 }
 
-// `lookup <table>`: by any rt_tables name of its id, or by the numeric id
-// `ip` prints while rt_tables lacks a name (UC-163).
-function rule_line_has_lookup_table(fields, table, table_id) {
-    let names = [ as_string(table), as_string(table_id), ...rt_table_names(table_id) ];
+// The names `ip rule` may show for the table: any rt_tables name of its id,
+// or the numeric id `ip` prints while rt_tables lacks a name (UC-163). Read
+// once per listing, not once per line of it (optimization 15).
+function lookup_table_names(table, table_id) {
+    return [ as_string(table), as_string(table_id), ...rt_table_names(table_id) ];
+}
 
+// `lookup <table>` by one of `names` (lookup_table_names).
+function rule_line_has_lookup_table(fields, names) {
     for (let i = 0; i + 1 < length(fields); i++)
         if (fields[i] == "lookup" && index(names, fields[i + 1]) >= 0)
             return true;
@@ -1446,12 +1450,13 @@ function has_tproxy_marking_rule_text(rule_list, table, mark) {
     if (expected_mark == null)
         return false;
 
+    let names = lookup_table_names(table, TPROXY_RULE_TABLE_ID);
     for (let line in split(rule_list, "\n")) {
         let fields = normalized_fields(line);
         if (length(fields) < 3 || fields[0] != TPROXY_RULE_PRIORITY + ":" || fields[1] != "from" || fields[2] != "all")
             continue;
 
-        if (rule_line_has_lookup_table(fields, table, TPROXY_RULE_TABLE_ID) && rule_line_has_fwmark(fields, expected_mark))
+        if (rule_line_has_lookup_table(fields, names) && rule_line_has_fwmark(fields, expected_mark))
             return true;
     }
 
@@ -1463,9 +1468,10 @@ function has_tproxy_marking_rule_text(rule_list, table, mark) {
 function has_foreign_table_rule_text(rule_list, table, mark) {
     let expected_mark = provider_marks.parse_number(mark);
 
+    let names = lookup_table_names(table, TPROXY_RULE_TABLE_ID);
     for (let line in split(rule_list, "\n")) {
         let fields = normalized_fields(line);
-        if (length(fields) < 2 || !rule_line_has_lookup_table(fields, table, TPROXY_RULE_TABLE_ID))
+        if (length(fields) < 2 || !rule_line_has_lookup_table(fields, names))
             continue;
         if (fields[0] == TPROXY_RULE_PRIORITY + ":" && expected_mark != null && rule_line_has_fwmark(fields, expected_mark))
             continue;
