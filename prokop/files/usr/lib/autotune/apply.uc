@@ -444,20 +444,25 @@ function network_unavailable(probes, successes) {
 
 // A failed traffic check that the probes themselves cannot pin on the WAN
 // (AT-6: through FakeIP sing-box accepts the connection locally, and a WAN
-// that drops packets shows the same timeout as a DPI blackhole). One control
-// run outside the candidate decides: the isolated direct path of tuning
+// that drops packets shows the same timeout as a DPI blackhole). Control
+// runs outside the candidate decide: the isolated direct path of tuning
 // (autotune/isolation.uc: no DPI, the probe mark through the production
-// bypass, SYN-ACKs counted per connection) to the pinned address.
-//   down     no route to the target, or no connection got a SYN-ACK
-//   up       a SYN-ACK or a success: the WAN carries the target, the
-//            candidate failed it
-//   unknown  the control could not run; the candidate stays blamed
-// It runs inside this process's autotune lock, which it joins.
-function control_probe(plan) {
-    let ip = plan.target.ip, record = autotune_lock.record_name();
+// bypass, SYN-ACKs counted per connection), TCP handshakes only (AT-14: no
+// ClientHello the DPI could blackhole, so no orphan keeps the probe sockets,
+// and the run's hold, alive for minutes).
+//   down     no route to the target, or no connection to the pinned address
+//            got an answer and none to an independent witness either (the
+//            upstream resolver of the target, AT-13): the WAN is down
+//   up       a SYN-ACK or a connection from the pinned address, or from the
+//            witness when the pinned address alone is unreachable: the WAN
+//            carries traffic, the candidate failed it
+//   unknown  a control could not run; the candidate stays blamed
+// They run inside this process's autotune lock, which they join.
+function control_run(plan, ip) {
+    let record = autotune_lock.record_name();
     if (!probe_module.public_ipv4(ip) || record == null) return { verdict: "unknown", reason: "control_unavailable" };
     let pipe = fs.popen("PROKOP_AUTOTUNE_LOCK_OWNER=" + quote(record) + " " + command([ "ucode", "-L", LIB_DIR, ISOLATION,
-        "run", "direct", plan.target.host, "" + CONTROL_PROBES, plan.target.resolver || "", ip ]) + " 2>/dev/null", "r");
+        "run", "direct", plan.target.host, "" + CONTROL_PROBES, plan.target.resolver || "", ip, "handshake" ]) + " 2>/dev/null", "r");
     let r = pipe ? parse_json(pipe.read("all")) : null;
     if (pipe) pipe.close();
     if (interrupted) return { verdict: "unknown", reason: "interrupted", interrupted: true };
@@ -471,6 +476,7 @@ function control_probe(plan) {
     let probes = type(r.probes) == "array" ? r.probes : [];
     if (r.status != "completed" || r.reason != null || length(probes) == 0) return out;
     out.successes = length(filter(probes, (p) => p.class == "success"));
+    out.resets = length(filter(probes, (p) => p.class == "tcp_reset"));
     let counted = filter(probes, (p) => type(p.syn_acks) == "int");
     out.syn_acks = 0;
     for (let p in counted) out.syn_acks += p.syn_acks;
@@ -478,10 +484,30 @@ function control_probe(plan) {
     else if (length(counted) == length(probes)) { out.verdict = "down"; out.reason = "no_syn_ack"; }
     return out;
 }
+function control_probe(plan) {
+    let target = control_run(plan, plan.target.ip);
+    if (target.interrupted || target.verdict != "down" || target.reason == "route_unavailable") return target;
+    // The pinned address alone may be unreachable (an address taken out of
+    // rotation, blocked by address) while the WAN works: only a witness
+    // that is not answering either makes it the WAN.
+    let ip = plan.target.resolver;
+    if (!probe_module.public_ipv4(ip) || ip == plan.target.ip)
+        return { ...target, verdict: "unknown", reason: "witness_unavailable" };
+    let witness = control_run(plan, ip);
+    let result = { ...target, witness: { verdict: witness.verdict, reason: witness.reason, syn_acks: witness.syn_acks } };
+    if (witness.interrupted) return { ...result, verdict: "unknown", reason: "interrupted", interrupted: true };
+    // A reset answers too: the witness need not serve on port 443.
+    if (witness.verdict == "up" || witness.resets > 0) { result.verdict = "up"; result.reason = "target_unreachable"; }
+    else if (witness.verdict != "down") { result.verdict = "unknown"; result.reason = "witness_" + as_string(witness.reason || "unknown"); }
+    return result;
+}
 // The traffic of a failed check: when the probes alone do not prove the WAN
-// down, the control run is asked (see control_probe).
+// down, the control runs are asked (see control_probe). false: interrupted.
 function settle_network(plan, t) {
-    if (t.stability == "stable" || t.network_unavailable) return true;
+    if (type(t) != "object" || t.stability == "stable" || t.network_unavailable) return true;
+    // A marking table left behind keeps the control out (isolation.uc
+    // would remove it); the candidate stays blamed.
+    if (table_present(VERIFY_TABLE) !== false) return true;
     t.control = control_probe(plan);
     if (t.control.interrupted) return false;
     if (t.control.verdict == "down") t.network_unavailable = true;
@@ -567,7 +593,6 @@ function marked_traffic(plan, owner, checks, result) {
         queue_rule_packets: before_c != null && after_c != null ? after_c - before_c : null
     };
     result.traffic = t;
-    if (removed && !settle_network(plan, t)) return { ok: false, checks, traffic: null, interrupted: true };
     check(checks, "verify_path_created", created);
     check(checks, "traffic_transport", t.stability == "stable", sprintf("%d/%d", successes, length(probes)));
     // Every probe connection sends at least one packet with the rule mark,
@@ -584,6 +609,8 @@ function marked_traffic(plan, owner, checks, result) {
 // Runtime coherence of the rule with an expected strategy, plus (optionally)
 // a small sample of normal production requests proving they took this rule's
 // zapret path (FakeIP answer, the rule's queue and queue rule counting them).
+// Whether failed requests were the WAN's is settled by the caller
+// (settle_network), after the rollback of a failed apply (AT-14).
 function verify_production(plan, expected_opt, traffic) {
     let checks = [];
     let text = fs.readfile(CONFIG_FILE);
@@ -641,7 +668,6 @@ function verify_production(plan, expected_opt, traffic) {
         queue_rule_packets: before_c != null && after_c != null ? after_c - before_c : null
     };
     result.traffic = t;
-    if (!settle_network(plan, t)) return { ok: false, checks, traffic: null, interrupted: true };
     check(checks, "traffic_transport", t.stability == "stable", sprintf("%d/%d", successes, length(probes)));
     check(checks, "traffic_sing_box_path", length(filter(probes, (p) => p.remote_ip != null && is_fakeip(p.remote_ip))) == length(probes),
         "FakeIP answers");
@@ -1058,8 +1084,20 @@ function apply(plan_file, resolver) {
         audit.rollback_available = true; audit.finished_at = now();
         state_write(audit); return audit;
     }
-    if (!v.ok) return rollback_to(audit, p, type(v.traffic) == "object" && v.traffic.network_unavailable === true ?
-        "verification_network_unavailable" : "verification_failed");
+    if (!v.ok) {
+        // Rolled back at once whatever failed (AT-14): the control runs that
+        // tell a WAN outage from the candidate only name the reason, and
+        // take up to minutes the failing candidate would otherwise keep
+        // serving the whole rule.
+        let proven = type(v.traffic) == "object" && v.traffic.network_unavailable === true;
+        let result = rollback_to(audit, p, proven ? "verification_network_unavailable" : "verification_failed");
+        if (proven || result.phase != "rolled_back" || interrupted) return result;
+        if (settle_network(p, v.traffic) && v.traffic?.network_unavailable === true)
+            audit.reason = "verification_network_unavailable";
+        audit.verification = v;
+        state_write(audit);
+        return audit;
+    }
     audit.applied = true;
     // Confirm exactly the verified configuration, never a later edit.
     if (fingerprint(fs.readfile(CONFIG_FILE)) != candidate.fingerprint) {
@@ -1138,13 +1176,20 @@ function observe(started_at) {
     let probes = type(t) == "object" && type(t.probes) == "array" ? t.probes : [];
     let output = { status: "inconclusive", reason: null, failing, at: now(),
         successes: length(filter(probes, (p) => p.class == "success")), attempted: length(probes),
-        classes: map(probes, (p) => p.class),
-        control: type(t) == "object" && type(t.control) == "object" ? t.control.verdict : null };
+        classes: map(probes, (p) => p.class), control: null };
+    if (edited) output.config_edited = true;
     if (v.ok) { output.status = "ok"; return output; }
     // The coherence checks failed before any request was sent.
     if (type(t) != "object") { output.reason = "runtime_not_coherent"; return output; }
     if (t.network_unavailable === true) { output.reason = "network_unavailable"; return output; }
-    if (length(failing) == 1 && failing[0] == "traffic_transport") { output.status = "failed"; output.reason = "traffic_failed"; return output; }
+    if (length(failing) == 1 && failing[0] == "traffic_transport") {
+        // Only a check whose requests took the rule's path can blame the
+        // candidate, so only it needs the control runs (AT-14).
+        if (!settle_network(r.plan, t) || interrupted) return { status: "interrupted", reason: "interrupted" };
+        output.control = type(t.control) == "object" ? t.control.verdict : null;
+        if (t.network_unavailable === true) { output.reason = "network_unavailable"; return output; }
+        output.status = "failed"; output.reason = "traffic_failed"; return output;
+    }
     output.reason = length(filter(failing, (n) => index(PATH_CHECKS, n) >= 0)) > 0 ? "path_unproven" : "runtime_not_coherent";
     return output;
 }
@@ -1370,6 +1415,7 @@ else if (mode == "verify") {
     else {
         let expected = ARGV[2] == "current" ? p.current_strategy : (p.proposed_strategy || p.current_strategy);
         output = verify_production(p, expected, ARGV[3] == "traffic");
+        if (!output.ok && !output.interrupted) settle_network(p, output.traffic);
         output.status = output.ok ? "verified" : "failed";
         code = output.ok ? 0 : 1;
     }

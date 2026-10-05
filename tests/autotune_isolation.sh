@@ -75,6 +75,22 @@ grep -qxF 'add rule inet ProkopAutotuneProbe replies ip saddr 93.184.216.34 tcp 
   fail "SYN-ACK counter of the probe rule missing: $(grep replies "$NFT_STATE/last.nft")"
 assert_clean "connect timeout without SYN-ACK"
 ok "a timeout with a SYN-ACK is a TLS timeout, without one a connect timeout"
+# The control runs of an apply (AT-14): TCP handshakes only, through the same
+# isolated direct path; an established connection is a success.
+reset_state; export CURL_STUB_MODE=tls_timeout; iso run direct example.com 2 192.0.2.53 93.184.216.34 handshake
+json 'a.equal(r.status, "completed", JSON.stringify(r)); a.equal(r.handshake, true); const p = r.probes[0];
+  a.equal(p.class, "success"); a.equal(p.connect, "ok"); a.equal(p.handshake, true); a.equal(p.syn_acks, 1);' "$WORK/out.json"
+args="$(cat "$STUB_LOG/curl.args")"
+grep -qx -- 'ftp://example.com:443/' <<<"$args" || fail "handshake probe URL: $args"
+grep -qx -- '=ftp' <<<"$args" || fail "handshake probe protocol: $args"
+! grep -q -- 'https://' <<<"$args" || fail "a handshake probe sends a request"
+grep -qx -- '61000-61063' <<<"$args" || fail "handshake probe without the dedicated source ports"
+assert_clean "handshake"
+reset_state; export CURL_STUB_MODE=connect_timeout; iso run direct example.com 1 192.0.2.53 93.184.216.34 handshake
+json 'const p = r.probes[0]; a.equal(p.class, "connect_timeout"); a.equal(p.syn_acks, 0);' "$WORK/out.json"
+reset_state; iso run multisplit example.com 1 192.0.2.53 93.184.216.34 handshake
+json 'a.equal(r.status, "refused"); a.equal(r.reason, "invalid_mode");' "$WORK/out.json"
+ok "handshake-only direct run for the apply's control"
 }
 cases_3() {
 expect_class tls tls_failure ok failed not_attempted

@@ -172,7 +172,8 @@ manager flush
 # --- restore and autotune texts; a user's own success is silent -------------
 for case in "restore recovered|вернул прежнюю конфигурацию" "restore failure|Нужна проверка" \
   "autotune_rollback success automatic fake_cand|Автотюн откатил стратегию DPI: новая стратегия (fake_cand)" \
-  "start failure|Prokop не запустился"; do
+  "start failure|Prokop не запустился" \
+  "autotune_observation failure automatic fake_cand|Наблюдение автотюна закончилось без результата: новая стратегия DPI (fake_cand)"; do
   reset
   args="${case%%|*}"; text="${case#*|}"
   # shellcheck disable=SC2086
@@ -180,7 +181,8 @@ for case in "restore recovered|вернул прежнюю конфигурац�
   manager flush
   grep -qF "$text" "$WORK/curl.log" || fail "no text '$text' for $args"
 done
-for args in "restore success" "autotune_rollback success manual" "restore not_started" "cron_refresh failure"; do
+for args in "restore success" "autotune_rollback success manual" "restore not_started" "cron_refresh failure" \
+  "autotune_observation success automatic fake_cand"; do
   reset
   # shellcheck disable=SC2086
   record $args

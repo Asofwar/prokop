@@ -653,6 +653,9 @@ msgstr "Автоподбор: %s применена вручную"
 msgid "Autotune: %s passed the observation"
 msgstr "Автоподбор: %s прошла наблюдение"
 
+msgid "Autotune: the observation of %s ended without a result"
+msgstr "Автоподбор: наблюдение за %s закончилось без результата"
+
 msgid "Autotune: automatic apply"
 msgstr "Автоподбор: автоматическое применение"
 

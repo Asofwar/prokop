@@ -14,6 +14,10 @@ const MAX_TIME = "10";
 // connection after its first kilobytes needs to show, without downloading a
 // whole page on every probe (audit 2026-10-04).
 const PROBE_MAX_BYTES = "65536";
+// A handshake probe (the control runs of autotune/apply.uc, AT-14) only
+// opens the TCP connection and waits this long for a greeting that never
+// comes: nothing is sent to the target.
+const HANDSHAKE_TIME = "3";
 const FIELDS = "%{exitcode}|%{local_port}|%{remote_ip}|%{http_code}|%{time_connect}|%{time_appconnect}|%{time_starttransfer}|%{time_total}|%{errormsg}";
 
 function as_string(value) { return value == null ? "" : "" + value; }
@@ -204,16 +208,23 @@ function clean_message(v) {
 // options.production: a normal request through the production path (system
 // resolver, no pinned address, no dedicated source ports) - used by stage 5
 // to verify an applied strategy; the isolated probe pins ip and ports.
+// options.handshake (isolated only): the TCP handshake alone, as curl
+// ftp:// on port 443 makes it (it waits for an FTP greeting and sends
+// nothing); an established connection is its success.
 function probe(options) {
     let host = as_string(options.host), ip = options.production ? "" : as_string(options.ip);
     let path = as_string(options.path || "/");
+    let handshake_only = !options.production && !!options.handshake;
     if (!valid_host(host) || (!options.production && !valid_ipv4(ip)) || match(path, /^\/[A-Za-z0-9._~\/-]*$/) == null)
         return { class: "invalid_input" };
-    let args = [ CURL, "-s", "-o", "/dev/null", "--ipv4", "--noproxy", "*", "--proto", "=https",
-        "--connect-timeout", CONNECT_TIMEOUT, "--max-time", MAX_TIME, "--max-filesize", PROBE_MAX_BYTES, "-w", FIELDS ];
+    let args = handshake_only
+        ? [ CURL, "-s", "-o", "/dev/null", "--ipv4", "--noproxy", "*", "--proto", "=ftp",
+            "--connect-timeout", HANDSHAKE_TIME, "--max-time", HANDSHAKE_TIME, "-w", FIELDS ]
+        : [ CURL, "-s", "-o", "/dev/null", "--ipv4", "--noproxy", "*", "--proto", "=https",
+            "--connect-timeout", CONNECT_TIMEOUT, "--max-time", MAX_TIME, "--max-filesize", PROBE_MAX_BYTES, "-w", FIELDS ];
     if (!options.production) push(args, "--resolve", host + ":443:" + ip);
     if (options.port_range && !options.production) push(args, "--local-port", as_string(options.port_range));
-    push(args, "https://" + host + path);
+    push(args, handshake_only ? "ftp://" + host + ":443/" : "https://" + host + path);
     let run = capture(args);
     let line = "";
     for (let l in split(run.output, "\n")) if (trim(l) != "") line = l;
@@ -234,6 +245,14 @@ function probe(options) {
     record.connect = c.connect;
     record.tls = c.tls;
     record.http = c.http;
+    if (handshake_only) {
+        // Whatever followed the connection (the timeout waiting for the
+        // greeting, a close), it was established.
+        record.handshake = true;
+        if (seconds(f[4]) > 0) {
+            record.class = "success"; record.connect = "ok"; record.tls = "not_attempted"; record.http = "not_attempted";
+        }
+    }
     return record;
 }
 

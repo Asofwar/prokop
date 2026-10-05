@@ -326,6 +326,9 @@ function event_text(event) {
         if (status == "failure")
             return "⛔ Автотюн не смог откатить стратегию DPI. Нужна проверка.";
         return null;
+    case "autotune_observation":
+        return status == "failure" ? "⚠️ Наблюдение автотюна закончилось без результата: новая стратегия DPI" +
+            (event.candidate ? " (" + display_name(event.candidate) + ")" : "") + " осталась непроверенной." : null;
     case "node_down":
         return "🔴 Подключение «" + name + "» не отвечает.";
     case "node_up":

@@ -149,5 +149,14 @@ describe('observation after an automatic apply', () => {
         candidate: 'multisplit',
       }),
     ).toBe('Autotune: multisplit passed the observation');
+    expect(
+      eventTitle({
+        kind: 'autotune_observation',
+        status: 'failure',
+        timestamp: 1,
+        trigger: 'automatic',
+        candidate: 'multisplit',
+      }),
+    ).toBe('Autotune: the observation of multisplit ended without a result');
   });
 });

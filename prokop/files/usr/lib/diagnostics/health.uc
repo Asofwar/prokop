@@ -31,7 +31,8 @@ const HISTORY_MAX_BYTES = 65536;
 const HISTORY_KEEP = 150;
 // An autotune apply and its rollback have kinds of their own, never restore
 // (UC-060, design H.6); autotune_observation: an automatic apply passed the
-// observation after it (autotune/manager.uc). cron_refresh: a start or reload that could not
+// observation after it (success), or it ended without a verdict (failure,
+// autotune/manager.uc). cron_refresh: a start or reload that could not
 // update the scheduled jobs and went on without them. config_migration: a
 // package upgrade migrated the configuration and changed what it does in a
 // way the user should know about; its notices say how
@@ -222,7 +223,8 @@ function notify_event(event) {
     let wanted = (event.kind == "reload" || event.kind == "start") ? event.status == "failure" :
         event.kind == "restore" ? (event.status == "recovered" || event.status == "failure") :
         event.kind == "autotune_rollback" ? (event.status == "failure" ||
-            (event.status == "success" && event.trigger == "automatic")) : false;
+            (event.status == "success" && event.trigger == "automatic")) :
+        event.kind == "autotune_observation" ? event.status == "failure" : false;
     if (!wanted)
         return;
     try {

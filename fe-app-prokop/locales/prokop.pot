@@ -905,6 +905,10 @@ msgstr ""
 msgid "Autotune: %s passed the observation"
 msgstr ""
 
+#: src/prokop/tabs/history/model.ts:262
+msgid "Autotune: the observation of %s ended without a result"
+msgstr ""
+
 #: src/prokop/tabs/history/model.ts:271
 msgid "Autotune: automatic apply"
 msgstr ""

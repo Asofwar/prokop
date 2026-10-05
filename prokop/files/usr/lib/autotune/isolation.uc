@@ -1202,7 +1202,9 @@ function tune(host, probes, resolver, list, ip) {
     return result;
 }
 
-function run(candidate_id, host, count, resolver, ip) {
+// handshake: "handshake" for TCP handshakes only (probe.uc), the control
+// runs of autotune/apply.uc; direct only.
+function run(candidate_id, host, count, resolver, ip, handshake) {
     let result = { status: "failed", reason: null, candidate: null, target: null,
         isolation: { table: TABLE, chains: [ MARK_CHAIN + "@" + MARK_PRIORITY, CHAIN + "@" + PRIORITY, REPLY_CHAIN + "@" + REPLY_PRIORITY ], queue: QUEUE,
             port_range: PORT_RANGE, probe_mark: PROBE_MARK, desync_mark: DESYNC_MARK },
@@ -1217,6 +1219,11 @@ function run(candidate_id, host, count, resolver, ip) {
     result.candidate = { id: checked.id, rank: checked.rank, nfqws_opt: checked.nfqws_opt,
         state: checked.state, reason: checked.reason };
     if (checked.state != "supported") { result.status = "unsupported"; result.reason = checked.reason; return result; }
+    let handshake_only = handshake == "handshake";
+    if ((handshake != null && !handshake_only) || (handshake_only && checked.nfqws_opt != "")) {
+        result.status = "refused"; result.reason = "invalid_mode"; return result;
+    }
+    if (handshake_only) result.handshake = true;
 
     let pre = preflight(result, host, resolver, ip, (resolved) => {
         result.status = "completed"; result.reason = "dns_failure";
@@ -1260,7 +1267,7 @@ function run(candidate_id, host, count, resolver, ip) {
             if (interrupted) return "interrupted";
             let before_c = probe_counters();
             if (before_c == null || before_c.synack == null) return "counters_unavailable";
-            let record = probe_module.probe({ host, ip: target.ip, port_range: PORT_RANGE });
+            let record = probe_module.probe({ host, ip: target.ip, port_range: PORT_RANGE, handshake: handshake_only });
             let after_c = probe_counters();
             if (after_c == null || after_c.synack == null) return "counters_unavailable";
             push(result.probes, probe_module.handshake(record, after_c.synack.packets - before_c.synack.packets));
@@ -1352,7 +1359,7 @@ if (mode == "run" || mode == "cleanup" || mode == "tune") {
     if (!autotune_lock.acquire())
         output = autotune_lock.busy() ? { status: "busy", reason: "autotune_in_progress" } : { status: "failed", reason: "lock_unavailable" };
     else {
-        if (mode == "run") output = run(ARGV[1], ARGV[2], ARGV[3], ARGV[4], ARGV[5]);
+        if (mode == "run") output = run(ARGV[1], ARGV[2], ARGV[3], ARGV[4], ARGV[5], ARGV[6]);
         else if (mode == "tune") output = tune(ARGV[1], ARGV[2], ARGV[3], ARGV[4], ARGV[5]);
         else output = cleanup();
         autotune_lock.release();
@@ -1365,7 +1372,7 @@ else if (mode == "status") {
     code = 0;
 }
 else {
-    warn("Usage: autotune/isolation.uc <run <candidate> <host> [count] [resolver] [ip]|tune <host> [probes] [resolver] [candidates] [ip]|cleanup|status|model <ip> [direct|tune]>\n");
+    warn("Usage: autotune/isolation.uc <run <candidate> <host> [count] [resolver] [ip] [handshake]|tune <host> [probes] [resolver] [candidates] [ip]|cleanup|status|model <ip> [direct|tune]>\n");
     exit(1);
 }
 print(sprintf("%J\n", output));

@@ -262,10 +262,11 @@ export function eventTitle(event: Prokop.HistoryEvent) {
   if (event.kind === 'autotune_rollback' && event.trigger)
     return rollbackTitle(event.trigger === 'manual', event.candidate ?? '');
   if (event.kind === 'autotune_observation' && event.candidate)
-    return _('Autotune: %s passed the observation').replace(
-      '%s',
-      event.candidate,
-    );
+    return (
+      event.status === 'success'
+        ? _('Autotune: %s passed the observation')
+        : _('Autotune: the observation of %s ended without a result')
+    ).replace('%s', event.candidate);
   if (event.kind !== 'autotune_apply' || !event.trigger)
     return eventKindLabel(event.kind);
   const candidate = event.candidate ?? '';

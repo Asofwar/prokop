@@ -69,12 +69,20 @@ SH
 cat > "$STATE/control" <<'SH'
 #!/bin/sh
 echo "isolation $4 $5 $6 $7 $8 $9" >> "$STUB_LOG/isolation.log"
+echo "mode ${10:-}" >> "$STUB_LOG/isolation.log"
+# The configuration a control run saw (AT-14: after the rollback).
+cp "$PROKOP_CONFIG_FILE" "$STATE/control.config"
 if ! "$REAL_UCODE" -L "$PROKOP_LIB" -e 'exit(require("autotune.lock").acquire() ? 0 : 1);'; then
   echo '{"status":"failed","reason":"lock_unavailable"}'; exit 1
 fi
 echo "joined $PROKOP_AUTOTUNE_LOCK_OWNER" >> "$STUB_LOG/isolation.log"
 p() { printf '{"class":"%s","syn_acks":%s,"curl_exit_code":%s}' "$1" "$2" "$3"; }
-case "${CONTROL:-refused}" in
+# The witness of a target found down (the resolver, AT-13): $CONTROL_WITNESS,
+# or as the target.
+control="${CONTROL:-refused}"
+[ "$9" != 192.0.2.53 ] || control="${CONTROL_WITNESS:-$control}"
+case "$control" in
+  reset) echo "{\"status\":\"completed\",\"reason\":null,\"probes\":[$(p tcp_reset 0 7),$(p tcp_reset 0 7),$(p tcp_reset 0 7)]}" ;;
   down) echo "{\"status\":\"completed\",\"reason\":null,\"probes\":[$(p connect_timeout 0 28),$(p connect_timeout 0 28),$(p connect_timeout 0 28)]}" ;;
   up) echo "{\"status\":\"completed\",\"reason\":null,\"probes\":[$(p tls_failure 1 28),$(p connect_timeout 0 28),$(p success 1 0)]}" ;;
   noroute) echo '{"status":"unsupported","reason":"isolation_unavailable","isolation":{"unavailable":"route_unavailable"},"probes":[]}' ;;
@@ -331,7 +339,7 @@ dpi_args() { tr '\0' ' ' < "/proc/$(head -n 1 "$ZAPRET_CHILD_PID_DIR/Dpi.pid")/c
 reset_apply() {
   reset_state
   unset PROD_PLAN PROD_SLEEP PROD_QUEUE_BUMP PROD_REMOTE DIG_SLEEP GUARD_SLEEP VALIDATE_SLEEP VALIDATE_FAIL RELOAD_SLEEP UCI_FAIL UCI_EXTRA_CHANGE BREAK_FIRST_RELOAD BREAK_ON_RELOAD CONFIRM_FAIL EDIT_BEFORE_RESTORE EDIT_ON_RELOAD STAGE_BEFORE_RESTORE NFQWS_STUB_REJECT DIG_STUB_ANSWER \
-    LOCAL_DIG_ANSWER PROD_CHAINS CLASH_DOWN HOLD_SLEEP GUARD_FAIL GUARD_HOLD UCI_SLEEP SNAPSHOT_DURING_VERIFY CONTROL
+    LOCAL_DIG_ANSWER PROD_CHAINS CLASH_DOWN HOLD_SLEEP GUARD_FAIL GUARD_HOLD UCI_SLEEP SNAPSHOT_DURING_VERIFY CONTROL CONTROL_WITNESS
   pkill -f "$WORK/bin/nfqws --qnum=40" 2>/dev/null || true
   rm -rf "$PROKOP_SNAPSHOT_DIR" "$PROKOP_SNAPSHOT_HASH_DIR" "$PROKOP_AUTOTUNE_APPLY_STATE" "$STATE"/prod.* "$STATE/reload.plan" "$STATE/zapret-broken" "$STATE/broke-once"\
     "$ZAPRET_CHILD_PID_DIR"/*.pid "$NFT_STATE/tables/ProkopConfigRestoreDpiGuard" "$PROKOP_SNAPSHOT_LOCK_DIR" "$WORK/run"/* \
@@ -578,6 +586,28 @@ reset_apply; plan_ready; export CONTROL=down; at apply "$WORK/plan.json"
 json 'a.equal(r.status, "applied"); a.equal(r.verification.traffic.control, undefined);' "$WORK/out.json"
 [ ! -s "$STUB_LOG/isolation.log" ] || fail "a passing verification ran the control"
 ok "AT-6 failed verification: control run down -> verification_network_unavailable; up or unavailable -> the candidate is blamed"
+# AT-14: the candidate is rolled back first; the control runs (TCP
+# handshakes only) after it, and only name the reason.
+reset_apply; plan_ready; export PROD_PLAN=connect_timeout CONTROL=down; at apply "$WORK/plan.json"
+json 'a.equal(r.status, "rolled_back"); a.equal(r.reason, "verification_network_unavailable"); a.equal(r.rollback.status, "success");' "$WORK/out.json"
+json 'a.equal(r.reason, "verification_network_unavailable"); a.equal(r.verification.traffic.control.verdict, "down");' "$PROKOP_AUTOTUNE_APPLY_STATE"
+[ "$(sha256sum < "$STATE/control.config" | cut -d' ' -f1)" = "$PRE_HASH" ] || fail "the control ran before the rollback"
+grep -qx 'mode handshake' "$STUB_LOG/isolation.log" || fail "the control is not handshake-only: $(cat "$STUB_LOG/isolation.log")"
+ok "AT-14 a failed verification is rolled back before the control runs, which only names the reason"
+# AT-13: the pinned address alone unreachable is not the WAN: the upstream
+# resolver is the independent witness. Down only when it is down too.
+reset_apply; plan_ready; export PROD_PLAN=connect_timeout CONTROL=down CONTROL_WITNESS=up; at apply "$WORK/plan.json"
+json 'a.equal(r.status, "rolled_back"); a.equal(r.reason, "verification_failed"); a.equal(r.verification.traffic.network_unavailable, false);
+  a.equal(r.verification.traffic.control.verdict, "up"); a.equal(r.verification.traffic.control.reason, "target_unreachable");
+  a.equal(r.verification.traffic.control.witness.verdict, "up");' "$WORK/out.json"
+grep -q '^isolation run direct example.com 3 192.0.2.53 192.0.2.53$' "$STUB_LOG/isolation.log" || fail "witness run: $(cat "$STUB_LOG/isolation.log")"
+reset_apply; plan_ready; export PROD_PLAN=connect_timeout CONTROL=down CONTROL_WITNESS=reset; at apply "$WORK/plan.json"
+json 'a.equal(r.reason, "verification_failed"); a.equal(r.verification.traffic.control.verdict, "up");' "$WORK/out.json"
+reset_apply; plan_ready; export PROD_PLAN=connect_timeout CONTROL=down CONTROL_WITNESS=refused; at apply "$WORK/plan.json"
+json 'a.equal(r.reason, "verification_failed"); a.equal(r.verification.traffic.control.verdict, "unknown");' "$WORK/out.json"
+reset_apply; plan_ready; export PROD_PLAN=connect_timeout CONTROL=noroute; at apply "$WORK/plan.json"
+json 'a.equal(r.reason, "verification_network_unavailable"); a.equal(r.verification.traffic.control.witness, undefined);' "$WORK/out.json"
+ok "AT-13 network unavailable only when the pinned address and the witness are both unreachable (or no route)"
 # Only a process the apply started joins its lock: the same record from
 # anywhere else (here the test itself) is refused.
 reset_apply; plan_ready; export PROD_PLAN=connect_timeout CONTROL=outsider
@@ -1624,8 +1654,11 @@ export PROD_PLAN=reset CONTROL=down; at observe "$id"; unset PROD_PLAN CONTROL
 json 'a.equal(r.status, "inconclusive", JSON.stringify(r)); a.equal(r.reason, "network_unavailable"); a.equal(r.control, "down");' "$WORK/out.json"
 export PROD_PLAN=reset CONTROL=up; at observe "$id"; unset PROD_PLAN CONTROL
 json 'a.equal(r.status, "failed"); a.equal(r.reason, "traffic_failed"); a.equal(r.control, "up");' "$WORK/out.json"
-export PROD_PLAN=reset PROD_REMOTE=93.184.216.34; at observe "$id"; unset PROD_PLAN PROD_REMOTE
+rm -f "$STUB_LOG/isolation.log"
+export PROD_PLAN=reset PROD_REMOTE=93.184.216.34 CONTROL=down; at observe "$id"; unset PROD_PLAN PROD_REMOTE CONTROL
 json 'a.equal(r.status, "inconclusive"); a.equal(r.reason, "path_unproven"); a.ok(r.failing.includes("traffic_sing_box_path"));' "$WORK/out.json"
+# Inconclusive whatever the WAN does: no control run (AT-14).
+[ ! -s "$STUB_LOG/isolation.log" ] || fail "a check without the rule path ran the control: $(cat "$STUB_LOG/isolation.log")"
 touch "$STATE/zapret-broken"; at observe "$id"; rm -f "$STATE/zapret-broken"
 json 'a.equal(r.status, "inconclusive"); a.equal(r.reason, "runtime_not_coherent"); a.ok(r.failing.includes("zapret_runtime_ready"));' "$WORK/out.json"
 : > "$PROKOP_STOP_REQUESTED_FILE"; at observe "$id"; rm -f "$PROKOP_STOP_REQUESTED_FILE"

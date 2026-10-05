@@ -768,7 +768,13 @@ function observation_tick_locked() {
     // A tick further away than one step was set before the clock jumped back.
     let step = policy_module.OBSERVATION_STEP;
     if (at < int(o.next_check_at) && int(o.next_check_at) <= at + step) return { result: "skipped", reason: "not_due" };
-    if (at > int(o.deadline) || at < int(o.started_at) - step) return finish("ended", "observation_expired");
+    if (at > int(o.deadline) || at < int(o.started_at) - step) {
+        // The candidate stays without a verdict: the history and a
+        // notification say so (AT-13).
+        let ended = finish("ended", "observation_expired");
+        if (ended.recorded) history("autotune_observation", "failure", "automatic", o.candidate);
+        return ended;
+    }
     let reason = blocker(true);
     if (reason != null) return { result: "skipped", reason };
     let check = run_tool("apply", [ "observe", "" + o.apply_started_at ]);

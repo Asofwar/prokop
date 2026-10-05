@@ -209,6 +209,8 @@ state_edit 's.observation.deadline=Math.floor(Date.now()/1000)-1'
 tick expired
 [ "$(json_get "$WORK/expired.json" observation.result)" = '"ended"' ] || fail "expired: $(cat "$WORK/expired.json")"
 [ "$(st groups.youtube.last_apply.observation.reason)" = '"observation_expired"' ] || fail "expired reason"
+# AT-13: a candidate left without a verdict is in the history (and notified).
+case "$(history_of autotune_observation)" in *,failure:automatic:fake) ;; *) fail "expiry not in the history: $(history_of autotune_observation)";; esac
 [ "$(observe_calls)" = 0 ] || fail "no check after the deadline"
 
 # ---- the mode switched away from auto ends it ---------------------------------
