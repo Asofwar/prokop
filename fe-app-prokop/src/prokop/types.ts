@@ -90,6 +90,9 @@ export namespace Prokop {
     tx_packets: number;
     rx_bytes: number;
     rx_packets: number;
+    // The MAC the router's neighbour table has for the address now
+    // (observed), when it has one.
+    mac?: string;
   }
   export interface DeviceTraffic {
     state: 'ok' | 'disabled' | 'stopped' | 'unavailable';
@@ -98,7 +101,13 @@ export namespace Prokop {
     // fw4 flow offloading: accelerated flows bypass the counters.
     offload: 'none' | 'software' | 'hardware' | 'unknown';
     interfaces: string[];
+    // The addresses with the most traffic first, at most 200 (TRF-2).
     devices: DeviceTrafficCounter[];
+    // All counted addresses; truncated when `devices` holds fewer.
+    total_devices?: number;
+    truncated?: boolean;
+    // Counter sets that are full and count no new address (TRF-1).
+    full?: string[];
   }
   export interface RouteTrace {
     target: RouteTraceStage & {

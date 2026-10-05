@@ -23,6 +23,11 @@ export interface DevicesViewModel {
   status: DevicesStatus;
   since: number | null;
   offload: Prokop.DeviceTraffic['offload'];
+  // Counter sets that count no new address (TRF-1).
+  full: boolean;
+  // All counted addresses, when the router sent only the busiest (TRF-2).
+  totalDevices: number | null;
+  shownDevices: number;
   rows: DevicesViewRow[];
   showConnections: (address: string) => void;
   startServiceActions: () => HTMLElement[];
@@ -214,6 +219,10 @@ function renderNotes(model: DevicesViewModel) {
         formatDateTime(model.since),
       )
     : _('Sent, received and speed: router counters since Prokop started.');
+  // TRF-5, TRF-6, TRF-4: what the counters hold and what they do not.
+  const scope = _(
+    'They count what a device sends through the router and receives from it, DNS and this page included, also packets the firewall drops afterwards; traffic between devices of the LAN is not seen. An address idle for 7 days starts again from zero, and names are those of the current leases.',
+  );
   const notes: Node[] = [
     E('p', { class: 'fkp_monitoring-devices__note' }, [
       renderProvenance('observed'),
@@ -221,11 +230,37 @@ function renderNotes(model: DevicesViewModel) {
         'span',
         { class: 'fkp_monitoring-devices__note-text' },
         asText(
-          `${counted} ${_('Through rules: what sing-box counted for connections seen while this page is open; traffic that no rule sends to sing-box is not split.')}`,
+          `${counted} ${scope} ${_('Through rules: what sing-box counted for connections seen while this page is open; traffic that no rule sends to sing-box is not split.')}`,
         ),
       ),
     ]),
   ];
+  const warning = (text: string) =>
+    E(
+      'p',
+      {
+        class:
+          'fkp_monitoring-devices__note fkp_monitoring-devices__note--warning',
+        role: 'note',
+      },
+      asText(text),
+    );
+  if (model.full)
+    notes.push(
+      warning(
+        _(
+          'The router counts no new addresses: its list of addresses is full. New devices are missing until addresses idle for 7 days leave it.',
+        ),
+      ),
+    );
+  if (model.totalDevices != null && model.totalDevices > model.shownDevices)
+    notes.push(
+      warning(
+        _('Shown: the %d addresses with the most traffic of %d.')
+          .replace('%d', String(model.shownDevices))
+          .replace('%d', String(model.totalDevices)),
+      ),
+    );
   if (model.offload === 'software' || model.offload === 'hardware')
     notes.push(
       E(

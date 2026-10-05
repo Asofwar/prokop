@@ -539,31 +539,51 @@ function trimClosedConnections() {
   });
 }
 
+// The rule each open connection is counted under, by connection id: a
+// connection keeps its route, so its path is worked out once and not on
+// every payload (optimization 4). Cleared when the route names change.
+let connectionRoutes = new Map<
+  string,
+  { key: string; label: string; kind: PathKind }
+>();
+
 // Every payload counts for the split by rule, also while the connection
 // list is paused.
 function trackRouteUsage(payload: ClashConnectionsPayload) {
   const rawConnections = Array.isArray(payload.connections)
     ? payload.connections
     : [];
+  const routes = new Map<
+    string,
+    { key: string; label: string; kind: PathKind }
+  >();
   routeUsage.observe(
     rawConnections.map((rawConnection) => {
       const id = normalizeString(rawConnection.id);
-      const path = getPath({ ...rawConnection, id, lastSeenAt: 0 });
+      let route = connectionRoutes.get(id);
+      if (!route) {
+        const path = getPath({ ...rawConnection, id, lastSeenAt: 0 });
+        route = {
+          key: path.rule
+            ? `rule:${path.rule.name}`
+            : `kind:${path.kind}:${path.tag}`,
+          label: path.rule
+            ? path.rule.label
+            : path.tag || pathKindLabel(path.kind),
+          kind: path.kind,
+        };
+      }
+      if (id) routes.set(id, route);
       return {
         id,
         ip: getConnectionSourceIp(rawConnection),
-        key: path.rule
-          ? `rule:${path.rule.name}`
-          : `kind:${path.kind}:${path.tag}`,
-        label: path.rule
-          ? path.rule.label
-          : path.tag || pathKindLabel(path.kind),
-        kind: path.kind,
+        ...route,
         upload: Number(rawConnection.upload) || 0,
         download: Number(rawConnection.download) || 0,
       };
     }),
   );
+  connectionRoutes = routes;
 }
 
 function applyConnectionsPayload(payload: ClashConnectionsPayload) {
@@ -1975,6 +1995,11 @@ function renderDevices() {
       status,
       since: deviceTraffic?.since ?? null,
       offload: deviceTraffic?.offload ?? 'unknown',
+      full: Boolean(deviceTraffic?.full?.length),
+      totalDevices: deviceTraffic?.truncated
+        ? (deviceTraffic.total_devices ?? null)
+        : null,
+      shownDevices: deviceTraffic?.devices.length ?? 0,
       rows,
       showConnections: showDeviceConnections,
       startServiceActions: renderStartServiceAction,
@@ -2044,6 +2069,7 @@ const routeNamesRefresher = createRouteNamesRefresher({
   },
   apply: (sections) => {
     buildRouteDisplayNames(sections);
+    connectionRoutes = new Map();
     renderControls();
     renderConnections();
   },
@@ -2223,6 +2249,7 @@ function setServiceAvailability(next: ServiceAvailability) {
       closedConnections.clear();
       closingConnectionIds.clear();
       routeUsage.reset();
+      connectionRoutes = new Map();
     } else if (next === 'unavailable') {
       loading = false;
       failed = true;
@@ -2273,6 +2300,7 @@ function resetMonitoringState() {
   closedConnections.clear();
   closingConnectionIds.clear();
   routeUsage.reset();
+  connectionRoutes = new Map();
   deviceTraffic = null;
   deviceTrafficFailed = false;
   deviceSample = null;

@@ -96,6 +96,53 @@ describe('device rows', () => {
   });
 });
 
+describe('device rows from observed MACs', () => {
+  it('puts addresses with the MAC of the neighbour table together and names them by MAC (TRF-3)', () => {
+    const data = traffic([
+      ['192.168.1.5', 100, 1000],
+      ['2001:db8::abcd', 10, 10],
+      ['fe80::5', 1, 1],
+    ]);
+    data.devices.forEach((device) => {
+      device.mac = 'AA:BB:CC:00:00:05';
+    });
+    const rows = deviceRows(
+      data,
+      { '192.168.9.9': { name: 'Phone', mac: 'aa:bb:cc:00:00:05' } },
+      {},
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0].addresses).toEqual([
+      '192.168.1.5',
+      '2001:db8::abcd',
+      'fe80::5',
+    ]);
+    expect(rows[0].name).toBe('Phone');
+  });
+
+  it('keeps the addresses behind one MAC with several IPv4 addresses apart (TRF-4)', () => {
+    const data = traffic([
+      ['192.168.1.5', 100, 1000],
+      ['192.168.1.6', 10, 10],
+    ]);
+    data.devices.forEach((device) => {
+      device.mac = 'aa:bb:cc:00:00:01';
+    });
+    const rows = deviceRows(
+      data,
+      {
+        '192.168.1.5': { name: 'Laptop', mac: 'aa:bb:cc:00:00:01' },
+        '192.168.1.6': { name: '', mac: 'aa:bb:cc:00:00:01' },
+      },
+      {},
+    );
+    expect(rows.map((row) => [row.name, row.addresses])).toEqual([
+      ['Laptop', ['192.168.1.5']],
+      ['', ['192.168.1.6']],
+    ]);
+  });
+});
+
 describe('counter rates', () => {
   it('reports bytes per second between two readings of the same counters', () => {
     const first = counterSample(traffic([['192.168.1.5', 1000, 5000]]), 0);
@@ -132,6 +179,13 @@ describe('counter rates', () => {
       ),
     ).toEqual({});
     expect(counterRates(null, first)).toEqual({});
+    // A start dated from the uptime moves by a second between readings.
+    expect(
+      counterRates(
+        first,
+        counterSample(traffic([['192.168.1.5', 4000, 11000]], 1001), 3000),
+      ),
+    ).toEqual({ '192.168.1.5': { tx: 1000, rx: 2000 } });
   });
 });
 

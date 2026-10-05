@@ -5234,6 +5234,15 @@ msgstr "Через правила"
 msgid "Through rules: what sing-box counted for connections seen while this page is open; traffic that no rule sends to sing-box is not split."
 msgstr "Через правила: что насчитал sing-box по соединениям, замеченным, пока открыта эта страница; трафик, который ни одно правило не отправляет в sing-box, не разбивается."
 
+msgid "They count what a device sends through the router and receives from it, DNS and this page included, also packets the firewall drops afterwards; traffic between devices of the LAN is not seen. An address idle for 7 days starts again from zero, and names are those of the current leases."
+msgstr "Считается то, что устройство отправляет через роутер и получает от него, включая DNS и эту страницу, а также пакеты, которые затем отбросит файрвол; трафик между устройствами локальной сети не виден. Адрес, простаивавший 7 дней, начинает счёт с нуля; имена берутся из текущих аренд."
+
+msgid "The router counts no new addresses: its list of addresses is full. New devices are missing until addresses idle for 7 days leave it."
+msgstr "Роутер не считает новые адреса: список адресов заполнен. Новых устройств не будет видно, пока из него не уйдут адреса, простаивавшие 7 дней."
+
+msgid "Shown: the %d addresses with the most traffic of %d."
+msgstr "Показаны %d адресов с наибольшим трафиком из %d."
+
 msgid "through the rule"
 msgstr "через правило"
 

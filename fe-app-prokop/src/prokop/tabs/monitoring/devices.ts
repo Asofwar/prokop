@@ -154,6 +154,14 @@ export interface AddressRate {
   rx: number;
 }
 
+// The router dates a start from its uptime once the clock has moved
+// (TRF-5): two readings of the same start may then differ by a second. A
+// rebuild of the counters starts them anew, seconds or more apart.
+function sameStart(a: number | null, b: number | null) {
+  if (a == null || b == null) return a === b;
+  return Math.abs(a - b) <= 2;
+}
+
 // Bytes per second between two readings of the same counters. None when the
 // counters were rebuilt in between (a different start time, or a count that
 // went down) or the readings are too close to tell.
@@ -165,7 +173,7 @@ export function counterRates(
   maxSeconds = 15,
 ): Record<string, AddressRate> {
   const rates: Record<string, AddressRate> = {};
-  if (!previous || previous.since !== next.since) return rates;
+  if (!previous || !sameStart(previous.since, next.since)) return rates;
   const seconds = (next.at - previous.at) / 1000;
   if (!(seconds >= 0.5) || seconds > maxSeconds) return rates;
   Object.entries(next.bytes).forEach(([address, now]) => {
@@ -210,18 +218,47 @@ export interface DeviceRow {
   rxRate: number | null;
 }
 
+function isIpv6LinkLocal(address: string) {
+  return /^fe[89ab][0-9a-f]:/i.test(address);
+}
+
 // One row per device: addresses with the same MAC (IPv4 and the IPv6
 // addresses of one device) are added up; an address the router knows no
-// MAC for is a device of its own.
+// MAC for is a device of its own. The MAC is the one the router's
+// neighbour table has now (observed, TRF-3), else the one of the host
+// hints. A MAC with more than one IPv4 address is a repeater, relayd or a
+// second router in front of several devices (TRF-4): its addresses stay
+// rows of their own.
 export function deviceRows(
   traffic: Prokop.DeviceTraffic,
   hosts: DeviceHosts,
   rates: Record<string, AddressRate>,
 ): DeviceRow[] {
+  const observed = new Map(
+    traffic.devices.map((device) => [device.address, device.mac || '']),
+  );
+  const macOf = (address: string) =>
+    (observed.get(address) || hosts[address]?.mac || '').toLowerCase();
+  const ipv4ByMac = new Map<string, number>();
+  traffic.devices.forEach((device) => {
+    const mac = macOf(device.address);
+    if (mac && isIpv4(device.address))
+      ipv4ByMac.set(mac, (ipv4ByMac.get(mac) || 0) + 1);
+  });
+  // The name a host hint gives the MAC, for addresses the hints do not
+  // know yet (a new temporary IPv6 address).
+  const nameByMac = new Map<string, string>();
+  Object.values(hosts).forEach((host) => {
+    const mac = (host.mac || '').toLowerCase();
+    if (mac && host.name && !nameByMac.has(mac)) nameByMac.set(mac, host.name);
+  });
+
   const rows = new Map<string, DeviceRow>();
   traffic.devices.forEach((device) => {
     const host = hosts[device.address];
-    const key = host?.mac ? `mac:${host.mac}` : `ip:${device.address}`;
+    const mac = macOf(device.address);
+    const shared = mac && (ipv4ByMac.get(mac) || 0) > 1;
+    const key = mac && !shared ? `mac:${mac}` : `ip:${device.address}`;
     let row = rows.get(key);
     if (!row) {
       row = {
@@ -236,6 +273,7 @@ export function deviceRows(
       rows.set(key, row);
     }
     if (!row.name && host?.name) row.name = host.name;
+    if (!row.name && mac && !shared) row.name = nameByMac.get(mac) || '';
     row.addresses.push(device.address);
     row.txBytes += Number(device.tx_bytes) || 0;
     row.rxBytes += Number(device.rx_bytes) || 0;
@@ -246,7 +284,15 @@ export function deviceRows(
     }
   });
   return Array.from(rows.values())
-    .map((row) => ({ ...row, addresses: row.addresses.sort(compareAddresses) }))
+    .map((row) => ({
+      ...row,
+      // A link-local address never names the device.
+      addresses: row.addresses.sort(
+        (a, b) =>
+          Number(isIpv6LinkLocal(a)) - Number(isIpv6LinkLocal(b)) ||
+          compareAddresses(a, b),
+      ),
+    }))
     .sort(
       (a, b) =>
         b.txBytes + b.rxBytes - (a.txBytes + a.rxBytes) ||
