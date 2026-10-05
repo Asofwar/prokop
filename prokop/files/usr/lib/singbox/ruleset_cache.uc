@@ -595,8 +595,29 @@ function empty_ruleset_path(url) {
     return path;
 }
 
-function prune_stale_cache(manifest) {
+// The local rule-set files a configuration references: the running one's
+// stay while a candidate is generated and checked (LC-8). A candidate that
+// is refused must not take a file from under the running sing-box, which
+// would not start again after a respawn; the files that only it used go at
+// the next generation.
+function referenced_rule_set_files(config_path) {
     let keep = {};
+    if (as_string(config_path) == "")
+        return keep;
+    let config = common.read_json_file(config_path);
+    let route = common.object_or_empty(common.object_or_empty(config).route);
+    for (let rule_set in common.array_or_empty(route.rule_set)) {
+        let path = as_string(common.object_or_empty(rule_set).path);
+        if (common.object_or_empty(rule_set).type == "local" && path != "") {
+            keep[path] = true;
+            keep[binary_validation_path(path)] = true;
+        }
+    }
+    return keep;
+}
+
+function prune_stale_cache(manifest, keep) {
+    keep = { ...keep };
     for (let key, entry in common.object_or_empty(manifest)) {
         let format = as_string(entry.format) == "source" ? "source" : "binary";
         let path = cache_path(entry.url, format);
@@ -615,8 +636,8 @@ function prune_stale_cache(manifest) {
     }
 }
 
-function prune_runtime_cache(manifest, runtime_manifest) {
-    let keep = {};
+function prune_runtime_cache(manifest, runtime_manifest, keep) {
+    keep = { ...keep };
     for (let key, entry in common.object_or_empty(manifest))
         keep[RUNTIME_CACHE_DIR + "/empty-" + key + ".json"] = true;
     for (let key, entry in common.object_or_empty(runtime_manifest)) {
@@ -673,7 +694,9 @@ function local_rule_set(rule_set, manifest, previous_manifest, runtime_manifest,
     };
 }
 
-function materialize_config(config_path, allow_download) {
+// running_config_path: the published configuration of the running
+// generation, whose files are kept (referenced_rule_set_files).
+function materialize_config(config_path, allow_download, running_config_path) {
     if (!ensure_cache_dir())
         return false;
     cleanup_stale_temporary_files();
@@ -707,9 +730,10 @@ function materialize_config(config_path, allow_download) {
     }
     if (!write_runtime_manifest(runtime_manifest))
         return false;
-    prune_runtime_cache(manifest, runtime_manifest);
+    let running = referenced_rule_set_files(running_config_path);
+    prune_runtime_cache(manifest, runtime_manifest, running);
     if (persistent_manifest_written)
-        prune_stale_cache(manifest);
+        prune_stale_cache(manifest, running);
     return true;
 }
 
@@ -771,7 +795,7 @@ function refresh_if_due_and_reload(proxy_address) {
 
 let mode = ARGV[0] || "";
 if (mode == "materialize-config")
-    exit(materialize_config(ARGV[1], as_string(ARGV[2]) != "cache-only") ? 0 : 1);
+    exit(materialize_config(ARGV[1], as_string(ARGV[2]) != "cache-only", ARGV[3] || "") ? 0 : 1);
 else if (mode == "refresh")
     exit(refresh_manifest(ARGV[1], false));
 else if (mode == "refresh-if-due")

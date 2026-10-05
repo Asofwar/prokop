@@ -2180,7 +2180,7 @@ function add_connections_outbound(config, section, taken) {
         runtime_generate_unsupported("connection section has no usable outbounds");
 
     if (section_needs_country_is(section)) {
-        let previous_state = read_json_file(runtime_subscription.section_cache_path(section_name));
+        let previous_state = read_json_file(runtime_subscription.section_cache_read_path(section_name));
         state.outboundMetadata.countries = runtime_country.detect(
             state.servers,
             previous_state,
@@ -3482,8 +3482,12 @@ function object_nonempty_stdin() {
 
 let mode = ARGV[0] || "";
 
-if (mode == "generate-config")
+if (mode == "generate-config") {
+    // Its section caches go next to the configuration (LC-8): a candidate
+    // that is checked and refused changes nothing the running one reads.
+    runtime_subscription.set_section_cache_output_dir(as_string(ARGV[1]) + ".section-cache");
     generate_config(ARGV[1], ARGV[2], ARGV[3], ARGV[4], ARGV[5] || "", ARGV[6] || "");
+}
 else if (mode == "generate-config-fixture")
     generate_config_fixture(ARGV[1], ARGV[2], ARGV[3], ARGV[4], ARGV[5], ARGV[6] || "", ARGV[7] || "");
 else if (mode == "generate-list-bootstrap-config")

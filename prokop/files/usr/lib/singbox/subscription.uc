@@ -18,11 +18,26 @@ const PROKOP_RUNTIME_CACHE_FORMAT = int(getenv("PROKOP_RUNTIME_CACHE_FORMAT") ||
 const PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR = getenv("PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR") || "/etc/prokop/subscription-cache";
 
 let section_cache_dir = PROKOP_SECTION_CACHE_DIR;
+// The running generation's section caches, while this generation writes
+// its own elsewhere (set_section_cache_output_dir).
+let section_cache_previous_dir = null;
 
 function set_section_cache_dir(path) {
     path = as_string(path);
     if (path != "")
         section_cache_dir = path;
+}
+
+// A candidate generation writes its section caches next to its
+// configuration; they replace the running ones only when it is committed
+// (singbox/runtime.uc publish_section_cache). Until it has written one, the
+// running generation's is what it reads (LC-8).
+function set_section_cache_output_dir(path) {
+    path = as_string(path);
+    if (path == "")
+        return;
+    section_cache_previous_dir = section_cache_dir;
+    section_cache_dir = path;
 }
 
 function source_id(section_name, index) {
@@ -31,6 +46,14 @@ function source_id(section_name, index) {
 
 function section_cache_path(section_name) {
     return section_cache_dir + "/" + section_name + ".json";
+}
+
+// The section cache to read: this generation's, else the running one's.
+function section_cache_read_path(section_name) {
+    let path = section_cache_path(section_name);
+    if (section_cache_previous_dir != null && fs.stat(path) == null)
+        return section_cache_previous_dir + "/" + section_name + ".json";
+    return path;
 }
 
 function legacy_metadata_path(section_name) {
@@ -149,12 +172,12 @@ function read_persistent_source_metadata(source_section, source_entry) {
 }
 
 function read_section_metadata(section_name, source_section, source_index) {
-    let cache = object_or_empty(read_json_file(section_cache_path(section_name)));
+    let cache = object_or_empty(read_json_file(section_cache_read_path(section_name)));
     let metadata = metadata_items_from_value(cache.subscriptionMetadata);
     if (length(metadata) == 0)
         metadata = metadata_items_from_value(read_json_file(legacy_metadata_path(section_name)));
     if (length(metadata) == 0) {
-        cache = object_or_empty(read_json_file(section_cache_path(source_section)));
+        cache = object_or_empty(read_json_file(section_cache_read_path(source_section)));
         metadata = metadata_items_from_value(cache.subscriptionMetadata);
     }
     if (length(metadata) == 0)
@@ -401,6 +424,8 @@ function new_section_state(section_name) {
 
 return {
     set_section_cache_dir,
+    set_section_cache_output_dir,
+    section_cache_read_path,
     source_id,
     section_cache_path,
     merge_source_metadata,

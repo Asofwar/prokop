@@ -817,6 +817,15 @@ function restore_dns_config(backup_path) {
     return publish_config_file(backup_path, config_path);
 }
 
+// The generator writes a candidate's section caches next to it
+// (generator.uc generate-config, LC-8): a candidate that is not published
+// takes them along.
+function remove_generation(temp_config, others) {
+    remove_files([ temp_config, ...others ]);
+    if (as_string(temp_config) != "")
+        command_success_from_args([ "rm", "-rf", temp_config + ".section-cache" ]);
+}
+
 function init_config(populate_nft, caches_prepared, no_refresh, prepared_deferred_sections, stage_path) {
     let settings = uci_settings();
     let config_path = option(settings, "config_path", "");
@@ -842,7 +851,7 @@ function init_config(populate_nft, caches_prepared, no_refresh, prepared_deferre
     let temp_config = temp_path();
     let runtime_log = temp_path();
     if (temp_config == "" || runtime_log == "") {
-        remove_files([ temp_config, runtime_log ]);
+        remove_generation(temp_config, [ runtime_log ]);
         exit(1);
     }
 
@@ -863,7 +872,7 @@ function init_config(populate_nft, caches_prepared, no_refresh, prepared_deferre
     if (generate_status != 0) {
         let reason = generator_failure_reason(runtime_log, generate_status);
         log_message("Failed to generate sing-box configuration: " + reason, "fatal");
-        remove_files([ temp_config, runtime_log ]);
+        remove_generation(temp_config, [ runtime_log ]);
         exit(1);
     }
     log_file_lines(runtime_log, "warn", "sing-box config generator: ");
@@ -871,9 +880,9 @@ function init_config(populate_nft, caches_prepared, no_refresh, prepared_deferre
     // Configuration generation must be deterministic and network-free. Missing
     // remote rule sets are represented by an empty local placeholder and are
     // refreshed only by the serialized post-start/update worker.
-    if (!module_success([ RULESET_CACHE_UC, "materialize-config", temp_config, "cache-only" ])) {
+    if (!module_success([ RULESET_CACHE_UC, "materialize-config", temp_config, "cache-only", config_path ])) {
         log_message("Failed to materialize remote rule sets into the persistent local cache. Aborted.", "fatal");
-        remove_files([ temp_config, runtime_log ]);
+        remove_generation(temp_config, [ runtime_log ]);
         exit(1);
     }
 
@@ -882,7 +891,7 @@ function init_config(populate_nft, caches_prepared, no_refresh, prepared_deferre
         : sing_box_check(temp_config, runtime_log);
     if (check_result.status != 0) {
         log_message("Generated sing-box configuration is invalid: " + check_result.reason + ". Aborted.", "fatal");
-        remove_files([ temp_config, runtime_log ]);
+        remove_generation(temp_config, [ runtime_log ]);
         exit(1);
     }
 
@@ -903,13 +912,18 @@ function init_config(populate_nft, caches_prepared, no_refresh, prepared_deferre
         NFT_LOCALV6_SET_NAME
     ])) {
         log_message("Failed to update nftables runtime sets from the generated sing-box configuration. Aborted.", "fatal");
-        remove_files([ temp_config, runtime_log ]);
+        remove_generation(temp_config, [ runtime_log ]);
         exit(1);
     }
 
     if (as_string(stage_path) != "") {
-        if (!ensure_parent_dir(stage_path) || !command_success_from_args([ "mv", "-f", temp_config, stage_path ])) {
-            remove_file(runtime_log);
+        // Its section caches go with it; commit_config_stage publishes
+        // them, discard_config_stage removes them.
+        command_success_from_args([ "rm", "-rf", stage_path + ".section-cache" ]);
+        if (!ensure_parent_dir(stage_path) || !command_success_from_args([ "mv", "-f", temp_config, stage_path ]) ||
+            (fs.stat(temp_config + ".section-cache") != null &&
+                !command_success_from_args([ "mv", "-f", temp_config + ".section-cache", stage_path + ".section-cache" ]))) {
+            remove_generation(temp_config, [ runtime_log ]);
             exit(1);
         }
         remove_file(runtime_log);
@@ -918,12 +932,12 @@ function init_config(populate_nft, caches_prepared, no_refresh, prepared_deferre
     }
 
     if (!save_config_file(temp_config, config_path)) {
-        remove_files([ temp_config, runtime_log ]);
+        remove_generation(temp_config, [ runtime_log ]);
         exit(1);
     }
     if (!publish_section_cache(temp_config)) {
         log_message("Failed to publish sing-box dashboard cache", "error");
-        remove_file(runtime_log);
+        remove_generation(temp_config, [ runtime_log ]);
         exit(1);
     }
     remove_file(runtime_log);
