@@ -94,12 +94,22 @@ int main(int argc, char **argv) {
 C
 cc -O0 -o "$WORK/bin/nfqws" "$WORK/nfqws.c"
 
-# nft stand-in. The switchable probe rule (handle 5) carries the comment and
-# queue of rule.state; replaces update it and reset its counter, as a new rule.
+# nft stand-in. The probe rules (handles from 5 on: one for a probe run, one
+# per port slice for a tuning run) are kept in $S/rules as "handle comment
+# queue first-port last-port"; replaces update them and reset their counter,
+# as a new rule.
 cat > "$WORK/bin/nft" <<'SH'
 #!/usr/bin/env bash
 S="$NFT_STATE"; T="$S/tables"
 echo "nft $*" >> "$STUB_LOG/nft.log"
+# probe_rule LINE: "comment queue first last" of an output probe rule.
+probe_rule() {
+  local comment queue sport
+  comment="$(sed -n 's/.* comment "\([a-z_:]*\)".*/\1/p' <<<"$1")"
+  queue="$(sed -n 's/.* queue num \([0-9]*\) .*/\1/p' <<<"$1")"
+  sport="$(sed -n 's/.* tcp sport \([0-9]*\)-\([0-9]*\) .*/\1 \2/p' <<<"$1")"
+  echo "$comment ${queue:--} $sport"
+}
 case "$*" in
   "list tables") for t in "$T"/*; do [ -e "$t" ] && echo "table inet ${t##*/}"; done; exit 0 ;;
   "list table inet "*) [ -e "$T/$4" ]; exit ;;
@@ -110,14 +120,21 @@ case "$*" in
     if [ "$5" = ProkopAutotuneProbe ]; then
       [ -z "${NFT_STUB_FAIL_PROBE_LISTING:-}" ] || exit 1
       target="$(cat "$S/probe.target" 2>/dev/null)"
-      probe="probe"; [ ! -e "$S/rule.state" ] || read -r probe _ < "$S/rule.state"
-      [ -e "$S/counters/$probe" ] || echo "0 0" > "$S/counters/$probe"
+      # A table a test left without a batch: one probe rule, as a run creates.
+      [ -e "$S/rules" ] || echo "5 probe - 61000 61063" > "$S/rules"
       rule() {
+        local p b sport=""
+        [ -e "$S/counters/$2" ] || echo "0 0" > "$S/counters/$2"
         read -r p b < "$S/counters/$2"
-        printf '{"rule":{"family":"inet","table":"ProkopAutotuneProbe","chain":"%s","handle":%s,"comment":"%s","expr":[{"match":{"op":"==","left":{"payload":{"protocol":"ip","field":"daddr"}},"right":"%s"}},{"counter":{"packets":%s,"bytes":%s}}]}}' "$1" "$3" "$2" "$target" "$p" "$b"
+        [ -z "${4:-}" ] || sport="$(printf ',{"match":{"op":"==","left":{"payload":{"protocol":"tcp","field":"sport"}},"right":{"range":[%s,%s]}}}' "$4" "$5")"
+        printf '{"rule":{"family":"inet","table":"ProkopAutotuneProbe","chain":"%s","handle":%s,"comment":"%s","expr":[{"match":{"op":"==","left":{"payload":{"protocol":"ip","field":"daddr"}},"right":"%s"}}%s,{"counter":{"packets":%s,"bytes":%s}}]}}' "$1" "$3" "$2" "$target" "$sport" "$p" "$b"
       }
-      printf '{"nftables":[{"table":{"family":"inet","name":"ProkopAutotuneProbe","handle":90}},%s,%s,%s,%s,%s]}\n' \
-        "$(rule premark probe_mark 2)" "$(rule output reinjected 3)" "$(rule output reinjected_bare 4)" "$(rule output "$probe" 5)" "$(rule output unexpected 6)"
+      out="$(rule premark probe_mark 2),$(rule output reinjected 3),$(rule output reinjected_bare 4)"
+      last=4
+      while read -r handle comment _ first lastport; do
+        out="$out,$(rule output "$comment" "$handle" "$first" "$lastport")"; last="$handle"
+      done < "$S/rules"
+      printf '{"nftables":[{"table":{"family":"inet","name":"ProkopAutotuneProbe","handle":90}},%s,%s]}\n' "$out" "$(rule output unexpected $((last + 1)))"
     else cat "$T/$5"; fi
     exit 0 ;;
   "list ruleset") cat "$S/ruleset"; [ -e "$T/ProkopAutotuneProbe" ] && echo "queue to 4600"; exit 0 ;;
@@ -125,25 +142,34 @@ case "$*" in
   "-j list set inet ProkopTable prokop_interfaces")
     printf '{"nftables":[{"set":{"family":"inet","name":"prokop_interfaces","table":"ProkopTable","type":"ifname","elem":%s}}]}\n' "${NFT_STUB_INTERFACES:-[\"br-lan\"]}"; exit 0 ;;
   "-f "*)
-    if grep -q '^replace rule inet ProkopAutotuneProbe output handle 5 ' "$2"; then
+    if grep -q '^replace rule inet ProkopAutotuneProbe output handle ' "$2"; then
       [ -z "${NFT_STUB_FAIL_REPLACE:-}" ] || exit 1
-      comment="$(sed -n 's/.* comment "\([a-z_]*\)".*/\1/p' "$2")"
-      queue="$(sed -n 's/.* queue num \([0-9]*\) .*/\1/p' "$2")"
-      echo "$comment ${queue:--}" > "$S/rule.state"; echo "$comment ${queue:--}" >> "$STUB_LOG/switch.log"
-      echo "0 0" > "$S/counters/$comment"
-      if [ "$comment" = released ]; then cp "$2" "$S/release.nft"; touch "$S/released"; fi
+      file="$2"
+      while read -r line; do
+        handle="$(sed -n 's/^replace rule inet ProkopAutotuneProbe output handle \([0-9]*\) .*/\1/p' <<<"$line")"
+        grep -q "^$handle " "$S/rules" || exit 1
+        rule="$(probe_rule "$line")"
+        sed -i "s/^$handle .*/$handle $rule/" "$S/rules"
+        read -r comment queue _ <<<"$rule"
+        echo "$comment $queue" >> "$STUB_LOG/switch.log"
+        echo "0 0" > "$S/counters/$comment"
+        case "$comment" in released*) cp "$file" "$S/release.nft"; touch "$S/released" ;; esac
+      done < "$file"
       exit 0
     fi
     [ -z "${NFT_STUB_FAIL_SETUP:-}" ] || exit 1
     grep -q '^create table inet ProkopAutotuneProbe$' "$2" && [ -e "$T/ProkopAutotuneProbe" ] && exit 1
     cp "$2" "$S/last.nft"; touch "$T/ProkopAutotuneProbe"; rm -f "$S/released"
     sed -n 's/.* ip daddr \([0-9.]*\) .*/\1/p' "$2" | head -n 1 > "$S/probe.target"
-    line="$(grep ' output .*meta mark 0x08000000 .*comment ' "$2" | head -n 1)"
-    comment="$(sed -n 's/.* comment "\([a-z_]*\)".*/\1/p' <<<"$line")"
-    queue="$(sed -n 's/.* queue num \([0-9]*\) .*/\1/p' <<<"$line")"
-    echo "$comment ${queue:--}" > "$S/rule.state"
-    for c in probe_mark reinjected reinjected_bare probe direct released unexpected; do echo "0 0" > "$S/counters/$c"; done; exit 0 ;;
-  "delete table inet "*) [ -z "${NFT_STUB_FAIL_DELETE:-}" ] || exit 1; rm -f "$T/$4" "$S/rule.state"; exit 0 ;;
+    : > "$S/rules"; handle=5
+    while read -r line; do
+      echo "$handle $(probe_rule "$line")" >> "$S/rules"; handle=$((handle + 1))
+    done < <(grep ' output .*meta mark 0x08000000 counter .*comment ' "$2")
+    rm -f "$S/counters/"*
+    for c in probe_mark reinjected reinjected_bare unexpected; do echo "0 0" > "$S/counters/$c"; done
+    while read -r _ comment _; do echo "0 0" > "$S/counters/$comment"; done < "$S/rules"
+    exit 0 ;;
+  "delete table inet "*) [ -z "${NFT_STUB_FAIL_DELETE:-}" ] || exit 1; rm -f "$T/$4" "$S/rules"; exit 0 ;;
 esac
 exit 1
 SH
@@ -160,9 +186,15 @@ ip="$(printf '%s\n' "$@" | sed -n 's/^[^:]*:443:\(.*\)$/\1/p')"
 bump() { local p b; read -r p b < "$NFT_STATE/counters/$1" 2>/dev/null || { p=0; b=0; }; echo "$((p + $2)) $((b + $2 * 80))" > "$NFT_STATE/counters/$1"; }
 key=none
 if [ -e "$NFT_STATE/tables/ProkopAutotuneProbe" ]; then
+  # The probe rule of the source ports curl leaves from.
+  ports="$(printf '%s\n' "$@" | sed -n '/^--local-port$/{n;p;}')"
   comment=probe; queue=-
-  [ ! -e "$NFT_STATE/rule.state" ] || read -r comment queue < "$NFT_STATE/rule.state"
-  key="$comment"; [ "$queue" = - ] || key="$queue"
+  while read -r _ c q first last; do
+    [ "$first-$last" = "$ports" ] || [ "$(wc -l < "$NFT_STATE/rules")" = 1 ] || continue
+    comment="$c"; queue="$q"; break
+  done < "$NFT_STATE/rules"
+  key="${comment%%:*}"; [ "$queue" = - ] || key="$queue"
+  printf '%s\n' "$ports" >> "$STUB_LOG/curl.ports"
   bump probe_mark 5; bump "$comment" 5
   [ "$queue" = - ] || bump reinjected 3
   [ -z "${CURL_STUB_UNEXPECTED:-}" ] || bump unexpected 1
@@ -299,7 +331,7 @@ reset_state() {
     CURL_STUB_QUEUED CURL_STUB_ROUTE_CHANGE PROKOP_AUTOTUNE_QUIET_TIMEOUT \
     NFT_STUB_FAIL_PROBE_LISTING CURL_STUB_PLAN
   rm -f "$WORK/proc_net/ip_tables_names" "$WORK/proc_net/ip6_tables_names" "$STUB_LOG"/* \
-    "$NFT_STATE/released" "$NFT_STATE/release.nft" "$NFT_STATE/route.changed" "$NFT_STATE/rule.state"
+    "$NFT_STATE/released" "$NFT_STATE/release.nft" "$NFT_STATE/route.changed" "$NFT_STATE/rules"
   export PROKOP_AUTOTUNE_DRAIN_TIMEOUT=1 PROKOP_AUTOTUNE_HOLD_TIMEOUT=2
   rm -rf "$PROKOP_AUTOTUNE_STATE_DIR" "$PROKOP_SNAPSHOT_LOCK_DIR" "$NFT_STATE/tables"/* "$NFT_STATE/last.nft"
   queue_reset "$PROD_QUEUE_LINE"

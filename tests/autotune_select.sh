@@ -163,6 +163,28 @@ a.equal(r.cleanup.status, "clean"); a.equal(r.production.unchanged, true);
 assert_clean "tune selected"
 ok "13 one resolution pinned for every candidate, rotated interleaving, multisplit selected"
 
+# Every candidate has a fixed slice of the source ports and a probe rule of
+# its own for it, created with the table: nothing is switched between
+# probes, and each probe leaves from its candidate's slice.
+json '
+a.deepEqual(r.isolation.port_slices, { direct: "61000-61020", multisplit: "61021-61041", fake: "61042-61062" });
+for (const p of r.probes) a.equal(p.port_range, r.isolation.port_slices[p.candidate], p.candidate);
+' "$WORK/out.json"
+T='ip daddr 93.184.216.34 tcp dport 443'
+for rule in "tcp sport 61000-61020 meta mark 0x08000000 counter accept comment \"direct:direct\"" \
+  "tcp sport 61021-61041 meta mark 0x08000000 counter queue num 4600 comment \"probe:multisplit\"" \
+  "tcp sport 61042-61062 meta mark 0x08000000 counter queue num 4601 comment \"probe:fake\""; do
+  grep -qxF "add rule inet ProkopAutotuneProbe output $T $rule" "$NFT_STATE/last.nft" || fail "missing slice rule: $rule"
+done
+grep -qxF "add rule inet ProkopAutotuneProbe output $T tcp sport 61000-61063 counter drop comment \"unexpected\"" "$NFT_STATE/last.nft" ||
+  fail "the drop of anything else of the probe tuple is not after the slices"
+[ "$(paste -sd' ' "$STUB_LOG/curl.ports")" = "61000-61020 61021-61041 61042-61062 61021-61041 61042-61062 61000-61020 61042-61062 61000-61020 61021-61041" ] ||
+  fail "probes did not leave from their candidate's slice: $(paste -sd' ' "$STUB_LOG/curl.ports")"
+[ "$(sort -u "$STUB_LOG/switch.log" | paste -sd' ')" = "released:direct - released:fake - released:multisplit -" ] ||
+  fail "probe rules were switched during the run: $(paste -sd' ' "$STUB_LOG/switch.log")"
+[ "$(grep -c '^replace rule' "$NFT_STATE/release.nft")" = 3 ] || fail "the slices are not released in one batch"
+ok "fixed port slices: one rule per candidate, no switching, released together"
+
 # 1 (end to end). direct stable -> direct, no DPI needed
 reset_state; CURL_STUB_PLAN="direct=success:100,4600=success:95,4601=success:90" tune 3 192.0.2.53 multisplit,fake
 json 'a.equal(r.status, "selected"); a.equal(r.selected, "direct"); a.equal(r.reason, "direct_stable"); a.equal(r.cleanup.status, "clean");' "$WORK/out.json"
@@ -278,11 +300,11 @@ ok "a candidate queue that did not take every probe packet invalidates the run"
 reset_state; CURL_STUB_PLAN="direct=reset,4600=success:120,4601=success:118" tune 3 192.0.2.53 multisplit,fake
 json 'a.equal(r.status, "selected"); a.equal(r.production.unchanged, true); a.equal(r.applied, false);
   a.deepEqual(r.production.before, r.production.after);' "$WORK/out.json"
-! grep -vE '^nft (list tables|list table inet [A-Za-z]+|list chain inet ProkopTable prokop_transition_guard|-j list table inet [A-Za-z]+|list ruleset|-j -t list ruleset|-j list set inet ProkopTable prokop_interfaces|-f .*/(probe|switch)\.nft|delete table inet ProkopAutotuneProbe)$' "$STUB_LOG/nft.log" ||
+! grep -vE '^nft (list tables|list table inet [A-Za-z]+|list chain inet ProkopTable prokop_transition_guard|-j list table inet [A-Za-z]+|list ruleset|-j -t list ruleset|-j list set inet ProkopTable prokop_interfaces|-f .*/(probe|release)\.nft|delete table inet ProkopAutotuneProbe)$' "$STUB_LOG/nft.log" ||
   fail "unexpected nft command: $(grep -vE '^nft (list|-j|-f|delete table inet ProkopAutotuneProbe)' "$STUB_LOG/nft.log" | head -3)"
 kill -0 "$PROD_NFQWS" || fail "production nfqws stand-in signalled"
 assert_clean "no mutation"
-ok "16 production untouched: only the temporary table is created, switched and deleted"
+ok "16 production untouched: only the temporary table is created, released and deleted"
 }
 
 # The groups of cases run at once, each on stand-ins of its own (a fresh

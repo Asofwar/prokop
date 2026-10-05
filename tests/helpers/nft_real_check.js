@@ -248,9 +248,11 @@ const modes = {
   },
 
   // isolation <json> <table> <probe mark> <production table>
-  //   <comment>:<queue:N|accept|-> (- : the queue statement the kernel lacks)
+  //   <comment>=<queue:N|accept|->[,...] (- : the queue statement the kernel
+  //   lacks): the probe rules in order, one for a probe run, one per port
+  //   slice for a tuning run.
   isolation() {
-    const [table, markText, production, switchable] = args;
+    const [table, markText, production, probeRules] = args;
     const probeMark = Number(markText);
     baseChain(table, 'premark', 'route', 'output', -152);
     baseChain(table, 'output', 'route', 'output', -151);
@@ -258,19 +260,36 @@ const modes = {
     assert.deepEqual(premark.map((r) => r.comment), ['probe_mark']);
     assert.equal(setsMark(premark[0]), probeMark, 'premark must set the probe mark');
     assert.equal(verdict(premark[0]), 'accept');
-    const [comment, action, queue] = switchable.split(':');
+    const specs = probeRules.split(',').map((spec) => {
+      const [comment, action] = spec.split('=');
+      const [kind, queue] = action.split(':');
+      return { comment, kind, queue };
+    });
     const out = rulesOf(table, 'output');
-    assert.deepEqual(out.map((r) => r.comment), ['reinjected', 'reinjected_bare', comment, 'unexpected'], 'probe chain order');
+    assert.deepEqual(out.map((r) => r.comment), ['reinjected', 'reinjected_bare', ...specs.map((x) => x.comment), 'unexpected'],
+      'probe chain order');
     assert.equal(setsMark(out[0]), probeMark);
     assert.equal(setsMark(out[1]), probeMark);
-    assert.equal(exactMark(out[2]), probeMark, 'the switchable rule takes only the probe mark');
-    if (action === 'queue') {
-      const q = statementOf(out[2], 'queue');
-      assert.ok(q && q.queue.num === Number(queue), `switchable rule must queue to ${queue}`);
-    }
-    else if (action === '-') assert.equal(verdict(out[2]), undefined, 'switchable rule without its queue statement');
-    else assert.equal(verdict(out[2]), action, 'switchable rule verdict');
-    assert.equal(verdict(out[3]), 'drop');
+    const sports = [];
+    specs.forEach((spec, i) => {
+      const rule = out[2 + i];
+      assert.equal(exactMark(rule), probeMark, `probe rule ${spec.comment} takes only the probe mark`);
+      if (spec.kind === 'queue') {
+        const q = statementOf(rule, 'queue');
+        assert.ok(q && q.queue.num === Number(spec.queue), `probe rule ${spec.comment} must queue to ${spec.queue}`);
+      }
+      else if (spec.kind === '-') assert.equal(verdict(rule), undefined, `probe rule ${spec.comment} without its queue statement`);
+      else assert.equal(verdict(rule), spec.kind, `probe rule ${spec.comment} verdict`);
+      const sport = rule.expr.map((e) => e.match).find((m) => m && m.left && m.left.payload && m.left.payload.field === 'sport');
+      assert.ok(sport && sport.right && Array.isArray(sport.right.range), `probe rule ${spec.comment} has no source-port range`);
+      sports.push(sport.right.range.map(Number));
+    });
+    // The slices stay inside the probe ports and do not overlap.
+    sports.sort((x, y) => x[0] - y[0]).forEach((r, i, all) => {
+      assert.ok(r[0] >= 61000 && r[1] <= 61063 && r[0] <= r[1], `source-port range ${r} outside the probe ports`);
+      if (i > 0) assert.ok(r[0] > all[i - 1][1], `source-port ranges ${all[i - 1]} and ${r} overlap`);
+    });
+    assert.equal(verdict(out[out.length - 1]), 'drop');
     // probe_counters() needs a counter on every rule of the table.
     for (const r of [...premark, ...out]) assert.ok(statementOf(r, 'counter'), `rule ${r.comment} has no counter`);
     // The probe chains run before every production output hook.

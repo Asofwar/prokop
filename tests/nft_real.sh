@@ -620,8 +620,8 @@ check_batch "$WORK_DIR/probe.nft" "autotune probe table"
 commit_batch "$WORK_DIR/probe.json" "autotune probe table"
 check tables "$WORK_DIR/probe.json" "$TABLE" ProkopAutotuneProbe
 grep -Fq " queue num $PROBE_QUEUE comment \"probe\"" "$WORK_DIR/probe.nft" || fail "the probe rule does not queue to $PROBE_QUEUE"
-probe_rule=probe:-
-supported queue && probe_rule="probe:queue:$PROBE_QUEUE"
+probe_rule=probe=-
+supported queue && probe_rule="probe=queue:$PROBE_QUEUE"
 check isolation "$WORK_DIR/probe.json" ProkopAutotuneProbe "$(hex_to_dec "$OUTBOUND_MARK")" "$TABLE" "$probe_rule"
 
 # The bypass contract (autotune/contract.uc) on the ruleset the kernel holds.
@@ -646,7 +646,7 @@ for (const a of ["probe_rule:released", "hold:timeout", "table:kept"])
   if (!r.actions.includes(a)) throw new Error("cleanup actions lack " + a + ": " + JSON.stringify(r));
 ' "$WORK_DIR/cleanup-held.json" || fail "unexpected held cleanup result"
 nft -j list ruleset >"$WORK_DIR/released.json"
-check isolation "$WORK_DIR/released.json" ProkopAutotuneProbe "$(hex_to_dec "$OUTBOUND_MARK")" "$TABLE" released:accept
+check isolation "$WORK_DIR/released.json" ProkopAutotuneProbe "$(hex_to_dec "$OUTBOUND_MARK")" "$TABLE" released=accept
 [ "$(node "$CHECK_JS" handle "$WORK_DIR/released.json" ProkopAutotuneProbe output released)" = "$switch_handle" ] ||
   fail "the probe rule was not replaced in place"
 : >"$PROKOP_AUTOTUNE_PROC_NET/tcp"
@@ -660,15 +660,31 @@ nft -j list ruleset >"$WORK_DIR/cleaned.json"
 check tables "$WORK_DIR/cleaned.json" "$TABLE"
 ok "autotune isolation: release replaces the probe rule in place, cleanup removes the table"
 
-# Tuning starts from the direct probe rule.
+# Tuning: a fixed source-port slice and a probe rule of its own per
+# candidate. The release replaces every slice rule in place, in one batch.
 isolation_batch tune
 check_batch "$WORK_DIR/probe.nft" "autotune tuning table"
 commit_batch "$WORK_DIR/tune.json" "autotune tuning table"
-check isolation "$WORK_DIR/tune.json" ProkopAutotuneProbe "$(hex_to_dec "$OUTBOUND_MARK")" "$TABLE" direct:accept
+tune_rules="direct:direct=accept,probe:candidate=-"
+supported queue && tune_rules="direct:direct=accept,probe:candidate=queue:$PROBE_QUEUE"
+check isolation "$WORK_DIR/tune.json" ProkopAutotuneProbe "$(hex_to_dec "$OUTBOUND_MARK")" "$TABLE" "$tune_rules"
+handles="$(node "$CHECK_JS" handle "$WORK_DIR/tune.json" ProkopAutotuneProbe output direct:direct) $(node "$CHECK_JS" handle "$WORK_DIR/tune.json" ProkopAutotuneProbe output probe:candidate)"
+printf '  sl  local_address rem_address   st\n   0: 0A00000A:EE48 22D8B85D:01BB 06 00000000:00000000 00:00000000 00000000     0        0 0\n' \
+  >"$PROKOP_AUTOTUNE_PROC_NET/tcp"
+if PROKOP_AUTOTUNE_HOLD_TIMEOUT=0 isolation cleanup >"$WORK_DIR/cleanup-tune-held.json"; then
+  fail "cleanup removed the tuning table while a probe socket lingered"
+fi
+grep -q '"probe_rule:released"' "$WORK_DIR/cleanup-tune-held.json" || fail "the tuning slices were not released: $(cat "$WORK_DIR/cleanup-tune-held.json")"
+nft -j list ruleset >"$WORK_DIR/tune-released.json"
+check isolation "$WORK_DIR/tune-released.json" ProkopAutotuneProbe "$(hex_to_dec "$OUTBOUND_MARK")" "$TABLE" \
+  "released:direct=accept,released:candidate=accept"
+[ "$(node "$CHECK_JS" handle "$WORK_DIR/tune-released.json" ProkopAutotuneProbe output released:direct) $(node "$CHECK_JS" handle "$WORK_DIR/tune-released.json" ProkopAutotuneProbe output released:candidate)" = "$handles" ] ||
+  fail "the slice rules were not replaced in place"
+: >"$PROKOP_AUTOTUNE_PROC_NET/tcp"
 isolation cleanup >"$WORK_DIR/cleanup-tune.json" || fail "tuning cleanup failed: $(cat "$WORK_DIR/cleanup-tune.json")"
 nft -j list ruleset >"$WORK_DIR/final.json"
 check tables "$WORK_DIR/final.json" "$TABLE"
-ok "autotune tuning table: checked, applied, cleaned up"
+ok "autotune tuning table: a slice rule per candidate, released in place together, cleaned up"
 
 # Stop removes the table (service/lifecycle.uc stop).
 nft delete table inet "$TABLE"

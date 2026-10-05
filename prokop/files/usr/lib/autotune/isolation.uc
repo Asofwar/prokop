@@ -23,9 +23,10 @@
 //
 // Modes: "run" probes one candidate; "tune" (stage 4) measures several
 // candidates interleaved through the same isolated path - one temporary
-// nfqws per DPI candidate on its own queue, the probe rule switched between
-// them (direct: accept with the probe mark) by atomic rule replaces - and
-// returns a selection from autotune/select.uc. Neither mode applies anything.
+// nfqws per DPI candidate on its own queue, each candidate with a fixed slice
+// of the source ports and a probe rule of its own for that slice (direct:
+// accept with the probe mark) - and returns a selection from
+// autotune/select.uc. Neither mode applies anything.
 //
 // Must be invoked as: ucode -L <lib> <lib>/autotune/isolation.uc <mode> ...
 // (the autotune lock identifies its owner by that command line).
@@ -96,7 +97,8 @@ const PROGRESS_FILE = getenv("PROKOP_AUTOTUNE_PROGRESS") || "";
 const PROBE_MARK_VALUE = contract.mark_number(PROBE_MARK);
 const DESYNC_MARK_VALUE = contract.mark_number(DESYNC_MARK);
 const REQUIRED_COUNTERS = [ "probe_mark", "reinjected", "reinjected_bare", "unexpected" ];
-// The switchable probe rule carries one of these comments.
+// A probe rule carries one of these comments; the probe rule of a tuning
+// slice adds ":<candidate>".
 const PROBE_RULE_COMMENTS = [ "probe", "direct", "released" ];
 // Production queue ranges the dedicated queue must stay out of.
 const RESERVED_QUEUES = [
@@ -353,22 +355,38 @@ function bypass_contract(route, ip) {
 
 // Counters of every rule of the temporary table by comment; null when the
 // listing is unavailable or incomplete.
+// "probe", "direct" or "released" for a probe rule (of a slice as well),
+// null for any other comment.
+function probe_rule_kind(comment) {
+    comment = as_string(comment);
+    let colon = index(comment, ":");
+    let kind = colon < 0 ? comment : substr(comment, 0, colon);
+    return index(PROBE_RULE_COMMENTS, kind) >= 0 && (colon < 0 || colon < length(comment) - 1) ? kind : null;
+}
+
+// Counters by rule comment. One probe rule for the whole port range (run),
+// or one per tuning slice, each comment once.
 function probe_counters() {
     let table = nft_json(TABLE);
     if (table == null) return null;
-    let result = {};
+    let result = {}, rules = 0, sliced = 0, plain = 0;
     for (let item in table) {
         let rule = item.rule;
         if (type(rule) != "object" || rule.table != TABLE) continue;
+        let comment = as_string(rule.comment);
         for (let expr in rule.expr || [])
-            if (type(expr) == "object" && type(expr.counter) == "object")
-                result[as_string(rule.comment)] = { packets: int(expr.counter.packets), bytes: int(expr.counter.bytes) };
+            if (type(expr) == "object" && type(expr.counter) == "object") {
+                if (result[comment] != null) return null;
+                result[comment] = { packets: int(expr.counter.packets), bytes: int(expr.counter.bytes) };
+                if (probe_rule_kind(comment) != null) {
+                    rules++;
+                    if (index(comment, ":") >= 0) sliced++; else plain++;
+                }
+            }
     }
     for (let name in REQUIRED_COUNTERS)
         if (result[name] == null) return null;
-    let switchable = 0;
-    for (let name in PROBE_RULE_COMMENTS) if (result[name] != null) switchable++;
-    return switchable == 1 ? result : null;
+    return (plain == 1 && sliced == 0) || (plain == 0 && sliced > 0) ? result : null;
 }
 
 // ---- runtime preconditions ---------------------------------------------
@@ -536,16 +554,34 @@ function table_target() {
 // The temporary chains as data: the nft batch is rendered from them and the
 // regression tests evaluate exactly this model against production rulesets.
 // Every rule is confined to the probe tuple; nothing outside it is touched.
-// The switchable probe rule: a candidate queue, direct (accept with the probe
-// mark) or released (accept, after the candidates stopped).
-function probe_rule_spec(queue, comment) {
-    return queue != null ? { comment: comment || "probe", verdict: "queue", queue }
-        : { comment: comment || "probe", verdict: "accept", queue: null };
+// A probe rule: a candidate queue, direct (accept with the probe mark) or
+// released (accept, after the candidates stopped).
+// sport: the source ports of the rule ([first, last]), all of them when null.
+function probe_rule_spec(queue, comment, sport) {
+    return queue != null ? { comment: comment || "probe", verdict: "queue", queue, sport }
+        : { comment: comment || "probe", verdict: "accept", queue: null, sport };
 }
 
+// The fixed source-port slices of a tuning run: the ports split evenly in
+// the order given, a slice per candidate. A probe of a candidate leaves from
+// its slice, so its packets, and the late ones of its earlier probes, can
+// only take its own rule: no rule is switched between candidates.
+function port_slices(ids) {
+    let size = int((PORT_LAST - PORT_FIRST + 1) / length(ids));
+    let result = {};
+    for (let i = 0; i < length(ids); i++)
+        result[ids[i]] = [ PORT_FIRST + i * size, PORT_FIRST + (i + 1) * size - 1 ];
+    return result;
+}
+
+// spec: one probe rule spec, or the list of the slice rules of a tuning run.
 function probe_chains(ip, spec) {
     let tuple = { daddr: ip, dport: 443, sport: [ PORT_FIRST, PORT_LAST ] };
     let injected = DESYNC_MARK_VALUE | PROBE_MARK_VALUE;
+    let probe_rules = [];
+    for (let rule in type(spec) == "array" ? spec : [ spec ])
+        push(probe_rules, { comment: rule.comment, tuple: rule.sport ? { ...tuple, sport: rule.sport } : tuple,
+            mark: PROBE_MARK_VALUE, set_mark: null, verdict: rule.verdict, queue: rule.queue });
     let chains = [
         { name: MARK_CHAIN, type: "route", hook: "output", priority: MARK_PRIORITY, rules: [
             // The probe connection: canonical probe mark, accepted so the
@@ -558,8 +594,8 @@ function probe_chains(ip, spec) {
             { comment: "reinjected", tuple, mark: injected, set_mark: PROBE_MARK_VALUE, verdict: "return" },
             // Injected with the bare desync mark: normalized the same way.
             { comment: "reinjected_bare", tuple, mark: DESYNC_MARK_VALUE, set_mark: PROBE_MARK_VALUE, verdict: "return" },
-            // The marked probe connection goes to the candidate.
-            { comment: spec.comment, tuple, mark: PROBE_MARK_VALUE, set_mark: null, verdict: spec.verdict, queue: spec.queue },
+            // The marked probe connection goes to the candidate (of its slice).
+            ...probe_rules,
             // Anything else of the probe tuple: never handed to production.
             { comment: "unexpected", tuple, mark: null, set_mark: null, verdict: "drop" }
         ] }
@@ -622,45 +658,52 @@ function drain(ip, queue_candidate) {
     return result;
 }
 
-// Point the switchable probe rule at a candidate queue, at direct or at
-// released, in one atomic replace (no hook is registered or removed).
-function switch_probe_rule(ip, spec) {
-    let listing = nft_json(TABLE);
-    if (listing == null) return "failed";
-    let handle = null, current = null;
-    for (let item in listing) {
-        if (type(item.rule) != "object" || item.rule.chain != CHAIN || index(PROBE_RULE_COMMENTS, item.rule.comment) < 0) continue;
-        if (handle != null) return "failed";
-        handle = item.rule.handle;
-        current = item.rule.comment;
+// The source ports a probe rule of the listing matches: [first, last], or
+// null when the listing does not show one range.
+function listed_sport(rule) {
+    for (let expr in rule.expr || []) {
+        let m = type(expr) == "object" ? expr.match : null;
+        if (type(m) != "object" || type(m.left) != "object" || type(m.left.payload) != "object" ||
+            m.left.payload.protocol != "tcp" || m.left.payload.field != "sport") continue;
+        if (type(m.right) == "object" && type(m.right.range) == "array" && length(m.right.range) == 2)
+            return [ int(m.right.range[0]), int(m.right.range[1]) ];
+        if (type(m.right) == "int") return [ m.right, m.right ];
+        return null;
     }
-    if (handle == null) return "failed";
-    let rule = { comment: spec.comment, tuple: { daddr: ip, dport: 443, sport: [ PORT_FIRST, PORT_LAST ] },
-        mark: PROBE_MARK_VALUE, set_mark: null, verdict: spec.verdict, queue: spec.queue };
-    let file = WORKDIR + "/switch.nft";
-    if (fs.stat(WORKDIR) == null) fs.mkdir(WORKDIR, 0755);
-    if (fs.writefile(file, "replace rule inet " + TABLE + " " + CHAIN + " handle " + handle + " " + render_rule(rule) + "\n") == null)
-        return "failed";
-    let ok = success([ "nft", "-f", file ]);
-    fs.unlink(file);
-    return ok ? "switched" : "failed";
+    return null;
 }
 
-// Release the probe connection from the candidates before they stop: the
-// probe rule becomes an accept of the canonical probe mark, so late packets
-// (FIN/ACK, TIME_WAIT ACKs) leave through the production bypass instead of
-// being dropped (which would make the peer retransmit and keep the sockets
-// alive) or queued without a listener.
+// Release the probe connections from the candidates before they stop: every
+// probe rule becomes an accept of the canonical probe mark for its own
+// source ports, in one atomic batch of replaces (no hook is registered or
+// removed), so late packets (FIN/ACK, TIME_WAIT ACKs) leave through the
+// production bypass instead of being dropped (which would make the peer
+// retransmit and keep the sockets alive) or queued without a listener.
 function release_probe_rule(ip) {
     let listing = nft_json(TABLE);
     if (listing == null) return "failed";
-    let comments = [];
-    for (let item in listing)
-        if (type(item.rule) == "object" && item.rule.chain == CHAIN && index(PROBE_RULE_COMMENTS, item.rule.comment) >= 0)
-            push(comments, item.rule.comment);
-    if (length(comments) == 1 && comments[0] == "released") return "already_released";
-    if (length(comments) != 1) return "failed";
-    return switch_probe_rule(ip, probe_rule_spec(null, "released")) == "switched" ? "released" : "failed";
+    let lines = [], plain = 0, slices = 0;
+    for (let item in listing) {
+        if (type(item.rule) != "object" || item.rule.chain != CHAIN) continue;
+        let comment = as_string(item.rule.comment), kind = probe_rule_kind(comment);
+        if (kind == null) continue;
+        let sliced = index(comment, ":") >= 0;
+        if (sliced) slices++; else plain++;
+        if (kind == "released") continue;
+        let sport = sliced ? listed_sport(item.rule) : [ PORT_FIRST, PORT_LAST ];
+        if (sport == null) return "failed";
+        let rule = { comment: sliced ? "released" + substr(comment, index(comment, ":")) : "released",
+            tuple: { daddr: ip, dport: 443, sport }, mark: PROBE_MARK_VALUE, set_mark: null, verdict: "accept", queue: null };
+        push(lines, "replace rule inet " + TABLE + " " + CHAIN + " handle " + item.rule.handle + " " + render_rule(rule));
+    }
+    if (!((plain == 1 && slices == 0) || (plain == 0 && slices > 0))) return "failed";
+    if (length(lines) == 0) return "already_released";
+    let file = WORKDIR + "/release.nft";
+    if (fs.stat(WORKDIR) == null) fs.mkdir(WORKDIR, 0755);
+    if (fs.writefile(file, join("\n", lines) + "\n") == null) return "failed";
+    let ok = success([ "nft", "-f", file ]);
+    fs.unlink(file);
+    return ok ? "released" : "failed";
 }
 
 // Keep the table until no socket of the probe tuple is left, so no late packet
@@ -938,28 +981,38 @@ function tune(host, probes, resolver, list, ip) {
     let dpi = filter(supported, (c) => c.nfqws_opt != "");
     if (length(dpi) == 0) { result.status = "refused"; result.reason = "no_supported_dpi_candidate"; return result; }
     if (length(dpi) > MAX_QUEUES) { result.status = "refused"; result.reason = "too_many_candidates"; return result; }
-    if (at_most && length(supported) * probes > MAX_TUNE_PROBES_TOTAL) probes = int(MAX_TUNE_PROBES_TOTAL / length(supported));
-    if (probes < select_module.MIN_PROBES || length(supported) * probes > MAX_TUNE_PROBES_TOTAL) {
+    // Every probe of a candidate needs a source port of its slice: a used
+    // port stays in TIME_WAIT for the rest of the run.
+    let slice_size = int(MAX_TUNE_PROBES_TOTAL / length(supported));
+    if (at_most && probes > slice_size) probes = slice_size;
+    if (probes < select_module.MIN_PROBES || probes > slice_size) {
         result.status = "refused"; result.reason = "too_many_probes"; return result;
     }
     result.probes_per_candidate = probes;
 
-    // One queue per DPI candidate, assigned in the deterministic base order.
+    // One queue per DPI candidate and one port slice per candidate, assigned
+    // in the deterministic base order.
     let order = select_module.base_order(supported);
-    let by_id = {}, entries = [], next_queue = QUEUE;
+    let slices = port_slices(order);
+    let by_id = {}, entries = [], rules = [], next_queue = QUEUE;
     for (let id in order) {
         let c = null;
         for (let s in supported) if (s.id == id) c = s;
-        let slot = { id, rank: c.rank, queue: null, pidfile: null, argv: null };
+        let slot = { id, rank: c.rank, queue: null, pidfile: null, argv: null, sport: slices[id],
+            ports: slices[id][0] + "-" + slices[id][1] };
         if (c.nfqws_opt != "") {
             slot.queue = next_queue++;
             slot.pidfile = pidfile_for(slot.queue);
             slot.argv = nfqws_argv(c.nfqws_opt, null, slot.queue);
             push(entries, { queue: slot.queue, pidfile: slot.pidfile, argv: slot.argv });
         }
+        slot.comment = (slot.queue == null ? "direct:" : "probe:") + id;
+        push(rules, probe_rule_spec(slot.queue, slot.comment, slot.sport));
         by_id[id] = slot;
     }
     result.isolation.queues = map(entries, (e) => e.queue);
+    result.isolation.port_slices = {};
+    for (let id in order) result.isolation.port_slices[id] = by_id[id].ports;
     result.schedule = select_module.schedule(order, probes);
     let total_probes = 0;
     for (let r in result.schedule) total_probes += length(r);
@@ -982,7 +1035,7 @@ function tune(host, probes, resolver, list, ip) {
             fs.writefile(ACTIVE, sprintf("%J\n", { table: TABLE, nfqws: entries, ip: target.ip })) == null)
             return "state_write_failed";
         let batch_file = WORKDIR + "/probe.nft";
-        if (fs.writefile(batch_file, batch(target.ip, probe_rule_spec(null, "direct"))) == null) return "state_write_failed";
+        if (fs.writefile(batch_file, batch(target.ip, rules)) == null) return "state_write_failed";
         result.teardown = { quiet_before_creation: production_queues_quiet() };
         if (!result.teardown.quiet_before_creation.quiet) return "production_queue_busy";
         if (!success([ "nft", "-f", batch_file ])) return "nft_setup_failed";
@@ -998,7 +1051,12 @@ function tune(host, probes, resolver, list, ip) {
         mark("T2", "temporary nfqws started", pids);
         mark("T3", "measurement begins", { rounds: length(result.schedule), candidates: order });
         progress("measuring", { done: 0, total: total_probes, candidates: length(order) });
-        let current = "direct";
+        // Queue positions of every candidate before its first probe: the run
+        // is checked as a whole as well (below).
+        let run_queue_before = {};
+        for (let entry in entries) run_queue_before["" + entry.queue] = queue_entry(entry.queue);
+        let run_counters_before = probe_counters();
+        if (run_counters_before == null) return "counters_unavailable";
         for (let r = 0; r < length(result.schedule); r++) {
             let round = [];
             for (let id in result.schedule[r]) {
@@ -1015,25 +1073,24 @@ function tune(host, probes, resolver, list, ip) {
                 }
                 if (index(result.pruned, id) >= 0) continue;
                 let slot = by_id[id];
-                let comment = slot.queue == null ? "direct" : "probe";
-                if (id != current) {
-                    if (switch_probe_rule(target.ip, probe_rule_spec(slot.queue, comment)) != "switched") return "switch_failed";
-                    current = id;
-                }
+                let comment = slot.comment;
                 // The queue is read before the rule counter here and after it
                 // below, so the queue window contains the rule window: a late
-                // packet of an earlier probe (a blocked probe leaves an orphan
-                // that keeps retransmitting) between two readings can only
-                // add to "queued", never look like a packet that bypassed
-                // the candidate.
+                // packet of an earlier probe of this candidate (a blocked
+                // probe leaves an orphan that keeps retransmitting) between
+                // two readings can only add to "queued", never look like a
+                // packet that bypassed the candidate. Late packets of other
+                // candidates leave from their own slices, through their own
+                // rules and queues.
                 let queue_before = slot.queue != null ? queue_entry(slot.queue) : null;
                 let counters_before = probe_counters();
                 if (counters_before == null || counters_before[comment] == null) return "counters_unavailable";
-                let record = probe_module.probe({ host, ip: target.ip, port_range: PORT_RANGE });
+                let record = probe_module.probe({ host, ip: target.ip, port_range: slot.ports });
                 let counters_after = probe_counters();
                 if (counters_after == null || counters_after[comment] == null) return "counters_unavailable";
                 record.round = r + 1;
                 record.candidate = id;
+                record.port_range = slot.ports;
                 record.rule_packets = counters_after[comment].packets - counters_before[comment].packets;
                 if (slot.queue != null) {
                     let queue_after = queue_entry(slot.queue);
@@ -1056,6 +1113,20 @@ function tune(host, probes, resolver, list, ip) {
                 result.unreachable_round = r + 1;
                 return "target_unreachable";
             }
+        }
+        // Over the whole run, every packet a candidate's rule matched must
+        // have entered its queue, the late ones of its last probes included
+        // (rule counters first, queues after them: see above).
+        let run_counters_after = probe_counters();
+        if (run_counters_after == null) return "counters_unavailable";
+        for (let id in order) {
+            let slot = by_id[id];
+            if (slot.queue == null || run_counters_after[slot.comment] == null || run_counters_before[slot.comment] == null)
+                continue;
+            let before_q = run_queue_before["" + slot.queue], after_q = queue_entry(slot.queue);
+            let matched = run_counters_after[slot.comment].packets - run_counters_before[slot.comment].packets;
+            if (before_q == null || after_q == null || after_q.id_sequence - before_q.id_sequence < matched)
+                return "candidate_bypassed";
         }
         mark("T5", "measurement done", { probes: length(result.probes) });
         return null;
@@ -1236,7 +1307,11 @@ let mode = ARGV[0] || "";
 let output = null, code = 1;
 if (mode == "model") {
     // The temporary chains for a target, as evaluated by the regression tests.
-    let spec = ARGV[2] == "direct" ? probe_rule_spec(null) : ARGV[2] == "tune" ? probe_rule_spec(null, "direct") : probe_rule_spec(QUEUE);
+    // "tune": the slices of a tuning run of the control and one DPI candidate.
+    let tune_slices = port_slices([ "direct", "candidate" ]);
+    let spec = ARGV[2] == "direct" ? probe_rule_spec(null) : ARGV[2] == "tune"
+        ? [ probe_rule_spec(null, "direct:direct", tune_slices.direct), probe_rule_spec(QUEUE, "probe:candidate", tune_slices.candidate) ]
+        : probe_rule_spec(QUEUE);
     print(sprintf("%J\n", { probe_mark: PROBE_MARK_VALUE, desync_mark: DESYNC_MARK_VALUE, queue: QUEUE,
         chains: probe_chains(ARGV[1], spec), batch: batch(ARGV[1], spec) }));
     exit(0);
