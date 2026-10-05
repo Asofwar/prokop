@@ -14,6 +14,7 @@ import {
   startRuntimeUiStatePolling,
 } from './runtimeUiState.service';
 import { startServiceActionOutcomeNotices } from './serviceActionOutcome.service';
+import { checkStaleInterface } from './staleInterface.service';
 
 type CoreServiceOptions = {
   waitForLogWatcherStart?: () => Promise<unknown>;
@@ -110,6 +111,7 @@ export function coreService(options: CoreServiceOptions = {}) {
 
   if (typeof window !== 'undefined') {
     scheduleStartWatcher();
+    void checkStaleInterface();
   } else {
     void startWatcher();
   }

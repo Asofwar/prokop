@@ -2249,7 +2249,7 @@
     "call": "Component update available",
     "key": "Component update available",
     "places": [
-      "src/prokop/services/core.service.ts:45"
+      "src/prokop/services/core.service.ts:46"
     ]
   },
   {
@@ -2628,13 +2628,13 @@
     "call": "Could not load data",
     "key": "Could not load data",
     "places": [
+      "src/prokop/tabs/history/initController.ts:260",
       "src/prokop/tabs/diagnostic/initController.ts:591",
       "src/prokop/tabs/diagnostic/initController.ts:595",
       "src/prokop/tabs/diagnostic/initController.ts:631",
       "src/prokop/tabs/diagnostic/initController.ts:635",
       "src/prokop/tabs/diagnostic/initController.ts:671",
-      "src/prokop/tabs/diagnostic/initController.ts:675",
-      "src/prokop/tabs/history/initController.ts:260"
+      "src/prokop/tabs/diagnostic/initController.ts:675"
     ]
   },
   {
@@ -5790,10 +5790,10 @@
       "src/prokop/tabs/autotune/render.ts:34",
       "src/prokop/tabs/dashboard/overview.ts:506",
       "src/prokop/tabs/dashboard/render.ts:16",
-      "src/prokop/tabs/diagnostic/initController.ts:741",
       "src/prokop/tabs/history/render.ts:14",
       "src/prokop/tabs/history/render.ts:18",
-      "src/prokop/tabs/history/render.ts:30"
+      "src/prokop/tabs/history/render.ts:30",
+      "src/prokop/tabs/diagnostic/initController.ts:741"
     ]
   },
   {
@@ -6058,9 +6058,9 @@
     "places": [
       "src/prokop/ui/status.ts:34",
       "src/prokop/ui/status.ts:113",
-      "src/prokop/tabs/diagnostic/statusLabels.ts:24",
       "src/prokop/tabs/history/model.ts:79",
-      "src/prokop/tabs/history/model.ts:82"
+      "src/prokop/tabs/history/model.ts:82",
+      "src/prokop/tabs/diagnostic/statusLabels.ts:24"
     ]
   },
   {
@@ -6103,7 +6103,7 @@
     "call": "New version %s is available for %s",
     "key": "New version %s is available for %s",
     "places": [
-      "src/prokop/services/core.service.ts:40"
+      "src/prokop/services/core.service.ts:41"
     ]
   },
   {
@@ -7392,7 +7392,7 @@
     "call": "Prokop Error",
     "key": "Prokop Error",
     "places": [
-      "src/prokop/services/core.service.ts:54"
+      "src/prokop/services/core.service.ts:55"
     ]
   },
   {
@@ -10499,6 +10499,13 @@
     ]
   },
   {
+    "call": "The Prokop interface is out of date",
+    "key": "The Prokop interface is out of date",
+    "places": [
+      "src/prokop/services/staleInterface.service.ts:42"
+    ]
+  },
+  {
     "call": "the Prokop transparent proxy",
     "key": "the Prokop transparent proxy",
     "places": [
@@ -11138,6 +11145,13 @@
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6809",
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7186"
+    ]
+  },
+  {
+    "call": "This page was loaded from the browser cache: it is version %s, while version %s is installed on the router. Reload the page bypassing the cache (Ctrl+F5, or Cmd+Shift+R on a Mac).",
+    "key": "This page was loaded from the browser cache: it is version %s, while version %s is installed on the router. Reload the page bypassing the cache (Ctrl+F5, or Cmd+Shift+R on a Mac).",
+    "places": [
+      "src/prokop/services/staleInterface.service.ts:27"
     ]
   },
   {

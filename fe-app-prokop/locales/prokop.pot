@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-05 00:09+0000\n"
-"PO-Revision-Date: 2026-10-05 00:09+0000\n"
+"POT-Creation-Date: 2026-10-05 00:12+0000\n"
+"PO-Revision-Date: 2026-10-05 00:12+0000\n"
 "Last-Translator: Asofwar <7397608+Asofwar@users.noreply.github.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -1344,7 +1344,7 @@ msgstr ""
 msgid "Command failed"
 msgstr ""
 
-#: src/prokop/services/core.service.ts:45
+#: src/prokop/services/core.service.ts:46
 msgid "Component update available"
 msgstr ""
 
@@ -1564,13 +1564,13 @@ msgstr ""
 msgid "Could not load configuration snapshots"
 msgstr ""
 
+#: src/prokop/tabs/history/initController.ts:260
 #: src/prokop/tabs/diagnostic/initController.ts:591
 #: src/prokop/tabs/diagnostic/initController.ts:595
 #: src/prokop/tabs/diagnostic/initController.ts:631
 #: src/prokop/tabs/diagnostic/initController.ts:635
 #: src/prokop/tabs/diagnostic/initController.ts:671
 #: src/prokop/tabs/diagnostic/initController.ts:675
-#: src/prokop/tabs/history/initController.ts:260
 msgid "Could not load data"
 msgstr ""
 
@@ -3430,10 +3430,10 @@ msgstr ""
 #: src/prokop/tabs/autotune/render.ts:34
 #: src/prokop/tabs/dashboard/overview.ts:506
 #: src/prokop/tabs/dashboard/render.ts:16
-#: src/prokop/tabs/diagnostic/initController.ts:741
 #: src/prokop/tabs/history/render.ts:14
 #: src/prokop/tabs/history/render.ts:18
 #: src/prokop/tabs/history/render.ts:30
+#: src/prokop/tabs/diagnostic/initController.ts:741
 msgid "Loading…"
 msgstr ""
 
@@ -3587,9 +3587,9 @@ msgstr ""
 
 #: src/prokop/ui/status.ts:34
 #: src/prokop/ui/status.ts:113
-#: src/prokop/tabs/diagnostic/statusLabels.ts:24
 #: src/prokop/tabs/history/model.ts:79
 #: src/prokop/tabs/history/model.ts:82
+#: src/prokop/tabs/diagnostic/statusLabels.ts:24
 msgid "Needs attention"
 msgstr ""
 
@@ -3614,7 +3614,7 @@ msgstr ""
 msgid "Never"
 msgstr ""
 
-#: src/prokop/services/core.service.ts:40
+#: src/prokop/services/core.service.ts:41
 msgid "New version %s is available for %s"
 msgstr ""
 
@@ -4387,7 +4387,7 @@ msgstr ""
 msgid "Prokop does not apply recommendations in this mode."
 msgstr ""
 
-#: src/prokop/services/core.service.ts:54
+#: src/prokop/services/core.service.ts:55
 msgid "Prokop Error"
 msgstr ""
 
@@ -6195,6 +6195,10 @@ msgstr ""
 msgid "the Prokop DNS of devices"
 msgstr ""
 
+#: src/prokop/services/staleInterface.service.ts:42
+msgid "The Prokop interface is out of date"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9261
 msgid "the Prokop transparent proxy"
 msgstr ""
@@ -6565,6 +6569,10 @@ msgstr ""
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6809
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7186
 msgid "This option requires a value."
+msgstr ""
+
+#: src/prokop/services/staleInterface.service.ts:27
+msgid "This page was loaded from the browser cache: it is version %s, while version %s is installed on the router. Reload the page bypassing the cache (Ctrl+F5, or Cmd+Shift+R on a Mac)."
 msgstr ""
 
 #: src/prokop/tabs/updates/fullUninstall.ts:113
