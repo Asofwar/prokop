@@ -166,8 +166,11 @@ awk '
   in_finish && /^}/ { done = 1; exit }
   END { exit done && release_line && pending_line > release_line ? 0 : 1 }
 ' "$UPDATES_UC" || fail "pending reload must run only after list update releases the runtime lock"
-assert_eq 7 \
+assert_eq 1 \
   "$(grep -c 'log_message("Failed to download .*"error");' "$UPDATES_UC")" \
+  "terminal list download error helper"
+assert_eq 7 \
+  "$(grep -c 'log_failed_list_source(' "$UPDATES_UC" | awk '{ print $1 - 1 }')" \
   "terminal list download errors"
 if grep 'log_message("Failed to download .*"warn");' "$UPDATES_UC" >/dev/null 2>&1; then
   fail "terminal list download failures must not remain warnings"
