@@ -3738,7 +3738,10 @@ function recover_torrserver_files(paths) {
 // Whether TorrServer has its own settings yet: its database, in data/ or,
 // from an install before TS-1, beside the binary.
 function torrserver_has_database(paths) {
-    return file_exists(as_string(paths.data_dir) + "/config.db") || file_exists(paths.dir + "/config.db");
+    for (let name in [ "config.db", "settings.json" ])
+        if (file_exists(as_string(paths.data_dir) + "/" + name) || file_exists(paths.dir + "/" + name))
+            return true;
+    return false;
 }
 
 // Gives the TorrServer Prokop just installed the recommended settings
@@ -3809,7 +3812,8 @@ function install_torrserver(action) {
     // binary it replaces, which stays until the new one answers. The old
     // binary already has its place there: the new one needs only its own
     // size (TS-2), and nothing passes through /tmp, the router's RAM.
-    if (!ensure_dir(paths.dir))
+    // TorrServer's own user passes through it (init.d sets 0755 as well).
+    if (!ensure_dir(paths.dir) || !command_success_from_args([ "chmod", "0755", paths.dir ]))
         action_fail("torrserver", action, "Failed to create " + paths.dir, current_version, release.version, "", release.release_url || "");
     let needed_kib = int(int(release.size) / 1024) + 2048;
     let dir_kib = available_kib(paths.dir);

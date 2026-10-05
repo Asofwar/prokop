@@ -127,8 +127,8 @@ function batch(names) {
     text_value +=
         "add set inet " + TABLE + " ifaces { type ifname; flags interval; auto-merge; }\n" +
         "add element inet " + TABLE + " ifaces { " + join(", ", quoted) + " }\n" +
-        "add rule inet " + TABLE + " ingress iifname @ifaces fib saddr . iif oif exists update @tx4 { ip saddr }\n" +
-        "add rule inet " + TABLE + " ingress iifname @ifaces fib saddr . iif oif exists update @tx6 { ip6 saddr }\n" +
+        "add rule inet " + TABLE + " ingress iifname @ifaces fib saddr type != local fib saddr . iif oif exists update @tx4 { ip saddr }\n" +
+        "add rule inet " + TABLE + " ingress iifname @ifaces fib saddr type != local fib saddr . iif oif exists update @tx6 { ip6 saddr }\n" +
         "add rule inet " + TABLE + " egress oifname @ifaces update @rx4 { ip daddr }\n" +
         "add rule inet " + TABLE + " egress oifname @ifaces update @rx6 { ip6 daddr }\n";
     return text_value;

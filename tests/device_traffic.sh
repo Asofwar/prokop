@@ -51,7 +51,8 @@ if [ "${1:-}" = "--in-namespace" ]; then
   nft list table inet ProkopTraffic >/dev/null || fail 'real nft: the table was not created'
   since="$(field v.since <"$WORK/run/traffic.json")"
   # lo gets a host address the reader counts (127/8 is not a device), and
-  # one datagram goes out and comes back in through it.
+  # one datagram goes out and comes back in through it. That address is the
+  # router's own: what it sends counts as received by it, never as sent.
   python3 - <<'PY' || fail 'real nft: could not send test traffic'
 import fcntl, socket, struct
 s = socket.socket()
@@ -67,7 +68,7 @@ PY
   [ "$(field v.state <<<"$out")" = ok ] || fail "real nft: state is not ok: $out"
   [ "$(field 'v.devices.filter(d=>d.address==="10.200.0.1").length' <<<"$out")" = 1 ] ||
     fail "real nft: 10.200.0.1 was not counted: $out"
-  [ "$(field 'v.devices[0].tx_packets>=3&&v.devices[0].rx_packets>=3&&v.devices[0].tx_bytes>=3000' <<<"$out")" = true ] ||
+  [ "$(field 'v.devices[0].rx_packets>=3&&v.devices[0].rx_bytes>=3000&&v.devices[0].tx_packets===0' <<<"$out")" = true ] ||
     fail "real nft: the counters do not hold the test traffic: $out"
   [ "$(field 'v.devices.some(d=>d.address.startsWith("127."))' <<<"$out")" = false ] ||
     fail "real nft: a loopback address was reported as a device: $out"
@@ -99,12 +100,15 @@ PY
     traffic sync || fail 'real nft: sync for br-lan failed'
     python3 "$PACKETS" lan br-lan 192.168.1.50 8.8.8.8 udp 53 || fail 'real nft: could not send from the LAN'
     python3 "$PACKETS" lan br-lan 172.31.9.9 8.8.8.8 udp 53 || fail 'real nft: could not send a forged packet'
+    python3 "$PACKETS" lan br-lan 192.168.1.1 8.8.8.8 udp 53 || fail "real nft: could not send from the router's address"
     out="$(traffic get)"
     [ "$(field 'v.devices.some(d=>d.address==="192.168.1.50")' <<<"$out")" = true ] ||
       fail "real nft: a LAN client was not counted: $out"
     [ "$(field 'v.devices.some(d=>d.address==="172.31.9.9")' <<<"$out")" = false ] ||
       fail "real nft: a forged source address was counted: $out"
-    ok 'real nft: a forged source address is not counted (TRF-1)'
+    [ "$(field 'v.devices.some(d=>d.address==="192.168.1.1")' <<<"$out")" = false ] ||
+      fail "real nft: the router's own address was counted as a device: $out"
+    ok 'real nft: a forged source address and the router itself are not counted (TRF-1)'
   else
     printf 'SKIP: real nft: no TUN device for the forged-source check\n'
   fi
@@ -176,8 +180,8 @@ head -3 "$batch" | tr '\n' '|' | grep -qx 'add table inet ProkopTraffic|delete t
 grep -qxF 'add element inet ProkopTraffic ifaces { "br-lan", "wg0" }' "$batch" || fail 'the interfaces are not in the set'
 # TRF-1: a source counts only when the router routes it back through the
 # interface it came in on; one set of interfaces, two rules per hook.
-for rule in 'ingress iifname @ifaces fib saddr . iif oif exists update @tx4 { ip saddr }' \
-  'ingress iifname @ifaces fib saddr . iif oif exists update @tx6 { ip6 saddr }' \
+for rule in 'ingress iifname @ifaces fib saddr type != local fib saddr . iif oif exists update @tx4 { ip saddr }' \
+  'ingress iifname @ifaces fib saddr type != local fib saddr . iif oif exists update @tx6 { ip6 saddr }' \
   'egress oifname @ifaces update @rx4 { ip daddr }' 'egress oifname @ifaces update @rx6 { ip6 daddr }'; do
   grep -qxF "add rule inet ProkopTraffic $rule" "$batch" || fail "missing rule: $rule"
 done
@@ -212,7 +216,7 @@ uci_settings 'prokop.settings.source_network_interfaces=br-lan "; flush ruleset'
 rules="$(traffic batch | grep '^add \(rule\|element\)')"
 grep -q '"br-lan"' <<<"$rules" || fail 'a valid interface was dropped with an invalid one'
 ! grep -q '";' <<<"$rules" || fail 'an interface name with nft syntax was rendered'
-! grep -Ev '^add rule inet ProkopTraffic (ingress iifname @ifaces fib saddr . iif oif exists|egress oifname @ifaces) update @(tx|rx)[46] \{ ip6? [sd]addr \}$|^add element inet ProkopTraffic ifaces \{ "br-lan", "flush", "ruleset" \}$' <<<"$rules" ||
+! grep -Ev '^add rule inet ProkopTraffic (ingress iifname @ifaces fib saddr type != local fib saddr . iif oif exists|egress oifname @ifaces) update @(tx|rx)[46] \{ ip6? [sd]addr \}$|^add element inet ProkopTraffic ifaces \{ "br-lan", "flush", "ruleset" \}$' <<<"$rules" ||
   fail 'a rule outside the expected shape was rendered'
 # NET-14: the names the validator and the kill-switch take are counted too.
 uci_settings 'prokop.settings.source_network_interfaces=br-lan lan+guest wg0:1'

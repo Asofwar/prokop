@@ -1,2 +1,6 @@
 /opt/torrserver/data/config.db
+/opt/torrserver/data/settings.json
+/opt/torrserver/data/viewed.json
 /opt/torrserver/config.db
+/opt/torrserver/settings.json
+/opt/torrserver/viewed.json

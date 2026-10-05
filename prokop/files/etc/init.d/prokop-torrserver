@@ -52,10 +52,18 @@ ensure_torrserver_user() {
 # and links are never followed.
 prepare_torrserver_data() {
 	local name
+	[ -L "$TORRSERVER_DIR" ] && return 1
+	# TorrServer's user must pass through the directory that holds its
+	# binary and data/: Prokop's updater runs under umask 077, and the
+	# directory a release before TS-1 created is 0700. It stays root's, so
+	# that user still writes nothing in it.
+	chmod 0755 "$TORRSERVER_DIR" || return 1
 	[ -L "$TORRSERVER_DATA" ] && return 1
 	[ -d "$TORRSERVER_DATA" ] || mkdir -m 0750 "$TORRSERVER_DATA" || return 1
 	chown -h "$TORRSERVER_USER:$TORRSERVER_USER" "$TORRSERVER_DATA" || return 1
-	for name in config.db rutor.ls; do
+	# settings.json holds the settings when StoreSettingsInJson is on, and
+	# viewed.json what was watched: they move in with the database.
+	for name in config.db settings.json viewed.json rutor.ls; do
 		if [ -f "$TORRSERVER_DIR/$name" ] && [ ! -L "$TORRSERVER_DIR/$name" ] && [ ! -e "$TORRSERVER_DATA/$name" ]; then
 			mv "$TORRSERVER_DIR/$name" "$TORRSERVER_DATA/$name" || return 1
 		fi

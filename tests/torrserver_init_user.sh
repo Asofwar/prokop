@@ -79,6 +79,14 @@ grep -Fxq -- "-h torrserver:torrserver $WORK/opt/torrserver/data" "$WORK/chown" 
 grep -q -- "-R\|torrserver:torrserver $WORK/opt/torrserver\$\|/torrserver/torrserver\$\|prokop-managed" "$WORK/chown" &&
   fail "nothing but data/ may change owner, and nothing recursively: $(cat "$WORK/chown")"
 
+# A directory a release before TS-1 made is 0700 (umask 077): TorrServer's
+# user must pass through it, or the binary cannot run (exit 127).
+reset_router
+chmod 0700 "$WORK/opt/torrserver"
+run_start
+[ "$START_RC" = 0 ] || fail "start with a 0700 directory must succeed"
+[ "$(stat -c %a "$WORK/opt/torrserver")" = 755 ] || fail "the directory must be 0755: $(stat -c %a "$WORK/opt/torrserver")"
+
 # Started again, the same user stays.
 run_start
 [ "$(grep -c '^torrserver:' "$WORK/passwd")" = 1 ] || fail "the user must be made once"
@@ -87,6 +95,8 @@ run_start
 reset_router
 printf 'db' >"$WORK/opt/torrserver/config.db"
 printf 'rutor' >"$WORK/opt/torrserver/rutor.ls"
+printf '{}' >"$WORK/opt/torrserver/settings.json"
+printf '[]' >"$WORK/opt/torrserver/viewed.json"
 # An id taken by another user is skipped.
 printf 'other:x:65536:100:other:/var:/bin/false\n' >>"$WORK/passwd"
 run_start
@@ -96,6 +106,10 @@ grep -q '^torrserver:x:65537:65537:' "$WORK/passwd" || fail "a taken id must be 
   fail "the database must move into data/"
 [ -e "$WORK/opt/torrserver/data/rutor.ls" ] || fail "the search database must move into data/"
 grep -Fxq -- "-h torrserver:torrserver $WORK/opt/torrserver/data/config.db" "$WORK/chown" || fail "the moved database must be the user's"
+for name in settings.json viewed.json; do
+  [ -e "$WORK/opt/torrserver/data/$name" ] && [ ! -e "$WORK/opt/torrserver/$name" ] || fail "$name must move into data/"
+  grep -Fxq -- "-h torrserver:torrserver $WORK/opt/torrserver/data/$name" "$WORK/chown" || fail "the moved $name must be the user's"
+done
 # A database already in data/ is never overwritten by one beside the binary,
 # and is the user's on every start (one a sysupgrade restored may carry an
 # old owner): the file itself, never what a link names.
@@ -110,7 +124,9 @@ grep -q "rutor.ls" "$WORK/chown" && fail "a link in data/ must never change owne
 
 # --- 2b. A sysupgrade keeps the database (TS-7) ------------------------------------
 KEEP="$ROOT_DIR/prokop/files/lib/upgrade/keep.d/prokop-torrserver"
-grep -Fxq /opt/torrserver/data/config.db "$KEEP" || fail "a sysupgrade must keep TorrServer's database"
+for name in config.db settings.json viewed.json; do
+  grep -Fxq "/opt/torrserver/data/$name" "$KEEP" || fail "a sysupgrade must keep TorrServer's $name"
+done
 grep -q 'keep.d/prokop-torrserver' "$ROOT_DIR/prokop/Makefile" || fail "the package must install the keep list"
 
 # --- 3. Fail closed --------------------------------------------------------------
@@ -121,6 +137,21 @@ run_start
 [ "$START_RC" != 0 ] || fail "a link at data/ must refuse the start"
 grep -q '^open' "$WORK/procd" && fail "nothing may run when data/ is a link"
 grep -Fq "was not started" "$WORK/logger" || fail "the refusal must be logged"
+# The directory itself as a link: never followed.
+rm -rf "$WORK/opt"
+mkdir -p "$WORK/real"
+ln -s "$WORK/real" "$WORK/opt"
+mkdir -p "$WORK/real/torrserver"
+printf '#!/bin/sh\n' >"$WORK/real/torrserver/torrserver"
+chmod 0755 "$WORK/real/torrserver/torrserver"
+printf '{}\n' >"$WORK/real/torrserver/prokop-managed.json"
+rm "$WORK/opt"
+mkdir -p "$WORK/opt"
+ln -s "$WORK/real/torrserver" "$WORK/opt/torrserver"
+run_start
+[ "$START_RC" != 0 ] || fail "a link at the TorrServer directory must refuse the start"
+grep -q '^open' "$WORK/procd" && fail "nothing may run when the directory is a link"
+rm -rf "$WORK/real"
 # A group whose id another user has: no user is made, nothing runs.
 reset_router
 printf 'torrserver:x:65540:\n' >>"$WORK/group"
