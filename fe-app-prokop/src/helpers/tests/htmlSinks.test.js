@@ -1,5 +1,6 @@
-// Guard for FE-1/FE-2/FE-3: LuCI's E(tag, attrs, children), ui.showModal and
-// ui.addNotification parse a bare string as HTML. Only literals and _()
+// Guard for FE-1/FE-2/FE-3/FE-13: LuCI's E(tag, attrs, children),
+// E(tag, children), ui.showModal, ui.addNotification and the labels of
+// addChoices parse a bare string as HTML. Only literals and _()
 // translations may be passed that way; everything else goes through asText()
 // in TypeScript or an array in the hand-written LuCI views.
 import { parse } from '@babel/parser';
@@ -22,7 +23,16 @@ const VIEW_DIR = path.resolve(
 function htmlSinkArguments(call) {
   const callee = call.expression;
   if (ts.isIdentifier(callee) && callee.text === 'E') {
-    return call.arguments.length >= 3 ? [call.arguments[2]] : [];
+    if (call.arguments.length >= 3) return [call.arguments[2]];
+    // E(tag, string): a non-object second argument is the children.
+    const second = call.arguments[1];
+    return second && !ts.isObjectLiteralExpression(second) ? [second] : [];
+  }
+  if (
+    ts.isPropertyAccessExpression(callee) &&
+    callee.name.text === 'addChoices'
+  ) {
+    return call.arguments.slice(1, 2);
   }
   if (
     ts.isPropertyAccessExpression(callee) &&
@@ -154,8 +164,31 @@ function javaScriptViolations() {
       CallExpression({ node }) {
         const callee = node.callee;
         let checked = [];
-        if (callee.type === 'Identifier' && callee.name === 'E')
-          checked = [node.arguments[2]];
+        if (callee.type === 'Identifier' && callee.name === 'E') {
+          // E(tag, string) takes a non-object second argument as children.
+          const second = node.arguments[1];
+          checked =
+            node.arguments.length >= 3 || second?.type === 'ObjectExpression'
+              ? [node.arguments[2]]
+              : [second];
+        }
+        // ui.DynamicList#addChoices and Dropdown#addChoices hand each label
+        // (or, without one, the value) to E() as children (FE-11, FE-12).
+        if (
+          callee.type === 'MemberExpression' &&
+          callee.property.type === 'Identifier' &&
+          callee.property.name === 'addChoices'
+        ) {
+          const labels = node.arguments[1];
+          if (
+            !(
+              labels?.type === 'CallExpression' &&
+              labels.callee.type === 'Identifier' &&
+              labels.callee.name === 'textChoiceLabels'
+            )
+          )
+            report(labels ?? node);
+        }
         if (
           callee.type === 'MemberExpression' &&
           callee.object.type === 'Identifier' &&
@@ -166,7 +199,7 @@ function javaScriptViolations() {
           if (owner === 'dom' && (method === 'content' || method === 'append'))
             checked = [node.arguments[1]];
           if (owner === 'ui' && method === 'showModal')
-            checked = [node.arguments[0]];
+            checked = node.arguments.slice(0, 2);
           if (owner === 'ui' && method === 'addNotification')
             checked = node.arguments.slice(0, 2);
         }

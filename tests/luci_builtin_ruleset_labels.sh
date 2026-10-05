@@ -48,6 +48,7 @@ const config = {
     for (const [key, text] of Object.entries(widget.choices))
       assert.equal(text, label(key), `${version}: offered ${key} is not named as localized`);
     assert.equal(widget.choices.geoblock, 'Geo-blocked services');
+    assert.deepEqual(widget.htmlChoiceLabels, [], `${version}: a label went to addChoices as HTML (FE-13)`);
   }
   console.log('luci_builtin_ruleset_labels: PASS');
 })().catch((error) => {

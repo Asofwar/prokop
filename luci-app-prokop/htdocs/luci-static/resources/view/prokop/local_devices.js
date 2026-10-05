@@ -284,6 +284,19 @@ function labelLocalDeviceChoices(choices) {
   return labels;
 }
 
+// ui.DynamicList.addChoices hands a string label to E(), which parses it as
+// HTML (FE-11, FE-12): node names come from the subscription provider and
+// device names from PTR answers. Labels go in as text nodes, one per value,
+// since a missing label falls back to the value, parsed the same way.
+function textChoiceLabels(values, labels) {
+  const nodes = {};
+  values.forEach((value) => {
+    const label = labels && labels[value] != null ? labels[value] : value;
+    nodes[value] = E("span", {}, [`${label}`]);
+  });
+  return nodes;
+}
+
 function hasSingleIpValue(values) {
   return normalizeOptionValues(values).some(
     (value) => main.validateIP(value).valid,
@@ -338,7 +351,11 @@ function createLocalDeviceDynamicListWidget(option, section_id, cfgvalue) {
         .then((loadedChoices) => {
           const labels = labelLocalDeviceChoices(loadedChoices);
           widget.clearChoices();
-          widget.addChoices(sortLocalDeviceChoiceValues(loadedChoices), labels);
+          const sortedValues = sortLocalDeviceChoiceValues(loadedChoices);
+          widget.addChoices(
+            sortedValues,
+            textChoiceLabels(sortedValues, labels),
+          );
           choicesLoaded = true;
         })
         .finally(() => {

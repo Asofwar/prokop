@@ -1806,6 +1806,19 @@ const ButtonAddSettingsDynamicList = SettingsDynamicList.extend({
   buttonAdd: true,
 });
 
+// ui.DynamicList.addChoices hands a string label to E(), which parses it as
+// HTML (FE-11, FE-12): node names come from the subscription provider and
+// device names from PTR answers. Labels go in as text nodes, one per value,
+// since a missing label falls back to the value, parsed the same way.
+function textChoiceLabels(values, labels) {
+  const nodes = {};
+  values.forEach((value) => {
+    const label = labels && labels[value] != null ? labels[value] : value;
+    nodes[value] = E("span", {}, [`${label}`]);
+  });
+  return nodes;
+}
+
 function configureLiveDynamicListChoices(option, getChoices) {
   option.renderWidget = function (section_id, _option_index, cfgvalue) {
     const values = L.toArray(cfgvalue != null ? cfgvalue : this.default);
@@ -1855,9 +1868,10 @@ function configureLiveDynamicListChoices(option, getChoices) {
       refreshOptionChoices(this, currentChoices);
       widget.choices = currentLabels;
       widget.clearChoices();
+      const currentValuesList = currentChoices.map((choice) => choice.value);
       widget.addChoices(
-        currentChoices.map((choice) => choice.value),
-        currentLabels,
+        currentValuesList,
+        textChoiceLabels(currentValuesList, currentLabels),
       );
       return true;
     };
@@ -3629,7 +3643,7 @@ function renderStackedJsonSettingsModal(title, map, onSave) {
   }
 
   return map.render().then((nodes) => {
-    const titleNode = E("span", title ? ` » ${title}` : "");
+    const titleNode = E("span", [title ? ` » ${title}` : ""]);
     const originalButtonClass = buttonRow.getAttribute("class") || "";
     const originalButtonNodes = Array.from(buttonRow.childNodes);
     let closed = false;
@@ -8151,9 +8165,10 @@ function hideSelectedRulesetChoices(option, choices) {
       const selected = new Set(L.toArray(widget.getValue()));
       const available = choices.filter(({ value }) => !selected.has(value));
       widget.clearChoices();
+      const availableValues = available.map(({ value }) => value);
       widget.addChoices(
-        available.map(({ value }) => value),
-        labels,
+        availableValues,
+        textChoiceLabels(availableValues, labels),
       );
     };
     node.addEventListener("cbi-dynlist-change", refreshChoices);

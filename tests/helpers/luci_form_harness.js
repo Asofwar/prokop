@@ -1121,7 +1121,10 @@ function createEnvironment({
   });
   const ui = {
     // ui.DynamicList: choices maps the values offered below the list (and
-    // the labels of its items) to their labels.
+    // the labels of its items) to their labels. addChoices builds each label
+    // as ui.js createChoiceElement does, E("span", {}, label ?? value): a
+    // string there is parsed as HTML, so it is kept in htmlChoiceLabels
+    // (FE-11) and the text of the label in choices.
     DynamicList: uiAbstract.extend({
       getValue() {
         return toArray(this.value);
@@ -1131,7 +1134,12 @@ function createEnvironment({
       },
       addChoices(values, labels) {
         this.choices ??= {};
-        for (const value of values) this.choices[value] = labels?.[value] ?? value;
+        this.htmlChoiceLabels ??= [];
+        for (const value of values) {
+          const content = E("span", {}, labels?.[value] ?? value);
+          if (content.markup != null) this.htmlChoiceLabels.push(content.markup);
+          this.choices[value] = content.markup ?? content.textContent;
+        }
       },
     }),
     Textarea: uiAbstract.extend({}),
