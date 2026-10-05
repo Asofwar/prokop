@@ -735,9 +735,9 @@ function test() {
     let config = notify_config.read();
     let channels = active_channels(config);
     if (!config.enabled)
-        return { status: "disabled", channels: [] };
+        return { status: "failed", reason: "disabled", channels: [] };
     if (length(channels) == 0)
-        return { status: "not_configured", channels: [] };
+        return { status: "failed", reason: "not_configured", channels: [] };
     if (!ensure_dirs())
         return { status: "failed", reason: "local_error", channels: [] };
     let message = { title: title(), text: "✅ Тестовое уведомление. Если вы его видите, уведомления Prokop настроены.",
@@ -759,7 +759,7 @@ function test() {
     if (state != null)
         save_state(state);
     release_lock(lock);
-    return { status: ok ? "ok" : "failed", channels: results };
+    return ok ? { status: "ok", channels: results } : { status: "failed", reason: "delivery_failed", channels: results };
 }
 
 function status() {
@@ -818,4 +818,6 @@ else {
     exit(2);
 }
 print(sprintf("%J\n", output));
-exit(output.status == "failed" ? 1 : 0);
+// status answers what it found; test and the cron line succeed only with
+// "ok" (a failure says why in reason).
+exit(mode == "status" || output.status == "ok" ? 0 : 1);

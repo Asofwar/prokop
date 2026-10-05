@@ -105,7 +105,7 @@ function stubs(canReadUci, calls, { stale = false } = {}) {
   assert.match(formSource, /new form\.Map\(UCI_PACKAGE/, 'configform must build the form');
   const handleSaveApply = function () {};
   for (const [file, modules] of [['page/rules.js', { section: {} }],
-    ['page/settings.js', { settings: {}, updates: {} }]]) {
+    ['page/settings.js', { settings: {}, notifications: {}, updates: {} }]]) {
     const view = load(file, { view: { extend: value => value }, form: {}, shell: {},
       configform: { handleSaveApply }, ...modules });
     assert.equal(view.handleSaveApply, handleSaveApply, `${file}: Save & Apply must be configform's`);
@@ -121,8 +121,9 @@ function stubs(canReadUci, calls, { stale = false } = {}) {
     'settings page lost the settings tabs');
   // LuCI keys map tabs by section type: every settings tab needs its own.
   const tabTypes = [...settingsSource.matchAll(/settingsTab\("(settings_\w+)", _\("([^"]+)"\)\)/g)];
-  assert.deepEqual(tabTypes.map((m) => m[2]), ['DNS', 'Network', 'Lists and updates', 'Service settings']);
-  assert.equal(new Set(tabTypes.map((m) => m[1])).size, 4, 'settings tabs must not share a section type');
+  assert.deepEqual(tabTypes.map((m) => m[2]), ['DNS', 'Network', 'Lists and updates', 'Service settings',
+    'Notifications']);
+  assert.equal(new Set(tabTypes.map((m) => m[1])).size, 5, 'settings tabs must not share a section type');
   assert.match(settingsSource, /cfgsections = function \(\) \{\s*return \["settings"\];/,
     'settings tabs must edit the single settings section');
   for (const file of Object.keys(pages))

@@ -1,15 +1,15 @@
 # RU translations for PROKOP package.
 # Copyright (C) 2026 THE PROKOP COPYRIGHT HOLDER
 # This file is distributed under the same license as the PROKOP package.
-# Claude, 2026.
+# Asofwar, 2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-05 12:12+0000\n"
-"PO-Revision-Date: 2026-10-05 12:12+0000\n"
-"Last-Translator: Claude\n"
+"POT-Creation-Date: 2026-10-05 12:31+0000\n"
+"PO-Revision-Date: 2026-10-05 12:31+0000\n"
+"Last-Translator: Asofwar\n"
 "Language-Team: none\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -161,6 +161,9 @@ msgstr "Восстановление конфигурации не заверш�
 msgid "A Connection rule needs a connection: add a connection URL, a subscription, a network interface or a JSON outbound, or disable the rule."
 msgstr "Правилу «Подключение» нужно подключение: добавьте URL подключения, подписку, сетевой интерфейс или JSON outbound либо выключите правило."
 
+msgid "A connection rule or sing-box stops answering, and when it is back. Checked every 5 minutes"
+msgstr "Правило с подключением или sing-box перестали отвечать, и когда они снова работают. Проверка раз в 5 минут"
+
 msgid "A domain, or a list of a DPI rule measured through a few of its domains."
 msgstr "Домен или список DPI-правила, который проверяется по нескольким его доменам."
 
@@ -173,6 +176,9 @@ msgstr "Неудавшееся изменение оставило защиту 
 msgid "A failed change left the DPI guard in place. Traffic that needs DPI bypass stays blocked until you restart Prokop."
 msgstr "Неудавшееся изменение оставило защиту DPI. Трафик, которому нужен обход DPI, блокируется, пока вы не перезапустите Prokop."
 
+msgid "A failed reload, start or snapshot restore, an autotune rollback"
+msgstr "Неудачная перезагрузка, запуск или восстановление снимка, откат автотюна"
+
 msgid "a FakeIP address is routed by its domain; check the site by its name"
 msgstr "адрес FakeIP маршрутизируется по своему домену; проверьте сайт по имени"
 
@@ -181,6 +187,9 @@ msgstr "Группа — это одно DPI-правило Zapret. Prokop ме�
 
 msgid "A list of a DPI rule. Each check takes a few of its domains; keywords and regular expressions are skipped."
 msgstr "Список DPI-правила. Каждая проверка берёт несколько его доменов; ключевые слова и регулярные выражения пропускаются."
+
+msgid "A POST to this address, for ntfy, Gotify and similar services. The saved address is never shown on the page"
+msgstr "POST-запрос на этот адрес, для ntfy, Gotify и похожих сервисов. Сохранённый адрес на странице не показывается"
 
 msgid "a previous apply is not resolved"
 msgstr "предыдущее применение не завершено"
@@ -217,6 +226,9 @@ msgstr "Сейчас применяется и проверяется страт
 
 msgid "A strategy is set for the whole rule, so Prokop does not change it. You can split the targets into separate rules."
 msgstr "Стратегия задаётся на всё правило, поэтому Prokop её не меняет. Можно разнести цели по разным правилам вручную."
+
+msgid "A subscription fails to update, is about to expire, has expired or runs out of traffic"
+msgstr "Подписка не обновилась, скоро истекает, истекла или заканчивается трафик"
 
 msgid "about %d min"
 msgstr "около %d мин"
@@ -785,6 +797,9 @@ msgstr "Изменений в сутки: не больше %d; откаченн
 msgid "Changes since this snapshot"
 msgstr "Изменения после этого снимка"
 
+msgid "Chat not found: check the ID and that you wrote to the bot first"
+msgstr "Чат не найден: проверьте ID и что вы сначала написали боту"
+
 msgid "Check"
 msgstr "Проверить"
 
@@ -1058,6 +1073,9 @@ msgstr "Соединения"
 msgid "Connections are unavailable"
 msgstr "Подключения недоступны"
 
+msgid "Connections down"
+msgstr "Падение подключений"
+
 msgid "connections to the DNS port are answered by the sing-box DNS, not routed by a rule"
 msgstr "соединения на порт DNS обслуживает DNS sing-box, а не правило маршрутизации"
 
@@ -1160,6 +1178,9 @@ msgstr "Подсчёт трафика по устройствам выключе
 msgid "Counts how much each device on the source interfaces sends and receives, for Monitoring > Devices. The counters start from zero when Prokop starts"
 msgstr "Считает, сколько отправляет и получает каждое устройство на исходных интерфейсах, для раздела «Мониторинг» → «Устройства». Счётчики начинаются с нуля при запуске Prokop"
 
+msgid "Create a bot with @BotFather and paste its token. The saved token is never shown on the page"
+msgstr "Создайте бота через @BotFather и вставьте его токен. Сохранённый токен на странице не показывается"
+
 msgid "Create snapshot"
 msgstr "Создать снимок"
 
@@ -1214,11 +1235,20 @@ msgstr "Удалить"
 msgid "Delete snapshot?"
 msgstr "Удалить снимок?"
 
+msgid "Delete the saved token"
+msgstr "Удалить сохранённый токен"
+
+msgid "Delete the saved webhook URL"
+msgstr "Удалить сохранённый адрес webhook"
+
 msgid "Delete this configuration snapshot?"
 msgstr "Удалить этот снимок конфигурации?"
 
 msgid "Delete…"
 msgstr "Удалить…"
+
+msgid "Delivered"
+msgstr "Доставлено"
 
 msgid "Derived from configuration"
 msgstr "Определено по конфигурации"
@@ -1285,6 +1315,9 @@ msgstr "Прямое подключение"
 
 msgid "Direct Proxy"
 msgstr "Прямой прокси"
+
+msgid "directly"
+msgstr "напрямую"
 
 msgid "Disable"
 msgstr "Отключить"
@@ -1586,6 +1619,9 @@ msgstr "Включить авторизацию смешанного прокс�
 msgid "Enable mode 2"
 msgstr "Включить режим 2"
 
+msgid "Enable notifications"
+msgstr "Включить уведомления"
+
 msgid "Enable Output Network Interface"
 msgstr "Включить выходной сетевой интерфейс"
 
@@ -1612,6 +1648,9 @@ msgstr "Укажите домен или IP-адрес"
 
 msgid "Enter a level name"
 msgstr "Введите название уровня"
+
+msgid "Enter a number from 1 to 30"
+msgstr "Введите число от 1 до 30"
 
 msgid "Enter a port"
 msgstr "Укажите порт"
@@ -2324,6 +2363,9 @@ msgstr "JSON outbound должен содержать непустое поле 
 msgid "JSON outbound settings"
 msgstr "Настройки JSON outbound"
 
+msgid "JSON: title, message, priority (Gotify)"
+msgstr "JSON: title, message, priority (Gotify)"
+
 msgid "just now"
 msgstr "только что"
 
@@ -2654,6 +2696,9 @@ msgstr "Менять нечего"
 msgid "No change was needed"
 msgstr "Изменение не потребовалось"
 
+msgid "No channel is set up: save a bot token and chat ID, or a webhook URL"
+msgstr "Канал не настроен: сохраните токен бота и ID чата или адрес webhook"
+
 msgid "No check has been run yet"
 msgstr "Проверка ещё не запускалась"
 
@@ -2792,6 +2837,9 @@ msgstr "Не проверено"
 msgid "Not checked yet"
 msgstr "Ещё не проверялось"
 
+msgid "Not delivered"
+msgstr "Не доставлено"
+
 msgid "Not determined"
 msgstr "Не определено"
 
@@ -2848,6 +2896,12 @@ msgstr "Ничего не откачено"
 
 msgid "Nothing was rolled back: the router has uncommitted uci changes of Prokop (made with \"uci set\" without a commit). Commit or revert them, then roll back again."
 msgstr "Ничего не откачено: на роутере есть незафиксированные изменения Prokop в uci (внесённые «uci set» без commit). Зафиксируйте или отмените их и повторите откат."
+
+msgid "Notifications"
+msgstr "Уведомления"
+
+msgid "Notifications are off: enable them and save the settings"
+msgstr "Уведомления выключены: включите их и сохраните настройки"
 
 msgid "Now"
 msgstr "Сейчас"
@@ -3043,6 +3097,9 @@ msgstr "Закреплённых доменов: %d"
 
 msgid "Plain DNS is intercepted"
 msgstr "Обычный DNS перехватывается"
+
+msgid "Plain text (ntfy)"
+msgstr "Простой текст (ntfy)"
 
 msgid "Policy"
 msgstr "Политика"
@@ -3584,6 +3641,9 @@ msgstr "Откатить последнее изменение…"
 msgid "Rollback did not finish"
 msgstr "Откат не завершился"
 
+msgid "Rollbacks and failed changes"
+msgstr "Откаты и неудачные изменения"
+
 msgid "Rolled back"
 msgstr "Откачено"
 
@@ -3716,6 +3776,9 @@ msgstr "Сохраните и примените настройки с вклю�
 msgid "Saved, service stopped"
 msgstr "Сохранено, служба остановлена"
 
+msgid "Saved. Enter a new value to replace it"
+msgstr "Сохранено. Введите новое значение, чтобы заменить"
+
 msgid "Saving URLTest settings…"
 msgstr "Сохранение настроек URLTest…"
 
@@ -3808,6 +3871,27 @@ msgstr "Выбрано %d из %d"
 
 msgid "Selector and URLTest outbounds must contain a non-empty outbounds array"
 msgstr "Selector и URLTest outbound должны содержать непустой массив outbounds"
+
+msgid "Send a message to Telegram or a webhook when Prokop rolls back a change, a connection stops answering, or a subscription fails or ends"
+msgstr "Присылать сообщение в Telegram или на webhook, когда Prokop откатывает изменения, подключение перестаёт отвечать или подписка не обновляется либо заканчивается"
+
+msgid "Send test"
+msgstr "Отправить тест"
+
+msgid "Send through"
+msgstr "Отправлять через"
+
+msgid "Send through a rule"
+msgstr "Отправлять через правило"
+
+msgid "Send through the connection of the selected rule, for example when Telegram is blocked. When that does not get through, Prokop sends directly"
+msgstr "Отправлять через подключение выбранного правила, например если Telegram заблокирован. Если так отправить не получилось, Prokop отправит напрямую"
+
+msgid "Sending…"
+msgstr "Отправка…"
+
+msgid "Sends a test message with the saved settings: save and apply changes first"
+msgstr "Отправляет тестовое сообщение с сохранёнными настройками: сначала сохраните и примените изменения"
 
 msgid "Sent"
 msgstr "Отправлено"
@@ -4106,6 +4190,9 @@ msgstr "URL подписки"
 msgid "Subscription URL settings"
 msgstr "Настройки URL подписки"
 
+msgid "Subscriptions"
+msgstr "Подписки"
+
 msgid "Subscriptions updated"
 msgstr "Подписки обновлены"
 
@@ -4166,6 +4253,18 @@ msgstr "Технические данные"
 msgid "Technical details"
 msgstr "Технические детали"
 
+msgid "Telegram bot token"
+msgstr "Токен Telegram-бота"
+
+msgid "Telegram chat ID"
+msgstr "ID чата Telegram"
+
+msgid "Telegram did not accept the bot token"
+msgstr "Telegram не принял токен бота"
+
+msgid "Telegram refused the request"
+msgstr "Telegram отклонил запрос"
+
 msgid "Test latency"
 msgstr "Тестирование задержки"
 
@@ -4225,6 +4324,12 @@ msgstr "Состояние автоподбора восстановлено п�
 
 msgid "The best strategy is not stable for every target of the rule."
 msgstr "Лучшая стратегия стабильна не для всех целей правила."
+
+msgid "The bot is blocked or was removed from the chat"
+msgstr "Бот заблокирован или удалён из чата"
+
+msgid "The bot may not write to this chat"
+msgstr "Боту нельзя писать в этот чат"
 
 msgid "The built-in rule sets are added. Save the rule to keep the change."
 msgstr "Встроенные наборы правил добавлены. Сохраните правило, чтобы сохранить изменение."
@@ -4523,6 +4628,9 @@ msgstr "Запись о последнем изменении автоподбо
 msgid "The record of the last autotune change is damaged. Checks and changes wait until an administrator rolls it back: Prokop then makes sure the last known working configuration is active."
 msgstr "Запись о последнем изменении автоподбора повреждена. Проверки и изменения ждут, пока администратор не выполнит откат: Prokop убедится, что активна последняя рабочая конфигурация."
 
+msgid "The request could not be prepared on the router"
+msgstr "Не удалось подготовить запрос на роутере"
+
 msgid "The request was refused: invalid input."
 msgstr "Запрос отклонён: неверные входные данные."
 
@@ -4628,6 +4736,12 @@ msgstr "Выбранная секция отключена. Включите е�
 msgid "The selected section no longer exists. Choose another section."
 msgstr "Выбранной секции больше нет. Выберите другую секцию."
 
+msgid "The server answered HTTP %s"
+msgstr "Сервер ответил HTTP %s"
+
+msgid "The server could not be reached"
+msgstr "Нет связи с сервером"
+
 msgid "the service is busy"
 msgstr "служба занята"
 
@@ -4709,6 +4823,9 @@ msgstr "Цель недоступна ни одним способом; возм
 msgid "The targets work without bypass."
 msgstr "Цели работают без обхода."
 
+msgid "The test could not run"
+msgstr "Проверку не удалось запустить"
+
 msgid "The TorrServer program was changed outside Prokop; Prokop left it as it is"
 msgstr "Программа TorrServer изменена не через Prokop; Prokop оставил её как есть"
 
@@ -4756,6 +4873,9 @@ msgstr "Откатывать нечего."
 
 msgid "This browser could not reach the check service, so FakeIP for devices is not proven either way."
 msgstr "Этот браузер не смог обратиться к сервису проверки, поэтому работа FakeIP для устройств не доказана ни в одну сторону."
+
+msgid "This does not look like a bot token (123456789:ABC…)"
+msgstr "Это не похоже на токен бота (123456789:ABC…)"
 
 msgid "This field must start a working ciadpi strategy; help/version options exit immediately and are not allowed here."
 msgstr "Это поле должно запускать рабочую стратегию ciadpi; параметры help/version сразу завершают процесс и здесь запрещены."
@@ -4843,6 +4963,9 @@ msgstr "Через правила"
 
 msgid "Through rules: what sing-box counted for connections seen while this page is open; traffic that no rule sends to sing-box is not split."
 msgstr "Через правила: что насчитал sing-box по соединениям, замеченным, пока открыта эта страница; трафик, который ни одно правило не отправляет в sing-box, не разбивается."
+
+msgid "through the rule"
+msgstr "через правило"
 
 msgid "Time in seconds for DNS record caching (default: 60)"
 msgstr "Время в секундах для кэширования DNS записей (по умолчанию: 60)"
@@ -5069,6 +5192,12 @@ msgstr "Настройки URLTest сброшены"
 msgid "URLTest settings saved"
 msgstr "Настройки URLTest сохранены"
 
+msgid "Use a numeric ID or @channel"
+msgstr "Укажите числовой ID или @канал"
+
+msgid "Use an http(s) address without spaces or quotes"
+msgstr "Укажите адрес http(s) без пробелов и кавычек"
+
 msgid "Use another section as an intermediate hop to connect to servers in this section. Does not apply to network interfaces or JSON outbounds."
 msgstr "Использовать другую секцию как промежуточный узел подключения к серверам этой секции. Не применяется к сетевым интерфейсам и JSON outbound."
 
@@ -5156,11 +5285,23 @@ msgstr "Ожидание TorrServer"
 msgid "Waiting to finish"
 msgstr "Ожидает завершения"
 
+msgid "Warn before expiry, days"
+msgstr "Предупреждать до окончания, дней"
+
 msgid "Warning"
 msgstr "Предупреждение"
 
 msgid "Warnings: %d"
 msgstr "Предупреждения: %d"
+
+msgid "Webhook"
+msgstr "Webhook"
+
+msgid "Webhook format"
+msgstr "Формат webhook"
+
+msgid "Webhook URL"
+msgstr "Адрес webhook"
 
 msgid "What"
 msgstr "Что"
@@ -5224,6 +5365,9 @@ msgstr "Да"
 
 msgid "You can select Output Network Interface, by default autodetect"
 msgstr "Вы можете выбрать выходной сетевой интерфейс, по умолчанию он определяется автоматически."
+
+msgid "Your user ID, a group ID (it starts with -100) or @channel. Write to the bot first, otherwise it cannot write to you"
+msgstr "Ваш ID, ID группы (начинается с -100) или @канал. Сначала напишите боту, иначе он не сможет вам писать"
 
 msgid "Zapret checks"
 msgstr "Проверки Zapret"

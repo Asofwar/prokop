@@ -60,7 +60,7 @@ route_trace device_traffic connectivity_test global_check support_report config_
 service_action_status latency_test_status component_action_status subscription_update_status get_list_update_status
 component_update_check_cache prokop_releases autotune_status autotune_target autotune_groups
 autotune_list_domains autotune_run_status validate_nfqws_strategy_json
-validate_nfqws2_strategy_json validate_byedpi_strategy_json
+validate_nfqws2_strategy_json validate_byedpi_strategy_json notify_status
 "
 # Everything that changes Prokop's configuration, snapshots, scheduled jobs,
 # packages or runtime.
@@ -73,6 +73,7 @@ config_snapshot_create config_snapshot_restore config_snapshot_delete
 urltest_override_save urltest_override_reset
 autotune_policy_set autotune_target_set autotune_target_remove autotune_run autotune_run_async
 autotune_apply autotune_apply_async autotune_rollback autotune_if_due killswitch_sync
+notify_test notify_tick notify_flush
 "
 listed() { case " $(printf '%s' "$2" | tr '\n' ' ') " in *" $1 "*) return 0 ;; esac; return 1; }
 

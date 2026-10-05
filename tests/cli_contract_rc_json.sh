@@ -151,6 +151,10 @@ autotune_if_due                | json-status:ok | covered: autotune_scheduler
 killswitch_status              | json          | covered: killswitch tests
 killswitch_sync                | rc            | covered: killswitch tests
 killswitch_disable             | rc            | covered: killswitch tests
+notify_test                    | json-status:ok | covered: notifications
+notify_status                  | json          | covered: notifications
+notify_tick                    | rc            | covered: notifications
+notify_flush                   | rc            | covered: notifications
 TABLE
 )"
 

@@ -997,6 +997,9 @@ function createSettingsContent(sections, capabilities) {
 
 const EntryPoint = {
   createSettingsContent,
+  // The Notifications tab (notifications.js) picks its rule the same way.
+  configureDownloadSectionOption,
+  configureDownloadViaProxyFlag,
 };
 
 return baseclass.extend(EntryPoint);

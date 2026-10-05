@@ -174,14 +174,16 @@ record reload failure
 reset
 sed -i 's/^prokop.settings.notify_telegram_token=.*/prokop.settings.notify_telegram_token=bad token/; /notify_webhook_url/d' "$WORK/uci"
 out="$(manager test || true)"
-[ "$(printf '%s' "$out" | jq -r .status)" = not_configured ] || fail "an invalid token counts as a channel: $out"
+[ "$(printf '%s' "$out" | jq -r .reason)" = not_configured ] || fail "an invalid token counts as a channel: $out"
 
 # --- test: per-channel result, refusals named -------------------------------
 reset
 printf '401' >"$WORK/code.telegram"
 printf '{"ok":false}' >"$WORK/body.telegram"
 out="$(manager test || true)"
-[ "$(printf '%s' "$out" | jq -r .status)" = failed ] || fail "a refused token is a failed test: $out"
+[ "$(printf '%s' "$out" | jq -r .status)/$(printf '%s' "$out" | jq -r .reason)" = failed/delivery_failed ] ||
+  fail "a refused token is a failed test: $out"
+manager test >/dev/null && fail "a failed test must exit non-zero"
 [ "$(printf '%s' "$out" | jq -r '.channels[] | select(.channel=="telegram") | .reason')" = token_rejected ] ||
   fail "a 401 is a rejected token: $out"
 [ "$(printf '%s' "$out" | jq -r '.channels[] | select(.channel=="webhook") | .status')" = ok ] ||

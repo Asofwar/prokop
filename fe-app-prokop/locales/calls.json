@@ -353,6 +353,13 @@
     ]
   },
   {
+    "call": "A connection rule or sing-box stops answering, and when it is back. Checked every 5 minutes",
+    "key": "A connection rule or sing-box stops answering, and when it is back. Checked every 5 minutes",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:248"
+    ]
+  },
+  {
     "call": "A domain, or a list of a DPI rule measured through a few of its domains.",
     "key": "A domain, or a list of a DPI rule measured through a few of its domains.",
     "places": [
@@ -381,6 +388,13 @@
     ]
   },
   {
+    "call": "A failed reload, start or snapshot restore, an autotune rollback",
+    "key": "A failed reload, start or snapshot restore, an autotune rollback",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:238"
+    ]
+  },
+  {
     "call": "a FakeIP address is routed by its domain; check the site by its name",
     "key": "a FakeIP address is routed by its domain; check the site by its name",
     "places": [
@@ -399,6 +413,13 @@
     "key": "A list of a DPI rule. Each check takes a few of its domains; keywords and regular expressions are skipped.",
     "places": [
       "src/prokop/tabs/autotune/initController.ts:686"
+    ]
+  },
+  {
+    "call": "A POST to this address, for ntfy, Gotify and similar services. The saved address is never shown on the page",
+    "key": "A POST to this address, for ntfy, Gotify and similar services. The saved address is never shown on the page",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:209"
     ]
   },
   {
@@ -483,6 +504,13 @@
     "key": "A strategy is set for the whole rule, so Prokop does not change it. You can split the targets into separate rules.",
     "places": [
       "src/prokop/tabs/autotune/model.ts:367"
+    ]
+  },
+  {
+    "call": "A subscription fails to update, is about to expire, has expired or runs out of traffic",
+    "key": "A subscription fails to update, is about to expire, has expired or runs out of traffic",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:260"
     ]
   },
   {
@@ -1861,9 +1889,17 @@
     ]
   },
   {
+    "call": "Chat not found: check the ID and that you wrote to the bot first",
+    "key": "Chat not found: check the ID and that you wrote to the bot first",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:84"
+    ]
+  },
+  {
     "call": "Check",
     "key": "Check",
     "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:311",
       "src/prokop/tabs/diagnostic/connectivityMatrix.ts:301",
       "src/prokop/tabs/diagnostic/renderDiagnostic.ts:55",
       "src/prokop/tabs/diagnostic/renderDiagnostic.ts:95"
@@ -2321,7 +2357,7 @@
     "call": "Components",
     "key": "Components",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/settings.js:43"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/settings.js:48"
     ]
   },
   {
@@ -2536,6 +2572,13 @@
     "key": "Connections are unavailable",
     "places": [
       "src/prokop/tabs/monitoring/initController.ts:1416"
+    ]
+  },
+  {
+    "call": "Connections down",
+    "key": "Connections down",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:247"
     ]
   },
   {
@@ -2789,6 +2832,13 @@
     ]
   },
   {
+    "call": "Create a bot with @BotFather and paste its token. The saved token is never shown on the page",
+    "key": "Create a bot with @BotFather and paste its token. The saved token is never shown on the page",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:174"
+    ]
+  },
+  {
     "call": "Create snapshot",
     "key": "Create snapshot",
     "places": [
@@ -2915,6 +2965,20 @@
     ]
   },
   {
+    "call": "Delete the saved token",
+    "key": "Delete the saved token",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:185"
+    ]
+  },
+  {
+    "call": "Delete the saved webhook URL",
+    "key": "Delete the saved webhook URL",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:220"
+    ]
+  },
+  {
     "call": "Delete this configuration snapshot?",
     "key": "Delete this configuration snapshot?",
     "places": [
@@ -2926,6 +2990,13 @@
     "key": "Delete…",
     "places": [
       "src/prokop/tabs/history/initController.ts:415"
+    ]
+  },
+  {
+    "call": "Delivered",
+    "key": "Delivered",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:129"
     ]
   },
   {
@@ -3102,6 +3173,13 @@
     ]
   },
   {
+    "call": "directly",
+    "key": "directly",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:126"
+    ]
+  },
+  {
     "call": "Disable",
     "key": "Disable",
     "places": [
@@ -3167,7 +3245,7 @@
     "call": "DNS",
     "key": "DNS",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/settings.js:32",
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/settings.js:33",
       "src/prokop/tabs/diagnostic/siteCheck.ts:131",
       "src/prokop/tabs/diagnostic/siteCheck.ts:138"
     ]
@@ -3831,6 +3909,13 @@
     ]
   },
   {
+    "call": "Enable notifications",
+    "key": "Enable notifications",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:162"
+    ]
+  },
+  {
     "call": "Enable Output Network Interface",
     "key": "Enable Output Network Interface",
     "places": [
@@ -3897,6 +3982,13 @@
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3162",
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3183"
+    ]
+  },
+  {
+    "call": "Enter a number from 1 to 30",
+    "key": "Enter a number from 1 to 30",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:282"
     ]
   },
   {
@@ -5614,6 +5706,13 @@
     ]
   },
   {
+    "call": "JSON: title, message, priority (Gotify)",
+    "key": "JSON: title, message, priority (Gotify)",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:228"
+    ]
+  },
+  {
     "call": "just now",
     "key": "just now",
     "places": [
@@ -5894,7 +5993,7 @@
     "call": "Lists and updates",
     "key": "Lists and updates",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/settings.js:34"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/settings.js:35"
     ]
   },
   {
@@ -6257,7 +6356,7 @@
     "call": "Network",
     "key": "Network",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/settings.js:33"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/settings.js:34"
     ]
   },
   {
@@ -6427,6 +6526,13 @@
     "key": "No change was needed",
     "places": [
       "src/prokop/tabs/autotune/model.ts:272"
+    ]
+  },
+  {
+    "call": "No channel is set up: save a bot token and chat ID, or a webhook URL",
+    "key": "No channel is set up: save a bot token and chat ID, or a webhook URL",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:118"
     ]
   },
   {
@@ -6773,6 +6879,13 @@
     ]
   },
   {
+    "call": "Not delivered",
+    "key": "Not delivered",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:102"
+    ]
+  },
+  {
     "call": "Not determined",
     "key": "Not determined",
     "places": [
@@ -6929,6 +7042,20 @@
     "key": "Nothing was rolled back: the router has uncommitted uci changes of Prokop (made with \"uci set\" without a commit). Commit or revert them, then roll back again.",
     "places": [
       "src/prokop/tabs/autotune/model.ts:1593"
+    ]
+  },
+  {
+    "call": "Notifications",
+    "key": "Notifications",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/settings.js:41"
+    ]
+  },
+  {
+    "call": "Notifications are off: enable them and save the settings",
+    "key": "Notifications are off: enable them and save the settings",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:114"
     ]
   },
   {
@@ -7405,6 +7532,13 @@
     "key": "Plain DNS is intercepted",
     "places": [
       "src/prokop/tabs/diagnostic/checks/runDnsCheck.ts:87"
+    ]
+  },
+  {
+    "call": "Plain text (ntfy)",
+    "key": "Plain text (ntfy)",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:229"
     ]
   },
   {
@@ -8704,6 +8838,13 @@
     ]
   },
   {
+    "call": "Rollbacks and failed changes",
+    "key": "Rollbacks and failed changes",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:237"
+    ]
+  },
+  {
     "call": "Rolled back",
     "key": "Rolled back",
     "places": [
@@ -9022,6 +9163,13 @@
     ]
   },
   {
+    "call": "Saved. Enter a new value to replace it",
+    "key": "Saved. Enter a new value to replace it",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:39"
+    ]
+  },
+  {
     "call": "Saving URLTest settings…",
     "key": "Saving URLTest settings…",
     "places": [
@@ -9242,6 +9390,55 @@
     ]
   },
   {
+    "call": "Send a message to Telegram or a webhook when Prokop rolls back a change, a connection stops answering, or a subscription fails or ends",
+    "key": "Send a message to Telegram or a webhook when Prokop rolls back a change, a connection stops answering, or a subscription fails or ends",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:163"
+    ]
+  },
+  {
+    "call": "Send test",
+    "key": "Send test",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:329"
+    ]
+  },
+  {
+    "call": "Send through",
+    "key": "Send through",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:299"
+    ]
+  },
+  {
+    "call": "Send through a rule",
+    "key": "Send through a rule",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:288"
+    ]
+  },
+  {
+    "call": "Send through the connection of the selected rule, for example when Telegram is blocked. When that does not get through, Prokop sends directly",
+    "key": "Send through the connection of the selected rule, for example when Telegram is blocked. When that does not get through, Prokop sends directly",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:289"
+    ]
+  },
+  {
+    "call": "Sending…",
+    "key": "Sending…",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:136"
+    ]
+  },
+  {
+    "call": "Sends a test message with the saved settings: save and apply changes first",
+    "key": "Sends a test message with the saved settings: save and apply changes first",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:312"
+    ]
+  },
+  {
     "call": "Sent",
     "key": "Sent",
     "places": [
@@ -9365,7 +9562,7 @@
     "call": "Service settings",
     "key": "Service settings",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/settings.js:35"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/settings.js:36"
     ]
   },
   {
@@ -9394,7 +9591,7 @@
     "key": "Settings",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:1477",
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/settings.js:16"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/settings.js:17"
     ]
   },
   {
@@ -9960,6 +10157,13 @@
     ]
   },
   {
+    "call": "Subscriptions",
+    "key": "Subscriptions",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:259"
+    ]
+  },
+  {
     "call": "Subscriptions updated",
     "key": "Subscriptions updated",
     "places": [
@@ -10103,6 +10307,34 @@
     ]
   },
   {
+    "call": "Telegram bot token",
+    "key": "Telegram bot token",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:173"
+    ]
+  },
+  {
+    "call": "Telegram chat ID",
+    "key": "Telegram chat ID",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:191"
+    ]
+  },
+  {
+    "call": "Telegram did not accept the bot token",
+    "key": "Telegram did not accept the bot token",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:82"
+    ]
+  },
+  {
+    "call": "Telegram refused the request",
+    "key": "Telegram refused the request",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:87"
+    ]
+  },
+  {
     "call": "Test latency",
     "key": "Test latency",
     "places": [
@@ -10243,6 +10475,20 @@
     "key": "The best strategy is not stable for every target of the rule.",
     "places": [
       "src/prokop/tabs/autotune/model.ts:362"
+    ]
+  },
+  {
+    "call": "The bot is blocked or was removed from the chat",
+    "key": "The bot is blocked or was removed from the chat",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:85"
+    ]
+  },
+  {
+    "call": "The bot may not write to this chat",
+    "key": "The bot may not write to this chat",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:86"
     ]
   },
   {
@@ -10949,6 +11195,13 @@
     ]
   },
   {
+    "call": "The request could not be prepared on the router",
+    "key": "The request could not be prepared on the router",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:89"
+    ]
+  },
+  {
     "call": "The request was refused: invalid input.",
     "key": "The request was refused: invalid input.",
     "places": [
@@ -11199,6 +11452,20 @@
     ]
   },
   {
+    "call": "The server answered HTTP %s",
+    "key": "The server answered HTTP %s",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:100"
+    ]
+  },
+  {
+    "call": "The server could not be reached",
+    "key": "The server could not be reached",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:88"
+    ]
+  },
+  {
     "call": "the service is busy",
     "key": "the service is busy",
     "places": [
@@ -11392,6 +11659,14 @@
     ]
   },
   {
+    "call": "The test could not run",
+    "key": "The test could not run",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:111",
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:148"
+    ]
+  },
+  {
     "call": "The TorrServer program was changed outside Prokop; Prokop left it as it is",
     "key": "The TorrServer program was changed outside Prokop; Prokop left it as it is",
     "places": [
@@ -11501,6 +11776,13 @@
     "key": "This browser could not reach the check service, so FakeIP for devices is not proven either way.",
     "places": [
       "src/prokop/tabs/diagnostic/checkCards.ts:78"
+    ]
+  },
+  {
+    "call": "This does not look like a bot token (123456789:ABC…)",
+    "key": "This does not look like a bot token (123456789:ABC…)",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:183"
     ]
   },
   {
@@ -11708,6 +11990,13 @@
     "key": "Through rules: what sing-box counted for connections seen while this page is open; traffic that no rule sends to sing-box is not split.",
     "places": [
       "src/prokop/tabs/monitoring/devicesView.ts:224"
+    ]
+  },
+  {
+    "call": "through the rule",
+    "key": "through the rule",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:124"
     ]
   },
   {
@@ -12271,6 +12560,20 @@
     ]
   },
   {
+    "call": "Use a numeric ID or @channel",
+    "key": "Use a numeric ID or @channel",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:202"
+    ]
+  },
+  {
+    "call": "Use an http(s) address without spaces or quotes",
+    "key": "Use an http(s) address without spaces or quotes",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:218"
+    ]
+  },
+  {
     "call": "Use another section as an intermediate hop to connect to servers in this section. Does not apply to network interfaces or JSON outbounds.",
     "key": "Use another section as an intermediate hop to connect to servers in this section. Does not apply to network interfaces or JSON outbounds.",
     "places": [
@@ -12500,6 +12803,13 @@
     ]
   },
   {
+    "call": "Warn before expiry, days",
+    "key": "Warn before expiry, days",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:271"
+    ]
+  },
+  {
     "call": "Warning",
     "key": "Warning",
     "places": [
@@ -12514,6 +12824,27 @@
     "key": "Warnings: %d",
     "places": [
       "src/prokop/tabs/diagnostic/checkCards.ts:148"
+    ]
+  },
+  {
+    "call": "Webhook",
+    "key": "Webhook",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:106"
+    ]
+  },
+  {
+    "call": "Webhook format",
+    "key": "Webhook format",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:226"
+    ]
+  },
+  {
+    "call": "Webhook URL",
+    "key": "Webhook URL",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:208"
     ]
   },
   {
@@ -12661,6 +12992,13 @@
     "key": "You can select Output Network Interface, by default autodetect",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:594"
+    ]
+  },
+  {
+    "call": "Your user ID, a group ID (it starts with -100) or @channel. Write to the bot first, otherwise it cannot write to you",
+    "key": "Your user ID, a group ID (it starts with -100) or @channel. Write to the bot first, otherwise it cannot write to you",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:192"
     ]
   },
   {

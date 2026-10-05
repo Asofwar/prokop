@@ -1,15 +1,15 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) 2026 THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PROKOP package.
-# Claude <noreply@anthropic.com>, 2026.
+# Asofwar <7397608+Asofwar@users.noreply.github.com>, 2026.
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-05 12:12+0000\n"
-"PO-Revision-Date: 2026-10-05 12:12+0000\n"
-"Last-Translator: Claude <noreply@anthropic.com>\n"
+"POT-Creation-Date: 2026-10-05 12:31+0000\n"
+"PO-Revision-Date: 2026-10-05 12:31+0000\n"
+"Last-Translator: Asofwar <7397608+Asofwar@users.noreply.github.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
@@ -225,6 +225,10 @@ msgstr ""
 msgid "A Connection rule needs a connection: add a connection URL, a subscription, a network interface or a JSON outbound, or disable the rule."
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:248
+msgid "A connection rule or sing-box stops answering, and when it is back. Checked every 5 minutes"
+msgstr ""
+
 #: src/prokop/tabs/autotune/initController.ts:728
 msgid "A domain, or a list of a DPI rule measured through a few of its domains."
 msgstr ""
@@ -241,6 +245,10 @@ msgstr ""
 msgid "A failed change left the DPI guard in place. Traffic that needs DPI bypass stays blocked until you restart Prokop."
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:238
+msgid "A failed reload, start or snapshot restore, an autotune rollback"
+msgstr ""
+
 #: src/prokop/tabs/diagnostic/siteCheck.ts:47
 msgid "a FakeIP address is routed by its domain; check the site by its name"
 msgstr ""
@@ -251,6 +259,10 @@ msgstr ""
 
 #: src/prokop/tabs/autotune/initController.ts:686
 msgid "A list of a DPI rule. Each check takes a few of its domains; keywords and regular expressions are skipped."
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:209
+msgid "A POST to this address, for ntfy, Gotify and similar services. The saved address is never shown on the page"
 msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:949
@@ -299,6 +311,10 @@ msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:367
 msgid "A strategy is set for the whole rule, so Prokop does not change it. You can split the targets into separate rules."
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:260
+msgid "A subscription fails to update, is about to expire, has expired or runs out of traffic"
 msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:807
@@ -1109,6 +1125,11 @@ msgstr ""
 msgid "Changes since this snapshot"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:84
+msgid "Chat not found: check the ID and that you wrote to the bot first"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:311
 #: src/prokop/tabs/diagnostic/connectivityMatrix.ts:301
 #: src/prokop/tabs/diagnostic/renderDiagnostic.ts:55
 #: src/prokop/tabs/diagnostic/renderDiagnostic.ts:95
@@ -1386,7 +1407,7 @@ msgstr ""
 msgid "Component update check interval was %s, shorter than the 1 h minimum of automatic updates: set to %s."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/settings.js:43
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/settings.js:48
 msgid "Components"
 msgstr ""
 
@@ -1512,6 +1533,10 @@ msgstr ""
 
 #: src/prokop/tabs/monitoring/initController.ts:1416
 msgid "Connections are unavailable"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:247
+msgid "Connections down"
 msgstr ""
 
 #: src/prokop/tabs/diagnostic/siteCheck.ts:51
@@ -1662,6 +1687,10 @@ msgstr ""
 msgid "Counts how much each device on the source interfaces sends and receives, for Monitoring > Devices. The counters start from zero when Prokop starts"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:174
+msgid "Create a bot with @BotFather and paste its token. The saved token is never shown on the page"
+msgstr ""
+
 #: src/prokop/tabs/history/initController.ts:352
 msgid "Create snapshot"
 msgstr ""
@@ -1734,12 +1763,24 @@ msgstr ""
 msgid "Delete snapshot?"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:185
+msgid "Delete the saved token"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:220
+msgid "Delete the saved webhook URL"
+msgstr ""
+
 #: src/prokop/tabs/history/initController.ts:316
 msgid "Delete this configuration snapshot?"
 msgstr ""
 
 #: src/prokop/tabs/history/initController.ts:415
 msgid "Delete…"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:129
+msgid "Delivered"
 msgstr ""
 
 #: src/prokop/ui/status.ts:176
@@ -1849,6 +1890,10 @@ msgstr ""
 msgid "Direct Proxy"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:126
+msgid "directly"
+msgstr ""
+
 #: src/prokop/tabs/updates/initController.ts:1151
 #: src/prokop/tabs/updates/initController.ts:1208
 msgid "Disable"
@@ -1887,7 +1932,7 @@ msgstr ""
 msgid "Display name"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/settings.js:32
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/settings.js:33
 #: src/prokop/tabs/diagnostic/siteCheck.ts:131
 #: src/prokop/tabs/diagnostic/siteCheck.ts:138
 msgid "DNS"
@@ -2278,6 +2323,10 @@ msgstr ""
 msgid "Enable mode 2"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:162
+msgid "Enable notifications"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:593
 msgid "Enable Output Network Interface"
 msgstr ""
@@ -2318,6 +2367,10 @@ msgstr ""
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3162
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3183
 msgid "Enter a level name"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:282
+msgid "Enter a number from 1 to 30"
 msgstr ""
 
 #: src/prokop/tabs/diagnostic/connectivityMatrix.ts:89
@@ -3323,6 +3376,10 @@ msgstr ""
 msgid "JSON outbound settings"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:228
+msgid "JSON: title, message, priority (Gotify)"
+msgstr ""
+
 #: src/prokop/ui/time.ts:8
 msgid "just now"
 msgstr ""
@@ -3486,7 +3543,7 @@ msgstr ""
 msgid "List update frequency was %s, shorter than the 1 h minimum of automatic updates: set to %s."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/settings.js:34
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/settings.js:35
 msgid "Lists and updates"
 msgstr ""
 
@@ -3705,7 +3762,7 @@ msgstr ""
 msgid "Needs attention"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/settings.js:33
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/settings.js:34
 msgid "Network"
 msgstr ""
 
@@ -3807,6 +3864,10 @@ msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:272
 msgid "No change was needed"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:118
+msgid "No channel is set up: save a bot token and chat ID, or a webhook URL"
 msgstr ""
 
 #: src/prokop/tabs/diagnostic/partials/renderRunAction.ts:57
@@ -4014,6 +4075,10 @@ msgstr ""
 msgid "Not checked yet"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:102
+msgid "Not delivered"
+msgstr ""
+
 #: src/prokop/ui/status.ts:167
 #: src/prokop/ui/status.ts:180
 #: src/prokop/tabs/autotune/model.ts:52
@@ -4114,6 +4179,14 @@ msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:1593
 msgid "Nothing was rolled back: the router has uncommitted uci changes of Prokop (made with \"uci set\" without a commit). Commit or revert them, then roll back again."
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/settings.js:41
+msgid "Notifications"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:114
+msgid "Notifications are off: enable them and save the settings"
 msgstr ""
 
 #: src/prokop/tabs/autotune/initController.ts:1132
@@ -4395,6 +4468,10 @@ msgstr ""
 
 #: src/prokop/tabs/diagnostic/checks/runDnsCheck.ts:87
 msgid "Plain DNS is intercepted"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:229
+msgid "Plain text (ntfy)"
 msgstr ""
 
 #: src/prokop/tabs/autotune/initController.ts:885
@@ -5153,6 +5230,10 @@ msgstr ""
 msgid "Rollback did not finish"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:237
+msgid "Rollbacks and failed changes"
+msgstr ""
+
 #: src/prokop/ui/status.ts:109
 msgid "Rolled back"
 msgstr ""
@@ -5339,6 +5420,10 @@ msgstr ""
 msgid "Saved, service stopped"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:39
+msgid "Saved. Enter a new value to replace it"
+msgstr ""
+
 #: src/prokop/tabs/dashboard/initController.ts:1397
 msgid "Saving URLTest settings…"
 msgstr ""
@@ -5466,6 +5551,34 @@ msgstr ""
 msgid "Selector and URLTest outbounds must contain a non-empty outbounds array"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:163
+msgid "Send a message to Telegram or a webhook when Prokop rolls back a change, a connection stops answering, or a subscription fails or ends"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:329
+msgid "Send test"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:299
+msgid "Send through"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:288
+msgid "Send through a rule"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:289
+msgid "Send through the connection of the selected rule, for example when Telegram is blocked. When that does not get through, Prokop sends directly"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:136
+msgid "Sending…"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:312
+msgid "Sends a test message with the saved settings: save and apply changes first"
+msgstr ""
+
 #: src/prokop/tabs/monitoring/devicesView.ts:140
 #: src/prokop/tabs/monitoring/devicesView.ts:264
 #: src/prokop/tabs/monitoring/initController.ts:1100
@@ -5538,7 +5651,7 @@ msgstr ""
 msgid "Service reload failed, previous configuration restored"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/settings.js:35
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/settings.js:36
 msgid "Service settings"
 msgstr ""
 
@@ -5555,7 +5668,7 @@ msgid "Setting"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:1477
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/settings.js:16
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/settings.js:17
 msgid "Settings"
 msgstr ""
 
@@ -5887,6 +6000,10 @@ msgstr ""
 msgid "Subscription URL settings"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:259
+msgid "Subscriptions"
+msgstr ""
+
 #: src/prokop/tabs/dashboard/initController.ts:533
 msgid "Subscriptions updated"
 msgstr ""
@@ -5970,6 +6087,22 @@ msgstr ""
 msgid "Technical details"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:173
+msgid "Telegram bot token"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:191
+msgid "Telegram chat ID"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:82
+msgid "Telegram did not accept the bot token"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:87
+msgid "Telegram refused the request"
+msgstr ""
+
 #: src/prokop/tabs/dashboard/partials/renderSections.ts:261
 #: src/prokop/tabs/dashboard/partials/renderSections.ts:269
 #: src/prokop/tabs/dashboard/partials/renderSections.ts:610
@@ -6051,6 +6184,14 @@ msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:362
 msgid "The best strategy is not stable for every target of the rule."
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:85
+msgid "The bot is blocked or was removed from the chat"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:86
+msgid "The bot may not write to this chat"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8496
@@ -6459,6 +6600,10 @@ msgstr ""
 msgid "The record of the last autotune change is damaged. Checks and changes wait until an administrator rolls it back: Prokop then makes sure the last known working configuration is active."
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:89
+msgid "The request could not be prepared on the router"
+msgstr ""
+
 #: src/prokop/helpers/actionReason.ts:43
 msgid "The request was refused: invalid input."
 msgstr ""
@@ -6604,6 +6749,14 @@ msgstr ""
 msgid "The selected section no longer exists. Choose another section."
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:100
+msgid "The server answered HTTP %s"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:88
+msgid "The server could not be reached"
+msgstr ""
+
 #: src/prokop/tabs/autotune/model.ts:953
 msgid "the service is busy"
 msgstr ""
@@ -6716,6 +6869,11 @@ msgstr ""
 msgid "The targets work without bypass."
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:111
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:148
+msgid "The test could not run"
+msgstr ""
+
 #: src/prokop/tabs/updates/componentActionToast.ts:105
 msgid "The TorrServer program was changed outside Prokop; Prokop left it as it is"
 msgstr ""
@@ -6778,6 +6936,10 @@ msgstr ""
 
 #: src/prokop/tabs/diagnostic/checkCards.ts:78
 msgid "This browser could not reach the check service, so FakeIP for devices is not proven either way."
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:183
+msgid "This does not look like a bot token (123456789:ABC…)"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7403
@@ -6898,6 +7060,10 @@ msgstr ""
 
 #: src/prokop/tabs/monitoring/devicesView.ts:224
 msgid "Through rules: what sing-box counted for connections seen while this page is open; traffic that no rule sends to sing-box is not split."
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:124
+msgid "through the rule"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:466
@@ -7235,6 +7401,14 @@ msgstr ""
 msgid "URLTest settings saved"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:202
+msgid "Use a numeric ID or @channel"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:218
+msgid "Use an http(s) address without spaces or quotes"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9147
 msgid "Use another section as an intermediate hop to connect to servers in this section. Does not apply to network interfaces or JSON outbounds."
 msgstr ""
@@ -7377,6 +7551,10 @@ msgstr ""
 msgid "Waiting to finish"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:271
+msgid "Warn before expiry, days"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:925
 #: src/prokop/ui/status.ts:30
 #: src/prokop/tabs/autotune/initController.ts:924
@@ -7386,6 +7564,18 @@ msgstr ""
 
 #: src/prokop/tabs/diagnostic/checkCards.ts:148
 msgid "Warnings: %d"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:106
+msgid "Webhook"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:226
+msgid "Webhook format"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:208
+msgid "Webhook URL"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8530
@@ -7470,6 +7660,10 @@ msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:594
 msgid "You can select Output Network Interface, by default autodetect"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:192
+msgid "Your user ID, a group ID (it starts with -100) or @channel. Write to the bot first, otherwise it cannot write to you"
 msgstr ""
 
 #: src/prokop/tabs/diagnostic/helpers/getCheckTitle.ts:11

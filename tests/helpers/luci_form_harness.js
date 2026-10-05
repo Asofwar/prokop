@@ -1227,6 +1227,7 @@ function createEnvironment({
   );
   const moduleGlobals = globals;
   let settingsModule = null;
+  let notificationsModule = null;
   let shellModule = null;
 
   // A page of the Prokop menu (page/*.js) as LuCI renders it: the view's
@@ -1368,6 +1369,10 @@ function createEnvironment({
     form,
     main,
     section,
+    // notifications.js once openSettings() loaded it.
+    get notificationsView() {
+      return notificationsModule;
+    },
     // The rules grid of the page (its row columns: grid.children).
     grid,
     document,
@@ -1433,9 +1438,15 @@ function createEnvironment({
         },
         moduleGlobals,
       );
+      notificationsModule ??= loadModule(
+        "notifications.js",
+        { baseclass, form, fs: fsStub, uci, main, settings: settingsModule },
+        moduleGlobals,
+      );
       const page = renderPage("page/settings.js", {
         shell: { startPage: () => Promise.resolve(null), uiCapabilities: capabilities },
         settings: settingsModule,
+        notifications: notificationsModule,
         updates: { createUpdatesContent() {} },
       });
       await page.rendered;
