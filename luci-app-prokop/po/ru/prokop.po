@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-05 00:07+0000\n"
-"PO-Revision-Date: 2026-10-05 00:07+0000\n"
+"POT-Creation-Date: 2026-10-05 00:09+0000\n"
+"PO-Revision-Date: 2026-10-05 00:09+0000\n"
 "Last-Translator: Asofwar\n"
 "Language-Team: none\n"
 "Language: ru\n"
@@ -2954,6 +2954,9 @@ msgstr "Политика…"
 msgid "Port"
 msgstr "Порт"
 
+msgid "Port %s is already used by %s"
+msgstr "Порт %s уже занят: %s"
+
 msgid "Port cannot be empty"
 msgstr "Порт не может быть пустым"
 
@@ -4178,6 +4181,9 @@ msgstr "Повреждённая запись отложена в сторону
 msgid "The desync fwmark is managed by Prokop for loop prevention and must not be overridden here."
 msgstr "Desync fwmark управляется Prokop для защиты от циклов и не должен переопределяться здесь."
 
+msgid "the direct proxy"
+msgstr "прямой прокси"
+
 msgid "The DNS server must be an IPv4 address."
 msgstr "DNS-сервер должен быть IPv4-адресом."
 
@@ -4292,6 +4298,9 @@ msgstr "Список изменений недоступен."
 msgid "The maximum number of targets is reached."
 msgstr "Достигнуто максимальное число целей."
 
+msgid "the mixed proxy of rule %s"
+msgstr "mixed proxy правила %s"
+
 msgid "The name does not resolve on the router, so no rule can open it. Check the DNS results above."
 msgstr "Имя не разрешается на роутере, поэтому ни одно правило его не откроет. Посмотрите результат DNS выше."
 
@@ -4324,6 +4333,12 @@ msgstr "предыдущий список блокировки DNS остаёт�
 
 msgid "The Prokop configuration could not be read"
 msgstr "Не удалось прочитать конфигурацию Prokop"
+
+msgid "the Prokop DNS of devices"
+msgstr "DNS Prokop для устройств"
+
+msgid "the Prokop transparent proxy"
+msgstr "прозрачный прокси Prokop"
 
 msgid "The recommendation is not confirmed yet."
 msgstr "Рекомендация ещё не подтверждена."

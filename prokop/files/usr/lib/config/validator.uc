@@ -1986,6 +1986,31 @@ function validate_source_network_interfaces(settings) {
     }
 }
 
+// C7: a mixed proxy listens on the router's LAN address, where the router's
+// own services and Prokop's other listeners already are; sing-box then
+// failed to start with "address already in use". Ports Prokop holds on
+// every address (0.0.0.0, ::) count as well.
+const MIXED_PROXY_RESERVED_PORTS = {
+    "22": "SSH", "53": "DNS", "80": "LuCI (HTTP)", "443": "LuCI (HTTPS)",
+    "1602": "the Prokop transparent proxy", "1603": "the Prokop DNS of devices", "9090": "the Clash API"
+};
+
+function validate_mixed_proxy_ports(settings, sections) {
+    let taken = {};
+    if (bool_option(settings, "direct_proxy_enabled", false))
+        taken[trim(option(settings, "direct_proxy_port", "2080"))] = "the direct proxy";
+    for (let section in sections) {
+        if (!section_enabled(section) || !bool_option(section, "mixed_proxy_enabled", false))
+            continue;
+        let port = trim(option(section, "mixed_proxy_port", ""));
+        let name = section_name(section);
+        let holder = MIXED_PROXY_RESERVED_PORTS[port] || taken[port];
+        if (holder != null)
+            fail_validation("Mixed proxy port " + port + " of rule '" + name + "' is already used by " + holder + ". Choose another port. Aborted.");
+        taken[port] = "the mixed proxy of rule '" + name + "'";
+    }
+}
+
 function validate_runtime_config(context) {
     let settings = settings_section();
     let sections = sections_by_type("section");
@@ -2027,6 +2052,7 @@ function validate_runtime_config(context) {
 
     validate_urltest_overrides(sections);
     validate_clash_api_settings(settings);
+    validate_mixed_proxy_ports(settings, sections);
     validate_interface_monitoring_delay(settings);
 }
 

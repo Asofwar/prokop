@@ -9248,11 +9248,50 @@ function createSectionContent(section) {
     }
 
     const parsed = Number(value);
-    if (/^[0-9]+$/.test(value) && parsed >= 1 && parsed <= 65535) {
-      return true;
+    if (!/^[0-9]+$/.test(value) || parsed < 1 || parsed > 65535) {
+      return _("Invalid port number. Must be between 1 and 65535");
     }
 
-    return _("Invalid port number. Must be between 1 and 65535");
+    // C7: the same ports config/validator.uc refuses (validate_mixed_proxy_ports).
+    const reserved = {
+      22: "SSH",
+      53: "DNS",
+      80: "LuCI (HTTP)",
+      443: "LuCI (HTTPS)",
+      1602: _("the Prokop transparent proxy"),
+      1603: _("the Prokop DNS of devices"),
+      9090: "Clash API",
+    };
+    if (reserved[parsed]) {
+      return _("Port %s is already used by %s").format(
+        parsed,
+        reserved[parsed],
+      );
+    }
+    if (
+      uci.get(UCI_PACKAGE, "settings", "direct_proxy_enabled") === "1" &&
+      Number(uci.get(UCI_PACKAGE, "settings", "direct_proxy_port") || 2080) ===
+        parsed
+    ) {
+      return _("Port %s is already used by %s").format(
+        parsed,
+        _("the direct proxy"),
+      );
+    }
+    const other = (uci.sections(UCI_PACKAGE, "section") || []).find(
+      (item) =>
+        item[".name"] !== _section_id &&
+        item.enabled !== "0" &&
+        item.mixed_proxy_enabled === "1" &&
+        Number(item.mixed_proxy_port) === parsed,
+    );
+    if (other) {
+      return _("Port %s is already used by %s").format(
+        parsed,
+        _("the mixed proxy of rule %s").format(other.label || other[".name"]),
+      );
+    }
+    return true;
   };
 
   o = section.taboption(
