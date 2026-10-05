@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  DEVICE_TRAFFIC_POLL_INTERVAL_MS,
   RouteUsageTracker,
   counterRates,
   counterSample,
@@ -230,5 +231,13 @@ describe('route usage', () => {
       connection('1', '', 'rule:A', 1, 1),
     ]);
     expect(tracker.usage(['192.168.1.5', ''])).toEqual([]);
+  });
+});
+
+describe('device traffic polling', () => {
+  // Each read runs ucode and nft on the router: not more often than every
+  // 5 s while the Devices page is open.
+  it('reads the counters every 5 s', () => {
+    expect(DEVICE_TRAFFIC_POLL_INTERVAL_MS).toBe(5000);
   });
 });

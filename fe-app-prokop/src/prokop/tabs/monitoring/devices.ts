@@ -9,6 +9,11 @@ import type { PathKind } from './connectionView';
 //   connections that went through sing-box and were seen while this page
 //   was open.
 
+// How often the open Devices page reads the counters. Each read starts a
+// ucode process and nft on the router; every 5 s is gentle on a weak
+// router and still shows the speed of a download as it changes.
+export const DEVICE_TRAFFIC_POLL_INTERVAL_MS = 5000;
+
 export interface DeviceHost {
   name: string;
   mac: string;

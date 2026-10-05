@@ -53,6 +53,7 @@ import {
   showMonitoringView,
 } from './views';
 import {
+  DEVICE_TRAFFIC_POLL_INTERVAL_MS,
   RouteUsageTracker,
   counterRates,
   counterSample,
@@ -128,7 +129,6 @@ const RENDER_INTERVAL_MS = 500;
 const ROUTE_NAMES_REFRESH_INTERVAL_MS = 15000;
 const CONNECTIONS_RPC_POLL_INTERVAL_MS = 1500;
 const CLOSED_CONNECTION_LIMIT = 300;
-const DEVICE_TRAFFIC_POLL_INTERVAL_MS = 3000;
 const ALL_FILTER_VALUE = 'all';
 
 let dependencies: MonitoringControllerDependencies = {};
