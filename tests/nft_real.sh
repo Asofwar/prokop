@@ -587,7 +587,7 @@ if [ "$CGROUP_MOUNTED" = 1 ]; then
   # (UC-108): still exactly one rule.
   commit_batch "$WORK_DIR/torrserver-again.json" "TorrServer Direct re-apply"
   check torrserver "$WORK_DIR/torrserver-again.json" ProkopTorrServerDirect "$(hex_to_dec "$OUTBOUND_MARK")" "$torrserver_cgroup"
-  [ "$(nft list chain inet ProkopTorrServerDirect output | grep -c 'Prokop TorrServer Direct')" = 1 ] ||
+  [ "$(nft list chain inet ProkopTorrServerDirect output | grep -c 'Prokop TorrServer Direct')" = 2 ] ||
     fail "a TorrServer Direct re-apply did not replace the rule"
   if supported socket; then
     nft list chain inet ProkopTorrServerDirect output |

@@ -238,12 +238,21 @@ const modes = {
     const [table, markText, cgroup] = args;
     baseChain(table, 'output', 'route', 'output', -151);
     const rules = rulesOf(table, 'output');
-    assert.equal(rules.length, 1, 'TorrServer Direct rule count');
-    assert.equal(rules[0].comment, 'Prokop TorrServer Direct');
-    assert.equal(setsMark(rules[0]), Number(markText), 'TorrServer Direct must set the outbound mark');
-    if (cgroup !== '-') {
-      const socket = rules[0].expr.map((e) => e.match).find((m) => m && m.left && m.left.socket);
-      assert.ok(socket && socket.left.socket.key === 'cgroupv2' && socket.right === cgroup, 'TorrServer Direct cgroup match');
+    // One rule per family, each leaving sing-box's FakeIP range unmarked (TS-9).
+    assert.equal(rules.length, 2, 'TorrServer Direct rule count');
+    const fakeip = { ip: '198.18.0.0/15', ip6: 'fc00::/18' };
+    for (const [i, family] of ['ip', 'ip6'].entries()) {
+      const rule = rules[i];
+      assert.equal(rule.comment, 'Prokop TorrServer Direct');
+      assert.equal(setsMark(rule), Number(markText), 'TorrServer Direct must set the outbound mark');
+      const daddr = rule.expr.map((e) => e.match).find((m) => m && m.left && m.left.payload && m.left.payload.field === 'daddr');
+      assert.ok(daddr && daddr.left.payload.protocol === family && daddr.op === '!=', `TorrServer Direct must exclude FakeIP (${family})`);
+      const right = daddr.right.prefix ? `${daddr.right.prefix.addr}/${daddr.right.prefix.len}` : String(daddr.right);
+      assert.equal(right, fakeip[family], `TorrServer Direct FakeIP range (${family})`);
+      if (cgroup !== '-') {
+        const socket = rule.expr.map((e) => e.match).find((m) => m && m.left && m.left.socket);
+        assert.ok(socket && socket.left.socket.key === 'cgroupv2' && socket.right === cgroup, 'TorrServer Direct cgroup match');
+      }
     }
   },
 

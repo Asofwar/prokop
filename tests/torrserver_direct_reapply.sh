@@ -64,7 +64,8 @@ case "$1" in
 table inet ProkopTorrServerDirect {
 	chain output {
 		type route hook output priority mangle - 1; policy accept;
-		socket cgroupv2 level 2 "services/torrserver" meta mark set 0x08000000 counter packets 0 bytes 0 comment "Prokop TorrServer Direct"
+		ip daddr != 198.18.0.0/15 socket cgroupv2 level 2 "services/torrserver" meta mark set 0x08000000 counter packets 0 bytes 0 comment "Prokop TorrServer Direct"
+		ip6 daddr != fc00::/18 socket cgroupv2 level 2 "services/torrserver" meta mark set 0x08000000 counter packets 0 bytes 0 comment "Prokop TorrServer Direct"
 	}
 }
 OUT
@@ -137,8 +138,13 @@ delete table inet ProkopTorrServerDirect
 add table inet ProkopTorrServerDirect'
   [ "$(printf '%s\n' "$batch" | head -n 3)" = "$expected" ] ||
     fail "the $round batch does not replace the table in one transaction: $batch"
-  printf '%s\n' "$batch" | grep -q '^add rule inet ProkopTorrServerDirect output socket cgroupv2 level 2 "services/torrserver" meta mark set' ||
-    fail "the $round batch lacks the rule: $batch"
+  # Connections to sing-box's FakeIP range stay unmarked, so they reach
+  # sing-box (TS-9).
+  printf '%s\n' "$batch" | grep -q '^add rule inet ProkopTorrServerDirect output ip daddr != 198.18.0.0/15 socket cgroupv2 level 2 "services/torrserver" meta mark set' ||
+    fail "the $round batch lacks the IPv4 rule that leaves FakeIP alone: $batch"
+  printf '%s\n' "$batch" | grep -q '^add rule inet ProkopTorrServerDirect output ip6 daddr != fc00::/18 socket cgroupv2 level 2 "services/torrserver" meta mark set' ||
+    fail "the $round batch lacks the IPv6 rule that leaves FakeIP alone: $batch"
+  [ "$(printf '%s\n' "$batch" | grep -c '^add rule')" = 2 ] || fail "the $round batch must mark only through those two rules: $batch"
   path="$(sed -n 's/^path://p' "$NFT_LOG")"
   case "$path" in
     "$WORK/tmp/"*) ;;

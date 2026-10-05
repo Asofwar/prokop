@@ -120,12 +120,19 @@ fi
 
 for group in 'services/torrserver' 'services/media/torrserver'; do
   level="$(awk -F/ '{print NF}' <<<"$group")"
-  printf 'type route hook output priority -151; socket cgroupv2 level %s "%s" meta mark set 0x08000000 comment "Prokop TorrServer Direct"\n' "$level" "$group" |
+  printf 'type route hook output priority -151; ip daddr != 198.18.0.0/15 socket cgroupv2 level %s "%s" meta mark set 0x08000000 comment "Prokop TorrServer Direct"\nip6 daddr != fc00::/18 socket\n' "$level" "$group" |
     ucode -L "$PROKOP_LIB" "$PROKOP_LIB/torrserver/direct.uc" rule-output-active "/$group"
 done
-if printf '%s\n' 'type route hook output priority -151; socket cgroupv2 level 2 "services/media" meta mark set 0x08000000 comment "Prokop TorrServer Direct"' |
+if printf '%s\n' 'type route hook output priority -151; ip daddr != 198.18.0.0/15 socket cgroupv2 level 2 "services/media" meta mark set 0x08000000 comment "Prokop TorrServer Direct"' 'ip6 daddr != fc00::/18 socket' |
   ucode -L "$PROKOP_LIB" "$PROKOP_LIB/torrserver/direct.uc" rule-output-active '/services/media/torrserver'; then
   echo 'FAIL: TorrServer Direct must not accept a shared parent cgroup' >&2
+  exit 1
+fi
+# A rule from before TS-9 marks FakeIP connections too: it is not taken as
+# TorrServer Direct's, so the worker replaces it.
+if printf '%s\n' 'type route hook output priority -151; socket cgroupv2 level 2 "services/torrserver" meta mark set 0x08000000 comment "Prokop TorrServer Direct"' |
+  ucode -L "$PROKOP_LIB" "$PROKOP_LIB/torrserver/direct.uc" rule-output-active '/services/torrserver'; then
+  echo 'FAIL: a TorrServer Direct rule that marks FakeIP connections must be replaced' >&2
   exit 1
 fi
 printf 'Direct Proxy and device exclusion checks passed\n'

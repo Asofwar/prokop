@@ -6,12 +6,17 @@
 
 let fs = require("fs");
 let uci = require("core.uci");
+let singbox_constants = require("singbox.constants");
 
 const CONFIG_NAME = getenv("PROKOP_CONFIG_NAME") || "prokop";
 const TABLE = "ProkopTorrServerDirect";
 // Where processes and cgroups are read (tests point them at a fake tree).
 const PROC_DIR = getenv("PROKOP_PROC_DIR") || "/proc";
 const CGROUP_DIR = getenv("PROKOP_CGROUP_DIR") || "/sys/fs/cgroup";
+// sing-box's FakeIP ranges: an address there stands for a name sing-box
+// resolved and routes by its rules, never a real peer (TS-9).
+const FAKEIP_RANGE = singbox_constants.FAKEIP_INET4_RANGE;
+const FAKEIP6_RANGE = singbox_constants.FAKEIP_INET6_RANGE;
 
 function text(value) { return value == null ? "" : "" + value; }
 function quote(value) { return "'" + replace(text(value), /'/g, "'\\''") + "'"; }
@@ -99,6 +104,8 @@ function rule_output_active(output, info) {
     return (index(output, "type route hook output priority mangle - 1") >= 0 ||
             index(output, "type route hook output priority -151") >= 0) &&
         index(output, "socket cgroupv2 level " + level + " \"" + path + "\"") >= 0 &&
+        index(output, "ip daddr != " + FAKEIP_RANGE + " ") >= 0 &&
+        index(output, "ip6 daddr != " + FAKEIP6_RANGE + " ") >= 0 &&
         (index(output, "meta mark set 0x08000000") >= 0 ||
          index(output, "meta mark set 0x8000000") >= 0) &&
         index(output, "Prokop TorrServer Direct") >= 0;
@@ -117,6 +124,6 @@ function status_of(info) {
 }
 
 return {
-    TABLE, PROC_DIR, is_torrserver_cmdline, each_process, valid_cgroup, discover, discover_from,
+    TABLE, PROC_DIR, FAKEIP_RANGE, FAKEIP6_RANGE, is_torrserver_cmdline, each_process, valid_cgroup, discover, discover_from,
     enabled, rule_output_active, active, status_of
 };

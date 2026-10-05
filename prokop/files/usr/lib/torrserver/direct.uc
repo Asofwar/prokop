@@ -31,18 +31,22 @@ function remove_rule() { success([ "nft", "delete", "table", "inet", TABLE ]); }
 // The nft batch for a dedicated cgroup (an absolute cgroup v2 path). It
 // replaces the table in one transaction: the add makes the delete valid when
 // there is no table yet, and TorrServer's sockets are never left unmarked
-// between an old rule and a new one (UC-108).
+// between an old rule and a new one (UC-108). A connection to a FakeIP
+// address is left unmarked: the name behind it is one of Prokop's rules,
+// and only sing-box can reach it (marked, it went to the WAN as is, TS-9).
 function rule_batch(cgroup) {
     let path = substr(cgroup, 1);
     let parts = split(path, "/");
     // Match the exact dedicated group, not a shared parent of nested services.
     let level = length(parts);
+    let match_group = "socket cgroupv2 level " + level + " \"" + path + "\" meta mark set " + OUTBOUND_MARK +
+        " counter comment \"Prokop TorrServer Direct\"\n";
     return "add table inet " + TABLE + "\n" +
         "delete table inet " + TABLE + "\n" +
         "add table inet " + TABLE + "\n" +
         "add chain inet " + TABLE + " output { type route hook output priority -151; policy accept; }\n" +
-        "add rule inet " + TABLE + " output socket cgroupv2 level " + level + " \"" + path +
-        "\" meta mark set " + OUTBOUND_MARK + " counter comment \"Prokop TorrServer Direct\"\n";
+        "add rule inet " + TABLE + " output ip daddr != " + procs.FAKEIP_RANGE + " " + match_group +
+        "add rule inet " + TABLE + " output ip6 daddr != " + procs.FAKEIP6_RANGE + " " + match_group;
 }
 function apply_rule(info) {
     if (!info.available) return false;
