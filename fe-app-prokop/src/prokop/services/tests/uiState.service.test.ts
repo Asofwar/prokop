@@ -459,4 +459,81 @@ describe('applyUiStateToStore', () => {
       true,
     );
   });
+
+  it('a late answer does not make a finished action run again (PRG-1)', () => {
+    const job = (running: boolean, extra = {}) =>
+      ({
+        job_id: 'J1',
+        component: 'zapret',
+        action: 'install',
+        running,
+        started_at: 100,
+        success: true,
+        message: '',
+        current_version: '',
+        latest_version: '',
+        changed: true,
+        ...extra,
+      }) as Prokop.ComponentActionResult;
+    store.set({
+      updatesProgress: {
+        zapret: {
+          component: 'zapret',
+          action: 'install',
+          jobId: 'J1',
+          running: false,
+          startedAt: 100,
+          finishedAt: 160,
+          progress: null,
+          success: false,
+          message: 'shown failure',
+        },
+      },
+    });
+    // Read before the job ended, answered after its completion.
+    applyUiStateToStore(createUiState({ component: [job(true)] }));
+    expect(store.get().updatesProgress.zapret?.running).toBe(false);
+    expect(store.get().updatesProgress.zapret?.message).toBe('shown failure');
+    applyUiStateToStore(createUiState({ component: [job(false)] }));
+    expect(store.get().updatesProgress.zapret?.message).toBe('shown failure');
+    // Gone from the router's list: the result stays until it is hidden.
+    applyUiStateToStore(createUiState({ component: [] }));
+    expect(store.get().updatesProgress.zapret?.message).toBe('shown failure');
+  });
+
+  it('a running view ends with the result the router lists (PRG-1)', () => {
+    const state = (running: boolean, extra = {}) =>
+      ({
+        job_id: 'J2',
+        component: 'zapret',
+        action: 'install',
+        running,
+        started_at: 100,
+        success: true,
+        message: '',
+        current_version: '',
+        latest_version: '',
+        changed: true,
+        ...extra,
+      }) as Prokop.ComponentActionResult;
+    applyUiStateToStore(createUiState({ component: [state(true)] }));
+    expect(store.get().updatesProgress.zapret?.running).toBe(true);
+    // A read-only user cannot ask for the job: the list ends it.
+    applyUiStateToStore(
+      createUiState({
+        component: [
+          state(false, {
+            success: false,
+            message: 'Failed to update package lists',
+            updated_at: 170,
+          }),
+        ],
+      }),
+    );
+    const view = store.get().updatesProgress.zapret;
+    expect(view?.running).toBe(false);
+    expect(view?.success).toBe(false);
+    expect(view?.finishedAt).toBe(170);
+    expect(view?.message).not.toContain('Failed to update package lists');
+  });
 });

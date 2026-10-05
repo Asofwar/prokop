@@ -279,6 +279,8 @@ sed -i "s/\"started_at\":1}/\"started_at\":$(date +%s)}/" "$JOBS/9-9.json"
 PROKOP_UI_COMPONENT_ACTION_DIR="$JOBS" ucode -L "$LIB" "$LIB/service/ui.uc" get-ui-state >"$WORK/ui-state" 2>/dev/null
 [ "$(json_get "$WORK/ui-state" 'v.actions.component.find(c => c.job_id === "9-9").progress.download.bytes')" = 10 ] ||
   fail "get_ui_state must pass a running job's progress: $(json_get "$WORK/ui-state" v.actions.component)"
+[ "$(json_get "$WORK/ui-state" 'typeof v.now')" = number ] ||
+  fail "get_ui_state must carry the router's clock for the read-only user (PRG-2)"
 rm -f "$JOBS/9-9.json" "$JOBS/9-9.progress"
 
 # --- 3. A failed update ends at the stage that failed ------------------------------

@@ -169,6 +169,10 @@ export const styles = `
     flex-wrap: wrap;
     gap: 6px;
 }
+.fkp_component-progress-slot {
+    min-width: 0;
+}
+
 .fkp_component-progress {
     display: flex;
     flex-direction: column;

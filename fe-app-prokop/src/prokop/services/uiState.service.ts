@@ -1,5 +1,9 @@
 import { getComponentActionKey } from '../helpers/getComponentActionKey';
 import { observeRouterTime } from '../helpers/routerClock';
+import {
+  componentActionFailureMessage,
+  componentActionSuccessText,
+} from '../tabs/updates/componentActionToast';
 import { normalizeProgress } from '../tabs/updates/componentProgress';
 import { normalizeSingBoxVariantFields } from '../helpers/singBoxVariant';
 import type { Prokop } from '../types';
@@ -207,7 +211,10 @@ function applyActionState(actions: UiActionMap = {}) {
 
 // A running component action shows its progress on its card. A finished
 // one keeps its view, which the job's completion fills in; a running view
-// whose job the router no longer lists at all is gone.
+// whose job the router no longer lists at all is gone. An answer read
+// before the job ended may arrive after its completion: a finished view is
+// never made running again by its own job, and a running view whose job the
+// router lists as finished ends with the job's result (PRG-1).
 function applyComponentProgress(states: Prokop.ComponentActionResult[] = []) {
   const current = store.get().updatesProgress;
   const next: StoreType['updatesProgress'] = {};
@@ -220,16 +227,37 @@ function applyComponentProgress(states: Prokop.ComponentActionResult[] = []) {
   }
 
   for (const state of states) {
-    if (
-      !isRunningAction(state) ||
-      !state.job_id ||
-      state.action === 'check_update'
-    ) {
+    if (!state.job_id || state.action === 'check_update') {
       continue;
     }
 
+    const known = next[state.component];
     const progress = normalizeProgress(state.progress);
     observeRouterTime(progress?.updated_at);
+
+    if (!isRunningAction(state)) {
+      if (known?.jobId === state.job_id && known.running) {
+        const success = state.success !== false;
+        next[state.component] = {
+          ...known,
+          running: false,
+          finishedAt:
+            (typeof state.updated_at === 'number' && state.updated_at) || 0,
+          progress: progress ?? known.progress,
+          success,
+          message: success
+            ? componentActionSuccessText(state)
+            : componentActionFailureMessage(state, state),
+          version: state.current_version || undefined,
+        };
+      }
+      continue;
+    }
+
+    if (known?.jobId === state.job_id && !known.running) {
+      continue;
+    }
+
     next[state.component] = {
       component: state.component,
       action: state.action,
@@ -245,6 +273,7 @@ function applyComponentProgress(states: Prokop.ComponentActionResult[] = []) {
 }
 
 export function applyUiStateToStore(uiState: Prokop.UiState) {
+  observeRouterTime(uiState.now);
   applyServiceState(uiState);
   applyActionState(uiState.actions);
   applyComponentProgress(uiState.actions?.component);

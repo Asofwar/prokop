@@ -38,6 +38,9 @@ import {
 } from './componentActionToast';
 import {
   normalizeProgress,
+  cardProgressView,
+  patchComponentProgress,
+  progressViewKey,
   renderComponentProgress,
 } from './componentProgress';
 import { showReleaseSelector } from './releaseSelector';
@@ -1627,20 +1630,7 @@ function renderComponentCard(card: ComponentCard) {
   // 3. The running or last action: its stages, download and time.
   // A card can carry another component's actions (TorrServer's direct
   // routing): their progress shows on it too.
-  const updatesProgress = store.get().updatesProgress;
-  const progressView =
-    updatesProgress[card.component] ||
-    card.actions
-      .map((action) => updatesProgress[action.component])
-      .find(Boolean);
-  const progressPanel = progressView
-    ? renderComponentProgress(progressView, {
-        installed:
-          progressView.component !== 'torrserver' ||
-          Boolean(store.get().diagnosticsSystemInfo.torrserver_installed),
-        onDismiss: () => dismissComponentProgress(progressView.component),
-      })
-    : null;
+  const progressSlot = renderProgressSlot(card);
 
   // 4. Actions classification
   const primaryActions: ComponentActionButton[] = [];
@@ -1814,11 +1804,76 @@ function renderComponentCard(card: ComponentCard) {
     cardChildren.push(detailsContainer);
   }
   cardChildren.push(actionsContainer);
-  if (progressPanel) {
-    cardChildren.push(progressPanel);
-  }
+  cardChildren.push(progressSlot);
 
   return E('div', { class: 'fkp_updates-page__component' }, cardChildren);
+}
+
+// The cards on the page and the progress they show: while only the
+// progress moves (a download, a stage), the panels are updated in place
+// instead of rebuilding every card each second.
+const progressSlots = new Map<
+  Prokop.ComponentName,
+  { others: Prokop.ComponentName[]; key: string }
+>();
+
+function cardProgressPanel(
+  view: Prokop.ComponentProgressView | null,
+): HTMLElement | null {
+  return view
+    ? renderComponentProgress(view, {
+        installed:
+          view.component !== 'torrserver' ||
+          Boolean(store.get().diagnosticsSystemInfo.torrserver_installed),
+        onDismiss: () => dismissComponentProgress(view.component),
+      })
+    : null;
+}
+
+function renderProgressSlot(card: ComponentCard) {
+  const others = card.actions.map((action) => action.component);
+  const view = cardProgressView(
+    store.get().updatesProgress,
+    card.component,
+    others,
+  );
+  const panel = cardProgressPanel(view);
+  const slot = E(
+    'div',
+    { class: 'fkp_component-progress-slot' },
+    panel ? [panel] : [],
+  );
+  slot.setAttribute('data-fkp-progress-card', card.component);
+  slot.hidden = !panel;
+  progressSlots.set(card.component, { others, key: progressViewKey(view) });
+  return slot;
+}
+
+// false when a card must change around its panel: the page is rendered
+// again instead.
+function patchProgressSlots() {
+  const progress = store.get().updatesProgress;
+  const updates: [HTMLElement, Prokop.ComponentProgressView | null][] = [];
+
+  for (const [component, { others, key }] of progressSlots) {
+    const view = cardProgressView(progress, component, others);
+    const slot = document.querySelector<HTMLElement>(
+      `[data-fkp-progress-card="${component}"]`,
+    );
+    if (!slot || progressViewKey(view) !== key) {
+      return false;
+    }
+    updates.push([slot, view]);
+  }
+
+  updates.forEach(([slot, view]) => {
+    const panel = cardProgressPanel(view);
+    const current = slot.firstElementChild;
+    if (panel && current) {
+      patchComponentProgress(current, panel);
+    }
+  });
+  return true;
 }
 
 function renderUpdatesComponents() {
@@ -1827,6 +1882,8 @@ function renderUpdatesComponents() {
   if (!container) {
     return;
   }
+
+  progressSlots.clear();
 
   const columns = [[], [], []] as Node[][];
   getComponentCards().forEach((card) => {
@@ -1867,6 +1924,12 @@ function onStoreUpdate(
     diff.diagnosticsActions ||
     diff.servicesInfoWidget
   ) {
+    const progressOnly =
+      Object.keys(diff).every((key) => key === 'updatesProgress') &&
+      progressSlots.size > 0;
+    if (progressOnly && patchProgressSlots()) {
+      return;
+    }
     renderUpdatesComponents();
   }
 }

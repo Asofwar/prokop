@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
+  cardProgressView,
   downloadText,
   failedStageOf,
   formatBytes,
@@ -228,6 +229,49 @@ describe('component action progress', () => {
       routerNowSeconds() - 1900,
       0,
     );
+  });
+
+  it('follows a router clock that steps back within a minute (PRG-2)', () => {
+    observeRouterTime(5000, 1_000_000);
+    expect(routerNowSeconds(1_001_000)).toBe(5001);
+    // NTP sets the router 3600 s back: the old estimate holds for a minute,
+    // then the new clock is followed.
+    observeRouterTime(1400, 1_010_000);
+    expect(routerNowSeconds(1_011_000)).toBe(5011);
+    observeRouterTime(1460, 1_070_000);
+    expect(routerNowSeconds(1_071_000)).toBe(1461);
+    // A step forward is followed at once.
+    observeRouterTime(9000, 1_072_000);
+    expect(routerNowSeconds(1_073_000)).toBe(9001);
+  });
+
+  it('a card shows the running action of what it carries (PRG-3)', () => {
+    const done = view({
+      component: 'torrserver',
+      jobId: 'old',
+      running: false,
+      success: true,
+    });
+    const direct = view({
+      component: 'torrserver_direct',
+      action: 'enable',
+      jobId: 'new',
+    });
+    expect(
+      cardProgressView(
+        { torrserver: done, torrserver_direct: direct },
+        'torrserver',
+        ['torrserver', 'torrserver_direct'],
+      )?.jobId,
+    ).toBe('new');
+    expect(
+      cardProgressView({ torrserver: done }, 'torrserver', [
+        'torrserver_direct',
+      ])?.jobId,
+    ).toBe('old');
+    expect(
+      cardProgressView({}, 'torrserver', ['torrserver_direct']),
+    ).toBeNull();
   });
 
   it('starting or configuring TorrServer is not an install', () => {

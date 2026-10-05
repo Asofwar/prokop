@@ -1115,6 +1115,9 @@ export namespace Prokop {
       component: ComponentActionResult[];
       subscription: SubscriptionUpdateJobState[];
     };
+    // The router's clock when it answered (seconds); missing from older
+    // releases.
+    now?: number;
   }
 
   export type ComponentName =

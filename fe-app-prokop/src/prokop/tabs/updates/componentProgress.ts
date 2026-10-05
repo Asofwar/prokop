@@ -650,3 +650,82 @@ export function renderComponentProgress(
     { 'aria-live': 'polite' },
   );
 }
+
+// The view a card shows. A card can carry the actions of another component
+// (TorrServer's direct routing): a running action comes first, its own or
+// the other's, then its own last result, then the other's (PRG-3).
+export function cardProgressView(
+  progress: Partial<
+    Record<Prokop.ComponentName, Prokop.ComponentProgressView | undefined>
+  >,
+  component: Prokop.ComponentName,
+  others: Prokop.ComponentName[] = [],
+) {
+  const views = [component, ...others]
+    .map((name) => progress[name])
+    .filter((view): view is Prokop.ComponentProgressView => Boolean(view));
+
+  return views.find((view) => view.running) || views[0] || null;
+}
+
+// What decides the shape of a card around its progress: which action it
+// shows and whether that one runs.
+export function progressViewKey(view: Prokop.ComponentProgressView | null) {
+  return view ? `${view.component}:${view.jobId}:${view.running}` : '';
+}
+
+// Brings CURRENT in place to what NEXT shows and keeps the nodes that stay,
+// the panel's live region among them: a download that moves changes one
+// line, not the whole card. A button is replaced, it carries its handler.
+function morph(current: Node, next: Node): void {
+  if (
+    current.nodeType !== next.nodeType ||
+    current.nodeName !== next.nodeName ||
+    current.nodeName === 'BUTTON'
+  ) {
+    current.parentNode?.replaceChild(next, current);
+    return;
+  }
+
+  if (current.nodeType !== Node.ELEMENT_NODE) {
+    if (current.nodeValue !== next.nodeValue) {
+      current.nodeValue = next.nodeValue;
+    }
+    return;
+  }
+
+  const target = current as Element;
+  const source = next as Element;
+  Array.from(target.attributes).forEach((attribute) => {
+    if (!source.hasAttribute(attribute.name)) {
+      target.removeAttribute(attribute.name);
+    }
+  });
+  Array.from(source.attributes).forEach((attribute) => {
+    if (target.getAttribute(attribute.name) !== attribute.value) {
+      target.setAttribute(attribute.name, attribute.value);
+    }
+  });
+  if ((target as HTMLElement).hidden !== (source as HTMLElement).hidden) {
+    (target as HTMLElement).hidden = (source as HTMLElement).hidden;
+  }
+
+  const wanted = Array.from(source.childNodes);
+  wanted.forEach((child, index) => {
+    const existing = target.childNodes[index];
+    if (existing) {
+      morph(existing, child);
+    } else {
+      target.appendChild(child);
+    }
+  });
+  while (target.childNodes.length > wanted.length) {
+    target.removeChild(target.lastChild as Node);
+  }
+}
+
+// Updates a progress panel already on the page to NEXT, the panel rendered
+// for the same job in the same state.
+export function patchComponentProgress(panel: Element, next: Element) {
+  morph(panel, next);
+}

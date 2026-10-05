@@ -1266,7 +1266,11 @@ function current_ui_state_json() {
             }
         },
         capabilities,
-        actions: action_state_from_dirs()
+        actions: action_state_from_dirs(),
+        // The router's clock, for the times the UI shows: the read-only
+        // user cannot call component_action_status, which also carries it
+        // (PRG-2).
+        now: time()
     };
     let text = sprintf("%J", state);
     print(text, "\n");
