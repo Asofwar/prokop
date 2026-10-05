@@ -252,6 +252,15 @@ if [ -n "${CURL_STUB_PLAN:-}" ]; then
     mode="${spec%%:*}"; [ "$spec" = "$mode" ] || tls="${spec#*:}"
   fi
 fi
+# CURL_STUB_KILL_AT=<n>: the n-th call kills the temporary nfqws of queue
+# 4600 (it dies while another candidate is probed).
+if [ -n "${CURL_STUB_KILL_AT:-}" ]; then
+  k=$(( $(cat "$STUB_LOG/kill.count" 2>/dev/null || echo 0) + 1 )); echo "$k" > "$STUB_LOG/kill.count"
+  [ "$k" != "$CURL_STUB_KILL_AT" ] || kill -9 "$(head -n 1 "$PROKOP_AUTOTUNE_STATE_DIR/nfqws-4600.pid")" 2>/dev/null || true
+fi
+# CURL_STUB_BUSY_MARK: while /proc/net/tcp holds that text (a TIME_WAIT
+# socket of the probe ports), no source port can be bound (curl exit 45).
+[ -z "${CURL_STUB_BUSY_MARK:-}" ] || ! grep -q "$CURL_STUB_BUSY_MARK" "$PROKOP_AUTOTUNE_PROC_NET/tcp" || mode=local_port
 ms() { printf '0.%03d' "$1"; }
 # The target answers the SYN of every probe that got past the TCP stage
 # (tls_stall included: curl hides that connection, the counter does not).
@@ -269,6 +278,7 @@ case "$mode" in
   refused) echo "7|0||000|0.000000|0.000000|0.000000|0.004|Failed to connect to x port 443 after 4 ms: Connection refused"; exit 7 ;;
   unreachable) echo "7|0||000|0.000000|0.000000|0.000000|0.004|Failed to connect to x port 443 after 4 ms: No route to host"; exit 7 ;;
   connect_timeout) echo "28|0||000|0.000000|0.000000|0.000000|5.001|Connection timed out after 5001 milliseconds"; exit 28 ;;
+  local_port) echo "45|0||000|0.000000|0.000000|0.000000|0.001|Failed binding local connection end"; exit 45 ;;
   # curl 8.19 on a blackholed ClientHello: the same record as connect_timeout.
   tls_stall) echo "28|0||000|0.000000|0.000000|0.000000|5.001|Connection timed out after 5001 milliseconds"; exit 28 ;;
   tls) echo "35|61003|$ip|000|0.012|0.000000|0.000000|0.070|mbedTLS: (-0x7780) SSL - A fatal alert message was received from our peer"; exit 35 ;;
@@ -343,7 +353,7 @@ queue_reset() {
 }
 reset_state() {
   unset CURL_STUB_MODE CURL_STUB_TOUCH_PROD CURL_STUB_SLEEP NFT_STUB_FAIL_SETUP NFT_STUB_FAIL_DELETE \
-    NFQWS_STUB_EXIT NFQWS_STUB_NO_LISTENER NFQWS_STUB_REJECT NFQWS_STUB_IGNORE_TERM DIG_STUB_ANSWER PROKOP_AUTOTUNE_QUEUE \
+    CURL_STUB_KILL_AT CURL_STUB_BUSY_MARK NFQWS_STUB_EXIT NFQWS_STUB_NO_LISTENER NFQWS_STUB_REJECT NFQWS_STUB_IGNORE_TERM DIG_STUB_ANSWER PROKOP_AUTOTUNE_QUEUE \
     CURL_STUB_UNEXPECTED CURL_STUB_PENDING CURL_STUB_SOCKET CURL_STUB_CLOSING NFT_STUB_FAIL_RULESET \
     IP_STUB_RULE_FAIL IP_STUB_ROUTE_LOCAL IP_STUB_ROUTE_DIFFERS NFT_STUB_INTERFACES NFT_STUB_FAIL_REPLACE \
     CURL_STUB_QUEUED CURL_STUB_ROUTE_CHANGE PROKOP_AUTOTUNE_QUIET_TIMEOUT \

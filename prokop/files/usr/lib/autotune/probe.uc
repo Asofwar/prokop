@@ -149,6 +149,9 @@ function classify(r) {
         return result;
     }
     if (code == 6) { result.class = "dns_failure"; return result; }
+    // 45: no source port of the given range could be bound (TIME_WAIT
+    // leftovers, AT-8): nothing reached the target, nothing is known of it.
+    if (code == 45) { result.class = "local_port_unavailable"; return result; }
     if (code == 7) {
         if (reset || refused) { result.connect = "reset"; result.class = "tcp_reset"; }
         else if (match(err, /timed out|timeout/) != null) { result.connect = "timeout"; result.class = "connect_timeout"; }

@@ -109,6 +109,15 @@ export function targetReasonText(reason: string | null | undefined) {
       return _(
         'The check was invalid: a strategy did not process every packet. It will be repeated.',
       );
+    // The run itself was faulty (AT-8, AT-9): nothing is said of the target.
+    case 'local_port_unavailable':
+      return _(
+        'The check was invalid: its probe ports were still busy. It will be repeated.',
+      );
+    case 'nfqws_died':
+      return _(
+        'The check was invalid: a strategy process stopped during it. It will be repeated.',
+      );
     case 'too_many_probes':
       return _(
         'The check needs more probe connections than one run can make; lower the number of probes.',

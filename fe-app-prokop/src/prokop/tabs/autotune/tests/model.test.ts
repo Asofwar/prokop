@@ -1406,6 +1406,12 @@ describe('S9 autotune texts', () => {
       'The check was invalid',
     );
     expect(targetReasonText('too_many_probes')).toContain('lower the number');
+    expect(targetReasonText('local_port_unavailable')).toContain(
+      'probe ports were still busy',
+    );
+    expect(targetReasonText('nfqws_died')).toContain(
+      'a strategy process stopped',
+    );
   });
 
   it('labels failed and unconfirmed applies by what happened (UC-112)', () => {

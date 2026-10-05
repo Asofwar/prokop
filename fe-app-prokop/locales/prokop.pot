@@ -6556,6 +6556,14 @@ msgstr ""
 msgid "The check was invalid: a strategy did not process every packet. It will be repeated."
 msgstr ""
 
+#: src/prokop/tabs/autotune/model.ts:112
+msgid "The check was invalid: its probe ports were still busy. It will be repeated."
+msgstr ""
+
+#: src/prokop/tabs/autotune/model.ts:116
+msgid "The check was invalid: a strategy process stopped during it. It will be repeated."
+msgstr ""
+
 #: src/prokop/tabs/autotune/initController.ts:265
 msgid "The check was postponed. See the state above."
 msgstr ""

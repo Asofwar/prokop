@@ -4604,6 +4604,12 @@ msgstr "Проверка неожиданно остановилась"
 msgid "The check was invalid: a strategy did not process every packet. It will be repeated."
 msgstr "Проверка недействительна: стратегия обработала не все пакеты. Она будет повторена."
 
+msgid "The check was invalid: its probe ports were still busy. It will be repeated."
+msgstr "Проверка недействительна: порты проверки ещё были заняты. Она будет повторена."
+
+msgid "The check was invalid: a strategy process stopped during it. It will be repeated."
+msgstr "Проверка недействительна: процесс стратегии остановился во время неё. Она будет повторена."
+
 msgid "The check was postponed. See the state above."
 msgstr "Проверка отложена. Причина — в состоянии выше."
 

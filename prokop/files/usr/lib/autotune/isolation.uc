@@ -95,6 +95,9 @@ const HOLD_TIMEOUT = int(getenv("PROKOP_AUTOTUNE_HOLD_TIMEOUT") || "300");
 // Seconds to wait for production queues to be momentarily empty before the
 // temporary hooks are registered or unregistered.
 const QUIET_TIMEOUT = int(getenv("PROKOP_AUTOTUNE_QUIET_TIMEOUT") || "2");
+// Seconds a tune waits for TIME_WAIT sockets of the probe ports to expire
+// (60 s in the kernel) before it starts (port_check).
+const PORT_WAIT = int(getenv("PROKOP_AUTOTUNE_PORT_WAIT") || "65");
 // Where a tune reports its phase while it runs, for the page (the manager
 // passes it; none: no reports). { phase, done, total, waited_s, timeout_s }.
 const PROGRESS_FILE = getenv("PROKOP_AUTOTUNE_PROGRESS") || "";
@@ -420,19 +423,35 @@ function queue_check() {
     return null;
 }
 
-function port_check() {
-    let range = split(trim(as_string(fs.readfile(PORT_RANGE_FILE))), /[ \t]+/);
-    if (length(range) != 2) return "port_range_unknown";
-    if (!(PORT_LAST < int(range[0]) || PORT_FIRST > int(range[1]))) return "port_range_overlaps_ephemeral";
+// Sockets with a local port in the probe range: { active, time_wait }.
+function range_sockets() {
+    let result = { active: 0, time_wait: 0 };
     for (let file in [ "tcp", "tcp6" ]) {
         for (let line in split(as_string(fs.readfile(PROC_NET + "/" + file)), "\n")) {
             let f = split(trim(line), /[ \t]+/);
             if (length(f) < 4 || index(f[1], ":") < 0) continue;
             let port = hex_value(substr(f[1], index(f[1], ":") + 1));
-            // TIME_WAIT (06) leftovers of an earlier probe send no new data.
-            if (port != null && port >= PORT_FIRST && port <= PORT_LAST && f[3] != "06")
-                return "port_range_in_use";
+            if (port == null || port < PORT_FIRST || port > PORT_LAST) continue;
+            if (f[3] == "06") result.time_wait++; else result.active++;
         }
+    }
+    return result;
+}
+// wait_time_wait (a tune): the ports of a candidate's slice are few, and a
+// port in TIME_WAIT (an apply verification just before, AT-8) cannot be
+// bound again until it expires: curl then fails the probe with exit 45.
+// The run waits, bounded, for TIME_WAIT leftovers to expire.
+function port_check(wait_time_wait) {
+    let range = split(trim(as_string(fs.readfile(PORT_RANGE_FILE))), /[ \t]+/);
+    if (length(range) != 2) return "port_range_unknown";
+    if (!(PORT_LAST < int(range[0]) || PORT_FIRST > int(range[1]))) return "port_range_overlaps_ephemeral";
+    for (let waited = 0; ; waited++) {
+        let sockets = range_sockets();
+        // TIME_WAIT (06) leftovers of an earlier probe send no new data.
+        if (sockets.active > 0) return "port_range_in_use";
+        if (!wait_time_wait || sockets.time_wait == 0 || waited >= PORT_WAIT || interrupted) break;
+        if (waited == 0) progress("preparing", { waiting: "ports" });
+        pause();
     }
     return null;
 }
@@ -902,7 +921,8 @@ function unavailable(result, detail) {
 // one resolution of the target (pinned for the whole run), the probe route,
 // the bypass contract and the production pre-state. Returns null when the
 // run must not go on (result already describes why).
-function preflight(result, host, resolver, ip, on_dns_failure) {
+// wait_ports: see port_check.
+function preflight(result, host, resolver, ip, on_dns_failure, wait_ports) {
     // Leftovers of an interrupted run are ours by name and signature.
     let recovered = [];
     if (!teardown(read_active(), recovered)) {
@@ -924,7 +944,7 @@ function preflight(result, host, resolver, ip, on_dns_failure) {
     else if (fs.stat(SNAPSHOT_LOCK) != null) refusal = "snapshot_operation_in_progress";
     // An nfqws of the run signature that no run recorded is not ours to stop.
     else if (length(found = orphans()) > 0) refusal = "queue_in_use";
-    else refusal = queue_check() || port_check();
+    else refusal = queue_check() || port_check(wait_ports);
     if (length(found) > 0) result.blocking_nfqws = blocking_nfqws(found);
     if (refusal) { result.status = "refused"; result.reason = refusal; return null; }
 
@@ -1051,7 +1071,7 @@ function tune(host, probes, resolver, list, ip) {
     let pre = preflight(result, host, resolver, ip, (resolved) => {
         result.status = "inconclusive"; result.reason = "target_unresolved";
         result.target.dns = resolved.reason;
-    });
+    }, true);
     if (pre == null) return result;
     let target = pre.target, before = pre.before;
     mark("T0", "pre-state recorded");
@@ -1120,6 +1140,9 @@ function tune(host, probes, resolver, list, ip) {
                 let counters_after = probe_counters();
                 if (counters_after == null || counters_after[comment] == null || counters_after[synack] == null)
                     return "counters_unavailable";
+                // No free source port of the slice: a fault of the run, never
+                // a failure of the candidate (AT-8).
+                if (record.class == "local_port_unavailable") return "local_port_unavailable";
                 record = probe_module.handshake(record, counters_after[synack].packets - counters_before[synack].packets);
                 record.round = r + 1;
                 record.candidate = id;
@@ -1156,6 +1179,9 @@ function tune(host, probes, resolver, list, ip) {
             let slot = by_id[id];
             if (slot.queue == null || run_counters_after[slot.comment] == null || run_counters_before[slot.comment] == null)
                 continue;
+            // A candidate whose nfqws died after its last probe left its
+            // queue unbound: that, not a bypass, is the reason (AT-9).
+            if (identity.matches(slot.pidfile, NFQWS, slot.argv, true, true) == "") return "nfqws_died";
             let before_q = run_queue_before["" + slot.queue], after_q = queue_entry(slot.queue);
             let matched = run_counters_after[slot.comment].packets - run_counters_before[slot.comment].packets;
             if (before_q == null || after_q == null || after_q.id_sequence - before_q.id_sequence < matched)
@@ -1282,6 +1308,7 @@ function run(candidate_id, host, count, resolver, ip, handshake) {
             let record = probe_module.probe({ host, ip: target.ip, port_range: PORT_RANGE, handshake: handshake_only });
             let after_c = probe_counters();
             if (after_c == null || after_c.synack == null) return "counters_unavailable";
+            if (record.class == "local_port_unavailable") return "local_port_unavailable";
             push(result.probes, probe_module.handshake(record, after_c.synack.packets - before_c.synack.packets));
         }
         // The rule counter first, the queue after it: see tune().

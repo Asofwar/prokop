@@ -231,6 +231,29 @@ a.ok(!r.probes.some((p) => ["fakedsplit","udp_fake","nosuch"].includes(p.candida
 assert_clean "tune unsupported"
 ok "9 unsupported candidates excluded with their reason, never probed or failed"
 
+# AT-8: a port of the probe range in TIME_WAIT (an apply verification just
+# before) cannot be bound again: the tune waits for it to expire instead of
+# losing probes of the control to curl exit 45; a probe that still finds
+# no free port fails the run, never the candidate.
+reset_state
+printf '   0: 0A00000A:EE4D 01010101:01BB 06\n' >> "$PROKOP_AUTOTUNE_PROC_NET/tcp"
+( sleep 2; sed -i '/0A00000A:EE4D/d' "$PROKOP_AUTOTUNE_PROC_NET/tcp" ) >/dev/null 2>&1 &
+CURL_STUB_BUSY_MARK=0A00000A:EE4D CURL_STUB_PLAN="direct=reset,4600=success:120" tune 3 192.0.2.53 multisplit
+json 'a.equal(r.status, "selected", JSON.stringify(r).slice(0, 400)); a.equal(r.selected, "multisplit");
+  a.ok(r.probes.every((p) => p.class !== "connect_failure" && p.class !== "local_port_unavailable"), JSON.stringify(r.probes.map((p) => p.class)));' "$WORK/out.json"
+assert_clean "tune after TIME_WAIT"
+reset_state; CURL_STUB_PLAN="direct=reset|local_port,4600=success:120" tune 3 192.0.2.53 multisplit
+json 'a.equal(r.status, "failed"); a.equal(r.reason, "local_port_unavailable"); a.equal(r.selected, null); a.equal(r.cleanup.status, "clean");' "$WORK/out.json"
+ok "AT-8 a tune waits for TIME_WAIT probe ports; an unbindable source port fails the run, not the candidate"
+
+# AT-9: a candidate nfqws that dies after its last probe (while the control
+# is probed) is named as such, not as a candidate that bypassed its queue.
+reset_state; CURL_STUB_KILL_AT=8 CURL_STUB_PLAN="direct=reset,4600=success:120" tune 4 192.0.2.53 multisplit
+json 'a.equal(r.status, "failed", JSON.stringify(r).slice(0, 300)); a.equal(r.reason, "nfqws_died");
+  a.equal(r.probes.length, 8); a.equal(r.probes[7].candidate, "direct");' "$WORK/out.json"
+assert_clean "tune nfqws died"
+ok "AT-9 an nfqws that died after its last probe -> nfqws_died"
+
 # Inconclusive runs.
 reset_state; CURL_STUB_PLAN="direct=reset,4600=tls,4601=reset" tune 3 192.0.2.53 multisplit,fake
 json 'a.equal(r.status, "inconclusive"); a.equal(r.reason, "all_failed"); a.equal(r.selected, null); a.equal(r.cleanup.status, "clean");' "$WORK/out.json"
