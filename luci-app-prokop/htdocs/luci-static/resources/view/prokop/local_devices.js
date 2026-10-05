@@ -170,11 +170,46 @@ function loadLocalDeviceChoices() {
   return localDeviceChoicesPromise;
 }
 
+function compareLocalDeviceIps(a, b) {
+  const aParts = a.split(".");
+  const bParts = b.split(".");
+  const aIpv4 = aParts.length === 4 && !a.includes(":");
+  const bIpv4 = bParts.length === 4 && !b.includes(":");
+
+  if (aIpv4 !== bIpv4) {
+    return aIpv4 ? -1 : 1;
+  }
+
+  if (aIpv4) {
+    for (let i = 0; i < 4; i += 1) {
+      const diff = Number(aParts[i]) - Number(bParts[i]);
+      if (diff) {
+        return diff;
+      }
+    }
+    return 0;
+  }
+
+  return a.localeCompare(b);
+}
+
 function sortLocalDeviceChoiceValues(choices) {
   return Object.keys(choices).sort((a, b) => {
     const byName = `${choices[a]}`.localeCompare(`${choices[b]}`);
-    return byName || a.localeCompare(b);
+    return byName || compareLocalDeviceIps(a, b);
   });
+}
+
+// The device pickers show the address next to the name: several devices may
+// share a name, and the stored value is the address anyway.
+function labelLocalDeviceChoices(choices) {
+  const labels = {};
+
+  Object.keys(choices || {}).forEach((ip) => {
+    labels[ip] = `${choices[ip]} (${ip})`;
+  });
+
+  return labels;
 }
 
 function hasSingleIpValue(values) {
@@ -198,10 +233,11 @@ function createLocalDeviceDynamicListWidget(option, section_id, cfgvalue) {
   return (
     shouldResolveExistingLabels ? loadLocalDeviceChoices() : Promise.resolve({})
   ).then((initialChoices) => {
-    const choices = localDeviceChoicesCache || initialChoices || {};
+    const deviceChoices = localDeviceChoicesCache || initialChoices || {};
+    const choices = labelLocalDeviceChoices(deviceChoices);
     const widget = new ui.DynamicList(values, choices, {
       id: option.cbid(section_id),
-      sort: sortLocalDeviceChoiceValues(choices),
+      sort: sortLocalDeviceChoiceValues(deviceChoices),
       optional: option.optional || option.rmempty,
       datatype: option.datatype,
       placeholder: option.placeholder,
@@ -228,11 +264,9 @@ function createLocalDeviceDynamicListWidget(option, section_id, cfgvalue) {
       choicesLoading = true;
       loadLocalDeviceChoices()
         .then((loadedChoices) => {
+          const labels = labelLocalDeviceChoices(loadedChoices);
           widget.clearChoices();
-          widget.addChoices(
-            sortLocalDeviceChoiceValues(loadedChoices),
-            loadedChoices,
-          );
+          widget.addChoices(sortLocalDeviceChoiceValues(loadedChoices), labels);
           choicesLoaded = true;
         })
         .finally(() => {
@@ -260,9 +294,11 @@ function createLocalDeviceDynamicListWidget(option, section_id, cfgvalue) {
 const EntryPoint = {
   createLocalDeviceDynamicListWidget,
   hasSingleIpValue,
+  labelLocalDeviceChoices,
   loadLocalDeviceChoices,
   normalizeOptionValues,
   preloadLocalDeviceChoicesForValues,
+  sortLocalDeviceChoiceValues,
 };
 
 return baseclass.extend(EntryPoint);
