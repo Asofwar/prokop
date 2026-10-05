@@ -3160,9 +3160,18 @@ function generate_config(output_path, service_address, mwan3_active, supports_xh
 // do not exist yet), no Clash API and no cache file. Generation side files
 // (rule sets, section caches) go to scratch_dir, not to the runtime
 // directories the real start fills afterwards.
-function generate_list_bootstrap_config(output_path, service_address, mwan3_active, supports_xhttp, deferred_sections, sing_box_version, scratch_dir) {
+//
+// Stage "subscriptions" comes first when the rule the lists download
+// through has no nodes yet: its subscription did not download directly at
+// this start and waits for the service proxy of the rule it downloads
+// through. The config then serves the subscription download proxies of
+// the rules that have an outbound instead of the lists proxy.
+function generate_list_bootstrap_config(output_path, service_address, mwan3_active, supports_xhttp, deferred_sections, sing_box_version, scratch_dir, stage) {
     if (as_string(scratch_dir) == "")
         runtime_generate_unsupported("list bootstrap scratch directory is not set");
+    let subscriptions_stage = as_string(stage) == "subscriptions";
+    if (!subscriptions_stage && as_string(stage) != "")
+        runtime_generate_unsupported("unknown list bootstrap stage");
     runtime_subscription.set_section_cache_dir(scratch_dir + "/section-cache");
     runtime_ruleset_folder = scratch_dir + "/rulesets";
     runtime_supports_xhttp = supports_xhttp == null || as_string(supports_xhttp) == ""
@@ -3183,15 +3192,12 @@ function generate_list_bootstrap_config(output_path, service_address, mwan3_acti
     reserve_section_outbound_tags(sections, taken);
     for (let section in sections)
         add_outbound_for_section(config, section, taken, sections);
-    let present = false;
+    let present = {};
     for (let outbound in config.outbounds)
-        if (outbound.tag == detour)
-            present = true;
+        present[as_string(outbound.tag)] = true;
     for (let endpoint in config.endpoints)
-        if (endpoint.tag == detour)
-            present = true;
-    if (!present)
-        runtime_generate_unsupported("the rule lists are downloaded through has no outbound");
+        present[as_string(endpoint.tag)] = true;
+    let deferred = deferred_section_set(deferred_sections);
 
     config.inbounds = [];
     config.route.rules = [];
@@ -3201,9 +3207,34 @@ function generate_list_bootstrap_config(output_path, service_address, mwan3_acti
     config.experimental = {};
     // "sing-box started" is an info line: the start waits for it.
     config.log = { disabled: false, level: "info", timestamp: false };
-    // The port the list download reaches it on (components/updates.uc).
-    add_service_mixed_proxy_inbound(config, runtime_constants.SERVICE_MIXED_INBOUND_TAG,
-        int(getenv("SB_SERVICE_MIXED_INBOUND_PORT") || runtime_constants.SERVICE_MIXED_INBOUND_PORT), detour);
+
+    if (subscriptions_stage) {
+        // The ports subscription/cache.uc downloads through
+        // (subscription_service_proxy_port): numbered over all rules.
+        let all_sections = [];
+        cursor.foreach(CONFIG_NAME, "section", function(section) {
+            push(all_sections, section);
+        });
+        let base_port = int(getenv("SB_SERVICE_MIXED_INBOUND_PORT") || runtime_constants.SERVICE_MIXED_INBOUND_PORT);
+        for (let target in connections.subscription_download_targets(all_sections)) {
+            if (deferred[target] || !present[outbound_tag(target)])
+                continue;
+            let port = connections.subscription_download_target_port(all_sections, target, base_port);
+            if (port <= 0)
+                runtime_generate_unsupported("subscription download proxy port could not be resolved");
+            add_service_mixed_proxy_inbound(config, runtime_constants.inbound_tag("service-subscription-" + target),
+                port, outbound_tag(target));
+        }
+        if (length(config.inbounds) == 0)
+            runtime_generate_unsupported("no rule a subscription downloads through has an outbound");
+    }
+    else {
+        if (!present[detour])
+            runtime_generate_unsupported("the rule lists are downloaded through has no outbound");
+        // The port the list download reaches it on (components/updates.uc).
+        add_service_mixed_proxy_inbound(config, runtime_constants.SERVICE_MIXED_INBOUND_TAG,
+            int(getenv("SB_SERVICE_MIXED_INBOUND_PORT") || runtime_constants.SERVICE_MIXED_INBOUND_PORT), detour);
+    }
 
     assert_unique_outbound_tags(config);
     strip_internal_fields(config);
@@ -3338,11 +3369,11 @@ if (mode == "generate-config")
 else if (mode == "generate-config-fixture")
     generate_config_fixture(ARGV[1], ARGV[2], ARGV[3], ARGV[4], ARGV[5], ARGV[6] || "", ARGV[7] || "");
 else if (mode == "generate-list-bootstrap-config")
-    generate_list_bootstrap_config(ARGV[1], ARGV[2], ARGV[3], ARGV[4], ARGV[5] || "", ARGV[6] || "", ARGV[7] || "");
+    generate_list_bootstrap_config(ARGV[1], ARGV[2], ARGV[3], ARGV[4], ARGV[5] || "", ARGV[6] || "", ARGV[7] || "", ARGV[8] || "");
 else if (mode == "generate-list-bootstrap-config-fixture") {
     use_fixture_cursor(ARGV[1]);
     urltest_seed_file = "";
-    generate_list_bootstrap_config(ARGV[2], ARGV[3], ARGV[4], ARGV[5], ARGV[6] || "", ARGV[7] || "", ARGV[8] || "");
+    generate_list_bootstrap_config(ARGV[2], ARGV[3], ARGV[4], ARGV[5], ARGV[6] || "", ARGV[7] || "", ARGV[8] || "", ARGV[9] || "");
 }
 else if (mode == "stdin-length")
     stdin_length();

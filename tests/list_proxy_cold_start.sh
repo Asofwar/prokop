@@ -70,9 +70,35 @@ if generator generate-list-bootstrap-config-fixture "$WORK/direct.json" "$WORK/d
   fail "a temporary list configuration was generated although lists are not downloaded through a proxy"
 fi
 
+# 1b. The rule the lists download through has no nodes yet: its subscription
+#     downloads through rule main and was deferred at this start. No lists
+#     proxy can be served; the first stage serves the subscription download
+#     proxy of main instead, on the port subscription/cache.uc uses.
+printf '%s\n' '{ "settings": { ".name": "settings", ".type": "settings", "dns_server": ["77.88.8.8"], "bootstrap_dns_server": ["77.88.8.8"], "yacd_secret_key": "test-clash-secret", "download_lists_via_proxy": "1", "download_lists_via_proxy_section": "vpn" }, "section": [ { ".name": "main", ".type": "section", "enabled": "1", "action": "connection", "outbound_jsons": ["{\"type\":\"direct\",\"tag\":\"test\"}"] }, { ".name": "vpn", ".type": "section", "enabled": "1", "action": "connection", "subscription_urls": ["https://sub.test/vpn"], "subscription_url_settings": "{\"https://sub.test/vpn\":{\"download_via_proxy_enabled\":\"1\",\"download_via_proxy_section\":\"main\"}}", "remote_domain_lists": ["https://lists.test/domains.txt"] } ] }' \
+  >"$WORK/deferred.json"
+if SB_SERVICE_MIXED_INBOUND_PORT=45399 generator generate-list-bootstrap-config-fixture "$WORK/deferred.json" \
+  "$WORK/deferred.out.json" 192.0.2.1 0 1 vpn 1.12.9 "$WORK/scratch3" >/dev/null 2>&1; then
+  fail "a lists proxy was generated through a rule without nodes"
+fi
+SB_SERVICE_MIXED_INBOUND_PORT=45399 generator generate-list-bootstrap-config-fixture "$WORK/deferred.json" \
+  "$WORK/subscriptions.json" 192.0.2.1 0 1 vpn 1.12.9 "$WORK/scratch4" subscriptions >"$WORK/gen.log" 2>&1 ||
+  fail "the subscription stage was not generated: $(cat "$WORK/gen.log")"
+shape="$(ucode -e '
+  let c = json(require("fs").readfile(ARGV[0]));
+  print(join(" ", [
+    length(c.inbounds), c.inbounds[0].tag, c.inbounds[0].listen_port,
+    length(c.route.rules), c.route.rules[0].inbound, c.route.rules[0].outbound
+  ]), "\n");' -- "$WORK/subscriptions.json")"
+[ "$shape" = "1 service-subscription-main-in 45401 1 service-subscription-main-in main-out" ] ||
+  fail "unexpected subscription stage configuration: $shape"
+# The lists stage with another rule deferred still serves the lists proxy.
+SB_SERVICE_MIXED_INBOUND_PORT=45399 generator generate-list-bootstrap-config-fixture "$WORK/proxied.json" \
+  "$WORK/other.json" 192.0.2.1 0 1 other 1.12.9 "$WORK/scratch5" >"$WORK/gen.log" 2>&1 ||
+  fail "the lists stage was not generated with another rule deferred: $(cat "$WORK/gen.log")"
+
 # 2. The cold start runs it around the download, and stops it before routing.
 line_of() { grep -n -F -- "$1" "$LIB/service/lifecycle.uc" | head -n 1 | cut -d: -f1; }
-start_line="$(line_of '[ "list-bootstrap-start" ]')"
+start_line="$(line_of '[ "list-bootstrap-start", subscription_deferred_sections ]')"
 prepare_line="$(line_of '[ "prepare-list-cache" ]')"
 stop_line="$(sed -n "${prepare_line:-1},\$p" "$LIB/service/lifecycle.uc" | grep -n -F '[ "list-bootstrap-stop" ]' | head -n 1 | cut -d: -f1)"
 nft_line="$(line_of 'if (!nft_candidate_begin())')"
@@ -133,6 +159,7 @@ prokop_env() {
   env -u no_proxy -u NO_PROXY -u http_proxy -u HTTP_PROXY -u https_proxy -u HTTPS_PROXY -u all_proxy -u ALL_PROXY \
     PATH="$WORK/bin:$PATH" LOGGER_LOG="$WORK/logger.log" PROKOP_LIB="$LIB" \
     PROKOP_UCI_STATE_FILE="$WORK/uci.state" TMP_SING_BOX_FOLDER="$WORK/tmp" TMP_RULESET_FOLDER="$WORK/rulesets" \
+    TMP_SUBSCRIPTION_FOLDER="$WORK/tmp/subscriptions" \
     PROKOP_RUNTIME_STATE_DIR="$WORK/run" PROKOP_RELOAD_LOCK_DIR="$WORK/run/reload.lock" \
     PROKOP_LIST_UPDATE_PID_FILE="$WORK/run/list.pid" PROKOP_PERSISTENT_LIST_CACHE_DIR="$WORK/cache" \
     PROKOP_RULESET_CACHE_DIR="$WORK/ruleset-cache" PROKOP_RUNTIME_LIST_GENERATION_DIR="$WORK/generation" \
@@ -176,5 +203,134 @@ ucode -L "$LIB" "$LIB/core/pidfile_cli.uc" record "$other" "$WORK/run/list-boots
   fail "could not record the unrelated process"
 runtime list-bootstrap-stop || fail "the stop failed on a pidfile of an unrelated process"
 alive "$other" || fail "the stop killed a process that was not the temporary sing-box"
+
+# 4. Another subscription rule was deferred at this start (its subscription
+#    did not download): the start hands its deferred rules over, the
+#    temporary sing-box starts all the same and they stay deferred. 2.17.0
+#    prepared the caches again without downloads and stopped there.
+reset_run() {
+  local bootstrap=""
+  read -r bootstrap _ 2>/dev/null <"$WORK/run/list-bootstrap/sing-box.pid" || true
+  # shellcheck disable=SC2086
+  [ -z "$bootstrap" ] || owned_kill KILL $bootstrap 2>/dev/null || true
+  find "$WORK/run" -mindepth 1 -maxdepth 1 ! -name reload.lock -exec rm -rf {} +
+  rm -rf "$WORK/tmp" "$WORK/cache" "$WORK/generation" "$WORK/subscription-cache" "$WORK/ruleset-cache"
+  mkdir -p "$WORK/cache"
+  : >"$WORK/curl.log"
+}
+reset_run
+cat >>"$WORK/uci.state" <<UCI
+prokop.other=section
+prokop.other.enabled=1
+prokop.other.action=connection
+prokop.other.subscription_urls=https://127.0.0.1:1/missing.txt
+UCI
+runtime list-bootstrap-start other >"$WORK/start.log" 2>"$WORK/start.err" ||
+  fail "the temporary sing-box did not start with another rule deferred: $(cat "$WORK/start.err" "$WORK/logger.log")"
+[ "$(cat "$WORK/start.log")" = other ] || fail "the deferred rules were not handed back: $(cat "$WORK/start.log")"
+updates prepare-list-cache >"$WORK/with.log" 2>&1 ||
+  fail "the list download failed with another rule deferred: $(cat "$WORK/with.log" "$WORK/logger.log")"
+runtime list-bootstrap-stop || fail "the temporary sing-box did not stop"
+
+# 5. The rule the lists download through has no nodes yet: its subscription
+#    did not download directly at this start and downloads through rule
+#    main. The temporary sing-box first serves main's subscription download
+#    proxy, the subscription downloads through it, and the lists then
+#    download through the rule's new node: a shadowsocks server (a second
+#    real sing-box) in front of the local list server.
+SS_PORT="$(free_port)"
+cat >"$WORK/ss.json" <<JSON
+{ "log": { "level": "info", "timestamp": false },
+  "inbounds": [ { "type": "shadowsocks", "listen": "127.0.0.1", "listen_port": $SS_PORT, "method": "aes-128-gcm", "password": "test-password" } ],
+  "outbounds": [ { "type": "direct" } ] }
+JSON
+"$SING_BOX" run -c "$WORK/ss.json" >"$WORK/ss.log" 2>&1 &
+pids+=("$!")
+for _ in $(seq 100); do grep -q 'sing-box started' "$WORK/ss.log" && break; sleep 0.1; done
+grep -q 'sing-box started' "$WORK/ss.log" || fail "the shadowsocks server did not start: $(cat "$WORK/ss.log")"
+# Subscriptions download over HTTPS only: a local HTTPS server with a
+# certificate the curl stand-in trusts.
+mkdir -p "$WORK/subs"
+printf 'ss://%s@127.0.0.1:%s#vpn-node\n' "$(printf 'aes-128-gcm:test-password' | base64 -w0)" "$SS_PORT" >"$WORK/subs/vpn.txt"
+openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj /CN=127.0.0.1 -addext subjectAltName=IP:127.0.0.1 \
+  -keyout "$WORK/tls.key" -out "$WORK/tls.crt" >/dev/null 2>&1 || fail "could not make a test certificate"
+HTTPS_PORT="$(free_port)"
+python3 - "$HTTPS_PORT" "$WORK/subs" "$WORK/tls.crt" "$WORK/tls.key" >"$WORK/https.log" 2>&1 <<'PY' &
+import functools, http.server, ssl, sys
+port, root, crt, key = int(sys.argv[1]), sys.argv[2], sys.argv[3], sys.argv[4]
+handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=root)
+server = http.server.HTTPServer(("127.0.0.1", port), handler)
+context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+context.load_cert_chain(crt, key)
+server.socket = context.wrap_socket(server.socket, server_side=True)
+server.serve_forever()
+PY
+pids+=("$!")
+for _ in $(seq 50); do
+  curl -s --noproxy '*' --cacert "$WORK/tls.crt" -o /dev/null "https://127.0.0.1:$HTTPS_PORT/vpn.txt" && break
+  sleep 0.1
+done
+
+# Every subscription request of rule vpn must go through a proxy.
+REAL_CURL="$(command -v curl)"
+cat >"$WORK/bin/curl" <<SH
+#!/bin/sh
+url=""; proxy=direct; prev=""
+for arg in "\$@"; do
+  case "\$prev" in
+    -x|--proxy) proxy="\$arg" ;;
+    -K) url="\$(sed -n 's/^url = "\\(.*\\)"\$/\\1/p' "\$arg")" ;;
+  esac
+  case "\$arg" in http://* | https://*) url="\$arg" ;; esac
+  prev="\$arg"
+done
+printf '%s proxy=%s\n' "\$url" "\$proxy" >>"$WORK/curl.log"
+exec "$REAL_CURL" --cacert "$WORK/tls.crt" "\$@"
+SH
+chmod +x "$WORK/bin/curl"
+
+reset_run
+cat >"$WORK/uci.state" <<UCI
+prokop.settings=settings
+prokop.settings.dns_server=77.88.8.8
+prokop.settings.bootstrap_dns_server=77.88.8.8
+prokop.settings.download_lists_via_proxy=1
+prokop.settings.download_lists_via_proxy_section=vpn
+prokop.main=section
+prokop.main.enabled=1
+prokop.main.action=connection
+prokop.main.outbound_jsons={"type":"direct","tag":"test"}
+prokop.vpn=section
+prokop.vpn.enabled=1
+prokop.vpn.action=connection
+prokop.vpn.subscription_urls=https://127.0.0.1:$HTTPS_PORT/vpn.txt
+prokop.vpn.subscription_url_settings={"https://127.0.0.1:$HTTPS_PORT/vpn.txt":{"download_via_proxy_enabled":"1","download_via_proxy_section":"main"}}
+prokop.vpn.remote_domain_lists=http://127.0.0.1:$HTTP_PORT/domains.txt
+UCI
+runtime list-bootstrap-start vpn >"$WORK/start.log" 2>"$WORK/start.err" ||
+  fail "the temporary sing-box did not start for a rule without nodes: $(cat "$WORK/start.err" "$WORK/logger.log")"
+[ -z "$(cat "$WORK/start.log")" ] || fail "the rule stays deferred after its subscription downloaded: $(cat "$WORK/start.log")"
+grep -q "/vpn.txt proxy=.*127.0.0.1:$((PROXY_PORT + 2))" "$WORK/curl.log" ||
+  fail "the subscription was not downloaded through rule main's proxy: $(cat "$WORK/curl.log")"
+! grep -q '/vpn.txt proxy=direct' "$WORK/curl.log" || fail "the subscription was downloaded directly: $(cat "$WORK/curl.log")"
+updates prepare-list-cache >"$WORK/with.log" 2>&1 ||
+  fail "the list download through the rule's new node failed: $(cat "$WORK/with.log" "$WORK/logger.log")"
+grep -q "outbound/shadowsocks\[.*\]: outbound connection to 127.0.0.1:$HTTP_PORT" "$WORK/run/list-bootstrap/sing-box.log" ||
+  fail "the lists were not downloaded through the rule's node: $(cat "$WORK/run/list-bootstrap/sing-box.log")"
+runtime list-bootstrap-stop || fail "the temporary sing-box did not stop"
+updates restore-list-cache || fail "the downloaded list generation is not usable"
+
+# 6. Its subscription does not download through main either: the start
+#    stops (fail closed), nothing is downloaded directly and no temporary
+#    sing-box is left.
+reset_run
+mv "$WORK/subs/vpn.txt" "$WORK/subs/vpn.gone"
+if runtime list-bootstrap-start vpn >"$WORK/start.log" 2>"$WORK/start.err"; then
+  fail "the temporary sing-box started for a rule whose subscription did not download"
+fi
+grep -q '/vpn.txt proxy=.*127.0.0.1:' "$WORK/curl.log" || fail "the subscription download was not tried through main: $(cat "$WORK/curl.log")"
+! grep -q 'proxy=direct' "$WORK/curl.log" || fail "something was downloaded directly: $(cat "$WORK/curl.log")"
+grep -q 'has no nodes' "$WORK/logger.log" || fail "the log does not say why the start stops: $(cat "$WORK/logger.log")"
+[ ! -e "$WORK/run/list-bootstrap" ] || fail "the failed bootstrap left the temporary sing-box files"
 
 printf 'list_proxy_cold_start: OK (real sing-box)\n'

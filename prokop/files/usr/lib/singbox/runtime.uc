@@ -978,19 +978,12 @@ function list_bootstrap_fail(message, log_path) {
     return false;
 }
 
-function list_bootstrap_start() {
-    let settings = uci_settings();
-    let section = download_via_proxy_section(settings, "lists");
-    if (section == "")
-        return true;
-    if (!list_bootstrap_stop())
-        return false;
+// Generates the temporary config of stage ("" for the lists proxy,
+// "subscriptions" for the subscription download proxies), starts the
+// temporary sing-box from it and waits until it listens.
+function list_bootstrap_run(settings, deferred_sections, stage, label) {
     if (!ensure_dir(LIST_BOOTSTRAP_DIR) || !fs.chmod(LIST_BOOTSTRAP_DIR, 0700))
         return list_bootstrap_fail("Cannot create " + LIST_BOOTSTRAP_DIR + " for the temporary sing-box");
-
-    let deferred_sections = prepare_subscription_caches(true, true);
-    if (deferred_sections == null)
-        return list_bootstrap_fail("Subscription caches are not ready for the temporary sing-box");
 
     let log_path = LIST_BOOTSTRAP_DIR + "/sing-box.log";
     let mwan3_active = module_success([ LIB_DIR + "/config/validator.uc", "mwan3-is-active" ]);
@@ -1004,7 +997,8 @@ function list_bootstrap_start() {
             sing_box_is_extended(sing_box_version()) ? "1" : "0",
             trim(as_string(deferred_sections)),
             sing_box_version(),
-            LIST_BOOTSTRAP_DIR + "/generation"
+            LIST_BOOTSTRAP_DIR + "/generation",
+            stage
         ]) + " >" + shell_quote(log_path) + " 2>&1"
     );
     if (status != 0)
@@ -1028,14 +1022,81 @@ function list_bootstrap_start() {
     let argv = list_bootstrap_argv();
     for (let i = 0; i < LIST_BOOTSTRAP_START_WAIT; i++) {
         if (index(as_string(fs.readfile(log_path) || ""), "sing-box started") >= 0) {
-            log_message("Started a temporary sing-box to download the lists through rule " + section, "info");
+            log_message("Started a temporary sing-box " + label, "info");
             return true;
         }
         if (identity.matches(LIST_BOOTSTRAP_DIR + "/sing-box.pid", "sing-box", argv, true, true) == "")
             break;
         list_bootstrap_pause();
     }
-    return list_bootstrap_fail("The temporary sing-box for the list download did not start", log_path);
+    return list_bootstrap_fail("The temporary sing-box " + label + " did not start", log_path);
+}
+
+function word_list_contains(value, word) {
+    return index(split(trim(as_string(value)), /[ \t\r\n]+/), as_string(word)) >= 0;
+}
+
+function word_list_without(value, word) {
+    let result = [];
+    for (let item in split(trim(as_string(value)), /[ \t\r\n]+/))
+        if (item != "" && item != word)
+            push(result, item);
+    return join(" ", result);
+}
+
+// The rule the lists download through has no nodes yet: its subscription
+// did not download directly at this start and was deferred until the
+// service proxy of the rule it downloads through runs (subscription/cache.uc
+// prepare_subscription_caches). The temporary sing-box serves that proxy
+// first, the subscription downloads through it (only through it, never
+// directly), and the sing-box stops. Without nodes the lists cannot be
+// downloaded through the rule, and the start stops (fail closed): they are
+// not downloaded around it.
+function list_bootstrap_fetch_subscription(settings, deferred_sections, section) {
+    if (!list_bootstrap_run(settings, deferred_sections, "subscriptions",
+        "to download the subscription of rule " + section + " the lists download through"))
+        return false;
+    let result = subscription_cache_capture([ "update-section-through-list-bootstrap", section ]);
+    log_lines(result.output, "debug", "subscription cache: ");
+    if (!list_bootstrap_stop())
+        return false;
+    if (result.status != 0 && result.status != 2) {
+        log_message("The subscription of rule " + section + " did not download through the rule it downloads through; " +
+            "the lists download through rule " + section + ", which has no nodes", "error");
+        return false;
+    }
+    return true;
+}
+
+// Prints the subscription rules that stay deferred for the start (the ones
+// it was given less the one this bootstrap downloaded). deferred_sections
+// is null when the caller did not prepare the subscription caches.
+function list_bootstrap_start(deferred_sections) {
+    let settings = uci_settings();
+    let section = download_via_proxy_section(settings, "lists");
+    if (section == "") {
+        print(trim(as_string(deferred_sections)), "\n");
+        return true;
+    }
+    if (!list_bootstrap_stop())
+        return false;
+
+    if (deferred_sections == null)
+        deferred_sections = prepare_subscription_caches(true, true);
+    if (deferred_sections == null)
+        return list_bootstrap_fail("Subscription caches are not ready for the temporary sing-box");
+    deferred_sections = trim(as_string(deferred_sections));
+
+    if (word_list_contains(deferred_sections, section)) {
+        if (!list_bootstrap_fetch_subscription(settings, deferred_sections, section))
+            return false;
+        deferred_sections = word_list_without(deferred_sections, section);
+    }
+
+    if (!list_bootstrap_run(settings, deferred_sections, "", "to download the lists through rule " + section))
+        return false;
+    print(deferred_sections, "\n");
+    return true;
 }
 
 let mode = ARGV[0] || "";
@@ -1067,7 +1128,7 @@ else if (mode == "generator-failure-reason-fixture")
 else if (mode == "patch-dns-config")
     patch_dns_config(ARGV[1] || "");
 else if (mode == "list-bootstrap-start")
-    exit(list_bootstrap_start() ? 0 : 1);
+    exit(list_bootstrap_start(length(ARGV) > 1 ? ARGV[1] : null) ? 0 : 1);
 else if (mode == "list-bootstrap-stop")
     exit(list_bootstrap_stop() ? 0 : 1);
 else if (mode == "restore-dns-config")

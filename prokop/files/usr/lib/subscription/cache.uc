@@ -1861,9 +1861,26 @@ function subscription_service_proxy_port(section_name_value, sections, parsed) {
     return port > 0 ? port : 0;
 }
 
+// A9: set while a cold start downloads the subscription of the rule its
+// lists download through, through the temporary sing-box
+// (singbox/runtime.uc list_bootstrap_start). That sing-box is no service
+// the running check sees. Its sources download only through the rule they
+// are configured to download through, never directly: the direct download
+// already failed at this start.
+let list_bootstrap_proxy_only = false;
+
+// The address of the service proxy a source downloads through, "" to
+// download it directly, null when it may not be downloaded at all.
 function get_subscription_download_proxy_address(section_name_value, sections, parsed, phase) {
     let download_section = as_string(object_or_empty(parsed).download_section);
     let port = subscription_service_proxy_port(section_name_value, sections, parsed);
+    if (list_bootstrap_proxy_only) {
+        if (port <= 0) {
+            log_message("Subscription source for rule '" + section_name_value + "' does not download through another rule; the temporary sing-box of the list download cannot fetch it", "warn");
+            return null;
+        }
+        return SB_SERVICE_MIXED_INBOUND_ADDRESS + ":" + as_string(port);
+    }
     if (port <= 0)
         return "";
 
@@ -2098,6 +2115,8 @@ function update_subscription_source(section_name_value, index_value, entry, phas
     }
 
     let proxy = get_subscription_download_proxy_address(section_name_value, sections, parsed, phase || "runtime");
+    if (proxy == null)
+        return 1;
     return download_subscription_into_cache(
         section_name_value,
         parsed.url,
@@ -2958,6 +2977,10 @@ else if (mode == "update-source") {
 }
 else if (mode == "update-section") {
     exit(subscription_update_section(find_section(uci_sections(), ARGV[1] || ""), as_string(ARGV[2] || "0") == "1"));
+}
+else if (mode == "update-section-through-list-bootstrap") {
+    list_bootstrap_proxy_only = true;
+    exit(subscription_update_section(find_section(uci_sections(), ARGV[1] || ""), true));
 }
 else if (mode == "update-request") {
     subscription_update_request(ARGV[1] || "0", ARGV[2] || "", ARGV[3] || "");
