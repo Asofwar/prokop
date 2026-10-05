@@ -24,6 +24,10 @@ apply_fixture() {
 export REAL_UCODE STATE="$WORK/state" WAIT_HELPER="$ROOT/tests/helpers/wait.sh" OWNED_PROCESSES="$ROOT/tests/helpers/owned_processes.sh"
 export PROKOP_CONFIG_FILE="$WORK/config/prokop"
 export PROKOP_SNAPSHOT_DIR="$WORK/snapshots" PROKOP_SNAPSHOT_HASH_DIR="$WORK/hash"
+# A store of 10 snapshots (config/retention.uc), 8 of them for manual ones.
+export PROKOP_RETENTION_FILE="$WORK/etc/retention.json"
+mkdir -p "$WORK/etc"
+printf '{"history_limit":50,"snapshot_limit":10}\n' > "$PROKOP_RETENTION_FILE"
 export PROKOP_RELOAD_COMMAND="$WORK/reload" PROKOP_BIN="$WORK/bin/prokop"
 export PROKOP_AUTOTUNE_APPLY_STATE="$WORK/etc/autotune-apply.json"
 export PROKOP_AUTOTUNE_UCI="$WORK/bin/uci"

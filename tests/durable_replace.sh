@@ -171,7 +171,8 @@ mkdir -p "$(dirname "$PROKOP_HISTORY_FILE")"
 for i in $(seq 1 200); do printf '{"kind":"reload","status":"success","timestamp":%d}\n' "$i"; done > "$PROKOP_HISTORY_FILE"
 watch "$(dirname "$PROKOP_HISTORY_FILE")"
 "$REAL_UCODE" -L "$LIB" "$LIB/diagnostics/health.uc" record start success
-[ "$(wc -l < "$PROKOP_HISTORY_FILE")" = 150 ] || fail "history: not rotated ($(wc -l < "$PROKOP_HISTORY_FILE") lines)"
+# The default limit keeps the newest 50 records (config/retention.uc).
+[ "$(wc -l < "$PROKOP_HISTORY_FILE")" = 50 ] || fail "history: not rotated ($(wc -l < "$PROKOP_HISTORY_FILE") lines)"
 durable "$PROKOP_HISTORY_FILE" "the rotated history journal"
 for i in $(seq 1 200); do printf '{"kind":"reload","status":"success","timestamp":%d}\n' "$i"; done > "$PROKOP_HISTORY_FILE"
 SYNC_FAIL_GLOB="$PROKOP_HISTORY_FILE.*tmp*" "$REAL_UCODE" -L "$LIB" "$LIB/diagnostics/health.uc" record start success || true

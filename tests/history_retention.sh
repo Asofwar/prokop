@@ -16,11 +16,13 @@ ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 LIB="$ROOT/prokop/files/usr/lib"
 SCRIPT="$LIB/config/snapshots.uc"
 HEALTH="$LIB/diagnostics/health.uc"
+# shellcheck source=tests/helpers/owned_processes.sh
+. "$ROOT/tests/helpers/owned_processes.sh"
 WORK="$(mktemp -d)"
 REAL_UCODE="$(command -v ucode)"
 holder=""
 cleanup() {
-  [ -z "$holder" ] || kill "$holder" 2>/dev/null || true
+  [ -z "$holder" ] || owned_kill TERM "$holder" || true
   rm -rf "$WORK"
 }
 trap cleanup EXIT HUP INT TERM
@@ -260,7 +262,7 @@ code=0
 PROKOP_HISTORY_LOCK_WAIT_MS=200 "$REAL_UCODE" -L "$LIB" "$HEALTH" clear > "$WORK/clear.json" || code=$?
 [ "$code" = 1 ] && grep -q '"status": *"busy"' "$WORK/clear.json" && [ "$(cat "$PROKOP_HISTORY_FILE")" = "$before" ] ||
   fail "history clear under a held lock: $(cat "$WORK/clear.json")"
-kill "$holder" 2>/dev/null || true
+owned_kill TERM "$holder" || true
 wait "$holder" 2>/dev/null || true
 holder=""
 ok "history clear refuses while another writer holds the journal lock"
