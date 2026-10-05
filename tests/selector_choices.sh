@@ -82,6 +82,29 @@ grep -q 'set_group_proxy", group.tag, tag_name, "auto"' "$PROKOP_LIB/singbox/pri
 lifecycle selector-capture-fixture >/dev/null
 [ "$(saved)" = '{"main":"proxy-a","extra":"x-1"}' ] || fail "the stop did not keep the selection: $(saved)"
 
+# 3b. A Priority group's selector is the priority worker's last switch, not
+#     a choice: it is not kept on flash (LC-9). The section caches of the
+#     running generation name those groups.
+mkdir -p "$WORK/run/section-cache"
+printf '%s\n' '{"priorityGroups":{"sec-priority-pg-out":{"tag":"sec-priority-pg-out","probe_tag":""}}}' \
+  >"$WORK/run/section-cache/sec.json"
+cp "$WORK/answers/proxies.json" "$WORK/answers/proxies.saved"
+sed 's/"auto":/"sec-priority-pg-out":{"type":"Selector","now":"x-2","all":["x-1","x-2"]},\n  "auto":/' \
+  "$WORK/answers/proxies.saved" >"$WORK/answers/proxies.json"
+rm -f "$CHOICES"
+lifecycle selector-capture-fixture >/dev/null
+[ "$(saved)" = '{"main":"proxy-a","extra":"x-1"}' ] || fail "a Priority group's selector was kept: $(saved)"
+# 3c. A reboot runs no stop: the shutdown hook records the selection
+#     (/etc/init.d/prokop shutdown, K01).
+rm -f "$CHOICES"
+lifecycle capture-selector-state || fail "the shutdown hook failed"
+[ "$(saved)" = '{"main":"proxy-a","extra":"x-1"}' ] || fail "the shutdown hook did not keep the selection: $(cat "$CHOICES" 2>&1)"
+grep -q '^STOP=01$' "$ROOT_DIR/prokop/files/etc/init.d/prokop" &&
+  awk '/^shutdown\(\)/{f=1} f&&/capture-selector-state/{ok=1} f&&/^}/{exit} END{exit !ok}' "$ROOT_DIR/prokop/files/etc/init.d/prokop" ||
+  fail "a reboot does not run the shutdown hook"
+cp "$WORK/answers/proxies.saved" "$WORK/answers/proxies.json"
+rm -rf "$WORK/run/section-cache"
+
 # 4. After a reboot every selector is on its default: the saved choices go
 # back, a gone tag and a gone group are skipped, and the restore itself is
 # not recorded as the user's choice.

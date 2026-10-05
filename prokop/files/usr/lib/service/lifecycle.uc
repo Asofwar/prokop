@@ -583,15 +583,32 @@ function clash_api_json(action, arg1, arg2, arg3) {
     }
 }
 
+// The selectors of the Priority groups, as the running generation's
+// section caches name them (singbox/generator.uc).
+function priority_group_selectors() {
+    let tags = {};
+    for (let path in (fs.glob(SECTION_CACHE_DIR + "/*.json") || []))
+        for (let tag, group in object_or_empty(object_or_empty(read_json_file(path)).priorityGroups)) {
+            tags[tag] = true;
+            let probe = as_string(object_or_empty(group).probe_tag);
+            if (probe != "")
+                tags[probe] = true;
+        }
+    return tags;
+}
+
 // The selection before a stop; also kept on flash for the start after a
 // reboot (C4), so that a choice made on the dashboard is kept as well.
 function capture_selector_state() {
     let state = selector_state_from_proxies_payload(clash_api_json("get_proxies"));
-    // The probe selectors of payload checks (C15) are the priority worker's
-    // own: what it last tested is no choice to keep on flash.
+    // A Priority group's selector, and the probe selector of its payload
+    // check (C15), is what the priority worker last switched to: no choice
+    // to keep on flash, and each switch would be one more flash write
+    // (LC-9, optimization 5). Its worker picks again after the start.
+    let priority = priority_group_selectors();
     let choices = {};
     for (let group, tag in state)
-        if (match(group, /-out-probe$/) == null)
+        if (!priority[group] && match(group, /-out-probe$/) == null)
             choices[group] = tag;
     if (length(choices) > 0)
         selector_choices.record_choices(choices);
@@ -2131,8 +2148,9 @@ function stop() {
         remove_file(EXPLICIT_START_FILE);
     if (refresh_worker.stop_all(LIB_DIR) > 0)
         log_message("Stopped the rule-set refresh", "info");
-    // A reboot stops Prokop this way: the selection, also one made on the
-    // dashboard, is kept for the next start (C4).
+    // The selection, also one made on the dashboard, is kept for the next
+    // start (C4). A reboot records it without a stop
+    // (capture-selector-state, /etc/init.d/prokop shutdown).
     capture_selector_state();
     let status = stop_impl(!internal_stop);
     // Refused by a later check (ownership changed meanwhile): the runtime
@@ -3047,6 +3065,12 @@ else if (mode == "disable")
     status = disable_service();
 else if (mode == "selector-state-from-proxies-fixture") {
     write_json(selector_state_from_proxies_payload(read_json_file(ARGV[1])));
+    status = 0;
+}
+// /etc/init.d/prokop shutdown, at a reboot: no stop runs then (LC-9).
+else if (mode == "capture-selector-state") {
+    // Without a running sing-box nothing is read and nothing recorded.
+    capture_selector_state();
     status = 0;
 }
 else if (mode == "selector-capture-fixture") {

@@ -143,7 +143,8 @@ fi
 #     runs again on the code that went on.
 : >"$EVENTS"
 postinst
-[ "$(links_of prokop)" = 'S99prokop ' ] || fail "a reinstall lost Prokop's autostart: $(links_of prokop)"
+# An autostart of an older release gets its shutdown hook (LC-9).
+[ "$(links_of prokop)" = 'K01prokop S99prokop ' ] || fail "a reinstall lost Prokop's autostart: $(links_of prokop)"
 [ "$(links_of prokop-torrserver-direct)" = 'K10prokop-torrserver-direct S99prokop-torrserver-direct ' ] ||
   fail "a reinstall lost the rc.d links of TorrServer Direct: $(links_of prokop-torrserver-direct)"
 grep -Eq '^prokop-torrserver-direct (restart|start)$' "$EVENTS" ||
@@ -178,6 +179,7 @@ reset_case 1
 postinst
 ! grep -Eq '^prokop-torrserver-direct (restart|start|enable)$' "$EVENTS" ||
   fail "postinst started TorrServer Direct although it is not enabled at boot"
+[ -z "$(links_of prokop)" ] || fail "postinst made links for a Prokop without autostart: $(links_of prokop)"
 
 # 5. Links of a release with START=100 and STOP=9 become the current ones
 #    (UC-161), and TorrServer Direct restarts on the new code.

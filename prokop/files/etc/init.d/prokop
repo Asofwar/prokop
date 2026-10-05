@@ -2,6 +2,8 @@
 # shellcheck disable=SC2034
 
 START=99
+# Only a shutdown hook (shutdown below): a reboot runs no stop of Prokop.
+STOP=01
 USE_PROCD=1
 EXTRA_COMMANDS="retry_start_on_wan_up handle_wan_up"
 EXTRA_HELP="        retry_start_on_wan_up Retry failed cold start after WAN comes up\n        handle_wan_up Reload or retry after monitored WAN comes up\n"
@@ -142,6 +144,17 @@ stop_service() {
     # Abort this invocation when Stop fails, so procd does not unregister a
     # service whose runtime is still up and then report success.
     [ "$status" -eq 0 ] || exit "$status"
+}
+
+# rcS runs this at a reboot (the K01 link). It stops nothing: the next boot
+# starts from scratch, and a full stop would only add DNS and nft changes
+# and flash writes to every reboot. It keeps the selection, also one made on
+# an external dashboard, for the start after the reboot (C4, LC-9).
+shutdown() {
+    [ -r "$PROKOP_LIB/service/lifecycle.uc" ] || return 0
+    PROKOP_LIB="$PROKOP_LIB" ucode -L "$PROKOP_LIB" "$PROKOP_LIB/service/lifecycle.uc" capture-selector-state \
+        </dev/null >/dev/null 2>&1 || true
+    return 0
 }
 
 restart() {

@@ -306,6 +306,17 @@ function dns_failsafe_postinst() {
         command_success_from_args([ DNS_FAILSAFE_INIT, "enable" ]);
 }
 
+// A reboot runs no stop of Prokop: its shutdown hook (K01, /etc/init.d/prokop
+// shutdown) records the selection for the next start (LC-9). An autostart
+// enabled by an older release has no such link; it gets one, and
+// autostart stays as the user left it.
+function prokop_shutdown_link_postinst() {
+    let start_link = RC_D_DIR + "/S99prokop";
+    let stop_link = RC_D_DIR + "/K01prokop";
+    if (fs.lstat(start_link) != null && fs.lstat(stop_link) == null)
+        fs.symlink("../init.d/prokop", stop_link);
+}
+
 // The firewall watcher (NET-4) reloads Prokop when fw4 took ProkopTable
 // away; it does nothing while Prokop is stopped, so it is always enabled,
 // and it is restarted on the new code. It stops before the package change
@@ -742,6 +753,7 @@ function postinst_restore() {
     torrserver_direct_postinst();
     torrserver_postinst();
     dns_failsafe_postinst();
+    prokop_shutdown_link_postinst();
     fw_watch_postinst();
 
     // Only an explicit start since boot lets a reload start a runtime that
