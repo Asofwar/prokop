@@ -238,16 +238,33 @@ exit 0
 SH
 chmod +x "$package_runtime_bin/opkg" "$package_runtime_bin/logger"
 
-set +e
-PATH="$package_runtime_bin:$PATH" \
-PROKOP_LIB="$package_runtime_lib" \
-PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/package-runtime" \
-PROKOP_BIN="$WORK_DIR/missing-prokop" \
-PROKOP_SERVICE_INIT="$WORK_DIR/missing-init" \
-FAKE_OPKG_LOG="$WORK_DIR/opkg.log" \
-FAKE_OPKG_UPDATED="$WORK_DIR/opkg.updated" \
-ucode -L "$package_runtime_lib" "$ACTION_UC" component-action sing_box install_stable >/dev/null
-set -e
+# UPD-14: the signed feed index lists the downloaded file, so it is the file
+# that gets installed; the feed is not asked again once Prokop is stopped.
+opkg_lists="$WORK_DIR/opkg-lists"
+mkdir -p "$opkg_lists"
+ipk_sum="$(printf 'ipk' | sha256sum | awk '{print $1}')"
+printf 'Package: sing-box-tiny\nVersion: 1.2.3\nSHA256sum: %s\n\nPackage: sing-box\nVersion: 1.2.3\nSHA256sum: %s\n\n' \
+  "$(printf 'other' | sha256sum | awk '{print $1}')" "$ipk_sum" | gzip -c >"$opkg_lists/openwrt_packages"
+printf 'signature' >"$opkg_lists/openwrt_packages.sig"
+run_opkg_stable() {
+  rm -f "$WORK_DIR/opkg.log" "$WORK_DIR/opkg.updated"
+  set +e
+  env PATH="$package_runtime_bin:$PATH" \
+  PROKOP_LIB="$package_runtime_lib" \
+  PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/package-runtime" \
+  PROKOP_BIN="$WORK_DIR/missing-prokop" \
+  PROKOP_SERVICE_INIT="$WORK_DIR/missing-init" \
+  PROKOP_OPKG_LISTS_DIR="$opkg_lists" \
+  FAKE_OPKG_LOG="$WORK_DIR/opkg.log" \
+  FAKE_OPKG_UPDATED="$WORK_DIR/opkg.updated" "$@" \
+  ucode -L "$package_runtime_lib" "$ACTION_UC" component-action sing_box install_stable >/dev/null
+  set -e
+}
+run_opkg_stable
+# (The stub binary never validates, so a rollback by name follows later.)
+grep -E '^opkg install ' "$WORK_DIR/opkg.log" | head -n 1 |
+  grep -Eq '^opkg install --force-overwrite --force-reinstall --force-downgrade .*/feed-sing-box/sing-box_1\.2\.3_all\.ipk$' ||
+  fail "UPD-14: the downloaded sing-box package was not the one installed: $(cat "$WORK_DIR/opkg.log")"
 OPKG_LOG="$WORK_DIR/opkg.log" node - <<'NODE'
 const fs = require('fs');
 const lines = fs.readFileSync(process.env.OPKG_LOG, 'utf8').trim().split(/\n+/);
@@ -258,7 +275,7 @@ function fail(message) {
 const firstList = lines.indexOf('opkg list sing-box');
 const update = lines.indexOf('opkg update');
 const secondList = lines.indexOf('opkg list sing-box', firstList + 1);
-const install = lines.findIndex(line => line.startsWith('opkg install ') && line.endsWith(' sing-box'));
+const install = lines.findIndex(line => line.startsWith('opkg install ') && line.endsWith('/sing-box_1.2.3_all.ipk'));
 if (firstList < 0) fail('initial stable sing-box package list lookup missing');
 if (update <= firstList) fail('package list update must happen after empty initial lookup');
 if (secondList <= update) fail('stable sing-box version must be resolved again after package list update');
@@ -266,6 +283,18 @@ if (install <= secondList) fail('stable sing-box install must happen after post-
 const download = lines.indexOf('opkg download sing-box');
 if (download <= secondList || download >= install) fail('B7: the stable sing-box package must be downloaded before the change starts');
 NODE
+
+# A file the feed index does not list is not installed: the change installs
+# the package from the feed by name, as before UPD-14.
+printf 'Package: sing-box\nVersion: 1.2.3\nSHA256sum: %s\n\n' "$(printf 'other' | sha256sum | awk '{print $1}')" >"$WORK_DIR/opkg-lists-other"
+mkdir -p "$WORK_DIR/opkg-lists-unlisted"
+cp "$WORK_DIR/opkg-lists-other" "$WORK_DIR/opkg-lists-unlisted/openwrt_packages"
+run_opkg_stable PROKOP_OPKG_LISTS_DIR="$WORK_DIR/opkg-lists-unlisted"
+if grep -Eq '^opkg install .*\.ipk$' "$WORK_DIR/opkg.log"; then
+  fail "UPD-14: a file the feed index does not list was installed: $(cat "$WORK_DIR/opkg.log")"
+fi
+grep -E '^opkg install ' "$WORK_DIR/opkg.log" | head -n 1 | grep -Eq ' sing-box$' ||
+  fail "UPD-14: an unlisted file did not fall back to the install by name: $(cat "$WORK_DIR/opkg.log")"
 
 # B7: a feed that does not deliver the package, or a package that would not
 # fit on the storage, refuses the change before anything is stopped, removed
@@ -335,14 +364,16 @@ ucode -L "$package_runtime_lib" "$ACTION_UC" component-action sing_box install_s
 set -e
 grep -Eq '^apk fetch -o .*/feed-sing-box sing-box=1\.2\.3-r1$' "$WORK_DIR/apk.log" ||
   fail "B7: APK stable action must download the exact package before the change: $(cat "$WORK_DIR/apk.log")"
-grep -Fxq 'apk add sing-box=1.2.3-r1' "$WORK_DIR/apk.log" ||
-  fail "APK stable action must request the exact sing-box package version"
-# The exact version is installed first; only then is the same package named
-# without a version, which drops the "sing-box=1.2.3-r1" pin from
-# /etc/apk/world so apk upgrade keeps updating it (UPD-3).
-[ "$(grep -Fxn -e 'apk add sing-box=1.2.3-r1' -e 'apk add sing-box' "$WORK_DIR/apk.log" | cut -d: -f2 | head -n 2 | tr '\n' '|')" = \
-  'apk add sing-box=1.2.3-r1|apk add sing-box|' ] ||
-  fail "APK stable action must install the exact version, then unpin it: $(cat "$WORK_DIR/apk.log")"
+# UPD-14: the fetched file is installed (apk checks its signature: no
+# --allow-untrusted); only then is the package named without a version,
+# which drops the file pin from /etc/apk/world so apk upgrade keeps
+# updating it (UPD-3).
+[ "$(grep -En -e '^apk add .*/feed-sing-box/sing-box-1\.2\.3-r1\.apk$' -e '^apk add sing-box$' "$WORK_DIR/apk.log" | cut -d: -f2 | sed 's#/.*/feed-sing-box/#FEED/#' | head -n 2 | tr '\n' '|')" = \
+  'apk add FEED/sing-box-1.2.3-r1.apk|apk add sing-box|' ] ||
+  fail "APK stable action must install the fetched file, then unpin it: $(cat "$WORK_DIR/apk.log")"
+if sed '/^apk add sing-box$/q' "$WORK_DIR/apk.log" | grep -Eq -- '--allow-untrusted|^apk add sing-box='; then
+  fail "UPD-14: APK installed without the signature check or from the network: $(cat "$WORK_DIR/apk.log")"
+fi
 
 release_json="$(cat <<'JSON'
 {

@@ -731,6 +731,60 @@ function pkg_install_name_downgrade(package_name, package_version) {
         command_success(command_from_args([ "opkg", "install", "--force-downgrade", package_name ]) + " </dev/null");
 }
 
+const OPKG_LISTS_DIR = getenv("PROKOP_OPKG_LISTS_DIR") || "";
+
+function opkg_lists_dir() {
+    if (OPKG_LISTS_DIR != "")
+        return OPKG_LISTS_DIR;
+    for (let line in split(read_file("/etc/opkg.conf"), "\n")) {
+        let found = match(trim(line), /^lists_dir[ \t]+[^ \t]+[ \t]+([^ \t]+)$/);
+        if (found != null)
+            return found[1];
+    }
+    return "/var/opkg-lists";
+}
+
+// The SHA256sum values the feed indexes list for a package; opkg update
+// checked those indexes against their signatures. Streamed through awk: the
+// indexes are megabytes once unpacked.
+function opkg_feed_package_sha256s(package_name) {
+    let script = 'for f in "$2"/*; do case "$f" in *.sig) continue ;; esac; [ -f "$f" ] || continue; ' +
+        'if gunzip -t "$f" 2>/dev/null; then gunzip -c "$f"; else cat "$f"; fi; echo; done | ' +
+        'awk -v pkg="$1" \'/^Package: / { name = $2 } name == pkg && /^SHA256sum: / { print tolower($2) }\'';
+    return filter(split(command_output_from_args([ "sh", "-c", script, "sh", package_name, opkg_lists_dir() ]), "\n"),
+        (line) => match(line, /^[0-9a-f]{64}$/) != null);
+}
+
+// UPD-14: the package fetched while the running variant still served (B7) is
+// the one installed, so the feed is not asked again while Prokop is stopped.
+// apk checks the signature of the file with its trusted keys (no
+// --allow-untrusted); for opkg the file must match a SHA256sum of the signed
+// feed index. false sends the caller to the install by name, as before.
+function pkg_install_fetched_file(package_name, package_file) {
+    package_name = as_string(package_name);
+    package_file = as_string(package_file);
+    if (package_file == "" || !file_exists(package_file))
+        return false;
+    if (is_apk()) {
+        let args = pkg_is_installed(package_name) ?
+            [ "apk", "add", "--force-reinstall", "--upgrade", package_file ] : [ "apk", "add", package_file ];
+        if (!command_success(command_from_args(args) + " </dev/null"))
+            return false;
+        // A file is kept in /etc/apk/world by its hash: naming the package
+        // unpins it, as for an exact version (UPD-3).
+        if (!command_success(command_from_args([ "apk", "add", package_name ]) + " </dev/null"))
+            updates_log("Could not unpin " + package_name + " in /etc/apk/world; apk upgrade will keep this version", "warn");
+        return true;
+    }
+    let sum = split(trim(command_output_from_args([ "sha256sum", package_file ])), /[ \t]+/)[0];
+    if (match(sum, /^[0-9a-f]{64}$/) == null || index(opkg_feed_package_sha256s(package_name), sum) < 0) {
+        updates_log("The downloaded " + package_name + " package is not listed in the package feed index; installing it from the feed", "warn");
+        return false;
+    }
+    return command_success(command_from_args([ "opkg", "install", "--force-overwrite", "--force-reinstall", "--force-downgrade", package_file ]) + " </dev/null") ||
+        command_success(command_from_args([ "opkg", "install", "--force-downgrade", package_file ]) + " </dev/null");
+}
+
 function pkg_install_files_command(files) {
     let args = is_apk() ? [ "apk", "add", "--allow-untrusted" ] : [ "opkg", "install", "--force-overwrite", "--force-downgrade" ];
     for (let file in files)
@@ -2134,17 +2188,19 @@ function restore_sing_box_extended_package_variant() {
     return true;
 }
 
-function replace_sing_box_package_variant(target_package, conflict_package, target_version) {
+function replace_sing_box_package_variant(target_package, conflict_package, target_version, package_file) {
     prepare_sing_box_package_service_install();
     if ((as_string(conflict_package) == "" || !pkg_is_installed(conflict_package)) &&
         (target_package == "sing-box-extended" || !pkg_is_installed("sing-box-extended")))
-        return pkg_install_name_downgrade(target_package, target_version);
+        return pkg_install_fetched_file(target_package, package_file) ||
+            pkg_install_name_downgrade(target_package, target_version);
 
     if (target_package != "sing-box-extended" && !pkg_remove_sing_box_conflict("sing-box-extended"))
         return false;
     if (as_string(conflict_package) != "" && !pkg_remove_sing_box_conflict(conflict_package))
         return false;
-    return pkg_install_name_downgrade(target_package, target_version);
+    return pkg_install_fetched_file(target_package, package_file) ||
+        pkg_install_name_downgrade(target_package, target_version);
 }
 
 function restore_sing_box_package_variant(previous_variant) {
@@ -2557,8 +2613,8 @@ function install_sing_box_extended(action, compressed) {
 // B7: the package of a stable or tiny sing-box comes from the package feed.
 // It is downloaded into the temporary directory while the running variant
 // still serves, so a feed that does not answer, or a package that would not
-// fit, refuses the change before Prokop is stopped for it. Returns the path,
-// "" when the download failed.
+// fit, refuses the change before Prokop is stopped for it; the change then
+// installs this file (UPD-14). Returns the path, "" when the download failed.
 function fetch_repository_package(package_name, package_version) {
     let dir = tmp_dir + "/feed-" + package_name;
     command_success_from_args([ "rm", "-rf", dir ]);
@@ -2615,7 +2671,6 @@ function install_package_sing_box(action, tiny) {
     // The package unpacks to about three times its size; the current binary
     // stays as the backup until the new one runs.
     let space_error = component_install_space_error(label, file_bytes(package_file) * 3);
-    command_success_from_args([ "rm", "-rf", tmp_dir + "/feed-" + package_name ]);
     if (space_error != "")
         action_fail("sing_box", action, space_error, current_version, latest_version);
 
@@ -2646,9 +2701,11 @@ function install_package_sing_box(action, tiny) {
     }
 
     if (!run_logged("Installing " + label + " package", "sh -c " + shell_quote("exit 0")) ||
-        !replace_sing_box_package_variant(package_name, conflict, latest_version))
+        !replace_sing_box_package_variant(package_name, conflict, latest_version, package_file))
         fail_package_sing_box_install(action, tiny, "package installation failed", current_version, latest_version,
             package_name, previous_variant, backup_binary, backup_cronet, previous_marker, previous_version_state, cronet_touched);
+
+    command_success_from_args([ "rm", "-rf", tmp_dir + "/feed-" + package_name ]);
 
     let new_version = read_sing_box_binary_version("/usr/bin/sing-box", "");
     if (new_version == "")
