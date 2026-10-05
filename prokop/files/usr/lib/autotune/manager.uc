@@ -97,6 +97,10 @@ const MANUAL_MAX_AGE_INTERVALS = 2;
 // or blocked meanwhile), how early a check may come before its tick (cron
 // starts are not exact) and how many checks the state keeps.
 const OBSERVATION_FAILURES = 2;
+// The share of failed conclusive checks one in five (AT-12): an observation
+// passes only at or below it, and two or more failed checks above it roll
+// the apply back, in a row or not (a strategy failing every second check).
+const OBSERVATION_FAILED_SHARE_NUM = 1, OBSERVATION_FAILED_SHARE_DEN = 5;
 const OBSERVATION_MAX_SECONDS = 86400;
 const OBSERVATION_SLACK = 60;
 const OBSERVATION_CHECKS_KEPT = 12;
@@ -545,16 +549,18 @@ function uci_apply(ops) {
 // observation keeps checking it in production for policy.observation, once
 // per scheduler tick (autotune/apply.uc observe: the same production
 // verification, normal requests through the rule included). It ends:
-//   passed        policy.observation_checks checks passed
+//   passed        policy.observation_checks checks passed and at most one
+//                 conclusive check in five failed
 //   rolled_back   OBSERVATION_FAILURES failed checks in a row (inconclusive
-//                 ones between them neither count nor break the row): the
-//                 candidate fails in production, the apply is rolled back to
-//                 the configuration before it (autotune/apply.uc rollback
-//                 observation) and the candidate is paused like one that
-//                 failed its verification
+//                 ones between them neither count nor break the row), or as
+//                 many failed checks that are more than one conclusive check
+//                 in five: the candidate fails in production, the apply is
+//                 rolled back to the configuration before it
+//                 (autotune/apply.uc rollback observation) and the candidate
+//                 is paused like one that failed its verification
 //   needs_attention  that rollback did not prove the old state back
-//   ended         the apply is no longer the configuration (edited since,
-//                 rolled back by the operator), the mode is no longer auto,
+//   ended         the candidate is no longer in effect (its rule edited
+//                 since, rolled back by the operator), the mode is no longer auto,
 //                 or OBSERVATION_MAX_SECONDS passed without enough checks:
 //                 nothing is changed
 // Inconclusive checks (WAN down, a service action, a runtime that is not
@@ -571,7 +577,7 @@ function observing(state) {
 function observation_start(group, applied, policy, at) {
     if (type(applied.apply_started_at) != "int") return null;
     return { status: "observing", group, candidate: applied.candidate, apply_started_at: applied.apply_started_at,
-        started_at: at, checks_required: policy.observation_checks, passed: 0, failures_in_row: 0, checks: [],
+        started_at: at, checks_required: policy.observation_checks, passed: 0, failures_in_row: 0, failed: 0, conclusive: 0, checks: [],
         next_check_at: at + policy_module.OBSERVATION_STEP - OBSERVATION_SLACK, deadline: at + OBSERVATION_MAX_SECONDS };
 }
 
@@ -581,7 +587,8 @@ function observation_finish(state, o, status, reason, policy) {
     state.observation = null;
     let g = type(state.groups[o.group]) == "object" ? state.groups[o.group] : null;
     let result = { status, reason: reason || null, passed: int(o.passed), checks_required: int(o.checks_required),
-        failures_in_row: int(o.failures_in_row), started_at: o.started_at, finished_at: now() };
+        failures_in_row: int(o.failures_in_row), failed: int(o.failed), conclusive: int(o.conclusive),
+        started_at: o.started_at, finished_at: now() };
     if (g == null) return result;
     if (type(g.last_apply) == "object" && g.last_apply.apply_started_at === o.apply_started_at)
         g.last_apply = { ...g.last_apply, observation: result };
@@ -783,8 +790,13 @@ function observation_tick_locked() {
         cur.last_check_at = at;
         cur.next_check_at = at + step - OBSERVATION_SLACK;
         if (verdict == "ok") { cur.passed = int(cur.passed) + 1; cur.failures_in_row = 0; }
-        else if (verdict == "failed") cur.failures_in_row = int(cur.failures_in_row) + 1;
-        next = cur.passed >= int(cur.checks_required) ? "passed" : cur.failures_in_row >= OBSERVATION_FAILURES ? "rollback" : null;
+        else if (verdict == "failed") { cur.failures_in_row = int(cur.failures_in_row) + 1; cur.failed = int(cur.failed) + 1; }
+        if (verdict != "inconclusive") cur.conclusive = int(cur.conclusive) + 1;
+        // Passing needs the checks and a low share of failed ones; the
+        // same share decides a rollback (AT-12).
+        let failing = int(cur.failed) * OBSERVATION_FAILED_SHARE_DEN > int(cur.conclusive) * OBSERVATION_FAILED_SHARE_NUM;
+        next = cur.failures_in_row >= OBSERVATION_FAILURES || (failing && int(cur.failed) >= OBSERVATION_FAILURES) ? "rollback" :
+            cur.passed >= int(cur.checks_required) && !failing ? "passed" : null;
         if (next == "passed") observation_finish(st, cur, "passed", null, policy);
         else st.observation = cur;
         o = cur;

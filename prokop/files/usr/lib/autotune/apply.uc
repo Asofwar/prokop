@@ -415,6 +415,22 @@ function path_probe(host, config) {
 }
 function check(checks, name, ok, detail) { push(checks, { name, ok: !!ok, detail: detail == null ? null : detail }); return !!ok; }
 
+// The probes of a traffic check: VERIFY_PROBES, and as many more when one
+// of them failed (AT-12). One lost request of three is no verdict on a
+// strategy: the six decide as the selection judges (stable at 5 of 6), not
+// a single error. null when interrupted.
+function probe_series(one) {
+    let probes = [];
+    for (let round = 0; round < 2; round++) {
+        if (round == 1 && length(filter(probes, (p) => p.class == "success")) != VERIFY_PROBES - 1) break;
+        for (let i = 0; i < VERIFY_PROBES; i++) {
+            if (interrupted) return null;
+            push(probes, one());
+        }
+    }
+    return probes;
+}
+
 // Every failed probe died before the TCP connection was up: the WAN, not
 // the candidate, failed the verification (AT-3).
 // A curl timeout (exit 28) without time_connect is not such proof: curl
@@ -529,9 +545,9 @@ function marked_traffic(plan, owner, checks, result) {
         result.ok = false; return result;
     }
     let before_q = queue_entry(plan.owner.queue), before_c = queue_rule_counter(plan.owner);
-    let created = create_verify_table(ip, owner.mark_value), probes = [];
-    for (let i = 0; created && i < VERIFY_PROBES && !interrupted; i++)
-        push(probes, probe_module.probe({ host: plan.target.host, ip, port_range: VERIFY_PORT_FIRST + "-" + VERIFY_PORT_LAST }));
+    let created = create_verify_table(ip, owner.mark_value);
+    let probes = created ? probe_series(() => probe_module.probe({ host: plan.target.host, ip,
+        port_range: VERIFY_PORT_FIRST + "-" + VERIFY_PORT_LAST })) || [] : [];
     // The rule counter first, the queue after it: the queue window contains
     // the window of the marked packets.
     let marked = created ? verify_rule_packets() : null;
@@ -612,11 +628,8 @@ function verify_production(plan, expected_opt, traffic) {
     // Normal production requests: system resolver, no pinned address, no
     // isolation mark or source ports.
     let before_q = queue_entry(plan.owner.queue), before_c = queue_rule_counter(plan.owner);
-    let probes = [];
-    for (let i = 0; i < VERIFY_PROBES; i++) {
-        if (interrupted) return { ok: false, checks, traffic: null, interrupted: true };
-        push(probes, probe_module.probe({ host: plan.target.host, production: true }));
-    }
+    let probes = probe_series(() => probe_module.probe({ host: plan.target.host, production: true }));
+    if (probes == null) return { ok: false, checks, traffic: null, interrupted: true };
     let after_q = queue_entry(plan.owner.queue), after_c = queue_rule_counter(plan.owner);
     let successes = length(filter(probes, (p) => p.class == "success"));
     let t = {

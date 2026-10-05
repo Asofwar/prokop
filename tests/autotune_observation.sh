@@ -102,12 +102,54 @@ until_="$(st groups.youtube.cooldowns.fake)"
 [ "$(st 'applies.length')" = 1 ] || fail "the rollback is no second apply of the budget"
 
 # ---- a passed check breaks the row ------------------------------------------
-observe_new
+# Rare failures (at most one conclusive check in five) neither pass nor roll
+# back on their own.
+observe_new 12
+check_is '{"status":"ok"}'; for i in 1 2 3 4 5 6 7 8; do tick "rok$i"; done
 check_is '{"status":"failed","reason":"traffic_failed"}'; tick r1
 check_is '{"status":"ok"}'; tick r2
 check_is '{"status":"failed","reason":"traffic_failed"}'; tick r3
 [ "$(st observation.failures_in_row)" = 1 ] || fail "ok resets the row"
+[ "$(st observation.failed)" = 2 ] || fail "failed checks counted: $(st observation)"
 [ "$(rollback_calls)" = 0 ] || fail "no rollback without two failures in a row"
+
+# ---- AT-12: a strategy that fails every second check --------------------------
+# A failure no longer hides between passed checks: the share of failed checks
+# above one in five rolls the apply back, and keeps it from passing.
+observe_new
+i=0
+for verdict in ok failed ok failed; do
+  i=$((i + 1))
+  if [ "$verdict" = ok ]; then check_is '{"status":"ok","successes":3,"attempted":3}'
+  else check_is '{"status":"failed","reason":"traffic_failed","successes":1,"attempted":3}'; fi
+  tick "flap$i"
+done
+[ "$(json_get "$WORK/flap4.json" observation.result)" = '"rolled_back"' ] || fail "flapping: $(cat "$WORK/flap4.json")"
+[ "$(st groups.youtube.last_apply.observation.failed)" = 2 ] || fail "flapping: failed checks kept"
+[ "$(history_of autotune_observation)" = 'success:automatic:fake' ] || fail "a flapping strategy passed: $(history_of autotune_observation)"
+# One failure among the required checks: passed once the share is low enough.
+observe_new
+for verdict in ok ok failed ok ok; do
+  if [ "$verdict" = ok ]; then check_is '{"status":"ok"}'; else check_is '{"status":"failed","reason":"traffic_failed"}'; fi
+  tick "rare$verdict"
+done
+[ "$(json_get "$WORK/rareok.json" observation.result)" = '"passed"' ] || fail "one failure in five: $(cat "$WORK/rareok.json")"
+# Enough passed checks do not pass while the share of failed ones is higher.
+observe_new 2
+i=0
+for verdict in ok failed ok ok; do
+  i=$((i + 1))
+  if [ "$verdict" = ok ]; then check_is '{"status":"ok"}'; else check_is '{"status":"failed","reason":"traffic_failed"}'; fi
+  tick "early$i"
+  [ "$(json_get "$WORK/early$i.json" observation.result)" = '"observing"' ] || fail "check $i of one failure in four or fewer: $(cat "$WORK/early$i.json")"
+done
+check_is '{"status":"ok"}'; tick early5
+[ "$(json_get "$WORK/early5.json" observation.result)" = '"passed"' ] || fail "passed at one failure in five: $(cat "$WORK/early5.json")"
+observe_new 12
+check_is '{"status":"ok"}'; for i in 1 2 3 4 5 6 7 8; do tick "rok$i"; done
+check_is '{"status":"failed","reason":"traffic_failed"}'; tick r1
+check_is '{"status":"ok"}'; tick r2
+check_is '{"status":"failed","reason":"traffic_failed"}'; tick r3
 
 # ---- a rollback that changed nothing: the observation goes on ---------------
 printf '{"status":"failed","reason":"rollback_not_started:busy"}\n' >"$WORK/tune/rollback.json"

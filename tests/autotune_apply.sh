@@ -547,6 +547,16 @@ json 'a.equal(r.status, "rolled_back"); a.equal(r.reason, "verification_failed")
 reset_apply; plan_ready; export PROD_PLAN="success|connect_timeout|reset"; at apply "$WORK/plan.json"
 json 'a.equal(r.status, "rolled_back"); a.equal(r.reason, "verification_failed"); a.equal(r.verification.traffic.network_unavailable, false);' "$WORK/out.json"
 ok "AT-3 verification lost to proven connect failures only -> verification_network_unavailable; a curl timeout blames the candidate"
+# AT-12: one failed request of three is no verdict: three more are made and
+# the six decide (5 of 6 is stable, as the selection judges).
+reset_apply; plan_ready; export PROD_PLAN="success|reset|success|success|success|success"; at apply "$WORK/plan.json"
+json 'a.equal(r.status, "applied", JSON.stringify(r).slice(0, 500)); a.equal(r.verification.traffic.probes.length, 6);
+  a.equal(r.verification.traffic.stability, "stable");' "$WORK/out.json"
+reset_apply; plan_ready; export PROD_PLAN="success|reset"; at apply "$WORK/plan.json"
+json 'a.equal(r.status, "rolled_back"); a.equal(r.reason, "verification_failed"); a.equal(r.verification.traffic.probes.length, 6);' "$WORK/out.json"
+reset_apply; plan_ready; export PROD_PLAN="success|reset|reset"; at apply "$WORK/plan.json"
+json 'a.equal(r.status, "rolled_back"); a.equal(r.verification.traffic.probes.length, 3);' "$WORK/out.json"
+ok "AT-12 a single failed verification request gets a second series; two of three failed do not"
 # AT-6: what the probes alone cannot pin on the WAN (FakeIP connects locally;
 # a WAN dropping packets times out like a DPI blackhole) is decided by one
 # isolated direct control run to the pinned address, inside the apply's lock.
