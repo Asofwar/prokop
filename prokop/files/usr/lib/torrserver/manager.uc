@@ -232,7 +232,9 @@ function memtotal_kib() {
 // preloading like TorrServer's own recommendations for weak devices, and
 // the default connection count. UPnP is off: TorrServer runs on the router
 // itself, and must not open the router's WAN to peers through miniupnpd
-// (TS-1). What is not listed stays as the user set it.
+// (TS-1). Bonjour is off too: it announces TorrServer on every address of
+// the router, the WAN one included. What is not listed stays as the user
+// set it.
 function recommended_settings() {
     let total_kib = memtotal_kib();
     let cache_mib = total_kib > 0 ? int(total_kib / 1024.0 / 8 / 16 + 0.5) * 16 : 64;
@@ -245,7 +247,8 @@ function recommended_settings() {
         ConnectionsLimit: 25,
         TorrentDisconnectTimeout: 30,
         ResponsiveMode: true,
-        DisableUPNP: true
+        DisableUPNP: true,
+        EnableBonjour: false
     };
 }
 

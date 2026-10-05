@@ -271,6 +271,7 @@ setting() { node -e 'process.stdout.write(String(JSON.parse(require("fs").readFi
 [ "$(setting ResponsiveMode)" = true ] && [ "$(setting PreloadCache)" = 50 ] || fail "a fresh install must apply the recommended settings: $(cat "$WORK/ts-settings.json")"
 # UPnP off: TorrServer must not open the router's WAN through miniupnpd (TS-1).
 [ "$(setting DisableUPNP)" = true ] || fail "the recommended settings must turn UPnP off: $(cat "$WORK/ts-settings.json")"
+[ "$(setting EnableBonjour)" = false ] || fail "the recommended settings must turn Bonjour off: $(cat "$WORK/ts-settings.json")"
 [ "$(setting EnableDLNA)" = true ] && [ "$(setting FriendlyName)" = tv ] || fail "the recommended settings must keep the others: $(cat "$WORK/ts-settings.json")"
 [ -e "$TS_DIR/prokop-settings-applied" ] || fail "a fresh install must stamp the applied settings"
 for row in "131072 32" "262144 32" "524288 64" "1006668 128" "4194304 256"; do
