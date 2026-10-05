@@ -129,6 +129,7 @@ define Package/prokop/install
 	$(INSTALL_BIN) ./files/etc/init.d/prokop-fw-watch $(1)/etc/init.d/prokop-fw-watch
 	$(INSTALL_DIR) $(1)/lib/upgrade/keep.d
 	$(INSTALL_DATA) ./files/lib/upgrade/keep.d/prokop-killswitch $(1)/lib/upgrade/keep.d/prokop-killswitch
+	$(INSTALL_DATA) ./files/lib/upgrade/keep.d/prokop-torrserver $(1)/lib/upgrade/keep.d/prokop-torrserver
 	$(INSTALL_DIR) $(1)/usr/share/nftables.d/ruleset-post
 	$(INSTALL_DATA) ./files/usr/share/nftables.d/ruleset-post/90-prokop-killswitch-loader.nft $(1)/usr/share/nftables.d/ruleset-post/90-prokop-killswitch-loader.nft
 

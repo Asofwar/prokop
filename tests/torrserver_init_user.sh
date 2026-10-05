@@ -96,10 +96,22 @@ grep -q '^torrserver:x:65537:65537:' "$WORK/passwd" || fail "a taken id must be 
   fail "the database must move into data/"
 [ -e "$WORK/opt/torrserver/data/rutor.ls" ] || fail "the search database must move into data/"
 grep -Fxq -- "-h torrserver:torrserver $WORK/opt/torrserver/data/config.db" "$WORK/chown" || fail "the moved database must be the user's"
-# A database already in data/ is never overwritten by one beside the binary.
+# A database already in data/ is never overwritten by one beside the binary,
+# and is the user's on every start (one a sysupgrade restored may carry an
+# old owner): the file itself, never what a link names.
 printf 'stale' >"$WORK/opt/torrserver/config.db"
 run_start
 [ "$(cat "$WORK/opt/torrserver/data/config.db")" = db ] || fail "the database in data/ must stay"
+grep -Fxq -- "-h torrserver:torrserver $WORK/opt/torrserver/data/config.db" "$WORK/chown" || fail "the database must be the user's on every start"
+rm -f "$WORK/opt/torrserver/data/rutor.ls"
+ln -s /etc/shadow "$WORK/opt/torrserver/data/rutor.ls"
+run_start
+grep -q "rutor.ls" "$WORK/chown" && fail "a link in data/ must never change owner: $(cat "$WORK/chown")"
+
+# --- 2b. A sysupgrade keeps the database (TS-7) ------------------------------------
+KEEP="$ROOT_DIR/prokop/files/lib/upgrade/keep.d/prokop-torrserver"
+grep -Fxq /opt/torrserver/data/config.db "$KEEP" || fail "a sysupgrade must keep TorrServer's database"
+grep -q 'keep.d/prokop-torrserver' "$ROOT_DIR/prokop/Makefile" || fail "the package must install the keep list"
 
 # --- 3. Fail closed --------------------------------------------------------------
 # data/ as a link: never followed.

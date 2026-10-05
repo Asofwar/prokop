@@ -46,17 +46,20 @@ ensure_torrserver_user() {
 }
 
 # data/ for TorrServer's user. A TorrServer from before kept its database
-# beside the binary and ran as root: the database moves in once and becomes
-# that user's. Nothing is changed recursively, and links are never followed.
+# beside the binary and ran as root: the database moves in once. The
+# database is that user's on every start, also one a sysupgrade restored
+# (lib/upgrade/keep.d/prokop-torrserver). Nothing is changed recursively,
+# and links are never followed.
 prepare_torrserver_data() {
 	local name
 	[ -L "$TORRSERVER_DATA" ] && return 1
 	[ -d "$TORRSERVER_DATA" ] || mkdir -m 0750 "$TORRSERVER_DATA" || return 1
 	chown -h "$TORRSERVER_USER:$TORRSERVER_USER" "$TORRSERVER_DATA" || return 1
 	for name in config.db rutor.ls; do
-		[ -f "$TORRSERVER_DIR/$name" ] && [ ! -L "$TORRSERVER_DIR/$name" ] || continue
-		[ -e "$TORRSERVER_DATA/$name" ] && continue
-		mv "$TORRSERVER_DIR/$name" "$TORRSERVER_DATA/$name" || return 1
+		if [ -f "$TORRSERVER_DIR/$name" ] && [ ! -L "$TORRSERVER_DIR/$name" ] && [ ! -e "$TORRSERVER_DATA/$name" ]; then
+			mv "$TORRSERVER_DIR/$name" "$TORRSERVER_DATA/$name" || return 1
+		fi
+		[ -f "$TORRSERVER_DATA/$name" ] && [ ! -L "$TORRSERVER_DATA/$name" ] || continue
 		chown -h "$TORRSERVER_USER:$TORRSERVER_USER" "$TORRSERVER_DATA/$name" || return 1
 	done
 	return 0
