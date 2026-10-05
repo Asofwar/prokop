@@ -13,6 +13,7 @@ const STATE_UC = getenv("PROKOP_STATE_UC") || LIB_DIR + "/service/state.uc";
 const BIN_PATH = getenv("PROKOP_BIN") || "/usr/bin/prokop";
 const CRONTAB_FILE = getenv("PROKOP_CRONTAB_FILE") || "/etc/crontabs/root";
 const CRON_INIT = getenv("PROKOP_CRON_INIT") || "/etc/init.d/cron";
+const CROND_PROC_DIR = getenv("PROKOP_CROND_PROC_DIR") || "/proc";
 // The shortest step of the due check of an interval of an hour or more
 // (due_check_cron_schedule_text).
 const DUE_CHECK_MIN_STEP_MINUTES = 5;
@@ -1835,12 +1836,22 @@ function remove_cron_jobs(list_marker, subscription_marker, component_marker) {
 // An enabled cron service that is not running is started; a disabled one is
 // left alone and the log says that the scheduled updates do not run. Only
 // an OpenWrt (rc.common) init script is called.
+// A running crond is found in /proc, in process: every start and reload
+// refreshes the cron jobs, and the init script's checks cost two rc.common
+// runs and a ubus call each time (optimization 6).
+function crond_process_running() {
+    for (let entry in fs.lsdir(CROND_PROC_DIR) || [])
+        if (match(entry, /^[1-9][0-9]*$/) != null && trim(as_string(fs.readfile(CROND_PROC_DIR + "/" + entry + "/comm"))) == "crond")
+            return true;
+    return false;
+}
+
 function ensure_crond_running(crontab, markers) {
     let scheduled = false;
     for (let marker in markers)
         if (as_string(marker) != "" && index(as_string(crontab), as_string(marker)) >= 0)
             scheduled = true;
-    if (!scheduled || index(as_string(fs.readfile(CRON_INIT, 256)), "/etc/rc.common") < 0)
+    if (!scheduled || crond_process_running() || index(as_string(fs.readfile(CRON_INIT, 256)), "/etc/rc.common") < 0)
         return;
     if (!command_success_from_args([ CRON_INIT, "enabled" ])) {
         log_message("The cron service is disabled: Prokop's scheduled updates do not run", "warn");

@@ -35,6 +35,8 @@ export PROKOP_UCI_STATE_FILE="$WORK/uci.state"
 export PROKOP_RUNTIME_STATE_DIR="$WORK/run"
 export PROKOP_CRONTAB_FILE="$WORK/crontabs/root"
 export PROKOP_CRON_INIT="$WORK/bin/cron"
+# The processes the refresh looks for crond in: none unless a case adds it.
+export PROKOP_CROND_PROC_DIR="$WORK/proc"
 export PROKOP_COMPONENT_UPDATE_CHECK_CACHE_DIR="$WORK/run/component-update-checks"
 export PROKOP_COMPONENT_UPDATE_CHECK_STATE_FILE="$WORK/run/component-update-check.timestamp"
 
@@ -61,7 +63,9 @@ chmod 0755 "$WORK/bin/"*
 updates() { ucode -L "$LIB" "$LIB/components/updates.uc" "$@"; }
 markers=('# prokop-list-update' '# prokop-subscription-update' '# prokop-component-update-check')
 reset_case() {
-  rm -f "$WORK/cron.calls" "$WORK/cron.enabled" "$WORK/cron.running" "$WORK/syslog" "$PROKOP_CRONTAB_FILE"
+  rm -rf "$WORK/cron.calls" "$WORK/cron.enabled" "$WORK/cron.running" "$WORK/syslog" "$PROKOP_CRONTAB_FILE" "$WORK/proc"
+  mkdir -p "$WORK/proc/1"
+  printf 'init\n' >"$WORK/proc/1/comm"
   printf '%s\n' 'prokop.settings=settings' 'prokop.settings.component_update_check_enabled=1' \
     'prokop.settings.component_update_check_interval=1d' >"$WORK/uci.state"
 }
@@ -95,6 +99,17 @@ printf '%s\n' 'prokop.settings=settings' >"$WORK/uci.state"
 : >"$WORK/cron.enabled"
 refresh
 [ ! -e "$WORK/cron.calls" ] || fail "the cron service was touched without Prokop jobs: $(cat "$WORK/cron.calls")"
+
+# 4b. A crond that runs is found without the init script: no rc.common
+#     run on every start and reload (optimization 6).
+reset_case
+: >"$WORK/cron.enabled"
+: >"$WORK/cron.running"
+mkdir -p "$WORK/proc/812"
+printf 'crond\n' >"$WORK/proc/812/comm"
+refresh
+grep -Fq '# prokop-component-update-check' "$PROKOP_CRONTAB_FILE" || fail "the cron refresh wrote no job next to a running crond"
+[ ! -e "$WORK/cron.calls" ] || fail "the init script was asked about a crond that runs: $(cat "$WORK/cron.calls")"
 
 # 5. OBS-4: the scheduled list and subscription updates wait for a start.
 reset_case
