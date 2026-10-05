@@ -4343,6 +4343,42 @@ msgstr "Сетевой интерфейс источника"
 msgid "Sources that could not be downloaded:"
 msgstr "Источники, которые не удалось скачать:"
 
+msgid "configured source"
+msgstr "заданный источник"
+
+msgid "rule “%s”"
+msgstr "правило «%s»"
+
+msgid "rule “%s”: %s"
+msgstr "правило «%s»: %s"
+
+msgid "List source"
+msgstr "Источник списка"
+
+msgid "Domain and IP list"
+msgstr "Список доменов и IP"
+
+msgid "Rule set"
+msgstr "Набор правил"
+
+msgid "Domain list"
+msgstr "Список доменов"
+
+msgid "Subnet list (JSON)"
+msgstr "Список подсетей (JSON)"
+
+msgid "Subnet list (SRS)"
+msgstr "Список подсетей (SRS)"
+
+msgid "Subnet list (text)"
+msgstr "Список подсетей (текст)"
+
+msgid "Built-in subnet list: %s"
+msgstr "Встроенный список подсетей: %s"
+
+msgid "A list source; the details are in the system log"
+msgstr "Источник списка; подробности в системном журнале"
+
 msgid "Speed"
 msgstr "Скорость"
 

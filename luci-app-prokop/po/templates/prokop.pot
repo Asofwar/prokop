@@ -6187,6 +6187,54 @@ msgstr ""
 msgid "Sources that could not be downloaded:"
 msgstr ""
 
+#: src/prokop/tabs/updates/listsUpdateStatus.ts
+msgid "configured source"
+msgstr ""
+
+#: src/prokop/tabs/updates/listsUpdateStatus.ts
+msgid "rule “%s”"
+msgstr ""
+
+#: src/prokop/tabs/updates/listsUpdateStatus.ts
+msgid "rule “%s”: %s"
+msgstr ""
+
+#: src/prokop/tabs/updates/listsUpdateStatus.ts
+msgid "List source"
+msgstr ""
+
+#: src/prokop/tabs/updates/listsUpdateStatus.ts
+msgid "Domain and IP list"
+msgstr ""
+
+#: src/prokop/tabs/updates/listsUpdateStatus.ts
+msgid "Rule set"
+msgstr ""
+
+#: src/prokop/tabs/updates/listsUpdateStatus.ts
+msgid "Domain list"
+msgstr ""
+
+#: src/prokop/tabs/updates/listsUpdateStatus.ts
+msgid "Subnet list (JSON)"
+msgstr ""
+
+#: src/prokop/tabs/updates/listsUpdateStatus.ts
+msgid "Subnet list (SRS)"
+msgstr ""
+
+#: src/prokop/tabs/updates/listsUpdateStatus.ts
+msgid "Subnet list (text)"
+msgstr ""
+
+#: src/prokop/tabs/updates/listsUpdateStatus.ts
+msgid "Built-in subnet list: %s"
+msgstr ""
+
+#: src/prokop/tabs/updates/listsUpdateStatus.ts
+msgid "A list source; the details are in the system log"
+msgstr ""
+
 #: src/prokop/tabs/monitoring/devicesView.ts:142
 #: src/prokop/tabs/monitoring/devicesView.ts:266
 msgid "Speed"
