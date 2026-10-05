@@ -152,13 +152,29 @@ case "$1" in
   enabled) [ -e "$TEST_WORK/rc.d/S95prokop-torrserver" ] ;;
 esac
 SH
+# df: the free space the test sets for TorrServer's directory (df-flash)
+# and for the temporary directory, the router's RAM (df-tmp); the host's
+# otherwise.
+cat >"$WORK/bin/df" <<'SH'
+#!/bin/sh
+for path; do :; done
+kib=""
+case "$path" in
+  "$TEST_WORK/opt"*) [ ! -f "$TEST_WORK/df-flash" ] || kib="$(cat "$TEST_WORK/df-flash")" ;;
+  "$TEST_WORK/tmp"*) [ ! -f "$TEST_WORK/df-tmp" ] || kib="$(cat "$TEST_WORK/df-tmp")" ;;
+esac
+[ -n "$kib" ] || exec /bin/df "$@"
+printf 'Filesystem 1K-blocks Used Available Use%% Mounted on\nfake 1000000 0 %s 0%% /\n' "$kib"
+SH
 chmod 0755 "$WORK/bin/"*
 
-# A TorrServer build: a program that reports its version.
+# A TorrServer build: a program that reports its version (PAD_KIB pads it
+# to about that size).
 make_asset() { # make_asset <version> [reported version]
   mkdir -p "$FIX/asset"
   # shellcheck disable=SC2016 # expanded by the fake binary
-  printf '#!/bin/sh\n[ "$1" = --version ] && echo "TorrServer %s"\n' "${2:-$1}" >"$FIX/asset/TorrServer-linux-arm64"
+  printf '#!/bin/sh\n[ "$1" = --version ] && echo "TorrServer %s"\nexit 0\n' "${2:-$1}" >"$FIX/asset/TorrServer-linux-arm64"
+  [ -z "${PAD_KIB:-}" ] || head -c "$((PAD_KIB * 1024))" /dev/zero | tr '\0' x >>"$FIX/asset/TorrServer-linux-arm64"
   chmod 0755 "$FIX/asset/TorrServer-linux-arm64"
 }
 # The release document; DIGEST overrides the published sha256 ("none" for
@@ -311,6 +327,64 @@ publish MatriX.148
 action torrserver install
 expect_failure "CPU without a build" "no build for this router's CPU"
 printf 'aarch64\n' >"$WORK/machine"
+
+# --- 4b. Space: straight to the storage, the new binary's own size (TS-2) ------------
+# A 1 MiB build: an update needs 1024 + 2048 KiB on the storage beside the
+# installed binary (not twice the build), and no room in /tmp at all.
+PAD_KIB=1024 publish MatriX.148
+printf '3200\n' >"$WORK/df-flash"
+printf '100\n' >"$WORK/df-tmp"
+action torrserver install
+expect_success "update with room for one build"
+bin_reports MatriX.148 "update with room for one build"
+[ -z "$(find "$WORK/tmp" -mindepth 1 -print -quit)" ] || fail "the build must not pass through /tmp: $(ls -R "$WORK/tmp")"
+PAD_KIB=1024 publish MatriX.149
+printf '3000\n' >"$WORK/df-flash"
+action torrserver install
+expect_failure "update without room for the build" "3000 KiB available where 3072 KiB is needed"
+bin_reports MatriX.148 "update without room for the build"
+[ ! -e "$BIN.prokop-new" ] || fail "a refused update must not stage anything"
+rm -f "$WORK/df-flash" "$WORK/df-tmp"
+publish MatriX.146
+action torrserver install
+expect_success "back to MatriX.146"
+
+# --- 4c. An update cut off midway (TS-3) -------------------------------------------
+# Cut after the binary moved in and before its marker (as releases before
+# 2.26 did it): the leftovers read as foreign until they are put right.
+"$WORK/bin/torrserver-init" stop
+mv "$BIN" "$BIN.prokop-old"
+mv "$MARKER" "$MARKER.prokop-old"
+cp "$FIX/asset/TorrServer-linux-arm64" "$BIN"
+: >"$BIN.prokop-new"
+action torrserver remove
+expect_success "removal after an update cut off before its marker"
+[ ! -e "$BIN" ] && [ ! -e "$BIN.prokop-old" ] && [ ! -e "$MARKER.prokop-old" ] && [ ! -e "$BIN.prokop-new" ] ||
+  fail "removal must leave nothing of a cut-off update: $(ls "$TS_DIR")"
+action torrserver install
+expect_success "install after the removal"
+# Cut after the new marker and before the binary moved in: the previous
+# release comes back and starts.
+"$WORK/bin/torrserver-init" stop
+mv "$BIN" "$BIN.prokop-old"
+cp "$MARKER" "$MARKER.prokop-old"
+sed -i 's/MatriX.146/MatriX.150/' "$MARKER"
+action torrserver start
+expect_success "start after an update cut off before its binary"
+bin_reports MatriX.146 "start after a cut-off update"
+grep -Fq '"version": "MatriX.146"' "$MARKER" || fail "the previous marker must be back: $(cat "$MARKER")"
+[ "$(status_field running)" = 1 ] || fail "the previous release must run again"
+# A first install cut off between its marker and its binary leaves a marker
+# alone; it names nothing and goes.
+"$WORK/bin/torrserver-init" stop
+mv "$BIN" "$WORK/saved-146"
+action torrserver remove
+expect_success "removal of a marker without its binary"
+[ ! -e "$MARKER" ] || fail "a marker without its binary must go"
+rm -f "$WORK/saved-146"
+action torrserver install
+expect_success "install after a marker without its binary"
+[ "$(status_field installed)" = 1 ] || fail "TorrServer must be installed again"
 
 # --- 5. A binary changed behind Prokop's back is left alone -------------------------
 # Same size, other content: only the checksum tells.

@@ -3614,6 +3614,34 @@ function restore_torrserver_backup(paths, had_backup) {
         move_file_portable(paths.marker + ".prokop-old", paths.marker);
 }
 
+// An install or update cut off midway (power loss, a worker killed) left
+// its files behind: the staged binary goes, and when the binary at the
+// path is not the whole one its marker names, the previous pair kept aside
+// comes back. Before this, such leftovers read as a foreign TorrServer that
+// the card could neither remove nor install over (TS-3).
+function recover_torrserver_files(paths) {
+    remove_file(paths.bin + ".prokop-new");
+    remove_file(paths.marker + ".tmp");
+    let old_bin = paths.bin + ".prokop-old";
+    let old_marker = paths.marker + ".prokop-old";
+    let kept_aside = file_exists(old_bin) || file_exists(old_marker);
+    if (!kept_aside) {
+        // A first install cut off between its marker and its binary.
+        if (file_exists(paths.marker) && !file_exists(paths.bin))
+            remove_file(paths.marker);
+        return;
+    }
+    if (!module_success([ TORRSERVER_UC, "managed" ])) {
+        updates_log("Restoring the TorrServer kept aside by an update that did not finish", "warn");
+        if (file_exists(old_bin))
+            move_file_portable(old_bin, paths.bin);
+        if (file_exists(old_marker))
+            move_file_portable(old_marker, paths.marker);
+    }
+    remove_file(old_bin);
+    remove_file(old_marker);
+}
+
 // Whether TorrServer has its own settings yet: its database, in data/ or,
 // from an install before TS-1, beside the binary.
 function torrserver_has_database(paths) {
@@ -3644,6 +3672,10 @@ function install_torrserver(action) {
     let paths = torrserver_paths();
     if (as_string(paths.bin) == "" || as_string(paths.marker) == "")
         action_fail("torrserver", action, "Failed to read TorrServer paths");
+    if (action != "check_update") {
+        recover_torrserver_files(paths);
+        status = torrserver_status();
+    }
     let installed = int(status.installed || 0) == 1;
     let current_version = installed ? as_string(status.version) : "";
 
@@ -3678,37 +3710,37 @@ function install_torrserver(action) {
         action_success("torrserver", action, "Latest TorrServer is already installed",
             current_version, release.version, 0, "latest", release.release_url || "");
 
-    let space_error = component_download_space_error("TorrServer", release.size, 1, tmp_dir);
-    if (space_error != "")
-        action_fail("torrserver", action, space_error, current_version, release.version, "", release.release_url || "");
-    // The new binary is staged next to the old one, which stays until the
-    // new one answers.
-    let needed = int(release.size) * (installed ? 2 : 1);
+    // TorrServer is downloaded straight to the router's storage, next to the
+    // binary it replaces, which stays until the new one answers. The old
+    // binary already has its place there: the new one needs only its own
+    // size (TS-2), and nothing passes through /tmp, the router's RAM.
     if (!ensure_dir(paths.dir))
         action_fail("torrserver", action, "Failed to create " + paths.dir, current_version, release.version, "", release.release_url || "");
+    let needed_kib = int(int(release.size) / 1024) + 2048;
     let dir_kib = available_kib(paths.dir);
-    if (dir_kib >= 0 && dir_kib < int(needed / 1024) + 2048)
+    if (dir_kib >= 0 && dir_kib < needed_kib)
         action_fail("torrserver", action, "Not enough free space on the router's storage to install TorrServer: " +
-            dir_kib + " KiB available where " + (int(needed / 1024) + 2048) + " KiB is needed",
+            dir_kib + " KiB available where " + needed_kib + " KiB is needed",
             current_version, release.version, "", release.release_url || "");
 
-    let download = tmp_dir + "/torrserver";
-    if (!download_with_retry(release.url, download, release.name, release.size))
+    let staged = paths.bin + ".prokop-new";
+    remove_file(staged);
+    if (!download_with_retry(release.url, staged, release.name, release.size)) {
+        remove_file(staged);
         action_fail("torrserver", action, "Failed to download TorrServer", current_version, release.version, "", release.release_url || "");
-    if (file_bytes(download) != int(release.size) || !download_checksum_ok(download, release.sha256)) {
-        remove_file(download);
+    }
+    // Hashed once, where it is installed from: the marker records what was
+    // checked here.
+    if (file_bytes(staged) != int(release.size) || !download_checksum_ok(staged, release.sha256)) {
+        remove_file(staged);
         action_fail("torrserver", action, "Downloaded TorrServer does not match its published size and sha256",
             current_version, release.version, "", release.release_url || "");
     }
-    let staged = paths.bin + ".prokop-new";
-    remove_file(staged);
-    if (!command_success_from_args([ "cp", download, staged ]) || !command_success_from_args([ "chmod", "0755", staged ]) ||
-        !download_checksum_ok(staged, release.sha256)) {
+    if (!command_success_from_args([ "chmod", "0755", staged ])) {
         remove_file(staged);
-        action_fail("torrserver", action, "Failed to stage TorrServer on the router's storage" + out_of_space_hint(last_logged_output),
+        action_fail("torrserver", action, "Failed to stage TorrServer on the router's storage",
             current_version, release.version, "", release.release_url || "");
     }
-    remove_file(download);
     // The build must run on this CPU and be the release it claims.
     let staged_version = trim(module_output([ TORRSERVER_UC, "binary-version", staged ]));
     if (staged_version != release.version) {
@@ -3732,8 +3764,11 @@ function install_torrserver(action) {
             current_version, release.version, "", release.release_url || "");
     }
     progress?.stage?.("install");
-    if (!fs.rename(staged, paths.bin) ||
-        !module_success([ TORRSERVER_UC, "write-marker", release.version, release.sha256 ])) {
+    // The marker first, then the binary it names: cut off between the two,
+    // the marker names no binary and recover_torrserver_files() puts the
+    // previous one back (TS-3).
+    if (!module_success([ TORRSERVER_UC, "write-marker", release.version, release.sha256, staged ]) ||
+        !fs.rename(staged, paths.bin)) {
         remove_file(staged);
         let restored = restore_torrserver_backup(paths, had_backup);
         if (had_backup && restored)
@@ -3774,6 +3809,9 @@ function install_torrserver(action) {
 // settings stay as they are (TS-8). Refused while another TorrServer runs
 // or holds the port: the start would only compete with it (TS-10).
 function start_torrserver() {
+    let paths = torrserver_paths();
+    if (as_string(paths.bin) != "" && as_string(paths.marker) != "")
+        recover_torrserver_files(paths);
     let status = torrserver_status();
     let current_version = as_string(status.version);
     if (int(status.installed || 0) != 1)
@@ -3811,10 +3849,11 @@ function apply_torrserver_settings() {
 // Removes the binary Prokop installed and stops its service; TorrServer's
 // settings and torrent list (its database in the same directory) stay.
 function remove_torrserver() {
-    let status = torrserver_status();
     let paths = torrserver_paths();
-    if (as_string(paths.bin) == "")
+    if (as_string(paths.bin) == "" || as_string(paths.marker) == "")
         action_fail("torrserver", "remove", "Failed to read TorrServer paths");
+    recover_torrserver_files(paths);
+    let status = torrserver_status();
     let current_version = as_string(status.version);
     if (int(status.installed || 0) != 1) {
         if (file_exists(paths.bin))

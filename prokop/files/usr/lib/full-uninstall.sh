@@ -528,6 +528,9 @@ run() {
             rm -f "$torrserver_dir/torrserver" "$torrserver_dir/prokop-managed.json"
         fi
     fi
+    # What an install cut off midway left (TS-3): names only Prokop uses.
+    rm -f "$torrserver_dir/torrserver.prokop-new" "$torrserver_dir/prokop-managed.json.tmp" \
+        "$torrserver_dir/torrserver.prokop-old" "$torrserver_dir/prokop-managed.json.prokop-old"
     remove_backups
     # The rc.d links of the removed services. The disable of a release whose
     # TorrServer Direct had START=100 and STOP=9 never removed its links

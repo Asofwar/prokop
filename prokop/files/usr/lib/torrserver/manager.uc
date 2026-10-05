@@ -267,11 +267,13 @@ function binary_version(path) {
     return m != null ? m[1] : "";
 }
 
-// The marker of the binary now at BIN, which must hash to `sha256`.
-function write_marker(version, sha256) {
-    let stat = fs.stat(BIN);
+// The marker of the binary at `path` (BIN, or the staged binary about to
+// become BIN), whose `sha256` the caller has just checked: the binary is
+// not hashed a second time.
+function write_marker(version, sha256, path) {
+    let stat = fs.stat(path || BIN);
     if (!valid_version(version) || match(text(sha256), /^[a-f0-9]{64}$/) == null ||
-        stat == null || stat.type != "file" || file_sha256(BIN) != sha256)
+        stat == null || stat.type != "file")
         return false;
     let staged = MARKER + ".tmp";
     let value = { version, sha256, size: stat.size, source: RELEASE_OWNER + "/" + RELEASE_REPO };
@@ -402,7 +404,8 @@ else if (mode == "apply-recommended-now") {
     print("applied\n");
 }
 else if (mode == "write-marker")
-    exit(write_marker(ARGV[1], ARGV[2]) ? 0 : 1);
+    // write-marker <version> <sha256> [binary, BIN by default]
+    exit(write_marker(ARGV[1], ARGV[2], ARGV[3]) ? 0 : 1);
 else if (mode == "wait-running")
     exit(wait_running(int(ARGV[1] || "20"), ARGV[2]) ? 0 : 1);
 else if (mode == "paths")
