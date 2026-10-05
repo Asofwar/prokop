@@ -11,6 +11,14 @@
 # data/, the only directory that user may write; the binary, Prokop's
 # marker and the directory that holds them stay root's, so TorrServer can
 # neither replace its own program nor plant links where Prokop writes.
+#
+# Prokop's settings add, both off by default: a password for TorrServer's
+# API (torrserver_auth_*, --httpauth with data/accs.db), and procd's jail
+# (torrserver_jail), which shows TorrServer only its binary, its data,
+# its disk cache and what it needs to resolve names and check
+# certificates. A setting that cannot be honoured stops the start: never
+# an open API when a password is asked for, never an unjailed TorrServer
+# when the jail is.
 START=95
 STOP=10
 USE_PROCD=1
@@ -20,6 +28,38 @@ TORRSERVER_DATA="$TORRSERVER_DIR/data"
 TORRSERVER_USER=torrserver
 PASSWD_FILE=/etc/passwd
 GROUP_FILE=/etc/group
+PROKOP_LIB=/usr/lib/prokop
+UCODE=/usr/bin/ucode
+UJAIL=/sbin/ujail
+# What TorrServer's own settings of Prokop were when it started (a digest),
+# so that a change of Prokop's other settings does not restart it.
+OPTIONS_STAMP=/var/run/prokop-torrserver.options
+
+torrserver_option() {
+	uci -q get "prokop.settings.$1"
+}
+
+torrserver_manager() {
+	PROKOP_TORRSERVER_DIR="$TORRSERVER_DIR" "$UCODE" -L "$PROKOP_LIB" "$PROKOP_LIB/torrserver/manager.uc" "$@"
+}
+
+# A digest of the settings that need a restart of TorrServer: the
+# password (only while it is on) and the jail. "auth=0 jail=0" alone is
+# what a TorrServer started before these settings existed runs with.
+torrserver_options_stamp() {
+	local auth jail
+	auth="$(torrserver_option torrserver_auth_enabled)"
+	[ "$auth" = 1 ] || auth=0
+	jail="$(torrserver_option torrserver_jail)"
+	[ "$jail" = 1 ] || jail=0
+	{
+		echo "auth=$auth jail=$jail"
+		if [ "$auth" = 1 ]; then
+			torrserver_option torrserver_auth_user
+			torrserver_option torrserver_auth_password
+		fi
+	} | md5sum | cut -d' ' -f1
+}
 
 # The system user TorrServer runs as, created on first use as OpenWrt's
 # packages create theirs (add_group_and_user): a group from 65536 up, and a
@@ -73,22 +113,95 @@ prepare_torrserver_data() {
 	return 0
 }
 
+# What TorrServer needs to see in its jail besides its binary and data:
+# names (resolv.conf and where OpenWrt links it, hosts), certificates,
+# the time zone. Only those that exist: ujail refuses a missing one.
+torrserver_jail_mounts() {
+	local path
+	for path in /dev/null /dev/urandom /etc/ssl /etc/resolv.conf /tmp/resolv.conf /tmp/resolv.conf.d \
+		/tmp/resolv.conf.auto /etc/hosts /etc/TZ /etc/localtime; do
+		[ -e "$path" ] && echo "$path"
+	done
+}
+
 start_service() {
+	local stamp auth jail memlimit
 	[ -x "$TORRSERVER_DIR/torrserver" ] && [ -f "$TORRSERVER_DIR/prokop-managed.json" ] || return 0
 	# Fail closed: without its own user TorrServer does not run at all.
 	if ! ensure_torrserver_user || ! prepare_torrserver_data; then
 		logger -t prokop-torrserver "TorrServer was not started: its user $TORRSERVER_USER or $TORRSERVER_DATA could not be prepared"
 		return 1
 	fi
+	stamp="$(torrserver_options_stamp)"
+	# The password of its API: accs.db is written (or removed) by the
+	# manager and read by TorrServer's user alone.
+	auth="$(torrserver_manager prepare-auth)" || auth=""
+	case "$auth" in
+		on)
+			if ! chown -h "$TORRSERVER_USER:$TORRSERVER_USER" "$TORRSERVER_DATA/accs.db"; then
+				logger -t prokop-torrserver "TorrServer was not started: its password file could not be handed to $TORRSERVER_USER"
+				return 1
+			fi
+			;;
+		off) ;;
+		*)
+			logger -t prokop-torrserver "TorrServer was not started: its password is on, but the user name or password is missing or unusable"
+			return 1
+			;;
+	esac
+	jail="$(torrserver_option torrserver_jail)"
+	if [ "$jail" = 1 ] && [ ! -x "$UJAIL" ]; then
+		logger -t prokop-torrserver "TorrServer was not started: its jail is on, but this firmware has no $UJAIL (procd-ujail)"
+		return 1
+	fi
+	# A soft limit for Go's heap (torrserver/manager.uc memlimit-mib):
+	# TorrServer's cache and some room. Go collects garbage sooner near it
+	# and never stops TorrServer for it. None when it cannot be told.
+	memlimit="$(torrserver_manager memlimit-mib 2>/dev/null)" || memlimit=""
+	case "$memlimit" in ''|*[!0-9]*) memlimit="" ;; esac
 	procd_open_instance torrserver
-	procd_set_param command "$TORRSERVER_DIR/torrserver" -d "$TORRSERVER_DATA" -p 8090
+	if [ "$auth" = on ]; then
+		procd_set_param command "$TORRSERVER_DIR/torrserver" -d "$TORRSERVER_DATA" -p 8090 --httpauth
+	else
+		procd_set_param command "$TORRSERVER_DIR/torrserver" -d "$TORRSERVER_DATA" -p 8090
+	fi
 	procd_set_param user "$TORRSERVER_USER"
 	procd_set_param no_new_privs 1
 	# Go returns freed memory to the router at once (as TorrServer's own
 	# systemd unit sets).
-	procd_set_param env GODEBUG=madvdontneed=1 HOME="$TORRSERVER_DATA"
+	if [ -n "$memlimit" ]; then
+		procd_set_param env GODEBUG=madvdontneed=1 HOME="$TORRSERVER_DATA" GOMEMLIMIT="${memlimit}MiB"
+	else
+		procd_set_param env GODEBUG=madvdontneed=1 HOME="$TORRSERVER_DATA"
+	fi
 	procd_set_param limits nofile="4096 4096"
 	procd_set_param respawn 3600 5 5
 	procd_set_param stderr 1
+	if [ "$jail" = 1 ]; then
+		# requirejail: procd itself refuses to run it unjailed. ujail runs
+		# TorrServer as its child in this instance's cgroup (it moves a
+		# process only for an OCI container), which TorrServer Direct marks.
+		procd_add_jail torrserver procfs requirejail
+		# shellcheck disable=SC2046 # one path per line, none with spaces
+		procd_add_jail_mount "$TORRSERVER_DIR/torrserver" $(torrserver_jail_mounts)
+		# shellcheck disable=SC2046
+		procd_add_jail_mount_rw "$TORRSERVER_DATA" $(torrserver_manager disk-cache-dirs 2>/dev/null)
+	fi
 	procd_close_instance
+	(umask 077 && echo "$stamp" >"$OPTIONS_STAMP") || true
+}
+
+# Prokop's settings changed (LuCI's Save & Apply): TorrServer restarts
+# only when its own did. Its playback is not cut for anything else.
+service_triggers() {
+	procd_add_reload_trigger prokop
+}
+
+reload_service() {
+	local recorded
+	recorded="$(cat "$OPTIONS_STAMP" 2>/dev/null)" || recorded=""
+	[ -n "$recorded" ] || recorded="$(echo "auth=0 jail=0" | md5sum | cut -d' ' -f1)"
+	[ "$(torrserver_options_stamp)" = "$recorded" ] && return 0
+	stop
+	start
 }

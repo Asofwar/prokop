@@ -1876,6 +1876,58 @@ msgstr ""
 msgid "Delete the saved token"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/settings.js:1
+msgid "TorrServer"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:1
+msgid "Protect TorrServer with a password"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:1
+msgid "TorrServer's web page and API then ask for this user name and password, also apps that use its API (Lampa, MSX); stream and playlist links stay open. Applies to the TorrServer that Prokop installed"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:1
+msgid "TorrServer user name"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:1
+msgid "Use 1 to 64 Latin letters, digits, dots, dashes, _ or @"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:1
+msgid "TorrServer password"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:1
+msgid "The saved password is never shown on the page"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:1
+msgid "Use up to 128 characters, without line breaks"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:1
+msgid "Delete the saved password"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:1
+msgid "Enter a password"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:1
+msgid "Run TorrServer in a jail"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:1
+msgid "procd's jail (ujail): TorrServer sees only its program, its data, its disk cache and what it needs to resolve names and check certificates. A disk cache folder changed in TorrServer is seen after TorrServer restarts. If the jail cannot be set up, TorrServer does not start"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:1
+msgid "Not available: this firmware has no procd-ujail. Install the procd-ujail package to use it"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:220
 msgid "Delete the saved webhook URL"
 msgstr ""

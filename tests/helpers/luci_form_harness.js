@@ -1236,6 +1236,7 @@ function createEnvironment({
   const moduleGlobals = globals;
   let settingsModule = null;
   let notificationsModule = null;
+  let torrserverModule = null;
   let shellModule = null;
 
   // A page of the Prokop menu (page/*.js) as LuCI renders it: the view's
@@ -1451,10 +1452,16 @@ function createEnvironment({
         { baseclass, form, fs: fsStub, uci, main, settings: settingsModule },
         moduleGlobals,
       );
+      torrserverModule ??= loadModule(
+        "torrserver.js",
+        { baseclass, form, uci, main, notifications: notificationsModule },
+        moduleGlobals,
+      );
       const page = renderPage("page/settings.js", {
         shell: { startPage: () => Promise.resolve(null), uiCapabilities: capabilities },
         settings: settingsModule,
         notifications: notificationsModule,
+        torrserver: torrserverModule,
         updates: { createUpdatesContent() {} },
       });
       await page.rendered;

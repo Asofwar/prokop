@@ -36,6 +36,10 @@ config settings 'settings'
         option direct_proxy_enabled '0'
         option direct_proxy_port '2080'
         option torrserver_direct_enabled '0'
+        # TorrServer's API password (user and password set on the
+        # Settings page) and procd's jail for TorrServer; both off.
+        option torrserver_auth_enabled '0'
+        option torrserver_jail '0'
         # Optional dependency mirror, off when empty. When set, lists, rule
         # sets and some components are downloaded through it. OpenWrt feeds
         # move to it only when /usr/share/prokop/mirror-migration.sh runs

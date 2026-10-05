@@ -34,6 +34,20 @@ user_add() { echo "${1}:x:${2}:${3}:${4:-$1}:${5:-/var/run/$1}:${6:-/bin/false}"
 procd_open_instance() { echo "open $*" >>"$WORK/procd"; }
 procd_set_param() { echo "$*" >>"$WORK/procd"; }
 procd_close_instance() { echo "close" >>"$WORK/procd"; }
+procd_add_jail() { echo "jail $*" >>"$WORK/procd"; }
+procd_add_jail_mount() { echo "jail_mount $*" >>"$WORK/procd"; }
+procd_add_jail_mount_rw() { echo "jail_mount_rw $*" >>"$WORK/procd"; }
+# The uci CLI on the test's settings, which the manager reads as well.
+uci() {
+  [ "$1" = -q ] && shift
+  [ "$1" = get ] || return 1
+  grep -s "^$2=" "$PROKOP_UCI_STATE_FILE" | tail -n 1 | cut -d= -f2- | grep '' || return 1
+}
+settings() { printf '%s\n' prokop.settings=settings "$@" >"$PROKOP_UCI_STATE_FILE"; }
+export PROKOP_UCI_STATE_FILE="$WORK/uci.state" PROKOP_MEMINFO_PATH="$WORK/meminfo" PROKOP_PROC_DIR="$WORK/proc"
+mkdir -p "$WORK/proc"
+printf 'MemTotal:        1006668 kB\n' >"$WORK/meminfo"
+settings
 chown() { echo "$*" >>"$WORK/chown"; }
 logger() { echo "$*" >>"$WORK/logger"; }
 
@@ -47,6 +61,10 @@ run_start() { # run_start: the script's start_service on the test's files
   TORRSERVER_DATA="$TORRSERVER_DIR/data"
   PASSWD_FILE="$WORK/passwd"
   GROUP_FILE="$WORK/group"
+  PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
+  UCODE="$(command -v ucode)"
+  UJAIL="$WORK/ujail"
+  OPTIONS_STAMP="$WORK/options"
   set +e
   start_service
   START_RC=$?
@@ -167,5 +185,104 @@ rm -f "$WORK/opt/torrserver/prokop-managed.json"
 run_start
 [ "$START_RC" = 0 ] && [ ! -s "$WORK/procd" ] && ! grep -q '^torrserver:' "$WORK/passwd" ||
   fail "a TorrServer without Prokop's marker is not this service's"
+
+# --- 4. The API password (TS-1): --httpauth with data/accs.db ---------------------
+reset_router
+run_start
+grep -q -- '--httpauth' "$WORK/procd" && fail "the password must be off by default"
+[ ! -e "$WORK/opt/torrserver/data/accs.db" ] || fail "no accounts file by default"
+settings prokop.settings.torrserver_auth_enabled=1 prokop.settings.torrserver_auth_user=admin \
+  prokop.settings.torrserver_auth_password=secret
+run_start
+[ "$START_RC" = 0 ] || fail "start with a password must succeed: $(cat "$WORK/logger")"
+grep -Fxq "command $WORK/opt/torrserver/torrserver -d $WORK/opt/torrserver/data -p 8090 --httpauth" "$WORK/procd" ||
+  fail "TorrServer must start with --httpauth: $(cat "$WORK/procd")"
+[ "$(cat "$WORK/opt/torrserver/data/accs.db")" = '{ "admin": "secret" }' ] || fail "accs.db: $(cat "$WORK/opt/torrserver/data/accs.db")"
+grep -Fxq -- "-h torrserver:torrserver $WORK/opt/torrserver/data/accs.db" "$WORK/chown" || fail "accs.db must be TorrServer's user's"
+! grep -q secret "$WORK/procd" "$WORK/logger" || fail "the password reached procd or the log"
+# Asked for but unusable: TorrServer does not start at all (procd then
+# stops a running one), never with an open API.
+settings prokop.settings.torrserver_auth_enabled=1 prokop.settings.torrserver_auth_user=admin
+run_start
+[ "$START_RC" != 0 ] || fail "a password without a value must refuse the start"
+grep -q '^open' "$WORK/procd" && fail "TorrServer must not run with an open API when a password is asked for"
+grep -Fq "its password is on, but the user name or password is missing or unusable" "$WORK/logger" || fail "the refusal must be logged"
+settings
+run_start
+grep -q -- '--httpauth' "$WORK/procd" && fail "turned off, the password must go"
+[ ! -e "$WORK/opt/torrserver/data/accs.db" ] || fail "turned off, accs.db must go"
+
+# --- 5. GOMEMLIMIT: the cache and some room, a soft limit -------------------------
+reset_router
+run_start
+grep -Fxq "env GODEBUG=madvdontneed=1 HOME=$WORK/opt/torrserver/data GOMEMLIMIT=192MiB" "$WORK/procd" ||
+  fail "GOMEMLIMIT must be the recommended cache and 64 MiB: $(grep '^env' "$WORK/procd")"
+printf '{"BitTorr":{"CacheSize":268435456}}' >"$WORK/opt/torrserver/data/settings.json"
+run_start
+grep -q 'GOMEMLIMIT=320MiB$' "$WORK/procd" || fail "GOMEMLIMIT must follow TorrServer's cache: $(grep '^env' "$WORK/procd")"
+printf 'MemTotal:        262144 kB\n' >"$WORK/meminfo"
+run_start
+[ "$START_RC" = 0 ] || fail "a limit that cannot be set must not stop the start"
+grep -q 'GOMEMLIMIT' "$WORK/procd" && fail "no GOMEMLIMIT past half the router's memory"
+printf 'MemTotal:        1006668 kB\n' >"$WORK/meminfo"
+
+# --- 6. procd's jail, opt-in and fail closed ------------------------------------------
+reset_router
+run_start
+grep -q '^jail' "$WORK/procd" && fail "the jail must be off by default"
+settings prokop.settings.torrserver_jail=1
+rm -f "$WORK/ujail"
+run_start
+[ "$START_RC" != 0 ] || fail "the jail asked for without ujail must refuse the start"
+grep -q '^open' "$WORK/procd" && fail "TorrServer must not run unjailed when the jail is asked for"
+grep -Fq "its jail is on, but this firmware has no $WORK/ujail" "$WORK/logger" || fail "the refusal must be logged"
+printf '#!/bin/sh\n' >"$WORK/ujail"
+chmod 0755 "$WORK/ujail"
+mkdir -p "$WORK/mnt/cache"
+printf '{"BitTorr":{"UseDisk":true,"TorrentsSavePath":"%s"}}' "$WORK/mnt/cache" >"$WORK/opt/torrserver/data/settings.json"
+run_start
+[ "$START_RC" = 0 ] || fail "start in the jail must succeed: $(cat "$WORK/logger")"
+grep -Fxq "jail torrserver procfs requirejail" "$WORK/procd" || fail "procd must refuse to run it unjailed: $(cat "$WORK/procd")"
+grep -q "^jail_mount $WORK/opt/torrserver/torrserver /dev/null /dev/urandom" "$WORK/procd" ||
+  fail "the binary must be in the jail, read-only: $(grep jail_mount "$WORK/procd")"
+grep -Fxq "jail_mount_rw $WORK/opt/torrserver/data $WORK/mnt/cache" "$WORK/procd" ||
+  fail "data/ and the disk cache must be writable in the jail: $(grep jail_mount_rw "$WORK/procd")"
+[ "$(sed -n '/^jail /,$p' "$WORK/procd" | tail -n 1)" = close ] || fail "the jail must belong to the instance"
+grep -Fxq "user torrserver" "$WORK/procd" || fail "the jail must keep TorrServer's user"
+rm -f "$WORK/opt/torrserver/data/settings.json"
+
+# --- 7. A change of Prokop's settings restarts TorrServer only for its own ---------
+stop() { echo stop >>"$WORK/procd"; }
+start() { echo start >>"$WORK/procd"; }
+reload_now() {
+  : >"$WORK/procd"
+  set +e
+  reload_service
+  set -e
+}
+grep -Fxq 'procd_add_reload_trigger prokop' <(sed -n '/^service_triggers()/,/^}/p' "$INIT" | tr -d '\t') ||
+  fail "a change of Prokop's settings must reach TorrServer"
+settings
+rm -f "$WORK/options"
+reload_now
+[ ! -s "$WORK/procd" ] || fail "a TorrServer started before these settings must not restart for nothing"
+reset_router
+run_start
+reload_now
+[ ! -s "$WORK/procd" ] || fail "unchanged settings must not restart TorrServer"
+settings prokop.settings.torrserver_auth_enabled=0 prokop.settings.torrserver_auth_user=admin prokop.settings.dns_type=doh
+reload_now
+[ ! -s "$WORK/procd" ] || fail "other settings must not restart TorrServer: $(cat "$WORK/procd")"
+settings prokop.settings.torrserver_auth_enabled=1 prokop.settings.torrserver_auth_user=admin prokop.settings.torrserver_auth_password=a
+run_start
+reload_now
+[ ! -s "$WORK/procd" ] || fail "the same password must not restart TorrServer"
+settings prokop.settings.torrserver_auth_enabled=1 prokop.settings.torrserver_auth_user=admin prokop.settings.torrserver_auth_password=b
+reload_now
+[ "$(tr '\n' ' ' <"$WORK/procd")" = 'stop start ' ] || fail "a new password must restart TorrServer: $(cat "$WORK/procd")"
+settings prokop.settings.torrserver_jail=1
+reload_now
+[ "$(tr '\n' ' ' <"$WORK/procd")" = 'stop start ' ] || fail "the jail must restart TorrServer"
+[ "$(stat -c %a "$WORK/options")" = 600 ] || fail "the digest of the password must be the root's alone"
 
 printf 'torrserver init user checks passed\n'

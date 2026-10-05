@@ -13,6 +13,7 @@ const TABLE = "ProkopTorrServerDirect";
 // Where processes and cgroups are read (tests point them at a fake tree).
 const PROC_DIR = getenv("PROKOP_PROC_DIR") || "/proc";
 const CGROUP_DIR = getenv("PROKOP_CGROUP_DIR") || "/sys/fs/cgroup";
+const UJAIL_BIN = getenv("PROKOP_UJAIL_BIN") || "/sbin/ujail";
 // sing-box's FakeIP ranges: an address there stands for a name sing-box
 // resolved and routes by its rules, never a real peer (TS-9).
 const FAKEIP_RANGE = singbox_constants.FAKEIP_INET4_RANGE;
@@ -58,13 +59,25 @@ function valid_cgroup(path) {
         return false;
     return path != "/services" && path != "/system.slice" && path != "/user.slice";
 }
+// procd's jail around TorrServer (torrserver_jail): ujail stays its parent
+// in the instance's cgroup, and its command line ends with `-- <TorrServer>
+// ...` (the arguments are NUL-separated; is_torrserver_cmdline reads the
+// program's name, the first of them).
+function is_torrserver_jail(pid, cmdline) {
+    if (fs.readlink(PROC_DIR + "/" + pid + "/exe") != UJAIL_BIN)
+        return false;
+    let args = split(text(cmdline), "\x00");
+    let separator = index(args, "--");
+    return separator >= 0 && separator + 1 < length(args) && is_torrserver_cmdline(args[separator + 1]);
+}
 function dedicated_cgroup(path) {
     let pids = split(replace(read(CGROUP_DIR + path + "/cgroup.procs"), /[\r\n]+$/g, ""), /[\r\n]+/);
     let found = 0;
     for (let pid in pids) {
         if (pid == "") continue;
         found++;
-        if (!is_torrserver_cmdline(read(PROC_DIR + "/" + pid + "/cmdline"))) return false;
+        let cmdline = read(PROC_DIR + "/" + pid + "/cmdline");
+        if (!is_torrserver_cmdline(cmdline) && !is_torrserver_jail(pid, cmdline)) return false;
     }
     return found > 0;
 }
@@ -124,6 +137,6 @@ function status_of(info) {
 }
 
 return {
-    TABLE, PROC_DIR, FAKEIP_RANGE, FAKEIP6_RANGE, is_torrserver_cmdline, each_process, valid_cgroup, discover, discover_from,
+    TABLE, PROC_DIR, UJAIL_BIN, FAKEIP_RANGE, FAKEIP6_RANGE, is_torrserver_cmdline, is_torrserver_jail, each_process, valid_cgroup, discover, discover_from,
     enabled, rule_output_active, active, status_of
 };

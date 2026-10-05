@@ -450,6 +450,9 @@ function createNotificationsContent(section, capabilities) {
 
 return baseclass.extend({
   createNotificationsContent,
+  // The TorrServer tab (torrserver.js) keeps its password the same way.
+  configureSecret,
+  keepWhileOff,
   resultLines,
   webhookWarning,
 });

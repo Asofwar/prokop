@@ -4,6 +4,7 @@
 "require view.prokop.shell as shell";
 "require view.prokop.settings as settings";
 "require view.prokop.notifications as notifications";
+"require view.prokop.torrserver as torrserver";
 "require view.prokop.updates as updates";
 "require view.prokop.configform as configform";
 
@@ -16,7 +17,7 @@ const EntryPoint = {
     const uiCapabilities = shell.uiCapabilities;
     const prokopMap = configform.createMap(_("Settings"), null);
     prokopMap.tabbed = true;
-    // The single "settings" UCI section is shown as five tabs; each tab
+    // The single "settings" UCI section is shown as six tabs; each tab
     // writes only its own options. LuCI keys map tabs by section type, so
     // each tab gets its own type while editing the same "settings" section.
     const settingsTab = (type, title) => {
@@ -39,6 +40,10 @@ const EntryPoint = {
     );
     notifications.createNotificationsContent(
       settingsTab("settings_notify", _("Notifications")),
+      uiCapabilities,
+    );
+    torrserver.createTorrServerContent(
+      settingsTab("settings_torrserver", _("TorrServer")),
       uiCapabilities,
     );
 

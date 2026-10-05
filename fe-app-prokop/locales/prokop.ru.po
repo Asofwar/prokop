@@ -1319,6 +1319,45 @@ msgstr "Удалить снимок?"
 msgid "Delete the saved token"
 msgstr "Удалить сохранённый токен"
 
+msgid "TorrServer"
+msgstr "TorrServer"
+
+msgid "Protect TorrServer with a password"
+msgstr "Защитить TorrServer паролем"
+
+msgid "TorrServer's web page and API then ask for this user name and password, also apps that use its API (Lampa, MSX); stream and playlist links stay open. Applies to the TorrServer that Prokop installed"
+msgstr "Веб-страница и API TorrServer будут спрашивать это имя и пароль, в том числе у приложений, которые работают через API (Lampa, MSX). Ссылки на потоки и плейлисты остаются открытыми. Касается TorrServer, установленного Prokop"
+
+msgid "TorrServer user name"
+msgstr "Имя пользователя TorrServer"
+
+msgid "Use 1 to 64 Latin letters, digits, dots, dashes, _ or @"
+msgstr "От 1 до 64 латинских букв, цифр, точек, дефисов, _ или @"
+
+msgid "TorrServer password"
+msgstr "Пароль TorrServer"
+
+msgid "The saved password is never shown on the page"
+msgstr "Сохранённый пароль на странице не показывается"
+
+msgid "Use up to 128 characters, without line breaks"
+msgstr "До 128 символов, без переносов строк"
+
+msgid "Delete the saved password"
+msgstr "Удалить сохранённый пароль"
+
+msgid "Enter a password"
+msgstr "Введите пароль"
+
+msgid "Run TorrServer in a jail"
+msgstr "Запускать TorrServer в изоляции"
+
+msgid "procd's jail (ujail): TorrServer sees only its program, its data, its disk cache and what it needs to resolve names and check certificates. A disk cache folder changed in TorrServer is seen after TorrServer restarts. If the jail cannot be set up, TorrServer does not start"
+msgstr "Изоляция procd (ujail): TorrServer видит только свою программу, свои данные, кэш на диске и то, что нужно для DNS и проверки сертификатов. Новую папку кэша, заданную в TorrServer, он увидит после перезапуска. Если изоляцию не удаётся настроить, TorrServer не запускается"
+
+msgid "Not available: this firmware has no procd-ujail. Install the procd-ujail package to use it"
+msgstr "Недоступно: в прошивке нет procd-ujail. Чтобы включить, установите пакет procd-ujail"
+
 msgid "Delete the saved webhook URL"
 msgstr "Удалить сохранённый адрес webhook"
 

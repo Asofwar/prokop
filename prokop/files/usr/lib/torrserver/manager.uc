@@ -10,6 +10,7 @@
 // someone installed by other means is never overwritten, stopped or removed.
 
 let fs = require("fs");
+let uci = require("core.uci");
 let procs = require("torrserver.procs");
 
 const DIR = getenv("PROKOP_TORRSERVER_DIR") || "/opt/torrserver";
@@ -32,6 +33,20 @@ const MEMINFO_PATH = getenv("PROKOP_MEMINFO_PATH") || "/proc/meminfo";
 const PROC_DIR = procs.PROC_DIR;
 const RELEASE_OWNER = "YouROK";
 const RELEASE_REPO = "TorrServer";
+const CONFIG_NAME = getenv("PROKOP_CONFIG_NAME") || "prokop";
+// TorrServer's accounts for its --httpauth: {"user":"password"}, read from
+// its data directory when it starts (upstream server/web/auth/auth.go).
+const ACCOUNTS_FILE = DATA_DIR + "/accs.db";
+// TorrServer's settings: settings.json ({"BitTorr":{...}}) in current
+// releases, the bbolt config.db (the same JSON stored as a value) before.
+const SETTINGS_JSON = DATA_DIR + "/settings.json";
+const CONFIG_DB = DATA_DIR + "/config.db";
+const CONFIG_DB_READ_MAX = 16 * 1048576;
+// What Go may use beyond TorrServer's cache before it collects garbage
+// harder (GOMEMLIMIT), and the share of the router's memory it may never
+// pass: past it, no limit is set.
+const MEMLIMIT_HEADROOM_MIB = 64;
+const MEMLIMIT_MAX_SHARE = 0.5;
 
 function text(value) { return value == null ? "" : "" + value; }
 function quote(value) { return "'" + replace(text(value), /'/g, "'\\''") + "'"; }
@@ -98,6 +113,14 @@ function process_exe(pid) {
     return replace(text(fs.readlink(PROC_DIR + "/" + pid + "/exe")), / \(deleted\)$/, "");
 }
 
+// procd's jail for BIN (torrserver_jail): ujail, whose command line ends
+// with `-- BIN ...`. It is the jailed TorrServer's parent in the same
+// cgroup, neither that TorrServer nor another one.
+function own_jail(pid, cmdline) {
+    let args = split(text(cmdline), "\x00");
+    return procs.is_torrserver_jail(pid, cmdline) && args[index(args, "--") + 1] == BIN;
+}
+
 // Every TorrServer process: the one run from BIN, and any other; `named`
 // lists every process named TorrServer, as TorrServer Direct looks for it.
 function processes() {
@@ -108,12 +131,100 @@ function processes() {
         let is_named = procs.is_torrserver_cmdline(cmdline);
         if (is_named)
             push(named, pid);
-        if (process_exe(pid) == BIN)
+        let exe = process_exe(pid);
+        if (exe == BIN)
             push(own, pid);
-        else if (is_named)
+        else if (is_named && !own_jail(pid, cmdline))
             push(other, pid);
     });
     return { own, other, named };
+}
+
+function settings_option(name) {
+    uci.refresh(CONFIG_NAME);
+    return text(uci.get(CONFIG_NAME + ".settings." + name));
+}
+
+// The password of TorrServer's API (TS-1), off by default. The user name
+// goes before the first colon of HTTP Basic auth: none in it. Neither
+// holds a control character (curl's config file, TorrServer's JSON).
+// `valid` is false while it is on without a usable user and password.
+function auth() {
+    let enabled = trim(settings_option("torrserver_auth_enabled")) == "1";
+    let user = settings_option("torrserver_auth_user");
+    let password = settings_option("torrserver_auth_password");
+    let valid = match(user, /^[A-Za-z0-9._@-]{1,64}$/) != null &&
+        length(password) >= 1 && length(password) <= 128 && match(password, /[\x01-\x1f\x7f]/) == null && index(password, "\x00") < 0;
+    return { enabled, user, password, valid };
+}
+
+// TorrServer's accounts file as `auth` asks: written when the password is
+// on (only when it changed, a file on flash), removed when it is off.
+// data/ belongs to TorrServer's user: a link there is never followed, the
+// new file is made exclusively (a name that exists stops the write) and
+// renamed over the old one. The init script hands it to that user.
+// "on", "off", or null when the password is on but unusable or the file
+// cannot be written: TorrServer then does not start (fail closed).
+function prepare_auth() {
+    let value = auth();
+    if (!value.enabled) {
+        if (fs.lstat(ACCOUNTS_FILE) != null && !fs.unlink(ACCOUNTS_FILE))
+            return null;
+        return "off";
+    }
+    if (!value.valid)
+        return null;
+    let accounts = sprintf("%J\n", { [value.user]: value.password });
+    let stat = fs.lstat(ACCOUNTS_FILE);
+    if (stat != null && stat.type == "file" && fs.readfile(ACCOUNTS_FILE) == accounts)
+        return "on";
+    let staged = ACCOUNTS_FILE + ".prokop-new";
+    if (fs.lstat(staged) != null)
+        fs.unlink(staged);
+    let file = fs.open(staged, "wx", 0600);
+    if (file == null)
+        return null;
+    let written = file.write(accounts) != null;
+    file.close();
+    if (!written || !fs.chmod(staged, 0600) || !fs.rename(staged, ACCOUNTS_FILE)) {
+        fs.unlink(staged);
+        return null;
+    }
+    return "on";
+}
+
+// A value of a curl config file: quoted, with \ and " escaped (auth()
+// admits no line break).
+function curl_quote(value) {
+    return "\"" + replace(replace(text(value), /\\/g, "\\\\"), /"/g, "\\\"") + "\"";
+}
+
+// TorrServer's settings in settings.json ({"BitTorr":{...}}), or null.
+function json_settings() {
+    let parsed = parse_object(fs.readfile(SETTINGS_JSON, CONFIG_DB_READ_MAX));
+    return parsed != null && type(parsed.BitTorr) == "object" ? parsed.BitTorr : null;
+}
+
+// The runs of a bbolt config.db, read raw, that name `key`: it stores the
+// settings as JSON, and an older copy may remain in a free page (a regex
+// stops at a NUL byte, hence the runs).
+function db_chunks(key) {
+    let chunks = [];
+    let db = fs.stat(CONFIG_DB);
+    if (db == null || db.type != "file" || db.size > CONFIG_DB_READ_MAX)
+        return chunks;
+    for (let chunk in split(text(fs.readfile(CONFIG_DB)), "\x00"))
+        if (index(chunk, "\"" + key + "\"") >= 0)
+            push(chunks, chunk);
+    return chunks;
+}
+
+function memtotal_kib() {
+    for (let line in split(read(MEMINFO_PATH), "\n")) {
+        let m = match(line, /^MemTotal:[ \t]+([0-9]+)/);
+        if (m != null) return int(m[1]);
+    }
+    return 0;
 }
 
 // Settings that suit a router: the RAM cache sized to the router's memory
@@ -123,11 +234,7 @@ function processes() {
 // itself, and must not open the router's WAN to peers through miniupnpd
 // (TS-1). What is not listed stays as the user set it.
 function recommended_settings() {
-    let total_kib = 0;
-    for (let line in split(read(MEMINFO_PATH), "\n")) {
-        let m = match(line, /^MemTotal:[ \t]+([0-9]+)/);
-        if (m != null) total_kib = int(m[1]);
-    }
+    let total_kib = memtotal_kib();
     let cache_mib = total_kib > 0 ? int(total_kib / 1024.0 / 8 / 16 + 0.5) * 16 : 64;
     if (cache_mib < 32) cache_mib = 32;
     if (cache_mib > 256) cache_mib = 256;
@@ -140,6 +247,74 @@ function recommended_settings() {
         ResponsiveMode: true,
         DisableUPNP: true
     };
+}
+
+// TorrServer's RAM cache in bytes as its settings say: settings.json when
+// it holds it, else the largest value config.db holds (an older copy may
+// remain there: the larger one is the safe one for a limit). A cache of 0
+// is TorrServer's default, 64 MiB. Without either, the recommended size,
+// which Prokop applies on the first install, and never less than that
+// default.
+function cache_size() {
+    let fallback = 64 * 1048576;
+    let sets = json_settings();
+    if (sets != null && type(sets.CacheSize) == "int")
+        return sets.CacheSize > 0 ? sets.CacheSize : fallback;
+    let largest = -1;
+    for (let rest in db_chunks("CacheSize")) {
+        let m;
+        while ((m = match(rest, /"CacheSize":[ ]*([0-9]{1,15})/)) != null) {
+            if (int(m[1]) > largest)
+                largest = int(m[1]);
+            rest = substr(rest, index(rest, m[0]) + length(m[0]));
+        }
+    }
+    if (largest >= 0)
+        return largest > 0 ? largest : fallback;
+    let recommended = recommended_settings().CacheSize;
+    return recommended > fallback ? recommended : fallback;
+}
+
+// GOMEMLIMIT for TorrServer, in MiB: its cache and MEMLIMIT_HEADROOM_MIB.
+// A soft limit: Go collects garbage sooner as the heap nears it and never
+// fails an allocation or stops because of it. Not set (0) when the
+// router's memory is unknown or the limit would pass MEMLIMIT_MAX_SHARE of
+// it: below the heap TorrServer needs, it would only burn CPU.
+function memlimit_mib() {
+    let total_mib = int(memtotal_kib() / 1024);
+    if (total_mib <= 0)
+        return 0;
+    let mib = int((cache_size() + 1048575) / 1048576) + MEMLIMIT_HEADROOM_MIB;
+    return mib <= total_mib * MEMLIMIT_MAX_SHARE ? mib : 0;
+}
+
+// The directories TorrServer keeps its disk cache in (TorrentsSavePath),
+// for its jail: every absolute path its settings name that is a directory
+// now and not one of the system's own (procd splits a mount list on
+// spaces: none in them).
+function disk_cache_dirs() {
+    let candidates = [];
+    let sets = json_settings();
+    if (sets != null && type(sets.TorrentsSavePath) == "string")
+        push(candidates, sets.TorrentsSavePath);
+    for (let rest in db_chunks("TorrentsSavePath")) {
+        let m;
+        while ((m = match(rest, /"TorrentsSavePath":[ ]*"([^"\\\x01-\x1f]{1,255})"/)) != null) {
+            push(candidates, m[1]);
+            rest = substr(rest, index(rest, m[0]) + length(m[0]));
+        }
+    }
+    let found = [];
+    for (let path in candidates) {
+        path = replace(path, /\/+$/, "");
+        let stat = fs.stat(path);
+        if (match(path, /^\/[A-Za-z0-9._@+-][A-Za-z0-9._@+\/-]*$/) == null || match(path, /(^|\/)\.\.?(\/|$)/) != null ||
+            match(path, /^\/(proc|sys|dev|etc|rom|overlay|boot|tmp\/run)(\/|$)/) != null ||
+            stat == null || stat.type != "directory" || index(found, path) >= 0)
+            continue;
+        push(found, path);
+    }
+    return found;
 }
 
 // The inodes of the sockets listening on TorrServer's port, from the
@@ -282,25 +457,61 @@ function write_marker(version, sha256, path) {
     return true;
 }
 
+// A request to TorrServer's API; the answer, or null on failure. With its
+// password on, curl sends it from a private config file (-K, mktemp's
+// 0600 file, removed after the request), never from the command line;
+// without curl (uclient-fetch takes a password only as an argument), no
+// request that needs it is made. `body` (JSON) makes it a POST.
+function http_request(url, body, seconds) {
+    let curl = success([ "sh", "-c", "command -v curl" ]);
+    let credentials = auth();
+    let temporary = [];
+    let cleanup = function() { for (let path in temporary) fs.unlink(path); };
+    let args;
+    if (curl) {
+        args = [ "curl", "-fsS", "--connect-timeout", "2", "-m", "" + seconds ];
+        if (credentials.enabled) {
+            let config = trim(command_output([ "mktemp" ]));
+            if (config != "")
+                push(temporary, config);
+            if (!credentials.valid || config == "" ||
+                fs.writefile(config, "user = " + curl_quote(credentials.user + ":" + credentials.password) + "\n") == null) {
+                cleanup();
+                return null;
+            }
+            push(args, "-K", config);
+        }
+    }
+    else {
+        if (credentials.enabled && body != null)
+            return null;
+        args = [ "wget", "-q", "-T", "" + seconds, "-O", "-" ];
+    }
+    if (body != null) {
+        let path = trim(command_output([ "mktemp" ]));
+        if (path != "")
+            push(temporary, path);
+        if (path == "" || fs.writefile(path, body) == null) {
+            cleanup();
+            return null;
+        }
+        push(args, ...(curl ? [ "--data-binary", "@" + path ] : [ "--post-file=" + path ]));
+    }
+    push(args, url);
+    let pipe = fs.popen(command(args) + " 2>/dev/null", "r");
+    let data = pipe ? pipe.read("all") : null;
+    let status = pipe ? pipe.close() : 1;
+    cleanup();
+    return status == 0 && data != null ? text(data) : null;
+}
+
 function http_body(url) {
-    if (success([ "sh", "-c", "command -v curl" ]))
-        return command_output([ "curl", "-fsS", "--connect-timeout", "2", "-m", "3", url ]);
-    return command_output([ "wget", "-q", "-T", "3", "-O", "-", url ]);
+    return text(http_request(url, null, 3));
 }
 
 // POSTs `body` (JSON) to TorrServer's API; the answer, or null on failure.
 function http_post(url, body) {
-    let path = trim(command_output([ "mktemp" ]));
-    if (path == "" || fs.writefile(path, body) == null)
-        return null;
-    let curl = success([ "sh", "-c", "command -v curl" ]);
-    let pipe = fs.popen(command(curl ?
-        [ "curl", "-fsS", "--connect-timeout", "2", "-m", "10", "--data-binary", "@" + path, url ] :
-        [ "wget", "-q", "-T", "10", "-O", "-", "--post-file=" + path, url ]) + " 2>/dev/null", "r");
-    let data = pipe ? pipe.read("all") : null;
-    let status = pipe ? pipe.close() : 1;
-    fs.unlink(path);
-    return status == 0 ? text(data) : null;
+    return http_request(url, body, 10);
 }
 
 // Reads TorrServer's settings, puts the recommended values over them and
@@ -412,7 +623,23 @@ else if (mode == "write-marker")
     exit(write_marker(ARGV[1], ARGV[2], ARGV[3]) ? 0 : 1);
 else if (mode == "wait-running")
     exit(wait_running(int(ARGV[1] || "20"), ARGV[2]) ? 0 : 1);
+else if (mode == "prepare-auth") {
+    // The init script, before it starts TorrServer: "on" (start it with
+    // --httpauth) or "off"; exit 1 when it must not start.
+    let state = prepare_auth();
+    if (state == null) exit(1);
+    print(state, "\n");
+}
+else if (mode == "memlimit-mib") {
+    let mib = memlimit_mib();
+    if (mib <= 0) exit(1);
+    print(mib, "\n");
+}
+else if (mode == "disk-cache-dirs") {
+    for (let path in disk_cache_dirs())
+        print(path, "\n");
+}
 else if (mode == "paths")
-    print(sprintf("%J\n", { dir: DIR, data_dir: DATA_DIR, bin: BIN, marker: MARKER, init: INIT, settings_stamp: SETTINGS_STAMP }));
+    print(sprintf("%J\n", { dir: DIR, data_dir: DATA_DIR, bin: BIN, marker: MARKER, init: INIT, settings_stamp: SETTINGS_STAMP, accounts: ACCOUNTS_FILE }));
 else
     exit(1);

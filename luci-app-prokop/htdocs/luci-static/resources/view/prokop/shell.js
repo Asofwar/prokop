@@ -17,6 +17,8 @@ const uiCapabilities = {
   zapretInstalled: false,
   zapret2Installed: false,
   byedpiInstalled: false,
+  // procd's jail for TorrServer (the TorrServer tab of Settings).
+  ujailAvailable: false,
 };
 let uiCapabilitiesPromise = null;
 let coreStarted = false;
@@ -79,6 +81,7 @@ function updateUiCapabilities(data) {
   uiCapabilities.byedpiInstalled = Boolean(
     Number(data?.byedpi_installed) === 1,
   );
+  uiCapabilities.ujailAvailable = Boolean(Number(data?.ujail_available) === 1);
   applyUiCapabilities();
 
   return uiCapabilities;

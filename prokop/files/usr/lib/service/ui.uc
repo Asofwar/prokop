@@ -54,6 +54,8 @@ const SB_DNS_INBOUND_ADDRESS = require("core.dns_inbound").ADDRESS;
 const ZAPRET_PROVIDER_NFQWS_BIN = getenv("ZAPRET_PROVIDER_NFQWS_BIN") || "/opt/zapret/nfq/nfqws";
 const ZAPRET2_PROVIDER_NFQWS2_BIN = getenv("ZAPRET2_PROVIDER_NFQWS2_BIN") || "/opt/zapret2/nfq2/nfqws2";
 const BYEDPI_BIN = getenv("BYEDPI_BIN") || "/usr/bin/ciadpi";
+// procd's jail, for TorrServer's (Settings > TorrServer).
+const UJAIL_BIN = getenv("PROKOP_UJAIL_BIN") || "/sbin/ujail";
 
 function as_string(value) {
     return value == null ? "" : "" + value;
@@ -1104,7 +1106,8 @@ function capability_flags() {
         sing_box_package: "",
         zapret_installed: file_executable(ZAPRET_PROVIDER_NFQWS_BIN) ? 1 : 0,
         zapret2_installed: file_executable(ZAPRET2_PROVIDER_NFQWS2_BIN) ? 1 : 0,
-        byedpi_installed: file_executable(BYEDPI_BIN) ? 1 : 0
+        byedpi_installed: file_executable(BYEDPI_BIN) ? 1 : 0,
+        ujail_available: file_executable(UJAIL_BIN) ? 1 : 0
     };
 
     if (file_executable(SING_BOX_BIN_PATH)) {
