@@ -17,7 +17,9 @@ mkdir -p "$WORK/bin" "$WORK/run"
 
 # curl: records its arguments and config file, answers with the HTTP code in
 # $WORK/code.<channel> (or fails with the exit status in $WORK/exit.<channel>);
-# a request through the proxy uses $WORK/proxy-exit when it exists.
+# a request through the proxy uses $WORK/proxy-exit when it exists, one as
+# the router's traffic goes (no proxy, no pinned address: through dnsmasq,
+# and so through sing-box) $WORK/system-exit.
 cat >"$WORK/bin/curl" <<SH
 #!/bin/sh
 echo "\$*" >>"$WORK/argv.log"
@@ -37,9 +39,36 @@ for f in \$(sed -n 's/^data-urlencode = "text@\(.*\)"$/\1/p; s/^data-binary = "@
   { echo "BODY-BEGIN"; cat "\$f"; echo; echo "BODY-END"; } >>"$WORK/curl.log"
 done
 if [ -n "\$proxy" ] && [ -e "$WORK/proxy-exit" ]; then exit "\$(cat "$WORK/proxy-exit")"; fi
+if [ -z "\$proxy" ] && ! grep -q '^resolve = ' "\$cfg" && [ -e "$WORK/system-exit" ]; then
+  exit "\$(cat "$WORK/system-exit")"
+fi
 if [ -e "$WORK/exit.\$channel" ]; then exit "\$(cat "$WORK/exit.\$channel")"; fi
 [ -e "$WORK/body.\$channel" ] && cp "$WORK/body.\$channel" "\$out"
 printf '%s' "\$(cat "$WORK/code.\$channel" 2>/dev/null || echo 200)"
+SH
+# nslookup as BusyBox prints it: the router's own resolver (127.0.0.1, which
+# is dnsmasq and then sing-box) answers with a FakeIP address, any other
+# server with the real one ($WORK/dns.<server> overrides it);
+# $WORK/no-nslookup stands for a router without it. Like BusyBox, it exits
+# non-zero for the missing AAAA answer.
+cat >"$WORK/bin/nslookup" <<SH
+#!/bin/sh
+echo "\$*" >>"$WORK/nslookup.log"
+[ -e "$WORK/no-nslookup" ] && exit 127
+host="\$2"; server="\$3"
+case "\$server" in
+  127.0.0.1) address=198.18.0.7 ;;
+  *) address="\$(cat "$WORK/dns.\$server" 2>/dev/null || true)" ;;
+esac
+if [ -z "\$address" ]; then
+  case "\$host" in
+    api.telegram.org) address=149.154.167.220 ;;
+    *) address=203.0.113.7 ;;
+  esac
+fi
+printf 'Server:\t\t%s\nAddress:\t%s:53\n\nNon-authoritative answer:\nName:\t%s\nAddress: %s\n\n' \
+  "\$server" "\$server" "\$host" "\$address"
+exit 1
 SH
 cat >"$WORK/bin/logger" <<SH
 #!/bin/sh
@@ -67,7 +96,8 @@ export PATH="$WORK/bin:$PATH" PROKOP_LIB="$LIB" PROKOP_BIN="$WORK/bin/prokop" \
   PROKOP_RELOAD_LOCK_DIR="$WORK/reload.lock" PROKOP_STOP_REQUESTED_FILE="$WORK/run/stop.requested" \
   PROKOP_NOTIFY_HEALTH_FILE="$WORK/health.json" PROKOP_NOTIFY_HOSTNAME_FILE="$WORK/hostname" \
   PROKOP_CRONTAB_FILE="$WORK/crontab" PROKOP_NOTIFY_CRONTAB="$WORK/bin/crontab" TMP_DIR="$WORK" \
-  PROKOP_HISTORY_FILE="$WORK/history.jsonl" PROKOP_NOTIFY_NO_FLUSH=1
+  PROKOP_HISTORY_FILE="$WORK/history.jsonl" PROKOP_NOTIFY_NO_FLUSH=1 \
+  PROKOP_NOTIFY_PERSIST_FILE="$WORK/persist/notify-sent.json"
 printf 'Flint2\n' >"$WORK/hostname"
 printf '{"overall":"ok","guard":{"active":false}}\n' >"$WORK/health.json"
 cat >"$WORK/bin/crontab" <<SH
@@ -82,7 +112,8 @@ queued() { find "$WORK/run/notify/queue" -name '*.json' 2>/dev/null | wc -l; }
 sent_count() { cat "$WORK/curl.log" 2>/dev/null | grep -c '^CHANNEL' || true; }
 reset() {
   rm -rf "$WORK/run" "$WORK"/curl.log "$WORK"/argv.log "$WORK"/logger.log "$WORK"/code.* "$WORK"/exit.* \
-    "$WORK"/body.* "$WORK/proxy-exit" "$WORK"/down.* "$WORK/clash-down" "$WORK"/meta.* "$WORK/history.jsonl"
+    "$WORK"/body.* "$WORK/proxy-exit" "$WORK"/down.* "$WORK/clash-down" "$WORK"/meta.* "$WORK/history.jsonl" \
+    "$WORK/system-exit" "$WORK"/dns.* "$WORK/no-nslookup" "$WORK/nslookup.log" "$WORK/persist" "$WORK/crontab"
   mkdir -p "$WORK/run"
   printf '0\n' >"$WORK/run/shutdown_correctly"
   cat >"$WORK/uci" <<UCI
@@ -223,6 +254,125 @@ grep -q '^PROXY http://127.0.0.1:4533' "$WORK/curl.log" || fail "the proxy route
 [ "$(grep -c '^PROXY $' "$WORK/curl.log")" -eq 2 ] || fail "both channels were not sent directly after the proxy"
 [ "$(manager status | jq -r .last.telegram.route)" = direct ] || fail "status does not name the route"
 
+# --- the direct route goes around Prokop's DNS and FakeIP (NTF-1) -----------
+# The router's resolver (dnsmasq, whose upstream is sing-box) answers with a
+# FakeIP address for a host in a rule's list: a request as the router's
+# traffic goes then reaches sing-box (simulated: it fails). The direct route
+# resolves with the bootstrap DNS server of the settings and pins curl to
+# the real address.
+reset
+setting bootstrap_dns_server 9.9.9.9
+printf '7' >"$WORK/system-exit"
+record start failure
+manager flush
+grep -q '^resolve = "api.telegram.org:443:149.154.167.220"$' "$WORK/curl.log" ||
+  fail "the direct route does not use the real address: $(grep -e '^resolve' -e '^PROXY' "$WORK/curl.log")"
+grep -q '^resolve = "ntfy.example:443:203.0.113.7"$' "$WORK/curl.log" || fail "the webhook host is not pinned"
+grep -q 'api.telegram.org 9.9.9.9$' "$WORK/nslookup.log" || fail "not resolved by the bootstrap server: $(cat "$WORK/nslookup.log")"
+grep -q ' 127\.0\.0\.1$' "$WORK/nslookup.log" && fail "the direct route asked the router's own resolver"
+grep -q '198\.18\.' "$WORK/curl.log" && fail "a FakeIP address was used"
+[ "$(jq '.outbox | length' "$WORK/run/notify/state.json")" -eq 0 ] || fail "the direct route did not deliver"
+status="$(manager status)"
+[ "$(printf '%s' "$status" | jq -r .last.telegram.route)/$(printf '%s' "$status" | jq -r .last.telegram.status)" = direct/ok ] ||
+  fail "status does not say the message went directly: $status"
+if grep -q -e "$TOKEN" -e 'prokop-secret-topic' "$WORK/argv.log" "$WORK/nslookup.log"; then
+  fail "a secret reached a command line"
+fi
+# A route that works as the router's traffic goes is not doubled.
+reset
+record start failure
+manager flush
+[ "$(sent_count)" -eq 2 ] || fail "a working route was retried directly: $(sent_count)"
+grep -q '^resolve' "$WORK/curl.log" && fail "the first attempt must go as the router's traffic goes"
+[ "$(manager status | jq -r .last.telegram.route)" = system ] || fail "the first route is not named system"
+[ -e "$WORK/nslookup.log" ] && fail "nothing needed resolving"
+# Without the settings' server: sing-box's default bootstrap server.
+reset
+printf '7' >"$WORK/system-exit"
+record start failure
+manager flush
+grep -q 'api.telegram.org 77.88.8.8$' "$WORK/nslookup.log" || fail "the default bootstrap server is not used"
+# Only FakeIP (a bootstrap server that is the router's resolver after all):
+# not sent to that address; the reason is dns, and the message waits.
+reset
+setting bootstrap_dns_server 192.168.1.1
+printf '198.18.0.9' >"$WORK/dns.192.168.1.1"
+printf '7' >"$WORK/system-exit"
+record start failure
+manager flush
+grep -q '^resolve' "$WORK/curl.log" && fail "a FakeIP answer was used"
+[ "$(manager status | jq -r .last.telegram.reason)" = dns ] || fail "a failed resolution is not reason dns"
+[ "$(jq '.outbox | length' "$WORK/run/notify/state.json")" -eq 2 ] || fail "the message does not wait for a retry"
+# No nslookup on the router: dns, no crash.
+reset
+: >"$WORK/no-nslookup"
+printf '7' >"$WORK/system-exit"
+record start failure
+manager flush
+[ "$(manager status | jq -r .last.webhook.reason)" = dns ] || fail "a missing nslookup is not reason dns"
+# The proxy route that fails goes directly as well, around Prokop.
+reset
+setting notify_via_proxy 1
+setting notify_via_proxy_section vpn
+printf '7' >"$WORK/proxy-exit"
+record start failure
+manager flush
+[ "$(grep -c '^resolve = ' "$WORK/curl.log")" -eq 2 ] || fail "the fallback of the proxy route is not around Prokop"
+
+# --- curl: no globbing, http(s) only, one status code (NTF-4) ----------------
+reset
+sed -i "s|^prokop.settings.notify_webhook_url=.*|prokop.settings.notify_webhook_url=https://ntfy.example/hook[1-5]|" "$WORK/uci"
+record start failure
+manager flush
+grep -q -- '--globoff' "$WORK/argv.log" || fail "curl globs the URL"
+grep -q -- '--proto =http,https' "$WORK/argv.log" || fail "curl may use other protocols"
+grep -q -- '--proto-redir =https' "$WORK/argv.log" || fail "a redirect may leave https"
+reset
+printf '200200200' >"$WORK/code.webhook"
+record start failure
+manager flush
+[ "$(manager status | jq -r .last.webhook.reason)" = bad_response ] || fail "a status that is not one code was taken: $(manager status)"
+[ "$(jq '[.outbox[] | select(.channel=="webhook")] | length' "$WORK/run/notify/state.json")" -eq 0 ] ||
+  fail "a garbled status is retried"
+
+# --- a long name is cut on a character boundary (NTF-3) ---------------------
+name="ABC$(printf 'Подключение%.0s' 1 2 3 4 5 6)"
+text="$(manager fixture-text "{\"kind\":\"node_down\",\"name\":\"$name\"}")"
+printf '%s' "$text" | node -e 'new TextDecoder("utf-8", { fatal: true }).decode(require("fs").readFileSync(0))' ||
+  fail "a cut name is not valid UTF-8: $text"
+printf '%s' "$text" | grep -q '…' || fail "the long name was not cut"
+reset
+printf '400' >"$WORK/code.telegram"
+printf '{"ok":false,"description":"Bad Request: text must be encoded in UTF-8"}' >"$WORK/body.telegram"
+out="$(manager test || true)"
+[ "$(printf '%s' "$out" | jq -r '.channels[] | select(.channel=="telegram") | .reason')" = bad_text ] ||
+  fail "a text Telegram refused as UTF-8 is not named: $out"
+
+# --- a channel that cannot be reached is tried once per run (NTF-6) ----------
+reset
+printf '7' >"$WORK/exit.telegram"
+record start failure
+manager flush
+record reload failure
+: >"$WORK/curl.log"
+manager flush
+# Two messages wait for Telegram: the first one fails for the network, the
+# second is not tried (the webhook still gets it).
+[ "$(grep -c 'CHANNEL telegram' "$WORK/curl.log")" -eq 2 ] ||
+  fail "a channel without network was tried more than once: $(grep -c 'CHANNEL telegram' "$WORK/curl.log")"
+[ "$(grep -c 'Перезагрузка Prokop завершилась ошибкой' "$WORK/curl.log")" -eq 1 ] ||
+  fail "a channel without network was tried for every message"
+[ "$(jq '[.outbox[] | select(.channel=="telegram")] | length' "$WORK/run/notify/state.json")" -eq 2 ] ||
+  fail "the messages not tried were lost"
+# Past the delivery budget the rest waits.
+: >"$WORK/curl.log"
+rm -f "$WORK/exit.telegram"
+PROKOP_NOTIFY_DELIVERY_BUDGET_SECONDS=0 manager flush
+[ "$(sent_count)" -eq 0 ] || fail "a run sent past its budget"
+[ "$(jq '.outbox | length' "$WORK/run/notify/state.json")" -eq 2 ] || fail "the messages past the budget were lost"
+manager flush
+[ "$(jq '.outbox | length' "$WORK/run/notify/state.json")" -eq 0 ] || fail "the waiting messages were not sent later"
+
 # --- rate limit: held back, then counted -----------------------------------
 reset
 export PROKOP_NOTIFY_RATE_MAX=1
@@ -290,6 +440,31 @@ reset
 printf '[{"sourceIndex":1,"expire":%d}]\n' $((now + 20 * 86400)) >"$WORK/meta.vpn"
 manager tick
 [ "$(sent_count)" -eq 0 ] || fail "an expiry far away was reported"
+
+# --- subscription warnings outlast a reboot; a renewal warns again (NTF-7) ---
+reset
+manager tick
+[ -e "$WORK/persist/notify-sent.json" ] && fail "the kept keys file was written with nothing to keep"
+printf '[{"sourceIndex":1,"expire":%d,"traffic":{"total":107374182400,"remaining":5368709120}}]\n' \
+  $((now + 2 * 86400 + 3600)) >"$WORK/meta.vpn"
+manager tick
+[ "$(sent_count)" -eq 2 ] || fail "the warnings were not sent: $(sent_count)"
+[ "$(stat -c %a "$WORK/persist/notify-sent.json")" = 600 ] || fail "the kept keys are not private"
+# A reboot: the runtime state on tmpfs is gone.
+rm -rf "$WORK/run/notify"
+: >"$WORK/curl.log"
+manager tick
+[ "$(sent_count)" -eq 0 ] || fail "a reboot sent the subscription warnings again"
+# Renewed with the same total and no expiry date: the traffic is fine, then
+# low again: warned again.
+printf '[{"sourceIndex":1,"traffic":{"total":107374182400,"remaining":5368709120}}]\n' >"$WORK/meta.vpn"
+manager tick
+printf '[{"sourceIndex":1,"traffic":{"total":107374182400,"remaining":107374182400}}]\n' >"$WORK/meta.vpn"
+manager tick
+: >"$WORK/curl.log"
+printf '[{"sourceIndex":1,"traffic":{"total":107374182400,"remaining":5368709120}}]\n' >"$WORK/meta.vpn"
+manager tick
+grep -q 'осталось 5% трафика' "$WORK/curl.log" || fail "a renewed subscription is not warned again"
 
 # --- a failed subscription update is queued by the update itself ------------
 reset

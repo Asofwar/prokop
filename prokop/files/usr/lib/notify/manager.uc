@@ -28,9 +28,17 @@
 // message says so. A channel that failed for a reason that may pass (no
 // network, the proxy down, HTTP 429 or 5xx) is retried by the next tick
 // until RETRY_SECONDS have passed; a refusal (a wrong token, an unknown
-// chat) is not retried and is shown by status. A message for the proxy
-// route that cannot get through the proxy is sent directly instead: the
-// event may be that very connection going down.
+// chat) is not retried and is shown by status.
+//
+// Routes: "proxy" through the connection of the chosen rule; "system" as the
+// router's own traffic goes, through dnsmasq and so through Prokop's rules
+// when the host is in one of their lists; "direct" around Prokop: the host
+// is resolved by the bootstrap DNS servers of the settings with nslookup
+// (not by dnsmasq, whose upstream is sing-box and may answer with FakeIP),
+// and curl connects to that real address, which Prokop's output chain does
+// not divert. A message that did not get through the proxy or the system
+// route for a reason of the network is sent directly: the event may be that
+// very connection, or sing-box, going down (NTF-1).
 
 let fs = require("fs");
 let common = require("core.common");
@@ -40,6 +48,8 @@ let singbox_constants = require("singbox.constants");
 let notify_config = require("notify.config");
 let queue = require("notify.queue");
 let cron_line = require("core.cron_line");
+let core_url = require("core.url");
+let core_ip = require("core.ip");
 
 const LIB_DIR = getenv("PROKOP_LIB") || "/usr/lib/prokop";
 const BIN = getenv("PROKOP_BIN") || "/usr/bin/prokop";
@@ -60,6 +70,14 @@ const TMP_DIR = getenv("TMP_DIR") || "/tmp";
 const CRON_MARKER = "# prokop-notify";
 // Tests: the health answer as a file, instead of asking the router.
 const HEALTH_FIXTURE = getenv("PROKOP_NOTIFY_HEALTH_FILE") || "";
+// The bootstrap DNS server sing-box uses when the settings name none
+// (singbox/generator.uc).
+const DEFAULT_BOOTSTRAP_DNS = "77.88.8.8";
+const NSLOOKUP_TIMEOUT = "5";
+const FAKEIP_INET4_RANGE = getenv("SB_FAKEIP_INET4_RANGE") || "198.18.0.0/15";
+// The subscription keys that were sent survive a reboot here (NTF-7): the
+// runtime state is on tmpfs. Written only when one is added or forgotten.
+const PERSIST_FILE = getenv("PROKOP_NOTIFY_PERSIST_FILE") || "/etc/prokop/notify-sent.json";
 
 const NODE_CHECK_SECONDS = int(getenv("PROKOP_NOTIFY_NODE_CHECK_SECONDS") || "300");
 const SUBSCRIPTION_CHECK_SECONDS = int(getenv("PROKOP_NOTIFY_SUBSCRIPTION_CHECK_SECONDS") || "3600");
@@ -74,6 +92,12 @@ const OUTBOX_MAX = 20;
 const LOCK_WAIT_MS = 10000;
 const CURL_CONNECT_TIMEOUT = "7";
 const CURL_MAX_TIME = "15";
+// One tick sends for at most this long; what is left waits for the next one
+// (NTF-6). A channel that failed for a reason of the network is not tried
+// again within the same run.
+const DELIVERY_BUDGET_SECONDS = int(getenv("PROKOP_NOTIFY_DELIVERY_BUDGET_SECONDS") || "60");
+// Connection probes running at once (each waits up to PROBE_TIMEOUT_MS).
+const PROBE_PARALLEL = 4;
 // A subscription with less than this share of its traffic left is reported
 // once.
 const TRAFFIC_LOW_PERCENT = 10;
@@ -122,10 +146,54 @@ function parse_json(text) {
 
 // ---- state -------------------------------------------------------------------
 
+// The sent keys of subscription warnings (expiry, traffic): weeks-long
+// windows that must outlast a reboot.
+function subscription_keys(sent_keys) {
+    let result = {};
+    for (let key, sent in common.object_or_empty(sent_keys))
+        if (index(key, "subscription_") == 0 && type(sent) == "array")
+            result[key] = sent;
+    return result;
+}
+
+function persisted_keys() {
+    let raw = fs.readfile(PERSIST_FILE, 65536);
+    return subscription_keys(raw != null ? parse_json(raw) : null);
+}
+
+// Written only when the keys changed: a warning sent or forgotten, a window
+// that ran out. A write that fails is logged; the keys stay in the runtime
+// state.
+function persist_keys(state) {
+    let sent = subscription_keys(state.sent_keys);
+    let text = sprintf("%J\n", sent);
+    let current = fs.readfile(PERSIST_FILE, 65536);
+    // Nothing to keep and nothing kept: no file (most routers never warn).
+    if (current === text || (current == null && length(keys(sent)) == 0))
+        return;
+    let dir = fs.dirname(PERSIST_FILE);
+    if (fs.stat(dir) == null)
+        fs.mkdir(dir, 0755);
+    let path = sprintf("%s.%d.tmp", PERSIST_FILE, clock()[1]);
+    let file = fs.open(path, "w", 0600);
+    let ok = file != null && file.write(text) != null;
+    if (file != null)
+        file.close();
+    if (!ok || !fs.rename(path, PERSIST_FILE)) {
+        fs.unlink(path);
+        log_message("could not keep the sent subscription warnings in " + PERSIST_FILE +
+            "; after a reboot they may be sent again", "warn");
+    }
+}
+
 function load_state() {
     let raw = fs.readfile(STATE_FILE);
     let value = raw == null || length(raw) > 262144 ? null : parse_json(raw);
     value = common.object_or_empty(value);
+    // A new boot (the state is on tmpfs): the subscription warnings already
+    // sent are not sent again.
+    if (raw == null)
+        value.sent_keys = { ...common.object_or_empty(value.sent_keys), ...persisted_keys() };
     for (let key in [ "sent_keys", "nodes", "service" ])
         value[key] = common.object_or_empty(value[key]);
     for (let key in [ "sent_times", "outbox" ])
@@ -184,10 +252,19 @@ function title() {
     return host != "" ? "Prokop · " + host : "Prokop";
 }
 
-// A display name from the configuration: printable, at most 64 characters.
+// A display name from the configuration: printable, at most 64 bytes. The
+// cut never splits a UTF-8 character (NTF-3): length and substr count
+// bytes, and Telegram refuses a text that is not valid UTF-8, which would
+// lose the whole message with every event in it.
 function display_name(value) {
     value = replace(as_string(value), /[[:cntrl:]]/g, " ");
-    return length(value) > 64 ? substr(value, 0, 64) + "…" : value;
+    if (length(value) <= 64)
+        return value;
+    let cut = 64;
+    // A continuation byte (10xxxxxx) at the cut: back to the lead byte.
+    while (cut > 0 && (ord(value, cut) & 0xC0) == 0x80)
+        cut--;
+    return substr(value, 0, cut) + "…";
 }
 
 function date_text(epoch) {
@@ -321,7 +398,11 @@ function write_private(suffix, text) {
 }
 
 // One request. config_lines: the curl config (url and data, which may hold
-// secrets); args: what may be on the command line. Returns { code, exit }.
+// secrets); args: what may be on the command line; proxy: the proxy
+// address, or null for none. Returns { code, exit }. No URL globbing: a
+// [1-5] or {a,b} in a webhook URL is part of the address, not five
+// requests (NTF-4); only http(s), and a redirect (curl follows none here)
+// could only go to https.
 function curl_request(config_lines, args, proxy) {
     let config_path = write_private("cfg", join("\n", config_lines) + "\n");
     let response_path = config_path != null ? write_private("out", "") : null;
@@ -329,7 +410,8 @@ function curl_request(config_lines, args, proxy) {
         if (config_path != null) fs.unlink(config_path);
         return { exit: -1, code: 0, body: "" };
     }
-    let command = [ "curl", "-sS", "--connect-timeout", CURL_CONNECT_TIMEOUT, "--max-time", CURL_MAX_TIME,
+    let command = [ "curl", "-sS", "--globoff", "--proto", "=http,https", "--proto-redir", "=https",
+        "--connect-timeout", CURL_CONNECT_TIMEOUT, "--max-time", CURL_MAX_TIME,
         "-o", response_path, "-w", "%{http_code}", "-K", config_path ];
     if (proxy != null)
         push(command, "-x", "http://" + proxy);
@@ -341,7 +423,9 @@ function curl_request(config_lines, args, proxy) {
     let body = as_string(fs.readfile(response_path, 4096));
     fs.unlink(config_path);
     fs.unlink(response_path);
-    return { exit: result.status, code: int(trim(result.output)), body };
+    // Exactly one HTTP status, or none that can be trusted.
+    let code_text = trim(result.output);
+    return { exit: result.status, code: match(code_text, /^[0-9]{3}$/) != null ? int(code_text) : -1, body };
 }
 
 // ok, or a reason and whether it may pass.
@@ -351,6 +435,8 @@ function classify(channel, response) {
     if (response.exit != 0)
         return { status: "failed", reason: "network", retry: true };
     let code = response.code;
+    if (code < 0)
+        return { status: "failed", reason: "bad_response", retry: false };
     if (code >= 200 && code < 300)
         return { status: "ok" };
     if (channel == "telegram") {
@@ -362,12 +448,17 @@ function classify(channel, response) {
             return { status: "failed", retry: false,
                 reason: index(description, "chat not found") >= 0 ? "chat_not_found" :
                     index(description, "blocked") >= 0 || index(description, "kicked") >= 0 ? "bot_blocked" :
+                    index(description, "utf-8") >= 0 ? "bad_text" :
                     code == 403 ? "forbidden" : "bad_request" };
         }
     }
     if (code == 429 || code >= 500 || code == 0)
         return { status: "failed", reason: "http_" + code, retry: true };
     return { status: "failed", reason: "http_" + code, retry: false };
+}
+
+function channel_url(config, channel) {
+    return channel == "telegram" ? TELEGRAM_API : config.webhook.url;
 }
 
 function channel_request(config, channel, message) {
@@ -402,22 +493,147 @@ function channel_request(config, channel, message) {
     };
 }
 
-// Through the proxy when one is set, directly when that did not get
-// through. Returns the result with the route it took.
+// ---- resolving around Prokop (the direct route) -----------------------------
+
+function ipv4_number(address) {
+    let parts = split(as_string(address), ".");
+    if (length(parts) != 4)
+        return null;
+    let value = 0;
+    for (let part in parts) {
+        if (match(part, /^[0-9]{1,3}$/) == null || int(part) > 255)
+            return null;
+        value = value * 256 + int(part);
+    }
+    return value;
+}
+
+function ipv4_in_cidr(address, cidr) {
+    let pieces = split(as_string(cidr), "/");
+    let value = ipv4_number(address), base = ipv4_number(pieces[0]);
+    let bits = int(pieces[1] ?? "32");
+    if (value == null || base == null || bits < 0 || bits > 32)
+        return false;
+    let size = 1;
+    for (let i = 0; i < 32 - bits; i++)
+        size *= 2;
+    return int(value / size) == int(base / size);
+}
+
+// An address the direct route may connect to: not a FakeIP of sing-box
+// (Prokop's output chain would send it into sing-box), not a unique local
+// IPv6 address (the FakeIP IPv6 range is one), not loopback or unspecified.
+function usable_address(address) {
+    let family = core_ip.ip_family(address);
+    if (family == 4)
+        return !ipv4_in_cidr(address, FAKEIP_INET4_RANGE) && !ipv4_in_cidr(address, "127.0.0.0/8") &&
+            !ipv4_in_cidr(address, "0.0.0.0/8");
+    if (family == 6) {
+        let lower = lc(address);
+        return match(lower, /^f[cd][0-9a-f]{0,2}:/) == null && lower != "::1" && lower != "::";
+    }
+    return false;
+}
+
+// The bootstrap DNS servers of the settings that are plain addresses off the
+// router itself (a resolver on the router is dnsmasq or sing-box).
+function bootstrap_servers() {
+    let result = [];
+    let configured = uci_core.get(CONFIG_NAME + ".settings.bootstrap_dns_server");
+    if (type(configured) != "array")
+        configured = split(trim(as_string(configured)), /[ \t\r\n]+/);
+    for (let value in configured) {
+        let server = core_url.host(value);
+        if (core_ip.valid_ip(server) && usable_address(server) && index(result, server) < 0)
+            push(result, server);
+    }
+    if (length(result) == 0)
+        push(result, DEFAULT_BOOTSTRAP_DNS);
+    return result;
+}
+
+// The answers of BusyBox nslookup (or a full one) after the "Name:" line.
+function nslookup_addresses(output) {
+    let result = [], name_seen = false;
+    for (let line in split(as_string(output), "\n")) {
+        line = trim(line);
+        if (index(line, "Name:") == 0) {
+            name_seen = true;
+            continue;
+        }
+        if (!name_seen)
+            continue;
+        let matched = match(line, /^Address([ \t]+[0-9]+)?:[ \t]*(.*)$/);
+        if (matched == null)
+            continue;
+        let address = split(trim(as_string(matched[2])), /[ \t]+/)[0];
+        if (core_ip.valid_ip(address))
+            push(result, address);
+    }
+    return result;
+}
+
+// The real address of the host of url, from the bootstrap DNS servers:
+// { address } (null for a host that is an address already), or { error }.
+// IPv4 first: the router's IPv6 uplink is less often there.
+function resolve_around_prokop(url) {
+    let host = core_url.host(url);
+    if (host == "")
+        return { error: "dns" };
+    if (core_ip.valid_ip(host))
+        return usable_address(host) ? { address: null } : { error: "dns" };
+    if (match(host, /^[A-Za-z0-9._-]{1,253}$/) == null)
+        return { error: "dns" };
+    for (let server in bootstrap_servers()) {
+        let result = run_capture([ "nslookup", "-timeout=" + NSLOOKUP_TIMEOUT, host, server ]);
+        let fallback = null;
+        // BusyBox exits non-zero for a missing AAAA next to a usable A
+        // answer: the answers decide, not the exit status.
+        for (let address in nslookup_addresses(result.output)) {
+            if (!usable_address(address))
+                continue;
+            if (core_ip.ip_family(address) == 4)
+                return { address };
+            fallback ??= address;
+        }
+        if (fallback != null)
+            return { address: fallback };
+    }
+    return { error: "dns" };
+}
+
+// The curl config line that pins the host of url to address.
+function resolve_line(url, address) {
+    let port = core_url.port(url);
+    if (port == "")
+        port = core_url.scheme(url) == "http" ? "80" : "443";
+    let target = core_ip.ip_family(address) == 6 ? "[" + address + "]" : address;
+    return "resolve = " + curl_quote(core_url.host(url) + ":" + port + ":" + target);
+}
+
+function send_direct(config, channel, request) {
+    let url = channel_url(config, channel);
+    let resolved = resolve_around_prokop(url);
+    if (resolved.error != null)
+        return { status: "failed", reason: resolved.error, retry: true, route: "direct" };
+    let lines = resolved.address != null ? [ ...request.lines, resolve_line(url, resolved.address) ] : request.lines;
+    let result = classify(channel, curl_request(lines, request.args, null));
+    result.route = "direct";
+    return result;
+}
+
+// Through the proxy when one is set, else as the router's traffic goes;
+// directly around Prokop when that did not get through for a reason of the
+// network. Returns the result with the route it took.
 function send_channel(config, channel, message) {
     let request = channel_request(config, channel, message);
     if (request.lines == null)
         return { status: "failed", reason: "local_error", retry: true };
-    let result = null;
-    if (config.proxy != null) {
-        result = classify(channel, curl_request(request.lines, request.args, config.proxy.address));
-        result.route = "proxy";
-    }
-    if (result == null || (result.status != "ok" && result.reason == "network")) {
-        let direct = classify(channel, curl_request(request.lines, request.args, null));
-        direct.route = "direct";
-        result = direct;
-    }
+    let result = classify(channel, curl_request(request.lines, request.args,
+        config.proxy != null ? config.proxy.address : null));
+    result.route = config.proxy != null ? "proxy" : "system";
+    if (result.status != "ok" && result.reason == "network")
+        result = send_direct(config, channel, request);
     for (let path in request.cleanup)
         fs.unlink(path);
     return result;
@@ -497,14 +713,26 @@ function compose(config, state, events) {
     return { lines, urgent, count };
 }
 
+// Oldest first. A channel that failed for a reason of the network (or of
+// resolving around Prokop) is not tried again in this run: its other
+// messages would wait out the same timeouts (NTF-6). Past the delivery
+// budget the rest waits for the next tick. Nothing that waits is lost: a
+// message is dropped only past RETRY_SECONDS or on a refusal, and both are
+// logged.
 function deliver_outbox(config, state) {
     let t = now();
+    let started = clock()[0];
     let kept = [];
+    let cut = {};
     let channels = active_channels(config);
     for (let item in state.outbox) {
         if (type(item) != "object" || index(channels, item.channel) < 0 || t - int(item.created) > RETRY_SECONDS) {
             if (type(item) == "object" && index(channels, item.channel) >= 0)
                 log_message("a message to " + item.channel + " was not delivered in time and is dropped", "warn");
+            continue;
+        }
+        if (cut[item.channel] || clock()[0] - started >= DELIVERY_BUDGET_SECONDS) {
+            push(kept, item);
             continue;
         }
         let result = send_channel(config, item.channel, item.message);
@@ -513,11 +741,16 @@ function deliver_outbox(config, state) {
         state.last[item.channel] = { time: t, status: result.status, reason: result.reason, route: result.route };
         if (result.status == "ok")
             continue;
+        if (result.reason == "network" || result.reason == "dns")
+            cut[item.channel] = true;
         if (result.retry)
             push(kept, item);
         else
             log_message("a message to " + item.channel + " was refused (" + result.reason + ")", "warn");
     }
+    if (length(kept) > OUTBOX_MAX)
+        log_message(sprintf("%d undelivered messages are dropped: no more than %d wait for a retry",
+            length(kept) - OUTBOX_MAX, OUTBOX_MAX), "warn");
     state.outbox = length(kept) > OUTBOX_MAX ? slice(kept, length(kept) - OUTBOX_MAX) : kept;
 }
 
@@ -582,14 +815,47 @@ function clash(args) {
     return { status: result.status, value: parse_json(result.output) };
 }
 
-// "up", "down" or "unknown" (the controller did not answer the test).
-function probe(tag) {
-    let result = clash([ "get_proxy_latency", tag, "" + PROBE_TIMEOUT_MS ]);
-    if (result.status == 0 && type(result.value) == "object" && +result.value.delay > 0)
+// "up", "down" or "unknown" (the controller did not answer the test), from
+// the answer of clash_api get_proxy_latency.
+function probe_result(status, value) {
+    if (status == 0 && type(value) == "object" && +value.delay > 0)
         return "up";
-    if (type(result.value) == "object" && result.value.error == "latency_failed")
+    if (type(value) == "object" && value.error == "latency_failed")
         return "down";
     return "unknown";
+}
+
+// The probes of tags, PROBE_PARALLEL at a time: one after another, ten
+// connections that do not answer would hold the tick for 50 s. Each probe
+// writes its answer and exit status to a private file. Returns tag ->
+// result.
+function probe_all(tags) {
+    let results = {};
+    for (let start = 0; start < length(tags); start += PROBE_PARALLEL) {
+        let batch = slice(tags, start, start + PROBE_PARALLEL);
+        let jobs = [], script = "";
+        for (let tag in batch) {
+            let item = private_file("probe");
+            if (item == null) {
+                results[tag] = "unknown";
+                continue;
+            }
+            item.file.close();
+            push(jobs, { tag, path: item.path });
+            script += "(" + common.shell_command([ BIN, "clash_api", "get_proxy_latency", tag, "" + PROBE_TIMEOUT_MS ]) +
+                " >" + common.shell_quote(item.path) + " 2>/dev/null; echo \"$?\" >" +
+                common.shell_quote(item.path + ".rc") + ") </dev/null & ";
+        }
+        if (length(jobs) > 0)
+            system(script + "wait");
+        for (let job in jobs) {
+            let rc = trim(as_string(fs.readfile(job.path + ".rc", 16)));
+            results[job.tag] = probe_result(rc == "" ? -1 : int(rc), parse_json(fs.readfile(job.path, 65536)));
+            fs.unlink(job.path);
+            fs.unlink(job.path + ".rc");
+        }
+    }
+    return results;
 }
 
 function node_check(config, state, events) {
@@ -616,14 +882,19 @@ function node_check(config, state, events) {
         push(events, { category: "node", kind: "service_up" });
     state.service = {};
     let seen = {};
+    let checked = [];
     for (let section in connection_sections()) {
+        let tag = singbox_constants.outbound_tag(as_string(section[".name"]));
+        if (type(proxies.value.proxies[tag]) == "object")
+            push(checked, { section, tag });
+    }
+    let results = probe_all(map(checked, (item) => item.tag));
+    for (let item in checked) {
+        let section = item.section;
         let name = as_string(section[".name"]);
-        let tag = singbox_constants.outbound_tag(name);
-        if (type(proxies.value.proxies[tag]) != "object")
-            continue;
         seen[name] = true;
         let node = common.object_or_empty(state.nodes[name]);
-        let result = probe(tag);
+        let result = results[item.tag] ?? "unknown";
         if (result == "up") {
             if (node.down)
                 push(events, { category: "node", kind: "node_up", section: name, name: section_label(section) });
@@ -651,8 +922,22 @@ function subscription_sections() {
     return result;
 }
 
+// The traffic warnings of a source are sent once per period: a key holds the
+// total and the expiry, and is forgotten once the traffic is no longer low
+// (a renewal with the same total and no expiry date, NTF-7).
+function forget_traffic_keys(state, base) {
+    for (let kind in [ "subscription_traffic_low", "subscription_traffic_exhausted" ]) {
+        let prefix = sprintf("%s:%s:%s:", kind, base.section, as_string(base.source));
+        for (let key in keys(state.sent_keys))
+            if (index(key, prefix) == 0)
+                delete state.sent_keys[key];
+    }
+}
+
 function subscription_check(config, state, events) {
-    if (!notify_config.wants(config, "subscription"))
+    // Like the connection checks: nothing while Prokop is stopped (its cron
+    // line may be there for a retry only).
+    if (!notify_config.wants(config, "subscription") || !prokop_should_run())
         return;
     let t = now();
     let warn_seconds = config.expire_days * 86400;
@@ -684,11 +969,14 @@ function subscription_check(config, state, events) {
             let total = +traffic.total;
             if (total > 0 && traffic.remaining != null) {
                 let remaining = +traffic.remaining;
+                let mark = sprintf("%d:%d", total, expire);
                 if (remaining <= 0)
-                    push(events, { ...base, kind: "subscription_traffic_exhausted", mark: sprintf("%d", total) });
+                    push(events, { ...base, kind: "subscription_traffic_exhausted", mark });
                 else if (remaining * 100 / total < TRAFFIC_LOW_PERCENT)
                     push(events, { ...base, kind: "subscription_traffic_low", total, remaining,
-                        percent: int(remaining * 100 / total), mark: sprintf("%d", total) });
+                        percent: int(remaining * 100 / total), mark });
+                else
+                    forget_traffic_keys(state, base);
             }
         }
     }
@@ -726,6 +1014,7 @@ function flush(with_checks) {
         }
     }
     process_events(config, state, events);
+    persist_keys(state);
     save_state(state);
     release_lock(lock);
     return 0;
