@@ -27,12 +27,29 @@ function componentName(component: Prokop.ComponentName): string {
   }
 }
 
+// A success that left something undone: TorrServer installed, but its
+// recommended settings did not take (TS-11). The toast warns instead.
+export function componentActionSuccessIsPartial(
+  result: Pick<Prokop.ComponentActionResult, 'component' | 'settings_applied'>,
+): boolean {
+  return result.component === 'torrserver' && result.settings_applied === 0;
+}
+
 // The success toast is built from the component and the action: the
 // backend message is English prose meant for logs (UC-130).
 export function componentActionSuccessText(
-  result: Pick<Prokop.ComponentActionResult, 'component' | 'action' | 'status'>,
+  result: Pick<
+    Prokop.ComponentActionResult,
+    'component' | 'action' | 'status' | 'settings_applied'
+  >,
 ): string {
   const { component, action } = result;
+
+  if (componentActionSuccessIsPartial(result)) {
+    return _(
+      'TorrServer has been installed, but the recommended settings were not applied. Apply them with the button on the card',
+    );
+  }
 
   if (component === 'prokop' && result.status === 'recovered') {
     return _(
@@ -73,13 +90,84 @@ export function componentActionSuccessText(
   return _('Action completed');
 }
 
-// TorrServer's failures (components/action.uc install_torrserver and
-// remove_torrserver) in the UI's language: the backend writes English for
-// the log. Any other message is returned unchanged.
+// TorrServer's failures (components/action.uc install_torrserver,
+// start_torrserver, apply_torrserver_settings, remove_torrserver and
+// set_torrserver_direct) in the UI's language: the backend writes English
+// for the log. Any other message is returned unchanged.
 const TORRSERVER_FAILURES: Array<
   [RegExp, (match: RegExpMatchArray) => string]
 > = [
   [/^TorrServer is not installed$/, () => _('TorrServer is not installed')],
+  [
+    /^TorrServer service is not available in this Prokop build$/,
+    () => _('This Prokop build cannot install TorrServer'),
+  ],
+  [
+    /^Failed to read TorrServer paths$/,
+    () => _('Failed to read where TorrServer is installed'),
+  ],
+  [
+    /^Failed to create (\/\S*)$/,
+    (m) => _('Failed to create the folder %s').replace('%s', m[1]),
+  ],
+  [
+    /^Failed to stage TorrServer on the router's storage/,
+    () =>
+      _(
+        "Failed to save TorrServer on the router's storage; nothing was installed",
+      ),
+  ],
+  [
+    /^Failed to keep the installed TorrServer aside for the update/,
+    () =>
+      _(
+        'Failed to set the installed TorrServer aside for the update; it runs on unchanged',
+      ),
+  ],
+  [
+    /^Failed to install TorrServer; the previous version was restored$/,
+    () => _('Failed to install TorrServer; the previous version was restored'),
+  ],
+  [
+    /^Failed to install TorrServer; the previous version could not be restored$/,
+    () =>
+      _(
+        'Failed to install TorrServer, and the previous version could not be restored',
+      ),
+  ],
+  [/^Failed to install TorrServer$/, () => _('Failed to install TorrServer')],
+  [/^Failed to remove TorrServer$/, () => _('Failed to remove TorrServer')],
+  [
+    /^TorrServer (\S+) did not start$/,
+    (m) => _('TorrServer %s did not start').replace('%s', m[1]),
+  ],
+  [
+    /^TorrServer Direct service is not available$/,
+    () => _('This Prokop build has no direct routing for TorrServer'),
+  ],
+  [
+    /^This firmware does not provide kmod-nft-socket/,
+    () =>
+      _(
+        'This firmware has no kmod-nft-socket package, which direct routing for TorrServer needs',
+      ),
+  ],
+  [/^TorrServer is not running$/, () => _('TorrServer is not running')],
+  [
+    /^TorrServer does not have a dedicated cgroup$/,
+    () =>
+      _(
+        'TorrServer does not run in its own service group. Install TorrServer from Prokop to use direct routing for it.',
+      ),
+  ],
+  [
+    /^Failed to save TorrServer Direct settings$/,
+    () => _('Failed to save the direct routing setting for TorrServer'),
+  ],
+  [
+    /^Failed to apply TorrServer Direct settings$/,
+    () => _('Failed to apply direct routing for TorrServer'),
+  ],
   [
     /^TorrServer publishes no build for this router's CPU$/,
     () => _("TorrServer publishes no build for this router's CPU"),

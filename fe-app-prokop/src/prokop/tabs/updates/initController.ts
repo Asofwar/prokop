@@ -34,6 +34,7 @@ import {
 import { shouldApplyCompletedComponentActionResult } from './componentActionCompletion';
 import {
   componentActionFailureText,
+  componentActionSuccessIsPartial,
   componentActionSuccessText,
 } from './componentActionToast';
 import {
@@ -656,7 +657,11 @@ async function applyCompletedComponentAction({
   }
 
   if (notify) {
-    showToast(componentActionSuccessText(result), 'success');
+    if (componentActionSuccessIsPartial(result)) {
+      showToast(componentActionSuccessText(result), 'warning', 8000);
+    } else {
+      showToast(componentActionSuccessText(result), 'success');
+    }
   }
 
   void refreshSystemInfoAfterMutation();
@@ -1185,9 +1190,11 @@ function getComponentCards(): ComponentCard[] {
         },
       ];
 
+  // Beside another TorrServer, Prokop's is neither started nor given
+  // settings: the backend refuses both (TS-10).
   const torrserverActions: ComponentActionButton[] = torrserverInstalled
     ? [
-        ...(torrserverServiceRunning
+        ...(torrserverServiceRunning || torrserverForeign
           ? []
           : [
               {
@@ -1210,7 +1217,7 @@ function getComponentCards(): ComponentCard[] {
           component: 'torrserver',
           action: 'remove',
         },
-        ...(torrserverServiceRunning
+        ...(torrserverServiceRunning && !torrserverForeign
           ? [
               {
                 key: 'torrserverApplySettings' as const,
@@ -1418,11 +1425,15 @@ function getComponentCards(): ComponentCard[] {
       releaseUrl: 'https://github.com/YouROK/TorrServer/releases',
       actions: torrserverActions,
       note:
-        !systemInfoLoading && !torrserverInstalled && torrserverForeign
-          ? _(
-              'Another TorrServer is installed or running on this router. Prokop does not replace it; remove it first to install TorrServer from Prokop.',
-            )
-          : undefined,
+        systemInfoLoading || !torrserverForeign
+          ? undefined
+          : torrserverInstalled
+            ? _(
+                'Another TorrServer runs on this router. Prokop does not start its own TorrServer or change settings while it runs; stop the other one first.',
+              )
+            : _(
+                'Another TorrServer is installed or running on this router. Prokop does not replace it; remove it first to install TorrServer from Prokop.',
+              ),
       link: torrserverWebUrl
         ? { href: torrserverWebUrl, text: _('Open TorrServer') }
         : undefined,

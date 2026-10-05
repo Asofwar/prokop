@@ -100,6 +100,7 @@ case "$url" in
   http://127.0.0.1:8090/echo) src="$TEST_WORK/echo" ;;
   http://127.0.0.1:8090/settings)
     [ -f "$TEST_WORK/echo" ] || exit 7
+    [ ! -f "$TEST_WORK/settings-fail" ] || exit 22
     printf '%s\n' "$(cat "$data")" >>"$TEST_WORK/settings-requests"
     exec node -e '
       const fs = require("fs");
@@ -241,6 +242,7 @@ expect_failure "check without TorrServer" "TorrServer is not installed"
 
 action torrserver install
 expect_success "fresh install"
+[ "$(field settings_applied)" = 1 ] || fail "a fresh install must report the applied settings: $(cat "$WORK/out")"
 [ "$(field current_version)" = MatriX.145 ] || fail "install must report the installed version: $(cat "$WORK/out")"
 bin_reports MatriX.145 "fresh install"
 cmp -s "$BIN" "$FIX/asset/TorrServer-linux-arm64" || fail "the installed binary is not the published asset"
@@ -514,6 +516,19 @@ expect_success "install over a kept database"
 [ ! -s "$WORK/settings-requests" ] || fail "an install over a kept database must not touch its settings"
 action torrserver remove
 expect_success "remove after the reinstall"
+
+# A fresh install whose settings did not take: the install stands, and the
+# response says so for the UI's warning (TS-11).
+rm -rf "$TS_DIR/data" "$WORK/ts-settings.json"
+: >"$WORK/settings-fail"
+action torrserver install
+expect_success "fresh install whose settings did not take"
+[ "$(field settings_applied)" = 0 ] || fail "the response must say the settings were not applied: $(cat "$WORK/out")"
+rm -f "$WORK/settings-fail"
+action torrserver start
+[ "$(field settings_applied)" = undefined ] || fail "an action that does not apply settings must not report them: $(cat "$WORK/out")"
+action torrserver remove
+expect_success "remove after the fresh install"
 
 # --- 8. A TorrServer installed by other means ----------------------------------------
 # One that runs from elsewhere.

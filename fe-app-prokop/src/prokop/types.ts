@@ -1148,6 +1148,9 @@ export namespace Prokop {
     exit_code?: number | null;
     // Why the action did not succeed (components/action.uc, UC-119).
     reason?: string;
+    // A fresh TorrServer took the recommended settings (1) or not (0);
+    // absent when the action did not apply them (TS-11).
+    settings_applied?: 0 | 1;
     // What the worker reported doing (components/progress.uc).
     progress?: ComponentActionProgress | null;
     // The router's clock when it answered (seconds).

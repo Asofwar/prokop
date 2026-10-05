@@ -485,6 +485,9 @@ msgstr "На роутере уже установлен или запущен д
 msgid "Another TorrServer is installed or running on this router. Prokop does not replace it; remove it first to install TorrServer from Prokop."
 msgstr "На роутере уже установлен или запущен другой TorrServer. Prokop его не заменяет: удалите его, чтобы установить TorrServer из Prokop."
 
+msgid "Another TorrServer runs on this router. Prokop does not start its own TorrServer or change settings while it runs; stop the other one first."
+msgstr "На роутере работает другой TorrServer. Пока он работает, Prokop не запускает свой TorrServer и не меняет настройки; сначала остановите другой."
+
 msgid "Answer of the router DNS"
 msgstr "Ответ DNS роутера"
 
@@ -814,6 +817,9 @@ msgstr "Путь к файлу кэша не может быть пустым"
 
 msgid "Cache: an eighth of the router memory, 32 to 256 MB"
 msgstr "Кэш: восьмая часть памяти роутера, от 32 до 256 МБ"
+
+msgid "Cache: %s MB, an eighth of the router memory"
+msgstr "Кэш: %s МБ, восьмая часть памяти роутера"
 
 msgid "Calculated"
 msgstr "Расчёт"
@@ -1859,11 +1865,41 @@ msgstr "Не удалось создать отчёт для поддержки"
 msgid "Failed to download TorrServer"
 msgstr "Не удалось скачать TorrServer"
 
+msgid "Failed to apply direct routing for TorrServer"
+msgstr "Не удалось применить прямую маршрутизацию TorrServer"
+
+msgid "Failed to install TorrServer"
+msgstr "Не удалось установить TorrServer"
+
+msgid "Failed to install TorrServer, and the previous version could not be restored"
+msgstr "Не удалось установить TorrServer, и прежнюю версию восстановить не удалось"
+
+msgid "Failed to install TorrServer; the previous version was restored"
+msgstr "Не удалось установить TorrServer; прежняя версия восстановлена"
+
+msgid "Failed to create the folder %s"
+msgstr "Не удалось создать папку %s"
+
 msgid "Failed to execute"
 msgstr "Не удалось выполнить"
 
 msgid "Failed to read the latest TorrServer release. Check the internet connection and try again"
 msgstr "Не удалось получить последний выпуск TorrServer. Проверьте доступ в интернет и повторите"
+
+msgid "Failed to read where TorrServer is installed"
+msgstr "Не удалось узнать, куда установлен TorrServer"
+
+msgid "Failed to remove TorrServer"
+msgstr "Не удалось удалить TorrServer"
+
+msgid "Failed to save TorrServer on the router's storage; nothing was installed"
+msgstr "Не удалось сохранить TorrServer в памяти роутера; ничего не установлено"
+
+msgid "Failed to save the direct routing setting for TorrServer"
+msgstr "Не удалось сохранить настройку прямой маршрутизации TorrServer"
+
+msgid "Failed to set the installed TorrServer aside for the update; it runs on unchanged"
+msgstr "Не удалось отложить установленный TorrServer для обновления; он работает без изменений"
 
 msgid "Failed to save URLTest settings"
 msgstr "Не удалось сохранить настройки URLTest"
@@ -2038,6 +2074,9 @@ msgstr "Таймаут простоя"
 
 msgid "If the VPN kill-switch is enabled, its sections stay blocked until Prokop is started."
 msgstr "Если включён VPN kill-switch, его секции остаются заблокированными, пока Prokop не запущен."
+
+msgid "If a setting changes, TorrServer restarts its torrents: playback stops for a few seconds"
+msgstr "Если настройка меняется, TorrServer перезапускает торренты: просмотр прервётся на несколько секунд"
 
 msgid "ignored: %s is used instead"
 msgstr "не используется: вместо него используется %s"
@@ -5171,6 +5210,15 @@ msgstr "Эту стратегию недавно откатывали; она ж
 msgid "This TorrServer was not installed by Prokop; Prokop left it as it is"
 msgstr "Этот TorrServer установлен не через Prokop; Prokop оставил его как есть"
 
+msgid "This Prokop build cannot install TorrServer"
+msgstr "Эта сборка Prokop не умеет устанавливать TorrServer"
+
+msgid "This firmware has no kmod-nft-socket package, which direct routing for TorrServer needs"
+msgstr "В этой прошивке нет пакета kmod-nft-socket, нужного для прямой маршрутизации TorrServer"
+
+msgid "This Prokop build has no direct routing for TorrServer"
+msgstr "В этой сборке Prokop нет прямой маршрутизации для TorrServer"
+
 msgid "Through rules"
 msgstr "Через правила"
 
@@ -5204,6 +5252,9 @@ msgstr "Верхний уровень имеет самый высокий пр�
 msgid "TorrServer %s did not start and was removed"
 msgstr "TorrServer %s не запустился и был удалён"
 
+msgid "TorrServer %s did not start"
+msgstr "TorrServer %s не запустился"
+
 msgid "TorrServer %s did not start, and the previous version %s did not start again either"
 msgstr "TorrServer %s не запустился, и прежняя версия %s тоже не запустилась"
 
@@ -5219,8 +5270,14 @@ msgstr "Прямой TorrServer"
 msgid "TorrServer does not run in its own service group. Install TorrServer from Prokop to use direct routing for it."
 msgstr "TorrServer запущен не в отдельной группе сервиса. Установите TorrServer из Prokop, чтобы использовать для него прямую маршрутизацию."
 
+msgid "TorrServer has been installed, but the recommended settings were not applied. Apply them with the button on the card"
+msgstr "TorrServer установлен, но рекомендуемые настройки не применились. Примените их кнопкой в карточке"
+
 msgid "TorrServer is not installed"
 msgstr "TorrServer не установлен"
+
+msgid "TorrServer is not running"
+msgstr "TorrServer не запущен"
 
 msgid "TorrServer is stopped and its program is removed. Its settings and torrent list stay on the router."
 msgstr "TorrServer будет остановлен, его программа удалена. Настройки и список торрентов останутся на роутере."
@@ -5359,6 +5416,9 @@ msgstr "Без обхода нестабильно; найдена стабил�
 
 msgid "Up to 8 domains; exactly these are checked."
 msgstr "До 8 доменов; проверяются именно они."
+
+msgid "UPnP off: TorrServer does not open ports on the router"
+msgstr "UPnP выключен: TorrServer не открывает порты на роутере"
 
 msgid "Update"
 msgstr "Обновить"

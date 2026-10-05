@@ -674,6 +674,10 @@ msgstr ""
 msgid "Another TorrServer is installed or running on this router. Prokop does not replace it; remove it first to install TorrServer from Prokop."
 msgstr ""
 
+#: src/prokop/tabs/updates/initController.ts
+msgid "Another TorrServer runs on this router. Prokop does not start its own TorrServer or change settings while it runs; stop the other one first."
+msgstr ""
+
 #: src/prokop/tabs/diagnostic/siteCheck.ts:140
 msgid "Answer of the router DNS"
 msgstr ""
@@ -2660,6 +2664,26 @@ msgstr ""
 msgid "Failed to download TorrServer"
 msgstr ""
 
+#: src/prokop/tabs/updates/componentActionToast.ts
+msgid "Failed to apply direct routing for TorrServer"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts
+msgid "Failed to install TorrServer"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts
+msgid "Failed to install TorrServer, and the previous version could not be restored"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts
+msgid "Failed to install TorrServer; the previous version was restored"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts
+msgid "Failed to create the folder %s"
+msgstr ""
+
 #: src/prokop/methods/shell/index.ts:192
 #: src/prokop/methods/shell/index.ts:198
 #: src/prokop/tabs/updates/initController.ts:688
@@ -2672,6 +2696,26 @@ msgstr ""
 
 #: src/prokop/tabs/updates/componentActionToast.ts:90
 msgid "Failed to read the latest TorrServer release. Check the internet connection and try again"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts
+msgid "Failed to read where TorrServer is installed"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts
+msgid "Failed to remove TorrServer"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts
+msgid "Failed to save TorrServer on the router's storage; nothing was installed"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts
+msgid "Failed to save the direct routing setting for TorrServer"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts
+msgid "Failed to set the installed TorrServer aside for the update; it runs on unchanged"
 msgstr ""
 
 #: src/prokop/tabs/dashboard/initController.ts:1428
@@ -7345,6 +7389,18 @@ msgstr ""
 msgid "This TorrServer was not installed by Prokop; Prokop left it as it is"
 msgstr ""
 
+#: src/prokop/tabs/updates/componentActionToast.ts
+msgid "This Prokop build cannot install TorrServer"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts
+msgid "This firmware has no kmod-nft-socket package, which direct routing for TorrServer needs"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts
+msgid "This Prokop build has no direct routing for TorrServer"
+msgstr ""
+
 #: src/prokop/tabs/monitoring/devicesView.ts:146
 #: src/prokop/tabs/monitoring/devicesView.ts:267
 msgid "Through rules"
@@ -7392,6 +7448,10 @@ msgstr ""
 msgid "TorrServer %s did not start and was removed"
 msgstr ""
 
+#: src/prokop/tabs/updates/componentActionToast.ts
+msgid "TorrServer %s did not start"
+msgstr ""
+
 #: src/prokop/tabs/updates/componentActionToast.ts:156
 msgid "TorrServer %s did not start, and the previous version %s did not start again either"
 msgstr ""
@@ -7412,8 +7472,16 @@ msgstr ""
 msgid "TorrServer does not run in its own service group. Install TorrServer from Prokop to use direct routing for it."
 msgstr ""
 
+#: src/prokop/tabs/updates/componentActionToast.ts
+msgid "TorrServer has been installed, but the recommended settings were not applied. Apply them with the button on the card"
+msgstr ""
+
 #: src/prokop/tabs/updates/componentActionToast.ts:82
 msgid "TorrServer is not installed"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts
+msgid "TorrServer is not running"
 msgstr ""
 
 #: src/prokop/tabs/updates/initController.ts:885

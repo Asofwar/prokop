@@ -54,6 +54,10 @@ const TORRSERVER_INIT = getenv("PROKOP_TORRSERVER_INIT") || "/etc/init.d/prokop-
 const TORRSERVER_START_TIMEOUT = getenv("PROKOP_TORRSERVER_START_TIMEOUT") || "30";
 
 let tmp_dir = "";
+// Whether a fresh TorrServer took the recommended settings (1 or 0); null
+// when the action did not try. The response carries it, so the UI can warn
+// instead of showing a plain success (TS-11).
+let torrserver_settings_applied = null;
 let lock_held = false;
 let prokop_was_running = false;
 let last_logged_output = "";
@@ -443,6 +447,8 @@ function updates_response(success, component, action, message, current_version, 
     };
     if (!value.success)
         value.reason = as_string(reason) != "" ? as_string(reason) : "failure";
+    if (torrserver_settings_applied != null)
+        value.settings_applied = torrserver_settings_applied;
     write_json(value);
 }
 
@@ -3659,9 +3665,11 @@ function torrserver_settings_fresh(fresh) {
         return "";
     if (module_success([ TORRSERVER_UC, "apply-recommended-now", "10" ])) {
         updates_log("Recommended TorrServer settings have been applied");
+        torrserver_settings_applied = 1;
         return "";
     }
     updates_log("TorrServer did not take the recommended settings", "warn");
+    torrserver_settings_applied = 0;
     return "; the recommended settings were not applied";
 }
 
