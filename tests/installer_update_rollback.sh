@@ -66,6 +66,8 @@ pkg_installed_version() { printf '%s\n' "${INSTALLED[$1]:-}"; }
 pkg_is_installed() { [ -n "${INSTALLED[$1]:-}" ]; }
 pkg_install_files() {
   printf 'install %s\n' "$*" >>"$LOG"
+  # UPD-10: what the postinst of the reinstalled package would start on.
+  printf 'config at install: %s\n' "$(sed -n "s/.*option marker '\(.*\)'/\1/p" "$UPDATE_CONFIG_FILE")" >>"$LOG"
   [ -z "${INSTALL_FAILS:-}" ]
 }
 
@@ -101,6 +103,9 @@ if grep -Fq 'luci-i18n-prokop-ru' "$LOG"; then
   fail_test "a package the update had not replaced was reinstalled: $(cat "$LOG")"
 fi
 grep -q "marker 'old'" "$UPDATE_CONFIG_FILE" || fail_test "the configuration was not restored"
+if grep -Fq 'config at install: new' "$LOG"; then
+  fail_test "a previous package was reinstalled over the configuration of the failed update (UPD-10): $(cat "$LOG")"
+fi
 [ "$(stat -c %a "$UPDATE_CONFIG_FILE")" = 600 ] || fail_test "the restored configuration is readable by others"
 grep -q '^WARN The previous Prokop 2.12.0-r1 and its configuration were restored' "$LOG" || fail_test "the rollback is not reported: $(cat "$LOG")"
 : >"$LOG"
@@ -131,14 +136,26 @@ for cause in network checksum; do
   grep -q "marker 'new'" "$UPDATE_CONFIG_FILE" || fail_test "$cause: the configuration was replaced without the packages"
 done
 
-# 4. A failed reinstall leaves the configuration and says where the files are.
+# 4. A failed reinstall still restores the configuration (a newer Prokop
+#    reads it, UPD-10) and says where the files are; they are moved out of
+#    TMP_DIR, which the EXIT trap removes (UPD-11).
 reset_case
 prepare_current_update_rollback
 INSTALL_FAILS=1
 : >"$LOG"
 failed_update
 grep -q 'was not fully reinstalled; its packages are in' "$LOG" || fail_test "a failed reinstall is not reported: $(cat "$LOG")"
-grep -q "marker 'new'" "$UPDATE_CONFIG_FILE" || fail_test "the configuration was restored over a failed reinstall"
+grep -q "marker 'old'" "$UPDATE_CONFIG_FILE" || fail_test "the configuration was not restored when a reinstall failed"
+kept_dir="$(sed -n 's/.*its packages are in //p' "$LOG")"
+case "$kept_dir" in
+  "$TMP_DIR"|"$TMP_DIR"/*) fail_test "the reported rollback files are inside TMP_DIR, removed on exit: $kept_dir" ;;
+esac
+[ -f "$kept_dir/prokop_2.12.0.ipk" ] && [ -f "$kept_dir/prokop.config" ] ||
+  fail_test "the reported rollback files are missing: $kept_dir"
+cleanup
+[ -f "$kept_dir/prokop_2.12.0.ipk" ] || fail_test "the rollback files did not survive the exit cleanup"
+rm -rf "$kept_dir"
+mkdir -p "$TMP_DIR"
 
 # 5. A clean installation keeps nothing and rolls nothing back.
 reset_case

@@ -2914,6 +2914,16 @@ prepare_current_update_rollback() {
     msg "Prokop $installed_tag packages and configuration are kept to roll back a failed update"
 }
 
+# The kept files leave TMP_DIR, which the EXIT trap removes, when the rollback
+# did not finish: they are the way back by hand (tmpfs, until a reboot).
+keep_update_rollback_dir() {
+    kept="${TMP_DIR%/*}/prokop-update-rollback.$$"
+    rm -rf "$kept"
+    if mv "$UPDATE_ROLLBACK_DIR" "$kept" 2>/dev/null; then
+        UPDATE_ROLLBACK_DIR="$kept"
+    fi
+}
+
 rollback_current_update() {
     [ "$INSTALL_MODE" = "update" ] || return 0
     [ "$UPDATE_PACKAGES_STARTED" -eq 1 ] || return 0
@@ -2925,6 +2935,18 @@ rollback_current_update() {
     fi
 
     warn "Reinstalling the previous Prokop packages after the installation failure"
+    # The configuration goes back first: the postinst of the previous package
+    # starts Prokop, and must not start it on (or fail to validate) the
+    # configuration of the failed update. A newer Prokop still reads the old
+    # configuration, so it goes back even when a reinstall below fails.
+    config_ok=1
+    if [ -n "$UPDATE_ROLLBACK_CONFIG" ]; then
+        if cp "$UPDATE_ROLLBACK_CONFIG" "$UPDATE_CONFIG_FILE" && chmod 0600 "$UPDATE_CONFIG_FILE"; then
+            :
+        else
+            config_ok=0
+        fi
+    fi
     rollback_ok=1
     for entry in $UPDATE_ROLLBACK_PACKAGES; do
         package_name="${entry%%:*}"
@@ -2937,17 +2959,16 @@ rollback_current_update() {
             rollback_ok=0
         fi
     done
+    if [ "$rollback_ok" -ne 1 ] || [ "$config_ok" -ne 1 ]; then
+        keep_update_rollback_dir
+    fi
     if [ "$rollback_ok" -ne 1 ]; then
         warn "The previous Prokop was not fully reinstalled; its packages are in $UPDATE_ROLLBACK_DIR"
         return 0
     fi
-    if [ -n "$UPDATE_ROLLBACK_CONFIG" ]; then
-        if cp "$UPDATE_ROLLBACK_CONFIG" "$UPDATE_CONFIG_FILE" && chmod 0600 "$UPDATE_CONFIG_FILE"; then
-            :
-        else
-            warn "The previous Prokop was reinstalled, but its configuration could not be restored from $UPDATE_ROLLBACK_CONFIG"
-            return 0
-        fi
+    if [ "$config_ok" -ne 1 ]; then
+        warn "The previous Prokop was reinstalled, but its configuration could not be restored from $UPDATE_ROLLBACK_DIR/prokop.config"
+        return 0
     fi
     warn "The previous Prokop $UPDATE_ROLLBACK_VERSION and its configuration were restored after the installation failure"
 }
