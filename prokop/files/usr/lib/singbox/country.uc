@@ -190,6 +190,15 @@ function address_from_outputs(a_output, aaaa_output, nslookup_output) {
     return address;
 }
 
+// A host name a resolver may be asked for. The name comes from a
+// subscription: dig and nslookup take one that starts with '-' for an
+// option ("-f/etc/shadow" makes BIND dig read that file as a batch of
+// queries), so such a name, or one with anything but a host name's
+// characters, gets no lookup (SB-14).
+function resolvable_host_name(value) {
+    return length(value) <= 253 && match(value, /^[a-z0-9_]([a-z0-9_.-]*[a-z0-9_.])?$/) != null;
+}
+
 // Resolves names RESOLVE_PARALLEL at a time: a slow DNS server costs one
 // timeout per batch instead of one per server. Returns { name: address }.
 function resolve_servers(names) {
@@ -201,7 +210,7 @@ function resolve_servers(names) {
             continue;
         if (valid_ipv4(server) || valid_ipv6(server))
             result[server] = server;
-        else
+        else if (resolvable_host_name(server))
             push(pending, server);
     }
     if (length(pending) == 0)

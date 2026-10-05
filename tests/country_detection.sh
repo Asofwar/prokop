@@ -19,6 +19,7 @@ mkdir -p "$WORK_DIR/bin"
 
 cat >"$WORK_DIR/bin/dig" <<'SH'
 #!/usr/bin/env sh
+printf '%s\n' "$*" >>"$FAKE_DIG_LOG"
 case " $* " in
   *' alpha.example A '*) printf '8.8.8.8\n' ;;
   *' beta.example A '*) printf '1.1.1.1\n' ;;
@@ -68,6 +69,9 @@ function fail(message) {
 let detected = country.detect({
     alpha: "alpha.example",
     beta: "beta.example",
+    // SB-14: a subscription's server name is no option of dig or nslookup.
+    option: "-f/etc/shadow",
+    spaced: "a.example -f/etc/passwd",
     zero: "0.0.0.0",
     private: "192.168.1.1",
     fakeip: "198.18.6.9",
@@ -93,6 +97,8 @@ if (cached.renamed != "DE")
     fail("country cache should be reused by server after an outbound tag changes");
 UCODE
 
+: >"$WORK_DIR/dig.log"
+FAKE_DIG_LOG="$WORK_DIR/dig.log" \
 FAKE_COUNTRY_PAYLOAD="$WORK_DIR/payload.json" \
 FAKE_COUNTRY_RESOLVE="$WORK_DIR/resolve.txt" \
 PROKOP_COUNTRY_IS_URL="https://country.invalid/" \
@@ -107,5 +113,8 @@ grep -Fq 'country.invalid:443:8.6.112.0' "$WORK_DIR/resolve.txt" ||
   fail "country.is request did not bypass the router FakeIP resolver"
 grep -Eq '0\.0\.0\.0|192\.168\.1\.1|198\.18\.6\.9|203\.0\.113\.10' "$WORK_DIR/payload.json" &&
   fail "country.is request contained a non-public address"
+
+grep -q 'alpha.example' "$WORK_DIR/dig.log" || fail "the stand-in dig was not asked"
+grep -q 'etc/' "$WORK_DIR/dig.log" && fail "a server name was passed to dig as an option: $(grep 'etc/' "$WORK_DIR/dig.log")"
 
 printf 'country detection checks passed\n'
