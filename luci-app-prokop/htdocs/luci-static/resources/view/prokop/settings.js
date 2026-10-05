@@ -492,6 +492,31 @@ function createSettingsContent(sections, capabilities) {
   o.default = "prefer_ipv4";
   o.rmempty = false;
 
+  // C9: EDNS Client Subnet (singbox/generator.uc base_config).
+  o = sections.dns.option(
+    form.Value,
+    "dns_client_subnet",
+    _("EDNS Client Subnet"),
+    _(
+      "Optional. An IP address or subnet sent to the upstream DNS servers with every query, so services with servers in many places answer with ones near you. Useful when DNS goes through a proxy or a public resolver. Leave empty to send nothing",
+    ),
+  );
+  o.placeholder = "203.0.113.0/24";
+  o.rmempty = true;
+  o.validate = function (section_id, value) {
+    const text = `${value || ""}`.trim();
+    if (!text) {
+      return true;
+    }
+    const ipv4 =
+      /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}(\/(3[0-2]|[12]?\d))?$/;
+    const ipv6 =
+      /^[0-9A-Fa-f:.]*:[0-9A-Fa-f:.]*(\/(12[0-8]|1[01]\d|[1-9]?\d))?$/;
+    return ipv4.test(text) || ipv6.test(text)
+      ? true
+      : _("Enter an IP address or subnet, such as 203.0.113.0/24");
+  };
+
   o = sections.dns.option(
     form.Flag,
     "dns_detour_enabled",

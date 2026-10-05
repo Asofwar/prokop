@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-04 23:37+0000\n"
-"PO-Revision-Date: 2026-10-04 23:37+0000\n"
+"POT-Creation-Date: 2026-10-05 00:05+0000\n"
+"PO-Revision-Date: 2026-10-05 00:05+0000\n"
 "Last-Translator: Asofwar\n"
 "Language-Team: none\n"
 "Language: ru\n"
@@ -1508,6 +1508,9 @@ msgstr "Изменить URLTest"
 msgid "Edit…"
 msgstr "Изменить…"
 
+msgid "EDNS Client Subnet"
+msgstr "EDNS Client Subnet"
+
 msgid "Empty response"
 msgstr "Пустой ответ"
 
@@ -1582,6 +1585,9 @@ msgstr "Укажите целое число миллисекунд от 0 до 
 
 msgid "Enter an address"
 msgstr "Укажите адрес"
+
+msgid "Enter an IP address or subnet, such as 203.0.113.0/24"
+msgstr "Введите IP-адрес или подсеть, например 203.0.113.0/24"
 
 msgid "Enter the subscription URL"
 msgstr "Введите URL подписки"
@@ -2818,6 +2824,9 @@ msgstr "Необязательное значение здесь нужно пе
 
 msgid "Optional values must be attached with '=' here; a separate token would be ignored by nfqws2."
 msgstr "Необязательные значения здесь должны задаваться через '='; отдельный токен будет проигнорирован nfqws2."
+
+msgid "Optional. An IP address or subnet sent to the upstream DNS servers with every query, so services with servers in many places answer with ones near you. Useful when DNS goes through a proxy or a public resolver. Leave empty to send nothing"
+msgstr "Необязательно. IP-адрес или подсеть, которые уходят вышестоящим DNS-серверам с каждым запросом, чтобы сервисы с серверами в разных местах отвечали ближайшими к вам. Полезно, когда DNS идёт через прокси или публичный резолвер. Оставьте пустым, чтобы ничего не отправлять"
 
 msgid "Original repositories could not be restored. Removal was cancelled before deleting packages."
 msgstr "Не удалось восстановить исходные репозитории. Удаление отменено до удаления пакетов."

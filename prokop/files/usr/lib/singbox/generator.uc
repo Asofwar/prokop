@@ -532,7 +532,12 @@ function base_config(settings, service_address, runtime_context) {
             rules: dns_rules,
             final: runtime_constants.DNS_SERVER_TAG,
             strategy: option(settings, "dns_strategy", "prefer_ipv4"),
-            independent_cache: true
+            independent_cache: true,
+            // C9: EDNS Client Subnet, so geo-CDNs answer with a node near
+            // the user when DNS leaves through a proxy or a public resolver.
+            // Off unless set (config/validator.uc checks the value).
+            ...(trim(option(settings, "dns_client_subnet", "")) != "" ?
+                { client_subnet: trim(option(settings, "dns_client_subnet", "")) } : {})
         },
         ntp: {},
         certificate: {},

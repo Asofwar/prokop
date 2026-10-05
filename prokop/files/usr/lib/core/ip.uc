@@ -122,6 +122,20 @@ function valid_ip_or_cidr(value) {
     return valid_ip(value) || valid_ip_cidr(value);
 }
 
+// What Go's netip.ParseAddr or ParsePrefix accepts (sing-box options such as
+// dns.client_subnet): no leading zeros in an IPv4 octet or in the prefix
+// length.
+function valid_netip_addr_or_prefix(value) {
+    value = as_string(value);
+    let slash = index(value, "/");
+    if (slash < 0)
+        return valid_ipv4(value, false, true) || valid_ipv6(value);
+    let prefix = substr(value, slash + 1);
+    if (!decimal_text(prefix, true))
+        return false;
+    return valid_ipv4_cidr(value, true) || valid_ipv6_cidr(value);
+}
+
 function nft_ip_or_cidr(value) {
     return valid_ipv4(value, true, true) || valid_ipv4_cidr(value, true) || valid_ipv6(value) || valid_ipv6_cidr(value);
 }
@@ -170,6 +184,7 @@ return {
     valid_ip_cidr,
     valid_ip_or_cidr,
     nft_ip_or_cidr,
+    valid_netip_addr_or_prefix,
     ip_family,
     format_ipv6_tproxy_target,
     CLOUDFLARE_SHARED_CIDRS,

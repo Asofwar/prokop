@@ -866,7 +866,7 @@
     "call": "Allows access to YACD from the WAN. Make sure to open the appropriate port in your firewall.",
     "key": "Allows access to YACD from the WAN. Make sure to open the appropriate port in your firewall.",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:699"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:724"
     ]
   },
   {
@@ -880,7 +880,7 @@
     "call": "Always",
     "key": "Always",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:929"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:954"
     ]
   },
   {
@@ -1165,7 +1165,7 @@
     "call": "Automatic component update checks",
     "key": "Automatic component update checks",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:757"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:782"
     ]
   },
   {
@@ -1193,7 +1193,7 @@
     "call": "Automatically check installed components for new versions",
     "key": "Automatically check installed components for new versions",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:758"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:783"
     ]
   },
   {
@@ -1677,14 +1677,14 @@
     "call": "Cache File Path",
     "key": "Cache File Path",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:858"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:883"
     ]
   },
   {
     "call": "Cache file path cannot be empty",
     "key": "Cache file path cannot be empty",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:872"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:897"
     ]
   },
   {
@@ -2133,7 +2133,7 @@
     "call": "Clash API secret cannot be empty",
     "key": "Clash API secret cannot be empty",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:721"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:746"
     ]
   },
   {
@@ -2242,7 +2242,7 @@
     "call": "Component update check interval",
     "key": "Component update check interval",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:766"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:791"
     ]
   },
   {
@@ -2299,7 +2299,7 @@
     "call": "Config File Path",
     "key": "Config File Path",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:839"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:864"
     ]
   },
   {
@@ -2755,7 +2755,7 @@
     "call": "Debug",
     "key": "Debug",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:898"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:923"
     ]
   },
   {
@@ -2769,7 +2769,7 @@
     "call": "Default address for checking server availability and latency. URLTest uses its own address.",
     "key": "Default address for checking server availability and latency. URLTest uses its own address.",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:775"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:800"
     ]
   },
   {
@@ -2790,14 +2790,14 @@
     "call": "Delay in milliseconds before reloading Prokop after interface UP",
     "key": "Delay in milliseconds before reloading Prokop after interface UP",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:662"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:687"
     ]
   },
   {
     "call": "Delay value cannot be empty",
     "key": "Delay value cannot be empty",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:675"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:700"
     ]
   },
   {
@@ -2929,7 +2929,7 @@
     "call": "Devices with their own DNS server (8.8.8.8 in a TV, IoT devices) bypass domain rules and the kill-switch. Their plain DNS on port 53 is sent to the router instead. DNS to local addresses (Pi-hole) and DNS over TLS stay untouched",
     "key": "Devices with their own DNS server (8.8.8.8 in a TV, IoT devices) bypass domain rules and the kill-switch. Their plain DNS on port 53 is sent to the router instead. DNS to local addresses (Pi-hole) and DNS over TLS stay untouched",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:924"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:949"
     ]
   },
   {
@@ -3010,14 +3010,14 @@
     "call": "Disable QUIC",
     "key": "Disable QUIC",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:729"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:754"
     ]
   },
   {
     "call": "Disable the QUIC protocol to improve compatibility or fix issues with video streaming",
     "key": "Disable the QUIC protocol to improve compatibility or fix issues with video streaming",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:730"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:755"
     ]
   },
   {
@@ -3148,7 +3148,7 @@
     "key": "DNS requests through section",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8590",
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:506"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:531"
     ]
   },
   {
@@ -3208,7 +3208,7 @@
     "key": "DNS through proxy",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10021",
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:498"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:523"
     ]
   },
   {
@@ -3407,7 +3407,7 @@
     "call": "Dont Touch My DHCP!",
     "key": "Dont Touch My DHCP!",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:830"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:855"
     ]
   },
   {
@@ -3421,14 +3421,14 @@
     "call": "Download component packages via the selected section",
     "key": "Download component packages via the selected section",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:811"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:836"
     ]
   },
   {
     "call": "Download components through",
     "key": "Download components through",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:818"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:843"
     ]
   },
   {
@@ -3436,14 +3436,14 @@
     "key": "Download components through a section",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10034",
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:810"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:835"
     ]
   },
   {
     "call": "Download lists through",
     "key": "Download lists through",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:798"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:823"
     ]
   },
   {
@@ -3451,14 +3451,14 @@
     "key": "Download lists through a section",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10027",
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:790"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:815"
     ]
   },
   {
     "call": "Download remote lists and rule sets via the selected section",
     "key": "Download remote lists and rule sets via the selected section",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:791"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:816"
     ]
   },
   {
@@ -3641,6 +3641,13 @@
     ]
   },
   {
+    "call": "EDNS Client Subnet",
+    "key": "EDNS Client Subnet",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:499"
+    ]
+  },
+  {
     "call": "Empty response",
     "key": "Empty response",
     "places": [
@@ -3660,7 +3667,7 @@
     "call": "Enable automatic updates for remote lists and rule sets",
     "key": "Enable automatic updates for remote lists and rule sets",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:741"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:766"
     ]
   },
   {
@@ -3681,14 +3688,14 @@
     "call": "Enable it per Connection section. While Prokop or the VPN is down, protected traffic is rejected instead of leaving directly; other traffic is not affected. If sing-box dies, a standby resolver keeps DNS working and blocks the names of every VPN section: large domain lists take memory on the router and time on every start and reload.",
     "key": "Enable it per Connection section. While Prokop or the VPN is down, protected traffic is rejected instead of leaving directly; other traffic is not affected. If sing-box dies, a standby resolver keeps DNS working and blocks the names of every VPN section: large domain lists take memory on the router and time on every start and reload.",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:515"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:540"
     ]
   },
   {
     "call": "Enable list updates",
     "key": "Enable list updates",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:740"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:765"
     ]
   },
   {
@@ -3716,21 +3723,21 @@
     "call": "Enable Output Network Interface",
     "key": "Enable Output Network Interface",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:568"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:593"
     ]
   },
   {
     "call": "Enable YACD",
     "key": "Enable YACD",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:689"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:714"
     ]
   },
   {
     "call": "Enable YACD WAN Access",
     "key": "Enable YACD WAN Access",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:698"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:723"
     ]
   },
   {
@@ -3813,7 +3820,7 @@
     "call": "Enter a whole number of milliseconds from 0 to 60000",
     "key": "Enter a whole number of milliseconds from 0 to 60000",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:681"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:706"
     ]
   },
   {
@@ -3821,6 +3828,13 @@
     "key": "Enter an address",
     "places": [
       "src/prokop/tabs/diagnostic/connectivityMatrix.ts:84"
+    ]
+  },
+  {
+    "call": "Enter an IP address or subnet, such as 203.0.113.0/24",
+    "key": "Enter an IP address or subnet, such as 203.0.113.0/24",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:517"
     ]
   },
   {
@@ -3834,7 +3848,7 @@
     "call": "Error",
     "key": "Error",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:901",
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:926",
       "src/prokop/ui/status.ts:32",
       "src/prokop/tabs/diagnostic/statusLabels.ts:26"
     ]
@@ -3902,14 +3916,14 @@
     "call": "Exclude NTP",
     "key": "Exclude NTP",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:910"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:935"
     ]
   },
   {
     "call": "Exclude NTP protocol traffic from the tunnel to prevent it from being routed through the proxy or VPN",
     "key": "Exclude NTP protocol traffic from the tunnel to prevent it from being routed through the proxy or VPN",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:911"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:936"
     ]
   },
   {
@@ -4121,7 +4135,7 @@
     "call": "Fatal",
     "key": "Fatal",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:902"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:927"
     ]
   },
   {
@@ -4142,8 +4156,8 @@
     "call": "Flash",
     "key": "Flash",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:846",
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:866"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:871",
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:891"
     ]
   },
   {
@@ -4178,7 +4192,7 @@
     "call": "For routers with 256 MB of memory or less and an unstable connection: sing-box finds dead client connections with keep-alive probes and ends idle UDP sessions after 60 seconds instead of 5 minutes, so they do not pile up in memory",
     "key": "For routers with 256 MB of memory or less and an unstable connection: sing-box finds dead client connections with keep-alive probes and ends idle UDP sessions after 60 seconds instead of 5 minutes, so they do not pile up in memory",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:940"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:965"
     ]
   },
   {
@@ -4554,7 +4568,7 @@
     "call": "Info",
     "key": "Info",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:899"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:924"
     ]
   },
   {
@@ -4621,28 +4635,28 @@
     "call": "Intercept client DNS",
     "key": "Intercept client DNS",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:923"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:948"
     ]
   },
   {
     "call": "Interface Monitoring",
     "key": "Interface Monitoring",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:629"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:654"
     ]
   },
   {
     "call": "Interface Monitoring Delay",
     "key": "Interface Monitoring Delay",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:661"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:686"
     ]
   },
   {
     "call": "Interface monitoring for Bad WAN",
     "key": "Interface monitoring for Bad WAN",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:630"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:655"
     ]
   },
   {
@@ -5613,7 +5627,7 @@
     "call": "Latency test URL",
     "key": "Latency test URL",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:774"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:799"
     ]
   },
   {
@@ -5692,7 +5706,7 @@
     "call": "List Update Frequency",
     "key": "List Update Frequency",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:749"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:774"
     ]
   },
   {
@@ -5772,7 +5786,7 @@
     "call": "Log Level",
     "key": "Log Level",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:894"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:919"
     ]
   },
   {
@@ -5786,7 +5800,7 @@
     "call": "Low memory mode",
     "key": "Low memory mode",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:939"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:964"
     ]
   },
   {
@@ -5963,7 +5977,7 @@
     "call": "Monitored Interfaces",
     "key": "Monitored Interfaces",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:638"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:663"
     ]
   },
   {
@@ -6068,7 +6082,7 @@
     "call": "Never",
     "key": "Never",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:930"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:955"
     ]
   },
   {
@@ -6865,6 +6879,13 @@
     ]
   },
   {
+    "call": "Optional. An IP address or subnet sent to the upstream DNS servers with every query, so services with servers in many places answer with ones near you. Useful when DNS goes through a proxy or a public resolver. Leave empty to send nothing",
+    "key": "Optional. An IP address or subnet sent to the upstream DNS servers with every query, so services with servers in many places answer with ones near you. Useful when DNS goes through a proxy or a public resolver. Leave empty to send nothing",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:500"
+    ]
+  },
+  {
     "call": "Original repositories could not be restored. Removal was cancelled before deleting packages.",
     "key": "Original repositories could not be restored. Removal was cancelled before deleting packages.",
     "places": [
@@ -6932,7 +6953,7 @@
     "call": "Output Network Interface",
     "key": "Output Network Interface",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:577"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:602"
     ]
   },
   {
@@ -6976,7 +6997,7 @@
     "call": "Panic",
     "key": "Panic",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:903"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:928"
     ]
   },
   {
@@ -7028,21 +7049,21 @@
     "call": "Path must be absolute (start with /)",
     "key": "Path must be absolute (start with /)",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:876"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:901"
     ]
   },
   {
     "call": "Path must contain at least one directory (like /tmp/cache.db)",
     "key": "Path must contain at least one directory (like /tmp/cache.db)",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:885"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:910"
     ]
   },
   {
     "call": "Path must end with cache.db",
     "key": "Path must end with cache.db",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:880"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:905"
     ]
   },
   {
@@ -7617,7 +7638,7 @@
     "call": "Prokop will not modify your DHCP configuration",
     "key": "Prokop will not modify your DHCP configuration",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:831"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:856"
     ]
   },
   {
@@ -7766,8 +7787,8 @@
     "call": "RAM",
     "key": "RAM",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:850",
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:863"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:875",
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:888"
     ]
   },
   {
@@ -8429,7 +8450,7 @@
     "call": "Route main DNS requests through the selected section.",
     "key": "Route main DNS requests through the selected section.",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:499"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:524"
     ]
   },
   {
@@ -8731,7 +8752,7 @@
     "call": "Secret of the Clash API controller used by YACD and the Prokop pages. Required: it is generated on installation and protects the controller with or without WAN access.",
     "key": "Secret of the Clash API controller used by YACD and the Prokop pages. Required: it is generated on installation and protects the controller with or without WAN access.",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:711"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:736"
     ]
   },
   {
@@ -8844,14 +8865,14 @@
     "call": "Select or enter path for sing-box cache file. Change this ONLY if you know what you are doing",
     "key": "Select or enter path for sing-box cache file. Change this ONLY if you know what you are doing",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:859"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:884"
     ]
   },
   {
     "call": "Select path for sing-box config file. Change this ONLY if you know what you are doing",
     "key": "Select path for sing-box config file. Change this ONLY if you know what you are doing",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:840"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:865"
     ]
   },
   {
@@ -8866,28 +8887,28 @@
     "call": "Select the log level for sing-box",
     "key": "Select the log level for sing-box",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:895"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:920"
     ]
   },
   {
     "call": "Select the network interface from which the traffic will originate",
     "key": "Select the network interface from which the traffic will originate",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:532"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:557"
     ]
   },
   {
     "call": "Select the network interface to which the traffic will originate",
     "key": "Select the network interface to which the traffic will originate",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:578"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:603"
     ]
   },
   {
     "call": "Select the WAN interfaces to be monitored",
     "key": "Select the WAN interfaces to be monitored",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:639"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:664"
     ]
   },
   {
@@ -9296,7 +9317,7 @@
     "call": "Source Network Interface",
     "key": "Source Network Interface",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:531"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:556"
     ]
   },
   {
@@ -11272,7 +11293,7 @@
     "call": "Trace",
     "key": "Trace",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:897"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:922"
     ]
   },
   {
@@ -11861,7 +11882,7 @@
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4288",
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9160",
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:514"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:539"
     ]
   },
   {
@@ -11918,7 +11939,7 @@
     "call": "Warning",
     "key": "Warning",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:900",
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:925",
       "src/prokop/ui/status.ts:30",
       "src/prokop/tabs/autotune/initController.ts:924",
       "src/prokop/tabs/autotune/initController.ts:956"
@@ -11977,7 +11998,7 @@
     "call": "When a rule has the kill-switch",
     "key": "When a rule has the kill-switch",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:928"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:953"
     ]
   },
   {
@@ -12047,7 +12068,7 @@
     "call": "YACD Secret Key",
     "key": "YACD Secret Key",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:710"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:735"
     ]
   },
   {
@@ -12068,7 +12089,7 @@
     "call": "You can select Output Network Interface, by default autodetect",
     "key": "You can select Output Network Interface, by default autodetect",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:569"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:594"
     ]
   },
   {

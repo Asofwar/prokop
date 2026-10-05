@@ -1068,6 +1068,12 @@ function validate_dns_settings(settings, sections, context) {
     else if (length(rewrite_ttl) > 10 || +rewrite_ttl > 2147483647)
         fail_validation("DNS Rewrite TTL '" + rewrite_ttl + "' is too large. Use at most 2147483647 seconds. Aborted.");
 
+    // C9: sing-box parses dns.client_subnet with netip and refuses to start
+    // on a value it cannot read.
+    let client_subnet = trim(option(settings, "dns_client_subnet", ""));
+    if (client_subnet != "" && !core_ip.valid_netip_addr_or_prefix(client_subnet))
+        fail_validation("EDNS Client Subnet '" + client_subnet + "' is not an IP address or subnet such as 203.0.113.0/24. Aborted.");
+
     let main_servers = dns_setting_values(settings, "dns_server");
     let bootstrap_servers = dns_setting_values(settings, "bootstrap_dns_server");
     if (length(main_servers) == 0)

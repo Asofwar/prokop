@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-04 23:37+0000\n"
-"PO-Revision-Date: 2026-10-04 23:37+0000\n"
+"POT-Creation-Date: 2026-10-05 00:05+0000\n"
+"PO-Revision-Date: 2026-10-05 00:05+0000\n"
 "Last-Translator: Asofwar <7397608+Asofwar@users.noreply.github.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -522,7 +522,7 @@ msgstr ""
 msgid "Allowed domain prefixes are full:, keyword:, and regex:"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:699
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:724
 msgid "Allows access to YACD from the WAN. Make sure to open the appropriate port in your firewall."
 msgstr ""
 
@@ -530,7 +530,7 @@ msgstr ""
 msgid "Allows limiting the list of servers for URLTest"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:929
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:954
 msgid "Always"
 msgstr ""
 
@@ -695,7 +695,7 @@ msgstr ""
 msgid "automatic changes per day: up to %d"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:757
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:782
 msgid "Automatic component update checks"
 msgstr ""
 
@@ -711,7 +711,7 @@ msgstr ""
 msgid "Automatically add text to the name of each server from this subscription for convenient filtering."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:758
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:783
 msgid "Automatically check installed components for new versions"
 msgstr ""
 
@@ -994,11 +994,11 @@ msgstr ""
 msgid "Bypass not needed"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:858
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:883
 msgid "Cache File Path"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:872
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:897
 msgid "Cache file path cannot be empty"
 msgstr ""
 
@@ -1273,7 +1273,7 @@ msgstr ""
 msgid "CIDR must be between 0 and 32 for IPv4 or 0 and 128 for IPv6"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:721
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:746
 msgid "Clash API secret cannot be empty"
 msgstr ""
 
@@ -1340,7 +1340,7 @@ msgstr ""
 msgid "Component update available"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:766
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:791
 msgid "Component update check interval"
 msgstr ""
 
@@ -1373,7 +1373,7 @@ msgstr ""
 msgid "Confidence"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:839
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:864
 msgid "Config File Path"
 msgstr ""
 
@@ -1640,7 +1640,7 @@ msgstr ""
 msgid "Dashboard currently unavailable"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:898
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:923
 msgid "Debug"
 msgstr ""
 
@@ -1648,7 +1648,7 @@ msgstr ""
 msgid "Dedicated cgroup unavailable"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:775
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:800
 msgid "Default address for checking server availability and latency. URLTest uses its own address."
 msgstr ""
 
@@ -1660,11 +1660,11 @@ msgstr ""
 msgid "Default strategy"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:662
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:687
 msgid "Delay in milliseconds before reloading Prokop after interface UP"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:675
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:700
 msgid "Delay value cannot be empty"
 msgstr ""
 
@@ -1745,7 +1745,7 @@ msgstr ""
 msgid "Devices may bypass the router DNS, so domain rules do not apply to them."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:924
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:949
 msgid "Devices with their own DNS server (8.8.8.8 in a TV, IoT devices) bypass domain rules and the kill-switch. Their plain DNS on port 53 is sent to the router instead. DNS to local addresses (Pi-hole) and DNS over TLS stay untouched"
 msgstr ""
 
@@ -1793,11 +1793,11 @@ msgstr ""
 msgid "Disable autostart"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:729
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:754
 msgid "Disable QUIC"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:730
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:755
 msgid "Disable the QUIC protocol to improve compatibility or fix issues with video streaming"
 msgstr ""
 
@@ -1877,7 +1877,7 @@ msgid "DNS protocol used by the resolver"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8590
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:506
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:531
 msgid "DNS requests through section"
 msgstr ""
 
@@ -1913,7 +1913,7 @@ msgid "DNS Strategy"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10021
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:498
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:523
 msgid "DNS through proxy"
 msgstr ""
 
@@ -2028,7 +2028,7 @@ msgstr ""
 msgid "Domains: %d"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:830
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:855
 msgid "Dont Touch My DHCP!"
 msgstr ""
 
@@ -2036,29 +2036,29 @@ msgstr ""
 msgid "Download"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:811
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:836
 msgid "Download component packages via the selected section"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:818
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:843
 msgid "Download components through"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10034
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:810
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:835
 msgid "Download components through a section"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:798
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:823
 msgid "Download lists through"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10027
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:790
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:815
 msgid "Download lists through a section"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:791
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:816
 msgid "Download remote lists and rule sets via the selected section"
 msgstr ""
 
@@ -2166,6 +2166,10 @@ msgstr ""
 msgid "Edit…"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:499
+msgid "EDNS Client Subnet"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:27
 msgid "Empty response"
 msgstr ""
@@ -2176,7 +2180,7 @@ msgstr ""
 msgid "Enable"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:741
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:766
 msgid "Enable automatic updates for remote lists and rule sets"
 msgstr ""
 
@@ -2188,11 +2192,11 @@ msgstr ""
 msgid "Enable built-in DNS resolver for domains handled by this section"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:515
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:540
 msgid "Enable it per Connection section. While Prokop or the VPN is down, protected traffic is rejected instead of leaving directly; other traffic is not affected. If sing-box dies, a standby resolver keeps DNS working and blocks the names of every VPN section: large domain lists take memory on the router and time on every start and reload."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:740
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:765
 msgid "Enable list updates"
 msgstr ""
 
@@ -2208,15 +2212,15 @@ msgstr ""
 msgid "Enable mode 2"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:568
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:593
 msgid "Enable Output Network Interface"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:689
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:714
 msgid "Enable YACD"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:698
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:723
 msgid "Enable YACD WAN Access"
 msgstr ""
 
@@ -2266,7 +2270,7 @@ msgstr ""
 msgid "Enter a valid domain or IP address"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:681
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:706
 msgid "Enter a whole number of milliseconds from 0 to 60000"
 msgstr ""
 
@@ -2274,11 +2278,15 @@ msgstr ""
 msgid "Enter an address"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:517
+msgid "Enter an IP address or subnet, such as 203.0.113.0/24"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8803
 msgid "Enter the subscription URL"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:901
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:926
 #: src/prokop/ui/status.ts:32
 #: src/prokop/tabs/diagnostic/statusLabels.ts:26
 msgid "Error"
@@ -2319,11 +2327,11 @@ msgstr ""
 msgid "Exclude devices"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:910
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:935
 msgid "Exclude NTP"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:911
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:936
 msgid "Exclude NTP protocol traffic from the tunnel to prevent it from being routed through the proxy or VPN"
 msgstr ""
 
@@ -2451,7 +2459,7 @@ msgstr ""
 msgid "Fastest"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:902
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:927
 msgid "Fatal"
 msgstr ""
 
@@ -2463,8 +2471,8 @@ msgstr ""
 msgid "Fix the highlighted fields and save again."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:846
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:866
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:871
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:891
 msgid "Flash"
 msgstr ""
 
@@ -2484,7 +2492,7 @@ msgstr ""
 msgid "For recommendations. Automatic apply always requires high confidence."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:940
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:965
 msgid "For routers with 256 MB of memory or less and an unstable connection: sing-box finds dead client connections with keep-alive probes and ends idle UDP sessions after 60 seconds instead of 5 minutes, so they do not pile up in memory"
 msgstr ""
 
@@ -2704,7 +2712,7 @@ msgstr ""
 msgid "Include servers"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:899
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:924
 msgid "Info"
 msgstr ""
 
@@ -2744,19 +2752,19 @@ msgstr ""
 msgid "Installed version is newer than release"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:923
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:948
 msgid "Intercept client DNS"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:629
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:654
 msgid "Interface Monitoring"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:661
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:686
 msgid "Interface Monitoring Delay"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:630
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:655
 msgid "Interface monitoring for Bad WAN"
 msgstr ""
 
@@ -3322,7 +3330,7 @@ msgstr ""
 msgid "Latency test failed"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:774
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:799
 msgid "Latency test URL"
 msgstr ""
 
@@ -3368,7 +3376,7 @@ msgstr ""
 msgid "List of a rule"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:749
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:774
 msgid "List Update Frequency"
 msgstr ""
 
@@ -3421,7 +3429,7 @@ msgstr ""
 msgid "Loading…"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:894
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:919
 msgid "Log Level"
 msgstr ""
 
@@ -3429,7 +3437,7 @@ msgstr ""
 msgid "low"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:939
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:964
 msgid "Low memory mode"
 msgstr ""
 
@@ -3531,7 +3539,7 @@ msgstr ""
 msgid "Mode and state"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:638
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:663
 msgid "Monitored Interfaces"
 msgstr ""
 
@@ -3594,7 +3602,7 @@ msgstr ""
 msgid "never"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:930
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:955
 msgid "Never"
 msgstr ""
 
@@ -4079,6 +4087,10 @@ msgstr ""
 msgid "Optional values must be attached with '=' here; a separate token would be ignored by nfqws2."
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:500
+msgid "Optional. An IP address or subnet sent to the upstream DNS servers with every query, so services with servers in many places answer with ones near you. Useful when DNS goes through a proxy or a public resolver. Leave empty to send nothing"
+msgstr ""
+
 #: src/prokop/tabs/updates/fullUninstallStatus.ts:80
 msgid "Original repositories could not be restored. Removal was cancelled before deleting packages."
 msgstr ""
@@ -4116,7 +4128,7 @@ msgstr ""
 msgid "Outcome unknown"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:577
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:602
 msgid "Output Network Interface"
 msgstr ""
 
@@ -4142,7 +4154,7 @@ msgstr ""
 msgid "Packet Steering normal mode has been restored"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:903
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:928
 msgid "Panic"
 msgstr ""
 
@@ -4173,15 +4185,15 @@ msgstr ""
 msgid "Path cannot be empty"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:876
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:901
 msgid "Path must be absolute (start with /)"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:885
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:910
 msgid "Path must contain at least one directory (like /tmp/cache.db)"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:880
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:905
 msgid "Path must end with cache.db"
 msgstr ""
 
@@ -4516,7 +4528,7 @@ msgstr ""
 msgid "Prokop will create a configuration snapshot, reload the service and check the real production path. If the check fails, the previous configuration is restored automatically."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:831
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:856
 msgid "Prokop will not modify your DHCP configuration"
 msgstr ""
 
@@ -4602,8 +4614,8 @@ msgstr ""
 msgid "Proxy"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:850
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:863
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:875
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:888
 msgid "RAM"
 msgstr ""
 
@@ -4989,7 +5001,7 @@ msgstr ""
 msgid "Route"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:499
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:524
 msgid "Route main DNS requests through the selected section."
 msgstr ""
 
@@ -5165,7 +5177,7 @@ msgstr ""
 msgid "Search domains"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:711
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:736
 msgid "Secret of the Clash API controller used by YACD and the Prokop pages. Required: it is generated on installation and protects the controller with or without WAN access."
 msgstr ""
 
@@ -5230,11 +5242,11 @@ msgstr ""
 msgid "Select network interface for VPN connection"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:859
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:884
 msgid "Select or enter path for sing-box cache file. Change this ONLY if you know what you are doing"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:840
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:865
 msgid "Select path for sing-box config file. Change this ONLY if you know what you are doing"
 msgstr ""
 
@@ -5243,19 +5255,19 @@ msgstr ""
 msgid "Select the fastest node"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:895
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:920
 msgid "Select the log level for sing-box"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:532
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:557
 msgid "Select the network interface from which the traffic will originate"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:578
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:603
 msgid "Select the network interface to which the traffic will originate"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:639
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:664
 msgid "Select the WAN interfaces to be monitored"
 msgstr ""
 
@@ -5493,7 +5505,7 @@ msgstr ""
 msgid "Source"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:531
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:556
 msgid "Source Network Interface"
 msgstr ""
 
@@ -6641,7 +6653,7 @@ msgstr ""
 msgid "Total traffic"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:897
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:922
 msgid "Trace"
 msgstr ""
 
@@ -7002,7 +7014,7 @@ msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4288
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9160
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:514
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:539
 msgid "VPN kill-switch"
 msgstr ""
 
@@ -7035,7 +7047,7 @@ msgstr ""
 msgid "Waiting to finish"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:900
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:925
 #: src/prokop/ui/status.ts:30
 #: src/prokop/tabs/autotune/initController.ts:924
 #: src/prokop/tabs/autotune/initController.ts:956
@@ -7070,7 +7082,7 @@ msgstr ""
 msgid "What was proven"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:928
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:953
 msgid "When a rule has the kill-switch"
 msgstr ""
 
@@ -7110,7 +7122,7 @@ msgstr ""
 msgid "Works without bypass."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:710
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:735
 msgid "YACD Secret Key"
 msgstr ""
 
@@ -7122,7 +7134,7 @@ msgstr ""
 msgid "Yes"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:569
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:594
 msgid "You can select Output Network Interface, by default autodetect"
 msgstr ""
 
