@@ -1180,6 +1180,14 @@ function process_vmess_json(raw, decoded) {
         if (string_value(vmess.host) != "")
             outbound.transport.host = split_csv(string_value(vmess.host));
     }
+    else if (network == "httpupgrade") {
+        outbound.transport = {
+            type: "httpupgrade",
+            path: string_value(vmess.path) != "" ? string_value(vmess.path) : "/"
+        };
+        if (string_value(vmess.host) != "")
+            outbound.transport.host = string_value(vmess.host);
+    }
     else if (network != "" && network != "tcp" && network != "raw") {
         // kcp, quic and the like have no sing-box transport: skip the node.
         return null;
@@ -1240,13 +1248,66 @@ function share_link_outbound(raw, tag) {
     return true;
 }
 
+const YAML_ESCAPES = { "0": "\u0000", a: "\u0007", b: "\b", t: "\t", n: "\n", v: "\u000b", f: "\f", r: "\r",
+    e: "\u001b", " ": " ", "\"": "\"", "/": "/", "\\": "\\", N: "\u0085", _: "\u00a0" };
+const YAML_HEX_ESCAPES = { x: 2, u: 4, U: 8 };
+
+// The text of a double-quoted YAML scalar: its backslash escapes. An escape
+// YAML does not know is kept as it is.
+function yaml_double_quoted_text(value) {
+    let result = "";
+    for (let i = 0; i < length(value); i++) {
+        let char = substr(value, i, 1);
+        if (char != "\\" || i + 1 >= length(value)) {
+            result += char;
+            continue;
+        }
+        let code = substr(value, i + 1, 1);
+        let digits = YAML_HEX_ESCAPES[code];
+        let code_text = digits ? substr(value, i + 2, digits) : null;
+        if (code_text != null && length(code_text) == digits && match(code_text, /^[0-9A-Fa-f]+$/)) {
+            result += uchr(hex(code_text));
+            i += 1 + digits;
+        }
+        else if (exists(YAML_ESCAPES, code)) {
+            result += YAML_ESCAPES[code];
+            i++;
+        }
+        else
+            result += char;
+    }
+    return result;
+}
+
+// A quoted YAML scalar is unquoted as YAML reads it (SB-13): in single
+// quotes '' is one quote and a backslash is a backslash, in double quotes a
+// backslash escapes.
 function clean_scalar(value) {
     value = trim(value);
     let first = substr(value, 0, 1);
     let last = substr(value, length(value) - 1);
-    if (length(value) >= 2 && ((first == "\"" && last == "\"") || (first == "'" && last == "'")))
-        return substr(value, 1, length(value) - 2);
-    return value;
+    if (length(value) < 2 || first != last || (first != "\"" && first != "'"))
+        return value;
+    let inner = substr(value, 1, length(value) - 2);
+    return first == "'" ? replace(inner, "''", "'") : yaml_double_quoted_text(inner);
+}
+
+// The quote open after value[i], given the one open before it, and how
+// many characters value[i] takes: a quoted scalar starts at the start of a
+// token ("it's" is plain text); in single quotes '' is a quote inside them,
+// in double quotes a backslash escapes the next character.
+function yaml_quote_step(value, i, quote) {
+    let char = substr(value, i, 1);
+    if (quote == "'") {
+        if (char != "'")
+            return [ quote, 1 ];
+        return substr(value, i + 1, 1) == "'" ? [ quote, 2 ] : [ "", 1 ];
+    }
+    if (quote == "\"")
+        return char == "\\" ? [ quote, 2 ] : [ char == "\"" ? "" : quote, 1 ];
+    if ((char == "\"" || char == "'") && (i == 0 || match(substr(value, i - 1, 1), /[ \t:,{\[]/)))
+        return [ char, 1 ];
+    return [ "", 1 ];
 }
 
 function leading_indent(value) {
@@ -1255,51 +1316,41 @@ function leading_indent(value) {
 }
 
 function find_top_level_colon(value) {
-    let depth = 0, quote = "", escaped = false;
-    for (let i = 0; i < length(value); i++) {
+    let depth = 0, quote = "";
+    for (let i = 0; i < length(value); ) {
         let char = substr(value, i, 1);
-        if (quote != "") {
-            if (escaped)
-                escaped = false;
-            else if (char == "\\")
-                escaped = true;
-            else if (char == quote)
-                quote = "";
+        if (quote == "") {
+            if (char == "{" || char == "[")
+                depth++;
+            else if (char == "}" || char == "]")
+                depth--;
+            else if (char == ":" && depth == 0)
+                return i;
         }
-        else if (char == "\"" || char == "'")
-            quote = char;
-        else if (char == "{" || char == "[")
-            depth++;
-        else if (char == "}" || char == "]")
-            depth--;
-        else if (char == ":" && depth == 0)
-            return i;
+        let step = yaml_quote_step(value, i, quote);
+        quote = step[0];
+        i += step[1];
     }
     return null;
 }
 
 function split_top_level(value, separator) {
-    let result = [], depth = 0, quote = "", escaped = false, start = 0;
-    for (let i = 0; i < length(value); i++) {
+    let result = [], depth = 0, quote = "", start = 0;
+    for (let i = 0; i < length(value); ) {
         let char = substr(value, i, 1);
-        if (quote != "") {
-            if (escaped)
-                escaped = false;
-            else if (char == "\\")
-                escaped = true;
-            else if (char == quote)
-                quote = "";
+        if (quote == "") {
+            if (char == "{" || char == "[")
+                depth++;
+            else if (char == "}" || char == "]")
+                depth--;
+            else if (char == separator && depth == 0) {
+                push(result, substr(value, start, i - start));
+                start = i + 1;
+            }
         }
-        else if (char == "\"" || char == "'")
-            quote = char;
-        else if (char == "{" || char == "[")
-            depth++;
-        else if (char == "}" || char == "]")
-            depth--;
-        else if (char == separator && depth == 0) {
-            push(result, substr(value, start, i - start));
-            start = i + 1;
-        }
+        let step = yaml_quote_step(value, i, quote);
+        quote = step[0];
+        i += step[1];
     }
     push(result, substr(value, start));
     return result;
@@ -1372,27 +1423,20 @@ let clash_nested_keys = {
     "grpc-opts": true,
     "reality-opts": true,
     "obfs-opts": true,
+    "h2-opts": true,
     headers: true
 };
 
 // A YAML comment: '#' at the start or after a space, outside quotes. It is
 // not part of the value (SB-4: 'password: abc # old' kept the comment).
 function strip_yaml_comment(value) {
-    let quote = "", escaped = false;
-    for (let i = 0; i < length(value); i++) {
-        let char = substr(value, i, 1);
-        if (quote != "") {
-            if (escaped)
-                escaped = false;
-            else if (char == "\\" && quote == "\"")
-                escaped = true;
-            else if (char == quote)
-                quote = "";
-        }
-        else if ((char == "\"" || char == "'") && (i == 0 || match(substr(value, i - 1, 1), /[ \t:,{\[]/)))
-            quote = char;
-        else if (char == "#" && (i == 0 || match(substr(value, i - 1, 1), /[ \t]/)))
+    let quote = "";
+    for (let i = 0; i < length(value); ) {
+        if (quote == "" && substr(value, i, 1) == "#" && (i == 0 || match(substr(value, i - 1, 1), /[ \t]/)))
             return rtrim(substr(value, 0, i));
+        let step = yaml_quote_step(value, i, quote);
+        quote = step[0];
+        i += step[1];
     }
     return value;
 }
@@ -1530,7 +1574,23 @@ function add_clash_tls(outbound, options) {
     outbound.tls = tls;
 }
 
-// False for a network the node cannot be built for (h2, http, kcp, ...).
+// The items of a flow list ("[a, 'b']") or of one scalar.
+function clash_list(value) {
+    value = trim(as_string(value));
+    if (substr(value, 0, 1) == "[" && substr(value, length(value) - 1) == "]")
+        value = substr(value, 1, length(value) - 2);
+    let result = [];
+    for (let item in split_top_level(value, ",")) {
+        item = clean_scalar(item);
+        if (item != "")
+            push(result, item);
+    }
+    return result;
+}
+
+// False for a network the node cannot be built for (http, kcp, ...). The
+// Clash "http" network is V2Ray's HTTP header obfuscation of TCP, which
+// sing-box does not have.
 function add_clash_transport(outbound, options) {
     if (options.network == "" || options.network == "tcp")
         return true;
@@ -1546,6 +1606,13 @@ function add_clash_transport(outbound, options) {
         outbound.transport = { type: "grpc" };
         if (options.grpc_service_name != "")
             outbound.transport.service_name = options.grpc_service_name;
+    }
+    else if (options.network == "h2") {
+        outbound.transport = { type: "http" };
+        if (options.h2_path != "")
+            outbound.transport.path = options.h2_path;
+        if (length(options.h2_hosts) > 0)
+            outbound.transport.host = options.h2_hosts;
     }
     else
         return false;
@@ -1570,6 +1637,8 @@ function parse_clash_record(record) {
         ws_path: as_string(record["ws-opts.path"]),
         ws_host: as_string(record["ws-opts.headers.Host"]),
         grpc_service_name: as_string(record["grpc-opts.grpc-service-name"]),
+        h2_path: as_string(record["h2-opts.path"]),
+        h2_hosts: clash_list(record["h2-opts.host"]),
         reality_public_key: as_string(record["reality-opts.public-key"]),
         reality_short_id: as_string(record["reality-opts.short-id"]),
         alpn: normalized_clash_alpn(record.alpn || ""),

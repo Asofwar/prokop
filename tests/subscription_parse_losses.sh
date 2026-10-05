@@ -55,17 +55,18 @@ expect "vless://$uuid@example.com:443?security=tls&fp=random" .tls.utls.fingerpr
 expect "vless://$uuid@example.com:443?security=tls&fp=qq" .tls.utls.fingerprint qq
 expect "vless://$uuid@example.com:443?security=tls&fp=nonsense" .tls.utls.fingerprint chrome
 
-# Clash: a network with no builder drops the node, ws still works.
+# Clash: a network with no builder drops the node (http, V2Ray's HTTP
+# header obfuscation of TCP; h2 is built since SB-13), ws still works.
 cat >"$WORK_DIR/clash.yaml" <<YAML
 proxies:
-  - { name: H2 node, type: vless, server: example.com, port: 443, uuid: $uuid, network: h2, tls: true }
+  - { name: HTTP node, type: vless, server: example.com, port: 443, uuid: $uuid, network: http, tls: true }
   - { name: WS node, type: vless, server: example.com, port: 443, uuid: $uuid, network: ws, tls: true, ws-opts: { path: /ws } }
   - { name: TCP node, type: trojan, server: example.com, port: 443, password: secret }
 YAML
 ucode -L "$LIB" "$LIB/subscription/parser.uc" normalize-clash-yaml "$WORK_DIR/clash.yaml" "$WORK_DIR/clash.json" ||
   fail "the Clash YAML must be normalized"
 tags="$(jq -r '[.outbounds[].tag] | join(",")' "$WORK_DIR/clash.json")"
-[ "$tags" = "WS node,TCP node" ] || fail "Clash h2 node must be skipped, got tags '$tags'"
+[ "$tags" = "WS node,TCP node" ] || fail "Clash http node must be skipped, got tags '$tags'"
 
 # Xray JSON: a kcp stream drops the node, splithttp keeps it as XHTTP.
 cat >"$WORK_DIR/xray.json" <<JSON
