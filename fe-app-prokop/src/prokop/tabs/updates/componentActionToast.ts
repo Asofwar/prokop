@@ -1,3 +1,4 @@
+import { actionReasonText, failureReason } from '../../helpers/actionReason';
 import { Prokop } from '../../types';
 
 function componentName(component: Prokop.ComponentName): string {
@@ -270,4 +271,154 @@ export function componentActionFailureText(message: string): string {
     }
   }
   return message;
+}
+
+// The other failures of components/action.uc, by their kind. The backend
+// writes English for the system log, where the full text stays; the card
+// and the toast say what kind of failure it was in the UI's language.
+const COMPONENT_FAILURES: Array<
+  [RegExp, (match: RegExpMatchArray, name: string) => string]
+> = [
+  [
+    /^Installed Prokop (\S+) is not published in this Prokop channel.*?(?:: (wget -qO- \S+ \| sh))?$/,
+    (m) =>
+      m[2]
+        ? _(
+            'Prokop %s is not published in this release channel, so it cannot be kept for a rollback; the update was refused. Run the one-line installer instead: %s',
+          )
+            .replace('%s', m[1])
+            .replace('%s', m[2])
+        : _(
+            'Prokop %s is not published in this release channel, so it cannot be kept for a rollback; the update was refused',
+          ).replace('%s', m[1]),
+  ],
+  [
+    /^Not enough free space on the router's storage to install .*: ([0-9]+) KiB available where ([0-9]+) KiB is needed$/,
+    (m, name) =>
+      _('Not enough free space for %s: %s KiB free, %s KiB needed')
+        .replace('%s', name)
+        .replace('%s', m[1])
+        .replace('%s', m[2]),
+  ],
+  [
+    /ran out of storage space|No space left on device/,
+    (_m, name) =>
+      _('%s: the router ran out of storage space').replace('%s', name),
+  ],
+  [
+    /^Prokop was not stopped: another sing-box process/,
+    () =>
+      _(
+        'Prokop was not stopped: another sing-box process runs on the router; the current sing-box was kept',
+      ),
+  ],
+  [
+    /^The configured mirror uses http:\/\//,
+    () =>
+      _(
+        'The configured mirror uses http://; programs are installed only from an https:// mirror',
+      ),
+  ],
+  [
+    /could not be restored/,
+    (_m, name) =>
+      _(
+        '%s: the change failed, and the previous state could not be restored. Check the system log',
+      ).replace('%s', name),
+  ],
+  [
+    /previous (sing-box variant|release) (was )?restored|the current sing-box (variant )?was kept/,
+    (_m, name) =>
+      _('%s: the change failed; the previous version was kept').replace(
+        '%s',
+        name,
+      ),
+  ],
+  [
+    /did not start cleanly/,
+    (_m, name) =>
+      _('%s was installed, but Prokop did not start cleanly').replace(
+        '%s',
+        name,
+      ),
+  ],
+  [
+    /^Failed to update package lists/,
+    () =>
+      _(
+        'Failed to update the package lists. Check the internet connection and try again',
+      ),
+  ],
+  [
+    /checksum mismatch|has no SHA-256|does not match its published/,
+    (_m, name) =>
+      _(
+        '%s: the downloaded file does not match its published checksum; it was not installed',
+      ).replace('%s', name),
+  ],
+  [
+    /^Failed to download/,
+    (_m, name) =>
+      _(
+        '%s: the download failed. Check the internet connection and try again',
+      ).replace('%s', name),
+  ],
+  [
+    /^Failed to (resolve|check|read the latest)|^Selected release is unavailable/,
+    (_m, name) =>
+      _(
+        '%s: the release could not be checked. Check the internet connection and try again',
+      ).replace('%s', name),
+  ],
+  [
+    /is not installed$/,
+    (_m, name) => _('%s is not installed').replace('%s', name),
+  ],
+  [
+    /service is not available/,
+    (_m, name) =>
+      _('%s is not available in this Prokop build').replace('%s', name),
+  ],
+];
+
+// The text of a failed component action for the card and the toast: the
+// translated reason when the backend gives one, a translated text by the
+// kind of failure, and otherwise a translated line that points to the
+// system log rather than the backend's English (FE-15).
+export function componentActionFailureMessage(
+  failure: { reason?: string; error?: string; message?: string },
+  result?: Partial<Pick<Prokop.ComponentActionResult, 'component'>>,
+  fallback: string = _('Failed to execute'),
+): string {
+  const reasonText = actionReasonText(failureReason(failure));
+  if (reasonText) {
+    return reasonText;
+  }
+
+  const raw = (failure.error || failure.message || '').trim();
+  if (!raw) {
+    return fallback;
+  }
+
+  const torrserver = componentActionFailureText(raw);
+  if (torrserver !== raw) {
+    return torrserver;
+  }
+
+  const name = result?.component
+    ? componentName(result.component)
+    : _('Component');
+  for (const [pattern, text] of COMPONENT_FAILURES) {
+    const match = raw.match(pattern);
+    if (match) {
+      return text(match, name);
+    }
+  }
+
+  return result?.component
+    ? _('%s: the action failed. The details are in the system log').replace(
+        '%s',
+        name,
+      )
+    : _('The action failed. The details are in the system log');
 }

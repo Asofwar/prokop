@@ -5312,6 +5312,60 @@ msgstr "TorrServer %s не запустился; снова работает п�
 msgid "TorrServer did not take the recommended settings"
 msgstr "TorrServer не принял рекомендуемые настройки"
 
+msgid "Prokop %s is not published in this release channel, so it cannot be kept for a rollback; the update was refused. Run the one-line installer instead: %s"
+msgstr "Prokop %s не опубликован в этом канале релизов, поэтому его нельзя сохранить для отката; обновление отменено. Запустите установщик одной командой: %s"
+
+msgid "Prokop %s is not published in this release channel, so it cannot be kept for a rollback; the update was refused"
+msgstr "Prokop %s не опубликован в этом канале релизов, поэтому его нельзя сохранить для отката; обновление отменено"
+
+msgid "Not enough free space for %s: %s KiB free, %s KiB needed"
+msgstr "Недостаточно места для %s: свободно %s КиБ, нужно %s КиБ"
+
+msgid "%s: the router ran out of storage space"
+msgstr "%s: на роутере закончилось место"
+
+msgid "Prokop was not stopped: another sing-box process runs on the router; the current sing-box was kept"
+msgstr "Prokop не остановлен: на роутере работает другой процесс sing-box; текущий sing-box оставлен"
+
+msgid "The configured mirror uses http://; programs are installed only from an https:// mirror"
+msgstr "Указанное зеркало использует http://; программы устанавливаются только с зеркала https://"
+
+msgid "%s: the change failed, and the previous state could not be restored. Check the system log"
+msgstr "%s: изменение не удалось, и прежнее состояние восстановить не получилось. Проверьте системный журнал"
+
+msgid "%s: the change failed; the previous version was kept"
+msgstr "%s: изменение не удалось; прежняя версия сохранена"
+
+msgid "%s was installed, but Prokop did not start cleanly"
+msgstr "%s установлен, но Prokop запустился с ошибками"
+
+msgid "Failed to update the package lists. Check the internet connection and try again"
+msgstr "Не удалось обновить списки пакетов. Проверьте подключение к интернету и повторите"
+
+msgid "%s: the downloaded file does not match its published checksum; it was not installed"
+msgstr "%s: скачанный файл не совпадает с опубликованной контрольной суммой; он не установлен"
+
+msgid "%s: the download failed. Check the internet connection and try again"
+msgstr "%s: не удалось скачать. Проверьте подключение к интернету и повторите"
+
+msgid "%s: the release could not be checked. Check the internet connection and try again"
+msgstr "%s: не удалось проверить релиз. Проверьте подключение к интернету и повторите"
+
+msgid "%s is not installed"
+msgstr "%s не установлен"
+
+msgid "%s is not available in this Prokop build"
+msgstr "%s недоступен в этой сборке Prokop"
+
+msgid "Component"
+msgstr "Компонент"
+
+msgid "%s: the action failed. The details are in the system log"
+msgstr "%s: действие не выполнено. Подробности в системном журнале"
+
+msgid "The action failed. The details are in the system log"
+msgstr "Действие не выполнено. Подробности в системном журнале"
+
 msgid "TorrServer Direct"
 msgstr "Прямой TorrServer"
 

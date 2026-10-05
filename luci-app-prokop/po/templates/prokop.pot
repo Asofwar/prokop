@@ -7522,6 +7522,78 @@ msgstr ""
 msgid "TorrServer did not take the recommended settings"
 msgstr ""
 
+#: src/prokop/tabs/updates/componentActionToast.ts
+msgid "Prokop %s is not published in this release channel, so it cannot be kept for a rollback; the update was refused. Run the one-line installer instead: %s"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts
+msgid "Prokop %s is not published in this release channel, so it cannot be kept for a rollback; the update was refused"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts
+msgid "Not enough free space for %s: %s KiB free, %s KiB needed"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts
+msgid "%s: the router ran out of storage space"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts
+msgid "Prokop was not stopped: another sing-box process runs on the router; the current sing-box was kept"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts
+msgid "The configured mirror uses http://; programs are installed only from an https:// mirror"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts
+msgid "%s: the change failed, and the previous state could not be restored. Check the system log"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts
+msgid "%s: the change failed; the previous version was kept"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts
+msgid "%s was installed, but Prokop did not start cleanly"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts
+msgid "Failed to update the package lists. Check the internet connection and try again"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts
+msgid "%s: the downloaded file does not match its published checksum; it was not installed"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts
+msgid "%s: the download failed. Check the internet connection and try again"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts
+msgid "%s: the release could not be checked. Check the internet connection and try again"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts
+msgid "%s is not installed"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts
+msgid "%s is not available in this Prokop build"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts
+msgid "Component"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts
+msgid "%s: the action failed. The details are in the system log"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts
+msgid "The action failed. The details are in the system log"
+msgstr ""
+
 #: src/prokop/tabs/updates/componentActionToast.ts:24
 msgid "TorrServer Direct"
 msgstr ""

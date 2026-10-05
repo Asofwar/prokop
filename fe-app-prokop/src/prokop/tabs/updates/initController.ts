@@ -6,7 +6,6 @@ import { showToast } from '../../../helpers/showToast';
 import {
   actionReasonText,
   failureReason,
-  failureText,
   failureToastType,
 } from '../../helpers/actionReason';
 import { copyToClipboard } from '../../../helpers/copyToClipboard';
@@ -33,7 +32,7 @@ import {
 } from '../diagnostic/serviceTransition';
 import { shouldApplyCompletedComponentActionResult } from './componentActionCompletion';
 import {
-  componentActionFailureText,
+  componentActionFailureMessage,
   componentActionSuccessIsPartial,
   componentActionSuccessText,
 } from './componentActionToast';
@@ -700,20 +699,25 @@ async function completeComponentActionJob(
 
     handledComponentJobs.add(jobId);
     setActionLoading(key, false);
+    const text = componentActionFailureMessage(
+      failure,
+      response.success
+        ? response.data
+        : {
+            component: Object.values(store.get().updatesProgress).find(
+              (view) => view?.jobId === jobId,
+            )?.component,
+          },
+    );
     setFinishedComponentProgress(
       jobId,
       response.success ? response.data : undefined,
       false,
-      componentActionFailureText(failureText(failure, _('Failed to execute'))),
+      text,
     );
     if (shouldNotify) {
       // Busy is a translated warning, not a failure (UC-119).
-      showToast(
-        componentActionFailureText(
-          failureText(failure, _('Failed to execute')),
-        ),
-        failureToastType(failure),
-      );
+      showToast(text, failureToastType(failure));
     }
     await ackComponentActionJob(jobId);
     return;
