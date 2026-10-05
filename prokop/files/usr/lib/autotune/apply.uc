@@ -99,6 +99,11 @@ const PORT_RANGE_FILE = getenv("PROKOP_AUTOTUNE_PORT_RANGE_FILE") || "/proc/sys/
 const PROC_NET = getenv("PROKOP_AUTOTUNE_PROC_NET") || "/proc/net";
 const ROLLBACK_WAIT_SECONDS = int(getenv("PROKOP_AUTOTUNE_ROLLBACK_WAIT_SECONDS") || "300");
 const TERMINAL_PHASES = [ "applied", "rolled_back", "failed", "stale", "no_change_required", "needs_attention" ];
+// The "lkg" of an applied record whose candidate waits for its observation
+// (observed apply): last-known-working stays the pre-apply configuration
+// until the observation passes (confirm); config/snapshots.uc objects to a
+// start or reload confirming the candidate meanwhile.
+const LKG_OBSERVATION = "observation_pending";
 
 let interrupted = false;
 
@@ -988,7 +993,10 @@ function valid_plan(p) {
         valid_hash(p.config_hash) && valid_hash(p.candidate_hash);
 }
 
-function apply(plan_file, resolver) {
+// observed: an automatic apply that autotune/manager.uc observes after it
+// passes its verification; its candidate becomes last-known-working only
+// when that observation passes (confirm).
+function apply(plan_file, resolver, observed) {
     let p = read_json(plan_file);
     if (!valid_plan(p)) return { status: "failed", reason: "invalid_plan", applied: false };
     let previous = state_read();
@@ -1105,6 +1113,15 @@ function apply(plan_file, resolver) {
         audit.lkg = "not_confirmed"; audit.finished_at = now();
         state_write(audit); return audit;
     }
+    // An observed candidate is confirmed by its observation (confirm), not
+    // by this verification: last-known-working stays the pre-apply
+    // configuration, so a failed or unfinished observation never leaves the
+    // candidate as the configuration to return to.
+    if (observed) {
+        audit.lkg = LKG_OBSERVATION;
+        audit.phase = "applied"; audit.status = "applied"; audit.finished_at = now();
+        state_write(audit); return audit;
+    }
     // The one confirmation of a candidate: a start or reload never confirms
     // it while this record is unfinished or undecided (config/snapshots.uc).
     // Its snapshot may not push out the pre-apply one the rollback needs.
@@ -1194,11 +1211,52 @@ function observe(started_at) {
     return output;
 }
 
+// The observation of an observed apply passed (autotune/manager.uc
+// observation_tick): its candidate becomes last-known-working, only while
+// the record is still that applied candidate and the candidate is still in
+// effect, as observe() judges it (the exact candidate, or an edit that kept
+// it, AT-10). The verdict:
+//   confirmed     last-known-working is the configuration now (also when an
+//                 earlier call already confirmed it)
+//   ended         the record or the configuration is no longer that
+//                 candidate: nothing is confirmed
+//   inconclusive  not now (a transaction, a service action, the confirmation
+//                 itself failed): the caller asks again
+function confirm(started_at) {
+    let s = state_read();
+    if (type(s) != "object" || s.unreadable || s.mutation == null || s.started_at !== started_at)
+        return { status: "ended", reason: "record_changed" };
+    if (s.phase != "applied") return { status: "ended", reason: "apply_" + as_string(s.phase) };
+    if (s.lkg == "confirmed") return { status: "confirmed", reason: "already_confirmed" };
+    if (s.lkg != LKG_OBSERVATION) return { status: "ended", reason: "not_observed" };
+    let d = diagnose(s);
+    let edited = d.diagnosis == "superseded" && d.candidate_in_effect === true;
+    if (d.diagnosis == "superseded" && !edited) return { status: "ended", reason: "config_changed" };
+    if (d.diagnosis == "not_applied") return { status: "ended", reason: "not_applied" };
+    if (d.diagnosis != "candidate_active" && !edited) return { status: "inconclusive", reason: d.diagnosis };
+    if (service_stopped()) return { status: "inconclusive", reason: "service_stopped" };
+    if (runtime_guard_kept()) return { status: "inconclusive", reason: "runtime_guard_active" };
+    let action = service_action();
+    if (action != null) return { status: "inconclusive", reason: action };
+    // Its snapshot may not push out the pre-apply one the rollback needs.
+    let confirmed = snapshots([ "confirm-working", "autotune", as_string(s.pre_snapshot) ]);
+    if (confirmed.status != "confirmed")
+        return { status: "inconclusive", reason: "lkg_" + as_string(confirmed.reason || confirmed.status) };
+    s.lkg = "confirmed";
+    s.lkg_confirmed_at = now();
+    if (edited) s.lkg_config_edited = true;
+    // Without the record on flash a start or reload would still object to
+    // the candidate: the caller asks again (confirming again is a no-op).
+    if (!state_write(s)) return { status: "inconclusive", reason: "state_write_failed" };
+    return { status: "confirmed", reason: null };
+}
+
 // The snapshot a rollback of the record returns to, or null: the recorded
 // before-autotune snapshot; else the last-known-working one while it still
-// holds the pre-apply user configuration (checked before any mutation, and
-// only a verified apply moves it). An unreadable record returns to the
-// last-known-working one (rollback_unreadable).
+// holds the pre-apply user configuration (checked before any mutation; only
+// a verified apply, or for an observed one its passed observation, moves
+// it). An unreadable record returns to the last-known-working one
+// (rollback_unreadable).
 function rollback_source(s, pre) {
     let id = trim(as_string(fs.readfile(SNAPSHOT_DIR + "/last-known-working")));
     let item = match(id, /^[0-9]+_[0-9]+$/) != null ? read_json(SNAPSHOT_DIR + "/" + id + ".json") : null;
@@ -1435,25 +1493,26 @@ else if (mode == "path") {
         code = seen.ok ? 0 : 1;
     }
 }
-else if (mode == "apply" || mode == "rollback" || mode == "observe") {
+else if (mode == "apply" || mode == "rollback" || mode == "observe" || mode == "confirm") {
     // The apply an observation names: its started_at, digits only.
-    let observed = mode == "observe" ? ARGV[1] : mode == "rollback" && ARGV[1] == "observation" ? ARGV[2] : null;
+    let observed = mode == "observe" || mode == "confirm" ? ARGV[1] : mode == "rollback" && ARGV[1] == "observation" ? ARGV[2] : null;
     let started = observed != null && match(as_string(observed), /^[1-9][0-9]{0,11}$/) != null ? int(observed) : null;
     if (observed != null && started == null) output = { status: "failed", reason: "invalid_apply_id" };
     else if (mode == "rollback" && ARGV[1] != null && ARGV[1] != "observation") output = { status: "failed", reason: "invalid_arguments" };
     else if (!autotune_lock.acquire())
         output = autotune_lock.busy() ? { status: "busy", reason: "autotune_in_progress" } : { status: "failed", reason: "lock_unavailable" };
     else {
-        output = mode == "apply" ? apply(ARGV[1], ARGV[2]) : mode == "observe" ? observe(started) : rollback(started);
+        output = mode == "apply" ? apply(ARGV[1], ARGV[2], ARGV[3] == "observed") : mode == "observe" ? observe(started) :
+            mode == "confirm" ? confirm(started) : rollback(started);
         autotune_lock.release();
         // Exit 0 only when the requested outcome happened: apply applied (or
         // nothing to do), rollback rolled back, an observation check made.
         code = index(mode == "apply" ? [ "applied", "no_change_required" ] : mode == "observe" ? [ "ok", "failed", "inconclusive", "ended" ] :
-            [ "rolled_back" ], output.status) >= 0 ? 0 : 1;
+            mode == "confirm" ? [ "confirmed" ] : [ "rolled_back" ], output.status) >= 0 ? 0 : 1;
     }
 }
 else {
-    warn("Usage: autotune/apply.uc <plan <selection.json> [resolver]|apply <plan.json> [resolver]|verify <plan.json> [proposed|current] [traffic]|rollback [observation <started_at>]|observe <started_at>|status|path <host>>\n");
+    warn("Usage: autotune/apply.uc <plan <selection.json> [resolver]|apply <plan.json> [resolver] [observed]|verify <plan.json> [proposed|current] [traffic]|rollback [observation <started_at>]|observe <started_at>|confirm <started_at>|status|path <host>>\n");
     exit(1);
 }
 print(sprintf("%J\n", output));

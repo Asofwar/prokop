@@ -30,6 +30,9 @@ const STOP_REQUESTED = getenv("PROKOP_STOP_REQUESTED_FILE") ||
 // phases in which that apply is finished.
 const AUTOTUNE_APPLY_STATE = getenv("PROKOP_AUTOTUNE_APPLY_STATE") || "/etc/prokop/autotune-apply.json";
 const AUTOTUNE_TERMINAL_PHASES = [ "applied", "rolled_back", "failed", "stale", "no_change_required", "needs_attention" ];
+// The "lkg" of an apply record whose candidate waits for its observation
+// (autotune/apply.uc).
+const AUTOTUNE_LKG_OBSERVATION = "observation_pending";
 // The save directory of `uci set` without a commit; libuci reads every
 // cursor through it (autotune/apply.uc and manager.uc check it too, with the
 // override PROKOP_AUTOTUNE_UCI_SAVEDIR). Tests that restore set it.
@@ -864,6 +867,11 @@ function runs_strategy(content, mutation) {
 // because it was edited during the check, UC-017) is no candidate any more,
 // but while the rule still runs the candidate's strategy it carries what
 // has not been, or has just failed to be, verified.
+// An automatic apply that is observed after its verification is confirmed
+// only by its observation once it passes (autotune/apply.uc confirm): until
+// then, and when the observation ends without passing, a configuration that
+// is its candidate or still runs the candidate's strategy is not confirmed
+// by a start or reload either.
 function autotune_objection(content) {
     if (fs.stat(AUTOTUNE_APPLY_STATE) == null) return null;
     let record = null;
@@ -875,7 +883,13 @@ function autotune_objection(content) {
     // A decided record objects to nothing: nothing more is read or parsed
     // (this runs in every start and reload).
     let undecided = !finished || record.phase == "needs_attention" || (record.phase == "failed" && record.rollback_available === true);
-    if (!undecided) return null;
+    if (!undecided) {
+        if (record.phase != "applied" || record.lkg != AUTOTUNE_LKG_OBSERVATION) return null;
+        let hash = sha(content);
+        let candidate = hash != "" && (hash == record.candidate_hash ||
+            (record.candidate_fingerprint != null && user_fingerprint(content) == record.candidate_fingerprint));
+        return candidate || runs_strategy(content, record.mutation) ? "autotune_observation_pending" : null;
+    }
     let hash = sha(content);
     let candidate = hash != "" && (hash == record.candidate_hash ||
         (record.candidate_fingerprint != null && user_fingerprint(content) == record.candidate_fingerprint));

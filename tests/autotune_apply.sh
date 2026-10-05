@@ -1635,7 +1635,7 @@ cases_10() {
 # 25. The observation after an automatic apply (autotune/manager.uc): read-only
 #     checks of the applied candidate in production (observe <started_at>) and
 #     the rollback of that very apply once it fails (rollback observation).
-reset_apply; plan_ready; at apply "$WORK/plan.json"
+reset_apply; plan_ready; at apply "$WORK/plan.json" "" observed
 json 'a.equal(r.status, "applied"); a.equal(typeof r.started_at, "number");' "$WORK/out.json"
 id="$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).started_at)' "$WORK/out.json")"
 applied_hash="$(chash)"; applied_lkg="$(lkg)"; reloads_before="$(reloads)"
@@ -1688,7 +1688,7 @@ ok "25a observation rollback: only the observed apply, pre-apply configuration a
 #      keeps the observation, and its rollback sets back only the option the
 #      apply changed, keeping the edit; an edit of the rule's strategy ends
 #      it, nothing is rolled back.
-reset_apply; plan_ready; at apply "$WORK/plan.json"
+reset_apply; plan_ready; at apply "$WORK/plan.json" "" observed
 id="$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).started_at)' "$WORK/out.json")"
 sed -i "s/option dns_rewrite_ttl '60'/option dns_rewrite_ttl '45'/" "$PROKOP_CONFIG_FILE"
 printf "\nconfig autotune 'autotune'\n\toption mode 'auto'\n\toption observation '3h'\n" >> "$PROKOP_CONFIG_FILE"; edited="$(chash)"
@@ -1710,19 +1710,75 @@ grep -q "option nfqws_opt '$FAKE'" "$PROKOP_CONFIG_FILE" || fail "the rule is no
 [ "$(journal)" = "autotune_rollback:success:automatic:multisplit" ] || fail "rule rollback history: $(journal)"
 at observe "$id"; json 'a.equal(r.status, "ended"); a.equal(r.phase, "rolled_back"); a.equal(r.apply_reason, "observation_failed");' "$WORK/out.json"
 # The operator's rollback after an unrelated edit works the same way.
-reset_apply; plan_ready; at apply "$WORK/plan.json"
+reset_apply; plan_ready; at apply "$WORK/plan.json" "" observed
 sed -i "s/option dns_rewrite_ttl '60'/option dns_rewrite_ttl '45'/" "$PROKOP_CONFIG_FILE"
 at rollback
 json 'a.equal(r.status, "rolled_back", JSON.stringify(r).slice(0, 600)); a.equal(r.reason, "operator_rollback"); a.equal(r.rollback.mode, "rule");' "$WORK/out.json"
 grep -q "option dns_rewrite_ttl '45'" "$PROKOP_CONFIG_FILE" || fail "the operator's rollback discarded the edit"
 # An edit of the rule's strategy takes the candidate out: ended, untouched.
-reset_apply; plan_ready; at apply "$WORK/plan.json"
+reset_apply; plan_ready; at apply "$WORK/plan.json" "" observed
 id="$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).started_at)' "$WORK/out.json")"
 sed -i "s/--dpi-desync-split-pos=1,midsld/--dpi-desync-split-pos=2/" "$PROKOP_CONFIG_FILE"; edited="$(chash)"
 at observe "$id"; json 'a.equal(r.status, "ended"); a.equal(r.reason, "config_changed");' "$WORK/out.json"
 at rollback observation "$id"; json 'a.equal(r.status, "failed"); a.equal(r.reason, "rollback_needs_candidate_config");' "$WORK/out.json"
 [ "$(chash)" = "$edited" ] || fail "an edited configuration was touched"
 ok "25b AT-10 an edit that keeps the candidate in effect keeps the observation and its rollback (only the rule option, the edit stays); an edit of the strategy ends it"
+
+# 25c. Last-known-working after the observation passed: an observed apply
+#      leaves it on the pre-apply configuration, and a start or reload does
+#      not confirm the candidate meanwhile; only the passed observation does
+#      (confirm), for that very apply while its candidate is in effect.
+reset_apply; plan_ready; at apply "$WORK/plan.json" "" observed
+json 'a.equal(r.status, "applied", JSON.stringify(r).slice(0, 400)); a.equal(r.lkg, "observation_pending");' "$WORK/out.json"
+id="$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).started_at)' "$WORK/out.json")"
+[ "$(lkg)" = "$PRE_LKG" ] || fail "an observed apply moved last-known-working before its observation"
+confirm; json 'a.equal(r.status, "not_confirmed"); a.equal(r.reason, "autotune_observation_pending");' "$WORK/confirm.json"
+[ "$(lkg)" = "$PRE_LKG" ] || fail "a reload confirmed the observed candidate"
+at status; json 'a.equal(r.resolved, true); a.equal(r.diagnosis, "candidate_active");' "$WORK/out.json"
+at confirm "$((id + 1))"; json 'a.equal(r.status, "ended"); a.equal(r.reason, "record_changed");' "$WORK/out.json"
+at confirm abc; json 'a.equal(r.status, "failed"); a.equal(r.reason, "invalid_apply_id");' "$WORK/out.json"
+: > "$PROKOP_STOP_REQUESTED_FILE"; at confirm "$id"; rm -f "$PROKOP_STOP_REQUESTED_FILE"
+json 'a.equal(r.status, "inconclusive"); a.equal(r.reason, "service_stopped");' "$WORK/out.json"
+[ "$(lkg)" = "$PRE_LKG" ] || fail "an inconclusive confirmation moved last-known-working"
+reloads_before="$(reloads)"
+at confirm "$id"; json 'a.equal(r.status, "confirmed", JSON.stringify(r));' "$WORK/out.json"
+[ "$(lkg)" != "$PRE_LKG" ] || fail "the passed observation did not confirm the candidate"
+grep -q "multisplit\|split-pos=1,midsld" "$PROKOP_SNAPSHOT_DIR/$(lkg).json" || fail "last-known-working is not the candidate"
+[ "$(reloads)" = "$reloads_before" ] || fail "the confirmation reloaded"
+json 'a.equal(r.phase, "applied"); a.equal(r.lkg, "confirmed"); a.equal(typeof r.lkg_confirmed_at, "number");' "$PROKOP_AUTOTUNE_APPLY_STATE"
+confirmed_lkg="$(lkg)"
+at confirm "$id"; json 'a.equal(r.status, "confirmed"); a.equal(r.reason, "already_confirmed");' "$WORK/out.json"
+confirm; json 'a.equal(r.status, "confirmed");' "$WORK/confirm.json"
+[ "$(lkg)" = "$confirmed_lkg" ] || fail "last-known-working moved again"
+# The rollback of the observation returns to the pre-apply snapshot without
+# relying on last-known-working, which it leaves on that snapshot.
+reset_apply; plan_ready; at apply "$WORK/plan.json" "" observed
+id="$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).started_at)' "$WORK/out.json")"
+pre_id="$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).pre_snapshot)' "$WORK/out.json")"
+at rollback observation "$id"
+json 'a.equal(r.status, "rolled_back", JSON.stringify(r).slice(0, 500)); a.equal(r.rollback.lkg_is_pre_snapshot, true);' "$WORK/out.json"
+[ "$(lkg)" = "$pre_id" ] || fail "last-known-working is not the pre-apply snapshot after the rollback"
+at confirm "$id"; json 'a.equal(r.status, "ended"); a.equal(r.reason, "apply_rolled_back");' "$WORK/out.json"
+[ "$(lkg)" = "$pre_id" ] || fail "a rolled back candidate was confirmed"
+# An edit that keeps the candidate in effect (AT-10) is confirmed with it.
+reset_apply; plan_ready; at apply "$WORK/plan.json" "" observed
+id="$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).started_at)' "$WORK/out.json")"
+sed -i "s/option dns_rewrite_ttl '60'/option dns_rewrite_ttl '45'/" "$PROKOP_CONFIG_FILE"
+confirm; json 'a.equal(r.status, "not_confirmed"); a.equal(r.reason, "autotune_observation_pending");' "$WORK/confirm.json"
+at confirm "$id"; json 'a.equal(r.status, "confirmed", JSON.stringify(r));' "$WORK/out.json"
+grep -q "option dns_rewrite_ttl '45'" "$PROKOP_SNAPSHOT_DIR/$(lkg).json" || fail "last-known-working is not the edited configuration"
+json 'a.equal(r.lkg, "confirmed"); a.equal(r.lkg_config_edited, true);' "$PROKOP_AUTOTUNE_APPLY_STATE"
+# The rule's strategy edited: the candidate is out, nothing is confirmed by
+# the observation, and a reload confirms the edited configuration as usual.
+reset_apply; plan_ready; at apply "$WORK/plan.json" "" observed
+id="$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).started_at)' "$WORK/out.json")"
+sed -i "s/--dpi-desync-split-pos=1,midsld/--dpi-desync-split-pos=2/" "$PROKOP_CONFIG_FILE"
+at confirm "$id"; json 'a.equal(r.status, "ended"); a.equal(r.reason, "config_changed");' "$WORK/out.json"
+[ "$(lkg)" = "$PRE_LKG" ] || fail "an edited-out candidate was confirmed"
+json 'a.equal(r.lkg, "observation_pending");' "$PROKOP_AUTOTUNE_APPLY_STATE"
+confirm; json 'a.equal(r.status, "confirmed", JSON.stringify(r));' "$WORK/confirm.json"
+grep -q "split-pos=2" "$PROKOP_SNAPSHOT_DIR/$(lkg).json" || fail "the edited configuration was not confirmed by the reload"
+ok "25c observed apply: last-known-working stays pre-apply until the observation passes; confirmed only for that apply in effect"
 }
 
 # The groups of cases run at once, each on a fixture of its own (a fresh

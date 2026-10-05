@@ -6,8 +6,10 @@
 //                   1700000000 (after $STUB_APPLY_SLEEP seconds, when set);
 //   rollback [observation <id>]  $STUB_TUNE_DIR/rollback.json or a rolled
 //                   back apply of candidate fake in group youtube;
-//   observe <id>    $STUB_TUNE_DIR/observe.json or a passed check.
-// plan, apply, rollback and observe calls are logged to
+//   observe <id>    $STUB_TUNE_DIR/observe.json or a passed check;
+//   confirm <id>    $STUB_TUNE_DIR/confirm.json or a confirmed candidate.
+// plan, apply (with " observed" for an observed one), rollback, observe and
+// confirm calls are logged to
 // $STUB_TUNE_DIR/apply.log.
 let fs = require("fs");
 let dir = getenv("STUB_TUNE_DIR");
@@ -28,7 +30,8 @@ else if (mode == "plan") {
 }
 else if (mode == "apply") {
     let plan = read_json(ARGV[1]);
-    log(sprintf("apply %s %s %s", plan ? plan.owner.section : "-", plan ? plan.selected : "-", ARGV[2]));
+    log(sprintf("apply %s %s %s%s", plan ? plan.owner.section : "-", plan ? plan.selected : "-", ARGV[2],
+        ARGV[3] != null ? " " + ARGV[3] : ""));
     if (getenv("STUB_APPLY_SLEEP")) system("sleep " + getenv("STUB_APPLY_SLEEP"));
     let data = fs.readfile(dir + "/apply.json");
     print(data != null ? data : sprintf("%J\n", { status: "applied", reason: null, applied: true, started_at: 1700000000 }));
@@ -37,6 +40,11 @@ else if (mode == "observe") {
     log("observe " + ARGV[1]);
     let data = fs.readfile(dir + "/observe.json");
     print(data != null ? data : sprintf("%J\n", { status: "ok", reason: null, successes: 3, attempted: 3 }));
+}
+else if (mode == "confirm") {
+    log("confirm " + ARGV[1]);
+    let data = fs.readfile(dir + "/confirm.json");
+    print(data != null ? data : sprintf("%J\n", { status: "confirmed", reason: null }));
 }
 else if (mode == "rollback") {
     log(ARGV[0] + (ARGV[1] != null ? " " + ARGV[1] + " " + ARGV[2] : ""));

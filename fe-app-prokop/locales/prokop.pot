@@ -4568,6 +4568,9 @@ msgstr ""
 msgid "Observation stopped: not enough checks in a day"
 msgstr ""
 
+msgid "Observation stopped: the checks passed, but the configuration was not recorded as the last known working one"
+msgstr ""
+
 #: src/prokop/tabs/autotune/model.ts:468
 msgid "Observation stopped: the configuration was edited"
 msgstr ""
@@ -6929,6 +6932,9 @@ msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:1481
 msgid "The last change (%s) passed its check, but it could not be recorded as the last known working configuration."
+msgstr ""
+
+msgid "The checks passed; the configuration is recorded as the last known working one at the next check."
 msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:1490

@@ -119,7 +119,9 @@ manager if-due >"$WORK/custom.json"
 scheduled_youtube applied
 [ "$(json_get "$WORK/applied.json" applied.status)" = '"applied"' ] || fail "apply: $(cat "$WORK/applied.json")"
 grep -Fxq 'plan www.youtube.com fake 192.0.2.53' "$WORK/tune/apply.log" || fail "plan from the representative's tune of this run: $(cat "$WORK/tune/apply.log")"
-grep -Fxq 'apply youtube fake 192.0.2.53' "$WORK/tune/apply.log" || fail "apply of that plan"
+# Observed: its candidate becomes last-known-working only when the
+# observation passes (autotune/apply.uc confirm).
+grep -Fxq 'apply youtube fake 192.0.2.53 observed' "$WORK/tune/apply.log" || fail "observed apply of that plan: $(cat "$WORK/tune/apply.log")"
 [ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" applies.0.counted)" = true ] || fail "the apply counts"
 [ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" groups.youtube.pending)" = null ] || fail "confirmations start over"
 [ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" groups.youtube.last_apply.status)" = '"applied"' ] || fail "last apply stored"

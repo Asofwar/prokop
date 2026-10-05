@@ -152,11 +152,30 @@ describe('observation after an automatic apply', () => {
       observationView(null, { status: 'ended', reason: 'config_changed' })
         ?.label,
     ).toBe('Observation stopped: the rule or its strategy was edited');
+    expect(
+      observationView(null, { status: 'ended', reason: 'lkg_not_confirmed' }),
+    ).toEqual({
+      label:
+        'Observation stopped: the checks passed, but the configuration was not recorded as the last known working one',
+      tone: 'warning',
+      detail: null,
+    });
     // The operator's rollback is the last change of the card itself.
     expect(
       observationView(null, { status: 'ended', reason: 'operator_rollback' }),
     ).toBeNull();
     expect(observationView(null, null)).toBeNull();
+  });
+
+  it('says a passed observation waits for the last known working record', () => {
+    const view = observationView(
+      running({ passed: 4, verdict: 'passed' }),
+      null,
+    );
+    expect(view?.label).toBe('Under observation: 4 of 4 checks passed');
+    expect(view?.detail).toBe(
+      'The checks passed; the configuration is recorded as the last known working one at the next check.',
+    );
   });
 
   it('puts the observation on the card of its group only', () => {

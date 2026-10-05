@@ -753,6 +753,24 @@ function observation_record(o, check) {
     return slice(checks, -OBSERVATION_CHECKS_KEPT);
 }
 
+// The observation passed: its candidate becomes last-known-working
+// (autotune/apply.uc confirm), and only then does the observation end
+// passed. A candidate no longer in effect ends it without that; anything
+// else (a transaction, a service action, a failed confirmation) leaves it
+// waiting for the next tick, until the deadline ends it unconfirmed.
+function observation_confirm(o, finish) {
+    let c = run_tool("apply", [ "confirm", "" + o.apply_started_at ]) || { status: "inconclusive", reason: "confirm_output_invalid" };
+    if (c.status == "confirmed") {
+        let passed = finish("passed", null);
+        if (passed.recorded) history("autotune_observation", "success", "automatic", o.candidate);
+        return passed;
+    }
+    if (c.status == "ended") return finish("ended", c.reason);
+    let why = as_string(c.reason || c.status);
+    with_observation(o, (st, cur) => { cur.lkg_attempt = { at: now(), reason: why }; st.observation = cur; });
+    return { result: "observing", reason: "lkg_not_confirmed:" + why, group: o.group, candidate: o.candidate };
+}
+
 function observation_tick_locked() {
     let state = state_module.read();
     if (!observing(state)) return null;
@@ -771,14 +789,16 @@ function observation_tick_locked() {
     let step = policy_module.OBSERVATION_STEP;
     if (at < int(o.next_check_at) && int(o.next_check_at) <= at + step) return { result: "skipped", reason: "not_due" };
     if (at > int(o.deadline) || at < int(o.started_at) - step) {
-        // The candidate stays without a verdict: the history and a
-        // notification say so (AT-13).
-        let ended = finish("ended", "observation_expired");
+        // The candidate stays without a verdict, or passed but never became
+        // last-known-working: the history and a notification say so (AT-13).
+        let ended = finish("ended", o.verdict == "passed" ? "lkg_not_confirmed" : "observation_expired");
         if (ended.recorded) history("autotune_observation", "failure", "automatic", o.candidate);
         return ended;
     }
     let reason = blocker(true);
     if (reason != null) return { result: "skipped", reason };
+    // Passed, its candidate not yet last-known-working: only that is asked again.
+    if (o.verdict == "passed") return observation_confirm(o, finish);
     let check = run_tool("apply", [ "observe", "" + o.apply_started_at ]);
     if (check == null) return { result: "skipped", reason: "observe_output_invalid" };
     if (check.status == "busy" || check.status == "interrupted") return { result: "skipped", reason: check.reason || check.status };
@@ -809,15 +829,14 @@ function observation_tick_locked() {
         let failing = int(cur.failed) * OBSERVATION_FAILED_SHARE_DEN > int(cur.conclusive) * OBSERVATION_FAILED_SHARE_NUM;
         next = cur.failures_in_row >= OBSERVATION_FAILURES || (failing && int(cur.failed) >= OBSERVATION_FAILURES) ? "rollback" :
             cur.passed >= int(cur.checks_required) && !failing ? "passed" : null;
-        if (next == "passed") observation_finish(st, cur, "passed", null, policy);
-        else st.observation = cur;
+        // The observation passed; it ends once its candidate is
+        // last-known-working (observation_confirm).
+        if (next == "passed") cur.verdict = "passed";
+        st.observation = cur;
         o = cur;
     });
     if (!updated.ok) return { result: "failed", reason: "state_write_failed", check: verdict };
-    if (next == "passed") {
-        history("autotune_observation", "success", "automatic", o.candidate);
-        return { result: "passed", check: verdict, group: o.group, candidate: o.candidate };
-    }
+    if (next == "passed") return { ...observation_confirm(o, finish), check: verdict };
     if (next != "rollback") return { result: "observing", check: verdict, reason: entry.reason, group: o.group, candidate: o.candidate };
 
     // The candidate failed in production twice in a row: back to the
@@ -933,7 +952,10 @@ function apply_group(name, aggregate, full, dns_resolver, trigger) {
         }))
         record.reason = "state_write_failed";
     else {
-        let result = run_tool("apply", [ "apply", plan_file, dns_resolver ]);
+        // A scheduled apply is observed once it passes its verification:
+        // its candidate becomes last-known-working only when that
+        // observation passes (observation_tick).
+        let result = run_tool("apply", [ "apply", plan_file, dns_resolver, ...(trigger == "schedule" ? [ "observed" ] : []) ]);
         let o = autoapply.outcome(result);
         record.status = o.status;
         record.reason = type(result) == "object" ? result.reason || null : "apply_output_invalid";

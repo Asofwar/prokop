@@ -19,13 +19,14 @@ st() { json_get "$PROKOP_AUTOTUNE_STATE_FILE" "$1"; }
 log_count() { if [ -e "$WORK/tune/apply.log" ]; then grep -c "$1" "$WORK/tune/apply.log" || true; else echo 0; fi; }
 observe_calls() { log_count '^observe '; }
 rollback_calls() { log_count '^rollback'; }
+confirm_calls() { log_count '^confirm '; }
 check_is() { printf '%s\n' "$1" >"$WORK/tune/observe.json"; }
 history_of() { if [ -e "$PROKOP_HISTORY_FILE" ]; then node -e 'console.log(require("fs").readFileSync(process.argv[1],"utf8").trim().split("\n").map(JSON.parse).filter(e=>e.kind==process.argv[2]).map(e=>e.status+":"+(e.trigger||"")+":"+(e.candidate||"")).join(","))' "$PROKOP_HISTORY_FILE" "$1"; fi; }
 # The next tick of the observation is due; the scheduled run itself is not.
 tick() { state_edit 's.observation && (s.observation.next_check_at=1); s.next_run_at=Math.floor(Date.now()/1000)+3600'; manager if-due >"$WORK/$1.json"; }
 # An automatic apply of candidate fake in group youtube, just verified.
 observe_new() {
-  rm -f "$WORK/tune/observe.json" "$WORK/tune/rollback.json" "$WORK/tune/apply.log"
+  rm -f "$WORK/tune/observe.json" "$WORK/tune/rollback.json" "$WORK/tune/confirm.json" "$WORK/tune/apply.log"
   local now; now="$(date +%s)"
   state_edit "s.groups=s.groups||{}; s.groups.youtube={cooldowns:{},pending:null,last_apply:{at:$now,group:'youtube',candidate:'fake',status:'applied',counted:true,trigger:'automatic',apply_started_at:1700000000}};
     s.applies=[{at:$now,group:'youtube',candidate:'fake',status:'applied',counted:true,trigger:'automatic'}];
@@ -65,6 +66,7 @@ for i in 1 2 3; do
 done
 grep -Fxq 'observe 1700000000' "$WORK/tune/apply.log" || fail "the check names the apply: $(cat "$WORK/tune/apply.log")"
 [ "$(st observation.passed)" = 3 ] || fail "three checks passed"
+[ "$(confirm_calls)" = 0 ] || fail "last-known-working confirmed before the observation passed"
 [ "$(st observation.checks.2.successes)" = 3 ] || fail "check details kept"
 next="$(st observation.next_check_at)"
 [ "$next" -gt $(( $(date +%s) + 800 )) ] || fail "next check one tick later: $next"
@@ -76,8 +78,51 @@ tick ok4
 [ "$(st groups.youtube.last_apply.observation.passed)" = 4 ] || fail "4 of 4"
 [ "$(history_of autotune_observation)" = 'success:automatic:fake' ] || fail "history: $(history_of autotune_observation)"
 [ "$(rollback_calls)" = 0 ] || fail "no rollback"
+# The passed observation makes its candidate last-known-working, once.
+grep -Fxq 'confirm 1700000000' "$WORK/tune/apply.log" || fail "the passed observation confirms that apply: $(cat "$WORK/tune/apply.log")"
+[ "$(confirm_calls)" = 1 ] || fail "confirmed more than once"
 tick after
 [ "$(json_get "$WORK/after.json" observation)" = null ] || fail "nothing observed afterwards: $(cat "$WORK/after.json")"
+
+# ---- passed, but last-known-working not confirmed yet -------------------------
+# A transaction or service action at that moment: the observation waits,
+# passed, and the next tick only asks for the confirmation again. (The
+# history of these cases is set aside afterwards.)
+cp "$PROKOP_HISTORY_FILE" "$WORK/history.keep"
+observe_new 2
+printf '{"status":"inconclusive","reason":"service_action_in_progress"}\n' >"$WORK/tune/confirm.json"
+tick lkg1; tick lkg2
+[ "$(json_get "$WORK/lkg2.json" observation.result)" = '"observing"' ] || fail "passed, not confirmed: $(cat "$WORK/lkg2.json")"
+[ "$(json_get "$WORK/lkg2.json" observation.reason)" = '"lkg_not_confirmed:service_action_in_progress"' ] || fail "reason: $(cat "$WORK/lkg2.json")"
+[ "$(st observation.verdict)" = '"passed"' ] || fail "the observation passed: $(st observation)"
+[ "$(st observation.lkg_attempt.reason)" = '"service_action_in_progress"' ] || fail "attempt recorded"
+[ "$(st groups.youtube.last_apply.observation)" = null ] || fail "not finished before the confirmation"
+[ "$(history_of autotune_observation)" = 'success:automatic:fake' ] || fail "history before the confirmation: $(history_of autotune_observation)"
+rm "$WORK/tune/confirm.json"
+tick lkg3
+[ "$(json_get "$WORK/lkg3.json" observation.result)" = '"passed"' ] || fail "confirmed on the next tick: $(cat "$WORK/lkg3.json")"
+[ "$(observe_calls)" = 2 ] || fail "no further check once passed: $(cat "$WORK/tune/apply.log")"
+[ "$(confirm_calls)" = 2 ] || fail "the confirmation is asked again"
+[ "$(st groups.youtube.last_apply.observation.status)" = '"passed"' ] || fail "passed recorded"
+[ "$(history_of autotune_observation)" = 'success:automatic:fake,success:automatic:fake' ] || fail "history: $(history_of autotune_observation)"
+# The candidate was taken out right before: ended, nothing confirmed.
+observe_new 2
+printf '{"status":"ended","reason":"config_changed"}\n' >"$WORK/tune/confirm.json"
+tick gone1; tick gone2
+[ "$(json_get "$WORK/gone2.json" observation.result)" = '"ended"' ] || fail "candidate gone: $(cat "$WORK/gone2.json")"
+[ "$(st groups.youtube.last_apply.observation.reason)" = '"config_changed"' ] || fail "ended reason"
+[ "$(history_of autotune_observation)" = 'success:automatic:fake,success:automatic:fake' ] || fail "an unconfirmed candidate passed: $(history_of autotune_observation)"
+# Passed, and the deadline came before the confirmation: ended unconfirmed.
+observe_new 2
+printf '{"status":"inconclusive","reason":"lkg_busy"}\n' >"$WORK/tune/confirm.json"
+tick late1; tick late2
+state_edit 's.observation.deadline=Math.floor(Date.now()/1000)-1'
+tick late3
+[ "$(json_get "$WORK/late3.json" observation.result)" = '"ended"' ] || fail "late: $(cat "$WORK/late3.json")"
+[ "$(st groups.youtube.last_apply.observation.reason)" = '"lkg_not_confirmed"' ] || fail "late reason"
+[ "$(confirm_calls)" = 1 ] || fail "no confirmation after the deadline"
+rm -f "$WORK/tune/confirm.json"
+cp "$WORK/history.keep" "$PROKOP_HISTORY_FILE"
 
 # ---- two failed checks in a row roll the apply back -------------------------
 observe_new

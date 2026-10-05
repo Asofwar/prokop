@@ -3188,6 +3188,9 @@ msgstr "Наблюдение остановлено: автоматически�
 msgid "Observation stopped: not enough checks in a day"
 msgstr "Наблюдение остановлено: за сутки не набралось проверок"
 
+msgid "Observation stopped: the checks passed, but the configuration was not recorded as the last known working one"
+msgstr "Наблюдение остановлено: проверки пройдены, но конфигурация не записана как последняя рабочая"
+
 msgid "Observation stopped: the configuration was edited"
 msgstr "Наблюдение остановлено: конфигурация изменена"
 
@@ -4882,6 +4885,9 @@ msgstr "Последнее изменение (%s) не прошло прове�
 
 msgid "The last change (%s) passed its check, but it could not be recorded as the last known working configuration."
 msgstr "Последнее изменение (%s) прошло проверку, но его не удалось записать как последнюю рабочую конфигурацию."
+
+msgid "The checks passed; the configuration is recorded as the last known working one at the next check."
+msgstr "Проверки пройдены; конфигурация будет записана как последняя рабочая при следующей проверке."
 
 msgid "The last change (%s) was not checked to the end."
 msgstr "Последнее изменение (%s) не было проверено до конца."

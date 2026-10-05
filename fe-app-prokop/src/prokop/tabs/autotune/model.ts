@@ -432,9 +432,15 @@ export function observationView(
       .replace('%d', String(running.checks_required));
     const last = running.checks?.[running.checks.length - 1] ?? null;
     let detail: string | null = null;
+    // Passed: last-known-working moves to the candidate only now, and a
+    // transaction at that moment makes it wait for the next tick.
+    if (running.verdict === 'passed')
+      detail = _(
+        'The checks passed; the configuration is recorded as the last known working one at the next check.',
+      );
     // An inconclusive check neither counts nor breaks a row of failures
     // (autotune/manager.uc): the row is named by the checks, not the last.
-    if (last?.result === 'failed')
+    else if (last?.result === 'failed')
       detail = _(
         'The last check failed; one more failure in a row rolls the change back.',
       );
@@ -523,6 +529,16 @@ export function observationView(
           return {
             label: _('Observation stopped: not enough checks in a day'),
             tone: 'neutral',
+            detail: null,
+          };
+        // Passed, but never recorded as last known working before the
+        // deadline: it stays the configuration before the change.
+        case 'lkg_not_confirmed':
+          return {
+            label: _(
+              'Observation stopped: the checks passed, but the configuration was not recorded as the last known working one',
+            ),
+            tone: 'warning',
             detail: null,
           };
         // The rollback itself is the last change of the card.

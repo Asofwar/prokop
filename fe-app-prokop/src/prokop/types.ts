@@ -321,6 +321,9 @@ export namespace Prokop {
     passed: number;
     failures_in_row: number;
     next_check_at?: number;
+    // "passed": the checks passed; it ends once the configuration is the
+    // last known working one (autotune/apply.uc confirm).
+    verdict?: 'passed';
     checks?: {
       at: number;
       result: 'ok' | 'failed' | 'inconclusive';
