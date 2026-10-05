@@ -30,14 +30,15 @@ const HISTORY_MAX = 200;
 const HISTORY_MAX_BYTES = 65536;
 const HISTORY_KEEP = 150;
 // An autotune apply and its rollback have kinds of their own, never restore
-// (UC-060, design H.6). cron_refresh: a start or reload that could not
+// (UC-060, design H.6); autotune_observation: an automatic apply passed the
+// observation after it (autotune/manager.uc). cron_refresh: a start or reload that could not
 // update the scheduled jobs and went on without them. config_migration: a
 // package upgrade migrated the configuration and changed what it does in a
 // way the user should know about; its notices say how
 // (config/migration.uc).
 const EVENT_KINDS = [ "start", "reload", "restore", "autotune_apply", "autotune_rollback", "snapshot_create",
     "snapshot_delete", "autotune_mode", "autotune_recommendation", "autotune_run", "cron_refresh",
-    "config_migration" ];
+    "config_migration", "autotune_observation" ];
 // The notices of a config_migration event, in the shape the History page
 // reads: a known code, a UCI section name, ids of rule sets or options.
 // Anything else is dropped; an event keeps at most MIGRATION_NOTICES_MAX of
@@ -125,7 +126,7 @@ function notice_view(notice) {
 // The event as stored and shown: only known fields, extras only when valid.
 function event_view(event) {
     let view = { kind: event.kind, status: event.status, timestamp: event.timestamp };
-    if (event.kind == "autotune_apply" || event.kind == "autotune_rollback") {
+    if (event.kind == "autotune_apply" || event.kind == "autotune_rollback" || event.kind == "autotune_observation") {
         if (index(EVENT_TRIGGERS, event.trigger) >= 0) view.trigger = event.trigger;
         if (type(event.candidate) == "string" && match(event.candidate, /^[a-z0-9_]{1,32}$/) != null)
             view.candidate = event.candidate;

@@ -133,6 +133,8 @@ export function eventKindLabel(kind: string): string {
       return _('Autotune apply');
     case 'autotune_rollback':
       return _('Autotune rollback');
+    case 'autotune_observation':
+      return _('Autotune observation passed');
     case 'autotune_mode':
       return _('Autotune mode changed');
     case 'autotune_recommendation':

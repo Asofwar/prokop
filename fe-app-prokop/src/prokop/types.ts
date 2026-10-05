@@ -191,6 +191,9 @@ export namespace Prokop {
     max_applies_per_day: number;
     cooldown: string;
     probes: number;
+    // How long an automatic apply is watched in production afterwards.
+    observation?: string;
+    observation_checks?: number;
     interval_seconds?: number | null;
     cooldown_seconds?: number | null;
   }
@@ -280,6 +283,37 @@ export namespace Prokop {
     // Counted against the daily limit of automatic applies.
     counted?: boolean;
     trigger?: 'manual' | 'automatic';
+    // How the observation after an automatic apply ended.
+    observation?: AutotuneObservationResult | null;
+  }
+
+  // autotune/manager.uc observation_finish.
+  export interface AutotuneObservationResult {
+    status: string;
+    reason: string | null;
+    passed?: number;
+    checks_required?: number;
+    failures_in_row?: number;
+    finished_at?: number;
+  }
+
+  // The automatic apply under observation (autotune/manager.uc).
+  export interface AutotuneObservation {
+    status: string;
+    group: string;
+    candidate: string | null;
+    started_at: number;
+    checks_required: number;
+    passed: number;
+    failures_in_row: number;
+    next_check_at?: number;
+    checks?: {
+      at: number;
+      result: 'ok' | 'failed' | 'inconclusive';
+      reason: string | null;
+      successes?: number | null;
+      attempted?: number | null;
+    }[];
   }
 
   // Hysteresis state of a group, written by the worker.
@@ -380,6 +414,7 @@ export namespace Prokop {
     worker: AutotuneWorker | null;
     recovered_at: number | null;
     state_recovered: string | null;
+    observation?: AutotuneObservation | null;
     // The recorded Stage 5 apply; null when none was recorded.
     apply?: AutotuneRecordedApply | null;
   }

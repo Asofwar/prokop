@@ -127,6 +127,9 @@ grep -Fxq 'apply youtube fake 192.0.2.53' "$WORK/tune/apply.log" || fail "apply 
 [ "$(history_kinds)" = success ] || fail "history: $(history_kinds)"
 if find "$WORK/tmp" -name 'prokop-autotune-apply.*' | grep -q .; then fail "selection and plan files are removed"; fi
 if grep -E 'dpi-desync|nfqws_opt' "$PROKOP_AUTOTUNE_STATE_FILE" >/dev/null; then fail "no raw strategies in the state"; fi
+# The automatic apply is watched afterwards (tests/autotune_observation.sh).
+[ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" observation.status)" = '"observing"' ] || fail "observation started"
+[ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" observation.apply_started_at)" = 1700000000 ] || fail "observation names the apply"
 
 # ---- the daily limit ----------------------------------------------------------
 confirm_youtube
@@ -134,8 +137,14 @@ scheduled_youtube limit
 [ "$(decision limit)" = '"daily_limit_reached"' ] || fail "daily limit: $(cat "$WORK/limit.json")"
 [ "$(applies)" = 1 ] || fail "no second apply within the limit"
 
-# ---- a rollback cools the candidate down ------------------------------------
+# ---- no other automatic apply while one is under observation ----------------
 manager policy-set max_applies_per_day 3 >/dev/null
+scheduled_youtube observing
+[ "$(decision observing)" = '"observation_in_progress"' ] || fail "observation blocks applies: $(cat "$WORK/observing.json")"
+[ "$(applies)" = 1 ] || fail "no apply while observing"
+state_edit 's.observation=null'
+
+# ---- a rollback cools the candidate down ------------------------------------
 printf '{"status":"rolled_back","reason":"verification_failed"}\n' >"$WORK/tune/apply.json"
 scheduled_youtube rollback
 [ "$(json_get "$WORK/rollback.json" applied.status)" = '"rolled_back"' ] || fail "rollback: $(cat "$WORK/rollback.json")"

@@ -175,6 +175,7 @@ const CATEGORY: Record<string, Exclude<HistoryFilter, 'all'>> = {
   config_migration: 'config',
   autotune_apply: 'autotune',
   autotune_rollback: 'autotune',
+  autotune_observation: 'autotune',
   autotune_mode: 'autotune',
   autotune_recommendation: 'autotune',
   autotune_run: 'autotune',
@@ -255,6 +256,11 @@ export function migrationNoticeText(notice: Prokop.MigrationNotice) {
 export function eventTitle(event: Prokop.HistoryEvent) {
   if (event.kind === 'autotune_rollback' && event.trigger)
     return rollbackTitle(event.trigger === 'manual', event.candidate ?? '');
+  if (event.kind === 'autotune_observation' && event.candidate)
+    return _('Autotune: %s passed the observation').replace(
+      '%s',
+      event.candidate,
+    );
   if (event.kind !== 'autotune_apply' || !event.trigger)
     return eventKindLabel(event.kind);
   const candidate = event.candidate ?? '';

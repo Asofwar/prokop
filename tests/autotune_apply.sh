@@ -1531,6 +1531,59 @@ UC
 ok "default strategy: only its TCP/443 profile replaced, applied, known as the candidate"
 }
 
+cases_10() {
+# 25. The observation after an automatic apply (autotune/manager.uc): read-only
+#     checks of the applied candidate in production (observe <started_at>) and
+#     the rollback of that very apply once it fails (rollback observation).
+reset_apply; plan_ready; at apply "$WORK/plan.json"
+json 'a.equal(r.status, "applied"); a.equal(typeof r.started_at, "number");' "$WORK/out.json"
+id="$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).started_at)' "$WORK/out.json")"
+applied_hash="$(chash)"; applied_lkg="$(lkg)"; reloads_before="$(reloads)"
+at observe "$id"
+json 'a.equal(r.status, "ok", JSON.stringify(r)); a.equal(r.successes, 3); a.equal(r.attempted, 3); a.deepEqual(r.failing, []);' "$WORK/out.json"
+grep -q 'curl production' "$STUB_LOG/curl.log" || fail "the observation used no production requests"
+at observe "$((id + 1))"; json 'a.equal(r.status, "ended"); a.equal(r.reason, "record_changed");' "$WORK/out.json"
+at observe abc; json 'a.equal(r.status, "failed"); a.equal(r.reason, "invalid_apply_id");' "$WORK/out.json"
+at rollback foo; json 'a.equal(r.status, "failed"); a.equal(r.reason, "invalid_arguments");' "$WORK/out.json"
+export PROD_PLAN=reset; at observe "$id"; unset PROD_PLAN
+json 'a.equal(r.status, "failed", JSON.stringify(r)); a.equal(r.reason, "traffic_failed"); a.deepEqual(r.failing, ["traffic_transport"]); a.equal(r.successes, 0);' "$WORK/out.json"
+export PROD_PLAN=unreachable; at observe "$id"; unset PROD_PLAN
+json 'a.equal(r.status, "inconclusive"); a.equal(r.reason, "network_unavailable");' "$WORK/out.json"
+export PROD_PLAN=reset PROD_REMOTE=93.184.216.34; at observe "$id"; unset PROD_PLAN PROD_REMOTE
+json 'a.equal(r.status, "inconclusive"); a.equal(r.reason, "path_unproven"); a.ok(r.failing.includes("traffic_sing_box_path"));' "$WORK/out.json"
+touch "$STATE/zapret-broken"; at observe "$id"; rm -f "$STATE/zapret-broken"
+json 'a.equal(r.status, "inconclusive"); a.equal(r.reason, "runtime_not_coherent"); a.ok(r.failing.includes("zapret_runtime_ready"));' "$WORK/out.json"
+: > "$PROKOP_STOP_REQUESTED_FILE"; at observe "$id"; rm -f "$PROKOP_STOP_REQUESTED_FILE"
+json 'a.equal(r.status, "inconclusive"); a.equal(r.reason, "service_stopped");' "$WORK/out.json"
+{ [ "$(chash)" = "$applied_hash" ] && [ "$(lkg)" = "$applied_lkg" ] && [ "$(reloads)" = "$reloads_before" ]; } || fail "an observation check changed production"
+json 'a.equal(r.phase, "applied");' "$PROKOP_AUTOTUNE_APPLY_STATE"
+ok "25 observation checks: ok, failed only when the rule path is proven, inconclusive otherwise; read-only"
+
+# 25a. The rollback of the observed apply: only that apply, back to the
+#      configuration and runtime before it, an automatic rollback in the history.
+rm -rf "$STATE/health"
+at rollback observation "$((id + 1))"; json 'a.equal(r.status, "failed"); a.equal(r.reason, "observed_apply_changed");' "$WORK/out.json"
+[ "$(chash)" = "$applied_hash" ] || fail "a rollback of another apply changed the configuration"
+at rollback observation "$id"
+json 'a.equal(r.status, "rolled_back", JSON.stringify(r).slice(0, 500)); a.equal(r.reason, "observation_failed");
+  a.equal(r.rollback.status, "success"); a.equal(r.rollback.config_hash_restored, true); a.equal(r.rollback.lkg_is_pre_snapshot, true); a.ok(r.rollback.runtime.ok);' "$WORK/out.json"
+[ "$(chash)" = "$PRE_HASH" ] || fail "the observation rollback did not restore the pre-apply configuration"
+[ "$(dpi_args)" = "$ZAPRET_NFQWS_BIN --qnum=4000 --dpi-desync-fwmark=0x40000000 $FAKE " ] || fail "the observation rollback left the candidate runtime"
+[ "$(journal)" = "autotune_rollback:success:automatic:multisplit" ] || fail "observation rollback history: $(journal)"
+at observe "$id"; json 'a.equal(r.status, "ended"); a.equal(r.phase, "rolled_back");' "$WORK/out.json"
+at rollback observation "$id"; json 'a.equal(r.status, "failed"); a.equal(r.reason, "nothing_to_roll_back");' "$WORK/out.json"
+ok "25a observation rollback: only the observed apply, pre-apply configuration and runtime back, automatic rollback recorded"
+
+# 25b. The configuration was edited after the apply: the observation ends,
+#      nothing is rolled back.
+reset_apply; plan_ready; at apply "$WORK/plan.json"
+id="$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).started_at)' "$WORK/out.json")"
+sed -i "s/option dns_rewrite_ttl '60'/option dns_rewrite_ttl '45'/" "$PROKOP_CONFIG_FILE"; edited="$(chash)"
+at observe "$id"; json 'a.equal(r.status, "ended"); a.equal(r.reason, "config_changed");' "$WORK/out.json"
+[ "$(chash)" = "$edited" ] || fail "an edited configuration was touched"
+ok "25b configuration edited after the apply -> observation ended, nothing changed"
+}
+
 # The groups of cases run at once, each on a fixture of its own (a fresh
 # $WORK from autotune_stubs.sh): the apply waits whole seconds at its
 # steps, so one after another they took minutes.
@@ -1542,8 +1595,8 @@ case_group() {
   "cases_$1"
   printf '%s\n' "$pass" >"$GROUP_DIR/$1.count"
 }
-run_case_groups "$GROUP_DIR" case_group 1 2 3 4 5 6 7 8 9
-for group in 1 2 3 4 5 6 7 8 9; do
+run_case_groups "$GROUP_DIR" case_group 1 2 3 4 5 6 7 8 9 10
+for group in 1 2 3 4 5 6 7 8 9 10; do
   pass=$((pass + $(cat "$GROUP_DIR/$group.count")))
 done
 printf 'autotune_apply: PASS (%d checks)\n' "$pass"

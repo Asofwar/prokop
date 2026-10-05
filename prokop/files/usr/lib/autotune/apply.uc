@@ -33,6 +33,10 @@
 //   apply <plan.json> [resolver]       stale checks, revalidation, transaction
 //   verify <plan.json> [proposed|current] [traffic]  read-only verification
 //   rollback                           restore the recorded pre-apply snapshot
+//   observe <started_at>               read-only: one observation check of
+//                                      the recorded applied candidate
+//   rollback observation <started_at>  the rollback of that apply after its
+//                                      observation found it failing
 //   status                             durable state and current diagnosis
 //   path <host>                        read-only: production DNS mode and the
 //                                      outbound a connection to host takes
@@ -824,7 +828,7 @@ function rollback_to(audit, p, why) {
     audit.rollback = { status: restored.status, reason: restored.reason || null, guard: restored.guard || null };
     let edited = restored.reason == "config_changed_during_transaction";
     if (edited) audit.rollback.saved_snapshot = restored.saved_snapshot || null;
-    if (restored.status != "success" && why == "operator_rollback" && length(guards_present()) == 0 &&
+    if (restored.status != "success" && (why == "operator_rollback" || why == "observation_failed") && length(guards_present()) == 0 &&
         ((edited && !restored.started) || diagnose(audit).diagnosis == "candidate_active")) {
         // The restore changed nothing: the verified record stays as it was.
         audit.phase = recorded.phase; audit.status = recorded.status; audit.reason = recorded.reason;
@@ -999,6 +1003,67 @@ function apply(plan_file, resolver) {
     state_write(audit); return audit;
 }
 
+// The plan view of a recorded apply against the routing as it is now: the
+// queue, outbound and mark of the rule that owns the target.
+function recorded_plan(s, sections) {
+    let p = { target: s.target, owner: { section: s.mutation.section, queue: null }, changes: [ s.mutation ], config_hash: s.plan_config_hash };
+    let owner = owner_of(sections, s.target.host, s.target.ip, true);
+    p.owner.queue = owner.queue;
+    p.owner.outbound = owner.outbound;
+    p.owner.mark_value = owner.mark_value;
+    return { plan: p, owner };
+}
+
+// Production verification checks that need the traffic to have taken the
+// rule's path; with them all passed, a failed transport is the candidate's.
+const PATH_CHECKS = [ "traffic_sing_box_path", "traffic_dpi_queue", "traffic_rule_path", "traffic_rule_mark",
+    "verify_path_available", "verify_path_created", "verify_path_removed" ];
+
+// One observation check of an applied candidate (autotune/manager.uc
+// observation_tick), read-only: the same production verification as right
+// after the apply, normal requests through the rule included. The verdict:
+//   ok            the candidate runs and the target works through it
+//   failed        the runtime runs the candidate, the requests took the
+//                 rule's path and failed there: the candidate fails
+//   inconclusive  nothing can be said now (WAN down, a transaction or a
+//                 service action, the runtime or the routing not coherent)
+//   ended         the record is no longer this applied candidate (phase,
+//                 configuration changed since, another apply)
+// started_at names the apply: anything else ends the observation.
+function observe(started_at) {
+    let s = state_read();
+    if (type(s) != "object" || s.unreadable || s.mutation == null || s.started_at !== started_at)
+        return { status: "ended", reason: "record_changed" };
+    if (s.phase != "applied") return { status: "ended", reason: "apply_" + as_string(s.phase), phase: s.phase };
+    let d = diagnose(s);
+    if (d.diagnosis == "superseded") return { status: "ended", reason: "config_changed" };
+    if (d.diagnosis == "not_applied") return { status: "ended", reason: "not_applied" };
+    if (d.diagnosis != "candidate_active") return { status: "inconclusive", reason: d.diagnosis };
+    if (service_stopped()) return { status: "inconclusive", reason: "service_stopped" };
+    if (runtime_guard_kept()) return { status: "inconclusive", reason: "runtime_guard_active" };
+    let action = service_action();
+    if (action != null) return { status: "inconclusive", reason: action };
+    if (table_present(PROBE_TABLE) != false) return { status: "inconclusive", reason: "probe_path_present" };
+    let r = recorded_plan(s, parse_config(fs.readfile(CONFIG_FILE)));
+    if (!r.owner.decided || r.owner.kind != "zapret" || r.owner.section != s.mutation.section)
+        return { status: "inconclusive", reason: "rule_owner_changed" };
+    let v = verify_production(r.plan, s.mutation.to, true);
+    if (v.interrupted || interrupted) return { status: "interrupted", reason: "interrupted" };
+    let failing = map(filter(v.checks, (c) => !c.ok), (c) => c.name);
+    let t = v.traffic;
+    let probes = type(t) == "object" && type(t.probes) == "array" ? t.probes : [];
+    let output = { status: "inconclusive", reason: null, failing, at: now(),
+        successes: length(filter(probes, (p) => p.class == "success")), attempted: length(probes),
+        classes: map(probes, (p) => p.class) };
+    if (v.ok) { output.status = "ok"; return output; }
+    // The coherence checks failed before any request was sent.
+    if (type(t) != "object") { output.reason = "runtime_not_coherent"; return output; }
+    if (t.network_unavailable === true) { output.reason = "network_unavailable"; return output; }
+    if (length(failing) == 1 && failing[0] == "traffic_transport") { output.status = "failed"; output.reason = "traffic_failed"; return output; }
+    output.reason = length(filter(failing, (n) => index(PATH_CHECKS, n) >= 0)) > 0 ? "path_unproven" : "runtime_not_coherent";
+    return output;
+}
+
 // The snapshot a rollback of the record returns to, or null: the recorded
 // before-autotune snapshot; else the last-known-working one while it still
 // holds the pre-apply user configuration (checked before any mutation, and
@@ -1051,8 +1116,16 @@ function rollback_unreadable() {
 // Explicit rollback of a recorded apply (after an interrupted verification,
 // an unconfirmed LKG or on operator request): only while the configuration is
 // still exactly the applied candidate and no transaction is active.
-function rollback() {
+// observed: the started_at of the apply an observation found failing; its
+// rollback only replaces that very apply, still applied and still the
+// configuration (autotune/manager.uc observation_tick).
+function rollback(observed) {
     let s = state_read();
+    if (observed != null) {
+        if (type(s) != "object" || s.unreadable || s.mutation == null || s.started_at !== observed)
+            return { status: "failed", reason: "observed_apply_changed" };
+        if (s.phase != "applied") return { status: "failed", reason: "nothing_to_roll_back", phase: s.phase };
+    }
     if (type(s) == "object" && s.unreadable) return rollback_unreadable();
     if (type(s) != "object" || s.mutation == null) return { status: "failed", reason: "no_recorded_apply" };
     let d = diagnose(s);
@@ -1070,14 +1143,9 @@ function rollback() {
     // Nothing is attempted without a source; the record stays as it is.
     if (pre == null) return { status: "failed", reason: "pre_apply_snapshot_missing", phase: s.phase };
     s.pre_snapshot = pre;
-    let p = { target: s.target, owner: { section: s.mutation.section, queue: null }, changes: [ s.mutation ], config_hash: s.plan_config_hash };
-    let sections = parse_config(fs.readfile(CONFIG_FILE));
-    let owner = owner_of(sections, s.target.host, s.target.ip, true);
-    p.owner.queue = owner.queue;
-    p.owner.outbound = owner.outbound;
-    p.owner.mark_value = owner.mark_value;
+    let p = recorded_plan(s, parse_config(fs.readfile(CONFIG_FILE))).plan;
     delete s.last_attempt;
-    return rollback_to(s, p, "operator_rollback");
+    return rollback_to(s, p, observed != null ? "observation_failed" : "operator_rollback");
 }
 
 function status() {
@@ -1149,19 +1217,25 @@ else if (mode == "path") {
         code = seen.ok ? 0 : 1;
     }
 }
-else if (mode == "apply" || mode == "rollback") {
-    if (!autotune_lock.acquire())
+else if (mode == "apply" || mode == "rollback" || mode == "observe") {
+    // The apply an observation names: its started_at, digits only.
+    let observed = mode == "observe" ? ARGV[1] : mode == "rollback" && ARGV[1] == "observation" ? ARGV[2] : null;
+    let started = observed != null && match(as_string(observed), /^[1-9][0-9]{0,11}$/) != null ? int(observed) : null;
+    if (observed != null && started == null) output = { status: "failed", reason: "invalid_apply_id" };
+    else if (mode == "rollback" && ARGV[1] != null && ARGV[1] != "observation") output = { status: "failed", reason: "invalid_arguments" };
+    else if (!autotune_lock.acquire())
         output = autotune_lock.busy() ? { status: "busy", reason: "autotune_in_progress" } : { status: "failed", reason: "lock_unavailable" };
     else {
-        output = mode == "apply" ? apply(ARGV[1], ARGV[2]) : rollback();
+        output = mode == "apply" ? apply(ARGV[1], ARGV[2]) : mode == "observe" ? observe(started) : rollback(started);
         autotune_lock.release();
         // Exit 0 only when the requested outcome happened: apply applied (or
-        // nothing to do), rollback rolled back.
-        code = index(mode == "apply" ? [ "applied", "no_change_required" ] : [ "rolled_back" ], output.status) >= 0 ? 0 : 1;
+        // nothing to do), rollback rolled back, an observation check made.
+        code = index(mode == "apply" ? [ "applied", "no_change_required" ] : mode == "observe" ? [ "ok", "failed", "inconclusive", "ended" ] :
+            [ "rolled_back" ], output.status) >= 0 ? 0 : 1;
     }
 }
 else {
-    warn("Usage: autotune/apply.uc <plan <selection.json> [resolver]|apply <plan.json> [resolver]|verify <plan.json> [proposed|current] [traffic]|rollback|status|path <host>>\n");
+    warn("Usage: autotune/apply.uc <plan <selection.json> [resolver]|apply <plan.json> [resolver]|verify <plan.json> [proposed|current] [traffic]|rollback [observation <started_at>]|observe <started_at>|status|path <host>>\n");
     exit(1);
 }
 print(sprintf("%J\n", output));

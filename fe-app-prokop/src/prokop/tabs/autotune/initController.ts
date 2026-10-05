@@ -39,6 +39,7 @@ import {
   modeLabel,
   MODES,
   mutationErrorText,
+  OBSERVATION_CHOICES,
   refreshPlan,
   outsideReasonText,
   recordedApplyView,
@@ -225,6 +226,9 @@ async function setMode(mode: Prokop.AutotuneMode) {
           .replace('%d', String(status.policy.max_applies_per_day))
           .replace('%s', durationLabel(status.policy.cooldown)),
         _('Changes are made only by scheduled checks, one group at a time.'),
+        _(
+          'After a change Prokop keeps checking it for %s; a strategy that fails twice in a row is rolled back.',
+        ).replace('%s', durationLabel(status.policy.observation ?? '1h')),
       ],
       confirmLabel: _('Turn on'),
     });
@@ -488,6 +492,13 @@ function showPolicyEditor() {
       policy.cooldown,
     ),
     probes: numberInput('probes', policy.probes, 3, 7),
+    observation: select(
+      'observation',
+      durationChoices(OBSERVATION_CHOICES, policy.observation ?? '1h').map(
+        (v) => [v, durationLabel(v)],
+      ),
+      policy.observation ?? '1h',
+    ),
   };
 
   const save = async () => {
@@ -539,6 +550,13 @@ function showPolicyEditor() {
         _('Probes per strategy'),
         controls.probes,
         _('3–7 attempts per strategy and target in each check.'),
+      ),
+      ...field(
+        _('Observation after a change'),
+        controls.observation,
+        _(
+          'Automatic mode checks a changed strategy every 15 minutes for this long and rolls it back after two failures in a row.',
+        ),
       ),
     ]),
     modalActions(() => void save(), _('Save')),
@@ -826,6 +844,14 @@ function policySummary(policy: Prokop.AutotunePolicy) {
       '%s',
       durationLabel(policy.cooldown),
     ),
+    ...(policy.mode === 'auto'
+      ? [
+          _('observation after a change %s').replace(
+            '%s',
+            durationLabel(policy.observation ?? '1h'),
+          ),
+        ]
+      : []),
   ].join(' · ');
 }
 
@@ -1144,6 +1170,14 @@ function renderGroup(card: GroupCard) {
         `${card.lastApply.candidate}:`,
         renderStatus(card.lastApply.outcome),
         timeNode(card.lastApply.at),
+      ]),
+    ]);
+  if (card.observation)
+    facts.push([
+      _('Observation'),
+      E('span', { class: 'fkp-autotune__row' }, [
+        renderStatus(card.observation),
+        ...(card.observation.detail ? asText(card.observation.detail) : []),
       ]),
     ]);
   for (const cooldown of card.cooldowns)

@@ -228,6 +228,10 @@ export function decisionText(reason: string | null | undefined) {
       );
     case 'direct_not_applicable':
       return _('Prokop never turns DPI bypass off by itself.');
+    case 'observation_in_progress':
+      return _(
+        'The previous automatic change is still under observation; the next one waits for it.',
+      );
     case 'representative_not_measured':
     case 'no_recommendation':
       return '';
@@ -264,6 +268,11 @@ export function applyOutcomeView(
     case 'rolled_back':
       if (reason === 'operator_rollback')
         return { label: _('Rolled back by an administrator'), tone: 'neutral' };
+      if (reason === 'observation_failed')
+        return {
+          label: _('Stopped working under observation, rolled back'),
+          tone: 'warning',
+        };
       return {
         label: _('Check failed, rolled back automatically'),
         tone: 'warning',
@@ -339,6 +348,12 @@ export interface GroupCard {
     outcome: { label: string; tone: StatusTone };
   } | null;
   cooldowns: { candidate: string; until: number }[];
+  // The observation of the last automatic change: running or how it ended.
+  observation: {
+    label: string;
+    tone: StatusTone;
+    detail: string | null;
+  } | null;
   // The confirmed recommendation an administrator may apply now (mode
   // "recommend" only); the backend checks everything again.
   applyCandidate: string | null;
@@ -378,6 +393,107 @@ function inconclusiveText(reason: string | null) {
       'The last check gave no usable result. The current strategy is kept.',
     );
   return `${targetReasonText(reason)} ${_('The current strategy is kept.')}`;
+}
+
+// Why an observation check said nothing (autotune/apply.uc observe).
+function observationCheckText(reason: string | null) {
+  switch (reason) {
+    case 'network_unavailable':
+      return _('the last check could not reach the network');
+    case 'path_unproven':
+      return _('the last check could not prove the route through the rule');
+    case 'runtime_not_coherent':
+      return _('the last check found the DPI service not ready');
+    case 'service_stopped':
+      return _('the last check found Prokop stopped');
+    default:
+      return _('the last check gave no result');
+  }
+}
+
+// The observation after an automatic apply: the running one of this group,
+// else how the last one ended.
+export function observationView(
+  running: Prokop.AutotuneObservation | null,
+  ended: Prokop.AutotuneObservationResult | null,
+): GroupCard['observation'] {
+  if (running && running.status === 'observing') {
+    const label = _('Under observation: %d of %d checks passed')
+      .replace('%d', String(running.passed))
+      .replace('%d', String(running.checks_required));
+    const last = running.checks?.[running.checks.length - 1] ?? null;
+    let detail: string | null = null;
+    if (running.failures_in_row > 0)
+      detail = _(
+        'The last check failed; one more failure in a row rolls the change back.',
+      );
+    else if (last?.result === 'inconclusive')
+      detail = `${observationCheckText(last.reason)}.`.replace(/^./, (c) =>
+        c.toUpperCase(),
+      );
+    return { label, tone: 'loading', detail };
+  }
+  if (!ended) return null;
+  switch (ended.status) {
+    case 'passed':
+      return {
+        label: _('Observation passed'),
+        tone: 'success',
+        detail: _('%d of %d checks passed')
+          .replace('%d', String(ended.passed ?? 0))
+          .replace('%d', String(ended.checks_required ?? 0)),
+      };
+    case 'rolled_back':
+      return {
+        label: _('Failed twice in a row, rolled back'),
+        tone: 'warning',
+        detail: null,
+      };
+    case 'needs_attention':
+      return {
+        label: _('The rollback after the observation did not finish'),
+        tone: 'error',
+        detail: null,
+      };
+    case 'unavailable':
+      return {
+        label: _('Not observed: the change cannot be identified'),
+        tone: 'warning',
+        detail: null,
+      };
+    case 'ended':
+      switch (ended.reason) {
+        case 'config_changed':
+          return {
+            label: _('Observation stopped: the configuration was edited'),
+            tone: 'neutral',
+            detail: null,
+          };
+        case 'mode_changed':
+          return {
+            label: _('Observation stopped: automatic mode was turned off'),
+            tone: 'neutral',
+            detail: null,
+          };
+        case 'observation_expired':
+          return {
+            label: _('Observation stopped: not enough checks in a day'),
+            tone: 'neutral',
+            detail: null,
+          };
+        // The rollback itself is the last change of the card.
+        case 'operator_rollback':
+          return null;
+        default:
+          return {
+            label: _('Observation stopped'),
+            tone: 'neutral',
+            detail: null,
+          };
+      }
+    default:
+      return null;
+  }
 }
 
 // One card per DPI rule. `live` is the membership calculated now (null
@@ -523,6 +639,10 @@ export function groupCards(
               outcome: applyOutcomeView(apply.status, apply.reason),
             }
           : null,
+      observation: observationView(
+        status.observation?.group === id ? status.observation : null,
+        apply?.observation ?? null,
+      ),
       cooldowns: Object.entries(state?.cooldowns ?? {})
         .filter(([, until]) => until > nowSeconds)
         .map(([candidate, until]) => ({
@@ -1006,11 +1126,13 @@ export function targetIdFor(host: string, taken: string[], prefix = 't_') {
 }
 
 export const INTERVAL_CHOICES = ['1h', '3h', '6h', '12h', '1d'];
+export const OBSERVATION_CHOICES = ['30m', '1h', '2h', '3h', '6h', '12h'];
 export const COOLDOWN_CHOICES = ['6h', '12h', '1d', '2d', '7d'];
 
 export function durationLabel(value: string) {
-  const match = /^(\d+)([hd])$/.exec(value);
+  const match = /^(\d+)([mhd])$/.exec(value);
   if (!match) return value;
+  if (match[2] === 'm') return _('%d min').replace('%d', match[1]);
   return match[2] === 'h'
     ? _('%d h').replace('%d', match[1])
     : _('%d d').replace('%d', match[1]);

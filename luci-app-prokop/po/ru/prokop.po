@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-05 12:53+0000\n"
-"PO-Revision-Date: 2026-10-05 12:53+0000\n"
+"POT-Creation-Date: 2026-10-05 12:59+0000\n"
+"PO-Revision-Date: 2026-10-05 12:59+0000\n"
 "Last-Translator: Asofwar\n"
 "Language-Team: none\n"
 "Language: ru\n"
@@ -50,6 +50,9 @@ msgstr "%d ч"
 msgid "%d h ago"
 msgstr "%d ч назад"
 
+msgid "%d min"
+msgstr "%d мин"
+
 msgid "%d min ago"
 msgstr "%d мин назад"
 
@@ -64,6 +67,9 @@ msgstr "%d мс"
 
 msgid "%d node groups"
 msgstr "Групп узлов: %d"
+
+msgid "%d of %d checks passed"
+msgstr "Пройдено проверок: %d из %d"
 
 msgid "%d rules"
 msgstr "Правил: %d"
@@ -380,6 +386,9 @@ msgstr "Дополнительно"
 msgid "Advanced settings"
 msgstr "Дополнительные настройки"
 
+msgid "After a change Prokop keeps checking it for %s; a strategy that fails twice in a row is rolled back."
+msgstr "После изменения Prokop проверяет стратегию ещё %s; стратегия, которая дважды подряд не прошла проверку, откатывается."
+
 msgid "All"
 msgstr "Все"
 
@@ -569,6 +578,9 @@ msgstr "автоизменений в сутки: до %d"
 msgid "Automatic component update checks"
 msgstr "Автоматическая проверка обновлений компонентов"
 
+msgid "Automatic mode checks a changed strategy every 15 minutes for this long and rolls it back after two failures in a row."
+msgstr "В автоматическом режиме изменённая стратегия проверяется каждые 15 минут в течение этого времени и откатывается после двух неудачных проверок подряд."
+
 msgid "Automatic recovery did not finish."
 msgstr "Автоматическое восстановление не завершилось."
 
@@ -611,6 +623,9 @@ msgstr "Автоподбор выключен. Чтобы применить р�
 msgid "Autotune mode changed"
 msgstr "Изменён режим автоподбора"
 
+msgid "Autotune observation passed"
+msgstr "Автоподбор: наблюдение пройдено"
+
 msgid "Autotune policy"
 msgstr "Политика автоподбора"
 
@@ -631,6 +646,9 @@ msgstr "Автоподбор: %s применена автоматически"
 
 msgid "Autotune: %s applied manually"
 msgstr "Автоподбор: %s применена вручную"
+
+msgid "Autotune: %s passed the observation"
+msgstr "Автоподбор: %s прошла наблюдение"
 
 msgid "Autotune: automatic apply"
 msgstr "Автоподбор: автоматическое применение"
@@ -1859,6 +1877,9 @@ msgstr "Не удалось переключить узел"
 msgid "Failed to update subscriptions"
 msgstr "Не удалось обновить подписки"
 
+msgid "Failed twice in a row, rolled back"
+msgstr "Дважды подряд не прошла проверку, выполнен откат"
+
 msgid "FakeIP and control checks use different public IPs"
 msgstr "FakeIP и контрольная проверка используют разные публичные IP"
 
@@ -2948,6 +2969,9 @@ msgstr "Не управляется (Dont Touch My DHCP)"
 msgid "Not needed"
 msgstr "Не требовалось"
 
+msgid "Not observed: the change cannot be identified"
+msgstr "Наблюдение не ведётся: изменение не удалось опознать"
+
 msgid "Not recorded yet"
 msgstr "Пока не записана"
 
@@ -2992,6 +3016,30 @@ msgstr "Уведомления выключены: включите их и со
 
 msgid "Now"
 msgstr "Сейчас"
+
+msgid "Observation"
+msgstr "Наблюдение"
+
+msgid "Observation after a change"
+msgstr "Наблюдение после изменения"
+
+msgid "observation after a change %s"
+msgstr "наблюдение после изменения: %s"
+
+msgid "Observation passed"
+msgstr "Наблюдение пройдено"
+
+msgid "Observation stopped"
+msgstr "Наблюдение остановлено"
+
+msgid "Observation stopped: automatic mode was turned off"
+msgstr "Наблюдение остановлено: автоматический режим выключен"
+
+msgid "Observation stopped: not enough checks in a day"
+msgstr "Наблюдение остановлено: за сутки не набралось проверок"
+
+msgid "Observation stopped: the configuration was edited"
+msgstr "Наблюдение остановлено: конфигурация изменена"
 
 msgid "Observed"
 msgstr "Наблюдается"
@@ -4274,6 +4322,9 @@ msgstr "Остановлен"
 msgid "Stopped by user"
 msgstr "Остановлено пользователем"
 
+msgid "Stopped working under observation, rolled back"
+msgstr "Перестала работать под наблюдением, выполнен откат"
+
 msgid "stopped: protected traffic is blocked"
 msgstr "остановлен: защищённый трафик блокируется"
 
@@ -4625,8 +4676,26 @@ msgstr "Последнее изменение (%s) не подтверждено
 msgid "The last change was rolled back automatically."
 msgstr "Последнее изменение было автоматически откачено."
 
+msgid "the last check could not prove the route through the rule"
+msgstr "последняя проверка не подтвердила, что трафик идёт через правило"
+
+msgid "the last check could not reach the network"
+msgstr "последняя проверка не получила доступа к сети"
+
 msgid "The last check failed"
 msgstr "Последняя проверка завершилась ошибкой"
+
+msgid "The last check failed; one more failure in a row rolls the change back."
+msgstr "Последняя проверка не прошла; ещё одна неудача подряд откатит изменение."
+
+msgid "the last check found Prokop stopped"
+msgstr "при последней проверке Prokop был остановлен"
+
+msgid "the last check found the DPI service not ready"
+msgstr "при последней проверке служба DPI была не готова"
+
+msgid "the last check gave no result"
+msgstr "последняя проверка не дала результата"
 
 msgid "The last check gave no usable result. The current strategy is kept."
 msgstr "Последняя проверка не дала пригодного результата. Текущая стратегия оставлена."
@@ -4715,6 +4784,9 @@ msgstr "Уведомление скрыто, больше в правиле ни
 msgid "The package is removed from the router."
 msgstr "Пакет будет удалён с роутера."
 
+msgid "The previous automatic change is still under observation; the next one waits for it."
+msgstr "Предыдущее автоматическое изменение ещё под наблюдением; следующее ждёт его окончания."
+
 msgid "the previous DNS block list stays in place"
 msgstr "предыдущий список блокировки DNS остаётся"
 
@@ -4753,6 +4825,9 @@ msgstr "Не удалось подготовить запрос на роуте�
 
 msgid "The request was refused: invalid input."
 msgstr "Запрос отклонён: неверные входные данные."
+
+msgid "The rollback after the observation did not finish"
+msgstr "Откат после наблюдения не завершён"
 
 msgid "The rollback did not finish: the configuration was changed while the \"Before autotune\" snapshot was being restored, and Prokop kept that change. It is not known whether Prokop now runs the snapshot or the change: check the rule, or restore the snapshot you need in History and recovery."
 msgstr "Откат не завершился: конфигурацию изменили, пока восстанавливался снимок «Перед автоподбором», и Prokop сохранил это изменение. Неизвестно, работает ли Prokop сейчас со снимком или с изменением: проверьте правило или восстановите нужный снимок в разделе «История и восстановление»."
@@ -5209,6 +5284,9 @@ msgstr "Таймаут недоступности"
 
 msgid "Unavailable: needs sing-box-extended %s or newer, the installed sing-box is %s."
 msgstr "Недоступно: нужен sing-box-extended %s или новее, установлен sing-box %s."
+
+msgid "Under observation: %d of %d checks passed"
+msgstr "Под наблюдением: пройдено проверок %d из %d"
 
 msgid "Unexpected ByeDPI strategy argument: %s"
 msgstr "Неожиданный аргумент стратегии ByeDPI: %s"

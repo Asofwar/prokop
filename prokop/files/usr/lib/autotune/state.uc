@@ -6,7 +6,10 @@
 // (temporary file + rename, flushed to flash before and after the rename,
 // UC-025) and only when its content changed, at most once per worker run:
 //   { version, targets: { <id>: summary }, groups: { <section>: group },
-//     applies: [ records ], next_run_at, rotation, worker, recovered_at }
+//     applies: [ records ], next_run_at, rotation, worker, recovered_at,
+//     observation }
+// observation: the automatic apply being watched (autotune/manager.uc
+// observation_tick), or null.
 // A state file that exists but cannot be trusted (corrupt, foreign version)
 // reads as an empty state marked recovered_from; the next write keeps a copy
 // of the bad file as state.json.corrupt and records recovered_at, after
@@ -33,7 +36,7 @@ function object_or_empty(v) { return type(v) == "object" ? v : {}; }
 
 function empty() {
     return { version: VERSION, targets: {}, groups: {}, applies: [], next_run_at: null, rotation: 0, worker: null,
-        recovered_at: null };
+        recovered_at: null, observation: null };
 }
 
 function valid_id(id) {
@@ -64,6 +67,8 @@ function read() {
     state.rotation = type(parsed.rotation) == "int" && parsed.rotation >= 0 ? parsed.rotation : 0;
     state.worker = type(parsed.worker) == "object" ? parsed.worker : null;
     state.recovered_at = type(parsed.recovered_at) == "int" ? parsed.recovered_at : null;
+    let o = parsed.observation;
+    state.observation = type(o) == "object" && valid_id(o.group) && type(o.apply_started_at) == "int" ? o : null;
     return state;
 }
 

@@ -14,7 +14,9 @@
 //   - the rule does not carry a custom strategy of the user;
 //   - the candidate is not in its cooldown after a rollback or failure;
 //   - fewer than policy.max_applies_per_day applies in the last 24 hours;
-//   - the state was not recovered from a corrupt file within policy.cooldown.
+//   - the state was not recovered from a corrupt file within policy.cooldown;
+//   - no earlier automatic apply is still under observation (its rollback
+//     must stay the plain return to the configuration before it).
 // "direct" is never applied: Prokop never turns DPI off by itself.
 let policy_module = require("autotune.policy");
 
@@ -32,7 +34,7 @@ function applies_today(applies, now) {
 }
 
 // ctx: { policy, trigger, group (hysteresis state), result (aggregate),
-//        custom, applies, now, cooldown_until, recovered_at }
+//        custom, applies, now, cooldown_until, recovered_at, observing }
 // → { apply: bool, reason } — reason is null only when it may be applied.
 function decide(ctx) {
     let p = ctx.policy, r = ctx.result || {};
@@ -52,6 +54,7 @@ function decide(ctx) {
     let limit = int(p.max_applies_per_day);
     if (limit <= 0) return { apply: false, reason: "applies_disabled" };
     if (applies_today(ctx.applies, ctx.now) >= limit) return { apply: false, reason: "daily_limit_reached" };
+    if (ctx.observing === true) return { apply: false, reason: "observation_in_progress" };
     return { apply: true, reason: null };
 }
 

@@ -19,7 +19,8 @@
 //   run <all|group>     tune the targets of the groups now (write)
 //   if-due              the scheduled run, when enabled and due (cron); in
 //                       mode "auto" it may apply one confirmed group
-//                       recommendation through autotune/apply.uc
+//                       recommendation through autotune/apply.uc, and it
+//                       watches an automatic apply afterwards (observation)
 //   run-async <all|group>  start a run as a background job; prints its id
 //   run-status <job>    state and result of a job (read-only)
 //   rollback            the operator's rollback of the recorded apply
@@ -91,6 +92,14 @@ const APPLY_STATE_FILE = getenv("PROKOP_AUTOTUNE_APPLY_STATE") || "/etc/prokop/a
 const APPLY_PHASES = [ "checking", "applying", "verifying", "rolling_back" ];
 // A recommendation measured longer ago than this many intervals is stale.
 const MANUAL_MAX_AGE_INTERVALS = 2;
+// The observation of an automatic apply: failed checks in a row that roll it
+// back, the longest it may wait for its conclusive checks (a Prokop stopped
+// or blocked meanwhile), how early a check may come before its tick (cron
+// starts are not exact) and how many checks the state keeps.
+const OBSERVATION_FAILURES = 2;
+const OBSERVATION_MAX_SECONDS = 86400;
+const OBSERVATION_SLACK = 60;
+const OBSERVATION_CHECKS_KEPT = 12;
 
 function as_string(v) { return v == null ? "" : "" + v; }
 function quote(v) { return "'" + replace(as_string(v), /'/g, "'\\''") + "'"; }
@@ -288,6 +297,7 @@ function status() {
         worker: worker_view(state.worker),
         recovered_at: state.recovered_at,
         state_recovered: state.recovered_from || null,
+        observation: state.observation,
         apply: apply_summary()
     };
 }
@@ -529,6 +539,76 @@ function uci_apply(ops) {
     return ok ? { status: "ok" } : { status: "failed", reason: "uci_failed" };
 }
 
+// ---- observation of an automatic apply ---------------------------------------
+//
+// An automatic apply passed its verification right after the reload; the
+// observation keeps checking it in production for policy.observation, once
+// per scheduler tick (autotune/apply.uc observe: the same production
+// verification, normal requests through the rule included). It ends:
+//   passed        policy.observation_checks checks passed
+//   rolled_back   OBSERVATION_FAILURES failed checks in a row (inconclusive
+//                 ones between them neither count nor break the row): the
+//                 candidate fails in production, the apply is rolled back to
+//                 the configuration before it (autotune/apply.uc rollback
+//                 observation) and the candidate is paused like one that
+//                 failed its verification
+//   needs_attention  that rollback did not prove the old state back
+//   ended         the apply is no longer the configuration (edited since,
+//                 rolled back by the operator), the mode is no longer auto,
+//                 or OBSERVATION_MAX_SECONDS passed without enough checks:
+//                 nothing is changed
+// Inconclusive checks (WAN down, a service action, a runtime that is not
+// coherent) change nothing. A check skipped by a blocker is not recorded and
+// writes nothing to flash. While an observation runs no other automatic
+// apply starts, so its rollback stays a plain return to the configuration
+// before the apply. The apply itself already counted against the daily
+// limit; its rollback does not count again.
+
+function observing(state) {
+    return type(state) == "object" && type(state.observation) == "object" && state.observation.status == "observing";
+}
+
+function observation_start(group, applied, policy, at) {
+    if (type(applied.apply_started_at) != "int") return null;
+    return { status: "observing", group, candidate: applied.candidate, apply_started_at: applied.apply_started_at,
+        started_at: at, checks_required: policy.observation_checks, passed: 0, failures_in_row: 0, checks: [],
+        next_check_at: at + policy_module.OBSERVATION_STEP - OBSERVATION_SLACK, deadline: at + OBSERVATION_MAX_SECONDS };
+}
+
+// The observation ends: the state forgets it, the group's apply record keeps
+// how it ended. rolled_back and needs_attention pause the candidate.
+function observation_finish(state, o, status, reason, policy) {
+    state.observation = null;
+    let g = type(state.groups[o.group]) == "object" ? state.groups[o.group] : null;
+    let result = { status, reason: reason || null, passed: int(o.passed), checks_required: int(o.checks_required),
+        failures_in_row: int(o.failures_in_row), started_at: o.started_at, finished_at: now() };
+    if (g == null) return result;
+    if (type(g.last_apply) == "object" && g.last_apply.apply_started_at === o.apply_started_at)
+        g.last_apply = { ...g.last_apply, observation: result };
+    if (status == "rolled_back" || status == "needs_attention") {
+        g.last_apply = { ...(type(g.last_apply) == "object" ? g.last_apply : { group: o.group, candidate: o.candidate }),
+            status, reason: "observation_failed", observation: result, rolled_back_at: now() };
+        g = hysteresis.start_cooldown(g, o.candidate, policy.cooldown_seconds, now());
+        g.pending = null;
+        g.ready = false;
+        g.ready_auto = false;
+    }
+    state.groups[o.group] = g;
+    return result;
+}
+
+// Ends the observation outside a tick (the operator's rollback, the mode
+// switched away from auto).
+function observation_end(reason) {
+    let stored = state_module.read();
+    if (!observing(stored)) return true;
+    let sections = config_sections();
+    let policy = policy_module.read(sections || []).policy;
+    return with_state((state) => {
+        if (observing(state)) observation_finish(state, state.observation, "ended", reason, policy);
+    });
+}
+
 function policy_set(key, value) {
     let checked = policy_module.check(key, value);
     if (checked.error) return { status: "failed", reason: checked.error, option: as_string(key) };
@@ -544,6 +624,8 @@ function policy_set(key, value) {
     let cron = null;
     if (key == "mode") {
         if (previous.mode != checked.value) history("autotune_mode", "success");
+        // Only auto mode acts on its own: an observation ends with it.
+        if (checked.value != "auto") observation_end("mode_changed");
         cron = cron_sync().status;
     }
     return { status: "ok", option: key, value: checked.value, previous: previous[key], cron };
@@ -647,6 +729,100 @@ function blocker(for_apply) {
 }
 
 
+// Changes the observation in the state only while it is still the same one.
+function with_observation(o, change) {
+    let result = null;
+    let ok = with_state((state) => {
+        if (!observing(state) || state.observation.apply_started_at !== o.apply_started_at) return;
+        result = change(state, state.observation);
+    });
+    return { ok, result };
+}
+
+function observation_record(o, check) {
+    let checks = [ ...(type(o.checks) == "array" ? o.checks : []), check ];
+    return slice(checks, -OBSERVATION_CHECKS_KEPT);
+}
+
+function observation_tick_locked() {
+    let state = state_module.read();
+    if (!observing(state)) return null;
+    let o = state.observation;
+    let sections = config_sections();
+    if (sections == null) return { result: "skipped", reason: "config_unavailable" };
+    let policy = policy_module.read(sections).policy;
+    let at = now();
+    let finish = (status, reason) => {
+        let r = with_observation(o, (st, cur) => observation_finish(st, cur, status, reason, policy));
+        return { result: status, reason, recorded: r.ok, group: o.group, candidate: o.candidate };
+    };
+    // The operator switched autotune away from auto: it no longer acts.
+    if (policy.mode != "auto") return finish("ended", "mode_changed");
+    // A tick further away than one step was set before the clock jumped back.
+    let step = policy_module.OBSERVATION_STEP;
+    if (at < int(o.next_check_at) && int(o.next_check_at) <= at + step) return { result: "skipped", reason: "not_due" };
+    if (at > int(o.deadline) || at < int(o.started_at) - step) return finish("ended", "observation_expired");
+    let reason = blocker(true);
+    if (reason != null) return { result: "skipped", reason };
+    let check = run_tool("apply", [ "observe", "" + o.apply_started_at ]);
+    if (check == null) return { result: "skipped", reason: "observe_output_invalid" };
+    if (check.status == "busy" || check.status == "interrupted") return { result: "skipped", reason: check.reason || check.status };
+    if (check.status == "ended") {
+        // The apply was rolled back or left needing attention by a run that
+        // died before it recorded so: the candidate is paused all the same.
+        if (check.phase == "rolled_back" || check.phase == "needs_attention") return finish(check.phase, check.reason);
+        return finish("ended", check.reason);
+    }
+    let verdict = index([ "ok", "failed" ], check.status) >= 0 ? check.status : "inconclusive";
+    let entry = { at, result: verdict, reason: check.reason || null,
+        successes: type(check.successes) == "int" ? check.successes : null,
+        attempted: type(check.attempted) == "int" ? check.attempted : null };
+    let next = null;
+    let updated = with_observation(o, (st, cur) => {
+        cur.checks = observation_record(cur, entry);
+        cur.last_check_at = at;
+        cur.next_check_at = at + step - OBSERVATION_SLACK;
+        if (verdict == "ok") { cur.passed = int(cur.passed) + 1; cur.failures_in_row = 0; }
+        else if (verdict == "failed") cur.failures_in_row = int(cur.failures_in_row) + 1;
+        next = cur.passed >= int(cur.checks_required) ? "passed" : cur.failures_in_row >= OBSERVATION_FAILURES ? "rollback" : null;
+        if (next == "passed") observation_finish(st, cur, "passed", null, policy);
+        else st.observation = cur;
+        o = cur;
+    });
+    if (!updated.ok) return { result: "failed", reason: "state_write_failed", check: verdict };
+    if (next == "passed") {
+        history("autotune_observation", "success", "automatic", o.candidate);
+        return { result: "passed", check: verdict, group: o.group, candidate: o.candidate };
+    }
+    if (next != "rollback") return { result: "observing", check: verdict, reason: entry.reason, group: o.group, candidate: o.candidate };
+
+    // The candidate failed in production twice in a row: back to the
+    // configuration before the apply, through the Stage 5 rollback.
+    let r = run_tool("apply", [ "rollback", "observation", "" + o.apply_started_at ]) || { status: "failed", reason: "rollback_output_invalid" };
+    if (r.status == "rolled_back" || r.status == "needs_attention") {
+        // The rollback is in the history already (autotune_rollback).
+        return { ...finish(r.status, "observation_failed"), check: verdict };
+    }
+    // Nothing was changed (busy, a service action outlasting the wait, the
+    // configuration edited right before): the observation goes on, the next
+    // tick checks and decides again.
+    with_observation(o, (st, cur) => { cur.rollback_attempt = { at: now(), reason: as_string(r.reason || r.status) }; st.observation = cur; });
+    return { result: "observing", check: verdict, reason: "rollback_not_done:" + as_string(r.reason || r.status), group: o.group,
+        candidate: o.candidate };
+}
+
+// One scheduler tick of the observation; called by if-due before the
+// scheduled run. null when there is nothing to observe.
+function observation_tick() {
+    let stored = state_module.read();
+    if (!observing(stored)) return null;
+    let lock = flock(WORKER_LOCK, false);
+    if (lock == null) return { result: "skipped", reason: "autotune_worker_running" };
+    let output = observation_tick_locked();
+    unlock(lock);
+    return output;
+}
+
 function tune_target(t, probes, dns_resolver) {
     // The policy value is an upper bound: a run has a fixed number of source
     // ports, shared by every supported candidate (isolation.uc tune).
@@ -688,6 +864,7 @@ function merge(updates) {
         state.worker = updates.worker;
         if (updates.rotation != null) state.rotation = updates.rotation;
         if (updates.next_run_at != null) state.next_run_at = updates.next_run_at;
+        if (updates.observation != null) state.observation = updates.observation;
     });
 }
 
@@ -738,6 +915,9 @@ function apply_group(name, aggregate, full, dns_resolver, trigger) {
         record.reason = type(result) == "object" ? result.reason || null : "apply_output_invalid";
         record.counted = manual ? false : o.counted;
         record.attempted = o.counted;
+        // The apply's own id in the Stage 5 record: an observation acts on
+        // that very apply only.
+        if (type(result) == "object" && type(result.started_at) == "int") record.apply_started_at = result.started_at;
         record.outcome = o;
         if (o.history != null) history("autotune_apply", o.history, record.trigger, aggregate.candidate);
     }
@@ -824,7 +1004,7 @@ function run_locked(scope, trigger) {
     let local = state_module.read();
     // A state recovered from a corrupt file in this very run.
     let recovered_at = local.recovered_at != null ? local.recovered_at : local.recovered_from != null ? started : null;
-    let updates = { targets: {}, groups: {}, applies: [], worker: null, rotation: null, next_run_at: null };
+    let updates = { targets: {}, groups: {}, applies: [], worker: null, rotation: null, next_run_at: null, observation: null };
     let report = {}, tuned = [], unmeasured = [], outside = [], chosen = [], stop = null, results = {}, applied = null;
     let unknown_group = false;
 
@@ -894,7 +1074,8 @@ function run_locked(scope, trigger) {
             // At most one production change per run.
             let decision = applied != null ? { apply: false, reason: "one_apply_per_run" } : autoapply.decide({
                 policy, trigger, group, result: aggregate, custom: g.custom, applies: local.applies, now: now(),
-                cooldown_until: hysteresis.cooldown_until(group, aggregate.candidate), recovered_at });
+                cooldown_until: hysteresis.cooldown_until(group, aggregate.candidate), recovered_at,
+                observing: observing(local) });
             if (decision.apply && results[aggregate.representative] == null) decision = { apply: false, reason: "representative_not_measured" };
             group.decision = { reason: decision.reason, at: now() };
             if (decision.apply) {
@@ -906,6 +1087,13 @@ function run_locked(scope, trigger) {
                 if (applied.outcome != null && applied.outcome.reset) { group.pending = null; group.ready = false; group.ready_auto = false; }
                 push(local.applies, applied);
                 push(updates.applies, applied);
+                // An automatic apply that passed its verification is watched
+                // for policy.observation (observation_tick).
+                if (applied.status == "applied" && trigger == "schedule") {
+                    let o = observation_start(name, applied, policy, now());
+                    if (o != null) local.observation = updates.observation = o;
+                    else group.last_apply = applied = { ...applied, observation: { status: "unavailable", reason: "apply_id_missing" } };
+                }
             }
             local.groups[name] = updates.groups[name] = group;
             report[name] = { result: aggregate, events: observed.events, ready: observed.ready, required: observed.required,
@@ -953,19 +1141,23 @@ function if_due() {
     let sections = config_sections();
     if (sections == null) return { status: "failed", reason: "config_unavailable" };
     let read = policy_module.read(sections);
-    if (read.policy.mode == "off") return { status: "ok", result: "skipped", reason: "mode_off" };
+    // Ends an observation the mode no longer allows.
+    let observation = read.policy.mode != "auto" ? observation_tick() : null;
+    if (read.policy.mode == "off") return { status: "ok", result: "skipped", reason: "mode_off", observation };
     // Only for a Prokop that was started and not stopped since (D-15): a
     // disabled autostart left the cron line in place (OBS-4).
     if (fs.stat(STOP_REQUESTED_FILE) != null || fs.stat(EXPLICIT_START_FILE) == null)
-        return { status: "ok", result: "skipped", reason: "prokop_stopped" };
+        return { status: "ok", result: "skipped", reason: "prokop_stopped", observation };
+    if (read.policy.mode == "auto") observation = observation_tick();
+    let with_observation_result = (output) => observation != null ? { ...output, observation } : output;
     let state = with_postponed(state_module.read());
     // A next run further away than one interval was set before the clock
     // jumped back: it is due now instead of waiting for that date (AT-4).
     if (state.next_run_at != null && now() < state.next_run_at &&
         state.next_run_at <= now() + read.policy.interval_seconds + RETRY_SECONDS)
-        return { status: "ok", result: "skipped", reason: "not_due", next_run_at: state.next_run_at };
-    if (length(filter(read.targets, (t) => t.enabled)) == 0) return { status: "ok", result: "skipped", reason: "no_targets" };
-    return run("auto", "schedule");
+        return with_observation_result({ status: "ok", result: "skipped", reason: "not_due", next_run_at: state.next_run_at });
+    if (length(filter(read.targets, (t) => t.enabled)) == 0) return with_observation_result({ status: "ok", result: "skipped", reason: "no_targets" });
+    return with_observation_result(run("auto", "schedule"));
 }
 
 // ---- manual apply ------------------------------------------------------------
@@ -1028,6 +1220,7 @@ function manual_apply_locked(name, job) {
     if (policy.mode != "recommend") return refuse(policy.mode == "off" ? "mode_off" : "mode_not_recommend");
     let state = state_module.read();
     if (state.recovered_from != null) return refuse("state_recovered");
+    if (observing(state)) return refuse("observation_in_progress");
     let stored = manual_recommendation(state, name, policy, started);
     if (stored.reason) return refuse(stored.reason);
     let candidate = stored.result.candidate;
@@ -1121,6 +1314,13 @@ function operator_rollback() {
             g.ready = false;
             g.ready_auto = false;
             state.groups[group] = g;
+            // The operator decided about the apply under observation.
+            if (observing(state)) {
+                let o = state.observation;
+                observation_finish(state, o, "ended", "operator_rollback", policy);
+                // The group record is the rollback's, never the apply's.
+                state.groups[group] = g;
+            }
         });
     }
     unlock(lock);

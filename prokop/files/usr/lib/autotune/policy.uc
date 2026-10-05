@@ -10,6 +10,7 @@
 //       option max_applies_per_day '1'
 //       option cooldown '24h'             # after a rollback of a candidate
 //       option probes '5'                 # probes per candidate and run
+//       option observation '1h'           # watch an automatic apply this long
 //
 //   config autotune_target '<id>'
 //       option host 'youtube.com'
@@ -32,16 +33,20 @@ const MODES = [ "off", "recommend", "auto" ];
 const CONFIDENCES = [ "medium", "high" ];
 const DEFAULTS = {
     mode: "off", interval: "6h", confirmations: 3, min_confidence: "high",
-    max_applies_per_day: 1, cooldown: "24h", probes: 5
+    max_applies_per_day: 1, cooldown: "24h", probes: 5, observation: "1h"
 };
 const LIMITS = {
     interval: [ 3600, 7 * 86400 ],
     cooldown: [ 3600, 30 * 86400 ],
+    observation: [ 1800, 12 * 3600 ],
     confirmations: [ 2, 10 ],
     max_applies_per_day: [ 0, 5 ],
     probes: [ 3, 7 ]
 };
 const MAX_TARGETS = 16;
+// The observation after an automatic apply checks production once per
+// scheduler tick (the cron line runs every 15 minutes, autotune/manager.uc).
+const OBSERVATION_STEP = 900;
 
 function as_string(v) { return v == null ? "" : "" + v; }
 
@@ -71,7 +76,7 @@ function check(key, value) {
         return index(MODES, value) >= 0 ? { value } : { error: "invalid_mode" };
     if (key == "min_confidence")
         return index(CONFIDENCES, value) >= 0 ? { value } : { error: "invalid_confidence" };
-    if (key == "interval" || key == "cooldown") {
+    if (key == "interval" || key == "cooldown" || key == "observation") {
         let seconds = duration_seconds(value);
         if (seconds == null) return { error: "invalid_duration" };
         if (seconds < LIMITS[key][0] || seconds > LIMITS[key][1]) return { error: "duration_out_of_range" };
@@ -106,6 +111,11 @@ function read(sections) {
     }
     policy.interval_seconds = duration_seconds(policy.interval);
     policy.cooldown_seconds = duration_seconds(policy.cooldown);
+    policy.observation_seconds = duration_seconds(policy.observation);
+    // Conclusive checks an automatic apply has to pass: one per scheduler
+    // tick of the observation, never fewer than two.
+    let checks = int((policy.observation_seconds + OBSERVATION_STEP - 1) / OBSERVATION_STEP);
+    policy.observation_checks = checks < 2 ? 2 : checks;
     // Autonomous apply never acts on less than high confidence.
     policy.apply_min_confidence = "high";
 
@@ -138,4 +148,4 @@ function confidence_at_least(confidence, minimum) {
     return order[as_string(confidence)] != null && order[as_string(confidence)] >= order[as_string(minimum)];
 }
 
-return { DEFAULTS, LIMITS, MODES, MAX_TARGETS, read, check, duration_seconds, valid_target_id, confidence_at_least };
+return { DEFAULTS, LIMITS, MODES, MAX_TARGETS, OBSERVATION_STEP, read, check, duration_seconds, valid_target_id, confidence_at_least };
