@@ -13,7 +13,9 @@
 //   status        what is configured (never a secret) and how the last
 //                 delivery went
 //   cron-sync     write the cron line while notifications are active,
-//   cron-remove   remove it (service/lifecycle.uc, with the other jobs)
+//   cron-hold     keep it only for a retry (a failed start or reload),
+//   cron-remove   remove it (an explicit stop); service/lifecycle.uc runs
+//                 them with the other jobs (see schedule)
 //
 // Nothing here runs on the paths that change the router: events arrive as
 // files (notify/queue.uc), and a sender that hangs or fails holds up only
@@ -98,6 +100,10 @@ const CURL_MAX_TIME = "15";
 const DELIVERY_BUDGET_SECONDS = int(getenv("PROKOP_NOTIFY_DELIVERY_BUDGET_SECONDS") || "60");
 // Connection probes running at once (each waits up to PROBE_TIMEOUT_MS).
 const PROBE_PARALLEL = 4;
+// The cron line: every CRON_PERIODIC while nothing waits, every minute while
+// a message waits for a retry or an event for the sender.
+const CRON_PERIODIC = "*/5 * * * *";
+const CRON_RETRY = "* * * * *";
 // A subscription with less than this share of its traffic left is reported
 // once.
 const TRAFFIC_LOW_PERCENT = 10;
@@ -982,6 +988,66 @@ function subscription_check(config, state, events) {
     }
 }
 
+// ---- the cron line -----------------------------------------------------------
+
+function stop_requested() {
+    return fs.stat(STOP_REQUESTED_FILE) != null;
+}
+
+function queue_waiting() {
+    for (let name in fs.lsdir(QUEUE_DIR) || [])
+        if (match(name, /\.json$/) != null)
+            return true;
+    return false;
+}
+
+function crontab_has_line() {
+    return index(as_string(fs.readfile(CRONTAB_FILE)), CRON_MARKER) >= 0;
+}
+
+function cron_write(schedule) {
+    let result = cron_line.rewrite({ crontab_file: CRONTAB_FILE, crontab: CRONTAB, tmp_dir: TMP_DIR }, CRON_MARKER,
+        schedule != null ? schedule + " " + BIN + " notify_tick >/dev/null 2>&1" : null);
+    if (result.status == "failed")
+        log_message("could not update the schedule line in " + CRONTAB_FILE + ": " + result.reason, "error");
+    return result;
+}
+
+// The line for the moment (opt. 1, NTF-2):
+//   sync   Prokop starts or reloads: the periodic checks run
+//   hold   a start or reload failed and its runtime was taken down: only
+//          the retry of what waits (the failure itself is such a message,
+//          and the WAN is often not up yet at boot)
+//   remove an explicit stop (the user's, a package removal): no line;
+//          what waits stays in the outbox for the next start
+//   flush  after a run of the sender: every minute while a message waits,
+//          back to the periodic line once nothing does; a line that is
+//          not there is added only for a retry, and an explicit stop is
+//          left alone
+function schedule(mode, config, state) {
+    if (!config.active)
+        return cron_write(null);
+    let waiting = length(state.outbox) > 0 || queue_waiting();
+    if (mode == "remove") {
+        if (waiting)
+            log_message(sprintf("%d undelivered messages wait for the next start of Prokop", length(state.outbox)), "warn");
+        return cron_write(null);
+    }
+    if (stop_requested())
+        return mode == "flush" ? { status: "ok", changed: false } : cron_write(null);
+    if (waiting)
+        return cron_write(CRON_RETRY);
+    if (mode == "sync" || (mode == "flush" && crontab_has_line()))
+        return cron_write(CRON_PERIODIC);
+    return cron_write(null);
+}
+
+function cron_mode(mode) {
+    let config = notify_config.read();
+    let result = schedule(mode, config, load_state());
+    return { status: result.status, reason: result.reason, enabled: result.enabled };
+}
+
 // ---- modes -----------------------------------------------------------------
 
 function flush(with_checks) {
@@ -998,6 +1064,7 @@ function flush(with_checks) {
         state.nodes = {};
         state.service = {};
         save_state(state);
+        schedule("flush", config, state);
         release_lock(lock);
         return 0;
     }
@@ -1016,6 +1083,9 @@ function flush(with_checks) {
     process_events(config, state, events);
     persist_keys(state);
     save_state(state);
+    // Last, while the lock is held: an event queued during this run by a
+    // sender that could not wait for the lock is seen here.
+    schedule("flush", config, state);
     release_lock(lock);
     return 0;
 }
@@ -1075,14 +1145,6 @@ function status() {
     };
 }
 
-function cron_write(enabled) {
-    let result = cron_line.rewrite({ crontab_file: CRONTAB_FILE, crontab: CRONTAB, tmp_dir: TMP_DIR }, CRON_MARKER,
-        enabled ? "* * * * * " + BIN + " notify_tick >/dev/null 2>&1" : null);
-    if (result.status == "failed")
-        log_message("could not update the schedule line in " + CRONTAB_FILE + ": " + result.reason, "error");
-    return result;
-}
-
 let mode = ARGV[0] || "";
 if (mode == "flush")
     exit(flush(false));
@@ -1094,16 +1156,18 @@ if (mode == "test")
 else if (mode == "status")
     output = status();
 else if (mode == "cron-sync")
-    output = cron_write(notify_config.read().active);
+    output = cron_mode("sync");
+else if (mode == "cron-hold")
+    output = cron_mode("hold");
 else if (mode == "cron-remove")
-    output = cron_write(false);
+    output = cron_mode("remove");
 else if (mode == "fixture-text") {
     let event = parse_json(ARGV[1]);
     print(as_string(type(event) == "object" ? event_text(event) : ""), "\n");
     exit(0);
 }
 else {
-    warn("Usage: notify/manager.uc flush|tick|test|status|cron-sync|cron-remove\n");
+    warn("Usage: notify/manager.uc flush|tick|test|status|cron-sync|cron-hold|cron-remove\n");
     exit(2);
 }
 print(sprintf("%J\n", output));

@@ -144,6 +144,9 @@ const RULESET_CACHE_UC = LIB_DIR + "/singbox/ruleset_cache.uc";
 const UPDATES_UC = LIB_DIR + "/components/updates.uc";
 const AUTOTUNE_MANAGER_UC = LIB_DIR + "/autotune/manager.uc";
 const NOTIFY_MANAGER_UC = LIB_DIR + "/notify/manager.uc";
+// The notification line in the crontab (notify/manager.uc).
+const NOTIFY_CRONTAB_FILE = getenv("PROKOP_CRONTAB_FILE") || "/etc/crontabs/root";
+const NOTIFY_CRON_MARKER = "# prokop-notify";
 const STATE_UC = LIB_DIR + "/service/state.uc";
 const RELOAD_UC = LIB_DIR + "/service/reload.uc";
 const UI_UC = LIB_DIR + "/service/ui.uc";
@@ -1028,11 +1031,19 @@ function restore_guarded_singbox_runtime(backup_path, guard_active) {
 // printing a JSON result, which must not reach the output of an init.d action:
 // an operator who runs restart would read autotune's "enabled": false as a
 // verdict on the service. Capture discards it; module_success would not.
-function sync_autotune_cron(mode) {
+//
+// The notification line (notify/manager.uc) follows the same moments:
+// written with the start and every reload, removed by an explicit stop,
+// and kept by the stop of a failed start or reload only while a message
+// waits for its retry (notify_mode "cron-hold", NTF-2). Its sender runs
+// only when it has something to do: notifications turned on, or a line of
+// theirs to remove; most routers have neither, and a start, reload or stop
+// then starts no process for it.
+function sync_autotune_cron(mode, notify_mode) {
     module_capture(AUTOTUNE_MANAGER_UC, [ mode ]);
-    // The notification line (notify/manager.uc) follows the same moments:
-    // written or removed with the start, every reload, and the stop.
-    module_capture(NOTIFY_MANAGER_UC, [ mode ]);
+    if (config_get(CONFIG_NAME + ".settings.notify_enabled", "0") == "1" ||
+        index(as_string(fs.readfile(NOTIFY_CRONTAB_FILE)), NOTIFY_CRON_MARKER) >= 0)
+        module_capture(NOTIFY_MANAGER_UC, [ notify_mode || mode ]);
 }
 
 function refresh_cron() {
@@ -1083,14 +1094,14 @@ function keep_cron_refresh_pending(path) {
             "only the next start or a change of their settings updates them", "warn");
 }
 
-function remove_cron_jobs() {
+function remove_cron_jobs(explicit_stop) {
     let status = module_status(UPDATES_UC, [
         "remove-cron-jobs",
         LIST_UPDATE_CRON_MARKER,
         SUBSCRIPTION_UPDATE_CRON_MARKER,
         COMPONENT_UPDATE_CHECK_CRON_MARKER
     ]);
-    sync_autotune_cron("cron-remove");
+    sync_autotune_cron("cron-remove", explicit_stop ? "cron-remove" : "cron-hold");
     return status;
 }
 
@@ -1431,7 +1442,7 @@ function stop_main(explicit_stop) {
     module_success(PRIORITY_UC, [ "stop-runtime" ]);
     module_success(SUBSCRIPTION_CACHE_UC, [ "stop-deferred-bootstrap-worker" ]);
     module_success(UPDATES_UC, [ "stop-list-update" ]);
-    remove_cron_jobs();
+    remove_cron_jobs(explicit_stop);
     // A newer list generation may intentionally live only in /tmp because
     // flash space was below the persistent-cache reserve. Keep it across an
     // in-boot service reload; a real reboot clears both /tmp and its marker.

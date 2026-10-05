@@ -40,8 +40,8 @@ const RC_D_DIR = env("PROKOP_RC_D_DIR", "/etc/rc.d");
 const TORRSERVER_DIRECT_LEGACY_LINKS = [ "S100prokop-torrserver-direct", "K9prokop-torrserver-direct" ];
 const CRONTAB_FILE = env("PROKOP_CRONTAB_FILE", "/etc/crontabs/root");
 // The markers of Prokop's lines in the crontab (service/lifecycle.uc,
-// autotune/manager.uc).
-const CRON_MARKERS = /# prokop-(list-update|subscription-update|component-update-check|autotune)/;
+// autotune/manager.uc, notify/manager.uc).
+const CRON_MARKERS = /# prokop-(list-update|subscription-update|component-update-check|autotune|notify)/;
 const PACKAGE_UPGRADE_STATE = env("PROKOP_PACKAGE_UPGRADE_STATE", "/tmp/prokop-package-was-running");
 const UPGRADE_SING_BOX_WAIT_SECONDS = int(env("PROKOP_UPGRADE_SING_BOX_WAIT_SECONDS", "15"));
 // The start after an upgrade runs while the package manager holds its lock;

@@ -478,15 +478,64 @@ grep -q 'require("notify.queue").enqueue("subscription"' "$LIB/subscription/cach
 reset
 printf '0 4 * * * other job\n' >"$WORK/crontab"
 manager cron-sync >/dev/null
-grep -q "^\* \* \* \* \* $WORK/bin/prokop notify_tick >/dev/null 2>&1 # prokop-notify$" "$WORK/crontab" ||
+grep -q "^\*/5 \* \* \* \* $WORK/bin/prokop notify_tick >/dev/null 2>&1 # prokop-notify$" "$WORK/crontab" ||
   fail "the cron line was not written: $(cat "$WORK/crontab")"
 grep -q '^0 4 \* \* \* other job$' "$WORK/crontab" || fail "another job was lost"
 sed -i '/notify_enabled/d' "$WORK/uci"
 manager cron-sync >/dev/null
 grep -q prokop-notify "$WORK/crontab" && fail "the cron line stayed while notifications are off"
 grep -q '^0 4 \* \* \* other job$' "$WORK/crontab" || fail "another job was lost on removal"
-grep -q 'module_capture(NOTIFY_MANAGER_UC, \[ mode \]);' "$LIB/service/lifecycle.uc" ||
+grep -q 'module_capture(NOTIFY_MANAGER_UC, \[ notify_mode || mode \]);' "$LIB/service/lifecycle.uc" ||
   fail "the lifecycle does not keep the cron line in step"
+
+# --- the cron line: every 5 minutes, every minute while a message waits ------
+# (opt. 1); a failed start keeps it for the retry, an explicit stop does not
+# (NTF-2).
+cron_schedule() { sed -n 's/^\(.*\) [^ ]*\/prokop notify_tick .*# prokop-notify$/\1/p' "$WORK/crontab"; }
+reset
+manager cron-sync >/dev/null
+[ "$(cron_schedule)" = '*/5 * * * *' ] || fail "the periodic line is not every 5 minutes: $(cat "$WORK/crontab")"
+printf '7' >"$WORK/exit.telegram"; printf '7' >"$WORK/exit.webhook"
+record start failure
+manager flush
+[ "$(cron_schedule)" = '* * * * *' ] || fail "a waiting message does not make the line run every minute"
+rm -f "$WORK/exit.telegram" "$WORK/exit.webhook"
+manager tick
+[ "$(jq '.outbox | length' "$WORK/run/notify/state.json")" -eq 0 ] || fail "the retry did not deliver"
+[ "$(cron_schedule)" = '*/5 * * * *' ] || fail "the line stays every minute after the retry: $(cat "$WORK/crontab")"
+# A failed start: its runtime is taken down (cron-hold) and the message about
+# it cannot go out yet: the line stays for the retry.
+reset
+printf '0 4 * * * other job\n' >"$WORK/crontab"
+manager cron-sync >/dev/null
+printf '1\n' >"$WORK/run/shutdown_correctly"
+manager cron-hold >/dev/null
+grep -q prokop-notify "$WORK/crontab" && fail "cron-hold kept the line with nothing to retry"
+printf '7' >"$WORK/exit.telegram"; printf '7' >"$WORK/exit.webhook"
+record start failure
+manager flush
+[ "$(cron_schedule)" = '* * * * *' ] || fail "the message about a failed start gets no retry (NTF-2): $(cat "$WORK/crontab")"
+manager cron-hold >/dev/null
+[ "$(cron_schedule)" = '* * * * *' ] || fail "cron-hold removed the line of a waiting message"
+rm -f "$WORK/exit.telegram" "$WORK/exit.webhook"
+: >"$WORK/curl.log"
+manager tick
+grep -q 'Prokop не запустился' "$WORK/curl.log" || fail "the retry after a failed start did not send"
+grep -q '^0 4 \* \* \* other job$' "$WORK/crontab" || fail "another job was lost"
+# An explicit stop removes the line; what waits is kept and logged.
+reset
+manager cron-sync >/dev/null
+printf '7' >"$WORK/exit.telegram"; printf '7' >"$WORK/exit.webhook"
+record start failure
+manager flush
+: >"$WORK/run/stop.requested"
+manager cron-remove >/dev/null
+grep -q prokop-notify "$WORK/crontab" && fail "an explicit stop kept the line"
+[ "$(jq '.outbox | length' "$WORK/run/notify/state.json")" -eq 2 ] || fail "an explicit stop lost the waiting messages"
+grep -q 'wait for the next start' "$WORK/logger.log" || fail "the waiting messages are not logged at the stop"
+manager flush
+grep -q prokop-notify "$WORK/crontab" && fail "a sender added the line back after an explicit stop"
+rm -f "$WORK/run/stop.requested"
 
 # --- turned off: the queue and outbox are cleared ---------------------------
 reset

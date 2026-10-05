@@ -208,7 +208,7 @@ find_left_behind() {
         fi
     done
     if [ "${1:-}" = all ]; then
-        if grep -Eqs '# prokop-(list-update|subscription-update|component-update-check|autotune)' \
+        if grep -Eqs '# prokop-(list-update|subscription-update|component-update-check|autotune|notify)' \
             "$ROOT/etc/crontabs/root"; then
             left_behind cron "lines marked # prokop- in /etc/crontabs/root"
         fi
