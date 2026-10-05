@@ -5,6 +5,9 @@
 # the run lock stay real.
 # shellcheck source=tests/helpers/owned_processes.sh
 . "$(dirname "${BASH_SOURCE[0]}")/owned_processes.sh"
+# For the stand-ins below that signal this test's processes.
+OWNED_PROCESSES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/owned_processes.sh"
+export OWNED_PROCESSES
 WORK="$(mktemp -d)"
 FOREIGN_PIDS=()
 cleanup_test() {
@@ -256,7 +259,11 @@ fi
 # 4600 (it dies while another candidate is probed).
 if [ -n "${CURL_STUB_KILL_AT:-}" ]; then
   k=$(( $(cat "$STUB_LOG/kill.count" 2>/dev/null || echo 0) + 1 )); echo "$k" > "$STUB_LOG/kill.count"
-  [ "$k" != "$CURL_STUB_KILL_AT" ] || kill -9 "$(head -n 1 "$PROKOP_AUTOTUNE_STATE_DIR/nfqws-4600.pid")" 2>/dev/null || true
+  if [ "$k" = "$CURL_STUB_KILL_AT" ]; then
+    # shellcheck source=tests/helpers/owned_processes.sh
+    OWNED_PROCESSES_KEEP_MARK=1 . "$OWNED_PROCESSES"
+    owned_kill KILL "$(head -n 1 "$PROKOP_AUTOTUNE_STATE_DIR/nfqws-4600.pid")" 2>/dev/null || true
+  fi
 fi
 # CURL_STUB_BUSY_MARK: while /proc/net/tcp holds that text (a TIME_WAIT
 # socket of the probe ports), no source port can be bound (curl exit 45).

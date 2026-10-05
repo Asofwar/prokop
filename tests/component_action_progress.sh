@@ -15,7 +15,11 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK="$(mktemp -d)"
-trap 'rc=$?; kill $(cat "$WORK/hang-pids" 2>/dev/null) 2>/dev/null || true; rm -rf "${WORK:?}" 2>/dev/null || true; exit "$rc"' EXIT
+# shellcheck source=tests/helpers/owned_processes.sh
+. "$ROOT_DIR/tests/helpers/owned_processes.sh"
+# A stalled download the deadline missed is this test's sleep (UC-233).
+# shellcheck disable=SC2046
+trap 'rc=$?; owned_kill KILL $(cat "$WORK/hang-pids" 2>/dev/null) 2>/dev/null || true; rm -rf "${WORK:?}" 2>/dev/null || true; exit "$rc"' EXIT
 trap 'exit 1' HUP INT TERM
 
 fail() {
@@ -338,7 +342,7 @@ done
 [ "$(json_get "$WORK/status" v.success)" = false ] || fail "a stalled download must fail: $(cat "$WORK/status")"
 [ -s "$WORK/hang-pids" ] || fail "the stalled download never started"
 while read -r pid; do
-  if kill -0 "$pid" 2>/dev/null; then fail "the stalled download $pid outlived its deadline"; fi
+  if owned_process "$pid"; then fail "the stalled download $pid outlived its deadline"; fi
 done <"$WORK/hang-pids"
 
 printf 'component action progress checks passed\n'
