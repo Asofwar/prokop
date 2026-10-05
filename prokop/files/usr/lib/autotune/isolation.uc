@@ -49,7 +49,11 @@ const MARK_PRIORITY = -152;
 const CHAIN = "output";
 const PRIORITY = -151;
 const REPLY_CHAIN = "replies";
-const REPLY_PRIORITY = -300;
+// After conntrack (-200), so the SYN-ACK counters see the connection a reply
+// belongs to (AT-7): only replies to the router's own probe sockets count,
+// never a transit NAT reply to a LAN client whose masqueraded source port
+// happens to fall in the probe range.
+const REPLY_PRIORITY = -175;
 const QUEUE = int(getenv("PROKOP_AUTOTUNE_QUEUE") || "4600");
 // Queues of one run: one per DPI candidate, QUEUE .. QUEUE_LAST.
 const MAX_QUEUES = 8;
@@ -583,7 +587,9 @@ function port_slices(ids) {
 }
 
 // spec: one probe rule spec, or the list of the slice rules of a tuning run.
-function probe_chains(ip, spec) {
+// saddr: the router's source address of the probe route (prefsrc), whose
+// own connections alone the SYN-ACK counters count.
+function probe_chains(ip, spec, saddr) {
     let tuple = { daddr: ip, dport: 443, sport: [ PORT_FIRST, PORT_LAST ] };
     let injected = DESYNC_MARK_VALUE | PROBE_MARK_VALUE;
     let probe_rules = [];
@@ -611,12 +617,14 @@ function probe_chains(ip, spec) {
     // Counts only, no verdict: the SYN-ACKs the target sends to each probe
     // rule's source ports. curl reports a TLS handshake the DPI blackholes as
     // "Connection timed out" with time_connect 0, so only a SYN-ACK proves
-    // the TCP connection was up (probe.uc handshake).
+    // the TCP connection was up (probe.uc handshake). Only replies of a
+    // connection the router itself opened from saddr count (AT-7).
+    let own = probe_module.valid_ipv4(saddr) ? saddr : null;
     let replies = [];
     for (let rule in type(spec) == "array" ? spec : [ spec ]) {
         let colon = index(rule.comment || "", ":");
         push(replies, { comment: "synack" + (colon < 0 ? "" : substr(rule.comment, colon)),
-            reply: { saddr: ip, sport: 443, dport: rule.sport || [ PORT_FIRST, PORT_LAST ] }, syn_ack: true,
+            reply: { saddr: ip, sport: 443, dport: rule.sport || [ PORT_FIRST, PORT_LAST ], own }, syn_ack: true,
             mark: null, set_mark: null, verdict: null });
     }
     if (TRACE)
@@ -631,7 +639,10 @@ function render_rule(rule) {
     let text = rule.reply
         ? "ip saddr " + rule.reply.saddr + " tcp sport " + rule.reply.sport + " tcp dport " + rule.reply.dport[0] + "-" + rule.reply.dport[1]
         : "ip daddr " + rule.tuple.daddr + " tcp dport " + rule.tuple.dport + " tcp sport " + rule.tuple.sport[0] + "-" + rule.tuple.sport[1];
-    if (rule.syn_ack) text += " tcp flags & (syn | ack) == syn | ack";
+    if (rule.syn_ack) {
+        text += " tcp flags & (syn | ack) == syn | ack ct direction reply";
+        if (rule.reply.own != null) text += " ct original ip saddr " + rule.reply.own;
+    }
     if (rule.mark != null) text += sprintf(" meta mark 0x%08x", rule.mark);
     if (TRACE) text += " meta nftrace set 1";
     if (rule.set_mark != null) text += sprintf(" meta mark set 0x%08x", rule.set_mark);
@@ -641,9 +652,9 @@ function render_rule(rule) {
     return text + " comment \"" + rule.comment + "\"";
 }
 
-function batch(ip, spec) {
+function batch(ip, spec, saddr) {
     let text = "create table inet " + TABLE + "\n";
-    for (let chain in probe_chains(ip, spec)) {
+    for (let chain in probe_chains(ip, spec, saddr)) {
         text += "add chain inet " + TABLE + " " + chain.name + " { type " + chain.type + " hook " + chain.hook +
             " priority " + chain.priority + "; policy accept; }\n";
         for (let rule in chain.rules)
@@ -1054,7 +1065,7 @@ function tune(host, probes, resolver, list, ip) {
             fs.writefile(ACTIVE, sprintf("%J\n", { table: TABLE, nfqws: entries, ip: target.ip })) == null)
             return "state_write_failed";
         let batch_file = WORKDIR + "/probe.nft";
-        if (fs.writefile(batch_file, batch(target.ip, rules)) == null) return "state_write_failed";
+        if (fs.writefile(batch_file, batch(target.ip, rules, target.route.prefsrc)) == null) return "state_write_failed";
         result.teardown = { quiet_before_creation: production_queues_quiet() };
         if (!result.teardown.quiet_before_creation.quiet) return "production_queue_busy";
         if (!success([ "nft", "-f", batch_file ])) return "nft_setup_failed";
@@ -1246,7 +1257,8 @@ function run(candidate_id, host, count, resolver, ip, handshake) {
             return "state_write_failed";
         if (debug_file) { fs.writefile(debug_file, ""); fs.chmod(debug_file, 0666); }
         let batch_file = WORKDIR + "/probe.nft";
-        if (fs.writefile(batch_file, batch(target.ip, probe_rule_spec(queue_candidate ? QUEUE : null))) == null) return "state_write_failed";
+        if (fs.writefile(batch_file, batch(target.ip, probe_rule_spec(queue_candidate ? QUEUE : null), target.route.prefsrc)) == null)
+            return "state_write_failed";
         result.teardown = { quiet_before_creation: production_queues_quiet() };
         // Registering hooks while production packets sit in an NFQUEUE could
         // make them resume at a shifted hook index.
@@ -1346,8 +1358,10 @@ if (mode == "model") {
     let spec = ARGV[2] == "direct" ? probe_rule_spec(null) : ARGV[2] == "tune"
         ? [ probe_rule_spec(null, "direct:direct", tune_slices.direct), probe_rule_spec(QUEUE, "probe:candidate", tune_slices.candidate) ]
         : probe_rule_spec(QUEUE);
+    // The router's address: the given one, else a documentation address.
+    let saddr = ARGV[3] || "203.0.113.10";
     print(sprintf("%J\n", { probe_mark: PROBE_MARK_VALUE, desync_mark: DESYNC_MARK_VALUE, queue: QUEUE,
-        chains: probe_chains(ARGV[1], spec), batch: batch(ARGV[1], spec) }));
+        chains: probe_chains(ARGV[1], spec, saddr), batch: batch(ARGV[1], spec, saddr) }));
     exit(0);
 }
 if (queue_reserved()) {
@@ -1372,7 +1386,7 @@ else if (mode == "status") {
     code = 0;
 }
 else {
-    warn("Usage: autotune/isolation.uc <run <candidate> <host> [count] [resolver] [ip] [handshake]|tune <host> [probes] [resolver] [candidates] [ip]|cleanup|status|model <ip> [direct|tune]>\n");
+    warn("Usage: autotune/isolation.uc <run <candidate> <host> [count] [resolver] [ip] [handshake]|tune <host> [probes] [resolver] [candidates] [ip]|cleanup|status|model <ip> [direct|tune] [saddr]>\n");
     exit(1);
 }
 print(sprintf("%J\n", output));

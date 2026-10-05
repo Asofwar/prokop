@@ -184,13 +184,13 @@ grep -qxF "add rule inet ProkopAutotuneProbe output $T tcp sport 61000-61063 cou
   fail "probe rules were switched during the run: $(paste -sd' ' "$STUB_LOG/switch.log")"
 [ "$(grep -c '^replace rule' "$NFT_STATE/release.nft")" = 3 ] || fail "the slices are not released in one batch"
 R='ip saddr 93.184.216.34 tcp sport 443'
-for rule in "tcp dport 61000-61020 tcp flags & (syn | ack) == syn | ack counter comment \"synack:direct\"" \
-  "tcp dport 61021-61041 tcp flags & (syn | ack) == syn | ack counter comment \"synack:multisplit\"" \
-  "tcp dport 61042-61062 tcp flags & (syn | ack) == syn | ack counter comment \"synack:fake\""; do
+for rule in "tcp dport 61000-61020 tcp flags & (syn | ack) == syn | ack ct direction reply ct original ip saddr 203.0.113.10 counter comment \"synack:direct\"" \
+  "tcp dport 61021-61041 tcp flags & (syn | ack) == syn | ack ct direction reply ct original ip saddr 203.0.113.10 counter comment \"synack:multisplit\"" \
+  "tcp dport 61042-61062 tcp flags & (syn | ack) == syn | ack ct direction reply ct original ip saddr 203.0.113.10 counter comment \"synack:fake\""; do
   grep -qxF "add rule inet ProkopAutotuneProbe replies $R $rule" "$NFT_STATE/last.nft" || fail "missing SYN-ACK counter: $rule"
 done
-grep -qxF "add chain inet ProkopAutotuneProbe replies { type filter hook prerouting priority -300; policy accept; }" "$NFT_STATE/last.nft" ||
-  fail "reply chain is not a counting filter chain"
+grep -qxF "add chain inet ProkopAutotuneProbe replies { type filter hook prerouting priority -175; policy accept; }" "$NFT_STATE/last.nft" ||
+  fail "reply chain is not a counting filter chain after conntrack"
 ok "fixed port slices: one rule per candidate, no switching, released together"
 
 # A control and a candidate whose ClientHello is blackholed after the TCP

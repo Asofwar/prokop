@@ -71,7 +71,7 @@ expect_class tls_stall tls_failure ok timeout not_attempted
 json 'const p = r.probes[0]; a.equal(p.syn_acks, 1); a.equal(p.connect_evidence, "syn_ack"); a.equal(p.curl_exit_code, 28);' "$WORK/out.json"
 reset_state; export CURL_STUB_MODE=connect_timeout; run_probe multisplit 1
 json 'const p = r.probes[0]; a.equal(p.syn_acks, 0); a.equal(p.connect_evidence, undefined);' "$WORK/out.json"
-grep -qxF 'add rule inet ProkopAutotuneProbe replies ip saddr 93.184.216.34 tcp sport 443 tcp dport 61000-61063 tcp flags & (syn | ack) == syn | ack counter comment "synack"' "$NFT_STATE/last.nft" ||
+grep -qxF 'add rule inet ProkopAutotuneProbe replies ip saddr 93.184.216.34 tcp sport 443 tcp dport 61000-61063 tcp flags & (syn | ack) == syn | ack ct direction reply ct original ip saddr 203.0.113.10 counter comment "synack"' "$NFT_STATE/last.nft" ||
   fail "SYN-ACK counter of the probe rule missing: $(grep replies "$NFT_STATE/last.nft")"
 assert_clean "connect timeout without SYN-ACK"
 ok "a timeout with a SYN-ACK is a TLS timeout, without one a connect timeout"

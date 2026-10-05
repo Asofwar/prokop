@@ -300,14 +300,19 @@ const modes = {
     });
     assert.equal(verdict(out[out.length - 1]), 'drop');
     // The SYN-ACK counters: one per probe rule, counting only (no verdict,
-    // no mark), so the reply path stays production's.
-    baseChain(table, 'replies', 'filter', 'prerouting', -300);
+    // no mark), so the reply path stays production's; after conntrack, only
+    // replies to the router's own connections (AT-7).
+    baseChain(table, 'replies', 'filter', 'prerouting', -175);
     const replies = rulesOf(table, 'replies');
     assert.deepEqual(replies.map((r) => r.comment),
       specs.map((x) => 'synack' + (x.comment.includes(':') ? x.comment.slice(x.comment.indexOf(':')) : '')), 'SYN-ACK counters');
     for (const r of replies) {
       assert.equal(verdict(r), undefined, `reply rule ${r.comment} must not decide`);
       assert.ok(setsMark(r) == null, `reply rule ${r.comment} must not mark`);
+      const ct = r.expr.map((e) => e.match).filter((m) => m && m.left && m.left.ct);
+      assert.ok(ct.some((m) => m.left.ct.key === 'direction' && m.right === 'reply'), `reply rule ${r.comment} counts more than replies`);
+      assert.ok(ct.some((m) => ['ip saddr', 'saddr'].includes(m.left.ct.key) && m.left.ct.dir === 'original' && m.right === '203.0.113.10'),
+        `reply rule ${r.comment} counts replies to connections not of the router: ${JSON.stringify(ct)}`);
     }
     // probe_counters() needs a counter on every rule of the table.
     for (const r of [...premark, ...out, ...replies]) assert.ok(statementOf(r, 'counter'), `rule ${r.comment} has no counter`);
