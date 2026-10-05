@@ -2,8 +2,8 @@
 # LC-1: while Prokop runs, dnsmasq forwards to sing-box (127.0.0.42) and
 # that is kept in /etc/config/dhcp. With autostart off, nothing started
 # sing-box after a reboot and the LAN had no DNS. prokop-dns-failsafe runs at
-# boot before dnsmasq and restores dnsmasq's own servers unless Prokop
-# autostarts.
+# boot before dnsmasq and restores dnsmasq's own servers, also when Prokop
+# autostarts (LC-10): its start forwards DNS to sing-box once sing-box runs.
 set -eo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -94,12 +94,14 @@ boot_hook
 ! grep -q 'commit' "$LOG" || fail "a boot with dnsmasq already restored wrote /etc/config/dhcp"
 [ ! -s "$DNSMASQ_LOG" ] || fail "a boot with dnsmasq already restored restarted dnsmasq"
 
-# 3. Autostart on: Prokop's own start configures dnsmasq; the hook leaves it.
+# 3. Autostart on (LC-10): Prokop's start takes minutes at boot and forwards
+#    DNS to sing-box only once sing-box runs. Until then dnsmasq has its own
+#    servers: the hook restores them as with autostart off.
 : >"$WORK_DIR/S99prokop"
 prokop_ran_then_reboot
 boot_hook
-[ "$(uci_get 'dhcp.@dnsmasq[0].server')" = 127.0.0.42 ] ||
-  fail "autostart on: the hook changed dnsmasq before Prokop's own start"
-! grep -q 'commit' "$LOG" || fail "autostart on: the hook wrote /etc/config/dhcp"
+[ "$(uci_get 'dhcp.@dnsmasq[0].server')" != 127.0.0.42 ] ||
+  fail "autostart on: the LAN's DNS goes to a sing-box that is not running during the boot start"
+grep -Fxq 'commit dhcp' "$LOG" || fail "autostart on: the restore was not committed"
 
 printf 'PASS: DNS failsafe at boot\n'

@@ -8,21 +8,21 @@
 # dnsmasq would forward the whole LAN's DNS to an address nobody listens on
 # (LC-1).
 #
-# This runs at boot before dnsmasq (S19) and, when Prokop will not start,
-# restores dnsmasq's own upstream servers, as Prokop's stop does. It changes
-# nothing when dnsmasq does not forward to sing-box or when Prokop
-# autostarts (Prokop's start configures dnsmasq itself). A kill-switch that
-# is armed keeps its local block list (dns/apply.uc restore).
+# This runs at boot before dnsmasq (S19) and restores dnsmasq's own upstream
+# servers, as Prokop's stop does, also when Prokop autostarts: its start
+# takes minutes at boot (time sync, subscriptions, the first lists) and
+# forwards DNS to sing-box itself once sing-box runs. Until then the LAN
+# has working DNS; it had none for that time (LC-10). Nothing changes when
+# dnsmasq does not forward to sing-box. A kill-switch that is armed keeps
+# its local block list (dns/apply.uc restore).
 
 START=18
 
 PROKOP_LIB="/usr/lib/prokop"
 DNS_APPLY_UC="$PROKOP_LIB/dns/apply.uc"
-PROKOP_INIT="/etc/init.d/prokop"
 
 boot() {
     [ -r "$DNS_APPLY_UC" ] || return 0
-    [ -x "$PROKOP_INIT" ] && "$PROKOP_INIT" enabled && return 0
     ucode -L "$PROKOP_LIB" "$DNS_APPLY_UC" restore >/dev/null 2>&1 || true
     return 0
 }
