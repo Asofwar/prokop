@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-05 01:01+0000\n"
-"PO-Revision-Date: 2026-10-05 01:01+0000\n"
+"POT-Creation-Date: 2026-10-05 01:07+0000\n"
+"PO-Revision-Date: 2026-10-05 01:07+0000\n"
 "Last-Translator: Asofwar <7397608+Asofwar@users.noreply.github.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -45,7 +45,7 @@ msgstr ""
 msgid "%d confirmations"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:357
+#: src/prokop/tabs/dashboard/overview.ts:366
 msgid "%d connections now"
 msgstr ""
 
@@ -79,22 +79,22 @@ msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:576
 #: src/prokop/tabs/dashboard/initController.ts:1102
-#: src/prokop/tabs/dashboard/overview.ts:374
+#: src/prokop/tabs/dashboard/overview.ts:383
 #: src/prokop/tabs/dashboard/partials/renderSections.ts:349
 #: src/prokop/tabs/dashboard/partials/renderSections.ts:534
 #: src/prokop/tabs/diagnostic/checks/runSectionsCheck.ts:153
 msgid "%d ms"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:350
+#: src/prokop/tabs/dashboard/overview.ts:359
 msgid "%d node groups"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:348
+#: src/prokop/tabs/dashboard/overview.ts:357
 msgid "%d rules"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:344
+#: src/prokop/tabs/dashboard/overview.ts:353
 msgid "%d rules · %d node groups"
 msgstr ""
 
@@ -213,7 +213,7 @@ msgstr ""
 msgid "A configuration change was not confirmed. Traffic that needs DPI bypass may be blocked; see the recovery details for the next step."
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:444
+#: src/prokop/tabs/dashboard/overview.ts:453
 msgid "A configuration restore did not finish: restore the last known good snapshot to finish it."
 msgstr ""
 
@@ -233,7 +233,7 @@ msgstr ""
 msgid "a failed change left the DPI guard in place; restart Prokop"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:430
+#: src/prokop/tabs/dashboard/overview.ts:439
 msgid "A failed change left the DPI guard in place: restart Prokop to remove it."
 msgstr ""
 
@@ -538,6 +538,10 @@ msgstr ""
 msgid "Always"
 msgstr ""
 
+#: src/prokop/tabs/diagnostic/checks/runDnsCheck.ts:88
+msgid "An address without a DNS server answered on port 53. Use a DoH or DoT main DNS server."
+msgstr ""
+
 #: src/prokop/tabs/autotune/initController.ts:947
 msgid "An administrator can roll it back."
 msgstr ""
@@ -724,11 +728,11 @@ msgstr ""
 msgid "Automatically select the fastest node in the current level"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:316
+#: src/prokop/tabs/dashboard/overview.ts:325
 msgid "Autostart is off"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:316
+#: src/prokop/tabs/dashboard/overview.ts:325
 msgid "Autostart is on"
 msgstr ""
 
@@ -778,7 +782,7 @@ msgid "Autotune run"
 msgstr ""
 
 #: src/prokop/tabs/autotune/initController.ts:839
-#: src/prokop/tabs/dashboard/overview.ts:503
+#: src/prokop/tabs/dashboard/overview.ts:512
 msgid "Autotune state is unavailable"
 msgstr ""
 
@@ -1067,7 +1071,7 @@ msgstr ""
 msgid "Cascade connection"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:452
+#: src/prokop/tabs/dashboard/overview.ts:461
 msgid "Change in progress"
 msgstr ""
 
@@ -1248,8 +1252,12 @@ msgstr ""
 msgid "Checks passed"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/checks/getDnsCheckPresentation.ts:31
+#: src/prokop/tabs/diagnostic/checks/getDnsCheckPresentation.ts:37
 msgid "Checks passed with manual DHCP"
+msgstr ""
+
+#: src/prokop/tabs/diagnostic/checks/getDnsCheckPresentation.ts:35
+msgid "Checks passed, but plain DNS is intercepted on the way"
 msgstr ""
 
 #: src/prokop/tabs/diagnostic/renderDiagnostic.ts:143
@@ -1616,7 +1624,7 @@ msgstr ""
 msgid "Could not start the check"
 msgstr ""
 
-#: src/prokop/tabs/updates/listsUpdate.ts:124
+#: src/prokop/tabs/updates/listsUpdate.ts:78
 msgid "Could not start the lists update"
 msgstr ""
 
@@ -1765,11 +1773,11 @@ msgstr ""
 msgid "Devices with their own DNS server (8.8.8.8 in a TV, IoT devices) bypass domain rules and the kill-switch. Their plain DNS on port 53 is sent to the router instead. DNS to local addresses (Pi-hole) and DNS over TLS stay untouched"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/checks/getDnsCheckPresentation.ts:41
+#: src/prokop/tabs/diagnostic/checks/getDnsCheckPresentation.ts:47
 msgid "DHCP has DNS server"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/checks/getDnsCheckPresentation.ts:40
+#: src/prokop/tabs/diagnostic/checks/getDnsCheckPresentation.ts:46
 msgid "DHCP is managed manually"
 msgstr ""
 
@@ -1778,7 +1786,7 @@ msgstr ""
 msgid "Diagnostics"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:324
+#: src/prokop/tabs/dashboard/overview.ts:333
 msgid "Diagnostics has not been run yet"
 msgstr ""
 
@@ -1987,7 +1995,7 @@ msgid "Domain"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9731
-#: src/prokop/tabs/updates/listsUpdate.ts:143
+#: src/prokop/tabs/updates/listsUpdate.ts:98
 msgid "Domain and IP lists"
 msgstr ""
 
@@ -2554,7 +2562,7 @@ msgstr ""
 msgid "Global check"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:514
+#: src/prokop/tabs/dashboard/overview.ts:523
 msgid "Groups: %d · targets: %d"
 msgstr ""
 
@@ -3290,7 +3298,7 @@ msgstr ""
 #: src/prokop/tabs/autotune/initController.ts:912
 #: src/prokop/tabs/autotune/initController.ts:918
 #: src/prokop/tabs/autotune/initController.ts:919
-#: src/prokop/tabs/dashboard/overview.ts:564
+#: src/prokop/tabs/dashboard/overview.ts:573
 #: src/prokop/tabs/diagnostic/partials/renderRunAction.ts:56
 msgid "Last check"
 msgstr ""
@@ -3303,7 +3311,7 @@ msgstr ""
 msgid "Last check postponed"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:320
+#: src/prokop/tabs/dashboard/overview.ts:329
 msgid "Last diagnostics: %s"
 msgstr ""
 
@@ -3332,11 +3340,11 @@ msgstr ""
 msgid "Last reload"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:394
+#: src/prokop/tabs/dashboard/overview.ts:403
 msgid "Last reload: %s"
 msgstr ""
 
-#: src/prokop/tabs/updates/listsUpdate.ts:40
+#: src/prokop/tabs/updates/listsUpdateStatus.ts:35
 msgid "Last successful update: %s"
 msgstr ""
 
@@ -3409,15 +3417,15 @@ msgstr ""
 msgid "Lists and updates"
 msgstr ""
 
-#: src/prokop/tabs/updates/listsUpdate.ts:44
+#: src/prokop/tabs/updates/listsUpdateStatus.ts:39
 msgid "Lists have not been updated since the router started"
 msgstr ""
 
-#: src/prokop/tabs/updates/listsUpdate.ts:65
+#: src/prokop/tabs/updates/listsUpdateStatus.ts:60
 msgid "Lists update failed: %s."
 msgstr ""
 
-#: src/prokop/tabs/updates/listsUpdate.ts:51
+#: src/prokop/tabs/updates/listsUpdateStatus.ts:46
 msgid "Lists updated: %s"
 msgstr ""
 
@@ -3453,7 +3461,7 @@ msgstr ""
 #: src/prokop/tabs/autotune/render.ts:26
 #: src/prokop/tabs/autotune/render.ts:30
 #: src/prokop/tabs/autotune/render.ts:34
-#: src/prokop/tabs/dashboard/overview.ts:506
+#: src/prokop/tabs/dashboard/overview.ts:515
 #: src/prokop/tabs/dashboard/render.ts:16
 #: src/prokop/tabs/diagnostic/initController.ts:741
 #: src/prokop/tabs/history/render.ts:14
@@ -3560,7 +3568,7 @@ msgstr ""
 
 #: src/prokop/tabs/autotune/initController.ts:852
 #: src/prokop/tabs/autotune/initController.ts:860
-#: src/prokop/tabs/dashboard/overview.ts:574
+#: src/prokop/tabs/dashboard/overview.ts:583
 msgid "Mode"
 msgstr ""
 
@@ -3648,7 +3656,7 @@ msgid "News"
 msgstr ""
 
 #: src/prokop/tabs/autotune/initController.ts:921
-#: src/prokop/tabs/dashboard/overview.ts:568
+#: src/prokop/tabs/dashboard/overview.ts:577
 msgid "Next scheduled check"
 msgstr ""
 
@@ -3738,7 +3746,7 @@ msgstr ""
 msgid "No connections match the filters"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:375
+#: src/prokop/tabs/dashboard/overview.ts:384
 msgid "no data"
 msgstr ""
 
@@ -3790,11 +3798,11 @@ msgstr ""
 msgid "No other marking rules found"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:480
+#: src/prokop/tabs/dashboard/overview.ts:489
 msgid "No recovery needed"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:401
+#: src/prokop/tabs/dashboard/overview.ts:410
 #: src/prokop/tabs/history/model.ts:152
 msgid "No reload recorded yet"
 msgstr ""
@@ -3911,7 +3919,7 @@ msgid "Not checked"
 msgstr ""
 
 #: src/prokop/tabs/autotune/initController.ts:919
-#: src/prokop/tabs/dashboard/overview.ts:564
+#: src/prokop/tabs/dashboard/overview.ts:573
 msgid "Not checked yet"
 msgstr ""
 
@@ -4175,7 +4183,7 @@ msgid "Package recovery"
 msgstr ""
 
 #: src/prokop/tabs/dashboard/overview.ts:166
-#: src/prokop/tabs/dashboard/overview.ts:464
+#: src/prokop/tabs/dashboard/overview.ts:473
 msgid "Package recovery has not finished"
 msgstr ""
 
@@ -4275,6 +4283,10 @@ msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:643
 msgid "Pinned domains: %d"
+msgstr ""
+
+#: src/prokop/tabs/diagnostic/checks/runDnsCheck.ts:87
+msgid "Plain DNS is intercepted"
 msgstr ""
 
 #: src/prokop/tabs/autotune/initController.ts:885
@@ -4470,7 +4482,7 @@ msgid "Prokop is stopped. Start it to run the checks."
 msgstr ""
 
 #: src/prokop/tabs/dashboard/overview.ts:176
-#: src/prokop/tabs/dashboard/overview.ts:474
+#: src/prokop/tabs/dashboard/overview.ts:483
 msgid "Prokop kept or restored the previous configuration."
 msgstr ""
 
@@ -4640,7 +4652,7 @@ msgstr ""
 msgid "Protection could not be removed completely"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:456
+#: src/prokop/tabs/dashboard/overview.ts:465
 msgid "Protection is active"
 msgstr ""
 
@@ -4687,7 +4699,7 @@ msgstr ""
 msgid "Recommendations only"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:535
+#: src/prokop/tabs/dashboard/overview.ts:544
 msgid "Recommendations waiting for a decision: %d"
 msgstr ""
 
@@ -4855,7 +4867,7 @@ msgstr ""
 msgid "Restart Prokop. If another add-on marks traffic, make sure it does not conflict."
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:426
+#: src/prokop/tabs/dashboard/overview.ts:435
 msgid "Restart required"
 msgstr ""
 
@@ -4895,7 +4907,7 @@ msgstr ""
 msgid "Restore normal mode"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:440
+#: src/prokop/tabs/dashboard/overview.ts:449
 msgid "Restore required"
 msgstr ""
 
@@ -5056,12 +5068,16 @@ msgstr ""
 msgid "Router DNS"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:312
+#: src/prokop/tabs/dashboard/overview.ts:321
 msgid "Router DNS is managed by you"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:308
+#: src/prokop/tabs/dashboard/overview.ts:317
 msgid "Router DNS is not pointed to Prokop"
+msgstr ""
+
+#: src/prokop/tabs/dashboard/overview.ts:310
+msgid "Router DNS settings were changed outside Prokop; restart Prokop to restore them"
 msgstr ""
 
 #: src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:58
@@ -5077,7 +5093,7 @@ msgstr ""
 msgid "Routing"
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:355
+#: src/prokop/tabs/dashboard/overview.ts:364
 msgid "Routing is paused while Prokop is stopped."
 msgstr ""
 
@@ -5520,7 +5536,7 @@ msgstr ""
 msgid "Snapshot storage is full: delete a manual snapshot in History and recovery. Changes were not applied."
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:405
+#: src/prokop/tabs/dashboard/overview.ts:414
 msgid "Snapshots: %d"
 msgstr ""
 
@@ -5552,7 +5568,7 @@ msgstr ""
 msgid "Source Network Interface"
 msgstr ""
 
-#: src/prokop/tabs/updates/listsUpdate.ts:157
+#: src/prokop/tabs/updates/listsUpdate.ts:112
 msgid "Sources that could not be downloaded:"
 msgstr ""
 
@@ -5645,8 +5661,8 @@ msgid "State"
 msgstr ""
 
 #: src/prokop/tabs/dashboard/overview.ts:271
-#: src/prokop/tabs/dashboard/overview.ts:386
-#: src/prokop/tabs/dashboard/overview.ts:412
+#: src/prokop/tabs/dashboard/overview.ts:395
+#: src/prokop/tabs/dashboard/overview.ts:421
 msgid "State unavailable"
 msgstr ""
 
@@ -5654,7 +5670,7 @@ msgstr ""
 msgid "Status"
 msgstr ""
 
-#: src/prokop/tabs/updates/listsUpdate.ts:34
+#: src/prokop/tabs/updates/listsUpdateStatus.ts:26
 msgid "Status unavailable"
 msgstr ""
 
@@ -6075,7 +6091,7 @@ msgstr ""
 msgid "The last autotune change is not resolved."
 msgstr ""
 
-#: src/prokop/tabs/dashboard/overview.ts:547
+#: src/prokop/tabs/dashboard/overview.ts:556
 msgid "The last autotune change needs attention."
 msgstr ""
 
@@ -6118,7 +6134,7 @@ msgid "The last check was interrupted"
 msgstr ""
 
 #: src/prokop/tabs/dashboard/overview.ts:175
-#: src/prokop/tabs/dashboard/overview.ts:471
+#: src/prokop/tabs/dashboard/overview.ts:480
 msgid "The last configuration change failed"
 msgstr ""
 
@@ -6175,7 +6191,7 @@ msgstr ""
 msgid "The list of changes is unavailable."
 msgstr ""
 
-#: src/prokop/tabs/updates/listsUpdate.ts:58
+#: src/prokop/tabs/updates/listsUpdateStatus.ts:53
 msgid "The lists of the last successful update (%s) stay in use."
 msgstr ""
 
@@ -6935,7 +6951,7 @@ msgstr ""
 msgid "Update is available:"
 msgstr ""
 
-#: src/prokop/tabs/updates/listsUpdate.ts:171
+#: src/prokop/tabs/updates/listsUpdate.ts:128
 msgid "Update lists"
 msgstr ""
 
@@ -6949,7 +6965,7 @@ msgstr ""
 msgid "Update this subscription automatically"
 msgstr ""
 
-#: src/prokop/tabs/updates/listsUpdate.ts:31
+#: src/prokop/tabs/updates/listsUpdateStatus.ts:22
 msgid "Updating lists…"
 msgstr ""
 

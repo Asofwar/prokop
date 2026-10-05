@@ -50,7 +50,7 @@
     "call": "%d connections now",
     "key": "%d connections now",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:357"
+      "src/prokop/tabs/dashboard/overview.ts:366"
     ]
   },
   {
@@ -108,7 +108,7 @@
     "places": [
       "src/prokop/tabs/autotune/model.ts:576",
       "src/prokop/tabs/dashboard/initController.ts:1102",
-      "src/prokop/tabs/dashboard/overview.ts:374",
+      "src/prokop/tabs/dashboard/overview.ts:383",
       "src/prokop/tabs/dashboard/partials/renderSections.ts:349",
       "src/prokop/tabs/dashboard/partials/renderSections.ts:534",
       "src/prokop/tabs/diagnostic/checks/runSectionsCheck.ts:153"
@@ -118,21 +118,21 @@
     "call": "%d node groups",
     "key": "%d node groups",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:350"
+      "src/prokop/tabs/dashboard/overview.ts:359"
     ]
   },
   {
     "call": "%d rules",
     "key": "%d rules",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:348"
+      "src/prokop/tabs/dashboard/overview.ts:357"
     ]
   },
   {
     "call": "%d rules · %d node groups",
     "key": "%d rules · %d node groups",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:344"
+      "src/prokop/tabs/dashboard/overview.ts:353"
     ]
   },
   {
@@ -335,7 +335,7 @@
     "call": "A configuration restore did not finish: restore the last known good snapshot to finish it.",
     "key": "A configuration restore did not finish: restore the last known good snapshot to finish it.",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:444"
+      "src/prokop/tabs/dashboard/overview.ts:453"
     ]
   },
   {
@@ -370,7 +370,7 @@
     "call": "A failed change left the DPI guard in place: restart Prokop to remove it.",
     "key": "A failed change left the DPI guard in place: restart Prokop to remove it.",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:430"
+      "src/prokop/tabs/dashboard/overview.ts:439"
     ]
   },
   {
@@ -891,6 +891,13 @@
     ]
   },
   {
+    "call": "An address without a DNS server answered on port 53. Use a DoH or DoT main DNS server.",
+    "key": "An address without a DNS server answered on port 53. Use a DoH or DoT main DNS server.",
+    "places": [
+      "src/prokop/tabs/diagnostic/checks/runDnsCheck.ts:88"
+    ]
+  },
+  {
     "call": "An administrator can roll it back.",
     "key": "An administrator can roll it back.",
     "places": [
@@ -1215,14 +1222,14 @@
     "call": "Autostart is off",
     "key": "Autostart is off",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:316"
+      "src/prokop/tabs/dashboard/overview.ts:325"
     ]
   },
   {
     "call": "Autostart is on",
     "key": "Autostart is on",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:316"
+      "src/prokop/tabs/dashboard/overview.ts:325"
     ]
   },
   {
@@ -1308,7 +1315,7 @@
     "key": "Autotune state is unavailable",
     "places": [
       "src/prokop/tabs/autotune/initController.ts:839",
-      "src/prokop/tabs/dashboard/overview.ts:503"
+      "src/prokop/tabs/dashboard/overview.ts:512"
     ]
   },
   {
@@ -1792,7 +1799,7 @@
     "call": "Change in progress",
     "key": "Change in progress",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:452"
+      "src/prokop/tabs/dashboard/overview.ts:461"
     ]
   },
   {
@@ -2090,7 +2097,14 @@
     "call": "Checks passed with manual DHCP",
     "key": "Checks passed with manual DHCP",
     "places": [
-      "src/prokop/tabs/diagnostic/checks/getDnsCheckPresentation.ts:31"
+      "src/prokop/tabs/diagnostic/checks/getDnsCheckPresentation.ts:37"
+    ]
+  },
+  {
+    "call": "Checks passed, but plain DNS is intercepted on the way",
+    "key": "Checks passed, but plain DNS is intercepted on the way",
+    "places": [
+      "src/prokop/tabs/diagnostic/checks/getDnsCheckPresentation.ts:35"
     ]
   },
   {
@@ -2713,7 +2727,7 @@
     "call": "Could not start the lists update",
     "key": "Could not start the lists update",
     "places": [
-      "src/prokop/tabs/updates/listsUpdate.ts:124"
+      "src/prokop/tabs/updates/listsUpdate.ts:78"
     ]
   },
   {
@@ -2964,14 +2978,14 @@
     "call": "DHCP has DNS server",
     "key": "DHCP has DNS server",
     "places": [
-      "src/prokop/tabs/diagnostic/checks/getDnsCheckPresentation.ts:41"
+      "src/prokop/tabs/diagnostic/checks/getDnsCheckPresentation.ts:47"
     ]
   },
   {
     "call": "DHCP is managed manually",
     "key": "DHCP is managed manually",
     "places": [
-      "src/prokop/tabs/diagnostic/checks/getDnsCheckPresentation.ts:40"
+      "src/prokop/tabs/diagnostic/checks/getDnsCheckPresentation.ts:46"
     ]
   },
   {
@@ -2986,7 +3000,7 @@
     "call": "Diagnostics has not been run yet",
     "key": "Diagnostics has not been run yet",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:324"
+      "src/prokop/tabs/dashboard/overview.ts:333"
     ]
   },
   {
@@ -3336,7 +3350,7 @@
     "key": "Domain and IP lists",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9731",
-      "src/prokop/tabs/updates/listsUpdate.ts:143"
+      "src/prokop/tabs/updates/listsUpdate.ts:98"
     ]
   },
   {
@@ -4299,7 +4313,7 @@
     "call": "Groups: %d · targets: %d",
     "key": "Groups: %d · targets: %d",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:514"
+      "src/prokop/tabs/dashboard/overview.ts:523"
     ]
   },
   {
@@ -5560,7 +5574,7 @@
       "src/prokop/tabs/autotune/initController.ts:912",
       "src/prokop/tabs/autotune/initController.ts:918",
       "src/prokop/tabs/autotune/initController.ts:919",
-      "src/prokop/tabs/dashboard/overview.ts:564",
+      "src/prokop/tabs/dashboard/overview.ts:573",
       "src/prokop/tabs/diagnostic/partials/renderRunAction.ts:56"
     ]
   },
@@ -5582,7 +5596,7 @@
     "call": "Last diagnostics: %s",
     "key": "Last diagnostics: %s",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:320"
+      "src/prokop/tabs/dashboard/overview.ts:329"
     ]
   },
   {
@@ -5632,14 +5646,14 @@
     "call": "Last reload: %s",
     "key": "Last reload: %s",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:394"
+      "src/prokop/tabs/dashboard/overview.ts:403"
     ]
   },
   {
     "call": "Last successful update: %s",
     "key": "Last successful update: %s",
     "places": [
-      "src/prokop/tabs/updates/listsUpdate.ts:40"
+      "src/prokop/tabs/updates/listsUpdateStatus.ts:35"
     ]
   },
   {
@@ -5763,21 +5777,21 @@
     "call": "Lists have not been updated since the router started",
     "key": "Lists have not been updated since the router started",
     "places": [
-      "src/prokop/tabs/updates/listsUpdate.ts:44"
+      "src/prokop/tabs/updates/listsUpdateStatus.ts:39"
     ]
   },
   {
     "call": "Lists update failed: %s.",
     "key": "Lists update failed: %s.",
     "places": [
-      "src/prokop/tabs/updates/listsUpdate.ts:65"
+      "src/prokop/tabs/updates/listsUpdateStatus.ts:60"
     ]
   },
   {
     "call": "Lists updated: %s",
     "key": "Lists updated: %s",
     "places": [
-      "src/prokop/tabs/updates/listsUpdate.ts:51"
+      "src/prokop/tabs/updates/listsUpdateStatus.ts:46"
     ]
   },
   {
@@ -5831,7 +5845,7 @@
       "src/prokop/tabs/autotune/render.ts:26",
       "src/prokop/tabs/autotune/render.ts:30",
       "src/prokop/tabs/autotune/render.ts:34",
-      "src/prokop/tabs/dashboard/overview.ts:506",
+      "src/prokop/tabs/dashboard/overview.ts:515",
       "src/prokop/tabs/dashboard/render.ts:16",
       "src/prokop/tabs/diagnostic/initController.ts:741",
       "src/prokop/tabs/history/render.ts:14",
@@ -6013,7 +6027,7 @@
     "places": [
       "src/prokop/tabs/autotune/initController.ts:852",
       "src/prokop/tabs/autotune/initController.ts:860",
-      "src/prokop/tabs/dashboard/overview.ts:574"
+      "src/prokop/tabs/dashboard/overview.ts:583"
     ]
   },
   {
@@ -6161,7 +6175,7 @@
     "key": "Next scheduled check",
     "places": [
       "src/prokop/tabs/autotune/initController.ts:921",
-      "src/prokop/tabs/dashboard/overview.ts:568"
+      "src/prokop/tabs/dashboard/overview.ts:577"
     ]
   },
   {
@@ -6314,7 +6328,7 @@
     "call": "no data",
     "key": "no data",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:375"
+      "src/prokop/tabs/dashboard/overview.ts:384"
     ]
   },
   {
@@ -6402,14 +6416,14 @@
     "call": "No recovery needed",
     "key": "No recovery needed",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:480"
+      "src/prokop/tabs/dashboard/overview.ts:489"
     ]
   },
   {
     "call": "No reload recorded yet",
     "key": "No reload recorded yet",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:401",
+      "src/prokop/tabs/dashboard/overview.ts:410",
       "src/prokop/tabs/history/model.ts:152"
     ]
   },
@@ -6601,7 +6615,7 @@
     "key": "Not checked yet",
     "places": [
       "src/prokop/tabs/autotune/initController.ts:919",
-      "src/prokop/tabs/dashboard/overview.ts:564"
+      "src/prokop/tabs/dashboard/overview.ts:573"
     ]
   },
   {
@@ -7033,7 +7047,7 @@
     "key": "Package recovery has not finished",
     "places": [
       "src/prokop/tabs/dashboard/overview.ts:166",
-      "src/prokop/tabs/dashboard/overview.ts:464"
+      "src/prokop/tabs/dashboard/overview.ts:473"
     ]
   },
   {
@@ -7201,6 +7215,13 @@
     "key": "Pinned domains: %d",
     "places": [
       "src/prokop/tabs/autotune/model.ts:643"
+    ]
+  },
+  {
+    "call": "Plain DNS is intercepted",
+    "key": "Plain DNS is intercepted",
+    "places": [
+      "src/prokop/tabs/diagnostic/checks/runDnsCheck.ts:87"
     ]
   },
   {
@@ -7535,7 +7556,7 @@
     "key": "Prokop kept or restored the previous configuration.",
     "places": [
       "src/prokop/tabs/dashboard/overview.ts:176",
-      "src/prokop/tabs/dashboard/overview.ts:474"
+      "src/prokop/tabs/dashboard/overview.ts:483"
     ]
   },
   {
@@ -7831,7 +7852,7 @@
     "call": "Protection is active",
     "key": "Protection is active",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:456"
+      "src/prokop/tabs/dashboard/overview.ts:465"
     ]
   },
   {
@@ -7911,7 +7932,7 @@
     "call": "Recommendations waiting for a decision: %d",
     "key": "Recommendations waiting for a decision: %d",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:535"
+      "src/prokop/tabs/dashboard/overview.ts:544"
     ]
   },
   {
@@ -8196,7 +8217,7 @@
     "call": "Restart required",
     "key": "Restart required",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:426"
+      "src/prokop/tabs/dashboard/overview.ts:435"
     ]
   },
   {
@@ -8266,7 +8287,7 @@
     "call": "Restore required",
     "key": "Restore required",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:440"
+      "src/prokop/tabs/dashboard/overview.ts:449"
     ]
   },
   {
@@ -8544,14 +8565,21 @@
     "call": "Router DNS is managed by you",
     "key": "Router DNS is managed by you",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:312"
+      "src/prokop/tabs/dashboard/overview.ts:321"
     ]
   },
   {
     "call": "Router DNS is not pointed to Prokop",
     "key": "Router DNS is not pointed to Prokop",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:308"
+      "src/prokop/tabs/dashboard/overview.ts:317"
+    ]
+  },
+  {
+    "call": "Router DNS settings were changed outside Prokop; restart Prokop to restore them",
+    "key": "Router DNS settings were changed outside Prokop; restart Prokop to restore them",
+    "places": [
+      "src/prokop/tabs/dashboard/overview.ts:310"
     ]
   },
   {
@@ -8580,7 +8608,7 @@
     "call": "Routing is paused while Prokop is stopped.",
     "key": "Routing is paused while Prokop is stopped.",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:355"
+      "src/prokop/tabs/dashboard/overview.ts:364"
     ]
   },
   {
@@ -9341,7 +9369,7 @@
     "call": "Snapshots: %d",
     "key": "Snapshots: %d",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:405"
+      "src/prokop/tabs/dashboard/overview.ts:414"
     ]
   },
   {
@@ -9397,7 +9425,7 @@
     "call": "Sources that could not be downloaded:",
     "key": "Sources that could not be downloaded:",
     "places": [
-      "src/prokop/tabs/updates/listsUpdate.ts:157"
+      "src/prokop/tabs/updates/listsUpdate.ts:112"
     ]
   },
   {
@@ -9553,8 +9581,8 @@
     "key": "State unavailable",
     "places": [
       "src/prokop/tabs/dashboard/overview.ts:271",
-      "src/prokop/tabs/dashboard/overview.ts:386",
-      "src/prokop/tabs/dashboard/overview.ts:412"
+      "src/prokop/tabs/dashboard/overview.ts:395",
+      "src/prokop/tabs/dashboard/overview.ts:421"
     ]
   },
   {
@@ -9568,7 +9596,7 @@
     "call": "Status unavailable",
     "key": "Status unavailable",
     "places": [
-      "src/prokop/tabs/updates/listsUpdate.ts:34"
+      "src/prokop/tabs/updates/listsUpdateStatus.ts:26"
     ]
   },
   {
@@ -10295,7 +10323,7 @@
     "call": "The last autotune change needs attention.",
     "key": "The last autotune change needs attention.",
     "places": [
-      "src/prokop/tabs/dashboard/overview.ts:547"
+      "src/prokop/tabs/dashboard/overview.ts:556"
     ]
   },
   {
@@ -10368,7 +10396,7 @@
     "key": "The last configuration change failed",
     "places": [
       "src/prokop/tabs/dashboard/overview.ts:175",
-      "src/prokop/tabs/dashboard/overview.ts:471"
+      "src/prokop/tabs/dashboard/overview.ts:480"
     ]
   },
   {
@@ -10467,7 +10495,7 @@
     "call": "The lists of the last successful update (%s) stay in use.",
     "key": "The lists of the last successful update (%s) stay in use.",
     "places": [
-      "src/prokop/tabs/updates/listsUpdate.ts:58"
+      "src/prokop/tabs/updates/listsUpdateStatus.ts:53"
     ]
   },
   {
@@ -11764,7 +11792,7 @@
     "call": "Update lists",
     "key": "Update lists",
     "places": [
-      "src/prokop/tabs/updates/listsUpdate.ts:171"
+      "src/prokop/tabs/updates/listsUpdate.ts:128"
     ]
   },
   {
@@ -11787,7 +11815,7 @@
     "call": "Updating lists…",
     "key": "Updating lists…",
     "places": [
-      "src/prokop/tabs/updates/listsUpdate.ts:31"
+      "src/prokop/tabs/updates/listsUpdateStatus.ts:22"
     ]
   },
   {

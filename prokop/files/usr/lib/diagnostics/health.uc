@@ -333,8 +333,13 @@ function health(ui, guards, package_pending, events, reload_busy, bridge) {
         },
         // Not pointed at Prokop is a warning, unless the user manages the
         // router's DNS themselves (dont_touch_dhcp, OBS-6).
-        dns: { status: prokop.dns_configured == 0 && prokop.dhcp_user_managed != 1 ? "warning" : "unknown",
-            configured: prokop.dns_configured == 1, user_managed: prokop.dhcp_user_managed == 1 },
+        // Pointed at Prokop, but with options changed behind it (C8): an
+        // older UI state without dns_complete counts as complete.
+        dns: { status: prokop.dhcp_user_managed != 1 &&
+                (prokop.dns_configured == 0 || (prokop.dns_configured == 1 && prokop.dns_complete == 0)) ?
+                "warning" : "unknown",
+            configured: prokop.dns_configured == 1, user_managed: prokop.dhcp_user_managed == 1,
+            drift: prokop.dhcp_user_managed != 1 && prokop.dns_configured == 1 && prokop.dns_complete == 0 },
         dpi: { status: guard ? "transitioning" : "unknown" },
         lists: { status: "unknown" },
         guard: { active: guard, runtime: guards.runtime === true, restore: guards.restore === true },

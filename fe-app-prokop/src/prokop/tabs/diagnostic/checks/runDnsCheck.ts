@@ -33,7 +33,7 @@ export async function runDnsCheck() {
   }
 
   const data = dnsChecks.data;
-  const { state, description, dhcpItemState, dhcpItemKey } =
+  const { state, description, dhcpItemState, dhcpItemKey, intercepted } =
     getDnsCheckPresentation(data);
 
   updateCheckStore({
@@ -81,6 +81,15 @@ export async function runDnsCheck() {
         key: dhcpItemKey,
         value: '',
       },
+      ...insertIf<IDiagnosticsChecksItem>(intercepted, [
+        {
+          state: 'warning',
+          key: _('Plain DNS is intercepted'),
+          value: _(
+            'An address without a DNS server answered on port 53. Use a DoH or DoT main DNS server.',
+          ),
+        },
+      ]),
     ],
   });
 

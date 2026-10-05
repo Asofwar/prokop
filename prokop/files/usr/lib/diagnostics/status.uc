@@ -681,6 +681,9 @@ function render_global_dns_check(dont_touch_dhcp) {
 
     print_line((flag_is_one(value.dns_status) ? "\u2705 Main DNS: " : "\u274c Main DNS: ") + dns_server + " [" + dns_type + "]" + dns_position);
     print_line(flag_is_one(value.dns_on_router) ? "\u2705 DNS on router" : "\u274c DNS on router");
+    // C8: an answer from 192.0.2.1, an address nobody serves DNS on.
+    if (value.dns_interception === 1)
+        print_line("\u26a0\ufe0f Plain DNS (port 53) is intercepted on the way: an address without a DNS server answered");
 
     if (as_string(dont_touch_dhcp) == "1") {
         print_line("\u26a0\ufe0f dont_touch_dhcp is enabled. \ud83d\udcc4 DHCP config:");

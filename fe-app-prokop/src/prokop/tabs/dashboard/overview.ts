@@ -303,7 +303,16 @@ export function overviewState(input: OverviewInput): OverviewState {
         ? { text: _('sing-box is running') }
         : { text: _('sing-box is not running'), tone: 'error' },
     );
-    if (health?.dns?.status === 'warning') {
+    if (health?.dns?.drift) {
+      // C8: dnsmasq still forwards to sing-box, but its own resolvers or
+      // cache were turned back on behind Prokop. A restart sets them again.
+      lines.push({
+        text: _(
+          'Router DNS settings were changed outside Prokop; restart Prokop to restore them',
+        ),
+        tone: 'warning',
+      });
+    } else if (health?.dns?.status === 'warning') {
       lines.push({
         text: _('Router DNS is not pointed to Prokop'),
         tone: 'warning',

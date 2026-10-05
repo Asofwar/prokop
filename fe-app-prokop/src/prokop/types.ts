@@ -36,7 +36,12 @@ export namespace Prokop {
   export interface HealthStatus {
     overall: HealthLevel;
     service: { prokop: HealthLevel; sing_box: HealthLevel };
-    dns: { status: HealthLevel; configured?: boolean; user_managed?: boolean };
+    dns: {
+      status: HealthLevel;
+      configured?: boolean;
+      user_managed?: boolean;
+      drift?: boolean;
+    };
     dpi: { status: HealthLevel };
     lists: { status: HealthLevel };
     // runtime: a guard that a failed lifecycle transition kept (only a
@@ -887,6 +892,7 @@ export namespace Prokop {
     bootstrap_dns_required: 0 | 1;
     dhcp_config_status: 0 | 1;
     dont_touch_dhcp: 0 | 1;
+    dns_interception?: 0 | 1;
   }
 
   export interface NftRulesCheckResult {
@@ -919,6 +925,7 @@ export namespace Prokop {
     enabled: number;
     status: string;
     dns_configured?: number;
+    dns_complete?: number;
     // dont_touch_dhcp: the user points the router's DNS (OBS-6).
     dhcp_user_managed?: number;
     // 1 while an explicit stop holds Prokop down (D-15): not a failure.

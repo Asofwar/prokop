@@ -51,4 +51,26 @@ describe('getDnsCheckPresentation', () => {
       }),
     ).toMatchObject({ state: 'success' });
   });
+
+  // C8: an answer from an address without a DNS server.
+  it('warns when plain DNS is intercepted on the way', () => {
+    expect(
+      getDnsCheckPresentation({
+        ...baseDnsResult,
+        dhcp_config_status: 1,
+        dns_interception: 1,
+      }),
+    ).toMatchObject({
+      state: 'warning',
+      description: 'Checks passed, but plain DNS is intercepted on the way',
+      intercepted: true,
+    });
+    expect(
+      getDnsCheckPresentation({
+        ...baseDnsResult,
+        dhcp_config_status: 1,
+        dns_interception: 0,
+      }),
+    ).toMatchObject({ state: 'success', intercepted: false });
+  });
 });

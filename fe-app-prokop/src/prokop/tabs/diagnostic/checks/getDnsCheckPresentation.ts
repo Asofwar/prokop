@@ -24,12 +24,18 @@ export function getDnsCheckPresentation(data: Prokop.DnsCheckResult) {
     Boolean(data.dns_status);
 
   const meta = getMeta({ atLeastOneGood, allGood });
+  // C8: something on the way answers plain DNS in place of the servers.
+  const intercepted = data.dns_interception === 1;
   const state: DnsCheckState =
-    dhcpManagedManually && meta.state === 'success' ? 'warning' : meta.state;
+    (dhcpManagedManually || intercepted) && meta.state === 'success'
+      ? 'warning'
+      : meta.state;
   const description =
-    dhcpManagedManually && meta.state === 'success'
-      ? _('Checks passed with manual DHCP')
-      : meta.description;
+    intercepted && meta.state === 'success'
+      ? _('Checks passed, but plain DNS is intercepted on the way')
+      : dhcpManagedManually && meta.state === 'success'
+        ? _('Checks passed with manual DHCP')
+        : meta.description;
 
   const dhcpItemState: DnsCheckState = dhcpManagedManually
     ? 'warning'
@@ -45,5 +51,6 @@ export function getDnsCheckPresentation(data: Prokop.DnsCheckResult) {
     description,
     dhcpItemState,
     dhcpItemKey,
+    intercepted,
   };
 }

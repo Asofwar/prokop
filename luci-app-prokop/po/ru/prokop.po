@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-05 01:01+0000\n"
-"PO-Revision-Date: 2026-10-05 01:01+0000\n"
+"POT-Creation-Date: 2026-10-05 01:07+0000\n"
+"PO-Revision-Date: 2026-10-05 01:07+0000\n"
 "Last-Translator: Asofwar\n"
 "Language-Team: none\n"
 "Language: ru\n"
@@ -385,6 +385,9 @@ msgstr "Позволяет ограничить список серверов д
 
 msgid "Always"
 msgstr "Всегда"
+
+msgid "An address without a DNS server answered on port 53. Use a DoH or DoT main DNS server."
+msgstr "На порту 53 ответил адрес, где нет DNS-сервера. Используйте основной DNS-сервер DoH или DoT."
 
 msgid "An administrator can roll it back."
 msgstr "Откатить его может администратор."
@@ -874,6 +877,9 @@ msgstr "Проверки пройдены"
 
 msgid "Checks passed with manual DHCP"
 msgstr "Проверки пройдены с ручным DHCP"
+
+msgid "Checks passed, but plain DNS is intercepted on the way"
+msgstr "Проверки пройдены, но обычный DNS перехватывается по пути"
 
 msgid "Checks run on the router and do not prove the path of a LAN client."
 msgstr "Проверки выполняются на роутере и не подтверждают маршрут клиента LAN."
@@ -2960,6 +2966,9 @@ msgstr "Закреплённые домены — это доменные име
 msgid "Pinned domains: %d"
 msgstr "Закреплённых доменов: %d"
 
+msgid "Plain DNS is intercepted"
+msgstr "Обычный DNS перехватывается"
+
 msgid "Policy"
 msgstr "Политика"
 
@@ -3523,6 +3532,9 @@ msgstr "DNS роутера настраиваете вы"
 
 msgid "Router DNS is not pointed to Prokop"
 msgstr "DNS роутера не направлен в Prokop"
+
+msgid "Router DNS settings were changed outside Prokop; restart Prokop to restore them"
+msgstr "Настройки DNS роутера изменены в обход Prokop; перезапустите Prokop, чтобы вернуть их"
 
 msgid "Router FakeIP check could not be completed"
 msgstr "Не удалось выполнить проверку FakeIP на роутере"

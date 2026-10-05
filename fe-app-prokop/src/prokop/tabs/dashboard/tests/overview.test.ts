@@ -520,6 +520,22 @@ describe('overview state', () => {
     );
   });
 
+  // C8: dnsmasq changed behind Prokop is named, with the way to repair it.
+  it('warns when router DNS settings were changed outside Prokop', () => {
+    const state = overviewState(
+      input({
+        health: health({
+          dns: { status: 'warning', configured: true, drift: true },
+        }),
+      }),
+    );
+    const lines = state.lines.map((line) => line.text);
+    expect(lines).toContain(
+      'Router DNS settings were changed outside Prokop; restart Prokop to restore them',
+    );
+    expect(lines).not.toContain('Router DNS is not pointed to Prokop');
+  });
+
   // OBS-6: with dont_touch_dhcp the user points the router's DNS; that is
   // no warning.
   it('says neutrally that the user manages router DNS', () => {

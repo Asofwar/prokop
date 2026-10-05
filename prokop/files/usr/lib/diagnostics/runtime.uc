@@ -1232,6 +1232,18 @@ function dns_check_timeout_seconds(value) {
     return milliseconds > 0 ? int((milliseconds + 999) / 1000) : 2;
 }
 
+// DNS interception canary (C8). 192.0.2.1 (TEST-NET-1, RFC 5737) runs no
+// DNS server: any answer to a query sent there comes from something on the
+// way that captures port 53, typically the ISP. Plain DNS through that path
+// is then answered, or filtered, by it. 1: intercepted, 0: no answer.
+const DNS_CANARY_ADDRESS = "192.0.2.1";
+
+function dns_interception_detected(timeout_seconds) {
+    let output = command_output_from_args([ "dig", "@" + DNS_CANARY_ADDRESS, "example.com", "A",
+        "+timeout=" + as_string(timeout_seconds), "+tries=1" ]);
+    return index(output, "->>HEADER<<-") >= 0;
+}
+
 function check_dns_available() {
     let cfg = settings();
     let dns_type = option(cfg, "dns_type", "");
@@ -1293,6 +1305,7 @@ function check_dns_available() {
 
     if (!module_success(DNS_APPLY_UC, [ "default-config-complete" ]))
         dhcp_config_status = 0;
+    let dns_interception = dns_interception_detected(timeout_seconds) ? 1 : 0;
 
     let display_dns_server = replace(status_output([ "mask-dns-server", dns_server ], null), /[\r\n]+$/g, "");
     let display_bootstrap_dns_server = replace(status_output([ "mask-dns-server", bootstrap_dns_server ], null), /[\r\n]+$/g, "");
@@ -1309,7 +1322,8 @@ function check_dns_available() {
         bootstrap_dns_status,
         bootstrap_dns_required: bootstrap_dns_required ? 1 : 0,
         dhcp_config_status,
-        dont_touch_dhcp
+        dont_touch_dhcp,
+        dns_interception
     });
     return 0;
 }
