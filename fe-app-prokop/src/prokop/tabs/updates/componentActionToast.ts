@@ -54,6 +54,12 @@ export function componentActionSuccessText(
   if (action === 'install' || action.startsWith('install_')) {
     return _('%s has been installed').replace('%s', name);
   }
+  if (action === 'start') {
+    return _('%s has been started').replace('%s', name);
+  }
+  if (action === 'apply_settings') {
+    return _('Recommended %s settings have been applied').replace('%s', name);
+  }
   if (action === 'remove') {
     return _('%s has been removed').replace('%s', name);
   }
@@ -158,6 +164,14 @@ const TORRSERVER_FAILURES: Array<
     (m) => _('TorrServer %s did not start and was removed').replace('%s', m[1]),
   ],
   [/^Failed to stop TorrServer$/, () => _('Failed to stop TorrServer')],
+  [
+    /^TorrServer is stopped; start it to apply the settings$/,
+    () => _('TorrServer is stopped; start it to apply the settings'),
+  ],
+  [
+    /^TorrServer did not take the recommended settings$/,
+    () => _('TorrServer did not take the recommended settings'),
+  ],
 ];
 
 export function componentActionFailureText(message: string): string {

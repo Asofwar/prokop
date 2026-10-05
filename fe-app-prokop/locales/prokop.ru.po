@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-05 12:31+0000\n"
-"PO-Revision-Date: 2026-10-05 12:31+0000\n"
+"POT-Creation-Date: 2026-10-05 12:43+0000\n"
+"PO-Revision-Date: 2026-10-05 12:43+0000\n"
 "Last-Translator: Asofwar\n"
 "Language-Team: none\n"
 "Language: ru\n"
@@ -95,6 +95,9 @@ msgstr "%s установлен"
 msgid "%s has been removed"
 msgstr "%s удалён"
 
+msgid "%s has been started"
+msgstr "%s запущен"
+
 msgid "%s in the rule \"%t\""
 msgstr "%s в правиле «%t»"
 
@@ -133,6 +136,9 @@ msgstr "0–5; 0 отключает автоматические изменен�
 
 msgid "1–8 domains, spread evenly over the list; a domain without an address is replaced by the next one."
 msgstr "1–8 доменов, равномерно по списку; домен без адреса заменяется следующим."
+
+msgid "25 connections per torrent, disconnect after 30 seconds"
+msgstr "25 соединений на торрент, отключение через 30 секунд"
 
 msgid "3–7 attempts per strategy and target in each check."
 msgstr "3–7 попыток на стратегию и цель в каждой проверке."
@@ -473,8 +479,14 @@ msgstr "Применить %s?"
 msgid "Apply did not finish: configuration edited"
 msgstr "Применение не завершено: конфигурацию изменили"
 
+msgid "Apply recommended settings"
+msgstr "Применить рекомендуемые"
+
 msgid "Apply section rules only to the specified local IP addresses"
 msgstr "Применять правила секции только к указанным локальным IP-адресам"
+
+msgid "Apply the recommended TorrServer settings?"
+msgstr "Применить рекомендуемые настройки TorrServer?"
 
 msgid "Applying a strategy"
 msgstr "Применяется стратегия"
@@ -751,6 +763,9 @@ msgstr "Путь к файлу кэша"
 
 msgid "Cache file path cannot be empty"
 msgstr "Путь к файлу кэша не может быть пустым"
+
+msgid "Cache: an eighth of the router memory, 32 to 256 MB"
+msgstr "Кэш: восьмая часть памяти роутера, от 32 до 256 МБ"
 
 msgid "Calculated"
 msgstr "Расчёт"
@@ -1211,9 +1226,6 @@ msgstr "Дашборд сейчас недоступен"
 msgid "Debug"
 msgstr "Отладка"
 
-msgid "Dedicated cgroup unavailable"
-msgstr "Отдельная cgroup недоступна"
-
 msgid "Default address for checking server availability and latency. URLTest uses its own address."
 msgstr "Адрес по умолчанию для проверки доступности и задержки серверов. Для URLTest используется собственный адрес."
 
@@ -1316,6 +1328,15 @@ msgstr "Прямое подключение"
 msgid "Direct Proxy"
 msgstr "Прямой прокси"
 
+msgid "Direct routing is off"
+msgstr "Прямая маршрутизация выключена"
+
+msgid "Direct routing is on"
+msgstr "Прямая маршрутизация включена"
+
+msgid "Direct routing is on and waits for TorrServer"
+msgstr "Прямая маршрутизация включена и ждёт TorrServer"
+
 msgid "directly"
 msgstr "напрямую"
 
@@ -1324,6 +1345,9 @@ msgstr "Отключить"
 
 msgid "Disable autostart"
 msgstr "Отключить автостарт"
+
+msgid "Disable direct routing"
+msgstr "Выключить прямую маршрутизацию"
 
 msgid "Disable QUIC"
 msgstr "Отключить QUIC"
@@ -1603,6 +1627,9 @@ msgstr "Включить автостарт"
 
 msgid "Enable built-in DNS resolver for domains handled by this section"
 msgstr "Включить встроенный DNS-резолвер для доменов, обрабатываемых этой секцией"
+
+msgid "Enable direct routing"
+msgstr "Включить прямую маршрутизацию"
 
 msgid "Enable it per Connection section. While Prokop or the VPN is down, protected traffic is rejected instead of leaving directly; other traffic is not affected. If sing-box dies, a standby resolver keeps DNS working and blocks the names of every VPN section: large domain lists take memory on the router and time on every start and reload."
 msgstr "Включается в каждом разделе Connection. Пока Prokop или VPN не работают, защищённый трафик отклоняется, а не уходит напрямую; остальной трафик не затрагивается. Если sing-box завершился, резервный резолвер сохраняет работу DNS и блокирует имена всех VPN-секций: большие списки доменов занимают память роутера и время при каждом запуске и перезагрузке."
@@ -1993,9 +2020,6 @@ msgstr "Информация"
 
 msgid "Install"
 msgstr "Установить"
-
-msgid "Install and start TorrServer to enable direct routing for it."
-msgstr "Установите и запустите TorrServer, чтобы включить для него прямую маршрутизацию."
 
 msgid "Install another build:"
 msgstr "Установить другую сборку:"
@@ -3290,6 +3314,9 @@ msgstr "Служба Prokop остановлена. Запустите серв�
 msgid "Prokop service is stopped. Start the service to display nodes and groups."
 msgstr "Служба Prokop остановлена. Запустите её, чтобы увидеть узлы и группы."
 
+msgid "Prokop sets these TorrServer settings. The others, such as DLNA, the name and the trackers, stay as they are."
+msgstr "Prokop задаст эти настройки TorrServer. Остальные, например DLNA, имя и трекеры, останутся как есть."
+
 msgid "Prokop sets this header itself"
 msgstr "Этот заголовок Prokop задаёт сам"
 
@@ -3389,6 +3416,9 @@ msgstr "Применить заново"
 msgid "Reachable"
 msgstr "Доступно"
 
+msgid "Read-ahead 95%, preload 50%"
+msgstr "Упреждающее чтение 95%, предзагрузка 50%"
+
 msgid "Ready"
 msgstr "Готов"
 
@@ -3406,6 +3436,9 @@ msgstr "Рекомендаций ждут решения: %d"
 
 msgid "Recommended"
 msgstr "Рекомендовано"
+
+msgid "Recommended %s settings have been applied"
+msgstr "Рекомендуемые настройки %s применены"
 
 msgid "Recovered"
 msgstr "Восстановлено"
@@ -3505,6 +3538,9 @@ msgstr "Выбор ресурсов по IP или CIDR внутри nfqws зд�
 
 msgid "Resource selection by IP or CIDR inside nfqws2 is not supported here; sing-box selects resources before NFQUEUE."
 msgstr "Выбор ресурсов по IP или CIDR внутри nfqws2 здесь не поддерживается; sing-box выбирает ресурсы до NFQUEUE."
+
+msgid "Responsive mode on"
+msgstr "Отзывчивый режим включён"
 
 msgid "Restart Prokop"
 msgstr "Перезапустить Prokop"
@@ -4111,6 +4147,9 @@ msgstr "Отдельная служба Zapret2 неактивна"
 
 msgid "Standby DNS for a failed sing-box"
 msgstr "Резервный DNS при сбое sing-box"
+
+msgid "Start"
+msgstr "Запустить"
 
 msgid "Start Prokop"
 msgstr "Запустить Prokop"
@@ -4997,6 +5036,9 @@ msgstr "TorrServer %s не запустился, и прежняя версия 
 msgid "TorrServer %s did not start; the previous version %s runs again"
 msgstr "TorrServer %s не запустился; снова работает прежняя версия %s"
 
+msgid "TorrServer did not take the recommended settings"
+msgstr "TorrServer не принял рекомендуемые настройки"
+
 msgid "TorrServer Direct"
 msgstr "Прямой TorrServer"
 
@@ -5009,8 +5051,8 @@ msgstr "TorrServer не установлен"
 msgid "TorrServer is stopped and its program is removed. Its settings and torrent list stay on the router."
 msgstr "TorrServer будет остановлен, его программа удалена. Настройки и список торрентов останутся на роутере."
 
-msgid "TorrServer not found"
-msgstr "TorrServer не найден"
+msgid "TorrServer is stopped; start it to apply the settings"
+msgstr "TorrServer остановлен; запустите его, чтобы применить настройки"
 
 msgid "TorrServer publishes no build for this router's CPU"
 msgstr "Для процессора этого роутера нет сборки TorrServer"
@@ -5278,9 +5320,6 @@ msgstr "ожидание закрытия соединений проб: %d с (
 
 msgid "Waiting for the service action to finish."
 msgstr "Ожидание завершения действия со службой."
-
-msgid "Waiting for TorrServer"
-msgstr "Ожидание TorrServer"
 
 msgid "Waiting to finish"
 msgstr "Ожидает завершения"

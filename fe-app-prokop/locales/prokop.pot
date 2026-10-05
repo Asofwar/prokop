@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-05 12:31+0000\n"
-"PO-Revision-Date: 2026-10-05 12:31+0000\n"
+"POT-Creation-Date: 2026-10-05 12:43+0000\n"
+"PO-Revision-Date: 2026-10-05 12:43+0000\n"
 "Last-Translator: Asofwar <7397608+Asofwar@users.noreply.github.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -119,11 +119,11 @@ msgstr ""
 msgid "%s (unavailable)"
 msgstr ""
 
-#: src/prokop/tabs/updates/componentActionToast.ts:64
+#: src/prokop/tabs/updates/componentActionToast.ts:70
 msgid "%s has been disabled"
 msgstr ""
 
-#: src/prokop/tabs/updates/componentActionToast.ts:61
+#: src/prokop/tabs/updates/componentActionToast.ts:67
 msgid "%s has been enabled"
 msgstr ""
 
@@ -131,8 +131,12 @@ msgstr ""
 msgid "%s has been installed"
 msgstr ""
 
-#: src/prokop/tabs/updates/componentActionToast.ts:58
+#: src/prokop/tabs/updates/componentActionToast.ts:64
 msgid "%s has been removed"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts:58
+msgid "%s has been started"
 msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:1342
@@ -185,6 +189,10 @@ msgstr ""
 
 #: src/prokop/tabs/autotune/initController.ts:695
 msgid "1–8 domains, spread evenly over the list; a domain without an address is replaced by the next one."
+msgstr ""
+
+#: src/prokop/tabs/updates/initController.ts:777
+msgid "25 connections per torrent, disconnect after 30 seconds"
 msgstr ""
 
 #: src/prokop/tabs/autotune/initController.ts:541
@@ -326,7 +334,7 @@ msgstr ""
 msgid "Action"
 msgstr ""
 
-#: src/prokop/tabs/updates/componentActionToast.ts:67
+#: src/prokop/tabs/updates/componentActionToast.ts:73
 msgid "Action completed"
 msgstr ""
 
@@ -614,11 +622,11 @@ msgstr ""
 msgid "Another snapshot operation is already in progress. Try again in a moment."
 msgstr ""
 
-#: src/prokop/tabs/updates/componentActionToast.ts:98
+#: src/prokop/tabs/updates/componentActionToast.ts:104
 msgid "Another TorrServer is installed or running on this router; Prokop does not replace it"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1183
+#: src/prokop/tabs/updates/initController.ts:1279
 msgid "Another TorrServer is installed or running on this router. Prokop does not replace it; remove it first to install TorrServer from Prokop."
 msgstr ""
 
@@ -643,6 +651,7 @@ msgid "Applied, check passed"
 msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:1044
+#: src/prokop/tabs/updates/initController.ts:780
 msgid "Apply"
 msgstr ""
 
@@ -658,8 +667,16 @@ msgstr ""
 msgid "Apply did not finish: configuration edited"
 msgstr ""
 
+#: src/prokop/tabs/updates/initController.ts:1074
+msgid "Apply recommended settings"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9860
 msgid "Apply section rules only to the specified local IP addresses"
+msgstr ""
+
+#: src/prokop/tabs/updates/initController.ts:770
+msgid "Apply the recommended TorrServer settings?"
 msgstr ""
 
 #: src/prokop/tabs/autotune/initController.ts:898
@@ -1048,6 +1065,10 @@ msgstr ""
 msgid "Cache file path cannot be empty"
 msgstr ""
 
+#: src/prokop/tabs/updates/initController.ts:775
+msgid "Cache: an eighth of the router memory, 32 to 256 MB"
+msgstr ""
+
 #: src/prokop/ui/status.ts:165
 msgid "Calculated"
 msgstr ""
@@ -1210,7 +1231,7 @@ msgstr ""
 msgid "Check timeout after which the server is considered dead"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:848
+#: src/prokop/tabs/updates/initController.ts:876
 msgid "Check update"
 msgstr ""
 
@@ -1324,7 +1345,7 @@ msgstr ""
 msgid "Choose Prokop version"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1422
+#: src/prokop/tabs/updates/initController.ts:1510
 msgid "Choose version"
 msgstr ""
 
@@ -1567,7 +1588,7 @@ msgstr ""
 msgid "Copy"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1469
+#: src/prokop/tabs/updates/initController.ts:1580
 msgid "Copy address"
 msgstr ""
 
@@ -1731,10 +1752,6 @@ msgstr ""
 msgid "Debug"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1198
-msgid "Dedicated cgroup unavailable"
-msgstr ""
-
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:800
 msgid "Default address for checking server availability and latency. URLTest uses its own address."
 msgstr ""
@@ -1886,21 +1903,36 @@ msgid "Direct connection"
 msgstr ""
 
 #: src/prokop/tabs/updates/componentActionToast.ts:20
-#: src/prokop/tabs/updates/initController.ts:1142
+#: src/prokop/tabs/updates/initController.ts:1238
 msgid "Direct Proxy"
+msgstr ""
+
+#: src/prokop/tabs/updates/initController.ts:1100
+msgid "Direct routing is off"
+msgstr ""
+
+#: src/prokop/tabs/updates/initController.ts:1098
+msgid "Direct routing is on"
+msgstr ""
+
+#: src/prokop/tabs/updates/initController.ts:1099
+msgid "Direct routing is on and waits for TorrServer"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:126
 msgid "directly"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1151
-#: src/prokop/tabs/updates/initController.ts:1208
+#: src/prokop/tabs/updates/initController.ts:1247
 msgid "Disable"
 msgstr ""
 
 #: src/prokop/tabs/dashboard/overviewCards.ts:191
 msgid "Disable autostart"
+msgstr ""
+
+#: src/prokop/tabs/updates/initController.ts:1106
+msgid "Disable direct routing"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:754
@@ -1914,8 +1946,7 @@ msgstr ""
 #: src/prokop/ui/status.ts:42
 #: src/prokop/tabs/autotune/model.ts:684
 #: src/prokop/tabs/autotune/model.ts:717
-#: src/prokop/tabs/updates/initController.ts:1145
-#: src/prokop/tabs/updates/initController.ts:1203
+#: src/prokop/tabs/updates/initController.ts:1241
 msgid "Disabled"
 msgstr ""
 
@@ -2286,8 +2317,7 @@ msgid "Empty response"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8534
-#: src/prokop/tabs/updates/initController.ts:1158
-#: src/prokop/tabs/updates/initController.ts:1215
+#: src/prokop/tabs/updates/initController.ts:1254
 msgid "Enable"
 msgstr ""
 
@@ -2301,6 +2331,10 @@ msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2862
 msgid "Enable built-in DNS resolver for domains handled by this section"
+msgstr ""
+
+#: src/prokop/tabs/updates/initController.ts:1116
+msgid "Enable direct routing"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:540
@@ -2319,7 +2353,7 @@ msgstr ""
 msgid "Enable Mixed Proxy Authentication"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1132
+#: src/prokop/tabs/updates/initController.ts:1228
 msgid "Enable mode 2"
 msgstr ""
 
@@ -2340,8 +2374,7 @@ msgid "Enable YACD WAN Access"
 msgstr ""
 
 #: src/prokop/tabs/autotune/initController.ts:744
-#: src/prokop/tabs/updates/initController.ts:1144
-#: src/prokop/tabs/updates/initController.ts:1200
+#: src/prokop/tabs/updates/initController.ts:1240
 msgid "Enabled"
 msgstr ""
 
@@ -2522,20 +2555,20 @@ msgstr ""
 msgid "Failed to create support report"
 msgstr ""
 
-#: src/prokop/tabs/updates/componentActionToast.ts:125
+#: src/prokop/tabs/updates/componentActionToast.ts:131
 msgid "Failed to download TorrServer"
 msgstr ""
 
 #: src/prokop/methods/shell/index.ts:191
 #: src/prokop/methods/shell/index.ts:197
-#: src/prokop/tabs/updates/initController.ts:565
-#: src/prokop/tabs/updates/initController.ts:579
-#: src/prokop/tabs/updates/initController.ts:631
-#: src/prokop/tabs/updates/initController.ts:827
+#: src/prokop/tabs/updates/initController.ts:570
+#: src/prokop/tabs/updates/initController.ts:584
+#: src/prokop/tabs/updates/initController.ts:636
+#: src/prokop/tabs/updates/initController.ts:855
 msgid "Failed to execute"
 msgstr ""
 
-#: src/prokop/tabs/updates/componentActionToast.ts:84
+#: src/prokop/tabs/updates/componentActionToast.ts:90
 msgid "Failed to read the latest TorrServer release. Check the internet connection and try again"
 msgstr ""
 
@@ -2543,7 +2576,7 @@ msgstr ""
 msgid "Failed to save URLTest settings"
 msgstr ""
 
-#: src/prokop/tabs/updates/componentActionToast.ts:160
+#: src/prokop/tabs/updates/componentActionToast.ts:166
 msgid "Failed to stop TorrServer"
 msgstr ""
 
@@ -2859,22 +2892,18 @@ msgstr ""
 msgid "Info"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:862
-#: src/prokop/tabs/updates/initController.ts:1010
-#: src/prokop/tabs/updates/initController.ts:1429
+#: src/prokop/tabs/updates/initController.ts:890
+#: src/prokop/tabs/updates/initController.ts:1038
+#: src/prokop/tabs/updates/initController.ts:1517
 #: src/prokop/tabs/updates/releaseSelector.ts:69
 msgid "Install"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1230
-msgid "Install and start TorrServer to enable direct routing for it."
-msgstr ""
-
-#: src/prokop/tabs/updates/initController.ts:1499
+#: src/prokop/tabs/updates/initController.ts:1610
 msgid "Install another build:"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:969
+#: src/prokop/tabs/updates/initController.ts:997
 msgid "Install Extended build"
 msgstr ""
 
@@ -2882,7 +2911,7 @@ msgstr ""
 msgid "Install selected version"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:960
+#: src/prokop/tabs/updates/initController.ts:988
 msgid "Install Tiny build"
 msgstr ""
 
@@ -2890,16 +2919,16 @@ msgstr ""
 msgid "Installed"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1110
+#: src/prokop/tabs/updates/initController.ts:1206
 msgid "Installed (Mirror edition)"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1176
+#: src/prokop/tabs/updates/initController.ts:1272
 msgid "Installed outside Prokop"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:317
-#: src/prokop/tabs/updates/initController.ts:1289
+#: src/prokop/tabs/updates/initController.ts:322
+#: src/prokop/tabs/updates/initController.ts:1349
 msgid "Installed version is newer than release"
 msgstr ""
 
@@ -3493,12 +3522,12 @@ msgstr ""
 msgid "Latency test URL"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:320
-#: src/prokop/tabs/updates/initController.ts:1287
+#: src/prokop/tabs/updates/initController.ts:325
+#: src/prokop/tabs/updates/initController.ts:1347
 msgid "Latest version is installed"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1289
+#: src/prokop/tabs/updates/initController.ts:1349
 msgid "Latest version:"
 msgstr ""
 
@@ -3581,12 +3610,12 @@ msgstr ""
 msgid "Loading kill-switch status…"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1049
-#: src/prokop/tabs/updates/initController.ts:1060
-#: src/prokop/tabs/updates/initController.ts:1071
-#: src/prokop/tabs/updates/initController.ts:1084
-#: src/prokop/tabs/updates/initController.ts:1097
-#: src/prokop/tabs/updates/initController.ts:1170
+#: src/prokop/tabs/updates/initController.ts:1145
+#: src/prokop/tabs/updates/initController.ts:1156
+#: src/prokop/tabs/updates/initController.ts:1167
+#: src/prokop/tabs/updates/initController.ts:1180
+#: src/prokop/tabs/updates/initController.ts:1193
+#: src/prokop/tabs/updates/initController.ts:1266
 msgid "Loading..."
 msgstr ""
 
@@ -3708,7 +3737,7 @@ msgstr ""
 msgid "Mode"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1120
+#: src/prokop/tabs/updates/initController.ts:1216
 msgid "Mode 2 enabled"
 msgstr ""
 
@@ -4036,7 +4065,7 @@ msgstr ""
 msgid "none"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1120
+#: src/prokop/tabs/updates/initController.ts:1216
 msgid "Normal mode"
 msgstr ""
 
@@ -4085,11 +4114,11 @@ msgstr ""
 msgid "Not determined"
 msgstr ""
 
-#: src/prokop/tabs/updates/componentActionToast.ts:123
+#: src/prokop/tabs/updates/componentActionToast.ts:129
 msgid "Not enough free memory to download TorrServer"
 msgstr ""
 
-#: src/prokop/tabs/updates/componentActionToast.ts:117
+#: src/prokop/tabs/updates/componentActionToast.ts:123
 msgid "Not enough free space for TorrServer: %s KiB free, %s KiB needed"
 msgstr ""
 
@@ -4101,11 +4130,11 @@ msgstr ""
 #: src/prokop/helpers/singBoxVariant.ts:29
 #: src/prokop/helpers/singBoxVariant.ts:37
 #: src/prokop/tabs/diagnostic/initController.ts:743
-#: src/prokop/tabs/updates/initController.ts:1074
-#: src/prokop/tabs/updates/initController.ts:1087
-#: src/prokop/tabs/updates/initController.ts:1100
-#: src/prokop/tabs/updates/initController.ts:1111
-#: src/prokop/tabs/updates/initController.ts:1177
+#: src/prokop/tabs/updates/initController.ts:1170
+#: src/prokop/tabs/updates/initController.ts:1183
+#: src/prokop/tabs/updates/initController.ts:1196
+#: src/prokop/tabs/updates/initController.ts:1207
+#: src/prokop/tabs/updates/initController.ts:1273
 msgid "Not installed"
 msgstr ""
 
@@ -4248,8 +4277,8 @@ msgstr ""
 msgid "Only: %d"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1280
-#: src/prokop/tabs/updates/initController.ts:1302
+#: src/prokop/tabs/updates/initController.ts:1340
+#: src/prokop/tabs/updates/initController.ts:1362
 msgid "Open"
 msgstr ""
 
@@ -4279,7 +4308,7 @@ msgstr ""
 msgid "Open settings"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1188
+#: src/prokop/tabs/updates/initController.ts:1284
 msgid "Open TorrServer"
 msgstr ""
 
@@ -4740,6 +4769,10 @@ msgstr ""
 msgid "Prokop service is stopped. Start the service to display nodes and groups."
 msgstr ""
 
+#: src/prokop/tabs/updates/initController.ts:771
+msgid "Prokop sets these TorrServer settings. The others, such as DLNA, the name and the trackers, stay as they are."
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2514
 msgid "Prokop sets this header itself"
 msgstr ""
@@ -4875,6 +4908,10 @@ msgstr ""
 msgid "Reachable"
 msgstr ""
 
+#: src/prokop/tabs/updates/initController.ts:776
+msgid "Read-ahead 95%, preload 50%"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:245
 msgid "Ready"
 msgstr ""
@@ -4900,6 +4937,10 @@ msgstr ""
 
 #: src/prokop/tabs/autotune/initController.ts:1134
 msgid "Recommended"
+msgstr ""
+
+#: src/prokop/tabs/updates/componentActionToast.ts:61
+msgid "Recommended %s settings have been applied"
 msgstr ""
 
 #: src/prokop/ui/status.ts:107
@@ -4939,10 +4980,10 @@ msgstr ""
 #: src/prokop/tabs/autotune/initController.ts:754
 #: src/prokop/tabs/diagnostic/connectivityMatrix.ts:308
 #: src/prokop/tabs/diagnostic/connectivityMatrix.ts:309
-#: src/prokop/tabs/updates/initController.ts:757
-#: src/prokop/tabs/updates/initController.ts:907
-#: src/prokop/tabs/updates/initController.ts:1001
-#: src/prokop/tabs/updates/initController.ts:1026
+#: src/prokop/tabs/updates/initController.ts:762
+#: src/prokop/tabs/updates/initController.ts:935
+#: src/prokop/tabs/updates/initController.ts:1029
+#: src/prokop/tabs/updates/initController.ts:1065
 msgid "Remove"
 msgstr ""
 
@@ -4954,7 +4995,7 @@ msgstr ""
 msgid "Remove %s from this rule? When you save the rule, it matches without them and the configuration can be applied again. Nothing else in the rule changes."
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:747
+#: src/prokop/tabs/updates/initController.ts:752
 msgid "Remove %s?"
 msgstr ""
 
@@ -5045,6 +5086,10 @@ msgstr ""
 msgid "Resource selection by IP or CIDR inside nfqws2 is not supported here; sing-box selects resources before NFQUEUE."
 msgstr ""
 
+#: src/prokop/tabs/updates/initController.ts:778
+msgid "Responsive mode on"
+msgstr ""
+
 #: src/prokop/tabs/dashboard/overviewCards.ts:151
 #: src/prokop/tabs/dashboard/overviewCards.ts:173
 #: src/prokop/tabs/dashboard/overviewCards.ts:305
@@ -5099,7 +5144,7 @@ msgstr ""
 msgid "Restore failed; previous configuration and runtime recovered"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1125
+#: src/prokop/tabs/updates/initController.ts:1221
 msgid "Restore normal mode"
 msgstr ""
 
@@ -5381,7 +5426,7 @@ msgstr ""
 msgid "Rules proxy exist"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:755
+#: src/prokop/tabs/updates/initController.ts:760
 msgid "Rules that use this provider stop bypassing DPI"
 msgstr ""
 
@@ -5389,7 +5434,7 @@ msgstr ""
 msgid "Run full diagnostics"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1173
+#: src/prokop/tabs/updates/initController.ts:1269
 msgid "Running"
 msgstr ""
 
@@ -5883,6 +5928,10 @@ msgstr ""
 msgid "Standby DNS for a failed sing-box"
 msgstr ""
 
+#: src/prokop/tabs/updates/initController.ts:1052
+msgid "Start"
+msgstr ""
+
 #: src/prokop/tabs/dashboard/overviewCards.ts:164
 #: src/prokop/tabs/shared/startService.ts:38
 #: src/prokop/tabs/shared/startService.ts:42
@@ -5950,7 +5999,7 @@ msgstr ""
 msgid "Stop Prokop…"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1173
+#: src/prokop/tabs/updates/initController.ts:1269
 msgid "Stopped"
 msgstr ""
 
@@ -6328,11 +6377,11 @@ msgstr ""
 msgid "The DNS server must be an IPv4 address."
 msgstr ""
 
-#: src/prokop/tabs/updates/componentActionToast.ts:129
+#: src/prokop/tabs/updates/componentActionToast.ts:135
 msgid "The downloaded TorrServer does not match its published checksum; nothing was installed"
 msgstr ""
 
-#: src/prokop/tabs/updates/componentActionToast.ts:136
+#: src/prokop/tabs/updates/componentActionToast.ts:142
 msgid "The downloaded TorrServer does not run on this router; nothing was installed"
 msgstr ""
 
@@ -6469,7 +6518,7 @@ msgstr ""
 msgid "The latency test measured no delay: no tested proxy answered."
 msgstr ""
 
-#: src/prokop/tabs/updates/componentActionToast.ts:91
+#: src/prokop/tabs/updates/componentActionToast.ts:97
 msgid "The latest TorrServer release has no build with a published checksum for %s"
 msgstr ""
 
@@ -6551,7 +6600,7 @@ msgstr ""
 msgid "The notice is dismissed; nothing else in the rule changes. Save the rule to keep the change."
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:753
+#: src/prokop/tabs/updates/initController.ts:758
 msgid "The package is removed from the router."
 msgstr ""
 
@@ -6874,7 +6923,7 @@ msgstr ""
 msgid "The test could not run"
 msgstr ""
 
-#: src/prokop/tabs/updates/componentActionToast.ts:105
+#: src/prokop/tabs/updates/componentActionToast.ts:111
 msgid "The TorrServer program was changed outside Prokop; Prokop left it as it is"
 msgstr ""
 
@@ -7049,7 +7098,7 @@ msgstr ""
 msgid "This strategy was rolled back recently; it waits for the cooldown."
 msgstr ""
 
-#: src/prokop/tabs/updates/componentActionToast.ts:112
+#: src/prokop/tabs/updates/componentActionToast.ts:118
 msgid "This TorrServer was not installed by Prokop; Prokop left it as it is"
 msgstr ""
 
@@ -7096,40 +7145,43 @@ msgstr ""
 msgid "Top level has the highest priority; lower levels are used as fallback"
 msgstr ""
 
-#: src/prokop/tabs/updates/componentActionToast.ts:158
+#: src/prokop/tabs/updates/componentActionToast.ts:164
 msgid "TorrServer %s did not start and was removed"
 msgstr ""
 
-#: src/prokop/tabs/updates/componentActionToast.ts:150
+#: src/prokop/tabs/updates/componentActionToast.ts:156
 msgid "TorrServer %s did not start, and the previous version %s did not start again either"
 msgstr ""
 
-#: src/prokop/tabs/updates/componentActionToast.ts:143
+#: src/prokop/tabs/updates/componentActionToast.ts:149
 msgid "TorrServer %s did not start; the previous version %s runs again"
 msgstr ""
 
+#: src/prokop/tabs/updates/componentActionToast.ts:173
+msgid "TorrServer did not take the recommended settings"
+msgstr ""
+
 #: src/prokop/tabs/updates/componentActionToast.ts:24
-#: src/prokop/tabs/updates/initController.ts:1194
 msgid "TorrServer Direct"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1227
+#: src/prokop/tabs/updates/initController.ts:1130
 msgid "TorrServer does not run in its own service group. Install TorrServer from Prokop to use direct routing for it."
 msgstr ""
 
-#: src/prokop/tabs/updates/componentActionToast.ts:76
+#: src/prokop/tabs/updates/componentActionToast.ts:82
 msgid "TorrServer is not installed"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:750
+#: src/prokop/tabs/updates/initController.ts:755
 msgid "TorrServer is stopped and its program is removed. Its settings and torrent list stay on the router."
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1196
-msgid "TorrServer not found"
+#: src/prokop/tabs/updates/componentActionToast.ts:169
+msgid "TorrServer is stopped; start it to apply the settings"
 msgstr ""
 
-#: src/prokop/tabs/updates/componentActionToast.ts:79
+#: src/prokop/tabs/updates/componentActionToast.ts:85
 msgid "TorrServer publishes no build for this router's CPU"
 msgstr ""
 
@@ -7276,7 +7328,7 @@ msgstr ""
 #: src/prokop/services/systemInfo.service.ts:38
 #: src/prokop/services/systemInfo.service.ts:39
 #: src/prokop/tabs/diagnostic/initController.ts:739
-#: src/prokop/tabs/updates/initController.ts:355
+#: src/prokop/tabs/updates/initController.ts:360
 msgid "unknown"
 msgstr ""
 
@@ -7328,15 +7380,15 @@ msgstr ""
 msgid "Up to 8 domains; exactly these are checked."
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:862
+#: src/prokop/tabs/updates/initController.ts:890
 msgid "Update"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:313
+#: src/prokop/tabs/updates/initController.ts:318
 msgid "Update is available"
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:1266
+#: src/prokop/tabs/updates/initController.ts:1326
 msgid "Update is available:"
 msgstr ""
 
@@ -7541,10 +7593,6 @@ msgstr ""
 
 #: src/prokop/tabs/diagnostic/initController.ts:552
 msgid "Waiting for the service action to finish."
-msgstr ""
-
-#: src/prokop/tabs/updates/initController.ts:1202
-msgid "Waiting for TorrServer"
 msgstr ""
 
 #: src/prokop/tabs/history/model.ts:142

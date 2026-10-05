@@ -161,6 +161,8 @@ export const initialDiagnosticStore: Pick<
     torrserverCheck: { loading: false },
     torrserverInstall: { loading: false },
     torrserverRemove: { loading: false },
+    torrserverStart: { loading: false },
+    torrserverApplySettings: { loading: false },
     torrserverDirectEnable: { loading: false },
     torrserverDirectDisable: { loading: false },
   },

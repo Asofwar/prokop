@@ -54,7 +54,10 @@ export PROKOP_LIB="$LIB"
 export PROKOP_TORRSERVER_DIR="$TS_DIR"
 export PROKOP_TORRSERVER_INIT="$WORK/bin/torrserver-init"
 export PROKOP_TORRSERVER_START_TIMEOUT=3
-export PROKOP_TORRSERVER_ECHO_URL="http://127.0.0.1:8090/echo"
+export PROKOP_TORRSERVER_API_URL="http://127.0.0.1:8090"
+export PROKOP_MEMINFO_PATH="$WORK/meminfo"
+# 1 GiB, as the GL-MT6000: a 128 MiB cache.
+printf 'MemTotal:        1006668 kB\n' >"$WORK/meminfo"
 export PROKOP_PROC_DIR="$PROC"
 export PROKOP_RUNTIME_STATE_DIR="$WORK/run"
 export PROKOP_SYSTEM_INFO_CACHE_FILE="$WORK/run/system-info.json"
@@ -75,14 +78,17 @@ cat "$TEST_WORK/machine"
 SH
 printf 'aarch64\n' >"$WORK/machine"
 # curl: the GitHub API and the asset from the fixtures, TorrServer's /echo
-# from what the fake service answers.
+# and /settings from what the fake service answers (its settings live in
+# ts-settings.json while it runs).
 cat >"$WORK/bin/curl" <<'SH'
 #!/bin/sh
 out=""
 url=""
+data=""
 while [ "$#" -gt 0 ]; do
   case "$1" in
     -o) out="$2"; shift 2 ;;
+    --data-binary) data="${2#@}"; shift 2 ;;
     -x|-m|--connect-timeout|--speed-time|--speed-limit) shift 2 ;;
     -*) shift ;;
     *) url="$1"; shift ;;
@@ -92,6 +98,16 @@ case "$url" in
   https://api.github.com/repos/YouROK/TorrServer/releases/latest) src="$TEST_FIX/release.json" ;;
   https://github.com/YouROK/TorrServer/releases/download/*) src="$TEST_FIX/asset/${url##*/}" ;;
   http://127.0.0.1:8090/echo) src="$TEST_WORK/echo" ;;
+  http://127.0.0.1:8090/settings)
+    [ -f "$TEST_WORK/echo" ] || exit 7
+    printf '%s\n' "$(cat "$data")" >>"$TEST_WORK/settings-requests"
+    exec node -e '
+      const fs = require("fs");
+      const [body, store] = process.argv.slice(1);
+      const req = JSON.parse(fs.readFileSync(body, "utf8"));
+      if (req.action === "get") process.stdout.write(fs.readFileSync(store, "utf8"));
+      else if (req.action === "set") fs.writeFileSync(store, JSON.stringify(req.sets));
+      else process.exit(22);' "$data" "$TEST_WORK/ts-settings.json" ;;
   *) exit 6 ;;
 esac
 [ -f "$src" ] || exit 22
@@ -114,6 +130,12 @@ start() {
   printf '%s\0-d\0x\0' "$TEST_BIN" >"$TEST_PROC/4242/cmdline"
   ln -sfn "$TEST_BIN" "$TEST_PROC/4242/exe"
   printf '%s' "$version" >"$TEST_WORK/echo"
+  # TorrServer's first start writes its defaults to its database.
+  if [ ! -e "$(dirname "$TEST_BIN")/config.db" ]; then
+    : >"$(dirname "$TEST_BIN")/config.db"
+    printf '{"CacheSize":67108864,"ReaderReadAHead":95,"PreloadCache":50,"ConnectionsLimit":25,"TorrentDisconnectTimeout":30,"ResponsiveMode":false,"EnableDLNA":true,"FriendlyName":"tv"}' \
+      >"$TEST_WORK/ts-settings.json"
+  fi
 }
 stop() { rm -rf "$TEST_PROC/4242" "$TEST_WORK/echo"; }
 case "$1" in
@@ -219,8 +241,25 @@ expect_success "install of the running release"
 [ "$(field changed)" = 0 ] || fail "installing the running release must change nothing: $(cat "$WORK/out")"
 grep -Fq "init" "$WORK/events" && fail "installing the running release must not restart TorrServer"
 
+# The first install gives TorrServer the recommended settings, over its own
+# and keeping the rest.
+setting() { node -e 'process.stdout.write(String(JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"))[process.argv[2]]))' "$WORK/ts-settings.json" "$1"; }
+[ "$(setting CacheSize)" = 134217728 ] || fail "a fresh install must size the cache to 128 MiB for 1 GiB of RAM: $(cat "$WORK/ts-settings.json")"
+[ "$(setting ResponsiveMode)" = true ] && [ "$(setting PreloadCache)" = 50 ] || fail "a fresh install must apply the recommended settings: $(cat "$WORK/ts-settings.json")"
+[ "$(setting EnableDLNA)" = true ] && [ "$(setting FriendlyName)" = tv ] || fail "the recommended settings must keep the others: $(cat "$WORK/ts-settings.json")"
+[ -e "$TS_DIR/prokop-settings-applied" ] || fail "a fresh install must stamp the applied settings"
+for row in "131072 32" "262144 32" "524288 64" "1006668 128" "4194304 256"; do
+  read -r kib mib <<<"$row"
+  printf 'MemTotal: %s kB\n' "$kib" >"$WORK/meminfo"
+  got="$(ucode -L "$LIB" "$MANAGER" recommended-settings | node -e 'let s = ""; process.stdin.on("data", (d) => s += d).on("end", () => process.stdout.write(String(JSON.parse(s).CacheSize / 1048576)))')"
+  [ "$got" = "$mib" ] || fail "cache for $kib KiB of RAM: $got MiB, expected $mib"
+done
+printf 'MemTotal:        1006668 kB\n' >"$WORK/meminfo"
+
 # --- 2. Update ------------------------------------------------------------------
 : >"$TS_DIR/config.db"
+# A setting the user changed survives an update: the settings are applied once.
+node -e 'const f = process.argv[1], fs = require("fs"); const v = JSON.parse(fs.readFileSync(f, "utf8")); v.CacheSize = 33554432; fs.writeFileSync(f, JSON.stringify(v));' "$WORK/ts-settings.json"
 publish MatriX.146
 action torrserver check_update
 [ "$(field status)" = outdated ] || fail "a newer release must read as an update: $(cat "$WORK/out")"
@@ -229,6 +268,7 @@ expect_success "update"
 bin_reports MatriX.146 "update"
 [ ! -e "$BIN.prokop-old" ] && [ ! -e "$MARKER.prokop-old" ] || fail "a completed update must not keep the previous binary"
 [ -e "$TS_DIR/config.db" ] || fail "an update must keep TorrServer's database"
+[ "$(setting CacheSize)" = 33554432 ] || fail "an update must not apply the recommended settings over the user's: $(cat "$WORK/ts-settings.json")"
 
 # --- 3. An update that does not start puts the previous release back ------------------
 publish MatriX.147
@@ -280,7 +320,36 @@ action torrserver install
 expect_failure "update over a binary of another size" "Another TorrServer is installed or running"
 cp "$WORK/saved-bin" "$BIN"
 
-# --- 6. Removal keeps the settings ----------------------------------------------------
+# --- 6. Start: the installed release runs again ---------------------------------------
+"$WORK/bin/torrserver-init" stop
+[ "$(status_field running)" = 0 ] || fail "fixture: TorrServer did not stop"
+# A TorrServer installed before Prokop applied the settings (no stamp)
+# gets them once it runs; a stopped one cannot take them.
+rm -f "$TS_DIR/prokop-settings-applied"
+ucode -L "$LIB" "$MANAGER" apply-recommended-once 1 >/dev/null && fail "a stopped TorrServer cannot take the recommended settings"
+action torrserver start
+expect_success "start"
+[ "$(setting CacheSize)" = 134217728 ] && [ "$(setting EnableDLNA)" = true ] || fail "start must apply the recommended settings once and keep the others: $(cat "$WORK/ts-settings.json")"
+[ -e "$TS_DIR/prokop-settings-applied" ] || fail "applied settings must be stamped"
+# After that, a setting the user changes stays.
+node -e 'const f = process.argv[1], fs = require("fs"); const v = JSON.parse(fs.readFileSync(f, "utf8")); v.CacheSize = 33554432; fs.writeFileSync(f, JSON.stringify(v));' "$WORK/ts-settings.json"
+[ "$(ucode -L "$LIB" "$MANAGER" apply-recommended-once 1)" = already ] || fail "stamped settings must not be applied again"
+[ "$(setting CacheSize)" = 33554432 ] || fail "settings the user changed must stay"
+# The card's button applies them again on request.
+action torrserver apply_settings
+expect_success "recommended settings button"
+[ "$(setting CacheSize)" = 134217728 ] && [ "$(setting EnableDLNA)" = true ] || fail "the button must apply the recommended settings and keep the others: $(cat "$WORK/ts-settings.json")"
+"$WORK/bin/torrserver-init" stop
+action torrserver apply_settings
+expect_failure "recommended settings while stopped" "TorrServer is stopped"
+action torrserver start
+expect_success "start after the button"
+[ "$(status_field running)" = 1 ] || fail "start must run TorrServer again"
+action torrserver start
+expect_success "start while running"
+[ "$(field changed)" = 0 ] || fail "starting a running TorrServer must change nothing"
+
+# --- 7. Removal keeps the settings ----------------------------------------------------
 action torrserver remove
 expect_success "remove"
 [ ! -e "$BIN" ] && [ ! -e "$MARKER" ] || fail "remove must delete the binary and its marker"
@@ -291,8 +360,10 @@ fi
 action torrserver remove
 expect_success "remove again"
 [ "$(field changed)" = 0 ] || fail "a second removal must change nothing"
+action torrserver start
+expect_failure "start without TorrServer" "TorrServer is not installed"
 
-# --- 7. A TorrServer installed by other means ----------------------------------------
+# --- 8. A TorrServer installed by other means ----------------------------------------
 # One that runs from elsewhere.
 mkdir -p "$PROC/777"
 printf '/usr/bin/TorrServer-linux-arm64\0-d\0/opt/ts\0' >"$PROC/777/cmdline"

@@ -94,6 +94,11 @@ interface ComponentCard {
   // component's own page is.
   note?: string;
   link?: { href: string; text: string };
+  // Status lines under the header, and a second row of actions
+  // with its own explanation (TorrServer's direct routing).
+  details?: string[];
+  directNote?: string;
+  extraActions?: ComponentActionButton[];
 }
 
 let updatesLifecycleRegistered = false;
@@ -759,8 +764,31 @@ function confirmComponentRemoval(button: ComponentActionButton) {
   });
 }
 
+// The values match recommended_settings() in torrserver/manager.uc.
+function confirmTorrServerSettings() {
+  return confirmAction({
+    title: _('Apply the recommended TorrServer settings?'),
+    message: _(
+      'Prokop sets these TorrServer settings. The others, such as DLNA, the name and the trackers, stay as they are.',
+    ),
+    consequences: [
+      _('Cache: an eighth of the router memory, 32 to 256 MB'),
+      _('Read-ahead 95%, preload 50%'),
+      _('25 connections per torrent, disconnect after 30 seconds'),
+      _('Responsive mode on'),
+    ],
+    confirmLabel: _('Apply'),
+  });
+}
+
 async function handleComponentAction(button: ComponentActionButton) {
   if (button.action === 'remove' && !(await confirmComponentRemoval(button))) {
+    return;
+  }
+  if (
+    button.action === 'apply_settings' &&
+    !(await confirmTorrServerSettings())
+  ) {
     return;
   }
 
@@ -1016,6 +1044,17 @@ function getComponentCards(): ComponentCard[] {
 
   const torrserverActions: ComponentActionButton[] = torrserverInstalled
     ? [
+        ...(torrserverServiceRunning
+          ? []
+          : [
+              {
+                key: 'torrserverStart' as const,
+                text: _('Start'),
+                icon: renderRotateCcwIcon24,
+                component: 'torrserver' as const,
+                action: 'start' as const,
+              },
+            ]),
         ...getInstalledUpdateActions(
           'torrserver',
           'torrserverCheck',
@@ -1028,6 +1067,17 @@ function getComponentCards(): ComponentCard[] {
           component: 'torrserver',
           action: 'remove',
         },
+        ...(torrserverServiceRunning
+          ? [
+              {
+                key: 'torrserverApplySettings' as const,
+                text: _('Apply recommended settings'),
+                icon: renderRotateCcwIcon24,
+                component: 'torrserver' as const,
+                action: 'apply_settings' as const,
+              },
+            ]
+          : []),
       ]
     : [
         {
@@ -1035,6 +1085,52 @@ function getComponentCards(): ComponentCard[] {
           disabled: torrserverForeign,
         },
       ];
+  // TorrServer Direct (its traffic bypasses Prokop's routing) belongs to the
+  // same card. Enable is offered only once a TorrServer runs: before that
+  // there is nothing to mark. Disable stays reachable whatever TorrServer
+  // does, so a setting that is on can always be turned off.
+  // Nothing about it is shown while there is no TorrServer at all and the
+  // setting is off.
+  const torrserverDirectShown =
+    torrserverDirectEnabled || torrserverInstalled || torrserverRunning;
+  const torrserverDirectState = torrserverDirectEnabled
+    ? torrserverDirectActive
+      ? _('Direct routing is on')
+      : _('Direct routing is on and waits for TorrServer')
+    : _('Direct routing is off');
+  const torrserverDirectActions: ComponentActionButton[] =
+    torrserverDirectEnabled
+      ? [
+          {
+            key: 'torrserverDirectDisable',
+            text: _('Disable direct routing'),
+            icon: renderXIcon24,
+            component: 'torrserver_direct',
+            action: 'disable',
+          },
+        ]
+      : torrserverRunning
+        ? [
+            {
+              key: 'torrserverDirectEnable',
+              text: _('Enable direct routing'),
+              icon: renderRotateCcwIcon24,
+              component: 'torrserver_direct',
+              action: 'enable',
+              disabled: !torrserverDirectAvailable,
+            },
+          ]
+        : [];
+  const torrserverDirectNote =
+    systemInfoLoading || torrserverDirectEnabled
+      ? undefined
+      : !torrserverRunning
+        ? undefined
+        : !torrserverDirectAvailable
+          ? _(
+              'TorrServer does not run in its own service group. Install TorrServer from Prokop to use direct routing for it.',
+            )
+          : undefined;
   const torrserverWebUrl =
     torrserverInstalled && torrserverServiceRunning
       ? `http://${window.location.hostname}:${systemInfo.torrserver_port || '8090'}`
@@ -1187,48 +1283,12 @@ function getComponentCards(): ComponentCard[] {
       link: torrserverWebUrl
         ? { href: torrserverWebUrl, text: _('Open TorrServer') }
         : undefined,
-    },
-    {
-      component: 'torrserver_direct',
-      column: 2,
-      title: _('TorrServer Direct'),
-      version: !torrserverRunning
-        ? _('TorrServer not found')
-        : !torrserverDirectAvailable
-          ? _('Dedicated cgroup unavailable')
-          : torrserverDirectEnabled && torrserverDirectActive
-            ? _('Enabled')
-            : torrserverDirectEnabled
-              ? _('Waiting for TorrServer')
-              : _('Disabled'),
-      actions: [
-        torrserverDirectEnabled
-          ? {
-              key: 'torrserverDirectDisable',
-              text: _('Disable'),
-              icon: renderXIcon24,
-              component: 'torrserver_direct',
-              action: 'disable',
-            }
-          : {
-              key: 'torrserverDirectEnable',
-              text: _('Enable'),
-              icon: renderRotateCcwIcon24,
-              component: 'torrserver_direct',
-              action: 'enable',
-              disabled: !torrserverDirectAvailable,
-            },
-      ],
-      note:
-        !systemInfoLoading &&
-        !torrserverDirectEnabled &&
-        !torrserverDirectAvailable
-          ? torrserverRunning
-            ? _(
-                'TorrServer does not run in its own service group. Install TorrServer from Prokop to use direct routing for it.',
-              )
-            : _('Install and start TorrServer to enable direct routing for it.')
-          : undefined,
+      details:
+        systemInfoLoading || !torrserverDirectShown
+          ? undefined
+          : [torrserverDirectState],
+      directNote: torrserverDirectNote,
+      extraActions: torrserverDirectActions,
     },
   ];
 }
@@ -1352,6 +1412,34 @@ function renderComponentCard(card: ComponentCard) {
     );
   }
 
+  for (const row of card.details || []) {
+    detailsChildren.push(
+      E(
+        'div',
+        { class: 'fkp_updates-page__component__info-row' },
+        E(
+          'span',
+          { class: 'fkp_updates-page__component__info-value' },
+          asText(row),
+        ),
+      ),
+    );
+  }
+
+  if (card.directNote) {
+    detailsChildren.push(
+      E(
+        'div',
+        { class: 'fkp_updates-page__component__info-row' },
+        E(
+          'span',
+          { class: 'fkp_updates-page__component__info-label' },
+          asText(card.directNote),
+        ),
+      ),
+    );
+  }
+
   if (card.link) {
     detailsChildren.push(
       E('div', { class: 'fkp_updates-page__component__info-row' }, [
@@ -1459,6 +1547,29 @@ function renderComponentCard(card: ComponentCard) {
         ...primaryButtons,
         ...dangerButtons,
       ]),
+    );
+  }
+
+  if (card.extraActions && card.extraActions.length > 0) {
+    actionElements.push(
+      E(
+        'div',
+        { class: 'fkp_updates-page__component__actions-main' },
+        card.extraActions.map((action) => {
+          const loading = updatesActions[action.key].loading;
+          return renderButton({
+            text: action.text,
+            icon: action.icon,
+            loading,
+            disabled:
+              action.disabled ||
+              systemInfoLoading ||
+              serviceRuntimeActionLoading ||
+              (anyActionLoading && !loading),
+            onClick: () => void handleComponentAction(action),
+          });
+        }),
+      ),
     );
   }
 

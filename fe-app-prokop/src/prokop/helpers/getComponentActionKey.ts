@@ -30,6 +30,8 @@ const componentActionKeyMap: Record<string, UpdatesActionKey> = {
   'torrserver:check_update': 'torrserverCheck',
   'torrserver:install': 'torrserverInstall',
   'torrserver:remove': 'torrserverRemove',
+  'torrserver:start': 'torrserverStart',
+  'torrserver:apply_settings': 'torrserverApplySettings',
   'torrserver_direct:enable': 'torrserverDirectEnable',
   'torrserver_direct:disable': 'torrserverDirectDisable',
 };

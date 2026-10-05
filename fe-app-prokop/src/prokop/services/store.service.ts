@@ -259,6 +259,8 @@ export interface StoreType {
     torrserverCheck: { loading: boolean };
     torrserverInstall: { loading: boolean };
     torrserverRemove: { loading: boolean };
+    torrserverStart: { loading: boolean };
+    torrserverApplySettings: { loading: boolean };
     torrserverDirectEnable: { loading: boolean };
     torrserverDirectDisable: { loading: boolean };
   };

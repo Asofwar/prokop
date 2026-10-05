@@ -1089,7 +1089,9 @@ export namespace Prokop {
     | 'install_stable'
     | 'enable'
     | 'disable'
-    | 'restore';
+    | 'restore'
+    | 'start'
+    | 'apply_settings';
 
   export interface ComponentActionResult {
     success: boolean;

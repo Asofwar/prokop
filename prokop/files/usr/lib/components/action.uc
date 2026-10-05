@@ -3502,6 +3502,19 @@ function restore_torrserver_backup(paths, had_backup) {
         move_file_portable(paths.marker + ".prokop-old", paths.marker);
 }
 
+// Gives the running TorrServer Prokop installed the recommended settings
+// (torrserver/manager.uc), once per TorrServer: settings changed after that
+// stay. A note for the action's message when they could not be applied.
+function torrserver_settings_once() {
+    let result = trim(module_output([ TORRSERVER_UC, "apply-recommended-once", "10" ]));
+    if (result == "applied")
+        updates_log("Recommended TorrServer settings have been applied");
+    if (result == "applied" || result == "already")
+        return "";
+    updates_log("TorrServer did not take the recommended settings", "warn");
+    return "; the recommended settings were not applied";
+}
+
 function install_torrserver(action) {
     if (!file_exists(TORRSERVER_INIT) || !file_exists(TORRSERVER_UC))
         action_fail("torrserver", action, "TorrServer service is not available in this Prokop build");
@@ -3540,7 +3553,8 @@ function install_torrserver(action) {
         action_fail("torrserver", action, "The installed TorrServer binary does not match the checksum Prokop recorded; it was not replaced",
             current_version, release.version, "", release.release_url || "");
     if (installed && current_version == release.version && int(status.running || 0) == 1)
-        action_success("torrserver", action, "Latest TorrServer is already installed", current_version, release.version, 0, "latest", release.release_url || "");
+        action_success("torrserver", action, "Latest TorrServer is already installed" + torrserver_settings_once(),
+            current_version, release.version, 0, "latest", release.release_url || "");
 
     let space_error = component_download_space_error("TorrServer", release.size, 1, tmp_dir);
     if (space_error != "")
@@ -3624,8 +3638,39 @@ function install_torrserver(action) {
     remove_file(paths.marker + ".prokop-old");
     torrserver_direct_follow();
     clear_version_caches();
-    action_success("torrserver", action, installed ? "TorrServer has been updated" : "TorrServer has been installed",
+    action_success("torrserver", action, (installed ? "TorrServer has been updated" : "TorrServer has been installed") + torrserver_settings_once(),
         release.version, release.version, 1, "latest", release.release_url || "");
+}
+
+// Starts the TorrServer Prokop installed again (stopped by hand, or after a
+// failure procd gave up respawning) and waits for it to answer.
+function start_torrserver() {
+    let status = torrserver_status();
+    let current_version = as_string(status.version);
+    if (int(status.installed || 0) != 1)
+        action_fail("torrserver", "start", "TorrServer is not installed");
+    if (int(status.running || 0) == 1)
+        action_success("torrserver", "start", "TorrServer is already running" + torrserver_settings_once(), current_version, "", 0);
+    if (!torrserver_enable_start() || !torrserver_wait_running(current_version))
+        action_fail("torrserver", "start", "TorrServer " + current_version + " did not start", current_version);
+    torrserver_direct_follow();
+    clear_version_caches();
+    action_success("torrserver", "start", "TorrServer has been started" + torrserver_settings_once(), current_version, "", 1);
+}
+
+// The card's button: the recommended settings (torrserver/manager.uc) over
+// TorrServer's own again, whatever was applied before; the others stay.
+function apply_torrserver_settings() {
+    let status = torrserver_status();
+    let current_version = as_string(status.version);
+    if (int(status.installed || 0) != 1)
+        action_fail("torrserver", "apply_settings", "TorrServer is not installed");
+    if (int(status.running || 0) != 1)
+        action_fail("torrserver", "apply_settings", "TorrServer is stopped; start it to apply the settings", current_version);
+    if (!module_success([ TORRSERVER_UC, "apply-recommended-now" ]))
+        action_fail("torrserver", "apply_settings", "TorrServer did not take the recommended settings", current_version);
+    updates_log("Recommended TorrServer settings have been applied");
+    action_success("torrserver", "apply_settings", "Recommended TorrServer settings have been applied", current_version, "", 1);
 }
 
 // Removes the binary Prokop installed and stops its service; TorrServer's
@@ -3742,6 +3787,10 @@ function component_action(component, action, version) {
         install_torrserver(action);
     else if (component == "torrserver" && action == "remove")
         remove_torrserver();
+    else if (component == "torrserver" && action == "start")
+        start_torrserver();
+    else if (component == "torrserver" && action == "apply_settings")
+        apply_torrserver_settings();
     else if (component == "torrserver_direct" && (action == "enable" || action == "disable"))
         set_torrserver_direct(action);
     else
