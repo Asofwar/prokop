@@ -754,6 +754,29 @@ function find_pre_snapshot(s) {
 //   superseded         no transaction active and the config is neither: it was
 //                      changed outside this apply, which no longer owns it
 //   state_unreadable   the record itself cannot be read
+// Whether the rule the record changed still runs the candidate's strategy
+// in `text`: an enabled zapret rule whose nfqws_opt is the candidate's. The
+// same definition as config/snapshots.uc runs_strategy.
+function runs_candidate_strategy(s, text) {
+    let m = s.mutation;
+    if (type(m) != "object" || type(m.section) != "string" || type(m.to) != "string") return false;
+    let section = find_section(parse_config(text), m.section);
+    return section != null && resolver.enabled(section) && section.options.action == "zapret" &&
+        type(section.options.nfqws_opt) == "string" && normalize(section.options.nfqws_opt) == normalize(m.to);
+}
+
+// An applied candidate whose configuration was edited since (another rule,
+// a target or the autotune policy, a migration of a package upgrade): the
+// edit left the candidate in effect while the rule the apply changed still
+// runs the candidate's strategy and still owns the target. Its observation
+// and its rollback go on (AT-10); only an edit of that rule's strategy or
+// of the routing to it takes the candidate out.
+function candidate_in_effect(s, text) {
+    if (type(s.target) != "object" || !runs_candidate_strategy(s, text)) return false;
+    let owner = owner_of(parse_config(text), s.target.host, s.target.ip, true);
+    return owner.decided && owner.kind == "zapret" && owner.section == s.mutation.section;
+}
+
 function diagnose(s) {
     let text = fs.readfile(CONFIG_FILE);
     let hash = text != null ? sha_text(text) : "";
@@ -765,18 +788,11 @@ function diagnose(s) {
     let diagnosis = s.unreadable ? "state_unreadable" : length(guards) > 0 || snapshot_operation_active() ? "in_transaction" :
         config_is == "pre_apply" ? "not_applied" : config_is == "candidate" ? "candidate_active" :
         config_is == "other" ? "superseded" : "in_transaction";
-    return { diagnosis, config_is, config_hash: hash, guards, pre_snapshot: find_pre_snapshot(s) };
-}
-
-// Whether the rule the record changed still runs the candidate's strategy
-// in `text`: an enabled zapret rule whose nfqws_opt is the candidate's. The
-// same definition as config/snapshots.uc runs_strategy.
-function runs_candidate_strategy(s, text) {
-    let m = s.mutation;
-    if (type(m) != "object" || type(m.section) != "string" || type(m.to) != "string") return false;
-    let section = find_section(parse_config(text), m.section);
-    return section != null && resolver.enabled(section) && section.options.action == "zapret" &&
-        type(section.options.nfqws_opt) == "string" && normalize(section.options.nfqws_opt) == normalize(m.to);
+    let result = { diagnosis, config_is, config_hash: hash, guards, pre_snapshot: find_pre_snapshot(s) };
+    // Only an applied candidate is observed and rolled back after an edit.
+    if (diagnosis == "superseded" && s.phase == "applied" && s.applied === true)
+        result.candidate_in_effect = candidate_in_effect(s, text);
+    return result;
 }
 
 // A record still waiting for a decision on its candidate, whatever the
@@ -1084,11 +1100,16 @@ function observe(started_at) {
     let s = state_read();
     if (type(s) != "object" || s.unreadable || s.mutation == null || s.started_at !== started_at)
         return { status: "ended", reason: "record_changed" };
-    if (s.phase != "applied") return { status: "ended", reason: "apply_" + as_string(s.phase), phase: s.phase };
+    // Who ended it: an observation rollback, or the operator, a run that
+    // died (AT-15).
+    if (s.phase != "applied")
+        return { status: "ended", reason: "apply_" + as_string(s.phase), phase: s.phase, apply_reason: s.reason || null };
     let d = diagnose(s);
-    if (d.diagnosis == "superseded") return { status: "ended", reason: "config_changed" };
+    // An edit that left the candidate in effect changes nothing (AT-10).
+    let edited = d.diagnosis == "superseded" && d.candidate_in_effect === true;
+    if (d.diagnosis == "superseded" && !edited) return { status: "ended", reason: "config_changed" };
     if (d.diagnosis == "not_applied") return { status: "ended", reason: "not_applied" };
-    if (d.diagnosis != "candidate_active") return { status: "inconclusive", reason: d.diagnosis };
+    if (d.diagnosis != "candidate_active" && !edited) return { status: "inconclusive", reason: d.diagnosis };
     if (service_stopped()) return { status: "inconclusive", reason: "service_stopped" };
     if (runtime_guard_kept()) return { status: "inconclusive", reason: "runtime_guard_active" };
     let action = service_action();
@@ -1164,6 +1185,82 @@ function rollback_unreadable() {
     return result;
 }
 
+// The rollback of an applied candidate whose configuration was edited since
+// while the candidate stayed in effect (candidate_in_effect, AT-10): the
+// snapshot before the apply would discard the edit as well, so only the
+// option the apply changed is set back. The configuration is the edited one
+// with that single change (built and proven as a candidate is), applied
+// through the same transaction as an apply: a snapshot of the edited
+// configuration first, the restore guard, validation, the reload, and the
+// edited configuration put back when the reload fails. The rollback is
+// proven by the configuration, the old strategy running in the rule and
+// the reverted configuration confirmed as last-known-working.
+function rollback_rule(audit, why) {
+    let m = audit.mutation, text = fs.readfile(CONFIG_FILE);
+    let hash = text != null ? sha_text(text) : "";
+    if (!valid_hash(hash)) return { status: "failed", reason: "config_unavailable", phase: audit.phase };
+    if (length(guards_present()) > 0) return { status: "failed", reason: "restore_guard_active", phase: audit.phase };
+    if (uncommitted_changes()) return { status: "failed", reason: "uncommitted_uci_changes", phase: audit.phase };
+    let reverted = build_candidate(text, m.section, m.from);
+    if (reverted.error) return { status: "failed", reason: "rollback_not_started:" + reverted.error, phase: audit.phase };
+    let file = trim(capture([ "mktemp", TMP_DIR + "/prokop-autotune-candidate.XXXXXX" ]).output);
+    if (file == "" || fs.writefile(file, reverted.text) == null) {
+        if (file != "") fs.unlink(file);
+        return { status: "failed", reason: "rollback_not_started:candidate_write_failed", phase: audit.phase };
+    }
+    let recorded = { phase: audit.phase, status: audit.status, reason: audit.reason };
+    audit.phase = "rolling_back";
+    state_write(audit);
+    let trigger = why == "operator_rollback" ? "manual" : "automatic";
+    let keep = as_string(audit.pre_snapshot);
+    let applied = snapshots([ "apply", file, hash, keep ]);
+    // An automatic rollback waits for a lifecycle action, bounded, as
+    // rollback_to does.
+    for (let waited = 0; why != "operator_rollback" && applied.status == "stale" &&
+        applied.reason == "service_action_in_progress" && waited < ROLLBACK_WAIT_SECONDS && !interrupted; waited++) {
+        system("sleep 1");
+        if (service_action() != "service_action_in_progress") applied = snapshots([ "apply", file, hash, keep ]);
+    }
+    fs.unlink(file);
+    audit.rollback = { status: applied.status, reason: applied.reason || null, guard: applied.guard || null, mode: "rule",
+        edit_snapshot: applied.pre_snapshot || null };
+    let now_hash = sha_text(fs.readfile(CONFIG_FILE));
+    if (applied.status != "success" && length(guards_present()) == 0 && now_hash == hash) {
+        // The edited configuration with the candidate is still in place (the
+        // transaction refused, or put it back after a failed reload): the
+        // record stays the applied one.
+        audit.phase = recorded.phase; audit.status = recorded.status; audit.reason = recorded.reason;
+        audit.last_attempt = { status: "failed", reason: "rollback_" + as_string(applied.reason || applied.status), finished_at: now() };
+        state_write(audit);
+        rollback_event(applied, "failed", trigger, audit.selected);
+        return { status: "failed", reason: "rollback_not_started:" + as_string(applied.reason || applied.status), phase: audit.phase };
+    }
+    if (applied.status != "success") {
+        audit.phase = "needs_attention"; audit.status = "needs_attention";
+        audit.reason = why + ":rollback_" + as_string(applied.status);
+        audit.finished_at = now();
+        state_write(audit);
+        rollback_event(applied, audit.phase, trigger, audit.selected);
+        return audit;
+    }
+    let p = recorded_plan(audit, parse_config(fs.readfile(CONFIG_FILE))).plan;
+    let old = verify_production(p, m.from, false);
+    audit.rollback.config_exact = valid_hash(now_hash) && now_hash == reverted.hash;
+    audit.rollback.config_hash_restored = audit.rollback.config_exact;
+    audit.rollback.runtime = old;
+    let confirmed = audit.rollback.config_exact && old.ok && !interrupted ?
+        snapshots([ "confirm-working", "autotune", keep ]) : { status: "not_confirmed" };
+    audit.rollback.lkg = confirmed.status;
+    let ok = audit.rollback.config_exact && old.ok && confirmed.status == "confirmed";
+    audit.phase = ok ? "rolled_back" : "needs_attention";
+    audit.status = audit.phase;
+    audit.reason = !ok && interrupted ? why + ":proof_interrupted" : why;
+    audit.finished_at = now();
+    state_write(audit);
+    rollback_event(applied, audit.phase, trigger, audit.selected);
+    return audit;
+}
+
 // Explicit rollback of a recorded apply (after an interrupted verification,
 // an unconfirmed LKG or on operator request): only while the configuration is
 // still exactly the applied candidate and no transaction is active.
@@ -1186,10 +1283,18 @@ function rollback(observed) {
     // The restore refuses before any change while a failed lifecycle
     // transition keeps its guard; the record stays as it is (UC-019).
     if (runtime_guard_kept()) return { status: "failed", reason: "runtime_guard_active", phase: s.phase };
-    if (d.diagnosis != "candidate_active") return { status: "failed", reason: "rollback_needs_candidate_config", diagnosis: d.diagnosis };
+    // An edit that left the applied candidate in effect: only its option
+    // is set back (AT-10).
+    let edited = d.diagnosis == "superseded" && d.candidate_in_effect === true;
+    if (d.diagnosis != "candidate_active" && !edited)
+        return { status: "failed", reason: "rollback_needs_candidate_config", diagnosis: d.diagnosis };
     if (service_stopped()) return { status: "failed", reason: "service_stopped" };
     let action = service_action();
     if (action != null) return { status: "failed", reason: action };
+    if (edited) {
+        delete s.last_attempt;
+        return rollback_rule(s, observed != null ? "observation_failed" : "operator_rollback");
+    }
     let pre = rollback_source(s, d.pre_snapshot);
     // Nothing is attempted without a source; the record stays as it is.
     if (pre == null) return { status: "failed", reason: "pre_apply_snapshot_missing", phase: s.phase };

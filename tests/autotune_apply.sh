@@ -1639,14 +1639,45 @@ at observe "$id"; json 'a.equal(r.status, "ended"); a.equal(r.phase, "rolled_bac
 at rollback observation "$id"; json 'a.equal(r.status, "failed"); a.equal(r.reason, "nothing_to_roll_back");' "$WORK/out.json"
 ok "25a observation rollback: only the observed apply, pre-apply configuration and runtime back, automatic rollback recorded"
 
-# 25b. The configuration was edited after the apply: the observation ends,
-#      nothing is rolled back.
+# 25b. The configuration was edited after the apply (AT-10): an edit that
+#      leaves the candidate in effect (another option, the autotune policy)
+#      keeps the observation, and its rollback sets back only the option the
+#      apply changed, keeping the edit; an edit of the rule's strategy ends
+#      it, nothing is rolled back.
 reset_apply; plan_ready; at apply "$WORK/plan.json"
 id="$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).started_at)' "$WORK/out.json")"
-sed -i "s/option dns_rewrite_ttl '60'/option dns_rewrite_ttl '45'/" "$PROKOP_CONFIG_FILE"; edited="$(chash)"
+sed -i "s/option dns_rewrite_ttl '60'/option dns_rewrite_ttl '45'/" "$PROKOP_CONFIG_FILE"
+printf "\nconfig autotune 'autotune'\n\toption mode 'auto'\n\toption observation '3h'\n" >> "$PROKOP_CONFIG_FILE"; edited="$(chash)"
+at observe "$id"; json 'a.equal(r.status, "ok", JSON.stringify(r)); a.equal(r.successes, 3);' "$WORK/out.json"
+export PROD_PLAN=reset CONTROL=up; at observe "$id"; unset PROD_PLAN CONTROL
+json 'a.equal(r.status, "failed", JSON.stringify(r)); a.equal(r.reason, "traffic_failed");' "$WORK/out.json"
+[ "$(chash)" = "$edited" ] || fail "an observation check touched the edited configuration"
+rm -rf "$STATE/health"
+at rollback observation "$id"
+json 'a.equal(r.status, "rolled_back", JSON.stringify(r).slice(0, 600)); a.equal(r.reason, "observation_failed");
+  a.equal(r.rollback.mode, "rule"); a.equal(r.rollback.status, "success"); a.equal(r.rollback.config_exact, true);
+  a.equal(r.rollback.lkg, "confirmed"); a.ok(r.rollback.runtime.ok);' "$WORK/out.json"
+grep -q "option dns_rewrite_ttl '45'" "$PROKOP_CONFIG_FILE" || fail "the rollback discarded the edit"
+grep -q "option observation '3h'" "$PROKOP_CONFIG_FILE" || fail "the rollback discarded the policy edit"
+grep -q "option nfqws_opt '$FAKE'" "$PROKOP_CONFIG_FILE" || fail "the rule is not back on its strategy: $(grep nfqws_opt "$PROKOP_CONFIG_FILE")"
+[ "$(dpi_args)" = "$ZAPRET_NFQWS_BIN --qnum=4000 --dpi-desync-fwmark=0x40000000 $FAKE " ] || fail "the rule rollback left the candidate runtime"
+[ "$(lkg)" != "$PRE_LKG" ] || fail "the reverted configuration was not confirmed"
+[ "$(journal)" = "autotune_rollback:success:automatic:multisplit" ] || fail "rule rollback history: $(journal)"
+at observe "$id"; json 'a.equal(r.status, "ended"); a.equal(r.phase, "rolled_back"); a.equal(r.apply_reason, "observation_failed");' "$WORK/out.json"
+# The operator's rollback after an unrelated edit works the same way.
+reset_apply; plan_ready; at apply "$WORK/plan.json"
+sed -i "s/option dns_rewrite_ttl '60'/option dns_rewrite_ttl '45'/" "$PROKOP_CONFIG_FILE"
+at rollback
+json 'a.equal(r.status, "rolled_back", JSON.stringify(r).slice(0, 600)); a.equal(r.reason, "operator_rollback"); a.equal(r.rollback.mode, "rule");' "$WORK/out.json"
+grep -q "option dns_rewrite_ttl '45'" "$PROKOP_CONFIG_FILE" || fail "the operator's rollback discarded the edit"
+# An edit of the rule's strategy takes the candidate out: ended, untouched.
+reset_apply; plan_ready; at apply "$WORK/plan.json"
+id="$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).started_at)' "$WORK/out.json")"
+sed -i "s/--dpi-desync-split-pos=1,midsld/--dpi-desync-split-pos=2/" "$PROKOP_CONFIG_FILE"; edited="$(chash)"
 at observe "$id"; json 'a.equal(r.status, "ended"); a.equal(r.reason, "config_changed");' "$WORK/out.json"
+at rollback observation "$id"; json 'a.equal(r.status, "failed"); a.equal(r.reason, "rollback_needs_candidate_config");' "$WORK/out.json"
 [ "$(chash)" = "$edited" ] || fail "an edited configuration was touched"
-ok "25b configuration edited after the apply -> observation ended, nothing changed"
+ok "25b AT-10 an edit that keeps the candidate in effect keeps the observation and its rollback (only the rule option, the edit stays); an edit of the strategy ends it"
 }
 
 # The groups of cases run at once, each on a fixture of its own (a fresh
