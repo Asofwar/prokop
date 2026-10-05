@@ -894,19 +894,31 @@ function confirmComponentRemoval(button: ComponentActionButton) {
   });
 }
 
-// The values match recommended_settings() in torrserver/manager.uc.
+// The values match recommended_settings() in torrserver/manager.uc, which
+// also sizes the cache for this router (torrserver_recommended_cache_mib).
 function confirmTorrServerSettings() {
+  const cacheMib = Number(
+    store.get().diagnosticsSystemInfo.torrserver_recommended_cache_mib || 0,
+  );
   return confirmAction({
     title: _('Apply the recommended TorrServer settings?'),
     message: _(
       'Prokop sets these TorrServer settings. The others, such as DLNA, the name and the trackers, stay as they are.',
     ),
     consequences: [
-      _('Cache: an eighth of the router memory, 32 to 256 MB'),
+      cacheMib > 0
+        ? _('Cache: %s MB, an eighth of the router memory').replace(
+            '%s',
+            String(cacheMib),
+          )
+        : _('Cache: an eighth of the router memory, 32 to 256 MB'),
       _('Read-ahead 95%, preload 50%'),
       _('25 connections per torrent, disconnect after 30 seconds'),
       _('Responsive mode on'),
       _('UPnP off: TorrServer does not open ports on the router'),
+      _(
+        'If a setting changes, TorrServer restarts its torrents: playback stops for a few seconds',
+      ),
     ],
     confirmLabel: _('Apply'),
   });

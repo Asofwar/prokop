@@ -1133,6 +1133,10 @@ msgstr ""
 msgid "Cache: an eighth of the router memory, 32 to 256 MB"
 msgstr ""
 
+#: src/prokop/tabs/updates/initController.ts:910
+msgid "Cache: %s MB, an eighth of the router memory"
+msgstr ""
+
 #: src/prokop/ui/status.ts:167
 msgid "Calculated"
 msgstr ""
@@ -2914,6 +2918,10 @@ msgstr ""
 
 #: src/prokop/tabs/dashboard/overview.ts:202
 msgid "If the VPN kill-switch is enabled, its sections stay blocked until Prokop is started."
+msgstr ""
+
+#: src/prokop/tabs/updates/initController.ts:920
+msgid "If a setting changes, TorrServer restarts its torrents: playback stops for a few seconds"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4880

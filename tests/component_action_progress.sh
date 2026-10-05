@@ -115,12 +115,16 @@ start() {
   if [ -f "$TEST_WORK/fail-version" ] && [ "$(cat "$TEST_WORK/fail-version")" = "$version" ]; then
     return 0
   fi
-  mkdir -p "$TEST_PROC/4242"
+  mkdir -p "$TEST_PROC/4242/fd" "$TEST_PROC/net"
   printf '%s\0-d\0x\0' "$TEST_BIN" >"$TEST_PROC/4242/cmdline"
   ln -sfn "$TEST_BIN" "$TEST_PROC/4242/exe"
+  # It listens on :8090 (0x1F9A) with the socket of inode 31337.
+  ln -sfn 'socket:[31337]' "$TEST_PROC/4242/fd/3"
+  printf '  sl  local_address rem_address   st tx_queue rx_queue tr tm->when retrnsmt   uid  timeout inode\n   0: 00000000:1F9A 00000000:0000 0A 00000000:00000000 00:00000000 00000000 65536        0 31337 1 0 100 0 0 10 0\n' \
+    >"$TEST_PROC/net/tcp"
   printf '%s' "$version" >"$TEST_WORK/echo"
 }
-stop() { rm -rf "$TEST_PROC/4242" "$TEST_WORK/echo"; }
+stop() { rm -rf "$TEST_PROC/4242" "$TEST_PROC/net/tcp" "$TEST_WORK/echo"; }
 case "$1" in
   start) start ;;
   restart) stop; start ;;

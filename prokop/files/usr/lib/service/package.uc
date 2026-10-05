@@ -30,7 +30,6 @@ const SING_BOX_CRONET = env("PROKOP_SING_BOX_CRONET", "/usr/lib/libcronet.so");
 const SING_BOX_MANAGED_MARKER = env("SB_MANAGED_SERVICE_MARKER", "Prokop managed sing-box service for binary variants");
 const TORRSERVER_DIRECT_INIT = env("PROKOP_TORRSERVER_DIRECT_INIT", "/etc/init.d/prokop-torrserver-direct");
 const TORRSERVER_INIT = env("PROKOP_TORRSERVER_INIT", "/etc/init.d/prokop-torrserver");
-const TORRSERVER_UC = LIB_DIR + "/torrserver/manager.uc";
 const DNS_FAILSAFE_INIT = env("PROKOP_DNS_FAILSAFE_INIT", "/etc/init.d/prokop-dns-failsafe");
 const FW_WATCH_INIT = env("PROKOP_FW_WATCH_INIT", "/etc/init.d/prokop-fw-watch");
 const RC_D_DIR = env("PROKOP_RC_D_DIR", "/etc/rc.d");
@@ -284,7 +283,9 @@ function torrserver_direct_postinst() {
 // TorrServer installed by Prokop runs from the package's init script: a
 // removal stops it with the script that goes. An upgrade leaves it running
 // (procd keeps the instance; streams go on), and a reinstall, whose "prerm
-// remove" stopped it, starts it again when its autostart is on.
+// remove" stopped it, starts it again when its autostart is on. Its
+// settings are the user's: an upgrade never applies Prokop's recommended
+// ones over them (TS-8).
 function stop_torrserver() {
     if (path_exists(TORRSERVER_INIT))
         command_success_from_args([ TORRSERVER_INIT, "stop" ]);
@@ -294,12 +295,6 @@ function torrserver_postinst() {
     if (!path_exists(TORRSERVER_INIT) || !command_success_from_args([ TORRSERVER_INIT, "enabled" ]))
         return;
     command_success_from_args([ TORRSERVER_INIT, "start" ]);
-    // A TorrServer installed before Prokop applied the recommended settings
-    // gets them once, in the background: the upgrade does not wait for it
-    // to answer.
-    if (command_success_from_args([ "ucode", "-L", LIB_DIR, TORRSERVER_UC, "managed-quick" ]))
-        system(command_from_args([ "ucode", "-L", LIB_DIR, TORRSERVER_UC, "apply-recommended-once", "60" ]) +
-            " >/dev/null 2>&1 </dev/null 1000>&- &");
 }
 
 // The boot hook that hands DNS back to dnsmasq when Prokop will not start

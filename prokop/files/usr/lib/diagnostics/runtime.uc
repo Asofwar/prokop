@@ -1019,6 +1019,7 @@ function build_system_info() {
         torrserver_service_running: int(torrserver_status.running || 0),
         torrserver_foreign: int(torrserver_status.foreign || 0),
         torrserver_port: "" + (torrserver_status.port || ""),
+        torrserver_recommended_cache_mib: int(torrserver_status.recommended_cache_mib || 0),
         torrserver_direct_available: int(torrserver_direct_status.available || 0),
         torrserver_direct_enabled: int(torrserver_direct_status.enabled || 0),
         torrserver_direct_active: int(torrserver_direct_status.active || 0),

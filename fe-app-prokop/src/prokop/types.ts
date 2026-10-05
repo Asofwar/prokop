@@ -1030,6 +1030,7 @@ export namespace Prokop {
     torrserver_service_running: 0 | 1;
     torrserver_foreign: 0 | 1;
     torrserver_port: string;
+    torrserver_recommended_cache_mib?: number;
     torrserver_direct_available: 0 | 1;
     torrserver_direct_enabled: 0 | 1;
     torrserver_direct_active: 0 | 1;

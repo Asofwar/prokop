@@ -17,8 +17,9 @@ const MARKER = DIR + "/prokop-managed.json";
 // TorrServer's own directory (its database), the only one its unprivileged
 // user may write (/etc/init.d/prokop-torrserver, TS-1).
 const DATA_DIR = DIR + "/data";
-// Written once the recommended settings were applied: Prokop applies them
-// once per TorrServer, and settings changed after that stay.
+// Written when the recommended settings were applied: on the first install
+// of a TorrServer that had no database yet, or by the card's button. Prokop
+// never applies them on its own after that (TS-8).
 const SETTINGS_STAMP = DIR + "/prokop-settings-applied";
 const INIT = getenv("PROKOP_TORRSERVER_INIT") || "/etc/init.d/prokop-torrserver";
 const PORT = "8090";
@@ -119,6 +120,67 @@ function processes() {
     return { own, other };
 }
 
+// Settings that suit a router: the RAM cache sized to the router's memory
+// (an eighth of it to the nearest 16 MiB, 32 to 256 MiB), reading ahead and
+// preloading like TorrServer's own recommendations for weak devices, and
+// the default connection count. UPnP is off: TorrServer runs on the router
+// itself, and must not open the router's WAN to peers through miniupnpd
+// (TS-1). What is not listed stays as the user set it.
+function recommended_settings() {
+    let total_kib = 0;
+    for (let line in split(read(MEMINFO_PATH), "\n")) {
+        let m = match(line, /^MemTotal:[ \t]+([0-9]+)/);
+        if (m != null) total_kib = int(m[1]);
+    }
+    let cache_mib = total_kib > 0 ? int(total_kib / 1024.0 / 8 / 16 + 0.5) * 16 : 64;
+    if (cache_mib < 32) cache_mib = 32;
+    if (cache_mib > 256) cache_mib = 256;
+    return {
+        CacheSize: cache_mib * 1024 * 1024,
+        ReaderReadAHead: 95,
+        PreloadCache: 50,
+        ConnectionsLimit: 25,
+        TorrentDisconnectTimeout: 30,
+        ResponsiveMode: true,
+        DisableUPNP: true
+    };
+}
+
+// The inodes of the sockets listening on TorrServer's port, from the
+// kernel's tables (hex port, state 0A = LISTEN).
+function listener_inodes() {
+    let port = sprintf(":%04X", int(PORT));
+    let inodes = {};
+    for (let table in [ "tcp", "tcp6" ]) {
+        for (let line in split(read(PROC_DIR + "/net/" + table), "\n")) {
+            let fields = split(trim(line), /[ \t]+/);
+            if (length(fields) < 10 || fields[3] != "0A")
+                continue;
+            let local = fields[1];
+            if (substr(local, length(local) - length(port)) == port && match(fields[9], /^[1-9][0-9]*$/) != null)
+                inodes[fields[9]] = true;
+        }
+    }
+    return inodes;
+}
+
+// Whether TorrServer's port is held by one of `pids` (TorrServer of BIN):
+// the answer on 127.0.0.1:8090 is then this TorrServer's, not another one's
+// that took the port first (TS-10).
+function port_owned_by(pids) {
+    let inodes = listener_inodes();
+    if (length(keys(inodes)) == 0)
+        return false;
+    for (let pid in pids) {
+        for (let fd in fs.glob(PROC_DIR + "/" + pid + "/fd/*")) {
+            let m = match(text(fs.readlink(fd)), /^socket:\[([0-9]+)\]$/);
+            if (m != null && inodes[m[1]])
+                return true;
+        }
+    }
+    return false;
+}
+
 function status() {
     let value = marker();
     let is_managed = managed(false);
@@ -133,7 +195,9 @@ function status() {
         // binary at Prokop's path without (or not matching) its marker.
         foreign: length(found.other) > 0 || (binary_present && !is_managed) ? 1 : 0,
         port: PORT,
-        dir: DIR
+        dir: DIR,
+        // For the card's confirmation of the recommended settings.
+        recommended_cache_mib: int(recommended_settings().CacheSize / 1048576)
     };
 }
 
@@ -241,42 +305,24 @@ function http_post(url, body) {
     return status == 0 ? text(data) : null;
 }
 
-// Settings that suit a router: the RAM cache sized to the router's memory
-// (an eighth of it to the nearest 16 MiB, 32 to 256 MiB), reading ahead and
-// preloading like TorrServer's own recommendations for weak devices, and
-// the default connection count. UPnP is off: TorrServer runs on the router
-// itself, and must not open the router's WAN to peers through miniupnpd
-// (TS-1). What is not listed stays as the user set it.
-function recommended_settings() {
-    let total_kib = 0;
-    for (let line in split(read(MEMINFO_PATH), "\n")) {
-        let m = match(line, /^MemTotal:[ \t]+([0-9]+)/);
-        if (m != null) total_kib = int(m[1]);
-    }
-    let cache_mib = total_kib > 0 ? int(total_kib / 1024.0 / 8 / 16 + 0.5) * 16 : 64;
-    if (cache_mib < 32) cache_mib = 32;
-    if (cache_mib > 256) cache_mib = 256;
-    return {
-        CacheSize: cache_mib * 1024 * 1024,
-        ReaderReadAHead: 95,
-        PreloadCache: 50,
-        ConnectionsLimit: 25,
-        TorrentDisconnectTimeout: 30,
-        ResponsiveMode: true,
-        DisableUPNP: true
-    };
-}
-
 // Reads TorrServer's settings, puts the recommended values over them and
 // writes them back whole (its "set" replaces every setting); prints what
-// was set. The settings are read back to prove it.
+// was set. The settings are read back to prove it. TorrServer's "set" drops
+// every torrent and reconnects: when the values are already there, nothing
+// is written and no playback is cut.
 function apply_recommended() {
     let current = parse_object(http_post(API_URL + "/settings", "{\"action\":\"get\"}"));
     if (current == null)
         return null;
     let wanted = recommended_settings();
-    for (let key, value in wanted)
+    let differs = false;
+    for (let key, value in wanted) {
+        if (current[key] != value)
+            differs = true;
         current[key] = value;
+    }
+    if (!differs)
+        return wanted;
     if (http_post(API_URL + "/settings", sprintf("%J", { action: "set", sets: current })) == null)
         return null;
     let check = parse_object(http_post(API_URL + "/settings", "{\"action\":\"get\"}"));
@@ -288,25 +334,25 @@ function apply_recommended() {
     return wanted;
 }
 
-// Waits up to `seconds` for the TorrServer of BIN to run and answer on its
-// port with `version` (its /echo answers the version it runs).
+// Waits up to `seconds` for the TorrServer of BIN to run, hold its port and
+// answer on it with `version` (its /echo answers the version it runs).
 function wait_running(seconds, version) {
     for (let i = 0; i < seconds; i++) {
-        if (length(processes().own) > 0 && trim(http_body(ECHO_URL)) == text(version))
+        let own = processes().own;
+        if (length(own) > 0 && trim(http_body(ECHO_URL)) == text(version) && port_owned_by(own))
             return true;
         system("sleep 1");
     }
     return false;
 }
 
-// The recommended settings, once: nothing when the stamp says they were
-// applied, otherwise (after waiting up to `seconds` for the TorrServer
-// Prokop installed to run) applied and stamped. "applied", "already", or
-// null on failure.
-function apply_recommended_once(seconds, force) {
-    if (!force && fs.stat(SETTINGS_STAMP) != null)
-        return "already";
-    if (!managed(false))
+// The recommended settings for the TorrServer Prokop installed, once it runs
+// and holds its port (after waiting up to `seconds`), and stamped. Only on
+// request: the first install of a TorrServer without a database, or the
+// card's button. Never into a TorrServer Prokop does not own (TS-10).
+// "applied", or null on failure.
+function apply_recommended_now(seconds) {
+    if (!managed(false) || status().foreign)
         return null;
     let version = text((marker() || {}).version);
     if (!wait_running(seconds > 0 ? seconds : 1, version))
@@ -350,15 +396,9 @@ else if (mode == "apply-recommended") {
     if (applied == null) exit(1);
     print(sprintf("%J\n", applied));
 }
-else if (mode == "apply-recommended-once") {
-    // apply-recommended-once [seconds to wait for TorrServer to run]
-    let result = apply_recommended_once(int(ARGV[1] || "0"), false);
-    if (result == null) exit(1);
-    print(result, "\n");
-}
 else if (mode == "apply-recommended-now") {
-    // The settings again, stamp or not (the card's button).
-    if (apply_recommended_once(1, true) == null) exit(1);
+    // apply-recommended-now [seconds to wait for TorrServer to run]
+    if (apply_recommended_now(int(ARGV[1] || "1")) == null) exit(1);
     print("applied\n");
 }
 else if (mode == "write-marker")

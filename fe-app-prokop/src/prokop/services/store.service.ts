@@ -226,6 +226,8 @@ export interface StoreType {
     torrserver_service_running: number;
     torrserver_foreign: number;
     torrserver_port: string;
+    // The cache the recommended settings give TorrServer on this router.
+    torrserver_recommended_cache_mib?: number;
     torrserver_direct_available: number;
     torrserver_direct_enabled: number;
     torrserver_direct_active: number;

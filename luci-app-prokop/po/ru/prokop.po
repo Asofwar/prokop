@@ -815,6 +815,9 @@ msgstr "Путь к файлу кэша не может быть пустым"
 msgid "Cache: an eighth of the router memory, 32 to 256 MB"
 msgstr "Кэш: восьмая часть памяти роутера, от 32 до 256 МБ"
 
+msgid "Cache: %s MB, an eighth of the router memory"
+msgstr "Кэш: %s МБ, восьмая часть памяти роутера"
+
 msgid "Calculated"
 msgstr "Расчёт"
 
@@ -2038,6 +2041,9 @@ msgstr "Таймаут простоя"
 
 msgid "If the VPN kill-switch is enabled, its sections stay blocked until Prokop is started."
 msgstr "Если включён VPN kill-switch, его секции остаются заблокированными, пока Prokop не запущен."
+
+msgid "If a setting changes, TorrServer restarts its torrents: playback stops for a few seconds"
+msgstr "Если настройка меняется, TorrServer перезапускает торренты: просмотр прервётся на несколько секунд"
 
 msgid "ignored: %s is used instead"
 msgstr "не используется: вместо него используется %s"

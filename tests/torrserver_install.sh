@@ -126,18 +126,23 @@ start() {
   if [ -f "$TEST_WORK/fail-version" ] && [ "$(cat "$TEST_WORK/fail-version")" = "$version" ]; then
     return 0
   fi
-  mkdir -p "$TEST_PROC/4242"
+  mkdir -p "$TEST_PROC/4242/fd" "$TEST_PROC/net"
   printf '%s\0-d\0x\0' "$TEST_BIN" >"$TEST_PROC/4242/cmdline"
   ln -sfn "$TEST_BIN" "$TEST_PROC/4242/exe"
+  # It listens on :8090 (0x1F9A) with the socket of inode 31337.
+  ln -sfn 'socket:[31337]' "$TEST_PROC/4242/fd/3"
+  printf '  sl  local_address rem_address   st tx_queue rx_queue tr tm->when retrnsmt   uid  timeout inode\n   0: 00000000:1F9A 00000000:0000 0A 00000000:00000000 00:00000000 00000000 65536        0 31337 1 0 100 0 0 10 0\n' \
+    >"$TEST_PROC/net/tcp"
   printf '%s' "$version" >"$TEST_WORK/echo"
   # TorrServer's first start writes its defaults to its database.
-  if [ ! -e "$(dirname "$TEST_BIN")/config.db" ]; then
-    : >"$(dirname "$TEST_BIN")/config.db"
+  if [ ! -e "$(dirname "$TEST_BIN")/data/config.db" ]; then
+    mkdir -p "$(dirname "$TEST_BIN")/data"
+    : >"$(dirname "$TEST_BIN")/data/config.db"
     printf '{"CacheSize":67108864,"ReaderReadAHead":95,"PreloadCache":50,"ConnectionsLimit":25,"TorrentDisconnectTimeout":30,"ResponsiveMode":false,"EnableDLNA":true,"FriendlyName":"tv"}' \
       >"$TEST_WORK/ts-settings.json"
   fi
 }
-stop() { rm -rf "$TEST_PROC/4242" "$TEST_WORK/echo"; }
+stop() { rm -rf "$TEST_PROC/4242" "$TEST_PROC/net/tcp" "$TEST_WORK/echo"; }
 case "$1" in
   start) start ;;
   restart) stop; start ;;
@@ -259,7 +264,8 @@ done
 printf 'MemTotal:        1006668 kB\n' >"$WORK/meminfo"
 
 # --- 2. Update ------------------------------------------------------------------
-: >"$TS_DIR/config.db"
+# A TorrServer runs with its own settings; requests to its API are counted.
+: >"$WORK/settings-requests"
 # A setting the user changed survives an update: the settings are applied once.
 node -e 'const f = process.argv[1], fs = require("fs"); const v = JSON.parse(fs.readFileSync(f, "utf8")); v.CacheSize = 33554432; fs.writeFileSync(f, JSON.stringify(v));' "$WORK/ts-settings.json"
 publish MatriX.146
@@ -269,8 +275,9 @@ action torrserver install
 expect_success "update"
 bin_reports MatriX.146 "update"
 [ ! -e "$BIN.prokop-old" ] && [ ! -e "$MARKER.prokop-old" ] || fail "a completed update must not keep the previous binary"
-[ -e "$TS_DIR/config.db" ] || fail "an update must keep TorrServer's database"
+[ -e "$TS_DIR/data/config.db" ] || fail "an update must keep TorrServer's database"
 [ "$(setting CacheSize)" = 33554432 ] || fail "an update must not apply the recommended settings over the user's: $(cat "$WORK/ts-settings.json")"
+grep -Fq '"set"' "$WORK/settings-requests" && fail "an update must not write TorrServer's settings (a set drops every torrent)"
 
 # --- 3. An update that does not start puts the previous release back ------------------
 publish MatriX.147
@@ -325,22 +332,27 @@ cp "$WORK/saved-bin" "$BIN"
 # --- 6. Start: the installed release runs again ---------------------------------------
 "$WORK/bin/torrserver-init" stop
 [ "$(status_field running)" = 0 ] || fail "fixture: TorrServer did not stop"
-# A TorrServer installed before Prokop applied the settings (no stamp)
-# gets them once it runs; a stopped one cannot take them.
+# A TorrServer installed before 2.23 (no stamp) whose user changed its
+# settings: a start leaves them alone and writes nothing (TS-8).
 rm -f "$TS_DIR/prokop-settings-applied"
-ucode -L "$LIB" "$MANAGER" apply-recommended-once 1 >/dev/null && fail "a stopped TorrServer cannot take the recommended settings"
+: >"$WORK/settings-requests"
 action torrserver start
 expect_success "start"
-[ "$(setting CacheSize)" = 134217728 ] && [ "$(setting EnableDLNA)" = true ] || fail "start must apply the recommended settings once and keep the others: $(cat "$WORK/ts-settings.json")"
-[ -e "$TS_DIR/prokop-settings-applied" ] || fail "applied settings must be stamped"
-# After that, a setting the user changes stays.
-node -e 'const f = process.argv[1], fs = require("fs"); const v = JSON.parse(fs.readFileSync(f, "utf8")); v.CacheSize = 33554432; fs.writeFileSync(f, JSON.stringify(v));' "$WORK/ts-settings.json"
-[ "$(ucode -L "$LIB" "$MANAGER" apply-recommended-once 1)" = already ] || fail "stamped settings must not be applied again"
-[ "$(setting CacheSize)" = 33554432 ] || fail "settings the user changed must stay"
+[ "$(setting CacheSize)" = 33554432 ] || fail "start must not apply the recommended settings over the user's: $(cat "$WORK/ts-settings.json")"
+[ ! -s "$WORK/settings-requests" ] || fail "start must not touch TorrServer's settings: $(cat "$WORK/settings-requests")"
+[ ! -e "$TS_DIR/prokop-settings-applied" ] || fail "start must not stamp settings it did not apply"
 # The card's button applies them again on request.
 action torrserver apply_settings
 expect_success "recommended settings button"
 [ "$(setting CacheSize)" = 134217728 ] && [ "$(setting EnableDLNA)" = true ] || fail "the button must apply the recommended settings and keep the others: $(cat "$WORK/ts-settings.json")"
+[ -e "$TS_DIR/prokop-settings-applied" ] || fail "applied settings must be stamped"
+# Pressed again with the values in place: nothing is written, no torrent
+# is dropped (TorrServer's set reconnects every torrent).
+: >"$WORK/settings-requests"
+action torrserver apply_settings
+expect_success "recommended settings button, values in place"
+grep -Fq '"set"' "$WORK/settings-requests" && fail "settings already in place must not be written again: $(cat "$WORK/settings-requests")"
+grep -Fq '"get"' "$WORK/settings-requests" || fail "the button must read the settings"
 "$WORK/bin/torrserver-init" stop
 action torrserver apply_settings
 expect_failure "recommended settings while stopped" "TorrServer is stopped"
@@ -351,11 +363,40 @@ action torrserver start
 expect_success "start while running"
 [ "$(field changed)" = 0 ] || fail "starting a running TorrServer must change nothing"
 
+# --- 6b. TorrServer's port held by another program (TS-10) ---------------------------
+# Ours runs, but another process holds :8090 and answers /echo: what answers
+# is not ours, so ours is not taken as started and gets no settings.
+"$WORK/bin/torrserver-init" stop
+"$WORK/bin/torrserver-init" start
+ln -sfn 'socket:[999]' "$PROC/4242/fd/3"
+ucode -L "$LIB" "$MANAGER" wait-running 1 MatriX.146 && fail "a port held by another process must not read as ours"
+cp "$WORK/ts-settings.json" "$WORK/settings-before"
+ucode -L "$LIB" "$MANAGER" apply-recommended-now 1 >/dev/null && fail "settings must not go to whatever holds the port"
+cmp -s "$WORK/ts-settings.json" "$WORK/settings-before" || fail "the settings of what holds the port must stay"
+ln -sfn 'socket:[31337]' "$PROC/4242/fd/3"
+ucode -L "$LIB" "$MANAGER" wait-running 1 MatriX.146 || fail "ours holding its port must read as running"
+# Another TorrServer process: Start and the button refuse, nothing is written.
+mkdir -p "$PROC/778"
+printf '/usr/bin/torrserver\0' >"$PROC/778/cmdline"
+ln -sfn /usr/bin/torrserver "$PROC/778/exe"
+: >"$WORK/settings-requests"
+action torrserver apply_settings
+expect_failure "recommended settings beside another TorrServer" "Another TorrServer is installed or running"
+ucode -L "$LIB" "$MANAGER" apply-recommended-now 1 >/dev/null && fail "settings must not be applied beside another TorrServer"
+[ ! -s "$WORK/settings-requests" ] || fail "nothing may be written beside another TorrServer: $(cat "$WORK/settings-requests")"
+"$WORK/bin/torrserver-init" stop
+action torrserver start
+expect_failure "start beside another TorrServer" "Another TorrServer is installed or running"
+grep -Fq "init" "$WORK/events" && fail "start beside another TorrServer must not touch the service"
+rm -rf "${PROC:?}/778"
+action torrserver start
+expect_success "start after the other TorrServer went"
+
 # --- 7. Removal keeps the settings ----------------------------------------------------
 action torrserver remove
 expect_success "remove"
 [ ! -e "$BIN" ] && [ ! -e "$MARKER" ] || fail "remove must delete the binary and its marker"
-[ -e "$TS_DIR/config.db" ] || fail "remove must keep TorrServer's database"
+[ -e "$TS_DIR/data/config.db" ] || fail "remove must keep TorrServer's database"
 if ! grep -Fxq "init stop" "$WORK/events" || ! grep -Fxq "init disable" "$WORK/events"; then
   fail "remove must stop and disable the service"
 fi
@@ -364,6 +405,17 @@ expect_success "remove again"
 [ "$(field changed)" = 0 ] || fail "a second removal must change nothing"
 action torrserver start
 expect_failure "start without TorrServer" "TorrServer is not installed"
+
+# Installed again over the database that stayed: its settings are the
+# user's, and the install leaves them alone (TS-8).
+node -e 'const f = process.argv[1], fs = require("fs"); const v = JSON.parse(fs.readFileSync(f, "utf8")); v.CacheSize = 33554432; fs.writeFileSync(f, JSON.stringify(v));' "$WORK/ts-settings.json"
+: >"$WORK/settings-requests"
+action torrserver install
+expect_success "install over a kept database"
+[ "$(setting CacheSize)" = 33554432 ] || fail "an install over a kept database must keep its settings: $(cat "$WORK/ts-settings.json")"
+[ ! -s "$WORK/settings-requests" ] || fail "an install over a kept database must not touch its settings"
+action torrserver remove
+expect_success "remove after the reinstall"
 
 # --- 8. A TorrServer installed by other means ----------------------------------------
 # One that runs from elsewhere.
