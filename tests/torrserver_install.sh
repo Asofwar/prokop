@@ -549,4 +549,9 @@ action torrserver remove
 expect_failure "removal of a foreign binary" "was not installed by Prokop"
 [ -e "$BIN" ] || fail "a foreign binary must not be removed"
 
+# An upgrade of Prokop (the package's postinst) never applies the
+# recommended settings over the user's (TS-8).
+grep -q 'apply-recommended' "$ROOT_DIR/prokop/files/usr/lib/service/package.uc" &&
+  fail "the package's postinst must not apply TorrServer settings"
+
 printf 'torrserver install checks passed\n'
