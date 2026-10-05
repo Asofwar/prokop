@@ -3127,8 +3127,13 @@ function reserve_section_outbound_tags(sections, taken) {
 
         for (let urltest_id in connections.urltests(section))
             taken[urltest_outbound_tag(section[".name"], urltest_id)] = true;
-        for (let group_id in connections.priority_groups(section))
+        for (let group_id in connections.priority_groups(section)) {
             taken[priority_outbound_tag(section[".name"], group_id)] = true;
+            // Its payload probe selector (C15): a node of the same name
+            // gets another tag instead of a duplicate one (SB-12).
+            if (connections.priority_group_payload_check(section, group_id))
+                taken[priority_outbound_tag(section[".name"], group_id) + "-probe"] = true;
+        }
     }
 }
 

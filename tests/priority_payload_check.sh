@@ -87,6 +87,25 @@ if ((groups["proxy-priority-pg_other-out"] || {}).payload_check !== false)
     fail("a group without payload_check is marked as checking payload");
 ' "$WORK_DIR/config-1.json" "$WORK_DIR/config-1.json.section-cache/proxy.json" || fail "probe path generation"
 
+# 1b. A node named like the probe selector (here a JSON outbound; a
+#     subscription's node names are tags too) gets another tag: a duplicate
+#     tag failed the whole generation (SB-12).
+fixture 1 | ucode -e '
+let f = json(require("fs").readfile("/dev/stdin"));
+f.section[0].outbound_jsons = [ sprintf("%J", { type: "direct", tag: "proxy-priority-pg_main-out-probe" }) ];
+print(sprintf("%J\n", f));' >"$WORK_DIR/fixture-clash.json"
+mkdir -p "$WORK_DIR/config-clash.json.section-cache"
+ucode -L "$PROKOP_LIB" "$GENERATOR_UC" generate-config-fixture \
+  "$WORK_DIR/fixture-clash.json" "$WORK_DIR/config-clash.json" "127.0.0.1" >"$WORK_DIR/generate.log" 2>&1 ||
+  fail "a node named like the probe selector failed the generation: $(cat "$WORK_DIR/generate.log")"
+ucode -e '
+let config = json(require("fs").readfile(ARGV[0]));
+let tags = map(config.outbounds, (o) => o.tag);
+let probe = filter(config.outbounds, (o) => o.tag == "proxy-priority-pg_main-out-probe");
+if (length(probe) != 1 || probe[0].type != "selector" || index(tags, "proxy-priority-pg_main-out-probe-1") < 0)
+    die("the probe selector lost its tag to the node: " + join(" ", tags) + "\n");
+' "$WORK_DIR/config-clash.json" || fail "probe tag reservation"
+
 # 2. Without payload_check nothing is added.
 generate 0
 if grep -q -- '-probe' "$WORK_DIR/config-0.json"; then fail "a probe was generated without payload_check"; fi
