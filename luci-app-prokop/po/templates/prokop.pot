@@ -3618,6 +3618,74 @@ msgstr ""
 msgid "keeping the previous protection"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js
+msgid "Prokop has not applied the lists of its configuration yet"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js
+msgid "the configuration changed since Prokop last applied it; reload Prokop first"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js
+msgid "the firewall policy could not be built"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js
+msgid "the firewall refused the built policy"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js
+msgid "the firewall did not take the policy"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js
+msgid "could not save {file}; the policy is active until the next firewall reload"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js
+msgid "dnsmasq is not managed by Prokop (dont_touch_dhcp): protected domains are guarded by the firewall and FakeIP only"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js
+msgid "{count} addresses of excluded devices cannot be read; those devices stay blocked through DNS while Prokop is stopped"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js
+msgid "the excluded devices form more than {groups} groups with different blocked names; {count} device addresses stay blocked through DNS while Prokop is stopped"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js
+msgid "could not save the block lists of excluded devices; they stay blocked through DNS while Prokop is stopped"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js
+msgid "could not remove {file}"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js
+msgid "could not write {file}"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js
+msgid "the sing-box configuration {file} cannot be read"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js
+msgid "protected sections {sections} are not routed by the running Prokop yet (subscription not loaded), so their domains are unknown"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js
+msgid "dnsmasq could not be refreshed"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js
+msgid "the details are in the system log"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js
+msgid "Excluded devices"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5796
 msgid "Keyword must not contain spaces or commas"
 msgstr ""

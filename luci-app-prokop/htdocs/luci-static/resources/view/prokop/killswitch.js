@@ -104,10 +104,115 @@ function format(template, values) {
   );
 }
 
+// The details the router writes in English (killswitch/runtime.uc), in the
+// interface language. A detail this page does not know is not shown in
+// English: it points to the system log, where the router writes it (FE-15).
+const KNOWN_DETAILS = [
+  [
+    /^Prokop has not applied the list generation of its configuration yet$/,
+    () => _("Prokop has not applied the lists of its configuration yet"),
+  ],
+  [
+    /^the configuration changed since Prokop last applied it; reload Prokop first$/,
+    () =>
+      _(
+        "the configuration changed since Prokop last applied it; reload Prokop first",
+      ),
+  ],
+  [/^nft render failed/, () => _("the firewall policy could not be built")],
+  [
+    /^rendered kill-switch policy failed nft validation$/,
+    () => _("the firewall refused the built policy"),
+  ],
+  [
+    /^kill-switch policy could not be applied$/,
+    () => _("the firewall did not take the policy"),
+  ],
+  [
+    /^could not save (\S+); the live policy is active until the next firewall reload$/,
+    (m) =>
+      format(
+        _(
+          "could not save {file}; the policy is active until the next firewall reload",
+        ),
+        { file: m[1] },
+      ),
+  ],
+  [
+    /^dnsmasq is not managed by Prokop \(dont_touch_dhcp\)/,
+    () =>
+      _(
+        "dnsmasq is not managed by Prokop (dont_touch_dhcp): protected domains are guarded by the firewall and FakeIP only",
+      ),
+  ],
+  [
+    /^([0-9]+) excluded device addresses of sections that exempt their excluded devices cannot be read/,
+    (m) =>
+      format(
+        _(
+          "{count} addresses of excluded devices cannot be read; those devices stay blocked through DNS while Prokop is stopped",
+        ),
+        { count: m[1] },
+      ),
+  ],
+  [
+    /^the excluded devices form more than ([0-9]+) groups .*; ([0-9]+) device addresses stay blocked/,
+    (m) =>
+      format(
+        _(
+          "the excluded devices form more than {groups} groups with different blocked names; {count} device addresses stay blocked through DNS while Prokop is stopped",
+        ),
+        { groups: m[1], count: m[2] },
+      ),
+  ],
+  [
+    /^could not save the block lists of excluded devices/,
+    () =>
+      _(
+        "could not save the block lists of excluded devices; they stay blocked through DNS while Prokop is stopped",
+      ),
+  ],
+  [
+    /^could not (remove|write) (\S+)$/,
+    (m) =>
+      format(
+        m[1] === "remove" ? _("could not remove {file}") : _("could not write {file}"),
+        { file: m[2] },
+      ),
+  ],
+  [
+    /^sing-box config (\S+) is not readable$/,
+    (m) => format(_("the sing-box configuration {file} cannot be read"), { file: m[1] }),
+  ],
+  [
+    /^protected section\(s\) (.+) not routed by the running Prokop yet/,
+    (m) =>
+      format(
+        _(
+          "protected sections {sections} are not routed by the running Prokop yet (subscription not loaded), so their domains are unknown",
+        ),
+        { sections: m[1] },
+      ),
+  ],
+  [
+    /^dnsmasq could not be refreshed$/,
+    () => _("dnsmasq could not be refreshed"),
+  ],
+];
+
+function detailText(detail) {
+  const text = `${detail || ""}`.trim();
+  for (const [pattern, translate] of KNOWN_DETAILS) {
+    const match = text.match(pattern);
+    if (match) return translate(match);
+  }
+  return _("the details are in the system log");
+}
+
 // The page says in the interface language what the router recorded as a
 // code with parameters (killswitch/runtime.uc, FE-10). A detail is the
-// router's own text, shown as it is; a code this page does not know falls
-// back to the English message.
+// router's English text, translated where this page knows it (FE-15); a
+// code this page does not know falls back to the English message.
 function codedMessage(item, fallback) {
   const p = item && typeof item === "object" ? item : {};
   const keep = _("keeping the previous protection");
@@ -117,11 +222,12 @@ function codedMessage(item, fallback) {
     runtime_table_missing: () =>
       `${format(_("Prokop runtime table {table} is not present"), p)}; ${keep}`,
     runtime_behind: () =>
-      `${_("The runtime does not match the configuration yet")}: ${p.detail}; ${keep}`,
+      `${_("The runtime does not match the configuration yet")}: ${detailText(p.detail)}; ${keep}`,
     nft_failed: () =>
-      `${_("The firewall policy could not be applied")}: ${p.detail}; ${keep}`,
+      `${_("The firewall policy could not be applied")}: ${detailText(p.detail)}; ${keep}`,
     teardown_incomplete: () => _("Protection could not be removed completely"),
-    unexpected: () => `${_("Unexpected failure")}: ${p.detail}`,
+    unexpected: () =>
+      `${_("Unexpected failure")}: ${_("the details are in the system log")}`,
     legacy_adopt_failed: () => format(_("Could not adopt {file}"), p),
     legacy_saved_policy: () =>
       _(
@@ -133,7 +239,10 @@ function codedMessage(item, fallback) {
         p,
       ),
     dns_list_failed: () =>
-      `${p.detail}; ${_("the previous DNS block list stays in place")}`,
+      `${detailText(p.detail)}; ${_("the previous DNS block list stays in place")}`,
+    dns_warning: () => detailText(p.detail),
+    exempt: () =>
+      `${_("Excluded devices")}: ${detailText(p.detail)}`,
     uncovered_matchers: () =>
       format(
         _(
@@ -149,9 +258,9 @@ function codedMessage(item, fallback) {
         p,
       ),
     standby_scope: () =>
-      `${_("The standby resolver for a dead sing-box blocks the protected names only, not those of the other VPN sections")}: ${p.detail}`,
+      `${_("The standby resolver for a dead sing-box blocks the protected names only, not those of the other VPN sections")}: ${detailText(p.detail)}`,
     standby_unreadable: () =>
-      `${_("The standby resolver for a dead sing-box")}: ${p.detail}`,
+      `${_("The standby resolver for a dead sing-box")}: ${detailText(p.detail)}`,
     standby_client_limited: () =>
       format(
         _(
