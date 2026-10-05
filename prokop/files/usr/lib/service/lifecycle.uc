@@ -1247,11 +1247,16 @@ function start_main() {
         // the temporary sing-box first downloads its subscription through
         // the rule it is configured to download through; the rule then
         // starts with its nodes instead of deferred.
+        // Lists set to download through a rule download only through it:
+        // without the temporary sing-box every list download would only
+        // wait for its timeouts and fallbacks first (LC-12).
         let bootstrap = module_capture(SINGBOX_UC, [ "list-bootstrap-start", subscription_deferred_sections ]);
-        if (bootstrap.status == 0)
-            subscription_deferred_sections = trim(bootstrap.output);
-        else
-            log_message("The temporary sing-box for the list download did not start; the download through the rule's proxy needs it", "warn");
+        if (bootstrap.status != 0) {
+            module_success(SINGBOX_UC, [ "list-bootstrap-stop" ]);
+            log_message("The temporary sing-box for the list download through the rule's proxy did not start, and the lists download only through that proxy. Aborted.", "fatal");
+            return 1;
+        }
+        subscription_deferred_sections = trim(bootstrap.output);
         let prepared = module_success(UPDATES_UC, [ "prepare-list-cache" ]);
         if (!module_success(SINGBOX_UC, [ "list-bootstrap-stop" ])) {
             log_message("The temporary sing-box for the list download did not stop. Aborted.", "fatal");

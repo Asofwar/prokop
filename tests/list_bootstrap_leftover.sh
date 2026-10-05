@@ -141,6 +141,8 @@ let mode = "" + (ARGV[0] ?? "");
 # service/state.uc is the real module.
 cat >"$LIB/service/state.uc" <<UC
 $fake_header
+if (mode == "has-list-update-sources")
+    exit(getenv("LIST_SOURCES") == "1" ? 0 : 1);
 exit(real("service/state.uc"));
 UC
 # singbox/runtime.uc: list-bootstrap-stop is the real one.
@@ -148,17 +150,26 @@ mkdir -p "$LIB/singbox"
 cat >"$LIB/singbox/runtime.uc" <<UC
 $fake_header
 ev("singbox " + mode);
+if (mode == "list-bootstrap-start")
+    exit(getenv("BOOTSTRAP_FAIL") == "1" ? 1 : 0);
 exit(mode == "list-bootstrap-stop" ? real("singbox/runtime.uc") : 0);
 UC
-# The configuration check fails: the start ends right after its gates.
+# The configuration check fails: the start ends right after its gates
+# (unless CHECK_PASS=1).
 mkdir -p "$LIB/config"
 cat >"$LIB/config/validator.uc" <<UC
 $fake_header
 ev("validator " + mode);
-exit(mode == "check-requirements" ? 1 : 0);
+exit(mode == "check-requirements" && getenv("CHECK_PASS") != "1" ? 1 : 0);
+UC
+mkdir -p "$LIB/components"
+cat >"$LIB/components/updates.uc" <<UC
+$fake_header
+ev("updates " + mode);
+exit(mode == "runtime-list-cache-active" || mode == "restore-list-cache" ? 1 : 0);
 UC
 for module in service/reload service/ui subscription/cache singbox/priority singbox/dns_failover singbox/ruleset_cache \
-  components/updates autotune/manager notify/manager providers/zapret/runtime providers/zapret2/runtime \
+  autotune/manager notify/manager providers/zapret/runtime providers/zapret2/runtime \
   providers/byedpi/runtime dns/apply nft/apply diagnostics/runtime diagnostics/health diagnostics/traffic \
   killswitch/runtime; do
   mkdir -p "$(dirname "$LIB/$module.uc")"
@@ -262,5 +273,16 @@ bootstrap=$LAST_DOUBLE
 lifecycle restart >/dev/null
 grep -q 'Refusing Prokop restart' "$SYSLOG" && fail "the restart was refused over the temporary list sing-box"
 wait_until 10 double_gone "$bootstrap" || fail "the restart left the temporary list sing-box running"
+
+# 6. A cold start whose lists download through a rule's proxy stops at once
+#    when the temporary sing-box for them did not start: it does not try
+#    every list through a proxy nobody serves (LC-12).
+reset_case
+[ "$(lifecycle start CHECK_PASS=1 LIST_SOURCES=1 BOOTSTRAP_FAIL=1)" != 0 ] ||
+  fail "the start went on without the temporary sing-box the lists download through"
+grep -q '^singbox list-bootstrap-start' "$EVENTS" || fail "the start did not reach the list download"
+grep -q '^updates prepare-list-cache' "$EVENTS" && fail "the start downloaded the lists through a proxy nobody serves"
+grep -q 'lists download only through that proxy' "$SYSLOG" || fail "the start does not say why it stopped"
+[ ! -e "$BOOTSTRAP_DIR" ] || fail "the failed start left the files of the temporary list sing-box"
 
 printf 'list_bootstrap_leftover: OK\n'
