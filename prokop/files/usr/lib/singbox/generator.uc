@@ -3487,6 +3487,11 @@ if (mode == "generate-config") {
     // that is checked and refused changes nothing the running one reads.
     runtime_subscription.set_section_cache_output_dir(as_string(ARGV[1]) + ".section-cache");
     generate_config(ARGV[1], ARGV[2], ARGV[3], ARGV[4], ARGV[5] || "", ARGV[6] || "");
+    // Only a generation that asked nothing of the network says so
+    // (singbox/runtime.uc generation_offline_marker): a restart may reuse
+    // its stage. One that could not say so is not reused.
+    if (!runtime_country.network_used())
+        fs.writefile(as_string(ARGV[1]) + ".offline", "");
 }
 else if (mode == "generate-config-fixture")
     generate_config_fixture(ARGV[1], ARGV[2], ARGV[3], ARGV[4], ARGV[5], ARGV[6] || "", ARGV[7] || "");

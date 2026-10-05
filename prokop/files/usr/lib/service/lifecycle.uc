@@ -168,6 +168,10 @@ let start_watches_stop_request = false;
 let subscription_caches_prepared = getenv("PROKOP_SUBSCRIPTION_CACHES_PREPARED") || "0";
 let subscription_runtime_no_refresh = getenv("PROKOP_SUBSCRIPTION_RUNTIME_NO_REFRESH") || "0";
 let subscription_deferred_sections = "";
+// B6: the sing-box configuration a restart checked before its stop, which
+// its start publishes when nothing it was generated from changed meanwhile
+// (singbox/runtime.uc init-config).
+let restart_checked_stage = "";
 let nft_populate_enabled = NFT_POPULATE_ENABLED_DEFAULT;
 let nft_candidate_batch_file = "";
 let rule_condition_cache_enabled = 0;
@@ -953,6 +957,18 @@ function nft_populate_runtime_sets() {
     ]);
 }
 
+function discard_singbox_config_stage(stage_path) {
+    if (as_string(stage_path) != "")
+        module_success(SINGBOX_UC, [ "discard-config-stage", stage_path ]);
+}
+
+// A stage init-config consumed is gone already, and its discard changes
+// nothing.
+function discard_restart_checked_stage() {
+    discard_singbox_config_stage(restart_checked_stage);
+    restart_checked_stage = "";
+}
+
 // The nft sets are filled inside the start candidate, which is committed
 // atomically before this runs: init-config must not fill them again live
 // (UC-162), as reload's prepare-config-stage does not.
@@ -962,8 +978,11 @@ function singbox_init_config() {
         "0",
         subscription_caches_prepared,
         subscription_runtime_no_refresh,
-        subscription_deferred_sections
+        subscription_deferred_sections,
+        restart_checked_stage
     ]);
+    // Published or discarded by init-config; gone either way.
+    discard_restart_checked_stage();
     if (result.status == 0) {
         subscription_deferred_sections = trim(result.output);
         subscription_caches_prepared = "1";
@@ -987,10 +1006,6 @@ function singbox_prepare_config_stage(stage_path) {
     return result.status;
 }
 
-function discard_singbox_config_stage(stage_path) {
-    if (as_string(stage_path) != "")
-        module_success(SINGBOX_UC, [ "discard-config-stage", stage_path ]);
-}
 
 // A stop that stopped waiting for reload.lock (service/initd.uc) tears the
 // runtime down while the reload in progress still holds the lock, and one
@@ -2898,12 +2913,15 @@ function restart_candidate_status() {
         log_message("Restart refused: no temporary file for the configuration check; the running Prokop is kept", "fatal");
         return 1;
     }
-    let result = module_capture(SINGBOX_UC, [ "prepare-config-stage", "0", "0", "1", "", stage_path ]);
-    discard_singbox_config_stage(stage_path);
+    let result = module_capture(SINGBOX_UC, [ "prepare-config-stage", "0", "0", "1", "", stage_path, "reusable" ]);
     if (result.status != 0) {
+        discard_singbox_config_stage(stage_path);
         log_message("Restart refused: the new sing-box configuration did not pass its check; the running Prokop is kept", "fatal");
         return result.status;
     }
+    // The start publishes it instead of generating and checking the same
+    // again, when nothing it was generated from changed (B6).
+    restart_checked_stage = stage_path;
     return 0;
 }
 
@@ -2926,14 +2944,18 @@ function restart() {
 
     let selector_state = capture_selector_state();
     status = stop_impl(false);
-    if (status != 0)
+    if (status != 0) {
+        discard_restart_checked_stage();
         return status;
+    }
 
     // An explicit restart is an explicit start: it ends an earlier explicit
     // stop.
     mark_explicit_start();
     remove_file(STOP_REQUESTED_FILE);
     status = start_impl();
+    // A start that ended before its sing-box configuration leaves it.
+    discard_restart_checked_stage();
     if (status != 0) {
         cleanup_failed_runtime();
         return status;

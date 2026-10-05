@@ -6,7 +6,9 @@ set -euo pipefail
 # (validate-runtime) and a sing-box configuration generated and checked into
 # a stage (prepare-config-stage, from cached data). A refused candidate stops
 # nothing: the table, sing-box and DNS stay as they were. A valid one restarts
-# as before. A restart of a stopped Prokop has nothing to keep and goes
+# as before, and its start is handed the checked stage (init-config publishes
+# it when nothing it was generated from changed, tests/restart_stage_reuse.sh),
+# which goes afterwards whatever happened. A restart of a stopped Prokop has nothing to keep and goes
 # straight to the start, which checks the same itself.
 #
 # The real service/lifecycle.uc runs against a library where every module is
@@ -115,6 +117,8 @@ if (name == "config/validator.uc" && mode == "validate-runtime" && (getenv("FAKE
     exit(1);
 if (name == "singbox/runtime.uc" && mode == "prepare-config-stage" && (getenv("FAKE_STAGE_FAILS") || "") == "1")
     exit(1);
+if (name == "service/state.uc" && mode == "stop-managed-sing-box-runtime" && (getenv("FAKE_STOP_FAILS") || "") == "1")
+    exit(1);
 if (name == "service/state.uc" && mode == "has-list-update-sources")
     exit(1);
 if (name == "singbox/ruleset_cache.uc" && mode == "refresh-if-due")
@@ -139,7 +143,7 @@ reset_case() {
     >"$WORK_DIR/uci.state"
   : >"$STATE_DIR/start.explicit"
   : >"$TABLES/ProkopTable"
-  unset FAKE_RUNNING FAKE_STABLE FAKE_INVALID FAKE_STAGE_FAILS
+  unset FAKE_RUNNING FAKE_STABLE FAKE_INVALID FAKE_STAGE_FAILS FAKE_STOP_FAILS
 }
 
 has_event() { grep -q "$1" "$EVENTS" 2>/dev/null; }
@@ -188,6 +192,26 @@ rebuild_line="$(grep -n '^nft/apply.uc nft-rebuild-runtime-from-uci' "$EVENTS" |
 { [ -n "$check_line" ] && [ -n "$rebuild_line" ]; } || fail "a valid restart did not check and then rebuild"
 [ "$check_line" -lt "$rebuild_line" ] || fail "the candidate was checked after the stop"
 has_event '^singbox/runtime.uc init-config' || fail "a valid restart did not start"
+# B6: the start is handed the checked stage, to publish it when nothing it
+# was generated from changed, and the stage goes afterwards either way.
+stage="$(sed -n 's/^singbox\/runtime.uc prepare-config-stage 0 0 1  \(.*\) reusable$/\1/p' "$EVENTS" | head -1)"
+[ -n "$stage" ] || fail "the restart did not ask for a reusable stage"
+init_line="$(grep -n "^singbox/runtime.uc init-config 0 .* $stage\$" "$EVENTS" | head -1 | cut -d: -f1)"
+[ -n "$init_line" ] || fail "the start was not handed the checked stage $stage"
+discard_line="$(grep -n "^singbox/runtime.uc discard-config-stage $stage\$" "$EVENTS" | tail -1 | cut -d: -f1)"
+{ [ -n "$discard_line" ] && [ "$discard_line" -gt "$init_line" ]; } ||
+  fail "the checked stage was not discarded after the start"
+grep -c "^singbox/runtime.uc discard-config-stage" "$EVENTS" | grep -qx 1 ||
+  fail "the checked stage was discarded before the start used it"
+
+# 3b. Running, a valid candidate, a stop that fails: the checked stage goes.
+reset_case
+export FAKE_RUNNING=1 FAKE_STABLE=1 FAKE_STOP_FAILS=1
+[ "$(lifecycle restart)" != 0 ] || fail "a restart whose stop failed succeeded"
+stage="$(sed -n 's/^singbox\/runtime.uc prepare-config-stage 0 0 1  \(.*\) reusable$/\1/p' "$EVENTS" | head -1)"
+[ -n "$stage" ] || fail "the restart did not check its candidate"
+has_event "^singbox/runtime.uc discard-config-stage $stage\$" || fail "a restart whose stop failed left the checked stage"
+! has_event '^singbox/runtime.uc init-config' || fail "a restart whose stop failed started"
 
 # 4. Stopped: nothing to keep, no separate check; the start checks itself.
 reset_case

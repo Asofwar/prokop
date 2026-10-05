@@ -343,6 +343,15 @@ function previous_countries_by_server(previous_state) {
     return result;
 }
 
+// Whether a detect() of this process asked DNS or the country service:
+// such a result is not a function of the files a generation reads
+// (singbox/runtime.uc reuses a checked stage only without it).
+let network_lookups = 0;
+
+function network_used() {
+    return network_lookups > 0;
+}
+
 function detect(servers, previous_state, resolver) {
     servers = object_or_empty(servers);
     let cached = previous_countries_by_server(previous_state);
@@ -368,6 +377,8 @@ function detect(servers, previous_state, resolver) {
         push(pending_tags_by_server[server], tag_name);
     }
 
+    if (length(pending_tags_by_server) > 0)
+        network_lookups++;
     let addresses = resolve_servers(keys(pending_tags_by_server));
     for (let server, tags in pending_tags_by_server) {
         let ip = as_string(addresses[server] || "");
@@ -395,6 +406,7 @@ function detect(servers, previous_state, resolver) {
 
 return {
     detect,
+    network_used,
     normalized_server,
     public_ip,
     previous_countries_by_server

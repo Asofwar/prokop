@@ -9,6 +9,7 @@ let managed_service = require("singbox.managed_service");
 let legacy_forkop = require("core.legacy_forkop");
 let listen_address = require("singbox.listen_address");
 let identity = require("core.process_identity");
+let ipv6 = require("core.ipv6");
 
 const CONFIG_NAME = getenv("PROKOP_CONFIG_NAME") || "prokop";
 // Test-only config preparation failure injection. Empty in production.
@@ -671,7 +672,7 @@ function save_config_file(temp_file_path, config_path) {
 
 function discard_config_stage(stage_path) {
     stage_path = as_string(stage_path);
-    remove_file(stage_path);
+    remove_files([ stage_path, stage_path + ".fingerprint" ]);
     command_success_from_args([ "rm", "-rf", stage_path + ".section-cache" ]);
     return true;
 }
@@ -817,16 +818,265 @@ function restore_dns_config(backup_path) {
     return publish_config_file(backup_path, config_path);
 }
 
+// B6: a restart checks a staged configuration while the old runtime still
+// serves, and its start used to generate, materialize and check the same
+// configuration again. The start now publishes that checked stage instead,
+// but only when everything a generation reads is what the precheck's
+// generation read: the Prokop UCI package, the generator's arguments and
+// environment, every file and cache it or the rule-set materializer reads,
+// the files the configuration names, the sing-box binary and Prokop's own
+// code. Both fingerprints come from generation_inputs_fingerprint; any
+// difference, unreadable input or damaged stage generates again as before.
+const STAGE_FINGERPRINT_FORMAT = "1";
+const URLTEST_SEED_FILE = getenv("PROKOP_URLTEST_SEED_FILE") || RUNTIME_STATE_DIR + "/urltest-seed";
+// As singbox/ruleset_cache.uc resolves them.
+const RULESET_CACHE_DIR = getenv("PROKOP_RULESET_CACHE_DIR") || "/etc/prokop/ruleset-cache";
+const RULESET_CACHE_MANIFEST = getenv("PROKOP_RULESET_CACHE_MANIFEST") || RULESET_CACHE_DIR + "/manifest.json";
+const PERSISTENT_LIST_CACHE_DIR = getenv("PROKOP_PERSISTENT_LIST_CACHE_DIR") || "/etc/prokop/list-cache";
+const RULESET_RUNTIME_CACHE_DIR = getenv("PROKOP_RULESET_RUNTIME_CACHE_DIR") || "/tmp/sing-box/ruleset-cache";
+const RULESET_RUNTIME_MANIFEST = getenv("PROKOP_RULESET_RUNTIME_MANIFEST") || "/var/run/prokop/ruleset-cache-runtime.json";
+
+function stage_fingerprint_path(stage_path) {
+    return as_string(stage_path) + ".fingerprint";
+}
+
+// The generator marks a generation that asked nothing of the network (no
+// server country lookup): only its result is a function of the files.
+function generation_offline_marker(config_path) {
+    return as_string(config_path) + ".offline";
+}
+
+// Kernel and device files are never read: only their kind is recorded.
+function fingerprint_readable_path(path) {
+    return match(path, /^\/(proc|sys|dev)(\/|$)/) == null;
+}
+
+// A file as stat sees it: a rewrite is a new inode or a new ctime.
+function fingerprint_stat_signature(path, stat) {
+    return join(":", [ "stat", path, stat.inode, stat.size, stat.mtime, stat.ctime ]);
+}
+
+// One entry per file under path, directories descended in name order:
+// [ path, null ] for a regular file whose content is hashed (by_stat: whose
+// stat signature is taken), [ path, kind ] for anything else. Returns false
+// when a directory cannot be listed.
+function fingerprint_collect(path, entries, recurse, depth, by_stat) {
+    path = as_string(path);
+    let stat = fs.stat(path);
+    if (stat == null) {
+        push(entries, [ path, "missing" ]);
+        return true;
+    }
+    if (stat.type == "file" && fingerprint_readable_path(path)) {
+        push(entries, [ path, by_stat ? fingerprint_stat_signature(path, stat) : null ]);
+        return true;
+    }
+    if (stat.type != "directory" || !recurse || !fingerprint_readable_path(path)) {
+        push(entries, [ path, stat.type ]);
+        return true;
+    }
+    if (depth > 8)
+        return false;
+    let names = fs.lsdir(path);
+    if (type(names) != "array")
+        return false;
+    push(entries, [ path, "directory" ]);
+    for (let name in sort(names))
+        if (!fingerprint_collect(path + "/" + name, entries, true, depth + 1, by_stat))
+            return false;
+    return true;
+}
+
+// The md5 of every [ path, null ] entry, filled in; false when md5sum fails
+// on any of them.
+function fingerprint_hash_entries(entries) {
+    let pending = [];
+    for (let i = 0; i < length(entries); i++)
+        if (entries[i][1] == null)
+            push(pending, i);
+    for (let start = 0; start < length(pending); start += 64) {
+        let batch = slice(pending, start, start + 64);
+        let args = [ "md5sum", "--" ];
+        for (let i in batch)
+            push(args, entries[i][0]);
+        let lines = filter(split(command_output_from_args(args), "\n"), (line) => line != "");
+        if (length(lines) != length(batch))
+            return false;
+        for (let n = 0; n < length(batch); n++) {
+            let line = lines[n];
+            if (match(line, /^[0-9a-f]{32}  /) == null || substr(line, 34) != entries[batch[n]][0])
+                return false;
+            entries[batch[n]][1] = substr(line, 0, 32);
+        }
+    }
+    return true;
+}
+
+// Absolute paths a UCI value names (a local list, a certificate, ...).
+function fingerprint_uci_paths(value, paths) {
+    if (type(value) == "array") {
+        for (let item in value)
+            fingerprint_uci_paths(item, paths);
+        return;
+    }
+    for (let word in split(as_string(value), /[ \t\r\n,]+/))
+        if (length(word) > 1 && substr(word, 0, 1) == "/" && index(paths, word) < 0)
+            push(paths, word);
+}
+
+function generation_inputs_fingerprint(generator_args) {
+    let inputs = {
+        format: STAGE_FINGERPRINT_FORMAT,
+        generator: generator_args,
+        env: [],
+        uci: [],
+        ipv6: ipv6.available(),
+        sing_box: "",
+        files: []
+    };
+
+    let environment = getenv();
+    for (let name in sort(keys(environment)))
+        push(inputs.env, [ name, environment[name] ]);
+
+    // Read again, as the generator process read it.
+    uci_core.refresh(CONFIG_NAME);
+    let uci_paths = [];
+    for (let name in uci_core.all_sections(CONFIG_NAME)) {
+        let section = uci_core.get_all(CONFIG_NAME, name);
+        push(inputs.uci, section);
+        for (let key, value in object_or_empty(section))
+            if (substr(key, 0, 1) != ".")
+                fingerprint_uci_paths(value, uci_paths);
+    }
+    if (length(inputs.uci) == 0)
+        return "";
+
+    // The sing-box binary (tens of megabytes) and Prokop's own code are
+    // identified by their files rather than read: an upgrade or an edit is a
+    // new inode or a new ctime.
+    let binary = trim(command_output("command -v sing-box 2>/dev/null"));
+    let binary_stat = binary != "" ? fs.stat(binary) : null;
+    if (binary_stat != null)
+        inputs.sing_box = fingerprint_stat_signature(binary, binary_stat);
+    if (!fingerprint_collect(LIB_DIR, inputs.files, true, 0, true))
+        return "";
+
+    let config_path = option(uci_settings(), "config_path", "");
+    let trees = [
+        SECTION_CACHE_DIR,
+        TMP_SUBSCRIPTION_FOLDER,
+        TMP_RULESET_FOLDER,
+        SUBSCRIPTION_LINKS_DIR,
+        SUBSCRIPTION_METADATA_DIR,
+        OUTBOUND_METADATA_DIR,
+        PERSISTENT_SUBSCRIPTION_CACHE_DIR,
+        RULESET_CACHE_DIR,
+        PERSISTENT_LIST_CACHE_DIR,
+        RULESET_RUNTIME_CACHE_DIR
+    ];
+    let files = [
+        config_path,
+        RUNTIME_CACHE_FORMAT_FILE,
+        PERSISTENT_SUBSCRIPTION_CACHE_FORMAT_FILE,
+        RULESET_CACHE_MANIFEST,
+        RULESET_RUNTIME_MANIFEST,
+        runtime_dns.DNS_FAILOVER_STATE_FILE,
+        URLTEST_SEED_FILE,
+        SB_VARIANT_STATE_FILE,
+        SB_VERSION_STATE_FILE
+    ];
+    for (let path in trees)
+        if (as_string(path) != "" && !fingerprint_collect(path, inputs.files, true, 0))
+            return "";
+    for (let path in [ ...files, ...uci_paths ])
+        if (as_string(path) != "")
+            fingerprint_collect(path, inputs.files, false, 0);
+    if (!fingerprint_hash_entries(inputs.files))
+        return "";
+
+    // Kept as a digest: the inputs hold the UCI secrets.
+    let path = temp_path();
+    if (path == "")
+        return "";
+    let digest = fs.writefile(path, sprintf("%J", inputs)) != null ? md5_file(path) : "";
+    remove_file(path);
+    return digest;
+}
+
+// The files the configuration itself names (local rule sets, certificate
+// and key files), outside the sing-box cache file it writes while it runs.
+function config_named_paths(value, paths, key) {
+    if (type(value) == "object") {
+        for (let name, item in value)
+            if (name != "experimental")
+                config_named_paths(item, paths, name);
+    }
+    else if (type(value) == "array") {
+        for (let item in value)
+            config_named_paths(item, paths, key);
+    }
+    else if (type(value) == "string" && match(as_string(key), /path$/) != null &&
+        substr(value, 0, 1) == "/" && index(paths, value) < 0)
+        push(paths, value);
+}
+
+// What the checked stage is: its configuration, its section caches and the
+// files its configuration names, each with its md5. null when any of it
+// cannot be read.
+function stage_contents(stage_path) {
+    let config = common.read_json_file(stage_path);
+    if (type(config) != "object")
+        return null;
+    let entries = [];
+    if (!fingerprint_collect(stage_path, entries, false, 0) ||
+        !fingerprint_collect(stage_path + ".section-cache", entries, true, 0))
+        return null;
+    let named = [];
+    config_named_paths(config, named, "");
+    for (let path in named)
+        fingerprint_collect(path, entries, false, 0);
+    if (entries[0][1] != null || !fingerprint_hash_entries(entries))
+        return null;
+    return entries;
+}
+
 // The generator writes a candidate's section caches next to it
 // (generator.uc generate-config, LC-8): a candidate that is not published
 // takes them along.
 function remove_generation(temp_config, others) {
     remove_files([ temp_config, ...others ]);
-    if (as_string(temp_config) != "")
+    if (as_string(temp_config) != "") {
+        remove_file(generation_offline_marker(temp_config));
         command_success_from_args([ "rm", "-rf", temp_config + ".section-cache" ]);
+    }
 }
 
-function init_config(populate_nft, caches_prepared, no_refresh, prepared_deferred_sections, stage_path) {
+// The record a reusable stage keeps next to it: the digest of the inputs it
+// was generated from and what the stage is.
+function write_stage_fingerprint(stage_path, inputs) {
+    let contents = stage_contents(stage_path);
+    if (inputs == "" || contents == null)
+        return false;
+    return common.write_private_json_file(stage_fingerprint_path(stage_path),
+        { format: STAGE_FINGERPRINT_FORMAT, inputs, contents });
+}
+
+// The stage as checked, from the same inputs: a stage changed, cut short or
+// without its record, or inputs that differ or cannot be read, are no match.
+function checked_stage_matches(stage_path, inputs) {
+    let record = common.read_json_file(stage_fingerprint_path(stage_path));
+    if (inputs == "" || type(record) != "object" || record.format !== STAGE_FINGERPRINT_FORMAT ||
+        record.inputs !== inputs || type(record.contents) != "array")
+        return false;
+    let contents = stage_contents(stage_path);
+    return contents != null && sprintf("%J", contents) === sprintf("%J", record.contents);
+}
+
+// stage_reusable: a stage the restart may publish instead of generating
+// again (a fingerprint is recorded next to it). checked_stage: such a stage,
+// published when its fingerprint still matches; otherwise discarded.
+function init_config(populate_nft, caches_prepared, no_refresh, prepared_deferred_sections, stage_path, stage_reusable, checked_stage) {
     let settings = uci_settings();
     let config_path = option(settings, "config_path", "");
     if (config_path == "") {
@@ -848,6 +1098,39 @@ function init_config(populate_nft, caches_prepared, no_refresh, prepared_deferre
             exit(1);
     }
 
+    let version = sing_box_version();
+    let generator_args = [
+        service_listen_address_value(settings),
+        mwan3_active ? "1" : "0",
+        sing_box_is_extended(version) ? "1" : "0",
+        deferred_sections,
+        version
+    ];
+    checked_stage = as_string(checked_stage);
+    stage_reusable = stage_reusable && as_string(stage_path) != "" && !populate_nft;
+    let inputs = stage_reusable || (checked_stage != "" && !populate_nft)
+        ? generation_inputs_fingerprint(generator_args) : "";
+
+    if (checked_stage != "") {
+        if (as_string(stage_path) == "" && !populate_nft && checked_stage_matches(checked_stage, inputs)) {
+            log_message("Using the sing-box configuration checked before the restart: nothing it was generated from has changed", "info");
+            if (!save_config_file(checked_stage, config_path)) {
+                discard_config_stage(checked_stage);
+                exit(1);
+            }
+            if (!publish_section_cache(checked_stage)) {
+                log_message("Failed to publish sing-box dashboard cache", "error");
+                discard_config_stage(checked_stage);
+                exit(1);
+            }
+            discard_config_stage(checked_stage);
+            print(deferred_sections, "\n");
+            return;
+        }
+        log_message("Generating the sing-box configuration again: the one checked before the restart no longer matches what it is generated from", "info");
+        discard_config_stage(checked_stage);
+    }
+
     let temp_config = temp_path();
     let runtime_log = temp_path();
     if (temp_config == "" || runtime_log == "") {
@@ -860,11 +1143,7 @@ function init_config(populate_nft, caches_prepared, no_refresh, prepared_deferre
             LIB_DIR + "/singbox/generator.uc",
             "generate-config",
             temp_config,
-            service_listen_address_value(settings),
-            mwan3_active ? "1" : "0",
-            sing_box_is_extended(sing_box_version()) ? "1" : "0",
-            deferred_sections,
-            sing_box_version()
+            ...generator_args
         ]) + " >" + shell_quote(runtime_log) + " 2>&1"
     );
     if (SINGBOX_CONFIG_FAIL_PHASE == "generate")
@@ -917,8 +1196,16 @@ function init_config(populate_nft, caches_prepared, no_refresh, prepared_deferre
     }
 
     if (as_string(stage_path) != "") {
+        // A generation that asked the network, or that changed what it read
+        // (a first urltest seed, a rebuilt list set), is not the one a start
+        // would make again from the same files.
+        let reusable = stage_reusable && inputs != "" &&
+            fs.stat(generation_offline_marker(temp_config)) != null &&
+            generation_inputs_fingerprint(generator_args) == inputs;
+        remove_file(generation_offline_marker(temp_config));
         // Its section caches go with it; commit_config_stage publishes
         // them, discard_config_stage removes them.
+        remove_file(stage_fingerprint_path(stage_path));
         command_success_from_args([ "rm", "-rf", stage_path + ".section-cache" ]);
         if (!ensure_parent_dir(stage_path) || !command_success_from_args([ "mv", "-f", temp_config, stage_path ]) ||
             (fs.stat(temp_config + ".section-cache") != null &&
@@ -926,10 +1213,14 @@ function init_config(populate_nft, caches_prepared, no_refresh, prepared_deferre
             remove_generation(temp_config, [ runtime_log ]);
             exit(1);
         }
+        if (reusable)
+            write_stage_fingerprint(stage_path, inputs);
         remove_file(runtime_log);
         print(deferred_sections, "\n");
         return;
     }
+
+    remove_file(generation_offline_marker(temp_config));
 
     if (!save_config_file(temp_config, config_path)) {
         remove_generation(temp_config, [ runtime_log ]);
@@ -1120,9 +1411,10 @@ let mode = ARGV[0] || "";
 if (mode == "configure-service")
     configure_service();
 else if (mode == "init-config")
-    init_config(arg_bool(ARGV[1] || "1"), arg_bool(ARGV[2] || "0"), arg_bool(ARGV[3] || "0"), ARGV[4] || "", "");
+    init_config(arg_bool(ARGV[1] || "1"), arg_bool(ARGV[2] || "0"), arg_bool(ARGV[3] || "0"), ARGV[4] || "", "", false, ARGV[5] || "");
 else if (mode == "prepare-config-stage")
-    init_config(arg_bool(ARGV[1] || "0"), arg_bool(ARGV[2] || "0"), arg_bool(ARGV[3] || "0"), ARGV[4] || "", ARGV[5] || "");
+    init_config(arg_bool(ARGV[1] || "0"), arg_bool(ARGV[2] || "0"), arg_bool(ARGV[3] || "0"), ARGV[4] || "", ARGV[5] || "",
+        (ARGV[6] || "") == "reusable", "");
 else if (mode == "commit-config-stage")
     exit(commit_config_stage(ARGV[1] || "", ARGV[2] || "") ? 0 : 1);
 else if (mode == "restore-config-stage")
