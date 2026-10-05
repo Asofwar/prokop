@@ -43,10 +43,18 @@ cat >"$WORK/bin/dig" <<'SH'
 printf '%s\n' "$*" >>"${DIG_LOG:?}"
 case "$1" in
   @192.0.2.1)
+    : >"$DIG_LOG.canary"
     [ "${CANARY_ANSWERS:-0}" = 1 ] || exit 9
     printf ';; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 1\n'
     exit 0 ;;
 esac
+# Whether the canary already runs when the first other check asks.
+if [ ! -e "$DIG_LOG.first" ]; then
+  : >"$DIG_LOG.first"
+  i=0
+  while [ ! -e "$DIG_LOG.canary" ] && [ "$i" -lt 30 ]; do sleep 0.1; i=$((i + 1)); done
+  [ -e "$DIG_LOG.canary" ] && echo running >"$DIG_LOG.first" || echo later >"$DIG_LOG.first"
+fi
 exit 9
 SH
 printf '#!/bin/sh\nexit 1\n' >"$WORK/bin/ip"
@@ -56,6 +64,7 @@ printf 'prokop.settings=settings\nprokop.settings.dns_type=udp\nprokop.settings.
 
 canary() {
   : >"$WORK/dig.log"
+  rm -f "$WORK/dig.log.canary" "$WORK/dig.log.first"
   PATH="$WORK/bin:$PATH" DIG_LOG="$WORK/dig.log" CANARY_ANSWERS="$1" \
     PROKOP_UCI_STATE_FILE="$WORK/dns.state" \
     PROKOP_DNS_FAILOVER_STATE_FILE="$WORK/none.json" \
@@ -67,6 +76,9 @@ canary() {
 [ "$(canary 1)" = 1 ] || fail "an answer from 192.0.2.1 is not reported as DNS interception"
 grep -q '^@192.0.2.1 example.com A +timeout=2 +tries=1$' "$WORK/dig.log" || fail "the canary query was not sent: $(cat "$WORK/dig.log")"
 [ "$(canary 0)" = 0 ] || fail "no answer from 192.0.2.1 is reported as DNS interception"
+# On a clean network the canary waits its whole timeout: it runs next to
+# the other DNS checks, not after them (optimization 7).
+[ "$(cat "$WORK/dig.log.first")" = running ] || fail "the DNS canary runs only after the other DNS checks"
 
 # The text report of global_check names the interception.
 printf '{"dns_type":"udp","dns_server":"8.8.8.8","dns_status":1,"dns_on_router":1,"dhcp_config_status":1,"dns_interception":1}\n' |

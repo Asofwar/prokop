@@ -1260,10 +1260,19 @@ function dns_check_timeout_seconds(value) {
 // is then answered, or filtered, by it. 1: intercepted, 0: no answer.
 const DNS_CANARY_ADDRESS = "192.0.2.1";
 
-function dns_interception_detected(timeout_seconds) {
-    let output = command_output_from_args([ "dig", "@" + DNS_CANARY_ADDRESS, "example.com", "A",
-        "+timeout=" + as_string(timeout_seconds), "+tries=1" ]);
-    return index(output, "->>HEADER<<-") >= 0;
+// On a clean network the canary waits its whole timeout: it is started
+// first and runs while the other DNS checks do (optimization 7), then its
+// answer is read.
+function dns_interception_probe_start(timeout_seconds) {
+    return fs.popen(command_from_args([ "dig", "@" + DNS_CANARY_ADDRESS, "example.com", "A",
+        "+timeout=" + as_string(timeout_seconds), "+tries=1" ]) + " 2>/dev/null", "r");
+}
+
+function dns_interception_detected(probe) {
+    if (!probe)
+        return false;
+    let output = as_string(probe.read("all"));
+    return probe.close() == 0 && index(output, "->>HEADER<<-") >= 0;
 }
 
 function check_dns_available() {
@@ -1279,6 +1288,7 @@ function check_dns_available() {
     let dns_on_router = 0;
     let bootstrap_dns_status = 0;
     let dhcp_config_status = 1;
+    let interception_probe = dns_interception_probe_start(timeout_seconds);
 
     let active_dns_args = [ "dig" ];
     if (runtime_dns.failover_enabled(cfg)) {
@@ -1327,7 +1337,7 @@ function check_dns_available() {
 
     if (!module_success(DNS_APPLY_UC, [ "default-config-complete" ]))
         dhcp_config_status = 0;
-    let dns_interception = dns_interception_detected(timeout_seconds) ? 1 : 0;
+    let dns_interception = dns_interception_detected(interception_probe) ? 1 : 0;
 
     let display_dns_server = replace(status_output([ "mask-dns-server", dns_server ], null), /[\r\n]+$/g, "");
     let display_bootstrap_dns_server = replace(status_output([ "mask-dns-server", bootstrap_dns_server ], null), /[\r\n]+$/g, "");
