@@ -219,6 +219,25 @@ const masked = JSON.stringify(diff(before, after));
 assert.equal(masked.includes('s3cr3t'), false);
 assert.equal(JSON.parse(masked).length, 24);
 
+// A plain setting shows its values, so the apply notice says what changed;
+// a secret-named option stays hidden even when its value looks plain.
+assert.deepEqual(diff(lines("option intercept_client_dns '1'", "option log_level 'warn'", "option check_interval '3m'"),
+  lines("option intercept_client_dns '0'", "option log_level 'debug'", "option check_interval '5m'")), [
+  { section: 'settings', option: 'intercept_client_dns', before: '1', after: '0' },
+  { section: 'settings', option: 'log_level', before: 'warn', after: 'debug' },
+  { section: 'settings', option: 'check_interval', before: '3m', after: '5m' }
+]);
+let plainBefore = '', plainAfter = '';
+for (const option of ['hwid', 'notify_telegram_chat_id', 'mixed_proxy_username', 'subscription_user_agent',
+  'yacd_secret_key', 'notify_telegram_token', 'mirror_base_url', 'user_domains', 'proxy_string']) {
+  plainBefore += lines(`option ${option} 'plain-s3cr3t-a'`);
+  plainAfter += lines(`option ${option} 'Plain.S3cr3t-b'`);
+}
+assert.equal(JSON.stringify(diff(plainBefore, plainAfter)).includes('3cr3t'), false);
+assert.deepEqual(diff(lines("option mixed_proxy_auth_enabled '0'"), lines("option mixed_proxy_auth_enabled '1'")), [
+  { section: 'settings', option: 'mixed_proxy_auth_enabled', before: '0', after: '1' }
+]);
+
 // Quoted values spanning several lines are compared as a whole.
 const multi = (...values) => ` option action '${values.join('\n')}'\n option dns_type 'doh'\n`;
 assert.deepEqual(diff(multi('a', 'b', 'c'), multi('a', 'b', 'c')), []);

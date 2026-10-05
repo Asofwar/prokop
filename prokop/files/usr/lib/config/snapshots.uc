@@ -361,11 +361,19 @@ function create(kind, reason, dedupe, keep, content) {
         return { status: "failed", reason: "write_failed" };
     return { status: "created", snapshot: metadata(snapshot) };
 }
+// An option whose name may hold a secret (a password, a token, a link that
+// carries credentials, a chat ID, an ID of the device) is always hidden,
+// whatever its value; only its switch (*_enabled) is shown.
+const SECRET_OPTION = /pass|secret|token|auth|uuid|key|private|credential|cookie|psk|cert|hwid|chat_id|user|proxy_string|url|link|json/;
+// Any other option shows a value only of a shape no secret has: a switch, a
+// number, a duration or a lowercase keyword (doh, prefer_ipv4, 3m). Free
+// text, addresses and anything with a capital letter stay hidden.
 function safe_value(option, raw) {
-    if (index([ "enabled", "action", "dns_type", "dns_strategy", "disable_quic" ], option) >= 0 &&
-        match(raw, /^[A-Za-z0-9_-]{1,32}$/) != null) return raw;
     if (index([ "dns_server", "bootstrap_dns_server" ], option) >= 0 &&
         match(raw, /^[0-9A-Fa-f:.]{1,45}$/) != null) return raw;
+    let name = lc(option);
+    if (match(name, SECRET_OPTION) != null && match(name, /_enabled$/) == null) return "***";
+    if (match(raw, /^[a-z0-9][a-z0-9_-]{0,31}$/) != null) return raw;
     return "***";
 }
 // Parses a UCI value made of quoted/unquoted segments ('it'\''s', "a\"b").
