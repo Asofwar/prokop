@@ -181,7 +181,8 @@ done
 mkdir -p "$WORK_DIR/boot-bin" "$WORK_DIR/doubles"
 cp "$(command -v bash)" "$WORK_DIR/boot-bin/sing-box"
 mkfifo "$WORK_DIR/doubles/block"
-printf 'read -r _ <"%s"\n' "$WORK_DIR/doubles/block" >"$WORK_DIR/doubles/run"
+printf '[ ! -e "%s" ] || trap "" TERM\nread -r _ <"%s"\n' "$WORK_DIR/doubles/ignore-term" "$WORK_DIR/doubles/block" \
+  >"$WORK_DIR/doubles/run"
 
 LAST_DOUBLE=''
 start_double() { # start_double [arguments of sing-box...]
@@ -284,5 +285,19 @@ grep -q '^singbox list-bootstrap-start' "$EVENTS" || fail "the start did not rea
 grep -q '^updates prepare-list-cache' "$EVENTS" && fail "the start downloaded the lists through a proxy nobody serves"
 grep -q 'lists download only through that proxy' "$SYSLOG" || fail "the start does not say why it stopped"
 [ ! -e "$BOOTSTRAP_DIR" ] || fail "the failed start left the files of the temporary list sing-box"
+
+# 7. A temporary sing-box that ignores TERM is killed after its grace time;
+#    the stop polls it in process, without a forked sleep per poll.
+reset_case
+: >"$WORK_DIR/doubles/ignore-term"
+leftover_bootstrap
+bootstrap=$LAST_DOUBLE
+rm -f "$WORK_DIR/doubles/ignore-term"
+printf '#!/bin/sh\nprintf "sleep %%s\\n" "$*" >>"%s"\nexec %s "$@"\n' "$EVENTS" "$(command -v sleep)" >"$WORK_DIR/bin/sleep"
+chmod +x "$WORK_DIR/bin/sleep"
+ucode -L "$REAL_LIB" "$REAL_LIB/singbox/runtime.uc" list-bootstrap-stop || fail "the temporary sing-box that ignores TERM was not stopped"
+rm -f "$WORK_DIR/bin/sleep"
+wait_until 10 double_gone "$bootstrap" || fail "the temporary sing-box that ignores TERM is still running"
+grep -q '^sleep ' "$EVENTS" && fail "the stop forked a sleep for every poll: $(grep -c '^sleep ' "$EVENTS") sleeps"
 
 printf 'list_bootstrap_leftover: OK\n'

@@ -956,8 +956,10 @@ function list_bootstrap_argv() {
     return [ "sing-box", "run", "-c", list_bootstrap_config_path(), "-D", LIST_BOOTSTRAP_DIR ];
 }
 
+// In process: the waits below poll up to some hundred times, a forked
+// sleep each was a process per poll.
 function list_bootstrap_pause() {
-    command_success_from_args([ "sleep", "0.1" ]);
+    sleep(100);
 }
 
 // Stops the temporary sing-box this or an earlier start left, only when the
