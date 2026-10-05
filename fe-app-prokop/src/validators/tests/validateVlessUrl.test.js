@@ -19,11 +19,6 @@ const validUrls = [
     'tcp + tls',
     'vless://2e9e8288-060e-4da2-8b9f-a1c81826feb7@127.0.0.1:19316?type=tcp&encryption=none&security=tls&fp=chrome&alpn=h2%2Chttp%2F1.1&sni=google.com#vless-tcp-tls',
   ],
-  // mKCP
-  [
-    'mKCP + none',
-    'vless://72e201d7-7841-4a32-b266-4aa3eb776d51@127.0.0.1:17270?type=kcp&encryption=none&headerType=none&seed=AirziWi4ng&security=none#vless-mKCP',
-  ],
   // WebSocket
   [
     'ws + none',
@@ -74,6 +69,11 @@ const invalidUrls = [
     'vless://uuid@2001:db8::1:443?type=tcp&security=tls',
   ],
   ['Unsupported type', 'vless://uuid@127.0.0.1:443?type=quic&security=tls'],
+  // mKCP: sing-box has no such transport (SB-11).
+  [
+    'mKCP + none',
+    'vless://72e201d7-7841-4a32-b266-4aa3eb776d51@127.0.0.1:17270?type=kcp&encryption=none&headerType=none&seed=AirziWi4ng&security=none#vless-mKCP',
+  ],
   ['Missing security', 'vless://uuid@127.0.0.1:443?type=tcp'],
   [
     'reality without pbk',

@@ -1942,15 +1942,22 @@ function add_direct_proxy(config, settings, service_address) {
 // Hysteria2 port ranges the UI accepts (SB-2, SB-3).
 let share_link_parser = null;
 
-function manual_link_outbound(link, tag_name) {
+// null for a link the parser cannot build an outbound from (an unknown
+// scheme, or a transport sing-box has none of, as kcp or quic): that node
+// is skipped with a warning, as a subscription's is, and the rule's other
+// nodes still run (SB-11). A rule left without any fails as before.
+function manual_link_outbound(link, tag_name, section_name) {
     if (share_link_parser == null)
         share_link_parser = require("subscription.parser");
     let outbound = share_link_parser.parse_share_link(trim(as_string(link)));
     if (type(outbound) != "object") {
         let scheme = url_scheme(link);
-        if (index([ "vmess", "ss", "vless", "trojan", "hysteria2", "hy2", "socks4", "socks4a", "socks5", "socks5h" ], scheme) < 0)
-            runtime_generate_unsupported("manual proxy link scheme is not supported by sing-box config generation yet");
-        runtime_generate_unsupported("manual " + scheme + " proxy link is invalid");
+        let name = url_fragment(link);
+        warn("skipped manual proxy link ", name != "" ? "'" + name + "' " : "", "of rule '", as_string(section_name), "': ",
+            index([ "vmess", "ss", "vless", "trojan", "hysteria2", "hy2", "socks4", "socks4a", "socks5", "socks5h" ], scheme) < 0
+                ? "its scheme is not supported"
+                : "the " + scheme + " link is invalid or uses a transport sing-box does not have", "\n");
+        return null;
     }
     delete outbound.share_link;
     delete outbound.remark;
@@ -1964,7 +1971,9 @@ function add_manual_proxy_link(config, state, section_name, manual_index, link, 
         tag_name = unique_tag(tag_name, taken);
     taken[tag_name] = true;
 
-    let outbound = manual_link_outbound(link, tag_name);
+    let outbound = manual_link_outbound(link, tag_name, section_name);
+    if (outbound == null)
+        return null;
     let display_name = url_fragment(link);
     if (display_name == "")
         display_name = tag_name;

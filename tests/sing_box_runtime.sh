@@ -1106,8 +1106,29 @@ if generate_config "$WORK_DIR/manual-http-fixture.json" "$WORK_DIR/manual-http.j
   >"$WORK_DIR/manual-http.stdout" 2>"$WORK_DIR/manual-http.stderr"; then
   fail "generator should reject native HTTP connection URLs"
 fi
-grep -Fxq 'manual proxy link scheme is not supported by sing-box config generation yet' "$WORK_DIR/manual-http.stderr" ||
+grep -Fxq "skipped manual proxy link of rule 'proxy': its scheme is not supported" "$WORK_DIR/manual-http.stderr" ||
   fail "native HTTP connection URL failure should identify the unsupported scheme"
+grep -Fxq 'connection section has no usable outbounds' "$WORK_DIR/manual-http.stderr" ||
+  fail "a rule left without nodes should still fail the generation"
+# SB-11: a manual link with a transport sing-box has none of (kcp, quic) is
+# skipped with a warning; the rule's other nodes and the other rules run.
+cat >"$WORK_DIR/manual-kcp-fixture.json" <<'JSON'
+{ "settings": { ".name": "settings", ".type": "settings", "dns_server": "1.1.1.1" },
+  "section": [ { ".name": "proxy", ".type": "section", "enabled": "1", "action": "connection",
+    "selector_proxy_links": [
+      "vless://00000000-0000-4000-8000-000000000001@k.example:443?security=tls&sni=k.example&type=kcp#KCP",
+      "vless://00000000-0000-4000-8000-000000000002@q.example:443?security=tls&sni=q.example&type=quic",
+      "vless://00000000-0000-4000-8000-000000000003@t.example:443?security=tls&sni=t.example&type=tcp#TCP" ] } ] }
+JSON
+generate_config "$WORK_DIR/manual-kcp-fixture.json" "$WORK_DIR/manual-kcp.json" \
+  >"$WORK_DIR/manual-kcp.stdout" 2>"$WORK_DIR/manual-kcp.stderr" ||
+  fail "a manual kcp link failed the whole generation: $(cat "$WORK_DIR/manual-kcp.stderr")"
+grep -Fxq "skipped manual proxy link 'KCP' of rule 'proxy': the vless link is invalid or uses a transport sing-box does not have" \
+  "$WORK_DIR/manual-kcp.stderr" || fail "the skipped kcp link was not reported: $(cat "$WORK_DIR/manual-kcp.stderr")"
+grep -Fxq "skipped manual proxy link of rule 'proxy': the vless link is invalid or uses a transport sing-box does not have" \
+  "$WORK_DIR/manual-kcp.stderr" || fail "the skipped quic link was not reported: $(cat "$WORK_DIR/manual-kcp.stderr")"
+[ "$(jq -r '[.outbounds[] | select(.type == "vless") | .server] | join(",")' "$WORK_DIR/manual-kcp.json")" = t.example ] ||
+  fail "the rule did not keep exactly its usable manual node"
 generate_config "$WORK_DIR/provider-actions-fixture.json" "$WORK_DIR/providers.json"
 generate_config "$WORK_DIR/manual-transport-fixture.json" "$WORK_DIR/manual.json"
 generate_config "$WORK_DIR/vpn-interface-fixture.json" "$WORK_DIR/vpn.json"

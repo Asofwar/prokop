@@ -68,16 +68,19 @@ export function validateVlessUrl(url: string): ValidationResult {
 
     const params = parseQueryString(queryString);
 
+    // The transports the backend builds an outbound for
+    // (subscription/parser.uc add_transport); a link with another one (kcp,
+    // quic) is skipped at start, so it is refused here.
     const validTypes = [
       'tcp',
       'raw',
-      'udp',
       'grpc',
       'http',
+      'h2',
       'httpupgrade',
       'xhttp',
+      'splithttp',
       'ws',
-      'kcp',
     ];
     const validSecurities = ['tls', 'reality', 'none'];
     const transportType = params.type || 'tcp';
