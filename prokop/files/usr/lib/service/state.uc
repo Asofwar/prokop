@@ -1567,6 +1567,11 @@ function subscription_urls_signature(section) {
             hide_urltest_group_outbounds: connections.subscription_hide_urltest_group_outbounds(section, entry) ? "1" : "0",
             hide_detour_outbounds: connections.subscription_hide_detour_outbounds(section, entry) ? "1" : "0"
         });
+        // C11: only a source with custom headers carries them, so the
+        // signature of every other configuration stays as it was.
+        let headers = connections.subscription_headers(section, entry);
+        if (length(headers) > 0)
+            result[length(result) - 1].headers = headers;
     }
     return sprintf("%J", result);
 }

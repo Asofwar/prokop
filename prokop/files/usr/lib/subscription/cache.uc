@@ -388,6 +388,8 @@ function cache_name_from_file(path) {
         return substr(file_name, 0, length(file_name) - 11);
     if (ends_with(file_name, ".hwid"))
         return substr(file_name, 0, length(file_name) - 5);
+    if (ends_with(file_name, ".headers"))
+        return substr(file_name, 0, length(file_name) - 8);
 
     return "";
 }
@@ -510,6 +512,12 @@ function source_user_agent_path(dir, source_section) {
 
 function source_hwid_path(dir, source_section) {
     return as_string(dir) + "/" + as_string(source_section) + ".hwid";
+}
+
+// The hash of the custom headers a cache was downloaded with (C11); the
+// headers themselves may carry credentials and are never stored.
+function source_headers_path(dir, source_section) {
+    return as_string(dir) + "/" + as_string(source_section) + ".headers";
 }
 
 function read_text(path) {
@@ -708,6 +716,48 @@ function temp_path(dir, section, kind) {
     return sprintf("%s/%s.%s.%d.%d", dir, as_string(section), as_string(kind), stamp[0], stamp[1]);
 }
 
+// C11: the custom headers of each subscription URL, as its source profile
+// (subscription_source_profile) last read them, with their hash. Two
+// sources with one URL share it: the last one read wins.
+let source_headers = {};
+
+function headers_hash(headers) {
+    if (length(headers) == 0)
+        return "";
+    // Through a pipe: the values may be credentials and never go on a
+    // command line (CFG-4).
+    let output = temp_path(TMP_SUBSCRIPTION_FOLDER, "headers", "hash");
+    let pipe = fs.popen("sha256sum >" + shell_quote(output), "w");
+    if (!pipe)
+        return "unknown";
+    pipe.write(join("\n", headers) + "\n");
+    pipe.close();
+    let hash = whitespace_values(read_text(output));
+    unlink_path(output);
+    return length(hash) > 0 && match(hash[0], /^[0-9a-f]{64}$/) != null ? "sha256:" + hash[0] : "unknown";
+}
+
+function register_source_headers(url, headers) {
+    let entry = { headers, hash: headers_hash(headers) };
+    source_headers[as_string(url)] = entry;
+    return entry.hash;
+}
+
+function source_request_headers(url) {
+    let entry = source_headers[as_string(url)];
+    return type(entry) == "object" ? entry.headers : [];
+}
+
+function source_headers_hash(url) {
+    let entry = source_headers[as_string(url)];
+    return type(entry) == "object" ? entry.hash : "";
+}
+
+// Whether the cache in dir was downloaded with the headers configured now.
+function cached_headers_match(dir, source_section, expected_hash) {
+    return read_text(source_headers_path(dir, source_section)) == as_string(expected_hash);
+}
+
 function move_file(source, target) {
     return fs.rename(as_string(source), as_string(target));
 }
@@ -793,11 +843,15 @@ function restore_persistent_subscription_cache(source_section, tmp_dir, persiste
         return false;
     if (!hwid_matches_config(expected_hwid, cached_hwid))
         return false;
+    let cached_headers = read_text(source_headers_path(persistent_dir, source_section));
+    if (cached_headers != source_headers_hash(expected_url))
+        return false;
 
     return copy_file(persistent_json, runtime_json) &&
         write_text(source_url_path(tmp_dir, source_section), cached_url) &&
         write_text(source_user_agent_path(tmp_dir, source_section), cached_user_agent) &&
-        write_text(source_hwid_path(tmp_dir, source_section), cached_hwid);
+        write_text(source_hwid_path(tmp_dir, source_section), cached_hwid) &&
+        write_text(source_headers_path(tmp_dir, source_section), cached_headers);
 }
 
 function subscription_source_profile(section, entry) {
@@ -810,6 +864,7 @@ function subscription_source_profile(section, entry) {
         parsed.user_agent = user_agent;
 
     parsed.hwid = connections.subscription_hwid(section, entry);
+    parsed.headers_hash = register_source_headers(parsed.url, connections.subscription_headers(section, entry));
     parsed.download_section = connections.subscription_download_section(section, entry);
     parsed.update_enabled = connections.subscription_update_enabled(section, entry);
     parsed.update_interval = connections.subscription_update_interval(section, entry);
@@ -854,7 +909,8 @@ function section_current_usable_cache(section, tmp_dir, persistent_dir, default_
         let cached_url = read_text(source_url_path(tmp_dir, source_section));
         let cached_user_agent = read_text(source_user_agent_path(tmp_dir, source_section));
         let cached_hwid = read_text(source_hwid_path(tmp_dir, source_section));
-        if (source_cache_profile_matches(parsed, cached_url, cached_user_agent, cached_hwid, default_user_agent))
+        if (source_cache_profile_matches(parsed, cached_url, cached_user_agent, cached_hwid, default_user_agent) &&
+            cached_headers_match(tmp_dir, source_section, parsed.headers_hash))
             return true;
     }
 
@@ -1393,6 +1449,7 @@ function remove_subscription_source_runtime_cache(source_section) {
     unlink_path(source_url_path(TMP_SUBSCRIPTION_FOLDER, source_section));
     unlink_path(source_user_agent_path(TMP_SUBSCRIPTION_FOLDER, source_section));
     unlink_path(source_hwid_path(TMP_SUBSCRIPTION_FOLDER, source_section));
+    unlink_path(source_headers_path(TMP_SUBSCRIPTION_FOLDER, source_section));
 }
 
 function persist_subscription_cache(source_section, subscription_json_path, subscription_url, effective_user_agent, effective_hwid, metadata_path) {
@@ -1410,16 +1467,20 @@ function persist_subscription_cache(source_section, subscription_json_path, subs
     let previous_url = read_text(persistent_url);
     let previous_user_agent = read_text(persistent_user_agent);
     let previous_hwid = read_text(persistent_hwid);
+    let persistent_headers = source_headers_path(PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR, source_section);
+    let request_headers = source_headers_hash(subscription_url);
     let can_keep_previous_metadata = previous_url == as_string(subscription_url) &&
         previous_user_agent == as_string(effective_user_agent) &&
         previous_hwid == as_string(effective_hwid) &&
+        read_text(persistent_headers) == request_headers &&
         file_nonempty(persistent_metadata) &&
         object_has_extra_keys(persistent_metadata);
 
     if (!copy_file_if_changed(subscription_json_path, persistent_json) ||
         !write_text_if_changed(persistent_url, subscription_url) ||
         !write_text_if_changed(persistent_user_agent, effective_user_agent) ||
-        !write_text_if_changed(persistent_hwid, effective_hwid))
+        !write_text_if_changed(persistent_hwid, effective_hwid) ||
+        !write_text_if_changed(persistent_headers, request_headers))
         return false;
 
     if (metadata_path != null && metadata_path != "" && file_nonempty(metadata_path) && object_has_extra_keys(metadata_path)) {
@@ -1601,7 +1662,8 @@ function subscription_curl_args(url, filepath, http_proxy_address, headers_filep
         "X-Device-Model: " + get_device_model(),
         "X-Ver-OS: " + get_kernel_version(),
         "Accept-Language: ru-RU,en,*",
-        "X-Device-Locale: EN"
+        "X-Device-Locale: EN",
+        ...source_request_headers(url)
     ])
         push(config, "header = " + curl_config_value(header));
     unlink_path(config_path);
@@ -1676,7 +1738,8 @@ function prefetched_subscription(url, filepath, http_proxy_address, headers_file
     for (let entry in array_or_empty(read_json(SUBSCRIPTION_PREFETCH_DIR + "/index.json"))) {
         entry = object_or_empty(entry);
         if (type(entry.status) != "int" || entry.url !== as_string(url) || entry.proxy !== as_string(http_proxy_address) ||
-            entry.user_agent !== as_string(effective_user_agent) || entry.hwid !== as_string(effective_hwid))
+            entry.user_agent !== as_string(effective_user_agent) || entry.hwid !== as_string(effective_hwid) ||
+            entry.request_headers !== source_headers_hash(url))
             continue;
         if (int(entry.status) != 0)
             return entry.proxy != "" ? null : int(entry.status);
@@ -1821,6 +1884,8 @@ function download_subscription_into_cache(section_name_value, subscription_url, 
     ensure_dir(TMP_SUBSCRIPTION_FOLDER);
     let subscription_user_agent_cache_path = source_user_agent_path(TMP_SUBSCRIPTION_FOLDER, cache_section);
     let subscription_hwid_cache_path = source_hwid_path(TMP_SUBSCRIPTION_FOLDER, cache_section);
+    let subscription_headers_cache_path = source_headers_path(TMP_SUBSCRIPTION_FOLDER, cache_section);
+    let request_headers = source_headers_hash(subscription_url);
     let raw_tmpfile = temp_path(TMP_SUBSCRIPTION_FOLDER, cache_section, "download");
     let headers_tmpfile = temp_path(TMP_SUBSCRIPTION_FOLDER, cache_section, "headers");
     let normalized_tmpfile = temp_path(TMP_SUBSCRIPTION_FOLDER, cache_section, "normalized");
@@ -1872,7 +1937,8 @@ function download_subscription_into_cache(section_name_value, subscription_url, 
         if (!subscription_share_link.populate_subscription_file(normalized_tmpfile))
             log_message("Failed to cache direct proxy links for subscription rule '" + section_name_value + "'", "warn");
 
-        if (!subscription_config_is_current(section_name_value, subscription_url, subscription_user_agent, subscription_hwid, sections)) {
+        if (!subscription_config_is_current(section_name_value, subscription_url, subscription_user_agent, subscription_hwid, sections) ||
+            source_headers_hash(subscription_url) != request_headers) {
             log_message("Subscription source settings changed while updating rule '" + section_name_value + "'; discarding superseded download", "warn");
             if (metadata_output_path != "")
                 unlink_path(metadata_output_path);
@@ -1897,6 +1963,7 @@ function download_subscription_into_cache(section_name_value, subscription_url, 
             write_text(subscription_url_cache_path, subscription_url);
             write_text(subscription_user_agent_cache_path, effective_user_agent);
             write_text(subscription_hwid_cache_path, effective_hwid);
+        write_text(subscription_headers_cache_path, request_headers);
             persist_subscription_cache(cache_section, subscription_json_path, subscription_url, effective_user_agent, effective_hwid, metadata_tmpfile) ||
                 log_message("Failed to persist last working subscription cache for source '" + cache_section + "'", "warn");
             if (!file_nonempty(metadata_output_path))
@@ -1918,6 +1985,7 @@ function download_subscription_into_cache(section_name_value, subscription_url, 
             write_text(subscription_url_cache_path, subscription_url);
             write_text(subscription_user_agent_cache_path, effective_user_agent);
             write_text(subscription_hwid_cache_path, effective_hwid);
+        write_text(subscription_headers_cache_path, request_headers);
             persist_subscription_cache(cache_section, subscription_json_path, subscription_url, effective_user_agent, effective_hwid, metadata_tmpfile) ||
                 log_message("Failed to persist last working subscription cache for source '" + cache_section + "'", "warn");
             if (!file_nonempty(metadata_output_path))
@@ -1941,6 +2009,7 @@ function download_subscription_into_cache(section_name_value, subscription_url, 
         write_text(subscription_url_cache_path, subscription_url);
         write_text(subscription_user_agent_cache_path, effective_user_agent);
         write_text(subscription_hwid_cache_path, effective_hwid);
+        write_text(subscription_headers_cache_path, request_headers);
         persist_subscription_cache(cache_section, subscription_json_path, subscription_url, effective_user_agent, effective_hwid, metadata_tmpfile) ||
             log_message("Failed to persist last working subscription cache for source '" + cache_section + "'", "warn");
         if (!file_nonempty(metadata_output_path))
@@ -1988,7 +2057,8 @@ function cached_source_status(source_section, parsed) {
     let cached_user_agent = read_text(user_agent_path);
     let cached_hwid = read_text(hwid_path);
     if (had_usable_cache &&
-        !source_cache_profile_matches(parsed, cached_url, cached_user_agent, cached_hwid, get_subscription_user_agent(""))) {
+        (!source_cache_profile_matches(parsed, cached_url, cached_user_agent, cached_hwid, get_subscription_user_agent("")) ||
+        !cached_headers_match(TMP_SUBSCRIPTION_FOLDER, source_section, parsed.headers_hash))) {
         remove_subscription_source_runtime_cache(source_section);
         return {
             usable: false,
@@ -2284,7 +2354,8 @@ function prefetch_cached_user_agent(source_section, parsed, default_user_agent) 
             continue;
         let user_agent = read_text(source_user_agent_path(dir, source_section));
         let matches = source_cache_profile_matches(parsed, read_text(source_url_path(dir, source_section)),
-            user_agent, read_text(source_hwid_path(dir, source_section)), default_user_agent);
+            user_agent, read_text(source_hwid_path(dir, source_section)), default_user_agent) &&
+            cached_headers_match(dir, source_section, parsed.headers_hash);
         if (dir == TMP_SUBSCRIPTION_FOLDER)
             return matches ? runtime_user_agent : "";
         if (matches)
@@ -2325,6 +2396,7 @@ function prefetch_subscription_source(dir, index, sections, section, source_inde
             proxy: as_string(proxy),
             user_agent: as_string(user_agent),
             hwid: as_string(hwid),
+            request_headers: source_headers_hash(parsed.url),
             status,
             body: status == 0 ? body : "",
             headers: status == 0 && file_nonempty(dir + "/" + headers) ? headers : ""

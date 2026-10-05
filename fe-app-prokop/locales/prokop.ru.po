@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-05 01:07+0000\n"
-"PO-Revision-Date: 2026-10-05 01:07+0000\n"
+"POT-Creation-Date: 2026-10-05 01:16+0000\n"
+"PO-Revision-Date: 2026-10-05 01:16+0000\n"
 "Last-Translator: Asofwar\n"
 "Language-Team: none\n"
 "Language: ru\n"
@@ -1673,6 +1673,9 @@ msgstr "Внешние конфиги nfqws обходят управление 
 msgid "External nfqws2 config files bypass Prokop queue management and explicit validation."
 msgstr "Внешние конфиги nfqws2 обходят управление очередями и явную валидацию Prokop."
 
+msgid "Extra headers for the requests of this subscription, one per line as Name: value. Some panels need a token here."
+msgstr "Дополнительные заголовки запросов этой подписки, по одному в строке в виде Имя: значение. Некоторым панелям здесь нужен токен."
+
 msgid "Failed"
 msgstr "Ошибка"
 
@@ -1837,6 +1840,9 @@ msgstr "Как часто проверять, восстановился ли DN
 
 msgid "HTTP error"
 msgstr "Ошибка HTTP"
+
+msgid "HTTP headers"
+msgstr "HTTP-заголовки"
 
 msgid "HTTPS request made by the router itself"
 msgstr "HTTPS-запрос выполняет сам роутер"
@@ -3155,6 +3161,9 @@ msgstr "Служба Prokop остановлена. Запустите серв�
 msgid "Prokop service is stopped. Start the service to display nodes and groups."
 msgstr "Служба Prokop остановлена. Запустите её, чтобы увидеть узлы и группы."
 
+msgid "Prokop sets this header itself"
+msgstr "Этот заголовок Prokop задаёт сам"
+
 msgid "Prokop stays stopped until you start it: reloads, restores and updates do not start it."
 msgstr "Prokop останется остановленным, пока вы его не запустите: перезагрузка конфигурации, восстановление и обновления его не запускают."
 
@@ -4244,6 +4253,18 @@ msgstr "Для загружаемых списков в редакторе не�
 msgid "The firewall policy could not be applied"
 msgstr "Не удалось применить политику файрвола"
 
+msgid "The header has no value"
+msgstr "У заголовка нет значения"
+
+msgid "The header is too long"
+msgstr "Заголовок слишком длинный"
+
+msgid "The header must not contain control characters"
+msgstr "Заголовок не должен содержать управляющие символы"
+
+msgid "The header name contains characters that are not allowed"
+msgstr "В имени заголовка недопустимые символы"
+
 msgid "The interrupted Prokop update was rolled back; no new update was attempted"
 msgstr "Прерванное обновление Prokop откачено; новое обновление не запускалось"
 
@@ -5053,6 +5074,9 @@ msgstr "С другим действием правило не может исп
 
 msgid "Works without bypass."
 msgstr "Работает без обхода."
+
+msgid "Write the header as Name: value"
+msgstr "Запишите заголовок в виде Имя: значение"
 
 msgid "YACD Secret Key"
 msgstr "Секретный ключ YACD"

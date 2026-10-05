@@ -2439,6 +2439,7 @@ function subscriptionUrlSettingsKeys() {
     "download_via_proxy_enabled",
     "download_via_proxy_section",
     "user_agent",
+    "headers",
     "prefix_nodes",
     "node_prefix",
     "include_urltest_groups",
@@ -2452,6 +2453,7 @@ function defaultSubscriptionUrlSettings() {
     download_via_proxy_enabled: "0",
     download_via_proxy_section: "",
     user_agent: "",
+    headers: [],
     prefix_nodes: "0",
     node_prefix: "",
     include_urltest_groups: "1",
@@ -2467,6 +2469,54 @@ function flintnetSubscriptionUrl(value) {
   } catch (_error) {
     return false;
   }
+}
+
+// Mirror of config/connections.uc subscription_header_error (C11).
+const SUBSCRIPTION_RESERVED_HEADERS = [
+  "user-agent",
+  "x-hwid",
+  "x-device-os",
+  "x-device-model",
+  "x-ver-os",
+  "accept-language",
+  "x-device-locale",
+  "host",
+  "content-length",
+  "transfer-encoding",
+  "connection",
+  "proxy-authorization",
+  "te",
+  "upgrade",
+  "expect",
+  "cookie2",
+];
+
+function subscriptionHeaderError(value) {
+  const entry = `${value || ""}`;
+  if (!entry.trim()) {
+    return true;
+  }
+  if (entry.length > 1024) {
+    return _("The header is too long");
+  }
+  if (/[\u0000-\u001f\u007f]/.test(entry)) {
+    return _("The header must not contain control characters");
+  }
+  const colon = entry.indexOf(":");
+  if (colon <= 0) {
+    return _("Write the header as Name: value");
+  }
+  const name = entry.slice(0, colon).trim();
+  if (!/^[A-Za-z0-9!#$%&'*+.^_`|~-]+$/.test(name)) {
+    return _("The header name contains characters that are not allowed");
+  }
+  if (SUBSCRIPTION_RESERVED_HEADERS.includes(name.toLowerCase())) {
+    return _("Prokop sets this header itself");
+  }
+  if (!entry.slice(colon + 1).trim()) {
+    return _("The header has no value");
+  }
+  return true;
 }
 
 function subscriptionUrlChildDefaults() {
@@ -2757,6 +2807,23 @@ function addSubscriptionUrlItemOptions(itemSection, options = {}) {
     return /[\u0000-\u001f\u007f]/.test(`${value || ""}`)
       ? _("User-Agent must not contain control characters")
       : true;
+  };
+
+  // C11: sent with the requests for this subscription, after the headers
+  // Prokop sets itself, which cannot be replaced (config/connections.uc
+  // subscription_header_error). The values may be credentials: Diagnostics
+  // and the read-only role never show them, and the cache keeps a hash.
+  o = itemSection.option(
+    form.DynamicList,
+    "headers",
+    _("HTTP headers"),
+    _(
+      "Extra headers for the requests of this subscription, one per line as Name: value. Some panels need a token here.",
+    ),
+  );
+  o.placeholder = "X-Token: value";
+  o.validate = function (_itemId, value) {
+    return subscriptionHeaderError(value);
   };
 
   o = itemSection.option(
@@ -5540,14 +5607,14 @@ function applyChildItemSettings(itemId, settings) {
     if (value === undefined || value === null || value === "") {
       uci.unset(UCI_PACKAGE, itemId, key);
     } else if (Array.isArray(value)) {
-      uci.set(
-        UCI_PACKAGE,
-        itemId,
-        key,
-        value
-          .map((item) => `${item || ""}`.trim())
-          .filter((item) => item.length),
-      );
+      const items = value
+        .map((item) => `${item || ""}`.trim())
+        .filter((item) => item.length);
+      if (items.length) {
+        uci.set(UCI_PACKAGE, itemId, key, items);
+      } else {
+        uci.unset(UCI_PACKAGE, itemId, key);
+      }
     } else {
       uci.set(UCI_PACKAGE, itemId, key, `${value}`);
     }

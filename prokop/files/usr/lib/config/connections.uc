@@ -631,6 +631,53 @@ function subscription_node_prefix(section, value) {
     return trim(as_string(prefix));
 }
 
+// C11: extra HTTP headers a subscription source sends ("Name: value", a
+// list of its subscription_url item). The headers Prokop sets itself, and
+// the ones that change the request framing, cannot be replaced here.
+const SUBSCRIPTION_HEADERS_MAX = 16;
+const SUBSCRIPTION_HEADER_MAX_LENGTH = 1024;
+const SUBSCRIPTION_RESERVED_HEADERS = [ "user-agent", "x-hwid", "x-device-os", "x-device-model", "x-ver-os",
+    "accept-language", "x-device-locale", "host", "content-length", "transfer-encoding", "connection",
+    "proxy-authorization", "te", "upgrade", "expect", "cookie2" ];
+
+// "" when entry is a header Prokop can send, otherwise why not.
+function subscription_header_error(entry) {
+    entry = as_string(entry);
+    if (length(entry) > SUBSCRIPTION_HEADER_MAX_LENGTH)
+        return "too long";
+    if (match(entry, /[[:cntrl:]]/) != null)
+        return "control characters";
+    let colon = index(entry, ":");
+    if (colon <= 0)
+        return "not Name: value";
+    let name = trim(substr(entry, 0, colon));
+    if (match(name, /^[A-Za-z0-9!#$%&'*+.^_`|~-]+$/) == null)
+        return "invalid name";
+    if (index(SUBSCRIPTION_RESERVED_HEADERS, lc(name)) >= 0)
+        return "reserved name";
+    if (trim(substr(entry, colon + 1)) == "")
+        return "empty value";
+    return "";
+}
+
+// The valid headers of a source as "Name: value", in order, at most
+// SUBSCRIPTION_HEADERS_MAX; invalid entries are left out.
+function subscription_headers(section, value) {
+    let child = child_item_by_value(section, "subscription_url", "url", value);
+    let result = [];
+    if (child == null)
+        return result;
+    for (let entry in child_list(child, "headers", [])) {
+        if (length(result) >= SUBSCRIPTION_HEADERS_MAX)
+            break;
+        if (subscription_header_error(entry) != "")
+            continue;
+        let colon = index(entry, ":");
+        push(result, trim(substr(entry, 0, colon)) + ": " + trim(substr(entry, colon + 1)));
+    }
+    return result;
+}
+
 function subscription_user_agent(section, value) {
     return subscription_auto_user_agent(section, value) ? "" : subscription_configured_user_agent(section, value);
 }
@@ -1057,6 +1104,8 @@ return {
     subscription_prefix_nodes,
     subscription_node_prefix,
     subscription_user_agent,
+    subscription_headers,
+    subscription_header_error,
     subscription_hwid,
     subscription_download_section,
     interface_domain_resolver_enabled,
