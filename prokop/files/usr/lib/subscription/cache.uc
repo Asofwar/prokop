@@ -1869,8 +1869,33 @@ function subscription_service_proxy_port(section_name_value, sections, parsed) {
 // already failed at this start.
 let list_bootstrap_proxy_only = false;
 
+// LC-11: at a start before sing-box runs, the subscription of a rule whose
+// sources all download through other rules waits for them: prepare-caches
+// defers the rule, and it downloads through the service proxy once sing-box
+// runs (or through the temporary sing-box when the lists download through
+// it), never directly. Only when a rule it downloads through cannot carry
+// it at this start (no nodes or provider of its own yet), or the rule has
+// sources that do not wait (manual links, direct sources), does the start
+// download it directly, as the rule would otherwise start without them.
+function subscription_waits_for_download_rules(sections, section_name_value) {
+    let section = find_section(sections, section_name_value);
+    if (section_has_non_subscription_connection_sources(section))
+        return false;
+    let default_user_agent = get_subscription_user_agent("");
+    let any = false;
+    for (let entry in connections.subscription_urls(section)) {
+        let download_section = as_string(object_or_empty(subscription_source_profile(section, entry)).download_section);
+        if (download_section == "" || download_section == section_name_value)
+            return false;
+        if (!subscription_download_target_section_is_ready(sections, download_section, "", default_user_agent))
+            return false;
+        any = true;
+    }
+    return any;
+}
+
 // The address of the service proxy a source downloads through, "" to
-// download it directly, null when it may not be downloaded at all.
+// download it directly, null when it may not be downloaded at all (now).
 function get_subscription_download_proxy_address(section_name_value, sections, parsed, phase) {
     let download_section = as_string(object_or_empty(parsed).download_section);
     let port = subscription_service_proxy_port(section_name_value, sections, parsed);
@@ -1885,8 +1910,13 @@ function get_subscription_download_proxy_address(section_name_value, sections, p
         return "";
 
     if (!sing_box_service_running()) {
-        if (phase == "startup")
-            log_message("Subscription source for rule '" + section_name_value + "' is configured to download via rule '" + download_section + "', but sing-box is not running yet; downloading it directly during startup", "warn");
+        if (phase == "startup") {
+            if (subscription_waits_for_download_rules(sections, section_name_value)) {
+                log_message("Subscription source for rule '" + section_name_value + "' downloads via rule '" + download_section + "' once sing-box runs; it is not downloaded directly", "info");
+                return null;
+            }
+            log_message("Subscription source for rule '" + section_name_value + "' is configured to download via rule '" + download_section + "', but that rule cannot carry it before sing-box starts or the rule has other sources; downloading it directly during startup", "warn");
+        }
         else
             log_message("Subscription source for rule '" + section_name_value + "' is configured to download via rule '" + download_section + "', but sing-box service proxy is not running; downloading it directly", "warn");
         return "";
@@ -2556,7 +2586,7 @@ function ensure_subscription_source_for_prepare(state, section, source_index, en
 
     let metadata_output_path = metadata_tmpfile != "" ? temp_path(TMP_SUBSCRIPTION_FOLDER, source_section, "metadata-output") : "";
     let proxy = get_subscription_download_proxy_address(section_name_value, state.sections, parsed, state.phase);
-    let update_result = download_subscription_into_cache(
+    let update_result = proxy == null ? 1 : download_subscription_into_cache(
         section_name_value,
         parsed.url,
         source_json_path(TMP_SUBSCRIPTION_FOLDER, source_section),
