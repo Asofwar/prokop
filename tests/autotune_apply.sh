@@ -46,6 +46,8 @@ case "${3:-}" in
       ensure-dpi-transition-guard) echo "$$" > "$STATE/guard.pid"; [ -z "${GUARD_FAIL:-}" ] || exit 1; [ -z "${GUARD_SLEEP:-}" ] || sleep "$GUARD_SLEEP"; touch "$NFT_STATE/tables/ProkopConfigRestoreDpiGuard"; [ -z "${GUARD_HOLD:-}" ] || sleep "$GUARD_HOLD"; exit 0 ;;
       remove-dpi-transition-guard) rm -f "$NFT_STATE/tables/ProkopConfigRestoreDpiGuard"; exit 0 ;;
     esac; exit 0 ;;
+  # The control run of a failed verification (AT-6): stood in by $STATE/control.
+  */autotune/isolation.uc) exec "$STATE/control" "$@" ;;
   */config/validator.uc) [ -z "${VALIDATE_SLEEP:-}" ] || sleep "$VALIDATE_SLEEP"; [ -z "${VALIDATE_FAIL:-}" ]; exit ;;
   # Logged, and kept as health.uc keeps its journal (it drops an event kind
   # it does not know).
@@ -59,6 +61,28 @@ case "${3:-}" in
     [ "${4:-}" != restore ] || [ -z "${STAGE_BEFORE_RESTORE:-}" ] || echo "prokop.settings.dns_server='9.9.9.9'" > "$PROKOP_UCI_SAVEDIR/prokop" ;;
 esac
 exec "$REAL_UCODE" "$@"
+SH
+# The isolated direct run (autotune/isolation.uc run direct ...) of the
+# control: it joins the apply's lock through the real lock.uc, then answers as
+# $CONTROL says (refused: the control could not run). CONTROL=outsider: it
+# publishes the record it was given and waits until the test tried it.
+cat > "$STATE/control" <<'SH'
+#!/bin/sh
+echo "isolation $4 $5 $6 $7 $8 $9" >> "$STUB_LOG/isolation.log"
+if ! "$REAL_UCODE" -L "$PROKOP_LIB" -e 'exit(require("autotune.lock").acquire() ? 0 : 1);'; then
+  echo '{"status":"failed","reason":"lock_unavailable"}'; exit 1
+fi
+echo "joined $PROKOP_AUTOTUNE_LOCK_OWNER" >> "$STUB_LOG/isolation.log"
+p() { printf '{"class":"%s","syn_acks":%s,"curl_exit_code":%s}' "$1" "$2" "$3"; }
+case "${CONTROL:-refused}" in
+  down) echo "{\"status\":\"completed\",\"reason\":null,\"probes\":[$(p connect_timeout 0 28),$(p connect_timeout 0 28),$(p connect_timeout 0 28)]}" ;;
+  up) echo "{\"status\":\"completed\",\"reason\":null,\"probes\":[$(p tls_failure 1 28),$(p connect_timeout 0 28),$(p success 1 0)]}" ;;
+  noroute) echo '{"status":"unsupported","reason":"isolation_unavailable","isolation":{"unavailable":"route_unavailable"},"probes":[]}' ;;
+  outsider) echo "$PROKOP_AUTOTUNE_LOCK_OWNER" > "$STATE/control.record.tmp"; mv "$STATE/control.record.tmp" "$STATE/control.record"
+    for _ in $(seq 1 100); do [ -e "$STATE/control.tried" ] && break; sleep 0.05; done
+    echo '{"status":"refused","reason":"guard_active"}' ;;
+  *) echo '{"status":"refused","reason":"guard_active"}'; exit 1 ;;
+esac
 SH
 printf '#!/bin/sh\necho 1.0.26-test\n' > "$WORK/bin/prokop"
 # sync (core/durable.uc) fails while a file of $SYNC_FAIL_GLOB exists.
@@ -239,7 +263,7 @@ let broken = require("fs").stat(getenv("STATE") + "/zapret-broken") != null;
 print(sprintf("%J\n", { ready: !broken, conflict: false, expected_process_count: 2, running_process_count: broken ? 1 : 2,
     supervisor_process_count: 2 }));
 UC
-chmod +x "$WORK/bin/ucode" "$WORK/bin/prokop" "$WORK/bin/sync" "$WORK/bin/nft" "$WORK/bin/curl" "$WORK/bin/dig" "$WORK/bin/uci" "$WORK/reload" "$STATE/start-dpi"
+chmod +x "$STATE/control" "$WORK/bin/ucode" "$WORK/bin/prokop" "$WORK/bin/sync" "$WORK/bin/nft" "$WORK/bin/curl" "$WORK/bin/dig" "$WORK/bin/uci" "$WORK/reload" "$STATE/start-dpi"
 }
 
 # A short provider default with the three profiles of the real one (HTTP, TLS, QUIC).
@@ -307,11 +331,11 @@ dpi_args() { tr '\0' ' ' < "/proc/$(head -n 1 "$ZAPRET_CHILD_PID_DIR/Dpi.pid")/c
 reset_apply() {
   reset_state
   unset PROD_PLAN PROD_SLEEP PROD_QUEUE_BUMP PROD_REMOTE DIG_SLEEP GUARD_SLEEP VALIDATE_SLEEP VALIDATE_FAIL RELOAD_SLEEP UCI_FAIL UCI_EXTRA_CHANGE BREAK_FIRST_RELOAD BREAK_ON_RELOAD CONFIRM_FAIL EDIT_BEFORE_RESTORE EDIT_ON_RELOAD STAGE_BEFORE_RESTORE NFQWS_STUB_REJECT DIG_STUB_ANSWER \
-    LOCAL_DIG_ANSWER PROD_CHAINS CLASH_DOWN HOLD_SLEEP GUARD_FAIL GUARD_HOLD UCI_SLEEP SNAPSHOT_DURING_VERIFY
+    LOCAL_DIG_ANSWER PROD_CHAINS CLASH_DOWN HOLD_SLEEP GUARD_FAIL GUARD_HOLD UCI_SLEEP SNAPSHOT_DURING_VERIFY CONTROL
   pkill -f "$WORK/bin/nfqws --qnum=40" 2>/dev/null || true
   rm -rf "$PROKOP_SNAPSHOT_DIR" "$PROKOP_SNAPSHOT_HASH_DIR" "$PROKOP_AUTOTUNE_APPLY_STATE" "$STATE"/prod.* "$STATE/reload.plan" "$STATE/zapret-broken" "$STATE/broke-once"\
     "$ZAPRET_CHILD_PID_DIR"/*.pid "$NFT_STATE/tables/ProkopConfigRestoreDpiGuard" "$PROKOP_SNAPSHOT_LOCK_DIR" "$WORK/run"/* \
-    "$STATE/hold" "$STATE/guard.pid" "$WORK/uci-save"/*
+    "$STATE/hold" "$STATE/guard.pid" "$WORK/uci-save"/* "$STATE"/control.record "$STATE"/control.tried "$STUB_LOG/isolation.log"
   echo 0 > "$STATE/prod.counter"
   queue_reset
   touch "$NFT_STATE/tables/ProkopTable"
@@ -523,6 +547,41 @@ json 'a.equal(r.status, "rolled_back"); a.equal(r.reason, "verification_failed")
 reset_apply; plan_ready; export PROD_PLAN="success|connect_timeout|reset"; at apply "$WORK/plan.json"
 json 'a.equal(r.status, "rolled_back"); a.equal(r.reason, "verification_failed"); a.equal(r.verification.traffic.network_unavailable, false);' "$WORK/out.json"
 ok "AT-3 verification lost to proven connect failures only -> verification_network_unavailable; a curl timeout blames the candidate"
+# AT-6: what the probes alone cannot pin on the WAN (FakeIP connects locally;
+# a WAN dropping packets times out like a DPI blackhole) is decided by one
+# isolated direct control run to the pinned address, inside the apply's lock.
+reset_apply; plan_ready; export PROD_PLAN=connect_timeout CONTROL=down; at apply "$WORK/plan.json"
+json 'a.equal(r.status, "rolled_back", JSON.stringify(r).slice(0, 500)); a.equal(r.reason, "verification_network_unavailable");
+a.equal(r.verification.traffic.network_unavailable, true); a.equal(r.verification.traffic.control.verdict, "down");
+a.equal(r.verification.traffic.control.reason, "no_syn_ack"); a.equal(r.rollback.status, "success");' "$WORK/out.json"
+grep -q '^isolation run direct example.com 3 192.0.2.53 93.184.216.34$' "$STUB_LOG/isolation.log" || fail "control run: $(cat "$STUB_LOG/isolation.log" 2>/dev/null)"
+grep -q '^joined owner\.[0-9]*\.[0-9]*$' "$STUB_LOG/isolation.log" || fail "the control run did not join the apply's lock"
+[ "$(chash)" = "$PRE_HASH" ] || fail "rollback config hash after a WAN drop seen by the control"
+reset_apply; plan_ready; export PROD_PLAN=reset CONTROL=noroute; at apply "$WORK/plan.json"
+json 'a.equal(r.reason, "verification_network_unavailable"); a.equal(r.verification.traffic.control.reason, "route_unavailable");' "$WORK/out.json"
+reset_apply; plan_ready; export PROD_PLAN=connect_timeout CONTROL=up; at apply "$WORK/plan.json"
+json 'a.equal(r.status, "rolled_back"); a.equal(r.reason, "verification_failed"); a.equal(r.verification.traffic.network_unavailable, false);
+a.equal(r.verification.traffic.control.verdict, "up"); a.equal(r.verification.traffic.control.syn_acks, 2);' "$WORK/out.json"
+reset_apply; plan_ready; export PROD_PLAN=connect_timeout; at apply "$WORK/plan.json"
+json 'a.equal(r.reason, "verification_failed"); a.equal(r.verification.traffic.control.verdict, "unknown"); a.equal(r.verification.traffic.control.reason, "guard_active");' "$WORK/out.json"
+reset_apply; plan_ready; export CONTROL=down; at apply "$WORK/plan.json"
+json 'a.equal(r.status, "applied"); a.equal(r.verification.traffic.control, undefined);' "$WORK/out.json"
+[ ! -s "$STUB_LOG/isolation.log" ] || fail "a passing verification ran the control"
+ok "AT-6 failed verification: control run down -> verification_network_unavailable; up or unavailable -> the candidate is blamed"
+# Only a process the apply started joins its lock: the same record from
+# anywhere else (here the test itself) is refused.
+reset_apply; plan_ready; export PROD_PLAN=connect_timeout CONTROL=outsider
+ucode -L "$LIB" "$LIB/autotune/apply.uc" apply "$WORK/plan.json" > "$WORK/out.json" &
+runner=$!
+for _ in $(seq 1 400); do [ -e "$STATE/control.record" ] && break; sleep 0.05; done
+[ -e "$STATE/control.record" ] || fail "the control run never started"
+joined=0; PROKOP_AUTOTUNE_LOCK_OWNER="$(cat "$STATE/control.record")" "$REAL_UCODE" -L "$LIB" -e 'exit(require("autotune.lock").acquire() ? 0 : 1);' && joined=1
+PROKOP_AUTOTUNE_LOCK_OWNER="owner.1.1" "$REAL_UCODE" -L "$LIB" -e 'exit(require("autotune.lock").acquire() ? 0 : 1);' && joined=1
+touch "$STATE/control.tried"; wait "$runner" || true
+[ "$joined" = 0 ] || fail "a process outside the apply joined its lock"
+json 'a.equal(r.status, "rolled_back"); a.equal(r.reason, "verification_failed");' "$WORK/out.json"
+[ ! -e "$PROKOP_AUTOTUNE_STATE_DIR/lock" ] || fail "the lock outlived the apply"
+ok "AT-6 the control run joins only the lock of the apply that started it"
 reset_apply; plan_ready; export PROD_QUEUE_BUMP=0; at apply "$WORK/plan.json"
 json 'a.equal(r.status, "rolled_back"); const c = r.verification.checks.find((x) => x.name === "traffic_dpi_queue"); a.equal(c.ok, false);
   a.equal(r.verification.checks.find((x) => x.name === "traffic_transport").ok, true);' "$WORK/out.json"
@@ -1549,6 +1608,12 @@ export PROD_PLAN=reset; at observe "$id"; unset PROD_PLAN
 json 'a.equal(r.status, "failed", JSON.stringify(r)); a.equal(r.reason, "traffic_failed"); a.deepEqual(r.failing, ["traffic_transport"]); a.equal(r.successes, 0);' "$WORK/out.json"
 export PROD_PLAN=unreachable; at observe "$id"; unset PROD_PLAN
 json 'a.equal(r.status, "inconclusive"); a.equal(r.reason, "network_unavailable");' "$WORK/out.json"
+# AT-6: a WAN dropping packets during an observation check is no reason to
+# roll back; the control run decides, as in the verification of the apply.
+export PROD_PLAN=reset CONTROL=down; at observe "$id"; unset PROD_PLAN CONTROL
+json 'a.equal(r.status, "inconclusive", JSON.stringify(r)); a.equal(r.reason, "network_unavailable"); a.equal(r.control, "down");' "$WORK/out.json"
+export PROD_PLAN=reset CONTROL=up; at observe "$id"; unset PROD_PLAN CONTROL
+json 'a.equal(r.status, "failed"); a.equal(r.reason, "traffic_failed"); a.equal(r.control, "up");' "$WORK/out.json"
 export PROD_PLAN=reset PROD_REMOTE=93.184.216.34; at observe "$id"; unset PROD_PLAN PROD_REMOTE
 json 'a.equal(r.status, "inconclusive"); a.equal(r.reason, "path_unproven"); a.ok(r.failing.includes("traffic_sing_box_path"));' "$WORK/out.json"
 touch "$STATE/zapret-broken"; at observe "$id"; rm -f "$STATE/zapret-broken"

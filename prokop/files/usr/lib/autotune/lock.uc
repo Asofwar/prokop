@@ -19,6 +19,11 @@ const LIB_DIR = getenv("PROKOP_LIB") || "/usr/lib/prokop";
 const STATE_DIR = getenv("PROKOP_AUTOTUNE_STATE_DIR") || "/var/run/prokop/autotune";
 const LOCK = STATE_DIR + "/lock";
 const OWNER_SCRIPTS = [ "autotune/isolation.uc", "autotune/apply.uc" ];
+// The control probe of an apply verification (AT-6) is an isolation run the
+// apply starts while it holds the lock. That run joins the lock instead of
+// taking it, and only when the record it names is held by a running apply
+// that is its own ancestor; it never releases what it did not take.
+const JOIN = getenv("PROKOP_AUTOTUNE_LOCK_OWNER") || "";
 
 let lock_record = null;
 let lock_busy = false;
@@ -48,7 +53,15 @@ function ensure_state_dir() {
     if (fs.stat(STATE_DIR) == null && !fs.mkdir(STATE_DIR, 0700)) return false;
     return fs.chmod(STATE_DIR, 0700);
 }
+function joinable(name) {
+    let parsed = match(name, /^owner\.([1-9][0-9]*)\.([0-9]+)$/);
+    if (parsed == null || fs.lstat(LOCK + "/" + name) == null) return false;
+    if (identity.matches_record({ pid: parsed[1], ticks: parsed[2] }, "ucode",
+        [ "ucode", "-L", LIB_DIR, LIB_DIR + "/autotune/apply.uc" ], false, true) == "") return false;
+    return identity.descendant_of(owner_pid(), parsed[1]);
+}
 function acquire() {
+    if (JOIN != "") return joinable(JOIN);
     if (!ensure_state_dir()) return false;
     let pid = owner_pid(), ticks = identity.start_ticks(pid);
     if (ticks == "") return false;
@@ -85,6 +98,8 @@ function release() {
     fs.rmdir(STATE_DIR);
 }
 function busy() { return lock_busy; }
+// The owner record of the lock this process took (for a run that joins it).
+function record_name() { return lock_record == null ? null : fs.basename(lock_record); }
 // Is any autotune operation holding the lock right now?
 function held() {
     let entries = fs.lsdir(LOCK);
@@ -93,4 +108,4 @@ function held() {
     return false;
 }
 
-return { acquire, release, busy, held, owner_pid, STATE_DIR };
+return { acquire, release, busy, held, owner_pid, record_name, STATE_DIR };
