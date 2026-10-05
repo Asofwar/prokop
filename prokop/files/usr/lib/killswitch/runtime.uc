@@ -162,9 +162,12 @@ const STRICT_LEGACY_REASONS = { "package removal": true };
 const WATCH_ITERATIONS = int(getenv("PROKOP_KILLSWITCH_WATCH_ITERATIONS") || "0");
 const WATCH_INTERVAL_MS = int(getenv("PROKOP_KILLSWITCH_WATCH_INTERVAL_MS") || "2000");
 // While sing-box answers, nothing is redirected and no restart is under way,
-// the watcher checks this much less often (dig and nft every 10 s instead of
-// every 2 s); the first unanswered probe brings it back to every pass.
-const WATCH_QUIET_INTERVAL_MS = int(getenv("PROKOP_KILLSWITCH_WATCH_QUIET_INTERVAL_MS") || sprintf("%d", WATCH_INTERVAL_MS * 5));
+// the watcher checks less often: dig and nft every 5 s instead of every
+// 2 s. The first unanswered probe brings it back to every pass, and the
+// third in a row fails client DNS over to the standby resolver: about 10 s
+// after sing-box died at worst (at 10 s it was about 15 s). The firewall
+// part of the kill-switch does not wait for it.
+const WATCH_QUIET_INTERVAL_MS = int(getenv("PROKOP_KILLSWITCH_WATCH_QUIET_INTERVAL_MS") || sprintf("%d", WATCH_INTERVAL_MS * 5 / 2));
 
 // Route-rule keys that do not narrow a rule below "every client, every port".
 // Only such rules may carve an exception out of a protected domain.
