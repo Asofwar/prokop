@@ -442,7 +442,7 @@ function removal_left() {
     let left = runtime_left();
     let killswitch_table = constants.KILLSWITCH_NFT_TABLE || "ProkopKillswitch";
     let table_name = constants.NFT_TABLE_NAME || "ProkopTable";
-    for (let table in [ killswitch_table, "ProkopTorrServerDirect", table_name + "DpiGuard", "ProkopConfigRestoreDpiGuard" ])
+    for (let table in [ killswitch_table, "ProkopTorrServerDirect", "ProkopTraffic", table_name + "DpiGuard", "ProkopConfigRestoreDpiGuard" ])
         if (nft_table_present(table))
             push(left, "nft table inet " + table);
     let policy = constants.KILLSWITCH_NFT_POLICY || "/etc/prokop/killswitch/policy.nft";

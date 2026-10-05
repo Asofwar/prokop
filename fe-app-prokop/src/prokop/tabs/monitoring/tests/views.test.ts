@@ -7,6 +7,8 @@ import { controllerForView, readMonitoringView } from '../views';
 describe('monitoring views', () => {
   it('opens node selection from monitoring#view=nodes', () => {
     expect(readMonitoringView('#view=nodes')).toBe('nodes');
+    expect(readMonitoringView('#view=devices')).toBe('devices');
+    expect(readMonitoringView('#view=other')).toBe('connections');
     expect(readMonitoringView('#search=example.com')).toBe('connections');
     expect(readMonitoringView('')).toBe('connections');
   });
@@ -14,5 +16,6 @@ describe('monitoring views', () => {
   it('runs node selection with the dashboard controller', () => {
     expect(controllerForView('nodes')).toBe('dashboard');
     expect(controllerForView('connections')).toBe('monitoring');
+    expect(controllerForView('devices')).toBe('monitoring');
   });
 });

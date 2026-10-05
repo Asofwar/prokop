@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-05 11:43+0000\n"
-"PO-Revision-Date: 2026-10-05 11:43+0000\n"
+"POT-Creation-Date: 2026-10-05 12:12+0000\n"
+"PO-Revision-Date: 2026-10-05 12:12+0000\n"
 "Last-Translator: Claude\n"
 "Language-Team: none\n"
 "Language: ru\n"
@@ -400,6 +400,9 @@ msgstr "Для IP-адреса DNS не нужен"
 
 msgid "and %d more"
 msgstr "и ещё %d"
+
+msgid "and %d more addresses"
+msgstr "и ещё адресов: %d"
 
 msgid "Anime"
 msgstr "Аниме"
@@ -1148,6 +1151,15 @@ msgstr "Не удалось запустить обновление списко
 msgid "Count a server as working only when a 32 KB download through it over HTTPS completes, not only when it answers. Finds servers that connect but pass no data. Each check downloads 32 KB; a server that fails is skipped for a minute."
 msgstr "Считать сервер рабочим, только когда через него по HTTPS полностью загружаются 32 КБ, а не только когда он отвечает. Так находятся серверы, которые подключаются, но не пропускают данные. Каждая проверка загружает 32 КБ; сервер, не прошедший её, пропускается на минуту."
 
+msgid "Count traffic per device"
+msgstr "Считать трафик по устройствам"
+
+msgid "Counting traffic per device is off: Settings, Network, Count traffic per device."
+msgstr "Подсчёт трафика по устройствам выключен: «Настройки», «Сеть», «Считать трафик по устройствам»."
+
+msgid "Counts how much each device on the source interfaces sends and receives, for Monitoring > Devices. The counters start from zero when Prokop starts"
+msgstr "Считает, сколько отправляет и получает каждое устройство на исходных интерфейсах, для раздела «Мониторинг» → «Устройства». Счётчики начинаются с нуля при запуске Prokop"
+
 msgid "Create snapshot"
 msgstr "Создать снимок"
 
@@ -1234,6 +1246,9 @@ msgstr "Фильтр по устройствам"
 
 msgid "Device or IP"
 msgstr "Устройство или IP"
+
+msgid "Device traffic is unavailable"
+msgstr "Трафик устройств недоступен"
 
 msgid "Devices"
 msgstr "Устройства"
@@ -1759,6 +1774,9 @@ msgstr "Исправьте подсвеченные поля и сохранит
 
 msgid "Flash"
 msgstr "Флеш-память"
+
+msgid "Flow offloading is on in the firewall: accelerated connections bypass the counters, so the totals are lower than the real traffic."
+msgstr "В межсетевом экране включено ускорение (flow offloading): ускоренные соединения идут мимо счётчиков, поэтому итоги меньше реального трафика."
 
 msgid "Follow new"
 msgstr "Следить за новыми"
@@ -2441,6 +2459,9 @@ msgstr "Загрузка доступных версий…"
 msgid "Loading connections"
 msgstr "Загрузка соединений"
 
+msgid "Loading device traffic"
+msgstr "Загрузка трафика устройств"
+
 msgid "Loading kill-switch status…"
 msgstr "Загрузка состояния kill-switch…"
 
@@ -2645,6 +2666,12 @@ msgstr "Нет доступных совместимых версий"
 msgid "No connections match the filters"
 msgstr "Нет соединений, подходящих под фильтры"
 
+msgid "No connections of this device through sing-box seen yet"
+msgstr "Соединений этого устройства через sing-box пока не видно"
+
+msgid "No connections through sing-box seen yet"
+msgstr "Соединений через sing-box пока не видно"
+
 msgid "no data"
 msgstr "нет данных"
 
@@ -2719,6 +2746,9 @@ msgstr "Ни одна цель не идёт через DPI-правило Zapre
 
 msgid "No targets yet"
 msgstr "Целей пока нет"
+
+msgid "No traffic from devices counted yet"
+msgstr "Трафика устройств пока не насчитано"
 
 msgid "no transit rule is selected"
 msgstr "не выбрано транзитное правило"
@@ -2908,6 +2938,9 @@ msgstr "ОС"
 
 msgid "Other"
 msgstr "Другое"
+
+msgid "other %d: %s"
+msgstr "ещё %d: %s"
 
 msgid "Other event"
 msgstr "Другое событие"
@@ -3190,6 +3223,9 @@ msgstr "Работа Prokop"
 
 msgid "Prokop runtime table {table} is not present"
 msgstr "Нет таблицы Prokop {table}"
+
+msgid "Prokop service is stopped. Start the service to count traffic per device."
+msgstr "Служба Prokop остановлена. Запустите сервис, чтобы считать трафик по устройствам."
 
 msgid "Prokop service is stopped. Start the service to display connections."
 msgstr "Служба Prokop остановлена. Запустите сервис для отображения соединений."
@@ -3779,6 +3815,12 @@ msgstr "Отправлено"
 msgid "Sent with the requests for this subscription. Leave empty to try compatible client profiles automatically."
 msgstr "Передаётся в запросах этой подписки. Оставьте пустым, чтобы совместимые профили клиентов подбирались автоматически."
 
+msgid "Sent, received and speed: router counters since %s."
+msgstr "Отправлено, получено и скорость: счётчики роутера с %s."
+
+msgid "Sent, received and speed: router counters since Prokop started."
+msgstr "Отправлено, получено и скорость: счётчики роутера с запуска Prokop."
+
 msgid "Server closed the connection without a response"
 msgstr "Сервер закрыл соединение без ответа"
 
@@ -3832,6 +3874,9 @@ msgstr "Настройки"
 
 msgid "Several strategies are stable with similar latency; the simplest one was chosen."
 msgstr "Несколько стратегий стабильны с близкой задержкой; выбрана самая простая."
+
+msgid "Show connections of this device"
+msgstr "Показать соединения устройства"
 
 msgid "Show only connections that start from now on, active and closed"
 msgstr "Показывать только соединения, начатые с этого момента, — активные и закрытые"
@@ -3937,6 +3982,9 @@ msgstr "Сетевой интерфейс источника"
 
 msgid "Sources that could not be downloaded:"
 msgstr "Источники, которые не удалось скачать:"
+
+msgid "Speed"
+msgstr "Скорость"
 
 msgid "Stability"
 msgstr "Стабильность"
@@ -4505,6 +4553,9 @@ msgstr "Роутер не смог проверить, открывается л
 msgid "The router could not resolve the address."
 msgstr "Роутер не смог определить адрес."
 
+msgid "The router could not set up the traffic counters; the system log says why."
+msgstr "Роутер не смог включить счётчики трафика; причина в системном журнале."
+
 msgid "The router did not report the outcome of the rollback; it may still be running. This page shows it once the rollback ends."
 msgstr "Роутер не сообщил, чем закончился откат; возможно, он ещё выполняется. Эта страница покажет исход, когда откат закончится."
 
@@ -4786,6 +4837,12 @@ msgstr "Эту стратегию недавно откатывали; она ж
 
 msgid "This TorrServer was not installed by Prokop; Prokop left it as it is"
 msgstr "Этот TorrServer установлен не через Prokop; Prokop оставил его как есть"
+
+msgid "Through rules"
+msgstr "Через правила"
+
+msgid "Through rules: what sing-box counted for connections seen while this page is open; traffic that no rule sends to sing-box is not split."
+msgstr "Через правила: что насчитал sing-box по соединениям, замеченным, пока открыта эта страница; трафик, который ни одно правило не отправляет в sing-box, не разбивается."
 
 msgid "Time in seconds for DNS record caching (default: 60)"
 msgstr "Время в секундах для кэширования DNS записей (по умолчанию: 60)"

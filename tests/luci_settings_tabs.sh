@@ -19,13 +19,13 @@ for (const m of settings.matchAll(/sections\.(\w+)\.option\(\s*(?:form|widgets)\
   groupOf[m[2]] = m[1];
 const expect = {
   dns: ['dns_type', 'dns_server', 'bootstrap_dns_server', 'dns_rewrite_ttl', 'dns_strategy', 'dns_client_subnet', 'dns_detour_enabled'],
-  network: ['_kill_switch_status', 'source_network_interfaces', 'output_network_interface', 'disable_quic', 'exclude_ntp', 'dont_touch_dhcp', 'exclude_bittorrent', 'intercept_client_dns', 'tproxy_low_memory'],
+  network: ['_kill_switch_status', 'source_network_interfaces', 'output_network_interface', 'disable_quic', 'exclude_ntp', 'dont_touch_dhcp', 'exclude_bittorrent', 'intercept_client_dns', 'tproxy_low_memory', 'device_traffic'],
   lists: ['list_update_enabled', 'update_interval', 'latency_test_url', 'download_lists_via_proxy'],
   service: ['enable_yacd', 'yacd_secret_key', 'config_path', 'cache_path', 'log_level'],
 };
 for (const [group, names] of Object.entries(expect))
   for (const name of names) assert.equal(groupOf[name], group, `${name} belongs to the ${group} tab`);
-assert.equal(Object.keys(groupOf).length, 39, 'every settings option lives in exactly one tab');
+assert.equal(Object.keys(groupOf).length, 40, 'every settings option lives in exactly one tab');
 assert.doesNotMatch(settings, /\bsection\.option\(/, 'no option is left outside the tabs');
 
 const secret = settings.slice(settings.indexOf('"yacd_secret_key"'));

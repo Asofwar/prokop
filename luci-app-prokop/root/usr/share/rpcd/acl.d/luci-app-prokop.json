@@ -18,6 +18,7 @@
         "/usr/libexec/prokop-ro autotune_groups": ["exec"],
         "/usr/libexec/prokop-ro autotune_run_status *": ["exec"],
         "/usr/libexec/prokop-ro route_trace *": ["exec"],
+        "/usr/libexec/prokop-ro device_traffic": ["exec"],
         "/usr/libexec/prokop-ro config_snapshot_list": ["exec"],
         "/usr/libexec/prokop-ro config_snapshot_diff *": ["exec"],
         "/usr/libexec/prokop-ro connectivity_test *": ["exec"],

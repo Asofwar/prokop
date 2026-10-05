@@ -27,6 +27,7 @@ export const READONLY_EXEC_PATTERNS = [
   '/usr/libexec/prokop-ro autotune_groups',
   '/usr/libexec/prokop-ro autotune_run_status *',
   '/usr/libexec/prokop-ro route_trace *',
+  '/usr/libexec/prokop-ro device_traffic',
   '/usr/libexec/prokop-ro config_snapshot_list',
   '/usr/libexec/prokop-ro config_snapshot_diff *',
   '/usr/libexec/prokop-ro connectivity_test *',

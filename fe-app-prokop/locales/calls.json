@@ -519,17 +519,19 @@
     "call": "Actions",
     "key": "Actions",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:991",
-      "src/prokop/tabs/monitoring/initController.ts:1294"
+      "src/prokop/tabs/monitoring/devicesView.ts:147",
+      "src/prokop/tabs/monitoring/devicesView.ts:269",
+      "src/prokop/tabs/monitoring/initController.ts:1047",
+      "src/prokop/tabs/monitoring/initController.ts:1350"
     ]
   },
   {
     "call": "Active",
     "key": "Active",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:768",
-      "src/prokop/tabs/monitoring/initController.ts:1108",
-      "src/prokop/tabs/monitoring/render.ts:52"
+      "src/prokop/tabs/monitoring/initController.ts:824",
+      "src/prokop/tabs/monitoring/initController.ts:1164",
+      "src/prokop/tabs/monitoring/render.ts:57"
     ]
   },
   {
@@ -543,7 +545,7 @@
     "call": "Active connections of all devices are interrupted.",
     "key": "Active connections of all devices are interrupted.",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1680"
+      "src/prokop/tabs/monitoring/initController.ts:1736"
     ]
   },
   {
@@ -794,8 +796,8 @@
     "key": "All devices",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4414",
-      "src/prokop/tabs/monitoring/initController.ts:623",
-      "src/prokop/tabs/monitoring/render.ts:85"
+      "src/prokop/tabs/monitoring/initController.ts:679",
+      "src/prokop/tabs/monitoring/render.ts:90"
     ]
   },
   {
@@ -817,7 +819,7 @@
     "call": "All paths",
     "key": "All paths",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:660"
+      "src/prokop/tabs/monitoring/initController.ts:716"
     ]
   },
   {
@@ -924,6 +926,13 @@
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/configform.js:342",
       "src/prokop/tabs/history/model.ts:440"
+    ]
+  },
+  {
+    "call": "and %d more addresses",
+    "key": "and %d more addresses",
+    "places": [
+      "src/prokop/tabs/monitoring/devicesView.ts:66"
     ]
   },
   {
@@ -1115,7 +1124,7 @@
     "call": "Apps reconnect on their own; downloads and calls may drop",
     "key": "Apps reconnect on their own; downloads and calls may drop",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1682"
+      "src/prokop/tabs/monitoring/initController.ts:1738"
     ]
   },
   {
@@ -1705,7 +1714,7 @@
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4333",
       "src/prokop/tabs/monitoring/connectionView.ts:116",
-      "src/prokop/tabs/monitoring/initController.ts:209"
+      "src/prokop/tabs/monitoring/initController.ts:237"
     ]
   },
   {
@@ -1878,7 +1887,7 @@
     "call": "Check address in Diagnostics",
     "key": "Check address in Diagnostics",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1147"
+      "src/prokop/tabs/monitoring/initController.ts:1203"
     ]
   },
   {
@@ -2230,22 +2239,22 @@
     "call": "Close all",
     "key": "Close all",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1684"
+      "src/prokop/tabs/monitoring/initController.ts:1740"
     ]
   },
   {
     "call": "Close all connections",
     "key": "Close all connections",
     "places": [
-      "src/prokop/tabs/monitoring/render.ts:128",
-      "src/prokop/tabs/monitoring/render.ts:129"
+      "src/prokop/tabs/monitoring/render.ts:133",
+      "src/prokop/tabs/monitoring/render.ts:134"
     ]
   },
   {
     "call": "Close all connections?",
     "key": "Close all connections?",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1679"
+      "src/prokop/tabs/monitoring/initController.ts:1735"
     ]
   },
   {
@@ -2253,31 +2262,31 @@
     "key": "Close connection",
     "places": [
       "src/prokop/tabs/monitoring/connectionView.ts:205",
-      "src/prokop/tabs/monitoring/initController.ts:1178"
+      "src/prokop/tabs/monitoring/initController.ts:1234"
     ]
   },
   {
     "call": "Close details",
     "key": "Close details",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1096",
-      "src/prokop/tabs/monitoring/initController.ts:1097"
+      "src/prokop/tabs/monitoring/initController.ts:1152",
+      "src/prokop/tabs/monitoring/initController.ts:1153"
     ]
   },
   {
     "call": "closed",
     "key": "closed",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:964"
+      "src/prokop/tabs/monitoring/initController.ts:1020"
     ]
   },
   {
     "call": "Closed",
     "key": "Closed",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:775",
-      "src/prokop/tabs/monitoring/initController.ts:1109",
-      "src/prokop/tabs/monitoring/render.ts:61"
+      "src/prokop/tabs/monitoring/initController.ts:831",
+      "src/prokop/tabs/monitoring/initController.ts:1165",
+      "src/prokop/tabs/monitoring/render.ts:66"
     ]
   },
   {
@@ -2497,7 +2506,7 @@
     "call": "Connection ID",
     "key": "Connection ID",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1019"
+      "src/prokop/tabs/monitoring/initController.ts:1075"
     ]
   },
   {
@@ -2519,14 +2528,14 @@
     "key": "Connections",
     "places": [
       "src/prokop/tabs/dashboard/overviewCards.ts:265",
-      "src/prokop/tabs/monitoring/render.ts:15"
+      "src/prokop/tabs/monitoring/render.ts:19"
     ]
   },
   {
     "call": "Connections are unavailable",
     "key": "Connections are unavailable",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1360"
+      "src/prokop/tabs/monitoring/initController.ts:1416"
     ]
   },
   {
@@ -2589,7 +2598,7 @@
     "call": "Copy details",
     "key": "Copy details",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1164",
+      "src/prokop/tabs/monitoring/initController.ts:1220",
       "src/prokop/tabs/diagnostic/partials/renderCheckSection.ts:156"
     ]
   },
@@ -2759,6 +2768,27 @@
     ]
   },
   {
+    "call": "Count traffic per device",
+    "key": "Count traffic per device",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:989"
+    ]
+  },
+  {
+    "call": "Counting traffic per device is off: Settings, Network, Count traffic per device.",
+    "key": "Counting traffic per device is off: Settings, Network, Count traffic per device.",
+    "places": [
+      "src/prokop/tabs/monitoring/devicesView.ts:191"
+    ]
+  },
+  {
+    "call": "Counts how much each device on the source interfaces sends and receives, for Monitoring > Devices. The counters start from zero when Prokop starts",
+    "key": "Counts how much each device on the source interfaces sends and receives, for Monitoring > Devices. The counters start from zero when Prokop starts",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:990"
+    ]
+  },
+  {
     "call": "Create snapshot",
     "key": "Create snapshot",
     "places": [
@@ -2909,10 +2939,10 @@
     "call": "Destination",
     "key": "Destination",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:982",
-      "src/prokop/tabs/monitoring/initController.ts:1010",
-      "src/prokop/tabs/monitoring/initController.ts:1035",
-      "src/prokop/tabs/monitoring/initController.ts:1290"
+      "src/prokop/tabs/monitoring/initController.ts:1038",
+      "src/prokop/tabs/monitoring/initController.ts:1066",
+      "src/prokop/tabs/monitoring/initController.ts:1091",
+      "src/prokop/tabs/monitoring/initController.ts:1346"
     ]
   },
   {
@@ -2953,11 +2983,13 @@
     "places": [
       "src/prokop/tabs/diagnostic/initController.ts:797",
       "src/prokop/tabs/diagnostic/renderDiagnostic.ts:83",
-      "src/prokop/tabs/monitoring/initController.ts:981",
-      "src/prokop/tabs/monitoring/initController.ts:1034",
-      "src/prokop/tabs/monitoring/initController.ts:1104",
-      "src/prokop/tabs/monitoring/initController.ts:1289",
-      "src/prokop/tabs/monitoring/render.ts:83"
+      "src/prokop/tabs/monitoring/devicesView.ts:136",
+      "src/prokop/tabs/monitoring/devicesView.ts:263",
+      "src/prokop/tabs/monitoring/initController.ts:1037",
+      "src/prokop/tabs/monitoring/initController.ts:1090",
+      "src/prokop/tabs/monitoring/initController.ts:1160",
+      "src/prokop/tabs/monitoring/initController.ts:1345",
+      "src/prokop/tabs/monitoring/render.ts:88"
     ]
   },
   {
@@ -2975,10 +3007,18 @@
     ]
   },
   {
+    "call": "Device traffic is unavailable",
+    "key": "Device traffic is unavailable",
+    "places": [
+      "src/prokop/tabs/monitoring/devicesView.ts:178"
+    ]
+  },
+  {
     "call": "Devices",
     "key": "Devices",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8612"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8612",
+      "src/prokop/tabs/monitoring/render.ts:20"
     ]
   },
   {
@@ -3035,7 +3075,7 @@
     "call": "direct",
     "key": "direct",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:210"
+      "src/prokop/tabs/monitoring/initController.ts:238"
     ]
   },
   {
@@ -3630,7 +3670,7 @@
     "call": "DPI strategy",
     "key": "DPI strategy",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1124"
+      "src/prokop/tabs/monitoring/initController.ts:1180"
     ]
   },
   {
@@ -3658,8 +3698,8 @@
     "call": "Duration",
     "key": "Duration",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1042",
-      "src/prokop/tabs/monitoring/render.ts:101"
+      "src/prokop/tabs/monitoring/initController.ts:1098",
+      "src/prokop/tabs/monitoring/render.ts:106"
     ]
   },
   {
@@ -4087,16 +4127,16 @@
     "call": "Failed to close connection",
     "key": "Failed to close connection",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1651",
-      "src/prokop/tabs/monitoring/initController.ts:1666"
+      "src/prokop/tabs/monitoring/initController.ts:1707",
+      "src/prokop/tabs/monitoring/initController.ts:1722"
     ]
   },
   {
     "call": "Failed to close connections",
     "key": "Failed to close connections",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1698",
-      "src/prokop/tabs/monitoring/initController.ts:1711"
+      "src/prokop/tabs/monitoring/initController.ts:1754",
+      "src/prokop/tabs/monitoring/initController.ts:1767"
     ]
   },
   {
@@ -4260,17 +4300,24 @@
     ]
   },
   {
+    "call": "Flow offloading is on in the firewall: accelerated connections bypass the counters, so the totals are lower than the real traffic.",
+    "key": "Flow offloading is on in the firewall: accelerated connections bypass the counters, so the totals are lower than the real traffic.",
+    "places": [
+      "src/prokop/tabs/monitoring/devicesView.ts:239"
+    ]
+  },
+  {
     "call": "Follow new",
     "key": "Follow new",
     "places": [
-      "src/prokop/tabs/monitoring/render.ts:74"
+      "src/prokop/tabs/monitoring/render.ts:79"
     ]
   },
   {
     "call": "Following new connections",
     "key": "Following new connections",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:704"
+      "src/prokop/tabs/monitoring/initController.ts:760"
     ]
   },
   {
@@ -4463,7 +4510,7 @@
     "call": "Host",
     "key": "Host",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1013"
+      "src/prokop/tabs/monitoring/initController.ts:1069"
     ]
   },
   {
@@ -5744,8 +5791,8 @@
     "call": "Latency test failed",
     "key": "Latency test failed",
     "places": [
-      "src/prokop/methods/shell/index.ts:657",
-      "src/prokop/methods/shell/index.ts:678",
+      "src/prokop/methods/shell/index.ts:661",
+      "src/prokop/methods/shell/index.ts:682",
       "src/prokop/tabs/dashboard/initController.ts:1061",
       "src/prokop/tabs/dashboard/latencyJob.ts:9"
     ]
@@ -5889,8 +5936,16 @@
     "call": "Loading connections",
     "key": "Loading connections",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1350",
-      "src/prokop/tabs/monitoring/render.ts:165"
+      "src/prokop/tabs/monitoring/initController.ts:1406",
+      "src/prokop/tabs/monitoring/render.ts:170"
+    ]
+  },
+  {
+    "call": "Loading device traffic",
+    "key": "Loading device traffic",
+    "places": [
+      "src/prokop/tabs/monitoring/devicesView.ts:173",
+      "src/prokop/tabs/monitoring/render.ts:208"
     ]
   },
   {
@@ -6133,14 +6188,14 @@
     "call": "Monitoring",
     "key": "Monitoring",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/monitoring.js:21"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/monitoring.js:22"
     ]
   },
   {
     "call": "Monitoring view",
     "key": "Monitoring view",
     "places": [
-      "src/prokop/tabs/monitoring/render.ts:12"
+      "src/prokop/tabs/monitoring/render.ts:16"
     ]
   },
   {
@@ -6336,7 +6391,7 @@
     "call": "No active connections",
     "key": "No active connections",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1397"
+      "src/prokop/tabs/monitoring/initController.ts:1453"
     ]
   },
   {
@@ -6385,7 +6440,7 @@
     "call": "No closed connections",
     "key": "No closed connections",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1398"
+      "src/prokop/tabs/monitoring/initController.ts:1454"
     ]
   },
   {
@@ -6399,7 +6454,21 @@
     "call": "No connections match the filters",
     "key": "No connections match the filters",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1378"
+      "src/prokop/tabs/monitoring/initController.ts:1434"
+    ]
+  },
+  {
+    "call": "No connections of this device through sing-box seen yet",
+    "key": "No connections of this device through sing-box seen yet",
+    "places": [
+      "src/prokop/tabs/monitoring/devicesView.ts:119"
+    ]
+  },
+  {
+    "call": "No connections through sing-box seen yet",
+    "key": "No connections through sing-box seen yet",
+    "places": [
+      "src/prokop/tabs/monitoring/devicesView.ts:71"
     ]
   },
   {
@@ -6480,7 +6549,7 @@
     "call": "No new connections yet. Open the site or app you want to check.",
     "key": "No new connections yet. Open the site or app you want to check.",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1393"
+      "src/prokop/tabs/monitoring/initController.ts:1449"
     ]
   },
   {
@@ -6586,6 +6655,13 @@
     ]
   },
   {
+    "call": "No traffic from devices counted yet",
+    "key": "No traffic from devices counted yet",
+    "places": [
+      "src/prokop/tabs/monitoring/devicesView.ts:205"
+    ]
+  },
+  {
     "call": "no transit rule is selected",
     "key": "no transit rule is selected",
     "places": [
@@ -6622,7 +6698,7 @@
     "key": "Nodes and groups",
     "places": [
       "src/prokop/tabs/dashboard/overviewCards.ts:262",
-      "src/prokop/tabs/monitoring/render.ts:16",
+      "src/prokop/tabs/monitoring/render.ts:21",
       "src/prokop/tabs/diagnostic/partials/renderCheckSection.ts:94"
     ]
   },
@@ -7017,8 +7093,8 @@
     "key": "Operation timed out",
     "places": [
       "src/helpers/withTimeout.ts:7",
-      "src/prokop/methods/shell/index.ts:626",
-      "src/prokop/methods/shell/index.ts:716"
+      "src/prokop/methods/shell/index.ts:630",
+      "src/prokop/methods/shell/index.ts:720"
     ]
   },
   {
@@ -7079,6 +7155,13 @@
     ]
   },
   {
+    "call": "other %d: %s",
+    "key": "other %d: %s",
+    "places": [
+      "src/prokop/tabs/monitoring/devicesView.ts:102"
+    ]
+  },
+  {
     "call": "Other event",
     "key": "Other event",
     "places": [
@@ -7089,7 +7172,7 @@
     "call": "Outbound chain",
     "key": "Outbound chain",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1017"
+      "src/prokop/tabs/monitoring/initController.ts:1073"
     ]
   },
   {
@@ -7203,10 +7286,10 @@
     "call": "Path",
     "key": "Path",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:986",
-      "src/prokop/tabs/monitoring/initController.ts:1037",
-      "src/prokop/tabs/monitoring/initController.ts:1291",
-      "src/prokop/tabs/monitoring/render.ts:90"
+      "src/prokop/tabs/monitoring/initController.ts:1042",
+      "src/prokop/tabs/monitoring/initController.ts:1093",
+      "src/prokop/tabs/monitoring/initController.ts:1347",
+      "src/prokop/tabs/monitoring/render.ts:95"
     ]
   },
   {
@@ -7241,7 +7324,7 @@
     "call": "Path type",
     "key": "Path type",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:663"
+      "src/prokop/tabs/monitoring/initController.ts:719"
     ]
   },
   {
@@ -7269,9 +7352,9 @@
     "call": "Pause updates",
     "key": "Pause updates",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:804",
-      "src/prokop/tabs/monitoring/render.ts:141",
-      "src/prokop/tabs/monitoring/render.ts:142"
+      "src/prokop/tabs/monitoring/initController.ts:860",
+      "src/prokop/tabs/monitoring/render.ts:146",
+      "src/prokop/tabs/monitoring/render.ts:147"
     ]
   },
   {
@@ -7570,7 +7653,7 @@
     "call": "Prokop has been installed",
     "key": "Prokop has been installed",
     "places": [
-      "src/prokop/methods/shell/index.ts:864"
+      "src/prokop/methods/shell/index.ts:868"
     ]
   },
   {
@@ -7759,10 +7842,17 @@
     ]
   },
   {
+    "call": "Prokop service is stopped. Start the service to count traffic per device.",
+    "key": "Prokop service is stopped. Start the service to count traffic per device.",
+    "places": [
+      "src/prokop/tabs/monitoring/devicesView.ts:183"
+    ]
+  },
+  {
     "call": "Prokop service is stopped. Start the service to display connections.",
     "key": "Prokop service is stopped. Start the service to display connections.",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1338"
+      "src/prokop/tabs/monitoring/initController.ts:1394"
     ]
   },
   {
@@ -7967,7 +8057,7 @@
     "key": "Protocol",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2359",
-      "src/prokop/tabs/monitoring/initController.ts:1014"
+      "src/prokop/tabs/monitoring/initController.ts:1070"
     ]
   },
   {
@@ -8017,8 +8107,10 @@
     "call": "Received",
     "key": "Received",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1043",
-      "src/prokop/tabs/monitoring/render.ts:102"
+      "src/prokop/tabs/monitoring/devicesView.ts:141",
+      "src/prokop/tabs/monitoring/devicesView.ts:265",
+      "src/prokop/tabs/monitoring/initController.ts:1099",
+      "src/prokop/tabs/monitoring/render.ts:107"
     ]
   },
   {
@@ -8245,8 +8337,8 @@
     "call": "Reset filters",
     "key": "Reset filters",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:724",
-      "src/prokop/tabs/monitoring/initController.ts:1387"
+      "src/prokop/tabs/monitoring/initController.ts:780",
+      "src/prokop/tabs/monitoring/initController.ts:1443"
     ]
   },
   {
@@ -8537,7 +8629,7 @@
     "call": "Resume updates",
     "key": "Resume updates",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:804"
+      "src/prokop/tabs/monitoring/initController.ts:860"
     ]
   },
   {
@@ -8645,7 +8737,7 @@
     "places": [
       "src/prokop/tabs/diagnostic/siteCheck.ts:81",
       "src/prokop/tabs/diagnostic/siteCheck.ts:106",
-      "src/prokop/tabs/monitoring/initController.ts:1112"
+      "src/prokop/tabs/monitoring/initController.ts:1168"
     ]
   },
   {
@@ -8738,8 +8830,8 @@
     "key": "Rule",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/rules.js:27",
-      "src/prokop/tabs/monitoring/initController.ts:672",
-      "src/prokop/tabs/monitoring/initController.ts:1015"
+      "src/prokop/tabs/monitoring/initController.ts:728",
+      "src/prokop/tabs/monitoring/initController.ts:1071"
     ]
   },
   {
@@ -8781,7 +8873,7 @@
     "call": "Rule payload",
     "key": "Rule payload",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1016"
+      "src/prokop/tabs/monitoring/initController.ts:1072"
     ]
   },
   {
@@ -8954,7 +9046,7 @@
     "call": "Search",
     "key": "Search",
     "places": [
-      "src/prokop/tabs/monitoring/render.ts:114"
+      "src/prokop/tabs/monitoring/render.ts:119"
     ]
   },
   {
@@ -9153,8 +9245,10 @@
     "call": "Sent",
     "key": "Sent",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1044",
-      "src/prokop/tabs/monitoring/render.ts:103"
+      "src/prokop/tabs/monitoring/devicesView.ts:140",
+      "src/prokop/tabs/monitoring/devicesView.ts:264",
+      "src/prokop/tabs/monitoring/initController.ts:1100",
+      "src/prokop/tabs/monitoring/render.ts:108"
     ]
   },
   {
@@ -9162,6 +9256,20 @@
     "key": "Sent with the requests for this subscription. Leave empty to try compatible client profiles automatically.",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2803"
+    ]
+  },
+  {
+    "call": "Sent, received and speed: router counters since %s.",
+    "key": "Sent, received and speed: router counters since %s.",
+    "places": [
+      "src/prokop/tabs/monitoring/devicesView.ts:212"
+    ]
+  },
+  {
+    "call": "Sent, received and speed: router counters since Prokop started.",
+    "key": "Sent, received and speed: router counters since Prokop started.",
+    "places": [
+      "src/prokop/tabs/monitoring/devicesView.ts:216"
     ]
   },
   {
@@ -9227,8 +9335,8 @@
     "places": [
       "src/prokop/helpers/serviceActionNotice.ts:30",
       "src/prokop/helpers/serviceActionNotice.ts:31",
-      "src/prokop/methods/shell/index.ts:537",
-      "src/prokop/methods/shell/index.ts:587"
+      "src/prokop/methods/shell/index.ts:541",
+      "src/prokop/methods/shell/index.ts:591"
     ]
   },
   {
@@ -9297,10 +9405,17 @@
     ]
   },
   {
+    "call": "Show connections of this device",
+    "key": "Show connections of this device",
+    "places": [
+      "src/prokop/tabs/monitoring/devicesView.ts:118"
+    ]
+  },
+  {
     "call": "Show only connections that start from now on, active and closed",
     "key": "Show only connections that start from now on, active and closed",
     "places": [
-      "src/prokop/tabs/monitoring/render.ts:70"
+      "src/prokop/tabs/monitoring/render.ts:75"
     ]
   },
   {
@@ -9315,7 +9430,7 @@
     "call": "Shown %d of %d",
     "key": "Shown %d of %d",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:706"
+      "src/prokop/tabs/monitoring/initController.ts:762"
     ]
   },
   {
@@ -9399,7 +9514,7 @@
     "call": "Site, IP, device or rule",
     "key": "Site, IP, device or rule",
     "places": [
-      "src/prokop/tabs/monitoring/render.ts:113"
+      "src/prokop/tabs/monitoring/render.ts:118"
     ]
   },
   {
@@ -9512,7 +9627,7 @@
     "call": "Sort connections",
     "key": "Sort connections",
     "places": [
-      "src/prokop/tabs/monitoring/render.ts:97"
+      "src/prokop/tabs/monitoring/render.ts:102"
     ]
   },
   {
@@ -9526,7 +9641,7 @@
     "call": "Source",
     "key": "Source",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1008"
+      "src/prokop/tabs/monitoring/initController.ts:1064"
     ]
   },
   {
@@ -9541,6 +9656,14 @@
     "key": "Sources that could not be downloaded:",
     "places": [
       "src/prokop/tabs/updates/listsUpdate.ts:112"
+    ]
+  },
+  {
+    "call": "Speed",
+    "key": "Speed",
+    "places": [
+      "src/prokop/tabs/monitoring/devicesView.ts:142",
+      "src/prokop/tabs/monitoring/devicesView.ts:266"
     ]
   },
   {
@@ -9654,14 +9777,14 @@
     "call": "Start time",
     "key": "Start time",
     "places": [
-      "src/prokop/tabs/monitoring/render.ts:100"
+      "src/prokop/tabs/monitoring/render.ts:105"
     ]
   },
   {
     "call": "Started",
     "key": "Started",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1018"
+      "src/prokop/tabs/monitoring/initController.ts:1074"
     ]
   },
   {
@@ -9704,7 +9827,7 @@
     "call": "Status",
     "key": "Status",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1106"
+      "src/prokop/tabs/monitoring/initController.ts:1162"
     ]
   },
   {
@@ -9811,8 +9934,8 @@
     "call": "Subscription update failed",
     "key": "Subscription update failed",
     "places": [
-      "src/prokop/methods/shell/index.ts:912",
-      "src/prokop/methods/shell/index.ts:932"
+      "src/prokop/methods/shell/index.ts:916",
+      "src/prokop/methods/shell/index.ts:936"
     ]
   },
   {
@@ -9976,7 +10099,7 @@
     "key": "Technical details",
     "places": [
       "src/prokop/ui/states.ts:59",
-      "src/prokop/tabs/monitoring/initController.ts:1190"
+      "src/prokop/tabs/monitoring/initController.ts:1246"
     ]
   },
   {
@@ -10896,6 +11019,13 @@
     ]
   },
   {
+    "call": "The router could not set up the traffic counters; the system log says why.",
+    "key": "The router could not set up the traffic counters; the system log says why.",
+    "places": [
+      "src/prokop/tabs/monitoring/devicesView.ts:197"
+    ]
+  },
+  {
     "call": "The router did not report the outcome of the rollback; it may still be running. This page shows it once the rollback ends.",
     "key": "The router did not report the outcome of the rollback; it may still be running. This page shows it once the rollback ends.",
     "places": [
@@ -11566,6 +11696,21 @@
     ]
   },
   {
+    "call": "Through rules",
+    "key": "Through rules",
+    "places": [
+      "src/prokop/tabs/monitoring/devicesView.ts:146",
+      "src/prokop/tabs/monitoring/devicesView.ts:267"
+    ]
+  },
+  {
+    "call": "Through rules: what sing-box counted for connections seen while this page is open; traffic that no rule sends to sing-box is not split.",
+    "key": "Through rules: what sing-box counted for connections seen while this page is open; traffic that no rule sends to sing-box is not split.",
+    "places": [
+      "src/prokop/tabs/monitoring/devicesView.ts:224"
+    ]
+  },
+  {
     "call": "Time in seconds for DNS record caching (default: 60)",
     "key": "Time in seconds for DNS record caching (default: 60)",
     "places": [
@@ -11684,7 +11829,7 @@
     "call": "Total traffic",
     "key": "Total traffic",
     "places": [
-      "src/prokop/tabs/monitoring/render.ts:104"
+      "src/prokop/tabs/monitoring/render.ts:109"
     ]
   },
   {
@@ -11698,9 +11843,9 @@
     "call": "Traffic",
     "key": "Traffic",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:987",
-      "src/prokop/tabs/monitoring/initController.ts:1134",
-      "src/prokop/tabs/monitoring/initController.ts:1292",
+      "src/prokop/tabs/monitoring/initController.ts:1043",
+      "src/prokop/tabs/monitoring/initController.ts:1190",
+      "src/prokop/tabs/monitoring/initController.ts:1348",
       "src/prokop/tabs/dashboard/partials/renderSections.ts:147"
     ]
   },

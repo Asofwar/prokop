@@ -17,6 +17,7 @@ const EntryPoint = {
     main.DashboardTab.initController();
     main.MonitoringTab.initController({
       loadLocalDeviceChoices: localDevices.loadLocalDeviceChoices,
+      loadLocalDeviceHosts: localDevices.loadLocalDeviceHosts,
     });
     return shell.renderPage(_("Monitoring"), main.MonitoringTab.render());
   },

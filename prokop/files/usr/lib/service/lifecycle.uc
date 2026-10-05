@@ -151,6 +151,7 @@ const ZAPRET_UC = LIB_DIR + "/providers/zapret/runtime.uc";
 const ZAPRET2_UC = LIB_DIR + "/providers/zapret2/runtime.uc";
 const BYEDPI_UC = LIB_DIR + "/providers/byedpi/runtime.uc";
 const KILLSWITCH_UC = LIB_DIR + "/killswitch/runtime.uc";
+const TRAFFIC_UC = LIB_DIR + "/diagnostics/traffic.uc";
 
 let start_subscription_update_lock_held = false;
 // Whether the last start_main applied the complete list generation; the
@@ -493,8 +494,18 @@ function confirm_working_config(initial_fingerprint) {
     return result.status == 0;
 }
 
+// Per-device traffic accounting follows the runtime it counts for
+// (diagnostics/traffic.uc): kept as it is when unchanged, so its counters
+// survive a reload. It only counts; a failure is logged there and changes
+// nothing else.
+function traffic_sync() {
+    module_success(TRAFFIC_UC, [ "sync" ]);
+}
+
 function finish_reload_status(status, initial_fingerprint) {
     status = int(status || 0);
+    if (status == 0)
+        traffic_sync();
     if (status == 0)
         confirm_working_config(initial_fingerprint);
     if (status == 0)
@@ -1383,6 +1394,7 @@ function start_impl() {
     // Scheduling it here guarantees that a reboot-interrupted test resumes
     // only after sing-box, Clash API, and the rest of Prokop are ready.
     module_background(DIAGNOSTICS_UC, [ "automatic-latency-test", "resume" ]);
+    traffic_sync();
     return 0;
 }
 
@@ -1455,6 +1467,7 @@ function cleanup_failed_runtime() {
     if (dns_status != 0 && status == 0)
         status = dns_status;
 
+    module_success(TRAFFIC_UC, [ "remove" ]);
     mark_runtime_stopped_clean();
 
     if (status != 0)
@@ -1989,6 +2002,7 @@ function stop_impl(explicit_stop) {
     if (runtime_status != 0)
         status = runtime_status;
 
+    module_success(TRAFFIC_UC, [ "remove" ]);
     mark_runtime_stopped_clean();
 
     if (status != 0)

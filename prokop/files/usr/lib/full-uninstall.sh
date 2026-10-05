@@ -212,7 +212,7 @@ find_left_behind() {
             "$ROOT/etc/crontabs/root"; then
             left_behind cron "lines marked # prokop- in /etc/crontabs/root"
         fi
-        for table in ProkopTorrServerDirect ProkopKillswitch $DPI_GUARD_TABLES; do
+        for table in ProkopTorrServerDirect ProkopTraffic ProkopKillswitch $DPI_GUARD_TABLES; do
             if nft -t list table inet "$table" >/dev/null 2>&1; then
                 left_behind "table:$table" "nft table inet $table"
             fi
@@ -563,7 +563,9 @@ run() {
     # autotune apply that ended needs_attention always (only a restore,
     # gone with the packages, releases it). Nothing marks DPI traffic for
     # them any more.
-    for table in $DPI_GUARD_TABLES; do
+    # Per-device traffic accounting goes with Prokop's stop; this catches a
+    # stop that did not run or did not finish.
+    for table in $DPI_GUARD_TABLES ProkopTraffic; do
         if nft -t list table inet "$table" >/dev/null 2>&1; then
             nft delete table inet "$table" 2>/dev/null || true
         fi

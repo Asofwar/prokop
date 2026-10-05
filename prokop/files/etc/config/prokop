@@ -53,6 +53,7 @@ config settings 'settings'
         option exclude_ntp '0'
         option intercept_client_dns '1'
         option tproxy_low_memory '0'
+        option device_traffic '1'
         option exclude_bittorrent '0'
 
 #config section 'subscription_example'

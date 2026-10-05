@@ -80,6 +80,7 @@ export const UCI_SAFE_OPTIONS = new Set([
   'config_version',
   'connection_type',
   'detect_server_country',
+  'device_traffic',
   'direct_proxy_enabled',
   'direct_proxy_port',
   'disable_quic',

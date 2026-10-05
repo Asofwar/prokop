@@ -103,6 +103,7 @@ get_ui_state                   | json          | run
 get_health_status              | json          | covered: acl_boundary, health tests
 get_history                    | json          | run
 route_trace                    | json-error    | run: {error: invalid_input} rc 1; covered: route_trace
+device_traffic                 | json          | run; covered: device_traffic
 config_snapshot_create         | json-status:created,existing | run
 config_snapshot_list           | json          | run
 config_snapshot_diff           | json          | run: no output and rc 1 for a missing snapshot
@@ -446,6 +447,7 @@ expect show_config 0 "" -- masked
 expect get_ui_capabilities 0 "" --
 expect get_ui_state 0 "" --
 expect get_history 0 "" --
+expect device_traffic 0 "" --
 expect get_readonly_config_sections 0 "" --
 expect get_dashboard_runtime_metadata 0 "" --
 expect validate_nfqws_strategy_json 0 "" -- "--dpi-desync=fake"

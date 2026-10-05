@@ -1,13 +1,26 @@
 import { readPageParams } from '../../helpers/navigation';
 import { setProkopPage } from '../../services/tab.service';
 
-// Monitoring has two views: live connections and node selection
-// (monitoring#view=nodes). Node selection is run by the dashboard
-// controller, so switching views switches the active controller.
-export type MonitoringView = 'connections' | 'nodes';
+// Monitoring has three views: live connections, traffic per device
+// (monitoring#view=devices) and node selection (monitoring#view=nodes).
+// Node selection is run by the dashboard controller, so switching to it
+// switches the active controller; devices stay with the monitoring one.
+export type MonitoringView = 'connections' | 'devices' | 'nodes';
+
+const VIEWS: MonitoringView[] = ['connections', 'devices', 'nodes'];
 
 export function readMonitoringView(hash?: string): MonitoringView {
-  return readPageParams(hash).view === 'nodes' ? 'nodes' : 'connections';
+  const view = readPageParams(hash).view as MonitoringView;
+  return VIEWS.includes(view) ? view : 'connections';
+}
+
+let viewListener: ((view: MonitoringView) => void) | null = null;
+
+// The monitoring controller follows switches between its own two views.
+export function onMonitoringViewChange(
+  listener: ((view: MonitoringView) => void) | null,
+) {
+  viewListener = listener;
 }
 
 export function controllerForView(view: MonitoringView) {
@@ -15,10 +28,10 @@ export function controllerForView(view: MonitoringView) {
 }
 
 export function showMonitoringView(view: MonitoringView, updateUrl = true) {
-  const connections = document.getElementById('monitoring-view-connections');
-  const nodes = document.getElementById('monitoring-view-nodes');
-  if (connections) connections.hidden = view !== 'connections';
-  if (nodes) nodes.hidden = view !== 'nodes';
+  VIEWS.forEach((name) => {
+    const panel = document.getElementById(`monitoring-view-${name}`);
+    if (panel) panel.hidden = view !== name;
+  });
 
   document
     .querySelectorAll<HTMLButtonElement>('.fkp_monitoring-page__view')
@@ -33,9 +46,10 @@ export function showMonitoringView(view: MonitoringView, updateUrl = true) {
     history.replaceState(
       null,
       '',
-      view === 'nodes' ? `${url}#view=nodes` : url,
+      view === 'connections' ? url : `${url}#view=${view}`,
     );
   }
 
   setProkopPage(controllerForView(view));
+  viewListener?.(view);
 }

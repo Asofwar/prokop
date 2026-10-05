@@ -21,6 +21,7 @@ const callNetworkInterfaceDump = rpc.declare({
 });
 
 let localDeviceChoicesCache = null;
+let localDeviceHostsCache = null;
 let localDeviceChoicesPromise = null;
 
 function normalizeOptionValues(value) {
@@ -141,6 +142,64 @@ function buildLocalDeviceChoices(hostHints, dhcpLeases, networkInterfaces) {
   return choices;
 }
 
+function normalizeMac(value) {
+  return `${value || ""}`.trim().toLowerCase();
+}
+
+function addLocalDeviceHost(hosts, ip, mac, name) {
+  const normalizedIp = `${ip || ""}`.trim();
+
+  if (!normalizedIp || !main.validateIP(normalizedIp).valid) {
+    return;
+  }
+
+  const previous = hosts[normalizedIp] || { name: "", mac: "" };
+  hosts[normalizedIp] = {
+    name: normalizeLocalDeviceName(name) || previous.name,
+    mac: normalizeMac(mac) || previous.mac,
+  };
+}
+
+// Address -> { name, mac }: the MAC lets Monitoring put the IPv4 and IPv6
+// addresses of one device together (host hints are keyed by MAC).
+function buildLocalDeviceHosts(hostHints, dhcpLeases, networkInterfaces) {
+  const hosts = {};
+  const routerIps = buildRouterIpMap(networkInterfaces);
+
+  if (hostHints && typeof hostHints === "object") {
+    Object.entries(hostHints).forEach(([mac, hint]) => {
+      if (!hint || typeof hint !== "object") {
+        return;
+      }
+
+      [
+        ...normalizeOptionValues(hint.ipaddrs),
+        ...normalizeOptionValues(hint.ip6addrs),
+        ...normalizeOptionValues(hint.ipv4),
+        ...normalizeOptionValues(hint.ipv6),
+      ].forEach((ip) => {
+        addLocalDeviceHost(hosts, ip, mac, hint.name);
+      });
+    });
+  }
+
+  if (dhcpLeases && Array.isArray(dhcpLeases.dhcp_leases)) {
+    dhcpLeases.dhcp_leases.forEach((lease) => {
+      if (!lease || typeof lease !== "object") {
+        return;
+      }
+
+      addLocalDeviceHost(hosts, lease.ipaddr, lease.macaddr, lease.hostname);
+    });
+  }
+
+  Object.keys(routerIps).forEach((ip) => {
+    delete hosts[ip];
+  });
+
+  return hosts;
+}
+
 function loadLocalDeviceChoices() {
   if (localDeviceChoicesCache) {
     return Promise.resolve(localDeviceChoicesCache);
@@ -161,6 +220,11 @@ function loadLocalDeviceChoices() {
         dhcpLeases,
         networkInterfaces,
       );
+      localDeviceHostsCache = buildLocalDeviceHosts(
+        hostHints,
+        dhcpLeases,
+        networkInterfaces,
+      );
       return localDeviceChoicesCache;
     })
     .finally(() => {
@@ -168,6 +232,14 @@ function loadLocalDeviceChoices() {
     });
 
   return localDeviceChoicesPromise;
+}
+
+function loadLocalDeviceHosts() {
+  if (localDeviceHostsCache) {
+    return Promise.resolve(localDeviceHostsCache);
+  }
+
+  return loadLocalDeviceChoices().then(() => localDeviceHostsCache || {});
 }
 
 function compareLocalDeviceIps(a, b) {
@@ -296,6 +368,7 @@ const EntryPoint = {
   hasSingleIpValue,
   labelLocalDeviceChoices,
   loadLocalDeviceChoices,
+  loadLocalDeviceHosts,
   normalizeOptionValues,
   preloadLocalDeviceChoicesForValues,
   sortLocalDeviceChoiceValues,

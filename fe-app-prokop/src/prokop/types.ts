@@ -81,6 +81,25 @@ export namespace Prokop {
     strategy?: string;
     strategy_custom?: boolean;
   }
+  // nft counters per LAN address (diagnostics/traffic.uc), observed since
+  // `since` (Unix seconds; null when the start time was not saved).
+  export interface DeviceTrafficCounter {
+    address: string;
+    family: 4 | 6;
+    tx_bytes: number;
+    tx_packets: number;
+    rx_bytes: number;
+    rx_packets: number;
+  }
+  export interface DeviceTraffic {
+    state: 'ok' | 'disabled' | 'stopped' | 'unavailable';
+    since: number | null;
+    now: number;
+    // fw4 flow offloading: accelerated flows bypass the counters.
+    offload: 'none' | 'software' | 'hardware' | 'unknown';
+    interfaces: string[];
+    devices: DeviceTrafficCounter[];
+  }
   export interface RouteTrace {
     target: RouteTraceStage & {
       source: string;
@@ -584,6 +603,7 @@ export namespace Prokop {
     GET_HEALTH_STATUS = 'get_health_status',
     GET_HISTORY = 'get_history',
     ROUTE_TRACE = 'route_trace',
+    DEVICE_TRAFFIC = 'device_traffic',
     CONFIG_SNAPSHOT_CREATE = 'config_snapshot_create',
     CONFIG_SNAPSHOT_LIST = 'config_snapshot_list',
     CONFIG_SNAPSHOT_DIFF = 'config_snapshot_diff',

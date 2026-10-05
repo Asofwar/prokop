@@ -46,7 +46,22 @@ import {
 import { renderProvenance } from '../../ui/status';
 import { getProkopPage } from '../../services/prokopPage';
 import { setProkopPage } from '../../services/tab.service';
-import { controllerForView, readMonitoringView } from './views';
+import {
+  controllerForView,
+  onMonitoringViewChange,
+  readMonitoringView,
+  showMonitoringView,
+} from './views';
+import {
+  RouteUsageTracker,
+  counterRates,
+  counterSample,
+  deviceRows,
+  type AddressRate,
+  type CounterSample,
+  type DeviceHosts,
+} from './devices';
+import { renderDevicesPanel, type DevicesStatus } from './devicesView';
 import {
   getCachedRuntimeUiState,
   refreshRuntimeUiState,
@@ -66,6 +81,7 @@ type LocalDeviceChoices = Record<string, string>;
 
 interface MonitoringControllerDependencies {
   loadLocalDeviceChoices?: () => Promise<LocalDeviceChoices>;
+  loadLocalDeviceHosts?: () => Promise<DeviceHosts>;
 }
 
 interface ClashConnectionMetadata {
@@ -112,6 +128,7 @@ const RENDER_INTERVAL_MS = 500;
 const ROUTE_NAMES_REFRESH_INTERVAL_MS = 15000;
 const CONNECTIONS_RPC_POLL_INTERVAL_MS = 1500;
 const CLOSED_CONNECTION_LIMIT = 300;
+const DEVICE_TRAFFIC_POLL_INTERVAL_MS = 3000;
 const ALL_FILTER_VALUE = 'all';
 
 let dependencies: MonitoringControllerDependencies = {};
@@ -151,6 +168,17 @@ let closingAll = false;
 let monitoringPaused = false;
 let monitoringPausedAt: number | null = null;
 let serviceAvailability: ServiceAvailability = 'loading';
+
+// Monitoring > Devices: router counters per address, and the split by rule
+// from the sing-box connections this page sees.
+const routeUsage = new RouteUsageTracker();
+let deviceHosts: DeviceHosts = {};
+let deviceTraffic: Prokop.DeviceTraffic | null = null;
+let deviceTrafficFailed = false;
+let deviceSample: CounterSample | null = null;
+let deviceRates: Record<string, AddressRate> = {};
+let deviceTrafficTimer: ReturnType<typeof setInterval> | null = null;
+let pollingDeviceTraffic = false;
 
 const activeConnections = new Map<string, MonitoredConnection>();
 const closedConnections = new Map<string, MonitoredConnection>();
@@ -511,7 +539,35 @@ function trimClosedConnections() {
   });
 }
 
+// Every payload counts for the split by rule, also while the connection
+// list is paused.
+function trackRouteUsage(payload: ClashConnectionsPayload) {
+  const rawConnections = Array.isArray(payload.connections)
+    ? payload.connections
+    : [];
+  routeUsage.observe(
+    rawConnections.map((rawConnection) => {
+      const id = normalizeString(rawConnection.id);
+      const path = getPath({ ...rawConnection, id, lastSeenAt: 0 });
+      return {
+        id,
+        ip: getConnectionSourceIp(rawConnection),
+        key: path.rule
+          ? `rule:${path.rule.name}`
+          : `kind:${path.kind}:${path.tag}`,
+        label: path.rule
+          ? path.rule.label
+          : path.tag || pathKindLabel(path.kind),
+        kind: path.kind,
+        upload: Number(rawConnection.upload) || 0,
+        download: Number(rawConnection.download) || 0,
+      };
+    }),
+  );
+}
+
 function applyConnectionsPayload(payload: ClashConnectionsPayload) {
+  trackRouteUsage(payload);
   if (monitoringPaused) {
     pendingConnectionsPayload = payload;
     return;
@@ -1842,14 +1898,138 @@ async function loadNodeDisplayNames() {
 
 async function loadLocalDevices() {
   try {
-    localDeviceChoices = (await dependencies.loadLocalDeviceChoices?.()) || {};
+    const [choices, hosts] = await Promise.all([
+      dependencies.loadLocalDeviceChoices?.(),
+      dependencies.loadLocalDeviceHosts?.(),
+    ]);
+    localDeviceChoices = choices || {};
+    deviceHosts = hosts || {};
   } catch (error) {
     logger.warn('[MONITORING]', 'loadLocalDevices: failed', error);
     localDeviceChoices = {};
+    deviceHosts = {};
   } finally {
     renderControls();
     renderConnections();
+    renderDevices();
   }
+}
+
+function devicesViewVisible() {
+  const panel = document.getElementById('monitoring-view-devices');
+  return Boolean(panel && !panel.hidden);
+}
+
+// A device's name: from the host hints, else from a DHCP lease.
+function hostsWithLeaseNames(): DeviceHosts {
+  const hosts: DeviceHosts = { ...deviceHosts };
+  Object.entries(localDeviceChoices).forEach(([ip, name]) => {
+    if (!hosts[ip]?.name) hosts[ip] = { mac: hosts[ip]?.mac || '', name };
+  });
+  return hosts;
+}
+
+function devicesStatus(): DevicesStatus {
+  if (serviceAvailability === 'stopped') return 'stopped';
+  if (deviceTrafficFailed) return 'failed';
+  return deviceTraffic ? deviceTraffic.state : 'loading';
+}
+
+function showDeviceConnections(address: string) {
+  selectedDeviceFilter = address;
+  activeTab = routeUsage.activeAddresses().has(address) ? 'active' : 'closed';
+  showMonitoringView('connections');
+  renderControls();
+  renderConnections({ force: true });
+}
+
+function renderDevices() {
+  const container = document.getElementById('monitoring-devices');
+  if (!container || !monitoringMounted) return;
+  // Re-rendering would drop a selection the user is copying from.
+  const selection = window.getSelection?.();
+  if (
+    selection &&
+    !selection.isCollapsed &&
+    (container.contains(selection.anchorNode) ||
+      container.contains(selection.focusNode))
+  )
+    return;
+
+  const status = devicesStatus();
+  const known = new Set(getKnownSourceIps());
+  const rows =
+    status === 'ok' && deviceTraffic
+      ? deviceRows(deviceTraffic, hostsWithLeaseNames(), deviceRates).map(
+          (row) => ({
+            ...row,
+            routes: routeUsage.usage(row.addresses),
+            connectionsAddress:
+              row.addresses.find((address) => known.has(address)) || null,
+          }),
+        )
+      : [];
+  const previousScrollLeft = container.scrollLeft;
+  container.replaceChildren(
+    ...renderDevicesPanel({
+      status,
+      since: deviceTraffic?.since ?? null,
+      offload: deviceTraffic?.offload ?? 'unknown',
+      rows,
+      showConnections: showDeviceConnections,
+      startServiceActions: renderStartServiceAction,
+    }),
+  );
+  container.scrollLeft = previousScrollLeft;
+}
+
+function isDeviceTraffic(value: unknown): value is Prokop.DeviceTraffic {
+  return Boolean(
+    value &&
+      typeof value === 'object' &&
+      typeof (value as Prokop.DeviceTraffic).state === 'string' &&
+      Array.isArray((value as Prokop.DeviceTraffic).devices),
+  );
+}
+
+async function pollDeviceTraffic() {
+  if (pollingDeviceTraffic || !monitoringMounted || !devicesViewVisible()) {
+    return;
+  }
+
+  const mountId = monitoringMountId;
+  pollingDeviceTraffic = true;
+
+  try {
+    const response = await ProkopShellMethods.getDeviceTraffic();
+    if (!monitoringMounted || mountId !== monitoringMountId) return;
+    if (response.success && isDeviceTraffic(response.data)) {
+      const sample = counterSample(response.data, Date.now());
+      deviceRates = counterRates(deviceSample, sample);
+      deviceSample = sample;
+      deviceTraffic = response.data;
+      deviceTrafficFailed = false;
+    } else {
+      deviceTrafficFailed = true;
+    }
+  } catch (error) {
+    if (!monitoringMounted || mountId !== monitoringMountId) return;
+    logger.warn('[MONITORING]', 'device traffic polling failed', error);
+    deviceTrafficFailed = true;
+  } finally {
+    pollingDeviceTraffic = false;
+  }
+
+  if (monitoringMounted && mountId === monitoringMountId) renderDevices();
+}
+
+function onViewChange(view: string) {
+  if (view !== 'devices') return;
+  // A speed needs two readings close together.
+  deviceSample = null;
+  deviceRates = {};
+  renderDevices();
+  void pollDeviceTraffic();
 }
 
 // Both roles read the same derived section view: rule labels plus the DPI
@@ -2042,6 +2222,7 @@ function setServiceAvailability(next: ServiceAvailability) {
       activeConnections.clear();
       closedConnections.clear();
       closingConnectionIds.clear();
+      routeUsage.reset();
     } else if (next === 'unavailable') {
       loading = false;
       failed = true;
@@ -2050,6 +2231,8 @@ function setServiceAvailability(next: ServiceAvailability) {
 
   renderControls();
   renderConnections();
+  renderDevices();
+  if (next === 'running') void pollDeviceTraffic();
 }
 
 function watchServiceState() {
@@ -2089,6 +2272,12 @@ function resetMonitoringState() {
   activeConnections.clear();
   closedConnections.clear();
   closingConnectionIds.clear();
+  routeUsage.reset();
+  deviceTraffic = null;
+  deviceTrafficFailed = false;
+  deviceSample = null;
+  deviceRates = {};
+  pollingDeviceTraffic = false;
 
   const searchInput = document.getElementById(
     'monitoring-search',
@@ -2140,6 +2329,14 @@ async function onPageMount() {
 
     renderConnections();
   }, RENDER_INTERVAL_MS);
+
+  onMonitoringViewChange(onViewChange);
+  renderDevices();
+  void pollDeviceTraffic();
+  deviceTrafficTimer = setInterval(() => {
+    if (isPageHidden()) return;
+    void pollDeviceTraffic();
+  }, DEVICE_TRAFFIC_POLL_INTERVAL_MS);
 }
 
 function onPageUnmount() {
@@ -2150,6 +2347,12 @@ function onPageUnmount() {
     clearInterval(renderTimer);
     renderTimer = null;
   }
+
+  if (deviceTrafficTimer) {
+    clearInterval(deviceTrafficTimer);
+    deviceTrafficTimer = null;
+  }
+  onMonitoringViewChange(null);
 
   stopConnectionsUpdates();
   routeNamesRefresher.stop();

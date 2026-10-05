@@ -450,6 +450,10 @@ export const ProkopShellMethods = {
       '/usr/bin/prokop',
       { allowNonZeroWithStdout: true },
     ),
+  getDeviceTraffic: async () =>
+    callBaseMethod<Prokop.DeviceTraffic>(
+      Prokop.AvailableMethods.DEVICE_TRAFFIC,
+    ),
   routeTrace: async (
     target: string,
     source: string,

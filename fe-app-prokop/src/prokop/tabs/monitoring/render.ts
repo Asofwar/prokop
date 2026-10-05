@@ -1,7 +1,11 @@
 import { asText } from '../../../helpers/asText';
 import { isReadonlyMode } from '../../services/accessMode.service';
 import { renderNodes } from '../dashboard/render';
-import { readMonitoringView, showMonitoringView } from './views';
+import {
+  readMonitoringView,
+  showMonitoringView,
+  type MonitoringView,
+} from './views';
 
 function renderViewSwitch(current: string) {
   return E(
@@ -13,6 +17,7 @@ function renderViewSwitch(current: string) {
     },
     [
       ['connections', _('Connections')],
+      ['devices', _('Devices')],
       ['nodes', _('Nodes and groups')],
     ].map(([view, label]) =>
       E(
@@ -22,7 +27,7 @@ function renderViewSwitch(current: string) {
           class: `btn cbi-button fkp_monitoring-page__tab fkp_monitoring-page__view${current === view ? ' fkp_monitoring-page__tab--active' : ''}`,
           'data-view': view,
           'aria-pressed': current === view ? 'true' : 'false',
-          click: () => showMonitoringView(view as 'connections' | 'nodes'),
+          click: () => showMonitoringView(view as MonitoringView),
         },
         asText(label),
       ),
@@ -182,6 +187,30 @@ export function render() {
     [
       renderViewSwitch(view),
       renderConnectionsView(view !== 'connections'),
+      E(
+        'div',
+        {
+          id: 'monitoring-view-devices',
+          class: 'fkp_monitoring-page__panel',
+          ...(view !== 'devices' ? { hidden: true } : {}),
+        },
+        [
+          E(
+            'div',
+            { id: 'monitoring-devices', class: 'fkp_monitoring-page__body' },
+            [
+              E(
+                'div',
+                {
+                  class:
+                    'fkp_monitoring-page__state fkp_monitoring-page__state--loading',
+                },
+                _('Loading device traffic'),
+              ),
+            ],
+          ),
+        ],
+      ),
       E(
         'div',
         {

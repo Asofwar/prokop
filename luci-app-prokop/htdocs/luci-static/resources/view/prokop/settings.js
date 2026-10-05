@@ -980,6 +980,19 @@ function createSettingsContent(sections, capabilities) {
   );
   o.default = "0";
   o.rmempty = false;
+
+  // Monitoring > Devices: nft counters per LAN address
+  // (diagnostics/traffic.uc), a table of their own that only counts.
+  o = sections.network.option(
+    form.Flag,
+    "device_traffic",
+    _("Count traffic per device"),
+    _(
+      "Counts how much each device on the source interfaces sends and receives, for Monitoring > Devices. The counters start from zero when Prokop starts",
+    ),
+  );
+  o.default = "1";
+  o.rmempty = false;
 }
 
 const EntryPoint = {

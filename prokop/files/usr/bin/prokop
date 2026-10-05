@@ -104,6 +104,7 @@ function show_help() {
     print("    get_ui_state            Get lightweight UI service/action state in JSON format\n");
     print("    get_health_status       Get sanitized service and recovery health in JSON format\n");
     print("    route_trace             Trace safe observed router routing stages\n");
+    print("    device_traffic          Get per-device traffic counters in JSON format\n");
     print("    config_snapshot_create Create a manual configuration snapshot\n");
     print("    config_snapshot_list   List snapshot metadata\n");
     print("    config_snapshot_diff   Show masked changes since a snapshot\n");
@@ -204,6 +205,7 @@ function command_spec(command) {
         get_health_status: [ "diagnostics/health.uc", "get", 0 ],
         get_history: [ "diagnostics/health.uc", "history", 0 ],
         route_trace: [ "diagnostics/route_trace.uc", "trace", 4 ],
+        device_traffic: [ "diagnostics/traffic.uc", "get", 0 ],
         config_snapshot_create: [ "config/snapshots.uc", "create", 1 ],
         config_snapshot_list: [ "config/snapshots.uc", "list", 0 ],
         config_snapshot_diff: [ "config/snapshots.uc", "diff", 1 ],
@@ -303,7 +305,7 @@ const ALLOWED_DURING_FULL_UNINSTALL = [
     "check_dns_available", "get_status", "get_outbound_metadata", "get_subscription_metadata",
     "get_sing_box_status", "get_zapret_status", "get_zapret2_status", "get_byedpi_status", "get_system_info",
     "get_ui_capabilities", "get_ui_state", "get_health_status", "get_history", "get_readonly_config_sections",
-    "get_dashboard_runtime_metadata", "route_trace", "connectivity_test", "global_check", "support_report",
+    "get_dashboard_runtime_metadata", "route_trace", "device_traffic", "connectivity_test", "global_check", "support_report",
     "config_snapshot_list", "config_snapshot_diff", "service_action_status", "latency_test_status",
     "component_action_status", "subscription_update_status", "get_list_update_status", "component_update_check_cache",
     "prokop_releases", "autotune_status", "autotune_target", "autotune_groups", "autotune_list_domains",
