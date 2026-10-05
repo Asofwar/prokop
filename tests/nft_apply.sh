@@ -198,7 +198,7 @@ assert_contains "$NFT_LOG" $'nft\tadd\tset\tinet\tProkopTable\tlocalv4\t{ type i
 assert_contains "$NFT_LOG" $'nft\tadd\tset\tinet\tProkopTable\tlocalv6\t{ type ipv6_addr; flags interval; auto-merge; }' "runtime localv6 set"
 assert_contains "$NFT_LOG" '0.0.0.0/8,10.0.0.0/8,100.64.0.0/10,127.0.0.0/8' "runtime localv4 elements"
 assert_contains "$NFT_LOG" '::/128,::1/128,64:ff9b::/96' "runtime localv6 elements"
-assert_contains "$NFT_LOG" $'nft\tadd\tset\tinet\tProkopTable\tprokop_interfaces\t{ type ifname; flags interval; }' "runtime interface set"
+assert_contains "$NFT_LOG" $'nft\tadd\tset\tinet\tProkopTable\tprokop_interfaces\t{ type ifname; flags interval; auto-merge; }' "runtime interface set"
 assert_contains "$NFT_LOG" $'nft\tadd\telement\tinet\tProkopTable\tprokop_interfaces\t{ "br-lan" }' "runtime br-lan interface"
 assert_contains "$NFT_LOG" $'nft\tadd\telement\tinet\tProkopTable\tprokop_interfaces\t{ "tun0" }' "runtime tun0 interface"
 assert_contains "$NFT_LOG" $'nft\tadd\tchain\tinet\tProkopTable\tmangle\t{ type filter hook prerouting priority -149; policy accept; }' "runtime mangle chain runs after Tailscale connmark restore"

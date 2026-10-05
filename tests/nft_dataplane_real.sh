@@ -375,6 +375,14 @@ grep -q '"lan@1"' <<<"$(nft list set inet "$TABLE" "$INTERFACES")" || fail "the 
 expect captured lan 192.168.1.60 93.184.216.34 tcp 443
 ok "interface names such as lan@1 and 10g are quoted for nft (NET-9)"
 
+# NET-14: overlapping names (br-lan and br-*) and names with + or : that
+# the validator accepts are no error.
+sed 's/^prokop.settings.source_network_interfaces=.*/prokop.settings.source_network_interfaces=br-lan br-* lan+guest wg0:1/' \
+  "$WORK_DIR/ifnames.uci" >"$WORK_DIR/ifnames-overlap.uci"
+apply_config "$WORK_DIR/ifnames-overlap.uci"
+expect captured lan 192.168.1.60 93.184.216.34 tcp 443
+ok "overlapping interface names are merged in the capture set (NET-14)"
+
 # ---- NET-6: client DNS to foreign servers goes to the router -----------------
 
 # seen holds the destination after NAT: a redirected query arrives at the

@@ -2010,13 +2010,12 @@ function validate_urltest_overrides(sections) {
     }
 }
 
-// A Linux interface name (at most 15 characters, no spaces or slashes),
-// optionally ending in nft's wildcard '*' (NET-9).
+// config/connections.uc valid_source_interface_name (NET-9, NET-14).
 function validate_source_network_interfaces(settings) {
     for (let value in split(trim(as_string(option(settings, "source_network_interfaces", "br-lan"))), /[ \t\r\n]+/)) {
         if (value == "")
             continue;
-        if (length(value) > 15 || match(value, /^[A-Za-z0-9_.@:+-]+\*?$/) == null || value == "." || value == "..")
+        if (!connections.valid_source_interface_name(value))
             fail_validation("Invalid source network interface '" + value + "'. Use interface names such as br-lan, lan@1 or wg*. Aborted.");
     }
 }

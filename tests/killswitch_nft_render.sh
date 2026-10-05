@@ -170,6 +170,21 @@ assert_contains "$INTERCEPT_OUT" "add rule $T ks_dns_intercept iifname @ks_inter
 assert_contains "$INTERCEPT_OUT" "add element $T dns_intercept_skip4 { 185.10.20.30 }" "IPv4 exclusion"
 assert_contains "$INTERCEPT_OUT" "add element $T dns_intercept_skip6 { 2001:db8:53::1 }" "IPv6 exclusion"
 
+# NET-14: the kill-switch protects every interface the validator accepts
+# and Prokop routes, and refuses to render what it is not.
+sed 's/"source_network_interfaces": "br-lan awg_server"/"source_network_interfaces": "br-lan lan+guest wg0:1 br-*"/' \
+  "$WORK_DIR/fixture.json" > "$WORK_DIR/ifnames.json"
+ucode -L "$PROKOP_LIB" "$NFT_RUNTIME" killswitch-render-fixture "$WORK_DIR/ifnames.json" ProkopTable ProkopKillswitch "$WORK_DIR/ifnames.nft" >/dev/null ||
+  fail "render with lan+guest and wg0:1 failed"
+grep -Fqx "add element $T ks_interfaces { \"br-lan\", \"lan+guest\", \"wg0:1\", \"br-*\" }" "$WORK_DIR/ifnames.nft" ||
+  fail "every source interface must be protected: $(grep ks_interfaces "$WORK_DIR/ifnames.nft")"
+sed 's/"source_network_interfaces": "br-lan awg_server"/"source_network_interfaces": "br-lan bad\/name"/' \
+  "$WORK_DIR/fixture.json" > "$WORK_DIR/badname.json"
+if ucode -L "$PROKOP_LIB" "$NFT_RUNTIME" killswitch-render-fixture "$WORK_DIR/badname.json" ProkopTable ProkopKillswitch "$WORK_DIR/badname.nft" >"$WORK_DIR/badname.out"; then
+  fail "an invalid interface name must fail the render, not be left out"
+fi
+grep -Fq 'invalid source network interface' "$WORK_DIR/badname.out" || fail "the invalid interface must be reported: $(cat "$WORK_DIR/badname.out")"
+
 sed 's/"source_network_interfaces": "br-lan awg_server"/"source_network_interfaces": "br-lan awg_server", "exclude_ntp": "1"/' \
   "$WORK_DIR/fixture.json" > "$WORK_DIR/ntp.json"
 ucode -L "$PROKOP_LIB" "$NFT_RUNTIME" killswitch-render-fixture "$WORK_DIR/ntp.json" ProkopTable ProkopKillswitch "$WORK_DIR/ntp.nft" >/dev/null ||

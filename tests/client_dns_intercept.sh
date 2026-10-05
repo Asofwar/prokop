@@ -41,6 +41,11 @@ if (sprintf("%J", ex) != sprintf("%J", { v4: [ "192.168.1.5" ], v6: [ "fd00::1" 
     warn("exclusions from a string ", ex, "\n");
     exit(1);
 }
+// NET-14: one reading of interface names everywhere.
+for (let name in [ "br-lan", "lan+guest", "wg0:1", "lan@1", "wg*" ])
+    if (!c.valid_source_interface_name(name)) { warn("rejected ", name, "\n"); exit(1); }
+for (let name in [ "", "*", ".", "..", "br lan", "a/b", "w*g", "abcdefghijklmnop" ])
+    if (c.valid_source_interface_name(name)) { warn("accepted ", name, "\n"); exit(1); }
 UC
 ucode -L "$LIB" "$WORK/t.uc" || fail "intercept_client_dns decision"
 

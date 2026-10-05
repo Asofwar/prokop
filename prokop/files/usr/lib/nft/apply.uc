@@ -465,7 +465,8 @@ function nft_create_ipv6_port_set(table, name) {
 }
 
 function nft_create_ifname_set(table, name) {
-    return nft_create_set(table, name, "{ type ifname; flags interval; }");
+    // auto-merge: overlapping names (br-lan with br-*) are no error (NET-14).
+    return nft_create_set(table, name, "{ type ifname; flags interval; auto-merge; }");
 }
 
 function nft_add_set_elements(table, set_name, elements) {
@@ -2244,11 +2245,16 @@ function nft_set_elements_from_table(table, set_name) {
     return nft_set_elements_from_set(table, set_name);
 }
 
+// The source interfaces as elements of the kill-switch's interface set, or
+// null when one is not an interface name: the validator rejects it, and a
+// name left out would leave its clients unprotected (NET-14).
 function killswitch_interface_elements(settings) {
     let result = [];
-    for (let name in whitespace_values(option(settings, "source_network_interfaces", "br-lan")))
-        if (match(name, /^[A-Za-z0-9_.@*-]+$/) != null)
-            push(result, sprintf("%J", name));
+    for (let name in whitespace_values(option(settings, "source_network_interfaces", "br-lan"))) {
+        if (!connections.valid_source_interface_name(name))
+            return null;
+        push(result, sprintf("%J", name));
+    }
     return result;
 }
 
@@ -2284,6 +2290,10 @@ function nft_killswitch_render_sections(sections, settings, live_table, ks_table
     }
 
     let interfaces = killswitch_interface_elements(settings);
+    if (interfaces == null) {
+        result.error = "invalid source network interface";
+        return result;
+    }
     if (length(interfaces) == 0) {
         result.error = "no source network interfaces";
         return result;
@@ -2295,7 +2305,7 @@ function nft_killswitch_render_sections(sections, settings, live_table, ks_table
         "add table " + t,
         "delete table " + t,
         "add table " + t,
-        "add set " + t + " " + KILLSWITCH_INTERFACE_SET + " { type ifname; flags interval; }",
+        "add set " + t + " " + KILLSWITCH_INTERFACE_SET + " { type ifname; flags interval; auto-merge; }",
         "add element " + t + " " + KILLSWITCH_INTERFACE_SET + " { " + join(", ", interfaces) + " }",
         "add set " + t + " localv4 { type ipv4_addr; flags interval; auto-merge; }",
         "add element " + t + " localv4 { " + join(", ", LOCALV4_RANGES) + " }",

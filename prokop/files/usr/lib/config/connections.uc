@@ -321,6 +321,16 @@ function client_dns_intercept_enabled(settings, sections) {
     return false;
 }
 
+// A source network interface: a Linux interface name (at most 15
+// characters, no spaces or slashes), optionally ending in nft's wildcard '*'
+// (NET-9). The one reading of the validator, the nft tables, the kill-switch
+// and device traffic: a name one of them took and another dropped left its
+// clients routed by Prokop but not protected by the kill-switch (NET-14).
+function valid_source_interface_name(value) {
+    value = as_string(value);
+    return length(value) <= 15 && value != "." && value != ".." && match(value, /^[A-Za-z0-9_.@:+-]+\*?$/) != null;
+}
+
 // NET-12: addresses the intercept leaves alone, by family: traffic to port
 // 53 from them (a resolver in the LAN that asks the root servers) or to them
 // (a VPN server on port 53, a resolver of a neighbouring network) is never
@@ -1106,6 +1116,7 @@ return {
     is_connections_action,
     client_dns_intercept_enabled,
     client_dns_intercept_exclusions,
+    valid_source_interface_name,
     normalize_action,
     action,
     connection_urls,
