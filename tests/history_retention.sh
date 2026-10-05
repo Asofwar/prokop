@@ -199,6 +199,21 @@ run clear
   fail "clear without protections: $(answer), $(count) left"
 ok "clear removes unprotected automatic snapshots only and records it"
 
+# An apply that took its before-autotune snapshot but has not recorded the
+# id (or died there) may still roll back to it: every before-autotune
+# snapshot since the apply started stays, older ones go.
+put 1700000040_40 automatic before-autotune old
+put 1700000050_50 automatic before-autotune new
+printf '{"phase":"applying","mutation":{"section":"Dpi","option":"nfqws_opt","from":"a","to":"b"},"pre_snapshot":null,"started_at":1700000045}\n' > "$PROKOP_AUTOTUNE_APPLY_STATE"
+run delete 1700000050_50
+[ "$code" = 1 ] && [ "$(field reason)" = autotune_rollback_protected ] || fail "delete of an unnamed before-autotune snapshot: $(answer)"
+run clear
+exists 1700000050_50 && ! exists 1700000040_40 || fail "clear with an unnamed before-autotune snapshot: $(answer)"
+printf '{"phase":"applied","mutation":null,"pre_snapshot":null}\n' > "$PROKOP_AUTOTUNE_APPLY_STATE"
+run clear
+! exists 1700000050_50 || fail "a decided record still protects before-autotune snapshots: $(answer)"
+ok "an apply record without a recorded before-autotune snapshot protects those taken since it started"
+
 # 5. Lock: a live restore holds the snapshot lock; clear and retention
 #    change nothing meanwhile.
 for n in 30 31; do put "17000000${n}_$n" automatic before-reload "l$n"; done

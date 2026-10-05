@@ -288,6 +288,23 @@ function autotune_rollback_snapshot() {
         record.phase == "needs_attention" || (record.phase == "failed" && record.rollback_available === true);
     return rollback ? record.pre_snapshot : null;
 }
+// An apply record that may still roll back but names no before-autotune
+// snapshot yet: the apply is between taking it and recording its id, or
+// died there (autotune/apply.uc find_pre_snapshot finds it afterwards by
+// configuration hash and time). The time from which every before-autotune
+// snapshot counts as possibly that one, or null. An unreadable record or one
+// without a start time protects them all (0).
+function autotune_unnamed_since() {
+    if (fs.stat(AUTOTUNE_APPLY_STATE) == null) return null;
+    let record = null;
+    try { record = json(value(fs.readfile(AUTOTUNE_APPLY_STATE))); } catch (e) { record = null; }
+    if (type(record) != "object" || type(record.phase) != "string") return 0;
+    if (valid_id(record.pre_snapshot)) return null;
+    let open = index(AUTOTUNE_TERMINAL_PHASES, record.phase) < 0 || record.phase == "needs_attention" ||
+        (record.phase == "failed" && record.rollback_available === true);
+    if (!open) return null;
+    return type(record.started_at) == "int" ? record.started_at - 1 : 0;
+}
 // Install uses ensure semantics: after needs_attention the guard from the
 // failed restore is still active and must protect the recovery restore too.
 // It is removed only after a reload proved a coherent runtime.
@@ -307,6 +324,10 @@ function restore_guard_state() {
 // ways back the recovery offers. Read only when such a snapshot is next in
 // line, since it asks nft.
 function guard_needs(item, ctx) {
+    if (item.reason == "before-autotune") {
+        if (!ctx.unnamed_read) { ctx.unnamed_read = true; ctx.unnamed = autotune_unnamed_since(); }
+        return ctx.unnamed != null && int(item.created_at) >= ctx.unnamed;
+    }
     if (item.reason != "pre-restore" && item.reason != "concurrent-change") return false;
     if (ctx.guard == null) ctx.guard = restore_guard_state();
     return ctx.guard != "absent";
@@ -318,12 +339,14 @@ function guard_needs(item, ctx) {
 // that an active restore guard may still need (guard_needs)
 // (trim_retention keeps the same ones). reason: the snapshot's own.
 let protected_ids = null;
-function protected_reason(id, working, reason) {
+function protected_reason(id, working, reason, created_at) {
     if (id == working) return "lkg_protected";
     if (protected_ids == null)
         protected_ids = { rollback: autotune_rollback_snapshot(), applying: trim(value(fs.readfile(APPLY_SNAPSHOT))) };
     if (id == protected_ids.rollback) return "autotune_rollback_protected";
     if (id == protected_ids.applying) return "apply_snapshot_protected";
+    if (reason == "before-autotune" && guard_needs({ reason, created_at }, protected_ids))
+        return "autotune_rollback_protected";
     if (guard_needs({ reason }, protected_ids)) return "restore_guard_protected";
     return null;
 }
@@ -1247,7 +1270,7 @@ if (mode == "list") {
     let live = settings_schema(read_config()), current = null;
     let working = trim(value(fs.readfile(LKG)));
     for (let item in result) {
-        let reason = protected_reason(item.id, working, item.reason);
+        let reason = protected_reason(item.id, working, item.reason, item.created_at);
         if (reason != null) item.protected_reason = reason;
         if (schema_behind(item.schema, live)) {
             if (current == null) current = prokop_version();
@@ -1271,6 +1294,13 @@ if (mode == "fixture-diff") {
     exit(0);
 }
 if (index(OPERATIONS, mode) < 0) exit(1);
+// Clear and the limits wait for an autotune run or apply: the verification
+// of an apply takes any snapshot operation meanwhile for a failure and rolls
+// a good candidate back (autotune/apply.uc no_snapshot_operation).
+if ((mode == "clear" || mode == "retention") && require("autotune.lock").held()) {
+    print(sprintf("%J\n", { status: "busy", reason: "autotune_in_progress" }));
+    exit(1);
+}
 if (!acquire()) {
     print(sprintf("%J\n", lock_busy ?
         { status: "busy", reason: "snapshot_operation_in_progress" } :
@@ -1307,8 +1337,10 @@ else if (mode == "delete") {
     let id = value(ARGV[1]);
     if (!valid_id(id)) answer = { status: "failed", reason: "invalid_input" };
     else if (read_snapshot(id, true) == null) answer = { status: "failed", reason: "invalid_snapshot" };
-    else if (protected_reason(id, trim(value(fs.readfile(LKG))), metadata(read_snapshot(id, false)).reason) != null)
-        answer = { status: "failed", reason: protected_reason(id, trim(value(fs.readfile(LKG))), metadata(read_snapshot(id, false)).reason) };
+    else if (protected_reason(id, trim(value(fs.readfile(LKG))), metadata(read_snapshot(id, false)).reason,
+        metadata(read_snapshot(id, false)).created_at) != null)
+        answer = { status: "failed", reason: protected_reason(id, trim(value(fs.readfile(LKG))),
+            metadata(read_snapshot(id, false)).reason, metadata(read_snapshot(id, false)).created_at) };
     else if (!fs.unlink(snapshot_path(id))) answer = { status: "failed", reason: "delete_failed" };
     else {
         answer = { status: "deleted" };

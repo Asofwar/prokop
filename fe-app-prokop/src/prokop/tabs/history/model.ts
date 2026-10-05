@@ -469,6 +469,12 @@ export interface SnapshotToast {
 // only queued, with no live service action, never refuses a restore: the
 // restore's own reload runs it.
 export function snapshotBusyText(reason?: string) {
+  // Clear and the retention limits wait for autotune: its verification
+  // would take them for interference and roll a good change back.
+  if (reason === 'autotune_in_progress')
+    return _(
+      'Autotune is running. Nothing was changed; try again when it finishes.',
+    );
   if (reason === 'service_action_in_progress')
     return _(
       'The service is busy with another operation (list or subscription update, reload or start). Nothing was changed; try again when it finishes.',

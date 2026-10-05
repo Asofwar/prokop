@@ -120,9 +120,9 @@
     "call": "%d ms",
     "key": "%d ms",
     "places": [
-      "src/prokop/tabs/autotune/model.ts:756",
       "src/prokop/tabs/dashboard/initController.ts:1102",
       "src/prokop/tabs/dashboard/overview.ts:383",
+      "src/prokop/tabs/autotune/model.ts:756",
       "src/prokop/tabs/dashboard/partials/renderSections.ts:349",
       "src/prokop/tabs/dashboard/partials/renderSections.ts:534",
       "src/prokop/tabs/diagnostic/checks/runSectionsCheck.ts:153"
@@ -167,7 +167,7 @@
     "call": "%d oldest automatic snapshots are deleted.",
     "key": "%d oldest automatic snapshots are deleted.",
     "places": [
-      "src/prokop/tabs/history/model.ts:960"
+      "src/prokop/tabs/history/model.ts:966"
     ]
   },
   {
@@ -1042,8 +1042,8 @@
     "call": "All events",
     "key": "All events",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1557",
-      "src/prokop/tabs/dashboard/overviewCards.ts:340"
+      "src/prokop/tabs/dashboard/overviewCards.ts:340",
+      "src/prokop/tabs/autotune/initController.ts:1557"
     ]
   },
   {
@@ -1234,7 +1234,7 @@
     "call": "Another snapshot operation is already in progress. Try again in a moment.",
     "key": "Another snapshot operation is already in progress. Try again in a moment.",
     "places": [
-      "src/prokop/tabs/history/model.ts:476"
+      "src/prokop/tabs/history/model.ts:482"
     ]
   },
   {
@@ -1504,14 +1504,14 @@
     "call": "Automatic snapshots deleted: %d.",
     "key": "Automatic snapshots deleted: %d.",
     "places": [
-      "src/prokop/tabs/history/model.ts:1041"
+      "src/prokop/tabs/history/model.ts:1047"
     ]
   },
   {
     "call": "Automatic snapshots deleted: %d. Kept: %d (manual and protected).",
     "key": "Automatic snapshots deleted: %d. Kept: %d (manual and protected).",
     "places": [
-      "src/prokop/tabs/history/model.ts:1036"
+      "src/prokop/tabs/history/model.ts:1042"
     ]
   },
   {
@@ -1607,6 +1607,13 @@
     ]
   },
   {
+    "call": "Autotune is running. Nothing was changed; try again when it finishes.",
+    "key": "Autotune is running. Nothing was changed; try again when it finishes.",
+    "places": [
+      "src/prokop/tabs/history/model.ts:475"
+    ]
+  },
+  {
     "call": "Autotune mode changed",
     "key": "Autotune mode changed",
     "places": [
@@ -1653,8 +1660,8 @@
     "call": "Autotune state is unavailable",
     "key": "Autotune state is unavailable",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:865",
-      "src/prokop/tabs/dashboard/overview.ts:512"
+      "src/prokop/tabs/dashboard/overview.ts:512",
+      "src/prokop/tabs/autotune/initController.ts:865"
     ]
   },
   {
@@ -2125,8 +2132,8 @@
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5236",
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8502",
       "src/prokop/ui/confirmAction.ts:31",
-      "src/prokop/tabs/autotune/dialog.ts:37",
       "src/prokop/tabs/dashboard/initController.ts:1453",
+      "src/prokop/tabs/autotune/dialog.ts:37",
       "src/prokop/tabs/updates/fullUninstall.ts:17",
       "src/prokop/tabs/updates/releaseSelector.ts:41",
       "src/prokop/tabs/updates/releaseSelector.ts:93",
@@ -2477,13 +2484,13 @@
     "call": "Checking…",
     "key": "Checking…",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1030",
-      "src/prokop/tabs/autotune/initController.ts:1266",
       "src/prokop/tabs/dashboard/overview.ts:268",
       "src/prokop/tabs/diagnostic/connectivityMatrix.ts:115",
       "src/prokop/tabs/diagnostic/dpiPlayground.ts:48",
       "src/prokop/tabs/diagnostic/siteCheck.ts:269",
-      "src/prokop/tabs/diagnostic/statusLabels.ts:28"
+      "src/prokop/tabs/diagnostic/statusLabels.ts:28",
+      "src/prokop/tabs/autotune/initController.ts:1030",
+      "src/prokop/tabs/autotune/initController.ts:1266"
     ]
   },
   {
@@ -2625,10 +2632,10 @@
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3738",
       "src/partials/modal/renderModal.ts:284",
-      "src/prokop/tabs/autotune/initController.ts:826",
       "src/prokop/tabs/dashboard/initController.ts:1316",
       "src/prokop/tabs/dashboard/initController.ts:1717",
       "src/prokop/tabs/history/initController.ts:316",
+      "src/prokop/tabs/autotune/initController.ts:826",
       "src/prokop/tabs/updates/releaseSelector.ts:151"
     ]
   },
@@ -2804,14 +2811,14 @@
     "call": "Configuration restored and reloaded",
     "key": "Configuration restored and reloaded",
     "places": [
-      "src/prokop/tabs/history/model.ts:730"
+      "src/prokop/tabs/history/model.ts:736"
     ]
   },
   {
     "call": "Configuration restored, but Prokop is stopped: it was not started or checked. The restored configuration takes effect when Prokop is started.",
     "key": "Configuration restored, but Prokop is stopped: it was not started or checked. The restored configuration takes effect when Prokop is started.",
     "places": [
-      "src/prokop/tabs/history/model.ts:740"
+      "src/prokop/tabs/history/model.ts:746"
     ]
   },
   {
@@ -3039,7 +3046,7 @@
     "call": "Could not clear the history",
     "key": "Could not clear the history",
     "places": [
-      "src/prokop/tabs/history/model.ts:1076"
+      "src/prokop/tabs/history/model.ts:1082"
     ]
   },
   {
@@ -3068,21 +3075,21 @@
     "call": "Could not create snapshot",
     "key": "Could not create snapshot",
     "places": [
-      "src/prokop/tabs/history/model.ts:599"
+      "src/prokop/tabs/history/model.ts:605"
     ]
   },
   {
     "call": "Could not delete all automatic snapshots",
     "key": "Could not delete all automatic snapshots",
     "places": [
-      "src/prokop/tabs/history/model.ts:1054"
+      "src/prokop/tabs/history/model.ts:1060"
     ]
   },
   {
     "call": "Could not delete snapshot",
     "key": "Could not delete snapshot",
     "places": [
-      "src/prokop/tabs/history/model.ts:526"
+      "src/prokop/tabs/history/model.ts:532"
     ]
   },
   {
@@ -3187,7 +3194,7 @@
     "call": "Could not save the retention limits. Check the free space on the router.",
     "key": "Could not save the retention limits. Check the free space on the router.",
     "places": [
-      "src/prokop/tabs/history/model.ts:1018"
+      "src/prokop/tabs/history/model.ts:1024"
     ]
   },
   {
@@ -3452,9 +3459,9 @@
     "call": "Details",
     "key": "Details",
     "places": [
+      "src/prokop/tabs/monitoring/connectionView.ts:198",
       "src/prokop/tabs/autotune/initController.ts:1417",
       "src/prokop/tabs/autotune/initController.ts:1458",
-      "src/prokop/tabs/monitoring/connectionView.ts:198",
       "src/prokop/tabs/diagnostic/partials/renderCheckSection.ts:191"
     ]
   },
@@ -3484,15 +3491,15 @@
     "call": "Device",
     "key": "Device",
     "places": [
+      "src/prokop/tabs/diagnostic/initController.ts:797",
+      "src/prokop/tabs/diagnostic/renderDiagnostic.ts:83",
       "src/prokop/tabs/monitoring/devicesView.ts:141",
       "src/prokop/tabs/monitoring/devicesView.ts:298",
       "src/prokop/tabs/monitoring/initController.ts:1059",
       "src/prokop/tabs/monitoring/initController.ts:1112",
       "src/prokop/tabs/monitoring/initController.ts:1182",
       "src/prokop/tabs/monitoring/initController.ts:1367",
-      "src/prokop/tabs/monitoring/render.ts:88",
-      "src/prokop/tabs/diagnostic/initController.ts:797",
-      "src/prokop/tabs/diagnostic/renderDiagnostic.ts:83"
+      "src/prokop/tabs/monitoring/render.ts:88"
     ]
   },
   {
@@ -5234,7 +5241,7 @@
     "key": "History cleared",
     "places": [
       "src/prokop/ui/status.ts:151",
-      "src/prokop/tabs/history/model.ts:1066"
+      "src/prokop/tabs/history/model.ts:1072"
     ]
   },
   {
@@ -5249,9 +5256,9 @@
     "call": "History is unavailable",
     "key": "History is unavailable",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:1521",
       "src/prokop/tabs/history/initController.ts:185",
-      "src/prokop/tabs/history/initController.ts:508"
+      "src/prokop/tabs/history/initController.ts:508",
+      "src/prokop/tabs/autotune/initController.ts:1521"
     ]
   },
   {
@@ -5265,14 +5272,14 @@
     "call": "history records deleted: %d",
     "key": "history records deleted: %d",
     "places": [
-      "src/prokop/tabs/history/model.ts:985"
+      "src/prokop/tabs/history/model.ts:991"
     ]
   },
   {
     "call": "History records: enter a whole number from %d to %d.",
     "key": "History records: enter a whole number from %d to %d.",
     "places": [
-      "src/prokop/tabs/history/model.ts:911"
+      "src/prokop/tabs/history/model.ts:917"
     ]
   },
   {
@@ -6507,10 +6514,10 @@
     "call": "Last check",
     "key": "Last check",
     "places": [
+      "src/prokop/tabs/dashboard/overview.ts:573",
       "src/prokop/tabs/autotune/initController.ts:938",
       "src/prokop/tabs/autotune/initController.ts:944",
       "src/prokop/tabs/autotune/initController.ts:945",
-      "src/prokop/tabs/dashboard/overview.ts:573",
       "src/prokop/tabs/diagnostic/partials/renderRunAction.ts:56"
     ]
   },
@@ -6791,19 +6798,19 @@
     "key": "Loading…",
     "places": [
       "src/prokop/ui/states.ts:35",
-      "src/prokop/tabs/autotune/domainPicker.ts:122",
-      "src/prokop/tabs/autotune/initController.ts:1323",
-      "src/prokop/tabs/autotune/render.ts:15",
-      "src/prokop/tabs/autotune/render.ts:26",
-      "src/prokop/tabs/autotune/render.ts:30",
-      "src/prokop/tabs/autotune/render.ts:34",
       "src/prokop/tabs/dashboard/overview.ts:515",
       "src/prokop/tabs/dashboard/render.ts:16",
       "src/prokop/tabs/history/render.ts:14",
       "src/prokop/tabs/history/render.ts:20",
       "src/prokop/tabs/history/render.ts:34",
       "src/prokop/tabs/history/render.ts:39",
-      "src/prokop/tabs/diagnostic/initController.ts:741"
+      "src/prokop/tabs/diagnostic/initController.ts:741",
+      "src/prokop/tabs/autotune/domainPicker.ts:122",
+      "src/prokop/tabs/autotune/initController.ts:1323",
+      "src/prokop/tabs/autotune/render.ts:15",
+      "src/prokop/tabs/autotune/render.ts:26",
+      "src/prokop/tabs/autotune/render.ts:30",
+      "src/prokop/tabs/autotune/render.ts:34"
     ]
   },
   {
@@ -6992,9 +6999,9 @@
     "call": "Mode",
     "key": "Mode",
     "places": [
+      "src/prokop/tabs/dashboard/overview.ts:583",
       "src/prokop/tabs/autotune/initController.ts:878",
-      "src/prokop/tabs/autotune/initController.ts:886",
-      "src/prokop/tabs/dashboard/overview.ts:583"
+      "src/prokop/tabs/autotune/initController.ts:886"
     ]
   },
   {
@@ -7141,8 +7148,8 @@
     "call": "Next scheduled check",
     "key": "Next scheduled check",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:947",
-      "src/prokop/tabs/dashboard/overview.ts:577"
+      "src/prokop/tabs/dashboard/overview.ts:577",
+      "src/prokop/tabs/autotune/initController.ts:947"
     ]
   },
   {
@@ -7426,8 +7433,8 @@
     "call": "No rule matched",
     "key": "No rule matched",
     "places": [
-      "src/prokop/tabs/monitoring/connectionView.ts:168",
-      "src/prokop/tabs/diagnostic/siteCheck.ts:110"
+      "src/prokop/tabs/diagnostic/siteCheck.ts:110",
+      "src/prokop/tabs/monitoring/connectionView.ts:168"
     ]
   },
   {
@@ -7605,20 +7612,20 @@
     "key": "Not checked",
     "places": [
       "src/prokop/ui/status.ts:38",
+      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:113",
+      "src/prokop/tabs/diagnostic/statusLabels.ts:32",
       "src/prokop/tabs/autotune/model.ts:83",
       "src/prokop/tabs/autotune/model.ts:598",
       "src/prokop/tabs/autotune/model.ts:861",
-      "src/prokop/tabs/autotune/model.ts:900",
-      "src/prokop/tabs/diagnostic/connectivityMatrix.ts:113",
-      "src/prokop/tabs/diagnostic/statusLabels.ts:32"
+      "src/prokop/tabs/autotune/model.ts:900"
     ]
   },
   {
     "call": "Not checked yet",
     "key": "Not checked yet",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:945",
-      "src/prokop/tabs/dashboard/overview.ts:573"
+      "src/prokop/tabs/dashboard/overview.ts:573",
+      "src/prokop/tabs/autotune/initController.ts:945"
     ]
   },
   {
@@ -7795,7 +7802,7 @@
     "key": "Nothing to delete: only manual and protected snapshots are left.",
     "places": [
       "src/prokop/tabs/history/initController.ts:669",
-      "src/prokop/tabs/history/model.ts:1042"
+      "src/prokop/tabs/history/model.ts:1048"
     ]
   },
   {
@@ -7834,9 +7841,9 @@
     "call": "Now",
     "key": "Now",
     "places": [
+      "src/prokop/tabs/history/initController.ts:279",
       "src/prokop/tabs/autotune/initController.ts:1158",
-      "src/prokop/tabs/autotune/model.ts:1217",
-      "src/prokop/tabs/history/initController.ts:279"
+      "src/prokop/tabs/autotune/model.ts:1217"
     ]
   },
   {
@@ -8002,7 +8009,7 @@
     "call": "Only the newest %d history records are kept; older ones are deleted.",
     "key": "Only the newest %d history records are kept; older ones are deleted.",
     "places": [
-      "src/prokop/tabs/history/model.ts:949"
+      "src/prokop/tabs/history/model.ts:955"
     ]
   },
   {
@@ -8140,8 +8147,8 @@
     "call": "Other",
     "key": "Other",
     "places": [
-      "src/prokop/tabs/monitoring/connectionView.ts:122",
-      "src/prokop/tabs/history/model.ts:351"
+      "src/prokop/tabs/history/model.ts:351",
+      "src/prokop/tabs/monitoring/connectionView.ts:122"
     ]
   },
   {
@@ -8756,7 +8763,7 @@
     "call": "Prokop is stopped: the configuration is replaced and checked, but Prokop is not started. It takes effect when you start Prokop.",
     "key": "Prokop is stopped: the configuration is replaced and checked, but Prokop is not started. It takes effect when you start Prokop.",
     "places": [
-      "src/prokop/tabs/history/model.ts:669"
+      "src/prokop/tabs/history/model.ts:675"
     ]
   },
   {
@@ -8842,7 +8849,7 @@
     "call": "Prokop reloads the configuration. If the reload fails, the previous configuration is restored automatically.",
     "key": "Prokop reloads the configuration. If the reload fails, the previous configuration is restored automatically.",
     "places": [
-      "src/prokop/tabs/history/model.ts:672"
+      "src/prokop/tabs/history/model.ts:678"
     ]
   },
   {
@@ -9277,9 +9284,9 @@
     "key": "Remove",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5377",
-      "src/prokop/tabs/autotune/initController.ts:772",
       "src/prokop/tabs/diagnostic/connectivityMatrix.ts:308",
       "src/prokop/tabs/diagnostic/connectivityMatrix.ts:309",
+      "src/prokop/tabs/autotune/initController.ts:772",
       "src/prokop/tabs/updates/initController.ts:907",
       "src/prokop/tabs/updates/initController.ts:1093",
       "src/prokop/tabs/updates/initController.ts:1187",
@@ -9533,42 +9540,42 @@
     "call": "Restore did not finish: a failed change left the DPI guard in place, and the DPI guard stays active. Restart Prokop, then restore the snapshot again.",
     "key": "Restore did not finish: a failed change left the DPI guard in place, and the DPI guard stays active. Restart Prokop, then restore the snapshot again.",
     "places": [
-      "src/prokop/tabs/history/model.ts:849"
+      "src/prokop/tabs/history/model.ts:855"
     ]
   },
   {
     "call": "Restore did not finish: the configuration was changed while the snapshot was being applied.",
     "key": "Restore did not finish: the configuration was changed while the snapshot was being applied.",
     "places": [
-      "src/prokop/tabs/history/model.ts:840"
+      "src/prokop/tabs/history/model.ts:846"
     ]
   },
   {
     "call": "Restore did not finish: the configuration was changed while the snapshot was being applied. Prokop was reloaded, but it is not known whether with the snapshot or with the change.",
     "key": "Restore did not finish: the configuration was changed while the snapshot was being applied. Prokop was reloaded, but it is not known whether with the snapshot or with the change.",
     "places": [
-      "src/prokop/tabs/history/model.ts:839"
+      "src/prokop/tabs/history/model.ts:845"
     ]
   },
   {
     "call": "Restore did not finish: the service was busy and only queued the reload. The DPI guard stays active; restore again when the service is idle.",
     "key": "Restore did not finish: the service was busy and only queued the reload. The DPI guard stays active; restore again when the service is idle.",
     "places": [
-      "src/prokop/tabs/history/model.ts:857"
+      "src/prokop/tabs/history/model.ts:863"
     ]
   },
   {
     "call": "Restore failed; check the recovery state before retrying",
     "key": "Restore failed; check the recovery state before retrying",
     "places": [
-      "src/prokop/tabs/history/model.ts:866"
+      "src/prokop/tabs/history/model.ts:872"
     ]
   },
   {
     "call": "Restore failed; previous configuration and runtime recovered",
     "key": "Restore failed; previous configuration and runtime recovered",
     "places": [
-      "src/prokop/tabs/history/model.ts:755"
+      "src/prokop/tabs/history/model.ts:761"
     ]
   },
   {
@@ -9596,106 +9603,106 @@
     "call": "Restore the snapshot you need to finish.",
     "key": "Restore the snapshot you need to finish.",
     "places": [
-      "src/prokop/tabs/history/model.ts:839"
+      "src/prokop/tabs/history/model.ts:845"
     ]
   },
   {
     "call": "Restore was not applied: Prokop was stopped during the restore. The previous configuration is kept.",
     "key": "Restore was not applied: Prokop was stopped during the restore. The previous configuration is kept.",
     "places": [
-      "src/prokop/tabs/history/model.ts:813"
+      "src/prokop/tabs/history/model.ts:819"
     ]
   },
   {
     "call": "Restore was not applied: Prokop was stopped, and the configuration was changed during the restore.",
     "key": "Restore was not applied: Prokop was stopped, and the configuration was changed during the restore.",
     "places": [
-      "src/prokop/tabs/history/model.ts:836"
+      "src/prokop/tabs/history/model.ts:842"
     ]
   },
   {
     "call": "Restore was not applied: the configuration file could not be written. The previous configuration is kept.",
     "key": "Restore was not applied: the configuration file could not be written. The previous configuration is kept.",
     "places": [
-      "src/prokop/tabs/history/model.ts:786",
-      "src/prokop/tabs/history/model.ts:787"
+      "src/prokop/tabs/history/model.ts:792",
+      "src/prokop/tabs/history/model.ts:793"
     ]
   },
   {
     "call": "Restore was not applied: the service was busy and only queued the reload. The previous configuration is kept.",
     "key": "Restore was not applied: the service was busy and only queued the reload. The previous configuration is kept.",
     "places": [
-      "src/prokop/tabs/history/model.ts:752"
+      "src/prokop/tabs/history/model.ts:758"
     ]
   },
   {
     "call": "Restore was not applied: the snapshot configuration did not pass validation. The previous configuration is kept; Prokop stays stopped.",
     "key": "Restore was not applied: the snapshot configuration did not pass validation. The previous configuration is kept; Prokop stays stopped.",
     "places": [
-      "src/prokop/tabs/history/model.ts:810"
+      "src/prokop/tabs/history/model.ts:816"
     ]
   },
   {
     "call": "Restore was not started: a failed change left the DPI guard in place, and nothing can be reloaded until Prokop is restarted. Restart Prokop, then restore the snapshot if it is still needed.",
     "key": "Restore was not started: a failed change left the DPI guard in place, and nothing can be reloaded until Prokop is restarted. Restart Prokop, then restore the snapshot if it is still needed.",
     "places": [
-      "src/prokop/tabs/history/model.ts:764"
+      "src/prokop/tabs/history/model.ts:770"
     ]
   },
   {
     "call": "Restore was not started: the configuration was changed while the restore was starting. Nothing was changed; check the change and try again.",
     "key": "Restore was not started: the configuration was changed while the restore was starting. Nothing was changed; check the change and try again.",
     "places": [
-      "src/prokop/tabs/history/model.ts:623"
+      "src/prokop/tabs/history/model.ts:629"
     ]
   },
   {
     "call": "Restore was not started: the current configuration could not be read. Nothing was changed.",
     "key": "Restore was not started: the current configuration could not be read. Nothing was changed.",
     "places": [
-      "src/prokop/tabs/history/model.ts:619"
+      "src/prokop/tabs/history/model.ts:625"
     ]
   },
   {
     "call": "Restore was not started: the current configuration could not be saved as a snapshot first. Nothing was changed. Check the free space on the router.",
     "key": "Restore was not started: the current configuration could not be saved as a snapshot first. Nothing was changed. Check the free space on the router.",
     "places": [
-      "src/prokop/tabs/history/model.ts:611"
+      "src/prokop/tabs/history/model.ts:617"
     ]
   },
   {
     "call": "Restore was not started: the DPI guard that protects traffic during the restore could not be installed. Nothing was changed.",
     "key": "Restore was not started: the DPI guard that protects traffic during the restore could not be installed. Nothing was changed.",
     "places": [
-      "src/prokop/tabs/history/model.ts:627"
+      "src/prokop/tabs/history/model.ts:633"
     ]
   },
   {
     "call": "Restore was not started: the router has uncommitted uci changes of Prokop (made with \"uci set\" without a commit). Commit or revert them, then restore again.",
     "key": "Restore was not started: the router has uncommitted uci changes of Prokop (made with \"uci set\" without a commit). Commit or revert them, then restore again.",
     "places": [
-      "src/prokop/tabs/history/model.ts:774"
+      "src/prokop/tabs/history/model.ts:780"
     ]
   },
   {
     "call": "Restore was not started: the snapshot is missing or damaged. Nothing was changed.",
     "key": "Restore was not started: the snapshot is missing or damaged. Nothing was changed.",
     "places": [
-      "src/prokop/tabs/history/model.ts:615"
+      "src/prokop/tabs/history/model.ts:621"
     ]
   },
   {
     "call": "Restore was not started: the snapshot storage could not be locked. Nothing was changed.",
     "key": "Restore was not started: the snapshot storage could not be locked. Nothing was changed.",
     "places": [
-      "src/prokop/tabs/history/model.ts:631"
+      "src/prokop/tabs/history/model.ts:637"
     ]
   },
   {
     "call": "Restore was not started: the snapshot was saved by an older version of Prokop, and its configuration could not be migrated to this version. Nothing was changed.",
     "key": "Restore was not started: the snapshot was saved by an older version of Prokop, and its configuration could not be migrated to this version. Nothing was changed.",
     "places": [
-      "src/prokop/tabs/history/model.ts:637"
+      "src/prokop/tabs/history/model.ts:643"
     ]
   },
   {
@@ -9745,8 +9752,8 @@
     "call": "Retention limits saved",
     "key": "Retention limits saved",
     "places": [
-      "src/prokop/tabs/history/model.ts:999",
-      "src/prokop/tabs/history/model.ts:1000"
+      "src/prokop/tabs/history/model.ts:1005",
+      "src/prokop/tabs/history/model.ts:1006"
     ]
   },
   {
@@ -9859,9 +9866,9 @@
     "call": "Route",
     "key": "Route",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:1190",
       "src/prokop/tabs/diagnostic/siteCheck.ts:81",
-      "src/prokop/tabs/diagnostic/siteCheck.ts:106"
+      "src/prokop/tabs/diagnostic/siteCheck.ts:106",
+      "src/prokop/tabs/monitoring/initController.ts:1190"
     ]
   },
   {
@@ -10154,11 +10161,11 @@
     "key": "Save",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3747",
-      "src/prokop/tabs/autotune/initController.ts:562",
-      "src/prokop/tabs/autotune/initController.ts:764",
       "src/prokop/tabs/dashboard/initController.ts:1448",
       "src/prokop/tabs/history/initController.ts:474",
-      "src/prokop/tabs/history/initController.ts:607"
+      "src/prokop/tabs/history/initController.ts:607",
+      "src/prokop/tabs/autotune/initController.ts:562",
+      "src/prokop/tabs/autotune/initController.ts:764"
     ]
   },
   {
@@ -10662,9 +10669,9 @@
     "call": "Shown %d of %d",
     "key": "Shown %d of %d",
     "places": [
-      "src/prokop/tabs/monitoring/initController.ts:784",
       "src/prokop/tabs/history/initController.ts:242",
-      "src/prokop/tabs/history/initController.ts:759"
+      "src/prokop/tabs/history/initController.ts:759",
+      "src/prokop/tabs/monitoring/initController.ts:784"
     ]
   },
   {
@@ -10777,42 +10784,42 @@
     "key": "Snapshot deleted",
     "places": [
       "src/prokop/ui/status.ts:147",
-      "src/prokop/tabs/history/model.ts:494"
+      "src/prokop/tabs/history/model.ts:500"
     ]
   },
   {
     "call": "Snapshot not saved: at most %d manual snapshots are kept, so that the automatic snapshots taken before a restore, Save & Apply or autotune always have room. Delete a manual snapshot you no longer need, then try again.",
     "key": "Snapshot not saved: at most %d manual snapshots are kept, so that the automatic snapshots taken before a restore, Save & Apply or autotune always have room. Delete a manual snapshot you no longer need, then try again.",
     "places": [
-      "src/prokop/tabs/history/model.ts:563"
+      "src/prokop/tabs/history/model.ts:569"
     ]
   },
   {
     "call": "Snapshot not saved: at most %d manual snapshots are kept, so that the automatic snapshots taken before a restore, Save & Apply or autotune always have room. There are %d manual snapshots now: delete %d you no longer need, then try again.",
     "key": "Snapshot not saved: at most %d manual snapshots are kept, so that the automatic snapshots taken before a restore, Save & Apply or autotune always have room. There are %d manual snapshots now: delete %d you no longer need, then try again.",
     "places": [
-      "src/prokop/tabs/history/model.ts:557"
+      "src/prokop/tabs/history/model.ts:563"
     ]
   },
   {
     "call": "Snapshot not saved: it could not be written. Check the free space on the router.",
     "key": "Snapshot not saved: it could not be written. Check the free space on the router.",
     "places": [
-      "src/prokop/tabs/history/model.ts:581"
+      "src/prokop/tabs/history/model.ts:587"
     ]
   },
   {
     "call": "Snapshot not saved: the configuration file could not be read.",
     "key": "Snapshot not saved: the configuration file could not be read.",
     "places": [
-      "src/prokop/tabs/history/model.ts:572"
+      "src/prokop/tabs/history/model.ts:578"
     ]
   },
   {
     "call": "Snapshot not saved: the snapshot storage could not be locked. Try again in a moment.",
     "key": "Snapshot not saved: the snapshot storage could not be locked. Try again in a moment.",
     "places": [
-      "src/prokop/tabs/history/model.ts:589"
+      "src/prokop/tabs/history/model.ts:595"
     ]
   },
   {
@@ -10826,7 +10833,7 @@
     "call": "Snapshot saved",
     "key": "Snapshot saved",
     "places": [
-      "src/prokop/tabs/history/model.ts:539"
+      "src/prokop/tabs/history/model.ts:545"
     ]
   },
   {
@@ -10854,7 +10861,7 @@
     "call": "snapshots deleted: %d",
     "key": "snapshots deleted: %d",
     "places": [
-      "src/prokop/tabs/history/model.ts:992"
+      "src/prokop/tabs/history/model.ts:998"
     ]
   },
   {
@@ -10868,7 +10875,7 @@
     "call": "Snapshots: enter a whole number from %d to %d.",
     "key": "Snapshots: enter a whole number from %d to %d.",
     "places": [
-      "src/prokop/tabs/history/model.ts:918"
+      "src/prokop/tabs/history/model.ts:924"
     ]
   },
   {
@@ -11091,10 +11098,10 @@
     "call": "State",
     "key": "State",
     "places": [
+      "src/prokop/tabs/dashboard/overviewCards.ts:201",
       "src/prokop/tabs/autotune/initController.ts:915",
       "src/prokop/tabs/autotune/initController.ts:923",
-      "src/prokop/tabs/autotune/initController.ts:929",
-      "src/prokop/tabs/dashboard/overviewCards.ts:201"
+      "src/prokop/tabs/autotune/initController.ts:929"
     ]
   },
   {
@@ -11195,8 +11202,8 @@
     "call": "Strategy",
     "key": "Strategy",
     "places": [
-      "src/prokop/tabs/autotune/initController.ts:798",
-      "src/prokop/tabs/diagnostic/renderDiagnostic.ts:41"
+      "src/prokop/tabs/diagnostic/renderDiagnostic.ts:41",
+      "src/prokop/tabs/autotune/initController.ts:798"
     ]
   },
   {
@@ -11651,14 +11658,14 @@
     "call": "The change is kept and saved as a snapshot (\"Concurrent edit\").",
     "key": "The change is kept and saved as a snapshot (\"Concurrent edit\").",
     "places": [
-      "src/prokop/tabs/history/model.ts:827"
+      "src/prokop/tabs/history/model.ts:833"
     ]
   },
   {
     "call": "The change is kept in the configuration, but no snapshot of it could be saved.",
     "key": "The change is kept in the configuration, but no snapshot of it could be saved.",
     "places": [
-      "src/prokop/tabs/history/model.ts:828"
+      "src/prokop/tabs/history/model.ts:834"
     ]
   },
   {
@@ -11813,14 +11820,14 @@
     "call": "The configuration of the snapshot was migrated from Prokop %s to %s.",
     "key": "The configuration of the snapshot was migrated from Prokop %s to %s.",
     "places": [
-      "src/prokop/tabs/history/model.ts:704"
+      "src/prokop/tabs/history/model.ts:710"
     ]
   },
   {
     "call": "The configuration of the snapshot was migrated to Prokop %s.",
     "key": "The configuration of the snapshot was migrated to Prokop %s.",
     "places": [
-      "src/prokop/tabs/history/model.ts:709"
+      "src/prokop/tabs/history/model.ts:715"
     ]
   },
   {
@@ -11927,15 +11934,15 @@
     "call": "The DPI guard of an earlier restore stays active.",
     "key": "The DPI guard of an earlier restore stays active.",
     "places": [
-      "src/prokop/tabs/history/model.ts:786",
-      "src/prokop/tabs/history/model.ts:800"
+      "src/prokop/tabs/history/model.ts:792",
+      "src/prokop/tabs/history/model.ts:806"
     ]
   },
   {
     "call": "The DPI guard stays active. Restore the snapshot you need to finish.",
     "key": "The DPI guard stays active. Restore the snapshot you need to finish.",
     "places": [
-      "src/prokop/tabs/history/model.ts:840"
+      "src/prokop/tabs/history/model.ts:846"
     ]
   },
   {
@@ -12027,7 +12034,7 @@
     "call": "The history is being written right now. Nothing was changed; try again in a moment.",
     "key": "The history is being written right now. Nothing was changed; try again in a moment.",
     "places": [
-      "src/prokop/tabs/history/model.ts:1069"
+      "src/prokop/tabs/history/model.ts:1075"
     ]
   },
   {
@@ -12205,7 +12212,7 @@
     "call": "The last known good snapshot cannot be deleted: it is the configuration Prokop returns to after a failed change.",
     "key": "The last known good snapshot cannot be deleted: it is the configuration Prokop returns to after a failed change.",
     "places": [
-      "src/prokop/tabs/history/model.ts:503"
+      "src/prokop/tabs/history/model.ts:509"
     ]
   },
   {
@@ -12261,7 +12268,7 @@
     "call": "The limits are out of range. Nothing was changed.",
     "key": "The limits are out of range. Nothing was changed.",
     "places": [
-      "src/prokop/tabs/history/model.ts:1013"
+      "src/prokop/tabs/history/model.ts:1019"
     ]
   },
   {
@@ -12808,7 +12815,7 @@
     "call": "The service is busy with another operation (list or subscription update, reload or start). Nothing was changed; try again when it finishes.",
     "key": "The service is busy with another operation (list or subscription update, reload or start). Nothing was changed; try again when it finishes.",
     "places": [
-      "src/prokop/tabs/history/model.ts:473"
+      "src/prokop/tabs/history/model.ts:479"
     ]
   },
   {
@@ -12864,7 +12871,7 @@
     "call": "The snapshot was not found or cannot be read.",
     "key": "The snapshot was not found or cannot be read.",
     "places": [
-      "src/prokop/tabs/history/model.ts:521"
+      "src/prokop/tabs/history/model.ts:527"
     ]
   },
   {
@@ -13066,7 +13073,7 @@
     "call": "There are %d manual snapshots, more than the %d that fit: none is deleted, but no new manual snapshot can be saved until you delete some.",
     "key": "There are %d manual snapshots, more than the %d that fit: none is deleted, but no new manual snapshot can be saved until you delete some.",
     "places": [
-      "src/prokop/tabs/history/model.ts:967"
+      "src/prokop/tabs/history/model.ts:973"
     ]
   },
   {
@@ -13094,7 +13101,7 @@
     "call": "There are unsaved changes of Prokop in this session. Save & Apply or revert them, then restore the snapshot.",
     "key": "There are unsaved changes of Prokop in this session. Save & Apply or revert them, then restore the snapshot.",
     "places": [
-      "src/prokop/tabs/history/model.ts:658"
+      "src/prokop/tabs/history/model.ts:664"
     ]
   },
   {
@@ -13320,14 +13327,14 @@
     "call": "This snapshot was saved by an older version of Prokop. Before the restore, its configuration is migrated to the current version %s, as an upgrade migrates it: settings retired since then are updated. The snapshot itself is not changed; the changes listed above compare the snapshot as it was saved.",
     "key": "This snapshot was saved by an older version of Prokop. Before the restore, its configuration is migrated to the current version %s, as an upgrade migrates it: settings retired since then are updated. The snapshot itself is not changed; the changes listed above compare the snapshot as it was saved.",
     "places": [
-      "src/prokop/tabs/history/model.ts:691"
+      "src/prokop/tabs/history/model.ts:697"
     ]
   },
   {
     "call": "This snapshot was saved by Prokop %s. Before the restore, its configuration is migrated to the current version %s, as an upgrade migrates it: settings retired since then are updated. The snapshot itself is not changed; the changes listed above compare the snapshot as it was saved.",
     "key": "This snapshot was saved by Prokop %s. Before the restore, its configuration is migrated to the current version %s, as an upgrade migrates it: settings retired since then are updated. The snapshot itself is not changed; the changes listed above compare the snapshot as it was saved.",
     "places": [
-      "src/prokop/tabs/history/model.ts:686"
+      "src/prokop/tabs/history/model.ts:692"
     ]
   },
   {
