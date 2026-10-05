@@ -87,6 +87,7 @@ prokop.settings=settings
 prokop.settings.config_path=$CONFIG
 prokop.settings.dns_server=77.88.8.8
 prokop.settings.bootstrap_dns_server=77.88.8.8
+prokop.settings.service_listen_address=192.168.1.1
 prokop.main=section
 prokop.main.enabled=1
 prokop.main.action=connection

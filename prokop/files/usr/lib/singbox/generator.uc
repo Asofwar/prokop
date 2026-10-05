@@ -23,7 +23,9 @@ let core_ip = require("core.ip");
 let uci = null;
 let fixture_uci_data = null;
 let runtime_settings_cache = null;
-let runtime_ruleset_folder = runtime_constants.TMP_RULESET_FOLDER;
+// The folder runtime.uc publishes rule sets to, overridden the same way.
+let runtime_ruleset_folder = getenv("TMP_RULESET_FOLDER") ||
+    (getenv("TMP_SING_BOX_FOLDER") ? getenv("TMP_SING_BOX_FOLDER") + "/rulesets" : runtime_constants.TMP_RULESET_FOLDER);
 let runtime_supports_xhttp = true;
 // X.Y.Z of sing-box-extended from "1.14.1-extended-2.7.2"; null when the
 // version is not known.
