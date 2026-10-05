@@ -17,6 +17,7 @@
     "locales:generate-pot": "node generate-pot.js",
     "locales:generate-po:ru": "node generate-po.js ru",
     "locales:distribute": "node distribute-locales.js",
+    "locales:refs": "node extract-calls.js && node refresh-pot-refs.js",
     "locales:actualize": "yarn locales:extract-calls && yarn locales:generate-pot && yarn locales:generate-po:ru && yarn locales:distribute"
   },
   "devDependencies": {
