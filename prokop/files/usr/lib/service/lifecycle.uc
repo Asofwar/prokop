@@ -583,11 +583,6 @@ function restore_selector_state(snapshot) {
         module_success(DIAGNOSTICS_UC, [ "clash-api", "set_group_proxy", pair.group, pair.proxy, "auto" ]);
 }
 
-// sing-box's cache file, which holds the selection while the router runs.
-function selector_cache_path() {
-    return config_get(CONFIG_NAME + ".settings.cache_path", "/tmp/sing-box/cache.db");
-}
-
 function module_background(module_path, args) {
     return command_status(module_command(module_path, args) + " >/dev/null 2>&1 1000>&- &") == 0;
 }
@@ -597,6 +592,11 @@ function config_get(path, fallback) {
     if (!uci_core.exists(path))
         return as_string(fallback);
     return trim(uci_core.get(path));
+}
+
+// sing-box's cache file, which holds the selection while the router runs.
+function selector_cache_path() {
+    return config_get(CONFIG_NAME + ".settings.cache_path", "/tmp/sing-box/cache.db");
 }
 
 function file_md5(path) {

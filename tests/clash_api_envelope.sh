@@ -62,6 +62,8 @@ prokop.settings.latency_test_url=https://latency.example/generate_204
 EOF
 
 export PROKOP_LIB FAKE_DIR
+# A choice set_group_proxy saves (C4) stays in the work directory.
+export PROKOP_SELECTOR_CHOICES_FILE="${WORK:?}/selector-choices.json"
 export PROKOP_UCI_STATE_FILE="$uci_state"
 export FAKE_CURL_LOG="${WORK:?}/curl.log"
 export PATH="${WORK:?}/bin:$PATH"

@@ -71,10 +71,17 @@ function die(message) { warn("FAIL: " + message + "\n"); exit(1); }
 function check(condition, message) { if (!condition) die(message); }
 // Declared after check(): unlike sibling declarations, a closure that captures
 // a name which is not declared yet never resolves it.
+// C4: sing-box's cache file is there, so no saved selection is restored.
+const SELECTOR_CACHE = "/test/cache.db";
 let fs = { stat: function(path) {
+    if (path == SELECTOR_CACHE)
+        return {};
     check(path == MANAGED_UPGRADE_SING_BOX_MARKER, "unexpected stat");
     return marker_present ? {} : null;
 } };
+function selector_cache_path() { return SELECTOR_CACHE; }
+let selector_choices = { read_choices: function() { die("saved selection read with the cache in place"); } };
+function restore_selector_state(snapshot) { die("selection restored with the cache in place"); }
 function sing_box_current_owned_service_runtime() { return health[0]; }
 function sing_box_service_stable(age) {
     check(age == RUNTIME_STABLE_MIN_AGE, "stable age changed");
