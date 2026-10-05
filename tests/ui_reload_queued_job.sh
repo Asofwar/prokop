@@ -177,7 +177,23 @@ release_lock() {
   rmdir "$PROKOP_RELOAD_LOCK_DIR"
 }
 
+# True once no job of a case still runs. A job that applies a queued request
+# (case 5) runs on in the background after the case checked its effect; its
+# init.d is not matched by the pkill in reset_case (only the worker's command
+# line names the job directory). Left running, it took the init.hold of the
+# next variant (it is UI-tracked as well) and wrote into the state directory
+# reset_case or the cleanup was removing.
+jobs_settled() {
+  local f
+  for f in "$PROKOP_UI_SERVICE_ACTION_DIR"/*.json; do
+    [ -e "$f" ] || continue
+    ! grep -q '"running": *true' "$f" || return 1
+  done
+  ! pgrep -f "$WORK_DIR/bin/init" >/dev/null 2>&1
+}
+
 reset_case() {
+  wait_until 30 jobs_settled || fail "a job of the previous case did not end"
   pkill -KILL -f "$PROKOP_UI_SERVICE_ACTION_DIR/" 2>/dev/null || true
   [ ! -e "$WORK_DIR/holder" ] || release_lock
   rm -rf "$PROKOP_UI_STATE_DIR" "$STATE_DIR/health-events.json" "$PROKOP_PENDING_RELOAD_FILE" "$STOP_MARKER" \
@@ -282,5 +298,6 @@ for variant in drain release; do
   wait_until 20 reload_ran_pending || fail "$variant: the queued UI reload never ran"
   wait_until 20 test ! -e "$PROKOP_PENDING_RELOAD_FILE" || fail "$variant: the queued request was left behind"
 done
+wait_until 30 jobs_settled || fail "the job that applied the queued request did not end"
 
 printf 'ui reload queued job checks passed\n'
