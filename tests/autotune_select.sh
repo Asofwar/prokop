@@ -160,6 +160,10 @@ a.equal(r.cleanup.status, "clean"); a.equal(r.production.unchanged, true);
 [ "$(wc -l < "$STUB_LOG/dig.log")" = 1 ] || fail "target resolved more than once"
 [ "$(cut -d' ' -f2 "$STUB_LOG/curl.seq" | sort -u)" = 93.184.216.34 ] || fail "probes against more than one address"
 [ "$(cut -d' ' -f1 "$STUB_LOG/curl.seq" | tr '\n' ' ')" = "direct 4600 4601 4600 4601 direct 4601 direct 4600 " ] || fail "probes not interleaved: $(tr '\n' ' ' < "$STUB_LOG/curl.seq")"
+# One counter snapshot per probe (the one after a probe opens the window of
+# the next): 9 probes, one before the first, a few for setup and teardown.
+listings="$(grep -c -- '-j list table inet ProkopAutotuneProbe' "$STUB_LOG/nft.log" || true)"
+[ "$listings" -le 15 ] || fail "two counter snapshots per probe: $listings probe table listings"
 assert_clean "tune selected"
 ok "13 one resolution pinned for every candidate, rotated interleaving, multisplit selected"
 

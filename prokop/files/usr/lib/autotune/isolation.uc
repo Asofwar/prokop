@@ -1107,6 +1107,12 @@ function tune(host, probes, resolver, list, ip) {
         for (let entry in entries) run_queue_before["" + entry.queue] = queue_entry(entry.queue);
         let run_counters_before = probe_counters();
         if (run_counters_before == null) return "counters_unavailable";
+        // One counter snapshot per probe: the one taken after a probe opens
+        // the window of the next, whatever its candidate; each candidate's
+        // queue window opens where its previous probe closed it (or before
+        // the run's first counter snapshot).
+        let last_counters = run_counters_before, last_queue = {};
+        for (let q in keys(run_queue_before)) last_queue[q] = run_queue_before[q];
         for (let r = 0; r < length(result.schedule); r++) {
             let round = [];
             for (let id in result.schedule[r]) {
@@ -1124,22 +1130,25 @@ function tune(host, probes, resolver, list, ip) {
                 if (index(result.pruned, id) >= 0) continue;
                 let slot = by_id[id];
                 let comment = slot.comment, synack = syn_ack_comment(comment);
-                // The queue is read before the rule counter here and after it
-                // below, so the queue window contains the rule window: a late
-                // packet of an earlier probe of this candidate (a blocked
-                // probe leaves an orphan that keeps retransmitting) between
-                // two readings can only add to "queued", never look like a
+                // The queue window contains the rule window: it opens at the
+                // reading after this candidate's previous probe (taken after
+                // the counters then), which is no later than the counter
+                // snapshot that opens the rule window, and closes after the
+                // counters below. A late packet of an earlier probe of this
+                // candidate (a blocked probe leaves an orphan that keeps
+                // retransmitting) can only add to "queued", never look like a
                 // packet that bypassed the candidate. Late packets of other
                 // candidates leave from their own slices, through their own
                 // rules and queues.
-                let queue_before = slot.queue != null ? queue_entry(slot.queue) : null;
-                let counters_before = probe_counters();
-                if (counters_before == null || counters_before[comment] == null || counters_before[synack] == null)
+                let counters_before = last_counters;
+                let queue_before = slot.queue != null ? last_queue["" + slot.queue] : null;
+                if (counters_before[comment] == null || counters_before[synack] == null)
                     return "counters_unavailable";
                 let record = probe_module.probe({ host, ip: target.ip, port_range: slot.ports });
                 let counters_after = probe_counters();
                 if (counters_after == null || counters_after[comment] == null || counters_after[synack] == null)
                     return "counters_unavailable";
+                last_counters = counters_after;
                 // No free source port of the slice: a fault of the run, never
                 // a failure of the candidate (AT-8).
                 if (record.class == "local_port_unavailable") return "local_port_unavailable";
@@ -1150,6 +1159,7 @@ function tune(host, probes, resolver, list, ip) {
                 record.rule_packets = counters_after[comment].packets - counters_before[comment].packets;
                 if (slot.queue != null) {
                     let queue_after = queue_entry(slot.queue);
+                    last_queue["" + slot.queue] = queue_after;
                     if (identity.matches(slot.pidfile, NFQWS, slot.argv, true, true) == "") return "nfqws_died";
                     record.queued = queue_before && queue_after ? queue_after.id_sequence - queue_before.id_sequence : null;
                     // Fail-open queues accept packets untransformed without a
@@ -1301,15 +1311,18 @@ function run(candidate_id, host, count, resolver, ip, handshake) {
         if (interrupted) return "interrupted";
         let queue_before = queue_entry(QUEUE);
         mark("T3", "probe begins");
+        // One counter snapshot per probe: the one after a probe opens the
+        // window of the next.
+        let before_c = probe_counters();
+        if (before_c == null || before_c.synack == null) return "counters_unavailable";
         for (let i = 0; i < count; i++) {
             if (interrupted) return "interrupted";
-            let before_c = probe_counters();
-            if (before_c == null || before_c.synack == null) return "counters_unavailable";
             let record = probe_module.probe({ host, ip: target.ip, port_range: PORT_RANGE, handshake: handshake_only });
             let after_c = probe_counters();
             if (after_c == null || after_c.synack == null) return "counters_unavailable";
             if (record.class == "local_port_unavailable") return "local_port_unavailable";
             push(result.probes, probe_module.handshake(record, after_c.synack.packets - before_c.synack.packets));
+            before_c = after_c;
         }
         // The rule counter first, the queue after it: see tune().
         result.counters = probe_counters();
