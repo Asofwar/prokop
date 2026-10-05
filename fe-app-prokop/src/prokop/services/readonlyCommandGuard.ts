@@ -48,6 +48,7 @@ export const READONLY_EXEC_PATTERNS = [
   '/usr/libexec/prokop-ro component_action_status *',
   '/usr/libexec/prokop-ro subscription_update_status *',
   '/usr/libexec/prokop-ro component_update_check_cache',
+  '/usr/libexec/prokop-ro get_list_update_status',
   '/usr/libexec/prokop-ro global_check masked',
   '/usr/libexec/prokop-ro show_sing_box_config masked',
 ];

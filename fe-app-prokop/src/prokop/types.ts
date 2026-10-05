@@ -600,6 +600,8 @@ export namespace Prokop {
     COMPONENT_UPDATE_CHECK_CACHE = 'component_update_check_cache',
     SUBSCRIPTION_UPDATE_ASYNC = 'subscription_update_async',
     SUBSCRIPTION_UPDATE_STATUS = 'subscription_update_status',
+    LIST_UPDATE_ASYNC = 'list_update_async',
+    GET_LIST_UPDATE_STATUS = 'get_list_update_status',
     AUTOTUNE_STATUS = 'autotune_status',
     AUTOTUNE_GROUPS = 'autotune_groups',
     AUTOTUNE_POLICY_SET = 'autotune_policy_set',
@@ -1080,6 +1082,26 @@ export namespace Prokop {
   export interface ComponentUpdateCheckCache {
     enabled: boolean;
     results: ComponentActionResult[];
+  }
+
+  export interface ListUpdateResult {
+    started_at: number;
+    finished_at: number;
+    success: boolean;
+    failed_sources: string[];
+  }
+
+  export interface ListUpdateStatus {
+    running: boolean;
+    last_success_at: number;
+    last_result: ListUpdateResult | null;
+  }
+
+  export interface ListUpdateStartResult {
+    success: boolean;
+    running: boolean;
+    started: boolean;
+    message?: string;
   }
 
   export type ComponentActionStartResult = UiActionStartResult;

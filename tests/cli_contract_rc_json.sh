@@ -68,6 +68,8 @@ restore_dnsmasq                | rc            | alias of dnsmasq_restore
 main                           | rc            | alias of start (UC-015); covered: cli_main_alias
 list_update                    | rc            | busy is rc 0 (cron); covered: list_update_reload_policy
 list_update_if_due             | rc            | busy is rc 0 (cron); covered: updates_due
+list_update_async              | json-success  | covered: list_update_manual
+get_list_update_status         | json          | covered: list_update_manual
 subscription_update            | rc            | 0 updated, 1 failed, 2 busy (a reload or another update kept its locks); run (job); covered: subscription_update_busy_pending_reload
 subscription_update_async      | job-start     | run: no worker started here; covered: subscriptionUpdate.test.ts
 subscription_update_status     | job-status    | run

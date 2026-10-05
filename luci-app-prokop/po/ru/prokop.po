@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-05 00:27+0000\n"
-"PO-Revision-Date: 2026-10-05 00:27+0000\n"
+"POT-Creation-Date: 2026-10-05 01:01+0000\n"
+"PO-Revision-Date: 2026-10-05 01:01+0000\n"
 "Last-Translator: Asofwar\n"
 "Language-Team: none\n"
 "Language: ru\n"
@@ -1126,6 +1126,9 @@ msgstr "Не удалось запустить применение"
 
 msgid "Could not start the check"
 msgstr "Не удалось запустить проверку"
+
+msgid "Could not start the lists update"
+msgstr "Не удалось запустить обновление списков"
 
 msgid "Create snapshot"
 msgstr "Создать снимок"
@@ -2330,6 +2333,9 @@ msgstr "Последняя перезагрузка"
 msgid "Last reload: %s"
 msgstr "Последняя перезагрузка: %s"
 
+msgid "Last successful update: %s"
+msgstr "Последнее успешное обновление: %s"
+
 msgid "Last update"
 msgstr "Последнее обновление"
 
@@ -2377,6 +2383,15 @@ msgstr "Частота обновления списков была %s — ме�
 
 msgid "Lists and updates"
 msgstr "Списки и обновления"
+
+msgid "Lists have not been updated since the router started"
+msgstr "Списки не обновлялись с момента запуска роутера"
+
+msgid "Lists update failed: %s."
+msgstr "Обновление списков не удалось: %s."
+
+msgid "Lists updated: %s"
+msgstr "Списки обновлены: %s"
 
 msgid "Lists: %d"
 msgstr "Списки: %d"
@@ -3860,6 +3875,9 @@ msgstr "Источник"
 msgid "Source Network Interface"
 msgstr "Сетевой интерфейс источника"
 
+msgid "Sources that could not be downloaded:"
+msgstr "Источники, которые не удалось скачать:"
+
 msgid "Stability"
 msgstr "Стабильность"
 
@@ -3925,6 +3943,9 @@ msgstr "Состояние недоступно"
 
 msgid "Status"
 msgstr "Состояние"
+
+msgid "Status unavailable"
+msgstr "Состояние недоступно"
 
 msgid "Still enforced until the next successful Prokop start or reload"
 msgstr "Действует до следующего успешного запуска или перезагрузки Prokop"
@@ -4300,6 +4321,9 @@ msgstr "Список не загружен на роутер; обновите �
 
 msgid "The list of changes is unavailable."
 msgstr "Список изменений недоступен."
+
+msgid "The lists of the last successful update (%s) stay in use."
+msgstr "Используются списки последнего успешного обновления (%s)."
 
 msgid "The maximum number of targets is reached."
 msgstr "Достигнуто максимальное число целей."
@@ -4835,11 +4859,17 @@ msgstr "Доступно обновление"
 msgid "Update is available:"
 msgstr "Доступна новая версия:"
 
+msgid "Update lists"
+msgstr "Обновить списки"
+
 msgid "Update subscriptions"
 msgstr "Обновить подписки"
 
 msgid "Update this subscription automatically"
 msgstr "Автоматически обновлять эту подписку"
+
+msgid "Updating lists…"
+msgstr "Списки обновляются…"
 
 msgid "URL must start with vless://, vmess://, ss://, trojan://, socks4://, socks4a://, socks5://, hysteria2://, or hy2://"
 msgstr "URL должен начинаться с vless://, vmess://, ss://, trojan://, socks4://, socks4a://, socks5://, hysteria2:// или hy2://"

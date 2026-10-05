@@ -39,6 +39,7 @@
         "/usr/libexec/prokop-ro component_action_status *": ["exec"],
         "/usr/libexec/prokop-ro subscription_update_status *": ["exec"],
         "/usr/libexec/prokop-ro component_update_check_cache": ["exec"],
+        "/usr/libexec/prokop-ro get_list_update_status": ["exec"],
         "/var/run/prokop/component-actions/*": [
           "read"
         ],

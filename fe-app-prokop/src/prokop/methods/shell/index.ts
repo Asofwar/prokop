@@ -767,6 +767,14 @@ export const ProkopShellMethods = {
       data: parsedResponse,
     } as Prokop.MethodSuccessResponse<Prokop.ComponentActionStartResult>;
   },
+  getListUpdateStatus: async () =>
+    callBaseMethod<Prokop.ListUpdateStatus>(
+      Prokop.AvailableMethods.GET_LIST_UPDATE_STATUS,
+    ),
+  listUpdateStart: async () =>
+    callBaseMethod<Prokop.ListUpdateStartResult>(
+      Prokop.AvailableMethods.LIST_UPDATE_ASYNC,
+    ),
   componentUpdateCheckCache: async () =>
     callBaseMethod<Prokop.ComponentUpdateCheckCache>(
       Prokop.AvailableMethods.COMPONENT_UPDATE_CHECK_CACHE,

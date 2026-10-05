@@ -33,6 +33,9 @@ const LEGACY_PERSISTENT_LIST_CACHE_FORMAT = "1";
 const LIST_GENERATION_FAIL_PHASE = getenv("PROKOP_LIST_GENERATION_FAIL_PHASE") || "";
 const LIST_UPDATE_STATE_FILE = getenv("PROKOP_LIST_UPDATE_STATE_FILE") || PERSISTENT_LIST_CACHE_DIR + "/last-success.timestamp";
 const LIST_UPDATE_RUNTIME_STATE_FILE = getenv("PROKOP_LIST_UPDATE_RUNTIME_STATE_FILE") || RUNTIME_STATE_DIR + "/list-update-last-success.timestamp";
+// Outcome of the last lists update for the UI (C6): when it ran, whether it
+// succeeded, and which sources failed to download.
+const LIST_UPDATE_RESULT_FILE = getenv("PROKOP_LIST_UPDATE_RESULT_FILE") || RUNTIME_STATE_DIR + "/list-update-result.json";
 const LIST_UPDATE_RUNTIME_SIGNATURE_FILE = getenv("PROKOP_LIST_UPDATE_RUNTIME_SIGNATURE_FILE") || RUNTIME_STATE_DIR + "/list-update-signature";
 const LIST_CACHE_LOG_STATE_FILE = getenv("PROKOP_LIST_CACHE_LOG_STATE_FILE") || RUNTIME_STATE_DIR + "/list-cache-restore.log-state";
 const LIST_SRS_VALIDATION_DIR = getenv("PROKOP_LIST_SRS_VALIDATION_DIR") || RUNTIME_STATE_DIR + "/validated-list-srs";
@@ -124,6 +127,10 @@ let list_update_signature_at_start = "";
 let subscription_outbounds_changed = false;
 let runtime_generation_commit_changed = false;
 let list_update_prepare_only = false;
+// Set once list_update() owns the worker pidfile; the sources that failed
+// to download in this run, as safe identities (no credentials or queries).
+let list_update_started_at = 0;
+let list_update_failed_sources = [];
 
 function routing_rulesets_module() {
     if (routing_rulesets_module_value == null)
@@ -247,6 +254,17 @@ function safe_remote_source_identity(url, logical_name) {
 
     let identity = host + path;
     return label == "" ? identity : "rule '" + label + "': " + identity;
+}
+
+// The UI shows the sources the last lists update could not use (C6).
+function note_failed_list_source(what) {
+    if (length(list_update_failed_sources) < 64 && index(list_update_failed_sources, what) < 0)
+        push(list_update_failed_sources, what);
+}
+
+function log_failed_list_source(what) {
+    log_message("Failed to download " + what + "; skipping it until the next successful update", "error");
+    note_failed_list_source(what);
 }
 
 function read_json_file(path) {
@@ -2271,9 +2289,13 @@ function launch_subscription_worker(args) {
     for (let arg in args)
         push(command_args, arg);
 
+    // OpenWrt passes procd's lock on fd 1000. A shell without multi-digit
+    // redirections (dash) would hand "1000" to the worker as an argument,
+    // so close it only when it is open.
+    let close_procd_lock = fs.stat("/proc/self/fd/1000") != null ? " 1000>&-" : "";
     let command = command_env(subscription_worker_env()) + " " +
         command_from_args(command_args) +
-        " >/dev/null 2>&1 1000>&- & echo $!";
+        " >/dev/null 2>&1" + close_procd_lock + " & echo $!";
     return trim(command_output("sh -c " + shell_quote(command)));
 }
 
@@ -3381,6 +3403,7 @@ function remove_stale_list_staging(wait_seconds) {
 
 function abandon_list_downloads(url) {
     log_message("Failed to preflight list source " + safe_remote_source_identity(url) + "; keeping the active generation", "error");
+    note_failed_list_source("list source " + safe_remote_source_identity(url));
     command_success_from_args([ "rm", "-rf", list_download_staging_dir ]);
     list_download_staging_dir = "";
     list_download_cache = {};
@@ -3581,7 +3604,7 @@ function import_domain_ip_list_reference_into_rulesets(reference, section, setti
         ok = import_domain_ip_list_file_into_rulesets(tmpfile, section);
     }
     else {
-        log_message("Failed to download remote domain/IP list " + safe_remote_source_identity(reference, section_name(section)) + "; skipping it until the next successful update", "error");
+        log_failed_list_source("remote domain/IP list " + safe_remote_source_identity(reference, section_name(section)));
         ok = false;
     }
 
@@ -3632,7 +3655,7 @@ function import_builtin_subnets_from_rule(section, settings) {
             }
 
             if (!download_to_file(url, tmpfile, service_proxy_address(settings, "lists")) || !file_nonempty(tmpfile)) {
-                log_message("Failed to download built-in " + as_string(service) + " subnet list; skipping it until the next successful update", "error");
+                log_failed_list_source("built-in " + as_string(service) + " subnet list");
                 ok = false;
                 remove_file(tmpfile);
                 continue;
@@ -3701,7 +3724,7 @@ function import_custom_ruleset_subnets_from_remote(url, format, section, label, 
     }
 
     if (!download_to_file(url, remote_tmpfile, service_proxy_address(settings, "lists")) || !file_nonempty(remote_tmpfile)) {
-        log_message("Failed to download remote rule set " + safe_remote_source_identity(url, section_name(section)) + "; skipping it until the next successful update", "error");
+        log_failed_list_source("remote rule set " + safe_remote_source_identity(url, section_name(section)));
         remove_files([ remote_tmpfile, json_tmpfile ]);
         return false;
     }
@@ -3771,7 +3794,7 @@ function import_domains_from_remote_plain_file(url, section, settings) {
         return false;
 
     if (!download_to_file(url, tmpfile, service_proxy_address(settings, "lists")) || !file_nonempty(tmpfile)) {
-        log_message("Failed to download remote domain list " + safe_remote_source_identity(url, section_name(section)) + "; skipping it until the next successful update", "error");
+        log_failed_list_source("remote domain list " + safe_remote_source_identity(url, section_name(section)));
         remove_file(tmpfile);
         return false;
     }
@@ -3815,7 +3838,7 @@ function import_subnets_from_remote_json_file(url, section, settings) {
         return false;
 
     if (!download_to_file(url, json_tmpfile, service_proxy_address(settings, "lists")) || !file_nonempty(json_tmpfile)) {
-        log_message("Failed to download remote JSON subnet list " + safe_remote_source_identity(url, section_name(section)) + "; skipping it until the next successful update", "error");
+        log_failed_list_source("remote JSON subnet list " + safe_remote_source_identity(url, section_name(section)));
         remove_file(json_tmpfile);
         return false;
     }
@@ -3836,7 +3859,7 @@ function import_subnets_from_remote_srs_file(url, section, settings) {
     }
 
     if (!download_to_file(url, binary_tmpfile, service_proxy_address(settings, "lists")) || !file_nonempty(binary_tmpfile)) {
-        log_message("Failed to download remote SRS subnet list " + safe_remote_source_identity(url, section_name(section)) + "; skipping it until the next successful update", "error");
+        log_failed_list_source("remote SRS subnet list " + safe_remote_source_identity(url, section_name(section)));
         remove_files([ binary_tmpfile, json_tmpfile ]);
         return false;
     }
@@ -3859,7 +3882,7 @@ function import_subnets_from_remote_plain_file(url, section, settings) {
         return false;
 
     if (!download_to_file(url, tmpfile, service_proxy_address(settings, "lists")) || !file_nonempty(tmpfile)) {
-        log_message("Failed to download remote plain subnet list " + safe_remote_source_identity(url, section_name(section)) + "; skipping it until the next successful update", "error");
+        log_failed_list_source("remote plain subnet list " + safe_remote_source_identity(url, section_name(section)));
         remove_file(tmpfile);
         return false;
     }
@@ -3925,6 +3948,59 @@ function list_update_worker_pid() {
             return pid;
     }
     return "";
+}
+
+function record_list_update_result(success) {
+    if (list_update_started_at <= 0)
+        return;
+    ensure_parent_dir(LIST_UPDATE_RESULT_FILE);
+    if (!write_state_file(LIST_UPDATE_RESULT_FILE, {
+        started_at: list_update_started_at,
+        finished_at: now_seconds(),
+        success: success == true,
+        failed_sources: list_update_failed_sources
+    }))
+        log_message("Could not record the lists update result", "warn");
+}
+
+// Read-only: whether a lists update runs now and how the last one ended.
+function list_update_status() {
+    let last = read_json_file(LIST_UPDATE_RESULT_FILE);
+    let result = null;
+    if (type(last) == "object" && type(last.finished_at) == "int") {
+        let failed = [];
+        if (type(last.failed_sources) == "array")
+            for (let source in last.failed_sources)
+                if (type(source) == "string")
+                    push(failed, source);
+        result = {
+            started_at: type(last.started_at) == "int" ? last.started_at : 0,
+            finished_at: last.finished_at,
+            success: last.success == true,
+            failed_sources: failed
+        };
+    }
+    write_json({
+        running: list_update_worker_pid() != "",
+        last_success_at: list_update_last_success(),
+        last_result: result
+    });
+}
+
+// Starts a manual lists update in the background for the UI. The worker
+// is the same "list-update" mode the CLI runs, so it takes the worker
+// pidfile and an update already in progress is reported, not doubled.
+function list_update_async() {
+    if (list_update_worker_pid() != "") {
+        write_json({ success: true, running: true, started: false });
+        return;
+    }
+    let pid = launch_subscription_worker([ "list-update" ]);
+    if (pid == "") {
+        write_json({ success: false, running: false, started: false, message: "Failed to start the lists update" });
+        exit(1);
+    }
+    write_json({ success: true, running: true, started: true });
 }
 
 function list_update_pid_begin() {
@@ -4097,6 +4173,7 @@ function finish_list_update(status, applied, generation_changed) {
         applied = status == 0;
     if (generation_changed == null)
         generation_changed = applied;
+    record_list_update_result(status == 0);
     let rulesets_changed = finish_list_ruleset_snapshot(applied);
     finish_list_nft_snapshot();
     cleanup_list_downloads();
@@ -4254,6 +4331,8 @@ function list_update() {
     remove_stale_list_staging(0);
     if (!list_update_pid_begin())
         exit(0);
+    list_update_started_at = now_seconds();
+    list_update_failed_sources = [];
 
     // The DNS probe and the downloads run before reload.lock is taken
     // (UC-057): the probe alone can take a minute on a dead resolver, and
@@ -5016,6 +5095,10 @@ else if (mode == "remove-cron-jobs")
     remove_cron_jobs(ARGV[1], ARGV[2], ARGV[3]);
 else if (mode == "list-update")
     list_update();
+else if (mode == "list-update-status")
+    list_update_status();
+else if (mode == "list-update-async")
+    list_update_async();
 else if (mode == "list-update-if-due")
     list_update_if_due();
 else if (mode == "list-update-after-start")

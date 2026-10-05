@@ -57,6 +57,11 @@ import {
 } from '../../services/runtimeUiState.service';
 import { Prokop } from '../../types';
 import { renderFullUninstall } from './fullUninstall';
+import {
+  refreshListsUpdateStatus,
+  renderListsUpdate,
+  stopListsUpdatePolling,
+} from './listsUpdate';
 import { render } from './render';
 import { renderOnAttach } from './renderOnAttach';
 import { confirmAction } from '../../ui/confirmAction';
@@ -1425,6 +1430,13 @@ function renderUpdatesComponents() {
     columns[card.column].push(renderComponentCard(card));
   });
   columns[2].push(
+    renderListsUpdate(
+      isAnyActionLoading() || isServiceRuntimeActionLoading(),
+      renderUpdatesComponents,
+      () => updatesMounted,
+    ),
+  );
+  columns[2].push(
     renderFullUninstall(
       isAnyActionLoading() || isServiceRuntimeActionLoading(),
     ),
@@ -1522,6 +1534,7 @@ async function onPageMount() {
   startComponentActionStateWatcher();
   renderUpdatesComponents();
   void ensureSystemInfo();
+  void refreshListsUpdateStatus(renderUpdatesComponents, () => updatesMounted);
   if (hasRuntimeSnapshot) {
     void refreshRuntimeUiState({ force: true });
   }
@@ -1531,6 +1544,7 @@ function onPageUnmount() {
   updatesMounted = false;
   updatesMountId += 1;
   stopComponentActionStateWatcher();
+  stopListsUpdatePolling();
   store.unsubscribe(onStoreUpdate);
 }
 

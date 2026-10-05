@@ -64,6 +64,8 @@ function show_help() {
     print("    main                    Compatibility alias of start\n");
     print("    list_update             Update remote lists\n");
     print("    list_update_if_due      Update remote lists only when the configured interval has elapsed\n");
+    print("    list_update_async       Start a remote lists update in the background\n");
+    print("    get_list_update_status  Show whether a lists update runs and how the last one ended\n");
     print("    subscription_update [rule] [source_index]\n");
     print("                            Update all subscription proxies, one rule, or one source in a rule\n");
     print("    subscription_update_async [rule] [source_index]\n");
@@ -167,6 +169,8 @@ function command_spec(command) {
         main: [ "service/lifecycle.uc", "start", 0 ],
         list_update: [ "components/updates.uc", "list-update", 0 ],
         list_update_if_due: [ "components/updates.uc", "list-update-if-due", 0 ],
+        list_update_async: [ "components/updates.uc", "list-update-async", 0 ],
+        get_list_update_status: [ "components/updates.uc", "list-update-status", 0 ],
         subscription_update: [ "components/updates.uc", "subscription-update", 2 ],
         subscription_update_async: [ "components/updates.uc", "subscription-update-async", 2 ],
         subscription_update_status: [ "components/updates.uc", "subscription-update-status", 1 ],
@@ -301,7 +305,7 @@ const ALLOWED_DURING_FULL_UNINSTALL = [
     "get_ui_capabilities", "get_ui_state", "get_health_status", "get_history", "get_readonly_config_sections",
     "get_dashboard_runtime_metadata", "route_trace", "connectivity_test", "global_check", "support_report",
     "config_snapshot_list", "config_snapshot_diff", "service_action_status", "latency_test_status",
-    "component_action_status", "subscription_update_status", "component_update_check_cache",
+    "component_action_status", "subscription_update_status", "get_list_update_status", "component_update_check_cache",
     "prokop_releases", "autotune_status", "autotune_target", "autotune_groups", "autotune_list_domains",
     "autotune_run_status", "validate_nfqws_strategy_json", "validate_nfqws2_strategy_json",
     "validate_byedpi_strategy_json"
