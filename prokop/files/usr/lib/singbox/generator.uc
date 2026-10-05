@@ -28,6 +28,13 @@ let runtime_supports_xhttp = true;
 // X.Y.Z of sing-box-extended from "1.14.1-extended-2.7.2"; null when the
 // version is not known.
 let runtime_extended_version = null;
+// C15: the payload probes of the priority groups that check payload: a
+// selector with the group's nodes, reached through a mixed inbound on the
+// loopback address, which the priority worker points at the node under
+// test. Live traffic never goes through it.
+const PRIORITY_PROBE_PORT_FIRST = 4580;
+const PRIORITY_PROBE_MAX = 16;
+let priority_probes = [];
 let runtime_supports_dns_response_matching = false;
 let provider_urltest_start_seed = "";
 
@@ -1532,6 +1539,25 @@ function add_priority_group_outbound(config, section, group_id, urltest_candidat
         interrupt_exist_connections: connections.priority_group_interrupt_exist_connections(section, group_id)
     };
 
+    let probe = null;
+    if (connections.priority_group_payload_check(section, group_id) && length(outbounds) > 0) {
+        if (length(priority_probes) >= PRIORITY_PROBE_MAX)
+            runtime_generate_unsupported("at most " + PRIORITY_PROBE_MAX + " priority groups can check payload");
+        probe = {
+            tag: priority_tag + "-probe",
+            inbound: runtime_constants.inbound_tag("probe-" + section_name + "-" + as_string(group_id)),
+            port: PRIORITY_PROBE_PORT_FIRST + length(priority_probes)
+        };
+        push(priority_probes, probe);
+        push(config.outbounds, {
+            type: "selector",
+            tag: probe.tag,
+            outbounds,
+            default: outbounds[0],
+            interrupt_exist_connections: true
+        });
+    }
+
     runtime_subscription.remember_outbound_metadata(state, priority_tag, display_name, outbound);
     runtime_subscription.remember_priority_group(state, priority_tag, {
         id: group_id,
@@ -1547,6 +1573,9 @@ function add_priority_group_outbound(config, section, group_id, urltest_candidat
         fastest_check_interval: connections.priority_group_fastest_check_interval(section, group_id),
         interrupt_exist_connections: connections.priority_group_interrupt_exist_connections(section, group_id),
         pin_dashboard: connections.priority_group_pin_dashboard(section, group_id),
+        payload_check: probe != null,
+        probe_tag: probe != null ? probe.tag : "",
+        probe_port: probe != null ? probe.port : 0,
         outbounds,
         levels
     });
@@ -1707,6 +1736,11 @@ function add_service_mixed_proxy_inbound(config, tag_name, listen_port, outbound
         inbound: tag_name,
         outbound
     });
+}
+
+function add_priority_probe_inbounds(config) {
+    for (let probe in priority_probes)
+        add_service_mixed_proxy_inbound(config, probe.inbound, probe.port, probe.tag);
 }
 
 function service_mixed_proxy_inbound_tag_for_purpose(purpose) {
@@ -3061,6 +3095,7 @@ function enabled_sections(deferred_sections) {
 }
 
 function generate_config(output_path, service_address, mwan3_active, supports_xhttp, deferred_sections, sing_box_version) {
+    priority_probes = [];
     runtime_supports_xhttp = supports_xhttp == null || as_string(supports_xhttp) == ""
         ? true
         : cli_bool(supports_xhttp);
@@ -3099,6 +3134,7 @@ function generate_config(output_path, service_address, mwan3_active, supports_xh
         add_route_for_section(config, section);
     add_source_aware_dns_fallback(config, source_aware_dns);
     add_service_mixed_proxy(config, settings, sections);
+    add_priority_probe_inbounds(config);
     for (let section in sections)
         add_mixed_proxy_for_section(config, section, service_address);
 

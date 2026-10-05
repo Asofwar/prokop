@@ -54,6 +54,7 @@ cat >"$WORK/answers/proxies.json" <<'JSON'
 {"proxies":{
   "main":{"type":"Selector","now":"proxy-a","all":["proxy-a","proxy-b"]},
   "extra":{"type":"Selector","now":"x-1","all":["x-1","x-2"]},
+  "sec-priority-pg-out-probe":{"type":"Selector","now":"x-2","all":["x-1","x-2"]},
   "auto":{"type":"URLTest","now":"proxy-a","all":["proxy-a","proxy-b"]}
 }}
 JSON
@@ -76,7 +77,8 @@ rm "$WORK/answers/put.fail"
 grep -q 'set_group_proxy", group.tag, tag_name, "auto"' "$PROKOP_LIB/singbox/priority.uc" ||
   fail "priority failover switches are recorded as the user's choice"
 
-# 3. The selection at a stop is kept, the URLTest group is not.
+# 3. The selection at a stop is kept, the URLTest group and the probe
+#    selector of a payload check (C15) are not.
 lifecycle selector-capture-fixture >/dev/null
 [ "$(saved)" = '{"main":"proxy-a","extra":"x-1"}' ] || fail "the stop did not keep the selection: $(saved)"
 

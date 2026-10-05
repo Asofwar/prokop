@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-05 01:16+0000\n"
-"PO-Revision-Date: 2026-10-05 01:16+0000\n"
+"POT-Creation-Date: 2026-10-05 01:22+0000\n"
+"PO-Revision-Date: 2026-10-05 01:22+0000\n"
 "Last-Translator: Asofwar\n"
 "Language-Team: none\n"
 "Language: ru\n"
@@ -839,6 +839,9 @@ msgstr "Проверить обновление"
 msgid "Check URL"
 msgstr "URL проверки"
 
+msgid "Check with a real download"
+msgstr "Проверять настоящей загрузкой"
+
 msgid "Checked"
 msgstr "Проверено"
 
@@ -1135,6 +1138,9 @@ msgstr "Не удалось запустить проверку"
 
 msgid "Could not start the lists update"
 msgstr "Не удалось запустить обновление списков"
+
+msgid "Count a server as working only when a 32 KB download through it over HTTPS completes, not only when it answers. Finds servers that connect but pass no data. Each check downloads 32 KB; a server that fails is skipped for a minute."
+msgstr "Считать сервер рабочим, только когда через него по HTTPS полностью загружаются 32 КБ, а не только когда он отвечает. Так находятся серверы, которые подключаются, но не пропускают данные. Каждая проверка загружает 32 КБ; сервер, не прошедший её, пропускается на минуту."
 
 msgid "Create snapshot"
 msgstr "Создать снимок"

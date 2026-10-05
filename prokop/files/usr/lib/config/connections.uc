@@ -890,6 +890,14 @@ function priority_group_pick_fastest(section, value) {
     return child != null ? child_bool(child, "pick_fastest", false) : false;
 }
 
+// C15: a node of the group counts as working only when a real HTTPS
+// download through it completes (singbox/priority.uc), not only the delay
+// check. Off by default: each check downloads 32 KiB through the node.
+function priority_group_payload_check(section, value) {
+    let child = priority_group_child(section, value);
+    return child != null ? child_bool(child, "payload_check", false) : false;
+}
+
 function priority_group_switch_to_faster_same_priority(section, value) {
     let child = priority_group_child(section, value);
     return child != null ? child_bool(child, "switch_to_faster_same_priority", false) : false;
@@ -1143,6 +1151,7 @@ return {
     priority_group_check_timeout,
     priority_group_recovery_check_interval,
     priority_group_pick_fastest,
+    priority_group_payload_check,
     priority_group_switch_to_faster_same_priority,
     priority_group_fastest_check_interval,
     priority_group_interrupt_exist_connections,

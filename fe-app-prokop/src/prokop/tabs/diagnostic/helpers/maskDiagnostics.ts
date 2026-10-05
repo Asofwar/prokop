@@ -139,6 +139,7 @@ export const UCI_SAFE_OPTIONS = new Set([
   'outbound_detour_enabled',
   'outbound_detour_section',
   'output_network_interface',
+  'payload_check',
   'pick_fastest',
   'pin_dashboard',
   'ports',

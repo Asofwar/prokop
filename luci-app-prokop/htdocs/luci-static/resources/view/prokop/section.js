@@ -2627,6 +2627,7 @@ function priorityGroupSettingsKeys() {
     "pick_fastest",
     "switch_to_faster_same_priority",
     "fastest_check_interval",
+    "payload_check",
     "interrupt_exist_connections",
     "pin_dashboard",
   ];
@@ -2642,6 +2643,7 @@ function defaultPriorityGroupSettings() {
     pick_fastest: "0",
     switch_to_faster_same_priority: "0",
     fastest_check_interval: "3m",
+    payload_check: "0",
     interrupt_exist_connections: "1",
     pin_dashboard: "1",
   };
@@ -2656,6 +2658,7 @@ function priorityGroupChildDefaults() {
     pick_fastest: "0",
     switch_to_faster_same_priority: "0",
     fastest_check_interval: "3m",
+    payload_check: "0",
     interrupt_exist_connections: "1",
     pin_dashboard: "1",
   };
@@ -3450,6 +3453,19 @@ function addPriorityGroupItemOptions(itemSection, options = {}) {
       ? validateRequiredSingBoxDuration(value)
       : true;
   };
+
+  // C15: singbox/priority.uc downloads through a probe selector and
+  // inbound that singbox/generator.uc adds for this group.
+  o = itemSection.option(
+    form.Flag,
+    "payload_check",
+    _("Check with a real download"),
+    _(
+      "Count a server as working only when a 32 KB download through it over HTTPS completes, not only when it answers. Finds servers that connect but pass no data. Each check downloads 32 KB; a server that fails is skipped for a minute.",
+    ),
+  );
+  o.default = "0";
+  o.rmempty = false;
 
   o = itemSection.option(
     form.Flag,

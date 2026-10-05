@@ -571,8 +571,14 @@ function clash_api_json(action, arg1, arg2, arg3) {
 // reboot (C4), so that a choice made on the dashboard is kept as well.
 function capture_selector_state() {
     let state = selector_state_from_proxies_payload(clash_api_json("get_proxies"));
-    if (length(state) > 0)
-        selector_choices.record_choices(state);
+    // The probe selectors of payload checks (C15) are the priority worker's
+    // own: what it last tested is no choice to keep on flash.
+    let choices = {};
+    for (let group, tag in state)
+        if (match(group, /-out-probe$/) == null)
+            choices[group] = tag;
+    if (length(choices) > 0)
+        selector_choices.record_choices(choices);
     return state;
 }
 

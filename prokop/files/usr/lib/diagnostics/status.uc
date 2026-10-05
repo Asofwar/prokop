@@ -181,7 +181,7 @@ let uci_safe_options = {
     interrupt_exist_connections: true, label: true, list_update_enabled: true, log_level: true,
     mixed_proxy_auth_enabled: true, mixed_proxy_enabled: true, mixed_proxy_port: true,
     name: true, node_prefix: true, order: true, outbound_detour_enabled: true,
-    outbound_detour_section: true, output_network_interface: true, pick_fastest: true,
+    outbound_detour_section: true, output_network_interface: true, payload_check: true, pick_fastest: true,
     pin_dashboard: true, ports: true, prefix_nodes: true, priority_groups: true,
     proxy_config_type: true, reality_mlkem: true, recovery_check_interval: true, resolve_real_ip_for_routing: true,
     rule: true, secondary_rule_sets: true, section: true, show_dashboard_metadata: true,

@@ -16,6 +16,19 @@ const SECTION_CACHE_DIR = getenv("PROKOP_SECTION_CACHE_DIR") || RUNTIME_STATE_DI
 const PRIORITY_PID_FILE = getenv("PROKOP_PRIORITY_PID_FILE") || RUNTIME_STATE_DIR + "/priority.pid";
 const PRIORITY_UC = getenv("PROKOP_PRIORITY_UC") || LIB_DIR + "/singbox/priority.uc";
 const DIAGNOSTICS_UC = getenv("PROKOP_DIAGNOSTICS_UC") || LIB_DIR + "/diagnostics/runtime.uc";
+const SERVICE_ADDRESS = getenv("SB_SERVICE_MIXED_INBOUND_ADDRESS") || "127.0.0.1";
+
+// C15: the payload check of a group downloads PAYLOAD_BYTES over HTTPS
+// through the node under test (its probe selector and inbound, see
+// singbox/generator.uc), so "the handshake works but no data flows" is a
+// failure too. A node whose download failed is left alone for
+// PAYLOAD_QUARANTINE_SECONDS; the active node is checked again every
+// PAYLOAD_RECHECK_SECONDS, the quick delay check runs as before meanwhile.
+const PAYLOAD_URL = getenv("PROKOP_PRIORITY_PAYLOAD_URL") || "https://speed.cloudflare.com/__down?bytes=32768";
+const PAYLOAD_BYTES = int(getenv("PROKOP_PRIORITY_PAYLOAD_BYTES") || "32768");
+const PAYLOAD_MAX_TIME = int(getenv("PROKOP_PRIORITY_PAYLOAD_MAX_TIME") || "15");
+const PAYLOAD_QUARANTINE_SECONDS = 60;
+const PAYLOAD_RECHECK_SECONDS = 180;
 
 function shell_quote(value) {
     return "'" + replace(as_string(value), /'/g, "'\\''") + "'";
@@ -150,6 +163,9 @@ function normalize_group(group, tag_name) {
         pick_fastest: bool_value(group.pick_fastest, false),
         switch_to_faster_same_priority: bool_value(group.switch_to_faster_same_priority, false),
         fastest_check_interval: as_string(group.fastest_check_interval || "3m"),
+        payload_check: group.payload_check === true && as_string(group.probe_tag) != "" && int(group.probe_port || 0) > 0,
+        probe_tag: as_string(group.probe_tag || ""),
+        probe_port: int(group.probe_port || 0),
         levels
     };
 }
@@ -235,6 +251,47 @@ function clash_probe(tag_name, group) {
         return { alive: false, delay: 0 };
 
     return { alive: true, delay };
+}
+
+// Points the group's probe selector at the node and downloads the payload
+// through it; true when all of it arrived.
+function payload_transfer(group, tag_name) {
+    if (module_capture([ "set_group_proxy", group.probe_tag, tag_name, "auto" ]).status != 0)
+        return false;
+    let output = command_output_from_args([ "curl", "-sS", "-o", "/dev/null",
+        "-w", "%{http_code} %{size_download}",
+        "--max-time", as_string(PAYLOAD_MAX_TIME),
+        "-x", "http://" + SERVICE_ADDRESS + ":" + as_string(group.probe_port),
+        PAYLOAD_URL ]);
+    let fields = split(trim(output), " ");
+    return length(fields) == 2 && match(fields[0], /^2[0-9][0-9]$/) != null &&
+        int(fields[1]) >= PAYLOAD_BYTES;
+}
+
+function new_payload_state() {
+    return { quarantine: {}, verified: {} };
+}
+
+// The probe of a group that may check payload: the delay check first, then,
+// for a group with payload_check, the download, unless the node passed it
+// within PAYLOAD_RECHECK_SECONDS. A failed download quarantines the node.
+function checked_probe(payload, group, tag_name, delay_probe, transfer, now) {
+    if (group.payload_check && int(payload.quarantine[tag_name] || 0) > now)
+        return { alive: false, delay: 0 };
+    let result = delay_probe(tag_name, group);
+    if (!result.alive || !group.payload_check)
+        return result;
+    if (payload.verified[tag_name] != null && now - int(payload.verified[tag_name]) < PAYLOAD_RECHECK_SECONDS)
+        return result;
+    if (!transfer(group, tag_name)) {
+        delete payload.verified[tag_name];
+        payload.quarantine[tag_name] = now + PAYLOAD_QUARANTINE_SECONDS;
+        log_message("node " + tag_name + " of " + group.tag + " answers but did not pass the payload download; " +
+            "skipping it for " + PAYLOAD_QUARANTINE_SECONDS + " s", "warn");
+        return { alive: false, delay: 0 };
+    }
+    payload.verified[tag_name] = now;
+    return result;
 }
 
 function fixture_probe(latencies, tag_name) {
@@ -350,6 +407,7 @@ function switch_group(state, group, selected) {
 
 function init_group_state(group) {
     return {
+        payload: new_payload_state(),
         active: "",
         levelIndex: -1,
         activeDelay: 0,
@@ -361,16 +419,19 @@ function init_group_state(group) {
 
 function tick_group(state, group) {
     let now = now_seconds();
+    let probe = function(tag_name, probe_group) {
+        return checked_probe(state.payload, probe_group, tag_name, clash_probe, payload_transfer, now);
+    };
 
     if (state.active == "" && now >= state.nextActiveCheck) {
-        let selected = choose_from_level_range(group, 0, length(group.levels) - 1, clash_probe);
+        let selected = choose_from_level_range(group, 0, length(group.levels) - 1, probe);
         switch_group(state, group, selected);
         state.nextActiveCheck = now + duration_to_seconds(group.active_check_interval, 5);
         return;
     }
 
     if (state.active != "" && now >= state.nextActiveCheck) {
-        let active = clash_probe(state.active, group);
+        let active = probe(state.active, group);
         if (active.alive) {
             state.activeDelay = active.delay;
         }
@@ -379,7 +440,7 @@ function tick_group(state, group) {
                 group,
                 state.levelIndex,
                 length(group.levels) - 1,
-                clash_probe,
+                probe,
                 state.active
             );
             if (switch_group(state, group, selected)) {
@@ -395,14 +456,14 @@ function tick_group(state, group) {
     }
 
     if (state.active != "" && state.levelIndex > 0 && now >= state.nextRecoveryCheck) {
-        let selected = choose_from_level_range(group, 0, state.levelIndex - 1, clash_probe);
+        let selected = choose_from_level_range(group, 0, state.levelIndex - 1, probe);
         if (switch_group(state, group, selected))
             state.nextFastestCheck = now + duration_to_seconds(group.fastest_check_interval, 180);
         state.nextRecoveryCheck = now + duration_to_seconds(group.recovery_check_interval, 15);
     }
 
     if (state.active != "" && group.switch_to_faster_same_priority && now >= state.nextFastestCheck) {
-        let selected = choose_fastest_same_level(group, state.levelIndex, state.active, clash_probe);
+        let selected = choose_fastest_same_level(group, state.levelIndex, state.active, probe);
         if (selected != null)
             switch_group(state, group, selected);
         state.nextFastestCheck = now + duration_to_seconds(group.fastest_check_interval, 180);
@@ -464,6 +525,34 @@ function select_faster_fixture(group_path, latency_path, level_index, active_tag
     write_json(selected == null ? {} : selected);
 }
 
+// Runs the probes of a scenario ({ group, latencies, payload: { tag: bool },
+// rounds: [ { now, level_start } ] }) and prints each round's selection with
+// the downloads made and the quarantine.
+function payload_fixture(path) {
+    let scenario = object_or_empty(read_json_file(path));
+    let group = normalize_group(scenario.group, "fixture");
+    let latencies = object_or_empty(scenario.latencies);
+    let outcomes = object_or_empty(scenario.payload);
+    let payload = new_payload_state();
+    let rounds = [];
+    for (let round in array_or_empty(scenario.rounds)) {
+        let downloads = [];
+        let now = int(round.now || 0);
+        let selected = choose_from_level_range(group, int(round.level_start || 0), length(group.levels) - 1,
+            function(tag_name, probe_group) {
+                return checked_probe(payload, probe_group, tag_name, function(tag) {
+                    return fixture_probe(latencies, tag);
+                }, function(_group, tag) {
+                    push(downloads, tag);
+                    return outcomes[tag] === true;
+                }, now);
+            }, as_string(round.skip || ""));
+        push(rounds, { selected: selected == null ? "" : selected.tag, downloads,
+            quarantined: sort(filter(keys(payload.quarantine), (tag) => payload.quarantine[tag] > now)) });
+    }
+    write_json(rounds);
+}
+
 let mode = ARGV[0] || "";
 
 if (mode == "start-runtime")
@@ -474,6 +563,10 @@ else if (mode == "worker")
     exit(worker());
 else if (mode == "select-fixture")
     select_fixture(ARGV[1], ARGV[2], ARGV[3], ARGV[4], ARGV[5]);
+else if (mode == "payload-fixture")
+    payload_fixture(ARGV[1]);
+else if (mode == "payload-transfer-fixture")
+    exit(payload_transfer(normalize_group(read_json_file(ARGV[1]), "fixture"), ARGV[2]) ? 0 : 1);
 else if (mode == "select-faster-fixture")
     select_faster_fixture(ARGV[1], ARGV[2], ARGV[3], ARGV[4]);
 else {

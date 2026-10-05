@@ -1649,6 +1649,10 @@ function priority_groups_signature(section) {
             pin_dashboard: connections.priority_group_pin_dashboard(section, group_id) ? "1" : "0",
             levels
         });
+        // C15: only a group that checks payload carries it, so the signature
+        // of every other configuration stays as it was.
+        if (connections.priority_group_payload_check(section, group_id))
+            result[length(result) - 1].payload_check = "1";
     }
     return sprintf("%J", result);
 }
