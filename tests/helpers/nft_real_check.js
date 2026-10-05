@@ -258,10 +258,11 @@ const modes = {
 
   // isolation <json> <table> <probe mark> <production table>
   //   <comment>=<queue:N|accept|->[,...] (- : the queue statement the kernel
-  //   lacks): the probe rules in order, one for a probe run, one per port
-  //   slice for a tuning run.
+  //   lacks) [map]: the probe rules in order, one for a probe run, one per
+  //   port slice for a tuning run; "map": the SYN-ACKs of all slices counted
+  //   by one rule into a named counter per slice.
   isolation() {
-    const [table, markText, production, probeRules] = args;
+    const [table, markText, production, probeRules, synackLayout] = args;
     const probeMark = Number(markText);
     baseChain(table, 'premark', 'route', 'output', -152);
     baseChain(table, 'output', 'route', 'output', -151);
@@ -280,6 +281,7 @@ const modes = {
     assert.equal(setsMark(out[0]), probeMark);
     assert.equal(setsMark(out[1]), probeMark);
     const sports = [];
+    const ranges = [];
     specs.forEach((spec, i) => {
       const rule = out[2 + i];
       assert.equal(exactMark(rule), probeMark, `probe rule ${spec.comment} takes only the probe mark`);
@@ -292,6 +294,7 @@ const modes = {
       const sport = rule.expr.map((e) => e.match).find((m) => m && m.left && m.left.payload && m.left.payload.field === 'sport');
       assert.ok(sport && sport.right && Array.isArray(sport.right.range), `probe rule ${spec.comment} has no source-port range`);
       sports.push(sport.right.range.map(Number));
+      ranges.push(sport.right.range.map(Number));
     });
     // The slices stay inside the probe ports and do not overlap.
     sports.sort((x, y) => x[0] - y[0]).forEach((r, i, all) => {
@@ -304,8 +307,22 @@ const modes = {
     // replies to the router's own connections (AT-7).
     baseChain(table, 'replies', 'filter', 'prerouting', -175);
     const replies = rulesOf(table, 'replies');
-    assert.deepEqual(replies.map((r) => r.comment),
-      specs.map((x) => 'synack' + (x.comment.includes(':') ? x.comment.slice(x.comment.indexOf(':')) : '')), 'SYN-ACK counters');
+    const ids = specs.map((x) => (x.comment.includes(':') ? x.comment.slice(x.comment.indexOf(':') + 1) : null));
+    if (synackLayout === 'map') {
+      assert.deepEqual(replies.map((r) => r.comment), ['synack'], 'one SYN-ACK rule');
+      const selector = statementOf(replies[0], 'counter').counter;
+      assert.ok(selector && selector.map, `the SYN-ACK rule selects no named counter: ${JSON.stringify(selector)}`);
+      assert.deepEqual(selector.map.key, { payload: { protocol: 'tcp', field: 'dport' } }, 'the slice is the reply destination port');
+      // Exactly the slices of the probe rules, each to the counter of its candidate.
+      const elements = selector.map.data.set.map(([k, name]) => [k.range.map(Number), name]);
+      assert.deepEqual(elements, ids.map((id, i) => [ranges[i], `synack_${id}`]).sort((x, y) => x[0][0] - y[0][0]),
+        'SYN-ACK counter map');
+      const counters = objects('counter').filter((c) => c.family === 'inet' && c.table === table).map((c) => c.name).sort();
+      assert.deepEqual(counters, ids.map((id) => `synack_${id}`).sort(), 'named SYN-ACK counters');
+    }
+    else
+      assert.deepEqual(replies.map((r) => r.comment),
+        ids.map((id) => 'synack' + (id === null ? '' : ':' + id)), 'SYN-ACK counters');
     for (const r of replies) {
       assert.equal(verdict(r), undefined, `reply rule ${r.comment} must not decide`);
       assert.ok(setsMark(r) == null, `reply rule ${r.comment} must not mark`);

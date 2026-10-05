@@ -16,6 +16,7 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 PROKOP_LIB="$ROOT_DIR/prokop/files/usr/lib"
 NFT_UC="$PROKOP_LIB/nft/apply.uc"
 CHECK_JS="$ROOT_DIR/tests/helpers/nft_real_check.js"
+PACKETS="$ROOT_DIR/tests/helpers/nft_packets.py"
 NAMESPACE=(unshare --user --map-root-user --net --mount)
 
 namespaces() { printf '%s %s' "$(readlink /proc/self/ns/net)" "$(readlink /proc/self/ns/mnt)"; }
@@ -667,7 +668,39 @@ check_batch "$WORK_DIR/probe.nft" "autotune tuning table"
 commit_batch "$WORK_DIR/tune.json" "autotune tuning table"
 tune_rules="direct:direct=accept,probe:candidate=-"
 supported queue && tune_rules="direct:direct=accept,probe:candidate=queue:$PROBE_QUEUE"
-check isolation "$WORK_DIR/tune.json" ProkopAutotuneProbe "$(hex_to_dec "$OUTBOUND_MARK")" "$TABLE" "$tune_rules"
+check isolation "$WORK_DIR/tune.json" ProkopAutotuneProbe "$(hex_to_dec "$OUTBOUND_MARK")" "$TABLE" "$tune_rules" map
+# The SYN-ACK counter map with real packets: the router's own connection from
+# the control's slice counts into the control's counter alone; one from
+# another local address (not the probe route's source) counts nowhere (AT-7).
+if command -v python3 >/dev/null 2>&1; then
+  python3 "$PACKETS" address lo 127.0.0.1/8
+  python3 "$PACKETS" address lo:1 203.0.113.10/32
+  python3 "$PACKETS" address lo:2 "$TARGET/32"
+  python3 - "$TARGET" <<'PY' || fail "probe connections through the tuning table failed"
+import socket, sys
+target = sys.argv[1]
+server = socket.socket()
+server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+server.bind((target, 443))
+server.listen(8)
+for source, port in (("203.0.113.10", 61005), ("203.0.113.10", 61006), (target, 61007)):
+    client = socket.socket()
+    client.settimeout(3)
+    client.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    client.bind((source, port))
+    client.connect((target, 443))
+    server.accept()[0].close()
+    client.close()
+PY
+  nft -j list counters table inet ProkopAutotuneProbe >"$WORK_DIR/tune-counters.json"
+  node -e '
+  const list = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")).nftables.filter((o) => o.counter);
+  const n = Object.fromEntries(list.map((o) => [o.counter.name, o.counter.packets]));
+  if (n.synack_direct !== 2 || n.synack_candidate !== 0) throw new Error(JSON.stringify(n));
+  ' "$WORK_DIR/tune-counters.json" || fail "SYN-ACK counters by slice: $(cat "$WORK_DIR/tune-counters.json")"
+else
+  printf 'NOTE: python3 is not installed, the SYN-ACK counters are not checked with packets\n'
+fi
 handles="$(node "$CHECK_JS" handle "$WORK_DIR/tune.json" ProkopAutotuneProbe output direct:direct) $(node "$CHECK_JS" handle "$WORK_DIR/tune.json" ProkopAutotuneProbe output probe:candidate)"
 printf '  sl  local_address rem_address   st\n   0: 0A00000A:EE48 22D8B85D:01BB 06 00000000:00000000 00:00000000 00000000     0        0 0\n' \
   >"$PROKOP_AUTOTUNE_PROC_NET/tcp"
@@ -677,14 +710,22 @@ fi
 grep -q '"probe_rule:released"' "$WORK_DIR/cleanup-tune-held.json" || fail "the tuning slices were not released: $(cat "$WORK_DIR/cleanup-tune-held.json")"
 nft -j list ruleset >"$WORK_DIR/tune-released.json"
 check isolation "$WORK_DIR/tune-released.json" ProkopAutotuneProbe "$(hex_to_dec "$OUTBOUND_MARK")" "$TABLE" \
-  "released:direct=accept,released:candidate=accept"
+  "released:direct=accept,released:candidate=accept" map
 [ "$(node "$CHECK_JS" handle "$WORK_DIR/tune-released.json" ProkopAutotuneProbe output released:direct) $(node "$CHECK_JS" handle "$WORK_DIR/tune-released.json" ProkopAutotuneProbe output released:candidate)" = "$handles" ] ||
   fail "the slice rules were not replaced in place"
 : >"$PROKOP_AUTOTUNE_PROC_NET/tcp"
 isolation cleanup >"$WORK_DIR/cleanup-tune.json" || fail "tuning cleanup failed: $(cat "$WORK_DIR/cleanup-tune.json")"
 nft -j list ruleset >"$WORK_DIR/final.json"
 check tables "$WORK_DIR/final.json" "$TABLE"
-ok "autotune tuning table: a slice rule per candidate, released in place together, cleaned up"
+ok "autotune tuning table: a slice rule per candidate, SYN-ACKs counted by slice, released in place together, cleaned up"
+
+# The fallback for an nft without counter maps: a SYN-ACK rule per slice.
+isolation_batch tune_rules
+check_batch "$WORK_DIR/probe.nft" "autotune tuning table (a SYN-ACK rule per slice)"
+commit_batch "$WORK_DIR/tune-rules.json" "autotune tuning table (a SYN-ACK rule per slice)"
+check isolation "$WORK_DIR/tune-rules.json" ProkopAutotuneProbe "$(hex_to_dec "$OUTBOUND_MARK")" "$TABLE" "$tune_rules"
+nft delete table inet ProkopAutotuneProbe
+ok "autotune tuning table with a SYN-ACK rule per slice: checked and applied"
 
 # Stop removes the table (service/lifecycle.uc stop).
 nft delete table inet "$TABLE"

@@ -25,7 +25,8 @@
 // candidates interleaved through the same isolated path - one temporary
 // nfqws per DPI candidate on its own queue, each candidate with a fixed slice
 // of the source ports and a probe rule of its own for that slice (direct:
-// accept with the probe mark) - and returns a selection from
+// accept with the probe mark), the SYN-ACKs of all slices counted by one
+// rule into a named counter per slice - and returns a selection from
 // autotune/select.uc. Neither mode applies anything.
 //
 // Must be invoked as: ucode -L <lib> <lib>/autotune/isolation.uc <mode> ...
@@ -104,6 +105,8 @@ const PROGRESS_FILE = getenv("PROKOP_AUTOTUNE_PROGRESS") || "";
 const PROBE_MARK_VALUE = contract.mark_number(PROBE_MARK);
 const DESYNC_MARK_VALUE = contract.mark_number(DESYNC_MARK);
 const REQUIRED_COUNTERS = [ "probe_mark", "reinjected", "reinjected_bare", "unexpected" ];
+// The named SYN-ACK counter of a tuning slice: "synack_<candidate>".
+const SYNACK_COUNTER_PREFIX = "synack_";
 // A probe rule carries one of these comments; the probe rule of a tuning
 // slice adds ":<candidate>".
 const PROBE_RULE_COMMENTS = [ "probe", "direct", "released" ];
@@ -380,17 +383,37 @@ function syn_ack_comment(comment) {
 }
 
 // Counters by rule comment. One probe rule for the whole port range (run),
-// or one per tuning slice, each comment once.
+// or one per tuning slice, each comment once. The named SYN-ACK counters of
+// a tuning run ("synack_<id>", selected by the one "synack" rule's map) are
+// returned as "synack:<id>", like the counters of a rule per slice.
 function probe_counters() {
     let table = nft_json(TABLE);
     if (table == null) return null;
-    let result = {}, rules = 0, sliced = 0, plain = 0;
+    let result = {}, rules = 0, sliced = 0, plain = 0, named = 0, maps = 0;
+    for (let item in table) {
+        let object = item.counter;
+        if (type(object) != "object" || object.table != TABLE) continue;
+        let name = as_string(object.name);
+        if (substr(name, 0, length(SYNACK_COUNTER_PREFIX)) != SYNACK_COUNTER_PREFIX ||
+            length(name) == length(SYNACK_COUNTER_PREFIX)) return null;
+        let key = "synack:" + substr(name, length(SYNACK_COUNTER_PREFIX));
+        if (result[key] != null || type(object.packets) != "int") return null;
+        result[key] = { packets: object.packets, bytes: int(object.bytes) };
+        named++;
+    }
     for (let item in table) {
         let rule = item.rule;
         if (type(rule) != "object" || rule.table != TABLE) continue;
         let comment = as_string(rule.comment);
         for (let expr in rule.expr || [])
             if (type(expr) == "object" && type(expr.counter) == "object") {
+                // A counter statement that selects a named counter holds no
+                // values of its own.
+                if (expr.counter.map != null) {
+                    if (comment != "synack") return null;
+                    maps++;
+                    continue;
+                }
                 if (result[comment] != null) return null;
                 result[comment] = { packets: int(expr.counter.packets), bytes: int(expr.counter.bytes) };
                 if (probe_rule_kind(comment) != null) {
@@ -401,6 +424,8 @@ function probe_counters() {
     }
     for (let name in REQUIRED_COUNTERS)
         if (result[name] == null) return null;
+    // Named counters exist only with the one rule that selects them.
+    if ((named > 0 || maps > 0) && !(named > 0 && maps == 1 && plain == 0)) return null;
     return (plain == 1 && sliced == 0) || (plain == 0 && sliced > 0) ? result : null;
 }
 
@@ -605,10 +630,27 @@ function port_slices(ids) {
     return result;
 }
 
+// The SYN-ACK counters of a tuning run as one rule (layout "map", the
+// default for several slices): [{ name, key, sport }] per slice, the named
+// counter "synack_<id>" read back as "synack:<id>"; null for a rule per
+// slice (layout "rules", a probe run, or an id nft cannot name).
+function synack_slices(spec, layout) {
+    if (layout == "rules" || type(spec) != "array" || length(spec) < 2) return null;
+    let result = [];
+    for (let rule in spec) {
+        let comment = as_string(rule.comment), colon = index(comment, ":");
+        let id = colon < 0 ? "" : substr(comment, colon + 1);
+        if (match(id, /^[a-z0-9_]{1,40}$/) == null || type(rule.sport) != "array") return null;
+        push(result, { name: SYNACK_COUNTER_PREFIX + id, key: "synack:" + id, sport: rule.sport });
+    }
+    return result;
+}
+
 // spec: one probe rule spec, or the list of the slice rules of a tuning run.
 // saddr: the router's source address of the probe route (prefsrc), whose
 // own connections alone the SYN-ACK counters count.
-function probe_chains(ip, spec, saddr) {
+// layout: "map" (default) or "rules", the SYN-ACK counters of a tuning run.
+function probe_chains(ip, spec, saddr, layout) {
     let tuple = { daddr: ip, dport: 443, sport: [ PORT_FIRST, PORT_LAST ] };
     let injected = DESYNC_MARK_VALUE | PROBE_MARK_VALUE;
     let probe_rules = [];
@@ -640,12 +682,19 @@ function probe_chains(ip, spec, saddr) {
     // connection the router itself opened from saddr count (AT-7).
     let own = probe_module.valid_ipv4(saddr) ? saddr : null;
     let replies = [];
-    for (let rule in type(spec) == "array" ? spec : [ spec ]) {
-        let colon = index(rule.comment || "", ":");
-        push(replies, { comment: "synack" + (colon < 0 ? "" : substr(rule.comment, colon)),
-            reply: { saddr: ip, sport: 443, dport: rule.sport || [ PORT_FIRST, PORT_LAST ], own }, syn_ack: true,
-            mark: null, set_mark: null, verdict: null });
-    }
+    let slices = synack_slices(spec, layout);
+    if (slices != null)
+        // One rule for every slice: the reply's destination port picks the
+        // named counter of its slice (a port of no slice counts nowhere).
+        push(replies, { comment: "synack", reply: { saddr: ip, sport: 443, dport: [ PORT_FIRST, PORT_LAST ], own },
+            syn_ack: true, counter_map: slices, mark: null, set_mark: null, verdict: null });
+    else
+        for (let rule in type(spec) == "array" ? spec : [ spec ]) {
+            let colon = index(rule.comment || "", ":");
+            push(replies, { comment: "synack" + (colon < 0 ? "" : substr(rule.comment, colon)),
+                reply: { saddr: ip, sport: 443, dport: rule.sport || [ PORT_FIRST, PORT_LAST ], own }, syn_ack: true,
+                mark: null, set_mark: null, verdict: null });
+        }
     if (TRACE)
         // Evidence only: marks the replies for nft trace and counts them.
         push(replies, { comment: "reply", reply: { saddr: ip, sport: 443, dport: [ PORT_FIRST, PORT_LAST ] },
@@ -665,15 +714,25 @@ function render_rule(rule) {
     if (rule.mark != null) text += sprintf(" meta mark 0x%08x", rule.mark);
     if (TRACE) text += " meta nftrace set 1";
     if (rule.set_mark != null) text += sprintf(" meta mark set 0x%08x", rule.set_mark);
-    text += " counter";
+    if (rule.counter_map != null) {
+        let elements = [];
+        for (let slice in rule.counter_map) push(elements, slice.sport[0] + "-" + slice.sport[1] + " : \"" + slice.name + "\"");
+        text += " counter name tcp dport map { " + join(", ", elements) + " }";
+    }
+    else text += " counter";
     if (rule.verdict == "queue") text += " queue num " + rule.queue;
     else if (rule.verdict != null) text += " " + rule.verdict;
     return text + " comment \"" + rule.comment + "\"";
 }
 
-function batch(ip, spec, saddr) {
+function batch(ip, spec, saddr, layout) {
     let text = "create table inet " + TABLE + "\n";
-    for (let chain in probe_chains(ip, spec, saddr)) {
+    let chains = probe_chains(ip, spec, saddr, layout);
+    for (let chain in chains)
+        for (let rule in chain.rules)
+            for (let slice in rule.counter_map || [])
+                text += "add counter inet " + TABLE + " " + slice.name + "\n";
+    for (let chain in chains) {
         text += "add chain inet " + TABLE + " " + chain.name + " { type " + chain.type + " hook " + chain.hook +
             " priority " + chain.priority + "; policy accept; }\n";
         for (let rule in chain.rules)
@@ -1088,7 +1147,17 @@ function tune(host, probes, resolver, list, ip) {
         if (fs.writefile(batch_file, batch(target.ip, rules, target.route.prefsrc)) == null) return "state_write_failed";
         result.teardown = { quiet_before_creation: production_queues_quiet() };
         if (!result.teardown.quiet_before_creation.quiet) return "production_queue_busy";
-        if (!success([ "nft", "-f", batch_file ])) return "nft_setup_failed";
+        result.isolation.synack_counters = "map";
+        if (!success([ "nft", "-f", batch_file ])) {
+            // The batch is atomic: nothing of it exists. An nft or kernel
+            // without counter maps (nft_objref) gets a SYN-ACK rule per
+            // slice instead, as before.
+            if (table_state(TABLE) != "absent") return "nft_setup_failed";
+            result.isolation.synack_counters = "rules";
+            if (fs.writefile(batch_file, batch(target.ip, rules, target.route.prefsrc, "rules")) == null) return "state_write_failed";
+            if (!production_queues_quiet().quiet) return "production_queue_busy";
+            if (!success([ "nft", "-f", batch_file ])) return "nft_setup_failed";
+        }
         result.isolation.rules = probe_rule_handles();
         mark("T1", "temporary nft table created");
         let pids = {};
@@ -1395,13 +1464,16 @@ if (mode == "model") {
     // The temporary chains for a target, as evaluated by the regression tests.
     // "tune": the slices of a tuning run of the control and one DPI candidate.
     let tune_slices = port_slices([ "direct", "candidate" ]);
-    let spec = ARGV[2] == "direct" ? probe_rule_spec(null) : ARGV[2] == "tune"
+    // "tune_rules": the same with a SYN-ACK rule per slice (the fallback).
+    let tuning = ARGV[2] == "tune" || ARGV[2] == "tune_rules";
+    let layout = ARGV[2] == "tune_rules" ? "rules" : "map";
+    let spec = ARGV[2] == "direct" ? probe_rule_spec(null) : tuning
         ? [ probe_rule_spec(null, "direct:direct", tune_slices.direct), probe_rule_spec(QUEUE, "probe:candidate", tune_slices.candidate) ]
         : probe_rule_spec(QUEUE);
     // The router's address: the given one, else a documentation address.
     let saddr = ARGV[3] || "203.0.113.10";
     print(sprintf("%J\n", { probe_mark: PROBE_MARK_VALUE, desync_mark: DESYNC_MARK_VALUE, queue: QUEUE,
-        chains: probe_chains(ARGV[1], spec, saddr), batch: batch(ARGV[1], spec, saddr) }));
+        chains: probe_chains(ARGV[1], spec, saddr, layout), batch: batch(ARGV[1], spec, saddr, layout) }));
     exit(0);
 }
 if (queue_reserved()) {
@@ -1426,7 +1498,7 @@ else if (mode == "status") {
     code = 0;
 }
 else {
-    warn("Usage: autotune/isolation.uc <run <candidate> <host> [count] [resolver] [ip] [handshake]|tune <host> [probes] [resolver] [candidates] [ip]|cleanup|status|model <ip> [direct|tune] [saddr]>\n");
+    warn("Usage: autotune/isolation.uc <run <candidate> <host> [count] [resolver] [ip] [handshake]|tune <host> [probes] [resolver] [candidates] [ip]|cleanup|status|model <ip> [direct|tune|tune_rules] [saddr]>\n");
     exit(1);
 }
 print(sprintf("%J\n", output));

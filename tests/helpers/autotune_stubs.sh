@@ -140,12 +140,25 @@ case "$*" in
         out="$out,$(rule output "$comment" "$handle" "$first" "$lastport")"; last="$handle"
       done < "$S/rules"
       out="$out,$(rule output unexpected $((last + 1)))"
-      # The SYN-ACK counters of the reply chain, one per probe rule.
-      handle=$((last + 2))
-      while read -r _ comment _; do
-        out="$out,$(rule replies "$(synack_of "$comment")" "$handle")"; handle=$((handle + 1))
+      # The SYN-ACK counters of the reply chain, one per probe rule, or (a
+      # counter map batch) one rule selecting a named counter per slice, as
+      # the real nft lists them.
+      handle=$((last + 2)); objects=""; elements=""
+      while read -r _ comment _ first lastport; do
+        if [ -e "$S/synack_map" ]; then
+          key="$(synack_of "$comment")"
+          [ -e "$S/counters/$key" ] || echo "0 0" > "$S/counters/$key"
+          read -r p b < "$S/counters/$key"
+          objects="$objects$(printf '{"counter":{"family":"inet","name":"synack_%s","table":"ProkopAutotuneProbe","handle":%s,"packets":%s,"bytes":%s}},' "${key#*:}" "$handle" "$p" "$b")"
+          elements="$elements${elements:+,}$(printf '[{"range":[%s,%s]},"synack_%s"]' "$first" "$lastport" "${key#*:}")"
+        else
+          out="$out,$(rule replies "$(synack_of "$comment")" "$handle")"
+        fi
+        handle=$((handle + 1))
       done < "$S/rules"
-      printf '{"nftables":[{"table":{"family":"inet","name":"ProkopAutotuneProbe","handle":90}},%s]}\n' "$out"
+      [ ! -e "$S/synack_map" ] || [ -n "${NFT_STUB_NO_SYNACK_SELECTOR:-}" ] ||
+        out="$out,$(printf '{"rule":{"family":"inet","table":"ProkopAutotuneProbe","chain":"replies","handle":%s,"comment":"synack","expr":[{"match":{"op":"==","left":{"payload":{"protocol":"ip","field":"saddr"}},"right":"%s"}},{"counter":{"map":{"key":{"payload":{"protocol":"tcp","field":"dport"}},"data":{"set":[%s]}}}}]}}' "$handle" "$target" "$elements")"
+      printf '{"nftables":[{"table":{"family":"inet","name":"ProkopAutotuneProbe","handle":90}},%s%s]}\n' "$objects" "$out"
     else cat "$T/$5"; fi
     exit 0 ;;
   "list ruleset") cat "$S/ruleset"; [ -e "$T/ProkopAutotuneProbe" ] && echo "queue to 4600"; exit 0 ;;
@@ -169,8 +182,13 @@ case "$*" in
       exit 0
     fi
     [ -z "${NFT_STUB_FAIL_SETUP:-}" ] || exit 1
+    # An nft or kernel without counter maps (nft_objref) rejects the batch.
+    if [ -n "${NFT_STUB_NO_COUNTER_MAP:-}" ] && grep -q ' counter name ' "$2"; then
+      cp "$2" "$S/refused.nft"; exit 1
+    fi
     grep -q '^create table inet ProkopAutotuneProbe$' "$2" && [ -e "$T/ProkopAutotuneProbe" ] && exit 1
-    cp "$2" "$S/last.nft"; touch "$T/ProkopAutotuneProbe"; rm -f "$S/released"
+    cp "$2" "$S/last.nft"; touch "$T/ProkopAutotuneProbe"; rm -f "$S/released" "$S/synack_map"
+    grep -q '^add counter inet ProkopAutotuneProbe synack_' "$2" && touch "$S/synack_map"
     sed -n 's/.* ip daddr \([0-9.]*\) .*/\1/p' "$2" | head -n 1 > "$S/probe.target"
     : > "$S/rules"; handle=5
     while read -r line; do
@@ -180,7 +198,7 @@ case "$*" in
     for c in probe_mark reinjected reinjected_bare unexpected; do echo "0 0" > "$S/counters/$c"; done
     while read -r _ comment _; do echo "0 0" > "$S/counters/$comment"; done < "$S/rules"
     exit 0 ;;
-  "delete table inet "*) [ -z "${NFT_STUB_FAIL_DELETE:-}" ] || exit 1; rm -f "$T/$4" "$S/rules"; exit 0 ;;
+  "delete table inet "*) [ -z "${NFT_STUB_FAIL_DELETE:-}" ] || exit 1; rm -f "$T/$4" "$S/rules" "$S/synack_map"; exit 0 ;;
 esac
 exit 1
 SH

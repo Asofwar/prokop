@@ -187,12 +187,16 @@ grep -qxF "add rule inet ProkopAutotuneProbe output $T tcp sport 61000-61063 cou
 [ "$(sort -u "$STUB_LOG/switch.log" | paste -sd' ')" = "released:direct - released:fake - released:multisplit -" ] ||
   fail "probe rules were switched during the run: $(paste -sd' ' "$STUB_LOG/switch.log")"
 [ "$(grep -c '^replace rule' "$NFT_STATE/release.nft")" = 3 ] || fail "the slices are not released in one batch"
-R='ip saddr 93.184.216.34 tcp sport 443'
-for rule in "tcp dport 61000-61020 tcp flags & (syn | ack) == syn | ack ct direction reply ct original ip saddr 203.0.113.10 counter comment \"synack:direct\"" \
-  "tcp dport 61021-61041 tcp flags & (syn | ack) == syn | ack ct direction reply ct original ip saddr 203.0.113.10 counter comment \"synack:multisplit\"" \
-  "tcp dport 61042-61062 tcp flags & (syn | ack) == syn | ack ct direction reply ct original ip saddr 203.0.113.10 counter comment \"synack:fake\""; do
-  grep -qxF "add rule inet ProkopAutotuneProbe replies $R $rule" "$NFT_STATE/last.nft" || fail "missing SYN-ACK counter: $rule"
+# The SYN-ACKs of every slice: one rule, a named counter per candidate
+# selected by the reply's destination port.
+R='ip saddr 93.184.216.34 tcp sport 443 tcp dport 61000-61063'
+for name in synack_direct synack_multisplit synack_fake; do
+  grep -qxF "add counter inet ProkopAutotuneProbe $name" "$NFT_STATE/last.nft" || fail "missing SYN-ACK counter $name"
 done
+grep -qxF "add rule inet ProkopAutotuneProbe replies $R tcp flags & (syn | ack) == syn | ack ct direction reply ct original ip saddr 203.0.113.10 counter name tcp dport map { 61000-61020 : \"synack_direct\", 61021-61041 : \"synack_multisplit\", 61042-61062 : \"synack_fake\" } comment \"synack\"" \
+  "$NFT_STATE/last.nft" || fail "missing SYN-ACK counter map: $(grep replies "$NFT_STATE/last.nft")"
+[ "$(grep -c '^add rule inet ProkopAutotuneProbe replies ' "$NFT_STATE/last.nft")" = 1 ] || fail "more than one SYN-ACK rule: $(grep ' replies ' "$NFT_STATE/last.nft")"
+json 'a.equal(r.isolation.synack_counters, "map");' "$WORK/out.json"
 grep -qxF "add chain inet ProkopAutotuneProbe replies { type filter hook prerouting priority -175; policy accept; }" "$NFT_STATE/last.nft" ||
   fail "reply chain is not a counting filter chain after conntrack"
 ok "fixed port slices: one rule per candidate, no switching, released together"
@@ -214,6 +218,35 @@ a.ok(r.probes.filter((x) => x.candidate === "multisplit").every((p) => p.syn_ack
 ' "$WORK/out.json"
 assert_clean "tune tls stall"
 ok "a ClientHello blackholed after the TCP handshake counts against the candidate and the control"
+
+# An nft or kernel without counter maps refuses the batch atomically: the
+# run creates the table with a SYN-ACK rule per slice instead, and the
+# SYN-ACK evidence is the same.
+reset_state; NFT_STUB_NO_COUNTER_MAP=1 CURL_STUB_PLAN="direct=tls_stall,4600=success:120,4601=tls_stall" tune 3 192.0.2.53 multisplit,fake
+json '
+a.equal(r.status, "selected", JSON.stringify(r).slice(0, 400)); a.equal(r.selected, "multisplit");
+a.equal(r.isolation.synack_counters, "rules");
+for (const p of r.probes.filter((x) => x.candidate !== "multisplit"))
+  a.deepEqual([p.class, p.syn_acks, p.connect_evidence], ["tls_failure", 1, "syn_ack"]);
+a.ok(r.probes.filter((x) => x.candidate === "multisplit").every((p) => p.syn_acks === 1));
+' "$WORK/out.json"
+grep -q ' counter name tcp dport map ' "$NFT_STATE/refused.nft" || fail "the counter map batch was not tried first"
+! grep -q ' counter name \|^add counter ' "$NFT_STATE/last.nft" || fail "the fallback batch still uses named counters"
+R='ip saddr 93.184.216.34 tcp sport 443'
+for rule in "tcp dport 61000-61020 tcp flags & (syn | ack) == syn | ack ct direction reply ct original ip saddr 203.0.113.10 counter comment \"synack:direct\"" \
+  "tcp dport 61021-61041 tcp flags & (syn | ack) == syn | ack ct direction reply ct original ip saddr 203.0.113.10 counter comment \"synack:multisplit\"" \
+  "tcp dport 61042-61062 tcp flags & (syn | ack) == syn | ack ct direction reply ct original ip saddr 203.0.113.10 counter comment \"synack:fake\""; do
+  grep -qxF "add rule inet ProkopAutotuneProbe replies $R $rule" "$NFT_STATE/last.nft" || fail "missing SYN-ACK counter: $rule"
+done
+assert_clean "tune without counter maps"
+ok "without counter maps a SYN-ACK rule per slice counts the same evidence"
+
+# Named SYN-ACK counters without the one rule that selects them are not
+# evidence: the run fails closed.
+reset_state; NFT_STUB_NO_SYNACK_SELECTOR=1 CURL_STUB_PLAN="direct=success:100,4600=success:95,4601=success:90" tune 3 192.0.2.53 multisplit,fake
+json 'a.equal(r.status, "failed"); a.equal(r.reason, "counters_unavailable"); a.ok(r.selected == null);' "$WORK/out.json"
+assert_clean "tune without the SYN-ACK selector"
+ok "named SYN-ACK counters without their selecting rule fail the run"
 
 # 1 (end to end). direct stable -> direct, no DPI needed
 reset_state; CURL_STUB_PLAN="direct=success:100,4600=success:95,4601=success:90" tune 3 192.0.2.53 multisplit,fake
