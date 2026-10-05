@@ -8,6 +8,7 @@ let process_identity = require("core.process_identity");
 let runtime_lock = require("core.runtime_lock");
 let refresh_worker = require("core.refresh_worker");
 let legacy = require("core.legacy_forkop");
+let selector_choices = require("core.selector_choices");
 
 function as_string(value) {
     return value == null ? "" : "" + value;
@@ -566,15 +567,25 @@ function clash_api_json(action, arg1, arg2, arg3) {
     }
 }
 
+// The selection before a stop; also kept on flash for the start after a
+// reboot (C4), so that a choice made on the dashboard is kept as well.
 function capture_selector_state() {
-    return selector_state_from_proxies_payload(clash_api_json("get_proxies"));
+    let state = selector_state_from_proxies_payload(clash_api_json("get_proxies"));
+    if (length(state) > 0)
+        selector_choices.record_choices(state);
+    return state;
 }
 
 function restore_selector_state(snapshot) {
     let pairs = selector_restore_pairs(snapshot, clash_api_json("get_proxies"));
 
     for (let pair in pairs)
-        module_success(DIAGNOSTICS_UC, [ "clash-api", "set_group_proxy", pair.group, pair.proxy, "" ]);
+        module_success(DIAGNOSTICS_UC, [ "clash-api", "set_group_proxy", pair.group, pair.proxy, "auto" ]);
+}
+
+// sing-box's cache file, which holds the selection while the router runs.
+function selector_cache_path() {
+    return config_get(CONFIG_NAME + ".settings.cache_path", "/tmp/sing-box/cache.db");
 }
 
 function module_background(module_path, args) {
@@ -1821,6 +1832,10 @@ function start_inner() {
         return 0;
     }
 
+    // Without its cache file (a reboot emptied /tmp) sing-box starts every
+    // selector on its default: the saved choices are put back after the
+    // start. With it, sing-box restores the selection itself.
+    let selector_cache_lost = fs.stat(selector_cache_path()) == null;
     let status = start_impl();
     release_start_subscription_update_lock();
 
@@ -1844,6 +1859,9 @@ function start_inner() {
         cleanup_failed_runtime();
         return status;
     }
+
+    if (selector_cache_lost)
+        restore_selector_state(selector_choices.read_choices());
 
     // Latency values live in sing-box's runtime and are lost on a real reboot.
     // Queue a fresh pass only after the complete Prokop runtime has passed its
@@ -2028,6 +2046,9 @@ function stop() {
         remove_file(EXPLICIT_START_FILE);
     if (refresh_worker.stop_all(LIB_DIR) > 0)
         log_message("Stopped the rule-set refresh", "info");
+    // A reboot stops Prokop this way: the selection, also one made on the
+    // dashboard, is kept for the next start (C4).
+    capture_selector_state();
     let status = stop_impl(!internal_stop);
     // Refused by a later check (ownership changed meanwhile): the runtime
     // was not torn down and runs on without a stop request.
@@ -2941,6 +2962,14 @@ else if (mode == "disable")
     status = disable_service();
 else if (mode == "selector-state-from-proxies-fixture") {
     write_json(selector_state_from_proxies_payload(read_json_file(ARGV[1])));
+    status = 0;
+}
+else if (mode == "selector-capture-fixture") {
+    write_json(capture_selector_state());
+    status = 0;
+}
+else if (mode == "selector-saved-restore-fixture") {
+    restore_selector_state(selector_choices.read_choices());
     status = 0;
 }
 else if (mode == "selector-restore-pairs-fixture") {

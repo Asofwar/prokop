@@ -11,6 +11,7 @@ let dpi_strategy = require("core.dpi_strategy");
 let common = require("core.common");
 let legacy_forkop = require("core.legacy_forkop");
 let listen_address = require("singbox.listen_address");
+let selector_choices = require("core.selector_choices");
 
 const CONFIG_NAME = getenv("PROKOP_CONFIG_NAME") || constants.PROKOP_CONFIG_NAME || "prokop";
 const LIB_DIR = getenv("PROKOP_LIB") || "/usr/lib/prokop";
@@ -1989,6 +1990,10 @@ function clash_api_request(action, arg1, arg2, arg3, auth) {
         let result = status_capture([ "clash-set-group-proxy-result", arg1, arg2 ], response.output);
         if (result.output != "")
             print(result.output);
+        // The user's choice outlives a reboot (C4); a switch made by
+        // Prokop itself ("auto": priority failover, a restore) is not one.
+        if (result.status == 0 && as_string(arg3) != "auto")
+            selector_choices.record_choices({ [arg1]: arg2 });
         return result.status;
     }
 

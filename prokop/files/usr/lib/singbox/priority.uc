@@ -323,7 +323,7 @@ function choose_fastest_same_level(group, level_index, active_tag, probe) {
 }
 
 function set_group_proxy(group, tag_name) {
-    let result = module_capture([ "set_group_proxy", group.tag, tag_name, "" ]);
+    let result = module_capture([ "set_group_proxy", group.tag, tag_name, "auto" ]);
     return result.status == 0;
 }
 
