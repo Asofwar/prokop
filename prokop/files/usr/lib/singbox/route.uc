@@ -47,6 +47,12 @@ function config(settings, runtime) {
         result.default_interface = output_network_interface;
     if (bool_option(settings, "disable_quic", true))
         push(result.rules, { action: "reject", inbound: tproxy_inbounds, protocol: "quic" });
+    // C14, opt-in: BitTorrent that sniffing recognises goes directly, in
+    // front of every section rule, so a VPN or proxy provider does not ban
+    // the account for it. It bypasses a rule's kill-switch too, which the
+    // setting says.
+    if (bool_option(settings, "exclude_bittorrent", false))
+        push(result.rules, { action: "route", inbound: tproxy_inbounds, protocol: "bittorrent", outbound: runtime_constants.DIRECT_OUTBOUND_TAG });
 
     return result;
 }

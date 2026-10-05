@@ -940,6 +940,18 @@ function createSettingsContent(sections, capabilities) {
   o.default = "0";
   o.rmempty = false;
 
+  // C14: BitTorrent goes directly (singbox/route.uc config).
+  o = sections.network.option(
+    form.Flag,
+    "exclude_bittorrent",
+    _("BitTorrent directly"),
+    _(
+      "BitTorrent traffic that Prokop recognises goes directly, past every rule, so a VPN or proxy provider does not block the account for torrents. Warning: it also goes past the kill-switch of a rule, so torrents of a device behind a kill-switch are not protected",
+    ),
+  );
+  o.default = "0";
+  o.rmempty = false;
+
   // NET-6: plain DNS (port 53) of clients to their own servers goes to the
   // router's dnsmasq (nft/apply.uc client_dns_intercept_rules).
   o = sections.network.option(

@@ -173,7 +173,7 @@ let uci_safe_options = {
     download_subscriptions_via_proxy: true, download_via_proxy_enabled: true,
     download_via_proxy_section: true, enable_badwan_interface_monitoring: true,
     enable_output_network_interface: true, enable_yacd: true, enable_yacd_wan_access: true,
-    enabled: true, exclude_countries: true, exclude_ntp: true, exclude_outbounds: true,
+    enabled: true, exclude_bittorrent: true, exclude_countries: true, exclude_ntp: true, exclude_outbounds: true,
     exclude_regex: true, fastest_check_interval: true, filter_mode: true, group: true,
     hide_detour_outbounds: true, hide_urltest_group_outbounds: true, idle_timeout: true,
     include_countries: true, include_outbounds: true, include_regex: true,

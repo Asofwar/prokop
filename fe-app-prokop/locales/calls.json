@@ -880,7 +880,7 @@
     "call": "Always",
     "key": "Always",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:954"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:966"
     ]
   },
   {
@@ -1429,6 +1429,20 @@
     "places": [
       "src/prokop/tabs/autotune/model.ts:722",
       "src/prokop/tabs/autotune/model.ts:824"
+    ]
+  },
+  {
+    "call": "BitTorrent directly",
+    "key": "BitTorrent directly",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:947"
+    ]
+  },
+  {
+    "call": "BitTorrent traffic that Prokop recognises goes directly, past every rule, so a VPN or proxy provider does not block the account for torrents. Warning: it also goes past the kill-switch of a rule, so torrents of a device behind a kill-switch are not protected",
+    "key": "BitTorrent traffic that Prokop recognises goes directly, past every rule, so a VPN or proxy provider does not block the account for torrents. Warning: it also goes past the kill-switch of a rule, so torrents of a device behind a kill-switch are not protected",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:948"
     ]
   },
   {
@@ -2929,7 +2943,7 @@
     "call": "Devices with their own DNS server (8.8.8.8 in a TV, IoT devices) bypass domain rules and the kill-switch. Their plain DNS on port 53 is sent to the router instead. DNS to local addresses (Pi-hole) and DNS over TLS stay untouched",
     "key": "Devices with their own DNS server (8.8.8.8 in a TV, IoT devices) bypass domain rules and the kill-switch. Their plain DNS on port 53 is sent to the router instead. DNS to local addresses (Pi-hole) and DNS over TLS stay untouched",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:949"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:961"
     ]
   },
   {
@@ -4192,7 +4206,7 @@
     "call": "For routers with 256 MB of memory or less and an unstable connection: sing-box finds dead client connections with keep-alive probes and ends idle UDP sessions after 60 seconds instead of 5 minutes, so they do not pile up in memory",
     "key": "For routers with 256 MB of memory or less and an unstable connection: sing-box finds dead client connections with keep-alive probes and ends idle UDP sessions after 60 seconds instead of 5 minutes, so they do not pile up in memory",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:965"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:977"
     ]
   },
   {
@@ -4635,7 +4649,7 @@
     "call": "Intercept client DNS",
     "key": "Intercept client DNS",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:948"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:960"
     ]
   },
   {
@@ -5800,7 +5814,7 @@
     "call": "Low memory mode",
     "key": "Low memory mode",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:964"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:976"
     ]
   },
   {
@@ -6082,7 +6096,7 @@
     "call": "Never",
     "key": "Never",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:955"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:967"
     ]
   },
   {
@@ -11998,7 +12012,7 @@
     "call": "When a rule has the kill-switch",
     "key": "When a rule has the kill-switch",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:953"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:965"
     ]
   },
   {

@@ -107,6 +107,7 @@ export const UCI_SAFE_OPTIONS = new Set([
   'enable_yacd',
   'enable_yacd_wan_access',
   'enabled',
+  'exclude_bittorrent',
   'exclude_countries',
   'exclude_ntp',
   'exclude_outbounds',

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-05 00:05+0000\n"
-"PO-Revision-Date: 2026-10-05 00:05+0000\n"
+"POT-Creation-Date: 2026-10-05 00:07+0000\n"
+"PO-Revision-Date: 2026-10-05 00:07+0000\n"
 "Last-Translator: Asofwar\n"
 "Language-Team: none\n"
 "Language: ru\n"
@@ -613,6 +613,12 @@ msgstr "Перед восстановлением"
 
 msgid "Best"
 msgstr "Лучшая"
+
+msgid "BitTorrent directly"
+msgstr "BitTorrent напрямую"
+
+msgid "BitTorrent traffic that Prokop recognises goes directly, past every rule, so a VPN or proxy provider does not block the account for torrents. Warning: it also goes past the kill-switch of a rule, so torrents of a device behind a kill-switch are not protected"
+msgstr "Трафик BitTorrent, который распознал Prokop, идёт напрямую, мимо всех правил, чтобы VPN- или прокси-провайдер не заблокировал аккаунт за торренты. Внимание: он идёт и мимо kill-switch правила, поэтому торренты устройства за kill-switch не защищены"
 
 msgid "Block"
 msgstr "Блокировка"

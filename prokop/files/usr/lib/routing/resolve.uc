@@ -206,9 +206,10 @@ function port_matches(rule, port) {
 }
 const RULE_KEYS = [ "action", "outbound", "inbound", "domain", "domain_suffix", "domain_keyword", "domain_regex",
     "ip_cidr", "rule_set", "source_ip_cidr", "port", "port_range", "network", "protocol" ];
-// Sniffed protocols a TCP connection can never have (disable_quic adds a
-// protocol=quic reject rule in front of every section rule).
-const UDP_ONLY_PROTOCOLS = [ "quic", "dtls", "stun" ];
+// Sniffed protocols a TCP connection to a site can never have (disable_quic
+// adds a protocol=quic reject rule in front of every section rule,
+// exclude_bittorrent a protocol=bittorrent route): a site speaks TLS or HTTP.
+const NON_SITE_PROTOCOLS = [ "quic", "dtls", "stun", "bittorrent" ];
 const RESOLVE_KEYS = [ "action", "server", "strategy", "disable_cache", "rewrite_ttl", "client_subnet" ];
 
 // A copy of a rule without the given (action-specific) option keys.
@@ -371,7 +372,7 @@ function rule_matches(r, t, lists) {
     if (!port_matches(r, t.port)) return "no";
     if (r.protocol != null) {
         if (t.network != "tcp") return { reason: "protocol_matcher" };
-        let tcp_possible = filter(list_of(r.protocol), (p) => index(UDP_ONLY_PROTOCOLS, p) < 0);
+        let tcp_possible = filter(list_of(r.protocol), (p) => index(NON_SITE_PROTOCOLS, p) < 0);
         if (length(tcp_possible) == 0) return "no";
         return { reason: "protocol_matcher" };
     }
