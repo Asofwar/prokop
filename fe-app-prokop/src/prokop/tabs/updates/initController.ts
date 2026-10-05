@@ -39,11 +39,14 @@ import {
 import {
   normalizeProgress,
   cardProgressView,
-  patchComponentProgress,
   progressViewKey,
+} from './componentProgressState';
+import type {
+  patchComponentProgress,
   renderComponentProgress,
 } from './componentProgress';
 import { showReleaseSelector } from './releaseSelector';
+import { routerNowSeconds } from '../../helpers/routerClock';
 import {
   shouldPreserveCompletedCheckResultOnNextMount,
   shouldExposeCheckResults,
@@ -1812,6 +1815,15 @@ function renderComponentCard(card: ComponentCard) {
 // The cards on the page and the progress they show: while only the
 // progress moves (a download, a stage), the panels are updated in place
 // instead of rebuilding every card each second.
+// The progress panels come from the LuCI module component_progress.js
+// (updates.js passes them in): only this page loads it.
+export interface UpdatesControllerDependencies {
+  renderComponentProgress?: typeof renderComponentProgress;
+  patchComponentProgress?: typeof patchComponentProgress;
+}
+
+let dependencies: UpdatesControllerDependencies = {};
+
 const progressSlots = new Map<
   Prokop.ComponentName,
   { others: Prokop.ComponentName[]; key: string }
@@ -1820,12 +1832,14 @@ const progressSlots = new Map<
 function cardProgressPanel(
   view: Prokop.ComponentProgressView | null,
 ): HTMLElement | null {
-  return view
-    ? renderComponentProgress(view, {
+  const renderPanel = dependencies.renderComponentProgress;
+  return view && renderPanel
+    ? renderPanel(view, {
         installed:
           view.component !== 'torrserver' ||
           Boolean(store.get().diagnosticsSystemInfo.torrserver_installed),
         onDismiss: () => dismissComponentProgress(view.component),
+        nowSeconds: routerNowSeconds,
       })
     : null;
 }
@@ -1869,8 +1883,8 @@ function patchProgressSlots() {
   updates.forEach(([slot, view]) => {
     const panel = cardProgressPanel(view);
     const current = slot.firstElementChild;
-    if (panel && current) {
-      patchComponentProgress(current, panel);
+    if (panel && current && dependencies.patchComponentProgress) {
+      dependencies.patchComponentProgress(current, panel);
     }
   });
   return true;
@@ -2051,7 +2065,11 @@ export function renderView(): HTMLElement {
   return root;
 }
 
-export async function initController(): Promise<void> {
+export async function initController(
+  controllerDependencies: UpdatesControllerDependencies = {},
+): Promise<void> {
+  dependencies = { ...dependencies, ...controllerDependencies };
+
   if (updatesControllerInitialized) {
     return;
   }

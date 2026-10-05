@@ -62,7 +62,7 @@ import {
   type CounterSample,
   type DeviceHosts,
 } from './devices';
-import { renderDevicesPanel, type DevicesStatus } from './devicesView';
+import type { renderDevicesPanel, DevicesStatus } from './devicesView';
 import {
   getCachedRuntimeUiState,
   refreshRuntimeUiState,
@@ -83,6 +83,8 @@ type LocalDeviceChoices = Record<string, string>;
 interface MonitoringControllerDependencies {
   loadLocalDeviceChoices?: () => Promise<LocalDeviceChoices>;
   loadLocalDeviceHosts?: () => Promise<DeviceHosts>;
+  // The LuCI module devices_view.js: only the Monitoring page loads it.
+  renderDevicesPanel?: typeof renderDevicesPanel;
 }
 
 interface ClashConnectionMetadata {
@@ -1965,7 +1967,8 @@ function showDeviceConnections(address: string) {
 
 function renderDevices() {
   const container = document.getElementById('monitoring-devices');
-  if (!container || !monitoringMounted) return;
+  const renderPanel = dependencies.renderDevicesPanel;
+  if (!container || !monitoringMounted || !renderPanel) return;
   // Re-rendering would drop a selection the user is copying from.
   const selection = window.getSelection?.();
   if (
@@ -1991,7 +1994,7 @@ function renderDevices() {
       : [];
   const previousScrollLeft = container.scrollLeft;
   container.replaceChildren(
-    ...renderDevicesPanel({
+    ...renderPanel({
       status,
       since: deviceTraffic?.since ?? null,
       offload: deviceTraffic?.offload ?? 'unknown',

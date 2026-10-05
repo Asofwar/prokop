@@ -61,6 +61,7 @@ function stubs(canReadUci, calls, { stale = false } = {}) {
   return {
     view: { extend: value => value }, baseclass, uci, main, shell,
     localDevices: { loadLocalDeviceChoices() {} },
+    devicesView: { renderDevicesPanel() {} },
   };
 }
 

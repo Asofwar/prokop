@@ -1,6 +1,6 @@
 import { asText } from '../../../helpers/asText';
 import { prettyBytes, prettyBytesRate } from '../../../helpers/prettyBytes';
-import { renderSearchIcon24 } from '../../../icons';
+import { renderSearchIcon24 } from '../../../icons/renderSearchIcon24';
 import { formatDateTime } from '../../ui/time';
 import { renderProvenance } from '../../ui/status';
 import type { Prokop } from '../../types';

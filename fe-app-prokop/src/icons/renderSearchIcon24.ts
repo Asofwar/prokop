@@ -1,4 +1,4 @@
-import { svgEl } from '../helpers';
+import { svgEl } from '../helpers/svgEl';
 
 export function renderSearchIcon24() {
   const NS = 'http://www.w3.org/2000/svg';

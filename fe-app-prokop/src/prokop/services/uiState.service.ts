@@ -4,7 +4,7 @@ import {
   componentActionFailureMessage,
   componentActionSuccessText,
 } from '../tabs/updates/componentActionToast';
-import { normalizeProgress } from '../tabs/updates/componentProgress';
+import { normalizeProgress } from '../tabs/updates/componentProgressState';
 import { normalizeSingBoxVariantFields } from '../helpers/singBoxVariant';
 import type { Prokop } from '../types';
 import { getLocalActionOverlay } from './localActionOverlay.service';

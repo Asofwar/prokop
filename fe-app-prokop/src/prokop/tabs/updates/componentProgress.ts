@@ -1,31 +1,18 @@
 import { asText } from '../../../helpers/asText';
 import { isPageHidden } from '../../../helpers/isPageHidden';
-import { routerNowSeconds } from '../../helpers/routerClock';
 import type { Prokop } from '../../types';
 
 // What a component card shows while its action runs and after it ends:
 // the stages the router reported, the bytes of the current download, and the
 // time spent. Everything comes from the router (components/progress.uc);
 // there is no estimate of the time left, only the stages still ahead.
+//
+// This file is the LuCI module component_progress.js (src/modules), loaded
+// by the page with the component cards only. It has no state of main.js:
+// the router's clock (helpers/routerClock.ts, kept in main.js) comes in as
+// nowSeconds, so the times shown follow the router, not the browser.
 
 type Stage = Prokop.ComponentActionStage;
-
-const STAGES: Stage[] = [
-  'resolve',
-  'lists',
-  'download',
-  'verify',
-  'backup',
-  'prepare',
-  'stop',
-  'install',
-  'remove',
-  'apply',
-  'start',
-  'restart',
-  'check',
-  'rollback',
-];
 
 export function stageLabel(stage: Stage | '') {
   switch (stage) {
@@ -127,71 +114,6 @@ export function plannedStages(
   }
 }
 
-function isStage(value: unknown): value is Stage {
-  return typeof value === 'string' && STAGES.includes(value as Stage);
-}
-
-function nonNegative(value: unknown) {
-  return typeof value === 'number' && Number.isFinite(value) && value >= 0
-    ? Math.trunc(value)
-    : null;
-}
-
-// Known fields of the right type only: the file is read straight from the
-// router, an older or newer release may write more or less.
-export function normalizeProgress(
-  raw: unknown,
-): Prokop.ComponentActionProgress | null {
-  if (!raw || typeof raw !== 'object') {
-    return null;
-  }
-
-  const value = raw as Record<string, unknown>;
-  const stages = Array.isArray(value.stages)
-    ? value.stages.flatMap((item) => {
-        if (!item || typeof item !== 'object') {
-          return [];
-        }
-        const stage = item as Record<string, unknown>;
-        const startedAt = nonNegative(stage.started_at);
-        if (!isStage(stage.id) || startedAt === null) {
-          return [];
-        }
-        return [
-          {
-            id: stage.id,
-            started_at: startedAt,
-            finished_at: nonNegative(stage.finished_at),
-          },
-        ];
-      })
-    : [];
-  const rawDownload =
-    value.download && typeof value.download === 'object'
-      ? (value.download as Record<string, unknown>)
-      : null;
-
-  return {
-    stage: isStage(value.stage) ? value.stage : '',
-    stages,
-    download: rawDownload
-      ? {
-          file: typeof rawDownload.file === 'string' ? rawDownload.file : '',
-          bytes: nonNegative(rawDownload.bytes) ?? 0,
-          total: nonNegative(rawDownload.total) ?? 0,
-          index: nonNegative(rawDownload.index) ?? 0,
-          count: nonNegative(rawDownload.count) ?? 0,
-        }
-      : null,
-    outcome:
-      value.outcome === 'done' || value.outcome === 'failed'
-        ? value.outcome
-        : '',
-    started_at: nonNegative(value.started_at),
-    updated_at: nonNegative(value.updated_at),
-  };
-}
-
 export function formatDuration(totalSeconds: number) {
   const seconds = Math.max(0, Math.floor(totalSeconds));
 
@@ -263,7 +185,10 @@ export function viewStartedAt(view: Prokop.ComponentProgressView) {
   return view.progress?.started_at || view.startedAt || 0;
 }
 
-export function viewDuration(view: Prokop.ComponentProgressView) {
+export function viewDuration(
+  view: Prokop.ComponentProgressView,
+  nowSeconds: number,
+) {
   const startedAt = viewStartedAt(view);
 
   if (!startedAt) {
@@ -271,7 +196,7 @@ export function viewDuration(view: Prokop.ComponentProgressView) {
   }
 
   if (view.running) {
-    return Math.max(0, routerNowSeconds() - startedAt);
+    return Math.max(0, nowSeconds - startedAt);
   }
 
   const stages = view.progress?.stages || [];
@@ -370,11 +295,15 @@ function withAttributes<T extends HTMLElement>(
   return node;
 }
 
+// The router's clock of the last panel rendered: the ticker runs between
+// two renders.
+let clock: () => number = () => Math.floor(Date.now() / 1000);
+
 function elapsedNode(since: number) {
   const node = E(
     'span',
     { class: 'fkp_component-progress__time' },
-    asText(formatDuration(routerNowSeconds() - since)),
+    asText(formatDuration(clock() - since)),
   );
   node.setAttribute(ELAPSED_ATTRIBUTE, String(since));
   return node;
@@ -389,8 +318,7 @@ function tickElapsed() {
   document
     .querySelectorAll<HTMLElement>(`[${REVEAL_ATTRIBUTE}]`)
     .forEach((node) => {
-      node.hidden =
-        routerNowSeconds() < Number(node.getAttribute(REVEAL_ATTRIBUTE));
+      node.hidden = clock() < Number(node.getAttribute(REVEAL_ATTRIBUTE));
     });
 
   if (nodes.length === 0) {
@@ -401,7 +329,7 @@ function tickElapsed() {
     return;
   }
 
-  const now = routerNowSeconds();
+  const now = clock();
   nodes.forEach((node) => {
     const since = Number(node.getAttribute(ELAPSED_ATTRIBUTE));
     if (Number.isFinite(since) && since > 0) {
@@ -474,8 +402,14 @@ export function renderComponentProgress(
   {
     installed = true,
     onDismiss,
-  }: { installed?: boolean; onDismiss?: () => void } = {},
+    nowSeconds,
+  }: {
+    installed?: boolean;
+    onDismiss?: () => void;
+    nowSeconds: () => number;
+  },
 ) {
+  clock = nowSeconds;
   const children: Node[] = [];
   const startedAt = viewStartedAt(view);
   const failedStage = failedStageOf(view)?.id;
@@ -499,7 +433,7 @@ export function renderComponentProgress(
       );
     }
   } else {
-    const duration = viewDuration(view);
+    const duration = viewDuration(view, clock());
     let title: string;
 
     if (view.success) {
@@ -599,7 +533,7 @@ export function renderComponentProgress(
       asText(_('The router does not report the stages of this action')),
     );
     caption.setAttribute(REVEAL_ATTRIBUTE, String(startedAt + 5));
-    caption.hidden = routerNowSeconds() < startedAt + 5;
+    caption.hidden = clock() < startedAt + 5;
     children.push(caption);
   }
 
@@ -649,29 +583,6 @@ export function renderComponentProgress(
     ),
     { 'aria-live': 'polite' },
   );
-}
-
-// The view a card shows. A card can carry the actions of another component
-// (TorrServer's direct routing): a running action comes first, its own or
-// the other's, then its own last result, then the other's (PRG-3).
-export function cardProgressView(
-  progress: Partial<
-    Record<Prokop.ComponentName, Prokop.ComponentProgressView | undefined>
-  >,
-  component: Prokop.ComponentName,
-  others: Prokop.ComponentName[] = [],
-) {
-  const views = [component, ...others]
-    .map((name) => progress[name])
-    .filter((view): view is Prokop.ComponentProgressView => Boolean(view));
-
-  return views.find((view) => view.running) || views[0] || null;
-}
-
-// What decides the shape of a card around its progress: which action it
-// shows and whether that one runs.
-export function progressViewKey(view: Prokop.ComponentProgressView | null) {
-  return view ? `${view.component}:${view.jobId}:${view.running}` : '';
 }
 
 // Brings CURRENT in place to what NEXT shows and keeps the nodes that stay,

@@ -8,7 +8,7 @@
     "format:js": "prettier --write ../luci-app-prokop/htdocs/luci-static/resources/view/prokop",
     "lint": "eslint src --ext .ts,.tsx",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
-    "build": "tsc --noEmit && tsup src/main.ts",
+    "build": "tsc --noEmit && tsup",
     "dev": "tsup src/main.ts --watch",
     "test": "vitest",
     "ci": "yarn format && yarn lint --max-warnings=0 && yarn test --run && yarn build",

@@ -3,6 +3,7 @@
 "require view.prokop.main as main";
 "require view.prokop.shell as shell";
 "require view.prokop.local_devices as localDevices";
+"require view.prokop.devices_view as devicesView";
 
 const EntryPoint = {
   load() {
@@ -18,6 +19,9 @@ const EntryPoint = {
     main.MonitoringTab.initController({
       loadLocalDeviceChoices: localDevices.loadLocalDeviceChoices,
       loadLocalDeviceHosts: localDevices.loadLocalDeviceHosts,
+      // The Devices table is a module of its own: the other Prokop pages
+      // do not load it.
+      renderDevicesPanel: devicesView.renderDevicesPanel,
     });
     return shell.renderPage(_("Monitoring"), main.MonitoringTab.render());
   },

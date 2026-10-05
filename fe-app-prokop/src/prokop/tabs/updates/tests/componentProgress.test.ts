@@ -1,14 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
-  cardProgressView,
   downloadText,
   failedStageOf,
   formatBytes,
   formatDuration,
-  normalizeProgress,
+  renderComponentProgress,
   stageRows,
   viewDuration,
 } from '../componentProgress';
+import { cardProgressView, normalizeProgress } from '../componentProgressState';
 import {
   observeRouterTime,
   resetRouterClock,
@@ -160,7 +160,7 @@ describe('component action progress', () => {
       'download:done',
       'verify:failed',
     ]);
-    expect(viewDuration(failed)).toBe(31);
+    expect(viewDuration(failed, 5000)).toBe(31);
   });
 
   it('marks the stage that failed, not the restore after it (PRG-4)', () => {
@@ -225,10 +225,12 @@ describe('component action progress', () => {
     observeRouterTime(1960, 2_059_000);
     observeRouterTime(1000, 2_060_000);
     expect(routerNowSeconds(2_061_000)).toBe(1962);
-    expect(viewDuration(view({ startedAt: 1900, progress: null }))).toBeCloseTo(
-      routerNowSeconds() - 1900,
-      0,
-    );
+    expect(
+      viewDuration(
+        view({ startedAt: 1900, progress: null }),
+        routerNowSeconds(),
+      ),
+    ).toBeCloseTo(routerNowSeconds() - 1900, 0);
   });
 
   it('follows a router clock that steps back within a minute (PRG-2)', () => {
@@ -287,5 +289,38 @@ describe('component action progress', () => {
         }),
       ).map((row) => row.id);
     expect(rows('apply_settings')).toEqual(['apply']);
+  });
+
+  it('the panel times follow the clock main.js passes in, not the browser', () => {
+    // component_progress.js is a LuCI module of its own: it has no copy of
+    // the router clock and takes main.js's.
+    interface Fake {
+      children: unknown[];
+      attributes: Record<string, string>;
+    }
+    const text = (node: unknown): string =>
+      typeof node === 'string'
+        ? node
+        : ((node as Fake).children || []).map(text).join('');
+    const g2 = globalThis as unknown as Record<string, unknown>;
+    const saved = { E: g2.E, document: g2.document };
+    g2.E = (_tag: string, _attrs: unknown, children: unknown = []) => ({
+      children: Array.isArray(children) ? children : [children],
+      attributes: {},
+      setAttribute(this: Fake, name: string, value: string) {
+        this.attributes[name] = value;
+      },
+    });
+    g2.document = { createTextNode: (value: string) => value };
+    try {
+      const panel = renderComponentProgress(
+        view({ startedAt: 1000, progress: null }),
+        { nowSeconds: () => 1090 },
+      );
+      expect(text(panel)).toContain('1 мин 30 с');
+    } finally {
+      g2.E = saved.E;
+      g2.document = saved.document;
+    }
   });
 });
