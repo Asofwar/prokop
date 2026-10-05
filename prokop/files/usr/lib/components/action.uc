@@ -36,6 +36,10 @@ const SB_MANAGED_SERVICE_MARKER = getenv("SB_MANAGED_SERVICE_MARKER") || constan
 const SB_LEGACY_MANAGED_SERVICE_MARKER = legacy_forkop.SING_BOX_MANAGED_MARKER;
 const TORRSERVER_DIRECT_INIT = getenv("PROKOP_TORRSERVER_DIRECT_INIT") || "/etc/init.d/prokop-torrserver-direct";
 const TORRSERVER_DIRECT_UC = LIB_DIR + "/torrserver/direct.uc";
+const TORRSERVER_UC = LIB_DIR + "/torrserver/manager.uc";
+const TORRSERVER_INIT = getenv("PROKOP_TORRSERVER_INIT") || "/etc/init.d/prokop-torrserver";
+// How long a freshly installed TorrServer has to answer on its port.
+const TORRSERVER_START_TIMEOUT = getenv("PROKOP_TORRSERVER_START_TIMEOUT") || "30";
 
 let tmp_dir = "";
 let lock_held = false;
@@ -3420,6 +3424,238 @@ function set_torrserver_direct(action) {
         target_enabled, target_enabled, current_enabled == target_enabled ? 0 : 1, "", "");
 }
 
+// --- TorrServer -------------------------------------------------------------
+// The official build of YouROK/TorrServer for the router's CPU, verified by
+// the sha256 GitHub publishes for it, in torrserver/manager.uc's directory
+// and run by /etc/init.d/prokop-torrserver. A TorrServer installed by other
+// means is never touched: install refuses while one runs or sits at
+// Prokop's path, remove refuses to delete a binary Prokop does not own.
+// Prokop itself keeps running throughout: nothing of its routing changes.
+
+function torrserver_status() {
+    return parse_json_object(module_output([ TORRSERVER_UC, "status" ]));
+}
+
+function torrserver_paths() {
+    return parse_json_object(module_output([ TORRSERVER_UC, "paths" ]));
+}
+
+// The release to install: an object with version, url, sha256, size and
+// release_url; { unsupported: true } when TorrServer has no build for this
+// CPU; null when the release could not be read (retried).
+function resolve_torrserver_release() {
+    let arch = trim(module_output([ TORRSERVER_UC, "asset-arch", read_openwrt_release_value("DISTRIB_ARCH"),
+        trim(command_output_from_args([ "uname", "-m" ])) ]));
+    if (arch == "")
+        return { unsupported: true };
+    let release_json = fetch_github_release_json("YouROK", "TorrServer");
+    if (release_json == "")
+        return null;
+    let input_path = make_tmp_file("torrserver-release");
+    if (input_path == "" || !write_file(input_path, release_json))
+        return null;
+    let release = parse_json_object(command_output(module_command([ TORRSERVER_UC, "select-asset", arch ]) +
+        " <" + shell_quote(input_path)));
+    remove_file(input_path);
+    if (as_string(release.version) == "")
+        return { missing: true, arch };
+    release.arch = arch;
+    return release;
+}
+
+function torrserver_version_key(version) {
+    return trim(module_output([ TORRSERVER_UC, "version-key", version ]));
+}
+
+function torrserver_stop_disable() {
+    let stopped = command_success_from_args([ TORRSERVER_INIT, "stop" ]);
+    command_success_from_args([ TORRSERVER_INIT, "disable" ]);
+    return stopped;
+}
+
+function torrserver_enable_start() {
+    return command_success_from_args([ TORRSERVER_INIT, "enable" ]) &&
+        command_success_from_args([ TORRSERVER_INIT, "restart" ]);
+}
+
+function torrserver_wait_running(version) {
+    return module_success([ TORRSERVER_UC, "wait-running", TORRSERVER_START_TIMEOUT, version ]);
+}
+
+// TorrServer Direct marks the sockets of TorrServer's cgroup, which procd
+// makes anew for the new process: the rule follows it at once instead of
+// at the worker's next pass.
+function torrserver_direct_follow() {
+    if (trim(uci_core.get(CONFIG_NAME + ".settings.torrserver_direct_enabled")) == "1" && file_exists(TORRSERVER_DIRECT_UC))
+        module_success([ TORRSERVER_DIRECT_UC, "reconcile" ]);
+}
+
+// Puts back the binary and marker moved aside before the change; true when
+// there were none to put back or they are back.
+function restore_torrserver_backup(paths, had_backup) {
+    if (!had_backup) {
+        remove_file(paths.bin);
+        remove_file(paths.marker);
+        return true;
+    }
+    return move_file_portable(paths.bin + ".prokop-old", paths.bin) &&
+        move_file_portable(paths.marker + ".prokop-old", paths.marker);
+}
+
+function install_torrserver(action) {
+    if (!file_exists(TORRSERVER_INIT) || !file_exists(TORRSERVER_UC))
+        action_fail("torrserver", action, "TorrServer service is not available in this Prokop build");
+    let status = torrserver_status();
+    let paths = torrserver_paths();
+    if (as_string(paths.bin) == "" || as_string(paths.marker) == "")
+        action_fail("torrserver", action, "Failed to read TorrServer paths");
+    let installed = int(status.installed || 0) == 1;
+    let current_version = installed ? as_string(status.version) : "";
+
+    let release = null;
+    retry_resolve("Resolving TorrServer release", function() {
+        release = resolve_torrserver_release();
+        return release != null;
+    });
+    if (release == null)
+        action_fail("torrserver", action, "Failed to read the latest TorrServer release", current_version);
+    if (release.unsupported)
+        action_fail("torrserver", action, "TorrServer publishes no build for this router's CPU", current_version);
+    if (release.missing)
+        action_fail("torrserver", action, "The latest TorrServer release has no verified build for " + release.arch, current_version);
+
+    if (action == "check_update") {
+        if (!installed)
+            action_fail("torrserver", action, "TorrServer is not installed", "", release.version, "", release.release_url || "");
+        check_success_compared("torrserver", current_version, release.version,
+            torrserver_version_key(current_version), torrserver_version_key(release.version), release.release_url || "");
+    }
+
+    // Fail closed on a TorrServer that is not Prokop's: it would be
+    // overwritten, or two servers would compete for the port.
+    if (int(status.foreign || 0) == 1)
+        action_fail("torrserver", action, "Another TorrServer is installed or running on this router; Prokop does not replace it",
+            current_version, release.version, "", release.release_url || "");
+    if (installed && !module_success([ TORRSERVER_UC, "managed" ]))
+        action_fail("torrserver", action, "The installed TorrServer binary does not match the checksum Prokop recorded; it was not replaced",
+            current_version, release.version, "", release.release_url || "");
+    if (installed && current_version == release.version && int(status.running || 0) == 1)
+        action_success("torrserver", action, "Latest TorrServer is already installed", current_version, release.version, 0, "latest", release.release_url || "");
+
+    let space_error = component_download_space_error("TorrServer", release.size, 1, tmp_dir);
+    if (space_error != "")
+        action_fail("torrserver", action, space_error, current_version, release.version, "", release.release_url || "");
+    // The new binary is staged next to the old one, which stays until the
+    // new one answers.
+    let needed = int(release.size) * (installed ? 2 : 1);
+    if (!ensure_dir(paths.dir))
+        action_fail("torrserver", action, "Failed to create " + paths.dir, current_version, release.version, "", release.release_url || "");
+    let dir_kib = available_kib(paths.dir);
+    if (dir_kib >= 0 && dir_kib < int(needed / 1024) + 2048)
+        action_fail("torrserver", action, "Not enough free space on the router's storage to install TorrServer: " +
+            dir_kib + " KiB available where " + (int(needed / 1024) + 2048) + " KiB is needed",
+            current_version, release.version, "", release.release_url || "");
+
+    let download = tmp_dir + "/torrserver";
+    if (!download_with_retry(release.url, download, release.name))
+        action_fail("torrserver", action, "Failed to download TorrServer", current_version, release.version, "", release.release_url || "");
+    if (file_bytes(download) != int(release.size) || !download_checksum_ok(download, release.sha256)) {
+        remove_file(download);
+        action_fail("torrserver", action, "Downloaded TorrServer does not match its published size and sha256",
+            current_version, release.version, "", release.release_url || "");
+    }
+    let staged = paths.bin + ".prokop-new";
+    remove_file(staged);
+    if (!command_success_from_args([ "cp", download, staged ]) || !command_success_from_args([ "chmod", "0755", staged ]) ||
+        !download_checksum_ok(staged, release.sha256)) {
+        remove_file(staged);
+        action_fail("torrserver", action, "Failed to stage TorrServer on the router's storage" + out_of_space_hint(last_logged_output),
+            current_version, release.version, "", release.release_url || "");
+    }
+    remove_file(download);
+    // The build must run on this CPU and be the release it claims.
+    let staged_version = trim(module_output([ TORRSERVER_UC, "binary-version", staged ]));
+    if (staged_version != release.version) {
+        remove_file(staged);
+        action_fail("torrserver", action, "The downloaded TorrServer does not run on this router or reports another version (" +
+            (staged_version != "" ? staged_version : "no version") + ")", current_version, release.version, "", release.release_url || "");
+    }
+
+    if (installed) {
+        updates_log("Stopping TorrServer " + current_version + " for the update");
+        command_success_from_args([ TORRSERVER_INIT, "stop" ]);
+    }
+    let had_backup = installed;
+    if (had_backup && (!move_file_to_backup(paths.bin, paths.bin + ".prokop-old") ||
+        !move_file_to_backup(paths.marker, paths.marker + ".prokop-old"))) {
+        restore_torrserver_backup(paths, true);
+        remove_file(staged);
+        torrserver_enable_start();
+        action_fail("torrserver", action, "Failed to keep the installed TorrServer aside for the update; it runs on unchanged",
+            current_version, release.version, "", release.release_url || "");
+    }
+    if (!fs.rename(staged, paths.bin) ||
+        !module_success([ TORRSERVER_UC, "write-marker", release.version, release.sha256 ])) {
+        remove_file(staged);
+        let restored = restore_torrserver_backup(paths, had_backup);
+        if (had_backup && restored)
+            torrserver_enable_start();
+        action_fail("torrserver", action, "Failed to install TorrServer" + (had_backup ? (restored ? "; the previous version was restored" :
+            "; the previous version could not be restored") : ""), current_version, release.version, "", release.release_url || "");
+    }
+
+    updates_log("Starting TorrServer " + release.version);
+    if (!torrserver_enable_start() || !torrserver_wait_running(release.version)) {
+        updates_log("TorrServer " + release.version + " did not start", "error");
+        command_success_from_args([ TORRSERVER_INIT, "stop" ]);
+        let restored = restore_torrserver_backup(paths, had_backup);
+        let back = false;
+        if (had_backup && restored)
+            back = torrserver_enable_start() && torrserver_wait_running(current_version);
+        else
+            command_success_from_args([ TORRSERVER_INIT, "disable" ]);
+        clear_version_caches();
+        action_fail("torrserver", action, "TorrServer " + release.version + " did not start" +
+            (had_backup ? (back ? "; the previous version " + current_version + " runs again" :
+                "; the previous version " + current_version + " could not be started again") : " and was removed"),
+            current_version, release.version, "", release.release_url || "");
+    }
+    remove_file(paths.bin + ".prokop-old");
+    remove_file(paths.marker + ".prokop-old");
+    torrserver_direct_follow();
+    clear_version_caches();
+    action_success("torrserver", action, installed ? "TorrServer has been updated" : "TorrServer has been installed",
+        release.version, release.version, 1, "latest", release.release_url || "");
+}
+
+// Removes the binary Prokop installed and stops its service; TorrServer's
+// settings and torrent list (its database in the same directory) stay.
+function remove_torrserver() {
+    let status = torrserver_status();
+    let paths = torrserver_paths();
+    if (as_string(paths.bin) == "")
+        action_fail("torrserver", "remove", "Failed to read TorrServer paths");
+    let current_version = as_string(status.version);
+    if (int(status.installed || 0) != 1) {
+        if (file_exists(paths.bin))
+            action_fail("torrserver", "remove", "This TorrServer was not installed by Prokop and was not removed");
+        if (file_exists(TORRSERVER_INIT))
+            command_success_from_args([ TORRSERVER_INIT, "disable" ]);
+        action_success("torrserver", "remove", "TorrServer is already removed", "", "", 0);
+    }
+    if (!module_success([ TORRSERVER_UC, "managed" ]))
+        action_fail("torrserver", "remove", "The installed TorrServer binary does not match the checksum Prokop recorded; it was not removed",
+            current_version);
+    if (file_exists(TORRSERVER_INIT) && !torrserver_stop_disable())
+        action_fail("torrserver", "remove", "Failed to stop TorrServer", current_version);
+    remove_file(paths.bin);
+    remove_file(paths.marker);
+    if (file_exists(paths.bin))
+        action_fail("torrserver", "remove", "Failed to remove TorrServer", current_version);
+    clear_version_caches();
+    action_success("torrserver", "remove", "TorrServer has been removed; its settings stay in " + paths.dir, current_version, "", 1);
+}
+
 function normalize_component_name(component) {
     component = as_string(component);
     if (component == "sing-box" || component == "singbox")
@@ -3502,6 +3738,10 @@ function component_action(component, action, version) {
         set_packet_steering(action);
     else if (component == "direct_proxy" && (action == "enable" || action == "disable"))
         set_direct_proxy(action);
+    else if (component == "torrserver" && (action == "check_update" || action == "install"))
+        install_torrserver(action);
+    else if (component == "torrserver" && action == "remove")
+        remove_torrserver();
     else if (component == "torrserver_direct" && (action == "enable" || action == "disable"))
         set_torrserver_direct(action);
     else

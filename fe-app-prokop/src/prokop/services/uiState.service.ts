@@ -36,6 +36,9 @@ function getEmptyUpdatesActions(): StoreType['updatesActions'] {
     packetSteeringRestore: { loading: false },
     directProxyEnable: { loading: false },
     directProxyDisable: { loading: false },
+    torrserverCheck: { loading: false },
+    torrserverInstall: { loading: false },
+    torrserverRemove: { loading: false },
     torrserverDirectEnable: { loading: false },
     torrserverDirectDisable: { loading: false },
   };

@@ -11,6 +11,7 @@ const ACTIONS = {
     zapret_manager: [ "install", "remove" ],
     packet_steering: [ "enable", "restore" ],
     direct_proxy: [ "enable", "disable" ],
+    torrserver: [ "check_update", "install", "remove" ],
     torrserver_direct: [ "enable", "disable" ]
 };
 

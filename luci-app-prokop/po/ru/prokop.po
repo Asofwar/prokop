@@ -1,15 +1,15 @@
 # RU translations for PROKOP package.
 # Copyright (C) 2026 THE PROKOP COPYRIGHT HOLDER
 # This file is distributed under the same license as the PROKOP package.
-# Asofwar, 2026.
+# Claude, 2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-05 01:22+0000\n"
-"PO-Revision-Date: 2026-10-05 01:22+0000\n"
-"Last-Translator: Asofwar\n"
+"POT-Creation-Date: 2026-10-05 11:43+0000\n"
+"PO-Revision-Date: 2026-10-05 11:43+0000\n"
+"Last-Translator: Claude\n"
 "Language-Team: none\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -424,6 +424,12 @@ msgstr "Уже выполняется другая операция со сни�
 
 msgid "Another snapshot operation is already in progress. Try again in a moment."
 msgstr "Уже выполняется другая операция со снимками. Повторите через минуту."
+
+msgid "Another TorrServer is installed or running on this router; Prokop does not replace it"
+msgstr "На роутере уже установлен или запущен другой TorrServer; Prokop его не заменяет"
+
+msgid "Another TorrServer is installed or running on this router. Prokop does not replace it; remove it first to install TorrServer from Prokop."
+msgstr "На роутере уже установлен или запущен другой TorrServer. Prokop его не заменяет: удалите его, чтобы установить TorrServer из Prokop."
 
 msgid "Answer of the router DNS"
 msgstr "Ответ DNS роутера"
@@ -1697,11 +1703,20 @@ msgstr "Не удалось скопировать!"
 msgid "Failed to create support report"
 msgstr "Не удалось создать отчёт для поддержки"
 
+msgid "Failed to download TorrServer"
+msgstr "Не удалось скачать TorrServer"
+
 msgid "Failed to execute"
 msgstr "Не удалось выполнить"
 
+msgid "Failed to read the latest TorrServer release. Check the internet connection and try again"
+msgstr "Не удалось получить последний выпуск TorrServer. Проверьте доступ в интернет и повторите"
+
 msgid "Failed to save URLTest settings"
 msgstr "Не удалось сохранить настройки URLTest"
+
+msgid "Failed to stop TorrServer"
+msgstr "Не удалось остановить TorrServer"
 
 msgid "Failed to switch the node"
 msgstr "Не удалось переключить узел"
@@ -1922,6 +1937,9 @@ msgstr "Информация"
 msgid "Install"
 msgstr "Установить"
 
+msgid "Install and start TorrServer to enable direct routing for it."
+msgstr "Установите и запустите TorrServer, чтобы включить для него прямую маршрутизацию."
+
 msgid "Install another build:"
 msgstr "Установить другую сборку:"
 
@@ -1939,6 +1957,9 @@ msgstr "установлена"
 
 msgid "Installed (Mirror edition)"
 msgstr "Установлен (Mirror edition)"
+
+msgid "Installed outside Prokop"
+msgstr "Установлен не через Prokop"
 
 msgid "Installed version is newer than release"
 msgstr "Установлена версия новее релиза"
@@ -2744,6 +2765,12 @@ msgstr "Ещё не проверялось"
 msgid "Not determined"
 msgstr "Не определено"
 
+msgid "Not enough free memory to download TorrServer"
+msgstr "Недостаточно свободной памяти, чтобы скачать TorrServer"
+
+msgid "Not enough free space for TorrServer: %s KiB free, %s KiB needed"
+msgstr "Недостаточно места для TorrServer: свободно %s КиБ, нужно %s КиБ"
+
 msgid "not in the list"
 msgstr "нет в списке"
 
@@ -2851,6 +2878,9 @@ msgstr "Открыть правила"
 
 msgid "Open settings"
 msgstr "Открыть настройки"
+
+msgid "Open TorrServer"
+msgstr "Открыть TorrServer"
 
 msgid "Operation timed out"
 msgstr "Время ожидания истекло"
@@ -3629,6 +3659,9 @@ msgstr "Правила с этим провайдером перестанут �
 msgid "Run full diagnostics"
 msgstr "Запустить полную диагностику"
 
+msgid "Running"
+msgstr "Работает"
+
 msgid "running: traffic goes through the VPN"
 msgstr "работает: трафик идёт через VPN"
 
@@ -3989,6 +4022,9 @@ msgstr "Остановить Prokop?"
 msgid "Stop Prokop…"
 msgstr "Остановить Prokop…"
 
+msgid "Stopped"
+msgstr "Остановлен"
+
 msgid "Stopped by user"
 msgstr "Остановлено пользователем"
 
@@ -4241,6 +4277,12 @@ msgstr "прямой прокси"
 msgid "The DNS server must be an IPv4 address."
 msgstr "DNS-сервер должен быть IPv4-адресом."
 
+msgid "The downloaded TorrServer does not match its published checksum; nothing was installed"
+msgstr "Скачанный TorrServer не совпадает с опубликованной контрольной суммой; ничего не установлено"
+
+msgid "The downloaded TorrServer does not run on this router; nothing was installed"
+msgstr "Скачанный TorrServer не запускается на этом роутере; ничего не установлено"
+
 msgid "The DPI guard of an earlier restore stays active."
 msgstr "Защита DPI от прежнего восстановления остаётся активной."
 
@@ -4336,6 +4378,9 @@ msgstr "Последняя рабочая конфигурация восста�
 
 msgid "The latency test measured no delay: no tested proxy answered."
 msgstr "Проверка задержки не получила результата: ни один проверенный прокси не ответил."
+
+msgid "The latest TorrServer release has no build with a published checksum for %s"
+msgstr "В последнем выпуске TorrServer нет сборки с опубликованной контрольной суммой для %s"
 
 msgid "The legacy conditions cannot be converted without changing what the rule matches:"
 msgstr "Устаревшие условия нельзя конвертировать, не изменив того, что сопоставляет правило:"
@@ -4613,6 +4658,9 @@ msgstr "Цель недоступна ни одним способом; возм
 msgid "The targets work without bypass."
 msgstr "Цели работают без обхода."
 
+msgid "The TorrServer program was changed outside Prokop; Prokop left it as it is"
+msgstr "Программа TorrServer изменена не через Prokop; Prokop оставил её как есть"
+
 msgid "the transit rule “%s” is disabled"
 msgstr "транзитное правило «%s» отключено"
 
@@ -4736,6 +4784,9 @@ msgstr "Эта стратегия не поддерживается устано
 msgid "This strategy was rolled back recently; it waits for the cooldown."
 msgstr "Эту стратегию недавно откатывали; она ждёт окончания паузы."
 
+msgid "This TorrServer was not installed by Prokop; Prokop left it as it is"
+msgstr "Этот TorrServer установлен не через Prokop; Prokop оставил его как есть"
+
 msgid "Time in seconds for DNS record caching (default: 60)"
 msgstr "Время в секундах для кэширования DNS записей (по умолчанию: 60)"
 
@@ -4757,11 +4808,32 @@ msgstr "Допуск"
 msgid "Top level has the highest priority; lower levels are used as fallback"
 msgstr "Верхний уровень имеет самый высокий приоритет; нижние уровни используются как резерв"
 
+msgid "TorrServer %s did not start and was removed"
+msgstr "TorrServer %s не запустился и был удалён"
+
+msgid "TorrServer %s did not start, and the previous version %s did not start again either"
+msgstr "TorrServer %s не запустился, и прежняя версия %s тоже не запустилась"
+
+msgid "TorrServer %s did not start; the previous version %s runs again"
+msgstr "TorrServer %s не запустился; снова работает прежняя версия %s"
+
 msgid "TorrServer Direct"
 msgstr "Прямой TorrServer"
 
+msgid "TorrServer does not run in its own service group. Install TorrServer from Prokop to use direct routing for it."
+msgstr "TorrServer запущен не в отдельной группе сервиса. Установите TorrServer из Prokop, чтобы использовать для него прямую маршрутизацию."
+
+msgid "TorrServer is not installed"
+msgstr "TorrServer не установлен"
+
+msgid "TorrServer is stopped and its program is removed. Its settings and torrent list stay on the router."
+msgstr "TorrServer будет остановлен, его программа удалена. Настройки и список торрентов останутся на роутере."
+
 msgid "TorrServer not found"
 msgstr "TorrServer не найден"
+
+msgid "TorrServer publishes no build for this router's CPU"
+msgstr "Для процессора этого роутера нет сборки TorrServer"
 
 msgid "Total traffic"
 msgstr "Общий трафик"

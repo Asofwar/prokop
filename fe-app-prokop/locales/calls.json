@@ -172,28 +172,28 @@
     "call": "%s has been disabled",
     "key": "%s has been disabled",
     "places": [
-      "src/prokop/tabs/updates/componentActionToast.ts:62"
+      "src/prokop/tabs/updates/componentActionToast.ts:64"
     ]
   },
   {
     "call": "%s has been enabled",
     "key": "%s has been enabled",
     "places": [
-      "src/prokop/tabs/updates/componentActionToast.ts:59"
+      "src/prokop/tabs/updates/componentActionToast.ts:61"
     ]
   },
   {
     "call": "%s has been installed",
     "key": "%s has been installed",
     "places": [
-      "src/prokop/tabs/updates/componentActionToast.ts:53"
+      "src/prokop/tabs/updates/componentActionToast.ts:55"
     ]
   },
   {
     "call": "%s has been removed",
     "key": "%s has been removed",
     "places": [
-      "src/prokop/tabs/updates/componentActionToast.ts:56"
+      "src/prokop/tabs/updates/componentActionToast.ts:58"
     ]
   },
   {
@@ -504,7 +504,7 @@
     "call": "Action completed",
     "key": "Action completed",
     "places": [
-      "src/prokop/tabs/updates/componentActionToast.ts:65"
+      "src/prokop/tabs/updates/componentActionToast.ts:67"
     ]
   },
   {
@@ -981,6 +981,20 @@
     "key": "Another snapshot operation is already in progress. Try again in a moment.",
     "places": [
       "src/prokop/tabs/history/model.ts:458"
+    ]
+  },
+  {
+    "call": "Another TorrServer is installed or running on this router; Prokop does not replace it",
+    "key": "Another TorrServer is installed or running on this router; Prokop does not replace it",
+    "places": [
+      "src/prokop/tabs/updates/componentActionToast.ts:98"
+    ]
+  },
+  {
+    "call": "Another TorrServer is installed or running on this router. Prokop does not replace it; remove it first to install TorrServer from Prokop.",
+    "key": "Another TorrServer is installed or running on this router. Prokop does not replace it; remove it first to install TorrServer from Prokop.",
+    "places": [
+      "src/prokop/tabs/updates/initController.ts:1183"
     ]
   },
   {
@@ -1978,7 +1992,7 @@
     "call": "Check update",
     "key": "Check update",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:833"
+      "src/prokop/tabs/updates/initController.ts:848"
     ]
   },
   {
@@ -2161,7 +2175,7 @@
     "call": "Choose version",
     "key": "Choose version",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:1309"
+      "src/prokop/tabs/updates/initController.ts:1422"
     ]
   },
   {
@@ -2277,7 +2291,7 @@
     "call": "Component update available",
     "key": "Component update available",
     "places": [
-      "src/prokop/services/core.service.ts:46"
+      "src/prokop/services/core.service.ts:47"
     ]
   },
   {
@@ -2568,7 +2582,7 @@
     "call": "Copy address",
     "key": "Copy address",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:1356"
+      "src/prokop/tabs/updates/initController.ts:1469"
     ]
   },
   {
@@ -2818,7 +2832,7 @@
     "call": "Dedicated cgroup unavailable",
     "key": "Dedicated cgroup unavailable",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:1126"
+      "src/prokop/tabs/updates/initController.ts:1198"
     ]
   },
   {
@@ -3044,15 +3058,15 @@
     "key": "Direct Proxy",
     "places": [
       "src/prokop/tabs/updates/componentActionToast.ts:20",
-      "src/prokop/tabs/updates/initController.ts:1096"
+      "src/prokop/tabs/updates/initController.ts:1142"
     ]
   },
   {
     "call": "Disable",
     "key": "Disable",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:1105",
-      "src/prokop/tabs/updates/initController.ts:1136"
+      "src/prokop/tabs/updates/initController.ts:1151",
+      "src/prokop/tabs/updates/initController.ts:1208"
     ]
   },
   {
@@ -3083,8 +3097,8 @@
       "src/prokop/ui/status.ts:42",
       "src/prokop/tabs/autotune/model.ts:684",
       "src/prokop/tabs/autotune/model.ts:717",
-      "src/prokop/tabs/updates/initController.ts:1099",
-      "src/prokop/tabs/updates/initController.ts:1131"
+      "src/prokop/tabs/updates/initController.ts:1145",
+      "src/prokop/tabs/updates/initController.ts:1203"
     ]
   },
   {
@@ -3716,8 +3730,8 @@
     "key": "Enable",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8534",
-      "src/prokop/tabs/updates/initController.ts:1112",
-      "src/prokop/tabs/updates/initController.ts:1143"
+      "src/prokop/tabs/updates/initController.ts:1158",
+      "src/prokop/tabs/updates/initController.ts:1215"
     ]
   },
   {
@@ -3773,7 +3787,7 @@
     "call": "Enable mode 2",
     "key": "Enable mode 2",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:1086"
+      "src/prokop/tabs/updates/initController.ts:1132"
     ]
   },
   {
@@ -3802,8 +3816,8 @@
     "key": "Enabled",
     "places": [
       "src/prokop/tabs/autotune/initController.ts:744",
-      "src/prokop/tabs/updates/initController.ts:1098",
-      "src/prokop/tabs/updates/initController.ts:1128"
+      "src/prokop/tabs/updates/initController.ts:1144",
+      "src/prokop/tabs/updates/initController.ts:1200"
     ]
   },
   {
@@ -4100,15 +4114,29 @@
     ]
   },
   {
+    "call": "Failed to download TorrServer",
+    "key": "Failed to download TorrServer",
+    "places": [
+      "src/prokop/tabs/updates/componentActionToast.ts:125"
+    ]
+  },
+  {
     "call": "Failed to execute",
     "key": "Failed to execute",
     "places": [
       "src/prokop/methods/shell/index.ts:191",
       "src/prokop/methods/shell/index.ts:197",
-      "src/prokop/tabs/updates/initController.ts:558",
-      "src/prokop/tabs/updates/initController.ts:571",
-      "src/prokop/tabs/updates/initController.ts:622",
-      "src/prokop/tabs/updates/initController.ts:812"
+      "src/prokop/tabs/updates/initController.ts:565",
+      "src/prokop/tabs/updates/initController.ts:579",
+      "src/prokop/tabs/updates/initController.ts:631",
+      "src/prokop/tabs/updates/initController.ts:827"
+    ]
+  },
+  {
+    "call": "Failed to read the latest TorrServer release. Check the internet connection and try again",
+    "key": "Failed to read the latest TorrServer release. Check the internet connection and try again",
+    "places": [
+      "src/prokop/tabs/updates/componentActionToast.ts:84"
     ]
   },
   {
@@ -4116,6 +4144,13 @@
     "key": "Failed to save URLTest settings",
     "places": [
       "src/prokop/tabs/dashboard/initController.ts:1428"
+    ]
+  },
+  {
+    "call": "Failed to stop TorrServer",
+    "key": "Failed to stop TorrServer",
+    "places": [
+      "src/prokop/tabs/updates/componentActionToast.ts:160"
     ]
   },
   {
@@ -4646,24 +4681,31 @@
     "call": "Install",
     "key": "Install",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:847",
-      "src/prokop/tabs/updates/initController.ts:990",
-      "src/prokop/tabs/updates/initController.ts:1316",
+      "src/prokop/tabs/updates/initController.ts:862",
+      "src/prokop/tabs/updates/initController.ts:1010",
+      "src/prokop/tabs/updates/initController.ts:1429",
       "src/prokop/tabs/updates/releaseSelector.ts:69"
+    ]
+  },
+  {
+    "call": "Install and start TorrServer to enable direct routing for it.",
+    "key": "Install and start TorrServer to enable direct routing for it.",
+    "places": [
+      "src/prokop/tabs/updates/initController.ts:1230"
     ]
   },
   {
     "call": "Install another build:",
     "key": "Install another build:",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:1386"
+      "src/prokop/tabs/updates/initController.ts:1499"
     ]
   },
   {
     "call": "Install Extended build",
     "key": "Install Extended build",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:949"
+      "src/prokop/tabs/updates/initController.ts:969"
     ]
   },
   {
@@ -4677,7 +4719,7 @@
     "call": "Install Tiny build",
     "key": "Install Tiny build",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:940"
+      "src/prokop/tabs/updates/initController.ts:960"
     ]
   },
   {
@@ -4691,15 +4733,22 @@
     "call": "Installed (Mirror edition)",
     "key": "Installed (Mirror edition)",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:1064"
+      "src/prokop/tabs/updates/initController.ts:1110"
+    ]
+  },
+  {
+    "call": "Installed outside Prokop",
+    "key": "Installed outside Prokop",
+    "places": [
+      "src/prokop/tabs/updates/initController.ts:1176"
     ]
   },
   {
     "call": "Installed version is newer than release",
     "key": "Installed version is newer than release",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:310",
-      "src/prokop/tabs/updates/initController.ts:1207"
+      "src/prokop/tabs/updates/initController.ts:317",
+      "src/prokop/tabs/updates/initController.ts:1289"
     ]
   },
   {
@@ -5712,15 +5761,15 @@
     "call": "Latest version is installed",
     "key": "Latest version is installed",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:313",
-      "src/prokop/tabs/updates/initController.ts:1205"
+      "src/prokop/tabs/updates/initController.ts:320",
+      "src/prokop/tabs/updates/initController.ts:1287"
     ]
   },
   {
     "call": "Latest version:",
     "key": "Latest version:",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:1207"
+      "src/prokop/tabs/updates/initController.ts:1289"
     ]
   },
   {
@@ -5855,11 +5904,12 @@
     "call": "Loading...",
     "key": "Loading...",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:1003",
-      "src/prokop/tabs/updates/initController.ts:1014",
-      "src/prokop/tabs/updates/initController.ts:1025",
-      "src/prokop/tabs/updates/initController.ts:1038",
-      "src/prokop/tabs/updates/initController.ts:1051"
+      "src/prokop/tabs/updates/initController.ts:1049",
+      "src/prokop/tabs/updates/initController.ts:1060",
+      "src/prokop/tabs/updates/initController.ts:1071",
+      "src/prokop/tabs/updates/initController.ts:1084",
+      "src/prokop/tabs/updates/initController.ts:1097",
+      "src/prokop/tabs/updates/initController.ts:1170"
     ]
   },
   {
@@ -6062,7 +6112,7 @@
     "call": "Mode 2 enabled",
     "key": "Mode 2 enabled",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:1074"
+      "src/prokop/tabs/updates/initController.ts:1120"
     ]
   },
   {
@@ -6188,7 +6238,7 @@
     "call": "New version %s is available for %s",
     "key": "New version %s is available for %s",
     "places": [
-      "src/prokop/services/core.service.ts:41"
+      "src/prokop/services/core.service.ts:42"
     ]
   },
   {
@@ -6587,7 +6637,7 @@
     "call": "Normal mode",
     "key": "Normal mode",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:1074"
+      "src/prokop/tabs/updates/initController.ts:1120"
     ]
   },
   {
@@ -6656,6 +6706,20 @@
     ]
   },
   {
+    "call": "Not enough free memory to download TorrServer",
+    "key": "Not enough free memory to download TorrServer",
+    "places": [
+      "src/prokop/tabs/updates/componentActionToast.ts:123"
+    ]
+  },
+  {
+    "call": "Not enough free space for TorrServer: %s KiB free, %s KiB needed",
+    "key": "Not enough free space for TorrServer: %s KiB free, %s KiB needed",
+    "places": [
+      "src/prokop/tabs/updates/componentActionToast.ts:117"
+    ]
+  },
+  {
     "call": "not in the list",
     "key": "not in the list",
     "places": [
@@ -6670,10 +6734,11 @@
       "src/prokop/helpers/singBoxVariant.ts:29",
       "src/prokop/helpers/singBoxVariant.ts:37",
       "src/prokop/tabs/diagnostic/initController.ts:743",
-      "src/prokop/tabs/updates/initController.ts:1028",
-      "src/prokop/tabs/updates/initController.ts:1041",
-      "src/prokop/tabs/updates/initController.ts:1054",
-      "src/prokop/tabs/updates/initController.ts:1065"
+      "src/prokop/tabs/updates/initController.ts:1074",
+      "src/prokop/tabs/updates/initController.ts:1087",
+      "src/prokop/tabs/updates/initController.ts:1100",
+      "src/prokop/tabs/updates/initController.ts:1111",
+      "src/prokop/tabs/updates/initController.ts:1177"
     ]
   },
   {
@@ -6721,7 +6786,7 @@
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:247",
       "src/prokop/tabs/dashboard/overview.ts:253",
-      "src/prokop/tabs/diagnostic/diagnostic.store.ts:131",
+      "src/prokop/tabs/diagnostic/diagnostic.store.ts:136",
       "src/prokop/tabs/diagnostic/initController.ts:107",
       "src/prokop/tabs/diagnostic/initController.ts:331",
       "src/prokop/tabs/diagnostic/initController.ts:386",
@@ -6892,8 +6957,8 @@
     "call": "Open",
     "key": "Open",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:1198",
-      "src/prokop/tabs/updates/initController.ts:1220"
+      "src/prokop/tabs/updates/initController.ts:1280",
+      "src/prokop/tabs/updates/initController.ts:1302"
     ]
   },
   {
@@ -6938,6 +7003,13 @@
     "key": "Open settings",
     "places": [
       "src/prokop/tabs/diagnostic/partials/renderCheckSection.ts:89"
+    ]
+  },
+  {
+    "call": "Open TorrServer",
+    "key": "Open TorrServer",
+    "places": [
+      "src/prokop/tabs/updates/initController.ts:1188"
     ]
   },
   {
@@ -7082,14 +7154,14 @@
     "call": "Packet Steering mode 2 has been enabled",
     "key": "Packet Steering mode 2 has been enabled",
     "places": [
-      "src/prokop/tabs/updates/componentActionToast.ts:43"
+      "src/prokop/tabs/updates/componentActionToast.ts:45"
     ]
   },
   {
     "call": "Packet Steering normal mode has been restored",
     "key": "Packet Steering normal mode has been restored",
     "places": [
-      "src/prokop/tabs/updates/componentActionToast.ts:46"
+      "src/prokop/tabs/updates/componentActionToast.ts:48"
     ]
   },
   {
@@ -7491,7 +7563,7 @@
     "call": "Prokop Error",
     "key": "Prokop Error",
     "places": [
-      "src/prokop/services/core.service.ts:55"
+      "src/prokop/services/core.service.ts:56"
     ]
   },
   {
@@ -8042,9 +8114,10 @@
       "src/prokop/tabs/autotune/initController.ts:754",
       "src/prokop/tabs/diagnostic/connectivityMatrix.ts:308",
       "src/prokop/tabs/diagnostic/connectivityMatrix.ts:309",
-      "src/prokop/tabs/updates/initController.ts:742",
-      "src/prokop/tabs/updates/initController.ts:892",
-      "src/prokop/tabs/updates/initController.ts:981"
+      "src/prokop/tabs/updates/initController.ts:757",
+      "src/prokop/tabs/updates/initController.ts:907",
+      "src/prokop/tabs/updates/initController.ts:1001",
+      "src/prokop/tabs/updates/initController.ts:1026"
     ]
   },
   {
@@ -8065,7 +8138,7 @@
     "call": "Remove %s?",
     "key": "Remove %s?",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:737"
+      "src/prokop/tabs/updates/initController.ts:747"
     ]
   },
   {
@@ -8315,7 +8388,7 @@
     "call": "Restore normal mode",
     "key": "Restore normal mode",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:1079"
+      "src/prokop/tabs/updates/initController.ts:1125"
     ]
   },
   {
@@ -8794,7 +8867,7 @@
     "call": "Rules that use this provider stop bypassing DPI",
     "key": "Rules that use this provider stop bypassing DPI",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:740"
+      "src/prokop/tabs/updates/initController.ts:755"
     ]
   },
   {
@@ -8802,6 +8875,13 @@
     "key": "Run full diagnostics",
     "places": [
       "src/prokop/tabs/diagnostic/partials/renderRunAction.ts:25"
+    ]
+  },
+  {
+    "call": "Running",
+    "key": "Running",
+    "places": [
+      "src/prokop/tabs/updates/initController.ts:1173"
     ]
   },
   {
@@ -9671,6 +9751,13 @@
     ]
   },
   {
+    "call": "Stopped",
+    "key": "Stopped",
+    "places": [
+      "src/prokop/tabs/updates/initController.ts:1173"
+    ]
+  },
+  {
     "call": "Stopped by user",
     "key": "Stopped by user",
     "places": [
@@ -10269,6 +10356,20 @@
     ]
   },
   {
+    "call": "The downloaded TorrServer does not match its published checksum; nothing was installed",
+    "key": "The downloaded TorrServer does not match its published checksum; nothing was installed",
+    "places": [
+      "src/prokop/tabs/updates/componentActionToast.ts:129"
+    ]
+  },
+  {
+    "call": "The downloaded TorrServer does not run on this router; nothing was installed",
+    "key": "The downloaded TorrServer does not run on this router; nothing was installed",
+    "places": [
+      "src/prokop/tabs/updates/componentActionToast.ts:136"
+    ]
+  },
+  {
     "call": "The DPI guard of an earlier restore stays active.",
     "key": "The DPI guard of an earlier restore stays active.",
     "places": [
@@ -10344,7 +10445,7 @@
     "call": "The interrupted Prokop update was rolled back; no new update was attempted",
     "key": "The interrupted Prokop update was rolled back; no new update was attempted",
     "places": [
-      "src/prokop/tabs/updates/componentActionToast.ts:36"
+      "src/prokop/tabs/updates/componentActionToast.ts:38"
     ]
   },
   {
@@ -10498,6 +10599,13 @@
     ]
   },
   {
+    "call": "The latest TorrServer release has no build with a published checksum for %s",
+    "key": "The latest TorrServer release has no build with a published checksum for %s",
+    "places": [
+      "src/prokop/tabs/updates/componentActionToast.ts:91"
+    ]
+  },
+  {
     "call": "The legacy conditions cannot be converted without changing what the rule matches:",
     "key": "The legacy conditions cannot be converted without changing what the rule matches:",
     "places": [
@@ -10636,7 +10744,7 @@
     "call": "The package is removed from the router.",
     "key": "The package is removed from the router.",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:738"
+      "src/prokop/tabs/updates/initController.ts:753"
     ]
   },
   {
@@ -11154,6 +11262,13 @@
     ]
   },
   {
+    "call": "The TorrServer program was changed outside Prokop; Prokop left it as it is",
+    "key": "The TorrServer program was changed outside Prokop; Prokop left it as it is",
+    "places": [
+      "src/prokop/tabs/updates/componentActionToast.ts:105"
+    ]
+  },
+  {
     "call": "the transit rule “%s” is disabled",
     "key": "the transit rule “%s” is disabled",
     "places": [
@@ -11444,6 +11559,13 @@
     ]
   },
   {
+    "call": "This TorrServer was not installed by Prokop; Prokop left it as it is",
+    "key": "This TorrServer was not installed by Prokop; Prokop left it as it is",
+    "places": [
+      "src/prokop/tabs/updates/componentActionToast.ts:112"
+    ]
+  },
+  {
     "call": "Time in seconds for DNS record caching (default: 60)",
     "key": "Time in seconds for DNS record caching (default: 60)",
     "places": [
@@ -11495,18 +11617,67 @@
     ]
   },
   {
+    "call": "TorrServer %s did not start and was removed",
+    "key": "TorrServer %s did not start and was removed",
+    "places": [
+      "src/prokop/tabs/updates/componentActionToast.ts:158"
+    ]
+  },
+  {
+    "call": "TorrServer %s did not start, and the previous version %s did not start again either",
+    "key": "TorrServer %s did not start, and the previous version %s did not start again either",
+    "places": [
+      "src/prokop/tabs/updates/componentActionToast.ts:150"
+    ]
+  },
+  {
+    "call": "TorrServer %s did not start; the previous version %s runs again",
+    "key": "TorrServer %s did not start; the previous version %s runs again",
+    "places": [
+      "src/prokop/tabs/updates/componentActionToast.ts:143"
+    ]
+  },
+  {
     "call": "TorrServer Direct",
     "key": "TorrServer Direct",
     "places": [
-      "src/prokop/tabs/updates/componentActionToast.ts:22",
-      "src/prokop/tabs/updates/initController.ts:1122"
+      "src/prokop/tabs/updates/componentActionToast.ts:24",
+      "src/prokop/tabs/updates/initController.ts:1194"
+    ]
+  },
+  {
+    "call": "TorrServer does not run in its own service group. Install TorrServer from Prokop to use direct routing for it.",
+    "key": "TorrServer does not run in its own service group. Install TorrServer from Prokop to use direct routing for it.",
+    "places": [
+      "src/prokop/tabs/updates/initController.ts:1227"
+    ]
+  },
+  {
+    "call": "TorrServer is not installed",
+    "key": "TorrServer is not installed",
+    "places": [
+      "src/prokop/tabs/updates/componentActionToast.ts:76"
+    ]
+  },
+  {
+    "call": "TorrServer is stopped and its program is removed. Its settings and torrent list stay on the router.",
+    "key": "TorrServer is stopped and its program is removed. Its settings and torrent list stay on the router.",
+    "places": [
+      "src/prokop/tabs/updates/initController.ts:750"
     ]
   },
   {
     "call": "TorrServer not found",
     "key": "TorrServer not found",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:1124"
+      "src/prokop/tabs/updates/initController.ts:1196"
+    ]
+  },
+  {
+    "call": "TorrServer publishes no build for this router's CPU",
+    "key": "TorrServer publishes no build for this router's CPU",
+    "places": [
+      "src/prokop/tabs/updates/componentActionToast.ts:79"
     ]
   },
   {
@@ -11743,10 +11914,10 @@
       "src/prokop/services/systemInfo.service.ts:18",
       "src/prokop/services/systemInfo.service.ts:20",
       "src/prokop/services/systemInfo.service.ts:22",
-      "src/prokop/services/systemInfo.service.ts:33",
-      "src/prokop/services/systemInfo.service.ts:34",
+      "src/prokop/services/systemInfo.service.ts:38",
+      "src/prokop/services/systemInfo.service.ts:39",
       "src/prokop/tabs/diagnostic/initController.ts:739",
-      "src/prokop/tabs/updates/initController.ts:348"
+      "src/prokop/tabs/updates/initController.ts:355"
     ]
   },
   {
@@ -11834,21 +12005,21 @@
     "call": "Update",
     "key": "Update",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:847"
+      "src/prokop/tabs/updates/initController.ts:862"
     ]
   },
   {
     "call": "Update is available",
     "key": "Update is available",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:306"
+      "src/prokop/tabs/updates/initController.ts:313"
     ]
   },
   {
     "call": "Update is available:",
     "key": "Update is available:",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:1184"
+      "src/prokop/tabs/updates/initController.ts:1266"
     ]
   },
   {
@@ -12173,7 +12344,7 @@
     "call": "Waiting for TorrServer",
     "key": "Waiting for TorrServer",
     "places": [
-      "src/prokop/tabs/updates/initController.ts:1130"
+      "src/prokop/tabs/updates/initController.ts:1202"
     ]
   },
   {

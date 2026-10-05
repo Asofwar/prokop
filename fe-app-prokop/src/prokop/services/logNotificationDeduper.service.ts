@@ -74,7 +74,7 @@ export function getProkopLogNotification(
   }
 
   const update = line.match(
-    /\[component-update\]\s+(prokop|sing_box|zapret|zapret2|byedpi|zapret_manager)\s+(\S+)/i,
+    /\[component-update\]\s+(prokop|sing_box|zapret|zapret2|byedpi|zapret_manager|torrserver)\s+(\S+)/i,
   );
 
   if (!update) {

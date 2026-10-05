@@ -194,6 +194,7 @@ build_backend_root() {
 
   install -m 0755 "$ROOT_DIR/prokop/files/etc/init.d/prokop" "$output_root/etc/init.d/prokop"
   install -m 0755 "$ROOT_DIR/prokop/files/etc/init.d/prokop-torrserver-direct" "$output_root/etc/init.d/prokop-torrserver-direct"
+  install -m 0755 "$ROOT_DIR/prokop/files/etc/init.d/prokop-torrserver" "$output_root/etc/init.d/prokop-torrserver"
   install -m 0755 "$ROOT_DIR/prokop/files/etc/init.d/prokop-killswitch" "$output_root/etc/init.d/prokop-killswitch"
   install -m 0755 "$ROOT_DIR/prokop/files/etc/init.d/prokop-dns-failsafe" "$output_root/etc/init.d/prokop-dns-failsafe"
   install -m 0755 "$ROOT_DIR/prokop/files/etc/init.d/prokop-fw-watch" "$output_root/etc/init.d/prokop-fw-watch"
@@ -216,6 +217,7 @@ build_backend_root() {
   chmod 0755 \
     "$output_root/etc/init.d/prokop" \
     "$output_root/etc/init.d/prokop-torrserver-direct" \
+    "$output_root/etc/init.d/prokop-torrserver" \
     "$output_root/etc/init.d/prokop-killswitch" \
     "$output_root/etc/init.d/prokop-dns-failsafe" \
     "$output_root/etc/init.d/prokop-fw-watch" \

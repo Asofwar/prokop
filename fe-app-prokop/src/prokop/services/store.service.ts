@@ -221,6 +221,11 @@ export interface StoreType {
     direct_proxy_address: string;
     direct_proxy_port: string;
     torrserver_running: number;
+    torrserver_installed: number;
+    torrserver_version: string;
+    torrserver_service_running: number;
+    torrserver_foreign: number;
+    torrserver_port: string;
     torrserver_direct_available: number;
     torrserver_direct_enabled: number;
     torrserver_direct_active: number;
@@ -251,6 +256,9 @@ export interface StoreType {
     packetSteeringRestore: { loading: boolean };
     directProxyEnable: { loading: boolean };
     directProxyDisable: { loading: boolean };
+    torrserverCheck: { loading: boolean };
+    torrserverInstall: { loading: boolean };
+    torrserverRemove: { loading: boolean };
     torrserverDirectEnable: { loading: boolean };
     torrserverDirectDisable: { loading: boolean };
   };

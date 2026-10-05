@@ -970,6 +970,11 @@ export namespace Prokop {
     direct_proxy_address: string;
     direct_proxy_port: string;
     torrserver_running: 0 | 1;
+    torrserver_installed: 0 | 1;
+    torrserver_version: string;
+    torrserver_service_running: 0 | 1;
+    torrserver_foreign: 0 | 1;
+    torrserver_port: string;
     torrserver_direct_available: 0 | 1;
     torrserver_direct_enabled: 0 | 1;
     torrserver_direct_active: 0 | 1;
@@ -1051,6 +1056,7 @@ export namespace Prokop {
     | 'zapret_manager'
     | 'packet_steering'
     | 'direct_proxy'
+    | 'torrserver'
     | 'torrserver_direct';
 
   export type ComponentAction =

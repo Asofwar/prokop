@@ -123,6 +123,7 @@ define Package/prokop/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/etc/init.d/prokop $(1)/etc/init.d/prokop
 	$(INSTALL_BIN) ./files/etc/init.d/prokop-torrserver-direct $(1)/etc/init.d/prokop-torrserver-direct
+	$(INSTALL_BIN) ./files/etc/init.d/prokop-torrserver $(1)/etc/init.d/prokop-torrserver
 	$(INSTALL_BIN) ./files/etc/init.d/prokop-killswitch $(1)/etc/init.d/prokop-killswitch
 	$(INSTALL_BIN) ./files/etc/init.d/prokop-dns-failsafe $(1)/etc/init.d/prokop-dns-failsafe
 	$(INSTALL_BIN) ./files/etc/init.d/prokop-fw-watch $(1)/etc/init.d/prokop-fw-watch

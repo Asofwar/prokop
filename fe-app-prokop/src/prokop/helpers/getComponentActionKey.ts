@@ -27,6 +27,9 @@ const componentActionKeyMap: Record<string, UpdatesActionKey> = {
   'packet_steering:restore': 'packetSteeringRestore',
   'direct_proxy:enable': 'directProxyEnable',
   'direct_proxy:disable': 'directProxyDisable',
+  'torrserver:check_update': 'torrserverCheck',
+  'torrserver:install': 'torrserverInstall',
+  'torrserver:remove': 'torrserverRemove',
   'torrserver_direct:enable': 'torrserverDirectEnable',
   'torrserver_direct:disable': 'torrserverDirectDisable',
 };

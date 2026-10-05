@@ -32,7 +32,10 @@ import {
   isServiceTransitionStatus,
 } from '../diagnostic/serviceTransition';
 import { shouldApplyCompletedComponentActionResult } from './componentActionCompletion';
-import { componentActionSuccessText } from './componentActionToast';
+import {
+  componentActionFailureText,
+  componentActionSuccessText,
+} from './componentActionToast';
 import { showReleaseSelector } from './releaseSelector';
 import {
   shouldPreserveCompletedCheckResultOnNextMount,
@@ -87,6 +90,10 @@ interface ComponentCard {
   releaseUrl?: string;
   actions: ComponentActionButton[];
   copyValue?: string;
+  // A line under the header: why an action is unavailable, or where the
+  // component's own page is.
+  note?: string;
+  link?: { href: string; text: string };
 }
 
 let updatesLifecycleRegistered = false;
@@ -568,7 +575,9 @@ async function completeComponentActionJob(
     if (shouldNotify) {
       // Busy is a translated warning, not a failure (UC-119).
       showToast(
-        failureText(failure, _('Failed to execute')),
+        componentActionFailureText(
+          failureText(failure, _('Failed to execute')),
+        ),
         failureToastType(failure),
       );
     }
@@ -724,6 +733,7 @@ const REMOVABLE_COMPONENT_TITLES: Partial<
   zapret2: 'Zapret2',
   byedpi: 'ByeDPI',
   zapret_manager: 'Zapret-Manager-Stressozz',
+  torrserver: 'TorrServer',
 };
 
 function confirmComponentRemoval(button: ComponentActionButton) {
@@ -735,7 +745,12 @@ function confirmComponentRemoval(button: ComponentActionButton) {
 
   return confirmAction({
     title: _('Remove %s?').replace('%s', title),
-    message: _('The package is removed from the router.'),
+    message:
+      button.component === 'torrserver'
+        ? _(
+            'TorrServer is stopped and its program is removed. Its settings and torrent list stay on the router.',
+          )
+        : _('The package is removed from the router.'),
     consequences: isDpiProvider
       ? [_('Rules that use this provider stop bypassing DPI')]
       : undefined,
@@ -912,6 +927,11 @@ function getComponentCards(): ComponentCard[] {
     ? `${systemInfo.direct_proxy_address}:${systemInfo.direct_proxy_port || '2080'}`
     : '';
   const torrserverRunning = Boolean(systemInfo.torrserver_running);
+  const torrserverInstalled = Boolean(systemInfo.torrserver_installed);
+  const torrserverServiceRunning = Boolean(
+    systemInfo.torrserver_service_running,
+  );
+  const torrserverForeign = Boolean(systemInfo.torrserver_foreign);
   const torrserverDirectAvailable = Boolean(
     systemInfo.torrserver_direct_available,
   );
@@ -993,6 +1013,32 @@ function getComponentCards(): ComponentCard[] {
           action: 'install',
         },
       ];
+
+  const torrserverActions: ComponentActionButton[] = torrserverInstalled
+    ? [
+        ...getInstalledUpdateActions(
+          'torrserver',
+          'torrserverCheck',
+          'torrserverInstall',
+        ),
+        {
+          key: 'torrserverRemove',
+          text: _('Remove'),
+          icon: renderXIcon24,
+          component: 'torrserver',
+          action: 'remove',
+        },
+      ]
+    : [
+        {
+          ...getInstallAction('torrserver', 'torrserverInstall', false),
+          disabled: torrserverForeign,
+        },
+      ];
+  const torrserverWebUrl =
+    torrserverInstalled && torrserverServiceRunning
+      ? `http://${window.location.hostname}:${systemInfo.torrserver_port || '8090'}`
+      : '';
 
   return [
     {
@@ -1117,6 +1163,32 @@ function getComponentCards(): ComponentCard[] {
       ],
     },
     {
+      component: 'torrserver',
+      column: 2,
+      title: 'TorrServer',
+      version: systemInfoLoading
+        ? _('Loading...')
+        : torrserverInstalled
+          ? `${systemInfo.torrserver_version} · ${
+              torrserverServiceRunning ? _('Running') : _('Stopped')
+            }`
+          : torrserverForeign
+            ? _('Installed outside Prokop')
+            : _('Not installed'),
+      latestVersion: getLatestVersion('torrserver'),
+      releaseUrl: 'https://github.com/YouROK/TorrServer/releases',
+      actions: torrserverActions,
+      note:
+        !systemInfoLoading && !torrserverInstalled && torrserverForeign
+          ? _(
+              'Another TorrServer is installed or running on this router. Prokop does not replace it; remove it first to install TorrServer from Prokop.',
+            )
+          : undefined,
+      link: torrserverWebUrl
+        ? { href: torrserverWebUrl, text: _('Open TorrServer') }
+        : undefined,
+    },
+    {
       component: 'torrserver_direct',
       column: 2,
       title: _('TorrServer Direct'),
@@ -1147,6 +1219,16 @@ function getComponentCards(): ComponentCard[] {
               disabled: !torrserverDirectAvailable,
             },
       ],
+      note:
+        !systemInfoLoading &&
+        !torrserverDirectEnabled &&
+        !torrserverDirectAvailable
+          ? torrserverRunning
+            ? _(
+                'TorrServer does not run in its own service group. Install TorrServer from Prokop to use direct routing for it.',
+              )
+            : _('Install and start TorrServer to enable direct routing for it.')
+          : undefined,
     },
   ];
 }
@@ -1254,6 +1336,37 @@ function renderComponentCard(card: ComponentCard) {
         ),
       );
     }
+  }
+
+  if (card.note) {
+    detailsChildren.push(
+      E(
+        'div',
+        { class: 'fkp_updates-page__component__info-row' },
+        E(
+          'span',
+          { class: 'fkp_updates-page__component__info-label' },
+          asText(card.note),
+        ),
+      ),
+    );
+  }
+
+  if (card.link) {
+    detailsChildren.push(
+      E('div', { class: 'fkp_updates-page__component__info-row' }, [
+        E(
+          'a',
+          {
+            class: 'fkp_updates-page__component__release-version-link',
+            href: card.link.href,
+            target: '_blank',
+            rel: 'noopener noreferrer',
+          },
+          asText(card.link.text),
+        ),
+      ]),
+    );
   }
 
   const detailsContainer =

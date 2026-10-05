@@ -2422,7 +2422,8 @@ function valid_component_name(component) {
     component = normalize_component_name(component);
     return component == "prokop" || component == "sing_box" || component == "zapret" ||
         component == "zapret2" || component == "byedpi" || component == "zapret_manager" ||
-        component == "packet_steering" || component == "direct_proxy" || component == "torrserver_direct";
+        component == "packet_steering" || component == "direct_proxy" || component == "torrserver" ||
+        component == "torrserver_direct";
 }
 
 // The UI's background start refuses an action components/action.uc does not
@@ -2556,7 +2557,7 @@ function component_update_check_cache() {
     let results = [];
 
     if (enabled) {
-        for (let component in [ "prokop", "sing_box", "zapret", "zapret2", "byedpi" ]) {
+        for (let component in [ "prokop", "sing_box", "zapret", "zapret2", "byedpi", "torrserver" ]) {
             let value = read_json_file(component_update_check_cache_path(component));
             if (component_update_check_result_cacheable(value))
                 push(results, value);
@@ -2927,6 +2928,8 @@ function automatic_component_check_names() {
         push(result, "zapret2");
     if (module_success([ LIB_DIR + "/providers/byedpi/runtime.uc", "installed" ]))
         push(result, "byedpi");
+    if (module_success([ LIB_DIR + "/torrserver/manager.uc", "managed-quick" ]))
+        push(result, "torrserver");
 
     return result;
 }

@@ -29,6 +29,7 @@ const SING_BOX_BIN = env("PROKOP_SING_BOX_BIN", "/usr/bin/sing-box");
 const SING_BOX_CRONET = env("PROKOP_SING_BOX_CRONET", "/usr/lib/libcronet.so");
 const SING_BOX_MANAGED_MARKER = env("SB_MANAGED_SERVICE_MARKER", "Prokop managed sing-box service for binary variants");
 const TORRSERVER_DIRECT_INIT = env("PROKOP_TORRSERVER_DIRECT_INIT", "/etc/init.d/prokop-torrserver-direct");
+const TORRSERVER_INIT = env("PROKOP_TORRSERVER_INIT", "/etc/init.d/prokop-torrserver");
 const DNS_FAILSAFE_INIT = env("PROKOP_DNS_FAILSAFE_INIT", "/etc/init.d/prokop-dns-failsafe");
 const FW_WATCH_INIT = env("PROKOP_FW_WATCH_INIT", "/etc/init.d/prokop-fw-watch");
 const RC_D_DIR = env("PROKOP_RC_D_DIR", "/etc/rc.d");
@@ -279,6 +280,20 @@ function torrserver_direct_postinst() {
         command_success_from_args([ TORRSERVER_DIRECT_INIT, "restart" ]);
 }
 
+// TorrServer installed by Prokop runs from the package's init script: a
+// removal stops it with the script that goes. An upgrade leaves it running
+// (procd keeps the instance; streams go on), and a reinstall, whose "prerm
+// remove" stopped it, starts it again when its autostart is on.
+function stop_torrserver() {
+    if (path_exists(TORRSERVER_INIT))
+        command_success_from_args([ TORRSERVER_INIT, "stop" ]);
+}
+
+function torrserver_postinst() {
+    if (path_exists(TORRSERVER_INIT) && command_success_from_args([ TORRSERVER_INIT, "enabled" ]))
+        command_success_from_args([ TORRSERVER_INIT, "start" ]);
+}
+
 // The boot hook that hands DNS back to dnsmasq when Prokop will not start
 // (LC-1) must run whatever autostart is: always enabled. OpenWrt's default
 // postinst enables it on a first install only, build.sh's packages never.
@@ -493,6 +508,7 @@ function prerm_cleanup(action, version) {
         if (removal) {
             command_success_from_args([ "ucode", "-L", LIB_DIR, LIB_DIR + "/service/initd.uc", "clear-explicit-start" ]);
             stop_torrserver_direct();
+            stop_torrserver();
         }
         // A stop that failed or was refused (another sing-box makes
         // ownership ambiguous) may have left Prokop's nft table and ip rule
@@ -721,6 +737,7 @@ function postinst_restore() {
         return false;
     }
     torrserver_direct_postinst();
+    torrserver_postinst();
     dns_failsafe_postinst();
     fw_watch_postinst();
 

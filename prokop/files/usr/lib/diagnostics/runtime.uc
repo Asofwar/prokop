@@ -987,6 +987,9 @@ function build_system_info() {
     let torrserver_direct_status = parse_json_or_null(module_output(LIB_DIR + "/torrserver/direct.uc", [ "status" ]));
     if (type(torrserver_direct_status) != "object")
         torrserver_direct_status = {};
+    let torrserver_status = parse_json_or_null(module_output(LIB_DIR + "/torrserver/manager.uc", [ "status" ]));
+    if (type(torrserver_status) != "object")
+        torrserver_status = {};
 
     return {
         prokop_version: PROKOP_VERSION,
@@ -1011,6 +1014,11 @@ function build_system_info() {
         direct_proxy_address,
         direct_proxy_port,
         torrserver_running: int(torrserver_direct_status.running || 0),
+        torrserver_installed: int(torrserver_status.installed || 0),
+        torrserver_version: "" + (torrserver_status.version || ""),
+        torrserver_service_running: int(torrserver_status.running || 0),
+        torrserver_foreign: int(torrserver_status.foreign || 0),
+        torrserver_port: "" + (torrserver_status.port || ""),
         torrserver_direct_available: int(torrserver_direct_status.available || 0),
         torrserver_direct_enabled: int(torrserver_direct_status.enabled || 0),
         torrserver_direct_active: int(torrserver_direct_status.active || 0),

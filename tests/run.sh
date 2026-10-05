@@ -382,6 +382,7 @@ HOST_ROOT=${PROKOP_TEST_HOST_ROOT:-}
 HOST_PATHS=(etc/prokop etc/prokop-backups etc/config etc/sing-box etc/crontabs
   etc/opkg etc/apk etc/rc.d etc/uci-defaults etc/hotplug.d
   etc/init.d/prokop etc/init.d/prokop-killswitch etc/init.d/prokop-torrserver-direct
+  etc/init.d/prokop-torrserver opt/torrserver
   etc/init.d/sing-box usr/bin/prokop usr/lib/prokop usr/share/prokop
   usr/libexec/prokop-ro run/prokop var/run/prokop tmp/.uci)
 

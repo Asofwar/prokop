@@ -441,6 +441,11 @@ run() {
         "$ROOT/etc/init.d/prokop-fw-watch" stop || true
         "$ROOT/etc/init.d/prokop-fw-watch" disable || true
     fi
+    # TorrServer installed by Prokop goes with it (below); its service first.
+    if [ -x "$ROOT/etc/init.d/prokop-torrserver" ]; then
+        "$ROOT/etc/init.d/prokop-torrserver" stop || true
+        "$ROOT/etc/init.d/prokop-torrserver" disable || true
+    fi
     # The package's second service: its stop removes its nft table (UC-083).
     if [ -x "$ROOT/etc/init.d/prokop-torrserver-direct" ]; then
         "$ROOT/etc/init.d/prokop-torrserver-direct" stop
@@ -497,7 +502,7 @@ run() {
         /etc/config/sing-box.opkg-old /etc/config/sing-box.opkg-dist \
         /usr/bin/prokop /usr/libexec/prokop-ro /usr/bin/sing-box /usr/lib/libcronet.so \
         /etc/init.d/prokop /etc/init.d/prokop-killswitch /etc/init.d/prokop-torrserver-direct \
-        /etc/init.d/prokop-dns-failsafe /etc/init.d/prokop-fw-watch \
+        /etc/init.d/prokop-torrserver /etc/init.d/prokop-dns-failsafe /etc/init.d/prokop-fw-watch \
         /etc/init.d/sing-box /etc/uci-defaults/50_luci-prokop \
         /usr/share/luci/menu.d/luci-app-prokop.json /usr/share/rpcd/acl.d/luci-app-prokop.json \
         /usr/share/nftables.d/ruleset-post/90-prokop-killswitch-loader.nft \
@@ -513,6 +518,16 @@ run() {
             rm -f "$ROOT$launcher"
         fi
     done
+    # The TorrServer binary Prokop installed, while it is still the one its
+    # marker names. Its settings and torrent list (the database next to it)
+    # stay; a TorrServer installed by other means is not touched.
+    torrserver_dir="$ROOT/opt/torrserver"
+    if [ -f "$torrserver_dir/prokop-managed.json" ] && [ -f "$torrserver_dir/torrserver" ]; then
+        torrserver_sha="$(sha256sum "$torrserver_dir/torrserver" | cut -d' ' -f1)"
+        if [ -n "$torrserver_sha" ] && grep -Fq "\"$torrserver_sha\"" "$torrserver_dir/prokop-managed.json"; then
+            rm -f "$torrserver_dir/torrserver" "$torrserver_dir/prokop-managed.json"
+        fi
+    fi
     remove_backups
     # The rc.d links of the removed services. The disable of a release whose
     # TorrServer Direct had START=100 and STOP=9 never removed its links
@@ -521,6 +536,7 @@ run() {
         "$ROOT"/etc/rc.d/[SK][0-9][0-9]prokop-dns-failsafe \
         "$ROOT"/etc/rc.d/[SK][0-9][0-9]prokop-fw-watch \
         "$ROOT"/etc/rc.d/[SK][0-9][0-9]prokop-torrserver-direct \
+        "$ROOT"/etc/rc.d/[SK][0-9][0-9]prokop-torrserver \
         "$ROOT/etc/rc.d/S100prokop-torrserver-direct" "$ROOT/etc/rc.d/K9prokop-torrserver-direct"
     # Whatever the kill-switch left (its removal above failed or an older
     # Prokop never lifted it) must not outlive the product (UC-191).
