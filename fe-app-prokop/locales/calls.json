@@ -2194,7 +2194,7 @@
     "call": "Changes",
     "key": "Changes",
     "places": [
-      "src/prokop/tabs/history/initController.ts:720"
+      "src/prokop/tabs/history/initController.ts:726"
     ]
   },
   {
@@ -2616,7 +2616,7 @@
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:342",
       "src/prokop/tabs/history/initController.ts:176",
-      "src/prokop/tabs/history/initController.ts:668"
+      "src/prokop/tabs/history/initController.ts:674"
     ]
   },
   {
@@ -2626,9 +2626,9 @@
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3738",
       "src/partials/modal/renderModal.ts:284",
       "src/prokop/tabs/autotune/initController.ts:826",
-      "src/prokop/tabs/history/initController.ts:316",
       "src/prokop/tabs/dashboard/initController.ts:1316",
       "src/prokop/tabs/dashboard/initController.ts:1717",
+      "src/prokop/tabs/history/initController.ts:316",
       "src/prokop/tabs/updates/releaseSelector.ts:151"
     ]
   },
@@ -3104,7 +3104,7 @@
     "call": "Could not load configuration snapshots",
     "key": "Could not load configuration snapshots",
     "places": [
-      "src/prokop/tabs/history/initController.ts:678"
+      "src/prokop/tabs/history/initController.ts:684"
     ]
   },
   {
@@ -3266,7 +3266,7 @@
     "call": "Create snapshot",
     "key": "Create snapshot",
     "places": [
-      "src/prokop/tabs/history/initController.ts:650"
+      "src/prokop/tabs/history/initController.ts:656"
     ]
   },
   {
@@ -3421,7 +3421,7 @@
     "call": "Delete…",
     "key": "Delete…",
     "places": [
-      "src/prokop/tabs/history/initController.ts:734"
+      "src/prokop/tabs/history/initController.ts:740"
     ]
   },
   {
@@ -5279,7 +5279,7 @@
     "call": "History: %d to %d records. Snapshots: %d to %d, two places of them stay for the automatic snapshots taken before a restore, Save & Apply or autotune. Older records and automatic snapshots beyond the limits are deleted automatically; manual and protected snapshots are never deleted automatically.",
     "key": "History: %d to %d records. Snapshots: %d to %d, two places of them stay for the automatic snapshots taken before a restore, Save & Apply or autotune. Older records and automatic snapshots beyond the limits are deleted automatically; manual and protected snapshots are never deleted automatically.",
     "places": [
-      "src/prokop/tabs/history/initController.ts:607"
+      "src/prokop/tabs/history/initController.ts:613"
     ]
   },
   {
@@ -6429,7 +6429,7 @@
     "call": "Keep history records",
     "key": "Keep history records",
     "places": [
-      "src/prokop/tabs/history/initController.ts:581"
+      "src/prokop/tabs/history/initController.ts:587"
     ]
   },
   {
@@ -6443,7 +6443,7 @@
     "call": "Keep snapshots",
     "key": "Keep snapshots",
     "places": [
-      "src/prokop/tabs/history/initController.ts:588"
+      "src/prokop/tabs/history/initController.ts:594"
     ]
   },
   {
@@ -6553,7 +6553,7 @@
     "call": "Last known good",
     "key": "Last known good",
     "places": [
-      "src/prokop/tabs/history/initController.ts:707",
+      "src/prokop/tabs/history/initController.ts:713",
       "src/prokop/tabs/history/model.ts:342"
     ]
   },
@@ -6797,12 +6797,12 @@
       "src/prokop/tabs/autotune/render.ts:26",
       "src/prokop/tabs/autotune/render.ts:30",
       "src/prokop/tabs/autotune/render.ts:34",
+      "src/prokop/tabs/dashboard/overview.ts:515",
+      "src/prokop/tabs/dashboard/render.ts:16",
       "src/prokop/tabs/history/render.ts:14",
       "src/prokop/tabs/history/render.ts:20",
       "src/prokop/tabs/history/render.ts:34",
       "src/prokop/tabs/history/render.ts:39",
-      "src/prokop/tabs/dashboard/overview.ts:515",
-      "src/prokop/tabs/dashboard/render.ts:16",
       "src/prokop/tabs/diagnostic/initController.ts:741"
     ]
   },
@@ -7367,8 +7367,8 @@
     "call": "No events recorded yet",
     "key": "No events recorded yet",
     "places": [
-      "src/prokop/tabs/history/initController.ts:233",
-      "src/prokop/tabs/dashboard/overviewCards.ts:339"
+      "src/prokop/tabs/dashboard/overviewCards.ts:339",
+      "src/prokop/tabs/history/initController.ts:233"
     ]
   },
   {
@@ -7411,8 +7411,8 @@
     "call": "No reload recorded yet",
     "key": "No reload recorded yet",
     "places": [
-      "src/prokop/tabs/history/model.ts:152",
-      "src/prokop/tabs/dashboard/overview.ts:410"
+      "src/prokop/tabs/dashboard/overview.ts:410",
+      "src/prokop/tabs/history/model.ts:152"
     ]
   },
   {
@@ -7463,7 +7463,7 @@
     "call": "No snapshots yet",
     "key": "No snapshots yet",
     "places": [
-      "src/prokop/tabs/history/initController.ts:746"
+      "src/prokop/tabs/history/initController.ts:752"
     ]
   },
   {
@@ -7794,7 +7794,7 @@
     "call": "Nothing to delete: only manual and protected snapshots are left.",
     "key": "Nothing to delete: only manual and protected snapshots are left.",
     "places": [
-      "src/prokop/tabs/history/initController.ts:663",
+      "src/prokop/tabs/history/initController.ts:669",
       "src/prokop/tabs/history/model.ts:1042"
     ]
   },
@@ -8140,8 +8140,8 @@
     "call": "Other",
     "key": "Other",
     "places": [
-      "src/prokop/tabs/history/model.ts:351",
-      "src/prokop/tabs/monitoring/connectionView.ts:122"
+      "src/prokop/tabs/monitoring/connectionView.ts:122",
+      "src/prokop/tabs/history/model.ts:351"
     ]
   },
   {
@@ -9702,7 +9702,7 @@
     "call": "Restore…",
     "key": "Restore…",
     "places": [
-      "src/prokop/tabs/history/initController.ts:727"
+      "src/prokop/tabs/history/initController.ts:733"
     ]
   },
   {
@@ -10156,9 +10156,9 @@
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3747",
       "src/prokop/tabs/autotune/initController.ts:562",
       "src/prokop/tabs/autotune/initController.ts:764",
+      "src/prokop/tabs/dashboard/initController.ts:1448",
       "src/prokop/tabs/history/initController.ts:474",
-      "src/prokop/tabs/history/initController.ts:601",
-      "src/prokop/tabs/dashboard/initController.ts:1448"
+      "src/prokop/tabs/history/initController.ts:607"
     ]
   },
   {
@@ -10619,7 +10619,7 @@
     "call": "Show all",
     "key": "Show all",
     "places": [
-      "src/prokop/tabs/history/initController.ts:767"
+      "src/prokop/tabs/history/initController.ts:773"
     ]
   },
   {
@@ -10633,7 +10633,7 @@
     "call": "Show fewer",
     "key": "Show fewer",
     "places": [
-      "src/prokop/tabs/history/initController.ts:767"
+      "src/prokop/tabs/history/initController.ts:773"
     ]
   },
   {
@@ -10662,9 +10662,9 @@
     "call": "Shown %d of %d",
     "key": "Shown %d of %d",
     "places": [
+      "src/prokop/tabs/monitoring/initController.ts:784",
       "src/prokop/tabs/history/initController.ts:242",
-      "src/prokop/tabs/history/initController.ts:753",
-      "src/prokop/tabs/monitoring/initController.ts:784"
+      "src/prokop/tabs/history/initController.ts:759"
     ]
   },
   {
@@ -10762,7 +10762,7 @@
     "call": "Snapshot actions",
     "key": "Snapshot actions",
     "places": [
-      "src/prokop/tabs/history/initController.ts:725"
+      "src/prokop/tabs/history/initController.ts:731"
     ]
   },
   {

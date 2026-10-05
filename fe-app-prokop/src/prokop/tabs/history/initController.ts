@@ -569,7 +569,13 @@ function renderRetention(force = false) {
   };
   const update = (patch: Partial<{ history: string; snapshots: string }>) => {
     retentionDraft = { ...draft, ...retentionDraft, ...patch };
-    retentionError = '';
+    // An error said about the previous value goes once the user edits it.
+    if (retentionError) {
+      retentionError = '';
+      document
+        .querySelector('#history-retention .fkp-history__error')
+        ?.remove();
+    }
   };
 
   replace(
