@@ -8,6 +8,7 @@ let runtime_dns = require("singbox.dns");
 let managed_service = require("singbox.managed_service");
 let legacy_forkop = require("core.legacy_forkop");
 let listen_address = require("singbox.listen_address");
+let identity = require("core.process_identity");
 
 const CONFIG_NAME = getenv("PROKOP_CONFIG_NAME") || "prokop";
 // Test-only config preparation failure injection. Empty in production.
@@ -42,6 +43,9 @@ const NFT_LOCALV6_SET_NAME = getenv("NFT_LOCALV6_SET_NAME") || "localv6";
 const NFT_FAKEIP_MARK = getenv("NFT_FAKEIP_MARK") || "0x04000000";
 const SB_SERVICE_MIXED_INBOUND_ADDRESS = getenv("SB_SERVICE_MIXED_INBOUND_ADDRESS") || "127.0.0.1";
 const SB_SERVICE_MIXED_INBOUND_PORT = getenv("SB_SERVICE_MIXED_INBOUND_PORT") || "4534";
+const LIST_BOOTSTRAP_DIR = getenv("PROKOP_LIST_BOOTSTRAP_DIR") || RUNTIME_STATE_DIR + "/list-bootstrap";
+// Tenths of a second the temporary sing-box gets to start listening.
+const LIST_BOOTSTRAP_START_WAIT = int(getenv("PROKOP_LIST_BOOTSTRAP_START_WAIT") || "300");
 const SB_VARIANT_STATE_FILE = getenv("SB_VARIANT_STATE_FILE") || "/etc/prokop/sing-box-variant";
 const SB_VERSION_STATE_FILE = getenv("SB_VERSION_STATE_FILE") || "/etc/prokop/sing-box-version";
 const SB_MANAGED_SERVICE_MARKER = getenv("SB_MANAGED_SERVICE_MARKER") || "Prokop managed sing-box service for binary variants";
@@ -926,6 +930,114 @@ function init_config(populate_nft, caches_prepared, no_refresh, prepared_deferre
     print(deferred_sections, "\n");
 }
 
+// A9: the temporary sing-box a start runs while it downloads the first list
+// generation through a rule's proxy (singbox/generator.uc
+// generate_list_bootstrap_config). It listens only on the lists service
+// proxy and is stopped before the real sing-box starts.
+function list_bootstrap_config_path() {
+    return LIST_BOOTSTRAP_DIR + "/config.json";
+}
+
+function list_bootstrap_argv() {
+    return [ "sing-box", "run", "-c", list_bootstrap_config_path(), "-D", LIST_BOOTSTRAP_DIR ];
+}
+
+function list_bootstrap_pause() {
+    command_success_from_args([ "sleep", "0.1" ]);
+}
+
+// Stops the temporary sing-box this or an earlier start left, only when the
+// recorded process still is that sing-box, and removes its files.
+function list_bootstrap_stop() {
+    let pid_file = LIST_BOOTSTRAP_DIR + "/sing-box.pid";
+    let saved = identity.read_record(pid_file);
+    let argv = list_bootstrap_argv();
+    if (saved != null && identity.matches_record(saved, "sing-box", argv, true, true) != "") {
+        identity.signal_record(saved, "sing-box", argv, true, "TERM");
+        for (let i = 0; i < 50 && identity.matches_record(saved, "sing-box", argv, true, true) != ""; i++)
+            list_bootstrap_pause();
+        if (identity.matches_record(saved, "sing-box", argv, true, true) != "") {
+            identity.signal_record(saved, "sing-box", argv, true, "KILL");
+            for (let i = 0; i < 20 && identity.matches_record(saved, "sing-box", argv, true, true) != ""; i++)
+                list_bootstrap_pause();
+        }
+        if (identity.matches_record(saved, "sing-box", argv, true, true) != "") {
+            log_message("The temporary sing-box for the list download (pid " + saved.pid + ") did not stop", "error");
+            return false;
+        }
+    }
+    command_success_from_args([ "rm", "-rf", LIST_BOOTSTRAP_DIR ]);
+    return true;
+}
+
+function list_bootstrap_fail(message, log_path) {
+    log_message(message, "error");
+    if (log_path != null)
+        log_file_lines(log_path, "error", "temporary sing-box: ");
+    list_bootstrap_stop();
+    return false;
+}
+
+function list_bootstrap_start() {
+    let settings = uci_settings();
+    let section = download_via_proxy_section(settings, "lists");
+    if (section == "")
+        return true;
+    if (!list_bootstrap_stop())
+        return false;
+    if (!ensure_dir(LIST_BOOTSTRAP_DIR) || !fs.chmod(LIST_BOOTSTRAP_DIR, 0700))
+        return list_bootstrap_fail("Cannot create " + LIST_BOOTSTRAP_DIR + " for the temporary sing-box");
+
+    let deferred_sections = prepare_subscription_caches(true, true);
+    if (deferred_sections == null)
+        return list_bootstrap_fail("Subscription caches are not ready for the temporary sing-box");
+
+    let log_path = LIST_BOOTSTRAP_DIR + "/sing-box.log";
+    let mwan3_active = module_success([ LIB_DIR + "/config/validator.uc", "mwan3-is-active" ]);
+    let status = command_status(
+        module_command([
+            LIB_DIR + "/singbox/generator.uc",
+            "generate-list-bootstrap-config",
+            list_bootstrap_config_path(),
+            service_listen_address_value(settings, true),
+            mwan3_active ? "1" : "0",
+            sing_box_is_extended(sing_box_version()) ? "1" : "0",
+            trim(as_string(deferred_sections)),
+            sing_box_version(),
+            LIST_BOOTSTRAP_DIR + "/generation"
+        ]) + " >" + shell_quote(log_path) + " 2>&1"
+    );
+    if (status != 0)
+        return list_bootstrap_fail("Cannot generate the temporary sing-box configuration: " + generator_failure_reason(log_path, status));
+    let check = sing_box_check(list_bootstrap_config_path(), log_path);
+    if (check.status != 0)
+        return list_bootstrap_fail("The temporary sing-box configuration is invalid: " + check.reason);
+
+    let pipe = fs.popen(command_from_args(list_bootstrap_argv()) + " >" + shell_quote(log_path) +
+        " 2>&1 </dev/null & echo $!", "r");
+    let pid = pipe ? trim(as_string(pipe.read("all"))) : "";
+    if (pipe)
+        pipe.close();
+    if (match(pid, /^[1-9][0-9]*$/) == null)
+        return list_bootstrap_fail("Cannot start the temporary sing-box", log_path);
+    if (!identity.record(LIST_BOOTSTRAP_DIR + "/sing-box.pid", pid)) {
+        command_success_from_args([ "kill", "-9", pid ]);
+        return list_bootstrap_fail("Cannot record the temporary sing-box process", log_path);
+    }
+
+    let argv = list_bootstrap_argv();
+    for (let i = 0; i < LIST_BOOTSTRAP_START_WAIT; i++) {
+        if (index(as_string(fs.readfile(log_path) || ""), "sing-box started") >= 0) {
+            log_message("Started a temporary sing-box to download the lists through rule " + section, "info");
+            return true;
+        }
+        if (identity.matches(LIST_BOOTSTRAP_DIR + "/sing-box.pid", "sing-box", argv, true, true) == "")
+            break;
+        list_bootstrap_pause();
+    }
+    return list_bootstrap_fail("The temporary sing-box for the list download did not start", log_path);
+}
+
 let mode = ARGV[0] || "";
 
 if (mode == "configure-service")
@@ -954,6 +1066,10 @@ else if (mode == "generator-failure-reason-fixture")
     print(generator_failure_reason(ARGV[1] || "", int(ARGV[2] || "1")), "\n");
 else if (mode == "patch-dns-config")
     patch_dns_config(ARGV[1] || "");
+else if (mode == "list-bootstrap-start")
+    exit(list_bootstrap_start() ? 0 : 1);
+else if (mode == "list-bootstrap-stop")
+    exit(list_bootstrap_stop() ? 0 : 1);
 else if (mode == "restore-dns-config")
     exit(restore_dns_config(ARGV[1] || "") ? 0 : 1);
 else if (mode == "managed-service-installed")

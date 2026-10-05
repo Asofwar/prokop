@@ -34,6 +34,7 @@ const SYSTEM_INFO_CACHE_FILE = getenv("PROKOP_SYSTEM_INFO_CACHE_FILE") || RUNTIM
 const RELOAD_STATE_FILE = getenv("PROKOP_RELOAD_STATE_FILE") || RUNTIME_STATE_DIR + "/reload-state";
 const RELOAD_STATE_SNAPSHOT_FILE = getenv("PROKOP_RELOAD_STATE_SNAPSHOT_FILE") || RUNTIME_STATE_DIR + "/reload-state.snapshot." + clock()[0] + "." + clock()[1];
 const PENDING_RELOAD_FILE = getenv("PROKOP_PENDING_RELOAD_FILE") || RUNTIME_STATE_DIR + "/reload.pending";
+const LIST_BOOTSTRAP_DIR = getenv("PROKOP_LIST_BOOTSTRAP_DIR") || RUNTIME_STATE_DIR + "/list-bootstrap";
 const LIST_UPDATE_RELOAD_FILE = getenv("PROKOP_LIST_UPDATE_RELOAD_FILE") || RUNTIME_STATE_DIR + "/list-update.reload";
 // Present while the live nft table lacks the list generation of the current
 // configuration: a start without it, or a reload that left the rebuild to
@@ -1177,11 +1178,28 @@ function start_main() {
     // Materialized list data is an explicit generation.  A source-backed
     // policy may not start from missing or invalid list data: that would
     // silently turn protected IP traffic into final/direct traffic.
+    // A temporary list sing-box a start that died left behind would hold
+    // the service proxy port of the real one.
+    if (fs.stat(LIST_BOOTSTRAP_DIR) != null && !module_success(SINGBOX_UC, [ "list-bootstrap-stop" ])) {
+        log_message("A temporary sing-box left by an earlier start did not stop. Aborted.", "fatal");
+        return 1;
+    }
     let has_list_sources = module_success(STATE_UC, [ "has-list-update-sources" ]);
     if (has_list_sources && !module_success(UPDATES_UC, [ "restore-list-cache" ])) {
         log_message("Preparing the initial list generation before starting routing", "info");
-        if (!module_success(UPDATES_UC, [ "prepare-list-cache" ]) ||
-            !module_success(UPDATES_UC, [ "restore-list-cache" ])) {
+        // With lists downloaded through a rule's proxy, that proxy is part of
+        // the sing-box this start has not started yet: a temporary sing-box
+        // serves it for the download and is stopped before routing starts
+        // (A9). Without one the download fails and the start with it.
+        let bootstrap_started = module_success(SINGBOX_UC, [ "list-bootstrap-start" ]);
+        if (!bootstrap_started)
+            log_message("The temporary sing-box for the list download did not start; the download through the rule's proxy needs it", "warn");
+        let prepared = module_success(UPDATES_UC, [ "prepare-list-cache" ]);
+        if (!module_success(SINGBOX_UC, [ "list-bootstrap-stop" ])) {
+            log_message("The temporary sing-box for the list download did not stop. Aborted.", "fatal");
+            return 1;
+        }
+        if (!prepared || !module_success(UPDATES_UC, [ "restore-list-cache" ])) {
             log_message("No valid active list generation is available. Aborted rather than starting a partial routing policy.", "fatal");
             return 1;
         }

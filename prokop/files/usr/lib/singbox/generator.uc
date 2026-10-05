@@ -3094,6 +3094,19 @@ function enabled_sections(deferred_sections) {
     return result;
 }
 
+function apply_sing_box_version(config, sing_box_version) {
+    let version_parts = match(as_string(sing_box_version), /^v?([0-9]+)\.([0-9]+)\./);
+    let extended_parts = match(as_string(sing_box_version), /-extended-([0-9]+)\.([0-9]+)\.([0-9]+)/);
+    runtime_extended_version = extended_parts != null
+        ? [ int(extended_parts[1]), int(extended_parts[2]), int(extended_parts[3]) ]
+        : null;
+    runtime_supports_dns_response_matching = version_parts != null &&
+        (int(version_parts[1]) > 1 || (int(version_parts[1]) == 1 && int(version_parts[2]) >= 14));
+    if (version_parts != null && (int(version_parts[1]) > 1 ||
+        (int(version_parts[1]) == 1 && int(version_parts[2]) >= 14)))
+        delete config.dns.independent_cache;
+}
+
 function generate_config(output_path, service_address, mwan3_active, supports_xhttp, deferred_sections, sing_box_version) {
     priority_probes = [];
     runtime_supports_xhttp = supports_xhttp == null || as_string(supports_xhttp) == ""
@@ -3113,16 +3126,7 @@ function generate_config(output_path, service_address, mwan3_active, supports_xh
         mwan3_active: cli_bool(mwan3_active),
         source_aware_dns: length(source_aware_dns) > 0
     });
-    let version_parts = match(as_string(sing_box_version), /^v?([0-9]+)\.([0-9]+)\./);
-    let extended_parts = match(as_string(sing_box_version), /-extended-([0-9]+)\.([0-9]+)\.([0-9]+)/);
-    runtime_extended_version = extended_parts != null
-        ? [ int(extended_parts[1]), int(extended_parts[2]), int(extended_parts[3]) ]
-        : null;
-    runtime_supports_dns_response_matching = version_parts != null &&
-        (int(version_parts[1]) > 1 || (int(version_parts[1]) == 1 && int(version_parts[2]) >= 14));
-    if (version_parts != null && (int(version_parts[1]) > 1 ||
-        (int(version_parts[1]) == 1 && int(version_parts[2]) >= 14)))
-        delete config.dns.independent_cache;
+    apply_sing_box_version(config, sing_box_version);
     add_source_aware_dns_support(config, source_aware_dns);
     let taken = reserved_runtime_tag_set(config.outbounds);
     reserve_section_outbound_tags(sections, taken);
@@ -3137,6 +3141,69 @@ function generate_config(output_path, service_address, mwan3_active, supports_xh
     add_priority_probe_inbounds(config);
     for (let section in sections)
         add_mixed_proxy_for_section(config, section, service_address);
+
+    assert_unique_outbound_tags(config);
+    strip_internal_fields(config);
+    if (!common.write_private_json_file(output_path, config)) {
+        warn("failed to write ", output_path, "\n");
+        exit(1);
+    }
+}
+
+// A9: the first start without a list cache, with lists downloaded through a
+// rule's proxy. The list generation must exist before routing starts, and
+// the service proxy it downloads through is part of the sing-box that
+// starts after it. This config is a temporary sing-box for that download
+// only: the outbounds of the enabled rules, DNS, and the lists service
+// proxy inbound routed to the configured rule. No transparent proxy, DNS or
+// other inbounds, no route or DNS rules (their rule sets are the lists that
+// do not exist yet), no Clash API and no cache file. Generation side files
+// (rule sets, section caches) go to scratch_dir, not to the runtime
+// directories the real start fills afterwards.
+function generate_list_bootstrap_config(output_path, service_address, mwan3_active, supports_xhttp, deferred_sections, sing_box_version, scratch_dir) {
+    if (as_string(scratch_dir) == "")
+        runtime_generate_unsupported("list bootstrap scratch directory is not set");
+    runtime_subscription.set_section_cache_dir(scratch_dir + "/section-cache");
+    runtime_ruleset_folder = scratch_dir + "/rulesets";
+    runtime_supports_xhttp = supports_xhttp == null || as_string(supports_xhttp) == ""
+        ? true
+        : cli_bool(supports_xhttp);
+    let cursor = uci_cursor();
+    cursor.load(CONFIG_NAME);
+    runtime_settings_cache = object_or_empty(cursor.get_all(CONFIG_NAME, "settings"));
+    let settings = runtime_settings_cache;
+    let detour = download_detour_tag(settings, "lists");
+    if (detour == "")
+        runtime_generate_unsupported("lists are not downloaded through a proxy");
+
+    let sections = enabled_sections(deferred_sections);
+    let config = base_config(settings, service_address, { mwan3_active: cli_bool(mwan3_active) });
+    apply_sing_box_version(config, sing_box_version);
+    let taken = reserved_runtime_tag_set(config.outbounds);
+    reserve_section_outbound_tags(sections, taken);
+    for (let section in sections)
+        add_outbound_for_section(config, section, taken, sections);
+    let present = false;
+    for (let outbound in config.outbounds)
+        if (outbound.tag == detour)
+            present = true;
+    for (let endpoint in config.endpoints)
+        if (endpoint.tag == detour)
+            present = true;
+    if (!present)
+        runtime_generate_unsupported("the rule lists are downloaded through has no outbound");
+
+    config.inbounds = [];
+    config.route.rules = [];
+    config.route.rule_set = [];
+    config.dns.rules = [];
+    config.services = [];
+    config.experimental = {};
+    // "sing-box started" is an info line: the start waits for it.
+    config.log = { disabled: false, level: "info", timestamp: false };
+    // The port the list download reaches it on (components/updates.uc).
+    add_service_mixed_proxy_inbound(config, runtime_constants.SERVICE_MIXED_INBOUND_TAG,
+        int(getenv("SB_SERVICE_MIXED_INBOUND_PORT") || runtime_constants.SERVICE_MIXED_INBOUND_PORT), detour);
 
     assert_unique_outbound_tags(config);
     strip_internal_fields(config);
@@ -3270,6 +3337,13 @@ if (mode == "generate-config")
     generate_config(ARGV[1], ARGV[2], ARGV[3], ARGV[4], ARGV[5] || "", ARGV[6] || "");
 else if (mode == "generate-config-fixture")
     generate_config_fixture(ARGV[1], ARGV[2], ARGV[3], ARGV[4], ARGV[5], ARGV[6] || "", ARGV[7] || "");
+else if (mode == "generate-list-bootstrap-config")
+    generate_list_bootstrap_config(ARGV[1], ARGV[2], ARGV[3], ARGV[4], ARGV[5] || "", ARGV[6] || "", ARGV[7] || "");
+else if (mode == "generate-list-bootstrap-config-fixture") {
+    use_fixture_cursor(ARGV[1]);
+    urltest_seed_file = "";
+    generate_list_bootstrap_config(ARGV[2], ARGV[3], ARGV[4], ARGV[5], ARGV[6] || "", ARGV[7] || "", ARGV[8] || "");
+}
 else if (mode == "stdin-length")
     stdin_length();
 else if (mode == "stdin-contains")
