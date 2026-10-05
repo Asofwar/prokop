@@ -15,7 +15,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK="$(mktemp -d)"
-trap 'rm -rf "${WORK:?}"' EXIT
+trap 'kill $(cat "$WORK/hang-pids" 2>/dev/null) 2>/dev/null; rm -rf "${WORK:?}"' EXIT
 trap 'exit 1' HUP INT TERM
 
 fail() {
@@ -78,10 +78,11 @@ cat >"$WORK/bin/curl" <<'SH'
 #!/bin/sh
 out=""
 url=""
+printf '%s\n' "$*" >>"$TEST_WORK/curl-args"
 while [ "$#" -gt 0 ]; do
   case "$1" in
     -o) out="$2"; shift 2 ;;
-    -x|-m|--connect-timeout|--speed-time|--speed-limit) shift 2 ;;
+    -x|-m|--connect-timeout|--speed-time|--speed-limit|--max-filesize) shift 2 ;;
     -*) shift ;;
     *) url="$1"; shift ;;
   esac
@@ -93,6 +94,10 @@ case "$url" in
   *) exit 6 ;;
 esac
 [ -f "$src" ] || exit 22
+if [ -n "$out" ] && [ -n "${TEST_HANG:-}" ] && [ "${url#https://github.com/YouROK/TorrServer/releases/download/}" != "$url" ]; then
+  printf '%s\n' "$$" >>"$TEST_WORK/hang-pids"
+  exec sleep 300
+fi
 if [ -n "$out" ] && [ -n "${TEST_SLOW:-}" ] && [ "${url#https://github.com/YouROK/TorrServer/releases/download/}" != "$url" ]; then
   size="$(wc -c <"$src")"; third=$(( (size + 2) / 3 ))
   : >"$out"
@@ -291,5 +296,27 @@ done
 [ "$(json_get "$WORK/status" 'v.progress.stages.map(s => s.id).join(" ")')" = "resolve download verify" ] ||
   fail "a failure must report only the stages it reached: $(json_get "$WORK/status" 'v.progress.stages')"
 "$BIN" --version | grep -Fxq "TorrServer MatriX.146" || fail "a failed update must keep the installed release"
+
+# --- 4. The deadline of a stalled download kills the download itself (PRG-5) --------
+# The published size caps the transfer (curl --max-filesize).
+grep -Fq -- "--max-filesize $size " "$WORK/curl-args" ||
+  fail "the published size must cap the download: $(grep -F TorrServer-linux-arm64 "$WORK/curl-args" | head -n 2)"
+make_asset MatriX.148
+make_release MatriX.148
+: >"$WORK/hang-pids"
+TEST_HANG=1 PROKOP_COMPONENT_DOWNLOAD_TIMEOUT=1 PROKOP_DOWNLOAD_DEADLINE_SLACK=0 \
+  updates component-action-async torrserver install >"$WORK/start"
+job="$(json_get "$WORK/start" v.job_id)"
+for _ in $(seq 1 100); do
+  updates component-action-status "$job" >"$WORK/status"
+  [ "$(json_get "$WORK/status" v.running)" = true ] || break
+  sleep 0.3
+done
+[ "$(json_get "$WORK/status" v.running)" = false ] || fail "a stalled download did not end at its deadline: $(cat "$WORK/status")"
+[ "$(json_get "$WORK/status" v.success)" = false ] || fail "a stalled download must fail: $(cat "$WORK/status")"
+[ -s "$WORK/hang-pids" ] || fail "the stalled download never started"
+while read -r pid; do
+  if kill -0 "$pid" 2>/dev/null; then fail "the stalled download $pid outlived its deadline"; fi
+done <"$WORK/hang-pids"
 
 printf 'component action progress checks passed\n'

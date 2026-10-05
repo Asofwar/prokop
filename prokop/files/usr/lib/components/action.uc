@@ -954,42 +954,58 @@ function service_proxy_address() {
 // OUTPUT_PATH once a second until it exits; its exit status, or 1 when it
 // cannot be followed. A download that outlives its own timeout by a margin
 // is stopped, after its identity is checked.
+// The download runs in the background of a subshell that records its pid and
+// waits for it: on the deadline the download itself is killed, not only the
+// subshell, which left curl or wget running as an orphan (PRG-5). The
+// deadline is on the monotonic clock: an NTP step right after boot must not
+// cut a transfer as stalled (PRG-2). The poll sleeps in-process instead of
+// forking sleep(1) every second.
+const DOWNLOAD_DEADLINE_SLACK = int(getenv("PROKOP_DOWNLOAD_DEADLINE_SLACK") || "30");
+
 function download_status_watched(command, output_path, timeout, watch) {
     let rc_file = make_tmp_file("download-rc");
     if (rc_file == "")
         return command_status(command);
     remove_file(rc_file);
-    let pid = trim(command_output("sh -c " + shell_quote("(" + command + " >/dev/null 2>&1; echo $? >" + shell_quote(rc_file) +
-        ") </dev/null >/dev/null 2>&1 & echo $!")));
-    if (match(pid, /^[1-9][0-9]*$/) == null)
+    let pid_file = rc_file + ".pid";
+    remove_file(pid_file);
+    let pid = trim(command_output("sh -c " + shell_quote("(" + command + " >/dev/null 2>&1 </dev/null & echo $! >" + shell_quote(pid_file) +
+        "; wait $!; echo $? >" + shell_quote(rc_file) + ") </dev/null >/dev/null 2>&1 & echo $!")));
+    if (match(pid, /^[1-9][0-9]*$/) == null) {
+        remove_file(pid_file);
         return 1;
+    }
     let ticks = process_identity.start_ticks(pid);
-    let deadline = now_seconds() + int(timeout) + 30;
+    let deadline = clock(true)[0] + int(timeout) + DOWNLOAD_DEADLINE_SLACK;
     let reported = -1;
+    let finish = (rc) => {
+        remove_file(rc_file);
+        remove_file(pid_file);
+        return rc;
+    };
     for (;;) {
         let rc = trim(read_file(rc_file));
-        if (match(rc, /^[0-9]+$/) != null) {
-            remove_file(rc_file);
-            return int(rc);
-        }
+        if (match(rc, /^[0-9]+$/) != null)
+            return finish(int(rc));
         let alive = ticks != "" && process_identity.start_ticks(pid) == ticks;
         if (!alive) {
             // It may have written the status just before it exited.
             rc = trim(read_file(rc_file));
-            remove_file(rc_file);
-            return match(rc, /^[0-9]+$/) != null ? int(rc) : 1;
+            return finish(match(rc, /^[0-9]+$/) != null ? int(rc) : 1);
         }
-        if (now_seconds() > deadline) {
+        if (clock(true)[0] > deadline) {
+            let child = trim(read_file(pid_file));
+            if (match(child, /^[1-9][0-9]*$/) != null && process_identity.parent_pid(child) == pid)
+                command_success_from_args([ "kill", child ]);
             command_success_from_args([ "kill", pid ]);
-            remove_file(rc_file);
-            return 1;
+            return finish(1);
         }
         let bytes = file_bytes(output_path);
         if (bytes != reported) {
             progress?.download?.(watch.label, bytes, watch.total, watch.index, watch.count);
             reported = bytes;
         }
-        command_success_from_args([ "sleep", "1" ]);
+        sleep(1000);
     }
 }
 
@@ -1004,6 +1020,12 @@ function http_get_once(url, output_path, proxy_address, timeout, watch) {
         // moving download may use the whole -m budget (B4).
         let args = [ "curl", "--connect-timeout", "5", "-m", timeout, "-fsSL",
             "--speed-time", "30", "--speed-limit", "1024" ];
+        // The size the release publishes caps the transfer: a wrong or
+        // endless answer stops there instead of filling tmpfs.
+        if (type(watch) == "object" && int(watch.total) > 0) {
+            push(args, "--max-filesize");
+            push(args, sprintf("%d", int(watch.total)));
+        }
         if (proxy_address != "") {
             push(args, "-x");
             push(args, "http://" + proxy_address);
@@ -1057,7 +1079,7 @@ function http_get(url) {
 
 // Package archives run to tens of megabytes: on a slow uplink 120 s was not
 // enough to finish one that was still arriving (B4).
-const COMPONENT_DOWNLOAD_TIMEOUT = "600";
+const COMPONENT_DOWNLOAD_TIMEOUT = getenv("PROKOP_COMPONENT_DOWNLOAD_TIMEOUT") || "600";
 
 function download_file_once(url, output_path, watch) {
     let proxy_address = service_proxy_address();
