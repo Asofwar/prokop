@@ -36,6 +36,10 @@ import {
   componentActionFailureText,
   componentActionSuccessText,
 } from './componentActionToast';
+import {
+  normalizeProgress,
+  renderComponentProgress,
+} from './componentProgress';
 import { showReleaseSelector } from './releaseSelector';
 import {
   shouldPreserveCompletedCheckResultOnNextMount,
@@ -212,8 +216,121 @@ function beginComponentAction(button: ComponentActionButton) {
     return false;
   }
 
+  // The last action's result gives way to the new one.
+  dismissComponentProgress(button.component);
   setActionLoading(button.key, true, true);
   return true;
+}
+
+function dismissComponentProgress(component: Prokop.ComponentName) {
+  const current = store.get().updatesProgress;
+  const view = current[component];
+
+  if (!view || view.running) {
+    return;
+  }
+
+  const next = { ...current };
+  delete next[component];
+  store.set({ updatesProgress: next });
+}
+
+// The finished action stays on its card with how it ended. The job's final
+// state carries the stages it went through; a result the UI put together
+// itself (the self-update below) keeps the stages last seen.
+function setFinishedComponentProgress(
+  jobId: string,
+  result: Partial<Prokop.ComponentActionResult> | undefined,
+  success: boolean,
+  message: string,
+) {
+  const current = store.get().updatesProgress;
+  const previous = Object.values(current).find((view) => view?.jobId === jobId);
+  const component = result?.component || previous?.component;
+  const action = result?.action || previous?.action;
+
+  if (!component || !action || action === 'check_update') {
+    return;
+  }
+
+  const progress =
+    normalizeProgress(result?.progress) ??
+    (previous?.jobId === jobId ? previous.progress : null);
+
+  store.set({
+    updatesProgress: {
+      ...current,
+      [component]: {
+        component,
+        action,
+        jobId,
+        running: false,
+        startedAt:
+          (typeof result?.started_at === 'number' && result.started_at) ||
+          previous?.startedAt ||
+          0,
+        finishedAt:
+          (typeof result?.updated_at === 'number' && result.updated_at) || 0,
+        progress,
+        success,
+        message,
+        version: result?.current_version || undefined,
+      },
+    },
+  });
+}
+
+// The page reloads after Prokop updated itself: its result is shown once
+// more after the reload.
+const LAST_SELF_UPDATE_KEY = 'prokop.updates.lastSelfUpdate';
+
+function keepSelfUpdateResultForReload() {
+  const view = store.get().updatesProgress.prokop;
+
+  if (!view || view.running) {
+    return;
+  }
+
+  try {
+    window.sessionStorage.setItem(
+      LAST_SELF_UPDATE_KEY,
+      JSON.stringify({ savedAt: Date.now(), view }),
+    );
+  } catch (_error) {
+    // Without storage the result is only in the toast.
+  }
+}
+
+function restoreSelfUpdateResult() {
+  let saved: { savedAt?: number; view?: Prokop.ComponentProgressView } | null =
+    null;
+
+  try {
+    const text = window.sessionStorage.getItem(LAST_SELF_UPDATE_KEY);
+    window.sessionStorage.removeItem(LAST_SELF_UPDATE_KEY);
+    saved = text ? JSON.parse(text) : null;
+  } catch (_error) {
+    return;
+  }
+
+  const view = saved?.view;
+  if (
+    !view ||
+    view.component !== 'prokop' ||
+    view.running ||
+    typeof saved?.savedAt !== 'number' ||
+    Date.now() - saved.savedAt > 10 * 60 * 1000 ||
+    store.get().updatesProgress.prokop
+  ) {
+    return;
+  }
+
+  store.set({
+    updatesProgress: {
+      ...store.get().updatesProgress,
+      prokop: { ...view, progress: normalizeProgress(view.progress) },
+    },
+  });
 }
 
 function setCheckResult(
@@ -532,6 +649,7 @@ async function applyCompletedComponentAction({
     }
 
     if (notify) {
+      keepSelfUpdateResultForReload();
       reloadPageAfterProkopUpdate();
     }
     return;
@@ -577,6 +695,12 @@ async function completeComponentActionJob(
 
     handledComponentJobs.add(jobId);
     setActionLoading(key, false);
+    setFinishedComponentProgress(
+      jobId,
+      response.success ? response.data : undefined,
+      false,
+      componentActionFailureText(failureText(failure, _('Failed to execute'))),
+    );
     if (shouldNotify) {
       // Busy is a translated warning, not a failure (UC-119).
       showToast(
@@ -591,6 +715,12 @@ async function completeComponentActionJob(
   }
 
   handledComponentJobs.add(jobId);
+  setFinishedComponentProgress(
+    jobId,
+    response.data,
+    true,
+    componentActionSuccessText(response.data),
+  );
   await ackComponentActionJob(jobId);
   await applyCompletedComponentAction({
     key,
@@ -1466,7 +1596,25 @@ function renderComponentCard(card: ComponentCard) {
         )
       : null;
 
-  // 3. Actions classification
+  // 3. The running or last action: its stages, download and time.
+  // A card can carry another component's actions (TorrServer's direct
+  // routing): their progress shows on it too.
+  const updatesProgress = store.get().updatesProgress;
+  const progressView =
+    updatesProgress[card.component] ||
+    card.actions
+      .map((action) => updatesProgress[action.component])
+      .find(Boolean);
+  const progressPanel = progressView
+    ? renderComponentProgress(progressView, {
+        installed:
+          progressView.component !== 'torrserver' ||
+          Boolean(store.get().diagnosticsSystemInfo.torrserver_installed),
+        onDismiss: () => dismissComponentProgress(progressView.component),
+      })
+    : null;
+
+  // 4. Actions classification
   const primaryActions: ComponentActionButton[] = [];
   const dangerActions: ComponentActionButton[] = [];
   const variantActions: ComponentActionButton[] = [];
@@ -1638,6 +1786,9 @@ function renderComponentCard(card: ComponentCard) {
     cardChildren.push(detailsContainer);
   }
   cardChildren.push(actionsContainer);
+  if (progressPanel) {
+    cardChildren.push(progressPanel);
+  }
 
   return E('div', { class: 'fkp_updates-page__component' }, cardChildren);
 }
@@ -1684,6 +1835,7 @@ function onStoreUpdate(
     diff.diagnosticsSystemInfo ||
     diff.updatesActions ||
     diff.updatesChecks ||
+    diff.updatesProgress ||
     diff.diagnosticsActions ||
     diff.servicesInfoWidget
   ) {
@@ -1732,6 +1884,7 @@ async function onPageMount() {
     applyComponentUpdateCheckCache(prefetchedComponentUpdateCheckCache);
   }
 
+  restoreSelfUpdateResult();
   renderUpdatesComponents();
 
   const componentUpdateCheckCache = await loadComponentUpdateCheckCache({

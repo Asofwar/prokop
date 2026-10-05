@@ -1,4 +1,6 @@
 import { getComponentActionKey } from '../helpers/getComponentActionKey';
+import { observeRouterTime } from '../helpers/routerClock';
+import { normalizeProgress } from '../tabs/updates/componentProgress';
 import { normalizeSingBoxVariantFields } from '../helpers/singBoxVariant';
 import type { Prokop } from '../types';
 import { getLocalActionOverlay } from './localActionOverlay.service';
@@ -203,7 +205,47 @@ function applyActionState(actions: UiActionMap = {}) {
   });
 }
 
+// A running component action shows its progress on its card. A finished
+// one keeps its view, which the job's completion fills in; a running view
+// whose job the router no longer lists at all is gone.
+function applyComponentProgress(states: Prokop.ComponentActionResult[] = []) {
+  const current = store.get().updatesProgress;
+  const next: StoreType['updatesProgress'] = {};
+  const listed = new Set(states.map((state) => state.job_id).filter(Boolean));
+
+  for (const [component, view] of Object.entries(current)) {
+    if (view && (!view.running || listed.has(view.jobId))) {
+      next[component as Prokop.ComponentName] = view;
+    }
+  }
+
+  for (const state of states) {
+    if (
+      !isRunningAction(state) ||
+      !state.job_id ||
+      state.action === 'check_update'
+    ) {
+      continue;
+    }
+
+    const progress = normalizeProgress(state.progress);
+    observeRouterTime(progress?.updated_at);
+    next[state.component] = {
+      component: state.component,
+      action: state.action,
+      jobId: state.job_id,
+      running: true,
+      startedAt: typeof state.started_at === 'number' ? state.started_at : 0,
+      finishedAt: 0,
+      progress,
+    };
+  }
+
+  store.set({ updatesProgress: next });
+}
+
 export function applyUiStateToStore(uiState: Prokop.UiState) {
   applyServiceState(uiState);
   applyActionState(uiState.actions);
+  applyComponentProgress(uiState.actions?.component);
 }

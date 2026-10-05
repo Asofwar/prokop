@@ -264,6 +264,10 @@ export interface StoreType {
     torrserverDirectEnable: { loading: boolean };
     torrserverDirectDisable: { loading: boolean };
   };
+  // The running or last component action of each card.
+  updatesProgress: Partial<
+    Record<Prokop.ComponentName, Prokop.ComponentProgressView>
+  >;
   updatesChecks: Record<
     Prokop.ComponentName,
     {
@@ -313,6 +317,7 @@ const initialStore: StoreType = {
     subscriptionUpdatingSections: {},
     data: [],
   },
+  updatesProgress: {},
   ...initialDiagnosticStore,
 };
 

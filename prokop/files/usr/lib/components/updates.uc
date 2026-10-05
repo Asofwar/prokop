@@ -2595,8 +2595,30 @@ function component_job_output_path_from_state(path) {
     return path + ".out";
 }
 
+// Where the worker reports its progress (components/progress.uc).
+function component_job_progress_path_from_state(path) {
+    path = as_string(path);
+    if (length(path) >= 5 && substr(path, length(path) - 5) == ".json")
+        return substr(path, 0, length(path) - 5) + ".progress";
+    return path + ".progress";
+}
+
+// components/progress.uc, loaded on use like components/catalog.uc: a
+// library without it (a test's partial copy) reports no progress.
+function component_job_progress(path) {
+    let module = null;
+    try {
+        module = require("components.progress");
+    }
+    catch (e) {
+        return null;
+    }
+    return module.read(component_job_progress_path_from_state(path));
+}
+
 function remove_component_job_state(path) {
     let output_path = component_job_output_path_from_state(path);
+    remove_file(component_job_progress_path_from_state(path));
     remove_file(path);
     remove_file(output_path);
     remove_file(output_path + ".json");
@@ -2694,11 +2716,25 @@ function component_cleanup_jobs() {
         "-mmin", "+" + as_string(COMPONENT_JOB_ORPHAN_OUTPUT_TTL_MINUTES),
         "-delete"
     ]);
+    for (let progress_path in fs.glob(COMPONENT_JOB_DIR + "/*.progress")) {
+        let state_file = component_job_state_path_value(path_basename_without_suffix(progress_path, ".progress"));
+        if (state_file == "" || fs.stat(state_file) == null || !component_job_running_is(state_file, true))
+            remove_file(progress_path);
+    }
+
     command_success_from_args([
         "find",
         COMPONENT_JOB_DIR,
         "-type", "f",
         "-name", "*.json.*",
+        "-mmin", "+10",
+        "-delete"
+    ]);
+    command_success_from_args([
+        "find",
+        COMPONENT_JOB_DIR,
+        "-type", "f",
+        "-name", "*.progress.*",
         "-mmin", "+10",
         "-delete"
     ]);
@@ -2783,6 +2819,8 @@ function component_fallback_job_state(component, action, message, exit_code, upd
 function finish_component_job(path, component, action, exit_code, output_file) {
     let updated_at = now_seconds();
     let value = output_json_object(output_file);
+    // The finished job keeps the stages it went through.
+    let progress = component_job_progress(path);
     let ok;
 
     if (type(value) == "object") {
@@ -2790,14 +2828,20 @@ function finish_component_job(path, component, action, exit_code, output_file) {
         value.kind = "component";
         value.exit_code = arg_number(exit_code);
         value.updated_at = updated_at;
+        if (progress != null)
+            value.progress = progress;
         update_component_check_cache_from_action(value);
         ok = write_state_file(path, value);
     }
     else {
         let raw_output = file_last_nonblank_line_value(output_file, "Failed to execute", 240);
-        ok = write_state_file(path, component_fallback_job_state(component, action, raw_output, exit_code, updated_at));
+        value = component_fallback_job_state(component, action, raw_output, exit_code, updated_at);
+        if (progress != null)
+            value.progress = progress;
+        ok = write_state_file(path, value);
     }
 
+    remove_file(component_job_progress_path_from_state(path));
     remove_file(output_file);
     remove_file(output_file + ".json");
     return ok;
@@ -2830,7 +2874,9 @@ function launch_component_worker(args) {
 
 function component_action_worker(state_file, output_file, component, action, version) {
     component = normalize_component_name(component);
-    let command = command_env(component_worker_env()) + " " +
+    let env = component_worker_env();
+    env.PROKOP_COMPONENT_ACTION_PROGRESS_FILE = component_job_progress_path_from_state(state_file);
+    let command = command_env(env) + " " +
         command_from_args([
             "ucode",
             "-L", LIB_DIR,
@@ -2915,7 +2961,19 @@ function component_action_status(job_id) {
         component_action_status_error_exit("Component action job was not found", "not_found");
 
     refresh_component_running_job_state(state_file);
-    print(as_string(fs.readfile(state_file)));
+    let value = read_json_file(state_file);
+    if (type(value) != "object") {
+        print(as_string(fs.readfile(state_file)));
+        return;
+    }
+    if (value.running === true) {
+        let progress = component_job_progress(state_file);
+        if (progress != null)
+            value.progress = progress;
+    }
+    // The router's clock, for the time the UI shows as elapsed.
+    value.now = now_seconds();
+    write_json(value);
 }
 
 function automatic_component_check_names() {

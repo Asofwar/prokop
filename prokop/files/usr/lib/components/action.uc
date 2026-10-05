@@ -8,6 +8,15 @@ let runtime_lock = require("core.runtime_lock");
 let process_identity = require("core.process_identity");
 let durable = require("core.durable");
 let legacy_forkop = require("core.legacy_forkop");
+// components/progress.uc, called as progress?.stage?.(...): a library
+// without it (a test's partial copy, a probe built from some of these
+// functions) runs the action without reporting progress.
+let progress = null;
+try {
+    progress = require("components.progress");
+}
+catch (e) {
+}
 
 const LIB_DIR = getenv("PROKOP_LIB") || "/usr/lib/prokop";
 const CONFIG_NAME = getenv("PROKOP_CONFIG_NAME") || constants.PROKOP_CONFIG_NAME || "prokop";
@@ -26,6 +35,9 @@ const COMPONENT_LOCK_DIR = getenv("UPDATES_LOCK_DIR") || RUNTIME_STATE_DIR + "/c
 // mark_stop_requested), removed by an explicit start.
 const STOP_REQUESTED_FILE = getenv("PROKOP_STOP_REQUESTED_FILE") || RUNTIME_STATE_DIR + "/stop.requested";
 const PROKOP_OPKG_RECOVERY_DIR = getenv("PROKOP_OPKG_RECOVERY_DIR") || "/etc/prokop/opkg-package-set-recovery";
+// Set for an action the UI runs as a background job: where it reports its
+// progress (components/progress.uc).
+const PROGRESS_FILE = getenv("PROKOP_COMPONENT_ACTION_PROGRESS_FILE") || "";
 const TMP_STALE_TTL_MINUTES = getenv("UPDATES_TMP_STALE_TTL_MINUTES") || "30";
 const TMP_FILE_STALE_TTL_MINUTES = getenv("UPDATES_TMP_FILE_STALE_TTL_MINUTES") || "10";
 const SB_MANAGED_SERVICE_MARKER = getenv("SB_MANAGED_SERVICE_MARKER") || constants.SB_MANAGED_SERVICE_MARKER || "Prokop managed sing-box service for binary variants";
@@ -590,6 +602,7 @@ function restart_prokop_after_failed_upgrade() {
 }
 
 function action_success(component, action, message, current_version, latest_version, changed, status, release_url) {
+    progress?.finish?.(true);
     updates_response(true, component, action, message, current_version, latest_version, changed || 0, status || "", release_url || "");
     cleanup_action();
     exit(0);
@@ -599,6 +612,7 @@ function action_fail(component, action, message, current_version, latest_version
     updates_log(message, "error");
     restart_prokop_after_failed_sing_box_change();
     restart_prokop_after_failed_upgrade();
+    progress?.finish?.(false);
     updates_response(false, component, action, message, current_version || "", latest_version || "", 0, status || "", release_url || "",
         reason);
     cleanup_action();
@@ -876,7 +890,50 @@ function service_proxy_address() {
     return trim(module_output([ LIB_DIR + "/singbox/runtime.uc", "service-proxy-address", "components" ]));
 }
 
-function http_get_once(url, output_path, proxy_address, timeout) {
+// Runs the download in the background and reports the bytes already in
+// OUTPUT_PATH once a second until it exits; its exit status, or 1 when it
+// cannot be followed. A download that outlives its own timeout by a margin
+// is stopped, after its identity is checked.
+function download_status_watched(command, output_path, timeout, watch) {
+    let rc_file = make_tmp_file("download-rc");
+    if (rc_file == "")
+        return command_status(command);
+    remove_file(rc_file);
+    let pid = trim(command_output("sh -c " + shell_quote("(" + command + " >/dev/null 2>&1; echo $? >" + shell_quote(rc_file) +
+        ") </dev/null >/dev/null 2>&1 & echo $!")));
+    if (match(pid, /^[1-9][0-9]*$/) == null)
+        return 1;
+    let ticks = process_identity.start_ticks(pid);
+    let deadline = now_seconds() + int(timeout) + 30;
+    let reported = -1;
+    for (;;) {
+        let rc = trim(read_file(rc_file));
+        if (match(rc, /^[0-9]+$/) != null) {
+            remove_file(rc_file);
+            return int(rc);
+        }
+        let alive = ticks != "" && process_identity.start_ticks(pid) == ticks;
+        if (!alive) {
+            // It may have written the status just before it exited.
+            rc = trim(read_file(rc_file));
+            remove_file(rc_file);
+            return match(rc, /^[0-9]+$/) != null ? int(rc) : 1;
+        }
+        if (now_seconds() > deadline) {
+            command_success_from_args([ "kill", pid ]);
+            remove_file(rc_file);
+            return 1;
+        }
+        let bytes = file_bytes(output_path);
+        if (bytes != reported) {
+            progress?.download?.(watch.label, bytes, watch.total, watch.index, watch.count);
+            reported = bytes;
+        }
+        command_success_from_args([ "sleep", "1" ]);
+    }
+}
+
+function http_get_once(url, output_path, proxy_address, timeout, watch) {
     url = as_string(url);
     output_path = as_string(output_path);
     proxy_address = as_string(proxy_address);
@@ -894,6 +951,8 @@ function http_get_once(url, output_path, proxy_address, timeout) {
         push(args, url);
         push(args, "-o");
         push(args, output_path);
+        if (type(watch) == "object" && progress?.active?.())
+            return download_status_watched(command_from_args(args), output_path, timeout, watch) == 0;
         return command_success_from_args(args);
     }
 
@@ -901,6 +960,8 @@ function http_get_once(url, output_path, proxy_address, timeout) {
         let command = command_from_args([ "wget", "-T", timeout, "-q", "-O", output_path, url ]);
         if (proxy_address != "")
             command = command_env({ http_proxy: "http://" + proxy_address, https_proxy: "http://" + proxy_address }) + " " + command;
+        if (type(watch) == "object" && progress?.active?.())
+            return download_status_watched(command, output_path, timeout, watch) == 0;
         return command_success(command);
     }
 
@@ -938,21 +999,28 @@ function http_get(url) {
 // enough to finish one that was still arriving (B4).
 const COMPONENT_DOWNLOAD_TIMEOUT = "600";
 
-function download_file_once(url, output_path) {
+function download_file_once(url, output_path, watch) {
     let proxy_address = service_proxy_address();
     if (proxy_address != "") {
-        if (http_get_once(url, output_path, proxy_address, COMPONENT_DOWNLOAD_TIMEOUT))
+        if (http_get_once(url, output_path, proxy_address, COMPONENT_DOWNLOAD_TIMEOUT, watch))
             return true;
         remove_file(output_path);
         updates_log("Download via service proxy failed for " + as_string(url) + "; retrying directly", "warn");
     }
-    return http_get_once(url, output_path, "", COMPONENT_DOWNLOAD_TIMEOUT);
+    return http_get_once(url, output_path, "", COMPONENT_DOWNLOAD_TIMEOUT, watch);
 }
 
-function download_with_retry(url, output_path, label) {
+// TOTAL is the size the release publishes (0 when unknown); NUMBER and COUNT
+// say which of the action's downloads this is, when it makes several.
+function download_with_retry(url, output_path, label, total, number, count) {
+    // The rollback copy prepare_prokop_package_set fetches stays in its stage.
+    if (progress?.current?.() != "prepare")
+        progress?.stage?.("download");
+    let watch = { label: path_basename(label), total: int(total || 0), index: int(number || 0), count: int(count || 0) };
     for (let attempt = 1; attempt <= 3; attempt++) {
         updates_log("Downloading " + as_string(label) + " (" + attempt + "/3)");
-        if (download_file_once(url, output_path) && file_nonempty(output_path))
+        progress?.download?.(watch.label, 0, watch.total, watch.index, watch.count);
+        if (download_file_once(url, output_path, watch) && file_nonempty(output_path))
             return true;
         remove_file(output_path);
         updates_log("Retrying " + as_string(label), "warn");
@@ -1028,6 +1096,8 @@ function download_checksum_ok(path, expected) {
     expected = as_string(expected);
     if (expected == "")
         return true;
+    if (progress?.current?.() != "prepare")
+        progress?.stage?.("verify");
     let actual = split(trim(command_output_from_args([ "sha256sum", path ])), /[ \t]+/)[0];
     return lc(as_string(actual)) == expected;
 }
@@ -1206,6 +1276,7 @@ function retry_resolve(description, fn) {
 function ensure_package_tool(tool_name, package_name, component, action) {
     if (command_exists(tool_name))
         return true;
+    progress?.stage?.("lists");
     if (!run_logged("Updating package lists before installing " + as_string(package_name), pkg_list_update_command()))
         return false;
     return run_logged("Installing bootstrap package " + as_string(package_name), pkg_install_name_command(package_name));
@@ -1312,6 +1383,7 @@ function restart_prokop_after_successful_change() {
         prepare_sing_box_service_disabled();
         return true;
     }
+    progress?.stage?.("restart");
     updates_log("Restarting Prokop after successful component change");
     let status = prokop_restart_and_wait();
     if (status == 0)
@@ -1341,6 +1413,7 @@ function stop_prokop_before_sing_box_change() {
     if (prokop_stopped_for_sing_box_change)
         return true;
 
+    progress?.stage?.("stop");
     if (prokop_was_running && file_exists(SERVICE_INIT) &&
         run_logged_status("Stopping Prokop before sing-box package change", command_from_args(prokop_stop_for_component_change_args())) == 2)
         return false;
@@ -1356,6 +1429,7 @@ function stop_prokop_before_sing_box_change() {
 function wait_prokop_running_after_sing_box_change() {
     if (!prokop_was_running)
         return true;
+    progress?.stage?.("check");
     if (!file_exists(BIN_PATH))
         return false;
 
@@ -1485,7 +1559,7 @@ function resolve_zapret2_release(arch) {
 
 function download_and_extract_zip_package(release, component) {
     let bundle_file = tmp_dir + "/" + release.bundle_name;
-    if (!download_with_retry(release.bundle_url, bundle_file, release.bundle_name))
+    if (!download_with_retry(release.bundle_url, bundle_file, release.bundle_name, release.bundle_size))
         return null;
     // GitHub publishes a digest for each asset: a bundle that does not match
     // it is not installed as root (UPD-4).
@@ -1543,7 +1617,7 @@ function resolve_byedpi_release(arch) {
 
 function download_byedpi_package(release) {
     let package_file = tmp_dir + "/" + release.package_name;
-    if (!download_with_retry(release.package_url, package_file, release.package_name) || !file_nonempty(package_file))
+    if (!download_with_retry(release.package_url, package_file, release.package_name, release.package_size) || !file_nonempty(package_file))
         return null;
     if (!download_checksum_ok(package_file, release.package_sha256)) {
         updates_log("Downloaded " + release.package_name + " does not match its published sha256", "error");
@@ -1601,6 +1675,7 @@ function install_zapret_like(component, action, runtime_module, resolve_fn, labe
         action_fail(component, action, "Failed to install unzip");
     // The package's dependencies (kmod-nft-queue and the like) come from the
     // feeds: on opkg the lists are gone after every reboot (UPD-5).
+    progress?.stage?.("lists");
     run_logged("Updating package lists before " + label + " installation", pkg_list_update_command());
     // The bundle, the package taken out of it and the package manager's
     // working copy (UPD-7, B3).
@@ -1614,6 +1689,7 @@ function install_zapret_like(component, action, runtime_module, resolve_fn, labe
     if (space_error != "")
         action_fail(component, action, space_error, current_version, pkg.version, "", release.release_url || "");
 
+    progress?.stage?.("install");
     if (!run_logged("Installing " + label + " package " + pkg.name, pkg_install_files_command([ pkg.file ])))
         action_fail(component, action, "Failed to install " + label + " package" + out_of_space_hint(last_logged_output), current_version, pkg.version, "", release.release_url || "");
 
@@ -1658,6 +1734,7 @@ function install_byedpi(action) {
         check_success("byedpi", current_version, release.version, release.release_url || "");
     }
 
+    progress?.stage?.("lists");
     run_logged("Updating package lists before ByeDPI installation", pkg_list_update_command());
     let space_error = component_download_space_error("ByeDPI", release.package_size, 2, tmp_dir);
     if (space_error != "")
@@ -1668,6 +1745,7 @@ function install_byedpi(action) {
     space_error = component_install_space_error("ByeDPI", file_bytes(pkg.file) * 3);
     if (space_error != "")
         action_fail("byedpi", action, space_error, current_version, pkg.version);
+    progress?.stage?.("install");
     if (!run_logged("Installing ByeDPI package " + pkg.name, pkg_install_files_command([ pkg.file ])))
         action_fail("byedpi", action, "Failed to install ByeDPI package" + out_of_space_hint(last_logged_output), current_version, pkg.version);
 
@@ -1749,6 +1827,7 @@ function install_zapret_manager(action) {
     let wrapper = zapret_manager_launcher();
     let auto_wrapper = wrapper;
 
+    progress?.stage?.("install");
     if (!write_file(zms, wrapper) || !write_file(zmsa, auto_wrapper) ||
         !command_success_from_args([ "chmod", "0755", zms, zmsa ]))
         action_fail(component, action, "Failed to install Zapret-Manager launchers", current_version, latest_version);
@@ -2021,12 +2100,13 @@ function restore_sing_box_extended_package_variant() {
     if (release == null)
         return false;
     let package_file = tmp_dir + "/" + release.asset_name;
-    if (!download_with_retry(release.asset_url, package_file, release.asset_name) ||
+    if (!download_with_retry(release.asset_url, package_file, release.asset_name, release.asset_size) ||
         !sing_box_extended_download_verified(release, package_file))
         return false;
     prepare_sing_box_package_service_install();
     pkg_remove_sing_box_conflict("sing-box-tiny");
     pkg_remove_sing_box_conflict("sing-box");
+    progress?.stage?.("install");
     if (!pkg_install_files([ package_file ])) {
         remove_file(package_file);
         return false;
@@ -2175,7 +2255,7 @@ function install_sing_box_extended_package(action) {
     if (space_error != "")
         action_fail("sing_box", action, space_error, current_version, latest_version);
     let package_file = tmp_dir + "/" + release.asset_name;
-    if (!download_with_retry(release.asset_url, package_file, release.asset_name))
+    if (!download_with_retry(release.asset_url, package_file, release.asset_name, release.asset_size))
         action_fail("sing_box", action, "Failed to download sing-box-extended package", current_version, latest_version);
     if (!sing_box_extended_download_verified(release, package_file))
         action_fail("sing_box", action, "Downloaded sing-box-extended package failed checksum verification", current_version, latest_version);
@@ -2187,6 +2267,7 @@ function install_sing_box_extended_package(action) {
         action_fail("sing_box", action, space_error, current_version, latest_version);
     }
 
+    progress?.stage?.("lists");
     if (!run_logged("Updating package lists before sing-box-extended package installation", pkg_list_update_command()))
         action_fail("sing_box", action, "Failed to update package lists", current_version, latest_version);
 
@@ -2243,6 +2324,7 @@ function install_sing_box_extended_package(action) {
         }
     }
 
+    progress?.stage?.("install");
     if (!run_logged("Installing sing-box-extended package " + release.asset_name, pkg_install_files_command([ package_file ]))) {
         restore_sing_box_after_failed_extended_package_install(current_variant, backup_binary, backup_cronet, previous_marker, previous_version_state, package_file, cronet_touched);
         action_fail("sing_box", action, "Failed to install sing-box-extended package" + out_of_space_hint(last_logged_output), current_version, latest_version);
@@ -2306,7 +2388,7 @@ function install_sing_box_extended(action, compressed) {
     if (space_error != "")
         action_fail("sing_box", action, space_error, current_version, latest_version);
     let archive_file = tmp_dir + "/" + release.asset_name;
-    if (!download_with_retry(release.asset_url, archive_file, release.asset_name))
+    if (!download_with_retry(release.asset_url, archive_file, release.asset_name, release.asset_size))
         action_fail("sing_box", action, "Failed to download " + label, current_version, latest_version);
     if (!sing_box_extended_download_verified(release, archive_file))
         action_fail("sing_box", action, "Downloaded " + label + " failed checksum verification", current_version, latest_version);
@@ -2414,6 +2496,7 @@ function install_sing_box_extended(action, compressed) {
     }
 
     remove_file("/usr/bin/sing-box");
+    progress?.stage?.("install");
     if (!install_staged_file(tmp_binary, "/usr/bin/sing-box", "0755")) {
         remove_file("/usr/bin/sing-box");
         restore_sing_box_after_failed_extended_install(current_variant, backup_binary, backup_cronet, previous_marker, previous_version_state, archive_file, cronet_touched);
@@ -2500,6 +2583,7 @@ function install_package_sing_box(action, tiny) {
         check_success("sing_box", current_version, latest_version, "");
     }
 
+    progress?.stage?.("lists");
     if (!run_logged("Updating package lists before " + package_name + " installation", pkg_list_update_command()))
         action_fail("sing_box", action, "Failed to update package lists", current_version, latest_version);
     latest_version = available_package_version(package_name);
@@ -2616,6 +2700,14 @@ function release_asset_sha256(metadata, name) {
     return "";
 }
 
+// The size the metadata publishes for that asset; 0 when it publishes none.
+function release_asset_size(metadata, name) {
+    for (let asset in (type(metadata.assets) == "array" ? metadata.assets : []))
+        if (type(asset) == "object" && as_string(asset.name) == as_string(name))
+            return release_asset_object_size(asset);
+    return 0;
+}
+
 // "" when the file cannot be read: it matches no checksum.
 function file_sha256(path) {
     return split(trim(command_output_from_args([ "sha256sum", path ])), /[ \t]+/)[0];
@@ -2643,7 +2735,10 @@ function resolve_prokop_release_json(latest_version, release_json) {
         app_sha256: release_asset_sha256(metadata, fields[3]),
         i18n_name: fields[5],
         i18n_url: prokop_release_url(fields[6]),
-        i18n_sha256: fields[5] != "" ? release_asset_sha256(metadata, fields[5]) : ""
+        i18n_sha256: fields[5] != "" ? release_asset_sha256(metadata, fields[5]) : "",
+        backend_size: release_asset_size(metadata, fields[1]),
+        app_size: release_asset_size(metadata, fields[3]),
+        i18n_size: fields[5] != "" ? release_asset_size(metadata, fields[5]) : 0
     };
 }
 
@@ -3157,6 +3252,7 @@ function require_release_checksums(packages, latest_version) {
 }
 
 function verify_release_downloads(packages, latest_version) {
+    progress?.stage?.("verify");
     for (let item in packages) {
         if (file_sha256(item[0]) != item[2])
             action_fail("prokop", "install", "Release package checksum mismatch for " + item[1] +
@@ -3199,13 +3295,15 @@ function install_prokop(requested_version) {
     let i18n_file = release.i18n_url != "" ? tmp_dir + "/" + release.i18n_name : "";
     let packages = release_packages(release, backend_file, app_file, i18n_file);
     require_release_checksums(packages, latest_version);
-    if (!download_with_retry(release.backend_url, backend_file, release.backend_name) ||
-        !download_with_retry(release.app_url, app_file, release.app_name) ||
-        (release.i18n_url != "" && !download_with_retry(release.i18n_url, i18n_file, release.i18n_name)))
+    let count = length(packages);
+    if (!download_with_retry(release.backend_url, backend_file, release.backend_name, release.backend_size, 1, count) ||
+        !download_with_retry(release.app_url, app_file, release.app_name, release.app_size, 2, count) ||
+        (release.i18n_url != "" && !download_with_retry(release.i18n_url, i18n_file, release.i18n_name, release.i18n_size, 3, count)))
         action_fail("prokop", "install", "Failed to download Prokop release packages", PROKOP_VERSION, latest_version);
     verify_release_downloads(packages, latest_version);
 
     if (selected != null) {
+        progress?.stage?.("backup");
         let backup = save_prokop_configuration_backup("/etc/config", "/etc/prokop-backups");
         if (backup == "")
             action_fail("prokop", "install", "Failed to back up Prokop configuration", PROKOP_VERSION, latest_version);
@@ -3216,6 +3314,7 @@ function install_prokop(requested_version) {
 
     // Every refusal comes before Prokop is stopped for the upgrade: a refused
     // upgrade leaves Prokop running (UC-196).
+    progress?.stage?.("prepare");
     let error = prepare_prokop_package_set(backend_file, app_file, i18n_file);
     if (error != "")
         action_fail("prokop", "install", error, PROKOP_VERSION, latest_version);
@@ -3225,18 +3324,21 @@ function install_prokop(requested_version) {
     capture_managed_upgrade_sing_box_marker();
 
     capture_prokop_start_before_upgrade();
+    progress?.stage?.("stop");
     error = stop_old_sing_box_before_prokop_upgrade();
     if (error != "") {
         discard_staged_prokop_package_set();
         action_fail("prokop", "install", error, PROKOP_VERSION, latest_version);
     }
 
+    progress?.stage?.("install");
     error = install_prokop_package_set(latest_version, backend_file, app_file, i18n_file);
     if (error != "")
         action_fail("prokop", "install", error, PROKOP_VERSION, latest_version);
     // The new release is installed: its start follows below.
     prokop_stopped_for_upgrade = false;
 
+    progress?.stage?.("restart");
     refresh_luci_after_prokop_upgrade();
 
     // The backend package post-install hook has already restored a Prokop
@@ -3250,6 +3352,7 @@ function install_prokop(requested_version) {
         updates_log("Prokop was stopped by the user during the upgrade; final start skipped");
     else
         restarted = restart_prokop_after_successful_change();
+    progress?.stage?.("check");
     clear_version_caches();
     let new_version = installed_package_version("prokop");
     if (new_version == "")
@@ -3571,7 +3674,7 @@ function install_torrserver(action) {
             current_version, release.version, "", release.release_url || "");
 
     let download = tmp_dir + "/torrserver";
-    if (!download_with_retry(release.url, download, release.name))
+    if (!download_with_retry(release.url, download, release.name, release.size))
         action_fail("torrserver", action, "Failed to download TorrServer", current_version, release.version, "", release.release_url || "");
     if (file_bytes(download) != int(release.size) || !download_checksum_ok(download, release.sha256)) {
         remove_file(download);
@@ -3596,6 +3699,7 @@ function install_torrserver(action) {
     }
 
     if (installed) {
+        progress?.stage?.("stop");
         updates_log("Stopping TorrServer " + current_version + " for the update");
         command_success_from_args([ TORRSERVER_INIT, "stop" ]);
     }
@@ -3608,6 +3712,7 @@ function install_torrserver(action) {
         action_fail("torrserver", action, "Failed to keep the installed TorrServer aside for the update; it runs on unchanged",
             current_version, release.version, "", release.release_url || "");
     }
+    progress?.stage?.("install");
     if (!fs.rename(staged, paths.bin) ||
         !module_success([ TORRSERVER_UC, "write-marker", release.version, release.sha256 ])) {
         remove_file(staged);
@@ -3618,6 +3723,7 @@ function install_torrserver(action) {
             "; the previous version could not be restored") : ""), current_version, release.version, "", release.release_url || "");
     }
 
+    progress?.stage?.("start");
     updates_log("Starting TorrServer " + release.version);
     if (!torrserver_enable_start() || !torrserver_wait_running(release.version)) {
         updates_log("TorrServer " + release.version + " did not start", "error");
@@ -3754,6 +3860,10 @@ function component_action(component, action, version) {
             installed_package_version("prokop"), "", 0, "recovered");
     }
     capture_prokop_running_state();
+    // What the UI shows while the action runs; a check reports nothing.
+    if (action != "check_update")
+        progress?.begin?.(PROGRESS_FILE, component, action, action == "remove" ? "remove" :
+            (action == "enable" || action == "disable" || action == "restore") ? "apply" : "resolve");
 
     if (component == "prokop" && action == "check_update")
         check_prokop();

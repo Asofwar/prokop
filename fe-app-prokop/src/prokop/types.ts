@@ -1112,6 +1112,63 @@ export namespace Prokop {
     exit_code?: number | null;
     // Why the action did not succeed (components/action.uc, UC-119).
     reason?: string;
+    // What the worker reported doing (components/progress.uc).
+    progress?: ComponentActionProgress | null;
+    // The router's clock when it answered (seconds).
+    now?: number;
+  }
+
+  export type ComponentActionStage =
+    | 'resolve'
+    | 'lists'
+    | 'download'
+    | 'verify'
+    | 'backup'
+    | 'prepare'
+    | 'stop'
+    | 'install'
+    | 'remove'
+    | 'apply'
+    | 'start'
+    | 'restart'
+    | 'check';
+
+  // Router times, in seconds. Only observed facts: no estimate of what is
+  // left.
+  export interface ComponentActionProgress {
+    stage: ComponentActionStage | '';
+    stages: {
+      id: ComponentActionStage;
+      started_at: number;
+      finished_at: number | null;
+    }[];
+    download: {
+      file: string;
+      bytes: number;
+      // 0 when the release publishes no size.
+      total: number;
+      index: number;
+      count: number;
+    } | null;
+    outcome: '' | 'done' | 'failed';
+    started_at: number | null;
+    updated_at: number | null;
+  }
+
+  // What a component card shows about its current or last action.
+  export interface ComponentProgressView {
+    component: ComponentName;
+    action: ComponentAction;
+    jobId: string;
+    running: boolean;
+    // Router time the job started (seconds); 0 when unknown.
+    startedAt: number;
+    // Router time the job ended (seconds); 0 while it runs or when unknown.
+    finishedAt: number;
+    progress: ComponentActionProgress | null;
+    success?: boolean;
+    message?: string;
+    version?: string;
   }
 
   export interface ComponentUpdateCheckCache {

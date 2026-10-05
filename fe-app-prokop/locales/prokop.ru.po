@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-05 12:43+0000\n"
-"PO-Revision-Date: 2026-10-05 12:43+0000\n"
+"POT-Creation-Date: 2026-10-05 12:53+0000\n"
+"PO-Revision-Date: 2026-10-05 12:53+0000\n"
 "Last-Translator: Asofwar\n"
 "Language-Team: none\n"
 "Language: ru\n"
@@ -83,6 +83,12 @@ msgstr "%s (провайдер не установлен)"
 msgid "%s (unavailable)"
 msgstr "%s (недоступна)"
 
+msgid "%s B"
+msgstr "%s Б"
+
+msgid "%s h %s min"
+msgstr "%s ч %s мин"
+
 msgid "%s has been disabled"
 msgstr "%s выключен"
 
@@ -109,6 +115,24 @@ msgstr "%s не применяется повторно до %t"
 
 msgid "%s is not installed. Install it in Components or choose another action."
 msgstr "%s не установлен. Установите его в разделе «Компоненты» или выберите другое действие."
+
+msgid "%s KB"
+msgstr "%s КБ"
+
+msgid "%s MB"
+msgstr "%s МБ"
+
+msgid "%s min %s s"
+msgstr "%s мин %s с"
+
+msgid "%s of %s (%s%)"
+msgstr "%s из %s (%s%)"
+
+msgid "%s received"
+msgstr "получено %s"
+
+msgid "%s s"
+msgstr "%s с"
 
 msgid "%s: “%s” cannot be written in the current form unchanged"
 msgstr "%s: «%s» нельзя записать в текущем виде без изменения смысла"
@@ -488,6 +512,9 @@ msgstr "Применять правила секции только к указ�
 msgid "Apply the recommended TorrServer settings?"
 msgstr "Применить рекомендуемые настройки TorrServer?"
 
+msgid "Applying"
+msgstr "Применение настройки"
+
 msgid "Applying a strategy"
 msgstr "Применяется стратегия"
 
@@ -637,6 +664,9 @@ msgstr "Б"
 
 msgid "Backend validation unavailable: %s. Save again to retry."
 msgstr "Проверка на роутере недоступна: %s. Сохраните ещё раз, чтобы повторить."
+
+msgid "Backing up the configuration"
+msgstr "Резервная копия настроек"
 
 msgid "Basics"
 msgstr "Основное"
@@ -893,6 +923,9 @@ msgstr "Проверяется"
 msgid "Checking targets"
 msgstr "Идёт проверка целей"
 
+msgid "Checking that it works"
+msgstr "Проверка работы"
+
 msgid "Checking the configuration before the change"
 msgstr "Проверка конфигурации перед изменением"
 
@@ -901,6 +934,9 @@ msgstr "Проверка реального production path"
 
 msgid "Checking the recommendation"
 msgstr "Проверка рекомендации"
+
+msgid "Checking the release"
+msgstr "Проверка релиза"
 
 msgid "Checking, please wait"
 msgstr "Проверяем, пожалуйста подождите"
@@ -1511,6 +1547,12 @@ msgstr "Доменов для проверки"
 msgid "Domains: %d"
 msgstr "Домены: %d"
 
+msgid "Done"
+msgstr "Готово"
+
+msgid "Done in %s"
+msgstr "Готово за %s"
+
 msgid "Dont Touch My DHCP!"
 msgstr "Отключить управление DHCP"
 
@@ -1552,6 +1594,9 @@ msgstr "загружается при обновлении списков; пр�
 
 msgid "downloaded by the list update; the rule matches the domains in them"
 msgstr "загружается при обновлении списков; правило сопоставляет домены из него"
+
+msgid "Downloading"
+msgstr "Загрузка"
 
 msgid "DPI"
 msgstr "DPI"
@@ -1612,6 +1657,9 @@ msgstr "Изменить…"
 
 msgid "EDNS Client Subnet"
 msgstr "EDNS Client Subnet"
+
+msgid "Elapsed:"
+msgstr "Прошло:"
 
 msgid "Empty response"
 msgstr "Пустой ответ"
@@ -1772,6 +1820,12 @@ msgstr "Дополнительные заголовки запросов это�
 msgid "Failed"
 msgstr "Ошибка"
 
+msgid "Failed at “%s”"
+msgstr "Ошибка на этапе «%s»"
+
+msgid "Failed at “%s” after %s"
+msgstr "Ошибка на этапе «%s» через %s"
+
 msgid "Failed to close connection"
 msgstr "Не удалось закрыть соединение"
 
@@ -1831,6 +1885,9 @@ msgstr "Самый быстрый"
 
 msgid "Fatal"
 msgstr "Критическая"
+
+msgid "file %s of %s"
+msgstr "файл %s из %s"
 
 msgid "Firewall rules that send traffic to Prokop are missing or not hit, so rules may not apply."
 msgstr "Правила межсетевого экрана, которые направляют трафик в Prokop, отсутствуют или не срабатывают — правила могут не применяться."
@@ -1903,6 +1960,9 @@ msgstr "Норма"
 
 msgid "Help"
 msgstr "Справка"
+
+msgid "Hide"
+msgstr "Скрыть"
 
 msgid "Hide values"
 msgstr "Скрывать значения"
@@ -2044,6 +2104,9 @@ msgstr "Установлен не через Prokop"
 
 msgid "Installed version is newer than release"
 msgstr "Установлена версия новее релиза"
+
+msgid "Installing"
+msgstr "Установка"
 
 msgid "Intercept client DNS"
 msgstr "Перехват DNS клиентов"
@@ -3170,6 +3233,9 @@ msgstr "Предпочитать IPv6"
 msgid "Prefix text"
 msgstr "Текст префикса"
 
+msgid "Preparing a rollback copy"
+msgstr "Подготовка копии для отката"
+
 msgid "Preparing the change"
 msgstr "Подготовка изменения"
 
@@ -3509,6 +3575,9 @@ msgstr "Исключить из уровня указанные серверы."
 msgid "Remove…"
 msgstr "Удалить…"
 
+msgid "Removing"
+msgstr "Удаление"
+
 msgid "Removing Prokop…"
 msgstr "Удаление Prokop…"
 
@@ -3556,6 +3625,9 @@ msgstr "Перезапустите Prokop. Если трафик маркиру�
 
 msgid "Restart required"
 msgstr "Нужен перезапуск"
+
+msgid "Restarting Prokop"
+msgstr "Перезапуск Prokop"
 
 msgid "Restore"
 msgstr "Восстановить"
@@ -4163,6 +4235,9 @@ msgstr "Начало"
 msgid "starting"
 msgstr "запуск"
 
+msgid "Starting"
+msgstr "Запуск"
+
 msgid "Starting…"
 msgstr "Запуск…"
 
@@ -4201,6 +4276,9 @@ msgstr "Остановлено пользователем"
 
 msgid "stopped: protected traffic is blocked"
 msgstr "остановлен: защищённый трафик блокируется"
+
+msgid "Stopping services"
+msgstr "Остановка служб"
 
 msgid "Strategy"
 msgstr "Стратегия"
@@ -4444,6 +4522,9 @@ msgstr "Конфигурация снимка перенесена на Prokop %
 
 msgid "The configuration was changed after the apply, so nothing was rolled back. Restore a snapshot in History and recovery if needed."
 msgstr "После применения конфигурация менялась, поэтому ничего не откачено. При необходимости восстановите снимок в разделе «История и восстановление»."
+
+msgid "The connection to the router may drop for a moment while Prokop is installed and restarted; the progress is kept and the page picks it up again."
+msgstr "Пока Prokop устанавливается и перезапускается, связь с роутером может ненадолго пропасть: ход обновления сохраняется, и страница подхватит его снова."
 
 msgid "The current strategy is already the best."
 msgstr "Текущая стратегия уже лучшая."
@@ -4708,6 +4789,9 @@ msgstr "Роутер не сообщил, чем закончился откат
 
 msgid "The router DNS returned no address"
 msgstr "DNS роутера не вернул адрес"
+
+msgid "The router does not report the stages of this action"
+msgstr "Роутер не сообщает этапы этого действия"
 
 msgid "The router does not route this address through FakeIP, so Prokop cannot check a strategy change for it."
 msgstr "Роутер направляет этот адрес не через FakeIP, поэтому Prokop не может проверить для него смену стратегии."
@@ -5204,6 +5288,9 @@ msgstr "Автоматически обновлять эту подписку"
 msgid "Updating lists…"
 msgstr "Списки обновляются…"
 
+msgid "Updating package lists"
+msgstr "Обновление списков пакетов"
+
 msgid "URL must start with vless://, vmess://, ss://, trojan://, socks4://, socks4a://, socks5://, hysteria2://, or hy2://"
 msgstr "URL должен начинаться с vless://, vmess://, ss://, trojan://, socks4://, socks4a://, socks5://, hysteria2:// или hy2://"
 
@@ -5290,6 +5377,9 @@ msgstr "Ошибки валидации:"
 
 msgid "Value cannot be empty"
 msgstr "Значение не может быть пустым"
+
+msgid "Verifying checksums"
+msgstr "Проверка контрольных сумм"
 
 msgid "Via country.is"
 msgstr "Через сервис country.is"

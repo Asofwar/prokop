@@ -3,6 +3,7 @@ import { ClashAPI, Prokop } from '../../types';
 import { executeShellCommand } from '../../../helpers';
 import { isTransientRpcError } from '../../helpers/isTransientRpcError';
 import { failureReason } from '../../helpers/actionReason';
+import { observeRouterTime } from '../../helpers/routerClock';
 
 const SUBSCRIPTION_UPDATE_RPC_TIMEOUT_MS = 15000;
 const SUBSCRIPTION_UPDATE_POLL_INTERVAL_MS = 1500;
@@ -824,6 +825,8 @@ export const ProkopShellMethods = {
         timeout: COMPONENT_ACTION_RPC_TIMEOUT_MS,
       });
       const parsedResponse = parseComponentActionResult(statusResponse);
+      // The router's clock, for the elapsed time on the component's card.
+      observeRouterTime(parsedResponse?.now);
 
       if ((statusResponse.code ?? 0) !== 0 || !parsedResponse) {
         if (stateResponse?.running) {

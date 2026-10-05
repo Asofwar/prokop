@@ -844,11 +844,32 @@ function action_state_from_dir(dir) {
     return result;
 }
 
+// A running component action with the progress its worker reports
+// (components/progress.uc); a finished one already carries its last one.
+function component_action_state_from_dir(dir) {
+    let result = action_state_from_dir(dir);
+    let module = null;
+    try {
+        module = require("components.progress");
+    }
+    catch (e) {
+        return result;
+    }
+    for (let value in result) {
+        if (value.running !== true || match(as_string(value.job_id), /^[A-Za-z0-9._-]+$/) == null)
+            continue;
+        let progress = module.read(as_string(dir) + "/" + value.job_id + ".progress");
+        if (progress != null)
+            value.progress = progress;
+    }
+    return result;
+}
+
 function action_state_from_dirs() {
     return {
         service: action_state_from_dir(SERVICE_ACTION_DIR),
         latency: action_state_from_dir(LATENCY_ACTION_DIR),
-        component: action_state_from_dir(COMPONENT_ACTION_DIR),
+        component: component_action_state_from_dir(COMPONENT_ACTION_DIR),
         subscription: action_state_from_dir(SUBSCRIPTION_ACTION_DIR)
     };
 }
