@@ -564,7 +564,10 @@ cat >"$WORK_DIR/vpn-interface-fixture.json" <<'JSON'
     ".type": "settings",
     "config_path": "/tmp/sing-box/config.json",
     "dns_server": "1.1.1.1",
-    "service_listen_address": "127.0.0.1"
+    "service_listen_address": "127.0.0.1",
+    "notify_enabled": "1",
+    "notify_via_proxy": "1",
+    "notify_via_proxy_section": "gone"
   },
   "section": [
     {
@@ -601,7 +604,10 @@ cat >"$WORK_DIR/download-via-proxy-fixture.json" <<'JSON'
     "download_subscriptions_via_proxy": "1",
     "download_components_via_proxy": "1",
     "download_lists_via_proxy_section": "proxy",
-    "download_components_via_proxy_section": "components_proxy"
+    "download_components_via_proxy_section": "components_proxy",
+    "notify_enabled": "1",
+    "notify_via_proxy": "1",
+    "notify_via_proxy_section": "components_proxy"
   },
   "section": [
     {
@@ -1453,6 +1459,7 @@ assert(outbound(manual, "proxy-3-out").type == "shadowsocks", "manual Shadowsock
 
 let vpn = cfg("vpn");
 assert(outbound(vpn, "renamed_awg-interface-1-out").bind_interface == "tun0", "renamed VPN interface outbound");
+assert(inbound(vpn, "service-notify-in") == null, "no notification inbound for a rule that is gone");
 assert(outbound(vpn, "renamed_awg-interface-1-out").domain_resolver == "renamed_awg-interface-1-domain-resolver", "renamed VPN domain resolver tag");
 assert(dns_server(vpn, r => r.tag == "renamed_awg-interface-1-domain-resolver") != null, "renamed VPN domain resolver DNS server");
 assert(outbound(vpn, "renamed_awg-interface-1-out").detour == null, "interface outbound must not receive a detour");
@@ -1464,6 +1471,10 @@ assert(inbound(download, "service-mixed-in") != null, "service mixed inbound");
 assert(route_rule(download, r => r.inbound == "service-mixed-in" && r.outbound == "proxy-out") != null, "service mixed route");
 assert(inbound(download, "service-components-in") != null, "components service mixed inbound");
 assert(route_rule(download, r => r.inbound == "service-components-in" && r.outbound == "components_proxy-out") != null, "components service mixed route");
+// Notifications through a rule (notify/manager.uc): their own inbound below
+// the download ones; a rule that is gone adds none and fails nothing.
+assert(inbound(download, "service-notify-in")?.listen_port == 4533, "notification service mixed inbound");
+assert(route_rule(download, r => r.inbound == "service-notify-in" && r.outbound == "components_proxy-out") != null, "notification service mixed route");
 assert(ruleset(download, "proxy-discord-community-ruleset").download_detour == "proxy-out", "download_detour on community ruleset");
 assert(ruleset_url(download, "https://example.com/rules.srs").download_detour == "proxy-out", "download_detour on custom remote ruleset");
 

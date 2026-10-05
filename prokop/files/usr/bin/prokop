@@ -146,6 +146,9 @@ function show_help() {
     print("    killswitch_status       Show the VPN kill-switch state in JSON format\n");
     print("    killswitch_sync         Re-apply the VPN kill-switch from the running Prokop policy\n");
     print("    killswitch_disable      Remove the VPN kill-switch until the next successful start or reload\n");
+    print("    notify_test             Send a test notification to the configured channels\n");
+    print("    notify_status           Show the notification settings (no secrets) and the last delivery\n");
+    print("    notify_tick             Send queued notifications and run the due checks (cron)\n");
     print("    validate_byedpi_strategy_json\n");
     print("                            Validate a ByeDPI ciadpi strategy and print JSON result\n");
 }
@@ -252,7 +255,11 @@ function command_spec(command) {
         autotune_if_due: [ "autotune/manager.uc", "if-due", 0 ],
         killswitch_status: [ "killswitch/runtime.uc", "status", 0 ],
         killswitch_sync: [ "killswitch/runtime.uc", "sync", 0 ],
-        killswitch_disable: [ "killswitch/runtime.uc", "disable", 0 ]
+        killswitch_disable: [ "killswitch/runtime.uc", "disable", 0 ],
+        notify_test: [ "notify/manager.uc", "test", 0 ],
+        notify_status: [ "notify/manager.uc", "status", 0 ],
+        notify_tick: [ "notify/manager.uc", "tick", 0 ],
+        notify_flush: [ "notify/manager.uc", "flush", 0 ]
     };
 
     return commands[as_string(command)];
@@ -310,7 +317,7 @@ const ALLOWED_DURING_FULL_UNINSTALL = [
     "component_action_status", "subscription_update_status", "get_list_update_status", "component_update_check_cache",
     "prokop_releases", "autotune_status", "autotune_target", "autotune_groups", "autotune_list_domains",
     "autotune_run_status", "validate_nfqws_strategy_json", "validate_nfqws2_strategy_json",
-    "validate_byedpi_strategy_json"
+    "validate_byedpi_strategy_json", "notify_status"
 ];
 
 function full_uninstall_running() {

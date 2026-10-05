@@ -143,6 +143,7 @@ const SUBSCRIPTION_CACHE_UC = LIB_DIR + "/subscription/cache.uc";
 const RULESET_CACHE_UC = LIB_DIR + "/singbox/ruleset_cache.uc";
 const UPDATES_UC = LIB_DIR + "/components/updates.uc";
 const AUTOTUNE_MANAGER_UC = LIB_DIR + "/autotune/manager.uc";
+const NOTIFY_MANAGER_UC = LIB_DIR + "/notify/manager.uc";
 const STATE_UC = LIB_DIR + "/service/state.uc";
 const RELOAD_UC = LIB_DIR + "/service/reload.uc";
 const UI_UC = LIB_DIR + "/service/ui.uc";
@@ -1029,6 +1030,9 @@ function restore_guarded_singbox_runtime(backup_path, guard_active) {
 // verdict on the service. Capture discards it; module_success would not.
 function sync_autotune_cron(mode) {
     module_capture(AUTOTUNE_MANAGER_UC, [ mode ]);
+    // The notification line (notify/manager.uc) follows the same moments:
+    // written or removed with the start, every reload, and the stop.
+    module_capture(NOTIFY_MANAGER_UC, [ mode ]);
 }
 
 function refresh_cron() {

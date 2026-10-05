@@ -1796,6 +1796,36 @@ function add_service_mixed_proxy(config, settings, sections) {
         runtime_generate_unsupported("download components via proxy section is not set");
 }
 
+// Notifications sent through a rule's connection (notify/manager.uc): one
+// more service inbound, below the download ones, routed only by its tag.
+// A notification setting never fails the runtime: without that rule's
+// outbound (the rule is gone, disabled, or not ready at a cold start) there
+// is no inbound, and the sender goes directly.
+function notify_proxy_section(settings) {
+    if (!bool_option(settings, "notify_enabled", false) || !bool_option(settings, "notify_via_proxy", false))
+        return "";
+    return option(settings, "notify_via_proxy_section", "");
+}
+
+function add_notify_service_mixed_proxy(config, settings) {
+    let section_name = notify_proxy_section(settings);
+    if (section_name == "")
+        return;
+    let outbound = outbound_tag(section_name);
+    let found = false;
+    for (let item in array_or_empty(config.outbounds))
+        if (type(item) == "object" && item.tag == outbound)
+            found = true;
+    if (!found)
+        return;
+    add_service_mixed_proxy_inbound(
+        config,
+        runtime_constants.inbound_tag("service-notify"),
+        runtime_constants.SERVICE_MIXED_INBOUND_PORT - 1,
+        outbound
+    );
+}
+
 /*
  * This proxy is intentionally routed only by its inbound tag. Destination
  * domains, IP ranges and rule sets must never be able to move its traffic to a
@@ -3138,6 +3168,7 @@ function generate_config(output_path, service_address, mwan3_active, supports_xh
         add_route_for_section(config, section);
     add_source_aware_dns_fallback(config, source_aware_dns);
     add_service_mixed_proxy(config, settings, sections);
+    add_notify_service_mixed_proxy(config, settings);
     add_priority_probe_inbounds(config);
     for (let section in sections)
         add_mixed_proxy_for_section(config, section, service_address);

@@ -206,6 +206,23 @@ function event_state() {
     return length(result) > 10 ? slice(result, length(result) - 10) : result;
 }
 
+// A failed change or a rollback the user should hear of when away from the
+// page: handed to the notification sender, which never holds up this record
+// (notify/queue.uc). What the user did and saw succeed is not sent.
+function notify_event(event) {
+    let wanted = (event.kind == "reload" || event.kind == "start") ? event.status == "failure" :
+        event.kind == "restore" ? (event.status == "recovered" || event.status == "failure") :
+        event.kind == "autotune_rollback" ? (event.status == "failure" ||
+            (event.status == "success" && event.trigger == "automatic")) : false;
+    if (!wanted)
+        return;
+    try {
+        require("notify.queue").enqueue("rollback", { kind: event.kind, status: event.status,
+            trigger: event.trigger, candidate: event.candidate });
+    }
+    catch (e) {}
+}
+
 // details: the extra fields of the kind, as JSON text (config_migration:
 // { "notices": [ ... ] }).
 function record_event(kind, status, trigger, candidate, details) {
@@ -253,8 +270,10 @@ function record_event(kind, status, trigger, candidate, details) {
         lock.lock("u");
         lock.close();
     }
+    notify_event(event);
     return result;
 }
+
 
 function as_string(value) {
     return value == null ? "" : "" + value;

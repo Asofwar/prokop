@@ -2273,6 +2273,15 @@ function subscription_update_section(section, force) {
     else {
         log_message("Subscription update for rule '" + section_name_value + "' failed: " + update_count_summary(changed, unchanged, failed), "warn");
     }
+    // The sender decides whether anyone hears of it; it never holds up the
+    // update (notify/queue.uc).
+    if (failed > 0) {
+        try {
+            require("notify.queue").enqueue("subscription", { kind: "subscription_failed", section: section_name_value,
+                name: option(section, "label", "") || section_name_value, failed, total });
+        }
+        catch (e) {}
+    }
 
     return update_result;
 }

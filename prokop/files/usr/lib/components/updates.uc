@@ -1872,7 +1872,8 @@ function refresh_cron_from_sources(settings, sections, bin, list_marker, subscri
         exit(1);
 
     log_cron_apply_result(result);
-    ensure_crond_running(result.crontab, [ list_marker, subscription_marker, component_marker, "# prokop-autotune" ]);
+    ensure_crond_running(result.crontab, [ list_marker, subscription_marker, component_marker, "# prokop-autotune",
+        "# prokop-notify" ]);
     // 2: an invalid interval in the settings, which the crontab was written
     // without Prokop's jobs for (service/lifecycle.uc fails the start or
     // reload on it); 1: the crontab could not be read or written.

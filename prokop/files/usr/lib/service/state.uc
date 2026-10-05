@@ -1949,6 +1949,12 @@ function sing_box_signature_body(settings, sections, mwan3_active) {
     if (download_via_proxy_enabled(settings, "components"))
         body = signature_add_value(body, "settings.download_components_via_proxy_section", option(settings, "download_components_via_proxy_section", ""));
 
+    // The notification inbound (singbox/generator.uc); only when it is
+    // asked for, so that a configuration without it keeps its signature.
+    if (bool_option_value(settings, "notify_enabled", false) == "1" &&
+        bool_option_value(settings, "notify_via_proxy", false) == "1")
+        body = signature_add_value(body, "settings.notify_via_proxy_section", option(settings, "notify_via_proxy_section", ""));
+
     for (let section in sections)
         body = append_sing_box_rule_signature_body(body, object_or_empty(section), sections);
 
