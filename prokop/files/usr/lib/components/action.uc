@@ -616,6 +616,10 @@ function action_success(component, action, message, current_version, latest_vers
 
 function action_fail(component, action, message, current_version, latest_version, status, release_url, reason) {
     updates_log(message, "error");
+    // Starting the stopped Prokop again may take minutes: not under the
+    // stage that failed (PRG-4).
+    if (prokop_was_running && (prokop_stopped_for_sing_box_change || prokop_stopped_for_upgrade))
+        progress?.stage?.("rollback");
     restart_prokop_after_failed_sing_box_change();
     restart_prokop_after_failed_upgrade();
     progress?.finish?.(false);
@@ -2260,6 +2264,7 @@ function restore_sing_box_install_backup(previous_variant, backup_binary) {
 }
 
 function restore_sing_box_after_failed_extended_install(previous_variant, backup_binary, backup_cronet, previous_marker, previous_version_state, archive_file, cronet_touched) {
+    progress?.stage?.("rollback");
     if (as_string(archive_file) != "")
         remove_file(archive_file);
     let restore_status = true;
@@ -2274,6 +2279,7 @@ function restore_sing_box_after_failed_extended_install(previous_variant, backup
 }
 
 function restore_sing_box_after_failed_extended_package_install(previous_variant, backup_binary, backup_cronet, previous_marker, previous_version_state, package_file, cronet_touched) {
+    progress?.stage?.("rollback");
     if (as_string(package_file) != "")
         remove_file(package_file);
     pkg_remove_sing_box_conflict("sing-box-extended");
@@ -2290,6 +2296,7 @@ function restore_sing_box_after_failed_extended_package_install(previous_variant
 }
 
 function restore_sing_box_after_failed_package_install(target_package, previous_variant, backup_binary, backup_cronet, previous_marker, previous_version_state, cronet_touched) {
+    progress?.stage?.("rollback");
     pkg_remove_sing_box_conflict(target_package);
     let restore_status = restore_sing_box_install_backup(previous_variant, backup_binary);
     if (cronet_touched) {
@@ -3167,6 +3174,7 @@ function install_prokop_package_set(latest_version, backend_file, app_file, i18n
     }
 
     updates_log("Prokop package-set upgrade failed; restoring previous release", "warn");
+    progress?.stage?.("rollback");
     let recovery_error = recover_prokop_opkg_set();
     if (recovery_error != "")
         return recovery_error;
@@ -4007,6 +4015,8 @@ function component_action(component, action, version) {
         // the state recorded before the upgrade.
         capture_prokop_running_state();
         prokop_stopped_for_upgrade = true;
+        // The card shows the recovery, not a release without stages (PRG-4).
+        progress?.begin?.(PROGRESS_FILE, component, action, "rollback");
         let recovery_error = recover_prokop_opkg_set();
         if (recovery_error != "")
             action_fail("prokop", "install", recovery_error);

@@ -956,6 +956,9 @@ msgstr "Идёт проверка целей"
 msgid "Checking that it works"
 msgstr "Проверка работы"
 
+msgid "Restoring after the failure"
+msgstr "Восстановление после ошибки"
+
 msgid "Checking the configuration before the change"
 msgstr "Проверка конфигурации перед изменением"
 

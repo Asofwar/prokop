@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   downloadText,
+  failedStageOf,
   formatBytes,
   formatDuration,
   normalizeProgress,
@@ -159,6 +160,40 @@ describe('component action progress', () => {
       'verify:failed',
     ]);
     expect(viewDuration(failed)).toBe(31);
+  });
+
+  it('marks the stage that failed, not the restore after it (PRG-4)', () => {
+    const stages = [
+      { id: 'resolve', started_at: 1000, finished_at: 1002 },
+      { id: 'stop', started_at: 1002, finished_at: 1003 },
+      { id: 'install', started_at: 1003, finished_at: 1040 },
+      { id: 'rollback', started_at: 1040, finished_at: null },
+    ];
+    const restoring = view({
+      component: 'sing_box',
+      progress: normalizeProgress({ stage: 'rollback', stages }),
+    });
+    // While it restores, nothing of the plan is ahead.
+    expect(stageRows(restoring).map((row) => `${row.id}:${row.state}`)).toEqual(
+      ['resolve:done', 'stop:done', 'install:done', 'rollback:current'],
+    );
+    const failed = view({
+      component: 'sing_box',
+      running: false,
+      success: false,
+      progress: normalizeProgress({
+        stage: 'rollback',
+        stages: [...stages.slice(0, 3), { ...stages[3], finished_at: 1100 }],
+        outcome: 'failed',
+      }),
+    });
+    expect(stageRows(failed).map((row) => `${row.id}:${row.state}`)).toEqual([
+      'resolve:done',
+      'stop:done',
+      'install:failed',
+      'rollback:done',
+    ]);
+    expect(failedStageOf(failed)?.id).toBe('install');
   });
 
   it('a fresh TorrServer install has nothing to stop', () => {

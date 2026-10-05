@@ -297,6 +297,26 @@ done
   fail "a failure must report only the stages it reached: $(json_get "$WORK/status" 'v.progress.stages')"
 "$BIN" --version | grep -Fxq "TorrServer MatriX.146" || fail "a failed update must keep the installed release"
 
+# --- 3b. The restore after a failure has its own stage (PRG-4) --------------------
+# The steps it reuses (a download, an install, a restart) stay under it, so
+# the stage that failed is the one before it.
+ucode -L "$LIB" -e '
+  let p = require("components.progress");
+  p.begin(ARGV[0], "sing_box", "install_stable", "resolve");
+  p.stage("install");
+  p.stage("rollback");
+  p.stage("download");
+  p.stage("restart");
+  p.finish(false);
+  print(sprintf("%J", p.read(ARGV[0])), "\n");' "$WORK/rollback.progress" >"$WORK/read"
+[ "$(json_get "$WORK/read" 'v.stages.map(s => s.id).join(" ")')" = "resolve install rollback" ] ||
+  fail "the restore after a failure must stay one stage: $(cat "$WORK/read")"
+[ "$(json_get "$WORK/read" 'v.outcome')" = failed ] || fail "a restored failure is still a failure: $(cat "$WORK/read")"
+awk '/^function action_fail\(/ {f=1} f && /progress\?\.stage\?\.\("rollback"\)/ {r=NR} f && /restart_prokop_after_failed_sing_box_change\(\);/ {s=NR; exit} END {exit !(r && s > r)}' \
+  "$LIB/components/action.uc" || fail "action_fail must enter the rollback stage before it starts Prokop again"
+[ "$(grep -B4 'let recovery_error = recover_prokop_opkg_set();' "$LIB/components/action.uc" | grep -c '"rollback")')" -eq 2 ] ||
+  fail "the package-set recovery must report its stage"
+
 # --- 4. The deadline of a stalled download kills the download itself (PRG-5) --------
 # The published size caps the transfer (curl --max-filesize).
 grep -Fq -- "--max-filesize $size " "$WORK/curl-args" ||

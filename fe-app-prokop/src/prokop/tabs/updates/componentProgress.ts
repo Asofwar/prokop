@@ -24,6 +24,7 @@ const STAGES: Stage[] = [
   'start',
   'restart',
   'check',
+  'rollback',
 ];
 
 export function stageLabel(stage: Stage | '') {
@@ -54,6 +55,8 @@ export function stageLabel(stage: Stage | '') {
       return _('Restarting Prokop');
     case 'check':
       return _('Checking that it works');
+    case 'rollback':
+      return _('Restoring after the failure');
     default:
       return _('In progress');
   }
@@ -278,6 +281,21 @@ export function viewDuration(view: Prokop.ComponentProgressView) {
   return end >= startedAt ? end - startedAt : null;
 }
 
+// The stage a failed action failed at: the restore after the failure
+// ('rollback') runs after it.
+export function failedStageOf(view: Prokop.ComponentProgressView) {
+  if (view.running || view.success !== false) {
+    return undefined;
+  }
+  const stages = view.progress?.stages || [];
+  for (let index = stages.length - 1; index >= 0; index -= 1) {
+    if (stages[index].id !== 'rollback') {
+      return { id: stages[index].id, index };
+    }
+  }
+  return undefined;
+}
+
 interface StageRow {
   id: Stage;
   state: 'done' | 'current' | 'failed' | 'pending';
@@ -290,14 +308,14 @@ export function stageRows(
   installed = true,
 ): StageRow[] {
   const observed = view.progress?.stages || [];
-  const failed = !view.running && view.success === false;
+  const failedIndex = failedStageOf(view)?.index ?? -1;
   const rows: StageRow[] = observed.map((stage, index) => {
     const last = index === observed.length - 1;
     let state: StageRow['state'] = 'done';
 
     if (last && view.running) {
       state = 'current';
-    } else if (last && failed) {
+    } else if (index === failedIndex) {
       state = 'failed';
     }
 
@@ -310,8 +328,12 @@ export function stageRows(
   });
 
   // Without a report from the router there is no stage to place the plan
-  // against.
-  if (!view.running || !view.progress) {
+  // against; once it restores after a failure, nothing of the plan is ahead.
+  if (
+    !view.running ||
+    !view.progress ||
+    observed.some((stage) => stage.id === 'rollback')
+  ) {
     return rows;
   }
 
@@ -456,10 +478,7 @@ export function renderComponentProgress(
 ) {
   const children: Node[] = [];
   const startedAt = viewStartedAt(view);
-  const failedStage =
-    !view.running && view.success === false
-      ? view.progress?.stages[view.progress.stages.length - 1]?.id
-      : undefined;
+  const failedStage = failedStageOf(view)?.id;
 
   // 1. What it is doing now, or how it ended, and for how long.
   const summary: Node[] = [];

@@ -1347,6 +1347,10 @@ msgstr ""
 msgid "Checking that it works"
 msgstr ""
 
+#: src/prokop/tabs/updates/componentProgress.ts
+msgid "Restoring after the failure"
+msgstr ""
+
 #: src/prokop/tabs/autotune/model.ts:1177
 msgid "Checking the configuration before the change"
 msgstr ""

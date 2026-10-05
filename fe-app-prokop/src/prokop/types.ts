@@ -1184,7 +1184,9 @@ export namespace Prokop {
     | 'apply'
     | 'start'
     | 'restart'
-    | 'check';
+    | 'check'
+    // The restore after a failure; the stage that failed is the one before.
+    | 'rollback';
 
   // Router times, in seconds. Only observed facts: no estimate of what is
   // left.

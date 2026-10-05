@@ -10,7 +10,7 @@ let fs = require("fs");
 const FORMAT = 1;
 // The order the UI lists them in; an action passes through some of them.
 const STAGES = [ "resolve", "lists", "download", "verify", "backup", "prepare", "stop", "install", "remove", "apply",
-    "start", "restart", "check" ];
+    "start", "restart", "check", "rollback" ];
 const MAX_STAGES = 32;
 const MAX_LABEL = 120;
 
@@ -68,12 +68,14 @@ function current() {
 }
 
 // Enters STAGE; the stage before it ends now. Entering the current stage
-// again changes nothing.
+// again changes nothing. "rollback" is the last one: the restore after a
+// failure reuses steps (a download, an install, a restart) that stay under
+// it, so the stage that failed stays the one before it (PRG-4).
 function stage(id) {
     id = stage_id(id);
     if (path == "" || value == null || id == "")
         return false;
-    if (value.stage == id)
+    if (value.stage == id || value.stage == "rollback")
         return true;
     let now = now_seconds();
     let stages = value.stages;
