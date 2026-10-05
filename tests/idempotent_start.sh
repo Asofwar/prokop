@@ -118,6 +118,8 @@ function legacy_start_refused(action) {
 function release_start_subscription_update_lock() { released++; }
 // The not-retryable mark of a refused start: tests/runtime_guard_lifecycle.sh.
 function clear_start_failure() { }
+// The leftover temporary list sing-box: tests/list_bootstrap_leftover.sh.
+function stop_list_bootstrap() { return true; }
 function mark_start_failure_not_retryable(reason) { }
 function start_impl() { cold_starts++; return 23; }
 function cleanup_failed_runtime() { cleanups++; }

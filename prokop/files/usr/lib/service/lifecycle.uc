@@ -1136,6 +1136,15 @@ function start_sing_box_and_wait() {
     ]);
 }
 
+// Stops the temporary list sing-box (A9) by its record, when one is there:
+// a start that died while it ran leaves it running, and it holds the
+// service proxy port of the real sing-box (LC-7). The record names the very
+// process (singbox/runtime.uc list_bootstrap_stop checks its PID, start
+// ticks and command line), so nothing else is signalled.
+function stop_list_bootstrap() {
+    return fs.stat(LIST_BOOTSTRAP_DIR) == null || module_success(SINGBOX_UC, [ "list-bootstrap-stop" ]);
+}
+
 // Only a fully applied runtime may refresh the persistent VPN kill-switch;
 // every failure path keeps the previously applied protection untouched.
 // Start and reload call it holding reload.lock, which a manual sync takes
@@ -1206,7 +1215,7 @@ function start_main() {
     // silently turn protected IP traffic into final/direct traffic.
     // A temporary list sing-box a start that died left behind would hold
     // the service proxy port of the real one.
-    if (fs.stat(LIST_BOOTSTRAP_DIR) != null && !module_success(SINGBOX_UC, [ "list-bootstrap-stop" ])) {
+    if (!stop_list_bootstrap()) {
         log_message("A temporary sing-box left by an earlier start did not stop. Aborted.", "fatal");
         return 1;
     }
@@ -1436,6 +1445,17 @@ function stop_main(explicit_stop) {
     }
     if (process_conflict)
         log_message("Additional sing-box process detected; explicit Stop removes Prokop's interception and stops only the sing-box processes that Prokop owns", "warn");
+
+    // A temporary list sing-box, of a start that died or of one this stop
+    // ends, is Prokop's (LC-7). A controlled stop that cannot end it changes
+    // nothing.
+    if (!stop_list_bootstrap()) {
+        if (!explicit_stop) {
+            log_message("Refusing Prokop stop: the temporary list sing-box did not stop; preserving the existing runtime", "fatal");
+            return 2;
+        }
+        log_message("The temporary sing-box for the list download did not stop", "warn");
+    }
 
     log_message("Stopping Prokop", "info");
     module_success(DNS_FAILOVER_UC, [ "stop-runtime" ]);
@@ -1833,6 +1853,12 @@ function start_inner() {
         restore_dns_after_refused_start();
         return 1;
     }
+
+    // Starts are serialized by reload.lock: a temporary list sing-box that
+    // runs now was left by a start that died (LC-7). It is Prokop's by its
+    // record and goes first; one that does not stop is refused below.
+    if (!stop_list_bootstrap())
+        log_message("A temporary sing-box left by an earlier start did not stop", "warn");
 
     // A second sing-box is not safely attributable from its executable name.
     // Do not turn this detection into a stop/restart cycle: that could remove

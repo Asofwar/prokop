@@ -43,6 +43,9 @@ const MANAGED_UPGRADE_SING_BOX_MARKER = getenv("PROKOP_MANAGED_UPGRADE_SING_BOX_
 // Prokop's sing-box executable: the sing-box package and every managed
 // binary variant install it here.
 const SING_BOX_BIN = getenv("PROKOP_SING_BOX_BIN") || "/usr/bin/sing-box";
+// The temporary list sing-box of a cold start (singbox/runtime.uc).
+const LIST_BOOTSTRAP_DIR = getenv("PROKOP_LIST_BOOTSTRAP_DIR") ||
+    (getenv("PROKOP_RUNTIME_STATE_DIR") || "/var/run/prokop") + "/list-bootstrap";
 // The sing-box configuration Prokop generates when settings.config_path is
 // not set (killswitch/runtime.uc, routing/resolve.uc).
 const DEFAULT_SING_BOX_CONFIG_PATH = "/etc/sing-box/config.json";
@@ -626,14 +629,31 @@ function sing_box_service_running() {
     return pid > 0 && pid_is_sing_box(pid);
 }
 
-function sing_box_process_count() {
+// skip_pid: a process not to count (the temporary list sing-box below).
+function sing_box_process_count(skip_pid) {
     let count = 0;
     for (let exe_path in fs.glob("/proc/[0-9]*/exe")) {
         let parts = split(as_string(exe_path), "/");
-        if (length(parts) >= 4 && pid_is_sing_box(parts[2]))
+        if (length(parts) >= 4 && parts[2] != skip_pid && pid_is_sing_box(parts[2]))
             count++;
     }
     return count;
+}
+
+// A9: the temporary sing-box a cold start runs for its list download
+// (singbox/runtime.uc list_bootstrap_run), recorded with its PID and start
+// ticks in Prokop's runtime state. It is Prokop's while that record still
+// names the very process, with its own command line (LC-7): a start that
+// was killed meanwhile leaves it running, and the next start, a stop and a
+// restart stop it by that record instead of refusing an ambiguous runtime.
+function list_bootstrap_process() {
+    let saved = process_identity.read_record(LIST_BOOTSTRAP_DIR + "/sing-box.pid");
+    if (saved == null || saved.ticks == "")
+        return null;
+    let argv = [ "sing-box", "run", "-c", LIST_BOOTSTRAP_DIR + "/config.json", "-D", LIST_BOOTSTRAP_DIR ];
+    if (process_identity.matches_record(saved, "sing-box", argv, true, true) == "")
+        return null;
+    return { pid: saved.pid, ticks: saved.ticks, argv };
 }
 
 function verified_sing_box_runtime(first_pid, first_ticks, first_identity, process_count,
@@ -678,8 +698,11 @@ function sing_box_deleted_owned_service_runtime() {
         process_start_ticks_for_pid(provenance.pid) == provenance.start_ticks;
 }
 
+// The temporary list sing-box is no competitor of procd's instance; next to
+// that instance it still is one (sing_box_runtime_provenance counts it).
 function sing_box_process_conflict() {
-    return sing_box_process_count() > 0 && !sing_box_single_owned_service_runtime();
+    let bootstrap = list_bootstrap_process();
+    return sing_box_process_count(bootstrap?.pid) > 0 && !sing_box_single_owned_service_runtime();
 }
 
 function stopped_owned_pid_observation(expected_ticks, current_ticks, owned_identity, process_count, service_pid) {
@@ -985,7 +1008,8 @@ function runs_prokop_sing_box(pid, exe) {
 // instance (Prokop configures and starts that service), the very process
 // that a managed upgrade recorded (PID and start ticks), or Prokop's
 // sing-box executable that runs Prokop's own configuration file, also
-// outside procd. An executable
+// outside procd, or the temporary list sing-box that its record names
+// (list_bootstrap_process). An executable
 // named sing-box proves nothing: another program (HomeProxy, a container,
 // the user) may run one of its own. Each record keeps the PID, start ticks
 // and command line seen here, so that every signal re-checks all of them.
@@ -1008,6 +1032,9 @@ function owned_sing_box_processes(config_path) {
                 argv[2] == "-c" && argv[3] == config_path && runs_prokop_sing_box(pid, fs.readlink(exe_path))))
             owned[pid] = { pid, ticks, argv };
     }
+    let bootstrap = list_bootstrap_process();
+    if (bootstrap != null)
+        owned[bootstrap.pid] = bootstrap;
     return owned;
 }
 
