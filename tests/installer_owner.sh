@@ -85,9 +85,13 @@ grep -Fq 'trap cleanup EXIT' "$INSTALLER" ||
   fail "installer cleanup must run on every exit"
 for signal_status in "HUP 129" "INT 130" "TERM 143"; do
   set -- $signal_status
-  grep -Fq "trap 'exit $2' $1" "$INSTALLER" ||
+  grep -Fq "trap 'on_installer_signal $2' $1" "$INSTALLER" ||
     fail "installer must stop with status $2 on $1"
 done
+# UPD-12: the handler rolls a started update back, otherwise it exits with
+# the signal's status.
+sed -n '/^on_installer_signal() {$/,/^}$/p' "$INSTALLER" | grep -Fxq '    exit "$1"' ||
+  fail "the installer signal handler must exit with the signal's status"
 if grep -Fq 'trap cleanup EXIT HUP INT TERM' "$INSTALLER"; then
   fail "installer signal handlers must not resume installation after cleanup"
 fi

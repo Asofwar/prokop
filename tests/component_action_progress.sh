@@ -15,7 +15,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK="$(mktemp -d)"
-trap 'kill $(cat "$WORK/hang-pids" 2>/dev/null) 2>/dev/null; rm -rf "${WORK:?}"' EXIT
+trap 'rc=$?; kill $(cat "$WORK/hang-pids" 2>/dev/null) 2>/dev/null || true; rm -rf "${WORK:?}" 2>/dev/null || true; exit "$rc"' EXIT
 trap 'exit 1' HUP INT TERM
 
 fail() {
