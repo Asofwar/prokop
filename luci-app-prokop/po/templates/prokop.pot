@@ -7619,6 +7619,10 @@ msgstr ""
 msgid "Up to 8 domains; exactly these are checked."
 msgstr ""
 
+#: src/prokop/tabs/updates/initController.ts:909
+msgid "UPnP off: TorrServer does not open ports on the router"
+msgstr ""
+
 #: src/prokop/tabs/updates/initController.ts:1020
 msgid "Update"
 msgstr ""

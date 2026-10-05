@@ -5360,6 +5360,9 @@ msgstr "Без обхода нестабильно; найдена стабил�
 msgid "Up to 8 domains; exactly these are checked."
 msgstr "До 8 доменов; проверяются именно они."
 
+msgid "UPnP off: TorrServer does not open ports on the router"
+msgstr "UPnP выключен: TorrServer не открывает порты на роутере"
+
 msgid "Update"
 msgstr "Обновить"
 

@@ -14,6 +14,9 @@ let fs = require("fs");
 const DIR = getenv("PROKOP_TORRSERVER_DIR") || "/opt/torrserver";
 const BIN = DIR + "/torrserver";
 const MARKER = DIR + "/prokop-managed.json";
+// TorrServer's own directory (its database), the only one its unprivileged
+// user may write (/etc/init.d/prokop-torrserver, TS-1).
+const DATA_DIR = DIR + "/data";
 // Written once the recommended settings were applied: Prokop applies them
 // once per TorrServer, and settings changed after that stay.
 const SETTINGS_STAMP = DIR + "/prokop-settings-applied";
@@ -241,7 +244,9 @@ function http_post(url, body) {
 // Settings that suit a router: the RAM cache sized to the router's memory
 // (an eighth of it to the nearest 16 MiB, 32 to 256 MiB), reading ahead and
 // preloading like TorrServer's own recommendations for weak devices, and
-// the default connection count. What is not listed stays as the user set it.
+// the default connection count. UPnP is off: TorrServer runs on the router
+// itself, and must not open the router's WAN to peers through miniupnpd
+// (TS-1). What is not listed stays as the user set it.
 function recommended_settings() {
     let total_kib = 0;
     for (let line in split(read(MEMINFO_PATH), "\n")) {
@@ -257,7 +262,8 @@ function recommended_settings() {
         PreloadCache: 50,
         ConnectionsLimit: 25,
         TorrentDisconnectTimeout: 30,
-        ResponsiveMode: true
+        ResponsiveMode: true,
+        DisableUPNP: true
     };
 }
 
@@ -360,6 +366,6 @@ else if (mode == "write-marker")
 else if (mode == "wait-running")
     exit(wait_running(int(ARGV[1] || "20"), ARGV[2]) ? 0 : 1);
 else if (mode == "paths")
-    print(sprintf("%J\n", { dir: DIR, bin: BIN, marker: MARKER, init: INIT, settings_stamp: SETTINGS_STAMP }));
+    print(sprintf("%J\n", { dir: DIR, data_dir: DATA_DIR, bin: BIN, marker: MARKER, init: INIT, settings_stamp: SETTINGS_STAMP }));
 else
     exit(1);

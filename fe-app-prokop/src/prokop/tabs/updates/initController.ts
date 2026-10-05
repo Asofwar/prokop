@@ -906,6 +906,7 @@ function confirmTorrServerSettings() {
       _('Read-ahead 95%, preload 50%'),
       _('25 connections per torrent, disconnect after 30 seconds'),
       _('Responsive mode on'),
+      _('UPnP off: TorrServer does not open ports on the router'),
     ],
     confirmLabel: _('Apply'),
   });

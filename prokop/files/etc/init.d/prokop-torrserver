@@ -5,19 +5,77 @@
 # It runs only the binary Prokop installed, which its marker names: a
 # TorrServer installed by other means is not this service's. procd keeps it
 # in its own cgroup, which TorrServer Direct needs.
+#
+# TorrServer talks to any peer on the internet and serves the LAN: it runs
+# as its own unprivileged user, never root (TS-1). Its database lives in
+# data/, the only directory that user may write; the binary, Prokop's
+# marker and the directory that holds them stay root's, so TorrServer can
+# neither replace its own program nor plant links where Prokop writes.
 START=95
 STOP=10
 USE_PROCD=1
 
 TORRSERVER_DIR=/opt/torrserver
+TORRSERVER_DATA="$TORRSERVER_DIR/data"
+TORRSERVER_USER=torrserver
+PASSWD_FILE=/etc/passwd
+GROUP_FILE=/etc/group
+
+# The system user TorrServer runs as, created on first use as OpenWrt's
+# packages create theirs (add_group_and_user): a group from 65536 up, and a
+# user with the same id. False when it cannot be made.
+ensure_torrserver_user() {
+	local id
+	if user_exists "$TORRSERVER_USER"; then
+		return 0
+	fi
+	if group_exists "$TORRSERVER_USER"; then
+		id="$(grep -s "^$TORRSERVER_USER:" "$GROUP_FILE" | cut -d: -f3)"
+	else
+		id=65536
+		while grep -qs "^[^:]*:[^:]*:$id:" "$PASSWD_FILE" "$GROUP_FILE"; do
+			id=$((id + 1))
+		done
+		group_add "$TORRSERVER_USER" "$id" || return 1
+	fi
+	case "$id" in ''|*[!0-9]*) return 1 ;; esac
+	# Never share an id with another user.
+	grep -qs "^[^:]*:[^:]*:$id:" "$PASSWD_FILE" && return 1
+	user_add "$TORRSERVER_USER" "$id" "$id" TorrServer "$TORRSERVER_DATA" /bin/false || return 1
+	user_exists "$TORRSERVER_USER"
+}
+
+# data/ for TorrServer's user. A TorrServer from before kept its database
+# beside the binary and ran as root: the database moves in once and becomes
+# that user's. Nothing is changed recursively, and links are never followed.
+prepare_torrserver_data() {
+	local name
+	[ -L "$TORRSERVER_DATA" ] && return 1
+	[ -d "$TORRSERVER_DATA" ] || mkdir -m 0750 "$TORRSERVER_DATA" || return 1
+	chown -h "$TORRSERVER_USER:$TORRSERVER_USER" "$TORRSERVER_DATA" || return 1
+	for name in config.db rutor.ls; do
+		[ -f "$TORRSERVER_DIR/$name" ] && [ ! -L "$TORRSERVER_DIR/$name" ] || continue
+		[ -e "$TORRSERVER_DATA/$name" ] && continue
+		mv "$TORRSERVER_DIR/$name" "$TORRSERVER_DATA/$name" || return 1
+		chown -h "$TORRSERVER_USER:$TORRSERVER_USER" "$TORRSERVER_DATA/$name" || return 1
+	done
+	return 0
+}
 
 start_service() {
 	[ -x "$TORRSERVER_DIR/torrserver" ] && [ -f "$TORRSERVER_DIR/prokop-managed.json" ] || return 0
+	# Fail closed: without its own user TorrServer does not run at all.
+	if ! ensure_torrserver_user || ! prepare_torrserver_data; then
+		logger -t prokop-torrserver "TorrServer was not started: its user $TORRSERVER_USER or $TORRSERVER_DATA could not be prepared"
+		return 1
+	fi
 	procd_open_instance torrserver
-	procd_set_param command "$TORRSERVER_DIR/torrserver" -d "$TORRSERVER_DIR" -p 8090
+	procd_set_param command "$TORRSERVER_DIR/torrserver" -d "$TORRSERVER_DATA" -p 8090
+	procd_set_param user "$TORRSERVER_USER"
+	procd_set_param no_new_privs 1
 	# Go returns freed memory to the router at once (as TorrServer's own
 	# systemd unit sets).
-	procd_set_param env GODEBUG=madvdontneed=1
+	procd_set_param env GODEBUG=madvdontneed=1 HOME="$TORRSERVER_DATA"
 	procd_set_param limits nofile="4096 4096"
 	procd_set_param respawn 3600 5 5
 	procd_set_param stderr 1
