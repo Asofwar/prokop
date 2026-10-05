@@ -172,8 +172,22 @@ function is_cloudflare_shared_cidr(value) {
     return false;
 }
 
-// Discord voice and video. Shared Cloudflare ranges are routed only for these.
-const DISCORD_VOICE_PORTS_NFT = "5000-5020,3478,19294-19344,50000-65535";
+// Discord voice and video, also over UDP 443. Shared Cloudflare ranges are
+// routed only for these, by nft and by sing-box alike (C1).
+const DISCORD_VOICE_PORTS_NFT = "443,5000-5020,3478,19294-19344,50000-65535";
+
+// The same ports as sing-box route rule matchers.
+function discord_voice_port_matchers() {
+    let port = [];
+    let port_range = [];
+    for (let item in split(DISCORD_VOICE_PORTS_NFT, ",")) {
+        if (index(item, "-") < 0)
+            push(port, int(item));
+        else
+            push(port_range, replace(item, "-", ":"));
+    }
+    return { port, port_range };
+}
 
 return {
     valid_ipv4,
@@ -189,5 +203,6 @@ return {
     format_ipv6_tproxy_target,
     CLOUDFLARE_SHARED_CIDRS,
     is_cloudflare_shared_cidr,
-    DISCORD_VOICE_PORTS_NFT
+    DISCORD_VOICE_PORTS_NFT,
+    discord_voice_port_matchers
 };

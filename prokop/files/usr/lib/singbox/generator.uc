@@ -19,6 +19,7 @@ let connections = require("config.connections");
 let urltest_override = require("config.urltest_override");
 let subscription_share_link = require("subscription.share_link");
 let legacy_forkop = require("core.legacy_forkop");
+let core_ip = require("core.ip");
 let uci = null;
 let fixture_uci_data = null;
 let runtime_settings_cache = null;
@@ -2658,6 +2659,35 @@ function push_section_route_rule(config, section, route_rule) {
     push(config.route.rules, exclude_sources_from_route_rule(route_rule, section));
 }
 
+// nft captures the shared Cloudflare ranges of the Discord list for
+// Discord's media ports over UDP only, whatever ports the rule filters
+// (nft/apply.uc). sing-box takes that traffic to the rule's target by the
+// same ranges and ports: matched by the rule-set and the rule's own port
+// filter alone, it went out directly (C1).
+function add_discord_shared_cloudflare_rule(config, section, target, source_ip_cidr) {
+    let discord = false;
+    for (let community in connections.community_lists(section))
+        if (as_string(community) == "discord")
+            discord = true;
+    if (!discord)
+        return;
+
+    let ports = core_ip.discord_voice_port_matchers();
+    let rule = {
+        action: target.action,
+        inbound: tproxy_inbound_matcher(),
+        network: "udp",
+        ip_cidr: [ ...core_ip.CLOUDFLARE_SHARED_CIDRS ],
+        port: ports.port,
+        port_range: ports.port_range
+    };
+    if (target.outbound)
+        rule.outbound = target.outbound;
+    if (length(source_ip_cidr) > 0)
+        rule.source_ip_cidr = source_ip_cidr;
+    push(config.route.rules, exclude_sources_from_route_rule(rule, section));
+}
+
 function add_combined_route_for_section(config, section) {
     let domains = domain_conditions(section);
     let domain = domains.domain;
@@ -2761,6 +2791,7 @@ function add_combined_route_for_section(config, section) {
         add_port_matchers(rule_set_rule, section);
         push_section_route_rule(config, section, rule_set_rule);
     }
+    add_discord_shared_cloudflare_rule(config, section, target, source_ip_cidr);
 
     let rewrite_ttl = int_option(runtime_settings(), "dns_rewrite_ttl", "60");
     if (length(domain) > 0 || length(domain_suffix) > 0 || length(domain_keyword) > 0 || length(domain_regex) > 0) {
