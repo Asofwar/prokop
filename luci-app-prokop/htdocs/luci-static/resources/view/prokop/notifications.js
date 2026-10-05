@@ -118,7 +118,15 @@ function resultLines(answer) {
       _("No channel is set up: save a bot token and chat ID, or a webhook URL"),
     ];
   }
-  return (Array.isArray(answer.channels) ? answer.channels : []).map((item) => {
+  const channels = Array.isArray(answer.channels) ? answer.channels : [];
+  // An answer without channel results (local_error: the router could not
+  // prepare the request) still says why (FE-17).
+  if (!channels.length) {
+    return [
+      answer.reason ? reasonText(answer.reason) : _("The test could not run"),
+    ];
+  }
+  return channels.map((item) => {
     const route =
       item.route === "proxy"
         ? _("through the rule")

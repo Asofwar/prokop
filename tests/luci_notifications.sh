@@ -118,6 +118,11 @@ async function check(label, fn) {
     assert.deepEqual(lines, ['Telegram: Telegram did not accept the bot token (through the rule)',
       'Webhook: Delivered (directly)', 'Webhook: The server answered HTTP 502']);
   }
+  // FE-17: no channel results (the router could not prepare the request):
+  // the reason is still shown.
+  assert.deepEqual(notifications.resultLines({ status: 'failed', reason: 'local_error', channels: [] }),
+    ['The request could not be prepared on the router']);
+  assert.deepEqual(notifications.resultLines({ status: 'failed' }), ['The test could not run']);
 
   if (failures.length) {
     console.error(failures.join('\n\n'));
