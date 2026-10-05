@@ -74,8 +74,17 @@ export function plannedStages(
       : ['remove'];
   }
 
-  if (action === 'enable' || action === 'disable' || action === 'restore') {
+  if (
+    action === 'enable' ||
+    action === 'disable' ||
+    action === 'restore' ||
+    action === 'apply_settings'
+  ) {
     return ['apply'];
+  }
+
+  if (action === 'start') {
+    return ['start'];
   }
 
   switch (component) {

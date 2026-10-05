@@ -3862,8 +3862,8 @@ function component_action(component, action, version) {
     capture_prokop_running_state();
     // What the UI shows while the action runs; a check reports nothing.
     if (action != "check_update")
-        progress?.begin?.(PROGRESS_FILE, component, action, action == "remove" ? "remove" :
-            (action == "enable" || action == "disable" || action == "restore") ? "apply" : "resolve");
+        progress?.begin?.(PROGRESS_FILE, component, action, action == "remove" ? "remove" : action == "start" ? "start" :
+            (action == "enable" || action == "disable" || action == "restore" || action == "apply_settings") ? "apply" : "resolve");
 
     if (component == "prokop" && action == "check_update")
         check_prokop();

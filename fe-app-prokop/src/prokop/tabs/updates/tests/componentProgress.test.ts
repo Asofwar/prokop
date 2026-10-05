@@ -194,4 +194,19 @@ describe('component action progress', () => {
       0,
     );
   });
+
+  it('starting or configuring TorrServer is not an install', () => {
+    const rows = (action: Prokop.ComponentAction) =>
+      stageRows(
+        view({
+          component: 'torrserver',
+          action,
+          progress: normalizeProgress({
+            stage: 'apply',
+            stages: [{ id: 'apply', started_at: 1, finished_at: null }],
+          }),
+        }),
+      ).map((row) => row.id);
+    expect(rows('apply_settings')).toEqual(['apply']);
+  });
 });
