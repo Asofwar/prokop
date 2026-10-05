@@ -63,7 +63,7 @@ const assert = require('assert/strict');
 const out = JSON.parse(fs.readFileSync(process.argv[2], 'utf8')).config;
 const mirror = process.argv[3];
 assert.equal(out.settings.mirror_base_url, '', `former mirror ${mirror} must be disabled`);
-assert.equal(out.settings.applied_migrations.at(-1), 'fork_mirror_opt_in_v1');
+assert(out.settings.applied_migrations.includes('fork_mirror_opt_in_v1'));
 assert(out.settings.applied_migrations.includes('mirror_infotechtg_ru_v1'), 'unknown ids stay recorded');
 const section = out.section[0];
 assert.deepEqual(section.rule_set, [

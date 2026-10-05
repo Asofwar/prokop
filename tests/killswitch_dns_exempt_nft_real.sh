@@ -181,6 +181,7 @@ write_uci() {
   {
     printf 'prokop.settings=settings\nprokop.settings.source_network_interfaces=%s\n' "${IFACES:-br-lan}"
     printf 'prokop.settings.config_path=%s\n' "$WORK_DIR/config.json"
+    [ -z "${INTERCEPT:-}" ] || printf 'prokop.settings.intercept_client_dns=%s\n' "$INTERCEPT"
     printf 'prokop.main=section\nprokop.main.action=connection\nprokop.main.kill_switch=1\n'
     printf 'prokop.main.ip_cidr=3.3.3.0/24\nprokop.main.excluded_source_ip_cidr=192.168.1.50\n'
     printf 'prokop.excl=section\nprokop.excl.action=connection\nprokop.excl.kill_switch=1\n'
@@ -350,6 +351,25 @@ expect 192.168.1.50 excl-inline.example exempt
 expect 192.168.1.5 excl2-inline.example exempt
 expect 192.168.1.70 excl-inline.example blocked
 ok "with a wildcard interface the excluded devices reach their resolvers"
+
+# ---- NET-13: the client DNS intercept of the kill-switch table --------------------
+#
+# With intercept_client_dns on, client DNS to outside servers goes to the
+# router. That of the excluded devices goes to their resolvers, not to the
+# shared block list of the main dnsmasq.
+INTERCEPT=1 write_uci 1 127.0.0.42
+ks sync start || fail "sync with the intercept failed"
+grep -q ' ks_dns_intercept ' "$STATE_DIR/policy.nft" || fail "the policy must intercept client DNS"
+INTERCEPT=1 write_uci 1 1.1.1.1
+ucode -L "$PROKOP_LIB" "$DNS_UC" killswitch-refresh || fail "DNS refresh failed"
+ks exempt-configs "$CONF_DIR" >"$WORK_DIR/confs" || fail "exempt-configs failed"
+serve
+PROKOP_KILLSWITCH_WATCH_ITERATIONS=1 ks watch || fail "watch failed"
+expect 192.168.1.50 excl-inline.example exempt 8.8.8.8
+expect 192.168.1.5 excl2-inline.example exempt 8.8.8.8
+expect 192.168.1.70 excl-inline.example blocked 8.8.8.8
+expect 192.168.1.50 main-inline.example blocked 8.8.8.8
+ok "with the intercept the excluded devices' DNS to outside servers reaches their resolvers (NET-13)"
 
 # ---- the owner goes: nothing stays --------------------------------------------------
 

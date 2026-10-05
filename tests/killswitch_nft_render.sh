@@ -151,17 +151,24 @@ fi
 grep -Fq 'prokop_rule_vpn_main_subnets6 is missing' "$WORK_DIR/partial.json" || fail "missing set must be reported"
 [ ! -e "$WORK_DIR/partial.nft" ] || fail "failed render must not write a policy"
 
-# NET-6: with a protected section, client DNS to foreign servers goes to the
-# router's dnsmasq (block list while Prokop is stopped), after Prokop's own
-# redirect; LAN resolvers and the router stay; off when asked.
-assert_contains "$OUT" "add chain $T ks_dns_intercept { type nat hook prerouting priority -100; policy accept; }" "client DNS intercept chain"
-assert_contains "$OUT" "add rule $T ks_dns_intercept iifname @ks_interfaces ip daddr != @localv4 fib daddr type != local udp dport 53 counter redirect to :53" "client DNS intercept IPv4 UDP"
-assert_contains "$OUT" "add rule $T ks_dns_intercept iifname @ks_interfaces ip6 daddr != @localv6 fib daddr type != local tcp dport 53 counter redirect to :53" "client DNS intercept IPv6 TCP"
-sed 's/"source_network_interfaces": "br-lan awg_server"/"source_network_interfaces": "br-lan awg_server", "intercept_client_dns": "0"/' \
-  "$WORK_DIR/fixture.json" > "$WORK_DIR/no-intercept.json"
-ucode -L "$PROKOP_LIB" "$NFT_RUNTIME" killswitch-render-fixture "$WORK_DIR/no-intercept.json" ProkopTable ProkopKillswitch "$WORK_DIR/no-intercept.nft" >/dev/null ||
-  fail "render with intercept_client_dns=0 failed"
-assert_not_contains "$WORK_DIR/no-intercept.nft" "ks_dns_intercept" "client DNS intercept off when asked"
+# NET-6: with a protected section and the intercept on, client DNS to
+# foreign servers goes to the router's dnsmasq (block list while Prokop is
+# stopped), after Prokop's own redirect; LAN resolvers, the router, the
+# delegated IPv6 prefixes and the excluded addresses stay. Off by default
+# (NET-12), its sets are always there.
+assert_not_contains "$OUT" "ks_dns_intercept" "client DNS intercept off by default"
+assert_contains "$OUT" "add set $T dns_intercept_skip4 { type ipv4_addr; flags interval; auto-merge; }" "intercept exclusions set"
+assert_contains "$OUT" "add set $T dns_intercept_lan6 { type ipv6_addr; flags interval; auto-merge; }" "intercept IPv6 prefix set"
+sed 's/"source_network_interfaces": "br-lan awg_server"/"source_network_interfaces": "br-lan awg_server", "intercept_client_dns": "1", "intercept_client_dns_exclude": [ "185.10.20.30", "2001:db8:53::1" ]/' \
+  "$WORK_DIR/fixture.json" > "$WORK_DIR/intercept.json"
+ucode -L "$PROKOP_LIB" "$NFT_RUNTIME" killswitch-render-fixture "$WORK_DIR/intercept.json" ProkopTable ProkopKillswitch "$WORK_DIR/intercept.nft" >/dev/null ||
+  fail "render with intercept_client_dns=1 failed"
+INTERCEPT_OUT="$WORK_DIR/intercept.nft"
+assert_contains "$INTERCEPT_OUT" "add chain $T ks_dns_intercept { type nat hook prerouting priority -100; policy accept; }" "client DNS intercept chain"
+assert_contains "$INTERCEPT_OUT" "add rule $T ks_dns_intercept iifname @ks_interfaces ip saddr != @dns_intercept_skip4 ip daddr != @localv4 ip daddr != @dns_intercept_skip4 fib daddr type != local udp dport 53 counter redirect to :53" "client DNS intercept IPv4 UDP"
+assert_contains "$INTERCEPT_OUT" "add rule $T ks_dns_intercept iifname @ks_interfaces ip6 saddr != @dns_intercept_skip6 ip6 daddr != @localv6 ip6 daddr != @dns_intercept_skip6 ip6 daddr != @dns_intercept_lan6 fib daddr type != local tcp dport 53 counter redirect to :53" "client DNS intercept IPv6 TCP"
+assert_contains "$INTERCEPT_OUT" "add element $T dns_intercept_skip4 { 185.10.20.30 }" "IPv4 exclusion"
+assert_contains "$INTERCEPT_OUT" "add element $T dns_intercept_skip6 { 2001:db8:53::1 }" "IPv6 exclusion"
 
 sed 's/"source_network_interfaces": "br-lan awg_server"/"source_network_interfaces": "br-lan awg_server", "exclude_ntp": "1"/' \
   "$WORK_DIR/fixture.json" > "$WORK_DIR/ntp.json"

@@ -953,20 +953,42 @@ function createSettingsContent(sections, capabilities) {
   o.rmempty = false;
 
   // NET-6: plain DNS (port 53) of clients to their own servers goes to the
-  // router's dnsmasq (nft/apply.uc client_dns_intercept_rules).
+  // router's dnsmasq (nft/apply.uc client_dns_intercept_rules). Off by
+  // default (NET-12): it catches anything on port 53.
   o = sections.network.option(
     form.ListValue,
     "intercept_client_dns",
     _("Intercept client DNS"),
     _(
-      "Devices with their own DNS server (8.8.8.8 in a TV, IoT devices) bypass domain rules and the kill-switch. Their plain DNS on port 53 is sent to the router instead. DNS to local addresses (Pi-hole) and DNS over TLS stay untouched",
+      "Off by default. Devices with their own DNS server (8.8.8.8 in a TV, IoT devices) bypass domain rules and the kill-switch; when on, everything they send to port 53 of an outside server goes to the router's DNS instead. This also catches a VPN whose server uses port 53 and a DNS server in the LAN that asks outside servers itself: add their addresses to the exclusions. DNS to local addresses (Pi-hole), to the router's IPv6 prefixes and DNS over TLS stay untouched",
     ),
   );
+  o.value("0", _("Never"));
   o.value("auto", _("When a rule has the kill-switch"));
   o.value("1", _("Always"));
-  o.value("0", _("Never"));
-  o.default = "1";
+  o.default = "0";
   o.rmempty = false;
+
+  o = sections.network.option(
+    form.DynamicList,
+    "intercept_client_dns_exclude",
+    _("Not intercepted"),
+    _(
+      "Used while client DNS is intercepted. DNS from these devices or to these servers is never intercepted: a DNS server in the LAN, the server of a VPN on port 53. An IPv4 or IPv6 address or subnet",
+    ),
+  );
+  // Shown also while the intercept is off: a hidden option would lose its
+  // list on save.
+  o.placeholder = "192.168.1.53";
+  o.rmempty = true;
+  o.validate = function (section_id, value) {
+    const text = `${value || ""}`.trim();
+    if (!text) {
+      return true;
+    }
+    const validation = main.validateSubnet(text);
+    return validation.valid ? true : validation.message;
+  };
 
   // B9: keep-alive and a shorter UDP timeout on the tproxy inbound
   // (singbox/generator.uc base_config).

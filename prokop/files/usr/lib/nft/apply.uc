@@ -210,6 +210,10 @@ function log_debug(message) {
     run_args([ "logger", "-t", "prokop", "[debug] " + as_string(message) ]);
 }
 
+function log_warning(message) {
+    run_args([ "logger", "-t", "prokop", "[warn] " + as_string(message) ]);
+}
+
 function log_fatal(message) {
     run_args([ "logger", "-t", "prokop", "[fatal] " + as_string(message) ]);
 }
@@ -1732,12 +1736,18 @@ function nft_rule_signature_body(body, section) {
     return body;
 }
 
+function client_dns_intercept_exclusions_value(settings) {
+    let excluded = connections.client_dns_intercept_exclusions(settings);
+    return join(",", [ ...excluded.v4, ...excluded.v6 ]);
+}
+
 function nft_runtime_signature_from_settings_and_sections(settings, sections) {
     let body = "";
 
     body = signature_add_value(body, "settings.source_network_interfaces", option(settings, "source_network_interfaces", "br-lan"));
     body = signature_add_value(body, "settings.exclude_ntp", bool_option(settings, "exclude_ntp", false) ? "1" : "0");
     body = signature_add_value(body, "settings.intercept_client_dns", connections.client_dns_intercept_enabled(settings, sections) ? "1" : "0");
+    body = signature_add_value(body, "settings.intercept_client_dns_exclude", client_dns_intercept_exclusions_value(settings));
 
     for (let section in sections)
         body = nft_rule_signature_body(body, object_or_empty(section));
@@ -1793,23 +1803,157 @@ function nft_create_provider_output_rules_from_uci(table, action, provider_bin, 
     );
 }
 
+// NET-12: the sets of the client DNS intercept, in each table that has it:
+// the excluded addresses (intercept_client_dns_exclude) by family, and the
+// router's delegated IPv6 prefixes, which are the LAN as much as localv6 is.
+const CLIENT_DNS_SKIP4_SET = "dns_intercept_skip4";
+const CLIENT_DNS_SKIP6_SET = "dns_intercept_skip6";
+const CLIENT_DNS_LAN6_SET = "dns_intercept_lan6";
+
+function network_interface_dump() {
+    let output = command_output_quiet_from_args([ "ubus", "call", "network.interface", "dump" ]);
+    try {
+        let data = json(output || "{}");
+        return type(data?.interface) == "array" ? data.interface : [];
+    }
+    catch (e) {
+        return [];
+    }
+}
+
+// The prefixes delegated to the router (ipv6-prefix on the uplink) and the
+// parts assigned to its networks (ipv6-prefix-assignment), as the network
+// daemon has them when the table is built.
+function delegated_ipv6_prefixes(dump) {
+    let result = [];
+    for (let entry in dump)
+        for (let key in [ "ipv6-prefix", "ipv6-prefix-assignment" ])
+            for (let prefix in (type(entry?.[key]) == "array" ? entry[key] : [])) {
+                let text = lc(as_string(prefix?.address) + "/" + as_string(prefix?.mask));
+                if (core_ip.valid_ipv6_cidr(text) && index(result, text) < 0)
+                    push(result, text);
+            }
+    return result;
+}
+
+function dnsmasq_settings() {
+    let found = uci_core.section_objects("dhcp", "dnsmasq");
+    return length(found) > 0 ? object_or_empty(found[0]) : null;
+}
+
+// The port dnsmasq answers DNS on: 53 by default, 0 when its DNS is off.
+function dnsmasq_dns_port(dnsmasq) {
+    let value = trim(option(dnsmasq, "port", "53"));
+    return match(value, /^[0-9]+$/) != null ? +value : 53;
+}
+
+// The source interfaces (exact names only) on which dnsmasq does not answer:
+// those of its notinterface networks and, when it lists the networks it
+// serves (interface), those of no listed network. A network the network
+// daemon does not report makes the listed ones unknown: nothing is
+// left out then.
+function dnsmasq_unserved_interfaces(dnsmasq, dump, source_names) {
+    let devices = {};
+    for (let entry in dump) {
+        let name = as_string(entry?.interface);
+        let names = [];
+        for (let key in [ "l3_device", "device" ])
+            if (as_string(entry?.[key]) != "")
+                push(names, as_string(entry[key]));
+        if (name != "")
+            devices[name] = names;
+    }
+    let served = null;
+    let listed = whitespace_values(option(dnsmasq, "interface", ""));
+    if (length(listed) > 0) {
+        served = {};
+        for (let name in listed) {
+            if (devices[name] == null)
+                return [];
+            for (let device in devices[name])
+                served[device] = true;
+        }
+    }
+    let excluded = {};
+    for (let name in whitespace_values(option(dnsmasq, "notinterface", "")))
+        for (let device in (devices[name] ?? []))
+            excluded[device] = true;
+    let result = [];
+    for (let name in source_names)
+        if (index(name, "*") < 0 && (excluded[name] || (served != null && !served[name])) && index(result, name) < 0)
+            push(result, name);
+    return result;
+}
+
+// What the intercept does with this configuration, or null when it is off
+// (intercept_client_dns) or would only break DNS: dnsmasq answers no DNS
+// (port 0), or on none of the source interfaces.
+function client_dns_intercept_plan(settings, sections) {
+    if (!connections.client_dns_intercept_enabled(settings, sections))
+        return null;
+    let dnsmasq = dnsmasq_settings();
+    if (dnsmasq != null && dnsmasq_dns_port(dnsmasq) == 0) {
+        log_warning("Client DNS is not intercepted: dnsmasq answers no DNS (port 0)");
+        return null;
+    }
+    let dump = network_interface_dump();
+    let source_names = whitespace_values(option(settings, "source_network_interfaces", "br-lan"));
+    let unserved = dnsmasq != null ? dnsmasq_unserved_interfaces(dnsmasq, dump, source_names) : [];
+    if (length(unserved) > 0 && length(unserved) == length(source_names)) {
+        log_warning("Client DNS is not intercepted: dnsmasq answers DNS on none of the source interfaces");
+        return null;
+    }
+    let excluded = connections.client_dns_intercept_exclusions(settings);
+    return { skip4: excluded.v4, skip6: excluded.v6, lan6: delegated_ipv6_prefixes(dump), unserved };
+}
+
 // NET-6 (config/connections.uc client_dns_intercept_enabled): plain DNS of
 // clients to foreign servers goes to the router's dnsmasq. DNS to the LAN
-// (a Pi-hole), to the router itself and DoT (853) are left alone. The rules
-// of one table, after its source-aware DNS redirect.
-function client_dns_intercept_rules(interface_set, localv4_set, localv6_set) {
+// (a Pi-hole, a delegated IPv6 prefix), to the router itself and DoT (853)
+// is left alone, and so is DNS from or to an excluded address and on an
+// interface dnsmasq does not answer on (NET-12). The rules of one table,
+// after its source-aware DNS redirect.
+function client_dns_intercept_rules(interface_set, localv4_set, localv6_set, plan) {
+    let unserved = [];
+    for (let name in plan?.unserved ?? [])
+        push(unserved, sprintf("%J", name));
     let rules = [];
-    for (let family in [ [ "ip", localv4_set ], [ "ip6", localv6_set ] ])
-        for (let proto in [ "udp", "tcp" ])
-            push(rules, [ "iifname", "@" + as_string(interface_set), family[0], "daddr", "!=", "@" + as_string(family[1]),
-                "fib", "daddr", "type", "!=", "local", proto, "dport", "53", "counter", "redirect", "to", ":53" ]);
+    for (let family in [ [ "ip", localv4_set, CLIENT_DNS_SKIP4_SET ], [ "ip6", localv6_set, CLIENT_DNS_SKIP6_SET ] ])
+        for (let proto in [ "udp", "tcp" ]) {
+            let rule = [ "iifname", "@" + as_string(interface_set) ];
+            if (length(unserved) > 0)
+                push(rule, "iifname", "!=", "{ " + join(", ", unserved) + " }");
+            push(rule, family[0], "saddr", "!=", "@" + family[2],
+                family[0], "daddr", "!=", "@" + as_string(family[1]), family[0], "daddr", "!=", "@" + family[2]);
+            if (family[0] == "ip6")
+                push(rule, "ip6", "daddr", "!=", "@" + CLIENT_DNS_LAN6_SET);
+            push(rules, [ ...rule, "fib", "daddr", "type", "!=", "local", proto, "dport", "53", "counter", "redirect", "to", ":53" ]);
+        }
     return rules;
 }
 
+// The sets of the intercept as lines of the kill-switch table `t`
+// ("inet <name>"); elements only with a plan.
+function client_dns_intercept_set_lines(t, plan) {
+    let lines = [];
+    for (let set in [ [ CLIENT_DNS_SKIP4_SET, "ipv4_addr", plan?.skip4 ], [ CLIENT_DNS_SKIP6_SET, "ipv6_addr", plan?.skip6 ],
+            [ CLIENT_DNS_LAN6_SET, "ipv6_addr", plan?.lan6 ] ]) {
+        push(lines, "add set " + t + " " + set[0] + " { type " + set[1] + "; flags interval; auto-merge; }");
+        if (length(set[2] ?? []) > 0)
+            push(lines, "add element " + t + " " + set[0] + " { " + join(", ", set[2]) + " }");
+    }
+    return lines;
+}
+
 function nft_add_client_dns_intercept_from_uci(table, interface_set, localv4_set, localv6_set) {
-    if (!connections.client_dns_intercept_enabled(uci_settings(), uci_sections("section")))
+    let plan = client_dns_intercept_plan(uci_settings(), uci_sections("section"));
+    if (plan == null)
         return true;
-    for (let rule in client_dns_intercept_rules(interface_set, localv4_set, default_arg(localv6_set, "localv6")))
+    for (let set in [ [ CLIENT_DNS_SKIP4_SET, nft_create_ipv4_set, plan.skip4 ], [ CLIENT_DNS_SKIP6_SET, nft_create_ipv6_set, plan.skip6 ],
+            [ CLIENT_DNS_LAN6_SET, nft_create_ipv6_set, plan.lan6 ] ])
+        if (!set[1](table, set[0]) || (length(set[2]) > 0 && !nft_add_set_elements(table, set[0], join(",", set[2]))))
+            return false;
+    for (let rule in client_dns_intercept_rules(interface_set, localv4_set, default_arg(localv6_set, "localv6"), plan))
         if (!nft_add_rule(table, "dns_redirect", rule))
             return false;
     return true;
@@ -2189,9 +2333,13 @@ function nft_killswitch_render_sections(sections, settings, live_table, ks_table
     // NET-6: client DNS to foreign servers goes to the router's dnsmasq,
     // which answers with the block list while Prokop is stopped. After
     // Prokop's own redirect (-101): the first redirect of a connection wins.
-    if (connections.client_dns_intercept_enabled(settings, sections)) {
+    // Its sets are always there: the watcher's redirect of excluded devices
+    // (killswitch/runtime.uc exempt_redirect_rules) uses them too.
+    let intercept = client_dns_intercept_plan(settings, sections);
+    push(lines, ...client_dns_intercept_set_lines(t, intercept));
+    if (intercept != null) {
         push(lines, "add chain " + t + " ks_dns_intercept { type nat hook prerouting priority -100; policy accept; }");
-        for (let rule in client_dns_intercept_rules(KILLSWITCH_INTERFACE_SET, "localv4", "localv6"))
+        for (let rule in client_dns_intercept_rules(KILLSWITCH_INTERFACE_SET, "localv4", "localv6", intercept))
             push(lines, "add rule " + t + " ks_dns_intercept " + join(" ", rule));
     }
 

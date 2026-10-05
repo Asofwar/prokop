@@ -2021,6 +2021,18 @@ function validate_source_network_interfaces(settings) {
     }
 }
 
+// NET-12: the addresses the client DNS intercept leaves alone.
+function validate_client_dns_intercept_exclusions(settings) {
+    let values = settings?.intercept_client_dns_exclude;
+    if (type(values) != "array")
+        values = split(trim(as_string(values)), /[ \t\r\n]+/);
+    for (let value in values) {
+        value = trim(as_string(value));
+        if (value != "" && (!core_ip.nft_ip_or_cidr(value) || core_ip.ip_family(value) == 0))
+            fail_validation("Invalid address '" + value + "' in the addresses excluded from client DNS interception. Use an IPv4 or IPv6 address or subnet. Aborted.");
+    }
+}
+
 // C7: a mixed proxy listens on the router's LAN address, where the router's
 // own services and Prokop's other listeners already are; sing-box then
 // failed to start with "address already in use". Ports Prokop holds on
@@ -2052,6 +2064,7 @@ function validate_runtime_config(context) {
 
     validate_runtime_mark_ranges_context(context);
     validate_source_network_interfaces(settings);
+    validate_client_dns_intercept_exclusions(settings);
     validate_dns_settings(settings, sections, context);
     validate_list_update_settings(settings);
     validate_http_url_option(option(settings, "latency_test_url", DEFAULT_LATENCY_TEST_URL) || DEFAULT_LATENCY_TEST_URL, "settings.latency_test_url");

@@ -391,7 +391,7 @@ expect_dns() { # expect_dns redirected|direct SRC DST PROTO
   nft flush set inet ProkopTestObserve seen
   nft flush set inet ProkopTestObserve marked
 }
-printf '%s\n' prokop.settings=settings prokop.web=section prokop.web.action=vpn \
+printf '%s\n' prokop.settings=settings prokop.settings.intercept_client_dns=1 prokop.web=section prokop.web.action=vpn \
   prokop.web.domain=example.com prokop.web.kill_switch=1 >"$WORK_DIR/dns-intercept.uci"
 apply_config "$WORK_DIR/dns-intercept.uci"
 expect_dns redirected 192.168.1.60 8.8.8.8 udp
@@ -402,15 +402,69 @@ printf 'prokop.settings.intercept_client_dns=0\n' >>"$WORK_DIR/dns-intercept.uci
 apply_config "$WORK_DIR/dns-intercept.uci"
 # A new client each time: a NAT binding stays with its connection.
 expect_dns direct 192.168.1.61 8.8.8.8 udp
-# Without the option the intercept is on, a kill-switch or not.
+# NET-12: without the option the intercept is off, a kill-switch or not.
 printf '%s\n' prokop.settings=settings prokop.web=section prokop.web.action=vpn \
-  prokop.web.domain=example.com >"$WORK_DIR/dns-intercept-off.uci"
+  prokop.web.domain=example.com prokop.web.kill_switch=1 >"$WORK_DIR/dns-intercept-off.uci"
 apply_config "$WORK_DIR/dns-intercept-off.uci"
-expect_dns redirected 192.168.1.62 8.8.8.8 udp
+expect_dns direct 192.168.1.62 8.8.8.8 udp
 printf 'prokop.settings.intercept_client_dns=auto\n' >>"$WORK_DIR/dns-intercept-off.uci"
 apply_config "$WORK_DIR/dns-intercept-off.uci"
-expect_dns direct 192.168.1.63 8.8.8.8 udp
-ok "client DNS to foreign servers goes to the router by default, with auto only while a rule has the kill-switch; LAN resolvers stay (NET-6)"
+expect_dns redirected 192.168.1.63 8.8.8.8 udp
+ok "client DNS to foreign servers goes to the router only when asked, with auto only while a rule has the kill-switch; LAN resolvers stay (NET-6, NET-12)"
+
+# ---- NET-12: what the intercept leaves alone -----------------------------------
+
+# A VPN server on port 53 and a resolver in the LAN that asks the root
+# servers itself are excluded by address, as destination or as source.
+printf '%s\n' prokop.settings=settings prokop.settings.intercept_client_dns=1 \
+  'prokop.settings.intercept_client_dns_exclude=185.10.20.30 192.168.1.70 2001:db8:53::/48' \
+  prokop.web=section prokop.web.action=vpn prokop.web.domain=example.com >"$WORK_DIR/dns-exclude.uci"
+apply_config "$WORK_DIR/dns-exclude.uci"
+expect_dns direct 192.168.1.64 185.10.20.30 udp
+expect_dns direct 192.168.1.64 185.10.20.30 tcp
+expect_dns direct 192.168.1.70 8.8.8.8 udp
+expect_dns redirected 192.168.1.65 8.8.8.8 udp
+grep -q '2001:db8:53::/48' <<<"$(nft list set inet "$TABLE" dns_intercept_skip6)" ||
+  fail "the excluded IPv6 subnet is not in the intercept's exclusions"
+# dnsmasq without DNS (port 0): redirecting to it would only break DNS.
+printf '%s\n' prokop.settings=settings prokop.settings.intercept_client_dns=1 \
+  prokop.web=section prokop.web.action=vpn prokop.web.domain=example.com \
+  dhcp.cfg01=dnsmasq dhcp.cfg01.port=0 >"$WORK_DIR/dns-port0.uci"
+apply_config "$WORK_DIR/dns-port0.uci"
+expect_dns direct 192.168.1.66 8.8.8.8 udp
+grep -q 'dnsmasq answers no DNS' "$WORK_DIR/logger.log" || fail "the skipped intercept was not logged"
+# dnsmasq does not answer on the LAN (notinterface), and the delegated IPv6
+# prefixes of the network daemon are the LAN.
+cat >"$WORK_DIR/bin/ubus" <<'UBUS'
+#!/bin/sh
+cat <<'JSON'
+{ "interface": [
+  { "interface": "lan", "l3_device": "br-lan", "device": "br-lan",
+    "ipv6-prefix-assignment": [ { "address": "2001:db8:bb:10::", "mask": 64 } ] },
+  { "interface": "wan6", "l3_device": "eth1", "ipv6-prefix": [ { "address": "2001:db8:aa::", "mask": 56 } ] },
+  { "interface": "guest", "l3_device": "br-guest", "device": "br-guest" }
+] }
+JSON
+UBUS
+chmod 0755 "$WORK_DIR/bin/ubus"
+printf '%s\n' prokop.settings=settings prokop.settings.intercept_client_dns=1 \
+  prokop.web=section prokop.web.action=vpn prokop.web.domain=example.com \
+  dhcp.cfg01=dnsmasq dhcp.cfg01.notinterface=lan >"$WORK_DIR/dns-unserved.uci"
+apply_config "$WORK_DIR/dns-unserved.uci"
+expect_dns direct 192.168.1.67 8.8.8.8 udp
+printf '%s\n' prokop.settings=settings prokop.settings.intercept_client_dns=1 \
+  'prokop.settings.source_network_interfaces=br-lan br-guest' \
+  prokop.web=section prokop.web.action=vpn prokop.web.domain=example.com \
+  dhcp.cfg01=dnsmasq dhcp.cfg01.interface=guest >"$WORK_DIR/dns-served.uci"
+apply_config "$WORK_DIR/dns-served.uci"
+expect_dns direct 192.168.1.68 8.8.8.8 udp
+rules="$(nft list chain inet "$TABLE" dns_redirect)"
+grep -q 'iifname != "br-lan"' <<<"$rules" || fail "the intercept does not leave out br-lan, where dnsmasq does not answer: $rules"
+prefixes="$(nft list set inet "$TABLE" dns_intercept_lan6)"
+grep -q '2001:db8:aa::/56' <<<"$prefixes" && grep -q "2001:db8:bb:10::/64" <<<"$prefixes" ||
+  fail "the delegated IPv6 prefixes are not left alone: $prefixes"
+rm -f "$WORK_DIR/bin/ubus"
+ok "the intercept leaves excluded addresses, interfaces dnsmasq does not answer on and delegated IPv6 prefixes alone, and is off while dnsmasq answers no DNS (NET-12)"
 
 # ---- NET-10: the table vanishes between building and committing a reload -----
 

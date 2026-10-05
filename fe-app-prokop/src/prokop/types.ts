@@ -153,6 +153,8 @@ export namespace Prokop {
   // update_interval_raised: the settings option `values[0]` held `from`,
   // shorter than the hour automatic updates wait at least, and is now `to`
   // (D-18 (a)).
+  // client_dns_intercept_off: intercept_client_dns held `from` (on or auto)
+  // and was turned off (`to`, NET-12).
   export interface MigrationNotice {
     code: string;
     section: string;

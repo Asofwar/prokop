@@ -92,6 +92,11 @@ const EXEMPT_MAX_GROUPS = 4;
 // Answered by the resolver of a group with the configuration it was
 // generated for and by no other (RFC 6761: never a real name).
 const EXEMPT_PROBE_ZONE = "exempt.prokop.invalid";
+// The sets of the kill-switch table's client DNS intercept (nft/apply.uc
+// client_dns_intercept_set_lines): always in the table.
+const INTERCEPT_SKIP4_SET = "dns_intercept_skip4";
+const INTERCEPT_SKIP6_SET = "dns_intercept_skip6";
+const INTERCEPT_LAN6_SET = "dns_intercept_lan6";
 // The input chain that lets only redirected DNS reach those resolvers.
 const EXEMPT_GUARD_CHAIN = "ks_exempt_guard";
 // A resolver that answered is probed again only every this many watcher
@@ -1361,10 +1366,23 @@ function exempt_redirect_rules(data, usable) {
     sort(entries, (a, b) => a.cidr.family - b.cidr.family || b.cidr.prefix - a.cidr.prefix ||
         (a.cidr.text < b.cidr.text ? -1 : (a.cidr.text > b.cidr.text ? 1 : 0)));
     let rules = [];
-    for (let entry in entries)
+    for (let entry in entries) {
+        let family = entry.cidr.family == 6 ? "ip6" : "ip";
+        let source = "iifname @" + INTERFACE_SET + " " + family + " saddr " + entry.cidr.text;
         for (let proto in [ "udp", "tcp" ])
-            push(rules, "iifname @" + INTERFACE_SET + " " + (entry.cidr.family == 6 ? "ip6" : "ip") + " saddr " +
-                entry.cidr.text + " fib daddr type local " + proto + " dport 53 counter redirect to :" + entry.port);
+            push(rules, source + " fib daddr type local " + proto + " dport 53 counter redirect to :" + entry.port);
+        // NET-13: before the kill-switch table's intercept (-100), which
+        // would hand their DNS to the shared block list; with its
+        // exclusions (nft/apply.uc client_dns_intercept_rules).
+        if (data.intercept === true) {
+            let skip = family == "ip6" ? INTERCEPT_SKIP6_SET : INTERCEPT_SKIP4_SET;
+            let foreign = source + " " + family + " saddr != @" + skip + " " + family + " daddr != @" +
+                (family == "ip6" ? "localv6" : "localv4") + " " + family + " daddr != @" + skip +
+                (family == "ip6" ? " ip6 daddr != @" + INTERCEPT_LAN6_SET : "");
+            for (let proto in [ "udp", "tcp" ])
+                push(rules, foreign + " fib daddr type != local " + proto + " dport 53 counter redirect to :" + entry.port);
+        }
+    }
     return { rules, tag: "prokop-exempt-" + text_hash(join("\n", rules)) };
 }
 
@@ -1704,7 +1722,7 @@ function exempt_groups(config, sections) {
 // anything no file is kept. unblocked counts, by section, the blocked names
 // of the section the excluded devices of a saved group resolve; sig is
 // what the state records for the groups saved.
-function sync_exempt(config, protected_names, sections, memo, main) {
+function sync_exempt(config, protected_names, sections, memo, main, intercept) {
     let result = { groups: 0, sig: "", unblocked: {}, warnings: [] };
     let built = exempt_groups(config, sections);
     let main_lines = {};
@@ -1750,6 +1768,10 @@ function sync_exempt(config, protected_names, sections, memo, main) {
         format: EXEMPT_FORMAT,
         fingerprint: exempt_fingerprint(sections),
         blocked_md5: file_md5(DNS_BLOCKED_FILE),
+        // NET-13: the kill-switch table intercepts client DNS to foreign
+        // servers (intercept_client_dns); then that of the excluded devices
+        // goes to their resolvers as well, not to the shared block list.
+        intercept: intercept === true,
         groups
     } : null;
     if (data != null)
@@ -1835,7 +1857,8 @@ function sync_dns(settings, protected_names, config, vpn_names, unrouted, sectio
     if (as_string(fs.readfile(STANDBY_BLOCKED_FILE)) != standby_content &&
         !write_atomic(STANDBY_BLOCKED_FILE, standby_content))
         rendered.standby_error = "could not write " + STANDBY_BLOCKED_FILE;
-    let exempt = sync_exempt(config, protected_names, sections, memo, rendered);
+    let exempt = sync_exempt(config, protected_names, sections, memo, rendered,
+        connections.client_dns_intercept_enabled(settings, sections));
     delete rendered.blocked_by;
     if (exempt.groups > 0) {
         rendered.exempt_groups = exempt.groups;

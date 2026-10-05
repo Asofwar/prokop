@@ -1949,7 +1949,7 @@ msgid "Devices may bypass the router DNS, so domain rules do not apply to them."
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:961
-msgid "Devices with their own DNS server (8.8.8.8 in a TV, IoT devices) bypass domain rules and the kill-switch. Their plain DNS on port 53 is sent to the router instead. DNS to local addresses (Pi-hole) and DNS over TLS stay untouched"
+msgid "Off by default. Devices with their own DNS server (8.8.8.8 in a TV, IoT devices) bypass domain rules and the kill-switch; when on, everything they send to port 53 of an outside server goes to the router's DNS instead. This also catches a VPN whose server uses port 53 and a DNS server in the LAN that asks outside servers itself: add their addresses to the exclusions. DNS to local addresses (Pi-hole), to the router's IPv6 prefixes and DNS over TLS stay untouched"
 msgstr ""
 
 #: src/prokop/tabs/diagnostic/checks/getDnsCheckPresentation.ts:47
@@ -3103,6 +3103,12 @@ msgstr ""
 msgid "Intercept client DNS"
 msgstr ""
 
+msgid "Not intercepted"
+msgstr ""
+
+msgid "Used while client DNS is intercepted. DNS from these devices or to these servers is never intercepted: a DNS server in the LAN, the server of a VPN on port 53. An IPv4 or IPv6 address or subnet"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:654
 msgid "Interface Monitoring"
 msgstr ""
@@ -3737,6 +3743,9 @@ msgstr ""
 
 #: src/prokop/tabs/history/model.ts:239
 msgid "List update frequency was %s, shorter than the 1 h minimum of automatic updates: set to %s."
+msgstr ""
+
+msgid "Intercepting client DNS is off by default now: it also caught VPNs and DNS servers in the LAN that use port 53. It was on here and was turned off; turn it on again under Settings > Network if you need it."
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/settings.js:35

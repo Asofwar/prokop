@@ -1361,8 +1361,8 @@ msgstr "Устройства продолжат работать через ро
 msgid "Devices may bypass the router DNS, so domain rules do not apply to them."
 msgstr "Устройства могут обходить DNS роутера, и правила по доменам к ним не применяются."
 
-msgid "Devices with their own DNS server (8.8.8.8 in a TV, IoT devices) bypass domain rules and the kill-switch. Their plain DNS on port 53 is sent to the router instead. DNS to local addresses (Pi-hole) and DNS over TLS stay untouched"
-msgstr "Устройства со своим DNS-сервером (8.8.8.8 в телевизоре, IoT) обходят доменные правила и kill-switch. Их обычный DNS на порт 53 отправляется на роутер. DNS на локальные адреса (Pi-hole) и DNS over TLS не трогаются"
+msgid "Off by default. Devices with their own DNS server (8.8.8.8 in a TV, IoT devices) bypass domain rules and the kill-switch; when on, everything they send to port 53 of an outside server goes to the router's DNS instead. This also catches a VPN whose server uses port 53 and a DNS server in the LAN that asks outside servers itself: add their addresses to the exclusions. DNS to local addresses (Pi-hole), to the router's IPv6 prefixes and DNS over TLS stay untouched"
+msgstr "По умолчанию выключено. Устройства со своим DNS-сервером (8.8.8.8 в телевизоре, IoT) обходят доменные правила и kill-switch; при включении всё, что они отправляют на порт 53 внешнего сервера, уходит на DNS роутера. Под перехват попадают и VPN, чей сервер работает на порту 53, и DNS-сервер в локальной сети, который сам обращается к внешним серверам: добавьте их адреса в исключения. DNS на локальные адреса (Pi-hole), на IPv6-префиксы роутера и DNS over TLS не трогаются"
 
 msgid "DHCP has DNS server"
 msgstr "DHCP содержит DNS сервер"
@@ -2171,6 +2171,12 @@ msgstr "Установка"
 msgid "Intercept client DNS"
 msgstr "Перехват DNS клиентов"
 
+msgid "Not intercepted"
+msgstr "Без перехвата"
+
+msgid "Used while client DNS is intercepted. DNS from these devices or to these servers is never intercepted: a DNS server in the LAN, the server of a VPN on port 53. An IPv4 or IPv6 address or subnet"
+msgstr "Действует, когда перехват DNS включён. DNS от этих устройств и к этим серверам никогда не перехватывается: DNS-сервер в локальной сети, сервер VPN на порту 53. IPv4- или IPv6-адрес либо подсеть"
+
 msgid "Interface Monitoring"
 msgstr "Мониторинг интерфейса"
 
@@ -2626,6 +2632,9 @@ msgstr "Частота обновления списков"
 
 msgid "List update frequency was %s, shorter than the 1 h minimum of automatic updates: set to %s."
 msgstr "Частота обновления списков была %s — меньше минимума автоматических обновлений в 1 ч: установлена %s."
+
+msgid "Intercepting client DNS is off by default now: it also caught VPNs and DNS servers in the LAN that use port 53. It was on here and was turned off; turn it on again under Settings > Network if you need it."
+msgstr "Перехват DNS клиентов теперь по умолчанию выключен: он задевал и VPN, и DNS-серверы в локальной сети, работающие на порту 53. Здесь он был включён и выключен обновлением; при необходимости включите его снова в разделе «Настройки» > «Сеть»."
 
 msgid "Lists and updates"
 msgstr "Списки и обновления"

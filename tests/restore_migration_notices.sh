@@ -157,6 +157,8 @@ const event = require('fs').readFileSync(process.argv[2], 'utf8').split('\n').fi
 assert.deepEqual(event.notices, [
   { code: 'retired_rule_sets', section: 'main', values: ['hetzner'], replacements: ['hetzner'] },
   { code: 'update_interval_raised', section: 'settings', values: ['update_interval'], replacements: [], from: '30m', to: '1h' },
+  // NET-12: a snapshot older than the intercept had it on by default.
+  { code: 'client_dns_intercept_off', section: 'settings', values: ['intercept_client_dns'], replacements: [], from: '1', to: '0' },
 ]);
 JS
 ok "migrated restore -> config_migration event with the notices, then the restore"

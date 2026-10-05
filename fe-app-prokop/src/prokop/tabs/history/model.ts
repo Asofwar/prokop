@@ -242,6 +242,11 @@ export function migrationNoticeText(notice: Prokop.MigrationNotice) {
       )
         .replace('%s', notice.from ?? '')
         .replace('%s', notice.to ?? '');
+    // NET-12: the setting is named, never its old value in words.
+    case 'client_dns_intercept_off':
+      return _(
+        'Intercepting client DNS is off by default now: it also caught VPNs and DNS servers in the LAN that use port 53. It was on here and was turned off; turn it on again under Settings > Network if you need it.',
+      );
     default:
       return _('Rule “%s”: changed by the update.').replace(
         '%s',

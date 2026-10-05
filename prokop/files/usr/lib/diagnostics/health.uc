@@ -45,8 +45,10 @@ const EVENT_KINDS = [ "start", "reload", "restore", "autotune_apply", "autotune_
 // them (the journal and the runtime file stay small).
 // update_interval_raised also keeps the interval it replaced and the new
 // one (`from`, `to`).
+// client_dns_intercept_off keeps the value of intercept_client_dns it
+// replaced (`from`: 1, true, yes, on or auto) and `to` (0).
 const MIGRATION_NOTICE_CODES = [ "retired_rule_sets", "update_interval_raised", "subscription_options_removed",
-    "subscription_user_agent_in_effect" ];
+    "subscription_user_agent_in_effect", "client_dns_intercept_off" ];
 const MIGRATION_NOTICES_MAX = 16;
 const MIGRATION_NOTICE_IDS_MAX = 32;
 // "not_started": a snapshot restore replaced the configuration while an
@@ -119,6 +121,12 @@ function notice_view(notice) {
                 return null;
             view[key] = notice[key];
         }
+    }
+    if (notice.code == "client_dns_intercept_off") {
+        if (index([ "1", "true", "yes", "on", "auto" ], notice.from) < 0 || notice.to !== "0")
+            return null;
+        view.from = notice.from;
+        view.to = notice.to;
     }
     return view;
 }

@@ -3,6 +3,7 @@
 let common = require("core.common");
 let uci_core = require("core.uci");
 let rule_config = require("config.rule");
+let core_ip = require("core.ip");
 
 let as_string = common.as_string;
 let object_or_empty = common.object_or_empty;
@@ -302,11 +303,12 @@ function is_connections_action(action) {
 // NET-6: a client with its own DNS server (8.8.8.8 hard-coded in a TV, an
 // IoT device, Android without Private DNS) gets real addresses and passes
 // by the domain rules and the kill-switch. intercept_client_dns sends its
-// plain DNS (port 53) to the router's dnsmasq: "1" always (the default),
-// "auto" while a section has the kill-switch, "0" never. nft/apply.uc builds the
-// rules; service/state.uc signs the decision.
+// plain DNS (port 53) to the router's dnsmasq: "1" always, "auto" while a
+// section has the kill-switch, "0" never (the default: NET-12, anything on
+// port 53 is caught, a VPN to a server on 53 and a resolver in the LAN
+// too). nft/apply.uc builds the rules; service/state.uc signs the decision.
 function client_dns_intercept_enabled(settings, sections) {
-    let value = lc(option(settings, "intercept_client_dns", "1"));
+    let value = lc(option(settings, "intercept_client_dns", "0"));
     if (index([ "1", "true", "yes", "on" ], value) >= 0)
         return true;
     if (value != "auto")
@@ -317,6 +319,27 @@ function client_dns_intercept_enabled(settings, sections) {
             return true;
     }
     return false;
+}
+
+// NET-12: addresses the intercept leaves alone, by family: traffic to port
+// 53 from them (a resolver in the LAN that asks the root servers) or to them
+// (a VPN server on port 53, a resolver of a neighbouring network) is never
+// redirected. config/validator.uc rejects what is not an address or a
+// subnet; what slips through is ignored here.
+function client_dns_intercept_exclusions(settings) {
+    let result = { v4: [], v6: [] };
+    let values = raw_option(settings, "intercept_client_dns_exclude");
+    if (type(values) != "array")
+        values = split(trim(as_string(values)), /[ \t\r\n]+/);
+    for (let value in values) {
+        value = trim(as_string(value));
+        let family = core_ip.nft_ip_or_cidr(value) ? core_ip.ip_family(value) : 0;
+        if (family == 4 && index(result.v4, value) < 0)
+            push(result.v4, value);
+        else if (family == 6 && index(result.v6, lc(value)) < 0)
+            push(result.v6, lc(value));
+    }
+    return result;
 }
 
 function normalize_action(action) {
@@ -1082,6 +1105,7 @@ return {
     item_bool,
     is_connections_action,
     client_dns_intercept_enabled,
+    client_dns_intercept_exclusions,
     normalize_action,
     action,
     connection_urls,

@@ -1677,6 +1677,26 @@ function migrate_update_interval_minimum(ctx) {
     }
 }
 
+// NET-12: the client DNS intercept (intercept_client_dns) redirected
+// anything on port 53, a VPN to a server on 53 and a resolver in the LAN
+// too, and was on by default. It is off by default now and turned off once
+// on a router that had it on, explicitly or by the old default; a notice
+// says so. Turned on again afterwards, it stays on.
+function migrate_client_dns_intercept_off(ctx) {
+    let settings = ctx.model.settings;
+    let value = lc(trim(option(settings, "intercept_client_dns", "")));
+    if (value == "0" || value == "false" || value == "no" || value == "off")
+        return;
+    // An unknown value already meant off.
+    if (value != "" && value != "1" && value != "true" && value != "yes" && value != "on" && value != "auto")
+        return;
+    set_option(ctx, settings, "intercept_client_dns", "0");
+    // A podkop configuration never had it.
+    if (!ctx.podkop)
+        push(ctx.notices, { code: "client_dns_intercept_off", section: section_name(settings),
+            values: [ "intercept_client_dns" ], from: value == "" ? "1" : value, to: "0" });
+}
+
 // D-17 (a), UC-090: subscription request options the runtime ignores are
 // not kept. A source sends the User-Agent its user_agent names
 // (config/connections.uc), so auto_user_agent goes, and with it a
@@ -1866,7 +1886,8 @@ const MIGRATIONS = [
     { id: "prokop_state_paths_v1", run: migrate_prokop_state_paths },
     // Routers that ran own_dependency_mirror_v1 before the mirror became
     // opt-in still name the upstream mirror.
-    { id: "fork_mirror_opt_in_v1", run: migrate_off_legacy_mirror }
+    { id: "fork_mirror_opt_in_v1", run: migrate_off_legacy_mirror },
+    { id: "client_dns_intercept_off_v1", run: migrate_client_dns_intercept_off }
 ];
 
 // Whether the migrations raise a config_version: they write 1.0.5 over an
@@ -2195,6 +2216,9 @@ function notice_text(notice) {
     if (notice.code == "subscription_user_agent_in_effect")
         return "rule '" + notice.section + "': a subscription source sends the User-Agent set in its settings, " +
             "which earlier versions ignored (they chose one automatically)";
+    if (notice.code == "client_dns_intercept_off")
+        return "settings.intercept_client_dns was " + notice.from + ": client DNS is no longer intercepted by default " +
+            "(it caught anything on port 53, VPNs on that port and resolvers in the LAN too); turn it on again under Settings if needed";
     if (notice.code == "update_interval_raised")
         return "settings." + notice.values[0] + " was " + notice.from + ", shorter than the 1h minimum of automatic updates: set to " + notice.to;
     return notice.code;
