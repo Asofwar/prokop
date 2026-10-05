@@ -508,11 +508,10 @@ function createSettingsContent(sections, capabilities) {
     if (!text) {
       return true;
     }
-    const ipv4 =
-      /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}(\/(3[0-2]|[12]?\d))?$/;
-    const ipv6 =
-      /^[0-9A-Fa-f:.]*:[0-9A-Fa-f:.]*(\/(12[0-8]|1[01]\d|[1-9]?\d))?$/;
-    return ipv4.test(text) || ipv6.test(text)
+    // The strict parser of the other address fields: what it takes the
+    // router takes too (config/validator.uc valid_netip_addr_or_prefix,
+    // FE-14).
+    return main.validateSubnet(text).valid
       ? true
       : _("Enter an IP address or subnet, such as 203.0.113.0/24");
   };
