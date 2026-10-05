@@ -10,6 +10,9 @@
 // notify/manager.uc, options notify_* of the settings section). The bot
 // token and the webhook URL are secrets: the page never shows them, an
 // empty field keeps what is saved, and only the delete box removes it.
+// Turning notifications off keeps every setting of the tab for when they
+// are turned on again (NTF-5). A role that may only read sees the settings
+// but no control that would change or send anything (FE-19).
 
 const UCI_PACKAGE = main.PROKOP_UCI_PACKAGE;
 const PROKOP_BIN = "/usr/bin/prokop";
@@ -22,6 +25,39 @@ const WEBHOOK_URL = /^https?:\/\/[\][A-Za-z0-9.:-]+(\/[^ \t\r\n"\\]*)?$/;
 
 function saved(section_id, key) {
   return `${uci.get(UCI_PACKAGE, section_id, key) || ""}`.trim() !== "";
+}
+
+function readonly(option) {
+  return Boolean(option.map && option.map.readonly);
+}
+
+// A webhook address over plain http to a host outside the local network:
+// the message, and a token in the address (?token= of Gotify, the topic of
+// ntfy), cross the internet unencrypted.
+function plainHttpRemote(url) {
+  const match = `${url || ""}`.trim().match(/^http:\/\/(\[[^\]]*\]|[^/:?#]+)/i);
+  if (!match) {
+    return false;
+  }
+  const host = match[1].toLowerCase();
+  return !(
+    /^(10|127)\./.test(host) ||
+    /^192\.168\./.test(host) ||
+    /^172\.(1[6-9]|2[0-9]|3[01])\./.test(host) ||
+    /^169\.254\./.test(host) ||
+    /^\[(::1|f[cd]|fe80)/.test(host) ||
+    host === "localhost" ||
+    /\.(lan|local|home\.arpa)$/.test(host) ||
+    !host.includes(".")
+  );
+}
+
+function webhookWarning(url) {
+  return plainHttpRemote(url)
+    ? _(
+        "This address uses http:// over the internet: the messages and any token in the address are sent unencrypted. Use https:// if the service supports it",
+      )
+    : "";
 }
 
 // A secret field: never filled from the configuration; a new value replaces
@@ -42,7 +78,7 @@ function configureSecret(option, key, pattern, message, example, deleteLabel) {
   };
   option.renderWidget = function (section_id) {
     const widget = form.Value.prototype.renderWidget.apply(this, arguments);
-    if (!saved(section_id, key)) {
+    if (!saved(section_id, key) || readonly(this)) {
       return widget;
     }
     const box = E("input", { type: "checkbox" });
@@ -80,6 +116,12 @@ function configureSecret(option, key, pattern, message, example, deleteLabel) {
 
 const REASONS = {
   token_rejected: () => _("Telegram did not accept the bot token"),
+  bad_text: () => _("Telegram refused the message text"),
+  bad_response: () => _("The server gave an answer that could not be read"),
+  dns: () =>
+    _(
+      "The server's address could not be found through the bootstrap DNS servers",
+    ),
   chat_not_found: () =>
     _("Chat not found: check the ID and that you wrote to the bot first"),
   bot_blocked: () => _("The bot is blocked or was removed from the chat"),
@@ -130,9 +172,11 @@ function resultLines(answer) {
     const route =
       item.route === "proxy"
         ? _("through the rule")
-        : item.route === "direct"
-          ? _("directly")
-          : "";
+        : item.route === "system"
+          ? _("by the router's usual route")
+          : item.route === "direct"
+            ? _("directly, bypassing Prokop")
+            : "";
     const verdict =
       item.status === "ok" ? _("Delivered") : reasonText(item.reason);
     return `${channelName(item.channel)}: ${verdict}${route ? ` (${route})` : ""}`;
@@ -163,8 +207,23 @@ function runTest(output, button) {
     });
 }
 
+// Turning notifications off hides the other options of the tab, and LuCI
+// removes a hidden option on save: a chat ID, a category turned off, the
+// rule of the route would be gone when they are turned on again (NTF-5).
+// While the switch is off, nothing is removed; an option hidden by another
+// switch (the rule of the route, the days before expiry) still is.
+function keepWhileOff(option, enabledOption) {
+  const remove = option.remove;
+  option.remove = function (section_id) {
+    if (enabledOption.formvalue(section_id) !== "1") {
+      return;
+    }
+    return remove.apply(this, arguments);
+  };
+}
+
 function createNotificationsContent(section, capabilities) {
-  let o = section.option(
+  const enabledOption = section.option(
     form.Flag,
     "notify_enabled",
     _("Enable notifications"),
@@ -172,10 +231,10 @@ function createNotificationsContent(section, capabilities) {
       "Send a message to Telegram or a webhook when Prokop rolls back a change, a connection stops answering, or a subscription fails or ends",
     ),
   );
-  o.default = "0";
-  o.rmempty = false;
+  enabledOption.default = "0";
+  enabledOption.rmempty = false;
 
-  o = section.option(
+  let o = section.option(
     form.Value,
     "notify_telegram_token",
     _("Telegram bot token"),
@@ -227,6 +286,28 @@ function createNotificationsContent(section, capabilities) {
     "https://ntfy.sh/…",
     _("Delete the saved webhook URL"),
   );
+  // A plain http:// address to the internet is allowed, with a warning
+  // under the field: for the saved address, and for one being typed (LuCI
+  // validates as the user types).
+  const warnings = {};
+  const secretWidget = o.renderWidget;
+  o.renderWidget = function (section_id) {
+    const note = E("div", { class: "cbi-value-description" }, [
+      webhookWarning(uci.get(UCI_PACKAGE, section_id, "notify_webhook_url")),
+    ]);
+    warnings[section_id] = note;
+    return E("div", {}, [secretWidget.apply(this, arguments), note]);
+  };
+  const secretValidate = o.validate;
+  o.validate = function (section_id, value) {
+    const typed = value ? `${value}`.trim() : "";
+    if (warnings[section_id]) {
+      warnings[section_id].textContent = webhookWarning(
+        typed || uci.get(UCI_PACKAGE, section_id, "notify_webhook_url"),
+      );
+    }
+    return secretValidate.apply(this, arguments);
+  };
 
   o = section.option(
     form.ListValue,
@@ -295,7 +376,7 @@ function createNotificationsContent(section, capabilities) {
     "notify_via_proxy",
     _("Send through a rule"),
     _(
-      "Send through the connection of the selected rule, for example when Telegram is blocked. When that does not get through, Prokop sends directly",
+      "Send through the connection of the selected rule, for example when Telegram is blocked. When that does not get through, Prokop sends directly, bypassing its own DNS and rules",
     ),
   );
   o.depends("notify_enabled", "1");
@@ -323,6 +404,24 @@ function createNotificationsContent(section, capabilities) {
   );
   o.depends("notify_enabled", "1");
   o.renderWidget = function () {
+    // The test runs /usr/bin/prokop, which a role that may only read
+    // cannot (FE-19): the button is there, disabled, with the reason.
+    if (readonly(this)) {
+      return E("div", {}, [
+        E(
+          "button",
+          {
+            class: "cbi-button cbi-button-action",
+            type: "button",
+            disabled: true,
+          },
+          [_("Send test")],
+        ),
+        E("div", { class: "prokop-notify-test-result" }, [
+          _("Not available in read-only mode."),
+        ]),
+      ]);
+    }
     const output = E("div", { class: "prokop-notify-test-result" });
     const button = E(
       "button",
@@ -338,9 +437,19 @@ function createNotificationsContent(section, capabilities) {
     );
     return E("div", {}, [button, output]);
   };
+
+  for (const option of section.children) {
+    if (
+      option !== enabledOption &&
+      `${option.option || ""}`.startsWith("notify_")
+    ) {
+      keepWhileOff(option, enabledOption);
+    }
+  }
 }
 
 return baseclass.extend({
   createNotificationsContent,
   resultLines,
+  webhookWarning,
 });

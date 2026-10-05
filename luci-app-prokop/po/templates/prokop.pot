@@ -1992,7 +1992,7 @@ msgid "Direct routing is on and waits for TorrServer"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:126
-msgid "directly"
+msgid "directly, bypassing Prokop"
 msgstr ""
 
 #: src/prokop/tabs/updates/initController.ts:1377
@@ -5776,7 +5776,7 @@ msgid "Send through a rule"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:289
-msgid "Send through the connection of the selected rule, for example when Telegram is blocked. When that does not get through, Prokop sends directly"
+msgid "Send through the connection of the selected rule, for example when Telegram is blocked. When that does not get through, Prokop sends directly, bypassing its own DNS and rules"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:136
@@ -6321,6 +6321,26 @@ msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:82
 msgid "Telegram did not accept the bot token"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js
+msgid "Telegram refused the message text"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js
+msgid "The server gave an answer that could not be read"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js
+msgid "The server's address could not be found through the bootstrap DNS servers"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js
+msgid "by the router's usual route"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js
+msgid "This address uses http:// over the internet: the messages and any token in the address are sent unencrypted. Use https:// if the service supports it"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:87

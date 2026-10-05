@@ -101,6 +101,60 @@ async function check(label, fn) {
       assert.equal(env.uci.data.settings.notify_via_proxy, '0');
       assert.equal(env.uci.data.settings.notify_via_proxy_section, undefined);
     });
+
+    await check(`${version} turning notifications off keeps their settings (NTF-5)`, async () => {
+      const env = createEnvironment({ version, config: config({ notify_enabled: '1', notify_telegram_token: TOKEN,
+        notify_telegram_chat_id: '-1001234567', notify_on_node: '0', notify_via_proxy: '1',
+        notify_via_proxy_section: 'vpn', notify_subscription_expire_days: '7', notify_webhook_format: 'text' }) });
+      const settings = await env.openSettings(installed);
+      settings.option('notify_enabled').getUIElement('settings').setValue('0');
+      await settings.save();
+      const data = env.uci.data.settings;
+      assert.equal(data.notify_enabled, '0');
+      assert.equal(data.notify_telegram_token, TOKEN);
+      assert.equal(data.notify_telegram_chat_id, '-1001234567', 'the chat ID was removed');
+      assert.equal(data.notify_on_node, '0', 'a category turned off was forgotten');
+      assert.equal(data.notify_via_proxy, '1');
+      assert.equal(data.notify_via_proxy_section, 'vpn');
+      assert.equal(data.notify_subscription_expire_days, '7');
+      assert.equal(data.notify_webhook_format, 'text');
+      // On again: everything is still there.
+      const again = await env.openSettings(installed);
+      again.option('notify_enabled').getUIElement('settings').setValue('1');
+      await again.save();
+      assert.equal(env.uci.data.settings.notify_telegram_chat_id, '-1001234567');
+      assert.equal(env.uci.data.settings.notify_on_node, '0');
+    });
+
+    await check(`${version} a role that may only read gets no active control (FE-19)`, async () => {
+      const env = createEnvironment({ version, config: config({ notify_enabled: '1', notify_telegram_token: TOKEN }) });
+      const settings = await env.openSettings(installed);
+      settings.map.readonly = true;
+      env.form.Value.prototype.renderWidget = () => 'field';
+      const test = settings.option('_notify_test').renderWidget('settings');
+      const button = test.querySelector('button');
+      assert.equal(button.attrs.disabled, true, 'the test button must be disabled');
+      assert.match(test.textContent, /read-only/);
+      const token = settings.option('notify_telegram_token').renderWidget('settings');
+      assert.equal(token, 'field', 'the delete box must not be offered');
+      settings.map.readonly = false;
+      const writable = settings.option('notify_telegram_token').renderWidget('settings');
+      assert.notEqual(writable, 'field', 'a writer gets the delete box');
+      const active = settings.option('_notify_test').renderWidget('settings').querySelector('button');
+      assert.notEqual(active.attrs.disabled, true);
+    });
+
+    await check(`${version} an http:// webhook to the internet is warned about`, async () => {
+      const env = createEnvironment({ version, config: config({ notify_enabled: '1',
+        notify_webhook_url: 'http://gotify.example.com/message?token=abc' }) });
+      const settings = await env.openSettings(installed);
+      env.form.Value.prototype.renderWidget = () => 'field';
+      const option = settings.option('notify_webhook_url');
+      const widget = option.renderWidget('settings');
+      assert.match(widget.textContent, /http:\/\/ over the internet/);
+      assert.equal(option.validate('settings', 'https://gotify.example.com/message?token=abc'), true);
+      assert.equal(widget.textContent.includes('http://'), false, 'an https address typed clears the warning');
+    });
   }
 
   // The test answer, as the page words it.
@@ -116,8 +170,19 @@ async function check(label, fn) {
       { channel: 'webhook', status: 'ok', route: 'direct' },
       { channel: 'webhook', status: 'failed', reason: 'http_502' }] });
     assert.deepEqual(lines, ['Telegram: Telegram did not accept the bot token (through the rule)',
-      'Webhook: Delivered (directly)', 'Webhook: The server answered HTTP 502']);
+      'Webhook: Delivered (directly, bypassing Prokop)', 'Webhook: The server answered HTTP 502']);
   }
+  // NTF-1: the route as the router's traffic goes is not called direct; a
+  // failed resolution around Prokop is said in words.
+  assert.deepEqual(notifications.resultLines({ status: 'failed', channels: [
+    { channel: 'telegram', status: 'ok', route: 'system' },
+    { channel: 'webhook', status: 'failed', reason: 'dns', route: 'direct' }] }),
+  ['Telegram: Delivered (by the router\'s usual route)',
+    'Webhook: The server\'s address could not be found through the bootstrap DNS servers (directly, bypassing Prokop)']);
+  for (const url of ['http://192.168.1.2/hook', 'http://gotify.lan/m?token=a', 'http://[fd00::1]/x', 'http://localhost:8080/',
+    'https://ntfy.sh/topic'])
+    assert.equal(notifications.webhookWarning(url), '', `no warning for ${url}`);
+  assert.notEqual(notifications.webhookWarning('http://ntfy.sh/secret-topic'), '');
   // FE-17: no channel results (the router could not prepare the request):
   // the reason is still shown.
   assert.deepEqual(notifications.resultLines({ status: 'failed', reason: 'local_error', channels: [] }),

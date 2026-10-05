@@ -1391,8 +1391,8 @@ msgstr "Прямая маршрутизация включена"
 msgid "Direct routing is on and waits for TorrServer"
 msgstr "Прямая маршрутизация включена и ждёт TorrServer"
 
-msgid "directly"
-msgstr "напрямую"
+msgid "directly, bypassing Prokop"
+msgstr "напрямую, мимо Prokop"
 
 msgid "Disable"
 msgstr "Отключить"
@@ -4040,8 +4040,8 @@ msgstr "Отправлять через"
 msgid "Send through a rule"
 msgstr "Отправлять через правило"
 
-msgid "Send through the connection of the selected rule, for example when Telegram is blocked. When that does not get through, Prokop sends directly"
-msgstr "Отправлять через подключение выбранного правила, например если Telegram заблокирован. Если так отправить не получилось, Prokop отправит напрямую"
+msgid "Send through the connection of the selected rule, for example when Telegram is blocked. When that does not get through, Prokop sends directly, bypassing its own DNS and rules"
+msgstr "Отправлять через подключение выбранного правила, например если Telegram заблокирован. Если так отправить не получилось, Prokop отправит напрямую, мимо своих DNS и правил"
 
 msgid "Sending…"
 msgstr "Отправка…"
@@ -4429,6 +4429,21 @@ msgstr "ID чата Telegram"
 
 msgid "Telegram did not accept the bot token"
 msgstr "Telegram не принял токен бота"
+
+msgid "Telegram refused the message text"
+msgstr "Telegram не принял текст сообщения"
+
+msgid "The server gave an answer that could not be read"
+msgstr "Ответ сервера не удалось разобрать"
+
+msgid "The server's address could not be found through the bootstrap DNS servers"
+msgstr "Не удалось найти адрес сервера через Bootstrap DNS-серверы"
+
+msgid "by the router's usual route"
+msgstr "обычным маршрутом роутера"
+
+msgid "This address uses http:// over the internet: the messages and any token in the address are sent unencrypted. Use https:// if the service supports it"
+msgstr "Адрес использует http:// через интернет: сообщения и токен в адресе передаются без шифрования. Используйте https://, если сервис его поддерживает"
 
 msgid "Telegram refused the request"
 msgstr "Telegram отклонил запрос"
