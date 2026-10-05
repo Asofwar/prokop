@@ -29,10 +29,11 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
-const VIEW_DIR = path.join(
-  __dirname,
-  "../../luci-app-prokop/htdocs/luci-static/resources/view/prokop",
-);
+// PROKOP_LUCI_VIEW_DIR: another copy of the views, such as the minified one
+// the package ships (tests/luci_views_minified.sh).
+const VIEW_DIR =
+  process.env.PROKOP_LUCI_VIEW_DIR ||
+  path.join(__dirname, "../../luci-app-prokop/htdocs/luci-static/resources/view/prokop");
 
 if (typeof String.prototype.format !== "function") {
   // LuCI extends String with printf-like format(); only %s/%d/%h are used.

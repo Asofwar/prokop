@@ -22,6 +22,11 @@ LUCI_LANG.ru:=Русский (Russian)
 LUCI_LANG.en:=English
 LUCI_MAINTAINER:=Asofwar <7397608+Asofwar@users.noreply.github.com>
 LUCI_DESCRIPTION:=Rule-based Prokop LuCI app with hybrid sing-box + zapret orchestration
+# LuCI's jsmin breaks section.js (it takes the regex literal after an arrow,
+# `=> /^(full|keyword|regex):/`, for a division and mangles the code after
+# it) and drops a space inside a nested template literal of
+# notifications.js. build.sh ships the views minified with esbuild instead
+# (minify_luci_views); a feed build ships them as they are.
 LUCI_MINIFY_JS:=0
 
 PKG_LICENSE:=GPL-2.0-or-later
