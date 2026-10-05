@@ -1383,6 +1383,9 @@ function status() {
         let finished = index(TERMINAL_PHASES, s.phase) >= 0 || !autotune_lock.held();
         result.resolved = finished && !unresolved(s, d);
         result.diagnosis = d.diagnosis;
+        // Edited since, yet still running the applied candidate: it can be
+        // rolled back (only its option, AT-10).
+        result.candidate_in_effect = d.candidate_in_effect === true;
         // Superseded, the record blocks nothing (UC-020). But while it is
         // undecided and its candidate never passed verification, a rule that
         // still runs the candidate's strategy keeps the configuration from

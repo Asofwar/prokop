@@ -63,6 +63,10 @@ a.equal(r.resolved, true); a.equal(r.rollback, true); a.equal(r.finished_at, 9);
 status_with '{"state":{"phase":"applied","selected":"fake","mutation":{"section":"youtube"}},"resolved":true,"diagnosis":"superseded","autotune_lock_held":false,"rollback_source_present":true}'
 [ "$(json_get "$WORK/status.json" apply.rollback)" = false ] || fail "a superseded apply offered a rollback"
 [ "$(json_get "$WORK/status.json" apply.unverified_strategy)" = false ] || fail "a superseded apply named an unverified strategy"
+# Edited since while the candidate stays in effect (another rule, the
+# policy): the operator may still roll it back, only its option (AT-10).
+status_with '{"state":{"phase":"applied","selected":"fake","mutation":{"section":"youtube"}},"resolved":true,"diagnosis":"superseded","candidate_in_effect":true,"autotune_lock_held":false,"rollback_source_present":true}'
+[ "$(json_get "$WORK/status.json" apply.rollback)" = true ] || fail "an applied candidate still in effect offered no rollback"
 
 # Edited during a failed check, the rule still runs the candidate's strategy:
 # the record blocks nothing, but no start or reload confirms the

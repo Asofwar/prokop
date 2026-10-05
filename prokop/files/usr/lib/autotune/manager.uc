@@ -167,8 +167,10 @@ function apply_summary() {
             resolved: null, diagnosis: null, in_progress: false, rollback: false, unverified_strategy: false };
     let open = index(APPLY_PHASES, s.phase) >= 0;
     let in_progress = open && st.autotune_lock_held === true;
-    let candidate_active = st.diagnosis == "candidate_active" &&
-        (open || s.phase == "applied" || s.phase == "needs_attention" || (s.phase == "failed" && s.reason == "interrupted_after_apply"));
+    let candidate_active = (st.diagnosis == "candidate_active" &&
+        (open || s.phase == "applied" || s.phase == "needs_attention" || (s.phase == "failed" && s.reason == "interrupted_after_apply"))) ||
+        // An edit left the applied candidate in effect (AT-10).
+        (st.diagnosis == "superseded" && st.candidate_in_effect === true && s.phase == "applied");
     return {
         phase: type(s.phase) == "string" ? s.phase : null,
         reason: type(s.reason) == "string" ? s.reason : null,
