@@ -112,6 +112,38 @@ function xhttp_object_arg(value) {
     }
 }
 
+// C2: the xHTTP settings that Remnawave and Xray-core send beyond the base
+// set, as sing-box-extended reads them: [ sing-box key, kind, Xray keys ].
+// singbox/generator.uc drops those the running core does not know.
+const XHTTP_EXTENDED_SETTINGS = [
+    [ "uplink_http_method", "method", [ "uplinkHTTPMethod", "uplinkHttpMethod" ] ],
+    [ "session_placement", "placement", [ "sessionPlacement" ] ],
+    [ "session_key", "key", [ "sessionKey" ] ],
+    [ "seq_placement", "placement", [ "seqPlacement" ] ],
+    [ "seq_key", "key", [ "seqKey" ] ],
+    [ "uplink_data_placement", "data_placement", [ "uplinkDataPlacement" ] ],
+    [ "uplink_data_key", "key", [ "uplinkDataKey" ] ],
+    [ "uplink_chunk_size", "range", [ "uplinkChunkSize" ] ],
+    [ "x_padding_obfs_mode", "bool", [ "xPaddingObfsMode" ] ],
+    [ "x_padding_key", "key", [ "xPaddingKey" ] ],
+    [ "x_padding_header", "key", [ "xPaddingHeader" ] ],
+    [ "x_padding_placement", "padding_placement", [ "xPaddingPlacement" ] ],
+    [ "x_padding_method", "padding_method", [ "xPaddingMethod" ] ],
+    [ "sc_max_buffered_posts", "count", [ "scMaxBufferedPosts" ] ],
+    [ "no_sse_header", "bool", [ "noSSEHeader", "noSseHeader" ] ],
+    [ "session_id_table", "table", [ "sessionIDTable", "sessionIdTable" ] ],
+    [ "session_id_length", "range", [ "sessionIDLength", "sessionIdLength" ] ]
+];
+const XHTTP_EXTENDED_SOURCE_KEYS = (() => {
+    let result = [];
+    for (let setting in XHTTP_EXTENDED_SETTINGS) {
+        push(result, setting[0]);
+        for (let key in setting[2])
+            push(result, key);
+    }
+    return result;
+})();
+
 function xhttp_copy_known_settings(target, source) {
     if (type(source) != "object")
         return;
@@ -127,7 +159,8 @@ function xhttp_copy_known_settings(target, source) {
         "sc_min_posts_interval_ms",
         "scStreamUpServerSecs",
         "sc_stream_up_server_secs",
-        "xmux"
+        "xmux",
+        ...XHTTP_EXTENDED_SOURCE_KEYS
     ]) {
         if (xhttp_value_present(source[key]))
             target[key] = source[key];
@@ -232,6 +265,58 @@ function xhttp_present_positive_range_or_default(value, default_value) {
         return null;
 
     return xhttp_positive_range_or_default(value, default_value);
+}
+
+// value as sing-box-extended takes it for that setting in this mode
+// (checkV2RayXHTTPBaseOptions), or null: a value it would refuse is left
+// out, so that one node never fails the whole configuration.
+function xhttp_extended_value(kind, value, mode) {
+    let text = trim(as_string(value));
+    if (kind == "bool")
+        return is_true(value);
+    if (kind == "range")
+        return xhttp_range_value(value, true);
+    if (kind == "count")
+        return xhttp_positive_integer_value(value);
+    if (kind == "key")
+        return match(text, /^[A-Za-z0-9_.-]{1,64}$/) != null ? text : null;
+    if (kind == "table")
+        return match(text, /^[!-~]{1,256}$/) != null ? text : null;
+    if (kind == "method") {
+        text = uc(text);
+        if (match(text, /^[A-Z]{1,16}$/) == null)
+            return null;
+        return text != "GET" || mode == "packet-up" ? text : null;
+    }
+    if (kind == "placement")
+        return index([ "path", "cookie", "header", "query" ], text) >= 0 ? text : null;
+    if (kind == "padding_placement")
+        return index([ "cookie", "header", "query", "queryInHeader" ], text) >= 0 ? text : null;
+    if (kind == "padding_method")
+        return index([ "repeat-x", "tokenish" ], text) >= 0 ? text : null;
+    if (kind == "data_placement") {
+        if (text == "auto" || text == "body")
+            return text;
+        return (text == "cookie" || text == "header") && mode == "packet-up" ? text : null;
+    }
+    return null;
+}
+
+function xhttp_apply_extended_settings(result, query, extra_settings) {
+    query = type(query) == "object" ? query : {};
+    extra_settings = type(extra_settings) == "object" ? extra_settings : {};
+    for (let setting in XHTTP_EXTENDED_SETTINGS) {
+        let value = null;
+        for (let source in [ query, extra_settings ])
+            for (let key in [ ...setting[2], setting[0] ])
+                if (value == null && xhttp_value_present(source[key]))
+                    value = source[key];
+        if (value == null)
+            continue;
+        let normalized = xhttp_extended_value(setting[1], value, result.mode);
+        if (normalized != null)
+            result[setting[0]] = normalized;
+    }
 }
 
 function xhttp_optional_bool(object, key, value) {
@@ -713,6 +798,7 @@ function add_transport(url) {
         xhttp_optional_positive_range(result, "sc_max_each_post_bytes", xhttp_setting_value(query, extra_settings, "scMaxEachPostBytes", "sc_max_each_post_bytes"));
         xhttp_optional_range(result, "sc_min_posts_interval_ms", xhttp_setting_value(query, extra_settings, "scMinPostsIntervalMs", "sc_min_posts_interval_ms"));
         xhttp_optional_range(result, "sc_stream_up_server_secs", xhttp_setting_value(query, extra_settings, "scStreamUpServerSecs", "sc_stream_up_server_secs"));
+        xhttp_apply_extended_settings(result, query, extra_settings);
         let xmux = xhttp_normalize_xmux(xhttp_setting_value(query, extra_settings, "xmux", "xmux"));
         if (xmux)
             result.xmux = xmux;
@@ -2268,6 +2354,7 @@ function xray_transport_from_stream(stream) {
         xhttp_optional_positive_range(result, "sc_max_each_post_bytes", xhttp_setting_value(settings, settings, "scMaxEachPostBytes", "sc_max_each_post_bytes"));
         xhttp_optional_range(result, "sc_min_posts_interval_ms", xhttp_setting_value(settings, settings, "scMinPostsIntervalMs", "sc_min_posts_interval_ms"));
         xhttp_optional_range(result, "sc_stream_up_server_secs", xhttp_setting_value(settings, settings, "scStreamUpServerSecs", "sc_stream_up_server_secs"));
+        xhttp_apply_extended_settings(result, settings, xhttp_extra_settings({ extra: settings.extra }));
         let xmux = xhttp_normalize_xmux(settings.xmux);
         if (xmux)
             result.xmux = xmux;
