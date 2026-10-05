@@ -78,7 +78,7 @@ assert.equal(sections.dpi.local_file, '/etc/prokop');
 assert.equal(config.subscription_url[0].url, 'file:///etc/prokop/subscription.txt');
 assert.equal(config.server?.[0]?.certificate_path, '/etc/prokop/certs/ca.pem',
   'sections of types no other migration reads must be migrated too');
-assert.equal(config.settings.applied_migrations.at(-1), 'prokop_state_paths_v1');
+assert(config.settings.applied_migrations.includes('prokop_state_paths_v1'));
 assert.ok(!JSON.stringify(config).includes('"/etc/forkop/'), 'a path under /etc/forkop was left');
 const changed = out.operations.filter((op) => op.op === 'set' || op.op === 'set_list').map((op) => `${op.section}.${op.option}`);
 for (const name of [ 'settings.cache_path', 'main.rule_set', 'dpi.zapret_nfqws_opt', 'dpi.local_file', 'provider.url', 'custom.certificate_path' ])

@@ -3262,13 +3262,6 @@
     ]
   },
   {
-    "call": "Devices with their own DNS server (8.8.8.8 in a TV, IoT devices) bypass domain rules and the kill-switch. Their plain DNS on port 53 is sent to the router instead. DNS to local addresses (Pi-hole) and DNS over TLS stay untouched",
-    "key": "Devices with their own DNS server (8.8.8.8 in a TV, IoT devices) bypass domain rules and the kill-switch. Their plain DNS on port 53 is sent to the router instead. DNS to local addresses (Pi-hole) and DNS over TLS stay untouched",
-    "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:961"
-    ]
-  },
-  {
     "call": "DHCP has DNS server",
     "key": "DHCP has DNS server",
     "places": [
@@ -13642,6 +13635,55 @@
     "key": "ZB",
     "places": [
       "src/helpers/prettyBytes.ts:11"
+    ]
+  },
+  {
+    "call": "Intercepting client DNS is off by default now: it also caught VPNs and DNS servers in the LAN that use port 53. It was on here and was turned off; turn it on again under Settings > Network if you need it.",
+    "key": "Intercepting client DNS is off by default now: it also caught VPNs and DNS servers in the LAN that use port 53. It was on here and was turned off; turn it on again under Settings > Network if you need it.",
+    "places": [
+      "src/prokop/tabs/history/model.ts:255"
+    ]
+  },
+  {
+    "call": "Not intercepted",
+    "key": "Not intercepted",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:978"
+    ]
+  },
+  {
+    "call": "Off by default. Devices with their own DNS server (8.8.8.8 in a TV, IoT devices) bypass domain rules and the kill-switch; when on, everything they send to port 53 of an outside server goes to the router's DNS instead. This also catches a VPN whose server uses port 53 and a DNS server in the LAN that asks outside servers itself: add their addresses to the exclusions. DNS to local addresses (Pi-hole), to the router's IPv6 prefixes and DNS over TLS stay untouched",
+    "key": "Off by default. Devices with their own DNS server (8.8.8.8 in a TV, IoT devices) bypass domain rules and the kill-switch; when on, everything they send to port 53 of an outside server goes to the router's DNS instead. This also catches a VPN whose server uses port 53 and a DNS server in the LAN that asks outside servers itself: add their addresses to the exclusions. DNS to local addresses (Pi-hole), to the router's IPv6 prefixes and DNS over TLS stay untouched",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:958"
+    ]
+  },
+  {
+    "call": "Shown: the %d addresses with the most traffic of %d.",
+    "key": "Shown: the %d addresses with the most traffic of %d.",
+    "places": [
+      "src/prokop/tabs/monitoring/devicesView.ts:266"
+    ]
+  },
+  {
+    "call": "The router counts no new addresses: its list of addresses is full. New devices are missing until addresses idle for 7 days leave it.",
+    "key": "The router counts no new addresses: its list of addresses is full. New devices are missing until addresses idle for 7 days leave it.",
+    "places": [
+      "src/prokop/tabs/monitoring/devicesView.ts:257"
+    ]
+  },
+  {
+    "call": "They count what a device sends through the router and receives from it, DNS and this page included, also packets the firewall drops afterwards; traffic between devices of the LAN is not seen. An address idle for 7 days starts again from zero, and names are those of the current leases.",
+    "key": "They count what a device sends through the router and receives from it, DNS and this page included, also packets the firewall drops afterwards; traffic between devices of the LAN is not seen. An address idle for 7 days starts again from zero, and names are those of the current leases.",
+    "places": [
+      "src/prokop/tabs/monitoring/devicesView.ts:221"
+    ]
+  },
+  {
+    "call": "Used while client DNS is intercepted. DNS from these devices or to these servers is never intercepted: a DNS server in the LAN, the server of a VPN on port 53. An IPv4 or IPv6 address or subnet",
+    "key": "Used while client DNS is intercepted. DNS from these devices or to these servers is never intercepted: a DNS server in the LAN, the server of a VPN on port 53. An IPv4 or IPv6 address or subnet",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:980"
     ]
   }
 ]

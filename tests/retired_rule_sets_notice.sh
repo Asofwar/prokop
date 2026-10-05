@@ -75,7 +75,7 @@ assert.deepEqual(games.community_lists, ['hetzner'], 'the migration must not add
 assert.deepEqual(games.retired_rule_sets, ['cloudflare', 'amazon', 'hetzner'],
   'the rule keeps the ids it lost for the editor');
 assert.equal(plain.retired_rule_sets, undefined, 'a rule that lost nothing gets no marker');
-assert.deepEqual(out.notices, [{
+assert.deepEqual(out.notices.filter((notice) => notice.code === 'retired_rule_sets'), [{
   code: 'retired_rule_sets',
   section: 'games',
   values: ['cloudflare', 'amazon', 'hetzner'],
@@ -121,7 +121,8 @@ const history = JSON.parse(require('fs').readFileSync(process.argv[2], 'utf8'));
 const events = history.events.filter((event) => event.kind === 'config_migration');
 assert.equal(events.length, 1);
 assert.equal(events[0].status, 'success');
-assert.deepEqual(events[0].notices, [{
+// Other migrations (client_dns_intercept_off) may add their own notices.
+assert.deepEqual(events[0].notices.filter((notice) => notice.code === 'retired_rule_sets'), [{
   code: 'retired_rule_sets', section: 'games', values: ['cloudflare'], replacements: ['cloudflare'],
 }]);
 NODE
