@@ -239,9 +239,11 @@ function renderHistory() {
             E(
               'span',
               { class: 'fkp-history__hint' },
-              _('Shown %d of %d')
-                .replace('%d', String(visible.length))
-                .replace('%d', String(items.length)),
+              asText(
+                _('Shown %d of %d')
+                  .replace('%d', String(visible.length))
+                  .replace('%d', String(items.length)),
+              ),
             ),
             E(
               'button',
@@ -518,21 +520,25 @@ function renderRetention(force = false) {
     E(
       'dd',
       {},
-      _('%d of %d')
-        .replace('%d', String(history.events.length))
-        .replace('%d', String(limits.history_limit)),
+      asText(
+        _('%d of %d')
+          .replace('%d', String(history.events.length))
+          .replace('%d', String(limits.history_limit)),
+      ),
     ),
     E('dt', {}, _('Snapshots')),
     E(
       'dd',
       {},
-      snapshots
-        ? _('%d of %d, manual %d of %d')
-            .replace('%d', String(snapshots.length))
-            .replace('%d', String(limits.snapshot_limit))
-            .replace('%d', String(manual))
-            .replace('%d', String(limits.manual_snapshot_limit))
-        : _('Unknown'),
+      asText(
+        snapshots
+          ? _('%d of %d, manual %d of %d')
+              .replace('%d', String(snapshots.length))
+              .replace('%d', String(limits.snapshot_limit))
+              .replace('%d', String(manual))
+              .replace('%d', String(limits.manual_snapshot_limit))
+          : _('Unknown'),
+      ),
     ),
   ]);
 
@@ -610,13 +616,15 @@ function renderRetention(force = false) {
     E(
       'p',
       { class: 'fkp-history__hint' },
-      _(
-        'History: %d to %d records. Snapshots: %d to %d, two places of them stay for the automatic snapshots taken before a restore, Save & Apply or autotune. Older records and automatic snapshots beyond the limits are deleted automatically; manual and protected snapshots are never deleted automatically.',
-      )
-        .replace('%d', String(RETENTION_BOUNDS.history.min))
-        .replace('%d', String(RETENTION_BOUNDS.history.max))
-        .replace('%d', String(RETENTION_BOUNDS.snapshots.min))
-        .replace('%d', String(RETENTION_BOUNDS.snapshots.max)),
+      asText(
+        _(
+          'History: %d to %d records. Snapshots: %d to %d, two places of them stay for the automatic snapshots taken before a restore, Save & Apply or autotune. Older records and automatic snapshots beyond the limits are deleted automatically; manual and protected snapshots are never deleted automatically.',
+        )
+          .replace('%d', String(RETENTION_BOUNDS.history.min))
+          .replace('%d', String(RETENTION_BOUNDS.history.max))
+          .replace('%d', String(RETENTION_BOUNDS.snapshots.min))
+          .replace('%d', String(RETENTION_BOUNDS.snapshots.max)),
+      ),
     ),
     ...(retentionError
       ? [
@@ -756,9 +764,11 @@ function renderSnapshots() {
             E(
               'span',
               { class: 'fkp-history__hint' },
-              _('Shown %d of %d')
-                .replace('%d', String(shownRows.length))
-                .replace('%d', String(rows.length)),
+              asText(
+                _('Shown %d of %d')
+                  .replace('%d', String(shownRows.length))
+                  .replace('%d', String(rows.length)),
+              ),
             ),
             E(
               'button',
@@ -770,7 +780,7 @@ function renderSnapshots() {
                   renderSnapshots();
                 },
               },
-              snapshotsExpanded ? _('Show fewer') : _('Show all'),
+              asText(snapshotsExpanded ? _('Show fewer') : _('Show all')),
             ),
           ]),
         ]
