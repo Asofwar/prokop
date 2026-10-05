@@ -290,8 +290,18 @@ const modes = {
       if (i > 0) assert.ok(r[0] > all[i - 1][1], `source-port ranges ${all[i - 1]} and ${r} overlap`);
     });
     assert.equal(verdict(out[out.length - 1]), 'drop');
+    // The SYN-ACK counters: one per probe rule, counting only (no verdict,
+    // no mark), so the reply path stays production's.
+    baseChain(table, 'replies', 'filter', 'prerouting', -300);
+    const replies = rulesOf(table, 'replies');
+    assert.deepEqual(replies.map((r) => r.comment),
+      specs.map((x) => 'synack' + (x.comment.includes(':') ? x.comment.slice(x.comment.indexOf(':')) : '')), 'SYN-ACK counters');
+    for (const r of replies) {
+      assert.equal(verdict(r), undefined, `reply rule ${r.comment} must not decide`);
+      assert.ok(setsMark(r) == null, `reply rule ${r.comment} must not mark`);
+    }
     // probe_counters() needs a counter on every rule of the table.
-    for (const r of [...premark, ...out]) assert.ok(statementOf(r, 'counter'), `rule ${r.comment} has no counter`);
+    for (const r of [...premark, ...out, ...replies]) assert.ok(statementOf(r, 'counter'), `rule ${r.comment} has no counter`);
     // The probe chains run before every production output hook.
     for (const c of objects('chain').filter((x) => x.table === production && x.hook === 'output'))
       assert.ok(c.prio > -151, `production chain ${c.name} (priority ${c.prio}) runs before the probe chains`);

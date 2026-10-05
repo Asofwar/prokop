@@ -364,6 +364,14 @@ function probe_rule_kind(comment) {
     return index(PROBE_RULE_COMMENTS, kind) >= 0 && (colon < 0 || colon < length(comment) - 1) ? kind : null;
 }
 
+// The SYN-ACK counter of a probe rule: "synack" for the run's rule,
+// "synack:<id>" for a tuning slice.
+function syn_ack_comment(comment) {
+    comment = as_string(comment);
+    let colon = index(comment, ":");
+    return "synack" + (colon < 0 ? "" : substr(comment, colon));
+}
+
 // Counters by rule comment. One probe rule for the whole port range (run),
 // or one per tuning slice, each comment once.
 function probe_counters() {
@@ -600,12 +608,22 @@ function probe_chains(ip, spec) {
             { comment: "unexpected", tuple, mark: null, set_mark: null, verdict: "drop" }
         ] }
     ];
+    // Counts only, no verdict: the SYN-ACKs the target sends to each probe
+    // rule's source ports. curl reports a TLS handshake the DPI blackholes as
+    // "Connection timed out" with time_connect 0, so only a SYN-ACK proves
+    // the TCP connection was up (probe.uc handshake).
+    let replies = [];
+    for (let rule in type(spec) == "array" ? spec : [ spec ]) {
+        let colon = index(rule.comment || "", ":");
+        push(replies, { comment: "synack" + (colon < 0 ? "" : substr(rule.comment, colon)),
+            reply: { saddr: ip, sport: 443, dport: rule.sport || [ PORT_FIRST, PORT_LAST ] }, syn_ack: true,
+            mark: null, set_mark: null, verdict: null });
+    }
     if (TRACE)
         // Evidence only: marks the replies for nft trace and counts them.
-        push(chains, { name: REPLY_CHAIN, type: "filter", hook: "prerouting", priority: REPLY_PRIORITY, rules: [
-            { comment: "reply", reply: { saddr: ip, sport: 443, dport: [ PORT_FIRST, PORT_LAST ] },
-              mark: null, set_mark: null, verdict: null }
-        ] });
+        push(replies, { comment: "reply", reply: { saddr: ip, sport: 443, dport: [ PORT_FIRST, PORT_LAST ] },
+            mark: null, set_mark: null, verdict: null });
+    push(chains, { name: REPLY_CHAIN, type: "filter", hook: "prerouting", priority: REPLY_PRIORITY, rules: replies });
     return chains;
 }
 
@@ -613,6 +631,7 @@ function render_rule(rule) {
     let text = rule.reply
         ? "ip saddr " + rule.reply.saddr + " tcp sport " + rule.reply.sport + " tcp dport " + rule.reply.dport[0] + "-" + rule.reply.dport[1]
         : "ip daddr " + rule.tuple.daddr + " tcp dport " + rule.tuple.dport + " tcp sport " + rule.tuple.sport[0] + "-" + rule.tuple.sport[1];
+    if (rule.syn_ack) text += " tcp flags & (syn | ack) == syn | ack";
     if (rule.mark != null) text += sprintf(" meta mark 0x%08x", rule.mark);
     if (TRACE) text += " meta nftrace set 1";
     if (rule.set_mark != null) text += sprintf(" meta mark set 0x%08x", rule.set_mark);
@@ -965,7 +984,7 @@ function tune_candidates(list) {
 // (the manager's policy does not know how many candidates are supported).
 function tune(host, probes, resolver, list, ip) {
     let result = { status: "failed", reason: null, target: null, selected: null, confidence: null,
-        isolation: { table: TABLE, chains: [ MARK_CHAIN + "@" + MARK_PRIORITY, CHAIN + "@" + PRIORITY ],
+        isolation: { table: TABLE, chains: [ MARK_CHAIN + "@" + MARK_PRIORITY, CHAIN + "@" + PRIORITY, REPLY_CHAIN + "@" + REPLY_PRIORITY ],
             queues: null, port_range: PORT_RANGE, probe_mark: PROBE_MARK, desync_mark: DESYNC_MARK },
         contract: null, timeline, schedule: null, candidates: [], excluded: [], pruned: [], probes: [],
         teardown: null, production: null, cleanup: null, applied: false };
@@ -1073,7 +1092,7 @@ function tune(host, probes, resolver, list, ip) {
                 }
                 if (index(result.pruned, id) >= 0) continue;
                 let slot = by_id[id];
-                let comment = slot.comment;
+                let comment = slot.comment, synack = syn_ack_comment(comment);
                 // The queue is read before the rule counter here and after it
                 // below, so the queue window contains the rule window: a late
                 // packet of an earlier probe of this candidate (a blocked
@@ -1084,10 +1103,13 @@ function tune(host, probes, resolver, list, ip) {
                 // rules and queues.
                 let queue_before = slot.queue != null ? queue_entry(slot.queue) : null;
                 let counters_before = probe_counters();
-                if (counters_before == null || counters_before[comment] == null) return "counters_unavailable";
+                if (counters_before == null || counters_before[comment] == null || counters_before[synack] == null)
+                    return "counters_unavailable";
                 let record = probe_module.probe({ host, ip: target.ip, port_range: slot.ports });
                 let counters_after = probe_counters();
-                if (counters_after == null || counters_after[comment] == null) return "counters_unavailable";
+                if (counters_after == null || counters_after[comment] == null || counters_after[synack] == null)
+                    return "counters_unavailable";
+                record = probe_module.handshake(record, counters_after[synack].packets - counters_before[synack].packets);
                 record.round = r + 1;
                 record.candidate = id;
                 record.port_range = slot.ports;
@@ -1182,7 +1204,7 @@ function tune(host, probes, resolver, list, ip) {
 
 function run(candidate_id, host, count, resolver, ip) {
     let result = { status: "failed", reason: null, candidate: null, target: null,
-        isolation: { table: TABLE, chains: [ MARK_CHAIN + "@" + MARK_PRIORITY, CHAIN + "@" + PRIORITY ], queue: QUEUE,
+        isolation: { table: TABLE, chains: [ MARK_CHAIN + "@" + MARK_PRIORITY, CHAIN + "@" + PRIORITY, REPLY_CHAIN + "@" + REPLY_PRIORITY ], queue: QUEUE,
             port_range: PORT_RANGE, probe_mark: PROBE_MARK, desync_mark: DESYNC_MARK },
         contract: null, timeline, probes: [], summary: null, counters: null, teardown: null,
         production: null, cleanup: null };
@@ -1236,7 +1258,12 @@ function run(candidate_id, host, count, resolver, ip) {
         mark("T3", "probe begins");
         for (let i = 0; i < count; i++) {
             if (interrupted) return "interrupted";
-            push(result.probes, probe_module.probe({ host, ip: target.ip, port_range: PORT_RANGE }));
+            let before_c = probe_counters();
+            if (before_c == null || before_c.synack == null) return "counters_unavailable";
+            let record = probe_module.probe({ host, ip: target.ip, port_range: PORT_RANGE });
+            let after_c = probe_counters();
+            if (after_c == null || after_c.synack == null) return "counters_unavailable";
+            push(result.probes, probe_module.handshake(record, after_c.synack.packets - before_c.synack.packets));
         }
         // The rule counter first, the queue after it: see tune().
         result.counters = probe_counters();

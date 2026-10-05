@@ -110,6 +110,8 @@ probe_rule() {
   sport="$(sed -n 's/.* tcp sport \([0-9]*\)-\([0-9]*\) .*/\1 \2/p' <<<"$1")"
   echo "$comment ${queue:--} $sport"
 }
+# The SYN-ACK counter of a probe rule: "synack" or "synack:<id>".
+synack_of() { case "$1" in *:*) echo "synack:${1#*:}" ;; *) echo synack ;; esac; }
 case "$*" in
   "list tables") for t in "$T"/*; do [ -e "$t" ] && echo "table inet ${t##*/}"; done; exit 0 ;;
   "list table inet "*) [ -e "$T/$4" ]; exit ;;
@@ -134,7 +136,13 @@ case "$*" in
       while read -r handle comment _ first lastport; do
         out="$out,$(rule output "$comment" "$handle" "$first" "$lastport")"; last="$handle"
       done < "$S/rules"
-      printf '{"nftables":[{"table":{"family":"inet","name":"ProkopAutotuneProbe","handle":90}},%s,%s]}\n' "$out" "$(rule output unexpected $((last + 1)))"
+      out="$out,$(rule output unexpected $((last + 1)))"
+      # The SYN-ACK counters of the reply chain, one per probe rule.
+      handle=$((last + 2))
+      while read -r _ comment _; do
+        out="$out,$(rule replies "$(synack_of "$comment")" "$handle")"; handle=$((handle + 1))
+      done < "$S/rules"
+      printf '{"nftables":[{"table":{"family":"inet","name":"ProkopAutotuneProbe","handle":90}},%s]}\n' "$out"
     else cat "$T/$5"; fi
     exit 0 ;;
   "list ruleset") cat "$S/ruleset"; [ -e "$T/ProkopAutotuneProbe" ] && echo "queue to 4600"; exit 0 ;;
@@ -245,6 +253,14 @@ if [ -n "${CURL_STUB_PLAN:-}" ]; then
   fi
 fi
 ms() { printf '0.%03d' "$1"; }
+# The target answers the SYN of every probe that got past the TCP stage
+# (tls_stall included: curl hides that connection, the counter does not).
+if [ "$key" != none ]; then
+  case "$mode" in
+    success|moved|forbidden|otherip|tls|tls_timeout|tls_stall|reset|http_transport|empty_reply)
+      case "$comment" in *:*) bump "synack:${comment#*:}" 1 ;; *) bump synack 1 ;; esac ;;
+  esac
+fi
 case "$mode" in
   success) echo "0|61000|$ip|204|0.012|$(ms "$tls")|$(ms $((tls + 29)))|$(ms $((tls + 30)))|" ;;
   moved) echo "0|61001|$ip|301|0.012|0.061|0.090|0.091|" ;;
@@ -253,6 +269,8 @@ case "$mode" in
   refused) echo "7|0||000|0.000000|0.000000|0.000000|0.004|Failed to connect to x port 443 after 4 ms: Connection refused"; exit 7 ;;
   unreachable) echo "7|0||000|0.000000|0.000000|0.000000|0.004|Failed to connect to x port 443 after 4 ms: No route to host"; exit 7 ;;
   connect_timeout) echo "28|0||000|0.000000|0.000000|0.000000|5.001|Connection timed out after 5001 milliseconds"; exit 28 ;;
+  # curl 8.19 on a blackholed ClientHello: the same record as connect_timeout.
+  tls_stall) echo "28|0||000|0.000000|0.000000|0.000000|5.001|Connection timed out after 5001 milliseconds"; exit 28 ;;
   tls) echo "35|61003|$ip|000|0.012|0.000000|0.000000|0.070|mbedTLS: (-0x7780) SSL - A fatal alert message was received from our peer"; exit 35 ;;
   tls_timeout) echo "28|61003|$ip|000|0.012|0.000000|0.000000|10.0|Operation timed out after 10000 milliseconds with 0 bytes received"; exit 28 ;;
   reset) echo "35|61004|$ip|000|0.012|0.000000|0.000000|0.050|Recv failure: Connection reset by peer"; exit 35 ;;

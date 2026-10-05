@@ -178,6 +178,23 @@ function classify(r) {
     return result;
 }
 
+// handshake(record, syn_acks) -> the record with its TCP stage corrected by
+// the SYN-ACKs the target sent to the probe's source ports. curl reports a
+// TLS handshake that never completes as "Connection timed out" (exit 28)
+// with time_connect 0 even after the TCP connection was established, so a
+// DPI blackhole after the ClientHello looked like an unreachable target.
+// A SYN-ACK in the probe's window turns that into a TLS timeout.
+function handshake(record, syn_acks) {
+    record.syn_acks = type(syn_acks) == "int" && syn_acks >= 0 ? syn_acks : null;
+    if (record.syn_acks > 0 && record.class == "connect_timeout" && record.curl_exit_code == 28) {
+        record.class = "tls_failure";
+        record.connect = "ok";
+        record.tls = "timeout";
+        record.connect_evidence = "syn_ack";
+    }
+    return record;
+}
+
 function clean_message(v) {
     v = replace(as_string(v), /[^ -~]/g, " ");
     return length(v) > 160 ? substr(v, 0, 160) : v;
@@ -221,7 +238,7 @@ function probe(options) {
 }
 
 if (sourcepath(1) != null && sourcepath(1) != "")
-    return { resolve, production_dns, probe, classify, valid_host, valid_ipv4, public_ipv4 };
+    return { resolve, production_dns, probe, classify, handshake, valid_host, valid_ipv4, public_ipv4 };
 
 let mode = ARGV[0] || "";
 if (mode == "resolve")

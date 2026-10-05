@@ -411,9 +411,13 @@ function check(checks, name, ok, detail) { push(checks, { name, ok: !!ok, detail
 
 // Every failed probe died before the TCP connection was up: the WAN, not
 // the candidate, failed the verification (AT-3).
+// A curl timeout (exit 28) without time_connect is not such proof: curl
+// reports a TLS handshake the DPI blackholes the same way, and these probes
+// have no SYN-ACK count (probe.uc handshake). It blames the candidate.
 function network_unavailable(probes, successes) {
+    let proven = (p) => select_module.network_failure(p) && !(p.curl_exit_code == 28 && p.syn_acks == null);
     return successes < length(probes) &&
-        length(filter(probes, (p) => p.class != "success" && !select_module.network_failure(p))) == 0;
+        length(filter(probes, (p) => p.class != "success" && !proven(p))) == 0;
 }
 
 // ---- marked verification of a device-limited rule ---------------------------

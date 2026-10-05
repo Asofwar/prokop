@@ -183,7 +183,33 @@ grep -qxF "add rule inet ProkopAutotuneProbe output $T tcp sport 61000-61063 cou
 [ "$(sort -u "$STUB_LOG/switch.log" | paste -sd' ')" = "released:direct - released:fake - released:multisplit -" ] ||
   fail "probe rules were switched during the run: $(paste -sd' ' "$STUB_LOG/switch.log")"
 [ "$(grep -c '^replace rule' "$NFT_STATE/release.nft")" = 3 ] || fail "the slices are not released in one batch"
+R='ip saddr 93.184.216.34 tcp sport 443'
+for rule in "tcp dport 61000-61020 tcp flags & (syn | ack) == syn | ack counter comment \"synack:direct\"" \
+  "tcp dport 61021-61041 tcp flags & (syn | ack) == syn | ack counter comment \"synack:multisplit\"" \
+  "tcp dport 61042-61062 tcp flags & (syn | ack) == syn | ack counter comment \"synack:fake\""; do
+  grep -qxF "add rule inet ProkopAutotuneProbe replies $R $rule" "$NFT_STATE/last.nft" || fail "missing SYN-ACK counter: $rule"
+done
+grep -qxF "add chain inet ProkopAutotuneProbe replies { type filter hook prerouting priority -300; policy accept; }" "$NFT_STATE/last.nft" ||
+  fail "reply chain is not a counting filter chain"
 ok "fixed port slices: one rule per candidate, no switching, released together"
+
+# A control and a candidate whose ClientHello is blackholed after the TCP
+# handshake: curl says "Connection timed out" with time_connect 0, the
+# SYN-ACK counters of their slices say the server answered. That is DPI
+# evidence against them, not an unreachable target (hardware, 2.18.0).
+reset_state; CURL_STUB_PLAN="direct=tls_stall,4600=success:120,4601=tls_stall" tune 3 192.0.2.53 multisplit,fake
+json '
+a.equal(r.status, "selected", JSON.stringify(r).slice(0, 400)); a.equal(r.selected, "multisplit");
+a.equal(r.reason, "direct_failed_candidate_stable"); a.equal(r.confidence, "high");
+const byId = Object.fromEntries(r.candidates.map((c) => [c.id, c]));
+a.deepEqual([byId.direct.attempted, byId.direct.network_failures, byId.direct.stability], [3, 0, "failed"]);
+a.deepEqual(byId.direct.failure_classes, [{ class: "tls_failure", count: 3 }]);
+for (const p of r.probes.filter((x) => x.candidate !== "multisplit"))
+  a.deepEqual([p.class, p.connect, p.tls, p.syn_acks, p.connect_evidence], ["tls_failure", "ok", "timeout", 1, "syn_ack"]);
+a.ok(r.probes.filter((x) => x.candidate === "multisplit").every((p) => p.syn_acks === 1 && p.connect_evidence === undefined));
+' "$WORK/out.json"
+assert_clean "tune tls stall"
+ok "a ClientHello blackholed after the TCP handshake counts against the candidate and the control"
 
 # 1 (end to end). direct stable -> direct, no DPI needed
 reset_state; CURL_STUB_PLAN="direct=success:100,4600=success:95,4601=success:90" tune 3 192.0.2.53 multisplit,fake

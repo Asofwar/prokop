@@ -65,6 +65,16 @@ expect_class forbidden success ok ok ok
 expect_class refused tcp_reset reset not_attempted not_attempted
 expect_class unreachable connect_failure failed not_attempted not_attempted
 expect_class connect_timeout connect_timeout timeout not_attempted not_attempted
+# curl 8.19 reports a blackholed ClientHello exactly like a connect timeout;
+# the SYN-ACK the target sent to the probe's port shows TCP was up.
+expect_class tls_stall tls_failure ok timeout not_attempted
+json 'const p = r.probes[0]; a.equal(p.syn_acks, 1); a.equal(p.connect_evidence, "syn_ack"); a.equal(p.curl_exit_code, 28);' "$WORK/out.json"
+reset_state; export CURL_STUB_MODE=connect_timeout; run_probe multisplit 1
+json 'const p = r.probes[0]; a.equal(p.syn_acks, 0); a.equal(p.connect_evidence, undefined);' "$WORK/out.json"
+grep -qxF 'add rule inet ProkopAutotuneProbe replies ip saddr 93.184.216.34 tcp sport 443 tcp dport 61000-61063 tcp flags & (syn | ack) == syn | ack counter comment "synack"' "$NFT_STATE/last.nft" ||
+  fail "SYN-ACK counter of the probe rule missing: $(grep replies "$NFT_STATE/last.nft")"
+assert_clean "connect timeout without SYN-ACK"
+ok "a timeout with a SYN-ACK is a TLS timeout, without one a connect timeout"
 }
 cases_3() {
 expect_class tls tls_failure ok failed not_attempted
@@ -104,7 +114,7 @@ grep -qx -- '@192.0.2.53' "$STUB_LOG/dig.args" || fail "dig not pinned to the up
 batch="$(cat "$NFT_STATE/last.nft")"
 grep -qx 'create table inet ProkopAutotuneProbe' <<<"$batch" || fail "table not created atomically"
 grep -q 'type route hook output priority -151; policy accept;' <<<"$batch" || fail "wrong hook/priority"
-[ "$(grep -c '^add rule' <<<"$batch")" = 5 ] || fail "unexpected rule count"
+[ "$(grep -c '^add rule' <<<"$batch")" = 6 ] || fail "unexpected rule count"
 T='ip daddr 93.184.216.34 tcp dport 443 tcp sport 61000-61063'
 expect_line() { sed -n "$1p" "$NFT_STATE/last.nft" | grep -qxF -- "$2" || fail "batch line $1: $(sed -n "$1p" "$NFT_STATE/last.nft")"; }
 expect_line 2 'add chain inet ProkopAutotuneProbe premark { type route hook output priority -152; policy accept; }'
@@ -354,7 +364,7 @@ ok "ruleset unavailable: refused"
 reset_state; run_probe multisplit 1
 json 'a.equal(r.status, "completed"); a.equal(r.contract.ok, true); a.equal(r.contract.bypass.length, 1);
   a.equal(r.contract.bypass[0].chain, "ProkopTable/mangle_output"); a.equal(r.target.route.dev, "pppoe-wan");
-  a.deepEqual(r.isolation.rules.map((x) => x.chain + "/" + x.comment), ["premark/probe_mark", "output/reinjected", "output/reinjected_bare", "output/probe", "output/unexpected"]);
+  a.deepEqual(r.isolation.rules.map((x) => x.chain + "/" + x.comment), ["premark/probe_mark", "output/reinjected", "output/reinjected_bare", "output/probe", "output/unexpected", "replies/synack"]);
   a.equal(r.target.route.unmarked.dev, "pppoe-wan"); a.deepEqual(r.contract.sets, { prokop_interfaces: ["br-lan"] });' "$WORK/out.json"
 ok "contract and route recorded for a completed run"
 
