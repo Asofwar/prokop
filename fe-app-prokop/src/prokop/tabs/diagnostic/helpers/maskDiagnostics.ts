@@ -145,6 +145,7 @@ export const UCI_SAFE_OPTIONS = new Set([
   'prefix_nodes',
   'priority_groups',
   'proxy_config_type',
+  'reality_mlkem',
   'recovery_check_interval',
   'resolve_real_ip_for_routing',
   'rule',

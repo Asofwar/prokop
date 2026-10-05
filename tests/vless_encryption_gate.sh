@@ -50,7 +50,7 @@ cat >"$WORK_DIR/subscriptions/enc-subscription-1.json" <<'JSON'
       "type": "vless", "tag": "enc-node", "remark": "Encrypted node",
       "server": "127.0.0.30", "server_port": 443,
       "uuid": "00000000-0000-4000-8000-000000000030",
-      "encryption": "mlkem768x25519plus.native.0rtt.AAAA"
+      "encryption": "mlkem768x25519plus.native.0rtt.AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8"
     },
     {
       "type": "vless", "tag": "plain-node", "remark": "Plain node",
@@ -90,7 +90,7 @@ cat >"$WORK_DIR/manual-fixture.json" <<'JSON'
       "enabled": "1",
       "action": "connection",
       "selector_proxy_links": [
-        "vless://00000000-0000-4000-8000-000000000032@enc.example:443?encryption=mlkem768x25519plus.native.0rtt.AAAA&security=tls&sni=enc.example&type=tcp#Manual Enc"
+        "vless://00000000-0000-4000-8000-000000000032@enc.example:443?encryption=mlkem768x25519plus.native.0rtt.AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8&security=tls&sni=enc.example&type=tcp#Manual Enc"
       ]
     }
   ]

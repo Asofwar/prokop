@@ -25,6 +25,9 @@ let fixture_uci_data = null;
 let runtime_settings_cache = null;
 let runtime_ruleset_folder = runtime_constants.TMP_RULESET_FOLDER;
 let runtime_supports_xhttp = true;
+// X.Y.Z of sing-box-extended from "1.14.1-extended-2.7.2"; null when the
+// version is not known.
+let runtime_extended_version = null;
 let runtime_supports_dns_response_matching = false;
 let provider_urltest_start_seed = "";
 
@@ -585,11 +588,96 @@ function outbound_uses_vless_encryption(outbound) {
     return encryption != "" && encryption != "none";
 }
 
+// sing-box-extended is at least major.minor.patch. An extended core of
+// unknown version (unknown_ok) passes.
+function extended_at_least(major, minor, patch, unknown_ok) {
+    if (!runtime_supports_xhttp)
+        return false;
+    let v = runtime_extended_version;
+    if (v == null)
+        return unknown_ok;
+    if (v[0] != major)
+        return v[0] > major;
+    if (v[1] != minor)
+        return v[1] > minor;
+    return v[2] >= patch;
+}
+
+// C3: VLESS Encryption (ML-KEM) came with sing-box-extended 2.0.0; on an
+// older core it is an unknown field that fails the whole configuration.
+const VLESS_ENCRYPTION_MIN_EXTENDED = [ 2, 0, 0 ];
+// tls.reality.support_x25519mlkem768 came with sing-box-extended 2.7.2.
+const REALITY_MLKEM_MIN_EXTENDED = [ 2, 7, 2 ];
+
+function vless_encryption_supported() {
+    let v = VLESS_ENCRYPTION_MIN_EXTENDED;
+    return extended_at_least(v[0], v[1], v[2], true);
+}
+
+// The bytes a base64 (raw URL alphabet, no padding) segment decodes to, or
+// null when it is not one, as Go's base64.RawURLEncoding reads it.
+function raw_url_base64_length(value) {
+    if (match(value, /^[A-Za-z0-9_-]*$/) == null)
+        return null;
+    let rest = length(value) % 4;
+    if (rest == 1)
+        return null;
+    return int(length(value) / 4) * 3 + (rest == 2 ? 1 : rest == 3 ? 2 : 0);
+}
+
+// Why sing-box-extended refuses a VLESS encryption value, as its
+// parseClientEncryption does: "mlkem768x25519plus.<mode>.<rtt>", padding
+// segments, then keys of 32 (X25519) or 1184 (ML-KEM-768) bytes. "" for a
+// value it takes. A truncated key fails here instead of the whole
+// configuration in "sing-box check".
+function vless_encryption_error(value) {
+    let parts = split(trim(as_string(value)), ".");
+    if (length(parts) < 4)
+        return "missing components";
+    if (parts[0] != "mlkem768x25519plus")
+        return "unsupported prefix";
+    if (index([ "native", "xorpub", "random" ], parts[1]) < 0)
+        return "unknown mode";
+    if (index([ "0rtt", "1rtt" ], parts[2]) < 0)
+        return "unsupported RTT value";
+    let keys = 0;
+    for (let i = 3; i < length(parts); i++) {
+        let segment = trim(parts[i]);
+        if (segment == "")
+            return "empty segment";
+        let bytes = raw_url_base64_length(segment);
+        if (bytes != null) {
+            if (bytes != 32 && bytes != 1184)
+                return "invalid key length";
+            keys++;
+            continue;
+        }
+        if (keys > 0)
+            return "invalid key";
+    }
+    return keys > 0 ? "" : "no keys";
+}
+
+// Why this outbound's VLESS encryption cannot run on this core, or "".
+function vless_encryption_unsupported(outbound) {
+    if (!outbound_uses_vless_encryption(outbound))
+        return "";
+    if (!runtime_supports_xhttp)
+        return "VLESS encryption requires sing-box-extended";
+    if (!vless_encryption_supported())
+        return "VLESS encryption requires sing-box-extended " + join(".", VLESS_ENCRYPTION_MIN_EXTENDED) + " or newer";
+    let error = vless_encryption_error(outbound.encryption);
+    return error != "" ? "invalid VLESS encryption value (" + error + ")" : "";
+}
+
 function ensure_explicit_outbound_supported(outbound, source, name) {
     if (!runtime_supports_xhttp && outbound_uses_xhttp(outbound))
         runtime_generate_unsupported(as_string(source) + " '" + as_string(name) + "' uses XHTTP transport, but sing-box-extended is not installed");
     if (!runtime_supports_xhttp && outbound_uses_vless_encryption(outbound))
         runtime_generate_unsupported(as_string(source) + " '" + as_string(name) + "' uses VLESS encryption, but sing-box-extended is not installed");
+    let encryption = vless_encryption_unsupported(outbound);
+    if (encryption != "")
+        runtime_generate_unsupported(as_string(source) + " '" + as_string(name) + "': " + encryption);
 }
 
 function subscription_outbound_display_name(outbound) {
@@ -642,8 +730,9 @@ function compatible_subscription_outbounds(outbounds, section_name) {
             warn_skipped_subscription_outbound(section_name, outbound, "XHTTP requires sing-box-extended");
             continue;
         }
-        if (!runtime_supports_xhttp && outbound_uses_vless_encryption(outbound)) {
-            warn_skipped_subscription_outbound(section_name, outbound, "VLESS encryption requires sing-box-extended");
+        let encryption = vless_encryption_unsupported(outbound);
+        if (encryption != "") {
+            warn_skipped_subscription_outbound(section_name, outbound, encryption);
             continue;
         }
         push(retained, outbound);
@@ -2824,6 +2913,30 @@ function unsupported_matcher_key(section) {
     return "";
 }
 
+// C3, opt-in per rule: REALITY servers on Xray-core 26.9.8 and newer that
+// want X25519MLKEM768 in the ClientHello answer without it with their mask
+// site. The key share goes with uTLS "chrome" only. sing-box-extended
+// 2.7.2 or newer reads it; on any other core the option does nothing, which
+// the setting says, and the configuration stays valid.
+function apply_reality_mlkem(config, section, first) {
+    if (!bool_option(section, "reality_mlkem", false))
+        return;
+    let v = REALITY_MLKEM_MIN_EXTENDED;
+    if (!extended_at_least(v[0], v[1], v[2], false)) {
+        warn("rule '", section[".name"], "': post-quantum REALITY key share needs sing-box-extended ",
+            join(".", v), " or newer; not applied\n");
+        return;
+    }
+    for (let i = first; i < length(config.outbounds); i++) {
+        let tls = object_or_empty(config.outbounds[i]).tls;
+        if (type(tls) != "object" || type(tls.reality) != "object" || tls.reality.enabled === false)
+            continue;
+        if (type(tls.utls) != "object" || lc(as_string(tls.utls.fingerprint)) != "chrome")
+            continue;
+        tls.reality.support_x25519mlkem768 = true;
+    }
+}
+
 function add_outbound_for_section(config, section, taken, sections) {
     let action = option(section, "action", "");
     let section_name = section[".name"];
@@ -2833,8 +2946,11 @@ function add_outbound_for_section(config, section, taken, sections) {
     if (unsupported_matcher != "")
         runtime_generate_unsupported("section has unsupported matcher " + unsupported_matcher);
 
-    if (connections.is_connections_action(action))
+    if (connections.is_connections_action(action)) {
+        let first = length(config.outbounds);
         add_connections_outbound(config, section, taken);
+        apply_reality_mlkem(config, section, first);
+    }
     else if (action == "zapret")
         add_zapret_outbound(config, section, sections);
     else if (action == "zapret2")
@@ -2963,6 +3079,10 @@ function generate_config(output_path, service_address, mwan3_active, supports_xh
         source_aware_dns: length(source_aware_dns) > 0
     });
     let version_parts = match(as_string(sing_box_version), /^v?([0-9]+)\.([0-9]+)\./);
+    let extended_parts = match(as_string(sing_box_version), /-extended-([0-9]+)\.([0-9]+)\.([0-9]+)/);
+    runtime_extended_version = extended_parts != null
+        ? [ int(extended_parts[1]), int(extended_parts[2]), int(extended_parts[3]) ]
+        : null;
     runtime_supports_dns_response_matching = version_parts != null &&
         (int(version_parts[1]) > 1 || (int(version_parts[1]) == 1 && int(version_parts[2]) >= 14));
     if (version_parts != null && (int(version_parts[1]) > 1 ||
@@ -3140,6 +3260,8 @@ else if (mode == "urltest-filter")
     urltest_filter(ARGV[1], ARGV[2], ARGV[3], ARGV[4], ARGV[5], ARGV[6], ARGV[7]);
 else if (mode == "object-nonempty")
     exit(object_nonempty_stdin() ? 0 : 1);
+else if (mode == "vless-encryption-error")
+    print(vless_encryption_error(ARGV[1]), "\n");
 else {
     warn("Usage: singbox/generator.uc <operation> ...\n");
     exit(1);

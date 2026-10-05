@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-05 00:12+0000\n"
-"PO-Revision-Date: 2026-10-05 00:12+0000\n"
+"POT-Creation-Date: 2026-10-05 00:27+0000\n"
+"PO-Revision-Date: 2026-10-05 00:27+0000\n"
 "Last-Translator: Asofwar\n"
 "Language-Team: none\n"
 "Language: ru\n"
@@ -322,6 +322,9 @@ msgstr "Адрес"
 
 msgid "Address set for checking"
 msgstr "Набор адресов для проверки"
+
+msgid "Adds X25519MLKEM768 to the TLS ClientHello of this rule's REALITY servers with the chrome fingerprint. Needed by REALITY servers on Xray-core 26.9.8 and newer (3x-ui 3.8.0 and newer) that answer with their mask site otherwise. Breaks REALITY servers without ML-KEM support: turn it on only for such servers."
+msgstr "Добавляет X25519MLKEM768 в TLS ClientHello REALITY-серверов этого правила с отпечатком chrome. Нужно REALITY-серверам на Xray-core 26.9.8 и новее (3x-ui 3.8.0 и новее), которые без него отвечают маскировочным сайтом. Ломает REALITY-серверы без поддержки ML-KEM: включайте только для таких серверов."
 
 msgid "Ads (Hagezi Pro)"
 msgstr "Реклама (Hagezi Pro)"
@@ -2975,6 +2978,9 @@ msgstr "Порты"
 msgid "Ports: %d"
 msgstr "Порты: %d"
 
+msgid "Post-quantum REALITY key share"
+msgstr "Постквантовый обмен ключами REALITY"
+
 msgid "Prefer IPv4"
 msgstr "Предпочитать IPv4"
 
@@ -4759,6 +4765,9 @@ msgstr "Не удалось проверить стратегию NFQWS2 чер�
 
 msgid "Unavailability timeout"
 msgstr "Таймаут недоступности"
+
+msgid "Unavailable: needs sing-box-extended %s or newer, the installed sing-box is %s."
+msgstr "Недоступно: нужен sing-box-extended %s или новее, установлен sing-box %s."
 
 msgid "Unexpected ByeDPI strategy argument: %s"
 msgstr "Неожиданный аргумент стратегии ByeDPI: %s"

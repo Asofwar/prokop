@@ -4090,6 +4090,58 @@ function showRuleSetSettingsModal(section_id, itemValue, option, widget) {
   );
 }
 
+// sing-box-extended reads tls.reality.support_x25519mlkem768 from 2.7.2
+// (singbox/generator.uc REALITY_MLKEM_MIN_EXTENDED).
+const REALITY_MLKEM_MIN_EXTENDED = [2, 7, 2];
+let realityMlkemReasonPromise = null;
+
+function extendedVersionAtLeast(parts, min) {
+  for (let i = 0; i < min.length; i += 1) {
+    if (parts[i] !== min[i]) {
+      return parts[i] > min[i];
+    }
+  }
+  return true;
+}
+
+// Why the installed sing-box cannot use the REALITY key share, or "" when
+// it can or its version is not known (the backend then decides and logs).
+function realityMlkemUnavailableReason() {
+  if (realityMlkemReasonPromise) {
+    return realityMlkemReasonPromise;
+  }
+
+  realityMlkemReasonPromise = Promise.resolve()
+    .then(() => main.ProkopShellMethods.getSystemInfo())
+    .then((result) => {
+      const version =
+        result && result.success && result.data
+          ? `${result.data.sing_box_version || ""}`
+          : "";
+      if (!version) {
+        return "";
+      }
+      const extended = version.match(/-extended-(\d+)\.(\d+)\.(\d+)/);
+      if (version.includes("extended") && !extended) {
+        return "";
+      }
+      if (
+        extended &&
+        extendedVersionAtLeast(
+          extended.slice(1, 4).map((part) => Number(part)),
+          REALITY_MLKEM_MIN_EXTENDED,
+        )
+      ) {
+        return "";
+      }
+      return _(
+        "Unavailable: needs sing-box-extended %s or newer, the installed sing-box is %s.",
+      ).format(REALITY_MLKEM_MIN_EXTENDED.join("."), version);
+    })
+    .catch(() => "");
+  return realityMlkemReasonPromise;
+}
+
 function ensureActionProvidersAvailabilityLoaded() {
   if (actionProvidersAvailabilityState.loaded) {
     return Promise.resolve(actionProvidersAvailabilityState);
@@ -9470,6 +9522,36 @@ function createSectionContent(section) {
       });
     },
   });
+
+  // C3: the post-quantum key share for REALITY (singbox/generator.uc
+  // apply_reality_mlkem). Disabled with the reason on a core that does not
+  // read it; unchecked means absent.
+  o = section.taboption(
+    "advanced",
+    form.Flag,
+    "reality_mlkem",
+    _("Post-quantum REALITY key share"),
+    _(
+      "Adds X25519MLKEM768 to the TLS ClientHello of this rule's REALITY servers with the chrome fingerprint. Needed by REALITY servers on Xray-core 26.9.8 and newer (3x-ui 3.8.0 and newer) that answer with their mask site otherwise. Breaks REALITY servers without ML-KEM support: turn it on only for such servers.",
+    ),
+  );
+  o.default = "0";
+  keepBackendFlagSpelling(o);
+  killswitch.KILL_SWITCH_ACTIONS.forEach((action) =>
+    o.depends("action", action),
+  );
+  o.modalonly = true;
+  o.load = function (section_id) {
+    const baseDescription = this.realityBaseDescription || this.description;
+    this.realityBaseDescription = baseDescription;
+    return realityMlkemUnavailableReason().then((reason) => {
+      this.readonly = reason ? true : null;
+      this.description = reason
+        ? `${baseDescription} ${reason}`
+        : baseDescription;
+      return this.cfgvalue(section_id);
+    });
+  };
 
   const ipConditionOption = addTextConditionField(section, {
     key: "ip_cidr",
