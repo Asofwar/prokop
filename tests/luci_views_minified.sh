@@ -18,7 +18,8 @@ fail() { printf 'FAIL: luci_views_minified: %s\n' "$1" >&2; exit 1; }
 load_build_functions() {
   local name
   for name in esbuild_lock_entry ensure_esbuild luci_view_minify minify_luci_views; do
-    eval "$(build_recipe_function "$ROOT_DIR/build.sh" "$name")" || fail "build.sh has no $name"
+    eval "$(build_recipe_function "$ROOT_DIR/build.sh" "$name")"
+    declare -F "$name" >/dev/null || fail "build.sh has no $name"
   done
 }
 load_build_functions
