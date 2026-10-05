@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # C1: nft captures the shared Cloudflare ranges of the Discord list for
-# Discord's media ports over UDP (443 included), whatever ports the rule
+# Discord's media ports over UDP (not 443: NET-15), whatever ports the rule
 # filters. sing-box takes that traffic to the rule's target by the same
 # ranges and ports, from the same constants; before, a rule with its own
 # port filter let it go out directly. A block rule rejects it. A rule
@@ -50,7 +50,9 @@ const flat = (r) => (r.type === 'logical' ? [r, ...r.rules.flatMap(flat)] : [r])
 const discordRule = (c) => c.route.rules.find((r) => flat(r).some((x) => list(x.network).includes('udp') &&
   list(x.ip_cidr).includes('162.159.0.0/16')));
 
-assert.ok(constants.ports.split(',').includes('443'), 'UDP 443 is a Discord media port');
+// NET-15: UDP 443 on the shared ranges is the QUIC of every site behind
+// Cloudflare.
+assert.ok(!constants.ports.split(',').includes('443'), 'UDP 443 is not routed for the shared ranges');
 const rule = discordRule(proxy);
 assert.ok(rule, 'the shared Cloudflare UDP rule is generated');
 const m = flat(rule).find((x) => list(x.ip_cidr).length);
