@@ -122,6 +122,19 @@ PATH="$WORK/bin:$PATH" PROKOP_FW_WATCH_ITERATIONS=0 timeout 10 \
 grep -q '^ubus call service delete .*"prokop-fw-watch"' "$WORK/calls" || fail "the orphaned watcher left its service: $(cat "$WORK/calls")"
 mv "$WORK/init.gone" "$WORK/init"
 
+# 9. Once an hour (here every 5 passes) the traffic accounting drops the
+# addresses idle for a week, only while it is set up (its state file).
+mkdir -p "$WORK/lib/diagnostics"
+printf 'system("echo traffic " + join(" ", ARGV) + " >>%s/calls");\n' "$WORK" >"$WORK/lib/diagnostics/traffic.uc"
+reset
+PROKOP_LIB="$WORK/lib" PROKOP_FW_WATCH_TRAFFIC_PASSES=5 watch 12
+[ "$(count '^traffic ')" = 0 ] || fail "the traffic expiry ran without the accounting: $(cat "$WORK/calls")"
+reset
+printf '{}\n' >"$WORK/run/traffic.json"
+PROKOP_LIB="$WORK/lib" PROKOP_FW_WATCH_TRAFFIC_PASSES=5 watch 12
+[ "$(count '^traffic expire$')" = 2 ] || fail "the traffic expiry did not run every 5 passes: $(cat "$WORK/calls")"
+rm -f "$WORK/run/traffic.json"
+
 # 8. The service script runs the watcher and is enabled with the package.
 # shellcheck disable=SC2016
 if ! grep -q '^FW_WATCH_UC="$PROKOP_LIB/service/fw_watch.uc"$' "$ROOT_DIR/prokop/files/etc/init.d/prokop-fw-watch" ||

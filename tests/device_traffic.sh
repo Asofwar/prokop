@@ -11,8 +11,10 @@
 # multicast, loopback), and tells when fw4 flow offloading hides traffic.
 #
 # With the real nft, in a private user+net namespace (skipped when one cannot
-# be created): the batch loads, a second sync keeps it, and traffic sent
-# through the counted interface shows up in the reader's output.
+# be created): the batch loads, a second sync keeps it, traffic sent
+# through the counted interface shows up in the reader's output, and the
+# hourly expiry keeps an address that moved and drops one idle for 7 days
+# (packets add to the sets and never rewrite an expiry).
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -75,12 +77,39 @@ PY
   ok 'real nft: traffic through the counted interface is reported per address'
 
 
-  before="$(field 'v.devices[0].tx_packets' <<<"$out")"
+  before="$(field 'v.devices[0].rx_packets' <<<"$out")"
   traffic sync || fail 'real nft: second sync failed'
   out="$(traffic get)"
-  [ "$(field 'v.devices[0].tx_packets' <<<"$out")" = "$before" ] || fail "real nft: a second sync reset the counters: $out"
+  [ "$(field 'v.devices[0].rx_packets' <<<"$out")" = "$before" ] || fail "real nft: a second sync reset the counters: $out"
   [ "$(field v.since <<<"$out")" = "$since" ] || fail 'real nft: a second sync changed the start time'
   ok 'real nft: a sync without changes keeps the table and its counters'
+
+  # Packets add to the sets: the counter of an element moves, its expiry
+  # is never rewritten, as the sets have none. expire (uptime given in
+  # seconds) drops an address only after 7 days without a packet.
+  listing="$(nft list table inet ProkopTraffic)"
+  grep -q 'add @tx4 { ip saddr }' <<<"$listing" || fail "real nft: packets do not add to the sets: $listing"
+  ! grep -q 'update @\|timeout\|expires' <<<"$listing" || fail "real nft: a packet rewrites an expiry: $listing"
+  [ "$(traffic expire 100)" = 0 ] || fail 'real nft: the first expiry deleted something'
+  [ "$(traffic expire $((100 + 604799)))" = 0 ] || fail 'real nft: an address was dropped before 7 idle days'
+  python3 -c 'import socket; socket.socket(socket.AF_INET, socket.SOCK_DGRAM).sendto(b"y" * 10, ("10.200.0.1", 9))'
+  moved="$(traffic get)"
+  [ "$(field 'v.devices[0].rx_packets' <<<"$moved")" -gt "$before" ] || fail "real nft: a packet to a known address was not counted: $moved"
+  [ "$(traffic expire $((100 + 604800)))" = 0 ] || fail 'real nft: an address that moved within 7 days was dropped'
+  [ "$(field 'v.devices.length' <<<"$(traffic get)")" = 1 ] || fail 'real nft: the active address is gone'
+  [ "$(traffic expire $((100 + 604800 + 604799)))" = 0 ] || fail 'real nft: dropped before 7 days after its last packet'
+  [ "$(traffic expire $((100 + 604800 + 604800)))" -ge 1 ] || fail 'real nft: an address idle for 7 days was not dropped'
+  out="$(traffic get)"
+  [ "$(field 'v.devices.length' <<<"$out")" = 0 ] || fail "real nft: an idle address is still reported: $out"
+  for set in tx4 rx4; do
+    nft list set inet ProkopTraffic "$set" | grep -q 'elements' && fail "real nft: idle elements are still in $set"
+  done
+  python3 -c 'import socket; socket.socket(socket.AF_INET, socket.SOCK_DGRAM).sendto(b"z" * 10, ("10.200.0.1", 9))'
+  out="$(traffic get)"
+  [ "$(field "v.devices.length===1&&v.devices[0].rx_packets<$before" <<<"$out")" = true ] ||
+    fail "real nft: a dropped address does not start afresh: $out"
+  ok 'real nft: an address that moved is kept, one idle for 7 days starts afresh (TRF-5)'
+  before="$(field 'v.devices[0].rx_packets' <<<"$out")"
 
   # TRF-1: a LAN client that forges a source address the router would
   # not route back through br-lan (its uplink is wan0) is not counted;
@@ -136,7 +165,12 @@ printf 'call:%s\n' "$*" >>"$NFT_LOG"
 case "$1 $2" in
   "-f "*)
     [ -z "${NFT_FAIL_F:-}" ] || exit 1
-    cp "$2" "$NFT_DIR/ProkopTraffic"
+    if grep -q '^delete element' "$2"; then
+      [ -z "${NFT_FAIL_DELETE:-}" ] || ! grep -qF "$NFT_FAIL_DELETE" "$2" || exit 1
+      cat "$2" >>"$NFT_DIR/deleted"
+    else
+      cp "$2" "$NFT_DIR/ProkopTraffic"
+    fi
     ;;
   "list table") [ -e "$NFT_DIR/$4" ] ;;
   "delete table") rm -f "$NFT_DIR/$4" ;;
@@ -180,11 +214,15 @@ head -3 "$batch" | tr '\n' '|' | grep -qx 'add table inet ProkopTraffic|delete t
 grep -qxF 'add element inet ProkopTraffic ifaces { "br-lan", "wg0" }' "$batch" || fail 'the interfaces are not in the set'
 # TRF-1: a source counts only when the router routes it back through the
 # interface it came in on; one set of interfaces, two rules per hook.
-for rule in 'ingress iifname @ifaces fib saddr type != local fib saddr . iif oif exists update @tx4 { ip saddr }' \
-  'ingress iifname @ifaces fib saddr type != local fib saddr . iif oif exists update @tx6 { ip6 saddr }' \
-  'egress oifname @ifaces update @rx4 { ip daddr }' 'egress oifname @ifaces update @rx6 { ip6 daddr }'; do
+for rule in 'ingress iifname @ifaces fib saddr type != local fib saddr . iif oif exists add @tx4 { ip saddr }' \
+  'ingress iifname @ifaces fib saddr type != local fib saddr . iif oif exists add @tx6 { ip6 saddr }' \
+  'egress oifname @ifaces add @rx4 { ip daddr }' 'egress oifname @ifaces add @rx6 { ip6 daddr }'; do
   grep -qxF "add rule inet ProkopTraffic $rule" "$batch" || fail "missing rule: $rule"
 done
+# A packet adds to a set and never rewrites an element's expiry: the sets
+# have no timeout, expire drops idle addresses.
+! grep -q 'update @\|timeout' "$batch" || fail 'a packet rewrites the expiry of an element'
+[ "$(grep -c 'flags dynamic; counter;' "$batch")" = 4 ] || fail 'the sets are not dynamic counting sets'
 [ "$(grep -c '^add rule' "$batch")" = 4 ] || fail 'more than two rules per hook'
 grep -q '"since_uptime":' "$PROKOP_RUNTIME_STATE_DIR/traffic.json" || fail 'the start was not recorded in uptime (TRF-5)'
 # Counting only: no verdict, mark, queue or NAT anywhere in the table.
@@ -216,7 +254,7 @@ uci_settings 'prokop.settings.source_network_interfaces=br-lan "; flush ruleset'
 rules="$(traffic batch | grep '^add \(rule\|element\)')"
 grep -q '"br-lan"' <<<"$rules" || fail 'a valid interface was dropped with an invalid one'
 ! grep -q '";' <<<"$rules" || fail 'an interface name with nft syntax was rendered'
-! grep -Ev '^add rule inet ProkopTraffic (ingress iifname @ifaces fib saddr type != local fib saddr . iif oif exists|egress oifname @ifaces) update @(tx|rx)[46] \{ ip6? [sd]addr \}$|^add element inet ProkopTraffic ifaces \{ "br-lan", "flush", "ruleset" \}$' <<<"$rules" ||
+! grep -Ev '^add rule inet ProkopTraffic (ingress iifname @ifaces fib saddr type != local fib saddr . iif oif exists|egress oifname @ifaces) add @(tx|rx)[46] \{ ip6? [sd]addr \}$|^add element inet ProkopTraffic ifaces \{ "br-lan", "flush", "ruleset" \}$' <<<"$rules" ||
   fail 'a rule outside the expected shape was rendered'
 # NET-14: the names the validator and the kill-switch take are counted too.
 uci_settings 'prokop.settings.source_network_interfaces=br-lan lan+guest wg0:1'
@@ -312,6 +350,54 @@ node -e '
 out="$(PROKOP_PROC_UPTIME="$WORK/uptime" traffic get)"
 [ "$(field 'v.now-v.since' <<<"$out")" = 600 ] || fail "the start is not dated from the uptime: $out"
 ok 'the start of the counters is dated from the uptime (TRF-5)'
+
+# TRF-5 without per-packet expiry: expire notes when each counter moved
+# (in seconds of uptime) and deletes, in one batch, the elements that stood
+# still for 7 days; an element first seen counts as active.
+rm -f "$NFT_DIR/deleted" "$PROKOP_RUNTIME_STATE_DIR/traffic-activity.json"
+[ "$(traffic expire 1000)" = 0 ] || fail 'the first expiry deleted something'
+[ -s "$PROKOP_RUNTIME_STATE_DIR/traffic-activity.json" ] || fail 'expire did not note the counters'
+[ "$(traffic expire $((1000 + 604799)))" = 0 ] && [ ! -e "$NFT_DIR/deleted" ] || fail 'an element was deleted before 7 idle days'
+node -e '
+  const fs = require("fs"); const p = process.argv[1]; const d = JSON.parse(fs.readFileSync(p, "utf8"));
+  const tx4 = d.nftables.find((i) => i.set && i.set.name === "tx4" && i.set.table === "ProkopTraffic").set;
+  tx4.elem.find((e) => e.elem.val === "192.168.1.10").elem.counter.packets = 11;
+  fs.writeFileSync(p, JSON.stringify(d));' "$NFT_DIR/counters.json"
+deleted="$(traffic expire $((1000 + 604800)))"
+grep -qxF 'delete element inet ProkopTraffic rx4 { 192.168.1.10 }' "$NFT_DIR/deleted" || fail "an idle element was kept: $(cat "$NFT_DIR/deleted")"
+grep -qxF 'delete element inet ProkopTraffic tx6 { fd00::10 }' "$NFT_DIR/deleted" || fail 'an idle IPv6 element was kept'
+! grep -q 'tx4 { 192.168.1.10 }' "$NFT_DIR/deleted" || fail 'an element whose counter moved was deleted'
+! grep -q 'OtherTable\|10.0.0.1' "$NFT_DIR/deleted" || fail 'an element of another table was deleted'
+[ "$deleted" = "$(grep -c '^delete element' "$NFT_DIR/deleted")" ] || fail "expire did not report what it deleted: $deleted"
+[ "$(grep -c '^call:-f' "$NFT_LOG")" -ge 1 ] || fail 'the deletes did not go to nft'
+# The element that moved is idle 7 days after its last move, not its first.
+rm -f "$NFT_DIR/deleted"
+traffic expire $((1000 + 604800 + 604799)) >/dev/null
+! grep -q 'tx4 { 192.168.1.10 }' "$NFT_DIR/deleted" 2>/dev/null || fail 'an element was deleted 7 days after its first packet'
+traffic expire $((1000 + 604800 + 604800)) >/dev/null
+grep -qxF 'delete element inet ProkopTraffic tx4 { 192.168.1.10 }' "$NFT_DIR/deleted" || fail 'an element idle for 7 days after it moved was kept'
+# A refused batch is retried element by element: one that is gone does not
+# keep the others.
+rm -f "$NFT_DIR/deleted" "$PROKOP_RUNTIME_STATE_DIR/traffic-activity.json"
+traffic expire 10 >/dev/null
+[ "$(NFT_FAIL_DELETE='tx6 { fd00::10 }' traffic expire $((10 + 604800)))" = "$(( $(grep -c '^delete element' "$NFT_DIR/deleted") ))" ] ||
+  fail 'the per-element retry did not report what it deleted'
+grep -qxF 'delete element inet ProkopTraffic rx4 { 192.168.1.10 }' "$NFT_DIR/deleted" || fail 'a refused batch kept the other idle elements'
+# A rebuilt table has no history: its elements start active.
+rm -f "$NFT_DIR/deleted"
+traffic expire 20 >/dev/null
+node -e '
+  const fs = require("fs"); const p = process.argv[1];
+  const s = JSON.parse(fs.readFileSync(p, "utf8")); s.since += 1; fs.writeFileSync(p, JSON.stringify(s));' "$PROKOP_RUNTIME_STATE_DIR/traffic.json"
+[ "$(traffic expire $((20 + 604800)))" = 0 ] || fail 'the history of another table deleted elements of this one'
+# No table: nothing to do.
+mv "$NFT_DIR/ProkopTraffic" "$NFT_DIR/ProkopTraffic.saved"
+: >"$NFT_LOG"
+traffic expire 99999999 >/dev/null || fail 'expire without the table failed'
+! grep -q '^call:-f\|^call:-j' "$NFT_LOG" || fail 'expire touched nft without the table'
+mv "$NFT_DIR/ProkopTraffic.saved" "$NFT_DIR/ProkopTraffic"
+rm -f "$NFT_DIR/deleted"
+ok 'expire drops the elements idle for 7 days, keeps those that moved (TRF-5)'
 
 printf '{"nftables":[{"metainfo":{}},{"flowtable":{"family":"inet","table":"fw4","name":"ft","hook":"ingress"}}]}' \
   >"$NFT_DIR/flowtables.json"

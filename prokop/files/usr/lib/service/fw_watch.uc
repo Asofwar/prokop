@@ -13,6 +13,10 @@
 // run (started, not stopped by the user, no lifecycle action in progress),
 // it reloads Prokop; the reload sees the incomplete runtime and restarts it
 // (service/lifecycle.uc).
+//
+// Once an hour it also lets the per-device traffic accounting drop the
+// addresses idle for a week (diagnostics/traffic.uc expire): their sets
+// carry no kernel timeout, so that no packet rewrites an expiry.
 
 let fs = require("fs");
 let common = require("core.common");
@@ -37,6 +41,11 @@ const SWEEP_PASSES = int(env("PROKOP_FW_WATCH_SWEEP_PASSES", "30"));
 // bring the table back must not run in a loop.
 const BACKOFF_PASSES = int(env("PROKOP_FW_WATCH_BACKOFF_PASSES", "15"));
 const ITERATIONS = int(env("PROKOP_FW_WATCH_ITERATIONS", "0"));
+const LIB_DIR = env("PROKOP_LIB", "/usr/lib/prokop");
+// Passes between runs of the traffic expiry (an hour), only while the
+// accounting is set up (its state file is there).
+const TRAFFIC_PASSES = int(env("PROKOP_FW_WATCH_TRAFFIC_PASSES", "1800"));
+const TRAFFIC_STATE_FILE = RUNTIME_STATE_DIR + "/traffic.json";
 
 function run_quiet(args) {
     return system(common.shell_command(args) + " >/dev/null 2>&1") == 0;
@@ -81,6 +90,7 @@ function watch() {
     let since_check = 0;
     let backoff = 0;
     let orphaned = 0;
+    let since_traffic = 0;
     for (let iteration = 1; ITERATIONS == 0 || iteration <= ITERATIONS; iteration++) {
         sleep(INTERVAL_MS);
         // A package upgrade replaces the script in place; only a script
@@ -98,6 +108,11 @@ function watch() {
         let changed = current != stamp;
         stamp = current;
         since_check++;
+        if (++since_traffic >= TRAFFIC_PASSES) {
+            since_traffic = 0;
+            if (fs.stat(TRAFFIC_STATE_FILE) != null)
+                run_quiet([ "ucode", "-L", LIB_DIR, LIB_DIR + "/diagnostics/traffic.uc", "expire" ]);
+        }
         if (backoff > 0) {
             backoff--;
             continue;

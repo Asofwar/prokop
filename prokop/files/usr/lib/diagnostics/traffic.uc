@@ -21,6 +21,15 @@
 // accelerates no longer crosses these hooks; the reader says so instead of
 // reporting a partial count as the total.
 //
+// A packet adds its address to a set (`add`), which counts it on the
+// element that is there and never rewrites the element's expiry: a hot
+// element is not written from every CPU on every packet. Instead of a
+// timeout in the kernel, `expire` (run hourly by service/fw_watch.uc) notes
+// when each element's counter last moved and deletes the ones that stood
+// still for ELEMENT_IDLE_SECONDS: an address idle for 7 days leaves the set
+// and starts from zero when it comes back, an active one is never reset
+// (TRF-5).
+//
 // The table lives while Prokop runs: start and every successful reload
 // (service/lifecycle.uc) keep it when it is already the one this
 // configuration asks for, and build it afresh (counters from zero) when it is
@@ -40,10 +49,12 @@ const TABLE = "ProkopTraffic";
 const PROD_TABLE = env("NFT_TABLE_NAME", "ProkopTable");
 const RUNTIME_STATE_DIR = env("PROKOP_RUNTIME_STATE_DIR", "/var/run/prokop");
 const STATE_FILE = RUNTIME_STATE_DIR + "/traffic.json";
+// When each element's counter last moved (seconds of uptime), for expire.
+const ACTIVITY_FILE = RUNTIME_STATE_DIR + "/traffic-activity.json";
 const IPV4_SET_SIZE = 1024;
 const IPV6_SET_SIZE = 4096;
 // An address that sent and received nothing for this long leaves the set.
-const ELEMENT_TIMEOUT = "7d";
+const ELEMENT_IDLE_SECONDS = 7 * 86400;
 // The reader reports the addresses with the most traffic, at most this
 // many (TRF-2): rpcd and ubus refuse a large answer, and the page polls
 // every few seconds.
@@ -107,7 +118,8 @@ function table_present(name) {
 // One transaction: the add makes the delete valid when there is no table
 // yet, and the new table replaces the old one whole.
 function batch(names) {
-    let set_options = "flags dynamic,timeout; timeout " + ELEMENT_TIMEOUT + "; counter;";
+    // No timeout: expire removes idle elements (the header says why).
+    let set_options = "flags dynamic; counter;";
     let text_value =
         "add table inet " + TABLE + "\n" +
         "delete table inet " + TABLE + "\n" +
@@ -127,10 +139,10 @@ function batch(names) {
     text_value +=
         "add set inet " + TABLE + " ifaces { type ifname; flags interval; auto-merge; }\n" +
         "add element inet " + TABLE + " ifaces { " + join(", ", quoted) + " }\n" +
-        "add rule inet " + TABLE + " ingress iifname @ifaces fib saddr type != local fib saddr . iif oif exists update @tx4 { ip saddr }\n" +
-        "add rule inet " + TABLE + " ingress iifname @ifaces fib saddr type != local fib saddr . iif oif exists update @tx6 { ip6 saddr }\n" +
-        "add rule inet " + TABLE + " egress oifname @ifaces update @rx4 { ip daddr }\n" +
-        "add rule inet " + TABLE + " egress oifname @ifaces update @rx6 { ip6 daddr }\n";
+        "add rule inet " + TABLE + " ingress iifname @ifaces fib saddr type != local fib saddr . iif oif exists add @tx4 { ip saddr }\n" +
+        "add rule inet " + TABLE + " ingress iifname @ifaces fib saddr type != local fib saddr . iif oif exists add @tx6 { ip6 saddr }\n" +
+        "add rule inet " + TABLE + " egress oifname @ifaces add @rx4 { ip daddr }\n" +
+        "add rule inet " + TABLE + " egress oifname @ifaces add @rx6 { ip6 daddr }\n";
     return text_value;
 }
 
@@ -159,6 +171,7 @@ function remove() {
     if (table_present(TABLE))
         success([ "nft", "delete", "table", "inet", TABLE ]);
     fs.unlink(STATE_FILE);
+    fs.unlink(ACTIVITY_FILE);
     return 0;
 }
 
@@ -192,7 +205,9 @@ function sync() {
         return 1;
     }
     // The clock may still be the build date before NTP (no RTC, TRF-5):
-    // the reader dates the start from the uptime.
+    // the reader dates the start from the uptime. The new table's elements
+    // have no history yet.
+    fs.unlink(ACTIVITY_FILE);
     if (!write_state({ since: time(), since_uptime: uptime(), spec: rules }))
         log_message("Device traffic accounting runs, but the time it started could not be saved", "warn");
     return 0;
@@ -329,6 +344,97 @@ function counters(items, broadcasts, macs) {
     return { devices: result, full };
 }
 
+function read_activity() {
+    let data = fs.readfile(ACTIVITY_FILE);
+    if (data == null) return null;
+    try {
+        let value = json(data);
+        return type(value) == "object" && type(value.elements) == "object" ? value : null;
+    }
+    catch (e) {
+        return null;
+    }
+}
+
+function write_activity(value) {
+    let tmp = ACTIVITY_FILE + ".tmp";
+    if (fs.writefile(tmp, sprintf("%J\n", value)) == null)
+        return false;
+    return fs.rename(tmp, ACTIVITY_FILE) == true;
+}
+
+// Addresses as nft prints them and takes them back: nothing else goes
+// into a batch.
+function element_address(value, family) {
+    value = text(value);
+    return family == 4 ? match(value, /^[0-9]{1,3}(\.[0-9]{1,3}){3}$/) != null :
+        match(value, /^[0-9a-fA-F:.]{2,45}$/) != null && index(value, ":") >= 0;
+}
+
+// Deletes the elements whose counter has not moved for
+// ELEMENT_IDLE_SECONDS. Each run notes, per set and address, the packet
+// count and the uptime it last changed at; an element first seen now
+// counts as active now (it was added since the last run, or the table is
+// new). Uptime, not the clock: NTP may move the clock by years after a
+// boot without RTC. A packet that comes between the listing and the
+// delete starts the address afresh, as any packet after 7 idle days does.
+// Prints how many elements were deleted.
+function expire(now_uptime) {
+    if (now_uptime == null)
+        now_uptime = uptime();
+    let state = read_state();
+    if (now_uptime == null || state == null || !table_present(TABLE))
+        return 0;
+    let items = json_listing([ "nft", "-j", "list", "table", "inet", TABLE ]);
+    if (items == null)
+        return 1;
+    // The activity of another table (one sync rebuilt) is not this one's.
+    let generation = sprintf("%d:%d", int(state.since || 0), int(state.since_uptime || 0));
+    let previous = read_activity();
+    let seen = previous != null && previous.generation == generation ? previous.elements : {};
+    let elements = {};
+    let idle = [];
+    let families = { tx4: 4, rx4: 4, tx6: 6, rx6: 6 };
+    for (let item in items) {
+        let set = item?.set;
+        if (type(set) != "object" || set.table != TABLE || !exists(families, set.name)) continue;
+        for (let element in (type(set.elem) == "array" ? set.elem : [])) {
+            let entry = type(element) == "object" ? element.elem : null;
+            if (type(entry) != "object" || type(entry.counter) != "object") continue;
+            let address = text(entry.val);
+            if (!element_address(address, families[set.name])) continue;
+            let key = set.name + " " + address;
+            let packets = int(entry.counter.packets || 0);
+            let last = seen[key];
+            let active = now_uptime;
+            if (type(last) == "array" && last[0] == packets && type(last[1]) == "int" && last[1] <= now_uptime)
+                active = last[1];
+            if (now_uptime - active >= ELEMENT_IDLE_SECONDS)
+                push(idle, [ set.name, address ]);
+            else
+                elements[key] = [ packets, active ];
+        }
+    }
+    let deleted = 0;
+    if (length(idle)) {
+        let lines = [];
+        for (let pair in idle)
+            push(lines, "delete element inet " + TABLE + " " + pair[0] + " { " + pair[1] + " }\n");
+        // One transaction; when nft refuses it (an element went away in
+        // between), each element on its own.
+        if (apply(join("", lines)))
+            deleted = length(idle);
+        else
+            for (let line in lines)
+                if (apply(line))
+                    deleted++;
+    }
+    if (!write_activity({ generation, elements }))
+        log_message("Device traffic accounting could not save when its counters last moved", "warn");
+    print(deleted, "\n");
+    return 0;
+}
+
 // Read-only: what the counters hold now. "state" tells why there are none:
 // disabled in the settings, Prokop not running, or set up but unreadable.
 // devices: at most DEVICES_MAX, the most traffic first; total_devices
@@ -377,6 +483,8 @@ let mode = ARGV[0] || "get";
 if (mode == "get") print(sprintf("%J\n", get()));
 else if (mode == "sync") exit(sync());
 else if (mode == "remove") exit(remove());
+// expire [uptime in seconds, the real one by default (tests)]
+else if (mode == "expire") exit(expire(length(ARGV) > 1 ? int(ARGV[1]) : null));
 else if (mode == "batch") {
     // Prints the batch sync() would submit; changes nothing (tests).
     print(batch(length(ARGV) > 1 ? slice(ARGV, 1) : interfaces()));
