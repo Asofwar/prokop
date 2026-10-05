@@ -143,9 +143,16 @@ calls() { # calls <tool>: how many times the tool ran since the log was cleared
   grep -c "^$1 " "$CALLS" || true
 }
 
+# The router's clock (now, PRG-2) changes with every answer: it is checked
+# to be a number and left out of the comparison.
 ui_state() {
   : >"$CALLS"
-  "$UCODE_BIN" -L "$LIB" "$LIB/service/ui.uc" get-ui-state
+  "$UCODE_BIN" -L "$LIB" "$LIB/service/ui.uc" get-ui-state >"$WORK_DIR/ui-state.out"
+  grep -Eq ', "now": [0-9]+ }$' "$WORK_DIR/ui-state.out" || {
+    printf 'FAIL: get-ui-state does not carry the router clock: %s\n' "$(cat "$WORK_DIR/ui-state.out")" >&2
+    return 1
+  }
+  sed -E 's/, "now": [0-9]+ }$/ }/' "$WORK_DIR/ui-state.out"
 }
 
 # The runtime counts as stably running once sing-box is 2 seconds old.
@@ -166,7 +173,7 @@ $(cat "$CALLS")"
 cp "$CALLS" "$WORK_DIR/first-calls.log"
 
 # 1b. The answer is kept for the health poll (optimization 2).
-[ "$(cat "$WORK_DIR/ui/current.json")" = "$first" ] || fail "get-ui-state did not keep its answer for the health poll"
+[ "$(sed -E 's/, "now": [0-9]+ }$/ }/' "$WORK_DIR/ui/current.json")" = "$first" ] || fail "get-ui-state did not keep its answer for the health poll"
 
 # 1a. One state.uc process and one procd query answer every runtime question
 #     of a poll (optimization 1 of the 2026-10-04 audit).
