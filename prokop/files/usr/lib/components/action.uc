@@ -1800,10 +1800,15 @@ function zapret_manager_url() {
 }
 
 // The launcher for the current mirror setting; zms and zmsA are the same.
+// An http:// mirror would hand the launcher a script to run as root over
+// plain HTTP on every start, so the launcher then runs the project's own
+// script over https:// instead (UPD-9), as install refuses that mirror.
 function zapret_manager_launcher() {
+    let mirrored = PROKOP_MIRROR_BASE_URL != "" && !mirror_refuses_executables();
+    let url = mirrored ? zapret_manager_url() : "https://" + ZAPRET_MANAGER_SOURCE;
     return "#!/bin/sh\n" + ZAPRET_MANAGER_LAUNCHER_MARKER + "\n" +
-        (PROKOP_MIRROR_BASE_URL != "" ? "export ZAPRET_MANAGER_MIRROR=" + shell_quote(PROKOP_MIRROR_BASE_URL) + "\n" : "") +
-        "exec sh <(wget -q -O - " + shell_quote(zapret_manager_url()) + ") \"$@\"\n";
+        (mirrored ? "export ZAPRET_MANAGER_MIRROR=" + shell_quote(PROKOP_MIRROR_BASE_URL) + "\n" : "") +
+        "exec sh <(wget -q -O - " + shell_quote(url) + ") \"$@\"\n";
 }
 
 function install_zapret_manager(action) {
@@ -1867,6 +1872,10 @@ function remove_zapret_manager(action) {
 function reconcile_zapret_manager_launchers() {
     let launcher = zapret_manager_launcher();
     let ok = true;
+
+    if (mirror_refuses_executables())
+        warn("The configured mirror uses http://; Zapret-Manager launchers run the script from " +
+            "https://" + ZAPRET_MANAGER_SOURCE + " instead\n");
 
     for (let path in [ ZAPRET_MANAGER_BIN_DIR + "/zms", ZAPRET_MANAGER_BIN_DIR + "/zmsA" ]) {
         let stat = fs.lstat(path);

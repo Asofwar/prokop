@@ -120,6 +120,22 @@ postinst 'https://own-mirror.test' >"$WORK_DIR/postinst.out" 2>&1 ||
 assert_launcher zms mirrored "postinst with the same mirror"
 printf 'PASS: launchers follow an opted-in mirror\n'
 
+# 3a. UPD-9: an http:// mirror never makes a launcher run a script fetched
+# over plain HTTP; the launchers run the project's script over https://.
+install_launcher zms mirrored
+install_launcher zmsA other-mirror
+out="$(reconcile 'http://insecure-mirror.test' 2>"$WORK_DIR/insecure.err")" ||
+  fail "reconciling for an http:// mirror failed"
+assert_launcher zms direct "http:// mirror"
+assert_launcher zmsA direct "http:// mirror"
+! grep -q 'insecure-mirror' "$BIN/zms" "$BIN/zmsA" || fail "a launcher uses the http:// mirror"
+grep -q 'uses http://' "$WORK_DIR/insecure.err" || fail "the http:// mirror was not reported"
+out="$(reconcile 'http://insecure-mirror.test' 2>/dev/null)" || fail "repeated http:// reconciliation failed"
+[ -z "$out" ] || fail "launchers were rewritten again for the same http:// mirror: $out"
+reconcile 'https://own-mirror.test' >/dev/null || fail "reconciling back to the https:// mirror failed"
+assert_launcher zms mirrored "back to the https:// mirror"
+printf 'PASS: an http:// mirror leaves the launchers on https://\n'
+
 # 4. Launchers Prokop did not write, and links, are never touched; a missing
 # launcher is never created.
 install_launcher zms foreign
