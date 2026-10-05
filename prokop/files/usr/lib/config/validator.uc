@@ -1010,33 +1010,68 @@ function router_addresses() {
     return router_addresses_cache;
 }
 
+// The port dnsmasq answers DNS on (dhcp.@dnsmasq[0].port, 53 by default;
+// 0 turns its DNS off).
+let dnsmasq_dns_port_cache = null;
+function dnsmasq_dns_port() {
+    if (dnsmasq_dns_port_cache != null)
+        return dnsmasq_dns_port_cache;
+    dnsmasq_dns_port_cache = 53;
+    try {
+        let names = uci_core.sections("dhcp", "dnsmasq");
+        let value = length(names) > 0 ? trim(as_string(uci_core.get("dhcp." + names[0] + ".port"))) : "";
+        if (match(value, /^[0-9]+$/) != null && +value <= 65535)
+            dnsmasq_dns_port_cache = +value;
+    }
+    catch (e) {
+        dnsmasq_dns_port_cache = 53;
+    }
+    return dnsmasq_dns_port_cache;
+}
+
 // A DNS server that sends sing-box's queries back to it (NET-5). While
-// Prokop runs, dnsmasq forwards to sing-box: a DNS server on the router
-// itself (127.0.0.1, ::1, its LAN or WAN address) is dnsmasq, which asks
-// sing-box again, and all DNS of the router and the LAN stops. Not a loop
-// when dnsmasq keeps its own servers (dont_touch_dhcp), except for
-// sing-box's own DNS listener.
-function dns_server_loop_reason(value, settings) {
-    let host = lc(core_url.host(trim(as_string(value))));
+// Prokop runs, dnsmasq forwards to sing-box: plain DNS to the router itself
+// (127.0.0.1, ::1, its LAN or WAN address) on dnsmasq's port is dnsmasq,
+// which asks sing-box again, and all DNS of the router and the LAN stops.
+// Another port, or DoT/DoH, on the router is another resolver
+// (https-dns-proxy on 5053, unbound on 5335, AdGuard Home), a valid
+// upstream (NET-11): only a warning says it must not forward to dnsmasq.
+// Not a loop when dnsmasq keeps its own servers (dont_touch_dhcp), except
+// for sing-box's own DNS listener. dns_type is how sing-box reaches the
+// server (singbox/dns.uc server_from_options): udp on 53, dot on 853, doh
+// on 443 unless the value names a port. Returns { reason, loop }.
+function dns_server_loop_reason(value, settings, dns_type) {
+    value = trim(as_string(value));
+    let host = lc(core_url.host(value));
     if (host == "")
         return null;
     if (host == lc(require("core.dns_inbound").ADDRESS))
-        return "is sing-box's own DNS listener";
+        return { reason: "is sing-box's own DNS listener", loop: true };
     if (bool_option(settings, "dont_touch_dhcp", false))
         return null;
+    let reason = null;
     if (host == "localhost" || host == "::1" || host == "0:0:0:0:0:0:0:1" ||
         (core_ip.valid_ipv4(host) && substr(host, 0, 4) == "127."))
-        return "is this router (loopback)";
-    if (index(router_addresses(), host) >= 0)
-        return "is an address of this router";
-    return null;
+        reason = "is this router (loopback)";
+    else if (index(router_addresses(), host) >= 0)
+        reason = "is an address of this router";
+    if (reason == null)
+        return null;
+    let port_text = core_url.port(value);
+    let port = port_text != "" ? +port_text : (dns_type == "dot" ? 853 : dns_type == "doh" ? 443 : 53);
+    let dnsmasq_port = dnsmasq_dns_port();
+    return { reason, loop: (dns_type || "udp") == "udp" && dnsmasq_port != 0 && port == dnsmasq_port };
 }
 
-function validate_dns_server_not_loop(value, settings, label) {
-    let reason = dns_server_loop_reason(value, settings);
-    if (reason != null)
-        fail_validation(label + " '" + value + "' " + reason + ": dnsmasq forwards DNS to sing-box while Prokop runs, so the queries would loop and all DNS would stop. " +
-            "Use an external DNS server, or enable dont_touch_dhcp to keep dnsmasq's own servers. Aborted.");
+function validate_dns_server_not_loop(value, settings, label, dns_type) {
+    let found = dns_server_loop_reason(value, settings, dns_type);
+    if (found == null)
+        return;
+    if (found.loop)
+        fail_validation(label + " '" + value + "' " + found.reason + ": dnsmasq forwards DNS to sing-box while Prokop runs, so the queries would loop and all DNS would stop. " +
+            "Use an external DNS server, a local resolver on another port, or enable dont_touch_dhcp to keep dnsmasq's own servers. Aborted.");
+    log_message(label + " '" + value + "' " + found.reason + " but not dnsmasq's DNS port: make sure that resolver does not forward to dnsmasq, " +
+        "which forwards to sing-box while Prokop runs", "warn");
 }
 
 function dns_setting_values(settings, key) {
@@ -1084,7 +1119,7 @@ function validate_dns_settings(settings, sections, context) {
         if (!dns_server_value_valid(value))
             fail_validation("Invalid main DNS server '" + value + "'. Aborted.");
         else
-            validate_dns_server_not_loop(value, settings, "Main DNS server");
+            validate_dns_server_not_loop(value, settings, "Main DNS server", dns_type);
     for (let value in bootstrap_servers)
         if (!dns_server_value_valid(value))
             fail_validation("Invalid Bootstrap DNS server '" + value + "'. Aborted.");
@@ -1095,7 +1130,7 @@ function validate_dns_settings(settings, sections, context) {
         else if (!bootstrap_dns_server_value_valid(value))
             log_message("Bootstrap DNS server '" + value + "' is not a plain IP address; hostnames and URLs need an independent resolver and may fail to bootstrap", "warn");
     for (let value in bootstrap_servers)
-        validate_dns_server_not_loop(value, settings, "Bootstrap DNS server");
+        validate_dns_server_not_loop(value, settings, "Bootstrap DNS server", "udp");
 
     if (length(main_servers) > 1 || length(bootstrap_servers) > 1) {
         validate_required_duration_option(option(settings, "dns_check_interval", "10s"), "settings.dns_check_interval");
@@ -1539,7 +1574,7 @@ function validate_dns_action(section, sections, context) {
     let dns_server = option(section, "dns_server", "");
     if (!dns_server_value_valid(dns_server))
         fail_validation("DNS rule '" + name + "' has an invalid DNS server '" + dns_server + "'. Aborted.");
-    validate_dns_server_not_loop(dns_server, settings_section(), "DNS rule '" + name + "' DNS server");
+    validate_dns_server_not_loop(dns_server, settings_section(), "DNS rule '" + name + "' DNS server", dns_type);
     if (length(connections.rule_sets_with_subnets(section)) > 0)
         fail_validation("DNS rule '" + name + "' can use domain-only rule sets, but subnet extraction is enabled. Disable 'Include IP addresses and subnets'. Aborted.");
     if (!dns_action_has_domain_matchers(section) && length(list_option(section, "fully_routed_ips")) == 0)
