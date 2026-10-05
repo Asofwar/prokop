@@ -114,10 +114,12 @@ grep -Fqx "no-resolv" "$conf" || fail "an original noresolv must be kept"
 touch "$WORK_DIR/ks-present" "$WORK_DIR/sing-box-alive"
 PROKOP_KILLSWITCH_WATCH_ITERATIONS=3 ks watch || fail "watch failed"
 [ ! -s "$WORK_DIR/ks_dns" ] || fail "no redirect while sing-box answers"
-# While sing-box answers and nothing is redirected, the watcher waits five
-# intervals between passes (optimization 6 of the 2026-10-04 audit).
+# While sing-box answers and nothing is redirected, the watcher waits two
+# and a half intervals between passes (optimization 6 of the 2026-10-04
+# audit; 5 s by default since optimization 4 of 2026-10-05, not 10 s).
 elapsed="$(timed_watch 3 300)"
-[ "$elapsed" -ge 3000 ] || fail "a healthy watcher must wait 5 intervals per pass (3 passes took ${elapsed} ms)"
+[ "$elapsed" -ge 2000 ] || fail "a healthy watcher must wait 2.5 intervals per pass (3 passes took ${elapsed} ms)"
+[ "$elapsed" -lt 3000 ] || fail "a healthy watcher must not wait 5 intervals per pass any more (3 passes took ${elapsed} ms)"
 
 # sing-box dies: two failed probes are not enough, the third switches.
 rm -f "$WORK_DIR/sing-box-alive"
