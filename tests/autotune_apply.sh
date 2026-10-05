@@ -72,7 +72,8 @@ echo "isolation $4 $5 $6 $7 $8 $9" >> "$STUB_LOG/isolation.log"
 echo "mode ${10:-}" >> "$STUB_LOG/isolation.log"
 # The configuration a control run saw (AT-14: after the rollback).
 cp "$PROKOP_CONFIG_FILE" "$STATE/control.config"
-if ! "$REAL_UCODE" -L "$PROKOP_LIB" -e 'exit(require("autotune.lock").acquire() ? 0 : 1);'; then
+# A run ends by releasing its own record (AT-11).
+if ! "$REAL_UCODE" -L "$PROKOP_LIB" -e 'let l = require("autotune.lock"), ok = l.acquire(); l.release(); exit(ok ? 0 : 1);'; then
   echo '{"status":"failed","reason":"lock_unavailable"}'; exit 1
 fi
 echo "joined $PROKOP_AUTOTUNE_LOCK_OWNER" >> "$STUB_LOG/isolation.log"
