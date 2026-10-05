@@ -4481,7 +4481,12 @@ download_prokop_packages() {
 }
 
 install_backend_package() {
-    [ "$INSTALL_MODE" = "update" ] && UPDATE_PACKAGES_STARTED=1
+    if [ "$INSTALL_MODE" = "update" ]; then
+        UPDATE_PACKAGES_STARTED=1
+        # A dropped SSH session must not kill apk/opkg or a postinst
+        # midway: from here the update runs to its end or its rollback.
+        trap '' HUP
+    fi
     pkg_install_prokop_file prokop "$PROKOP_BACKEND_FILE" || fail "prokop installation failed"
 
     [ -x /usr/bin/prokop ] || fail "prokop executable is missing after package installation"
@@ -4581,11 +4586,22 @@ print_installation_summary() {
     fi
 }
 
+# A signal once an update started to replace packages rolls it back as a
+# failure does (B8): the trap alone only removed TMP_DIR and left Prokop
+# stopped with a half-replaced package set.
+on_installer_signal() {
+    trap '' HUP INT TERM
+    if [ "$INSTALL_MODE" = "update" ] && [ "$UPDATE_PACKAGES_STARTED" -eq 1 ]; then
+        fail "The installation was interrupted; rolling the update back"
+    fi
+    exit "$1"
+}
+
 main() {
     trap cleanup EXIT
-    trap 'exit 129' HUP
-    trap 'exit 130' INT
-    trap 'exit 143' TERM
+    trap 'on_installer_signal 129' HUP
+    trap 'on_installer_signal 130' INT
+    trap 'on_installer_signal 143' TERM
 
     parse_args "$@"
     validate_installer_settings

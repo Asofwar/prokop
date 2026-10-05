@@ -175,4 +175,38 @@ sed -n '/^fail() {$/,/^}$/p' "$ROOT_DIR/install.sh" |
   awk '/rollback_current_update/ {r=NR} /restore_current_prokop_on_failure/ {s=NR} END {exit !(r && s > r)}' ||
   fail_test "fail() does not roll the update back before restoring the service state"
 
+# 7. UPD-12: a signal after the packages started rolls the update back; a
+#    signal before that only exits; a hangup no longer stops the update
+#    once it replaces packages.
+for started in 1 0; do
+  reset_case
+  prepare_current_update_rollback
+  : >"$LOG"
+  rc=0
+  (
+    trap 'on_installer_signal 143' TERM
+    printf "config settings 'settings'\n\toption marker 'new'\n" >"$UPDATE_CONFIG_FILE"
+    INSTALLED[prokop]=2.13.0-r1
+    UPDATE_PACKAGES_STARTED=$started
+    restore_current_prokop_on_failure() { printf 'restore service\n' >>"$LOG"; }
+    kill -TERM "$BASHPID"
+    printf 'not interrupted\n' >>"$LOG"
+  ) 2>/dev/null || rc=$?
+  if grep -Fq 'not interrupted' "$LOG"; then fail_test "the signal did not stop the installer"; fi
+  if [ "$started" -eq 1 ]; then
+    [ "$rc" -eq 1 ] || fail_test "an interrupted update did not fail: rc=$rc"
+    grep -Fxq "install $UPDATE_ROLLBACK_DIR/prokop_2.12.0.ipk" "$LOG" ||
+      fail_test "a signal after the packages started did not roll back: $(cat "$LOG")"
+    grep -Fxq 'restore service' "$LOG" || fail_test "a signal did not restore the service state: $(cat "$LOG")"
+  else
+    [ "$rc" -eq 143 ] || fail_test "a signal before the packages changed the exit code: rc=$rc"
+    if grep -q '^install ' "$LOG"; then fail_test "a signal before the packages rolled back: $(cat "$LOG")"; fi
+  fi
+done
+printf '%s\n' "$main_body" | grep -Fq "trap 'on_installer_signal 129' HUP" ||
+  fail_test "main does not route HUP to the rollback handler"
+sed -n '/^install_backend_package() {$/,/^}$/p' "$ROOT_DIR/install.sh" |
+  awk '/UPDATE_PACKAGES_STARTED=1/ {s=NR} /trap .. HUP/ {t=NR} /pkg_install_prokop_file/ {i=NR} END {exit !(s && t && i > t)}' ||
+  fail_test "an update does not ignore hangups before it replaces packages"
+
 printf 'Installer update rollback tests passed\n'
