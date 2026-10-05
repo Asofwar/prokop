@@ -432,9 +432,15 @@ export function observationView(
       .replace('%d', String(running.checks_required));
     const last = running.checks?.[running.checks.length - 1] ?? null;
     let detail: string | null = null;
-    if (running.failures_in_row > 0)
+    // An inconclusive check neither counts nor breaks a row of failures
+    // (autotune/manager.uc): the row is named by the checks, not the last.
+    if (last?.result === 'failed')
       detail = _(
         'The last check failed; one more failure in a row rolls the change back.',
+      );
+    else if (last?.result === 'inconclusive' && running.failures_in_row > 0)
+      detail = _(
+        'A check failed and the last one gave no result; one more failure rolls the change back.',
       );
     else if (last?.result === 'inconclusive')
       detail = `${observationCheckText(last.reason)}.`.replace(/^./, (c) =>
@@ -453,10 +459,21 @@ export function observationView(
           .replace('%d', String(ended.checks_required ?? 0)),
       };
     case 'rolled_back':
+      // Two failures in a row, or too many failed checks (AT-12).
       return {
-        label: _('Failed twice in a row, rolled back'),
+        label:
+          (ended.failures_in_row ?? 0) >= 2
+            ? _('Failed twice in a row, rolled back')
+            : _('Failed too many checks, rolled back'),
         tone: 'warning',
-        detail: null,
+        detail:
+          ended.conclusive != null &&
+          ended.failed != null &&
+          ended.conclusive > 0
+            ? _('%d of %d checks failed')
+                .replace('%d', String(ended.failed))
+                .replace('%d', String(ended.conclusive))
+            : null,
       };
     case 'needs_attention':
       return {
@@ -472,10 +489,28 @@ export function observationView(
       };
     case 'ended':
       switch (ended.reason) {
+        // Other edits keep the observation (AT-10).
         case 'config_changed':
           return {
-            label: _('Observation stopped: the configuration was edited'),
+            label: _(
+              'Observation stopped: the rule or its strategy was edited',
+            ),
             tone: 'neutral',
+            detail: null,
+          };
+        // Rolled back outside the observation (AT-15).
+        case 'apply_rolled_back':
+          return {
+            label: _('Observation stopped: the change was rolled back'),
+            tone: 'neutral',
+            detail: null,
+          };
+        case 'apply_needs_attention':
+          return {
+            label: _(
+              'Observation stopped: the change needs attention after a rollback',
+            ),
+            tone: 'warning',
             detail: null,
           };
         case 'mode_changed':

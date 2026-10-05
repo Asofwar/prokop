@@ -98,6 +98,10 @@ msgstr ""
 msgid "%d of %d checks passed"
 msgstr ""
 
+#: src/prokop/tabs/autotune/model.ts:470
+msgid "%d of %d checks failed"
+msgstr ""
+
 #: src/prokop/tabs/dashboard/overview.ts:357
 msgid "%d rules"
 msgstr ""
@@ -2747,6 +2751,10 @@ msgstr ""
 msgid "Failed twice in a row, rolled back"
 msgstr ""
 
+#: src/prokop/tabs/autotune/model.ts:465
+msgid "Failed too many checks, rolled back"
+msgstr ""
+
 #: src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:105
 msgid "FakeIP and control checks use different public IPs"
 msgstr ""
@@ -4438,6 +4446,18 @@ msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:468
 msgid "Observation stopped: the configuration was edited"
+msgstr ""
+
+#: src/prokop/tabs/autotune/model.ts:490
+msgid "Observation stopped: the rule or its strategy was edited"
+msgstr ""
+
+#: src/prokop/tabs/autotune/model.ts:497
+msgid "Observation stopped: the change was rolled back"
+msgstr ""
+
+#: src/prokop/tabs/autotune/model.ts:504
+msgid "Observation stopped: the change needs attention after a rollback"
 msgstr ""
 
 #: src/prokop/ui/status.ts:163
@@ -6766,6 +6786,10 @@ msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:427
 msgid "The last check failed; one more failure in a row rolls the change back."
+msgstr ""
+
+#: src/prokop/tabs/autotune/model.ts:435
+msgid "A check failed and the last one gave no result; one more failure rolls the change back."
 msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:408

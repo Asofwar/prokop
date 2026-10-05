@@ -305,6 +305,9 @@ export namespace Prokop {
     passed?: number;
     checks_required?: number;
     failures_in_row?: number;
+    // Failed and conclusive checks (AT-12); absent from older records.
+    failed?: number;
+    conclusive?: number;
     finished_at?: number;
   }
 

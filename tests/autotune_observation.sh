@@ -181,9 +181,17 @@ check_is '{"status":"ended","reason":"config_changed"}'; tick edited
 [ "$(rollback_calls)" = 0 ] || fail "no rollback of an edited configuration"
 # A rollback that finished in a run that died before recording it.
 observe_new
-check_is '{"status":"ended","reason":"apply_rolled_back","phase":"rolled_back"}'; tick died
+check_is '{"status":"ended","reason":"apply_rolled_back","phase":"rolled_back","apply_reason":"observation_failed"}'; tick died
 [ "$(json_get "$WORK/died.json" observation.result)" = '"rolled_back"' ] || fail "recorded rollback: $(cat "$WORK/died.json")"
 [ "$(st groups.youtube.cooldowns.fake)" != null ] || fail "the candidate pauses"
+# AT-15: a rollback by anything else (the operator through apply.uc) is no
+# failed observation: it ends it, nothing is paused.
+observe_new
+check_is '{"status":"ended","reason":"apply_rolled_back","phase":"rolled_back","apply_reason":"operator_rollback"}'; tick foreign
+[ "$(json_get "$WORK/foreign.json" observation.result)" = '"ended"' ] || fail "foreign rollback: $(cat "$WORK/foreign.json")"
+[ "$(st groups.youtube.last_apply.observation.reason)" = '"apply_rolled_back"' ] || fail "foreign rollback reason"
+[ "$(st groups.youtube.last_apply.reason)" != '"observation_failed"' ] || fail "a foreign rollback shown as a failed observation"
+[ "$(st groups.youtube.cooldowns.fake)" = null ] || fail "a foreign rollback paused the candidate"
 
 # ---- a blocker skips the tick without any write ------------------------------
 observe_new

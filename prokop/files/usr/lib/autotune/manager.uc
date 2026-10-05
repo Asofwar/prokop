@@ -783,9 +783,13 @@ function observation_tick_locked() {
     if (check == null) return { result: "skipped", reason: "observe_output_invalid" };
     if (check.status == "busy" || check.status == "interrupted") return { result: "skipped", reason: check.reason || check.status };
     if (check.status == "ended") {
-        // The apply was rolled back or left needing attention by a run that
-        // died before it recorded so: the candidate is paused all the same.
-        if (check.phase == "rolled_back" || check.phase == "needs_attention") return finish(check.phase, check.reason);
+        // The apply was rolled back or left needing attention by the
+        // observation's own rollback in a run that died before it recorded
+        // so: the candidate is paused all the same. A rollback by anything
+        // else (the operator through apply.uc, a dead manager's other
+        // path) is no failed observation (AT-15): it only ends it.
+        let own = substr(as_string(check.apply_reason), 0, length("observation_failed")) == "observation_failed";
+        if ((check.phase == "rolled_back" || check.phase == "needs_attention") && own) return finish(check.phase, "observation_failed");
         return finish("ended", check.reason);
     }
     let verdict = index([ "ok", "failed" ], check.status) >= 0 ? check.status : "inconclusive";

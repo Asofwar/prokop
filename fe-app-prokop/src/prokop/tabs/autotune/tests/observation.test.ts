@@ -72,9 +72,31 @@ describe('observation after an automatic apply', () => {
   });
 
   it('warns that one more failure rolls back', () => {
-    const view = observationView(running({ failures_in_row: 1 }), null);
+    const view = observationView(
+      running({
+        failures_in_row: 1,
+        checks: [{ at: 2, result: 'failed', reason: 'traffic_failed' }],
+      }),
+      null,
+    );
     expect(view?.detail).toBe(
       'The last check failed; one more failure in a row rolls the change back.',
+    );
+  });
+
+  it('does not call an inconclusive last check a failure (AT-15)', () => {
+    const view = observationView(
+      running({
+        failures_in_row: 1,
+        checks: [
+          { at: 2, result: 'failed', reason: 'traffic_failed' },
+          { at: 3, result: 'inconclusive', reason: 'network_unavailable' },
+        ],
+      }),
+      null,
+    );
+    expect(view?.detail).toBe(
+      'A check failed and the last one gave no result; one more failure rolls the change back.',
     );
   });
 
@@ -107,12 +129,29 @@ describe('observation after an automatic apply', () => {
       observationView(null, { status: 'rolled_back', reason: 'x' })?.tone,
     ).toBe('warning');
     expect(
+      observationView(null, {
+        status: 'rolled_back',
+        reason: 'observation_failed',
+        failures_in_row: 1,
+        failed: 2,
+        conclusive: 4,
+      }),
+    ).toEqual({
+      label: 'Failed too many checks, rolled back',
+      tone: 'warning',
+      detail: '2 of 4 checks failed',
+    });
+    expect(
+      observationView(null, { status: 'ended', reason: 'apply_rolled_back' })
+        ?.label,
+    ).toBe('Observation stopped: the change was rolled back');
+    expect(
       observationView(null, { status: 'needs_attention', reason: null })?.tone,
     ).toBe('error');
     expect(
       observationView(null, { status: 'ended', reason: 'config_changed' })
         ?.label,
-    ).toBe('Observation stopped: the configuration was edited');
+    ).toBe('Observation stopped: the rule or its strategy was edited');
     // The operator's rollback is the last change of the card itself.
     expect(
       observationView(null, { status: 'ended', reason: 'operator_rollback' }),

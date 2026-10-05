@@ -71,6 +71,9 @@ msgstr "Групп узлов: %d"
 msgid "%d of %d checks passed"
 msgstr "Пройдено проверок: %d из %d"
 
+msgid "%d of %d checks failed"
+msgstr "Не прошло проверок: %d из %d"
+
 msgid "%d rules"
 msgstr "Правил: %d"
 
@@ -1919,6 +1922,9 @@ msgstr "Не удалось обновить подписки"
 msgid "Failed twice in a row, rolled back"
 msgstr "Дважды подряд не прошла проверку, выполнен откат"
 
+msgid "Failed too many checks, rolled back"
+msgstr "Слишком много проверок не прошло, выполнен откат"
+
 msgid "FakeIP and control checks use different public IPs"
 msgstr "FakeIP и контрольная проверка используют разные публичные IP"
 
@@ -3091,6 +3097,15 @@ msgstr "Наблюдение остановлено: за сутки не наб
 
 msgid "Observation stopped: the configuration was edited"
 msgstr "Наблюдение остановлено: конфигурация изменена"
+
+msgid "Observation stopped: the rule or its strategy was edited"
+msgstr "Наблюдение остановлено: правило или его стратегия изменены"
+
+msgid "Observation stopped: the change was rolled back"
+msgstr "Наблюдение остановлено: изменение откатили"
+
+msgid "Observation stopped: the change needs attention after a rollback"
+msgstr "Наблюдение остановлено: после отката изменение требует внимания"
 
 msgid "Observed"
 msgstr "Наблюдается"
@@ -4759,6 +4774,9 @@ msgstr "Последняя проверка завершилась ошибко�
 
 msgid "The last check failed; one more failure in a row rolls the change back."
 msgstr "Последняя проверка не прошла; ещё одна неудача подряд откатит изменение."
+
+msgid "A check failed and the last one gave no result; one more failure rolls the change back."
+msgstr "Одна проверка не прошла, последняя не дала результата; ещё одна неудача откатит изменение."
 
 msgid "the last check found Prokop stopped"
 msgstr "при последней проверке Prokop был остановлен"
