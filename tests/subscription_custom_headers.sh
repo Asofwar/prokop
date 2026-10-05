@@ -171,4 +171,17 @@ cache update-source vpn 1 "$URL" >"$WORK_DIR/update.log" 2>&1 || fail "the updat
 cache section-current-usable-cache vpn "$TMP_SUBSCRIPTION_FOLDER" "$PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR" "" ||
   fail "a cache without headers is not current"
 
+# 5. One run hashes the same headers once (optimization 15): every source
+#    profile read used to start a sha256sum.
+write_config "X-Panel-Token:secret-tok-55"
+rm -rf "$TMP_SUBSCRIPTION_FOLDER" "$PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR"
+printf '#!/bin/sh\nprintf "x\\n" >>"%s"\nexec %s "$@"\n' "$WORK_DIR/sha256sum.calls" "$(command -v sha256sum)" >"$WORK_DIR/bin/sha256sum"
+chmod +x "$WORK_DIR/bin/sha256sum"
+cache update-source vpn 1 "$URL" >"$WORK_DIR/update.log" 2>&1 || fail "the update with custom headers failed again"
+rm -f "$WORK_DIR/bin/sha256sum"
+[ "$(wc -l <"$WORK_DIR/sha256sum.calls")" -eq 1 ] ||
+  fail "the same headers were hashed $(wc -l <"$WORK_DIR/sha256sum.calls") times in one run"
+cache section-current-usable-cache vpn "$TMP_SUBSCRIPTION_FOLDER" "$PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR" "" ||
+  fail "the cache is not current with the headers it was downloaded with (cached hash)"
+
 printf 'OK: subscription custom headers\n'

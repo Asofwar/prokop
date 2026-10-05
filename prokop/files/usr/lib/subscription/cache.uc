@@ -721,20 +721,31 @@ function temp_path(dir, section, kind) {
 // sources with one URL share it: the last one read wins.
 let source_headers = {};
 
+// The hashes this process computed, by header text: every source profile
+// read hashes its headers, and one run reads each source many times
+// (optimization 15). In memory only.
+let headers_hashes = {};
+
 function headers_hash(headers) {
     if (length(headers) == 0)
         return "";
+    let text = join("\n", headers) + "\n";
+    if (headers_hashes[text] != null)
+        return headers_hashes[text];
     // Through a pipe: the values may be credentials and never go on a
     // command line (CFG-4).
     let output = temp_path(TMP_SUBSCRIPTION_FOLDER, "headers", "hash");
     let pipe = fs.popen("sha256sum >" + shell_quote(output), "w");
     if (!pipe)
         return "unknown";
-    pipe.write(join("\n", headers) + "\n");
+    pipe.write(text);
     pipe.close();
     let hash = whitespace_values(read_text(output));
     unlink_path(output);
-    return length(hash) > 0 && match(hash[0], /^[0-9a-f]{64}$/) != null ? "sha256:" + hash[0] : "unknown";
+    if (length(hash) == 0 || match(hash[0], /^[0-9a-f]{64}$/) == null)
+        return "unknown";
+    headers_hashes[text] = "sha256:" + hash[0];
+    return headers_hashes[text];
 }
 
 function register_source_headers(url, headers) {
