@@ -114,7 +114,7 @@ function xhttp_object_arg(value) {
 
 // C2: the xHTTP settings that Remnawave and Xray-core send beyond the base
 // set, as sing-box-extended reads them: [ sing-box key, kind, Xray keys ].
-// singbox/generator.uc drops those the running core does not know.
+// singbox/generator.uc drops those the running core does not know (SB-10).
 const XHTTP_EXTENDED_SETTINGS = [
     [ "uplink_http_method", "method", [ "uplinkHTTPMethod", "uplinkHttpMethod" ] ],
     [ "session_placement", "placement", [ "sessionPlacement" ] ],

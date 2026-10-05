@@ -616,6 +616,77 @@ const VLESS_ENCRYPTION_MIN_EXTENDED = [ 2, 0, 0 ];
 // tls.reality.support_x25519mlkem768 came with sing-box-extended 2.7.2.
 const REALITY_MLKEM_MIN_EXTENDED = [ 2, 7, 2 ];
 
+// SB-10: the xHTTP settings beyond the base set (subscription/parser.uc
+// XHTTP_EXTENDED_SETTINGS), by the sing-box-extended release whose
+// option/v2ray_transport.go first reads them: [ release, an extended core
+// of unknown version reads them, keys ]. sing-box decodes its options with
+// unknown fields refused, so one key an older core does not know fails the
+// whole configuration. The xHTTP transport itself came with 1.1.0.
+const XHTTP_EXTENDED_FIELDS = [
+    [ [ 1, 1, 0 ], true, [ "sc_max_buffered_posts", "no_sse_header" ] ],
+    [ [ 1, 6, 0 ], false, [
+        "uplink_http_method", "session_placement", "session_key", "seq_placement", "seq_key",
+        "uplink_data_placement", "uplink_data_key", "uplink_chunk_size", "x_padding_obfs_mode",
+        "x_padding_key", "x_padding_header", "x_padding_placement", "x_padding_method"
+    ] ],
+    [ [ 2, 5, 0 ], false, [ "session_id_table", "session_id_length" ] ]
+];
+
+// Range settings: a core before sing-box-extended 1.6.0 reads a range as
+// "from-to" or {from, to} and refuses a plain number, which the parser
+// writes for a fixed value; "N-N" means the same to every core.
+const XHTTP_RANGE_FIELDS = [ "x_padding_bytes", "sc_max_each_post_bytes", "sc_min_posts_interval_ms",
+    "sc_stream_up_server_secs" ];
+const XMUX_RANGE_FIELDS = [ "max_concurrency", "max_connections", "c_max_reuse_times", "h_max_request_times",
+    "h_max_reusable_secs" ];
+
+function xhttp_ranges_as_text(options, keys) {
+    if (type(options) != "object")
+        return;
+    for (let key in keys) {
+        let value = options[key];
+        if (type(value) == "int" || (type(value) == "double" && value == int(value)))
+            options[key] = sprintf("%d-%d", value, value);
+    }
+}
+
+function drop_unknown_xhttp_fields(options, dropped) {
+    if (type(options) != "object")
+        return;
+    if (!extended_at_least(1, 6, 0, false)) {
+        xhttp_ranges_as_text(options, XHTTP_RANGE_FIELDS);
+        xhttp_ranges_as_text(options.xmux, XMUX_RANGE_FIELDS);
+    }
+    for (let group in XHTTP_EXTENDED_FIELDS) {
+        let v = group[0];
+        if (extended_at_least(v[0], v[1], v[2], group[1]))
+            continue;
+        for (let key in group[2]) {
+            if (exists(options, key)) {
+                delete options[key];
+                push(dropped, key);
+            }
+        }
+    }
+}
+
+// The settings this core does not read are left out of every xHTTP
+// outbound, also its download options, with a warning: the node may then
+// not reach its server, but the configuration stays valid. Its ranges are
+// written the way this core reads them.
+function drop_unsupported_xhttp_settings(config) {
+    for (let outbound in array_or_empty(config.outbounds)) {
+        if (!outbound_uses_xhttp(outbound))
+            continue;
+        let dropped = [];
+        drop_unknown_xhttp_fields(outbound.transport, dropped);
+        drop_unknown_xhttp_fields(outbound.transport.download, dropped);
+        if (length(dropped) > 0)
+            warn("xHTTP settings of outbound '", as_string(outbound.tag), "' need a newer sing-box-extended and were left out: ",
+                join(", ", uniq(dropped)), "\n");
+    }
+}
+
 function vless_encryption_supported() {
     let v = VLESS_ENCRYPTION_MIN_EXTENDED;
     return extended_at_least(v[0], v[1], v[2], true);
@@ -3173,6 +3244,7 @@ function generate_config(output_path, service_address, mwan3_active, supports_xh
     for (let section in sections)
         add_mixed_proxy_for_section(config, section, service_address);
 
+    drop_unsupported_xhttp_settings(config);
     assert_unique_outbound_tags(config);
     strip_internal_fields(config);
     if (!common.write_private_json_file(output_path, config)) {
@@ -3267,6 +3339,7 @@ function generate_list_bootstrap_config(output_path, service_address, mwan3_acti
             int(getenv("SB_SERVICE_MIXED_INBOUND_PORT") || runtime_constants.SERVICE_MIXED_INBOUND_PORT), detour);
     }
 
+    drop_unsupported_xhttp_settings(config);
     assert_unique_outbound_tags(config);
     strip_internal_fields(config);
     if (!common.write_private_json_file(output_path, config)) {

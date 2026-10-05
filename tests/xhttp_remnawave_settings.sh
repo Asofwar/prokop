@@ -74,6 +74,59 @@ for (const [name, o] of [['full', JSON.parse(fs.readFileSync(`${dir}/full.json`,
 }
 NODE
 
+# SB-10: the generator leaves out the settings the running core does not
+# read (sing-box-extended 1.6.0 brought most of them, 2.5.0 the session ID
+# ones; sing-box refuses unknown fields, so one of them failed the whole
+# configuration). An extended core of unknown version keeps only those of
+# every xHTTP-capable core (1.1.0). Checked against the released 1.5.3,
+# 2.4.1 and 2.7.2 binaries with "sing-box check".
+extra='{"xPaddingObfsMode":true,"xPaddingKey":"pad","uplinkHTTPMethod":"get","sessionPlacement":"header","sessionKey":"X-S",
+  "scMaxBufferedPosts":30,"noSSEHeader":true,"sessionIDTable":"abcdef","sessionIDLength":"8-16"}'
+extra="$(node -e 'process.stdout.write(encodeURIComponent(process.argv[1]))' "$extra")"
+cat >"$WORK/manual.json" <<JSON
+{
+  "settings": { ".name": "settings", ".type": "settings", "dns_server": "1.1.1.1" },
+  "section": [ { ".name": "xh", ".type": "section", "enabled": "1", "action": "connection",
+    "selector_proxy_links": [ "vless://00000000-0000-4000-8000-000000000003@x.example:443?security=tls&sni=x.example&type=xhttp&mode=packet-up&path=%2Fp&extra=$extra#XH" ] } ]
+}
+JSON
+generate() { # generate VERSION: the transport keys of the generated xHTTP outbound
+  mkdir -p "$WORK/subscriptions" "$WORK/persistent"
+  TMP_SUBSCRIPTION_FOLDER="$WORK/subscriptions" PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR="$WORK/persistent" \
+    ucode -L "$LIB" "$LIB/singbox/generator.uc" generate-config-fixture \
+    "$WORK/manual.json" "$WORK/gen.json" 127.0.0.1 0 1 '' "$1" 2>"$WORK/gen.stderr" ||
+    fail "the configuration for core '$1' was not generated: $(cat "$WORK/gen.stderr")"
+  node -e '
+    const c = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
+    const t = c.outbounds.find((o) => o.transport && o.transport.type === "xhttp").transport;
+    const keys = ["uplink_http_method", "session_placement", "session_key", "x_padding_obfs_mode", "x_padding_key",
+      "sc_max_buffered_posts", "no_sse_header", "session_id_table", "session_id_length"];
+    process.stdout.write(keys.filter((k) => k in t).join(" "));' "$WORK/gen.json"
+}
+all="uplink_http_method session_placement session_key x_padding_obfs_mode x_padding_key sc_max_buffered_posts no_sse_header session_id_table session_id_length"
+[ "$(generate 1.14.1-extended-2.7.2)" = "$all" ] || fail "extended 2.7.2 lost xHTTP settings: $(generate 1.14.1-extended-2.7.2)"
+[ "$(generate 1.13.14-extended-2.5.0)" = "$all" ] || fail "extended 2.5.0 lost xHTTP settings"
+[ "$(generate 1.13.12-extended-2.4.1)" = "${all% session_id_table session_id_length}" ] ||
+  fail "extended 2.4.1 got the session ID settings: $(generate 1.13.12-extended-2.4.1)"
+grep -Fq "xHTTP settings of outbound 'xh-1-out' need a newer sing-box-extended and were left out: session_id_table, session_id_length" "$WORK/gen.stderr" ||
+  fail "the left-out settings were not reported: $(cat "$WORK/gen.stderr")"
+[ "$(generate 1.12.22-extended-1.6.0)" = "${all% session_id_table session_id_length}" ] ||
+  fail "extended 1.6.0 lost settings it reads"
+[ "$(generate 1.12.17-extended-1.5.3)" = "sc_max_buffered_posts no_sse_header" ] ||
+  fail "extended 1.5.3 got settings it does not read: $(generate 1.12.17-extended-1.5.3)"
+# Before 1.6.0 a range is "from-to" only: a plain number failed the check.
+ranges() {
+  node -e '
+    const c = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
+    const t = c.outbounds.find((o) => o.transport && o.transport.type === "xhttp").transport;
+    process.stdout.write(JSON.stringify([t.x_padding_bytes, t.sc_max_each_post_bytes, t.sc_min_posts_interval_ms]));' "$WORK/gen.json"
+}
+[ "$(ranges)" = '["100-1000","1000000-1000000","30-30"]' ] || fail "extended 1.5.3 got ranges it cannot read: $(ranges)"
+generate 1.12.22-extended-1.6.0 >/dev/null
+[ "$(ranges)" = '["100-1000",1000000,30]' ] || fail "the ranges changed for extended 1.6.0: $(ranges)"
+[ "$(generate '')" = "sc_max_buffered_posts no_sse_header" ] ||
+  fail "an extended core of unknown version got settings it may not read: $(generate '')"
+
 SBX="${PROKOP_TEST_SING_BOX_EXTENDED:-}"
 if [ -z "$SBX" ] || [ ! -x "$SBX" ]; then
   printf 'xhttp_remnawave_settings: OK (real sing-box-extended not checked: set PROKOP_TEST_SING_BOX_EXTENDED)\n'
