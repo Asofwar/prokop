@@ -2489,15 +2489,24 @@ function exclude_sources_from_matchers(matchers, section) {
         else
             conditions[key] = value;
     }
+    let exclusion = {
+        source_ip_cidr: single_or_array(excluded),
+        invert: true
+    };
+    // A rule without conditions (the response-matching evaluate step) has
+    // nothing to wrap: sing-box rejects an empty nested rule, so the inverted
+    // source matcher becomes the rule itself.
+    if (length(conditions) == 0) {
+        for (let key, value in exclusion)
+            result[key] = value;
+        return result;
+    }
     let wrapped = {
         type: "logical",
         mode: "and",
         rules: [
             conditions,
-            {
-                source_ip_cidr: single_or_array(excluded),
-                invert: true
-            }
+            exclusion
         ]
     };
     for (let key, value in wrapped)
