@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-05 20:18+0300\n"
-"PO-Revision-Date: 2026-10-05 20:18+0300\n"
+"POT-Creation-Date: 2026-10-06 10:21+0000\n"
+"PO-Revision-Date: 2026-10-06 10:21+0000\n"
 "Last-Translator: Asofwar <7397608+Asofwar@users.noreply.github.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -88,9 +88,9 @@ msgstr ""
 #: src/prokop/tabs/autotune/model.ts:756
 #: src/prokop/tabs/dashboard/initController.ts:1102
 #: src/prokop/tabs/dashboard/overview.ts:383
-#: src/prokop/tabs/diagnostic/checks/runSectionsCheck.ts:153
 #: src/prokop/tabs/dashboard/partials/renderSections.ts:349
 #: src/prokop/tabs/dashboard/partials/renderSections.ts:534
+#: src/prokop/tabs/diagnostic/checks/runSectionsCheck.ts:153
 msgid "%d ms"
 msgstr ""
 
@@ -589,14 +589,6 @@ msgstr ""
 msgid "Adds X25519MLKEM768 to the TLS ClientHello of this rule's REALITY servers with the chrome fingerprint. Needed by REALITY servers on Xray-core 26.9.8 and newer (3x-ui 3.8.0 and newer) that answer with their mask site otherwise. Breaks REALITY servers without ML-KEM support: turn it on only for such servers."
 msgstr ""
 
-#: src/constants.ts:66
-msgid "Ads (Hagezi Pro)"
-msgstr ""
-
-#: src/constants.ts:60
-msgid "Adult sites"
-msgstr ""
-
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8547
 msgid "Advanced"
 msgstr ""
@@ -703,10 +695,6 @@ msgstr ""
 
 #: src/prokop/tabs/monitoring/devicesView.ts:71
 msgid "and %d more addresses"
-msgstr ""
-
-#: src/constants.ts:64
-msgid "Anime"
 msgstr ""
 
 #: src/prokop/helpers/actionReason.ts:37
@@ -1082,10 +1070,6 @@ msgstr ""
 #: src/prokop/tabs/monitoring/connectionView.ts:120
 #: src/prokop/tabs/dashboard/partials/getOutboundFooterLabel.ts:13
 msgid "Block"
-msgstr ""
-
-#: src/constants.ts:58
-msgid "Block list"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9311
@@ -1473,11 +1457,11 @@ msgstr ""
 
 #: src/prokop/tabs/autotune/initController.ts:1030
 #: src/prokop/tabs/autotune/initController.ts:1266
+#: src/prokop/tabs/dashboard/overview.ts:268
 #: src/prokop/tabs/diagnostic/connectivityMatrix.ts:115
 #: src/prokop/tabs/diagnostic/dpiPlayground.ts:48
 #: src/prokop/tabs/diagnostic/siteCheck.ts:269
 #: src/prokop/tabs/diagnostic/statusLabels.ts:28
-#: src/prokop/tabs/dashboard/overview.ts:268
 msgid "Checking…"
 msgstr ""
 
@@ -1563,9 +1547,9 @@ msgstr ""
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3738
 #: src/partials/modal/renderModal.ts:284
 #: src/prokop/tabs/autotune/initController.ts:826
-#: src/prokop/tabs/history/initController.ts:318
 #: src/prokop/tabs/dashboard/initController.ts:1316
 #: src/prokop/tabs/dashboard/initController.ts:1717
+#: src/prokop/tabs/history/initController.ts:318
 #: src/prokop/tabs/updates/releaseSelector.ts:151
 msgid "Close"
 msgstr ""
@@ -1847,13 +1831,13 @@ msgstr ""
 msgid "Could not load configuration snapshots"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:334
 #: src/prokop/tabs/diagnostic/initController.ts:591
 #: src/prokop/tabs/diagnostic/initController.ts:595
 #: src/prokop/tabs/diagnostic/initController.ts:631
 #: src/prokop/tabs/diagnostic/initController.ts:635
 #: src/prokop/tabs/diagnostic/initController.ts:671
 #: src/prokop/tabs/diagnostic/initController.ts:675
+#: src/prokop/tabs/history/initController.ts:334
 msgid "Could not load data"
 msgstr ""
 
@@ -3034,10 +3018,6 @@ msgstr ""
 msgid "GB"
 msgstr ""
 
-#: src/constants.ts:56
-msgid "Geo-blocked services"
-msgstr ""
-
 #: src/prokop/tabs/diagnostic/partials/renderAvailableActions.ts:37
 msgid "Get global check"
 msgstr ""
@@ -4015,13 +3995,13 @@ msgstr ""
 #: src/prokop/tabs/autotune/render.ts:26
 #: src/prokop/tabs/autotune/render.ts:30
 #: src/prokop/tabs/autotune/render.ts:34
+#: src/prokop/tabs/dashboard/overview.ts:515
+#: src/prokop/tabs/dashboard/render.ts:16
+#: src/prokop/tabs/diagnostic/initController.ts:741
 #: src/prokop/tabs/history/render.ts:14
 #: src/prokop/tabs/history/render.ts:20
 #: src/prokop/tabs/history/render.ts:34
 #: src/prokop/tabs/history/render.ts:39
-#: src/prokop/tabs/diagnostic/initController.ts:741
-#: src/prokop/tabs/dashboard/overview.ts:515
-#: src/prokop/tabs/dashboard/render.ts:16
 msgid "Loading…"
 msgstr ""
 
@@ -4183,9 +4163,9 @@ msgstr ""
 
 #: src/prokop/ui/status.ts:34
 #: src/prokop/ui/status.ts:113
+#: src/prokop/tabs/diagnostic/statusLabels.ts:24
 #: src/prokop/tabs/history/model.ts:79
 #: src/prokop/tabs/history/model.ts:82
-#: src/prokop/tabs/diagnostic/statusLabels.ts:24
 msgid "Needs attention"
 msgstr ""
 
@@ -4212,10 +4192,6 @@ msgstr ""
 
 #: src/prokop/services/core.service.ts:42
 msgid "New version %s is available for %s"
-msgstr ""
-
-#: src/constants.ts:62
-msgid "News"
 msgstr ""
 
 #: src/prokop/tabs/autotune/initController.ts:947
@@ -4351,8 +4327,8 @@ msgstr ""
 msgid "No events of this kind"
 msgstr ""
 
-#: src/prokop/tabs/history/initController.ts:233
 #: src/prokop/tabs/dashboard/overviewCards.ts:339
+#: src/prokop/tabs/history/initController.ts:233
 msgid "No events recorded yet"
 msgstr ""
 
@@ -4377,8 +4353,8 @@ msgstr ""
 msgid "No recovery needed"
 msgstr ""
 
-#: src/prokop/tabs/history/model.ts:152
 #: src/prokop/tabs/dashboard/overview.ts:410
+#: src/prokop/tabs/history/model.ts:152
 msgid "No reload recorded yet"
 msgstr ""
 
@@ -4578,12 +4554,12 @@ msgid "Not responding"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:356
+#: src/prokop/tabs/dashboard/overview.ts:253
 #: src/prokop/tabs/diagnostic/diagnostic.store.ts:136
 #: src/prokop/tabs/diagnostic/initController.ts:107
 #: src/prokop/tabs/diagnostic/initController.ts:331
 #: src/prokop/tabs/diagnostic/initController.ts:386
 #: src/prokop/tabs/diagnostic/initController.ts:459
-#: src/prokop/tabs/dashboard/overview.ts:253
 msgid "Not running"
 msgstr ""
 
@@ -5983,20 +5959,12 @@ msgstr ""
 msgid "running: traffic goes through the VPN"
 msgstr ""
 
-#: src/constants.ts:52
-msgid "Russia: blocked from outside"
-msgstr ""
-
-#: src/constants.ts:50
-msgid "Russia: blocked inside"
-msgstr ""
-
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3747
 #: src/prokop/tabs/autotune/initController.ts:562
 #: src/prokop/tabs/autotune/initController.ts:764
+#: src/prokop/tabs/dashboard/initController.ts:1448
 #: src/prokop/tabs/history/initController.ts:476
 #: src/prokop/tabs/history/initController.ts:613
-#: src/prokop/tabs/dashboard/initController.ts:1448
 msgid "Save"
 msgstr ""
 
@@ -8042,10 +8010,6 @@ msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:407
 msgid "UDP (Unprotected DNS)"
-msgstr ""
-
-#: src/constants.ts:54
-msgid "Ukraine"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:554

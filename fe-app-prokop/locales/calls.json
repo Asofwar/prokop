@@ -123,9 +123,9 @@
       "src/prokop/tabs/autotune/model.ts:756",
       "src/prokop/tabs/dashboard/initController.ts:1102",
       "src/prokop/tabs/dashboard/overview.ts:383",
-      "src/prokop/tabs/diagnostic/checks/runSectionsCheck.ts:153",
       "src/prokop/tabs/dashboard/partials/renderSections.ts:349",
-      "src/prokop/tabs/dashboard/partials/renderSections.ts:534"
+      "src/prokop/tabs/dashboard/partials/renderSections.ts:534",
+      "src/prokop/tabs/diagnostic/checks/runSectionsCheck.ts:153"
     ]
   },
   {
@@ -981,20 +981,6 @@
     ]
   },
   {
-    "call": "Ads (Hagezi Pro)",
-    "key": "Ads (Hagezi Pro)",
-    "places": [
-      "src/constants.ts:66"
-    ]
-  },
-  {
-    "call": "Adult sites",
-    "key": "Adult sites",
-    "places": [
-      "src/constants.ts:60"
-    ]
-  },
-  {
     "call": "Advanced",
     "key": "Advanced",
     "places": [
@@ -1178,13 +1164,6 @@
     "key": "and %d more addresses",
     "places": [
       "src/prokop/tabs/monitoring/devicesView.ts:71"
-    ]
-  },
-  {
-    "call": "Anime",
-    "key": "Anime",
-    "places": [
-      "src/constants.ts:64"
     ]
   },
   {
@@ -1836,13 +1815,6 @@
     ]
   },
   {
-    "call": "Block list",
-    "key": "Block list",
-    "places": [
-      "src/constants.ts:58"
-    ]
-  },
-  {
     "call": "Block this section's traffic instead of sending it directly when the VPN, sing-box or Prokop itself is not running. Applies to forwarded client traffic, survives a Prokop stop, firewall reloads and reboots. Earlier Zapret and Bypass sections keep working. For a section with a subscription, changing it restarts sing-box: a section whose subscription could not be loaded is rejected only while it is protected.",
     "key": "Block this section's traffic instead of sending it directly when the VPN, sing-box or Prokop itself is not running. Applies to forwarded client traffic, survives a Prokop stop, firewall reloads and reboots. Earlier Zapret and Bypass sections keep working. For a section with a subscription, changing it restarts sing-box: a section whose subscription could not be loaded is rejected only while it is protected.",
     "places": [
@@ -2486,11 +2458,11 @@
     "places": [
       "src/prokop/tabs/autotune/initController.ts:1030",
       "src/prokop/tabs/autotune/initController.ts:1266",
+      "src/prokop/tabs/dashboard/overview.ts:268",
       "src/prokop/tabs/diagnostic/connectivityMatrix.ts:115",
       "src/prokop/tabs/diagnostic/dpiPlayground.ts:48",
       "src/prokop/tabs/diagnostic/siteCheck.ts:269",
-      "src/prokop/tabs/diagnostic/statusLabels.ts:28",
-      "src/prokop/tabs/dashboard/overview.ts:268"
+      "src/prokop/tabs/diagnostic/statusLabels.ts:28"
     ]
   },
   {
@@ -2633,9 +2605,9 @@
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3738",
       "src/partials/modal/renderModal.ts:284",
       "src/prokop/tabs/autotune/initController.ts:826",
-      "src/prokop/tabs/history/initController.ts:318",
       "src/prokop/tabs/dashboard/initController.ts:1316",
       "src/prokop/tabs/dashboard/initController.ts:1717",
+      "src/prokop/tabs/history/initController.ts:318",
       "src/prokop/tabs/updates/releaseSelector.ts:151"
     ]
   },
@@ -3118,13 +3090,13 @@
     "call": "Could not load data",
     "key": "Could not load data",
     "places": [
-      "src/prokop/tabs/history/initController.ts:334",
       "src/prokop/tabs/diagnostic/initController.ts:591",
       "src/prokop/tabs/diagnostic/initController.ts:595",
       "src/prokop/tabs/diagnostic/initController.ts:631",
       "src/prokop/tabs/diagnostic/initController.ts:635",
       "src/prokop/tabs/diagnostic/initController.ts:671",
-      "src/prokop/tabs/diagnostic/initController.ts:675"
+      "src/prokop/tabs/diagnostic/initController.ts:675",
+      "src/prokop/tabs/history/initController.ts:334"
     ]
   },
   {
@@ -5130,13 +5102,6 @@
     ]
   },
   {
-    "call": "Geo-blocked services",
-    "key": "Geo-blocked services",
-    "places": [
-      "src/constants.ts:56"
-    ]
-  },
-  {
     "call": "Get global check",
     "key": "Get global check",
     "places": [
@@ -6804,13 +6769,13 @@
       "src/prokop/tabs/autotune/render.ts:26",
       "src/prokop/tabs/autotune/render.ts:30",
       "src/prokop/tabs/autotune/render.ts:34",
+      "src/prokop/tabs/dashboard/overview.ts:515",
+      "src/prokop/tabs/dashboard/render.ts:16",
+      "src/prokop/tabs/diagnostic/initController.ts:741",
       "src/prokop/tabs/history/render.ts:14",
       "src/prokop/tabs/history/render.ts:20",
       "src/prokop/tabs/history/render.ts:34",
-      "src/prokop/tabs/history/render.ts:39",
-      "src/prokop/tabs/diagnostic/initController.ts:741",
-      "src/prokop/tabs/dashboard/overview.ts:515",
-      "src/prokop/tabs/dashboard/render.ts:16"
+      "src/prokop/tabs/history/render.ts:39"
     ]
   },
   {
@@ -7089,9 +7054,9 @@
     "places": [
       "src/prokop/ui/status.ts:34",
       "src/prokop/ui/status.ts:113",
+      "src/prokop/tabs/diagnostic/statusLabels.ts:24",
       "src/prokop/tabs/history/model.ts:79",
-      "src/prokop/tabs/history/model.ts:82",
-      "src/prokop/tabs/diagnostic/statusLabels.ts:24"
+      "src/prokop/tabs/history/model.ts:82"
     ]
   },
   {
@@ -7135,13 +7100,6 @@
     "key": "New version %s is available for %s",
     "places": [
       "src/prokop/services/core.service.ts:42"
-    ]
-  },
-  {
-    "call": "News",
-    "key": "News",
-    "places": [
-      "src/constants.ts:62"
     ]
   },
   {
@@ -7374,8 +7332,8 @@
     "call": "No events recorded yet",
     "key": "No events recorded yet",
     "places": [
-      "src/prokop/tabs/history/initController.ts:233",
-      "src/prokop/tabs/dashboard/overviewCards.ts:339"
+      "src/prokop/tabs/dashboard/overviewCards.ts:339",
+      "src/prokop/tabs/history/initController.ts:233"
     ]
   },
   {
@@ -7418,8 +7376,8 @@
     "call": "No reload recorded yet",
     "key": "No reload recorded yet",
     "places": [
-      "src/prokop/tabs/history/model.ts:152",
-      "src/prokop/tabs/dashboard/overview.ts:410"
+      "src/prokop/tabs/dashboard/overview.ts:410",
+      "src/prokop/tabs/history/model.ts:152"
     ]
   },
   {
@@ -7745,12 +7703,12 @@
     "key": "Not running",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:356",
+      "src/prokop/tabs/dashboard/overview.ts:253",
       "src/prokop/tabs/diagnostic/diagnostic.store.ts:136",
       "src/prokop/tabs/diagnostic/initController.ts:107",
       "src/prokop/tabs/diagnostic/initController.ts:331",
       "src/prokop/tabs/diagnostic/initController.ts:386",
-      "src/prokop/tabs/diagnostic/initController.ts:459",
-      "src/prokop/tabs/dashboard/overview.ts:253"
+      "src/prokop/tabs/diagnostic/initController.ts:459"
     ]
   },
   {
@@ -10143,29 +10101,15 @@
     ]
   },
   {
-    "call": "Russia: blocked from outside",
-    "key": "Russia: blocked from outside",
-    "places": [
-      "src/constants.ts:52"
-    ]
-  },
-  {
-    "call": "Russia: blocked inside",
-    "key": "Russia: blocked inside",
-    "places": [
-      "src/constants.ts:50"
-    ]
-  },
-  {
     "call": "Save",
     "key": "Save",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3747",
       "src/prokop/tabs/autotune/initController.ts:562",
       "src/prokop/tabs/autotune/initController.ts:764",
+      "src/prokop/tabs/dashboard/initController.ts:1448",
       "src/prokop/tabs/history/initController.ts:476",
-      "src/prokop/tabs/history/initController.ts:613",
-      "src/prokop/tabs/dashboard/initController.ts:1448"
+      "src/prokop/tabs/history/initController.ts:613"
     ]
   },
   {
@@ -13689,13 +13633,6 @@
     "key": "UDP (Unprotected DNS)",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:407"
-    ]
-  },
-  {
-    "call": "Ukraine",
-    "key": "Ukraine",
-    "places": [
-      "src/constants.ts:54"
     ]
   },
   {

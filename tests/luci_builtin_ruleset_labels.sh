@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# The Built-in rule sets list of a rule names each list as the Stage 6.10
-# localization does (main.domainListLabel: "Russia: blocked inside", "Adult
-# sites", ...), both for the items already in the list and for the ones
-# offered below it, never by the internal catalog names ("Russia inside",
-# "Porn"), which have no translation (UC-226). The widget is the real one of
-# section.js in the rule modal, for LuCI 24.10 and 25.12.
+# The Built-in rule sets list of a rule names each list by its upstream list
+# name (main.domainListLabel: "Russia inside", "Russia outside", "Porn", ...),
+# untranslated, both for the items already in the list and for the ones
+# offered below it, never by the raw keys. Translated names hid what a list
+# is ("blocked from outside" read as the opposite of russia_outside). The
+# widget is the real one of section.js in the rule modal, for LuCI 24.10 and
+# 25.12.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 node - "$ROOT_DIR/tests/helpers/luci_form_harness.js" <<'NODE'
@@ -37,17 +38,17 @@ const config = {
     const label = (key) => env.main.domainListLabel(key);
     const keys = Object.keys(env.main.DOMAIN_LIST_OPTIONS);
 
-    assert.equal(widget.itemLabels.russia_inside, 'Russia: blocked inside');
-    assert.equal(widget.itemLabels.porn, 'Adult sites');
+    assert.equal(widget.itemLabels.russia_inside, 'Russia inside');
+    assert.equal(widget.itemLabels.porn, 'Porn');
     for (const key of keys)
-      assert.equal(widget.itemLabels[key], label(key), `${version}: ${key} is not named as localized`);
+      assert.equal(widget.itemLabels[key], label(key), `${version}: ${key} is not named by its list name`);
 
     // Offered below the list: what is not in it yet, with the same names.
     assert.deepEqual(Object.keys(widget.choices).sort(),
       keys.filter((key) => !['russia_inside', 'porn'].includes(key)).sort());
     for (const [key, text] of Object.entries(widget.choices))
-      assert.equal(text, label(key), `${version}: offered ${key} is not named as localized`);
-    assert.equal(widget.choices.geoblock, 'Geo-blocked services');
+      assert.equal(text, label(key), `${version}: offered ${key} is not named by its list name`);
+    assert.equal(widget.choices.geoblock, 'Geo Block');
     assert.deepEqual(widget.htmlChoiceLabels, [], `${version}: a label went to addChoices as HTML (FE-13)`);
   }
   console.log('luci_builtin_ruleset_labels: PASS');

@@ -42,33 +42,10 @@ export const DOMAIN_LIST_OPTIONS = {
   cloudfront: 'CloudFront ASN',
 };
 
-// The shown name of a built-in list: descriptive names are translated,
-// service and brand names are kept.
+// The shown name of a built-in list: the upstream list name, untranslated,
+// so it matches the list names used by the list sources and other guides.
 export function domainListLabel(key: string) {
-  switch (key) {
-    case 'russia_inside':
-      return _('Russia: blocked inside');
-    case 'russia_outside':
-      return _('Russia: blocked from outside');
-    case 'ukraine_inside':
-      return _('Ukraine');
-    case 'geoblock':
-      return _('Geo-blocked services');
-    case 'block':
-      return _('Block list');
-    case 'porn':
-      return _('Adult sites');
-    case 'news':
-      return _('News');
-    case 'anime':
-      return _('Anime');
-    case 'ads_hagezi_pro':
-      return _('Ads (Hagezi Pro)');
-    default:
-      return (
-        DOMAIN_LIST_OPTIONS[key as keyof typeof DOMAIN_LIST_OPTIONS] ?? key
-      );
-  }
+  return DOMAIN_LIST_OPTIONS[key as keyof typeof DOMAIN_LIST_OPTIONS] ?? key;
 }
 
 export const SECONDARY_RULESET_OPTIONS = {

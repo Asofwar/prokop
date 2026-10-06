@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-05 23:18+0300\n"
-"PO-Revision-Date: 2026-10-05 23:18+0300\n"
+"POT-Creation-Date: 2026-10-06 10:21+0000\n"
+"PO-Revision-Date: 2026-10-06 10:21+0000\n"
 "Last-Translator: Asofwar\n"
 "Language-Team: none\n"
 "Language: ru\n"
@@ -425,12 +425,6 @@ msgstr "Набор адресов для проверки"
 msgid "Adds X25519MLKEM768 to the TLS ClientHello of this rule's REALITY servers with the chrome fingerprint. Needed by REALITY servers on Xray-core 26.9.8 and newer (3x-ui 3.8.0 and newer) that answer with their mask site otherwise. Breaks REALITY servers without ML-KEM support: turn it on only for such servers."
 msgstr "Добавляет X25519MLKEM768 в TLS ClientHello REALITY-серверов этого правила с отпечатком chrome. Нужно REALITY-серверам на Xray-core 26.9.8 и новее (3x-ui 3.8.0 и новее), которые без него отвечают маскировочным сайтом. Ломает REALITY-серверы без поддержки ML-KEM: включайте только для таких серверов."
 
-msgid "Ads (Hagezi Pro)"
-msgstr "Реклама (Hagezi Pro)"
-
-msgid "Adult sites"
-msgstr "Сайты для взрослых"
-
 msgid "Advanced"
 msgstr "Дополнительно"
 
@@ -508,9 +502,6 @@ msgstr "и ещё %d"
 
 msgid "and %d more addresses"
 msgstr "и ещё адресов: %d"
-
-msgid "Anime"
-msgstr "Аниме"
 
 msgid "Another action of this kind is already running. Try again when it finishes."
 msgstr "Уже выполняется другое такое же действие. Повторите, когда оно завершится."
@@ -784,9 +775,6 @@ msgstr "Трафик BitTorrent, который распознал Prokop, ид�
 
 msgid "Block"
 msgstr "Блокировка"
-
-msgid "Block list"
-msgstr "Список блокировки"
 
 msgid "Block this section's traffic instead of sending it directly when the VPN, sing-box or Prokop itself is not running. Applies to forwarded client traffic, survives a Prokop stop, firewall reloads and reboots. Earlier Zapret and Bypass sections keep working. For a section with a subscription, changing it restarts sing-box: a section whose subscription could not be loaded is rejected only while it is protected."
 msgstr "Блокировать трафик этого раздела, а не пускать его напрямую, когда VPN, sing-box или сам Prokop не работают. Действует для трафика клиентов, сохраняется при остановке Prokop, перезагрузке файрвола и роутера. Разделы Zapret и Bypass, стоящие выше, продолжают работать. Для раздела с подпиской изменение опции перезапускает sing-box: раздел, подписку которого не удалось загрузить, отклоняется, только пока он защищён."
@@ -2129,9 +2117,6 @@ msgstr "Fuzzing здесь не поддерживается, потому чт�
 msgid "GB"
 msgstr "ГБ"
 
-msgid "Geo-blocked services"
-msgstr "Сервисы с геоблокировкой"
-
 msgid "Get global check"
 msgstr "Получить глобальную проверку"
 
@@ -2956,9 +2941,6 @@ msgstr "Никогда"
 
 msgid "New version %s is available for %s"
 msgstr "Доступна новая версия %s для %s"
-
-msgid "News"
-msgstr "Новости"
 
 msgid "Next scheduled check"
 msgstr "Следующая плановая проверка"
@@ -4192,12 +4174,6 @@ msgstr "Работает"
 
 msgid "running: traffic goes through the VPN"
 msgstr "работает: трафик идёт через VPN"
-
-msgid "Russia: blocked from outside"
-msgstr "Россия: блокируют извне"
-
-msgid "Russia: blocked inside"
-msgstr "Россия: заблокировано внутри"
 
 msgid "Save"
 msgstr "Сохранить"
@@ -5680,9 +5656,6 @@ msgstr "Тип"
 
 msgid "UDP (Unprotected DNS)"
 msgstr "UDP (Незащищённый DNS)"
-
-msgid "Ukraine"
-msgstr "Украина"
 
 msgid "Unable to validate the ByeDPI strategy through the backend parser."
 msgstr "Не удалось проверить стратегию ByeDPI через backend-парсер."
