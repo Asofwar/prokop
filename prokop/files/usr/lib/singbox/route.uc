@@ -22,15 +22,23 @@ function config(settings, runtime) {
     // IPv6 connection is sniffed and its QUIC rejected like an IPv4 one
     // (UC-097).
     let tproxy_inbounds = [ runtime_constants.TPROXY_INBOUND_TAG, runtime_constants.TPROXY_INBOUND6_TAG ];
-    let sniff_inbounds = [ ...tproxy_inbounds, runtime_constants.DNS_INBOUND_TAG ];
+    // The DNS-only inbounds: nothing but DNS reaches them. Each is a direct
+    // inbound without an override address, so a connection the sniffer did
+    // not take for DNS would go to final, direct-out, back to the inbound's
+    // own address and port: sing-box connected to itself in a loop (source
+    // DNS on 1603 of devices, thousands of connections a minute). They are
+    // hijacked whatever the sniffer says.
+    let dns_inbounds = [ runtime_constants.DNS_INBOUND_TAG ];
     if (type(runtime) == "object" && bool_value(runtime.source_aware_dns))
-        push(sniff_inbounds, runtime_constants.SOURCE_DNS_INBOUND_TAG);
+        push(dns_inbounds, runtime_constants.SOURCE_DNS_INBOUND_TAG);
     if (type(runtime) == "object" && type(runtime.dns_health_inbounds) == "array")
         for (let inbound in runtime.dns_health_inbounds)
-            push(sniff_inbounds, inbound);
+            push(dns_inbounds, inbound);
+    let sniff_inbounds = [ ...tproxy_inbounds, ...dns_inbounds ];
     let result = {
         rules: [
             { action: "sniff", inbound: sniff_inbounds },
+            { action: "hijack-dns", inbound: dns_inbounds },
             { action: "hijack-dns", port: 53 },
             { action: "hijack-dns", protocol: "dns" }
         ],

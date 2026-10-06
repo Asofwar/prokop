@@ -1345,6 +1345,14 @@ assert(route_rule(matchers, r => r.inbound == "proxy-mixed-in" && r.outbound == 
 let source_dns_in = inbound(matchers, "source-dns-in");
 assert(source_dns_in && source_dns_in.type == "direct" && source_dns_in.listen == "::" && source_dns_in.listen_port == 1603, "source-aware DNS uses one dual-stack inbound");
 assert(route_rule(matchers, r => r.action == "sniff" && contains(r.inbound, "source-dns-in")) != null, "source-aware DNS inbound is sniffed before hijacking");
+// A connection on a DNS-only inbound the sniffer did not take for DNS must
+// not reach final (direct-out): its destination is the inbound itself, so
+// sing-box connected to its own 1603 in a loop.
+let dns_inbound_hijack_index = route_rule_index(matchers, r => r.action == "hijack-dns" && contains(r.inbound, "source-dns-in") && contains(r.inbound, "dns-in") && r.protocol == null && r.port == null);
+assert(dns_inbound_hijack_index >= 0, "DNS-only inbounds are hijacked whatever the sniffer says");
+for (let i = 0; i < dns_inbound_hijack_index; i++)
+    assert(matchers.route.rules[i].action == "sniff", "nothing routes DNS-only inbounds before their hijack");
+assert(route_rule(matchers, r => r.action == "hijack-dns" && contains(r.inbound, "tproxy-in")) == null, "transparent proxy traffic is not hijacked by inbound");
 assert(dns_server(matchers, r => r.tag == "dnsmasq-server" && r.type == "udp" && r.server == "127.0.0.1" && r.server_port == 53) != null, "source-aware DNS uses the existing dnsmasq instance");
 let bypass_dnsmasq = dns_rule(matchers, r =>
     r.type == "logical" && r.server == "dnsmasq-server" &&
