@@ -962,6 +962,17 @@ function discard_singbox_config_stage(stage_path) {
         module_success(SINGBOX_UC, [ "discard-config-stage", stage_path ]);
 }
 
+// The backup commit-config-stage made: the previous config.json and, next
+// to it, the previous section caches (singbox/runtime.uc
+// discard_config_backup). Both go once the transaction is decided.
+function remove_singbox_backup(backup_path) {
+    backup_path = as_string(backup_path);
+    if (backup_path == "")
+        return;
+    remove_file(backup_path);
+    command_success_from_args([ "rm", "-rf", backup_path + ".section-cache" ]);
+}
+
 // A stage init-config consumed is gone already, and its discard changes
 // nothing.
 function discard_restart_checked_stage() {
@@ -1675,9 +1686,9 @@ function abandon_reload_for_stop(stage_path, backup_path) {
     nft_candidate_finish(false);
     discard_singbox_config_stage(stage_path);
     if (as_string(backup_path) != "")
-        remove_file(backup_path);
+        remove_singbox_backup(backup_path);
     if (dpi_singbox_backup != "")
-        remove_file(dpi_singbox_backup);
+        remove_singbox_backup(dpi_singbox_backup);
     discard_dpi_snapshot();
     discard_dnsmasq_reload_config();
     remove_file(RELOAD_STATE_SNAPSHOT_FILE);
@@ -1736,7 +1747,7 @@ function abort_reload(status, runtime_changed) {
         }
         log_message("Could not restore the previous dnsmasq configuration; stopping the partial runtime", "fatal");
         if (dpi_singbox_backup != "")
-            remove_file(dpi_singbox_backup);
+            remove_singbox_backup(dpi_singbox_backup);
         discard_dpi_snapshot();
         cleanup_failed_runtime();
         remove_file(RELOAD_STATE_SNAPSHOT_FILE);
@@ -2751,7 +2762,7 @@ function reload(reason) {
         if (dpi_snapshot_dir != "")
             dpi_singbox_backup = staged_singbox_backup;
         else
-            remove_file(staged_singbox_backup);
+            remove_singbox_backup(staged_singbox_backup);
         runtime_changed = true;
     }
 
@@ -2800,7 +2811,7 @@ function reload(reason) {
         return abort_reload(status, runtime_changed);
     keep_cron_refresh_pending(RELOAD_STATE_FILE);
     if (dpi_singbox_backup != "")
-        remove_file(dpi_singbox_backup);
+        remove_singbox_backup(dpi_singbox_backup);
     discard_dpi_snapshot();
     discard_dnsmasq_reload_config();
     // A changed list source left the nft rebuild to the list worker's

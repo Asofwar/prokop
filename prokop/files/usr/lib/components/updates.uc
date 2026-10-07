@@ -4728,7 +4728,7 @@ function subscription_discard_config_stage(stage_path, backup_path) {
     if (as_string(stage_path) != "")
         module_success([ LIB_DIR + "/singbox/runtime.uc", "discard-config-stage", stage_path ]);
     if (as_string(backup_path) != "")
-        remove_file(backup_path);
+        module_success([ LIB_DIR + "/singbox/runtime.uc", "discard-config-backup", backup_path ]);
 }
 
 // This update holds reload.lock, and a stop waits for it only for a bounded
@@ -4847,8 +4847,7 @@ function subscription_update_common_locked(force, target_section, target_source_
     // A stop requested while this update held reload.lock tears the runtime
     // down as soon as the lock is released: leave sing-box stopped.
     if (subscription_stop_requested()) {
-        remove_file(backup_config_path);
-        subscription_discard_config_stage(staged_config_path, "");
+        subscription_discard_config_stage(staged_config_path, backup_config_path);
         log_message("Prokop is stopping; the updated subscriptions were saved and sing-box stays stopped", "info");
         return true;
     }
@@ -4877,8 +4876,7 @@ function subscription_update_common_locked(force, target_section, target_source_
             log_message("Subscription runtime update rollback failed; sing-box remains stopped", "fatal");
         return false;
     }
-    remove_file(backup_config_path);
-    subscription_discard_config_stage(staged_config_path, "");
+    subscription_discard_config_stage(staged_config_path, backup_config_path);
     // This update applied the sing-box configuration only. A reload queued
     // before or during it has not been applied (init.d queues every reload
     // while a list update runs, with or without reload.lock): recording the
