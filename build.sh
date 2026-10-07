@@ -320,6 +320,8 @@ build_backend_root() {
   install -d "$output_root/lib/upgrade/keep.d"
   install -m 0644 "$ROOT_DIR/prokop/files/lib/upgrade/keep.d/prokop-killswitch" "$output_root/lib/upgrade/keep.d/prokop-killswitch"
   install -m 0644 "$ROOT_DIR/prokop/files/lib/upgrade/keep.d/prokop-torrserver" "$output_root/lib/upgrade/keep.d/prokop-torrserver"
+  install -d "$output_root/etc/hotplug.d/ntp"
+  install -m 0644 "$ROOT_DIR/prokop/files/etc/hotplug.d/ntp/60-prokop-time" "$output_root/etc/hotplug.d/ntp/60-prokop-time"
   install -d "$output_root/usr/share/nftables.d/ruleset-post"
   install -m 0644 "$ROOT_DIR/prokop/files/usr/share/nftables.d/ruleset-post/90-prokop-killswitch-loader.nft" \
     "$output_root/usr/share/nftables.d/ruleset-post/90-prokop-killswitch-loader.nft"

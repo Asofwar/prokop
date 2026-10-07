@@ -504,7 +504,7 @@ run() {
         /usr/bin/prokop /usr/libexec/prokop-ro /usr/bin/sing-box /usr/lib/libcronet.so \
         /etc/init.d/prokop /etc/init.d/prokop-killswitch /etc/init.d/prokop-torrserver-direct \
         /etc/init.d/prokop-torrserver /etc/init.d/prokop-dns-failsafe /etc/init.d/prokop-fw-watch \
-        /etc/init.d/sing-box /etc/uci-defaults/50_luci-prokop \
+        /etc/init.d/sing-box /etc/uci-defaults/50_luci-prokop /etc/hotplug.d/ntp/60-prokop-time \
         /usr/share/luci/menu.d/luci-app-prokop.json /usr/share/rpcd/acl.d/luci-app-prokop.json \
         /usr/share/nftables.d/ruleset-post/90-prokop-killswitch-loader.nft \
         /usr/share/nftables.d/ruleset-post/90-prokop-killswitch.nft; do
