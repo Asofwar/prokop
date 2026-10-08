@@ -6,6 +6,7 @@
 "require view.prokop.notifications as notifications";
 "require view.prokop.torrserver as torrserver";
 "require view.prokop.updates as updates";
+"require view.prokop.core_versions as coreVersions";
 "require view.prokop.configform as configform";
 
 const EntryPoint = {
@@ -45,6 +46,10 @@ const EntryPoint = {
     torrserver.createTorrServerContent(
       settingsTab("settings_torrserver", _("TorrServer")),
       uiCapabilities,
+    );
+
+    coreVersions.createCoreVersionContent(
+      settingsTab("settings_core_versions", _("Core version")),
     );
 
     const updatesSection = prokopMap.section(

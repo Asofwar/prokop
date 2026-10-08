@@ -4,7 +4,7 @@
 // pair is valid input to both or to neither (UC-119).
 const ACTIONS = {
     prokop: [ "check_update", "install" ],
-    sing_box: [ "check_update", "install", "install_extended", "install_extended_compressed", "install_tiny", "install_stable" ],
+    sing_box: [ "check_update", "install", "install_extended", "install_extended_compressed", "install_tiny", "install_stable", "install_version" ],
     zapret: [ "check_update", "install", "remove" ],
     zapret2: [ "check_update", "install", "remove" ],
     byedpi: [ "check_update", "install", "remove" ],

@@ -49,6 +49,7 @@ fail() {
 # restore, the package's prerm; a second full_uninstall, or its alias
 # uninstall, answers itself).
 ALLOWED="
+core_releases device_policy_status priority_health profiles_list profile_diff smart_detect_status sidecars_status support_session_status
 stop disable killswitch_disable dnsmasq_restore restore_dnsmasq package_prerm full_uninstall uninstall
 killswitch_status show_config show_version show_sing_box_config show_sing_box_version
 check_proxy check_nft check_nft_rules check_sing_box check_logs check_sing_box_logs check_fakeip
@@ -65,6 +66,7 @@ validate_nfqws2_strategy_json validate_byedpi_strategy_json notify_status
 # Everything that changes Prokop's configuration, snapshots, scheduled jobs,
 # packages or runtime.
 REFUSED="
+profile_save profile_activate profile_remove smart_detect_run sidecars_apply sidecars_stop support_session_prepare support_session_start support_session_stop
 start main restart reload enable dns_failover_apply
 list_update list_update_if_due list_update_async subscription_update subscription_update_async subscription_update_if_due
 service_action_async latency_test_async ui_action_ack neutralize_zapret_defaults

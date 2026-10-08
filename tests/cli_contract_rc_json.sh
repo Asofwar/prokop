@@ -54,6 +54,23 @@ command -v ucode >/dev/null || fail "ucode is required"
 command -v node >/dev/null || fail "node is required"
 
 CONTRACT="$(cat <<'TABLE'
+core_releases                  | json          | fork experiments; covered: fork_experiments
+device_policy_status           | json          | fork experiments; covered: fork_experiments
+priority_health                | json          | fork experiments; covered: fork_experiments
+profiles_list                  | json-success  | fork experiments; covered: fork_experiments
+profile_save                   | json-success  | fork experiments; covered: fork_experiments
+profile_activate               | json-success  | fork experiments; covered: fork_experiments
+profile_diff                   | json-success  | fork experiments; covered: fork_experiments
+profile_remove                 | json-success  | fork experiments; covered: fork_experiments
+smart_detect_status            | json-success  | fork experiments; covered: fork_experiments
+smart_detect_run               | json-success  | fork experiments; covered: fork_experiments
+sidecars_status                | json-success  | fork experiments; covered: fork_experiments
+sidecars_apply                 | json-success  | fork experiments; covered: fork_experiments
+sidecars_stop                  | json-success  | fork experiments; covered: fork_experiments
+support_session_status         | json-success  | fork experiments; covered: fork_experiments
+support_session_prepare        | json-success  | fork experiments; covered: fork_experiments
+support_session_start          | json-success  | fork experiments; covered: fork_experiments
+support_session_stop           | json-success  | fork experiments; covered: fork_experiments
 start                          | rc            | init.d start; covered: service_start_trap, initd_state, deferred_start_ui_job
 stop                           | rc            | covered: stop_paths_owned, initd_state
 reload                         | rc            | prints "queued"/"stopped" for UI-tracked reloads; covered: ui_reload_queued_job, stopped_reload_job

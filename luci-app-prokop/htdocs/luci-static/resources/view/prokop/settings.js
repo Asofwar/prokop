@@ -404,6 +404,7 @@ function createSettingsContent(sections, capabilities) {
   );
   o.value("doh", _("DNS over HTTPS (DoH)"));
   o.value("dot", _("DNS over TLS (DoT)"));
+  o.value("doq", _("DNS over QUIC (DoQ)"));
   o.value("udp", _("UDP (Unprotected DNS)"));
   o.default = "udp";
   o.rmempty = false;
@@ -417,6 +418,35 @@ function createSettingsContent(sections, capabilities) {
     ),
   );
   configureDnsList(dnsOption, main.DNS_SERVER_OPTIONS, "77.88.8.8");
+
+  const protocolOption = sections.dns.children.find(
+    (field) => field.option === "dns_type",
+  );
+  main.attachDnsProfiles(sections.dns, protocolOption, dnsOption, form);
+  let mtls = sections.dns.option(
+    form.Flag,
+    "dns_mtls_enabled",
+    _("DoH client certificate"),
+  );
+  mtls.depends("dns_type", "doh");
+  mtls.default = "0";
+  mtls = sections.dns.option(
+    form.Value,
+    "dns_mtls_host",
+    _("Certificate DNS hostname"),
+  );
+  mtls.depends("dns_mtls_enabled", "1");
+  mtls.rmempty = false;
+  for (const [key, label] of [
+    ["dns_mtls_client_certificate", "Client certificate path"],
+    ["dns_mtls_client_key", "Client private key path"],
+  ]) {
+    mtls = sections.dns.option(form.Value, key, _(label));
+    mtls.depends("dns_mtls_enabled", "1");
+    mtls.rmempty = false;
+    mtls.validate = (_id, value) =>
+      main.validatePath(value).valid || _("Use an absolute file path");
+  }
 
   const bootstrapOption = sections.dns.option(
     form.DynamicList,

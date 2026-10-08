@@ -7,6 +7,7 @@
 if (typeof structuredClone !== 'function')
   globalThis.structuredClone = (obj) => JSON.parse(JSON.stringify(obj));
 
+export { attachDnsProfiles } from './prokop/dnsProfiles';
 export { validateIP } from './validators/validateIp';
 export { validateDomain } from './validators/validateDomain';
 export { validateDNS, validateBootstrapDNS } from './validators/validateDns';

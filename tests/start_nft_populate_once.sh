@@ -127,6 +127,8 @@ if (name == "service/reload.uc" && mode == "plan-state-files") {
 }
 if (name == "components/updates.uc" && mode == "refresh-cron-from-uci")
     exit(int(getenv("CRON_FAILS") ?? "0"));
+if (name == "experiments/sidecars.uc" && mode == "ensure-user")
+    exit(int(getenv("PROVIDER_USER_FAILS") ?? "0"));
 exit(mode == "runtime-cache-needs-rebuild" ? 1 : 0);
 UC
 }
@@ -134,7 +136,7 @@ for module in service/state.uc subscription/cache.uc config/validator.uc nft/app
   singbox/priority.uc singbox/dns_failover.uc singbox/ruleset_cache.uc components/updates.uc \
   autotune/manager.uc providers/byedpi/runtime.uc providers/zapret/runtime.uc providers/zapret2/runtime.uc \
   dns/apply.uc diagnostics/runtime.uc diagnostics/health.uc config/snapshots.uc core/packages.uc \
-  service/ui.uc service/reload.uc service/lifecycle.uc killswitch/runtime.uc; do
+  service/ui.uc service/reload.uc service/lifecycle.uc killswitch/runtime.uc experiments/sidecars.uc; do
   fake_module "$module"
 done
 
@@ -163,3 +165,31 @@ case "$init" in
   *) fail "init-config after the committed candidate must not fill the nft sets again live: $init" ;;
 esac
 ok "start fills the nft sets once, inside the atomic candidate"
+
+# First-boot provider sockets need their dedicated uid excluded before nft
+# is built. A provisioning failure must abort before touching the dataplane.
+printf 'prokop.native=sidecar\nprokop.native.enabled=1\n' >>"$PROKOP_UCI_STATE_FILE"
+: >"$EVENTS"
+if env PROKOP_LIB="$FAKE_LIB" RUNNING=0 PROVIDER_USER_FAILS=1 ucode -L "$LIB" "$LIB/service/lifecycle.uc" start >"$WORK_DIR/lifecycle.out" 2>&1; then
+  fail "start succeeded despite provider user provisioning failure"
+fi
+has_event 'experiments/sidecars.uc ensure-user' || fail "provider user was not provisioned"
+if has_event 'nft/apply.uc nft-rebuild-runtime-from-uci'; then
+  fail "start rebuilt nft despite provider user provisioning failure"
+fi
+: >"$EVENTS"
+env PROKOP_LIB="$FAKE_LIB" RUNNING=0 ucode -L "$LIB" "$LIB/service/lifecycle.uc" start >"$WORK_DIR/lifecycle.out" 2>&1 ||
+  fail "start with local providers failed"
+wait_until 20 no_fake_modules || fail "provider start workers did not finish"
+user="$(line_of 'experiments/sidecars.uc ensure-user')"
+rebuild="$(line_of 'nft/apply.uc nft-rebuild-runtime-from-uci')"
+launch="$(line_of 'experiments/sidecars.uc start-runtime')"
+commit="$(line_of 'nft/apply.uc nft-apply-candidate-batch ')"
+[ -n "$commit" ] || commit="$(line_of 'nft/apply.uc nft-commit-candidate-batch ')"
+if [ -z "$user" ] || [ -z "$rebuild" ] || [ -z "$launch" ] || [ -z "$commit" ]; then
+  fail "provider startup phase missing"
+fi
+if [ "$user" -ge "$rebuild" ] || [ "$commit" -ge "$launch" ]; then
+  fail "providers launched before their uid bypass policy"
+fi
+ok "first-boot provider uid bypass precedes client startup; provisioning failure aborts nft"

@@ -1508,8 +1508,18 @@ function deferred_section_rejected(section) {
 }
 
 function nft_runtime_signature_body(settings, sections) {
-    let body = "";
+    let body = require("config.alice").signature_body(settings, signature_add_value, "");
+    if (bool_option(settings, "gaming_enabled", false)) {
+        body = signature_add_value(body, "settings.gaming_enabled", "1");
+        body = signature_add_value(body, "settings.gaming_ips", option(settings, "gaming_ips", ""));
+        body = signature_add_value(body, "settings.gaming_section", option(settings, "gaming_section", ""));
+    }
 
+    let sidecars = uci_core.section_objects(CONFIG_NAME, "sidecar");
+    if (length(sidecars)) {
+        body = signature_add_value(body, "settings.sidecars", sprintf("%J", sidecars));
+        body = signature_add_value(body, "settings.sidecar_uid", require("experiments.sidecar_config").uid());
+    }
     body = signature_add_value(body, "settings.source_network_interfaces", option(settings, "source_network_interfaces", "br-lan"));
     body = signature_add_value(body, "settings.exclude_ntp", bool_option(settings, "exclude_ntp", false) ? "1" : "0");
     body = signature_add_value(body, "settings.intercept_client_dns", connections.client_dns_intercept_enabled(settings, sections) ? "1" : "0");
@@ -1933,9 +1943,19 @@ function sing_box_signature_body(settings, sections, mwan3_active) {
     settings = object_or_empty(settings);
     let body = "";
 
+    body = require("config.alice").signature_body(settings, signature_add_value, body);
+    if (bool_option(settings, "gaming_enabled", false)) {
+        body = signature_add_value(body, "settings.gaming_enabled", "1");
+        body = signature_add_value(body, "settings.gaming_ips", option(settings, "gaming_ips", ""));
+        body = signature_add_value(body, "settings.gaming_section", option(settings, "gaming_section", ""));
+    }
+
     // Absent means UDP, as for the runtime (singbox/dns.uc state_template),
     // the validator and LuCI (UC-088).
     body = signature_add_value(body, "settings.dns_type", option(settings, "dns_type", "udp"));
+    if (bool_option(settings, "dns_mtls_enabled", false))
+      for (let key in [ "dns_mtls_enabled", "dns_mtls_host", "dns_mtls_client_certificate", "dns_mtls_client_key" ])
+        body = signature_add_value(body, "settings." + key, option(settings, key, ""));
     body = signature_add_value(body, "settings.dns_strategy", option(settings, "dns_strategy", "prefer_ipv4"));
     for (let value in list_option(settings, "dns_server", "77.88.8.8"))
         body = signature_add_value(body, "settings.dns_server", value);

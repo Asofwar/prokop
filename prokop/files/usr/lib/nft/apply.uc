@@ -956,99 +956,6 @@ function nft_prokop_mark_match_args(mark) {
 // shared capture sets of the releases before the per-rule sets: nothing
 // filled them, and the rules matching them never matched (UC-170). The
 // arguments stay so the callers' argument positions do not change.
-function nft_create_runtime_base(table, localv4_set, common_set, port_set, ip_port_set, interface_set, source_interfaces, fakeip_mark, outbound_mark, fakeip_range, tproxy_port, exclude_ntp, localv6_set, common6_set, ip_port6_set, fakeip6_range, tproxy6_address) {
-    localv6_set = default_arg(localv6_set, "localv6");
-    fakeip6_range = default_arg(fakeip6_range, "fc00::/18");
-    tproxy6_address = default_arg(tproxy6_address, "::1");
-
-    if (!nft_create_table(table) ||
-        !nft_create_ipv4_set(table, localv4_set) ||
-        !nft_add_set_elements(table, localv4_set, join(",", LOCALV4_RANGES)) ||
-        !nft_create_ipv6_set(table, localv6_set) ||
-        !nft_add_set_elements(table, localv6_set, join(",", LOCALV6_RANGES)) ||
-        !nft_create_ipv4_set(table, DNS_SOURCE_SET) ||
-        !nft_create_ipv6_set(table, DNS_SOURCE6_SET) ||
-        !nft_create_ifname_set(table, interface_set))
-        return false;
-
-    // Quoted: 'lan@1' or '10g' unquoted are a syntax error for nft (NET-9).
-    for (let interface in whitespace_values(source_interfaces))
-        if (!nft_add_set_elements(table, interface_set, sprintf("%J", interface)))
-            return false;
-
-    if (!nft_create_chain(table, "dns_redirect", "{ type nat hook prerouting priority -101; policy accept; }") ||
-        !nft_create_chain(table, "mangle", "{ type filter hook prerouting priority -149; policy accept; }") ||
-        !nft_create_chain(table, "mangle_output", "{ type route hook output priority -150; policy accept; }") ||
-        !nft_create_priority_chains(table) ||
-        !nft_create_chain(table, "proxy", "{ type filter hook prerouting priority -100; policy accept; }"))
-        return false;
-
-    if (!nft_add_rule(table, "dns_redirect", [ "iifname", "@" + as_string(interface_set), "ip", "saddr", "@" + DNS_SOURCE_SET, "tcp", "dport", "53", "counter", "redirect", "to", ":" + as_string(runtime_constants.SOURCE_DNS_INBOUND_PORT) ]) ||
-        !nft_add_rule(table, "dns_redirect", [ "iifname", "@" + as_string(interface_set), "ip", "saddr", "@" + DNS_SOURCE_SET, "udp", "dport", "53", "counter", "redirect", "to", ":" + as_string(runtime_constants.SOURCE_DNS_INBOUND_PORT) ]) ||
-        !nft_add_rule(table, "dns_redirect", [ "iifname", "@" + as_string(interface_set), "ip6", "saddr", "@" + DNS_SOURCE6_SET, "tcp", "dport", "53", "counter", "redirect", "to", ":" + as_string(runtime_constants.SOURCE_DNS_INBOUND_PORT) ]) ||
-        !nft_add_rule(table, "dns_redirect", [ "iifname", "@" + as_string(interface_set), "ip6", "saddr", "@" + DNS_SOURCE6_SET, "udp", "dport", "53", "counter", "redirect", "to", ":" + as_string(runtime_constants.SOURCE_DNS_INBOUND_PORT) ]) ||
-        // Every capture rule below matches the source interfaces only: WAN
-        // and other traffic leaves at the first rule instead of passing
-        // every rule of every section (audit optimization 21).
-        !nft_add_rule(table, "mangle", [ "iifname", "!=", "@" + as_string(interface_set), "return" ]) ||
-        // Answers are never captured (NET-1): capture goes by destination,
-        // and the answer of a connection that a host in a captured list
-        // opened to the router or to a LAN server went to sing-box too.
-        !nft_add_rule(table, "mangle", [ "ct", "direction", "reply", "return" ]) ||
-        !nft_add_rule(table, "mangle", [ "ct", "status", "dnat", "return" ]) ||
-        // The router's own addresses (its WAN address, the global IPv6
-        // address of router.lan) go direct (NET-2); FakeIP is never local.
-        !nft_add_rule(table, "mangle", [ "fib", "daddr", "type", "local", "return" ]) ||
-        !nft_add_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), "ip", "daddr", "@" + as_string(localv4_set), "return" ]) ||
-        !nft_add_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), "ip6", "daddr", "@" + as_string(localv6_set), "ip6", "daddr", "!=", fakeip6_range, "return" ]) ||
-        !nft_add_rule(table, "mangle", [ "jump", "priority_rules" ]) ||
-        !nft_add_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), "ip", "daddr", fakeip_range, "meta", "l4proto", "tcp", "meta", "mark", "set", fakeip_mark, "counter" ]) ||
-        !nft_add_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), "ip", "daddr", fakeip_range, "meta", "l4proto", "udp", "meta", "mark", "set", fakeip_mark, "counter" ]) ||
-        !nft_add_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), "ip6", "daddr", fakeip6_range, "meta", "l4proto", "tcp", "meta", "mark", "set", fakeip_mark, "counter" ]) ||
-        !nft_add_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), "ip6", "daddr", fakeip6_range, "meta", "l4proto", "udp", "meta", "mark", "set", fakeip_mark, "counter" ]) ||
-        !nft_add_rule(table, "proxy", [ "meta", "mark", "&", fakeip_mark, "==", fakeip_mark, "meta", "l4proto", "tcp", "tproxy", "ip", "to", ":" + as_string(tproxy_port), "counter" ]) ||
-        !nft_add_rule(table, "proxy", [ "meta", "mark", "&", fakeip_mark, "==", fakeip_mark, "meta", "l4proto", "udp", "tproxy", "ip", "to", ":" + as_string(tproxy_port), "counter" ]) ||
-        !nft_add_rule(table, "proxy", [ "meta", "mark", "&", fakeip_mark, "==", fakeip_mark, "meta", "l4proto", "tcp", "tproxy", "ip6", "to", core_ip.format_ipv6_tproxy_target(tproxy6_address, tproxy_port), "counter" ]) ||
-        !nft_add_rule(table, "proxy", [ "meta", "mark", "&", fakeip_mark, "==", fakeip_mark, "meta", "l4proto", "udp", "tproxy", "ip6", "to", core_ip.format_ipv6_tproxy_target(tproxy6_address, tproxy_port), "counter" ]) ||
-        !nft_add_rule(table, "mangle_output", [ "ct", "direction", "reply", "return" ]) ||
-        !nft_add_rule(table, "mangle_output", [ "fib", "daddr", "type", "local", "return" ]) ||
-        !nft_add_rule(table, "mangle_output", [ "ip", "daddr", "@" + as_string(localv4_set), "return" ]) ||
-        !nft_add_rule(table, "mangle_output", [ "ip6", "daddr", "@" + as_string(localv6_set), "ip6", "daddr", "!=", fakeip6_range, "return" ]) ||
-        nft_prokop_mark_match_args(outbound_mark) == null ||
-        !nft_add_rule(table, "mangle_output", [ ...nft_prokop_mark_match_args(outbound_mark), "counter", "return" ]) ||
-        !nft_add_rule(table, "mangle_output", [ "jump", "priority_output_rules" ]))
-        return false;
-
-    if (arg_bool(exclude_ntp) && !nft_insert_rule(table, "mangle", [ "udp", "dport", "123", "return" ]))
-        return false;
-
-    return true;
-}
-
-function nft_create_runtime_base_from_uci(table, localv4_set, common_set, port_set, ip_port_set, interface_set, fakeip_mark, outbound_mark, fakeip_range, tproxy_port, localv6_set, common6_set, ip_port6_set, fakeip6_range, tproxy6_address) {
-    let settings = uci_settings();
-
-    return nft_create_runtime_base(
-        table,
-        localv4_set,
-        common_set,
-        port_set,
-        ip_port_set,
-        interface_set,
-        option(settings, "source_network_interfaces", "br-lan"),
-        fakeip_mark,
-        outbound_mark,
-        fakeip_range,
-        tproxy_port,
-        option(settings, "exclude_ntp", "0"),
-        localv6_set,
-        common6_set,
-        ip_port6_set,
-        fakeip6_range,
-        tproxy6_address
-    );
-}
-
 // The shared capture set arguments are ignored, as in
 // nft_create_runtime_base().
 function nft_create_runtime_output_rules(table, localv4_set, common_set, port_set, ip_port_set, fakeip_mark, fakeip_range, localv6_set, common6_set, ip_port6_set, fakeip6_range) {
@@ -1358,6 +1265,197 @@ function nft_add_file_chunks_to_family_sets(path, table, ipv4_set, ipv6_set, kin
 function nft_add_csv_chunks_to_family_sets(csv, table, ipv4_set, ipv6_set, kind, ports_csv, chunk_size_text) {
     return nft_add_values_to_family_sets_once(nft_csv_values(csv), table, ipv4_set, ipv6_set, kind, ports_csv, chunk_size_text);
 }
+
+const ALICE_SOURCE_SET = "prokop_alice_sources";
+const ALICE_SOURCE6_SET = "prokop_alice_sources6";
+const ALICE_MAC_SET = "prokop_alice_macs";
+const ALICE_INTERFACE_SET = "prokop_alice_interfaces";
+const ALICE_GATE_CHAIN = "alice_gate";
+const ALICE_DNS_GATE_CHAIN = "alice_dns_gate";
+let alice_config = require("config.alice");
+
+function nft_create_alice_gate(table, interface_set, list_mode) {
+    let allow = list_mode == alice_config.LIST_MODE_ALLOW;
+    // nft only accepts a port redirect after a transport protocol match in the same rule.
+    let dns_direct = [ "meta", "l4proto", "{", "tcp,", "udp", "}", "counter", "redirect", "to", ":" + as_string(runtime_constants.ALICE_DNS_INBOUND_PORT) ];
+    let matchers = [
+        [ "iifname", "@" + ALICE_INTERFACE_SET ],
+        [ "ether", "saddr", "@" + ALICE_MAC_SET ],
+        [ "ip", "saddr", "@" + ALICE_SOURCE_SET ],
+        [ "ip6", "saddr", "@" + ALICE_SOURCE6_SET ]
+    ];
+
+    if (!nft_create_chain(table, ALICE_GATE_CHAIN, "{ }") ||
+        !nft_create_chain(table, ALICE_DNS_GATE_CHAIN, "{ }"))
+        return false;
+
+    for (let matcher in matchers) {
+        if (!nft_add_rule(table, ALICE_GATE_CHAIN, [ ...matcher, ...(allow ? [ "return" ] : [ "counter", "accept" ]) ]) ||
+            !nft_add_rule(table, ALICE_DNS_GATE_CHAIN, [ ...matcher, ...(allow ? [ "return" ] : dns_direct) ]))
+            return false;
+    }
+
+    if (allow &&
+        (!nft_add_rule(table, ALICE_GATE_CHAIN, [ "counter", "accept" ]) ||
+         !nft_add_rule(table, ALICE_DNS_GATE_CHAIN, dns_direct)))
+        return false;
+
+    for (let protocol in [ "tcp", "udp" ])
+        if (!nft_add_rule(table, "dns_redirect", [ "iifname", "@" + as_string(interface_set), protocol, "dport", "53", "jump", ALICE_DNS_GATE_CHAIN ]))
+            return false;
+
+    return nft_add_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), "jump", ALICE_GATE_CHAIN ]);
+}
+
+function nft_populate_alice_sets(alice, table) {
+    if (!alice.enabled)
+        return true;
+
+    if (!nft_add_csv_chunks_to_family_sets(join(",", alice.ips), table, ALICE_SOURCE_SET, ALICE_SOURCE6_SET, "ips", "", 5000))
+        return false;
+    if (length(alice.macs) > 0 && !nft_add_set_elements(table, ALICE_MAC_SET, join(", ", alice.macs)))
+        return false;
+    if (length(alice.interfaces) > 0 && !nft_add_set_elements(table, ALICE_INTERFACE_SET, join(", ", map(alice_config.nft_interface_elements(alice.interfaces), (name) => sprintf("%J", name)))))
+        return false;
+    return true;
+}
+
+
+function nft_create_runtime_base(table, localv4_set, common_set, port_set, ip_port_set, interface_set, source_interfaces, fakeip_mark, outbound_mark, fakeip_range, tproxy_port, exclude_ntp, localv6_set, common6_set, ip_port6_set, fakeip6_range, tproxy6_address, settings) {
+    settings = settings || uci_settings();
+    let alice = alice_config.config(settings);
+    localv6_set = default_arg(localv6_set, "localv6");
+    fakeip6_range = default_arg(fakeip6_range, "fc00::/18");
+    tproxy6_address = default_arg(tproxy6_address, "::1");
+
+    if (!nft_create_table(table) ||
+        !nft_create_ipv4_set(table, localv4_set) ||
+        !nft_add_set_elements(table, localv4_set, join(",", LOCALV4_RANGES)) ||
+        !nft_create_ipv6_set(table, localv6_set) ||
+        !nft_add_set_elements(table, localv6_set, join(",", LOCALV6_RANGES)) ||
+        !nft_create_ipv4_set(table, DNS_SOURCE_SET) ||
+        !nft_create_ipv6_set(table, DNS_SOURCE6_SET) ||
+        !nft_create_ifname_set(table, interface_set))
+        return false;
+
+    // Quoted: 'lan@1' or '10g' unquoted are a syntax error for nft (NET-9).
+    for (let interface in whitespace_values(source_interfaces))
+        if (!nft_add_set_elements(table, interface_set, sprintf("%J", interface)))
+            return false;
+
+    if (!nft_create_chain(table, "dns_redirect", "{ type nat hook prerouting priority -101; policy accept; }") ||
+        !nft_create_chain(table, "mangle", "{ type filter hook prerouting priority -149; policy accept; }") ||
+        !nft_create_chain(table, "mangle_output", "{ type route hook output priority -150; policy accept; }") ||
+        !nft_create_priority_chains(table) ||
+        (bool_option(settings, "gaming_enabled", false) && !nft_create_chain(table, "game_rules", "")) ||
+        !nft_create_chain(table, "proxy", "{ type filter hook prerouting priority -100; policy accept; }"))
+        return false;
+
+    if (bool_option(settings, "gaming_enabled", false)) {
+        let addresses = common.list_option(settings, "gaming_ips");
+        if (!nft_create_ipv4_set(table, "prokop_game_sources") || !nft_create_ipv6_set(table, "prokop_game_sources6") ||
+            !nft_add_csv_chunks_to_family_sets(join(",", addresses), table, "prokop_game_sources", "prokop_game_sources6", "ips", "", 5000)) return false;
+        for (let family in [ "ip", "ip6" ]) {
+            let sources = family == "ip" ? "@prokop_game_sources" : "@prokop_game_sources6";
+            for (let protocol in [ "tcp", "udp" ])
+                if (!nft_add_rule(table, "dns_redirect", [ "iifname", "@" + as_string(interface_set), family, "saddr", sources,
+                    protocol, "dport", "53", "redirect", "to", ":" + as_string(runtime_constants.ALICE_DNS_INBOUND_PORT) ])) return false;
+        }
+    }
+
+    if (alice.enabled) {
+        if (!nft_create_ipv4_set(table, ALICE_SOURCE_SET) ||
+            !nft_create_ipv6_set(table, ALICE_SOURCE6_SET) ||
+            !nft_create_set(table, ALICE_MAC_SET, "{ type ether_addr; }") ||
+            !nft_create_ifname_set(table, ALICE_INTERFACE_SET) ||
+            !nft_create_alice_gate(table, interface_set, alice.list_mode) ||
+            !nft_populate_alice_sets(alice, table)) return false;
+    }
+
+    if (!nft_add_rule(table, "dns_redirect", [ "iifname", "@" + as_string(interface_set), "ip", "saddr", "@" + DNS_SOURCE_SET, "tcp", "dport", "53", "counter", "redirect", "to", ":" + as_string(runtime_constants.SOURCE_DNS_INBOUND_PORT) ]) ||
+        !nft_add_rule(table, "dns_redirect", [ "iifname", "@" + as_string(interface_set), "ip", "saddr", "@" + DNS_SOURCE_SET, "udp", "dport", "53", "counter", "redirect", "to", ":" + as_string(runtime_constants.SOURCE_DNS_INBOUND_PORT) ]) ||
+        !nft_add_rule(table, "dns_redirect", [ "iifname", "@" + as_string(interface_set), "ip6", "saddr", "@" + DNS_SOURCE6_SET, "tcp", "dport", "53", "counter", "redirect", "to", ":" + as_string(runtime_constants.SOURCE_DNS_INBOUND_PORT) ]) ||
+        !nft_add_rule(table, "dns_redirect", [ "iifname", "@" + as_string(interface_set), "ip6", "saddr", "@" + DNS_SOURCE6_SET, "udp", "dport", "53", "counter", "redirect", "to", ":" + as_string(runtime_constants.SOURCE_DNS_INBOUND_PORT) ]) ||
+        // Every capture rule below matches the source interfaces only: WAN
+        // and other traffic leaves at the first rule instead of passing
+        // every rule of every section (audit optimization 21).
+        !nft_add_rule(table, "mangle", [ "iifname", "!=", "@" + as_string(interface_set), "return" ]) ||
+        // Answers are never captured (NET-1): capture goes by destination,
+        // and the answer of a connection that a host in a captured list
+        // opened to the router or to a LAN server went to sing-box too.
+        !nft_add_rule(table, "mangle", [ "ct", "direction", "reply", "return" ]) ||
+        !nft_add_rule(table, "mangle", [ "ct", "status", "dnat", "return" ]) ||
+        // The router's own addresses (its WAN address, the global IPv6
+        // address of router.lan) go direct (NET-2); FakeIP is never local.
+        !nft_add_rule(table, "mangle", [ "fib", "daddr", "type", "local", "return" ]) ||
+        !nft_add_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), "ip", "daddr", "@" + as_string(localv4_set), "return" ]) ||
+        !nft_add_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), "ip6", "daddr", "@" + as_string(localv6_set), "ip6", "daddr", "!=", fakeip6_range, "return" ]) ||
+        (bool_option(settings, "gaming_enabled", false) && !nft_add_rule(table, "mangle", [ "jump", "game_rules" ])) ||
+        !nft_add_rule(table, "mangle", [ "jump", "priority_rules" ]) ||
+        !nft_add_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), "ip", "daddr", fakeip_range, "meta", "l4proto", "tcp", "meta", "mark", "set", fakeip_mark, "counter" ]) ||
+        !nft_add_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), "ip", "daddr", fakeip_range, "meta", "l4proto", "udp", "meta", "mark", "set", fakeip_mark, "counter" ]) ||
+        !nft_add_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), "ip6", "daddr", fakeip6_range, "meta", "l4proto", "tcp", "meta", "mark", "set", fakeip_mark, "counter" ]) ||
+        !nft_add_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), "ip6", "daddr", fakeip6_range, "meta", "l4proto", "udp", "meta", "mark", "set", fakeip_mark, "counter" ]) ||
+        !nft_add_rule(table, "proxy", [ "meta", "mark", "&", fakeip_mark, "==", fakeip_mark, "meta", "l4proto", "tcp", "tproxy", "ip", "to", ":" + as_string(tproxy_port), "counter" ]) ||
+        !nft_add_rule(table, "proxy", [ "meta", "mark", "&", fakeip_mark, "==", fakeip_mark, "meta", "l4proto", "udp", "tproxy", "ip", "to", ":" + as_string(tproxy_port), "counter" ]) ||
+        !nft_add_rule(table, "proxy", [ "meta", "mark", "&", fakeip_mark, "==", fakeip_mark, "meta", "l4proto", "tcp", "tproxy", "ip6", "to", core_ip.format_ipv6_tproxy_target(tproxy6_address, tproxy_port), "counter" ]) ||
+        !nft_add_rule(table, "proxy", [ "meta", "mark", "&", fakeip_mark, "==", fakeip_mark, "meta", "l4proto", "udp", "tproxy", "ip6", "to", core_ip.format_ipv6_tproxy_target(tproxy6_address, tproxy_port), "counter" ]) ||
+        !nft_add_rule(table, "mangle_output", [ "ct", "direction", "reply", "return" ]) ||
+        !nft_add_rule(table, "mangle_output", [ "fib", "daddr", "type", "local", "return" ]) ||
+        !nft_add_rule(table, "mangle_output", [ "ip", "daddr", "@" + as_string(localv4_set), "return" ]) ||
+        !nft_add_rule(table, "mangle_output", [ "ip6", "daddr", "@" + as_string(localv6_set), "ip6", "daddr", "!=", fakeip6_range, "return" ]) ||
+        nft_prokop_mark_match_args(outbound_mark) == null ||
+        !nft_add_rule(table, "mangle_output", [ ...nft_prokop_mark_match_args(outbound_mark), "counter", "return" ]) ||
+        !nft_add_rule(table, "mangle_output", [ "jump", "priority_output_rules" ]))
+        return false;
+
+    if (bool_option(settings, "gaming_enabled", false)) {
+        for (let family in [ "ip", "ip6" ]) {
+            let sources = family == "ip" ? "@prokop_game_sources" : "@prokop_game_sources6";
+            if (!nft_add_rule(table, "game_rules", [ family, "saddr", sources, "meta", "l4proto", "udp", "return" ])) return false;
+            if (!nft_add_rule(table, "game_rules", [ family, "saddr", sources, "meta", "l4proto", "tcp", "meta", "mark", "set", fakeip_mark, "return" ])) return false;
+        }
+        // UDP must leave the parent too, otherwise later section rules recapture it.
+        for (let family in [ "ip", "ip6" ])
+            if (!nft_insert_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), family, "saddr",
+                family == "ip" ? "@prokop_game_sources" : "@prokop_game_sources6", "meta", "l4proto", "udp", "return" ])) return false;
+    }
+
+    let provider_uid = length(uci_core.section_objects(CONFIG_NAME, "sidecar")) > 0 ? require("experiments.sidecar_config").uid() : "";
+    if (provider_uid != "" && length(uci_core.section_objects(CONFIG_NAME, "sidecar")) > 0 &&
+        !nft_insert_rule(table, "mangle_output", [ "meta", "skuid", provider_uid, "return" ])) return false;
+
+    if (arg_bool(exclude_ntp) && !nft_insert_rule(table, "mangle", [ "udp", "dport", "123", "return" ]))
+        return false;
+
+    return true;
+}
+
+function nft_create_runtime_base_from_uci(table, localv4_set, common_set, port_set, ip_port_set, interface_set, fakeip_mark, outbound_mark, fakeip_range, tproxy_port, localv6_set, common6_set, ip_port6_set, fakeip6_range, tproxy6_address) {
+    let settings = uci_settings();
+
+    return nft_create_runtime_base(
+        table,
+        localv4_set,
+        common_set,
+        port_set,
+        ip_port_set,
+        interface_set,
+        option(settings, "source_network_interfaces", "br-lan"),
+        fakeip_mark,
+        outbound_mark,
+        fakeip_range,
+        tproxy_port,
+        option(settings, "exclude_ntp", "0"),
+        localv6_set,
+        common6_set,
+        ip_port6_set,
+        fakeip6_range,
+        tproxy6_address,
+        settings
+    );
+}
+
 
 // Subnets limited to the section's ports: the ports are added once with
 // the section's rules (nft_add_section_priority_rules); a second add of an
@@ -1749,7 +1847,13 @@ function client_dns_intercept_exclusions_value(settings) {
 }
 
 function nft_runtime_signature_from_settings_and_sections(settings, sections) {
-    let body = "";
+    let body = require("config.alice").signature_body(settings, signature_add_value, "");
+    if (bool_option(settings, "gaming_enabled", false)) {
+        body = signature_add_value(body, "settings.gaming_enabled", "1");
+        body = signature_add_value(body, "settings.gaming_ips", option(settings, "gaming_ips", ""));
+        body = signature_add_value(body, "settings.gaming_section", option(settings, "gaming_section", ""));
+    }
+
 
     body = signature_add_value(body, "settings.source_network_interfaces", option(settings, "source_network_interfaces", "br-lan"));
     body = signature_add_value(body, "settings.exclude_ntp", bool_option(settings, "exclude_ntp", false) ? "1" : "0");

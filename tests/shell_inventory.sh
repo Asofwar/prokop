@@ -49,6 +49,7 @@ expected_shell_scripts="$(
     'prokop/files/etc/init.d/prokop-dns-failsafe' \
     'prokop/files/etc/init.d/prokop-fw-watch' \
     'prokop/files/etc/init.d/prokop-killswitch' \
+    'prokop/files/etc/init.d/prokop-sidecars' \
     'prokop/files/etc/init.d/prokop-torrserver' \
     'prokop/files/etc/init.d/prokop-torrserver-direct' \
     'prokop/files/usr/lib/full-uninstall.sh' \

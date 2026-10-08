@@ -1223,6 +1223,11 @@ function start_main() {
 
     startup_config_fingerprint = external_config_fingerprint();
 
+    // The first startup must provision the bypass uid before generating nft.
+    if (length(uci_core.section_objects(CONFIG_NAME, "sidecar")) > 0 &&
+        module_status(LIB_DIR + "/experiments/sidecars.uc", [ "ensure-user" ]) != 0)
+        return start_phase_failed("local-provider-user", 1);
+
     status = module_status(NFT_UC, [ "ensure-bridge-netfilter-disabled" ]);
     if (status != 0)
         return start_phase_failed("bridge-netfilter", status);
@@ -1340,6 +1345,9 @@ function start_main() {
     if (start_abandoned_for_stop("sing-box"))
         return 1;
 
+    if (length(uci_core.section_objects(CONFIG_NAME, "sidecar")) > 0 &&
+        module_status(LIB_DIR + "/experiments/sidecars.uc", [ "start-runtime" ]) != 0)
+        return start_phase_failed("local-providers", 1);
     module_success(BYEDPI_UC, [ "start-runtime" ]);
 
     status = start_sing_box_and_wait();
@@ -1509,6 +1517,10 @@ function stop_main(explicit_stop) {
     module_success(ZAPRET_UC, [ "stop-runtime" ]);
     module_success(ZAPRET2_UC, [ "stop-runtime" ]);
     module_success(BYEDPI_UC, [ "stop-runtime" ]);
+    if (fs.stat("/var/run/prokop-sidecars/manifest.json") != null)
+        module_success(LIB_DIR + "/experiments/sidecars.uc", [ "stop-runtime" ]);
+    if (fs.stat("/var/run/prokop-support/session.json") != null)
+        module_success(LIB_DIR + "/experiments/support.uc", [ "stop" ]);
     module_success(NFT_UC, [ "remove-dpi-transition-guard", NFT_TABLE_NAME ]);
 
     if (command_success_from_args([ "nft", "list", "table", "inet", NFT_TABLE_NAME ]))

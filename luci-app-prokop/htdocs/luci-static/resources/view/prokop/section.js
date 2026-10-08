@@ -2162,6 +2162,7 @@ function dnsTypeChoices() {
   return [
     { value: "doh", label: _("DNS over HTTPS (DoH)") },
     { value: "dot", label: _("DNS over TLS (DoT)") },
+    { value: "doq", label: _("DNS over QUIC (DoQ)") },
     { value: "udp", label: "UDP" },
   ];
 }
@@ -8720,6 +8721,14 @@ function createSectionContent(section) {
     const validation = main.validateDNS(normalized);
     return validation.valid ? true : _("Enter a valid DNS server address");
   };
+
+  main.attachDnsProfiles(
+    section,
+    section.children.find((field) => field.option === "dns_type"),
+    section.children.find((field) => field.option === "dns_server"),
+    form,
+    "target",
+  );
 
   o = section.taboption(
     "target",

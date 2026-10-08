@@ -81,7 +81,7 @@ ucode -L "$LIB" "$LIB/service/state.uc" acquire-runtime-dir-lock "$UPDATES_LOCK_
 
 start() {
   set +e
-  ucode -L "$LIB" "$LIB/components/updates.uc" component-action-async "$1" "$2" >"${WORK:?}/out" 2>/dev/null </dev/null
+  ucode -L "$LIB" "$LIB/components/updates.uc" component-action-async "$1" "$2" "${3:-}" >"${WORK:?}/out" 2>/dev/null </dev/null
   set -e
   node -e 'const v = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")); process.stdout.write(String(v.reason ?? ""));' \
     "${WORK:?}/out"
@@ -89,7 +89,7 @@ start() {
 
 while read -r component action; do
   # With the lock held, a supported action gets as far as the busy refusal.
-  [ "$(start "$component" "$action")" = busy ] ||
+  [ "$(start "$component" "$action" "$([ "$action" = install_version ] && printf v1.14.1-extended-2.7.2 || true)")" = busy ] ||
     fail "the UI start refused the catalog action $component $action: $(cat "${WORK:?}/out")"
 done <<<"$pairs"
 [ "$(start sing-box check_update)" = busy ] || fail "the UI start must accept the sing-box spelling: $(cat "${WORK:?}/out")"

@@ -34,6 +34,8 @@ function config(settings, runtime) {
     if (type(runtime) == "object" && type(runtime.dns_health_inbounds) == "array")
         for (let inbound in runtime.dns_health_inbounds)
             push(dns_inbounds, inbound);
+    if ((bool_option(settings, "alice_mode_enabled", false) || bool_option(settings, "gaming_enabled", false)))
+        push(dns_inbounds, runtime_constants.ALICE_DNS_INBOUND_TAG);
     let sniff_inbounds = [ ...tproxy_inbounds, ...dns_inbounds ];
     let result = {
         rules: [
@@ -53,6 +55,10 @@ function config(settings, runtime) {
 
     if (output_network_interface != "")
         result.default_interface = output_network_interface;
+    if (bool_option(settings, "gaming_enabled", false))
+        push(result.rules, { action: "route", inbound: tproxy_inbounds, network: "tcp",
+            source_ip_cidr: common.list_option(settings, "gaming_ips"),
+            outbound: runtime_constants.outbound_tag(option(settings, "gaming_section", "")) });
     if (bool_option(settings, "disable_quic", true))
         push(result.rules, { action: "reject", inbound: tproxy_inbounds, protocol: "quic" });
     // C14, opt-in: BitTorrent that sniffing recognises goes directly, in

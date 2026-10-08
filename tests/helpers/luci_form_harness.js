@@ -1464,6 +1464,7 @@ function createEnvironment({
         notifications: notificationsModule,
         torrserver: torrserverModule,
         updates: { createUpdatesContent() {} },
+        coreVersions: loadModule("core_versions.js", { baseclass, form, fs: fsStub }, moduleGlobals),
       });
       await page.rendered;
       const map = page.map;

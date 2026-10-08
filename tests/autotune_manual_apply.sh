@@ -248,9 +248,9 @@ NODE
 
 # ---- background job: the page can leave and come back ---------------------------
 confirm_youtube
-export STUB_APPLY_SLEEP=3
+export STUB_APPLY_WAIT_FILE="$WORK/async-release"
 manager apply-async youtube >"$WORK/async.json"
-unset STUB_APPLY_SLEEP
+unset STUB_APPLY_WAIT_FILE
 job="$(node -e 'console.log(require(process.argv[1]).job)' "$WORK/async.json")"
 [ -n "$job" ] && [ "$job" != undefined ] || fail "async apply: $(cat "$WORK/async.json")"
 for _ in $(seq 100); do
@@ -269,6 +269,7 @@ manager apply youtube >"$WORK/while-running.json" || true
 [ "$(got while-running status)" = '"busy"' ] || fail "concurrent apply: $(cat "$WORK/while-running.json")"
 manager run youtube >"$WORK/run-while.json" || true
 [ "$(got run-while status)" = '"busy"' ] || fail "concurrent run: $(cat "$WORK/run-while.json")"
+touch "$WORK/async-release"
 for _ in $(seq 100); do
   manager run-status "$job" >"$WORK/job.json"
   [ "$(json_get "$WORK/job.json" job.state)" = '"finished"' ] && break; sleep 0.1

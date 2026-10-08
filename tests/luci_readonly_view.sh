@@ -106,7 +106,7 @@ function stubs(canReadUci, calls, { stale = false } = {}) {
   assert.match(formSource, /new form\.Map\(UCI_PACKAGE/, 'configform must build the form');
   const handleSaveApply = function () {};
   for (const [file, modules] of [['page/rules.js', { section: {} }],
-    ['page/settings.js', { settings: {}, notifications: {}, torrserver: {}, updates: {} }]]) {
+    ['page/settings.js', { settings: {}, notifications: {}, torrserver: {}, updates: {}, coreVersions: {} }]]) {
     const view = load(file, { view: { extend: value => value }, form: {}, shell: {},
       configform: { handleSaveApply }, ...modules });
     assert.equal(view.handleSaveApply, handleSaveApply, `${file}: Save & Apply must be configform's`);
@@ -123,8 +123,8 @@ function stubs(canReadUci, calls, { stale = false } = {}) {
   // LuCI keys map tabs by section type: every settings tab needs its own.
   const tabTypes = [...settingsSource.matchAll(/settingsTab\("(settings_\w+)", _\("([^"]+)"\)\)/g)];
   assert.deepEqual(tabTypes.map((m) => m[2]), ['DNS', 'Network', 'Lists and updates', 'Service settings',
-    'Notifications', 'TorrServer']);
-  assert.equal(new Set(tabTypes.map((m) => m[1])).size, 6, 'settings tabs must not share a section type');
+    'Notifications', 'TorrServer', 'Core version']);
+  assert.equal(new Set(tabTypes.map((m) => m[1])).size, 7, 'settings tabs must not share a section type');
   assert.match(settingsSource, /cfgsections = function \(\) \{\s*return \["settings"\];/,
     'settings tabs must edit the single settings section');
   for (const file of Object.keys(pages))
@@ -143,7 +143,7 @@ function stubs(canReadUci, calls, { stale = false } = {}) {
   assert.deepEqual(parent.depends.acl, ['luci-app-prokop']);
   const children = Object.entries(menu).filter(([key]) => key.startsWith('admin/services/prokop/'));
   const order = children.sort((a, b) => a[1].order - b[1].order).map(([key]) => key.split('/').pop());
-  assert.deepEqual(order, ['overview', 'rules', 'monitoring', 'diagnostics', 'autotune', 'history', 'settings']);
+  assert.deepEqual(order, ['overview', 'rules', 'devices', 'experiments', 'providers', 'monitoring', 'diagnostics', 'autotune', 'history', 'settings']);
   for (const [key, node] of children) {
     assert.equal(node.action.type, 'view', `${key} must be a view`);
     assert(fs.existsSync(path.join(root, 'luci-app-prokop/htdocs/luci-static/resources/view', `${node.action.path}.js`)),
@@ -153,6 +153,8 @@ function stubs(canReadUci, calls, { stale = false } = {}) {
     'Settings must be hidden from the read-only role');
   assert.deepEqual(menu['admin/services/prokop/rules'].depends, { acl: ['luci-app-prokop-admin'] },
     'Rules must be hidden from the read-only role');
+  for (const key of ['devices','experiments','providers'])
+    assert.deepEqual(menu[`admin/services/prokop/${key}`].depends, {acl:['luci-app-prokop-admin']}, `${key} must stay administrative`);
   for (const key of ['overview', 'monitoring', 'diagnostics', 'autotune', 'history'])
     assert(!menu[`admin/services/prokop/${key}`].depends,
       `${key} must stay available to the read-only role`);

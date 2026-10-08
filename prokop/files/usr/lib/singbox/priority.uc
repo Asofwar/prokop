@@ -27,6 +27,7 @@ const SERVICE_ADDRESS = getenv("SB_SERVICE_MIXED_INBOUND_ADDRESS") || "127.0.0.1
 const PAYLOAD_URL = getenv("PROKOP_PRIORITY_PAYLOAD_URL") || "https://speed.cloudflare.com/__down?bytes=32768";
 const PAYLOAD_BYTES = int(getenv("PROKOP_PRIORITY_PAYLOAD_BYTES") || "32768");
 const PAYLOAD_MAX_TIME = int(getenv("PROKOP_PRIORITY_PAYLOAD_MAX_TIME") || "15");
+const HEALTH_FILE = RUNTIME_STATE_DIR + "/priority-health.json";
 const PAYLOAD_QUARANTINE_SECONDS = 60;
 const PAYLOAD_RECHECK_SECONDS = 180;
 
@@ -269,21 +270,30 @@ function payload_transfer(group, tag_name) {
 }
 
 function new_payload_state() {
-    return { quarantine: {}, verified: {} };
+    return { quarantine: {}, verified: {}, observations: {} };
 }
 
 // The probe of a group that may check payload: the delay check first, then,
 // for a group with payload_check, the download, unless the node passed it
 // within PAYLOAD_RECHECK_SECONDS. A failed download quarantines the node.
 function checked_probe(payload, group, tag_name, delay_probe, transfer, now) {
+    payload.observations = payload.observations || {};
     if (group.payload_check && int(payload.quarantine[tag_name] || 0) > now)
         return { alive: false, delay: 0 };
     let result = delay_probe(tag_name, group);
-    if (!result.alive || !group.payload_check)
+    payload.observations[tag_name] = {
+        delay: result.delay, handshake: result.alive, checked_uptime: now,
+        payload: group.payload_check ? "pending" : "disabled", reason: result.alive ? "" : "handshake_failed"
+    };
+    if (!result.alive || !group.payload_check) return result;
+    if (payload.verified[tag_name] != null && now - int(payload.verified[tag_name]) < PAYLOAD_RECHECK_SECONDS) {
+        payload.observations[tag_name].payload = "passed";
+        payload.observations[tag_name].payload_checked_uptime = payload.verified[tag_name];
         return result;
-    if (payload.verified[tag_name] != null && now - int(payload.verified[tag_name]) < PAYLOAD_RECHECK_SECONDS)
-        return result;
+    }
     if (!transfer(group, tag_name)) {
+        payload.observations[tag_name].payload = "failed";
+        payload.observations[tag_name].reason = "payload_failed";
         delete payload.verified[tag_name];
         payload.quarantine[tag_name] = now + PAYLOAD_QUARANTINE_SECONDS;
         log_message("node " + tag_name + " of " + group.tag + " answers but did not pass the payload download; " +
@@ -291,6 +301,8 @@ function checked_probe(payload, group, tag_name, delay_probe, transfer, now) {
         return { alive: false, delay: 0 };
     }
     payload.verified[tag_name] = now;
+    payload.observations[tag_name].payload = "passed";
+    payload.observations[tag_name].payload_checked_uptime = now;
     return result;
 }
 
@@ -399,6 +411,8 @@ function switch_group(state, group, selected) {
         return false;
     }
 
+    state.failures = 0;
+    state.delay_samples = [];
     state.active = selected.tag;
     state.levelIndex = selected.levelIndex;
     state.activeDelay = selected.delay;
@@ -407,6 +421,8 @@ function switch_group(state, group, selected) {
 
 function init_group_state(group) {
     return {
+        failures: 0,
+        delay_samples: [],
         payload: new_payload_state(),
         active: "",
         levelIndex: -1,
@@ -433,9 +449,13 @@ function tick_group(state, group) {
     if (state.active != "" && now >= state.nextActiveCheck) {
         let active = probe(state.active, group);
         if (active.alive) {
-            state.activeDelay = active.delay;
+            state.failures = 0;
+            push(state.delay_samples, active.delay);
+            if (length(state.delay_samples) > 3) shift(state.delay_samples);
+            let ordered = sort([ ...state.delay_samples ], (a, b) => a - b);
+            state.activeDelay = ordered[int(length(ordered) / 2)];
         }
-        else {
+        else if (++state.failures >= 2) {
             let selected = choose_from_level_range(
                 group,
                 state.levelIndex,
@@ -464,7 +484,7 @@ function tick_group(state, group) {
 
     if (state.active != "" && group.switch_to_faster_same_priority && now >= state.nextFastestCheck) {
         let selected = choose_fastest_same_level(group, state.levelIndex, state.active, probe);
-        if (selected != null)
+        if (selected != null && state.activeDelay - selected.delay >= 50 && selected.delay <= state.activeDelay * 0.8)
             switch_group(state, group, selected);
         state.nextFastestCheck = now + duration_to_seconds(group.fastest_check_interval, 180);
     }
@@ -482,11 +502,20 @@ function worker() {
     while (true) {
         for (let group in groups)
             tick_group(states[group.tag], group);
+        let report = {};
+        for (let tag, state in states)
+            report[tag] = { active: state.active, failures: state.failures, nodes: state.payload.observations };
+        let temporary = HEALTH_FILE + ".tmp";
+        if (fs.writefile(temporary, sprintf("%J", { uptime: now_seconds(), groups: report })) != null) {
+            fs.chmod(temporary, 0600);
+            fs.rename(temporary, HEALTH_FILE);
+        }
         sleep(1000);
     }
 }
 
 function stop_runtime() {
+    remove_file(HEALTH_FILE);
     process_identity.signal(PRIORITY_PID_FILE, "ucode", [ "ucode", "-L", LIB_DIR, PRIORITY_UC, "worker" ], true, "TERM");
     remove_file(PRIORITY_PID_FILE);
     return 0;
@@ -555,7 +584,13 @@ function payload_fixture(path) {
 
 let mode = ARGV[0] || "";
 
-if (mode == "start-runtime")
+if (mode == "health-status") {
+    let value = read_json_file(HEALTH_FILE);
+    if (value == null || now_seconds() - int(value.uptime || 0) > 30)
+        write_json({ available: false });
+    else write_json({ available: true, uptime: now_seconds(), groups: value.groups });
+}
+else if (mode == "start-runtime")
     exit(start_runtime());
 else if (mode == "stop-runtime")
     exit(stop_runtime());

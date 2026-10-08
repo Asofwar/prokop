@@ -317,6 +317,7 @@ build_backend_root() {
   install -m 0755 "$ROOT_DIR/prokop/files/etc/init.d/prokop-killswitch" "$output_root/etc/init.d/prokop-killswitch"
   install -m 0755 "$ROOT_DIR/prokop/files/etc/init.d/prokop-dns-failsafe" "$output_root/etc/init.d/prokop-dns-failsafe"
   install -m 0755 "$ROOT_DIR/prokop/files/etc/init.d/prokop-fw-watch" "$output_root/etc/init.d/prokop-fw-watch"
+  install -m 0755 "$ROOT_DIR/prokop/files/etc/init.d/prokop-sidecars" "$output_root/etc/init.d/prokop-sidecars"
   install -d "$output_root/lib/upgrade/keep.d"
   install -m 0644 "$ROOT_DIR/prokop/files/lib/upgrade/keep.d/prokop-killswitch" "$output_root/lib/upgrade/keep.d/prokop-killswitch"
   install -m 0644 "$ROOT_DIR/prokop/files/lib/upgrade/keep.d/prokop-torrserver" "$output_root/lib/upgrade/keep.d/prokop-torrserver"
@@ -341,6 +342,7 @@ build_backend_root() {
     "$output_root/etc/init.d/prokop-killswitch" \
     "$output_root/etc/init.d/prokop-dns-failsafe" \
     "$output_root/etc/init.d/prokop-fw-watch" \
+    "$output_root/etc/init.d/prokop-sidecars" \
     "$output_root/usr/bin/prokop" \
     "$output_root/usr/libexec/prokop-ro" \
     "$output_root/usr/share/prokop/mirror-migration.sh"

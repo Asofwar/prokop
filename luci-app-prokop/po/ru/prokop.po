@@ -6028,3 +6028,288 @@ msgstr "sing-box outbound для Zapret2 не настроен"
 
 msgid "ZB"
 msgstr "ЗБ"
+
+msgid "Activate profile"
+msgstr "Активировать профиль"
+
+msgid "Add domain to pending changes"
+msgstr "Добавить домен в ожидающие изменения"
+
+msgid "Addresses"
+msgstr "Адреса"
+
+msgid "All nodes"
+msgstr "Все узлы"
+
+msgid "An empty allow list sends everyone directly. An empty bypass list leaves everyone in Prokop. Bypassed clients get real DNS addresses."
+msgstr "Пустой разрешающий список направляет всех напрямую. Пустой список обхода оставляет всех в Prokop. Клиенты в обходе получают реальные DNS-адреса."
+
+msgid "By country"
+msgstr "По стране"
+
+msgid "By name prefix"
+msgstr "По префиксу имени"
+
+msgid "Bypass Prokop"
+msgstr "Обходить Prokop"
+
+msgid "Certificate DNS hostname"
+msgstr "DNS-имя сертификата"
+
+msgid "Client certificate path"
+msgstr "Путь к клиентскому сертификату"
+
+msgid "Client private key path"
+msgstr "Путь к приватному ключу клиента"
+
+msgid "Compare direct and proxy"
+msgstr "Сравнить прямой путь и прокси"
+
+msgid "Compare profile"
+msgstr "Сравнить профиль"
+
+msgid "Configuration profiles"
+msgstr "Профили конфигурации"
+
+msgid "Connection configuration"
+msgstr "Конфигурация подключения"
+
+msgid "Console IP addresses or subnets"
+msgstr "IP-адреса или подсети консолей"
+
+msgid "Core version"
+msgstr "Версия ядра"
+
+msgid "Custom DNS"
+msgstr "Свой DNS"
+
+msgid "DNS over QUIC (DoQ)"
+msgstr "DNS через QUIC (DoQ)"
+
+msgid "DNS profile"
+msgstr "Профиль DNS"
+
+msgid "Default policy"
+msgstr "Политика по умолчанию"
+
+msgid "Delay"
+msgstr "Задержка"
+
+msgid "Device report unavailable"
+msgstr "Отчёт об устройствах недоступен"
+
+msgid "Device routing"
+msgstr "Маршрутизация устройств"
+
+msgid "Devices in the list"
+msgstr "Устройства в списке"
+
+msgid "DoH client certificate"
+msgstr "Клиентский сертификат DoH"
+
+msgid "Domain added to pending changes. Save & Apply to validate routing and create a rollback snapshot."
+msgstr "Домен добавлен в ожидающие изменения. Сохраните и примените их, чтобы проверить маршрутизацию и создать снимок для отката."
+
+msgid "Empty uses the latest release. A pinned tag is used for normal extended updates; other core variants are not version-selectable."
+msgstr "Пустое значение означает последний релиз. Закреплённый тег используется для обычных обновлений Extended; выбор версии других вариантов ядра не поддерживается."
+
+msgid "Enable and apply the device policy to see routing decisions."
+msgstr "Включите и примените политику устройств, чтобы увидеть решения маршрутизации."
+
+msgid "Enable device policy"
+msgstr "Включить политику устройств"
+
+msgid "Enter a domain observed to fail. A recommendation requires two checks at least two minutes apart: direct transport fails while HTTPS through the chosen proxy succeeds. DNS and certificate errors remain inconclusive."
+msgstr "Укажите домен с наблюдаемой ошибкой. Рекомендация требует двух проверок с интервалом не менее двух минут: прямое соединение не работает, а HTTPS через выбранный прокси работает. Ошибки DNS и сертификатов не подтверждают блокировку."
+
+msgid "Experiments"
+msgstr "Эксперименты"
+
+msgid "Find domains in recent error logs"
+msgstr "Найти домены в недавних ошибках"
+
+msgid "Game console profile"
+msgstr "Профиль игровой консоли"
+
+msgid "Group"
+msgstr "Группа"
+
+msgid "Group nodes"
+msgstr "Группировка узлов"
+
+msgid "HTTP administration"
+msgstr "Администрирование через HTTP"
+
+msgid "HTTPS administration"
+msgstr "Администрирование через HTTPS"
+
+msgid "Handshake"
+msgstr "Соединение"
+
+msgid "IP addresses and subnets"
+msgstr "IP-адреса и подсети"
+
+msgid "Install a core version"
+msgstr "Установить версию ядра"
+
+msgid "Installing…"
+msgstr "Установка…"
+
+msgid "Interface"
+msgstr "Интерфейс"
+
+msgid "Interfaces"
+msgstr "Интерфейсы"
+
+msgid "Invalid release tag"
+msgstr "Некорректный тег релиза"
+
+msgid "Invalid value"
+msgstr "Некорректное значение"
+
+msgid "Load compatible releases"
+msgstr "Загрузить совместимые релизы"
+
+msgid "Local SOCKS port"
+msgstr "Локальный порт SOCKS"
+
+msgid "Local providers"
+msgstr "Локальные провайдеры"
+
+msgid "MAC addresses"
+msgstr "MAC-адреса"
+
+msgid "No compatible release with a checksum is available from the configured source."
+msgstr "В настроенном источнике нет совместимого релиза с контрольной суммой."
+
+msgid "No domain candidates in recent error logs."
+msgstr "В недавних ошибках не найдено подходящих доменов."
+
+msgid "Node"
+msgstr "Узел"
+
+msgid "Node health"
+msgstr "Состояние узлов"
+
+msgid "Observed devices"
+msgstr "Обнаруженные устройства"
+
+msgid "Observed match"
+msgstr "Наблюдаемое совпадение"
+
+msgid "Operation failed"
+msgstr "Операция не выполнена"
+
+msgid "Optional features from community forks. Connectivity recommendations need your review before they change routing."
+msgstr "Дополнительные возможности из форков сообщества. Рекомендации по доступности требуют вашей проверки перед изменением маршрутизации."
+
+msgid "Payload"
+msgstr "Загрузка данных"
+
+msgid "Pinned sing-box-extended version"
+msgstr "Закреплённая версия sing-box-extended"
+
+msgid "Priority health is unavailable or stale. Start a Priority group to collect it."
+msgstr "Данные о состоянии Priority недоступны или устарели. Запустите группу Priority для их сбора."
+
+msgid "Profile name"
+msgstr "Имя профиля"
+
+msgid "Profiles use manual snapshots. Removing a name keeps its snapshot in History."
+msgstr "Профили используют ручные снимки. Удаление имени сохраняет снимок в истории."
+
+msgid "Provider status"
+msgstr "Состояние провайдера"
+
+msgid "Providers"
+msgstr "Провайдеры"
+
+msgid "Reason"
+msgstr "Причина"
+
+msgid "Reconstructed condition"
+msgstr "Восстановленное условие"
+
+msgid "Refresh health"
+msgstr "Обновить состояние узлов"
+
+msgid "Refresh profiles"
+msgstr "Обновить профили"
+
+msgid "Refresh status"
+msgstr "Обновить состояние"
+
+msgid "Refresh support status"
+msgstr "Обновить состояние доступа поддержки"
+
+msgid "Remove profile name"
+msgstr "Удалить имя профиля"
+
+msgid "Run Xray, WDTT (qwdtt) or OlcRTC as a local SOCKS connection. Install the provider binary first. Save & Apply, then start providers; add the displayed socks5 URL to a connection section in Rules. Providers use separate configs and processes."
+msgstr "Запустите Xray, WDTT (qwdtt) или OlcRTC как локальное подключение SOCKS. Сначала установите бинарник провайдера. Сохраните и примените настройки, затем запустите провайдеры и добавьте показанный URL socks5 в секцию подключения в правилах. Провайдеры используют отдельные конфигурации и процессы."
+
+msgid "SSH"
+msgstr "SSH"
+
+msgid "Save current configuration"
+msgstr "Сохранить текущую конфигурацию"
+
+msgid "Select an observed domain, then compare paths."
+msgstr "Выберите обнаруженный домен и сравните пути подключения."
+
+msgid "Select which devices use Prokop. Global bypass cannot be combined with a section kill-switch; use section filters for protected devices."
+msgstr "Выберите устройства, использующие Prokop. Глобальный обход несовместим с kill-switch секции; для защищённых устройств используйте фильтры секции."
+
+msgid "Selected consoles send TCP through the chosen connection and UDP directly. Real DNS addresses are used. Requires a separate device policy and no section kill-switch; this does not guarantee Open NAT."
+msgstr "Выбранные консоли направляют TCP через указанное подключение, а UDP напрямую. Используются реальные DNS-адреса. Режим применяется отдельно от глобальной политики устройств и несовместим с kill-switch секции; Open NAT не гарантируется."
+
+msgid "Selection"
+msgstr "Выбор"
+
+msgid "Smart Detect"
+msgstr "Smart Detect"
+
+msgid "Start for 30 minutes"
+msgstr "Включить на 30 минут"
+
+msgid "Start or update providers"
+msgstr "Запустить или обновить провайдеры"
+
+msgid "Still running; check the component status."
+msgstr "Операция ещё выполняется; проверьте состояние компонента."
+
+msgid "Stop providers"
+msgstr "Остановить провайдеры"
+
+msgid "Stop support access"
+msgstr "Остановить доступ поддержки"
+
+msgid "Support access is stopped"
+msgstr "Доступ поддержки остановлен"
+
+msgid "TCP connection"
+msgstr "Подключение для TCP"
+
+msgid "Temporary support access"
+msgstr "Временный доступ поддержки"
+
+msgid "The connection section no longer exists"
+msgstr "Секция подключения больше не существует"
+
+msgid "Use Prokop"
+msgstr "Использовать Prokop"
+
+msgid "Use a key from your own tailnet with an ephemeral node. One local administration port is available to identities permitted by your tailnet ACL for 30 minutes. Existing SSH or LuCI authentication still applies. The router's existing Tailscale service is independent."
+msgstr "Используйте ключ из собственного tailnet для временного узла. Один локальный порт администрирования доступен в течение 30 минут пользователям, разрешённым ACL вашего tailnet. Аутентификация SSH или LuCI сохраняется. Существующий сервис Tailscale роутера работает независимо."
+
+msgid "Use an absolute file path"
+msgstr "Укажите абсолютный путь к файлу"
+
+msgid "Working…"
+msgstr "Выполняется…"
+
+msgid "Xray: one native outbound JSON object. WDTT: qwdtt://config?peer=host:port&hashes=...&pass=... . OlcRTC: olcrtc://provider?transport@room#64-hex-key . The local SOCKS listener is always 127.0.0.1."
+msgstr "Xray: один native outbound в формате JSON. WDTT: qwdtt://config?peer=host:port&hashes=...&pass=... . OlcRTC: olcrtc://provider?transport@room#64-hex-key . Локальный SOCKS всегда слушает 127.0.0.1."
+
+msgid "Your ephemeral Tailscale auth key"
+msgstr "Ваш ключ Tailscale для временного узла"

@@ -1,3 +1,4 @@
+import { groupOutbounds, type OutboundGrouping } from './groupOutbounds';
 import { asText } from '../../../../helpers/asText';
 import { renderLoaderCircleIcon24, renderInfoIcon24 } from '../../../../icons';
 import { svgEl } from '../../../../helpers';
@@ -552,6 +553,57 @@ function renderDefaultState({
         onUpdateSubscription,
       );
 
+  const preference = 'prokop.outboundGrouping.' + section.sectionName;
+  let mode: OutboundGrouping = 'none';
+  try {
+    const stored = localStorage.getItem(preference);
+    if (stored === 'country' || stored === 'prefix') mode = stored;
+  } catch {
+    /* Storage is optional. */
+  }
+  const renderGroups = () =>
+    [...groupOutbounds(section.outbounds, mode)].map(([label, nodes]) =>
+      label
+        ? E('details', { open: true, style: 'grid-column: 1 / -1' }, [
+            E('summary', {}, asText(label === 'Other' ? _('Other') : label)),
+            E(
+              'div',
+              { class: 'fkp_dashboard-page__outbound-grid' },
+              nodes.map(renderOutbound),
+            ),
+          ])
+        : E('div', { style: 'display: contents' }, nodes.map(renderOutbound)),
+    );
+  const groupedGrid = E('div', { style: 'display: contents' }, renderGroups());
+  const drawGroups = () => groupedGrid.replaceChildren(...renderGroups());
+  const grouping = E(
+    'select',
+    {
+      'aria-label': _('Group nodes'),
+      onchange: (event: Event) => {
+        mode = (event.target as HTMLSelectElement).value as OutboundGrouping;
+        try {
+          localStorage.setItem(preference, mode);
+        } catch {
+          /* Storage is optional. */
+        }
+        drawGroups();
+      },
+    },
+    [
+      E('option', { value: 'none', selected: mode === 'none' }, _('All nodes')),
+      E(
+        'option',
+        { value: 'country', selected: mode === 'country' },
+        _('By country'),
+      ),
+      E(
+        'option',
+        { value: 'prefix', selected: mode === 'prefix' },
+        _('By name prefix'),
+      ),
+    ],
+  );
   return E('div', { class: 'fkp_dashboard-page__outbound-section' }, [
     // Title with test latency
     E('div', { class: 'fkp_dashboard-page__outbound-section__title-section' }, [
@@ -614,9 +666,10 @@ function renderDefaultState({
         ],
       ),
     ]),
+    grouping,
     E('div', { class: 'fkp_dashboard-page__outbound-grid' }, [
       ...metadataNodes,
-      ...section.outbounds.map((outbound) => renderOutbound(outbound)),
+      groupedGrid,
     ]),
   ]);
 }

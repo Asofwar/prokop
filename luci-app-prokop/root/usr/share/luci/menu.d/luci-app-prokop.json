@@ -6,8 +6,12 @@
       "type": "firstchild"
     },
     "depends": {
-      "acl": [ "luci-app-prokop" ],
-      "uci": { "prokop": true }
+      "acl": [
+        "luci-app-prokop"
+      ],
+      "uci": {
+        "prokop": true
+      }
     }
   },
   "admin/services/prokop/overview": {
@@ -26,7 +30,9 @@
       "path": "prokop/page/rules"
     },
     "depends": {
-      "acl": [ "luci-app-prokop-admin" ]
+      "acl": [
+        "luci-app-prokop-admin"
+      ]
     }
   },
   "admin/services/prokop/monitoring": {
@@ -69,7 +75,48 @@
       "path": "prokop/page/settings"
     },
     "depends": {
-      "acl": [ "luci-app-prokop-admin" ]
+      "acl": [
+        "luci-app-prokop-admin"
+      ]
+    }
+  },
+  "admin/services/prokop/devices": {
+    "title": "Device routing",
+    "order": 17,
+    "action": {
+      "type": "view",
+      "path": "prokop/page/devices"
+    },
+    "depends": {
+      "acl": [
+        "luci-app-prokop-admin"
+      ]
+    }
+  },
+  "admin/services/prokop/experiments": {
+    "title": "Experiments",
+    "order": 18,
+    "action": {
+      "type": "view",
+      "path": "prokop/page/experiments"
+    },
+    "depends": {
+      "acl": [
+        "luci-app-prokop-admin"
+      ]
+    }
+  },
+  "admin/services/prokop/providers": {
+    "title": "Local providers",
+    "order": 19,
+    "action": {
+      "type": "view",
+      "path": "prokop/page/providers"
+    },
+    "depends": {
+      "acl": [
+        "luci-app-prokop-admin"
+      ]
     }
   }
 }

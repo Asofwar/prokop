@@ -1,3 +1,4 @@
+import { formatRouteReason } from './routeReason';
 import { asText } from '../../../helpers/asText';
 import { isPageHidden } from '../../../helpers/isPageHidden';
 import {
@@ -1092,6 +1093,14 @@ function connectionTechnicalDetails(connection: MonitoredConnection) {
     [_('Protocol'), getNetwork(connection)],
     [_('Rule'), safeText(connection.rule)],
     [_('Rule payload'), safeText(connection.rulePayload)],
+    [
+      /^(?:domain|domain_suffix|domain_keyword|domain_regex|ip_cidr)=/.test(
+        connection.rulePayload || '',
+      ) && !/^(?:final|match|default)$/i.test(connection.rule || '')
+        ? _('Observed match')
+        : _('Reconstructed condition'),
+      formatRouteReason(connection.rule, connection.rulePayload, _, metadata),
+    ],
     [_('Outbound chain'), safeText((connection.chains || []).join(' → '))],
     [_('Started'), formatStarted(connection.start)],
     [_('Connection ID'), connection.id],

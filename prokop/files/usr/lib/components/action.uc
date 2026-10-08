@@ -2143,6 +2143,23 @@ function set_sing_box_extended_release_from_json(release_json, compressed) {
 // The mirror publishes a copy of the project's latest GitHub release with the
 // assets cut down to the OpenWrt packages; without a mirror the release comes
 // from GitHub itself. A configured mirror is never bypassed.
+let requested_core_tag = "";
+
+function core_releases() {
+    let raw = PROKOP_MIRROR_BASE_URL != "" ? http_get(PROKOP_MIRROR_BASE_URL + "/forkop/sing-box-extended/latest.json") : fetch_github_releases_json("shtorm-7", "sing-box-extended", 30);
+    let releases;
+    try { releases = json(raw); } catch (e) { print("[]\n"); return; }
+    if (type(releases) != "array") releases = [ releases ];
+    let available = [];
+    for (let release in releases) {
+        if (release.draft || release.prerelease) continue;
+        let item = set_sing_box_extended_release_from_json(sprintf("%J", release), false);
+        if (item != null && match(as_string(item.asset_sha256), /^[a-fA-F0-9]{64}$/) != null)
+            push(available, { tag: item.tag, url: item.release_url, published_at: release.published_at });
+    }
+    print(sprintf("%J", available), "\n");
+}
+
 function resolve_sing_box_extended_release(compressed) {
     if (mirror_refuses_executables()) {
         updates_log(INSECURE_MIRROR_MESSAGE, "error");
@@ -2151,7 +2168,17 @@ function resolve_sing_box_extended_release(compressed) {
     let release_json = PROKOP_MIRROR_BASE_URL != "" ?
         http_get(PROKOP_MIRROR_BASE_URL + "/forkop/sing-box-extended/latest.json") :
         fetch_github_release_json("shtorm-7", "sing-box-extended");
-    return set_sing_box_extended_release_from_json(release_json, compressed);
+    if (as_string(requested_core_tag) != "") {
+        if (PROKOP_MIRROR_BASE_URL != "") {
+            let latest;
+            try { latest = json(release_json); } catch (e) { return null; }
+            if (latest.tag_name != requested_core_tag) return null;
+        }
+        else release_json = http_get("https://api.github.com/repos/shtorm-7/sing-box-extended/releases/tags/" + requested_core_tag);
+    }
+    let selected = set_sing_box_extended_release_from_json(release_json, compressed);
+    if (selected != null && as_string(requested_core_tag) != "" && selected.tag != requested_core_tag) return null;
+    return selected;
 }
 
 // A download whose checksum differs from the published one is discarded.
@@ -3467,7 +3494,10 @@ function install_prokop(requested_version) {
 }
 
 function dispatch_sing_box(action) {
-    if (action == "install_extended") {
+    if (as_string(requested_core_tag) != "" && action == "install" &&
+        sing_box_runtime_output("variant", []) != "extended" && sing_box_runtime_output("variant", []) != "extended-compressed")
+        action_fail("sing_box", action, "Pinned releases require the extended variant; clear the pin or install extended explicitly");
+    if (action == "install_extended" || action == "install_version") {
         install_sing_box_extended(action, false);
         return;
     }
@@ -4000,6 +4030,16 @@ function component_action(component, action, version) {
     component = normalize_component_name(component);
     action = as_string(action);
     version = as_string(version);
+    if (component == "sing_box" && action == "install_version") {
+        if (length(version) > 100 || match(version, /^v?[0-9][A-Za-z0-9._-]*$/) == null)
+            action_fail(component, action, "Invalid core release tag");
+        requested_core_tag = version;
+    }
+    else if (component == "sing_box" && action == "install") {
+        requested_core_tag = as_string(uci_core.get(CONFIG_NAME + ".settings.sing_box_pinned_version"));
+        if (as_string(requested_core_tag) != "" && match(requested_core_tag, /^v?[0-9][A-Za-z0-9._-]*$/) == null)
+            action_fail(component, action, "Invalid pinned core release tag");
+    }
     if (!acquire_component_lock())
         action_fail(component != "" ? component : "unknown", action != "" ? action : "unknown", "Another component action is already running",
             "", "", "", "", "busy");
@@ -4040,7 +4080,7 @@ function component_action(component, action, version) {
         install_prokop(version);
     else if (component == "sing_box" && (action == "check_update" || action == "install" ||
         action == "install_extended" || action == "install_extended_compressed" ||
-        action == "install_tiny" || action == "install_stable"))
+        action == "install_tiny" || action == "install_stable" || action == "install_version"))
         dispatch_sing_box(action);
     else if (component == "zapret" && (action == "check_update" || action == "install"))
         install_zapret(action);
@@ -4079,7 +4119,9 @@ function component_action(component, action, version) {
 
 let mode = ARGV[0] || "";
 
-if (mode == "component-action")
+if (mode == "core-releases")
+    core_releases();
+else if (mode == "component-action")
     component_action(ARGV[1], ARGV[2], ARGV[3]);
 else if (mode == "prokop-releases")
     exit(prokop_releases() ? 0 : 1);

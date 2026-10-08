@@ -96,7 +96,49 @@ function active_values(settings, override_state) {
     };
 }
 
-function server_from_options(tag_name, dns_type, dns_server, detour) {
+function mtls_host_valid(value) {
+    if (value == "" || length(value) > 253)
+        return false;
+    for (let label in split(value, ".")) {
+        if (length(label) < 1 || length(label) > 63 ||
+            match(label, /^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/) == null)
+            return false;
+    }
+    return true;
+}
+
+function mtls_path_valid(value) {
+    if (length(value) < 2 || substr(value, 0, 1) != "/" || substr(value, -1) == "/")
+        return false;
+    for (let i = 0; i < length(value); i++) {
+        let code = ord(substr(value, i, 1));
+        if (code < 32 || code == 127)
+            return false;
+    }
+    return true;
+}
+
+function mtls_validation_error(settings) {
+    if (!bool_option(settings, "dns_mtls_enabled", false))
+        return "";
+    if (option(settings, "dns_type", "udp") != "doh")
+        return "DNS mTLS requires the DoH protocol.";
+    let host = option(settings, "dns_mtls_host", "");
+    if (!mtls_host_valid(host))
+        return "DNS mTLS host must be a hostname without a scheme, port or path.";
+    let matched = false;
+    for (let server in server_list(settings, "dns_server", "77.88.8.8"))
+        if (lc(runtime_url.host(server)) == lc(host))
+            matched = true;
+    if (!matched)
+        return "DNS mTLS host must match a configured main DoH server.";
+    if (!mtls_path_valid(option(settings, "dns_mtls_client_certificate", "")) ||
+        !mtls_path_valid(option(settings, "dns_mtls_client_key", "")))
+        return "DNS mTLS requires absolute client certificate and key file paths.";
+    return "";
+}
+
+function server_from_options(tag_name, dns_type, dns_server, detour, settings) {
     let server = runtime_url.host(dns_server);
     let port = runtime_url.port(dns_server);
     let result = {
@@ -114,12 +156,28 @@ function server_from_options(tag_name, dns_type, dns_server, detour) {
         result.type = "tls";
         result.server_port = port != "" ? int(port, 10) : 853;
     }
+    else if (dns_type == "doq") {
+        if (runtime_url.path(dns_server) != "" || match(dns_server, /[?#]/) != null)
+            return { unsupported: "DoQ does not accept a path or query" };
+        result.type = "quic";
+        result.server_port = port != "" ? int(port, 10) : 853;
+    }
     else if (dns_type == "doh") {
         result.type = "https";
         result.server_port = port != "" ? int(port, 10) : 443;
         let path = runtime_url.path(dns_server);
         if (path != "")
             result.path = path;
+        if (bool_option(settings, "dns_mtls_enabled", false) &&
+            mtls_validation_error(settings) == "" &&
+            lc(server) == lc(option(settings, "dns_mtls_host", ""))) {
+            result.tls = {
+                enabled: true,
+                server_name: option(settings, "dns_mtls_host", ""),
+                client_certificate_path: option(settings, "dns_mtls_client_certificate", ""),
+                client_key_path: option(settings, "dns_mtls_client_key", "")
+            };
+        }
     }
     else {
         return { unsupported: "unsupported dns_type " + dns_type };
@@ -150,7 +208,8 @@ function server_config(settings, override_state) {
         runtime_constants.DNS_SERVER_TAG,
         active.state.dns_type,
         active.main,
-        active.state.dns_detour
+        active.state.dns_detour,
+        settings
     );
 }
 
@@ -195,7 +254,7 @@ function add_health_candidate(result, kind, index_value, server) {
     let server_tag = health_tag(kind, index_value, "server");
     let inbound_tag = health_tag(kind, index_value, "in");
     let dns_server = kind == "main"
-        ? server_from_options(server_tag, result.state.dns_type, server, result.state.dns_detour)
+        ? server_from_options(server_tag, result.state.dns_type, server, result.state.dns_detour, result.settings)
         : bootstrap_server(server_tag, server);
 
     if (dns_server.unsupported) {
@@ -227,6 +286,7 @@ function config(settings, override_state) {
 
     let result = {
         state,
+        settings,
         servers: [ bootstrap_config(settings, state), main ],
         inbounds: [],
         rules: [],
@@ -244,6 +304,7 @@ function config(settings, override_state) {
         for (let i = 0; i < length(state.bootstrap_servers); i++)
             add_health_candidate(result, "bootstrap", i, state.bootstrap_servers[i]);
 
+    delete result.settings;
     return result;
 }
 
@@ -254,6 +315,7 @@ function default_domain_resolver(settings) {
 }
 
 return {
+    mtls_validation_error,
     DNS_FAILOVER_STATE_FILE,
     DNS_HEALTH_ADDRESS,
     active_values,

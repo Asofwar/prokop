@@ -32,6 +32,13 @@ else if (mode == "apply") {
     let plan = read_json(ARGV[1]);
     log(sprintf("apply %s %s %s%s", plan ? plan.owner.section : "-", plan ? plan.selected : "-", ARGV[2],
         ARGV[3] != null ? " " + ARGV[3] : ""));
+    // Explicit release barrier for concurrency tests; a fixed sleep can
+    // finish before the parent reads status on a loaded CI machine.
+    if (getenv("STUB_APPLY_WAIT_FILE")) {
+        let deadline = time() + 60;
+        while (fs.stat(getenv("STUB_APPLY_WAIT_FILE")) == null && time() < deadline)
+            system("sleep 0.1");
+    }
     if (getenv("STUB_APPLY_SLEEP")) system("sleep " + getenv("STUB_APPLY_SLEEP"));
     let data = fs.readfile(dir + "/apply.json");
     print(data != null ? data : sprintf("%J\n", { status: "applied", reason: null, applied: true, started_at: 1700000000 }));

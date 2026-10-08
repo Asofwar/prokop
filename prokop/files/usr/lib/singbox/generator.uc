@@ -482,6 +482,8 @@ function base_config(settings, service_address, runtime_context) {
     let dns_rules = [];
     for (let rule in dns_config.rules)
         push(dns_rules, rule);
+    if ((bool_option(settings, "alice_mode_enabled", false) || bool_option(settings, "gaming_enabled", false)))
+        push(dns_rules, { action: "route", inbound: runtime_constants.ALICE_DNS_INBOUND_TAG, server: runtime_constants.DNS_SERVER_TAG, rewrite_ttl });
     for (let rule in [
         { action: "reject", query_type: "HTTPS" },
         { action: "reject", domain_suffix: "use-application-dns.net" },
@@ -528,6 +530,8 @@ function base_config(settings, service_address, runtime_context) {
     push(inbounds, { type: "direct", tag: runtime_constants.DNS_INBOUND_TAG, listen: runtime_constants.DNS_INBOUND_ADDRESS, listen_port: runtime_constants.DNS_INBOUND_PORT });
     if (runtime_context.source_aware_dns)
         push(inbounds, { type: "direct", tag: runtime_constants.SOURCE_DNS_INBOUND_TAG, listen: runtime_constants.SOURCE_DNS_INBOUND_ADDRESS, listen_port: runtime_constants.SOURCE_DNS_INBOUND_PORT });
+    if ((bool_option(settings, "alice_mode_enabled", false) || bool_option(settings, "gaming_enabled", false)))
+        push(inbounds, { type: "direct", tag: runtime_constants.ALICE_DNS_INBOUND_TAG, listen: ipv6.available() ? runtime_constants.ALICE_DNS_INBOUND_ADDRESS : "0.0.0.0", listen_port: runtime_constants.ALICE_DNS_INBOUND_PORT });
     for (let inbound in dns_config.inbounds)
         push(inbounds, inbound);
 

@@ -1085,9 +1085,44 @@ function dns_setting_values(settings, key) {
 }
 
 function validate_dns_settings(settings, sections, context) {
+    if (bool_option(settings, "gaming_enabled", false)) {
+        if (bool_option(settings, "alice_mode_enabled", false)) fail_validation("Gaming and global device policy must be used separately. Aborted.");
+        let addresses = list_option(settings, "gaming_ips", "");
+        if (length(addresses) == 0) fail_validation("Gaming profile requires device IP addresses. Aborted.");
+        for (let address in addresses)
+            if (!core_ip.valid_netip_addr_or_prefix(address)) fail_validation("Invalid gaming device IP. Aborted.");
+        let target = option(settings, "gaming_section", ""), found = false;
+        for (let section in sections) {
+            if (section_name(section) == target && bool_option(section, "enabled", true) && connections.is_connections_action(option(section, "action", ""))) found = true;
+            if (bool_option(section, "enabled", true) && bool_option(section, "kill_switch", false)) fail_validation("Gaming UDP bypass cannot be combined with a section kill-switch. Aborted.");
+        }
+        if (!found) fail_validation("Gaming profile requires an enabled connection section. Aborted.");
+    }
+    let devices = require("config.alice").config(settings);
+    if (devices.enabled) {
+        if (!contains([ "allow", "deny" ], option(settings, "alice_list_mode", "allow")))
+            fail_validation("Invalid device policy mode. Aborted.");
+        for (let ip in devices.ips)
+            if (!core_ip.valid_netip_addr_or_prefix(ip)) fail_validation("Invalid device IP or subnet. Aborted.");
+        for (let mac in devices.macs)
+            if (match(mac, /^[0-9a-f]{2}(:[0-9a-f]{2}){5}$/) == null) fail_validation("Invalid device MAC address. Aborted.");
+        for (let name in devices.interfaces)
+            if (!require("config.alice").valid_interface_name(name)) fail_validation("Invalid device interface. Aborted.");
+        for (let section in sections)
+            if (bool_option(section, "kill_switch", false))
+                fail_validation("Global device bypass cannot be enabled together with section kill-switch; use section device filters. Aborted.");
+    }
     let dns_type = option(settings, "dns_type", "udp");
-    if (!contains([ "udp", "dot", "doh" ], dns_type))
-        fail_validation("Unsupported DNS protocol type '" + dns_type + "'. Use udp, dot, or doh. Aborted.");
+    if (!contains([ "udp", "dot", "doh", "doq" ], dns_type))
+        fail_validation("Unsupported DNS protocol type '" + dns_type + "'. Use udp, dot, doh, or doq. Aborted.");
+
+    if (bool_option(settings, "dns_mtls_enabled", false)) {
+        let mtls_error = require("singbox.dns").mtls_validation_error(settings);
+        if (mtls_error != "") fail_validation(mtls_error);
+    }
+    for (let value in dns_setting_values(settings, "dns_server"))
+        if (dns_type == "doq" && match(value, /[\/?#]/) != null)
+            fail_validation("DoQ requires a hostname or address without path or query. Aborted.");
 
     let dns_strategy = option(settings, "dns_strategy", "prefer_ipv4");
     if (!contains([ "prefer_ipv4", "ipv4_only", "prefer_ipv6", "ipv6_only" ], dns_strategy))
@@ -1569,9 +1604,11 @@ function validate_unsupported_legacy_matchers(section) {
 function validate_dns_action(section, sections, context) {
     let name = section_name(section);
     let dns_type = option(section, "dns_type", "udp");
-    if (!contains([ "udp", "dot", "doh" ], dns_type))
-        fail_validation("DNS rule '" + name + "' uses unsupported protocol '" + dns_type + "'. Use udp, dot, or doh. Aborted.");
+    if (!contains([ "udp", "dot", "doh", "doq" ], dns_type))
+        fail_validation("DNS rule '" + name + "' uses unsupported protocol '" + dns_type + "'. Use udp, dot, doh, or doq. Aborted.");
     let dns_server = option(section, "dns_server", "");
+    if (dns_type == "doq" && match(dns_server, /[\/?#]/) != null)
+        fail_validation("DoQ rule requires a hostname or address without path or query. Aborted.");
     if (!dns_server_value_valid(dns_server))
         fail_validation("DNS rule '" + name + "' has an invalid DNS server '" + dns_server + "'. Aborted.");
     validate_dns_server_not_loop(dns_server, settings_section(), "DNS rule '" + name + "' DNS server", dns_type);
@@ -2038,7 +2075,7 @@ function validate_client_dns_intercept_exclusions(settings) {
 // every address (0.0.0.0, ::) count as well.
 const MIXED_PROXY_RESERVED_PORTS = {
     "22": "SSH", "53": "DNS", "80": "LuCI (HTTP)", "443": "LuCI (HTTPS)",
-    "1602": "the Prokop transparent proxy", "1603": "the Prokop DNS of devices", "9090": "the Clash API"
+    "1602": "the Prokop transparent proxy", "1603": "the Prokop DNS of devices", "1604": "the Prokop device policy DNS", "9090": "the Clash API"
 };
 
 function validate_mixed_proxy_ports(settings, sections) {
@@ -2060,6 +2097,12 @@ function validate_mixed_proxy_ports(settings, sections) {
 function validate_runtime_config(context) {
     let settings = settings_section();
     let sections = sections_by_type("section");
+    let sidecars = sections_by_type("sidecar");
+    if (length(sidecars)) {
+        let result = require("experiments.sidecar_config").plan(sidecars);
+        if (!result.success) fail_validation(result.reason + ". Aborted.");
+    }
+
 
     validate_runtime_mark_ranges_context(context);
     validate_source_network_interfaces(settings);

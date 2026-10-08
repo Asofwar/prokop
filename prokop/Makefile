@@ -127,6 +127,7 @@ define Package/prokop/install
 	$(INSTALL_BIN) ./files/etc/init.d/prokop-killswitch $(1)/etc/init.d/prokop-killswitch
 	$(INSTALL_BIN) ./files/etc/init.d/prokop-dns-failsafe $(1)/etc/init.d/prokop-dns-failsafe
 	$(INSTALL_BIN) ./files/etc/init.d/prokop-fw-watch $(1)/etc/init.d/prokop-fw-watch
+	$(INSTALL_BIN) ./files/etc/init.d/prokop-sidecars $(1)/etc/init.d/prokop-sidecars
 	$(INSTALL_DIR) $(1)/lib/upgrade/keep.d
 	$(INSTALL_DATA) ./files/lib/upgrade/keep.d/prokop-killswitch $(1)/lib/upgrade/keep.d/prokop-killswitch
 	$(INSTALL_DATA) ./files/lib/upgrade/keep.d/prokop-torrserver $(1)/lib/upgrade/keep.d/prokop-torrserver

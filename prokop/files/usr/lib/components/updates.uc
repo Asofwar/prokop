@@ -2905,8 +2905,10 @@ function component_action_worker(state_file, output_file, component, action, ver
 function component_action_async(component, action, version) {
     // A version may only ever select a Prokop release to install.
     version = as_string(version);
-    if (version != "" && (normalize_component_name(component) != "prokop" || as_string(action) != "install" ||
-        match(version, /^[0-9]+[.][0-9]+[.][0-9]+$/) == null)) {
+    let core_version = normalize_component_name(component) == "sing_box" && as_string(action) == "install_version";
+    let valid_version = core_version ? length(version) <= 100 && match(version, /^v?[0-9][A-Za-z0-9._-]*$/) != null :
+        normalize_component_name(component) == "prokop" && as_string(action) == "install" && match(version, /^[0-9]+[.][0-9]+[.][0-9]+$/) != null;
+    if ((version != "" && !valid_version) || (core_version && version == "")) {
         component_job_json_response(false, "", "Invalid release selection", "invalid_input");
         exit(1);
     }

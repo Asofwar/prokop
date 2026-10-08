@@ -442,6 +442,11 @@ run() {
         "$ROOT/etc/init.d/prokop-fw-watch" stop || true
         "$ROOT/etc/init.d/prokop-fw-watch" disable || true
     fi
+
+    if [ -x "$ROOT/etc/init.d/prokop-sidecars" ]; then
+        "$ROOT/etc/init.d/prokop-sidecars" stop || true
+        "$ROOT/etc/init.d/prokop-sidecars" disable || true
+    fi
     # TorrServer installed by Prokop goes with it (below); its service first.
     if [ -x "$ROOT/etc/init.d/prokop-torrserver" ]; then
         "$ROOT/etc/init.d/prokop-torrserver" stop || true
@@ -493,6 +498,7 @@ run() {
     # Only known product paths are removed. Never recursively delete a path
     # supplied by a UCI option (it might point at /etc or other system data).
     for directory in /etc/prokop /etc/sing-box /tmp/sing-box /usr/lib/prokop \
+        /var/run/prokop-sidecars /var/run/prokop-support \
         /usr/share/prokop /www/luci-static/resources/view/prokop; do
         rm -rf "$ROOT$directory"
     done
@@ -504,6 +510,7 @@ run() {
         /usr/bin/prokop /usr/libexec/prokop-ro /usr/bin/sing-box /usr/lib/libcronet.so \
         /etc/init.d/prokop /etc/init.d/prokop-killswitch /etc/init.d/prokop-torrserver-direct \
         /etc/init.d/prokop-torrserver /etc/init.d/prokop-dns-failsafe /etc/init.d/prokop-fw-watch \
+        /etc/init.d/prokop-sidecars \
         /etc/init.d/sing-box /etc/uci-defaults/50_luci-prokop \
         /usr/share/luci/menu.d/luci-app-prokop.json /usr/share/rpcd/acl.d/luci-app-prokop.json \
         /usr/share/nftables.d/ruleset-post/90-prokop-killswitch-loader.nft \
@@ -539,6 +546,7 @@ run() {
     rm -f "$ROOT"/etc/rc.d/[SK][0-9][0-9]prokop "$ROOT"/etc/rc.d/[SK][0-9][0-9]prokop-killswitch \
         "$ROOT"/etc/rc.d/[SK][0-9][0-9]prokop-dns-failsafe \
         "$ROOT"/etc/rc.d/[SK][0-9][0-9]prokop-fw-watch \
+        "$ROOT"/etc/rc.d/[SK][0-9][0-9]prokop-sidecars \
         "$ROOT"/etc/rc.d/[SK][0-9][0-9]prokop-torrserver-direct \
         "$ROOT"/etc/rc.d/[SK][0-9][0-9]prokop-torrserver \
         "$ROOT/etc/rc.d/S100prokop-torrserver-direct" "$ROOT/etc/rc.d/K9prokop-torrserver-direct"
