@@ -1192,6 +1192,7 @@ function createEnvironment({
     E,
     L,
     window,
+    navigator: window.navigator,
     document,
     MutationObserver: class {
       observe() {}

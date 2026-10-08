@@ -75,6 +75,59 @@ Prokop прекращает сессию через обычный stop; пер�
 Нативные конфиги не доказывают работоспособность конкретного удалённого сервера.
 Начинать проверку следует с резервного снимка и одного тестового устройства.
 
+## Проверка логики ветки и регрессии
+
+Повторное review `d0ed3102` относительно `385be09c` выявило и исправило:
+
+- Потерю пользовательского DNS при нескольких последовательных пресетах;
+  распознавание сохранённого singleton-списка DNS как пресета. Добавлены
+  unit-тесты и проверка реальных LuCI-модулей для 24.10/25.12.
+- Маскирование ошибки Experiments исключением `_ is not a function` при
+  пустом или некорректном stdout. Добавлена проверка реального command helper.
+- Обход двухошибочного гистерезиса Priority при совпадающих active/fastest
+  таймерах и отказе active во время fastest-only пробы. Новые тесты исполняют
+  настоящий fastest selector, а не его заглушку.
+- Гонку Start/Stop поддержки, оставлявшую daemon без session/deadline.
+  Stop теперь возвращает `support_busy` во время Start: дождаться окончания
+  и повторить Stop. Watchdog не ждёт занятого lock, чтобы завершить свой
+  daemon по deadline; старт перепроверяет lease и identity после блокирующих
+  операций. Разные сессии с одинаковым deadline различаются lifetime token.
+- Коллизию имени провайдера `manifest` с manifest.json: native конфиги теперь
+  используют `<name>.config.json`. Отклонённая подготовка не снимает traversal
+  permission родительского каталога; приватные конфиги/data остаются закрыты.
+- Отправку кешированных FakeIP напрямую при включении bypass/game policy:
+  synthetic destinations остаются на пути трансляции sing-box.
+- Перехват DNS к самому роутеру/LAN новыми device/game правилами: теперь
+  optional DNS gates сохраняют router-local/private/delegated IPv6 ответы
+  и явные source/destination exclusions. Остальные, ранее настроенные
+  source-aware DNS-политики не отменяются.
+
+Важное ограничение: сохранённые FakeIP и ответы через локальный dnsmasq могут
+продолжать использовать обычные правила sing-box до обновления кеша. Исключение
+DNS к LAN не означает, что такой резолвер обязательно выдаёт реальные адреса.
+Фактическая доставка пакетов и ответы DHCP-hostnames требуют router-теста.
+
+Локальная проверка изменений (Windows + WSL, без OpenWrt):
+
+- Frontend: **116 файлов / 1020 тестов PASS**; TypeScript, ESLint, Prettier,
+  production build проходят.
+- Targeted backend: **18 проверок PASS**, включая новые concurrency/sidecar/
+  Priority тесты, DNS, nft generation и существующие контрактные проверки.
+- Syntax: **119 файлов × 2 режима PASS**; ShellCheck: **524 файла PASS**.
+- Полный backend-прогон: **488 запусков, 6 FAIL**. Четыре проверки реального
+  nft/dataplane не проходят на WSL kernel (в частности отсутствует nft fib);
+  отказ пустого ruleset воспроизводится также на родительском commit.
+  `ui_state_poll_cost` нестабилен под полной нагрузкой, но отдельный повтор
+  5 раз проходит. Шестой FAIL — вложенный агрегатор `tests/run.sh` из-за тех
+  же nft-проверок. Полный backend **не объявляется PASS**.
+- LuCI harness дополнен глобальным navigator из window.navigator: три
+  существующих теста больше не зависят от наличия browser global в Node 18.
+
+Новые тесты: `support_session_concurrency.sh`, `sidecar_prepare.sh`,
+`priority_fastest_hysteresis.sh`, `luci_experiments_errors.sh`,
+`fe-app-prokop/src/prokop/tests/dnsProfiles.test.ts`. Проверки WDTT/OlcRTC,
+живого tailnet, production nft/FakeIP и DoH mTLS на роутере по-прежнему нужны.
+
 ## Источники и атрибуция
 
 Все исходные ссылки и зафиксированные SHA собраны в

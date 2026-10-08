@@ -23,12 +23,24 @@ prokop.settings.alice_list_mode=deny
 prokop.settings.alice_ips=192.168.1.5
 prokop.settings.alice_macs=aa:bb:cc:dd:ee:ff
 prokop.settings.alice_interfaces=wg*
+prokop.settings.intercept_client_dns_exclude=9.9.9.9 2001:4860:4860::8888
 UCI
 base
 node - "$WORK/nft.log" <<'NODE'
 const assert = require('node:assert/strict'); const log = require('fs').readFileSync(process.argv[2],'utf8');
 assert.match(log, /mangle iifname @prokop_interfaces jump alice_gate/);
+assert.match(log, /alice_gate ip daddr 198\.18\.0\.0\/15 return/);
+assert.match(log, /alice_gate ip6 daddr fc00::\/18 return/);
+assert.ok(log.indexOf('alice_gate ip daddr 198.18.0.0/15 return') < log.indexOf('alice_gate ip saddr @prokop_alice_sources counter accept'));
 assert.match(log, /alice_gate ip saddr @prokop_alice_sources counter accept/);
+assert.match(log, /alice_dns_gate fib daddr type local return/);
+assert.match(log, /alice_dns_gate ip daddr @localv4 return/);
+assert.match(log, /alice_dns_gate ip6 daddr @localv6 return/);
+assert.match(log, /alice_dns_gate ip saddr \{ 9\.9\.9\.9 \} return/);
+assert.match(log, /alice_dns_gate ip daddr \{ 9\.9\.9\.9 \} return/);
+assert.match(log, /alice_dns_gate ip6 saddr \{ 2001:4860:4860::8888 \} return/);
+assert.match(log, /alice_dns_gate ip6 daddr \{ 2001:4860:4860::8888 \} return/);
+assert.ok(log.indexOf('alice_dns_gate fib daddr type local return') < log.indexOf('alice_dns_gate iifname @prokop_alice_interfaces'));
 assert.match(log, /alice_dns_gate.*redirect to :1604/);
 assert.match(log, /prokop_alice_sources.*192\.168\.1\.5/);
 assert.ok(log.indexOf('jump alice_gate') < log.indexOf('ct direction reply return'));
@@ -44,9 +56,14 @@ UCI
 base
 node - "$WORK/nft.log" <<'NODE'
 const assert = require('node:assert/strict'); const log = require('fs').readFileSync(process.argv[2],'utf8');
-assert.match(log,/insert rule inet ProkopTable mangle iifname @prokop_interfaces ip saddr @prokop_game_sources meta l4proto udp return/);
+assert.match(log,/insert rule inet ProkopTable mangle iifname @prokop_interfaces ip saddr @prokop_game_sources ip daddr != 198\.18\.0\.0\/15 meta l4proto udp return/);
+assert.match(log,/insert rule inet ProkopTable mangle iifname @prokop_interfaces ip6 saddr @prokop_game_sources6 ip6 daddr != fc00::\/18 meta l4proto udp return/);
 assert.match(log,/game_rules ip saddr @prokop_game_sources meta l4proto tcp meta mark set 0x04000000 return/);
-assert.match(log,/dns_redirect iifname @prokop_interfaces ip saddr @prokop_game_sources udp dport 53 redirect to :1604/);
+assert.match(log,/dns_redirect iifname @prokop_interfaces ip saddr @prokop_game_sources udp dport 53 jump game_dns_gate/);
+assert.match(log,/game_dns_gate fib daddr type local return/);
+assert.match(log,/game_dns_gate ip daddr @localv4 return/);
+assert.match(log,/game_dns_gate ip6 daddr @localv6 return/);
+assert.match(log,/game_dns_gate meta l4proto \{ tcp, udp \} redirect to :1604/);
 NODE
 cat >"$WORK/gaming.json" <<'JSON'
 {"settings":{".name":"settings",".type":"settings","gaming_enabled":"1","gaming_ips":["192.168.1.15"],"gaming_section":"main","dns_server":["77.88.8.8"],"bootstrap_dns_server":["77.88.8.8"],"yacd_secret_key":"test-secret"},"sections":[{".name":"main",".type":"section","enabled":"1","action":"connection","selector_proxy_links":["socks5://192.0.2.10:1080"],"domain_suffix":["example.com"]}]}

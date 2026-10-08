@@ -60,6 +60,10 @@ function cleanup_daemon_before_start() {
     identity.signal(DIR + "/daemon.pid", DAEMON, ARGS, true, "KILL", true);
     fs.unlink(DIR + "/daemon.pid"); fs.unlink(SOCKET);
 }
+function same_session(expires, token) {
+    let saved = c.read(DIR + "/session.json", {});
+    return saved.expires_uptime == expires && (token == "" || saved.token == token);
+}
 function start(port) {
     if (index([ "22", "80", "443" ], port) < 0) return c.fail("invalid_support_port");
     if (!c.directory(DIR)) return c.fail("support_storage_unavailable");
@@ -74,18 +78,36 @@ function start(port) {
         if (!fs.chmod(AUTH, 0600)) return c.fail("key_permissions_failed");
         cleanup_daemon_before_start();
         let expires = c.uptime() + 1800;
-        if (!c.write(DIR + "/session.json", { expires_uptime: expires, port: int(port) }, false)) return c.fail("session_write_failed");
+        let token = c.self() + "." + identity.start_ticks(c.self());
+        if (!c.write(DIR + "/session.json", { expires_uptime: expires, port: int(port), token }, false)) return c.fail("session_write_failed");
         // A second, independent process enforces the deadline even if the
-        // setup worker crashes. It binds its identity to this deadline.
-        if (!background([ "ucode", "-L", LIB, SCRIPT, "expire", "" + expires ], DIR + "/expiry.pid")) return c.fail("expiry_start_failed");
+        // setup worker crashes. A process-lifetime token disambiguates starts
+        // in the same uptime second; deadlines alone are not identities.
+        let expiry_args = [ "ucode", "-L", LIB, SCRIPT, "expire", "" + expires, token ];
+        if (!background(expiry_args, DIR + "/expiry.pid")) { cleanup(); return c.fail("expiry_start_failed"); }
+        function valid() {
+            return same_session(expires, token) && c.uptime() < expires &&
+                identity.matches(DIR + "/expiry.pid", "ucode", expiry_args, true, true) != "";
+        }
+        function cancelled() { cleanup(); return c.fail("support_session_cancelled"); }
         if (!network_bypass(true)) { cleanup(); return c.fail("support_capture_bypass_failed"); }
+        if (!valid()) return cancelled();
         if (!background(ARGS, DIR + "/daemon.pid")) { cleanup(); return c.fail("tailscaled_start_failed"); }
-        for (let i = 0; i < 30 && fs.stat(SOCKET) == null; i++) system("sleep 0.1");
+        let daemon = identity.read_record(DIR + "/daemon.pid");
+        function running() {
+            return valid() && identity.matches_record(daemon, DAEMON, ARGS, true, true) != "";
+        }
+        for (let i = 0; i < 30 && fs.stat(SOCKET) == null && valid(); i++) system("sleep 0.1");
+        if (!running() || fs.stat(SOCKET) == null) return cancelled();
         let logged_in = client([ "up", "--auth-key=file:" + AUTH, "--timeout=20s", "--hostname=prokop-support", "--accept-dns=false", "--accept-routes=false", "--reset" ]);
         fs.unlink(AUTH); fs.unlink(DIR + "/prepared.json");
+        if (!running()) return cancelled();
         if (logged_in.code != 0) { cleanup(); return c.fail("tailscale_login_failed"); }
         if (client([ "serve", "--bg", "--tcp=" + port, "tcp://127.0.0.1:" + port ]).code != 0) { cleanup(); return c.fail("support_forward_failed"); }
-        return status();
+        if (!running()) return cancelled();
+        let result = status();
+        if (!result.active || !running()) return cancelled();
+        return result;
     }
     try { result = work(); } catch (e) { cleanup(); result = c.fail("support_start_failed"); }
     c.locks.release(DIR + "/lock", c.self());
@@ -95,15 +117,35 @@ let mode = c.value(ARGV[0]);
 if (mode == "status") c.reply(status());
 if (mode == "prepare") c.reply(prepare());
 if (mode == "start") c.reply(start(c.value(ARGV[1])));
-if (mode == "stop") { cleanup(); c.reply({ success: true, active: false }); }
+if (mode == "stop") {
+    if (!c.directory(DIR)) c.reply(c.fail("support_storage_unavailable"));
+    if (!c.locks.acquire(DIR + "/lock", c.self())) c.reply(c.fail("support_busy"));
+    cleanup();
+    c.locks.release(DIR + "/lock", c.self());
+    c.reply({ success: true, active: false });
+}
 if (mode == "expire") {
-    let expires = int(ARGV[1]);
-    while (c.uptime() < expires) {
-        let saved = c.read(DIR + "/session.json", {});
-        if (saved.expires_uptime != expires) exit(0);
-        system("sleep 2");
+    let expires = int(ARGV[1]), token = c.value(ARGV[2]);
+    while (same_session(expires, token)) {
+        if (c.uptime() < expires) { system("sleep 2"); continue; }
+        if (c.locks.acquire(DIR + "/lock", c.self())) {
+            // Read back after acquisition: a completed stop/restart may have
+            // replaced the session while this watchdog was contending.
+            if (same_session(expires, token)) cleanup();
+            c.locks.release(DIR + "/lock", c.self());
+            break;
+        }
+        // Never wait for a hung setup/client/nft call before revoking access.
+        // Only signal the captured, exact process identity; shared files and
+        // nft rules remain protected by the lock. Start reads back its lease
+        // after every blocking operation and cannot publish expired access.
+        let daemon = identity.read_record(DIR + "/daemon.pid");
+        if (same_session(expires, token)) {
+            identity.signal_record(daemon, DAEMON, ARGS, true, "TERM");
+            identity.signal_record(daemon, DAEMON, ARGS, true, "KILL");
+        }
+        system("sleep 0.1");
     }
-    if (c.read(DIR + "/session.json", {}).expires_uptime == expires) cleanup();
     exit(0);
 }
 c.reply(c.fail("invalid_action"));

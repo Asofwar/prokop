@@ -386,7 +386,7 @@ function choose_fastest_same_level(group, level_index, active_tag, probe) {
 
     if (best == null || best.tag == active_tag)
         return null;
-    if (active == null || !active.alive || best.delay < active.delay)
+    if (active != null && active.alive && best.delay < active.delay)
         return best;
     return null;
 }
@@ -482,7 +482,7 @@ function tick_group(state, group) {
         state.nextRecoveryCheck = now + duration_to_seconds(group.recovery_check_interval, 15);
     }
 
-    if (state.active != "" && group.switch_to_faster_same_priority && now >= state.nextFastestCheck) {
+    if (state.active != "" && state.failures == 0 && group.switch_to_faster_same_priority && now >= state.nextFastestCheck) {
         let selected = choose_fastest_same_level(group, state.levelIndex, state.active, probe);
         if (selected != null && state.activeDelay - selected.delay >= 50 && selected.delay <= state.activeDelay * 0.8)
             switch_group(state, group, selected);

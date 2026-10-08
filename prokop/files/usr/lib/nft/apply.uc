@@ -1274,7 +1274,52 @@ const ALICE_GATE_CHAIN = "alice_gate";
 const ALICE_DNS_GATE_CHAIN = "alice_dns_gate";
 let alice_config = require("config.alice");
 
-function nft_create_alice_gate(table, interface_set, list_mode) {
+function network_interface_dump() {
+    let output = command_output_quiet_from_args([ "ubus", "call", "network.interface", "dump" ]);
+    try {
+        let data = json(output || "{}");
+        return type(data?.interface) == "array" ? data.interface : [];
+    }
+    catch (e) {
+        return [];
+    }
+}
+
+// The prefixes delegated to the router (ipv6-prefix on the uplink) and the
+// parts assigned to its networks (ipv6-prefix-assignment), as the network
+// daemon has them when the table is built.
+function delegated_ipv6_prefixes(dump) {
+    let result = [];
+    for (let entry in dump)
+        for (let key in [ "ipv6-prefix", "ipv6-prefix-assignment" ])
+            for (let prefix in (type(entry?.[key]) == "array" ? entry[key] : [])) {
+                let text = lc(as_string(prefix?.address) + "/" + as_string(prefix?.mask));
+                if (core_ip.valid_ipv6_cidr(text) && index(result, text) < 0)
+                    push(result, text);
+            }
+    return result;
+}
+
+// These optional real-IP DNS paths must not replace the router's local
+// dnsmasq answers or a LAN resolver. Explicit DNS exclusions apply to both
+// source and destination, just as in the normal client-DNS intercept.
+function nft_device_dns_guards(table, chain, localv4_set, localv6_set, settings) {
+    if (!nft_add_rule(table, chain, [ "fib", "daddr", "type", "local", "return" ]) ||
+        !nft_add_rule(table, chain, [ "ip", "daddr", "@" + as_string(localv4_set), "return" ]) ||
+        !nft_add_rule(table, chain, [ "ip6", "daddr", "@" + as_string(localv6_set), "return" ])) return false;
+    let excluded = connections.client_dns_intercept_exclusions(settings);
+    let lan6 = delegated_ipv6_prefixes(network_interface_dump());
+    for (let family in [ "ip", "ip6" ]) {
+        let values = family == "ip" ? excluded.v4 : excluded.v6;
+        if (length(values))
+            for (let field in [ "saddr", "daddr" ])
+                if (!nft_add_rule(table, chain, [ family, field, "{ " + join(", ", values) + " }", "return" ])) return false;
+    }
+    if (length(lan6) && !nft_add_rule(table, chain, [ "ip6", "daddr", "{ " + join(", ", lan6) + " }", "return" ])) return false;
+    return true;
+}
+
+function nft_create_alice_gate(table, interface_set, list_mode, fakeip_range, fakeip6_range, localv4_set, localv6_set, settings) {
     let allow = list_mode == alice_config.LIST_MODE_ALLOW;
     // nft only accepts a port redirect after a transport protocol match in the same rule.
     let dns_direct = [ "meta", "l4proto", "{", "tcp,", "udp", "}", "counter", "redirect", "to", ":" + as_string(runtime_constants.ALICE_DNS_INBOUND_PORT) ];
@@ -1286,7 +1331,14 @@ function nft_create_alice_gate(table, interface_set, list_mode) {
     ];
 
     if (!nft_create_chain(table, ALICE_GATE_CHAIN, "{ }") ||
-        !nft_create_chain(table, ALICE_DNS_GATE_CHAIN, "{ }"))
+        !nft_create_chain(table, ALICE_DNS_GATE_CHAIN, "{ }") ||
+        !nft_device_dns_guards(table, ALICE_DNS_GATE_CHAIN, localv4_set, localv6_set, settings))
+        return false;
+
+    // Cached synthetic answers still need translation after a device policy
+    // changes. Never forward FakeIP addresses to the WAN as real destinations.
+    if (!nft_add_rule(table, ALICE_GATE_CHAIN, [ "ip", "daddr", fakeip_range, "return" ]) ||
+        !nft_add_rule(table, ALICE_GATE_CHAIN, [ "ip6", "daddr", fakeip6_range, "return" ]))
         return false;
 
     for (let matcher in matchers) {
@@ -1353,13 +1405,17 @@ function nft_create_runtime_base(table, localv4_set, common_set, port_set, ip_po
 
     if (bool_option(settings, "gaming_enabled", false)) {
         let addresses = common.list_option(settings, "gaming_ips");
+        if (!nft_create_chain(table, "game_dns_gate", "{ }") ||
+            !nft_device_dns_guards(table, "game_dns_gate", localv4_set, localv6_set, settings) ||
+            !nft_add_rule(table, "game_dns_gate", [ "meta", "l4proto", "{", "tcp,", "udp", "}",
+                "redirect", "to", ":" + as_string(runtime_constants.ALICE_DNS_INBOUND_PORT) ])) return false;
         if (!nft_create_ipv4_set(table, "prokop_game_sources") || !nft_create_ipv6_set(table, "prokop_game_sources6") ||
             !nft_add_csv_chunks_to_family_sets(join(",", addresses), table, "prokop_game_sources", "prokop_game_sources6", "ips", "", 5000)) return false;
         for (let family in [ "ip", "ip6" ]) {
             let sources = family == "ip" ? "@prokop_game_sources" : "@prokop_game_sources6";
             for (let protocol in [ "tcp", "udp" ])
                 if (!nft_add_rule(table, "dns_redirect", [ "iifname", "@" + as_string(interface_set), family, "saddr", sources,
-                    protocol, "dport", "53", "redirect", "to", ":" + as_string(runtime_constants.ALICE_DNS_INBOUND_PORT) ])) return false;
+                    protocol, "dport", "53", "jump", "game_dns_gate" ])) return false;
         }
     }
 
@@ -1368,7 +1424,7 @@ function nft_create_runtime_base(table, localv4_set, common_set, port_set, ip_po
             !nft_create_ipv6_set(table, ALICE_SOURCE6_SET) ||
             !nft_create_set(table, ALICE_MAC_SET, "{ type ether_addr; }") ||
             !nft_create_ifname_set(table, ALICE_INTERFACE_SET) ||
-            !nft_create_alice_gate(table, interface_set, alice.list_mode) ||
+            !nft_create_alice_gate(table, interface_set, alice.list_mode, fakeip_range, fakeip6_range, localv4_set, localv6_set, settings) ||
             !nft_populate_alice_sets(alice, table)) return false;
     }
 
@@ -1418,7 +1474,8 @@ function nft_create_runtime_base(table, localv4_set, common_set, port_set, ip_po
         // UDP must leave the parent too, otherwise later section rules recapture it.
         for (let family in [ "ip", "ip6" ])
             if (!nft_insert_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), family, "saddr",
-                family == "ip" ? "@prokop_game_sources" : "@prokop_game_sources6", "meta", "l4proto", "udp", "return" ])) return false;
+                family == "ip" ? "@prokop_game_sources" : "@prokop_game_sources6", family, "daddr", "!=",
+                family == "ip" ? fakeip_range : fakeip6_range, "meta", "l4proto", "udp", "return" ])) return false;
     }
 
     let provider_uid = length(uci_core.section_objects(CONFIG_NAME, "sidecar")) > 0 ? require("experiments.sidecar_config").uid() : "";
@@ -1921,31 +1978,7 @@ const CLIENT_DNS_SKIP4_SET = "dns_intercept_skip4";
 const CLIENT_DNS_SKIP6_SET = "dns_intercept_skip6";
 const CLIENT_DNS_LAN6_SET = "dns_intercept_lan6";
 
-function network_interface_dump() {
-    let output = command_output_quiet_from_args([ "ubus", "call", "network.interface", "dump" ]);
-    try {
-        let data = json(output || "{}");
-        return type(data?.interface) == "array" ? data.interface : [];
-    }
-    catch (e) {
-        return [];
-    }
-}
 
-// The prefixes delegated to the router (ipv6-prefix on the uplink) and the
-// parts assigned to its networks (ipv6-prefix-assignment), as the network
-// daemon has them when the table is built.
-function delegated_ipv6_prefixes(dump) {
-    let result = [];
-    for (let entry in dump)
-        for (let key in [ "ipv6-prefix", "ipv6-prefix-assignment" ])
-            for (let prefix in (type(entry?.[key]) == "array" ? entry[key] : [])) {
-                let text = lc(as_string(prefix?.address) + "/" + as_string(prefix?.mask));
-                if (core_ip.valid_ipv6_cidr(text) && index(result, text) < 0)
-                    push(result, text);
-            }
-    return result;
-}
 
 function dnsmasq_settings() {
     let found = uci_core.section_objects("dhcp", "dnsmasq");

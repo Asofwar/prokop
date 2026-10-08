@@ -61,7 +61,12 @@ function prepare() {
         if (fs.stat(p.binary) == null) return c.fail("provider_binary_missing_" + p.kind);
     }
     if (!ports_available(desired)) return c.fail("provider_port_already_in_use");
-    if (!c.directory(DIR)) return c.fail("provider_storage_unavailable");
+    // Unlike private data directories, the active parent must stay traversable
+    // throughout preparation, including every failure path.
+    let parent = fs.lstat(DIR);
+    if ((parent != null && parent.type != "directory") ||
+        (parent == null && !fs.mkdir(DIR, 0711)) || !fs.chmod(DIR, 0711))
+        return c.fail("provider_storage_unavailable");
     // Native binaries run as a dedicated unprivileged user. Its sockets
     // bypass Prokop output capture; neither global provider service is stopped.
     let user = ensure_user();
@@ -92,7 +97,7 @@ function prepare() {
             return c.fail("provider_config_replace_failed");
         }
     // The parent is traversable; every secret config and data directory is private.
-    if (!fs.chmod(DIR, 0711) || !c.write(FILE, desired, false)) return c.fail("provider_manifest_write_failed");
+    if (!c.write(FILE, desired, false)) return c.fail("provider_manifest_write_failed");
     return public_plan(desired);
 }
 let mode = c.value(ARGV[0]);

@@ -13,7 +13,7 @@ function plan(sections) {
             index([ 1602, 1603, 1604, 4534, 4590, 4591, 9090, 18054 ], int(port)) >= 0 || ports[port]) return c.fail("invalid_or_duplicate_provider_port");
         ports[port] = true;
         let config, binary, args;
-        let path = DIR + "/" + name + ".json";
+        let path = DIR + "/" + name + ".config.json";
         if (kind == "xray") {
             let outbound;
             try { outbound = json(raw); } catch (e) { return c.fail("invalid_xray_outbound_json"); }

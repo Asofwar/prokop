@@ -122,18 +122,38 @@ export function attachDnsProfiles(
   picker.value('custom', _('Custom DNS'));
   DNS_PROFILES.forEach((p) => picker.value(p.id, p.label));
   picker.write = () => {};
-  picker.cfgvalue = (id) =>
-    DNS_PROFILES.find(
-      (p) =>
-        p.protocol === protocol.cfgvalue?.(id) &&
-        p.server === server.cfgvalue?.(id),
-    )?.id || 'custom';
+  picker.cfgvalue = (id) => {
+    const configured = server.cfgvalue?.(id);
+    const address = Array.isArray(configured)
+      ? configured.length === 1
+        ? configured[0]
+        : undefined
+      : configured;
+    return (
+      DNS_PROFILES.find(
+        (p) => p.protocol === protocol.cfgvalue?.(id) && p.server === address,
+      )?.id || 'custom'
+    );
+  };
   if (tab) {
     picker.depends('action', 'dns');
     picker.modalonly = true;
   }
   const remembered = new Map<string, Map<string, unknown>>();
   const selected = new Map<string, string>();
+  const appliedPreset = new Map<string, unknown>();
+  function rememberCustom(id: string, previous: string) {
+    const current = server.formvalue(id);
+    // Preset-to-preset transitions must not overwrite the user's custom DNS.
+    // An edited preset, however, is a custom value worth preserving.
+    if (
+      appliedPreset.has(id) &&
+      JSON.stringify(current) === JSON.stringify(appliedPreset.get(id))
+    )
+      return;
+    if (!remembered.has(id)) remembered.set(id, new Map());
+    remembered.get(id)?.set(previous, current);
+  }
   picker.onchange = (_event, id, value) => {
     const profile = DNS_PROFILES.find((p) => p.id === value);
     if (!profile) {
@@ -142,28 +162,27 @@ export function attachDnsProfiles(
         String(protocol.formvalue(id) || protocol.cfgvalue?.(id) || 'udp');
       const saved = remembered.get(id)?.get(current);
       if (saved != null) server.getUIElement(id)?.setValue(saved);
+      appliedPreset.delete(id);
       return;
     }
     const previous =
       selected.get(id) ||
       String(protocol.formvalue(id) || protocol.cfgvalue?.(id) || 'udp');
-    if (!remembered.has(id)) remembered.set(id, new Map());
-    remembered.get(id)?.set(previous, server.formvalue(id));
+    rememberCustom(id, previous);
     protocol.getUIElement(id)?.setValue(profile.protocol);
-    server.getUIElement(id)?.setValue(tab ? profile.server : [profile.server]);
+    const presetValue = tab ? profile.server : [profile.server];
+    server.getUIElement(id)?.setValue(presetValue);
+    appliedPreset.set(id, presetValue);
     selected.set(id, profile.protocol);
     protocol.map?.checkDepends?.();
   };
   const previousChange = protocol.onchange;
   protocol.onchange = (event, id, value) => {
-    let memory = remembered.get(id);
-    if (!memory) {
-      memory = new Map();
-      remembered.set(id, memory);
-    }
     const previous =
       selected.get(id) || String(protocol.cfgvalue?.(id) || 'udp');
-    memory.set(previous, server.formvalue(id));
+    rememberCustom(id, previous);
+    const memory = remembered.get(id)!;
+    appliedPreset.delete(id);
     const fallback = DNS_PROFILES.find((p) => p.protocol === value)?.server;
     server
       .getUIElement(id)

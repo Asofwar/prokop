@@ -15,7 +15,7 @@ async function command(args) {
   let data;
   try {
     data = JSON.parse(result.stdout);
-  } catch (_) {
+  } catch {
     throw new Error(_("Operation failed"));
   }
   if (result.code !== 0 || data.success === false)
