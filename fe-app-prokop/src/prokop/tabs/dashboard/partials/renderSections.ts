@@ -260,6 +260,57 @@ function renderSubscriptionMetadata(
   ]);
 }
 
+function fillNumbers(text: string, values: (number | undefined)[]) {
+  return values.reduce<string>(
+    (result, value) => result.replace('%s', String(value ?? 0)),
+    text,
+  );
+}
+
+export function subscriptionNoticeText(
+  notice: Prokop.SubscriptionNotice,
+  sourceCount: number,
+) {
+  let text = '';
+  if (notice.kind === 'node_limit') {
+    text = fillNumbers(
+      _(
+        'Only the first %s of %s servers of this subscription are used: %s were left out by its server limit. The limit is set in the subscription settings.',
+      ),
+      [notice.limit, notice.total, notice.dropped],
+    );
+  } else if (notice.kind === 'large_source') {
+    text = fillNumbers(
+      _(
+        'This subscription has %s servers and no server limit. On a router with little memory, a limit of %s servers in the subscription settings keeps sing-box from running out of memory.',
+      ),
+      [notice.total, notice.suggested],
+    );
+  } else if (notice.kind === 'placeholders') {
+    text = fillNumbers(
+      _(
+        'The subscription sent %s placeholder entries with address 0.0.0.0 or :: (provider notices, such as an expired subscription or used-up traffic); they were left out.',
+      ),
+      [notice.count],
+    );
+  } else if (notice.kind === 'certificate_pin') {
+    text = fillNumbers(
+      _(
+        '%s servers have a certificate pin that is not enforced before sing-box 1.15.0: they connect with the usual certificate verification.',
+      ),
+      [notice.count],
+    );
+  }
+
+  if (!text) {
+    return '';
+  }
+
+  return sourceCount > 1 && notice.sourceIndex
+    ? `${_('Subscription %s:').replace('%s', String(notice.sourceIndex))} ${text}`
+    : text;
+}
+
 function renderSubscriptionUpdateAction(
   section: Prokop.OutboundGroup,
   subscriptionUpdating: boolean,
@@ -561,6 +612,20 @@ function renderDefaultState({
               ]
             : []),
         ]),
+        ...(outbound.insecure
+          ? [
+              E(
+                'div',
+                {
+                  class: 'fkp_dashboard-page__outbound-grid__item__insecure',
+                  title: _(
+                    'The link of this server turns certificate verification off: the connection is not protected from interception',
+                  ),
+                },
+                asText(_('Certificate not verified')),
+              ),
+            ]
+          : []),
         E('div', { class: 'fkp_dashboard-page__outbound-grid__item__footer' }, [
           E(
             'div',
@@ -586,6 +651,18 @@ function renderDefaultState({
     .map((metadata) => renderSubscriptionMetadata(metadata))
     .filter(Boolean) as HTMLElement[];
   const pinGuardNode = renderPinGuardSwitch(section.pinGuardSwitch);
+  const noticeNodes = (section.subscriptionNotices || [])
+    .map((notice) =>
+      subscriptionNoticeText(notice, section.subscriptionSourceCount || 0),
+    )
+    .filter(Boolean)
+    .map((text) =>
+      E(
+        'div',
+        { class: 'fkp_dashboard-page__subscription-notice', role: 'note' },
+        asText(text),
+      ),
+    );
   const subscriptionUpdateAction = readonly
     ? undefined
     : renderSubscriptionUpdateAction(
@@ -710,6 +787,7 @@ function renderDefaultState({
     grouping,
     E('div', { class: 'fkp_dashboard-page__outbound-grid' }, [
       ...(pinGuardNode ? [pinGuardNode] : []),
+      ...noticeNodes,
       ...metadataNodes,
       groupedGrid,
     ]),

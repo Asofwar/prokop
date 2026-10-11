@@ -664,6 +664,39 @@ function subscription_node_prefix(section, value) {
     return trim(as_string(prefix));
 }
 
+// R6 (cergo666/netshift 7b51b92e): the servers of one subscription source
+// that go into the configuration: the first max_nodes of it, in its order,
+// after the nodes the core cannot run are left out; 0 is no limit. A
+// subscription of thousands of servers otherwise makes a configuration that
+// a router with little memory cannot check or run. A source without the
+// option takes the default; the sources that existed before the limit were
+// given 0 by config/migration.uc, so an upgrade cuts nothing. A value that
+// is not a number takes the default too (config/validator.uc refuses it).
+const SUBSCRIPTION_MAX_NODES_DEFAULT = 500;
+const SUBSCRIPTION_MAX_NODES_LIMIT = 100000;
+
+function subscription_max_nodes_value(value) {
+    value = trim(as_string(value));
+    if (value == "")
+        return SUBSCRIPTION_MAX_NODES_DEFAULT;
+    if (match(value, /^[0-9]+$/) == null || length(value) > 6 || int(value, 10) > SUBSCRIPTION_MAX_NODES_LIMIT)
+        return null;
+    return int(value, 10);
+}
+
+// The raw max_nodes of a source ("" when unset).
+function subscription_max_nodes_option(section, value) {
+    let child = child_item_by_value(section, "subscription_url", "url", value);
+    return trim(child != null
+        ? child_option(child, "max_nodes", "")
+        : item_option(section, "subscription_url_settings", value, "max_nodes", ""));
+}
+
+function subscription_max_nodes(section, value) {
+    let result = subscription_max_nodes_value(subscription_max_nodes_option(section, value));
+    return result == null ? SUBSCRIPTION_MAX_NODES_DEFAULT : result;
+}
+
 // C11: extra HTTP headers a subscription source sends ("Name: value", a
 // list of its subscription_url item). The headers Prokop sets itself, and
 // the ones that change the request framing, cannot be replaced here.
@@ -1142,6 +1175,10 @@ return {
     subscription_auto_user_agent,
     subscription_auto_hwid,
     subscription_include_urltest_groups,
+    subscription_max_nodes,
+    subscription_max_nodes_option,
+    subscription_max_nodes_value,
+    SUBSCRIPTION_MAX_NODES_DEFAULT,
     subscription_hide_urltest_group_outbounds,
     subscription_hide_detour_outbounds,
     subscription_prefix_nodes,

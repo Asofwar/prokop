@@ -24,7 +24,7 @@ if grep -Fq 'http(s)://, hy2/hysteria2:// links' \
   "$SECTION_JS" "$SOURCE_PO" "$PACKAGE_PO" "$SOURCE_POT" "$PACKAGE_POT" "$CALLS_JSON"; then
   fail "Connection URL help must not advertise removed HTTP proxy links"
 fi
-grep -Fq 'socks4/5://, hy2/hysteria2:// links' "$SECTION_JS" ||
+grep -Fq 'socks4/5://, hy2/hysteria2://, tuic://, anytls:// links' "$SECTION_JS" ||
   fail "Connection URL help must list the remaining native proxy links"
 
 for po in "$SOURCE_PO" "$PACKAGE_PO"; do

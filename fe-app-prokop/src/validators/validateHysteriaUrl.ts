@@ -1,6 +1,7 @@
 import { ValidationResult } from './types';
 import { parseQueryString } from '../helpers/parseQueryString';
 import { isValidPort, parseHostPort } from './hostPort';
+import { certificatePinsError } from './validateCertificatePins';
 
 export function validateHysteria2Url(url: string): ValidationResult {
   try {
@@ -135,6 +136,11 @@ export function validateHysteria2Url(url: string): ValidationResult {
           valid: false,
           message: _('Invalid HY2 URL: sni cannot be empty'),
         };
+      }
+
+      const pinError = certificatePinsError(params);
+      if (pinError) {
+        return { valid: false, message: pinError };
       }
 
       if (

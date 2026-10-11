@@ -33,6 +33,7 @@ type DashboardSectionCache = {
   subscriptionMetadata?:
     | Prokop.SubscriptionMetadata
     | Prokop.SubscriptionMetadata[];
+  subscriptionNotices?: Prokop.SubscriptionNotice[];
 };
 
 type UrlTestCacheGroup = {
@@ -1228,6 +1229,7 @@ function buildProxyGroupOutbounds(
         type: priorityConfig ? 'Priority' : item?.value.type || 'URLTest',
         selected: selector?.value?.now === code,
         description: outboundMetadata?.descriptions?.[code],
+        insecure: outboundMetadata?.insecure?.[code] === true || undefined,
         country: showDetectedCountries
           ? outboundMetadata?.countries?.[code]
           : undefined,
@@ -1424,11 +1426,50 @@ function getSubscriptionMetadata(
   return undefined;
 }
 
+const SUBSCRIPTION_NOTICE_KINDS = new Set([
+  'node_limit',
+  'large_source',
+  'placeholders',
+  'certificate_pin',
+]);
+
+// R1, R6, adjacent 9: the notices of the sources this rule has now. Shown
+// whatever show_dashboard_metadata says: they explain missing servers.
+export function getSubscriptionNotices(
+  section: Prokop.ConfigSection,
+  sourceCount: number,
+  dashboardCache?: DashboardSectionCache,
+) {
+  const notices = Array.isArray(dashboardCache?.subscriptionNotices)
+    ? dashboardCache.subscriptionNotices
+    : [];
+  const visible = notices.filter(
+    (notice) =>
+      notice &&
+      typeof notice === 'object' &&
+      SUBSCRIPTION_NOTICE_KINDS.has(notice.kind) &&
+      metadataMatchesCurrentSource(
+        section['.name'],
+        sourceCount,
+        notice as Prokop.SubscriptionMetadata,
+      ),
+  );
+
+  return visible.length ? visible : undefined;
+}
+
 function getOutboundMetadata(dashboardCache?: DashboardSectionCache) {
   const metadata = dashboardCache?.outboundMetadata;
   const names = objectMap(metadata?.names);
   const countries = objectMap(metadata?.countries);
   const descriptions = objectMap(metadata?.descriptions);
+  const insecure = Object.fromEntries(
+    Object.entries(
+      metadata?.insecure && typeof metadata.insecure === 'object'
+        ? metadata.insecure
+        : {},
+    ).filter(([, value]) => value === true),
+  ) as Record<string, boolean>;
 
   if (!metadata || typeof metadata !== 'object') {
     return undefined;
@@ -1438,6 +1479,7 @@ function getOutboundMetadata(dashboardCache?: DashboardSectionCache) {
     names,
     countries,
     descriptions,
+    insecure,
   };
 }
 
@@ -1493,6 +1535,13 @@ export async function getDashboardSections(): Promise<IGetDashboardSectionsRespo
                 dashboardCache,
               )
             : undefined;
+          const subscriptionNotices = subscriptionEnabled
+            ? getSubscriptionNotices(
+                section,
+                subscriptionSourceCount,
+                dashboardCache,
+              )
+            : undefined;
           const cachedProxyLinks = new Map<string, string>();
           const urltestGroups = mergeUrlTestGroups(
             getUrlTestGroups(dashboardCache),
@@ -1525,6 +1574,7 @@ export async function getDashboardSections(): Promise<IGetDashboardSectionsRespo
               runtimeMetadata.pinGuardEvents,
               outbounds,
             ),
+            subscriptionNotices,
             outbounds,
           };
         }

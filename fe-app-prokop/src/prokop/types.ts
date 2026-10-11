@@ -753,6 +753,7 @@ export namespace Prokop {
     description?: string;
     selected: boolean;
     country?: string;
+    insecure?: boolean;
     runtimeAvailable?: boolean;
     urlTestInfo?: UrlTestInfo;
     priorityInfo?: PriorityInfo;
@@ -817,6 +818,7 @@ export namespace Prokop {
     subscriptionMetadata?: SubscriptionMetadata[];
     // R2: the pin guard moved the rule off a dead server chosen by hand.
     pinGuardSwitch?: PinGuardSwitch;
+    subscriptionNotices?: SubscriptionNotice[];
     outbounds: Outbound[];
   }
 
@@ -824,6 +826,19 @@ export namespace Prokop {
     fromName: string;
     toName: string;
     time: number;
+  }
+
+  // What the generator tells about a subscription source
+  // (singbox/generator.uc push_subscription_notice): counts only.
+  export interface SubscriptionNotice {
+    kind: 'node_limit' | 'large_source' | 'placeholders' | 'certificate_pin';
+    sourceIndex?: number;
+    sourceSection?: string;
+    count?: number;
+    limit?: number;
+    total?: number;
+    dropped?: number;
+    suggested?: number;
   }
 
   export interface LatencyActionProgress {
@@ -1066,6 +1081,9 @@ export namespace Prokop {
     names?: Record<string, string>;
     countries?: Record<string, string>;
     descriptions?: Record<string, string>;
+    // Tags of the nodes that run without certificate verification
+    // (tls.insecure from their link); singbox/subscription.uc.
+    insecure?: Record<string, boolean>;
   }
 
   export interface GetSingBoxStatus {

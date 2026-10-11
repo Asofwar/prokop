@@ -1404,6 +1404,16 @@ function migrate_http_connection_urls(ctx) {
     }
 }
 
+// R6: a new subscription source keeps the first 500 servers
+// (config/connections.uc subscription_max_nodes). The sources that existed
+// before keep all of theirs (0, no limit): an upgrade must not move a
+// selected server out of the configuration. The dashboard tells the owner
+// of a large one that a limit is available.
+function migrate_subscription_max_nodes(ctx) {
+    for (let source in ctx.model.subscription_url)
+        set_option_if_missing(ctx, source, "max_nodes", "0");
+}
+
 // Flintnet's Xray JSON carries provider URLTest balancers whose members have
 // technical proxy tags. Import is disabled once during upgrade; users may
 // re-enable it manually afterwards.
@@ -1888,7 +1898,8 @@ const MIGRATIONS = [
     // Routers that ran own_dependency_mirror_v1 before the mirror became
     // opt-in still name the upstream mirror.
     { id: "fork_mirror_opt_in_v1", run: migrate_off_legacy_mirror },
-    { id: "client_dns_intercept_off_v1", run: migrate_client_dns_intercept_off }
+    { id: "client_dns_intercept_off_v1", run: migrate_client_dns_intercept_off },
+    { id: "subscription_max_nodes_v1", run: migrate_subscription_max_nodes }
 ];
 
 // Whether the migrations raise a config_version: they write 1.0.5 over an

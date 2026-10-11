@@ -1142,7 +1142,8 @@ function subscription_file_stats(path) {
     let value = object_or_empty(read_json(path));
     return {
         outbounds: length(array_or_empty(value.outbounds)),
-        skipped: int_or_zero(value.skipped)
+        skipped: int_or_zero(value.skipped),
+        placeholders: int_or_zero(value.placeholders)
     };
 }
 
@@ -1151,6 +1152,10 @@ function subscription_import_stats_text(path) {
     let text = count_label(stats.outbounds, "proxy entry", "proxy entries");
     if (stats.skipped > 0)
         text += ", " + count_label(stats.skipped, "skipped entry", "skipped entries");
+    // R1: the provider's notices dressed as nodes (address 0.0.0.0 or ::).
+    if (stats.placeholders > 0)
+        text += ", " + count_label(stats.placeholders, "placeholder entry", "placeholder entries") +
+            " with address 0.0.0.0 or :: skipped (the provider's notices, such as an expired subscription)";
     return text;
 }
 
@@ -1985,6 +1990,11 @@ function download_subscription_into_cache(section_name_value, subscription_url, 
         if (!parser.normalize_content_validated(raw_tmpfile, normalized_tmpfile)) {
             if (metadata_output_path != "")
                 unlink_path(metadata_output_path);
+            let placeholders = parser.normalized_placeholders_only();
+            if (placeholders > 0)
+                log_message("Subscription for rule '" + section_name_value + "' returned only " +
+                    count_label(placeholders, "placeholder entry", "placeholder entries") +
+                    " with address 0.0.0.0 or ::, no servers; it has probably expired or run out of traffic", "warn");
             if (subscription_user_agent != "")
                 log_message("Downloaded subscription for rule '" + section_name_value + "' is invalid with the configured request profile", "error");
             else

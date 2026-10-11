@@ -31,6 +31,9 @@ let runtime_supports_xhttp = true;
 // X.Y.Z of sing-box-extended from "1.14.1-extended-2.7.2"; null when the
 // version is not known.
 let runtime_extended_version = null;
+// X.Y.Z of the core ("1.15.0" of "1.15.0-extended-..."), with whether it is
+// a pre-release of that version (alpha, beta, rc); null when unknown.
+let runtime_core_version = null;
 // C15: the payload probes of the priority groups that check payload: a
 // selector with the group's nodes, reached through a mixed inbound on the
 // loopback address, which the priority worker points at the node under
@@ -132,9 +135,14 @@ function atomic_write_json_file(path, value) {
         return false;
     // A write that failed half-way leaves no partial copy (UC-159). A full
     // filesystem can take the write and keep none of it: read back first.
+    // Created 0600 (U4): a section cache holds the full share links of its
+    // nodes, and its staging directory is next to a configuration in /tmp.
     let data = sprintf("%J\n", value);
-    if (fs.writefile(tmp_path, data) == null || !fs.chmod(tmp_path, 0600) ||
-        fs.readfile(tmp_path) !== data || !fs.rename(tmp_path, path)) {
+    let fh = fs.open(tmp_path, "w", 0600);
+    let written = fh != null && fs.chmod(tmp_path, 0600) && fh.write(data) != null;
+    if (fh != null && fh.close() === false)
+        written = false;
+    if (!written || fs.readfile(tmp_path) !== data || !fs.rename(tmp_path, path)) {
         fs.unlink(tmp_path);
         return false;
     }
@@ -605,7 +613,72 @@ function supported_subscription_outbound(outbound) {
     if (t == "direct" || t == "selector" || t == "urltest" || t == "dns" || t == "block")
         return false;
     return t == "vless" || t == "vmess" || t == "trojan" || t == "shadowsocks" ||
-        t == "socks" || t == "hysteria2";
+        t == "socks" || t == "hysteria2" || t == "tuic" || t == "anytls";
+}
+
+// The core is at least major.minor.patch; a pre-release of exactly that
+// version, or an unknown version, is not (fail closed).
+function core_at_least(major, minor, patch) {
+    let v = runtime_core_version;
+    if (v == null)
+        return false;
+    if (v[0] != major)
+        return v[0] > major;
+    if (v[1] != minor)
+        return v[1] > minor;
+    if (v[2] != patch)
+        return v[2] > patch;
+    return !v[3];
+}
+
+// Adjacent 9: tls.certificate_sha256 (the SHA-256 of the whole certificate,
+// which links carry as pinSHA256 or pcs) came with sing-box 1.15.0
+// (docs/configuration/shared/tls.md); 1.13's certificate_public_key_sha256
+// pins the public key only and cannot take these hashes. sing-box refuses
+// unknown fields, so on an older core the pin is left out and the log says
+// so: the node then runs as it did before pins were read, with the usual
+// certificate verification (a self-signed certificate still fails), or
+// without verification only when its link asks for that itself.
+const CERTIFICATE_SHA256_MIN = [ 1, 15, 0 ];
+
+function certificate_pins_of(outbound) {
+    let tls = type(outbound) == "object" && type(outbound.tls) == "object" ? outbound.tls : null;
+    return tls != null && type(tls.certificate_sha256) == "array" && length(tls.certificate_sha256) > 0
+        ? tls.certificate_sha256 : null;
+}
+
+function certificate_pin_supported() {
+    return core_at_least(CERTIFICATE_SHA256_MIN[0], CERTIFICATE_SHA256_MIN[1], CERTIFICATE_SHA256_MIN[2]);
+}
+
+// A pinned node whose pin this core cannot enforce and that keeps the usual
+// certificate verification (its link does not turn verification off).
+function certificate_pin_unenforced(outbound) {
+    return certificate_pins_of(outbound) != null && !certificate_pin_supported() &&
+        outbound.tls.insecure !== true;
+}
+
+// The TLS the core runs for a pinned node: the pin replaces verification
+// (insecure is not needed with it); on an older core the pin is left out,
+// with a warning, and the node keeps the verification its link asks for.
+function apply_certificate_pin(outbound, name) {
+    if (certificate_pins_of(outbound) == null)
+        return outbound;
+    let tls = {};
+    for (let key, value in outbound.tls)
+        tls[key] = value;
+    if (certificate_pin_supported()) {
+        delete tls.insecure;
+    }
+    else {
+        delete tls.certificate_sha256;
+        warn("certificate pin of '", as_string(name), "' left out: it needs sing-box ", join(".", CERTIFICATE_SHA256_MIN),
+            " or newer; ", tls.insecure === true
+                ? "the node skips certificate verification, as its link allows"
+                : "the node connects with the usual certificate verification", "\n");
+    }
+    outbound.tls = tls;
+    return outbound;
 }
 
 function outbound_uses_xhttp(outbound) {
@@ -823,7 +896,7 @@ function warn_skipped_subscription_outbound(section_name, outbound, reason) {
         subscription_outbound_display_name(outbound), " (", reason, ")\n");
 }
 
-function compatible_subscription_outbounds(outbounds, section_name) {
+function compatible_subscription_outbounds(outbounds, section_name, skip_counts) {
     let source_refs = subscription_reference_set(outbounds);
     let retained = [];
     for (let outbound in array_or_empty(outbounds)) {
@@ -838,6 +911,8 @@ function compatible_subscription_outbounds(outbounds, section_name) {
             warn_skipped_subscription_outbound(section_name, outbound, encryption);
             continue;
         }
+        if (certificate_pin_unenforced(outbound) && type(skip_counts) == "object")
+            skip_counts.pin = (skip_counts.pin || 0) + 1;
         push(retained, outbound);
     }
 
@@ -881,7 +956,8 @@ function copy_subscription_outbound(outbound, new_tag) {
             index(key, LEGACY_SUBSCRIPTION_KEY_PREFIX) != 0)
             copy[key] = value;
     }
-    if (as_string(copy.type || "") == "hysteria2" &&
+    // QUIC (Hysteria2, TUIC) has no uTLS.
+    if ((as_string(copy.type || "") == "hysteria2" || as_string(copy.type || "") == "tuic") &&
         type(copy.tls) == "object" &&
         copy.tls.utls != null) {
         let tls = {};
@@ -1015,7 +1091,73 @@ function assert_unique_outbound_tags(config) {
     }
 }
 
-function add_subscription_source_with_state(config, section, source_index, source_entry, taken, selector_tags, urltest_candidate_tags, state, show_metadata, include_urltest_groups, hide_urltest_group_outbounds, hide_detour_outbounds, node_prefix) {
+// R6: the first max_nodes servers of a source, in its order, after the
+// filters before it (incompatible nodes, provider groups left out); 0 keeps
+// all. Groups do not count; they lose the members left out, a group left
+// without any and a node chained through one left out go too.
+function limit_subscription_outbounds(outbounds, max_nodes) {
+    let leaves = 0;
+    for (let outbound in outbounds)
+        if (!subscription_group_outbound(outbound))
+            leaves++;
+    if (max_nodes <= 0 || leaves <= max_nodes)
+        return { outbounds, total: leaves, dropped: 0 };
+
+    let dropped = {};
+    let kept = [];
+    let count = 0;
+    for (let outbound in outbounds) {
+        if (!subscription_group_outbound(outbound) && ++count > max_nodes) {
+            add_subscription_reference(dropped, outbound.tag);
+            add_subscription_reference(dropped, outbound.remark);
+            continue;
+        }
+        push(kept, outbound);
+    }
+
+    while (true) {
+        let next = [];
+        let changed = false;
+        for (let outbound in kept) {
+            let gone = dropped[as_string(outbound.detour || "")] === true;
+            if (!gone && subscription_group_outbound(outbound)) {
+                gone = true;
+                for (let member in array_or_empty(outbound.outbounds))
+                    if (!dropped[as_string(member)])
+                        gone = false;
+            }
+            if (gone) {
+                add_subscription_reference(dropped, outbound.tag);
+                add_subscription_reference(dropped, outbound.remark);
+                changed = true;
+                continue;
+            }
+            push(next, outbound);
+        }
+        kept = next;
+        if (!changed)
+            break;
+    }
+
+    let remaining = 0;
+    for (let outbound in kept)
+        if (!subscription_group_outbound(outbound))
+            remaining++;
+    return { outbounds: kept, total: leaves, dropped: leaves - remaining };
+}
+
+// What the dashboard tells about a source (no secret: counts only).
+function push_subscription_notice(state, notice) {
+    if (type(state) != "object")
+        return;
+    if (type(state.subscriptionNotices) != "array")
+        state.subscriptionNotices = [];
+    push(state.subscriptionNotices, notice);
+}
+
+const SUBSCRIPTION_LARGE_SOURCE = 500;
+
+function add_subscription_source_with_state(config, section, source_index, source_entry, taken, selector_tags, urltest_candidate_tags, state, show_metadata, include_urltest_groups, hide_urltest_group_outbounds, hide_detour_outbounds, node_prefix, max_nodes) {
     let section_name = section[".name"];
     let source_section = runtime_subscription.source_id(section_name, source_index);
     if (!runtime_subscription.source_cache_is_current(
@@ -1026,9 +1168,15 @@ function add_subscription_source_with_state(config, section, source_index, sourc
     ))
         return 0;
 
-    let source_outbounds = runtime_subscription.read_source_outbounds(source_section);
+    let source_file = runtime_subscription.read_source_file(source_section);
+    let source_outbounds = array_or_empty(source_file.outbounds);
     if (length(source_outbounds) == 0)
         return 0;
+    let notice_source = { sourceIndex: source_index, sourceSection: source_section };
+    // R1: placeholder nodes the parser left out (an expired subscription).
+    let placeholders = int(source_file.placeholders || 0);
+    if (placeholders > 0)
+        push_subscription_notice(state, { ...notice_source, kind: "placeholders", count: placeholders });
 
     let skipped = {};
     for (let outbound in source_outbounds) {
@@ -1038,7 +1186,10 @@ function add_subscription_source_with_state(config, section, source_index, sourc
         if (reportable_skipped_subscription_type(t))
             skipped[t] = (skipped[t] || 0) + 1;
     }
-    let outbounds = compatible_subscription_outbounds(source_outbounds, section_name);
+    let skip_counts = {};
+    let outbounds = compatible_subscription_outbounds(source_outbounds, section_name, skip_counts);
+    if (skip_counts.pin > 0)
+        push_subscription_notice(state, { ...notice_source, kind: "certificate_pin", count: skip_counts.pin });
 
     if (show_metadata !== false)
         runtime_subscription.merge_source_metadata(state, section_name, source_section, source_index, source_entry);
@@ -1048,6 +1199,28 @@ function add_subscription_source_with_state(config, section, source_index, sourc
     let exclude_flintnet_urltest_members =
         include_urltest_groups === false && flintnet_subscription_source(source_entry);
     node_prefix = trim(as_string(node_prefix));
+    let candidates = [];
+    for (let outbound in outbounds) {
+        if (include_urltest_groups === false && subscription_urltest_group_outbound(outbound))
+            continue;
+        if (exclude_flintnet_urltest_members && subscription_urltest_group_member(outbound, visibility_refs))
+            continue;
+        push(candidates, outbound);
+    }
+    max_nodes = max_nodes == null ? 0 : int(max_nodes);
+    let limited = limit_subscription_outbounds(candidates, max_nodes);
+    if (limited.dropped > 0) {
+        warn("subscription source ", source_index, " of rule '", section_name, "' has ", limited.total,
+            " servers; only the first ", max_nodes, " are used (server limit of the source), ",
+            limited.dropped, " left out\n");
+        push_subscription_notice(state, { ...notice_source, kind: "node_limit", limit: max_nodes,
+            total: limited.total, dropped: limited.dropped });
+    }
+    else if (max_nodes <= 0 && limited.total > SUBSCRIPTION_LARGE_SOURCE) {
+        push_subscription_notice(state, { ...notice_source, kind: "large_source", total: limited.total,
+            suggested: SUBSCRIPTION_LARGE_SOURCE });
+    }
+    outbounds = limited.outbounds;
     let prepared = [];
     let display_names = [];
     let source_links = [];
@@ -1058,10 +1231,6 @@ function add_subscription_source_with_state(config, section, source_index, sourc
     let tag_map = {};
     for (let i = 0; i < length(outbounds); i++) {
         let outbound = outbounds[i];
-        if (include_urltest_groups === false && subscription_urltest_group_outbound(outbound))
-            continue;
-        if (exclude_flintnet_urltest_members && subscription_urltest_group_member(outbound, visibility_refs))
-            continue;
         let display_name = as_string(outbound.remark || outbound.tag || ("server-" + (i + 1)));
         let base = as_string(outbound.tag || outbound.remark || ("server-" + (i + 1)));
         if (node_prefix != "") {
@@ -1075,7 +1244,8 @@ function add_subscription_source_with_state(config, section, source_index, sourc
             tag_map[as_string(outbound.tag)] = new_tag;
         if (as_string(outbound.remark || "") != "")
             tag_map[as_string(outbound.remark)] = new_tag;
-        push(prepared, copy_subscription_outbound(outbound, new_tag));
+        push(prepared, apply_certificate_pin(copy_subscription_outbound(outbound, new_tag),
+            as_string(outbound.remark || outbound.tag || new_tag)));
         push(display_names, display_name);
         let source_link = as_string(outbound.share_link || "");
         if (!subscription_share_link.is_copyable_link(source_link))
@@ -1977,6 +2147,8 @@ function add_direct_proxy(config, settings, service_address) {
 // reading it and lost '#', '&' and '+' in credentials and paths, and refused
 // Hysteria2 port ranges the UI accepts (SB-2, SB-3).
 let share_link_parser = null;
+const MANUAL_LINK_SCHEMES = [ "vmess", "ss", "vless", "trojan", "hysteria2", "hy2", "tuic", "anytls",
+    "socks4", "socks4a", "socks5", "socks5h" ];
 
 // null for a link the parser cannot build an outbound from (an unknown
 // scheme, or a transport sing-box has none of, as kcp or quic): that node
@@ -1989,8 +2161,11 @@ function manual_link_outbound(link, tag_name, section_name) {
     if (type(outbound) != "object") {
         let scheme = url_scheme(link);
         let name = url_fragment(link);
+        let reason = share_link_parser.last_parse_reject_reason();
         warn("skipped manual proxy link ", name != "" ? "'" + name + "' " : "", "of rule '", as_string(section_name), "': ",
-            index([ "vmess", "ss", "vless", "trojan", "hysteria2", "hy2", "socks4", "socks4a", "socks5", "socks5h" ], scheme) < 0
+            reason == "placeholder"
+                ? "its server address is 0.0.0.0 or ::, a placeholder, not a server"
+                : index(MANUAL_LINK_SCHEMES, scheme) < 0
                 ? "its scheme is not supported"
                 : "the " + scheme + " link is invalid or uses a transport sing-box does not have", "\n");
         return null;
@@ -1998,7 +2173,8 @@ function manual_link_outbound(link, tag_name, section_name) {
     delete outbound.share_link;
     delete outbound.remark;
     outbound.tag = tag_name;
-    return outbound;
+    let name = url_fragment(link);
+    return apply_certificate_pin(outbound, name != "" ? name : tag_name);
 }
 
 function add_manual_proxy_link(config, state, section_name, manual_index, link, taken, selector_tags, urltest_candidate_tags) {
@@ -2062,7 +2238,8 @@ function add_connection_subscriptions(config, state, section, taken, selector_ta
             connections.subscription_include_urltest_groups(section, subscription_urls[i]),
             connections.subscription_hide_urltest_group_outbounds(section, subscription_urls[i]),
             connections.subscription_hide_detour_outbounds(section, subscription_urls[i]),
-            connections.subscription_node_prefix(section, subscription_urls[i])
+            connections.subscription_node_prefix(section, subscription_urls[i]),
+            connections.subscription_max_nodes(section, subscription_urls[i])
         );
 }
 
@@ -3300,6 +3477,10 @@ function apply_sing_box_version(config, sing_box_version) {
     let version_parts = match(as_string(sing_box_version), /^v?([0-9]+)\.([0-9]+)\./);
     let extended_parts = match(as_string(sing_box_version), /-extended-([0-9]+)\.([0-9]+)\.([0-9]+)/);
     runtime_sing_box_version = as_string(sing_box_version);
+    let core_parts = match(as_string(sing_box_version), /^v?([0-9]+)\.([0-9]+)\.([0-9]+)(-(alpha|beta|rc))?/);
+    runtime_core_version = core_parts != null
+        ? [ int(core_parts[1]), int(core_parts[2]), int(core_parts[3]), core_parts[4] != null ]
+        : null;
     runtime_extended_version = extended_parts != null
         ? [ int(extended_parts[1]), int(extended_parts[2]), int(extended_parts[3]) ]
         : null;

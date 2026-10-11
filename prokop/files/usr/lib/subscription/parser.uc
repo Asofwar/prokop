@@ -47,6 +47,8 @@ function starts_with(value, prefix) {
 
 function is_supported_share_link(line) {
     return starts_with(line, "ss://") ||
+        starts_with(line, "tuic://") ||
+        starts_with(line, "anytls://") ||
         starts_with(line, "vmess://") ||
         starts_with(line, "vless://") ||
         starts_with(line, "trojan://") ||
@@ -93,6 +95,46 @@ function is_integer_string(value) {
             return false;
     }
     return true;
+}
+
+// R1 (rock12/FlowGate 448eb451, narrowed by c0d78b83): panels answer an
+// expired or exhausted subscription with pseudo nodes ("Subscription
+// expired", "Traffic is over") whose address is 0.0.0.0 or ::. They are not
+// servers: such a node is dropped and counted (placeholders), so the user
+// sees why. Every all-zero spelling counts; loopback stays, it may be a
+// real local server.
+function is_placeholder_server(host) {
+    host = lc(trim(as_string(host)));
+    if (substr(host, 0, 1) == "[" && substr(host, length(host) - 1) == "]")
+        host = substr(host, 1, length(host) - 2);
+    if (host == "")
+        return false;
+    if (match(host, /^[0-9]+(\.[0-9]+){0,3}$/) != null)
+        return match(host, /[1-9]/) == null;
+    if (index(host, ":") < 0)
+        return false;
+    if (substr(host, 0, 7) == "::ffff:")
+        host = substr(host, 7);
+    return match(host, /^[0:.]+$/) != null;
+}
+
+// Why parse_share_link refused the last link: "placeholder" or "".
+let parse_reject_reason = "";
+// The placeholders of the last normalization that kept no node at all: a
+// subscription that has expired as a whole (subscription/cache.uc says so).
+let last_placeholders_only = 0;
+
+function normalized_placeholders_only() {
+    return last_placeholders_only;
+}
+
+function last_parse_reject_reason() {
+    return parse_reject_reason;
+}
+
+function reject_placeholder() {
+    parse_reject_reason = "placeholder";
+    return null;
 }
 
 function xhttp_value_present(value) {
@@ -398,8 +440,32 @@ function validate_subscription(path) {
     return true;
 }
 
+// U4: every file the parser writes holds a subscription body or the
+// outbounds made from it (passwords, UUIDs). It is created 0600 and an
+// existing one is narrowed to 0600 before anything is written, whatever the
+// process umask (as core/common.uc write_private_json_file).
+function open_private_write(path) {
+    let fh = fs.open(path, "w", 0600);
+    if (fh == null)
+        return null;
+    if (!fs.chmod(path, 0600)) {
+        fh.close();
+        return null;
+    }
+    return fh;
+}
+
+function write_private_file(path, data) {
+    let fh = open_private_write(path);
+    if (fh == null)
+        return null;
+    let written = fh.write(as_string(data));
+    let closed = fh.close();
+    return written == null || closed === false ? null : written;
+}
+
 function write_json_file(path, value) {
-    return fs.writefile(path, sprintf("%J", value) + "\n");
+    return write_private_file(path, sprintf("%J", value) + "\n");
 }
 
 function write_json(value) {
@@ -516,6 +582,49 @@ function percent_decode(value) {
     return replace(value, /%([0-9A-Fa-f][0-9A-Fa-f])/g, function(all, hex_value) {
         return chr(hex(hex_value));
     });
+}
+
+// Adjacent 9: a certificate pin instead of turning verification off. Links
+// carry the SHA-256 of the server's whole DER certificate: pinSHA256
+// (Hysteria2, TUIC, AnyTLS; hex, colons allowed) or pcs (Xray's
+// pinnedPeerCertSha256), Clash a hex "fingerprint", Xray JSON
+// pinnedPeerCertSha256; several are separated by commas. sing-box takes them
+// base64 in tls.certificate_sha256 (since 1.15.0; the generator decides what
+// an older core does). null: no pin; false: a pin that cannot be read, the
+// node is refused (a pin is never dropped silently).
+function certificate_pins(value) {
+    value = trim(as_string(value));
+    if (value == "")
+        return null;
+
+    let result = [];
+    for (let item in split(value, ",")) {
+        item = trim(item);
+        if (item == "")
+            continue;
+        let hex_value = replace(item, /:/g, "");
+        if (match(hex_value, /^[0-9A-Fa-f]{64}$/) != null) {
+            let binary = "";
+            for (let i = 0; i < 64; i += 2)
+                binary += chr(hex(substr(hex_value, i, 2)));
+            push(result, b64enc(binary));
+            continue;
+        }
+        let decoded = match(item, /^[A-Za-z0-9+\/_-]{43}=?$/) != null ? base64_decode(item) : null;
+        if (decoded == null || length(decoded) != 32)
+            return false;
+        push(result, b64enc(decoded));
+    }
+    return length(result) > 0 ? result : false;
+}
+
+function looks_like_certificate_hash(value) {
+    return match(replace(trim(as_string(value)), /:/g, ""), /^[0-9A-Fa-f]{64}$/) != null;
+}
+
+function query_certificate_pins(query) {
+    query = object_or_empty(query);
+    return certificate_pins(query.pinSHA256 || query.pinsha256 || query.pcs || "");
 }
 
 let fragment_prefix_decode_cache = {};
@@ -683,7 +792,7 @@ function normalize_utls_fingerprint(value) {
 function add_tls(url, security, default_tls) {
     let query = object_or_empty(url.query);
     let sni = query.sni || query.peer || "";
-    let insecure = query.allowInsecure || query.insecure || "";
+    let insecure = query.allowInsecure || query.insecure || query.allow_insecure || "";
     let transport = query.type || "";
     let alpn = tls_alpn_for_transport(split_csv(query.alpn || ""), transport);
 
@@ -705,11 +814,17 @@ function add_tls(url, security, default_tls) {
     if (!tls_enabled)
         return [null, true];
 
+    let pins = query_certificate_pins(query);
+    if (pins === false)
+        return [null, false];
+
     let tls = { enabled: true };
     if (sni != "")
         tls.server_name = sni;
     if (is_true(insecure))
         tls.insecure = true;
+    if (pins != null)
+        tls.certificate_sha256 = pins;
     if (length(alpn) > 0)
         tls.alpn = alpn;
     if (fingerprint != "")
@@ -1040,6 +1155,8 @@ function process_shadowsocks(raw) {
         return null;
     let method = substr(userinfo, 0, cred_colon);
     let password = substr(userinfo, cred_colon + 1);
+    if (is_placeholder_server(host_port[0]))
+        return reject_placeholder();
     if (method == "" || method == "ss" || password == "" || host_port[0] == "" || !valid_port(host_port[1]))
         return null;
 
@@ -1082,11 +1199,17 @@ function process_hysteria2(raw, url) {
     if (password == "")
         return null;
 
+    let pins = query_certificate_pins(url.query);
+    if (pins === false)
+        return null;
+
     let tls = { enabled: true };
     if ((url.query.sni || "") != "")
         tls.server_name = url.query.sni;
     if (is_true(url.query.allowInsecure || url.query.insecure))
         tls.insecure = true;
+    if (pins != null)
+        tls.certificate_sha256 = pins;
     if ((url.query.alpn || "") != "")
         tls.alpn = split_csv(url.query.alpn);
 
@@ -1117,6 +1240,89 @@ function process_hysteria2(raw, url) {
     return outbound;
 }
 
+// R4 (cergo666/netshift bc5de4f0, written anew): TUIC v5 over QUIC.
+// tuic://uuid:password@host:port?congestion_control=bbr&udp_relay_mode=native
+// &alpn=h3&sni=...&allow_insecure=1&disable_sni=1&reduce_rtt=1. QUIC has no
+// uTLS, so a fingerprint is not carried over.
+const TUIC_CONGESTION_CONTROLS = { cubic: true, new_reno: true, bbr: true };
+const TUIC_UDP_RELAY_MODES = { native: true, quic: true };
+
+function tuic_outbound(raw, tag, server, port, uuid, password, options) {
+    if (server == "" || !valid_port(port) || uuid == "")
+        return null;
+    let pins = options.pins;
+    if (pins === false)
+        return null;
+
+    let tls = { enabled: true };
+    if (options.sni != "")
+        tls.server_name = options.sni;
+    if (is_true(options.insecure))
+        tls.insecure = true;
+    if (is_true(options.disable_sni))
+        tls.disable_sni = true;
+    if (length(options.alpn) > 0)
+        tls.alpn = options.alpn;
+    if (pins != null)
+        tls.certificate_sha256 = pins;
+
+    let outbound = { type: "tuic", tag, server, server_port: port, uuid };
+    if (raw != null)
+        outbound.share_link = raw;
+    if (password != "")
+        outbound.password = password;
+    let congestion = lc(as_string(options.congestion_control));
+    if (TUIC_CONGESTION_CONTROLS[congestion])
+        outbound.congestion_control = congestion;
+    let relay = lc(as_string(options.udp_relay_mode));
+    if (TUIC_UDP_RELAY_MODES[relay])
+        outbound.udp_relay_mode = relay;
+    if (is_true(options.zero_rtt))
+        outbound.zero_rtt_handshake = true;
+    outbound.tls = tls;
+    return outbound;
+}
+
+function process_tuic(raw, url) {
+    let userinfo = as_string(url.userinfo_raw);
+    let colon = index(userinfo, ":");
+    let uuid = percent_decode(colon >= 0 ? substr(userinfo, 0, colon) : userinfo);
+    let password = colon >= 0 ? percent_decode(substr(userinfo, colon + 1)) : "";
+    let query = url.query;
+    return tuic_outbound(raw, url.fragment != "" ? url.fragment : (url.host + ":" + url.port),
+        url.host, url.port, uuid, password, {
+            sni: as_string(query.sni || query.peer || ""),
+            insecure: query.allow_insecure || query.allowInsecure || query.insecure || "",
+            disable_sni: query.disable_sni || "",
+            alpn: split_csv(query.alpn || ""),
+            congestion_control: query.congestion_control || query["congestion-control"] || "",
+            udp_relay_mode: query.udp_relay_mode || query["udp-relay-mode"] || "",
+            zero_rtt: query.reduce_rtt || query.zero_rtt_handshake || "",
+            pins: query_certificate_pins(query)
+        });
+}
+
+// R4: AnyTLS (sing-box 1.12.0+, the oldest core Prokop supports).
+// anytls://password@host:port/?sni=...&insecure=1&alpn=...&fp=chrome. TLS is
+// required: a link that turns it off is refused.
+function process_anytls(raw, url) {
+    let password = percent_decode(as_string(url.userinfo_raw));
+    if (url.host == "" || !valid_port(url.port) || password == "")
+        return null;
+    let tls_result = add_tls(url, url.query.security || "tls", true);
+    if (!tls_result[1] || tls_result[0] == null)
+        return null;
+    return {
+        type: "anytls",
+        tag: url.fragment != "" ? url.fragment : (url.host + ":" + url.port),
+        share_link: raw,
+        server: url.host,
+        server_port: url.port,
+        password,
+        tls: tls_result[0]
+    };
+}
+
 function string_value(value) {
     return value == null ? "" : as_string(value);
 }
@@ -1129,6 +1335,8 @@ function process_vmess_json(raw, decoded) {
     let server = string_value(vmess.add);
     let port = int(vmess.port || 0);
     let uuid = string_value(vmess.id);
+    if (is_placeholder_server(server))
+        return reject_placeholder();
     if (server == "" || !valid_port(port) || uuid == "")
         return null;
 
@@ -1216,6 +1424,7 @@ function process_vmess(raw) {
 }
 
 function parse_share_link(line) {
+    parse_reject_reason = "";
     if (starts_with(line, "vmess://"))
         return process_vmess(line);
     if (starts_with(line, "ss://"))
@@ -1224,6 +1433,8 @@ function parse_share_link(line) {
     let url = parse_url(line);
     if (!url)
         return null;
+    if (is_placeholder_server(url.host))
+        return reject_placeholder();
 
     if (url.scheme == "vless")
         return process_vless(line, url);
@@ -1231,6 +1442,10 @@ function parse_share_link(line) {
         return process_trojan(line, url);
     if (url.scheme == "hysteria2" || url.scheme == "hy2")
         return process_hysteria2(line, url);
+    if (url.scheme == "tuic")
+        return process_tuic(line, url);
+    if (url.scheme == "anytls")
+        return process_anytls(line, url);
     if (match(url.scheme, /^socks/))
         return process_socks(line, url);
     return null;
@@ -1486,8 +1701,7 @@ function is_clash_proxies_header(line) {
     return text == "proxies:" || match(text, /^proxies:\s*#/);
 }
 
-function clash_yaml_records(input_file) {
-    let data = read_file(input_file);
+function clash_yaml_records(data) {
     if (data == null)
         return [];
 
@@ -1554,6 +1768,8 @@ function add_clash_tls(outbound, options) {
         tls.server_name = options.sni;
     if (is_true(options.skip_verify))
         tls.insecure = true;
+    if (options.pins != null)
+        tls.certificate_sha256 = options.pins;
     let alpn = tls_alpn_for_transport(split_csv(options.alpn), options.network);
     if (length(alpn) > 0)
         tls.alpn = alpn;
@@ -1626,6 +1842,8 @@ function parse_clash_record(record) {
     let port = int(record.port || 0);
     if (name == "")
         name = server + ":" + as_string(record.port);
+    if (is_placeholder_server(server))
+        return reject_placeholder();
     if (proxy_type == "" || server == "" || !valid_port(port))
         return null;
 
@@ -1642,8 +1860,15 @@ function parse_clash_record(record) {
         reality_public_key: as_string(record["reality-opts.public-key"]),
         reality_short_id: as_string(record["reality-opts.short-id"]),
         alpn: normalized_clash_alpn(record.alpn || ""),
-        fingerprint: normalize_utls_fingerprint(as_string(record["client-fingerprint"] || record.fingerprint))
+        // Clash's "fingerprint" is the certificate's SHA-256 (a pin); an
+        // older Prokop read it as the uTLS name, which other values stay.
+        pins: looks_like_certificate_hash(record.fingerprint) ? certificate_pins(record.fingerprint) : null,
+        fingerprint: normalize_utls_fingerprint(as_string(record["client-fingerprint"] ||
+            (looks_like_certificate_hash(record.fingerprint) ? "" : record.fingerprint)))
     };
+
+    if (options.pins === false)
+        return null;
 
     if (proxy_type == "ss" || proxy_type == "shadowsocks") {
         let method = as_string(record.cipher);
@@ -1710,6 +1935,8 @@ function parse_clash_record(record) {
             outbound.tls.server_name = options.sni;
         if (is_true(options.skip_verify))
             outbound.tls.insecure = true;
+        if (options.pins != null)
+            outbound.tls.certificate_sha256 = options.pins;
         if (options.alpn != "")
             outbound.tls.alpn = split_csv(options.alpn);
         let obfs = as_string(record.obfs);
@@ -1719,6 +1946,36 @@ function parse_clash_record(record) {
             if (obfs_password != "")
                 outbound.obfs.password = obfs_password;
         }
+        return outbound;
+    }
+    if (proxy_type == "tuic") {
+        return tuic_outbound(null, name, server, port, as_string(record.uuid), as_string(record.password), {
+            sni: options.sni,
+            insecure: options.skip_verify,
+            disable_sni: as_string(record["disable-sni"]),
+            alpn: split_csv(options.alpn),
+            congestion_control: as_string(record["congestion-controller"] || record["congestion-control"]),
+            udp_relay_mode: as_string(record["udp-relay-mode"]),
+            zero_rtt: as_string(record["reduce-rtt"]),
+            pins: options.pins
+        });
+    }
+    if (proxy_type == "anytls") {
+        let password = as_string(record.password);
+        if (password == "")
+            return null;
+        let outbound = { type: "anytls", tag: name, server: server, server_port: port, password: password };
+        options.always = true;
+        options.network = "";
+        add_clash_tls(outbound, options);
+        for (let item in [ [ "idle-session-check-interval", "idle_session_check_interval" ],
+            [ "idle-session-timeout", "idle_session_timeout" ] ]) {
+            let value = as_string(record[item[0]]);
+            if (is_integer_string(value))
+                outbound[item[1]] = value + "s";
+        }
+        if (is_integer_string(as_string(record["min-idle-session"])))
+            outbound.min_idle_session = int(record["min-idle-session"]);
         return outbound;
     }
     if (proxy_type == "socks5" || proxy_type == "socks") {
@@ -1732,19 +1989,25 @@ function parse_clash_record(record) {
     return null;
 }
 
-function normalize_clash_yaml(input_file, output_file) {
+function normalize_clash_yaml_data(data, output_file) {
     let outbounds = [];
     let skipped = 0;
+    let placeholders = 0;
 
-    for (let record in clash_yaml_records(input_file)) {
+    for (let record in clash_yaml_records(data)) {
+        parse_reject_reason = "";
         let outbound = parse_clash_record(record);
         if (outbound)
             push(outbounds, outbound);
+        else if (parse_reject_reason == "placeholder")
+            placeholders++;
         else
             skipped++;
     }
 
     if (length(outbounds) == 0) {
+        if (placeholders > 0)
+            last_placeholders_only = placeholders;
         fs.unlink(output_file);
         return false;
     }
@@ -1753,8 +2016,13 @@ function normalize_clash_yaml(input_file, output_file) {
         version: 1,
         format: "clash-yaml",
         skipped: skipped,
+        placeholders: placeholders,
         outbounds: outbounds
     });
+}
+
+function normalize_clash_yaml(input_file, output_file) {
+    return normalize_clash_yaml_data(read_file(input_file), output_file);
 }
 
 function normalize_uri_list_data(data, output_file) {
@@ -1762,12 +2030,13 @@ function normalize_uri_list_data(data, output_file) {
     if (index(data, "\r") >= 0)
         data = replace(data, /\r/g, "");
 
-    let output = fs.open(output_file, "w");
+    let output = open_private_write(output_file);
     if (!output)
         return false;
 
     let added = 0;
     let skipped = 0;
+    let placeholders = 0;
     output.write("{\"version\":1,\"format\":\"uri-list\",\"outbounds\":[");
 
     for (let line in split(data, "\n")) {
@@ -1782,16 +2051,21 @@ function normalize_uri_list_data(data, output_file) {
                 output.write(sprintf("%J", outbound));
                 added++;
             }
+            else if (parse_reject_reason == "placeholder") {
+                placeholders++;
+            }
             else {
                 skipped++;
             }
         }
     }
 
-    output.write("],\"skipped\":" + skipped + "}\n");
+    output.write("],\"skipped\":" + skipped + ",\"placeholders\":" + placeholders + "}\n");
     output.close();
 
     if (added == 0) {
+        if (placeholders > 0)
+            last_placeholders_only = placeholders;
         fs.unlink(output_file);
         return false;
     }
@@ -2146,12 +2420,13 @@ function is_metadata_preamble_line(line) {
 }
 
 function normalize_uri_list_stream(input, output_file, strip_metadata) {
-    let output = fs.open(output_file, "w");
+    let output = open_private_write(output_file);
     if (!output)
         return false;
 
     let added = 0;
     let skipped = 0;
+    let placeholders = 0;
     let line_no = 0;
     output.write("{\"version\":1,\"format\":\"uri-list\",\"outbounds\":[");
 
@@ -2171,16 +2446,21 @@ function normalize_uri_list_stream(input, output_file, strip_metadata) {
                 output.write(sprintf("%J", outbound));
                 added++;
             }
+            else if (parse_reject_reason == "placeholder") {
+                placeholders++;
+            }
             else {
                 skipped++;
             }
         }
     }
 
-    output.write("],\"skipped\":" + skipped + "}\n");
+    output.write("],\"skipped\":" + skipped + ",\"placeholders\":" + placeholders + "}\n");
     output.close();
 
     if (added == 0) {
+        if (placeholders > 0)
+            last_placeholders_only = placeholders;
         fs.unlink(output_file);
         return false;
     }
@@ -2324,6 +2604,10 @@ function xray_tls_from_stream(stream, network) {
     if (security != "tls" && security != "xtls" && security != "reality" && length(keys(settings)) == 0)
         return null;
 
+    let pins = certificate_pins(settings.pinnedPeerCertSha256 || "");
+    if (pins === false)
+        return false;
+
     let tls = { enabled: true };
     let server_name = xray_first_string([settings.serverName, settings.server_name, settings.sni]);
     let alpn = tls_alpn_for_transport(xray_alpn(settings.alpn), network);
@@ -2331,6 +2615,8 @@ function xray_tls_from_stream(stream, network) {
         tls.server_name = server_name;
     if (is_true(settings.allowInsecure) || is_true(settings.insecure))
         tls.insecure = true;
+    if (pins != null)
+        tls.certificate_sha256 = pins;
     if (length(alpn) > 0)
         tls.alpn = alpn;
 
@@ -2502,6 +2788,8 @@ function convert_xray_vless(outbound, tag) {
     if (transport === false)
         return null;
     let tls = xray_tls_from_stream(stream, lc(as_string(stream.network || "")));
+    if (tls === false)
+        return null;
     if (tls)
         result.tls = tls;
     if (transport)
@@ -2563,6 +2851,11 @@ function convert_xray_hysteria2(outbound, tag) {
         result.tls.server_name = server_name;
     if (is_true(tls_settings.allowInsecure) || is_true(tls_settings.insecure))
         result.tls.insecure = true;
+    let pins = certificate_pins(tls_settings.pinnedPeerCertSha256 || "");
+    if (pins === false)
+        return null;
+    if (pins != null)
+        result.tls.certificate_sha256 = pins;
     let alpn = xray_alpn(tls_settings.alpn);
     if (length(alpn) > 0)
         result.tls.alpn = alpn;
@@ -2976,6 +3269,78 @@ function normalize_sing_box_json_outbounds(candidates) {
     return outbounds;
 }
 
+// R1 for JSON subscriptions: the placeholder nodes go, and with them what
+// can no longer be built: a node whose detour was dropped, a group left
+// without members. Group member lists lose the dropped tags.
+function drop_placeholder_outbounds(outbounds) {
+    let dropped = {};
+    let placeholders = 0;
+    let skipped = 0;
+    let result = [];
+    for (let outbound in outbounds) {
+        if (type(outbound) == "object" && type(outbound.server) == "string" && is_placeholder_server(outbound.server)) {
+            placeholders++;
+            for (let ref in [ outbound.tag, outbound.remark ])
+                if (as_string(ref) != "")
+                    dropped[as_string(ref)] = true;
+            continue;
+        }
+        push(result, outbound);
+    }
+
+    let changed = placeholders > 0;
+    while (changed) {
+        changed = false;
+        let next = [];
+        for (let outbound in result) {
+            let gone = dropped[as_string(outbound.detour || "")] === true;
+            if (!gone && type(outbound.outbounds) == "array") {
+                let members = filter(outbound.outbounds, (tag) => dropped[as_string(tag)] !== true);
+                if (length(members) != length(outbound.outbounds)) {
+                    outbound.outbounds = members;
+                    if (length(members) == 0)
+                        gone = true;
+                    else if (outbound.default != null && dropped[as_string(outbound.default)])
+                        delete outbound.default;
+                }
+            }
+            if (gone) {
+                skipped++;
+                changed = true;
+                for (let ref in [ outbound.tag, outbound.remark ])
+                    if (as_string(ref) != "")
+                        dropped[as_string(ref)] = true;
+                continue;
+            }
+            push(next, outbound);
+        }
+        result = next;
+    }
+
+    return { outbounds: result, placeholders, skipped };
+}
+
+function write_sing_box_json_outbounds(output_file, outbounds) {
+    let kept = drop_placeholder_outbounds(outbounds);
+    if (length(kept.outbounds) == 0) {
+        if (kept.placeholders > 0)
+            last_placeholders_only = kept.placeholders;
+        fs.unlink(output_file);
+        return false;
+    }
+
+    let result = {
+        version: 1,
+        format: "sing-box-json",
+        outbounds: kept.outbounds
+    };
+    if (kept.skipped > 0)
+        result.skipped = kept.skipped;
+    if (kept.placeholders > 0)
+        result.placeholders = kept.placeholders;
+    return write_json_file(output_file, result);
+}
+
 function normalize_sing_box_json_value(value, output_file) {
     let candidates = [];
     let outbounds = [];
@@ -2985,13 +3350,8 @@ function normalize_sing_box_json_value(value, output_file) {
     else if (type(value) == "array" && length(value) > 0 && is_xray_config(value[0]))
         outbounds = normalize_xray_configs(value);
 
-    if (length(outbounds) > 0) {
-        return write_json_file(output_file, {
-            version: 1,
-            format: "sing-box-json",
-            outbounds: outbounds
-        });
-    }
+    if (length(outbounds) > 0)
+        return write_sing_box_json_outbounds(output_file, outbounds);
 
     if (type(value) == "object" && type(value.outbounds) == "array")
         candidates = value.outbounds;
@@ -3007,16 +3367,16 @@ function normalize_sing_box_json_value(value, output_file) {
         return false;
     }
 
-    return write_json_file(output_file, {
-        version: 1,
-        format: "sing-box-json",
-        outbounds: outbounds
-    });
+    return write_sing_box_json_outbounds(output_file, outbounds);
 }
 
-function temp_path(prefix) {
+// U4: a temporary file next to `near`, a file of the caller: the
+// subscription caches live in 0700 directories (subscription/cache.uc
+// ensure_private_dir), so the temporary copy of a body is never in the
+// shared /tmp, and it is created 0600 (open_private_write) besides.
+function sibling_temp_path(near, kind) {
     let stamp = clock();
-    return sprintf("/tmp/%s.%d.%d", prefix, stamp[0], stamp[1]);
+    return sprintf("%s.%s.%d.%d", as_string(near), kind, stamp[0], stamp[1]);
 }
 
 function shell_quote(value) {
@@ -3041,7 +3401,7 @@ function gzip_decode_file(input_file, output_file) {
         let pipe = fs.popen(command + " " + shell_quote(input_file) + " 2>/dev/null", "r");
         if (!pipe)
             continue;
-        let output = fs.open(output_file, "w");
+        let output = open_private_write(output_file);
         if (!output) {
             pipe.close();
             return false;
@@ -3082,8 +3442,15 @@ function gzip_decode_file(input_file, output_file) {
 }
 
 function try_decode_gzip_content_file(input_file) {
-    let tmp = temp_path("prokop-subscription-gzip");
-    if (!gzip_decode_file(input_file, tmp)) {
+    let tmp = sibling_temp_path(input_file, "gunzip");
+    let decoded = false;
+    try {
+        decoded = gzip_decode_file(input_file, tmp);
+    }
+    catch (e) {
+        decoded = false;
+    }
+    if (!decoded) {
         fs.unlink(tmp);
         return false;
     }
@@ -3096,23 +3463,30 @@ function try_decode_gzip_content_file(input_file) {
     return true;
 }
 
+function normalized_count(value) {
+    value = as_string(value != null ? value : "0");
+    return match(value, /^[0-9]+$/) == null ? 0 : int(value);
+}
+
 function normalized_skipped_message(path) {
     let value = read_json_file(path);
     if (type(value) != "object")
         return "";
 
-    let skipped = as_string(value.skipped != null ? value.skipped : "0");
-    if (match(skipped, /^[0-9]+$/) == null || int(skipped) <= 0)
-        return "";
-
-    if (as_string(value.format != null ? value.format : "") == "clash-yaml")
-        return "Skipped " + skipped + " invalid or unsupported Clash proxy entries";
-
-    return "Skipped " + skipped + " invalid or unsupported subscription links";
+    let messages = [];
+    let skipped = normalized_count(value.skipped);
+    let placeholders = normalized_count(value.placeholders);
+    if (skipped > 0)
+        push(messages, as_string(value.format != null ? value.format : "") == "clash-yaml"
+            ? "Skipped " + skipped + " invalid or unsupported Clash proxy entries"
+            : "Skipped " + skipped + " invalid or unsupported subscription links");
+    if (placeholders > 0)
+        push(messages, "Skipped " + placeholders + " placeholder entries with address 0.0.0.0 or :: (the provider's notices, such as an expired subscription)");
+    return join("; ", messages);
 }
 
 function extract_ui_metadata_file(headers_file, body_file, output_file) {
-    let tmp = temp_path("prokop-subscription-metadata");
+    let tmp = sibling_temp_path(output_file, "tmp");
     let raw = metadata_body_store_with_base64_fallback(body_file).values;
     let headers = metadata_headers_store(headers_file).values;
     for (let key, value in headers)
@@ -3127,7 +3501,7 @@ function extract_ui_metadata_file(headers_file, body_file, output_file) {
         return false;
     }
 
-    if (!fs.writefile(tmp, sprintf("%J\n", result))) {
+    if (!write_private_file(tmp, sprintf("%J\n", result))) {
         fs.unlink(tmp);
         return false;
     }
@@ -3151,14 +3525,10 @@ function normalize_content_data(data, output_file, depth) {
             return normalize_sing_box_json_value(decoded_json, output_file);
     }
 
-    if (index(data, "proxies:") >= 0 && content_is_clash_yaml(data)) {
-        let tmp = temp_path("prokop-subscription-clash");
-        if (!fs.writefile(tmp, data))
-            return false;
-        let ok = normalize_clash_yaml(tmp, output_file);
-        fs.unlink(tmp);
-        return ok;
-    }
+    // Parsed in memory: the body (passwords, UUIDs) is never copied to a
+    // temporary file (U4).
+    if (index(data, "proxies:") >= 0 && content_is_clash_yaml(data))
+        return normalize_clash_yaml_data(data, output_file);
 
     if (index(data, "://") >= 0) {
         if (normalize_uri_list_data(data, output_file))
@@ -3176,6 +3546,7 @@ function normalize_content_data(data, output_file, depth) {
 }
 
 function normalize_content_file(input_file, output_file) {
+    last_placeholders_only = 0;
     if (file_looks_like_uri_list(input_file))
         return normalize_uri_list_file(input_file, output_file, true);
 
@@ -3185,16 +3556,20 @@ function normalize_content_file(input_file, output_file) {
 
 function normalize_content_validated(input_file, output_file) {
     let normalize_input = input_file;
-    let decoded_tmp = temp_path("prokop-subscription-gzip");
-    let decoded = gzip_decode_file(input_file, decoded_tmp);
-    if (decoded)
-        normalize_input = decoded_tmp;
-    else
-        fs.unlink(decoded_tmp);
-
-    let ok = normalize_content_file(normalize_input, output_file);
-    if (decoded)
-        fs.unlink(decoded_tmp);
+    let decoded_tmp = sibling_temp_path(input_file, "gunzip");
+    let decoded = false;
+    let ok = false;
+    // The unpacked body goes on every path, an exception included (U4).
+    try {
+        decoded = gzip_decode_file(input_file, decoded_tmp);
+        if (decoded)
+            normalize_input = decoded_tmp;
+        ok = normalize_content_file(normalize_input, output_file);
+    }
+    catch (e) {
+        ok = false;
+    }
+    fs.unlink(decoded_tmp);
     if (!ok)
         return false;
 
@@ -3258,6 +3633,8 @@ function module_exports() {
         validate_subscription,
         normalize_content_validated,
         normalized_skipped_message,
+        normalized_placeholders_only,
+        last_parse_reject_reason,
         try_decode_gzip_content_file,
         extract_ui_metadata_file,
         runtime_outbounds_equal
