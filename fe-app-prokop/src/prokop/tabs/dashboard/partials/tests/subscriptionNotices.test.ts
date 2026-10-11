@@ -43,7 +43,7 @@ function render(section: Partial<Prokop.OutboundGroup>) {
 // R6, R1, adjacent 9: the dashboard says why servers of a subscription are
 // missing, and marks a server that runs without certificate verification.
 describe('subscription notices on the dashboard', () => {
-  it('explains the server limit, placeholders and refused pins', () => {
+  it('explains the server limit, placeholders and unenforced pins', () => {
     const text = render({
       subscriptionSourceCount: 2,
       subscriptionNotices: [
@@ -64,7 +64,9 @@ describe('subscription notices on the dashboard', () => {
     expect(text).toContain(
       'Subscription 2: The subscription sent 3 placeholder entries',
     );
-    expect(text).toContain('certificate pin needs sing-box 1.15.0');
+    expect(text).toContain(
+      'certificate pin that is not enforced before sing-box 1.15.0',
+    );
     expect(text).toContain(
       'This subscription has 900 servers and no server limit',
     );

@@ -612,9 +612,10 @@ function core_at_least(major, minor, patch) {
 // which links carry as pinSHA256 or pcs) came with sing-box 1.15.0
 // (docs/configuration/shared/tls.md); 1.13's certificate_public_key_sha256
 // pins the public key only and cannot take these hashes. sing-box refuses
-// unknown fields, so on an older core a pinned node either keeps the
-// insecure its link also asks for (the pin is left out and the log says so)
-// or is refused: a pin is never dropped while verification is off unasked.
+// unknown fields, so on an older core the pin is left out and the log says
+// so: the node then runs as it did before pins were read, with the usual
+// certificate verification (a self-signed certificate still fails), or
+// without verification only when its link asks for that itself.
 const CERTIFICATE_SHA256_MIN = [ 1, 15, 0 ];
 
 function certificate_pins_of(outbound) {
@@ -627,17 +628,16 @@ function certificate_pin_supported() {
     return core_at_least(CERTIFICATE_SHA256_MIN[0], CERTIFICATE_SHA256_MIN[1], CERTIFICATE_SHA256_MIN[2]);
 }
 
-// "" or why the node cannot run on this core.
-function certificate_pin_unsupported(outbound) {
-    if (certificate_pins_of(outbound) == null || certificate_pin_supported() || outbound.tls.insecure === true)
-        return "";
-    return "its certificate pin needs sing-box " + join(".", CERTIFICATE_SHA256_MIN) +
-        " or newer, and its link does not allow skipping certificate verification";
+// A pinned node whose pin this core cannot enforce and that keeps the usual
+// certificate verification (its link does not turn verification off).
+function certificate_pin_unenforced(outbound) {
+    return certificate_pins_of(outbound) != null && !certificate_pin_supported() &&
+        outbound.tls.insecure !== true;
 }
 
 // The TLS the core runs for a pinned node: the pin replaces verification
-// (insecure is not needed with it); on an older core the node keeps the
-// insecure of its link and the pin is left out, with a warning.
+// (insecure is not needed with it); on an older core the pin is left out,
+// with a warning, and the node keeps the verification its link asks for.
 function apply_certificate_pin(outbound, name) {
     if (certificate_pins_of(outbound) == null)
         return outbound;
@@ -650,7 +650,9 @@ function apply_certificate_pin(outbound, name) {
     else {
         delete tls.certificate_sha256;
         warn("certificate pin of '", as_string(name), "' left out: it needs sing-box ", join(".", CERTIFICATE_SHA256_MIN),
-            " or newer; the node skips certificate verification, as its link allows\n");
+            " or newer; ", tls.insecure === true
+                ? "the node skips certificate verification, as its link allows"
+                : "the node connects with the usual certificate verification", "\n");
     }
     outbound.tls = tls;
     return outbound;
@@ -886,13 +888,8 @@ function compatible_subscription_outbounds(outbounds, section_name, skip_counts)
             warn_skipped_subscription_outbound(section_name, outbound, encryption);
             continue;
         }
-        let pin = certificate_pin_unsupported(outbound);
-        if (pin != "") {
-            warn_skipped_subscription_outbound(section_name, outbound, pin);
-            if (type(skip_counts) == "object")
-                skip_counts.pin = (skip_counts.pin || 0) + 1;
-            continue;
-        }
+        if (certificate_pin_unenforced(outbound) && type(skip_counts) == "object")
+            skip_counts.pin = (skip_counts.pin || 0) + 1;
         push(retained, outbound);
     }
 
@@ -2143,11 +2140,6 @@ function manual_link_outbound(link, tag_name, section_name) {
     delete outbound.remark;
     outbound.tag = tag_name;
     let name = url_fragment(link);
-    let pin = certificate_pin_unsupported(outbound);
-    if (pin != "") {
-        warn("skipped manual proxy link ", name != "" ? "'" + name + "' " : "", "of rule '", as_string(section_name), "': ", pin, "\n");
-        return null;
-    }
     return apply_certificate_pin(outbound, name != "" ? name : tag_name);
 }
 

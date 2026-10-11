@@ -255,7 +255,7 @@ export function subscriptionNoticeText(
   } else if (notice.kind === 'certificate_pin') {
     text = fillNumbers(
       _(
-        '%s servers were left out: their certificate pin needs sing-box 1.15.0 or newer, and their links do not allow skipping certificate verification.',
+        '%s servers have a certificate pin that is not enforced before sing-box 1.15.0: they connect with the usual certificate verification.',
       ),
       [notice.count],
     );

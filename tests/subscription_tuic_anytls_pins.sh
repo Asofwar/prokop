@@ -7,9 +7,9 @@ set -euo pipefail
 # of the configuration still runs.
 # Adjacent 9: certificate pins (pinSHA256, pcs, Clash fingerprint, Xray
 # pinnedPeerCertSha256) become tls.certificate_sha256 on sing-box 1.15.0+,
-# where they replace insecure. On an older core a pinned node keeps the
-# insecure its link also asks for (the pin is left out, with a warning) or
-# is skipped: a pin is never dropped while verification is off unasked. The
+# where they replace insecure. On an older core the pin is left out, with a
+# warning, and the node runs as before pins were read: with the usual
+# certificate verification, or without it only when its link asks. The
 # dashboard learns which nodes run without verification.
 # With $PROKOP_TEST_SING_BOX (1.14.x) the generated configuration passes
 # "sing-box check".
@@ -161,12 +161,21 @@ summary() { # name:has-pin:insecure for each server outbound
   jq -r '[.outbounds[] | select(.server != null) | "\(.server):\(.tls.certificate_sha256 != null):\(.tls.insecure == true)"] | join(" ")' "$WORK/gen-$1.json"
 }
 generate 1.14.2
-[ "$(summary 1.14.2)" = "tuic.example.com:false:true any.example.com:false:true m.example.com:false:true t.example.com:false:false a.example.com:false:true q.example.com:false:true" ] ||
+# 1.14: no pin anywhere; pinned nodes without insecure stay, verified as usual.
+[ "$(summary 1.14.2)" = "tuic.example.com:false:true any.example.com:false:true h.example.com:false:false m.example.com:false:true t.example.com:false:false a.example.com:false:true p.example.com:false:false q.example.com:false:true" ] ||
   fail "1.14.2: $(summary 1.14.2)"
-grep -Fq "skipped manual proxy link 'ManualPinned' of rule 'proxy': its certificate pin needs sing-box 1.15.0 or newer" "$WORK/gen-1.14.2.err" ||
-  fail "the pinned manual link was not reported: $(cat "$WORK/gen-1.14.2.err")"
-grep -Fq "SubPinned (its certificate pin needs sing-box 1.15.0 or newer" "$WORK/gen-1.14.2.err" || fail "the pinned subscription node was not reported"
-grep -Fq "certificate pin of 'SubPinnedInsecure' left out" "$WORK/gen-1.14.2.err" || fail "the dropped pin was not reported"
+grep -Fq "certificate pin of 'ManualPinned' left out: it needs sing-box 1.15.0 or newer; the node connects with the usual certificate verification" \
+  "$WORK/gen-1.14.2.err" || fail "the unenforced manual pin was not reported: $(cat "$WORK/gen-1.14.2.err")"
+grep -Fq "certificate pin of 'SubPinned' left out: it needs sing-box 1.15.0 or newer; the node connects with the usual certificate verification" \
+  "$WORK/gen-1.14.2.err" || fail "the unenforced subscription pin was not reported"
+grep -Fq "certificate pin of 'SubPinnedInsecure' left out: it needs sing-box 1.15.0 or newer; the node skips certificate verification" \
+  "$WORK/gen-1.14.2.err" || fail "the dropped pin was not reported"
+if grep -Fq "skipped" "$WORK/gen-1.14.2.err"; then fail "a pinned node was skipped: $(cat "$WORK/gen-1.14.2.err")"; fi
+# The dashboard says one subscription pin is not enforced (SubPinned; the
+# insecure one is marked as unverified instead).
+jq -e '[.subscriptionNotices[] | select(.kind == "certificate_pin") | .count] == [1]' \
+  "$WORK/gen-1.14.2.json.section-cache/proxy.json" >/dev/null ||
+  fail "no unenforced-pin notice: $(jq -c .subscriptionNotices "$WORK/gen-1.14.2.json.section-cache/proxy.json")"
 jq -e '[.outbounds[] | select(.type=="tuic") | .tls.utls] | all(. == null)' "$WORK/gen-1.14.2.json" >/dev/null || fail "TUIC kept uTLS"
 node -e '
   const fs = require("fs");
@@ -181,6 +190,8 @@ node -e '
 generate 1.15.0
 [ "$(summary 1.15.0)" = "tuic.example.com:false:true any.example.com:false:true h.example.com:true:false m.example.com:true:false t.example.com:false:false a.example.com:false:true p.example.com:true:false q.example.com:true:false" ] ||
   fail "1.15.0: $(summary 1.15.0)"
+jq -e '[.subscriptionNotices[]? | select(.kind == "certificate_pin")] == []' \
+  "$WORK/gen-1.15.0.json.section-cache/proxy.json" >/dev/null || fail "1.15.0 must not report unenforced pins"
 generate 1.15.0-alpha.3
 [ "$(summary 1.15.0-alpha.3)" = "$(summary 1.14.2)" ] || fail "a 1.15.0 pre-release must not take pins: $(summary 1.15.0-alpha.3)"
 generate ''
