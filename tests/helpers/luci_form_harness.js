@@ -1228,7 +1228,11 @@ function createEnvironment({
       network: { getDevices: () => Promise.resolve([]) },
       ui,
       uci,
-      localDevices: { createLocalDeviceDynamicListWidget: () => E("div") },
+      // The real MAC helpers of the device pickers; the widget is a stub.
+      localDevices: Object.assign(
+        Object.create(loadModule("local_devices.js", { baseclass, rpc, ui, uci, main }, globals)),
+        { createLocalDeviceDynamicListWidget: () => E("div") },
+      ),
       killswitch,
       main,
     },

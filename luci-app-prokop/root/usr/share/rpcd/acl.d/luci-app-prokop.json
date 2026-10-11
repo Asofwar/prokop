@@ -117,7 +117,7 @@
   "luci-app-prokop-admin": {
     "description": "Grant Prokop configuration read access to administrators",
     "read": {
-      "uci": ["prokop"]
+      "uci": ["prokop", "dhcp"]
     }
   }
 }

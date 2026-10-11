@@ -41,7 +41,7 @@ const ui = {
     this.addChoices = (values, labels) => this.added.push({ values, labels });
   },
 };
-globalThis.E = (tag, attrs, children) => ({ tag, attrs, children });
+globalThis.E = (tag, attrs, children) => ({ tag, attrs, children, style: {} });
 const main = {
   validateIP: (ip) => ({
     valid: /^\d+\.\d+\.\d+\.\d+$/.test(ip) || /^[0-9a-f:]+$/i.test(ip),

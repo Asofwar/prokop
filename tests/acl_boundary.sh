@@ -122,6 +122,18 @@ if (acl.read.uci?.includes('prokop')) throw Error('raw UCI exposed to read role'
 if (!groups['luci-app-prokop-admin']?.read?.uci?.includes('prokop')) {
   throw Error('admin role lost UCI read access');
 }
+// The rule device pickers read the static leases (dhcp, read only) to warn
+// about an address without one; the admin role reads nothing else and
+// writes nothing.
+if (JSON.stringify(groups['luci-app-prokop-admin'].read.uci) !== JSON.stringify(['prokop', 'dhcp'])) {
+  throw Error(`admin role reads unexpected UCI packages: ${groups['luci-app-prokop-admin'].read.uci}`);
+}
+if ('write' in groups['luci-app-prokop-admin'] || Object.keys(groups['luci-app-prokop-admin'].read).join() !== 'uci') {
+  throw Error('admin role gained more than UCI read access');
+}
+if (acl.read.uci?.includes('dhcp') || acl.write.uci?.includes('dhcp')) {
+  throw Error('the Prokop read or write role must not carry dhcp access');
+}
 for (const path of ['/etc/sing-box/config.json', '/tmp/sing-box/config.json']) {
   if (grants[path]?.includes('read')) throw Error(`raw JSON exposed: ${path}`);
 }
