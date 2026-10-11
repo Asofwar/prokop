@@ -3571,6 +3571,33 @@ function prokop_active_for_setting_change() {
         module_success([ state_module, "runtime-apply-allowed", constants.NFT_TABLE_NAME ]);
 }
 
+// The reload reason of a setting change: service/initd.uc answers it with
+// "queued" or "stopped" when the reload did not run (QUEUE_ACK_REASONS,
+// STOP_ACK_REASONS).
+const DIRECT_PROXY_RELOAD_REASON = "direct-proxy";
+
+// A setting that only the sing-box configuration reads is applied by the
+// ordinary reload: it regenerates and checks the configuration, replaces
+// sing-box behind the transition guard and rolls back to the running
+// configuration when the new one fails. nft, dnsmasq and the DPI providers
+// are left alone, as the reload plan finds them unchanged. "applied",
+// "queued" (another lifecycle action holds reload.lock), "stopped" (the
+// user's stop overtook it; D-15) or "failed".
+function prokop_reload_for_setting(reason) {
+    let pipe = fs.popen(command_from_args([ SERVICE_INIT, "reload", reason ]) + " </dev/null 2>/dev/null", "r");
+    if (!pipe)
+        return "failed";
+    let output = trim(as_string(pipe.read("all") || ""));
+    let status = int(pipe.close());
+    if (status > 255)
+        status = int(status / 256);
+    if (output == "stopped" || (status != 0 && prokop_stopped_by_user()))
+        return "stopped";
+    if (status != 0)
+        return "failed";
+    return output == "queued" ? "queued" : "applied";
+}
+
 function set_direct_proxy(action) {
     let enabled_path = CONFIG_NAME + ".settings.direct_proxy_enabled";
     let port_path = CONFIG_NAME + ".settings.direct_proxy_port";
@@ -3600,31 +3627,37 @@ function set_direct_proxy(action) {
         !uci_core.commit(CONFIG_NAME))
         action_fail("direct_proxy", action, "Failed to save Direct Proxy settings", current_enabled, target_enabled);
 
-    let restart_status = 0;
+    let reload = "";
     if (!prokop_active_for_setting_change())
         updates_log("Prokop is not running; the Direct Proxy setting applies at its next start");
-    else if ((restart_status = prokop_restart_and_wait()) != 0) {
-        // The user's stop overtook the restart: it wins, and the setting
-        // applies at the next start. The restart with the previous settings
-        // would start Prokop again (D-15, UC-235).
-        if (prokop_stopped_by_user())
-            updates_log("Prokop was stopped by the user during its restart; the Direct Proxy setting applies at its next start");
-        else {
-            uci_core.set(enabled_path, current_enabled);
-            if (current_port != "")
-                uci_core.set(port_path, current_port);
-            else
-                uci_core.delete(port_path);
-            uci_core.commit(CONFIG_NAME);
-            // A refused stop changed nothing: Prokop runs on with the
-            // previous settings, and their restart would be refused alike.
-            if (restart_status == 2)
-                action_fail("direct_proxy", action, "Failed to apply Direct Proxy settings: " + PROKOP_RESTART_REFUSED +
-                    "; Prokop runs on with the previous Direct Proxy settings", current_enabled, target_enabled);
-            if (!prokop_stopped_by_user() && prokop_restart_and_wait() != 0 && !prokop_stopped_by_user())
-                updates_log("Prokop did not start again with the previous Direct Proxy settings", "error");
-            action_fail("direct_proxy", action, "Failed to apply Direct Proxy settings", current_enabled, target_enabled);
-        }
+    else if ((reload = prokop_reload_for_setting(DIRECT_PROXY_RELOAD_REASON)) == "stopped")
+        // The user's stop overtook the reload: it wins, and the setting
+        // applies at the next start (D-15, UC-235).
+        updates_log("Prokop was stopped by the user during its reload; the Direct Proxy setting applies at its next start");
+    else if (reload == "queued")
+        // Another lifecycle action holds reload.lock: the queued reload
+        // reads the saved setting once it is done.
+        updates_log("Another Prokop operation is running; the Direct Proxy setting applies with the reload queued behind it");
+    else if (reload != "applied") {
+        // The failed reload rolled sing-box back to the configuration it
+        // ran (service/lifecycle.uc abort_reload): the settings follow it.
+        uci_core.set(enabled_path, current_enabled);
+        if (current_port != "")
+            uci_core.set(port_path, current_port);
+        else
+            uci_core.delete(port_path);
+        uci_core.commit(CONFIG_NAME);
+        // A reload refused over another sing-box changed nothing: Prokop
+        // runs on with the previous settings, and their reload would be
+        // refused alike (UC-215).
+        if (module_success([ LIB_DIR + "/service/state.uc", "sing-box-process-conflict" ]))
+            action_fail("direct_proxy", action, "Failed to apply Direct Proxy settings: another sing-box process makes the ownership of the Prokop runtime ambiguous" +
+                "; Prokop runs on with the previous Direct Proxy settings", current_enabled, target_enabled);
+        // A reload with the previous settings changes nothing when that
+        // rollback worked, and repairs the runtime when it did not.
+        if (prokop_reload_for_setting(DIRECT_PROXY_RELOAD_REASON) == "failed" && !prokop_stopped_by_user())
+            updates_log("Prokop did not reload with the previous Direct Proxy settings", "error");
+        action_fail("direct_proxy", action, "Failed to apply Direct Proxy settings", current_enabled, target_enabled);
     }
 
     remove_file(SYSTEM_INFO_CACHE_FILE);

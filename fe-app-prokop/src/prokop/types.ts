@@ -815,7 +815,15 @@ export namespace Prokop {
     proxyConfigType?: ProxyConfigType;
     subscriptionSourceCount?: number;
     subscriptionMetadata?: SubscriptionMetadata[];
+    // R2: the pin guard moved the rule off a dead server chosen by hand.
+    pinGuardSwitch?: PinGuardSwitch;
     outbounds: Outbound[];
+  }
+
+  export interface PinGuardSwitch {
+    fromName: string;
+    toName: string;
+    time: number;
   }
 
   export interface LatencyActionProgress {

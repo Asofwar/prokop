@@ -67,6 +67,9 @@ const SUBSCRIPTION_LINKS_DIR = getenv("PROKOP_SUBSCRIPTION_LINKS_DIR") || RUNTIM
 const SUBSCRIPTION_METADATA_DIR = getenv("PROKOP_SUBSCRIPTION_METADATA_DIR") || RUNTIME_STATE_DIR + "/subscription-metadata";
 const OUTBOUND_METADATA_DIR = getenv("PROKOP_OUTBOUND_METADATA_DIR") || RUNTIME_STATE_DIR + "/outbound-metadata";
 const SECTION_CACHE_DIR = getenv("PROKOP_SECTION_CACHE_DIR") || RUNTIME_STATE_DIR + "/section-cache";
+// R2: the selectors the pin guard switched away from a dead server
+// (singbox/pin_guard.uc).
+const PIN_GUARD_EVENTS_FILE = getenv("PROKOP_PIN_GUARD_EVENTS_FILE") || RUNTIME_STATE_DIR + "/pin-guard.json";
 const RULE_CONDITION_CACHE_DIR = getenv("PROKOP_RULE_CONDITION_CACHE_DIR") || RUNTIME_STATE_DIR + "/rule-condition-cache";
 const RUNTIME_CACHE_FORMAT_FILE = getenv("PROKOP_RUNTIME_CACHE_FORMAT_FILE") || RUNTIME_STATE_DIR + "/cache-format";
 const PERSISTENT_SUBSCRIPTION_CACHE_DIR = getenv("PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR") || "/etc/prokop/subscription-cache";
@@ -610,9 +613,13 @@ function capture_selector_state() {
     // to keep on flash, and each switch would be one more flash write
     // (LC-9, optimization 5). Its worker picks again after the start.
     let priority = priority_group_selectors();
+    // A selector the pin guard moved off a dead server keeps the server the
+    // user chose as the saved choice, while it is where the guard put it.
+    let guarded = object_or_empty(read_json_file(PIN_GUARD_EVENTS_FILE));
     let choices = {};
     for (let group, tag in state)
-        if (!priority[group] && match(group, /-out-probe$/) == null)
+        if (!priority[group] && match(group, /-out-probe$/) == null &&
+            as_string(object_or_empty(guarded[group]).to) != tag)
             choices[group] = tag;
     if (length(choices) > 0)
         selector_choices.record_choices(choices);
@@ -960,6 +967,17 @@ function nft_populate_runtime_sets() {
 function discard_singbox_config_stage(stage_path) {
     if (as_string(stage_path) != "")
         module_success(SINGBOX_UC, [ "discard-config-stage", stage_path ]);
+}
+
+// The backup commit-config-stage made: the previous config.json and, next
+// to it, the previous section caches (singbox/runtime.uc
+// discard_config_backup). Both go once the transaction is decided.
+function remove_singbox_backup(backup_path) {
+    backup_path = as_string(backup_path);
+    if (backup_path == "")
+        return;
+    remove_file(backup_path);
+    command_success_from_args([ "rm", "-rf", backup_path + ".section-cache" ]);
 }
 
 // A stage init-config consumed is gone already, and its discard changes
@@ -1675,9 +1693,9 @@ function abandon_reload_for_stop(stage_path, backup_path) {
     nft_candidate_finish(false);
     discard_singbox_config_stage(stage_path);
     if (as_string(backup_path) != "")
-        remove_file(backup_path);
+        remove_singbox_backup(backup_path);
     if (dpi_singbox_backup != "")
-        remove_file(dpi_singbox_backup);
+        remove_singbox_backup(dpi_singbox_backup);
     discard_dpi_snapshot();
     discard_dnsmasq_reload_config();
     remove_file(RELOAD_STATE_SNAPSHOT_FILE);
@@ -1736,7 +1754,7 @@ function abort_reload(status, runtime_changed) {
         }
         log_message("Could not restore the previous dnsmasq configuration; stopping the partial runtime", "fatal");
         if (dpi_singbox_backup != "")
-            remove_file(dpi_singbox_backup);
+            remove_singbox_backup(dpi_singbox_backup);
         discard_dpi_snapshot();
         cleanup_failed_runtime();
         remove_file(RELOAD_STATE_SNAPSHOT_FILE);
@@ -2751,7 +2769,7 @@ function reload(reason) {
         if (dpi_snapshot_dir != "")
             dpi_singbox_backup = staged_singbox_backup;
         else
-            remove_file(staged_singbox_backup);
+            remove_singbox_backup(staged_singbox_backup);
         runtime_changed = true;
     }
 
@@ -2800,7 +2818,7 @@ function reload(reason) {
         return abort_reload(status, runtime_changed);
     keep_cron_refresh_pending(RELOAD_STATE_FILE);
     if (dpi_singbox_backup != "")
-        remove_file(dpi_singbox_backup);
+        remove_singbox_backup(dpi_singbox_backup);
     discard_dpi_snapshot();
     discard_dnsmasq_reload_config();
     // A changed list source left the nft rebuild to the list worker's

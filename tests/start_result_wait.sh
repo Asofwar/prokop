@@ -423,6 +423,14 @@ function prokop_stopped_by_user() { return user_stopped; }
 // that the start after it names (PROKOP_START_AFTER_STOP).
 function own_stop_request() { return user_stopped ? null : "1.000000001.42"; }
 let constants = { NFT_TABLE_NAME: "ProkopTable" };
+// The reload that applies Direct Proxy (U2): its outcomes in turn.
+const DIRECT_PROXY_RELOAD_REASON = "direct-proxy";
+let reload_results = [];
+let process_conflict = false;
+function prokop_reload_for_setting(reason) {
+    push(calls, "reload:" + reason);
+    return length(reload_results) > 0 ? shift(reload_results) : "applied";
+}
 function as_string(value) { return value == null ? "" : "" + value; }
 function die_check(message) { warn("FAIL: " + message + "\n"); exit(1); }
 function check(condition, message) { if (!condition) die_check(message); }
@@ -481,6 +489,8 @@ function run_logged(description, command) {
 function module_success(args) {
     if (args[0] == LIB_DIR + "/service/state.uc" && args[1] == "stop-requested")
         return stop_requested;
+    if (args[0] == LIB_DIR + "/service/state.uc" && args[1] == "sing-box-process-conflict")
+        return process_conflict;
     if (args[0] == LIB_DIR + "/service/state.uc" && args[1] == "runtime-apply-allowed") {
         check(args[2] == "ProkopTable", "the runtime check names no nft table");
         return !stop_requested && runtime_table;
@@ -516,6 +526,7 @@ function reset(values) {
     prokop_restart_refused = false; stop_refused = false;
     initd_source = 'else if (mode == "start-and-wait")'; status_results = [];
     stop_requested = false; runtime_table = false; user_stopped = false;
+    reload_results = []; process_conflict = false;
 }
 function run(fn) {
     try { fn(); }
@@ -524,19 +535,41 @@ function run(fn) {
 '''
 
 cases = r'''
-// Direct Proxy: a restart (Prokop's own stop, then the awaited start) that
-// does not bring Prokop up rolls the settings back, restarts the previous
-// configuration and fails the action.
-reset([ false, true ]);
+// Direct Proxy is applied by a reload, never a restart (U2). A reload that
+// fails rolls the settings back, reloads the previous configuration and
+// fails the action.
+reset([]);
+reload_results = [ "failed", "applied" ];
 run(function() { set_direct_proxy("enable"); });
-check(outcome != null && !outcome.success, "Direct Proxy enable was reported as success although Prokop did not start");
+check(outcome != null && !outcome.success, "Direct Proxy enable was reported as success although its reload failed");
 check(uci["prokop.settings.direct_proxy_enabled"] == "0", "the failed Direct Proxy settings were kept");
-check(join(",", calls) == "init:stop,wait:start,init:stop,wait:start", "the previous Direct Proxy settings were not restarted: " + join(",", calls));
+check(join(",", calls) == "reload:direct-proxy,reload:direct-proxy", "the previous Direct Proxy settings were not reloaded: " + join(",", calls));
 
-reset([ true ]);
+reset([]);
 run(function() { set_direct_proxy("enable"); });
 check(outcome != null && outcome.success, "a working Direct Proxy enable was reported as failure");
 check(uci["prokop.settings.direct_proxy_enabled"] == "1", "a working Direct Proxy enable was rolled back");
+check(join(",", calls) == "reload:direct-proxy", "Direct Proxy was not applied by one reload: " + join(",", calls));
+
+// The user's stop overtook the reload, or the reload was queued behind
+// another operation: the setting stays, no further reload or start.
+for (let result in [ "stopped", "queued" ]) {
+    reset([]);
+    reload_results = [ result ];
+    run(function() { set_direct_proxy("enable"); });
+    check(outcome != null && outcome.success && uci["prokop.settings.direct_proxy_enabled"] == "1",
+        "a " + result + " Direct Proxy reload rolled the setting back");
+    check(join(",", calls) == "reload:direct-proxy,log:info", "a " + result + " Direct Proxy reload went on: " + join(",", calls));
+}
+
+// A reload refused over another sing-box: rolled back, not tried again.
+reset([]);
+reload_results = [ "failed" ];
+process_conflict = true;
+run(function() { set_direct_proxy("enable"); });
+check(outcome != null && !outcome.success && index(outcome.message, "ambiguous") >= 0, "the refused reload is not reported: " + (outcome?.message ?? ""));
+check(uci["prokop.settings.direct_proxy_enabled"] == "0", "the refused Direct Proxy settings were kept");
+check(join(",", calls) == "reload:direct-proxy", "a refused Direct Proxy reload was tried again: " + join(",", calls));
 
 // A restart after a successful component change reports its outcome.
 reset([ false ]);
@@ -573,7 +606,7 @@ prokop_was_running = false;
 run(function() { set_direct_proxy("enable"); });
 check(outcome != null && outcome.success, "Direct Proxy of a stopped Prokop was not saved");
 check(uci["prokop.settings.direct_proxy_enabled"] == "1", "Direct Proxy of a stopped Prokop was rolled back");
-check(index(join(",", calls), "wait:") < 0 && index(join(",", calls), "init:") < 0,
+check(index(join(",", calls), "wait:") < 0 && index(join(",", calls), "init:") < 0 && index(join(",", calls), "reload:") < 0,
     "a Direct Proxy change started a stopped Prokop: " + join(",", calls));
 // Nor one that the user stopped, although its status still read running (the
 // stop is waiting for reload.lock) or its nft table is still there.
@@ -582,15 +615,15 @@ stop_requested = true; runtime_table = true;
 run(function() { set_direct_proxy("enable"); });
 check(outcome != null && outcome.success && uci["prokop.settings.direct_proxy_enabled"] == "1",
     "Direct Proxy of a Prokop that the user stopped was not saved");
-check(index(join(",", calls), "wait:") < 0, "a Direct Proxy change restarted a Prokop that the user stopped: " + join(",", calls));
+check(index(join(",", calls), "wait:") < 0 && index(join(",", calls), "reload:") < 0, "a Direct Proxy change restarted a Prokop that the user stopped: " + join(",", calls));
 // A Prokop whose status probe failed in the middle of a sing-box restart (a
 // DNS-failover switch, a subscription update, a reload) or answered too
-// slowly still has its runtime: the change is applied by a restart.
-reset([ true ]);
+// slowly still has its runtime: the change is applied by a reload.
+reset([]);
 prokop_was_running = false; runtime_table = true;
 run(function() { set_direct_proxy("enable"); });
 check(outcome != null && outcome.success, "Direct Proxy of a Prokop in a transition was reported as failure");
-check(join(",", calls) == "init:stop,wait:start", "Direct Proxy of a Prokop in a transition was not applied by a restart: " + join(",", calls));
+check(join(",", calls) == "reload:direct-proxy", "Direct Proxy of a Prokop in a transition was not applied by a reload: " + join(",", calls));
 
 // An older release installed by the action has no start-and-wait: the
 // start goes through init.d and the runtime is polled instead.

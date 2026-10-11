@@ -107,6 +107,46 @@ function formatDate(seconds?: number) {
   });
 }
 
+function formatTime(seconds: number) {
+  if (!Number.isFinite(seconds) || seconds <= 0) {
+    return undefined;
+  }
+  const date = new Date(seconds * 1000);
+  if (Number.isNaN(date.getTime())) {
+    return undefined;
+  }
+  return date.toLocaleString(uiLocale(), {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+// R2: the pin guard moved this rule off the server chosen by hand.
+export function renderPinGuardSwitch(event?: Prokop.PinGuardSwitch) {
+  if (!event) {
+    return undefined;
+  }
+  const time = formatTime(event.time);
+  const template = time
+    ? _(
+        'Server %s did not answer three checks in a row, so Prokop switched this rule to %s at %s. Choose the server again when it works.',
+      )
+    : _(
+        'Server %s did not answer three checks in a row, so Prokop switched this rule to %s. Choose the server again when it works.',
+      );
+  // One pass, so that a server name with %s in it stays as it is.
+  const values = [event.fromName, event.toName, time || ''];
+  let next = 0;
+  const text = template.replace(/%s/g, () => values[next++] ?? '');
+  return E(
+    'div',
+    { class: 'fkp_dashboard-page__pin-guard', role: 'status' },
+    asText(text),
+  );
+}
+
 function renderMetadataAction(label: string, url?: string) {
   if (!isValidHttpUrl(url)) {
     return undefined;
@@ -545,6 +585,7 @@ function renderDefaultState({
   const metadataNodes = (section.subscriptionMetadata || [])
     .map((metadata) => renderSubscriptionMetadata(metadata))
     .filter(Boolean) as HTMLElement[];
+  const pinGuardNode = renderPinGuardSwitch(section.pinGuardSwitch);
   const subscriptionUpdateAction = readonly
     ? undefined
     : renderSubscriptionUpdateAction(
@@ -668,6 +709,7 @@ function renderDefaultState({
     ]),
     grouping,
     E('div', { class: 'fkp_dashboard-page__outbound-grid' }, [
+      ...(pinGuardNode ? [pinGuardNode] : []),
       ...metadataNodes,
       groupedGrid,
     ]),

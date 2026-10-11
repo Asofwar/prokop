@@ -276,6 +276,17 @@ export const styles = `
     margin: 0;
 }
 
+.fkp_dashboard-page__pin-guard {
+    grid-column: 1 / -1;
+    border-left: 3px solid var(--fkp-tone-warning, #b26a00);
+    border-radius: 4px;
+    padding: 6px 10px;
+    background: var(--background-color-low, rgba(0, 0, 0, 0.04));
+    color: var(--text-color-high);
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+}
+
 .fkp_dashboard-page__subscription-meta__announce {
     margin: 6px 0 0;
     border-left: 3px solid var(--primary-color-medium, dodgerblue);

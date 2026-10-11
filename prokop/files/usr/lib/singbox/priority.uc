@@ -16,6 +16,8 @@ const SECTION_CACHE_DIR = getenv("PROKOP_SECTION_CACHE_DIR") || RUNTIME_STATE_DI
 const PRIORITY_PID_FILE = getenv("PROKOP_PRIORITY_PID_FILE") || RUNTIME_STATE_DIR + "/priority.pid";
 const PRIORITY_UC = getenv("PROKOP_PRIORITY_UC") || LIB_DIR + "/singbox/priority.uc";
 const DIAGNOSTICS_UC = getenv("PROKOP_DIAGNOSTICS_UC") || LIB_DIR + "/diagnostics/runtime.uc";
+// R2: the pin guard of hand-chosen servers runs and stops with this worker.
+const PIN_GUARD_UC = getenv("PROKOP_PIN_GUARD_UC") || LIB_DIR + "/singbox/pin_guard.uc";
 const SERVICE_ADDRESS = getenv("SB_SERVICE_MIXED_INBOUND_ADDRESS") || "127.0.0.1";
 
 // C15: the payload check of a group downloads PAYLOAD_BYTES over HTTPS
@@ -518,12 +520,16 @@ function stop_runtime() {
     remove_file(HEALTH_FILE);
     process_identity.signal(PRIORITY_PID_FILE, "ucode", [ "ucode", "-L", LIB_DIR, PRIORITY_UC, "worker" ], true, "TERM");
     remove_file(PRIORITY_PID_FILE);
+    command_success_from_args([ "ucode", "-L", LIB_DIR, PIN_GUARD_UC, "stop-runtime" ]);
     return 0;
 }
 
 function start_runtime() {
     let groups = priority_groups_from_cache();
     stop_runtime();
+    // Opt-in and not essential: a guard that cannot start fails nothing.
+    if (!command_success_from_args([ "ucode", "-L", LIB_DIR, PIN_GUARD_UC, "start-runtime" ]))
+        log_message("Could not start the pin guard", "warn");
     if (length(groups) == 0)
         return 0;
 

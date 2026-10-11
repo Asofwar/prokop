@@ -82,12 +82,13 @@ const INTERNAL_CONFIG_TRIGGER_GUARD = getenv("PROKOP_INTERNAL_CONFIG_TRIGGER_GUA
 const CONFIG_CHANGE_REASON = getenv("PROKOP_CONFIG_CHANGE_REASON") || "on_config_change";
 // Reload reasons of callers that must tell a queued reload from a completed
 // one: the list worker keeps its durable apply marker, a snapshot restore and
-// an autotune apply never confirm a configuration the runtime has not loaded.
-const QUEUE_ACK_REASONS = [ "list-content", "config-restore", "autotune" ];
+// an autotune apply never confirm a configuration the runtime has not loaded,
+// a Direct Proxy change (components/action.uc) tells the user it waits.
+const QUEUE_ACK_REASONS = [ "list-content", "config-restore", "autotune", "direct-proxy" ];
 // Reload reasons of the transactions that must also tell a reload that an
-// explicit stop skipped: a snapshot restore and an autotune apply never
-// report a runtime they did not reload (D-15, UC-056).
-const STOP_ACK_REASONS = [ "config-restore", "autotune" ];
+// explicit stop skipped: a snapshot restore, an autotune apply and a Direct
+// Proxy change never report a runtime they did not reload (D-15, UC-056).
+const STOP_ACK_REASONS = [ "config-restore", "autotune", "direct-proxy" ];
 
 const DNS_APPLY_UC = LIB_DIR + "/dns/apply.uc";
 const UI_UC = LIB_DIR + "/service/ui.uc";
@@ -504,7 +505,12 @@ function schedule_start_retry(path, delay_seconds) {
 
     let worker = start_retry_argv(path);
     push(worker, "sh", delay_seconds);
-    let result = command_capture(command_from_args(worker) + " >/dev/null 2>&1 & echo $!");
+    // The retry sleeps up to its delay: it must not keep procd's service
+    // lock (fd 1000) of the init.d action that scheduled it, as no other
+    // background worker of Prokop does (R5). Only when it is open: dash
+    // takes a multi-digit redirection for an argument.
+    let close_procd_lock = fs.stat("/proc/self/fd/1000") != null ? " 1000>&-" : "";
+    let result = command_capture(command_from_args(worker) + " >/dev/null 2>&1" + close_procd_lock + " & echo $!");
     let pid = trim(result.output);
     if (result.status != 0 || !numeric_text(pid))
         return false;

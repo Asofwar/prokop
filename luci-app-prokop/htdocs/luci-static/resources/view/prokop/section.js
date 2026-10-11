@@ -9361,6 +9361,22 @@ function createSectionContent(section) {
   };
   o.onListChange = refreshDashboardFilterChoiceWidgets;
 
+  // R2 pin guard (singbox/pin_guard.uc), off by default; it falls back to
+  // the first URLTest group, so it is offered only with one.
+  o = section.taboption(
+    "target",
+    form.Flag,
+    "pin_guard",
+    _("Leave a dead server chosen by hand"),
+    _(
+      "When a server chosen by hand on the dashboard does not answer three checks in a row (about a minute), switch the rule to its first URLTest group. The dashboard says so; Prokop does not switch back by itself, choose the server again when it works. The choice kept for a reboot stays the server you chose.",
+    ),
+  );
+  o.default = "0";
+  o.rmempty = true;
+  o.modalonly = true;
+  o.depends({ action: "connection", urltest: /\S/ });
+
   o = section.taboption(
     "target",
     form.Flag,

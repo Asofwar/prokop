@@ -351,6 +351,51 @@ function configureDnsDuration(
 
 // One tab per group of the "settings" UCI section: DNS, Network, Lists and
 // updates, Service. sections: { dns, network, lists, service }.
+// Why sing-box still runs as root (singbox/unprivileged.uc REASONS).
+const SING_BOX_USER_REASONS = {
+  service_script: () =>
+    _(
+      "the sing-box package's own service script cannot pass a user and network capabilities; only the sing-box variants Prokop installs as a binary can",
+    ),
+  no_ujail: () =>
+    _(
+      "this firmware cannot grant capabilities to a service (install procd-ujail)",
+    ),
+  capabilities_file: () => _("the capabilities file could not be written"),
+  user: () => _("the system user prokop-sb could not be created"),
+  unsupported_config: () =>
+    _(
+      "the configuration has a tun inbound, a WireGuard or a Tailscale endpoint, which need root",
+    ),
+  config_file: () =>
+    _("the sing-box configuration could not be handed to the user"),
+  cache_file: () =>
+    _("the sing-box cache file could not be handed to the user"),
+  workdir: () =>
+    _("the sing-box working directory could not be handed to the user"),
+  path_unreadable: () =>
+    _(
+      "a file the configuration names (a rule set or a certificate) is not readable by the user",
+    ),
+};
+
+function singBoxUserDescription(capabilities) {
+  const text = _(
+    "sing-box runs as its own system user prokop-sb with network rights only (CAP_NET_ADMIN, CAP_NET_RAW, CAP_NET_BIND_SERVICE) instead of root. Applies at the next start of sing-box. If something needed for it is missing, sing-box keeps running as root and the reason is shown here. Not checked on every router: turn it off if sing-box stops starting.",
+  );
+  const state = capabilities?.singBoxUser;
+  let status = "";
+  if (state === "active") {
+    status = _("Now: sing-box runs as prokop-sb.");
+  } else if (state === "root") {
+    const reason = SING_BOX_USER_REASONS[capabilities.singBoxUserReason];
+    status = reason
+      ? _("Now: sing-box runs as root because %s.").format(reason())
+      : _("Now: sing-box runs as root.");
+  }
+  return status ? `${text}<br><b>${status}</b>` : text;
+}
+
 function createSettingsContent(sections, capabilities) {
   const renderSettings = sections.dns.render;
   // Rarely changed DNS options fold under "Advanced settings".
@@ -776,6 +821,16 @@ function createSettingsContent(sections, capabilities) {
     }
     return true;
   };
+
+  // sing-box without root (singbox/unprivileged.uc), off by default.
+  o = sections.service.option(
+    form.Flag,
+    "sing_box_unprivileged",
+    _("Run sing-box without root"),
+    singBoxUserDescription(capabilities),
+  );
+  o.default = "0";
+  o.rmempty = false;
 
   o = sections.network.option(
     form.Flag,

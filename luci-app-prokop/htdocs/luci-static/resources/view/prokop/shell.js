@@ -19,6 +19,10 @@ const uiCapabilities = {
   byedpiInstalled: false,
   // procd's jail for TorrServer (the TorrServer tab of Settings).
   ujailAvailable: false,
+  // sing-box without root (Settings > Service settings): "off", "active"
+  // or "root", and the reason code when it still runs as root.
+  singBoxUser: "off",
+  singBoxUserReason: "",
 };
 let uiCapabilitiesPromise = null;
 let coreStarted = false;
@@ -82,6 +86,10 @@ function updateUiCapabilities(data) {
     Number(data?.byedpi_installed) === 1,
   );
   uiCapabilities.ujailAvailable = Boolean(Number(data?.ujail_available) === 1);
+  uiCapabilities.singBoxUser = ["active", "root"].includes(data?.sing_box_user)
+    ? data.sing_box_user
+    : "off";
+  uiCapabilities.singBoxUserReason = String(data?.sing_box_user_reason ?? "");
   applyUiCapabilities();
 
   return uiCapabilities;

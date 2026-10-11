@@ -192,6 +192,56 @@ describe('getDashboardSections', () => {
     );
   });
 
+  it('shows a pin guard switch while the selector stays on the group', async () => {
+    mocks.getConfigSections.mockResolvedValue([proxySection()]);
+    const proxies = {
+      ...clashProxies,
+      'main-out': proxy('Selector', {
+        name: 'main-out',
+        now: 'main-urltest-out',
+        all: ['main-urltest-out', 'main-1-out', 'main-2-out', 'main-3-out'],
+      }),
+    };
+    mocks.getClashApiProxies.mockResolvedValue({
+      success: true,
+      data: { proxies },
+    });
+    mocks.getDashboardRuntimeMetadata.mockResolvedValue({
+      success: true,
+      data: {
+        urltestGroups: {},
+        pinGuardEvents: {
+          'main-out': {
+            section: 'main',
+            from: 'main-2-out',
+            to: 'main-urltest-out',
+            time: 1760000000,
+          },
+          broken: { from: '', to: 'x' },
+        },
+      },
+    });
+
+    const [section] = (await getDashboardSections()).data;
+    const fromName = section.outbounds.find(
+      (item) => item.code === 'main-2-out',
+    )?.displayName;
+    expect(section.pinGuardSwitch).toEqual({
+      fromName,
+      toName: 'Fastest',
+      time: 1760000000,
+    });
+
+    // The user chose a server again: no notice.
+    proxies['main-out'] = proxy('Selector', {
+      name: 'main-out',
+      now: 'main-1-out',
+      all: ['main-urltest-out', 'main-1-out', 'main-2-out', 'main-3-out'],
+    });
+    const [again] = (await getDashboardSections()).data;
+    expect(again.pinGuardSwitch).toBeUndefined();
+  });
+
   it('shows the full selector group by default', async () => {
     mocks.getConfigSections.mockResolvedValue([proxySection()]);
 

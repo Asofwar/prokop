@@ -467,6 +467,41 @@ function stdin_first_field() {
         print(fields[0], "\n");
 }
 
+// sing-box run as its own user (singbox/unprivileged.uc): procd may hand
+// the capabilities over through ujail, which then stays sing-box's parent
+// and is what procd reports as the instance's PID. Such an instance is the
+// ujail whose command line runs `-- <...>/sing-box run ...`, and sing-box
+// is its one sing-box child: every check of the runtime (provenance,
+// ownership, signals) is made on that child, as on the sing-box procd
+// starts directly. A ujail without exactly one such child stays the PID
+// procd reported, which is no sing-box: fail closed.
+// (Self-contained: it is used above the helpers further down.)
+function jailed_sing_box_child(pid) {
+    let name = (path) => {
+        path = as_string(path);
+        return substr(path, rindex(path, "/") + 1);
+    };
+    pid = int(pid || 0);
+    if (pid <= 0 || name(fs.readlink("/proc/" + pid + "/exe")) != "ujail")
+        return pid;
+    let argv = split(as_string(fs.readfile("/proc/" + pid + "/cmdline")), "\0");
+    let separator = index(argv, "--");
+    if (separator < 0 || separator + 2 >= length(argv) ||
+        name(argv[separator + 1]) != "sing-box" || argv[separator + 2] != "run")
+        return pid;
+    let child = 0;
+    for (let stat_path in fs.glob("/proc/[0-9]*/stat")) {
+        let candidate = split(as_string(stat_path), "/")[2];
+        let exe = name(fs.readlink("/proc/" + candidate + "/exe"));
+        if ((exe != "sing-box" && exe != "sing-box (deleted)") || process_identity.parent_pid(candidate) != "" + pid)
+            continue;
+        if (child > 0)
+            return pid;
+        child = int(candidate);
+    }
+    return child > 0 ? child : pid;
+}
+
 function sing_box_service_pid_from_value(value) {
     let service = type(value) == "object" ? value["sing-box"] : null;
     let instances = service && type(service.instances) == "object" ? service.instances : {};
@@ -480,7 +515,7 @@ function sing_box_service_pid_from_value(value) {
 }
 
 function sing_box_service_pid() {
-    let pid = sing_box_service_pid_from_value(read_stdin_json());
+    let pid = jailed_sing_box_child(sing_box_service_pid_from_value(read_stdin_json()));
     if (pid > 0)
         print(pid, "\n");
 }
@@ -499,7 +534,7 @@ function sing_box_service_pid_runtime() {
             service_list_memo = data;
     }
     try {
-        return sing_box_service_pid_from_value(json(data));
+        return jailed_sing_box_child(sing_box_service_pid_from_value(json(data)));
     }
     catch (e) {
         return 0;
@@ -1877,6 +1912,10 @@ function append_sing_box_rule_signature_body(body, section, sections) {
         body = signature_add_value(body, prefix + ".legacy_outbound_json", option(section, "outbound_json", ""));
         body = signature_add_value(body, prefix + ".urltests", urltests_signature(section));
         body = signature_add_value(body, prefix + ".priority_groups", priority_groups_signature(section));
+        // Read by the pin guard worker from the section cache, which a
+        // reload rewrites; only when on, so other rules keep their signature.
+        if (bool_option_value(section, "pin_guard", false) == "1")
+            body = signature_add_value(body, prefix + ".pin_guard", "1");
         body = signature_add_value(body, prefix + ".urltest_enabled", bool_option_value(section, "urltest_enabled", false));
         body = signature_add_value(body, prefix + ".detect_server_country", normalize_detect_server_country_method(option(section, "detect_server_country", "flag_emoji")));
         body = signature_add_value(body, prefix + ".urltest_check_interval", section_urltest_check_interval(section));

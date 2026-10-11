@@ -33,6 +33,7 @@ const TMP_SING_BOX_FOLDER = getenv("TMP_SING_BOX_FOLDER") || constants.TMP_SING_
 const TMP_RULESET_FOLDER = getenv("TMP_RULESET_FOLDER") || constants.TMP_RULESET_FOLDER || TMP_SING_BOX_FOLDER + "/rulesets";
 const TMP_SUBSCRIPTION_FOLDER = getenv("TMP_SUBSCRIPTION_FOLDER") || constants.TMP_SUBSCRIPTION_FOLDER || TMP_SING_BOX_FOLDER + "/subscriptions";
 const SECTION_CACHE_DIR = getenv("PROKOP_SECTION_CACHE_DIR") || RUNTIME_STATE_DIR + "/section-cache";
+const PIN_GUARD_EVENTS_FILE = getenv("PROKOP_PIN_GUARD_EVENTS_FILE") || RUNTIME_STATE_DIR + "/pin-guard.json";
 const CHECK_PROXY_IP_DOMAIN = getenv("CHECK_PROXY_IP_DOMAIN") || constants.CHECK_PROXY_IP_DOMAIN || "ip.podkop.fyi";
 const FAKEIP_TEST_DOMAIN = getenv("FAKEIP_TEST_DOMAIN") || constants.FAKEIP_TEST_DOMAIN || "fakeip.podkop.fyi";
 const RT_TABLE_NAME = getenv("RT_TABLE_NAME") || constants.RT_TABLE_NAME || "prokop";
@@ -725,6 +726,24 @@ function clash_controller_hosts(parsed) {
     return hosts;
 }
 
+// R2: the selectors the pin guard moved off a dead server chosen by hand
+// (singbox/pin_guard.uc), for the dashboard: tags and a time only.
+function pin_guard_events() {
+    let result = {};
+    let events = read_json_file(PIN_GUARD_EVENTS_FILE);
+    for (let selector, event in (type(events) == "object" ? events : {})) {
+        if (type(event) != "object" || as_string(event.from) == "" || as_string(event.to) == "")
+            continue;
+        result[selector] = {
+            section: as_string(event.section),
+            from: as_string(event.from),
+            to: as_string(event.to),
+            time: int(event.time || 0)
+        };
+    }
+    return result;
+}
+
 function get_dashboard_runtime_metadata() {
     let path = option(settings(), "config_path", "");
     let parsed = read_json_file(path);
@@ -742,7 +761,11 @@ function get_dashboard_runtime_metadata() {
             interrupt_exist_connections: outbound.interrupt_exist_connections
         };
     }
-    write_json({ urltestGroups: groups, clashControllerHosts: clash_controller_hosts(parsed) });
+    write_json({
+        urltestGroups: groups,
+        clashControllerHosts: clash_controller_hosts(parsed),
+        pinGuardEvents: pin_guard_events()
+    });
     return 0;
 }
 

@@ -153,6 +153,23 @@ case "$1" in
     rm -f "$TEST_WORK/stray" "$TEST_WORK/runtime.up"
     exit "$(cat "$TEST_WORK/stop.status" 2>/dev/null || echo 0)"
     ;;
+  # A reload (service/lifecycle.uc): logged with its reason; refused while
+  # stray runs (another sing-box), fails with reload.status; with
+  # reload.user-stop the user's Stop comes in while it runs, and the reload
+  # gives way to it.
+  reload)
+    printf 'reload %s\n' "${2:-}" >>"$TEST_WORK/reloads"
+    [ ! -e "$TEST_WORK/stray" ] || exit 1
+    if [ -e "$TEST_WORK/reload.user-stop" ]; then
+      # The user's Stop from the CLI or LuCI records its request while the
+      # reload holds procd's lock; the reload gives way to it and leaves
+      # the runtime down (service/lifecycle.uc reload_gives_way_to_stop).
+      rm -f "$TEST_WORK/reload.user-stop" "$TEST_WORK/runtime.up" "$PROKOP_RUNTIME_STATE_DIR/start.explicit"
+      printf 'requested\nby=user\n' >"$PROKOP_RUNTIME_STATE_DIR/stop.requested"
+      exit 0
+    fi
+    exit "$(cat "$TEST_WORK/reload.status" 2>/dev/null || echo 0)"
+    ;;
   get_status)
     if [ -e "$TEST_WORK/runtime.up" ]; then printf '{"running":1}\n'; else printf '{"running":0}\n'; fi
     ;;
@@ -196,6 +213,7 @@ PROKOP_LIB="$TEST_LIB"
 PROKOP_INITD_UC="$TEST_LIB/service/initd.uc"
 stop() { stop_service "$@"; }
 start() { start_service "$@"; service_started; }
+reload() { reload_service "$@"; }
 printf '%s source=%s cleanup=%s\n' "$action" "${PROKOP_STOP_SOURCE:-}" "${PROKOP_STOP_CLEANUP:-}" >>"$TEST_WORK/init.log"
 own_stop=""
 [ "$action" != stop ] || [ "${PROKOP_STOP_SOURCE:-}" != component ] || own_stop=1
@@ -218,6 +236,7 @@ case "$action" in
   start) start "$@" ;;
   stop) stop "$@" ;;
   restart) restart "$@" ;;
+  reload) reload "$@" ;;
   *) exit 64 ;;
 esac
 status=$?
@@ -239,6 +258,7 @@ case "${3:-}" in
     case "${4:-}" in
       prokop-stably-running) [ -e "$TEST_WORK/runtime.up" ]; exit $? ;;
       foreign-sing-box-present) exit 1 ;;
+      sing-box-process-conflict) [ -e "$TEST_WORK/stray" ]; exit $? ;;
     esac
     ;;
   */dns/apply.uc | */diagnostics/health.uc | */killswitch/runtime.uc) exit 0 ;;
@@ -351,7 +371,8 @@ reset_case() {
   kill_retry_workers
   rm -f "$WORK_DIR"/start.status "$WORK_DIR"/stop.status "$WORK_DIR"/start.user-stop "$WORK_DIR"/starts \
     "$WORK_DIR"/user-stop.queued "$WORK_DIR"/user-stop.after "$WORK_DIR"/user-stop.waiting "$WORK_DIR"/user-stop.done \
-    "$WORK_DIR"/user-stop.before-start \
+    "$WORK_DIR"/user-stop.before-start "$WORK_DIR"/reloads "$WORK_DIR"/reload.status "$WORK_DIR"/reload.user-stop \
+    "$PROKOP_PENDING_RELOAD_FILE" \
     "$WORK_DIR"/stray \
     "$WORK_DIR"/uci.committed "$WORK_DIR"/out "$PROKOP_RUNTIME_STATE_DIR"/stop.requested \
     "$PROKOP_RUNTIME_STATE_DIR"/start.retry "$PROKOP_RUNTIME_STATE_DIR"/start-result.*
@@ -420,17 +441,60 @@ grep -qx 'restarted=yes' "$WORK_DIR/out" || fail "$case: the user's stop was rep
 [ ! -e "$WORK_DIR/runtime.up" ] || fail "$case: Prokop runs after the user stopped it"
 [ "$(grep -c '^start$' "$WORK_DIR/starts")" -eq 1 ] || fail "$case: Prokop was started again after the user's stop"
 
-# 5. Direct Proxy: the restart's stop fails. The new setting is rolled back
-#    and the action fails.
+# 5. Direct Proxy is applied by a reload (U2): the setting is in the
+#    sing-box configuration only. No stop, no start; Prokop stays up.
 reset_case
-printf '1\n' >"$WORK_DIR/stop.status"
-case="Direct Proxy, the restart's stop fails"
+case="Direct Proxy"
+probe direct-proxy || fail "$case: the action failed"
+grep -q '"success": *true' "$WORK_DIR/out" || fail "$case: the reload was reported as a failure"
+[ "$(cat "$WORK_DIR/reloads")" = "reload direct-proxy" ] || fail "$case: Direct Proxy was not applied by one reload: $(cat "$WORK_DIR/reloads" 2>/dev/null)"
+! grep -Eq '^(stop|start|restart) ' "$WORK_DIR/init.log" || fail "$case: Direct Proxy restarted Prokop: $(cat "$WORK_DIR/init.log")"
+[ ! -s "$WORK_DIR/starts" ] || fail "$case: Prokop was started"
+[ -e "$WORK_DIR/runtime.up" ] || fail "$case: Prokop does not run after the reload"
+grep -q '"prokop.settings.direct_proxy_enabled": *"0"' "$WORK_DIR/uci.committed" ||
+  fail "$case: the new Direct Proxy setting was not kept: $(cat "$WORK_DIR/uci.committed")"
+
+#    The reload fails (it rolled sing-box back): the new setting is rolled
+#    back, a reload with the previous settings follows, and the action fails.
+reset_case
+printf '1\n' >"$WORK_DIR/reload.status"
+case="Direct Proxy, the reload fails"
 probe direct-proxy && fail "$case: the action succeeded"
-grep -q '"success": *false' "$WORK_DIR/out" || fail "$case: the failed restart was reported as success"
+grep -q '"success": *false' "$WORK_DIR/out" || fail "$case: the failed reload was reported as success"
 grep -q 'Failed to apply Direct Proxy settings' "$WORK_DIR/out" || fail "$case: unexpected result"
 grep -q '"prokop.settings.direct_proxy_enabled": *"1"' "$WORK_DIR/uci.committed" ||
   fail "$case: the new Direct Proxy setting was kept: $(cat "$WORK_DIR/uci.committed")"
+[ "$(grep -c '^reload direct-proxy$' "$WORK_DIR/reloads")" -eq 2 ] || fail "$case: the previous settings were not reloaded: $(cat "$WORK_DIR/reloads")"
+! grep -Eq '^(stop|start|restart) ' "$WORK_DIR/init.log" || fail "$case: the failed reload restarted Prokop"
 expect_not_user_stop "$case"
+
+#    The user's Stop overtakes the reload: the stop wins, the setting stays
+#    for the next start, and nothing starts Prokop again (D-15).
+reset_case
+: >"$WORK_DIR/reload.user-stop"
+case="Direct Proxy, the user's stop overtakes the reload"
+probe direct-proxy || fail "$case: the action failed: $(cat "$WORK_DIR/out")"
+grep -q '"success": *true' "$WORK_DIR/out" || fail "$case: the user's stop was reported as a failure"
+[ "$(stop_request_by)" = user ] || fail "$case: the user's stop is no longer recorded"
+[ ! -e "$WORK_DIR/runtime.up" ] || fail "$case: Prokop runs after the user stopped it"
+[ ! -s "$WORK_DIR/starts" ] || fail "$case: Prokop was started after the user's stop"
+[ "$(grep -c '^reload ' "$WORK_DIR/reloads")" -eq 1 ] || fail "$case: Prokop was reloaded again after the user's stop"
+grep -q 'stopped by the user during its reload' "$WORK_DIR/syslog" || fail "$case: the user's stop was not logged"
+grep -q '"prokop.settings.direct_proxy_enabled": *"0"' "$WORK_DIR/uci.committed" ||
+  fail "$case: the setting was rolled back after the user's stop"
+
+#    Another operation holds reload.lock: the reload is queued behind it
+#    with the saved setting, which stays.
+reset_case
+hold_reload_lock
+case="Direct Proxy, reload queued"
+probe direct-proxy || fail "$case: the action failed: $(cat "$WORK_DIR/out")"
+grep -q '"success": *true' "$WORK_DIR/out" || fail "$case: the queued reload was reported as a failure"
+[ -e "$PROKOP_PENDING_RELOAD_FILE" ] || fail "$case: the reload was not queued"
+[ ! -s "$WORK_DIR/reloads" ] || fail "$case: the reload ran while another operation held reload.lock"
+grep -q '"prokop.settings.direct_proxy_enabled": *"0"' "$WORK_DIR/uci.committed" ||
+  fail "$case: the queued setting was rolled back"
+release_reload_lock
 
 # 6. A failed sing-box change: the start after it fails, and so does the
 #    stop of the restart that follows. That is logged as an error.
@@ -494,16 +558,16 @@ probe restart || fail "$case: the probe failed"
 grep -qx 'restarted=no' "$WORK_DIR/out" || fail "$case: a refused restart was reported as done"
 expect_refused_restart "$case"
 
-# 10. Direct Proxy: the restart's own stop is refused. Prokop runs on with the
-#     previous settings, which are kept; nothing restarts it again.
+# 10. Direct Proxy: another sing-box makes the ownership of the runtime
+#     ambiguous and the reload is refused. Prokop runs on with the previous
+#     settings, which are kept; nothing reloads or restarts it again.
 reset_case
 : >"$WORK_DIR/stray"
-case="Direct Proxy, the restart's own stop refused"
+case="Direct Proxy, the reload refused"
 probe direct-proxy && fail "$case: the action succeeded"
-grep -q '"success": *false' "$WORK_DIR/out" || fail "$case: the refused restart was reported as success"
-grep -q 'Prokop was not restarted: another sing-box process' "$WORK_DIR/out" ||
+grep -q '"success": *false' "$WORK_DIR/out" || fail "$case: the refused reload was reported as success"
+grep -q 'another sing-box process makes the ownership of the Prokop runtime ambiguous' "$WORK_DIR/out" ||
   fail "$case: the action does not report the refusal"
-# The setting was rolled back: it does not apply at the next start.
 if grep -q 'applies at its next start' "$WORK_DIR/out" "$WORK_DIR/syslog"; then
   fail "$case: the refusal claims that the rolled-back setting applies at the next start"
 fi
@@ -511,7 +575,9 @@ grep -q 'Prokop runs on with the previous Direct Proxy settings' "$WORK_DIR/out"
   fail "$case: the refusal does not say that Prokop runs on with the previous settings"
 grep -q '"prokop.settings.direct_proxy_enabled": *"1"' "$WORK_DIR/uci.committed" ||
   fail "$case: the new Direct Proxy setting was kept: $(cat "$WORK_DIR/uci.committed")"
-expect_refused_restart "$case"
+[ "$(grep -c '^reload ' "$WORK_DIR/reloads")" -eq 1 ] || fail "$case: the refused reload was tried again"
+! grep -Eq '^(stop|start|restart) ' "$WORK_DIR/init.log" || fail "$case: the refused reload restarted Prokop"
+[ -e "$WORK_DIR/runtime.up" ] || fail "$case: Prokop does not run after the refusal"
 
 # 11. A sing-box change: Prokop is down already, stopped for the change, and
 #     a sing-box that runs Prokop's configuration is left behind. Nothing

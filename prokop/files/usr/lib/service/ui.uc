@@ -56,6 +56,9 @@ const ZAPRET2_PROVIDER_NFQWS2_BIN = getenv("ZAPRET2_PROVIDER_NFQWS2_BIN") || "/o
 const BYEDPI_BIN = getenv("BYEDPI_BIN") || "/usr/bin/ciadpi";
 // procd's jail, for TorrServer's (Settings > TorrServer).
 const UJAIL_BIN = getenv("PROKOP_UJAIL_BIN") || "/sbin/ujail";
+// What singbox/unprivileged.uc last decided about sing-box's user.
+const SING_BOX_USER_STATUS_FILE = getenv("PROKOP_SING_BOX_USER_STATUS_FILE") ||
+    (getenv("PROKOP_RUNTIME_STATE_DIR") || "/var/run/prokop") + "/sing-box-user.json";
 
 function as_string(value) {
     return value == null ? "" : "" + value;
@@ -1107,8 +1110,17 @@ function capability_flags() {
         zapret_installed: file_executable(ZAPRET_PROVIDER_NFQWS_BIN) ? 1 : 0,
         zapret2_installed: file_executable(ZAPRET2_PROVIDER_NFQWS2_BIN) ? 1 : 0,
         byedpi_installed: file_executable(BYEDPI_BIN) ? 1 : 0,
-        ujail_available: file_executable(UJAIL_BIN) ? 1 : 0
+        ujail_available: file_executable(UJAIL_BIN) ? 1 : 0,
+        // sing-box without root (Settings): "off" (not asked for), "active"
+        // or "root" with the reason code why it still runs as root.
+        sing_box_user: "off",
+        sing_box_user_reason: ""
     };
+    let user_status = read_json_file(SING_BOX_USER_STATUS_FILE);
+    if (type(user_status) == "object" && user_status.requested === true) {
+        result.sing_box_user = user_status.active === true ? "active" : "root";
+        result.sing_box_user_reason = user_status.active === true ? "" : as_string(user_status.reason);
+    }
 
     if (file_executable(SING_BOX_BIN_PATH)) {
         result.sing_box_package = installed_sing_box_package_name();

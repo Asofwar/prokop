@@ -6,6 +6,7 @@ let common = require("core.common");
 let durable = require("core.durable");
 let runtime_dns = require("singbox.dns");
 let managed_service = require("singbox.managed_service");
+let unprivileged = require("singbox.unprivileged");
 let legacy_forkop = require("core.legacy_forkop");
 let listen_address = require("singbox.listen_address");
 let identity = require("core.process_identity");
@@ -625,6 +626,22 @@ function prepare_subscription_caches(prepared, no_refresh) {
 // start. A sync would flush every filesystem (USB storage included) on
 // each reload, subscription update and DNS-failover switch, and the switch
 // would wait for it while DNS fails.
+// sing-box without root (singbox/unprivileged.uc): decided for every
+// configuration that becomes config.json, since it hands that file and the
+// files it names to sing-box's user. It never refuses a publish: what it
+// cannot hand over leaves sing-box on root.
+function prepare_sing_box_user(config_path) {
+    if (as_string(config_path) != option(uci_settings(), "config_path", ""))
+        return;
+    try {
+        unprivileged.prepare(config_path);
+    }
+    catch (e) {
+        log_message("Cannot decide the sing-box user: " + e.message + "; sing-box runs as root", "error");
+        fs.unlink(unprivileged.DECISION_FILE);
+    }
+}
+
 function publish_config_file(source_path, config_path) {
     let data = fs.readfile(source_path);
     if (data == null) {
@@ -648,6 +665,7 @@ function publish_config_file(source_path, config_path) {
         }
     }
     remove_file(source_path);
+    prepare_sing_box_user(config_path);
     return true;
 }
 
@@ -667,53 +685,174 @@ function save_config_file(temp_file_path, config_path) {
 
     log_message("sing-box configuration is unchanged", "info");
     remove_file(temp_file_path);
+    // The files it names may be new ones (a rule set update) all the same.
+    prepare_sing_box_user(config_path);
     return true;
+}
+
+function remove_tree(path) {
+    path = as_string(path);
+    return path == "" || command_success_from_args([ "rm", "-rf", path ]);
 }
 
 function discard_config_stage(stage_path) {
     stage_path = as_string(stage_path);
     remove_files([ stage_path, stage_path + ".fingerprint" ]);
-    command_success_from_args([ "rm", "-rf", stage_path + ".section-cache" ]);
+    remove_tree(stage_path + ".section-cache");
     return true;
 }
 
-function restore_config_stage(backup_path) {
-    let config_path = option(uci_settings(), "config_path", "");
-    backup_path = as_string(backup_path);
-    return config_path != "" && file_exists(backup_path) &&
-        publish_config_file(backup_path, config_path);
+// The previous generation's section caches, kept next to the backup of its
+// config.json until the transaction is decided (commit_config_stage).
+function section_cache_backup_path(backup_path) {
+    return as_string(backup_path) + ".section-cache";
 }
 
-function publish_section_cache(temp_config_path) {
-    let source_dir = as_string(temp_config_path) + ".section-cache";
-    let entries = fs.lsdir(source_dir);
-    if (type(entries) != "array")
+// The backup of a committed stage is no longer needed: config.json and the
+// section caches it kept go together.
+function discard_config_backup(backup_path) {
+    backup_path = as_string(backup_path);
+    if (backup_path == "")
         return true;
-    // Section caches hold full share links: keep them away from other users.
-    if (!ensure_dir(SECTION_CACHE_DIR) || !fs.chmod(SECTION_CACHE_DIR, 0700))
-        return false;
+    remove_file(backup_path);
+    return remove_tree(section_cache_backup_path(backup_path));
+}
 
-    for (let entry in entries) {
+// Section caches are published as one set (U1). The set is built whole in
+// a private directory next to the live one (same filesystem, so that a
+// rename moves it), then the live directory is renamed away and the new
+// one renamed into its place. A reader sees the old set or the new one,
+// never a mix; between the two renames there is no directory at all, which
+// every reader takes as "no section caches" (the Priority and DNS failover
+// workers are stopped across a reload's commit anyway). Files of rules the
+// new generation no longer has are gone with the old directory.
+//
+// ucode has no renameat2(RENAME_EXCHANGE) and rename(2) does not replace a
+// directory that has files, hence two renames rather than a symlink swap:
+// priority.uc lists the directory with find, which does not follow a
+// symlinked start point, and several modules rm -rf and recreate it.
+function section_cache_sibling(kind) {
+    return SECTION_CACHE_DIR + "." + kind + "." + as_string(fs.readlink("/proc/self"));
+}
+
+// The new set in a sibling directory: its path, or "" with nothing left
+// behind. A stage without section caches is a generation that has none.
+function build_section_cache_set(source_dir) {
+    // What a publish killed half-way left behind (its process is gone).
+    for (let kind in [ "new", "old" ])
+        for (let path in (fs.glob(SECTION_CACHE_DIR + "." + kind + ".*") || []))
+            if (fs.stat("/proc/" + substr(path, length(SECTION_CACHE_DIR) + 5)) == null)
+                remove_tree(path);
+    let candidate = section_cache_sibling("new");
+    remove_tree(candidate);
+    let entries = [];
+    if (fs.stat(source_dir) != null) {
+        entries = fs.lsdir(source_dir);
+        if (type(entries) != "array")
+            return "";
+    }
+    // Section caches hold full share links: keep them away from other users.
+    if (!ensure_parent_dir(SECTION_CACHE_DIR) || !fs.mkdir(candidate, 0700) || !fs.chmod(candidate, 0700)) {
+        remove_tree(candidate);
+        return "";
+    }
+    for (let entry in sort(entries)) {
         entry = as_string(entry);
         if (match(entry, /^[A-Za-z0-9_-]+\.json$/) == null)
             continue;
+        let data = fs.readfile(source_dir + "/" + entry);
+        let target = candidate + "/" + entry;
+        // Read back: a full tmpfs can take the write and keep none of it.
+        if (data == null || SINGBOX_CONFIG_FAIL_PHASE == "section-cache-build" ||
+            fs.writefile(target, data) == null || !fs.chmod(target, 0600) || fs.readfile(target) !== data) {
+            remove_tree(candidate);
+            return "";
+        }
+    }
+    return candidate;
+}
 
-        let source = source_dir + "/" + entry;
-        let data = fs.readfile(source);
-        if (data == null)
-            return false;
+// Moves the directory from to the path to: a rename when both are on the
+// same filesystem, else a copy (mv). The stage and the backup are under
+// /tmp, the live set under /var/run/prokop: one tmpfs on OpenWrt.
+function move_tree(from, to) {
+    if (fs.rename(from, to))
+        return true;
+    remove_tree(to);
+    if (command_success_from_args([ "mv", "-f", from, to ]))
+        return true;
+    remove_tree(to);
+    return false;
+}
 
-        let target = SECTION_CACHE_DIR + "/" + entry;
-        let temporary = target + ".tmp";
-        if (fs.writefile(temporary, data) == null || !fs.chmod(temporary, 0600) ||
-            !fs.rename(temporary, target)) {
-            remove_file(temporary);
+// candidate becomes the live set. A copy of the previous set is kept at
+// keep_path first (an empty directory when there was none) unless
+// keep_path is "". On failure the previous set stays live, and candidate
+// and the copy are removed.
+function swap_section_cache_set(candidate, keep_path) {
+    let had_previous = fs.stat(SECTION_CACHE_DIR) != null;
+    if (keep_path != "") {
+        remove_tree(keep_path);
+        if (!(had_previous ? command_success_from_args([ "cp", "-a", SECTION_CACHE_DIR, keep_path ]) : fs.mkdir(keep_path, 0700))) {
+            log_message("Cannot keep the previous sing-box section caches for a rollback; they were left as they are", "error");
+            remove_tree(keep_path);
+            remove_tree(candidate);
             return false;
         }
-        remove_file(source);
     }
+    let previous = section_cache_sibling("old");
+    remove_tree(previous);
+    if (had_previous && !fs.rename(SECTION_CACHE_DIR, previous)) {
+        remove_tree(keep_path);
+        remove_tree(candidate);
+        return false;
+    }
+    if (SINGBOX_CONFIG_FAIL_PHASE == "section-cache-swap" || !fs.rename(candidate, SECTION_CACHE_DIR)) {
+        if (had_previous && !fs.rename(previous, SECTION_CACHE_DIR))
+            log_message("Cannot put the previous sing-box section caches back in place; they are kept at " + previous, "fatal");
+        remove_tree(keep_path);
+        remove_tree(candidate);
+        return false;
+    }
+    remove_tree(previous);
+    return true;
+}
 
-    command_success_from_args([ "rmdir", source_dir ]);
+// The stage's section caches become the live set, whole. backup_path, when
+// given, is the backup of config.json the transaction made: the previous
+// set is kept next to it, and restore_config_stage puts both back. The
+// stage's caches are removed only once published, so a failure can be
+// retried.
+function publish_section_cache(temp_config_path, backup_path) {
+    let source_dir = as_string(temp_config_path) + ".section-cache";
+    let keep_path = as_string(backup_path) != "" ? section_cache_backup_path(backup_path) : "";
+    if (keep_path != "")
+        remove_tree(keep_path);
+    let candidate = build_section_cache_set(source_dir);
+    if (candidate == "" || !swap_section_cache_set(candidate, keep_path))
+        return false;
+    remove_tree(source_dir);
+    return true;
+}
+
+// The previous generation back: config.json and, when the backup kept
+// them, its section caches (U1). The backup is consumed.
+function restore_config_stage(backup_path) {
+    let config_path = option(uci_settings(), "config_path", "");
+    backup_path = as_string(backup_path);
+    if (config_path == "" || !file_exists(backup_path) ||
+        !publish_config_file(backup_path, config_path))
+        return false;
+
+    let kept = section_cache_backup_path(backup_path);
+    if (fs.stat(kept) == null)
+        return true;
+    let candidate = section_cache_sibling("new");
+    remove_tree(candidate);
+    if (!move_tree(kept, candidate) || !swap_section_cache_set(candidate, "")) {
+        log_message("Cannot restore the previous sing-box section caches; the dashboard and the Priority worker may show the rejected generation until the next reload", "error");
+        return false;
+    }
     return true;
 }
 
@@ -732,7 +871,7 @@ function commit_config_stage(stage_path, backup_path) {
         return false;
     if (!save_config_file(stage_path, config_path))
         return false;
-    if (!publish_section_cache(stage_path))
+    if (!publish_section_cache(stage_path, backup_path))
         return false;
     return true;
 }
@@ -1421,6 +1560,10 @@ else if (mode == "restore-config-stage")
     exit(restore_config_stage(ARGV[1] || "") ? 0 : 1);
 else if (mode == "discard-config-stage")
     exit(discard_config_stage(ARGV[1] || "") ? 0 : 1);
+else if (mode == "sing-box-user-status")
+    print(sprintf("%J\n", unprivileged.status()));
+else if (mode == "discard-config-backup")
+    exit(discard_config_backup(ARGV[1] || "") ? 0 : 1);
 else if (mode == "save-config-file-fixture")
     exit(save_config_file(ARGV[1] || "", ARGV[2] || "") ? 0 : 1);
 else if (mode == "publish-section-cache-fixture")
