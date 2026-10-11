@@ -133,7 +133,8 @@ grep -qx "$W/etc/config.json 65536:65536" "$W/chown.log" || fail "config.json wa
 grep -qx "$W/tmp/cache.db 65536:65536" "$W/chown.log" || fail "the cache file was not handed to the user"
 [ -f "$W/tmp/cache.db" ] && [ "$(mode "$W/tmp/cache.db")" = 600 ] || fail "the cache file is missing or not private"
 grep -qx "$W/work/sing-box 65536:65536" "$W/chown.log" || fail "the working directory was not handed to the user"
-grep -qx "$W/rscache/sub/a.srs 0:65536" "$W/chown.log" || fail "the cached rule set was not given to the user's group"
+# The owner stays whoever wrote the file (root on a router, the CI user here).
+grep -qx "$W/rscache/sub/a.srs $(id -u):65536" "$W/chown.log" || fail "the cached rule set was not given to the user's group"
 [ "$(mode "$W/rscache/sub/a.srs")" = 640 ] || fail "the cached rule set is not group-readable: $(mode "$W/rscache/sub/a.srs")"
 [ "$(mode "$W/rscache")" = 710 ] && [ "$(mode "$W/rscache/sub")" = 710 ] ||
   fail "the rule set directories are not searchable for the group only: $(mode "$W/rscache") $(mode "$W/rscache/sub")"
