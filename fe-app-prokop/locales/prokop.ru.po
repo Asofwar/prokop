@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-06 10:21+0000\n"
-"PO-Revision-Date: 2026-10-06 10:21+0000\n"
+"POT-Creation-Date: 2026-10-11 18:38+0000\n"
+"PO-Revision-Date: 2026-10-11 18:38+0000\n"
 "Last-Translator: Asofwar\n"
 "Language-Team: none\n"
 "Language: ru\n"
@@ -248,6 +248,9 @@ msgstr "Правилу «Подключение» нужно подключен�
 msgid "A connection rule or sing-box stops answering, and when it is back. Checked every 5 minutes"
 msgstr "Правило с подключением или sing-box перестали отвечать, и когда они снова работают. Проверка раз в 5 минут"
 
+msgid "A device can also be chosen by its MAC address (needs sing-box 1.14 or later); it is then matched only while it is connected by cable or Wi-Fi, not over a VPN or PPP interface."
+msgstr ""
+
 msgid "A domain, or a list of a DPI rule measured through a few of its domains."
 msgstr "Домен или список DPI-правила, который проверяется по нескольким его доменам."
 
@@ -266,6 +269,9 @@ msgstr "Неудачная перезагрузка, запуск или вос�
 msgid "a FakeIP address is routed by its domain; check the site by its name"
 msgstr "адрес FakeIP маршрутизируется по своему домену; проверьте сайт по имени"
 
+msgid "A global IPv6 address is on %s, but Prokop runs IPv4 only (IPv6 is disabled for the kernel or the loopback interface): IPv6 connections of devices pass Prokop and the kill-switch. Enable IPv6 on the router or turn IPv6 off for the devices."
+msgstr ""
+
 msgid "A group is one Zapret DPI rule. Prokop changes only the strategy of an existing rule, for all its targets at once. It never creates or deletes rules and never turns DPI bypass off."
 msgstr "Группа — это одно DPI-правило Zapret. Prokop меняет только стратегию существующего правила, сразу для всех его целей. Он никогда не создаёт и не удаляет правила и не отключает обход DPI."
 
@@ -283,6 +289,12 @@ msgstr "предыдущее применение не завершено"
 
 msgid "A rolled back strategy is not applied again before this time passes."
 msgstr "Откаченная стратегия не применяется снова, пока не пройдёт это время."
+
+msgid "A router setting outside Prokop can make its rules or the kill-switch apply only partly, although Prokop itself works."
+msgstr ""
+
+msgid "a rule applies to devices chosen by MAC address, which this check cannot calculate"
+msgstr ""
 
 msgid "a rule applies to selected devices only; choose a device"
 msgstr "одно из правил действует только для отдельных устройств — выберите устройство"
@@ -1448,11 +1460,11 @@ msgstr "Устройство"
 msgid "Device filter"
 msgstr "Фильтр по устройствам"
 
-msgid "Device or IP"
-msgstr "Устройство или IP"
-
 msgid "Device traffic is unavailable"
 msgstr "Трафик устройств недоступен"
+
+msgid "Device, IP or MAC"
+msgstr ""
 
 msgid "Devices"
 msgstr "Устройства"
@@ -1886,8 +1898,14 @@ msgstr "Укажите адрес"
 msgid "Enter an IP address or subnet, such as 203.0.113.0/24"
 msgstr "Введите IP-адрес или подсеть, например 203.0.113.0/24"
 
+msgid "Enter the MAC address of one device as six hex pairs, e.g. aa:bb:cc:dd:ee:ff"
+msgstr ""
+
 msgid "Enter the subscription URL"
 msgstr "Введите URL подписки"
+
+msgid "Environment checks"
+msgstr ""
 
 msgid "Error"
 msgstr "Ошибка"
@@ -2078,6 +2096,9 @@ msgstr "Исправьте подсвеченные поля и сохранит
 msgid "Flash"
 msgstr "Флеш-память"
 
+msgid "Flow offloading"
+msgstr ""
+
 msgid "Flow offloading is on in the firewall: accelerated connections bypass the counters, so the totals are lower than the real traffic."
 msgstr "В межсетевом экране включено ускорение (flow offloading): ускоренные соединения идут мимо счётчиков, поэтому итоги меньше реального трафика."
 
@@ -2123,8 +2144,14 @@ msgstr "Получить глобальную проверку"
 msgid "Global check"
 msgstr "Глобальная проверка"
 
+msgid "Global IPv6 on %s; Prokop handles IPv6"
+msgstr ""
+
 msgid "Groups: %d · targets: %d"
 msgstr "Групп: %d · целей: %d"
+
+msgid "Hardware offloading is on: established connections are forwarded past the router processor and every nftables rule. Prokop, the kill-switch and zapret see only the start of a connection; a connection opened before Prokop started or before a list update can keep going directly, and device traffic counters are too low. If rules or the kill-switch apply unreliably, turn offloading off in Network → Firewall."
+msgstr ""
 
 msgid "has no effect"
 msgstr "ни на что не влияет"
@@ -2594,6 +2621,9 @@ msgstr "Только IPv4"
 msgid "IPv4 routing rule at priority 105"
 msgstr "правило маршрутизации IPv4 с приоритетом 105"
 
+msgid "IPv6"
+msgstr ""
+
 msgid "IPv6 only"
 msgstr "Только IPv6"
 
@@ -3038,6 +3068,9 @@ msgstr "Событий этого типа нет"
 msgid "No events recorded yet"
 msgstr "Событий пока нет"
 
+msgid "No global IPv6 address"
+msgstr ""
+
 msgid "no longer supported: the configuration cannot be applied while the rule is enabled"
 msgstr "больше не поддерживается: пока правило включено, конфигурацию применить не удастся"
 
@@ -3076,6 +3109,9 @@ msgstr "После этого снимка изменений нет"
 
 msgid "No snapshots yet"
 msgstr "Снимки ещё не создавались"
+
+msgid "No static lease for %s: the router may give this address to another device, and the rule then applies to that device. Add a static lease (Network → DHCP and DNS → Static Leases) or choose the device by MAC address."
+msgstr ""
 
 msgid "No strategies were measured"
 msgstr "Стратегии не измерялись"
@@ -3190,6 +3226,9 @@ msgstr "Не запускался"
 
 msgid "Not supported"
 msgstr "Не поддерживается"
+
+msgid "Not synchronized: TLS and Reality connections and subscription downloads may fail while the time is wrong. Check NTP in System → System."
+msgstr ""
 
 msgid "not used"
 msgstr "не используется"
@@ -3767,6 +3806,9 @@ msgstr "Применить заново"
 msgid "Reachable"
 msgstr "Доступно"
 
+msgid "Read the rows marked for attention. Prokop changes none of these settings itself."
+msgstr ""
+
 msgid "Read-ahead 95%, preload 50%"
 msgstr "Упреждающее чтение 95%, предзагрузка 50%"
 
@@ -4066,6 +4108,9 @@ msgstr "Маршрутизировать основные DNS-запросы ч�
 
 msgid "Route requests to this DNS server through another section."
 msgstr "Направлять запросы к этому DNS-серверу через другую секцию."
+
+msgid "Router clock"
+msgstr ""
 
 msgid "Router DNS"
 msgstr "DNS роутера"
@@ -4475,6 +4520,9 @@ msgstr "Снимков: %d"
 msgid "Snapshots: enter a whole number from %d to %d."
 msgstr "Снимки: введите целое число от %d до %d."
 
+msgid "Software offloading is on: established connections bypass the nftables rules. Prokop, the kill-switch and zapret see only the start of a connection; a connection opened before Prokop started or before a list update can keep going directly, and device traffic counters are too low. If rules or the kill-switch apply unreliably, turn offloading off in Network → Firewall."
+msgstr ""
+
 msgid "Some autotune settings are invalid; safe defaults are used for them."
 msgstr "Часть настроек автоподбора некорректна; для них используются безопасные значения по умолчанию."
 
@@ -4660,6 +4708,12 @@ msgstr "Поддержка"
 
 msgid "Support report contains confidential information. Do not share it in public chats."
 msgstr "Отчёт содержит конфиденциальную информацию. Не публикуйте его в открытых чатах."
+
+msgid "Synchronized"
+msgstr ""
+
+msgid "Synchronized, stratum %d"
+msgstr ""
 
 msgid "Syntax check is unavailable"
 msgstr "Проверка синтаксиса недоступна"
