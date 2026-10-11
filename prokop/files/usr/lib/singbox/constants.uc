@@ -30,6 +30,13 @@ const DIRECT_OUTBOUND_TAG = "direct-out";
 const BYPASS_OUTBOUND_TAG = "bypass-out";
 const OUTBOUND_MARK = 134217728;
 const FAKEIP_INET4_RANGE = "198.18.0.0/15";
+// FakeIP answers reach clients through dnsmasq, whose rebind protection
+// (OpenWrt rebind_protection=1, --stop-dns-rebind) drops upstream answers in
+// private ranges. Its IPv6 test (rfc1035.c private_net6, unchanged from 2.80
+// to 2.91) covers fd00::/8, fe80::/10, fec0::/10, 2001:db8::/32 and mapped
+// private IPv4, not fc00::/8, and its IPv4 one does not cover 198.18.0.0/15:
+// both ranges pass. Moving a range into one of those blocks would silently
+// drop every FakeIP answer of that family (tests/fakeip_dnsmasq_rebind.sh).
 const FAKEIP_INET6_RANGE = "fc00::/18";
 
 const DISABLED_UPDATE_INTERVAL = "876000h";
