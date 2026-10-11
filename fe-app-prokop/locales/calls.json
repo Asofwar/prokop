@@ -1189,8 +1189,8 @@
     ]
   },
   {
-    "call": "An empty allow list sends everyone directly. An empty bypass list leaves everyone in Prokop. Bypassed clients get real DNS addresses.",
-    "key": "An empty allow list sends everyone directly. An empty bypass list leaves everyone in Prokop. Bypassed clients get real DNS addresses.",
+    "call": "An empty allow list sends everyone directly. An empty bypass list leaves everyone in Prokop. Bypass applies to IP lists and to devices with their own external DNS server; devices that use the router's DNS still get Prokop addresses for domains in your lists, and that traffic keeps going through Prokop.",
+    "key": "An empty allow list sends everyone directly. An empty bypass list leaves everyone in Prokop. Bypass applies to IP lists and to devices with their own external DNS server; devices that use the router's DNS still get Prokop addresses for domains in your lists, and that traffic keeps going through Prokop.",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:34"
     ]
@@ -10937,8 +10937,8 @@
     ]
   },
   {
-    "call": "Selected consoles send TCP through the chosen connection and UDP directly. Real DNS addresses are used. Requires a separate device policy and no section kill-switch; this does not guarantee Open NAT.",
-    "key": "Selected consoles send TCP through the chosen connection and UDP directly. Real DNS addresses are used. Requires a separate device policy and no section kill-switch; this does not guarantee Open NAT.",
+    "call": "Selected consoles send TCP through the chosen connection and UDP directly. Consoles with their own external DNS server get real addresses; consoles that use the router's DNS still get Prokop addresses for domains in your lists. Requires a separate device policy and no section kill-switch; this does not guarantee Open NAT.",
+    "key": "Selected consoles send TCP through the chosen connection and UDP directly. Consoles with their own external DNS server get real addresses; consoles that use the router's DNS still get Prokop addresses for domains in your lists. Requires a separate device policy and no section kill-switch; this does not guarantee Open NAT.",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:62"
     ]

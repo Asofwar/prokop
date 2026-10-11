@@ -32,7 +32,7 @@ const EntryPoint = view.extend({
     o.default = "allow";
     o.depends("alice_mode_enabled", "1");
     o.description = _(
-      "An empty allow list sends everyone directly. An empty bypass list leaves everyone in Prokop. Bypassed clients get real DNS addresses.",
+      "An empty allow list sends everyone directly. An empty bypass list leaves everyone in Prokop. Bypass applies to IP lists and to devices with their own external DNS server; devices that use the router's DNS still get Prokop addresses for domains in your lists, and that traffic keeps going through Prokop.",
     );
     for (const [key, label, validator] of [
       [
@@ -60,7 +60,7 @@ const EntryPoint = view.extend({
     o = s.option(form.Flag, "gaming_enabled", _("Game console profile"));
     o.default = "0";
     o.description = _(
-      "Selected consoles send TCP through the chosen connection and UDP directly. Real DNS addresses are used. Requires a separate device policy and no section kill-switch; this does not guarantee Open NAT.",
+      "Selected consoles send TCP through the chosen connection and UDP directly. Consoles with their own external DNS server get real addresses; consoles that use the router's DNS still get Prokop addresses for domains in your lists. Requires a separate device policy and no section kill-switch; this does not guarantee Open NAT.",
     );
     o = s.option(
       form.DynamicList,

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-11 18:25+0000\n"
-"PO-Revision-Date: 2026-10-11 18:25+0000\n"
+"POT-Creation-Date: 2026-10-11 19:12+0000\n"
+"PO-Revision-Date: 2026-10-11 19:12+0000\n"
 "Last-Translator: Asofwar <7397608+Asofwar@users.noreply.github.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -711,7 +711,7 @@ msgid "An administrator can roll it back."
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:34
-msgid "An empty allow list sends everyone directly. An empty bypass list leaves everyone in Prokop. Bypassed clients get real DNS addresses."
+msgid "An empty allow list sends everyone directly. An empty bypass list leaves everyone in Prokop. Bypass applies to IP lists and to devices with their own external DNS server; devices that use the router's DNS still get Prokop addresses for domains in your lists, and that traffic keeps going through Prokop."
 msgstr ""
 
 #: src/prokop/tabs/dashboard/overview.ts:167
@@ -6454,7 +6454,7 @@ msgid "Selected %d of %d"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:62
-msgid "Selected consoles send TCP through the chosen connection and UDP directly. Real DNS addresses are used. Requires a separate device policy and no section kill-switch; this does not guarantee Open NAT."
+msgid "Selected consoles send TCP through the chosen connection and UDP directly. Consoles with their own external DNS server get real addresses; consoles that use the router's DNS still get Prokop addresses for domains in your lists. Requires a separate device policy and no section kill-switch; this does not guarantee Open NAT."
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:134
