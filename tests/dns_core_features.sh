@@ -58,11 +58,34 @@ out="$(check 1.13.0 with_gvisor 'prokop.settings.dns_type=doh')"
 printf '%s' "$out" | grep -Fq 'DoQ' && fail "DoH was refused for a missing QUIC tag: $out"
 ok "DoQ passes on a QUIC-capable or extended core; other protocols ignore the tag"
 
-out="$(check 1.12.9 with_quic 'prokop.settings.dns_type=doh' 'prokop.settings.dns_mtls_enabled=1')"
+mkdir -p "$WORK/pki"
+: > "$WORK/pki/client.crt"
+printf '%s\n' '-----BEGIN PRIVATE KEY-----' 'fixture-secret' > "$WORK/pki/client.key"
+chmod 0600 "$WORK/pki/client.key"
+CERT="prokop.settings.dns_mtls_client_certificate=$WORK/pki/client.crt"
+KEY="prokop.settings.dns_mtls_client_key=$WORK/pki/client.key"
+out="$(check 1.12.9 with_quic 'prokop.settings.dns_type=doh' 'prokop.settings.dns_mtls_enabled=1' "$CERT" "$KEY")"
 printf '%s' "$out" | grep -Fq 'DoH client certificate needs sing-box 1.13.0 or newer (installed: 1.12.9)' ||
   fail "a DoH client certificate on sing-box 1.12 was not refused: $out"
-out="$(check 1.13.0 with_quic 'prokop.settings.dns_type=doh' 'prokop.settings.dns_mtls_enabled=1')"
-printf '%s' "$out" | grep -Fq 'client certificate' && fail "a DoH client certificate was refused on 1.13.0: $out"
+out="$(check 1.13.0 with_quic 'prokop.settings.dns_type=doh' 'prokop.settings.dns_mtls_enabled=1' "$CERT" "$KEY")"
+printf '%s' "$out" | grep -Fq 'DoH client' && fail "a DoH client certificate was refused on 1.13.0: $out"
 out="$(check 1.12.9 with_quic 'prokop.settings.dns_type=doh' 'prokop.settings.dns_mtls_enabled=0')"
 printf '%s' "$out" | grep -Fq 'client certificate' && fail "a disabled client certificate was refused: $out"
 ok "the DoH client certificate needs sing-box 1.13.0"
+
+out="$(check 1.13.0 with_quic 'prokop.settings.dns_type=doh' 'prokop.settings.dns_mtls_enabled=1' "$CERT" "prokop.settings.dns_mtls_client_key=$WORK/pki/missing.key")"
+printf '%s' "$out" | grep -Fq "DoH client private key file $WORK/pki/missing.key was not found" ||
+  fail "a missing client key was not refused: $out"
+out="$(check 1.13.0 with_quic 'prokop.settings.dns_type=doh' 'prokop.settings.dns_mtls_enabled=1' "prokop.settings.dns_mtls_client_certificate=$WORK/pki" "$KEY")"
+printf '%s' "$out" | grep -Fq "DoH client certificate file $WORK/pki was not found" ||
+  fail "a directory was taken for the client certificate: $out"
+ok "missing client certificate files are refused before sing-box starts"
+
+chmod 0644 "$WORK/pki/client.key"
+out="$(check 1.13.0 with_quic 'prokop.settings.dns_type=doh' 'prokop.settings.dns_mtls_enabled=1' "$CERT" "$KEY")"
+printf '%s' "$out" | grep -Fq 'is readable by every user of the router' ||
+  fail "a world-readable client key was not reported: $out"
+printf '%s' "$out" | grep -F 'DoH client' | grep -Fq 'Aborted' &&
+  fail "a world-readable client key must warn, not refuse: $out"
+printf '%s' "$out" | grep -Fq 'fixture-secret' && fail "key contents reached the log: $out"
+ok "a world-readable client key is reported without its contents"

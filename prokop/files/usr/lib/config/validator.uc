@@ -2340,9 +2340,20 @@ function validate_dns_core_features(sing_box_version, version_output, compressed
     if (config_uses_doq() && !extended && version_output != "" &&
         !version_output_has_build_tag(version_output, "with_quic"))
         fail_requirement("DNS over QUIC (DoQ) needs a sing-box build with QUIC support (with_quic). Choose DoH or DoT, or install sing-box-extended. Aborted.", "error");
-    if (bool_option(settings_section(), "dns_mtls_enabled", false) && sing_box_version != "" &&
-        !version_at_least(sing_box_version, "1.13.0"))
+    let settings = settings_section();
+    if (!bool_option(settings, "dns_mtls_enabled", false))
+        return;
+    if (sing_box_version != "" && !version_at_least(sing_box_version, "1.13.0"))
         fail_requirement("DoH client certificate needs sing-box 1.13.0 or newer (installed: " + sing_box_version + "). Update sing-box or turn the client certificate off. Aborted.", "error");
+    // The files are read by sing-box; only their paths are in its config.
+    for (let pair in [ [ "dns_mtls_client_certificate", "certificate" ], [ "dns_mtls_client_key", "private key" ] ]) {
+        let path = option(settings, pair[0], "");
+        let stat = path != "" ? fs.stat(path) : null;
+        if (stat == null || stat.type != "file")
+            fail_requirement("DoH client " + pair[1] + " file " + path + " was not found. Copy it to the router or turn the client certificate off. Aborted.", "error");
+        if (pair[0] == "dns_mtls_client_key" && stat.perm?.other_read)
+            log_message("DoH client private key file " + path + " is readable by every user of the router; restrict it with chmod 600", "warn");
+    }
 }
 
 function check_runtime_requirements() {
