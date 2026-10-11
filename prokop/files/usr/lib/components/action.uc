@@ -2140,9 +2140,9 @@ function set_sing_box_extended_release_from_json(release_json, compressed) {
     };
 }
 
-// The mirror publishes a copy of the project's latest GitHub release with the
-// assets cut down to the OpenWrt packages; without a mirror the release comes
-// from GitHub itself. A configured mirror is never bypassed.
+// A release tag chosen in Settings -> Core version (install_version) or the
+// pinned tag (settings.sing_box_pinned_version) for install/check_update of the
+// extended variant; empty means the latest release.
 let requested_core_tag = "";
 
 function core_releases() {
@@ -2160,6 +2160,9 @@ function core_releases() {
     print(sprintf("%J", available), "\n");
 }
 
+// The mirror publishes a copy of the project's latest GitHub release with the
+// assets cut down to the OpenWrt packages; without a mirror the release comes
+// from GitHub itself. A configured mirror is never bypassed.
 function resolve_sing_box_extended_release(compressed) {
     if (mirror_refuses_executables()) {
         updates_log(INSECURE_MIRROR_MESSAGE, "error");
@@ -2177,7 +2180,16 @@ function resolve_sing_box_extended_release(compressed) {
         else release_json = http_get("https://api.github.com/repos/shtorm-7/sing-box-extended/releases/tags/" + requested_core_tag);
     }
     let selected = set_sing_box_extended_release_from_json(release_json, compressed);
-    if (selected != null && as_string(requested_core_tag) != "" && selected.tag != requested_core_tag) return null;
+    if (selected != null && as_string(requested_core_tag) != "") {
+        if (selected.tag != requested_core_tag)
+            return null;
+        // A chosen release is installed only against the digest its source
+        // publishes; the latest-release path keeps its existing behaviour.
+        if (match(as_string(selected.asset_sha256), /^[a-fA-F0-9]{64}$/) == null) {
+            updates_log("sing-box-extended " + requested_core_tag + " publishes no checksum for " + as_string(selected.asset_name) + "; refusing a pinned install", "error");
+            return null;
+        }
+    }
     return selected;
 }
 
@@ -4035,7 +4047,9 @@ function component_action(component, action, version) {
             action_fail(component, action, "Invalid core release tag");
         requested_core_tag = version;
     }
-    else if (component == "sing_box" && action == "install") {
+    else if (component == "sing_box" && (action == "install" || action == "check_update")) {
+        // check_update compares against the pin too, so a pinned router is
+        // not offered the latest release it would never install.
         requested_core_tag = as_string(uci_core.get(CONFIG_NAME + ".settings.sing_box_pinned_version"));
         if (as_string(requested_core_tag) != "" && match(requested_core_tag, /^v?[0-9][A-Za-z0-9._-]*$/) == null)
             action_fail(component, action, "Invalid pinned core release tag");

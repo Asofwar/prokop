@@ -63,6 +63,13 @@ release = {
     'assets': assets,
 }
 json.dump(release, open(os.path.join(work, 'github.json'), 'w'))
+# The same release with no digest on the aarch64 package: a pinned install of
+# it has nothing to verify against.
+nodigest = json.loads(json.dumps(release))
+for asset in nodigest['assets']:
+    if asset['name'].endswith('_openwrt_aarch64_cortex-a53.ipk'):
+        asset.pop('digest', None)
+json.dump(nodigest, open(os.path.join(work, 'github-nodigest.json'), 'w'))
 
 # The mirror copy, as ops/mirror/sync-sing-box-extended.sh writes it: only the
 # OpenWrt packages and the Linux compressed archives, addressed under the
@@ -129,6 +136,7 @@ let http_bodies = {};
 let download_log = [];
 let download_bodies = {};
 let result = null;
+let requested_core_tag = "";
 function init_tmp_dir() { return true; }
 function owner_pid() { return "1"; }
 function now_seconds() { return 0; }
@@ -249,6 +257,36 @@ if (!MIRRORED) {
     check(resolve_sing_box_extended_release(false) == null, "a GitHub error answer was taken for a release");
     http_bodies[API] = WORK + "/github.json";
 }
+
+// --- a pinned / chosen core release (Settings -> Core version) -------------
+const TAG_API = "https://api.github.com/repos/shtorm-7/sing-box-extended/releases/tags/" + TAG;
+requested_core_tag = TAG;
+http_log = [];
+if (MIRRORED) {
+    // The mirror only carries its latest release: the pin must match it.
+    release = resolve_sing_box_extended_release(false);
+    check(release != null && release.tag == TAG && release.asset_url == MIRROR_FILES + IPK,
+        "a pin equal to the mirror's latest release was not resolved from the mirror");
+    check(index(join(" ", http_log), "api.github.com") < 0, "a pinned install bypassed the configured mirror");
+    requested_core_tag = "v1.14.0-extended-2.7.1";
+    check(resolve_sing_box_extended_release(false) == null, "a pin the mirror does not carry was resolved");
+}
+else {
+    http_bodies[TAG_API] = WORK + "/github.json";
+    release = resolve_sing_box_extended_release(false);
+    check(join(" ", http_log) == API + " " + TAG_API, "a pinned release was not fetched by its tag: " + join(" ", http_log));
+    check(release != null && release.tag == TAG && release.asset_sha256 == digest(IPK),
+        "the pinned release was not resolved with its digest");
+    // Without a published digest a pinned install fails closed.
+    http_bodies[TAG_API] = WORK + "/github-nodigest.json";
+    check(resolve_sing_box_extended_release(false) == null, "a pinned release without a checksum was accepted");
+    // A tag answer for another release is not the pinned one.
+    requested_core_tag = "v1.14.0-extended-2.7.1";
+    http_bodies["https://api.github.com/repos/shtorm-7/sing-box-extended/releases/tags/" + requested_core_tag] = WORK + "/github.json";
+    check(resolve_sing_box_extended_release(false) == null, "a release with a different tag was taken for the pin");
+}
+requested_core_tag = "";
+http_log = [];
 
 // --- published digests are enforced ----------------------------------------
 release = resolve_sing_box_extended_release(false);
