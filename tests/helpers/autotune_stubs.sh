@@ -39,6 +39,9 @@ export ZAPRET_NFQWS_BIN="$WORK/bin/nfqws"
 export ZAPRET_CHILD_PID_DIR="$WORK/child-pid"
 export NFT_STATE="$WORK/nft" STUB_LOG="$WORK/log"
 export PATH="$WORK/bin:$PATH"
+# A clock NTP synchronized this boot (core/clock.uc), whatever the host runs.
+export PROKOP_CLOCK_MARKER="$WORK/time-synced" PROKOP_CLOCK_PROC="$WORK/clock-proc" PROKOP_CLOCK_SYSTEM_CONFIG="$WORK/clock-system"
+printf 'stratum=2\nat=%s\naction=stratum\n' "$(date +%s)" > "$PROKOP_CLOCK_MARKER"
 PROD_QUEUE_LINE=" 4000  29676     0 2 65531     0     0       51  1"
 export NFQWS_STUB_QUEUE_FILE="$PROKOP_AUTOTUNE_PROC_QUEUE"
 
@@ -108,7 +111,7 @@ echo "nft $*" >> "$STUB_LOG/nft.log"
 # probe_rule LINE: "comment queue first last" of an output probe rule.
 probe_rule() {
   local comment queue sport
-  comment="$(sed -n 's/.* comment "\([a-z_:]*\)".*/\1/p' <<<"$1")"
+  comment="$(sed -n 's/.* comment "\([a-z0-9_:]*\)".*/\1/p' <<<"$1")"
   queue="$(sed -n 's/.* queue num \([0-9]*\) .*/\1/p' <<<"$1")"
   sport="$(sed -n 's/.* tcp sport \([0-9]*\)-\([0-9]*\) .*/\1 \2/p' <<<"$1")"
   echo "$comment ${queue:--} $sport"
@@ -422,7 +425,7 @@ run_probe() { iso run "$1" example.com "${2:-3}" 192.0.2.53; }
 assert_clean() {
   [ ! -e "$NFT_STATE/tables/ProkopAutotuneProbe" ] || fail "$1: temporary table left behind"
   ! grep -qE '^ 46(0[0-7]) ' "$PROKOP_AUTOTUNE_PROC_QUEUE" || fail "$1: a run queue left behind"
-  ! pgrep -f "$WORK/bin/nfqws --qnum" >/dev/null || fail "$1: temporary nfqws left behind"
+  ! pgrep -f "$WORK/bin/nfqws2? --qnum" >/dev/null || fail "$1: temporary nfqws left behind"
   for leftover in active.json work; do
     [ ! -e "$PROKOP_AUTOTUNE_STATE_DIR/$leftover" ] || fail "$1: temporary state $leftover left behind"
   done
