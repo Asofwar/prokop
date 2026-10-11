@@ -143,7 +143,7 @@ function stubs(canReadUci, calls, { stale = false } = {}) {
   assert.deepEqual(parent.depends.acl, ['luci-app-prokop']);
   const children = Object.entries(menu).filter(([key]) => key.startsWith('admin/services/prokop/'));
   const order = children.sort((a, b) => a[1].order - b[1].order).map(([key]) => key.split('/').pop());
-  assert.deepEqual(order, ['overview', 'rules', 'devices', 'experiments', 'providers', 'monitoring', 'diagnostics', 'autotune', 'history', 'settings']);
+  assert.deepEqual(order, ['overview', 'rules', 'devices', 'experiments', 'monitoring', 'diagnostics', 'autotune', 'history', 'settings']);
   for (const [key, node] of children) {
     assert.equal(node.action.type, 'view', `${key} must be a view`);
     assert(fs.existsSync(path.join(root, 'luci-app-prokop/htdocs/luci-static/resources/view', `${node.action.path}.js`)),
@@ -153,7 +153,7 @@ function stubs(canReadUci, calls, { stale = false } = {}) {
     'Settings must be hidden from the read-only role');
   assert.deepEqual(menu['admin/services/prokop/rules'].depends, { acl: ['luci-app-prokop-admin'] },
     'Rules must be hidden from the read-only role');
-  for (const key of ['devices','experiments','providers'])
+  for (const key of ['devices','experiments'])
     assert.deepEqual(menu[`admin/services/prokop/${key}`].depends, {acl:['luci-app-prokop-admin']}, `${key} must stay administrative`);
   for (const key of ['overview', 'monitoring', 'diagnostics', 'autotune', 'history'])
     assert(!menu[`admin/services/prokop/${key}`].depends,
