@@ -2314,6 +2314,37 @@ function has_discord_cloudflare_overlap() {
     return discord && cloudflare;
 }
 
+function config_uses_doq() {
+    if (option(settings_section(), "dns_type", "udp") == "doq")
+        return true;
+    for (let section in sections_by_type("section"))
+        if (section_enabled(section) && option(section, "action", "") == "dns" &&
+            option(section, "dns_type", "udp") == "doq")
+            return true;
+    return false;
+}
+
+function version_output_has_build_tag(output, tag) {
+    for (let item in split(trim(replace(as_string(output), /[,: \t\r\n]+/g, " ")), " "))
+        if (item == tag)
+            return true;
+    return false;
+}
+
+// DoQ and the DoH client certificate are fields an unsuitable core refuses,
+// which would fail the whole sing-box configuration: reject them here with
+// a reason instead. sing-box-extended builds carry QUIC; an unknown version
+// is left to the sing-box check.
+function validate_dns_core_features(sing_box_version, version_output, compressed) {
+    let extended = compressed || index(as_string(sing_box_version), "-extended-") >= 0;
+    if (config_uses_doq() && !extended && version_output != "" &&
+        !version_output_has_build_tag(version_output, "with_quic"))
+        fail_requirement("DNS over QUIC (DoQ) needs a sing-box build with QUIC support (with_quic). Choose DoH or DoT, or install sing-box-extended. Aborted.", "error");
+    if (bool_option(settings_section(), "dns_mtls_enabled", false) && sing_box_version != "" &&
+        !version_at_least(sing_box_version, "1.13.0"))
+        fail_requirement("DoH client certificate needs sing-box 1.13.0 or newer (installed: " + sing_box_version + "). Update sing-box or turn the client certificate off. Aborted.", "error");
+}
+
 function check_runtime_requirements() {
     log_message("Checking required packages and runtime settings", "info");
 
@@ -2331,8 +2362,11 @@ function check_runtime_requirements() {
     // its version is the one recorded at install, and it is not run (opt. 14).
     let sing_box_compressed = sing_box_compressed_marker_set(ctx);
     let sing_box_version = sing_box_compressed ? sing_box_version_state(ctx) : "";
-    if (!sing_box_compressed && command_exists("sing-box"))
-        sing_box_version = first_line_last_field(bounded_command_output_from_args([ "sing-box", "version" ], 5));
+    let sing_box_version_output = "";
+    if (!sing_box_compressed && command_exists("sing-box")) {
+        sing_box_version_output = bounded_command_output_from_args([ "sing-box", "version" ], 5);
+        sing_box_version = first_line_last_field(sing_box_version_output);
+    }
     if (sing_box_version == "")
         sing_box_version = installed_sing_box_version();
     let coreutils_base64_version = first_line_field_from_text(command_output("base64 --version 2>/dev/null"), 4);
@@ -2344,6 +2378,8 @@ function check_runtime_requirements() {
     else if (!version_at_least(sing_box_version, ctx.sing_box_required_version)) {
         fail_requirement("Package 'sing-box' version (" + sing_box_version + ") is lower than the required minimum (" + ctx.sing_box_required_version + "). Update sing-box: opkg update && opkg remove sing-box && opkg install sing-box. Aborted.", "error");
     }
+
+    validate_dns_core_features(sing_box_version, sing_box_version_output, sing_box_compressed);
 
     if (!service_exists("sing-box") && sing_box_compressed_marker_set(ctx))
         install_managed_sing_box_service_script();
