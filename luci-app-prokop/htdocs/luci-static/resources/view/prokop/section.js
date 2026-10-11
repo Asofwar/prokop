@@ -2459,8 +2459,15 @@ function subscriptionUrlSettingsKeys() {
     "prefix_nodes",
     "node_prefix",
     "include_urltest_groups",
+    "max_nodes",
   ];
 }
+
+// R6: config/connections.uc SUBSCRIPTION_MAX_NODES_DEFAULT and its limit.
+// A new source keeps the first 500 servers; the sources made before the
+// limit existed were given 0 (no limit) by config/migration.uc.
+const SUBSCRIPTION_MAX_NODES_DEFAULT = 500;
+const SUBSCRIPTION_MAX_NODES_LIMIT = 100000;
 
 function defaultSubscriptionUrlSettings() {
   return {
@@ -2473,6 +2480,7 @@ function defaultSubscriptionUrlSettings() {
     prefix_nodes: "0",
     node_prefix: "",
     include_urltest_groups: "1",
+    max_nodes: String(SUBSCRIPTION_MAX_NODES_DEFAULT),
   };
 }
 
@@ -2868,6 +2876,28 @@ function addSubscriptionUrlItemOptions(itemSection, options = {}) {
   );
   o.default = "1";
   o.rmempty = false;
+
+  o = itemSection.option(
+    form.Value,
+    "max_nodes",
+    _("Server limit"),
+    _(
+      "Only the first servers of this subscription, in its order, go into the configuration: thousands of servers can exhaust the memory of a router. 0 means no limit. The dashboard says how many servers were left out.",
+    ),
+  );
+  o.datatype = "uinteger";
+  o.placeholder = String(SUBSCRIPTION_MAX_NODES_DEFAULT);
+  o.default = String(SUBSCRIPTION_MAX_NODES_DEFAULT);
+  o.rmempty = false;
+  o.validate = function (_itemId, value) {
+    const text = `${value ?? ""}`.trim();
+    if (text === "") {
+      return true;
+    }
+    return /^[0-9]+$/.test(text) && Number(text) <= SUBSCRIPTION_MAX_NODES_LIMIT
+      ? true
+      : _("Enter a whole number from 0 (no limit) to 100000");
+  };
 }
 
 function addInterfaceItemOptions(itemSection) {

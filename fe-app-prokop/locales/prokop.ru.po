@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-06 10:21+0000\n"
-"PO-Revision-Date: 2026-10-06 10:21+0000\n"
+"POT-Creation-Date: 2026-10-11 18:17+0000\n"
+"PO-Revision-Date: 2026-10-11 18:17+0000\n"
 "Last-Translator: Asofwar\n"
 "Language-Team: none\n"
 "Language: ru\n"
@@ -160,6 +160,9 @@ msgstr "получено %s"
 
 msgid "%s s"
 msgstr "%s с"
+
+msgid "%s servers were left out: their certificate pin needs sing-box 1.15.0 or newer, and their links do not allow skipping certificate verification."
+msgstr "Пропущено серверов: %s. Их закреплённый сертификат требует sing-box 1.15.0 или новее, а ссылки не разрешают отключать проверку сертификата."
 
 msgid "%s was installed, but Prokop did not start cleanly"
 msgstr "%s установлен, но Prokop запустился с ошибками"
@@ -913,6 +916,9 @@ msgstr "Не удалось сохранить правило"
 
 msgid "Cascade connection"
 msgstr "Каскадное подключение"
+
+msgid "Certificate not verified"
+msgstr "Сертификат не проверяется"
 
 msgid "Change in progress"
 msgstr "Изменение выполняется"
@@ -1877,6 +1883,9 @@ msgstr "Укажите корректный адрес DNS-сервера"
 msgid "Enter a valid domain or IP address"
 msgstr "Укажите корректный домен или IP-адрес"
 
+msgid "Enter a whole number from 0 (no limit) to 100000"
+msgstr "Введите целое число от 0 (без ограничения) до 100000"
+
 msgid "Enter a whole number of milliseconds from 0 to 60000"
 msgstr "Укажите целое число миллисекунд от 0 до 60000"
 
@@ -2330,6 +2339,24 @@ msgstr "Прерывать соединения, когда URLTest перекл
 msgid "Interval"
 msgstr "Интервал"
 
+msgid "Invalid %s URL: invalid host and port"
+msgstr "Неверный URL %s: некорректные хост и порт"
+
+msgid "Invalid %s URL: invalid port number"
+msgstr "Неверный URL %s: некорректный номер порта"
+
+msgid "Invalid %s URL: must not contain spaces"
+msgstr "Неверный URL %s: не должен содержать пробелов"
+
+msgid "Invalid %s URL: parsing failed"
+msgstr "Неверный URL %s: ошибка разбора"
+
+msgid "Invalid AnyTLS URL: AnyTLS always uses TLS"
+msgstr "Неверный URL AnyTLS: AnyTLS всегда работает через TLS"
+
+msgid "Invalid AnyTLS URL: missing password"
+msgstr "Неверный URL AnyTLS: не указан пароль"
+
 msgid "Invalid Bootstrap DNS server port"
 msgstr "Некорректный порт резервного DNS"
 
@@ -2503,6 +2530,9 @@ msgstr "Неверный URL Trojan: должен начинаться с trojan
 
 msgid "Invalid Trojan URL: parsing failed"
 msgstr "Неверный URL Trojan: ошибка разбора"
+
+msgid "Invalid TUIC URL: missing UUID"
+msgstr "Неверный URL TUIC: не указан UUID"
 
 msgid "Invalid URL format"
 msgstr "Неверный формат URL"
@@ -3283,6 +3313,12 @@ msgstr "Только серверы с одним из выбранных тра
 
 msgid "Only the first %d changes are listed; %d changes in total."
 msgstr "Показаны только первые %d изменений; всего изменений: %d."
+
+msgid "Only the first %s of %s servers of this subscription are used: %s were left out by its server limit. The limit is set in the subscription settings."
+msgstr "Используются только первые %s из %s серверов этой подписки: %s отброшено ограничением числа серверов. Ограничение задаётся в настройках подписки."
+
+msgid "Only the first servers of this subscription, in its order, go into the configuration: thousands of servers can exhaust the memory of a router. 0 means no limit. The dashboard says how many servers were left out."
+msgstr "В конфигурацию попадают только первые серверы этой подписки, в её порядке: тысячи серверов могут исчерпать память роутера. 0 — без ограничения. Сколько серверов отброшено, показывает панель."
 
 msgid "Only the newest %d history records are kept; older ones are deleted."
 msgstr "Останутся только последние записи истории (%d), более старые будут удалены."
@@ -4325,6 +4361,9 @@ msgstr "Группа серверов для автоматического вы
 msgid "Server group for priority failover"
 msgstr "Группа автоматически выбирает рабочий узел на основе установленного приоритета."
 
+msgid "Server limit"
+msgstr "Ограничение числа серверов"
+
 msgid "Server outbound must contain a non-empty server field"
 msgstr "Серверный outbound должен содержать непустое поле server"
 
@@ -4625,6 +4664,9 @@ msgstr "Список подсетей (текст)"
 msgid "Subnets from the list will be extracted and added to nftables"
 msgstr "IP-адреса и подсети из списка будут извлечены и добавлены в nftables"
 
+msgid "Subscription %s:"
+msgstr "Подписка %s:"
+
 msgid "Subscription auto update"
 msgstr "Автообновление подписи"
 
@@ -4795,6 +4837,9 @@ msgstr "Встроенные наборы правил добавлены. Со�
 
 msgid "The cascade setting is cleared. Save the rule to keep the change."
 msgstr "Настройка каскада очищена. Сохраните правило, чтобы сохранить изменение."
+
+msgid "The certificate pin must be the SHA-256 of the certificate as 64 hex digits or base64"
+msgstr "Закреплённый сертификат (pin) должен быть SHA-256 сертификата: 64 шестнадцатеричные цифры или base64"
 
 msgid "The change affects the whole group:"
 msgstr "Изменение затронет всю группу:"
@@ -5062,6 +5107,9 @@ msgstr "Лимиты вне допустимого диапазона. Ниче�
 
 msgid "the lines marked \"# prokop-\" in /etc/crontabs/root"
 msgstr "строки с пометкой «# prokop-» в /etc/crontabs/root"
+
+msgid "The link of this server turns certificate verification off: the connection is not protected from interception"
+msgstr "Ссылка этого сервера отключает проверку сертификата: соединение не защищено от перехвата"
 
 msgid "The list could not be read."
 msgstr "Список не удалось прочитать."
@@ -5357,6 +5405,9 @@ msgstr "Стратегия не применена: текущая конфиг�
 msgid "The subscription of this section is not loaded yet: Prokop rejects its traffic. The domains blocked while Prokop is stopped are not refreshed until the subscription is loaded."
 msgstr "Подписка этой секции ещё не загружена: Prokop отклоняет её трафик. Домены, блокируемые при остановленном Prokop, не обновляются, пока подписка не загрузится."
 
+msgid "The subscription sent %s placeholder entries with address 0.0.0.0 or :: (provider notices, such as an expired subscription or used-up traffic); they were left out."
+msgstr "Подписка прислала %s записей-заглушек с адресом 0.0.0.0 или :: (уведомления провайдера, например об истёкшей подписке или закончившемся трафике); они пропущены."
+
 msgid "The target address could not be determined reliably during the check."
 msgstr "Во время проверки не удалось надёжно определить адрес цели."
 
@@ -5521,6 +5572,9 @@ msgstr "Эта стратегия не поддерживается устано
 
 msgid "This strategy was rolled back recently; it waits for the cooldown."
 msgstr "Эту стратегию недавно откатывали; она ждёт окончания паузы."
+
+msgid "This subscription has %s servers and no server limit. On a router with little memory, a limit of %s servers in the subscription settings keeps sing-box from running out of memory."
+msgstr "В этой подписке %s серверов, ограничение числа серверов не задано. На роутере с небольшим объёмом памяти ограничение в %s серверов в настройках подписки защитит sing-box от нехватки памяти."
 
 msgid "This TorrServer was not installed by Prokop; Prokop left it as it is"
 msgstr "Этот TorrServer установлен не через Prokop; Prokop оставил его как есть"
@@ -5759,8 +5813,11 @@ msgstr "Обновление списков пакетов"
 msgid "UPnP off: TorrServer does not open ports on the router"
 msgstr "UPnP выключен: TorrServer не открывает порты на роутере"
 
-msgid "URL must start with vless://, vmess://, ss://, trojan://, socks4://, socks4a://, socks5://, hysteria2://, or hy2://"
-msgstr "URL должен начинаться с vless://, vmess://, ss://, trojan://, socks4://, socks4a://, socks5://, hysteria2:// или hy2://"
+msgid "URL must start with tuic:// or anytls://"
+msgstr "URL должен начинаться с tuic:// или anytls://"
+
+msgid "URL must start with vless://, vmess://, ss://, trojan://, socks4://, socks4a://, socks5://, hysteria2://, hy2://, tuic:// or anytls://"
+msgstr "URL должен начинаться с vless://, vmess://, ss://, trojan://, socks4://, socks4a://, socks5://, hysteria2://, hy2://, tuic:// или anytls://"
 
 msgid "URL must use one of the following protocols:"
 msgstr "URL должен использовать один из следующих протоколов:"
@@ -5867,8 +5924,8 @@ msgstr "Посмотреть логи"
 msgid "Visible name of this section"
 msgstr "Видимое имя этой секции"
 
-msgid "vless://, vmess://, ss://, trojan://, socks4/5://, hy2/hysteria2:// links"
-msgstr "ссылки vless://, vmess://, ss://, trojan://, socks4/5://, hy2/hysteria2://"
+msgid "vless://, vmess://, ss://, trojan://, socks4/5://, hy2/hysteria2://, tuic://, anytls:// links"
+msgstr "ссылки vless://, vmess://, ss://, trojan://, socks4/5://, hy2/hysteria2://, tuic://, anytls://"
 
 msgid "VPN kill-switch"
 msgstr "VPN kill-switch"

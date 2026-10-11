@@ -1071,7 +1071,73 @@ function assert_unique_outbound_tags(config) {
     }
 }
 
-function add_subscription_source_with_state(config, section, source_index, source_entry, taken, selector_tags, urltest_candidate_tags, state, show_metadata, include_urltest_groups, hide_urltest_group_outbounds, hide_detour_outbounds, node_prefix) {
+// R6: the first max_nodes servers of a source, in its order, after the
+// filters before it (incompatible nodes, provider groups left out); 0 keeps
+// all. Groups do not count; they lose the members left out, a group left
+// without any and a node chained through one left out go too.
+function limit_subscription_outbounds(outbounds, max_nodes) {
+    let leaves = 0;
+    for (let outbound in outbounds)
+        if (!subscription_group_outbound(outbound))
+            leaves++;
+    if (max_nodes <= 0 || leaves <= max_nodes)
+        return { outbounds, total: leaves, dropped: 0 };
+
+    let dropped = {};
+    let kept = [];
+    let count = 0;
+    for (let outbound in outbounds) {
+        if (!subscription_group_outbound(outbound) && ++count > max_nodes) {
+            add_subscription_reference(dropped, outbound.tag);
+            add_subscription_reference(dropped, outbound.remark);
+            continue;
+        }
+        push(kept, outbound);
+    }
+
+    while (true) {
+        let next = [];
+        let changed = false;
+        for (let outbound in kept) {
+            let gone = dropped[as_string(outbound.detour || "")] === true;
+            if (!gone && subscription_group_outbound(outbound)) {
+                gone = true;
+                for (let member in array_or_empty(outbound.outbounds))
+                    if (!dropped[as_string(member)])
+                        gone = false;
+            }
+            if (gone) {
+                add_subscription_reference(dropped, outbound.tag);
+                add_subscription_reference(dropped, outbound.remark);
+                changed = true;
+                continue;
+            }
+            push(next, outbound);
+        }
+        kept = next;
+        if (!changed)
+            break;
+    }
+
+    let remaining = 0;
+    for (let outbound in kept)
+        if (!subscription_group_outbound(outbound))
+            remaining++;
+    return { outbounds: kept, total: leaves, dropped: leaves - remaining };
+}
+
+// What the dashboard tells about a source (no secret: counts only).
+function push_subscription_notice(state, notice) {
+    if (type(state) != "object")
+        return;
+    if (type(state.subscriptionNotices) != "array")
+        state.subscriptionNotices = [];
+    push(state.subscriptionNotices, notice);
+}
+
+const SUBSCRIPTION_LARGE_SOURCE = 500;
+
+function add_subscription_source_with_state(config, section, source_index, source_entry, taken, selector_tags, urltest_candidate_tags, state, show_metadata, include_urltest_groups, hide_urltest_group_outbounds, hide_detour_outbounds, node_prefix, max_nodes) {
     let section_name = section[".name"];
     let source_section = runtime_subscription.source_id(section_name, source_index);
     if (!runtime_subscription.source_cache_is_current(
@@ -1082,9 +1148,15 @@ function add_subscription_source_with_state(config, section, source_index, sourc
     ))
         return 0;
 
-    let source_outbounds = runtime_subscription.read_source_outbounds(source_section);
+    let source_file = runtime_subscription.read_source_file(source_section);
+    let source_outbounds = array_or_empty(source_file.outbounds);
     if (length(source_outbounds) == 0)
         return 0;
+    let notice_source = { sourceIndex: source_index, sourceSection: source_section };
+    // R1: placeholder nodes the parser left out (an expired subscription).
+    let placeholders = int(source_file.placeholders || 0);
+    if (placeholders > 0)
+        push_subscription_notice(state, { ...notice_source, kind: "placeholders", count: placeholders });
 
     let skipped = {};
     for (let outbound in source_outbounds) {
@@ -1094,7 +1166,10 @@ function add_subscription_source_with_state(config, section, source_index, sourc
         if (reportable_skipped_subscription_type(t))
             skipped[t] = (skipped[t] || 0) + 1;
     }
-    let outbounds = compatible_subscription_outbounds(source_outbounds, section_name);
+    let skip_counts = {};
+    let outbounds = compatible_subscription_outbounds(source_outbounds, section_name, skip_counts);
+    if (skip_counts.pin > 0)
+        push_subscription_notice(state, { ...notice_source, kind: "certificate_pin", count: skip_counts.pin });
 
     if (show_metadata !== false)
         runtime_subscription.merge_source_metadata(state, section_name, source_section, source_index, source_entry);
@@ -1104,6 +1179,28 @@ function add_subscription_source_with_state(config, section, source_index, sourc
     let exclude_flintnet_urltest_members =
         include_urltest_groups === false && flintnet_subscription_source(source_entry);
     node_prefix = trim(as_string(node_prefix));
+    let candidates = [];
+    for (let outbound in outbounds) {
+        if (include_urltest_groups === false && subscription_urltest_group_outbound(outbound))
+            continue;
+        if (exclude_flintnet_urltest_members && subscription_urltest_group_member(outbound, visibility_refs))
+            continue;
+        push(candidates, outbound);
+    }
+    max_nodes = max_nodes == null ? 0 : int(max_nodes);
+    let limited = limit_subscription_outbounds(candidates, max_nodes);
+    if (limited.dropped > 0) {
+        warn("subscription source ", source_index, " of rule '", section_name, "' has ", limited.total,
+            " servers; only the first ", max_nodes, " are used (server limit of the source), ",
+            limited.dropped, " left out\n");
+        push_subscription_notice(state, { ...notice_source, kind: "node_limit", limit: max_nodes,
+            total: limited.total, dropped: limited.dropped });
+    }
+    else if (max_nodes <= 0 && limited.total > SUBSCRIPTION_LARGE_SOURCE) {
+        push_subscription_notice(state, { ...notice_source, kind: "large_source", total: limited.total,
+            suggested: SUBSCRIPTION_LARGE_SOURCE });
+    }
+    outbounds = limited.outbounds;
     let prepared = [];
     let display_names = [];
     let source_links = [];
@@ -1114,10 +1211,6 @@ function add_subscription_source_with_state(config, section, source_index, sourc
     let tag_map = {};
     for (let i = 0; i < length(outbounds); i++) {
         let outbound = outbounds[i];
-        if (include_urltest_groups === false && subscription_urltest_group_outbound(outbound))
-            continue;
-        if (exclude_flintnet_urltest_members && subscription_urltest_group_member(outbound, visibility_refs))
-            continue;
         let display_name = as_string(outbound.remark || outbound.tag || ("server-" + (i + 1)));
         let base = as_string(outbound.tag || outbound.remark || ("server-" + (i + 1)));
         if (node_prefix != "") {
@@ -2118,7 +2211,8 @@ function add_connection_subscriptions(config, state, section, taken, selector_ta
             connections.subscription_include_urltest_groups(section, subscription_urls[i]),
             connections.subscription_hide_urltest_group_outbounds(section, subscription_urls[i]),
             connections.subscription_hide_detour_outbounds(section, subscription_urls[i]),
-            connections.subscription_node_prefix(section, subscription_urls[i])
+            connections.subscription_node_prefix(section, subscription_urls[i]),
+            connections.subscription_max_nodes(section, subscription_urls[i])
         );
 }
 

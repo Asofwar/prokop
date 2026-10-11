@@ -42,7 +42,10 @@ const validUrls = [
 ];
 
 const invalidUrls = [
-  ['Unreadable certificate pin', 'hysteria2://pw@example.com:443/?pinSHA256=deadbeef'],
+  [
+    'Unreadable certificate pin',
+    'hysteria2://pw@example.com:443/?pinSHA256=deadbeef',
+  ],
   ['No prefix', 'pw@example.com:443'],
   ['Missing password', 'hysteria2://@example.com:443/'],
   ['Missing host', 'hysteria2://pw@:443/'],

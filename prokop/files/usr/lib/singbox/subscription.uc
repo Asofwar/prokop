@@ -402,6 +402,10 @@ function source_json_path(source_section) {
     return TMP_SUBSCRIPTION_FOLDER + "/" + source_section + ".json";
 }
 
+function read_source_file(source_section) {
+    return object_or_empty(read_json_file(source_json_path(source_section)));
+}
+
 function read_source_outbounds(source_section) {
     let subscription = object_or_empty(read_json_file(source_json_path(source_section)));
     return array_or_empty(subscription.outbounds);
@@ -426,7 +430,9 @@ function new_section_state(section_name) {
         urltestCandidateTags: [],
         urltestGroups: {},
         priorityGroups: {},
-        subscriptionMetadata: []
+        subscriptionMetadata: [],
+        // R1, R6, adjacent 9: what the dashboard tells about a source.
+        subscriptionNotices: []
     };
 }
 
@@ -445,5 +451,6 @@ return {
     remember_priority_group,
     source_cache_is_current,
     read_source_outbounds,
+    read_source_file,
     new_section_state
 };

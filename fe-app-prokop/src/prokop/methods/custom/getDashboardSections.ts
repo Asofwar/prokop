@@ -33,6 +33,7 @@ type DashboardSectionCache = {
   subscriptionMetadata?:
     | Prokop.SubscriptionMetadata
     | Prokop.SubscriptionMetadata[];
+  subscriptionNotices?: Prokop.SubscriptionNotice[];
 };
 
 type UrlTestCacheGroup = {
@@ -1370,6 +1371,38 @@ function getSubscriptionMetadata(
   return undefined;
 }
 
+const SUBSCRIPTION_NOTICE_KINDS = new Set([
+  'node_limit',
+  'large_source',
+  'placeholders',
+  'certificate_pin',
+]);
+
+// R1, R6, adjacent 9: the notices of the sources this rule has now. Shown
+// whatever show_dashboard_metadata says: they explain missing servers.
+export function getSubscriptionNotices(
+  section: Prokop.ConfigSection,
+  sourceCount: number,
+  dashboardCache?: DashboardSectionCache,
+) {
+  const notices = Array.isArray(dashboardCache?.subscriptionNotices)
+    ? dashboardCache.subscriptionNotices
+    : [];
+  const visible = notices.filter(
+    (notice) =>
+      notice &&
+      typeof notice === 'object' &&
+      SUBSCRIPTION_NOTICE_KINDS.has(notice.kind) &&
+      metadataMatchesCurrentSource(
+        section['.name'],
+        sourceCount,
+        notice as Prokop.SubscriptionMetadata,
+      ),
+  );
+
+  return visible.length ? visible : undefined;
+}
+
 function getOutboundMetadata(dashboardCache?: DashboardSectionCache) {
   const metadata = dashboardCache?.outboundMetadata;
   const names = objectMap(metadata?.names);
@@ -1447,6 +1480,13 @@ export async function getDashboardSections(): Promise<IGetDashboardSectionsRespo
                 dashboardCache,
               )
             : undefined;
+          const subscriptionNotices = subscriptionEnabled
+            ? getSubscriptionNotices(
+                section,
+                subscriptionSourceCount,
+                dashboardCache,
+              )
+            : undefined;
           const cachedProxyLinks = new Map<string, string>();
           const urltestGroups = mergeUrlTestGroups(
             getUrlTestGroups(dashboardCache),
@@ -1474,6 +1514,7 @@ export async function getDashboardSections(): Promise<IGetDashboardSectionsRespo
             proxyConfigType,
             subscriptionSourceCount,
             subscriptionMetadata,
+            subscriptionNotices,
             outbounds,
           };
         }

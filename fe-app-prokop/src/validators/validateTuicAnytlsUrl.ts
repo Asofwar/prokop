@@ -21,7 +21,10 @@ export function validateTuicAnytlsUrl(url: string): ValidationResult {
     if (/\s/.test(url)) {
       return {
         valid: false,
-        message: _('Invalid %s URL: must not contain spaces').replace('%s', name),
+        message: _('Invalid %s URL: must not contain spaces').replace(
+          '%s',
+          name,
+        ),
       };
     }
 

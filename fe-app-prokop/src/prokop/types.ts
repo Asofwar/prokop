@@ -816,7 +816,21 @@ export namespace Prokop {
     proxyConfigType?: ProxyConfigType;
     subscriptionSourceCount?: number;
     subscriptionMetadata?: SubscriptionMetadata[];
+    subscriptionNotices?: SubscriptionNotice[];
     outbounds: Outbound[];
+  }
+
+  // What the generator tells about a subscription source
+  // (singbox/generator.uc push_subscription_notice): counts only.
+  export interface SubscriptionNotice {
+    kind: 'node_limit' | 'large_source' | 'placeholders' | 'certificate_pin';
+    sourceIndex?: number;
+    sourceSection?: string;
+    count?: number;
+    limit?: number;
+    total?: number;
+    dropped?: number;
+    suggested?: number;
   }
 
   export interface LatencyActionProgress {

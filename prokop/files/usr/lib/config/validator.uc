@@ -1701,6 +1701,9 @@ function validate_rule(section, sections, context) {
             for (let value in connections.subscription_urls(section)) {
                 validate_subscription_source_entry_value(value, name);
                 validate_subscription_request_profile(section, value);
+                if (connections.subscription_max_nodes_value(connections.subscription_max_nodes_option(section, value)) == null)
+                    fail_validation("Invalid server limit '" + connections.subscription_max_nodes_option(section, value) +
+                        "' of a subscription in rule '" + name + "': use a whole number from 0 (no limit) to 100000. Aborted.");
                 let subscription_update_interval = subscription_update_interval_for_source(section, value);
                 if (subscription_update_interval != "")
                     validate_required_duration_option(subscription_update_interval, "rule." + name + ".subscription_update_interval");

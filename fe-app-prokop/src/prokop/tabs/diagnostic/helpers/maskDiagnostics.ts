@@ -131,6 +131,7 @@ export const UCI_SAFE_OPTIONS = new Set([
   'label',
   'list_update_enabled',
   'log_level',
+  'max_nodes',
   'mixed_proxy_auth_enabled',
   'mixed_proxy_enabled',
   'mixed_proxy_port',

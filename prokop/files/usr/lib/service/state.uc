@@ -1601,6 +1601,10 @@ function subscription_urls_signature(section) {
         let headers = connections.subscription_headers(section, entry);
         if (length(headers) > 0)
             result[length(result) - 1].headers = headers;
+        // R6: likewise only a limit other than the default.
+        let max_nodes = connections.subscription_max_nodes(section, entry);
+        if (max_nodes != connections.SUBSCRIPTION_MAX_NODES_DEFAULT)
+            result[length(result) - 1].max_nodes = "" + max_nodes;
     }
     return sprintf("%J", result);
 }
