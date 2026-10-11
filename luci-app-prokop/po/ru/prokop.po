@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-11 19:12+0000\n"
-"PO-Revision-Date: 2026-10-11 19:12+0000\n"
+"POT-Creation-Date: 2026-10-11 19:37+0000\n"
+"PO-Revision-Date: 2026-10-11 19:37+0000\n"
 "Last-Translator: Asofwar\n"
 "Language-Team: none\n"
 "Language: ru\n"
@@ -167,6 +167,9 @@ msgstr "получено %s"
 msgid "%s s"
 msgstr "%s с"
 
+msgid "%s servers have a certificate pin that is not enforced before sing-box 1.15.0: they connect with the usual certificate verification."
+msgstr "Серверов с закреплённым сертификатом: %s. Закрепление действует с sing-box 1.15.0, а пока они подключаются с обычной проверкой сертификата."
+
 msgid "%s was installed, but Prokop did not start cleanly"
 msgstr "%s установлен, но Prokop запустился с ошибками"
 
@@ -254,6 +257,9 @@ msgstr "Правилу «Подключение» нужно подключен�
 msgid "A connection rule or sing-box stops answering, and when it is back. Checked every 5 minutes"
 msgstr "Правило с подключением или sing-box перестали отвечать, и когда они снова работают. Проверка раз в 5 минут"
 
+msgid "A device can also be chosen by its MAC address (needs sing-box 1.14 or later); it is then matched only while it is connected by cable or Wi-Fi, not over a VPN or PPP interface."
+msgstr "Устройство можно выбрать и по MAC-адресу (нужен sing-box 1.14 или новее); тогда оно учитывается только при подключении по кабелю или Wi-Fi, но не через VPN- или PPP-интерфейс."
+
 msgid "A domain, or a list of a DPI rule measured through a few of its domains."
 msgstr "Домен или список DPI-правила, который проверяется по нескольким его доменам."
 
@@ -272,8 +278,17 @@ msgstr "Неудачная перезагрузка, запуск или вос�
 msgid "a FakeIP address is routed by its domain; check the site by its name"
 msgstr "адрес FakeIP маршрутизируется по своему домену; проверьте сайт по имени"
 
+msgid "a file the configuration names (a rule set or a certificate) is not readable by the user"
+msgstr "файл из конфигурации (набор правил или сертификат) недоступен пользователю для чтения"
+
+msgid "A global IPv6 address is on %s, but Prokop runs IPv4 only (IPv6 is disabled for the kernel or the loopback interface): IPv6 connections of devices pass Prokop and the kill-switch. Enable IPv6 on the router or turn IPv6 off for the devices."
+msgstr "На %s есть глобальный IPv6-адрес, но Prokop работает только с IPv4 (IPv6 отключён в ядре или на интерфейсе loopback): IPv6-соединения устройств идут мимо Prokop и kill-switch. Включите IPv6 на роутере или отключите IPv6 для устройств."
+
 msgid "A group is one Zapret DPI rule. Prokop changes only the strategy of an existing rule, for all its targets at once. It never creates or deletes rules and never turns DPI bypass off."
 msgstr "Группа — это одно DPI-правило Zapret. Prokop меняет только стратегию существующего правила, сразу для всех его целей. Он никогда не создаёт и не удаляет правила и не отключает обход DPI."
+
+msgid "A large file can be set for a site target only."
+msgstr "Большой файл можно задать только для цели-сайта."
 
 msgid "A list of a DPI rule. Each check takes a few of its domains; keywords and regular expressions are skipped."
 msgstr "Список DPI-правила. Каждая проверка берёт несколько его доменов; ключевые слова и регулярные выражения пропускаются."
@@ -292,6 +307,12 @@ msgstr "Профиль с таким именем уже существует."
 
 msgid "A rolled back strategy is not applied again before this time passes."
 msgstr "Откаченная стратегия не применяется снова, пока не пройдёт это время."
+
+msgid "A router setting outside Prokop can make its rules or the kill-switch apply only partly, although Prokop itself works."
+msgstr "Настройка роутера вне Prokop может приводить к тому, что его правила или kill-switch применяются лишь частично, хотя сам Prokop работает."
+
+msgid "a rule applies to devices chosen by MAC address, which this check cannot calculate"
+msgstr "правило применяется к устройствам, выбранным по MAC-адресу, — эта проверка не может его рассчитать"
 
 msgid "a rule applies to selected devices only; choose a device"
 msgstr "одно из правил действует только для отдельных устройств — выберите устройство"
@@ -532,6 +553,9 @@ msgstr "Уже выполняется другое такое же действ�
 
 msgid "Another autotune operation is running."
 msgstr "Уже выполняется другая операция автоподбора."
+
+msgid "Another certificate answers (a stub page or interception)"
+msgstr "Отвечает чужой сертификат (страница-заглушка или перехват)"
 
 msgid "another check is running"
 msgstr "идёт другая проверка"
@@ -791,6 +815,9 @@ msgstr "Перед автоподбором"
 msgid "Before restore"
 msgstr "Перед восстановлением"
 
+msgid "Before the real ClientHello sing-box sends a forged one with this domain; the site drops it, a DPI system that lets this domain through lets the connection through. Use a domain that is not blocked, such as a large domestic site. Empty: off."
+msgstr "Перед настоящим ClientHello sing-box отправляет поддельный с этим доменом: сайт его отбрасывает, а система DPI, которая пропускает этот домен, пропускает и соединение. Укажите незаблокированный домен, например крупного российского сайта. Пусто — выключено."
+
 msgid "Best"
 msgstr "Лучшая"
 
@@ -805,6 +832,12 @@ msgstr "Блокировка"
 
 msgid "Block this section's traffic instead of sending it directly when the VPN, sing-box or Prokop itself is not running. Applies to forwarded client traffic, survives a Prokop stop, firewall reloads and reboots. Earlier Zapret and Bypass sections keep working. For a section with a subscription, changing it restarts sing-box: a section whose subscription could not be loaded is rejected only while it is protected."
 msgstr "Блокировать трафик этого раздела, а не пускать его напрямую, когда VPN, sing-box или сам Prokop не работают. Действует для трафика клиентов, сохраняется при остановке Prokop, перезагрузке файрвола и роутера. Разделы Zapret и Bypass, стоящие выше, продолжают работать. Для раздела с подпиской изменение опции перезапускает sing-box: раздел, подписку которого не удалось загрузить, отклоняется, только пока он защищён."
+
+msgid "Blocked by address"
+msgstr "Блокировка по адресу"
+
+msgid "Blocked by site name (SNI)"
+msgstr "Блокировка по имени сайта (SNI)"
 
 msgid "Blocked connections"
 msgstr "Заблокировано соединений"
@@ -953,6 +986,12 @@ msgstr "Каскадное подключение"
 msgid "Certificate DNS hostname"
 msgstr "DNS-имя сертификата"
 
+msgid "Certificate not verified"
+msgstr "Сертификат не проверяется"
+
+msgid "Certificates failed the time check: the router clock is wrong. Nothing was measured; check the time synchronization (NTP)."
+msgstr "Сертификаты не прошли проверку времени: часы роутера идут неверно. Замеры не выполнялись; проверьте синхронизацию времени (NTP)."
+
 msgid "Change in progress"
 msgstr "Изменение выполняется"
 
@@ -1000,6 +1039,9 @@ msgstr "Проверять каждые"
 
 msgid "Check failed"
 msgstr "Проверка не удалась"
+
+msgid "Check failed because of the router clock, rolled back; the strategy is not blamed"
+msgstr "Проверка не прошла из-за часов роутера, изменение откачено; стратегия не считается виноватой"
 
 msgid "Check failed, not rolled back: configuration edited"
 msgstr "Проверка не пройдена, откат не выполнен: конфигурацию изменили"
@@ -1523,9 +1565,6 @@ msgstr "Устройство"
 msgid "Device filter"
 msgstr "Фильтр по устройствам"
 
-msgid "Device or IP"
-msgstr "Устройство или IP"
-
 msgid "Device report unavailable"
 msgstr "Отчёт об устройствах недоступен"
 
@@ -1534,6 +1573,9 @@ msgstr "Маршрутизация устройств"
 
 msgid "Device traffic is unavailable"
 msgstr "Трафик устройств недоступен"
+
+msgid "Device, IP or MAC"
+msgstr "Устройство, IP или MAC"
 
 msgid "Devices"
 msgstr "Устройства"
@@ -1552,6 +1594,9 @@ msgstr "DHCP содержит DNS сервер"
 
 msgid "DHCP is managed manually"
 msgstr "DHCP управляется вручную"
+
+msgid "Diagnosis"
+msgstr "Диагностика"
 
 msgid "Diagnostics"
 msgstr "Диагностика"
@@ -1700,6 +1745,9 @@ msgstr "dnsmasq всё ещё использует файл серверов kil
 msgid "Do not apply this section to the specified local IP addresses; matching continues with the next section."
 msgstr "Не применять эту секцию к указанным локальным IP-адресам; поиск продолжится в следующей секции."
 
+msgid "Do not fragment"
+msgstr "Не фрагментировать"
+
 msgid "Do not test servers from these countries."
 msgstr "Не тестировать серверы из этих стран."
 
@@ -1835,6 +1883,9 @@ msgstr "DPI"
 msgid "DPI autotune"
 msgstr "Автоподбор DPI"
 
+msgid "DPI bypass by sing-box"
+msgstr "Обход DPI средствами sing-box"
+
 msgid "DPI bypass of the rules using this provider may not work."
 msgstr "Обход DPI в правилах с этим провайдером может не работать."
 
@@ -1964,6 +2015,9 @@ msgstr "Укажите домен с наблюдаемой ошибкой. Ре
 msgid "Enter a domain or IP address"
 msgstr "Укажите домен или IP-адрес"
 
+msgid "Enter a domain such as example.com, without a scheme, port or path."
+msgstr "Введите домен вида example.com, без схемы, порта и пути."
+
 msgid "Enter a level name"
 msgstr "Введите название уровня"
 
@@ -1988,8 +2042,14 @@ msgstr "Укажите корректный адрес DNS-сервера"
 msgid "Enter a valid domain or IP address"
 msgstr "Укажите корректный домен или IP-адрес"
 
+msgid "Enter a whole number from 0 (no limit) to 100000"
+msgstr "Введите целое число от 0 (без ограничения) до 100000"
+
 msgid "Enter a whole number of milliseconds from 0 to 60000"
 msgstr "Укажите целое число миллисекунд от 0 до 60000"
+
+msgid "Enter a whole number of ms or s from 1ms to 10s, e.g. 500ms."
+msgstr "Введите целое число ms или s от 1ms до 10s, например 500ms."
 
 msgid "Enter an address"
 msgstr "Укажите адрес"
@@ -1997,8 +2057,14 @@ msgstr "Укажите адрес"
 msgid "Enter an IP address or subnet, such as 203.0.113.0/24"
 msgstr "Введите IP-адрес или подсеть, например 203.0.113.0/24"
 
+msgid "Enter the MAC address of one device as six hex pairs, e.g. aa:bb:cc:dd:ee:ff"
+msgstr "Введите MAC-адрес одного устройства — шесть пар шестнадцатеричных цифр, например aa:bb:cc:dd:ee:ff"
+
 msgid "Enter the subscription URL"
 msgstr "Введите URL подписки"
+
+msgid "Environment checks"
+msgstr "Окружение"
 
 msgid "Error"
 msgstr "Ошибка"
@@ -2186,6 +2252,9 @@ msgstr "файл %s из %s"
 msgid "Find domains in recent error logs"
 msgstr "Найти домены в недавних ошибках"
 
+msgid "finding out how the site is blocked"
+msgstr "выясняем, как заблокирован сайт"
+
 msgid "Firewall rules that send traffic to Prokop are missing or not hit, so rules may not apply."
 msgstr "Правила межсетевого экрана, которые направляют трафик в Prokop, отсутствуют или не срабатывают — правила могут не применяться."
 
@@ -2194,6 +2263,9 @@ msgstr "Исправьте подсвеченные поля и сохранит
 
 msgid "Flash"
 msgstr "Флеш-память"
+
+msgid "Flow offloading"
+msgstr "Ускорение потоков (flow offloading)"
 
 msgid "Flow offloading is on in the firewall: accelerated connections bypass the counters, so the totals are lower than the real traffic."
 msgstr "В межсетевом экране включено ускорение (flow offloading): ускоренные соединения идут мимо счётчиков, поэтому итоги меньше реального трафика."
@@ -2243,6 +2315,9 @@ msgstr "Получить глобальную проверку"
 msgid "Global check"
 msgstr "Глобальная проверка"
 
+msgid "Global IPv6 on %s; Prokop handles IPv6"
+msgstr "Глобальный IPv6 на %s; Prokop обрабатывает IPv6"
+
 msgid "Group"
 msgstr "Группа"
 
@@ -2251,6 +2326,9 @@ msgstr "Группировка узлов"
 
 msgid "Groups: %d · targets: %d"
 msgstr "Групп: %d · целей: %d"
+
+msgid "Hardware offloading is on: established connections are forwarded past the router processor and every nftables rule. Prokop, the kill-switch and zapret see only the start of a connection; a connection opened before Prokop started or before a list update can keep going directly, and device traffic counters are too low. If rules or the kill-switch apply unreliably, turn offloading off in Network → Firewall."
+msgstr "Включено аппаратное ускорение: установленные соединения пересылаются в обход процессора роутера и всех правил nftables. Prokop, kill-switch и zapret видят только начало соединения; соединение, открытое до запуска Prokop или до обновления списков, может и дальше идти напрямую, а счётчики трафика устройств занижены. Если правила или kill-switch срабатывают ненадёжно, отключите ускорение в разделе Сеть → Межсетевой экран."
 
 msgid "has no effect"
 msgstr "ни на что не влияет"
@@ -2320,6 +2398,9 @@ msgstr "Как часто проверять активные DNS-серверы
 
 msgid "How often to check whether a higher-priority DNS server has recovered."
 msgstr "Как часто проверять, восстановился ли DNS-сервер с более высоким приоритетом."
+
+msgid "How the site drops the forged ClientHello"
+msgstr "Как сайт отбросит поддельный ClientHello"
 
 msgid "HTTP error"
 msgstr "Ошибка HTTP"
@@ -2467,6 +2548,24 @@ msgstr "Прерывать соединения, когда URLTest перекл
 
 msgid "Interval"
 msgstr "Интервал"
+
+msgid "Invalid %s URL: invalid host and port"
+msgstr "Неверный URL %s: некорректные хост и порт"
+
+msgid "Invalid %s URL: invalid port number"
+msgstr "Неверный URL %s: некорректный номер порта"
+
+msgid "Invalid %s URL: must not contain spaces"
+msgstr "Неверный URL %s: не должен содержать пробелов"
+
+msgid "Invalid %s URL: parsing failed"
+msgstr "Неверный URL %s: ошибка разбора"
+
+msgid "Invalid AnyTLS URL: AnyTLS always uses TLS"
+msgstr "Неверный URL AnyTLS: AnyTLS всегда работает через TLS"
+
+msgid "Invalid AnyTLS URL: missing password"
+msgstr "Неверный URL AnyTLS: не указан пароль"
 
 msgid "Invalid Bootstrap DNS server port"
 msgstr "Некорректный порт резервного DNS"
@@ -2645,6 +2744,9 @@ msgstr "Неверный URL Trojan: должен начинаться с trojan
 msgid "Invalid Trojan URL: parsing failed"
 msgstr "Неверный URL Trojan: ошибка разбора"
 
+msgid "Invalid TUIC URL: missing UUID"
+msgstr "Неверный URL TUIC: не указан UUID"
+
 msgid "Invalid URL format"
 msgstr "Неверный формат URL"
 
@@ -2744,6 +2846,9 @@ msgstr "Только IPv4"
 msgid "IPv4 routing rule at priority 105"
 msgstr "правило маршрутизации IPv4 с приоритетом 105"
 
+msgid "IPv6"
+msgstr "IPv6"
+
 msgid "IPv6 only"
 msgstr "Только IPv6"
 
@@ -2755,6 +2860,12 @@ msgstr "Обнаружены проблемы"
 
 msgid "It goes directly and is not in a DPI rule. No bypass is configured for it."
 msgstr "Идёт напрямую и не входит в DPI-правило. Обход для неё не настроен."
+
+msgid "It goes through a ByeDPI rule. ByeDPI connections cannot be checked apart from your traffic, so autotune does not measure them."
+msgstr "Цель идёт через правило ByeDPI. Соединения ByeDPI нельзя проверить отдельно от вашего трафика, поэтому автоподбор их не замеряет."
+
+msgid "It goes through a DPI bypass by sing-box rule. Autotune has no isolated way to measure it, so it does not."
+msgstr "Оно идёт через правило «Обход DPI средствами sing-box». У автоподбора нет изолированного способа его замерить, поэтому он его не замеряет."
 
 msgid "It goes through a proxy or VPN rule. DPI autotune does not apply."
 msgstr "Идёт через правило прокси или VPN. Автоподбор DPI не применим."
@@ -2834,6 +2945,9 @@ msgstr "Состояние kill-switch"
 msgid "Kill-switch status is unavailable: %s"
 msgstr "Состояние kill-switch недоступно: %s"
 
+msgid "Large file of the site"
+msgstr "Большой файл сайта"
+
 msgid "Last change"
 msgstr "Последнее изменение"
 
@@ -2890,6 +3004,9 @@ msgstr "Установлена последняя версия"
 
 msgid "Latest version:"
 msgstr "Последняя версия:"
+
+msgid "Leave a dead server chosen by hand"
+msgstr "Уходить с мёртвого сервера, выбранного вручную"
 
 msgid "left"
 msgstr "осталось"
@@ -3206,6 +3323,9 @@ msgstr "Событий этого типа нет"
 msgid "No events recorded yet"
 msgstr "Событий пока нет"
 
+msgid "No global IPv6 address"
+msgstr "Глобального IPv6-адреса нет"
+
 msgid "no longer supported: the configuration cannot be applied while the rule is enabled"
 msgstr "больше не поддерживается: пока правило включено, конфигурацию применить не удастся"
 
@@ -3244,6 +3364,9 @@ msgstr "После этого снимка изменений нет"
 
 msgid "No snapshots yet"
 msgstr "Снимки ещё не создавались"
+
+msgid "No static lease for %s: the router may give this address to another device, and the rule then applies to that device. Add a static lease (Network → DHCP and DNS → Static Leases) or choose the device by MAC address."
+msgstr "Нет статической аренды для %s: роутер может выдать этот адрес другому устройству, и тогда правило будет применяться к нему. Добавьте статическую аренду (Сеть → DHCP и DNS → Статические аренды) или выберите устройство по MAC-адресу."
 
 msgid "No strategies were measured"
 msgstr "Стратегии не измерялись"
@@ -3368,6 +3491,9 @@ msgstr "Не запускался"
 msgid "Not supported"
 msgstr "Не поддерживается"
 
+msgid "Not synchronized: TLS and Reality connections and subscription downloads may fail while the time is wrong. Check NTP in System → System."
+msgstr "Не синхронизированы: пока время неверное, соединения TLS и Reality и загрузка подписок могут не работать. Проверьте NTP в разделе Система → Система."
+
 msgid "not used"
 msgstr "не используется"
 
@@ -3394,6 +3520,18 @@ msgstr "Уведомления выключены: включите их и со
 
 msgid "Now"
 msgstr "Сейчас"
+
+msgid "Now: sing-box runs as prokop-sb."
+msgstr "Сейчас: sing-box работает от prokop-sb."
+
+msgid "Now: sing-box runs as root because %s."
+msgstr "Сейчас: sing-box работает от root, потому что %s."
+
+msgid "Now: sing-box runs as root."
+msgstr "Сейчас: sing-box работает от root."
+
+msgid "NTP has not synchronized the router clock since boot yet. Autotune measures, applies and judges nothing until it does."
+msgstr "NTP ещё не синхронизировал часы роутера после загрузки. До этого автоподбор ничего не замеряет, не применяет и не оценивает."
 
 msgid "Observation"
 msgstr "Наблюдение"
@@ -3443,6 +3581,9 @@ msgstr "Выключен"
 msgid "Off by default. Devices with their own DNS server (8.8.8.8 in a TV, IoT devices) bypass domain rules and the kill-switch; when on, everything they send to port 53 of an outside server goes to the router's DNS instead. This also catches a VPN whose server uses port 53 and a DNS server in the LAN that asks outside servers itself: add their addresses to the exclusions. DNS to local addresses (Pi-hole), to the router's IPv6 prefixes and DNS over TLS stay untouched"
 msgstr "По умолчанию выключено. Устройства со своим DNS-сервером (8.8.8.8 в телевизоре, IoT) обходят доменные правила и kill-switch; при включении всё, что они отправляют на порт 53 внешнего сервера, уходит на DNS роутера. Под перехват попадают и VPN, чей сервер работает на порту 53, и DNS-сервер в локальной сети, который сам обращается к внешним серверам: добавьте их адреса в исключения. DNS на локальные адреса (Pi-hole), на IPv6-префиксы роутера и DNS over TLS не трогаются"
 
+msgid "Old TCP timestamp"
+msgstr "Устаревшая метка времени TCP"
+
 msgid "Only from the specified countries."
 msgstr "Только из указанных стран."
 
@@ -3467,11 +3608,23 @@ msgstr "Только серверы с одним из выбранных тра
 msgid "Only the first %d changes are listed; %d changes in total."
 msgstr "Показаны только первые %d изменений; всего изменений: %d."
 
+msgid "Only the first %s of %s servers of this subscription are used: %s were left out by its server limit. The limit is set in the subscription settings."
+msgstr "Используются только первые %s из %s серверов этой подписки: %s отброшено ограничением числа серверов. Ограничение задаётся в настройках подписки."
+
+msgid "Only the first servers of this subscription, in its order, go into the configuration: thousands of servers can exhaust the memory of a router. 0 means no limit. The dashboard says how many servers were left out."
+msgstr "В конфигурацию попадают только первые серверы этой подписки, в её порядке: тысячи серверов могут исчерпать память роутера. 0 — без ограничения. Сколько серверов отброшено, показывает панель."
+
 msgid "Only the newest %d history records are kept; older ones are deleted."
 msgstr "Останутся только последние записи истории (%d), более старые будут удалены."
 
 msgid "Only the specified servers."
 msgstr "Только указанные серверы."
+
+msgid "Only TLS 1.2 gets through"
+msgstr "Проходит только TLS 1.2"
+
+msgid "Only TLS 1.3 gets through"
+msgstr "Проходит только TLS 1.3"
 
 msgid "Only: %d"
 msgstr "Только: %d"
@@ -3514,6 +3667,9 @@ msgstr "Дополнительные возможности из форков с
 
 msgid "Optional IPv4 address. By default the first IPv4 DNS server of Prokop is used."
 msgstr "Необязательный IPv4-адрес. По умолчанию используется первый IPv4 DNS-сервер Prokop."
+
+msgid "Optional path of a file larger than 32 KB on this site, for example a script or a font. The check downloads its first 64 KB and finds a DPI that cuts transfers after 16-20 KB."
+msgstr "Необязательный путь к файлу больше 32 КБ на этом сайте, например скрипту или шрифту. Проверка скачивает его первые 64 КБ и находит DPI, который обрывает загрузку после 16–20 КБ."
 
 msgid "Optional values must be attached with '=' here; a separate token would be ignored by nfqws."
 msgstr "Необязательное значение здесь нужно передавать только через '='; отдельный токен nfqws проигнорирует."
@@ -3613,6 +3769,9 @@ msgstr "Пауза после отката"
 
 msgid "pause after a rollback %s"
 msgstr "пауза после отката %s"
+
+msgid "Pause between TCP segments"
+msgstr "Пауза между TCP-сегментами"
 
 msgid "Pause updates"
 msgstr "Приостановить обновление"
@@ -3980,6 +4139,9 @@ msgstr "Применить заново"
 msgid "Reachable"
 msgstr "Доступно"
 
+msgid "Read the rows marked for attention. Prokop changes none of these settings itself."
+msgstr "Посмотрите строки, отмеченные как требующие внимания. Сам Prokop ни одну из этих настроек не меняет."
+
 msgid "Read-ahead 95%, preload 50%"
 msgstr "Упреждающее чтение 95%, предзагрузка 50%"
 
@@ -4298,6 +4460,9 @@ msgstr "Маршрутизировать основные DNS-запросы ч�
 msgid "Route requests to this DNS server through another section."
 msgstr "Направлять запросы к этому DNS-серверу через другую секцию."
 
+msgid "Router clock"
+msgstr "Часы роутера"
+
 msgid "Router DNS"
 msgstr "DNS роутера"
 
@@ -4396,6 +4561,9 @@ msgstr "Правила с этим провайдером перестанут �
 
 msgid "Run full diagnostics"
 msgstr "Запустить полную диагностику"
+
+msgid "Run sing-box without root"
+msgstr "Запускать sing-box без root"
 
 msgid "Run TorrServer in a jail"
 msgstr "Запускать TorrServer в изоляции"
@@ -4562,6 +4730,12 @@ msgstr "Отправлено, получено и скорость: счётчи
 msgid "Sent, received and speed: router counters since Prokop started."
 msgstr "Отправлено, получено и скорость: счётчики роутера с запуска Prokop."
 
+msgid "Server %s did not answer three checks in a row, so Prokop switched this rule to %s at %s. Choose the server again when it works."
+msgstr "Сервер %s не ответил на три проверки подряд, поэтому Prokop переключил правило на %s в %s. Выберите сервер снова, когда он заработает."
+
+msgid "Server %s did not answer three checks in a row, so Prokop switched this rule to %s. Choose the server again when it works."
+msgstr "Сервер %s не ответил на три проверки подряд, поэтому Prokop переключил правило на %s. Выберите сервер снова, когда он заработает."
+
 msgid "Server closed the connection without a response"
 msgstr "Сервер закрыл соединение без ответа"
 
@@ -4573,6 +4747,9 @@ msgstr "Группа серверов для автоматического вы
 
 msgid "Server group for priority failover"
 msgstr "Группа автоматически выбирает рабочий узел на основе установленного приоритета."
+
+msgid "Server limit"
+msgstr "Ограничение числа серверов"
 
 msgid "Server outbound must contain a non-empty server field"
 msgstr "Серверный outbound должен содержать непустое поле server"
@@ -4667,6 +4844,9 @@ msgstr "Sing-box слушает порты"
 msgid "Sing-box process running"
 msgstr "Процесс sing-box запущен"
 
+msgid "sing-box runs as its own system user prokop-sb with network rights only (CAP_NET_ADMIN, CAP_NET_RAW, CAP_NET_BIND_SERVICE) instead of root. Applies at the next start of sing-box. If something needed for it is missing, sing-box keeps running as root and the reason is shown here. Not checked on every router: turn it off if sing-box stops starting."
+msgstr "sing-box работает от отдельного системного пользователя prokop-sb только с сетевыми правами (CAP_NET_ADMIN, CAP_NET_RAW, CAP_NET_BIND_SERVICE), а не от root. Действует со следующего запуска sing-box. Если чего-то для этого не хватает, sing-box продолжает работать от root, а причина показывается здесь. Проверено не на всех роутерах: выключите, если sing-box перестал запускаться."
+
 msgid "Sing-box service exist"
 msgstr "Сервис sing-box существует"
 
@@ -4727,6 +4907,9 @@ msgstr "Снимков: %d"
 msgid "Snapshots: enter a whole number from %d to %d."
 msgstr "Снимки: введите целое число от %d до %d."
 
+msgid "Software offloading is on: established connections bypass the nftables rules. Prokop, the kill-switch and zapret see only the start of a connection; a connection opened before Prokop started or before a list update can keep going directly, and device traffic counters are too low. If rules or the kill-switch apply unreliably, turn offloading off in Network → Firewall."
+msgstr "Включено программное ускорение: установленные соединения проходят в обход правил nftables. Prokop, kill-switch и zapret видят только начало соединения; соединение, открытое до запуска Prokop или до обновления списков, может и дальше идти напрямую, а счётчики трафика устройств занижены. Если правила или kill-switch срабатывают ненадёжно, отключите ускорение в разделе Сеть → Межсетевой экран."
+
 msgid "Some addresses through Prokop"
 msgstr "Часть адресов через Prokop"
 
@@ -4756,6 +4939,9 @@ msgstr "Источники, которые не удалось скачать:"
 
 msgid "Speed"
 msgstr "Скорость"
+
+msgid "Splits the TLS ClientHello of this rule's connections so that a DPI system cannot read the site name. TLS records: the ClientHello is cut into several TLS records, fast, try it first. TCP segments: it is sent in several TCP packets with a pause, slower. Both: records sent as separate segments."
+msgstr "Делит TLS ClientHello соединений этого правила, чтобы система DPI не прочитала имя сайта. TLS-записи: ClientHello режется на несколько TLS-записей — быстро, попробуйте сначала этот способ. TCP-сегменты: отправляется несколькими TCP-пакетами с паузой — медленнее. Оба: записи уходят отдельными сегментами."
 
 msgid "Stability"
 msgstr "Стабильность"
@@ -4883,6 +5069,9 @@ msgstr "Список подсетей (текст)"
 msgid "Subnets from the list will be extracted and added to nftables"
 msgstr "IP-адреса и подсети из списка будут извлечены и добавлены в nftables"
 
+msgid "Subscription %s:"
+msgstr "Подписка %s:"
+
 msgid "Subscription auto update"
 msgstr "Автообновление подписи"
 
@@ -4918,6 +5107,12 @@ msgstr "Поддержка"
 
 msgid "Support report contains confidential information. Do not share it in public chats."
 msgstr "Отчёт содержит конфиденциальную информацию. Не публикуйте его в открытых чатах."
+
+msgid "Synchronized"
+msgstr "Синхронизированы"
+
+msgid "Synchronized, stratum %d"
+msgstr "Синхронизированы, stratum %d"
 
 msgid "Syntax check is unavailable"
 msgstr "Проверка синтаксиса недоступна"
@@ -4960,6 +5155,12 @@ msgstr "ТБ"
 
 msgid "TCP connection"
 msgstr "Подключение для TCP"
+
+msgid "TCP MD5 signature"
+msgstr "Подпись TCP MD5"
+
+msgid "TCP segments"
+msgstr "TCP-сегменты"
 
 msgid "Technical data"
 msgstr "Технические данные"
@@ -5057,8 +5258,14 @@ msgstr "Боту нельзя писать в этот чат"
 msgid "The built-in rule sets are added. Save the rule to keep the change."
 msgstr "Встроенные наборы правил добавлены. Сохраните правило, чтобы сохранить изменение."
 
+msgid "the capabilities file could not be written"
+msgstr "не удалось записать файл прав"
+
 msgid "The cascade setting is cleared. Save the rule to keep the change."
 msgstr "Настройка каскада очищена. Сохраните правило, чтобы сохранить изменение."
+
+msgid "The certificate pin must be the SHA-256 of the certificate as 64 hex digits or base64"
+msgstr "Закреплённый сертификат (pin) должен быть SHA-256 сертификата: 64 шестнадцатеричные цифры или base64"
 
 msgid "The change affects the whole group:"
 msgstr "Изменение затронет всю группу:"
@@ -5138,6 +5345,9 @@ msgstr "Конфигурация до изменения восстановле�
 msgid "the configuration changed since Prokop last applied it; reload Prokop first"
 msgstr "конфигурация изменилась после последнего применения; сначала перезагрузите Prokop"
 
+msgid "the configuration has a tun inbound, a WireGuard or a Tailscale endpoint, which need root"
+msgstr "в конфигурации есть вход tun, WireGuard или Tailscale, которым нужен root"
+
 msgid "The configuration of the snapshot was migrated from Prokop %s to %s."
 msgstr "Конфигурация снимка перенесена с Prokop %s на %s."
 
@@ -5186,8 +5396,14 @@ msgstr "Прямое соединение работает, изменения �
 msgid "the direct proxy"
 msgstr "прямой прокси"
 
+msgid "The DNS answer is replaced"
+msgstr "Ответ DNS подменён"
+
 msgid "The DNS server must be an IPv4 address."
 msgstr "DNS-сервер должен быть IPv4-адресом."
+
+msgid "The DNS server returned an address no public site has: the answer is replaced. Use another DNS server for the target."
+msgstr "DNS-сервер вернул адрес, которого нет у публичных сайтов: ответ подменён. Укажите для цели другой DNS-сервер."
 
 msgid "The domain could not be resolved; the result is inconclusive."
 msgstr "Домен не удалось разрешить, результат неоднозначный."
@@ -5212,6 +5428,9 @@ msgstr "Не удалось надёжно определить DPI-правил
 
 msgid "The editor has no field for downloaded lists: they cannot be converted and stay as they are."
 msgstr "Для загружаемых списков в редакторе нет поля: их нельзя конвертировать, они остаются как есть."
+
+msgid "The encrypted connection is blocked"
+msgstr "Блокируется зашифрованное соединение"
 
 msgid "the excluded devices form more than {groups} groups with different blocked names; {count} device addresses stay blocked through DNS while Prokop is stopped"
 msgstr "исключённые устройства образуют больше {groups} групп с разными блокируемыми именами; пока Prokop остановлен, адреса устройств ({count}) блокируются через DNS"
@@ -5264,6 +5483,12 @@ msgstr "загрузчик kill-switch в /usr/share/nftables.d/ruleset-post"
 msgid "The kill-switch service could not be started; DNS will not fail over to the standby resolver if sing-box dies"
 msgstr "Не удалось запустить службу kill-switch: если sing-box упадёт, DNS не переключится на резервный резолвер"
 
+msgid "The large file path must start with \"/\" and contain only letters, digits and . _ ~ / -"
+msgstr "Путь к большому файлу должен начинаться с «/» и содержать только латинские буквы, цифры и . _ ~ / -"
+
+msgid "The large file size must be from 20480 to 65536 bytes."
+msgstr "Размер большого файла должен быть от 20480 до 65536 байт."
+
 msgid "The last autotune change is not resolved."
 msgstr "Последнее изменение автоподбора не завершено."
 
@@ -5312,6 +5537,9 @@ msgstr "последняя проверка не дала результата"
 msgid "The last check gave no usable result. The current strategy is kept."
 msgstr "Последняя проверка не дала пригодного результата. Текущая стратегия оставлена."
 
+msgid "the last check waited for the router clock"
+msgstr "последняя проверка ждала синхронизации часов роутера"
+
 msgid "The last check was interrupted"
 msgstr "Последняя проверка была прервана"
 
@@ -5353,6 +5581,9 @@ msgstr "Лимиты вне допустимого диапазона. Ниче�
 
 msgid "the lines marked \"# prokop-\" in /etc/crontabs/root"
 msgstr "строки с пометкой «# prokop-» в /etc/crontabs/root"
+
+msgid "The link of this server turns certificate verification off: the connection is not protected from interception"
+msgstr "Ссылка этого сервера отключает проверку сертификата: соединение не защищено от перехвата"
 
 msgid "The list could not be read."
 msgstr "Список не удалось прочитать."
@@ -5495,6 +5726,21 @@ msgstr "Маршрут рассчитывается по конфигураци�
 msgid "the route of an IPv6 address is not calculated"
 msgstr "маршрут для адреса IPv6 не рассчитывается"
 
+msgid "The router clock is behind (earlier than the release of this version). Autotune measures, applies and judges nothing until NTP sets the time."
+msgstr "Часы роутера отстают (показывают время раньше выхода этой версии). Пока NTP не установит время, автоподбор ничего не замеряет, не применяет и не оценивает."
+
+msgid "the router clock is not synchronized by NTP yet"
+msgstr "часы роутера ещё не синхронизированы по NTP"
+
+msgid "The router clock is not synchronized by NTP yet; nothing is measured or applied until it is."
+msgstr "Часы роутера ещё не синхронизированы по NTP; до этого ничего не замеряется и не применяется."
+
+msgid "The router clock is not synchronized. Autotune measures, applies and judges nothing until it is."
+msgstr "Часы роутера не синхронизированы. До синхронизации автоподбор ничего не замеряет, не применяет и не оценивает."
+
+msgid "The router clock is wrong"
+msgstr "Часы роутера идут неверно"
+
 msgid "The router could not check whether the site opens. Try the check again."
 msgstr "Роутер не смог проверить, открывается ли сайт. Повторите проверку."
 
@@ -5612,11 +5858,26 @@ msgstr "служба занята"
 msgid "The service is busy with another operation (list or subscription update, reload or start). Nothing was changed; try again when it finishes."
 msgstr "Служба занята другой операцией (обновление списков или подписки, перезагрузка или запуск). Ничего не изменено; повторите, когда она завершится."
 
+msgid "the sing-box cache file could not be handed to the user"
+msgstr "не удалось передать пользователю файл кэша sing-box"
+
 msgid "the sing-box configuration {file} cannot be read"
 msgstr "не удаётся прочитать конфигурацию sing-box {file}"
 
+msgid "the sing-box configuration could not be handed to the user"
+msgstr "не удалось передать пользователю конфигурацию sing-box"
+
 msgid "the sing-box configuration is not available; is Prokop running?"
 msgstr "конфигурация sing-box недоступна — Prokop запущен?"
+
+msgid "the sing-box package's own service script cannot pass a user and network capabilities; only the sing-box variants Prokop installs as a binary can"
+msgstr "служебный скрипт пакета sing-box не умеет передавать пользователя и сетевые права; это умеют только варианты sing-box, которые Prokop ставит как бинарный файл"
+
+msgid "the sing-box working directory could not be handed to the user"
+msgstr "не удалось передать пользователю рабочую папку sing-box"
+
+msgid "The site address itself is blocked: no DPI bypass strategy can help. Route this site through a connection (proxy or VPN) rule; Prokop changes nothing by itself."
+msgstr "Заблокирован сам адрес сайта: никакая стратегия обхода DPI не поможет. Направьте этот сайт через правило-подключение (прокси или VPN); сам Prokop ничего не меняет."
 
 msgid "The site did not open from the router. The router may take a different path than devices."
 msgstr "С роутера сайт не открылся. Роутер может ходить иначе, чем устройства."
@@ -5651,6 +5912,9 @@ msgstr "В стратегии есть ошибка"
 msgid "The strategy could not be applied. The previous configuration is kept."
 msgstr "Стратегию не удалось применить. Предыдущая конфигурация сохранена."
 
+msgid "The strategy depends on the distance to the DPI and was checked on one address only, so its confidence is at most medium."
+msgstr "Стратегия зависит от расстояния до DPI и проверена только на одном адресе, поэтому её уверенность не выше средней."
+
 msgid "The strategy is changed only after %d checks in a row with the same result."
 msgstr "Стратегия меняется только после %d проверок подряд с одинаковым результатом."
 
@@ -5677,6 +5941,12 @@ msgstr "Стратегия не применена: текущая конфиг�
 
 msgid "The subscription of this section is not loaded yet: Prokop rejects its traffic. The domains blocked while Prokop is stopped are not refreshed until the subscription is loaded."
 msgstr "Подписка этой секции ещё не загружена: Prokop отклоняет её трафик. Домены, блокируемые при остановленном Prokop, не обновляются, пока подписка не загрузится."
+
+msgid "The subscription sent %s placeholder entries with address 0.0.0.0 or :: (provider notices, such as an expired subscription or used-up traffic); they were left out."
+msgstr "Подписка прислала %s записей-заглушек с адресом 0.0.0.0 или :: (уведомления провайдера, например об истёкшей подписке или закончившемся трафике); они пропущены."
+
+msgid "the system user prokop-sb could not be created"
+msgstr "не удалось создать системного пользователя prokop-sb"
 
 msgid "The target address could not be determined reliably during the check."
 msgstr "Во время проверки не удалось надёжно определить адрес цели."
@@ -5768,11 +6038,17 @@ msgstr "Это поле должно запускать рабочую стра�
 msgid "This field must start a working nfqws2 strategy; --version exits immediately and is not allowed here."
 msgstr "Это поле должно запускать рабочую стратегию nfqws2; --version сразу завершает работу и здесь запрещён."
 
+msgid "this firmware cannot grant capabilities to a service (install procd-ujail)"
+msgstr "эта прошивка не умеет выдавать службе отдельные права (установите procd-ujail)"
+
 msgid "This firmware has no kmod-nft-socket package, which direct routing for TorrServer needs"
 msgstr "В этой прошивке нет пакета kmod-nft-socket, нужного для прямой маршрутизации TorrServer"
 
 msgid "This flag does not accept a value."
 msgstr "Этот флаг не принимает значение."
+
+msgid "This is a Zapret2 rule: Prokop shows the best strategy but never changes a Zapret2 strategy. Set it in the rule yourself if you want."
+msgstr "Это правило Zapret2: Prokop показывает лучшую стратегию, но никогда не меняет стратегию Zapret2. При желании укажите её в правиле сами."
 
 msgid "This option requires a value."
 msgstr "Этой опции требуется значение."
@@ -5843,6 +6119,9 @@ msgstr "Эта стратегия не поддерживается устано
 msgid "This strategy was rolled back recently; it waits for the cooldown."
 msgstr "Эту стратегию недавно откатывали; она ждёт окончания паузы."
 
+msgid "This subscription has %s servers and no server limit. On a router with little memory, a limit of %s servers in the subscription settings keeps sing-box from running out of memory."
+msgstr "В этой подписке %s серверов, ограничение числа серверов не задано. На роутере с небольшим объёмом памяти ограничение в %s серверов в настройках подписки защитит sing-box от нехватки памяти."
+
 msgid "This TorrServer was not installed by Prokop; Prokop left it as it is"
 msgstr "Этот TorrServer установлен не через Prokop; Prokop оставил его как есть"
 
@@ -5867,8 +6146,23 @@ msgstr "Тайм-аут"
 msgid "tiny"
 msgstr "tiny"
 
+msgid "TLS fragmentation"
+msgstr "Фрагментация TLS"
+
 msgid "TLS or certificate error"
 msgstr "Ошибка TLS или сертификата"
+
+msgid "TLS records"
+msgstr "TLS-записи"
+
+msgid "TLS records and TCP segments"
+msgstr "TLS-записи и TCP-сегменты"
+
+msgid "TLS spoof"
+msgstr "Подмена TLS"
+
+msgid "TLS spoof domain"
+msgstr "Домен для подмены TLS"
 
 msgid "TLS, median"
 msgstr "TLS, медиана"
@@ -5948,6 +6242,9 @@ msgstr "Трафик идёт через роутер без Prokop."
 msgid "Traffic of the rules does not reach sing-box, so connections through rules fail."
 msgstr "Трафик правил не доходит до sing-box, поэтому соединения через правила не работают."
 
+msgid "Transfers are cut after the first 16-20 KB"
+msgstr "Загрузка обрывается после первых 16–20 КБ"
+
 msgid "Transparent proxy mode is incompatible with action=byedpi because Prokop connects to ciadpi through SOCKS."
 msgstr "Режим прозрачного прокси несовместим с action=byedpi, потому что Prokop подключается к ciadpi через SOCKS."
 
@@ -5968,6 +6265,9 @@ msgstr "Включить"
 
 msgid "Turn on automatic mode?"
 msgstr "Включить автоматический режим?"
+
+msgid "Turn on TLS fragmentation or enter a TLS spoof domain, or choose another action."
+msgstr "Включите фрагментацию TLS или укажите домен для подмены TLS либо выберите другое действие."
 
 msgid "turns text mode on"
 msgstr "включает текстовый режим"
@@ -5995,6 +6295,9 @@ msgstr "Таймаут недоступности"
 
 msgid "Unavailable: needs sing-box-extended %s or newer, the installed sing-box is %s."
 msgstr "Недоступно: нужен sing-box-extended %s или новее, установлен sing-box %s."
+
+msgid "Unavailable: TLS spoof needs sing-box %s or newer, the installed sing-box is %s."
+msgstr "Недоступно: для подмены TLS нужен sing-box %s или новее, установлен sing-box %s."
 
 msgid "Under observation: %d of %d checks passed"
 msgstr "Под наблюдением: пройдено проверок %d из %d"
@@ -6083,8 +6386,11 @@ msgstr "Обновление списков пакетов"
 msgid "UPnP off: TorrServer does not open ports on the router"
 msgstr "UPnP выключен: TorrServer не открывает порты на роутере"
 
-msgid "URL must start with vless://, vmess://, ss://, trojan://, socks4://, socks4a://, socks5://, hysteria2://, or hy2://"
-msgstr "URL должен начинаться с vless://, vmess://, ss://, trojan://, socks4://, socks4a://, socks5://, hysteria2:// или hy2://"
+msgid "URL must start with tuic:// or anytls://"
+msgstr "URL должен начинаться с tuic:// или anytls://"
+
+msgid "URL must start with vless://, vmess://, ss://, trojan://, socks4://, socks4a://, socks5://, hysteria2://, hy2://, tuic:// or anytls://"
+msgstr "URL должен начинаться с vless://, vmess://, ss://, trojan://, socks4://, socks4a://, socks5://, hysteria2://, hy2://, tuic:// или anytls://"
 
 msgid "URL must use one of the following protocols:"
 msgstr "URL должен использовать один из следующих протоколов:"
@@ -6161,6 +6467,9 @@ msgstr "используется правилом; поле «Сетевой и�
 msgid "used by the rule: text mode is on"
 msgstr "используется правилом: включён текстовый режим"
 
+msgid "Used when sing-box cannot measure the round trip to the site. Empty: 500ms."
+msgstr "Используется, когда sing-box не может измерить задержку до сайта. Пусто — 500ms."
+
 msgid "Used while client DNS is intercepted. DNS from these devices or to these servers is never intercepted: a DNS server in the LAN, the server of a VPN on port 53. An IPv4 or IPv6 address or subnet"
 msgstr "Действует, когда перехват DNS включён. DNS от этих устройств и к этим серверам никогда не перехватывается: DNS-сервер в локальной сети, сервер VPN на порту 53. IPv4- или IPv6-адрес либо подсеть"
 
@@ -6197,8 +6506,8 @@ msgstr "Посмотреть логи"
 msgid "Visible name of this section"
 msgstr "Видимое имя этой секции"
 
-msgid "vless://, vmess://, ss://, trojan://, socks4/5://, hy2/hysteria2:// links"
-msgstr "ссылки vless://, vmess://, ss://, trojan://, socks4/5://, hy2/hysteria2://"
+msgid "vless://, vmess://, ss://, trojan://, socks4/5://, hy2/hysteria2://, tuic://, anytls:// links"
+msgstr "ссылки vless://, vmess://, ss://, trojan://, socks4/5://, hy2/hysteria2://, tuic://, anytls://"
 
 msgid "VPN kill-switch"
 msgstr "VPN kill-switch"
@@ -6260,6 +6569,9 @@ msgstr "Что доказано"
 msgid "When a rule has the kill-switch"
 msgstr "Когда у правила включён kill-switch"
 
+msgid "When a server chosen by hand on the dashboard does not answer three checks in a row (about a minute), switch the rule to its first URLTest group. The dashboard says so; Prokop does not switch back by itself, choose the server again when it works. The choice kept for a reboot stays the server you chose."
+msgstr "Если выбранный вручную на панели сервер не ответил на три проверки подряд (около минуты), правило переключается на его первую группу URLTest. Панель сообщит об этом; сам Prokop обратно не переключает — выберите сервер снова, когда он заработает. Выбор, сохраняемый на случай перезагрузки, остаётся вашим сервером."
+
 msgid "When switching to another level, test every server and select the fastest instead of the first working one."
 msgstr "При переходе на другой уровень тестировать все сервера и выбирать самый быстрый, а не первый работающий."
 
@@ -6292,6 +6604,18 @@ msgstr "Работает без обхода."
 
 msgid "Write the header as Name: value"
 msgstr "Запишите заголовок в виде Имя: значение"
+
+msgid "Wrong acknowledgment number"
+msgstr "Неверный номер подтверждения"
+
+msgid "Wrong checksum"
+msgstr "Неверная контрольная сумма"
+
+msgid "Wrong sequence number"
+msgstr "Неверный номер последовательности"
+
+msgid "Wrong sequence number suits most sites. Change it only if the bypass does not work."
+msgstr "Неверный номер последовательности подходит большинству сайтов. Меняйте, только если обход не работает."
 
 msgid "YACD Secret Key"
 msgstr "Секретный ключ YACD"
