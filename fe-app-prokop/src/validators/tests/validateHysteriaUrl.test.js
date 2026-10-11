@@ -31,7 +31,7 @@ const validUrls = [
 
   [
     'port range 123,5000-6000',
-    'hysteria2://letmein@example.com:123,5000-6000/?insecure=1&obfs=salamander&obfs-password=gawrgura&pinSHA256=deadbeef&sni=real.example.com',
+    'hysteria2://letmein@example.com:123,5000-6000/?insecure=1&obfs=salamander&obfs-password=gawrgura&pinSHA256=DE:AD:BE:EF:DE:AD:BE:EF:DE:AD:BE:EF:DE:AD:BE:EF:DE:AD:BE:EF:DE:AD:BE:EF:DE:AD:BE:EF:DE:AD:BE:EF&sni=real.example.com',
   ],
 
   [
@@ -42,6 +42,7 @@ const validUrls = [
 ];
 
 const invalidUrls = [
+  ['Unreadable certificate pin', 'hysteria2://pw@example.com:443/?pinSHA256=deadbeef'],
   ['No prefix', 'pw@example.com:443'],
   ['Missing password', 'hysteria2://@example.com:443/'],
   ['Missing host', 'hysteria2://pw@:443/'],

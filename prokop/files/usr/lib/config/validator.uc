@@ -1268,7 +1268,7 @@ function validate_proxy_parameter_value(value, allowed, parameter, section) {
 function validate_proxy_parameter_filters(protocols, transports, securities, section) {
     for (let value in protocols)
         validate_proxy_parameter_value(value,
-            [ "direct", "http", "hysteria2", "shadowsocks", "socks", "trojan", "vless", "vmess" ],
+            [ "anytls", "direct", "http", "hysteria2", "shadowsocks", "socks", "trojan", "tuic", "vless", "vmess" ],
             "protocol", section);
     for (let value in transports)
         validate_proxy_parameter_value(value,

@@ -753,6 +753,7 @@ export namespace Prokop {
     description?: string;
     selected: boolean;
     country?: string;
+    insecure?: boolean;
     runtimeAvailable?: boolean;
     urlTestInfo?: UrlTestInfo;
     priorityInfo?: PriorityInfo;
@@ -1057,6 +1058,9 @@ export namespace Prokop {
     names?: Record<string, string>;
     countries?: Record<string, string>;
     descriptions?: Record<string, string>;
+    // Tags of the nodes that run without certificate verification
+    // (tls.insecure from their link); singbox/subscription.uc.
+    insecure?: Record<string, boolean>;
   }
 
   export interface GetSingBoxStatus {

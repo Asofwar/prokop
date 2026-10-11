@@ -78,6 +78,22 @@ function add_query(params, key, value) {
         push(params, uri_encode(key) + "=" + uri_encode(value));
 }
 
+// The certificate pins of tls.certificate_sha256 (base64) as the hex that
+// links carry (pinSHA256, pcs), comma separated; "" without one.
+function certificate_pins_hex(tls) {
+    let result = [];
+    for (let pin in array_or_empty(type(tls) == "object" ? tls.certificate_sha256 : null)) {
+        let binary = b64dec(as_string(pin));
+        if (binary == null || length(binary) != 32)
+            continue;
+        let hex_value = "";
+        for (let i = 0; i < length(binary); i++)
+            hex_value += sprintf("%02X", ord(binary, i));
+        push(result, hex_value);
+    }
+    return join(",", result);
+}
+
 function add_xhttp_extra_query(params, transport) {
     let extra = {};
     for (let item in [
@@ -133,6 +149,7 @@ function add_tls_query(params, outbound, trojan_default_tls) {
     add_query(params, "sni", tls.server_name);
     if (tls.insecure === true)
         add_query(params, "allowInsecure", "1");
+    add_query(params, "pcs", certificate_pins_hex(tls));
     if (type(tls.utls) == "object" && tls.utls.enabled !== false)
         add_query(params, "fp", tls.utls.fingerprint);
     if (type(tls.alpn) == "array" && length(tls.alpn) > 0)
@@ -247,6 +264,7 @@ function serialize_hysteria2(outbound) {
         add_query(params, "sni", tls.server_name);
         if (tls.insecure === true)
             add_query(params, "insecure", "1");
+        add_query(params, "pinSHA256", certificate_pins_hex(tls));
         if (type(tls.alpn) == "array" && length(tls.alpn) > 0)
             add_query(params, "alpn", join(",", tls.alpn));
     }
@@ -257,6 +275,46 @@ function serialize_hysteria2(outbound) {
 
     return "hysteria2://" + uri_encode(outbound.password) + "@" +
         host_port(outbound.server, port) + query_string(params) + fragment(outbound);
+}
+
+function serialize_tuic(outbound) {
+    if (as_string(outbound.uuid) == "" || as_string(outbound.server) == "" || outbound.server_port == null)
+        return "";
+    let params = [];
+    add_query(params, "congestion_control", outbound.congestion_control);
+    add_query(params, "udp_relay_mode", outbound.udp_relay_mode);
+    if (outbound.zero_rtt_handshake === true)
+        add_query(params, "reduce_rtt", "1");
+    let tls = type(outbound.tls) == "object" ? outbound.tls : {};
+    add_query(params, "sni", tls.server_name);
+    if (tls.insecure === true)
+        add_query(params, "allow_insecure", "1");
+    if (tls.disable_sni === true)
+        add_query(params, "disable_sni", "1");
+    if (type(tls.alpn) == "array" && length(tls.alpn) > 0)
+        add_query(params, "alpn", join(",", tls.alpn));
+    add_query(params, "pinSHA256", certificate_pins_hex(tls));
+    let auth = uri_encode(outbound.uuid);
+    if (as_string(outbound.password) != "")
+        auth += ":" + uri_encode(outbound.password);
+    return "tuic://" + auth + "@" + host_port(outbound.server, outbound.server_port) + query_string(params) + fragment(outbound);
+}
+
+function serialize_anytls(outbound) {
+    if (as_string(outbound.password) == "" || as_string(outbound.server) == "" || outbound.server_port == null)
+        return "";
+    let params = [];
+    let tls = type(outbound.tls) == "object" ? outbound.tls : {};
+    add_query(params, "sni", tls.server_name);
+    if (tls.insecure === true)
+        add_query(params, "insecure", "1");
+    if (type(tls.alpn) == "array" && length(tls.alpn) > 0)
+        add_query(params, "alpn", join(",", tls.alpn));
+    if (type(tls.utls) == "object" && tls.utls.enabled !== false)
+        add_query(params, "fp", tls.utls.fingerprint);
+    add_query(params, "pinSHA256", certificate_pins_hex(tls));
+    return "anytls://" + uri_encode(outbound.password) + "@" + host_port(outbound.server, outbound.server_port) +
+        query_string(params) + fragment(outbound);
 }
 
 function serialize_vmess(outbound) {
@@ -326,6 +384,10 @@ function serialize_outbound_link(outbound) {
         return serialize_hysteria2(outbound);
     if (outbound_type == "vmess")
         return serialize_vmess(outbound);
+    if (outbound_type == "tuic")
+        return serialize_tuic(outbound);
+    if (outbound_type == "anytls")
+        return serialize_anytls(outbound);
     return "";
 }
 
@@ -333,7 +395,7 @@ function is_copyable_link(value) {
     value = lc(as_string(value));
     let prefixes = [
         "vless://", "vmess://", "trojan://", "ss://", "ssr://",
-        "hysteria2://", "hy2://", "tuic://",
+        "hysteria2://", "hy2://", "tuic://", "anytls://",
         "socks4://", "socks4a://", "socks5://", "socks5h://"
     ];
     for (let prefix in prefixes) {

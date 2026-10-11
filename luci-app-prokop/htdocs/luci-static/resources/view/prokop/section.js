@@ -2330,6 +2330,8 @@ function proxyProtocolChoices() {
     ["socks", "SOCKS"],
     ["http", "HTTP"],
     ["hysteria2", "Hysteria2"],
+    ["tuic", "TUIC"],
+    ["anytls", "AnyTLS"],
     ["direct", "Direct"],
   ];
 }
@@ -8913,7 +8915,7 @@ function createSectionContent(section) {
     "selector_proxy_links",
     _("Connection URL"),
     _(
-      "vless://, vmess://, ss://, trojan://, socks4/5://, hy2/hysteria2:// links",
+      "vless://, vmess://, ss://, trojan://, socks4/5://, hy2/hysteria2://, tuic://, anytls:// links",
     ),
   );
   o.depends("action", "connection");

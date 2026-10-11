@@ -1173,6 +1173,7 @@ function buildProxyGroupOutbounds(
         type: priorityConfig ? 'Priority' : item?.value.type || 'URLTest',
         selected: selector?.value?.now === code,
         description: outboundMetadata?.descriptions?.[code],
+        insecure: outboundMetadata?.insecure?.[code] === true || undefined,
         country: showDetectedCountries
           ? outboundMetadata?.countries?.[code]
           : undefined,
@@ -1374,6 +1375,13 @@ function getOutboundMetadata(dashboardCache?: DashboardSectionCache) {
   const names = objectMap(metadata?.names);
   const countries = objectMap(metadata?.countries);
   const descriptions = objectMap(metadata?.descriptions);
+  const insecure = Object.fromEntries(
+    Object.entries(
+      metadata?.insecure && typeof metadata.insecure === 'object'
+        ? metadata.insecure
+        : {},
+    ).filter(([, value]) => value === true),
+  ) as Record<string, boolean>;
 
   if (!metadata || typeof metadata !== 'object') {
     return undefined;
@@ -1383,6 +1391,7 @@ function getOutboundMetadata(dashboardCache?: DashboardSectionCache) {
     names,
     countries,
     descriptions,
+    insecure,
   };
 }
 

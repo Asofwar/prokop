@@ -9,6 +9,8 @@ const SERVER_OUTBOUND_TYPES = new Set([
   'http',
   'hysteria2',
   'hysteria',
+  'tuic',
+  'anytls',
 ]);
 
 function invalid(message: string): ValidationResult {

@@ -520,6 +520,20 @@ function renderDefaultState({
               ]
             : []),
         ]),
+        ...(outbound.insecure
+          ? [
+              E(
+                'div',
+                {
+                  class: 'fkp_dashboard-page__outbound-grid__item__insecure',
+                  title: _(
+                    'The link of this server turns certificate verification off: the connection is not protected from interception',
+                  ),
+                },
+                _('Certificate not verified'),
+              ),
+            ]
+          : []),
         E('div', { class: 'fkp_dashboard-page__outbound-grid__item__footer' }, [
           E(
             'div',

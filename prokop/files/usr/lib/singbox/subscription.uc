@@ -243,6 +243,13 @@ function remember_outbound_metadata(state, tag_name, display_name, outbound) {
         security = reality != null && reality.enabled !== false ? "reality" : "tls";
     }
     state.outboundMetadata.securities[tag_name] = security;
+    // Adjacent 9: the dashboard marks a node that runs without certificate
+    // verification (its link asked for it); no secret, only the tag.
+    if (tls != null && tls.enabled !== false && tls.insecure === true) {
+        if (type(state.outboundMetadata.insecure) != "object")
+            state.outboundMetadata.insecure = {};
+        state.outboundMetadata.insecure[tag_name] = true;
+    }
 
     let server = as_string(outbound.server || "");
     if (server != "")
@@ -412,7 +419,8 @@ function new_section_state(section_name) {
             protocols: {},
             transports: {},
             securities: {},
-            descriptions: {}
+            descriptions: {},
+            insecure: {}
         },
         servers: {},
         urltestCandidateTags: [],

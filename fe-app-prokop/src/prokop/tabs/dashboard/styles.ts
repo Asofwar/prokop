@@ -424,6 +424,24 @@ export const styles = `
     overflow-wrap: anywhere;
 }
 
+.fkp_dashboard-page__outbound-grid__item__insecure {
+    margin-top: 6px;
+    color: var(--warn-color-medium, orange);
+    font-size: 0.85em;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.fkp_dashboard-page__subscription-notice {
+    grid-column: 1 / -1;
+    border-left: 3px solid var(--warn-color-medium, orange);
+    padding: 4px 8px;
+    background: var(--background-color-low, rgba(0, 0, 0, 0.04));
+    color: var(--text-color-medium);
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+}
+
 .fkp_dashboard-page__outbound-grid__item__latency--empty {
     color: var(--primary-color-low, lightgray);
 }

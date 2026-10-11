@@ -47,6 +47,8 @@ function starts_with(value, prefix) {
 
 function is_supported_share_link(line) {
     return starts_with(line, "ss://") ||
+        starts_with(line, "tuic://") ||
+        starts_with(line, "anytls://") ||
         starts_with(line, "vmess://") ||
         starts_with(line, "vless://") ||
         starts_with(line, "trojan://") ||
@@ -582,6 +584,49 @@ function percent_decode(value) {
     });
 }
 
+// Adjacent 9: a certificate pin instead of turning verification off. Links
+// carry the SHA-256 of the server's whole DER certificate: pinSHA256
+// (Hysteria2, TUIC, AnyTLS; hex, colons allowed) or pcs (Xray's
+// pinnedPeerCertSha256), Clash a hex "fingerprint", Xray JSON
+// pinnedPeerCertSha256; several are separated by commas. sing-box takes them
+// base64 in tls.certificate_sha256 (since 1.15.0; the generator decides what
+// an older core does). null: no pin; false: a pin that cannot be read, the
+// node is refused (a pin is never dropped silently).
+function certificate_pins(value) {
+    value = trim(as_string(value));
+    if (value == "")
+        return null;
+
+    let result = [];
+    for (let item in split(value, ",")) {
+        item = trim(item);
+        if (item == "")
+            continue;
+        let hex_value = replace(item, /:/g, "");
+        if (match(hex_value, /^[0-9A-Fa-f]{64}$/) != null) {
+            let binary = "";
+            for (let i = 0; i < 64; i += 2)
+                binary += chr(hex(substr(hex_value, i, 2)));
+            push(result, b64enc(binary));
+            continue;
+        }
+        let decoded = match(item, /^[A-Za-z0-9+\/_-]{43}=?$/) != null ? base64_decode(item) : null;
+        if (decoded == null || length(decoded) != 32)
+            return false;
+        push(result, b64enc(decoded));
+    }
+    return length(result) > 0 ? result : false;
+}
+
+function looks_like_certificate_hash(value) {
+    return match(replace(trim(as_string(value)), /:/g, ""), /^[0-9A-Fa-f]{64}$/) != null;
+}
+
+function query_certificate_pins(query) {
+    query = object_or_empty(query);
+    return certificate_pins(query.pinSHA256 || query.pinsha256 || query.pcs || "");
+}
+
 let fragment_prefix_decode_cache = {};
 let fragment_decode_cache = {};
 let query_parse_cache = {};
@@ -747,7 +792,7 @@ function normalize_utls_fingerprint(value) {
 function add_tls(url, security, default_tls) {
     let query = object_or_empty(url.query);
     let sni = query.sni || query.peer || "";
-    let insecure = query.allowInsecure || query.insecure || "";
+    let insecure = query.allowInsecure || query.insecure || query.allow_insecure || "";
     let transport = query.type || "";
     let alpn = tls_alpn_for_transport(split_csv(query.alpn || ""), transport);
 
@@ -769,11 +814,17 @@ function add_tls(url, security, default_tls) {
     if (!tls_enabled)
         return [null, true];
 
+    let pins = query_certificate_pins(query);
+    if (pins === false)
+        return [null, false];
+
     let tls = { enabled: true };
     if (sni != "")
         tls.server_name = sni;
     if (is_true(insecure))
         tls.insecure = true;
+    if (pins != null)
+        tls.certificate_sha256 = pins;
     if (length(alpn) > 0)
         tls.alpn = alpn;
     if (fingerprint != "")
@@ -1148,11 +1199,17 @@ function process_hysteria2(raw, url) {
     if (password == "")
         return null;
 
+    let pins = query_certificate_pins(url.query);
+    if (pins === false)
+        return null;
+
     let tls = { enabled: true };
     if ((url.query.sni || "") != "")
         tls.server_name = url.query.sni;
     if (is_true(url.query.allowInsecure || url.query.insecure))
         tls.insecure = true;
+    if (pins != null)
+        tls.certificate_sha256 = pins;
     if ((url.query.alpn || "") != "")
         tls.alpn = split_csv(url.query.alpn);
 
@@ -1181,6 +1238,89 @@ function process_hysteria2(raw, url) {
             outbound.obfs.password = url.query["obfs-password"];
     }
     return outbound;
+}
+
+// R4 (cergo666/netshift bc5de4f0, written anew): TUIC v5 over QUIC.
+// tuic://uuid:password@host:port?congestion_control=bbr&udp_relay_mode=native
+// &alpn=h3&sni=...&allow_insecure=1&disable_sni=1&reduce_rtt=1. QUIC has no
+// uTLS, so a fingerprint is not carried over.
+const TUIC_CONGESTION_CONTROLS = { cubic: true, new_reno: true, bbr: true };
+const TUIC_UDP_RELAY_MODES = { native: true, quic: true };
+
+function tuic_outbound(raw, tag, server, port, uuid, password, options) {
+    if (server == "" || !valid_port(port) || uuid == "")
+        return null;
+    let pins = options.pins;
+    if (pins === false)
+        return null;
+
+    let tls = { enabled: true };
+    if (options.sni != "")
+        tls.server_name = options.sni;
+    if (is_true(options.insecure))
+        tls.insecure = true;
+    if (is_true(options.disable_sni))
+        tls.disable_sni = true;
+    if (length(options.alpn) > 0)
+        tls.alpn = options.alpn;
+    if (pins != null)
+        tls.certificate_sha256 = pins;
+
+    let outbound = { type: "tuic", tag, server, server_port: port, uuid };
+    if (raw != null)
+        outbound.share_link = raw;
+    if (password != "")
+        outbound.password = password;
+    let congestion = lc(as_string(options.congestion_control));
+    if (TUIC_CONGESTION_CONTROLS[congestion])
+        outbound.congestion_control = congestion;
+    let relay = lc(as_string(options.udp_relay_mode));
+    if (TUIC_UDP_RELAY_MODES[relay])
+        outbound.udp_relay_mode = relay;
+    if (is_true(options.zero_rtt))
+        outbound.zero_rtt_handshake = true;
+    outbound.tls = tls;
+    return outbound;
+}
+
+function process_tuic(raw, url) {
+    let userinfo = as_string(url.userinfo_raw);
+    let colon = index(userinfo, ":");
+    let uuid = percent_decode(colon >= 0 ? substr(userinfo, 0, colon) : userinfo);
+    let password = colon >= 0 ? percent_decode(substr(userinfo, colon + 1)) : "";
+    let query = url.query;
+    return tuic_outbound(raw, url.fragment != "" ? url.fragment : (url.host + ":" + url.port),
+        url.host, url.port, uuid, password, {
+            sni: as_string(query.sni || query.peer || ""),
+            insecure: query.allow_insecure || query.allowInsecure || query.insecure || "",
+            disable_sni: query.disable_sni || "",
+            alpn: split_csv(query.alpn || ""),
+            congestion_control: query.congestion_control || query["congestion-control"] || "",
+            udp_relay_mode: query.udp_relay_mode || query["udp-relay-mode"] || "",
+            zero_rtt: query.reduce_rtt || query.zero_rtt_handshake || "",
+            pins: query_certificate_pins(query)
+        });
+}
+
+// R4: AnyTLS (sing-box 1.12.0+, the oldest core Prokop supports).
+// anytls://password@host:port/?sni=...&insecure=1&alpn=...&fp=chrome. TLS is
+// required: a link that turns it off is refused.
+function process_anytls(raw, url) {
+    let password = percent_decode(as_string(url.userinfo_raw));
+    if (url.host == "" || !valid_port(url.port) || password == "")
+        return null;
+    let tls_result = add_tls(url, url.query.security || "tls", true);
+    if (!tls_result[1] || tls_result[0] == null)
+        return null;
+    return {
+        type: "anytls",
+        tag: url.fragment != "" ? url.fragment : (url.host + ":" + url.port),
+        share_link: raw,
+        server: url.host,
+        server_port: url.port,
+        password,
+        tls: tls_result[0]
+    };
 }
 
 function string_value(value) {
@@ -1302,6 +1442,10 @@ function parse_share_link(line) {
         return process_trojan(line, url);
     if (url.scheme == "hysteria2" || url.scheme == "hy2")
         return process_hysteria2(line, url);
+    if (url.scheme == "tuic")
+        return process_tuic(line, url);
+    if (url.scheme == "anytls")
+        return process_anytls(line, url);
     if (match(url.scheme, /^socks/))
         return process_socks(line, url);
     return null;
@@ -1624,6 +1768,8 @@ function add_clash_tls(outbound, options) {
         tls.server_name = options.sni;
     if (is_true(options.skip_verify))
         tls.insecure = true;
+    if (options.pins != null)
+        tls.certificate_sha256 = options.pins;
     let alpn = tls_alpn_for_transport(split_csv(options.alpn), options.network);
     if (length(alpn) > 0)
         tls.alpn = alpn;
@@ -1714,8 +1860,15 @@ function parse_clash_record(record) {
         reality_public_key: as_string(record["reality-opts.public-key"]),
         reality_short_id: as_string(record["reality-opts.short-id"]),
         alpn: normalized_clash_alpn(record.alpn || ""),
-        fingerprint: normalize_utls_fingerprint(as_string(record["client-fingerprint"] || record.fingerprint))
+        // Clash's "fingerprint" is the certificate's SHA-256 (a pin); an
+        // older Prokop read it as the uTLS name, which other values stay.
+        pins: looks_like_certificate_hash(record.fingerprint) ? certificate_pins(record.fingerprint) : null,
+        fingerprint: normalize_utls_fingerprint(as_string(record["client-fingerprint"] ||
+            (looks_like_certificate_hash(record.fingerprint) ? "" : record.fingerprint)))
     };
+
+    if (options.pins === false)
+        return null;
 
     if (proxy_type == "ss" || proxy_type == "shadowsocks") {
         let method = as_string(record.cipher);
@@ -1782,6 +1935,8 @@ function parse_clash_record(record) {
             outbound.tls.server_name = options.sni;
         if (is_true(options.skip_verify))
             outbound.tls.insecure = true;
+        if (options.pins != null)
+            outbound.tls.certificate_sha256 = options.pins;
         if (options.alpn != "")
             outbound.tls.alpn = split_csv(options.alpn);
         let obfs = as_string(record.obfs);
@@ -1791,6 +1946,36 @@ function parse_clash_record(record) {
             if (obfs_password != "")
                 outbound.obfs.password = obfs_password;
         }
+        return outbound;
+    }
+    if (proxy_type == "tuic") {
+        return tuic_outbound(null, name, server, port, as_string(record.uuid), as_string(record.password), {
+            sni: options.sni,
+            insecure: options.skip_verify,
+            disable_sni: as_string(record["disable-sni"]),
+            alpn: split_csv(options.alpn),
+            congestion_control: as_string(record["congestion-controller"] || record["congestion-control"]),
+            udp_relay_mode: as_string(record["udp-relay-mode"]),
+            zero_rtt: as_string(record["reduce-rtt"]),
+            pins: options.pins
+        });
+    }
+    if (proxy_type == "anytls") {
+        let password = as_string(record.password);
+        if (password == "")
+            return null;
+        let outbound = { type: "anytls", tag: name, server: server, server_port: port, password: password };
+        options.always = true;
+        options.network = "";
+        add_clash_tls(outbound, options);
+        for (let item in [ [ "idle-session-check-interval", "idle_session_check_interval" ],
+            [ "idle-session-timeout", "idle_session_timeout" ] ]) {
+            let value = as_string(record[item[0]]);
+            if (is_integer_string(value))
+                outbound[item[1]] = value + "s";
+        }
+        if (is_integer_string(as_string(record["min-idle-session"])))
+            outbound.min_idle_session = int(record["min-idle-session"]);
         return outbound;
     }
     if (proxy_type == "socks5" || proxy_type == "socks") {
@@ -2419,6 +2604,10 @@ function xray_tls_from_stream(stream, network) {
     if (security != "tls" && security != "xtls" && security != "reality" && length(keys(settings)) == 0)
         return null;
 
+    let pins = certificate_pins(settings.pinnedPeerCertSha256 || "");
+    if (pins === false)
+        return false;
+
     let tls = { enabled: true };
     let server_name = xray_first_string([settings.serverName, settings.server_name, settings.sni]);
     let alpn = tls_alpn_for_transport(xray_alpn(settings.alpn), network);
@@ -2426,6 +2615,8 @@ function xray_tls_from_stream(stream, network) {
         tls.server_name = server_name;
     if (is_true(settings.allowInsecure) || is_true(settings.insecure))
         tls.insecure = true;
+    if (pins != null)
+        tls.certificate_sha256 = pins;
     if (length(alpn) > 0)
         tls.alpn = alpn;
 
@@ -2597,6 +2788,8 @@ function convert_xray_vless(outbound, tag) {
     if (transport === false)
         return null;
     let tls = xray_tls_from_stream(stream, lc(as_string(stream.network || "")));
+    if (tls === false)
+        return null;
     if (tls)
         result.tls = tls;
     if (transport)
@@ -2658,6 +2851,11 @@ function convert_xray_hysteria2(outbound, tag) {
         result.tls.server_name = server_name;
     if (is_true(tls_settings.allowInsecure) || is_true(tls_settings.insecure))
         result.tls.insecure = true;
+    let pins = certificate_pins(tls_settings.pinnedPeerCertSha256 || "");
+    if (pins === false)
+        return null;
+    if (pins != null)
+        result.tls.certificate_sha256 = pins;
     let alpn = xray_alpn(tls_settings.alpn);
     if (length(alpn) > 0)
         result.tls.alpn = alpn;

@@ -30,6 +30,9 @@ let runtime_supports_xhttp = true;
 // X.Y.Z of sing-box-extended from "1.14.1-extended-2.7.2"; null when the
 // version is not known.
 let runtime_extended_version = null;
+// X.Y.Z of the core ("1.15.0" of "1.15.0-extended-..."), with whether it is
+// a pre-release of that version (alpha, beta, rc); null when unknown.
+let runtime_core_version = null;
 // C15: the payload probes of the priority groups that check payload: a
 // selector with the group's nodes, reached through a mixed inbound on the
 // loopback address, which the priority worker points at the node under
@@ -587,7 +590,70 @@ function supported_subscription_outbound(outbound) {
     if (t == "direct" || t == "selector" || t == "urltest" || t == "dns" || t == "block")
         return false;
     return t == "vless" || t == "vmess" || t == "trojan" || t == "shadowsocks" ||
-        t == "socks" || t == "hysteria2";
+        t == "socks" || t == "hysteria2" || t == "tuic" || t == "anytls";
+}
+
+// The core is at least major.minor.patch; a pre-release of exactly that
+// version, or an unknown version, is not (fail closed).
+function core_at_least(major, minor, patch) {
+    let v = runtime_core_version;
+    if (v == null)
+        return false;
+    if (v[0] != major)
+        return v[0] > major;
+    if (v[1] != minor)
+        return v[1] > minor;
+    if (v[2] != patch)
+        return v[2] > patch;
+    return !v[3];
+}
+
+// Adjacent 9: tls.certificate_sha256 (the SHA-256 of the whole certificate,
+// which links carry as pinSHA256 or pcs) came with sing-box 1.15.0
+// (docs/configuration/shared/tls.md); 1.13's certificate_public_key_sha256
+// pins the public key only and cannot take these hashes. sing-box refuses
+// unknown fields, so on an older core a pinned node either keeps the
+// insecure its link also asks for (the pin is left out and the log says so)
+// or is refused: a pin is never dropped while verification is off unasked.
+const CERTIFICATE_SHA256_MIN = [ 1, 15, 0 ];
+
+function certificate_pins_of(outbound) {
+    let tls = type(outbound) == "object" && type(outbound.tls) == "object" ? outbound.tls : null;
+    return tls != null && type(tls.certificate_sha256) == "array" && length(tls.certificate_sha256) > 0
+        ? tls.certificate_sha256 : null;
+}
+
+function certificate_pin_supported() {
+    return core_at_least(CERTIFICATE_SHA256_MIN[0], CERTIFICATE_SHA256_MIN[1], CERTIFICATE_SHA256_MIN[2]);
+}
+
+// "" or why the node cannot run on this core.
+function certificate_pin_unsupported(outbound) {
+    if (certificate_pins_of(outbound) == null || certificate_pin_supported() || outbound.tls.insecure === true)
+        return "";
+    return "its certificate pin needs sing-box " + join(".", CERTIFICATE_SHA256_MIN) +
+        " or newer, and its link does not allow skipping certificate verification";
+}
+
+// The TLS the core runs for a pinned node: the pin replaces verification
+// (insecure is not needed with it); on an older core the node keeps the
+// insecure of its link and the pin is left out, with a warning.
+function apply_certificate_pin(outbound, name) {
+    if (certificate_pins_of(outbound) == null)
+        return outbound;
+    let tls = {};
+    for (let key, value in outbound.tls)
+        tls[key] = value;
+    if (certificate_pin_supported()) {
+        delete tls.insecure;
+    }
+    else {
+        delete tls.certificate_sha256;
+        warn("certificate pin of '", as_string(name), "' left out: it needs sing-box ", join(".", CERTIFICATE_SHA256_MIN),
+            " or newer; the node skips certificate verification, as its link allows\n");
+    }
+    outbound.tls = tls;
+    return outbound;
 }
 
 function outbound_uses_xhttp(outbound) {
@@ -805,7 +871,7 @@ function warn_skipped_subscription_outbound(section_name, outbound, reason) {
         subscription_outbound_display_name(outbound), " (", reason, ")\n");
 }
 
-function compatible_subscription_outbounds(outbounds, section_name) {
+function compatible_subscription_outbounds(outbounds, section_name, skip_counts) {
     let source_refs = subscription_reference_set(outbounds);
     let retained = [];
     for (let outbound in array_or_empty(outbounds)) {
@@ -818,6 +884,13 @@ function compatible_subscription_outbounds(outbounds, section_name) {
         let encryption = vless_encryption_unsupported(outbound);
         if (encryption != "") {
             warn_skipped_subscription_outbound(section_name, outbound, encryption);
+            continue;
+        }
+        let pin = certificate_pin_unsupported(outbound);
+        if (pin != "") {
+            warn_skipped_subscription_outbound(section_name, outbound, pin);
+            if (type(skip_counts) == "object")
+                skip_counts.pin = (skip_counts.pin || 0) + 1;
             continue;
         }
         push(retained, outbound);
@@ -863,7 +936,8 @@ function copy_subscription_outbound(outbound, new_tag) {
             index(key, LEGACY_SUBSCRIPTION_KEY_PREFIX) != 0)
             copy[key] = value;
     }
-    if (as_string(copy.type || "") == "hysteria2" &&
+    // QUIC (Hysteria2, TUIC) has no uTLS.
+    if ((as_string(copy.type || "") == "hysteria2" || as_string(copy.type || "") == "tuic") &&
         type(copy.tls) == "object" &&
         copy.tls.utls != null) {
         let tls = {};
@@ -874,7 +948,7 @@ function copy_subscription_outbound(outbound, new_tag) {
         copy.tls = tls;
     }
     copy.tag = new_tag;
-    return copy;
+    return apply_certificate_pin(copy, as_string(outbound.remark || outbound.tag || new_tag));
 }
 
 function string_array_contains(values, needle) {
@@ -1948,7 +2022,8 @@ function add_direct_proxy(config, settings, service_address) {
 // reading it and lost '#', '&' and '+' in credentials and paths, and refused
 // Hysteria2 port ranges the UI accepts (SB-2, SB-3).
 let share_link_parser = null;
-const MANUAL_LINK_SCHEMES = [ "vmess", "ss", "vless", "trojan", "hysteria2", "hy2", "socks4", "socks4a", "socks5", "socks5h" ];
+const MANUAL_LINK_SCHEMES = [ "vmess", "ss", "vless", "trojan", "hysteria2", "hy2", "tuic", "anytls",
+    "socks4", "socks4a", "socks5", "socks5h" ];
 
 // null for a link the parser cannot build an outbound from (an unknown
 // scheme, or a transport sing-box has none of, as kcp or quic): that node
@@ -1973,7 +2048,13 @@ function manual_link_outbound(link, tag_name, section_name) {
     delete outbound.share_link;
     delete outbound.remark;
     outbound.tag = tag_name;
-    return outbound;
+    let name = url_fragment(link);
+    let pin = certificate_pin_unsupported(outbound);
+    if (pin != "") {
+        warn("skipped manual proxy link ", name != "" ? "'" + name + "' " : "", "of rule '", as_string(section_name), "': ", pin, "\n");
+        return null;
+    }
+    return apply_certificate_pin(outbound, name != "" ? name : tag_name);
 }
 
 function add_manual_proxy_link(config, state, section_name, manual_index, link, taken, selector_tags, urltest_candidate_tags) {
@@ -3232,6 +3313,10 @@ function enabled_sections(deferred_sections) {
 function apply_sing_box_version(config, sing_box_version) {
     let version_parts = match(as_string(sing_box_version), /^v?([0-9]+)\.([0-9]+)\./);
     let extended_parts = match(as_string(sing_box_version), /-extended-([0-9]+)\.([0-9]+)\.([0-9]+)/);
+    let core_parts = match(as_string(sing_box_version), /^v?([0-9]+)\.([0-9]+)\.([0-9]+)(-(alpha|beta|rc))?/);
+    runtime_core_version = core_parts != null
+        ? [ int(core_parts[1]), int(core_parts[2]), int(core_parts[3]), core_parts[4] != null ]
+        : null;
     runtime_extended_version = extended_parts != null
         ? [ int(extended_parts[1]), int(extended_parts[2]), int(extended_parts[3]) ]
         : null;
