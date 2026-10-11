@@ -70,6 +70,10 @@ function outcome(result) {
     // candidate is not to blame and the daily budget is not spent (AT-3).
     if (status == "rolled_back" && as_string(result.reason) == "verification_network_unavailable")
         return { status, counted: false, cooldown: false, reset: true, history: "recovered" };
+    // Certificates failed their time check during the verification: the
+    // clock is to blame, not the candidate (core/clock.uc).
+    if (status == "rolled_back" && as_string(result.reason) == "verification_clock_problem")
+        return { status, counted: false, cooldown: false, reset: true, history: "recovered" };
     if (status == "rolled_back") return { status, counted: true, cooldown: true, reset: true, history: "recovered" };
     if (status == "no_change_required") return { status, counted: false, cooldown: false, reset: true, history: null };
     // Nothing was changed: the plan went stale or another autotune ran.

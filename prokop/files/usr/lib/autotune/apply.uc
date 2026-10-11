@@ -55,6 +55,7 @@ let list_worker = require("core.list_worker");
 let resolver = require("routing.resolve");
 let dpi_strategy = require("core.dpi_strategy");
 let durable = require("core.durable");
+let clock_module = require("core.clock");
 
 const LIB_DIR = getenv("PROKOP_LIB") || "/usr/lib/prokop";
 const CONFIG_FILE = getenv("PROKOP_CONFIG_FILE") || "/etc/config/prokop";
@@ -441,6 +442,13 @@ function probe_series(one) {
 // A curl timeout (exit 28) without time_connect is not such proof: curl
 // reports a TLS handshake the DPI blackholes the same way, and these probes
 // have no SYN-ACK count (probe.uc handshake). It blames the candidate.
+// A probe of the traffic check failed its certificate's time check: the
+// router clock is wrong (autotune/probe.uc clock_problem).
+function clock_problem(traffic) {
+    let probes = type(traffic) == "object" && type(traffic.probes) == "array" ? traffic.probes : [];
+    return length(filter(probes, (p) => type(p) == "object" && p.class == "clock_problem")) > 0;
+}
+
 function network_unavailable(probes, successes) {
     let proven = (p) => select_module.network_failure(p) && !(p.curl_exit_code == 28 && p.syn_acks == null);
     return successes < length(probes) &&
@@ -741,6 +749,9 @@ function plan(selection_file, resolver) {
     if (checked.state != "supported" || checked.protocol != "tcp") {
         result.status = "failed"; result.reason = "candidate_unsupported"; result.candidate_reason = checked.reason; return result;
     }
+    // Only a zapret strategy is ever written: a Zapret2 candidate is a
+    // recommendation for the operator (autotune/manager.uc applicable).
+    if (checked.provider != "zapret") { result.status = "not_applicable"; result.reason = "zapret2_apply_unsupported"; return result; }
     if (!dns.fakeip) { result.status = "not_applicable"; result.reason = "target_not_fakeip_routed"; return result; }
     if (!owner.decided) { result.status = "not_applicable"; result.reason = "rule_owner_undecidable:" + owner.reason; return result; }
     if (owner.kind != "zapret") { result.status = "not_applicable"; result.reason = "target_not_handled_by_dpi_rule"; return result; }
@@ -1025,6 +1036,9 @@ function apply(plan_file, resolver, observed) {
     // interruption, not their failure, is the reason.
     if (interrupted) return refuse("failed", "interrupted_before_mutation");
     if (reason != null) return refuse("stale", reason);
+    // No production change on a clock NTP has not set: its verification
+    // would judge certificates by a wrong time (core/clock.uc).
+    if (clock_module.status().state == "unsynced") return refuse("stale", "clock_unsynced");
     let text = fs.readfile(CONFIG_FILE);
     let candidate = build_candidate(text, p.owner.section, p.changes[0].to);
     if (interrupted) return refuse("failed", "interrupted_before_mutation");
@@ -1098,8 +1112,11 @@ function apply(plan_file, resolver, observed) {
         // take up to minutes the failing candidate would otherwise keep
         // serving the whole rule.
         let proven = type(v.traffic) == "object" && v.traffic.network_unavailable === true;
-        let result = rollback_to(audit, p, proven ? "verification_network_unavailable" : "verification_failed");
-        if (proven || result.phase != "rolled_back" || interrupted) return result;
+        // Certificates that failed their time check: the clock, not the
+        // candidate, failed the verification. Rolled back all the same.
+        let clock = !proven && clock_problem(v.traffic);
+        let result = rollback_to(audit, p, proven ? "verification_network_unavailable" : clock ? "verification_clock_problem" : "verification_failed");
+        if (proven || clock || result.phase != "rolled_back" || interrupted) return result;
         if (settle_network(p, v.traffic) && v.traffic?.network_unavailable === true)
             audit.reason = "verification_network_unavailable";
         audit.verification = v;
@@ -1168,6 +1185,8 @@ function observe(started_at) {
     let s = state_read();
     if (type(s) != "object" || s.unreadable || s.mutation == null || s.started_at !== started_at)
         return { status: "ended", reason: "record_changed" };
+    // No verdict on a clock NTP has not set (core/clock.uc).
+    if (clock_module.status().state == "unsynced") return { status: "inconclusive", reason: "clock_unsynced" };
     // Who ended it: an observation rollback, or the operator, a run that
     // died (AT-15).
     if (s.phase != "applied")
@@ -1199,6 +1218,8 @@ function observe(started_at) {
     // The coherence checks failed before any request was sent.
     if (type(t) != "object") { output.reason = "runtime_not_coherent"; return output; }
     if (t.network_unavailable === true) { output.reason = "network_unavailable"; return output; }
+    // A certificate time error is the clock's, never the candidate's.
+    if (clock_problem(t)) { output.reason = "clock_problem"; return output; }
     if (length(failing) == 1 && failing[0] == "traffic_transport") {
         // Only a check whose requests took the rule's path can blame the
         // candidate, so only it needs the control runs (AT-14).
@@ -1226,6 +1247,8 @@ function confirm(started_at) {
     let s = state_read();
     if (type(s) != "object" || s.unreadable || s.mutation == null || s.started_at !== started_at)
         return { status: "ended", reason: "record_changed" };
+    // Last-known-working is not moved on a clock NTP has not set.
+    if (clock_module.status().state == "unsynced") return { status: "inconclusive", reason: "clock_unsynced" };
     if (s.phase != "applied") return { status: "ended", reason: "apply_" + as_string(s.phase) };
     if (s.lkg == "confirmed") return { status: "confirmed", reason: "already_confirmed" };
     if (s.lkg != LKG_OBSERVATION) return { status: "ended", reason: "not_observed" };
