@@ -161,8 +161,9 @@ function stubs(canReadUci, calls, { stale = false } = {}) {
 
   const acl = JSON.parse(fs.readFileSync(
     path.join(root, 'luci-app-prokop/root/usr/share/rpcd/acl.d/luci-app-prokop.json'), 'utf8'));
-  assert.deepEqual(acl['luci-app-prokop-admin'].read.uci, ['prokop'],
-    'the Settings gate group must grant the Prokop UCI read access');
+  // dhcp: the static leases, for the rule device pickers' warning.
+  assert.deepEqual(acl['luci-app-prokop-admin'].read.uci, ['prokop', 'dhcp'],
+    'the Settings gate group must grant the Prokop UCI read access (and the static leases)');
 
   console.log('luci_readonly_view: PASS');
 })().catch(error => { console.error(error); process.exitCode = 1; });

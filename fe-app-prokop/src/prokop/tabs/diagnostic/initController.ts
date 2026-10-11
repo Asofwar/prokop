@@ -5,6 +5,7 @@ import { runDnsCheck } from './checks/runDnsCheck';
 import { runSingBoxCheck } from './checks/runSingBoxCheck';
 import { runNftCheck } from './checks/runNftCheck';
 import { runFakeIPCheck } from './checks/runFakeIPCheck';
+import { runEnvironmentCheck } from './checks/runEnvironmentCheck';
 import { runZapretCheck } from './checks/runZapretCheck';
 import { runZapret2Check } from './checks/runZapret2Check';
 import { runByedpiCheck } from './checks/runByedpiCheck';
@@ -892,6 +893,7 @@ function getDiagnosticRunners(
       : []),
     { code: DIAGNOSTICS_CHECKS.OUTBOUNDS, run: runSectionsCheck },
     { code: DIAGNOSTICS_CHECKS.FAKEIP, run: runFakeIPCheck },
+    { code: DIAGNOSTICS_CHECKS.ENVIRONMENT, run: runEnvironmentCheck },
   ];
 }
 

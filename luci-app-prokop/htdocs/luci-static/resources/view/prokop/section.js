@@ -8045,6 +8045,12 @@ function addDynamicConditionField(section, config) {
   return o;
 }
 
+function deviceOptionDescription(text) {
+  return `${text} ${_(
+    "A device can also be chosen by its MAC address (needs sing-box 1.14 or later); it is then matched only while it is connected by cable or Wi-Fi, not over a VPN or PPP interface.",
+  )}`;
+}
+
 function addLocalDeviceSubnetDynamicField(section, config) {
   const o = section.taboption(
     "devices",
@@ -8055,10 +8061,20 @@ function addLocalDeviceSubnetDynamicField(section, config) {
   );
 
   o.modalonly = true;
-  o.placeholder = _("Device or IP");
+  o.placeholder = _("Device, IP or MAC");
   o.validate = function (_section_id, value) {
     if (!value || value.length === 0) {
       return true;
+    }
+
+    // A device by MAC address (sing-box 1.14 or later; the validator and
+    // the generator refuse an older one at start).
+    if (localDevices.looksLikeDeviceMac(value)) {
+      return localDevices.normalizeDeviceMac(value)
+        ? true
+        : _(
+            "Enter the MAC address of one device as six hex pairs, e.g. aa:bb:cc:dd:ee:ff",
+          );
     }
 
     const validation = main.validateSubnet(value);
@@ -8083,7 +8099,12 @@ function addLocalDeviceSubnetDynamicField(section, config) {
       : current.values;
   };
   o.write = function (section_id, value) {
-    writeListOption(section_id, config.key, value);
+    // MAC addresses are stored as nft and sing-box print them: lower case
+    // with ':'.
+    const values = normalizeOptionValues(value).map(
+      (item) => localDevices.normalizeDeviceMac(item) || item,
+    );
+    writeListOption(section_id, config.key, values);
     uci.unset(UCI_PACKAGE, section_id, `${config.key}_text`);
     uci.unset(UCI_PACKAGE, section_id, `${config.key}_text_mode`);
   };
@@ -10127,8 +10148,8 @@ function createSectionContent(section) {
     key: "source_ip_cidr",
     legacyText: true,
     label: _("Device filter"),
-    description: _(
-      "Apply section rules only to the specified local IP addresses",
+    description: deviceOptionDescription(
+      _("Apply section rules only to the specified local IP addresses"),
     ),
   });
   dependsOnRuleConditions(sourceIpOption);
@@ -10147,8 +10168,10 @@ function createSectionContent(section) {
   const fullyRoutedOption = addLocalDeviceSubnetDynamicField(section, {
     key: "fully_routed_ips",
     label: _("Forced device routing"),
-    description: _(
-      "All traffic from these IP addresses will be routed through the section unconditionally, ignoring all other conditions.",
+    description: deviceOptionDescription(
+      _(
+        "All traffic from these IP addresses will be routed through the section unconditionally, ignoring all other conditions.",
+      ),
     ),
   });
   dependsOnRoutingAction(fullyRoutedOption);
@@ -10158,8 +10181,10 @@ function createSectionContent(section) {
     key: "excluded_source_ip_cidr",
     legacyText: true,
     label: _("Exclude devices"),
-    description: _(
-      "Do not apply this section to the specified local IP addresses; matching continues with the next section.",
+    description: deviceOptionDescription(
+      _(
+        "Do not apply this section to the specified local IP addresses; matching continues with the next section.",
+      ),
     ),
   });
   dependsOnRoutingAction(excludedSourcesOption);

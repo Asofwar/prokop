@@ -119,7 +119,8 @@ export class StoreService<T extends Record<string, any>> {
 }
 
 export interface IDiagnosticsChecksItem {
-  state: 'error' | 'warning' | 'success';
+  // neutral: not checked or not available for checking (no verdict).
+  state: 'error' | 'warning' | 'success' | 'neutral';
   key: string;
   value: string;
 }

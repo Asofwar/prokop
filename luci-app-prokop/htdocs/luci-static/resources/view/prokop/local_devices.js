@@ -2,6 +2,7 @@
 "require baseclass";
 "require rpc";
 "require ui";
+"require uci";
 "require view.prokop.main as main";
 
 const callHostHints = rpc.declare({
@@ -22,7 +23,31 @@ const callNetworkInterfaceDump = rpc.declare({
 
 let localDeviceChoicesCache = null;
 let localDeviceHostsCache = null;
+let localDeviceMacChoicesCache = null;
 let localDeviceChoicesPromise = null;
+let staticLeaseIpsPromise = null;
+
+// A device MAC address as the rule device options accept it (the backend's
+// core/ip.uc normalize_mac): six hex pairs with one kind of separator, ':'
+// or '-'. Stored in lower case with ':'; a multicast or all-zero address is
+// never a source and is refused.
+const MAC_PATTERN = /^[0-9a-f]{2}([:-])[0-9a-f]{2}(\1[0-9a-f]{2}){4}$/i;
+
+function looksLikeDeviceMac(value) {
+  return /^[0-9a-f]{2}([:-][0-9a-f]{2}){5}$/i.test(`${value || ""}`.trim());
+}
+
+function normalizeDeviceMac(value) {
+  const text = `${value || ""}`.trim().toLowerCase();
+  if (!MAC_PATTERN.test(text)) {
+    return null;
+  }
+  const octets = text.split(/[:-]/);
+  if (parseInt(octets[0], 16) & 1 || octets.join("") === "000000000000") {
+    return null;
+  }
+  return octets.join(":");
+}
 
 function normalizeOptionValues(value) {
   if (!value) {
@@ -142,6 +167,38 @@ function buildLocalDeviceChoices(hostHints, dhcpLeases, networkInterfaces) {
   return choices;
 }
 
+// MAC -> name of the devices the router knows (host hints are keyed by MAC,
+// DHCP leases carry it): the pickers offer them next to the addresses. The
+// other users of the device list (site check, Monitoring) keep addresses.
+function buildLocalDeviceMacChoices(hostHints, dhcpLeases) {
+  const choices = {};
+  const add = (mac, name) => {
+    const normalizedMac = normalizeDeviceMac(mac);
+    const normalizedName = normalizeLocalDeviceName(name);
+    if (normalizedMac && normalizedName) {
+      choices[normalizedMac] = normalizedName;
+    }
+  };
+
+  if (hostHints && typeof hostHints === "object") {
+    Object.entries(hostHints).forEach(([mac, hint]) => {
+      if (hint && typeof hint === "object") {
+        add(mac, hint.name);
+      }
+    });
+  }
+
+  if (dhcpLeases && Array.isArray(dhcpLeases.dhcp_leases)) {
+    dhcpLeases.dhcp_leases.forEach((lease) => {
+      if (lease && typeof lease === "object") {
+        add(lease.macaddr, lease.hostname);
+      }
+    });
+  }
+
+  return choices;
+}
+
 function normalizeMac(value) {
   return `${value || ""}`.trim().toLowerCase();
 }
@@ -225,6 +282,10 @@ function loadLocalDeviceChoices() {
         dhcpLeases,
         networkInterfaces,
       );
+      localDeviceMacChoicesCache = buildLocalDeviceMacChoices(
+        hostHints,
+        dhcpLeases,
+      );
       return localDeviceChoicesCache;
     })
     .finally(() => {
@@ -267,8 +328,13 @@ function compareLocalDeviceIps(a, b) {
 
 function sortLocalDeviceChoiceValues(choices) {
   return Object.keys(choices).sort((a, b) => {
+    const aMac = looksLikeDeviceMac(a);
+    const bMac = looksLikeDeviceMac(b);
+    if (aMac !== bMac) {
+      return aMac ? 1 : -1;
+    }
     const byName = `${choices[a]}`.localeCompare(`${choices[b]}`);
-    return byName || compareLocalDeviceIps(a, b);
+    return byName || (aMac ? a.localeCompare(b) : compareLocalDeviceIps(a, b));
   });
 }
 
@@ -277,8 +343,10 @@ function sortLocalDeviceChoiceValues(choices) {
 function labelLocalDeviceChoices(choices) {
   const labels = {};
 
-  Object.keys(choices || {}).forEach((ip) => {
-    labels[ip] = `${choices[ip]} (${ip})`;
+  Object.keys(choices || {}).forEach((value) => {
+    labels[value] = looksLikeDeviceMac(value)
+      ? `${choices[value]} (MAC ${value})`
+      : `${choices[value]} (${value})`;
   });
 
   return labels;
@@ -299,14 +367,70 @@ function textChoiceLabels(values, labels) {
 
 function hasSingleIpValue(values) {
   return normalizeOptionValues(values).some(
-    (value) => main.validateIP(value).valid,
+    (value) => main.validateIP(value).valid || looksLikeDeviceMac(value),
   );
+}
+
+// The addresses of the static leases (DHCP and DNS -> Static Leases), or
+// null when the dhcp configuration cannot be read: then nothing is claimed.
+function loadStaticLeaseIps() {
+  if (staticLeaseIpsPromise) {
+    return staticLeaseIpsPromise;
+  }
+  staticLeaseIpsPromise =
+    typeof uci === "undefined"
+      ? Promise.resolve(null)
+      : Promise.resolve()
+          .then(() => uci.load("dhcp"))
+          .then(() => {
+            const ips = new Set();
+            (uci.sections("dhcp", "host") || []).forEach((host) => {
+              normalizeOptionValues(host.ip).forEach((ip) => ips.add(ip));
+            });
+            return ips;
+          })
+          .catch(() => null);
+  return staticLeaseIpsPromise;
+}
+
+// Single addresses of a device option without a static lease: the router
+// may give such an address to another device later, and the rule (or the
+// kill-switch's protection) then follows the address, not the device.
+function addressesWithoutStaticLease(values, staticIps) {
+  if (!staticIps) {
+    return [];
+  }
+  return normalizeOptionValues(values).filter(
+    (value) =>
+      !value.includes("/") &&
+      !looksLikeDeviceMac(value) &&
+      main.validateIP(value).valid &&
+      !staticIps.has(value),
+  );
+}
+
+function staticLeaseWarningText(addresses) {
+  return addresses.length
+    ? _(
+        "No static lease for %s: the router may give this address to another device, and the rule then applies to that device. Add a static lease (Network → DHCP and DNS → Static Leases) or choose the device by MAC address.",
+      ).replace("%s", addresses.join(", "))
+    : "";
 }
 
 function preloadLocalDeviceChoicesForValues(values) {
   return hasSingleIpValue(values)
     ? loadLocalDeviceChoices()
     : Promise.resolve(null);
+}
+
+// The warning goes under the list, as text. ui.DynamicList inserts new
+// items before its own last child, so it is a sibling, not a child.
+function renderStaticLeaseWarning() {
+  return E("div", {
+    class: "cbi-value-description prokop-device-lease-warning",
+    role: "status",
+    style: "display:none",
+  });
 }
 
 function createLocalDeviceDynamicListWidget(option, section_id, cfgvalue) {
@@ -318,7 +442,11 @@ function createLocalDeviceDynamicListWidget(option, section_id, cfgvalue) {
   return (
     shouldResolveExistingLabels ? loadLocalDeviceChoices() : Promise.resolve({})
   ).then((initialChoices) => {
-    const deviceChoices = localDeviceChoicesCache || initialChoices || {};
+    const deviceChoices = Object.assign(
+      {},
+      localDeviceChoicesCache || initialChoices || {},
+      localDeviceMacChoicesCache || {},
+    );
     const choices = labelLocalDeviceChoices(deviceChoices);
     const widget = new ui.DynamicList(values, choices, {
       id: option.cbid(section_id),
@@ -330,6 +458,20 @@ function createLocalDeviceDynamicListWidget(option, section_id, cfgvalue) {
       disabled: option.readonly != null ? option.readonly : option.map.readonly,
     });
     const node = widget.render();
+    const leaseWarning = renderStaticLeaseWarning();
+    const updateLeaseWarning = (current) => {
+      loadStaticLeaseIps().then((staticIps) => {
+        const text = staticLeaseWarningText(
+          addressesWithoutStaticLease(current, staticIps),
+        );
+        leaseWarning.textContent = text;
+        leaseWarning.style.display = text ? "" : "none";
+      });
+    };
+    updateLeaseWarning(values);
+    node.addEventListener("cbi-dynlist-change", () => {
+      updateLeaseWarning(widget.getValue());
+    });
     if (typeof option.onDeviceWidgetReady === "function") {
       option.onDeviceWidgetReady(section_id, widget);
     }
@@ -349,9 +491,14 @@ function createLocalDeviceDynamicListWidget(option, section_id, cfgvalue) {
       choicesLoading = true;
       loadLocalDeviceChoices()
         .then((loadedChoices) => {
-          const labels = labelLocalDeviceChoices(loadedChoices);
+          const allChoices = Object.assign(
+            {},
+            loadedChoices,
+            localDeviceMacChoicesCache || {},
+          );
+          const labels = labelLocalDeviceChoices(allChoices);
           widget.clearChoices();
-          const sortedValues = sortLocalDeviceChoiceValues(loadedChoices);
+          const sortedValues = sortLocalDeviceChoiceValues(allChoices);
           widget.addChoices(
             sortedValues,
             textChoiceLabels(sortedValues, labels),
@@ -376,12 +523,16 @@ function createLocalDeviceDynamicListWidget(option, section_id, cfgvalue) {
     node.addEventListener("mousedown", maybeLoadChoices, true);
     node.addEventListener("focusin", maybeLoadChoices, true);
 
-    return node;
+    return E("div", { class: "prokop-device-list" }, [node, leaseWarning]);
   });
 }
 
 const EntryPoint = {
+  addressesWithoutStaticLease,
   createLocalDeviceDynamicListWidget,
+  looksLikeDeviceMac,
+  normalizeDeviceMac,
+  staticLeaseWarningText,
   hasSingleIpValue,
   labelLocalDeviceChoices,
   loadLocalDeviceChoices,

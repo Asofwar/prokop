@@ -207,7 +207,7 @@ function port_matches(rule, port) {
 // The TLS options of a DPI rule by sing-box (singbox/dpi.uc ROUTE_OPTION_KEYS)
 // change how its outbound dials, not which connections the rule takes.
 const RULE_KEYS = [ "action", "outbound", "inbound", "domain", "domain_suffix", "domain_keyword", "domain_regex",
-    "ip_cidr", "rule_set", "source_ip_cidr", "port", "port_range", "network", "protocol",
+    "ip_cidr", "rule_set", "source_ip_cidr", "source_mac_address", "port", "port_range", "network", "protocol",
     "tls_fragment", "tls_record_fragment", "tls_fragment_fallback_delay", "tls_spoof", "tls_spoof_method" ];
 // Sniffed protocols a TCP connection to a site can never have (disable_quic
 // adds a protocol=quic reject rule in front of every section rule,
@@ -412,6 +412,9 @@ function rule_matches(r, t, lists) {
     }
     if (dest_fields > 0 && dest == "no") return "no";
     if (dest == "unknown") return { reason: "undecidable_matcher" };
+    // A device by MAC: which device an address belongs to is known only to
+    // the router's neighbor table at connection time.
+    if (r.source_mac_address != null) return { reason: "source_mac_rule" };
     if (r.source_ip_cidr != null) {
         if (t.source == "") return { reason: "source_scoped_rule" };
         let inside = false;

@@ -1370,6 +1370,32 @@ function validate_kill_switch_dns_exempt(section) {
         fail_validation("Invalid kill_switch_dns_exempt value '" + value + "' in rule '" + section_name(section) + "'. Use 0 or 1. Aborted.");
 }
 
+// Devices by MAC address in the device options (core/ip.uc
+// split_device_values): a value written like a MAC must be a usable unicast
+// one, or the rule would silently apply to fewer devices than configured.
+const DEVICE_OPTIONS = [ "source_ip_cidr", "excluded_source_ip_cidr", "fully_routed_ips" ];
+
+function validate_device_values(section) {
+    for (let key in DEVICE_OPTIONS)
+        for (let value in rule_conditions.device_values(section, key).invalid_macs)
+            fail_validation("Rule '" + section_name(section) + "' has an invalid device MAC address '" + value + "' in " + key +
+                ": use six hex pairs (aa:bb:cc:dd:ee:ff) of a unicast address. Aborted.");
+}
+
+function rule_sections_with_device_macs() {
+    let names = [];
+    for (let section in sections_by_type("section")) {
+        if (!section_enabled(section))
+            continue;
+        for (let key in DEVICE_OPTIONS)
+            if (length(rule_conditions.device_values(section, key).macs) > 0) {
+                push(names, section_name(section));
+                break;
+            }
+    }
+    return names;
+}
+
 function validate_priority_group(section, group_id) {
     let name = section_name(section);
     validate_priority_identifier_value(group_id, name);
@@ -1709,6 +1735,7 @@ function validate_rule(section, sections, context) {
         fail_validation("Enabled rule '" + name + "' uses unsupported action '" + action + "'. Aborted.");
     validate_unsupported_legacy_matchers(section);
     validate_kill_switch_dns_exempt(section);
+    validate_device_values(section);
 
     if (action != "dns")
         for (let value in list_option(section, "ports"))
@@ -2426,6 +2453,12 @@ function check_runtime_requirements() {
     }
     else if (!version_at_least(sing_box_version, ctx.sing_box_required_version)) {
         fail_requirement("Package 'sing-box' version (" + sing_box_version + ") is lower than the required minimum (" + ctx.sing_box_required_version + "). Update sing-box: opkg update && opkg remove sing-box && opkg install sing-box. Aborted.", "error");
+    }
+    // sing-box matches a device by MAC (source_mac_address) from 1.14 on.
+    if (sing_box_version != "" && !version_at_least(sing_box_version, "1.14.0")) {
+        let mac_rules = rule_sections_with_device_macs();
+        if (length(mac_rules) > 0)
+            fail_requirement("Rule '" + mac_rules[0] + "' selects devices by MAC address, which needs sing-box 1.14 or later (installed: " + sing_box_version + "). Update sing-box or choose the devices by IP address. Aborted.", "error");
     }
 
     validate_dns_core_features(sing_box_version, sing_box_version_output, sing_box_compressed);

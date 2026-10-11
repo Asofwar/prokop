@@ -231,6 +231,10 @@ export const ProkopShellMethods = {
     callBaseMethod<Prokop.FakeIPCheckResult>(
       Prokop.AvailableMethods.CHECK_FAKEIP,
     ),
+  checkEnvironment: async () =>
+    callBaseMethod<Prokop.EnvironmentCheckResult>(
+      Prokop.AvailableMethods.CHECK_ENVIRONMENT,
+    ),
   checkNftRules: async () =>
     callBaseMethod<Prokop.NftRulesCheckResult>(
       Prokop.AvailableMethods.CHECK_NFT_RULES,

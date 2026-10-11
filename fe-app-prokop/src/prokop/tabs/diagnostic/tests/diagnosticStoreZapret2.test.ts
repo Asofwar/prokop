@@ -19,6 +19,7 @@ describe('diagnostic store provider checks', () => {
       DIAGNOSTICS_CHECKS.BYEDPI,
       DIAGNOSTICS_CHECKS.OUTBOUNDS,
       DIAGNOSTICS_CHECKS.FAKEIP,
+      DIAGNOSTICS_CHECKS.ENVIRONMENT,
     ]);
   });
 

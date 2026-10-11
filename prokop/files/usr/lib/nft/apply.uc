@@ -7,6 +7,7 @@ let core_ip = require("core.ip");
 let ipv6 = require("core.ipv6");
 let uci_core = require("core.uci");
 let rule_config = require("config.rule");
+let rule_conditions = require("routing.rule_conditions");
 let connections = require("config.connections");
 let routing_rulesets = require("routing.rulesets");
 let runtime_constants = require("singbox.constants");
@@ -15,6 +16,9 @@ let legacy = require("core.legacy_forkop");
 const CONFIG_NAME = getenv("PROKOP_CONFIG_NAME") || "prokop";
 const DNS_SOURCE_SET = "prokop_dns_sources";
 const DNS_SOURCE6_SET = "prokop_dns_sources6";
+// Devices by MAC whose DNS goes to the source-aware sing-box inbound; only
+// in a table whose configuration has such devices.
+const DNS_SOURCE_MAC_SET = "prokop_dns_sources_mac";
 const NFT_BATCH_FILE = getenv("PROKOP_NFT_BATCH_FILE") || "";
 // Prepared elements of rule-set subnet imports (tmpfs), by the rule set's
 // content and the rule's port filter: a reload, and the final apply of a list
@@ -603,6 +607,23 @@ function section_priority_prefix(section) {
     return "prokop_rule_" + as_string(section[".name"]);
 }
 
+// Devices by MAC address in a device option (core/ip.uc
+// split_device_values). nft matches them with `ether saddr`, which exists
+// only for a packet that came in over an Ethernet-type interface: in
+// prerouting and in the kill-switch's forward chain, never for the router's
+// own traffic (output). nft adds `meta iiftype ether` to such a match, so it
+// is false for a WireGuard or PPP client, and a negated one too: an
+// exclusion by MAC is therefore never a "!=" condition of the rule (it would
+// take every such client out of the rule, the kill-switch's included) but a
+// return in a chain of its own (nft_mac_exclusion_chain).
+function section_device_macs(section, key) {
+    return rule_conditions.device_values(section, key).macs;
+}
+
+function section_mac_exclusion_chain(section) {
+    return section_priority_prefix(section) + "_mac_excl";
+}
+
 function section_priority_sets(section) {
     let prefix = section_priority_prefix(section);
     return {
@@ -626,7 +647,12 @@ function section_priority_sets(section) {
         excluded_sources: prefix + "_excluded_sources",
         excluded_sources6: prefix + "_excluded_sources6",
         fully_sources: prefix + "_fully_sources",
-        fully_sources6: prefix + "_fully_sources6"
+        fully_sources6: prefix + "_fully_sources6",
+        // Devices by MAC (ether_addr sets), only for a section that has
+        // them: the tables of every other configuration stay as they were.
+        ...(length(section_device_macs(section, "source_ip_cidr")) > 0 ? { sources_mac: prefix + "_sources_mac" } : {}),
+        ...(length(section_device_macs(section, "excluded_source_ip_cidr")) > 0 ? { excluded_sources_mac: prefix + "_excluded_sources_mac" } : {}),
+        ...(length(section_device_macs(section, "fully_routed_ips")) > 0 ? { fully_sources_mac: prefix + "_fully_sources_mac" } : {})
     };
 }
 
@@ -721,7 +747,10 @@ function nft_create_priority_sets(table, sets) {
         nft_create_ipv4_set(table, sets.excluded_sources) &&
         nft_create_ipv6_set(table, sets.excluded_sources6) &&
         nft_create_ipv4_set(table, sets.fully_sources) &&
-        nft_create_ipv6_set(table, sets.fully_sources6);
+        nft_create_ipv6_set(table, sets.fully_sources6) &&
+        (sets.sources_mac == null || nft_create_set(table, sets.sources_mac, "{ type ether_addr; }")) &&
+        (sets.excluded_sources_mac == null || nft_create_set(table, sets.excluded_sources_mac, "{ type ether_addr; }")) &&
+        (sets.fully_sources_mac == null || nft_create_set(table, sets.fully_sources_mac, "{ type ether_addr; }"));
 }
 
 function nft_priority_verdict_args(priority_action, mark) {
@@ -732,61 +761,101 @@ function nft_priority_verdict_args(priority_action, mark) {
     return [ "meta", "mark", "set", mark, "counter", "accept" ];
 }
 
+// The verdict of a section's rules where the packet has a link layer
+// (prerouting, the kill-switch's forward chain): with devices excluded by
+// MAC, a jump to the section's exclusion chain, which returns for them (the
+// next rules and sections still apply) and gives the verdict otherwise.
+function nft_link_layer_verdict_args(section, mark) {
+    let sets = section_priority_sets(section);
+    if (sets.excluded_sources_mac == null)
+        return nft_priority_verdict_args(section_priority_action(section), mark);
+    return [ "jump", section_mac_exclusion_chain(section) ];
+}
+
+// A "return" verdict ends the kill-switch's policy chain (the section's
+// traffic is allowed); inside the exclusion chain it would only end that
+// chain and later sections would still reject it. "accept" ends the base
+// forward chain, whose policy chain is its last rule: the same outcome.
+function nft_create_mac_exclusion_chain(table, section, mark) {
+    let sets = section_priority_sets(section);
+    if (sets.excluded_sources_mac == null)
+        return true;
+    let chain = section_mac_exclusion_chain(section);
+    let verdict = nft_priority_verdict_args(section_priority_action(section), mark);
+    if (length(verdict) == 1 && verdict[0] == "return")
+        verdict = [ "accept" ];
+    return nft_create_chain(table, chain, "{ }") &&
+        nft_add_rule(table, chain, [ "ether", "saddr", "@" + as_string(sets.excluded_sources_mac), "return" ]) &&
+        nft_add_rule(table, chain, verdict);
+}
+
 function append_array(target, additions) {
     for (let item in additions)
         push(target, item);
     return target;
 }
 
-function nft_source_match_args(section, family, sets) {
-    let args = [];
-    if (section_has_source_ip_matchers(section))
-        append_array(args, family == 6
-            ? [ "ip6", "saddr", "@" + as_string(sets.sources6) ]
-            : [ "ip", "saddr", "@" + as_string(sets.sources) ]);
+// The source conditions of a section's rules, one list per rule: the
+// device filter's addresses and its MAC addresses are alternatives (one
+// rule each); without a filter one rule matches every source. Without a link
+// layer (link_layer false: the router's own traffic) a MAC never matches,
+// so a filter of MAC addresses only yields no rule at all.
+function nft_source_variants(section, family, sets, link_layer) {
+    let exclusion = [];
     if (section_has_excluded_source_ip_matchers(section))
-        append_array(args, family == 6
+        exclusion = family == 6
             ? [ "ip6", "saddr", "!=", "@" + as_string(sets.excluded_sources6) ]
-            : [ "ip", "saddr", "!=", "@" + as_string(sets.excluded_sources) ]);
-    return args;
+            : [ "ip", "saddr", "!=", "@" + as_string(sets.excluded_sources) ];
+    let has_ip = section_has_source_ip_matchers(section);
+    if (!has_ip && sets.sources_mac == null)
+        return [ exclusion ];
+    let variants = [];
+    if (has_ip)
+        push(variants, [ ...(family == 6
+            ? [ "ip6", "saddr", "@" + as_string(sets.sources6) ]
+            : [ "ip", "saddr", "@" + as_string(sets.sources) ]), ...exclusion ]);
+    if (sets.sources_mac != null && link_layer)
+        push(variants, [ "ether", "saddr", "@" + as_string(sets.sources_mac), ...exclusion ]);
+    return variants;
 }
 
-function nft_priority_rule_args(section, family, local_set, match_args, mark) {
-    let sets = section_priority_sets(section);
+function nft_priority_rule_args(section, family, local_set, match_args, mark, source_args, link_layer) {
     let args = [];
-    if (family == 4)
-        append_array(args, nft_source_match_args(section, 4, sets));
-    else
-        append_array(args, nft_source_match_args(section, 6, sets));
+    append_array(args, source_args);
     append_array(args, [ family == 6 ? "ip6" : "ip", "daddr", "!=", "@" + as_string(local_set) ]);
     append_array(args, match_args);
-    append_array(args, nft_priority_verdict_args(section_priority_action(section), mark));
-    return args;
-}
-
-function nft_priority_prerouting_args(section, family, interface_set, local_set, match_args, mark) {
-    let args = [ "iifname", "@" + as_string(interface_set) ];
-    append_array(args, nft_priority_rule_args(section, family, local_set, match_args, mark));
+    append_array(args, link_layer
+        ? nft_link_layer_verdict_args(section, mark)
+        : nft_priority_verdict_args(section_priority_action(section), mark));
     return args;
 }
 
 function nft_add_priority_rule_pair(table, chain, section, interface_set, localv4_set, localv6_set, match4, match6, mark) {
-    if (chain == "priority_rules") {
-        return nft_add_rule(table, chain, nft_priority_prerouting_args(section, 4, interface_set, localv4_set, match4, mark)) &&
-            nft_add_rule(table, chain, nft_priority_prerouting_args(section, 6, interface_set, localv6_set, match6, mark));
+    let sets = section_priority_sets(section);
+    let prerouting = chain == "priority_rules";
+    let v4 = nft_source_variants(section, 4, sets, prerouting);
+    let v6 = nft_source_variants(section, 6, sets, prerouting);
+    for (let i = 0; i < length(v4); i++) {
+        let rule4 = nft_priority_rule_args(section, 4, localv4_set, match4, mark, v4[i], prerouting);
+        let rule6 = nft_priority_rule_args(section, 6, localv6_set, match6, mark, v6[i], prerouting);
+        if (prerouting) {
+            rule4 = [ "iifname", "@" + as_string(interface_set), ...rule4 ];
+            rule6 = [ "iifname", "@" + as_string(interface_set), ...rule6 ];
+        }
+        if (!nft_add_rule(table, chain, rule4) || !nft_add_rule(table, chain, rule6))
+            return false;
     }
-
-    return nft_add_rule(table, chain, nft_priority_rule_args(section, 4, localv4_set, match4, mark)) &&
-        nft_add_rule(table, chain, nft_priority_rule_args(section, 6, localv6_set, match6, mark));
+    return true;
 }
 
-function nft_fully_routed_priority_args(section, family, interface_set, local_set, fakeip_range, protocol, mark) {
+// by_mac: the rule of the devices forced by MAC address.
+function nft_fully_routed_priority_args(section, family, interface_set, local_set, fakeip_range, protocol, mark, by_mac) {
     let sets = section_priority_sets(section);
     let ip_key = family == 6 ? "ip6" : "ip";
     let source_set = family == 6 ? sets.fully_sources6 : sets.fully_sources;
     let args = [
         "iifname", "@" + as_string(interface_set),
-        ip_key, "saddr", "@" + as_string(source_set),
+        ...(by_mac ? [ "ether", "saddr", "@" + as_string(sets.fully_sources_mac) ] : [ ip_key, "saddr", "@" + as_string(source_set) ]),
         ip_key, "daddr", "!=", "@" + as_string(local_set)
     ];
 
@@ -797,6 +866,7 @@ function nft_fully_routed_priority_args(section, family, interface_set, local_se
         append_array(args, [ ip_key, "daddr", "!=", fakeip_range ]);
     if (as_string(protocol) != "")
         append_array(args, [ "meta", "l4proto", protocol ]);
+    // Exclusions do not apply to a forced device, by address or by MAC.
     append_array(args, nft_priority_verdict_args(section_priority_action(section), mark));
     return args;
 }
@@ -805,15 +875,27 @@ function nft_add_fully_routed_priority_rules(table, section, interface_set, loca
     if (!section_has_fully_routed_ips(section))
         return true;
 
-    if (section_priority_action(section) == "bypass") {
-        return nft_add_rule(table, "priority_rules", nft_fully_routed_priority_args(section, 4, interface_set, localv4_set, fakeip_range, "", mark)) &&
-            nft_add_rule(table, "priority_rules", nft_fully_routed_priority_args(section, 6, interface_set, localv6_set, fakeip6_range, "", mark));
-    }
+    let sets = section_priority_sets(section);
+    // The address rules whenever the list has anything but MAC addresses
+    // (as before); the MAC rules when it has those.
+    let kinds = [];
+    if (length(rule_conditions.device_values(section, "fully_routed_ips").ips) > 0 || sets.fully_sources_mac == null)
+        push(kinds, false);
+    if (sets.fully_sources_mac != null)
+        push(kinds, true);
 
-    return nft_add_rule(table, "priority_rules", nft_fully_routed_priority_args(section, 4, interface_set, localv4_set, fakeip_range, "tcp", mark)) &&
-        nft_add_rule(table, "priority_rules", nft_fully_routed_priority_args(section, 4, interface_set, localv4_set, fakeip_range, "udp", mark)) &&
-        nft_add_rule(table, "priority_rules", nft_fully_routed_priority_args(section, 6, interface_set, localv6_set, fakeip6_range, "tcp", mark)) &&
-        nft_add_rule(table, "priority_rules", nft_fully_routed_priority_args(section, 6, interface_set, localv6_set, fakeip6_range, "udp", mark));
+    for (let by_mac in kinds) {
+        let ok = section_priority_action(section) == "bypass"
+            ? nft_add_rule(table, "priority_rules", nft_fully_routed_priority_args(section, 4, interface_set, localv4_set, fakeip_range, "", mark, by_mac)) &&
+                nft_add_rule(table, "priority_rules", nft_fully_routed_priority_args(section, 6, interface_set, localv6_set, fakeip6_range, "", mark, by_mac))
+            : nft_add_rule(table, "priority_rules", nft_fully_routed_priority_args(section, 4, interface_set, localv4_set, fakeip_range, "tcp", mark, by_mac)) &&
+                nft_add_rule(table, "priority_rules", nft_fully_routed_priority_args(section, 4, interface_set, localv4_set, fakeip_range, "udp", mark, by_mac)) &&
+                nft_add_rule(table, "priority_rules", nft_fully_routed_priority_args(section, 6, interface_set, localv6_set, fakeip6_range, "tcp", mark, by_mac)) &&
+                nft_add_rule(table, "priority_rules", nft_fully_routed_priority_args(section, 6, interface_set, localv6_set, fakeip6_range, "udp", mark, by_mac));
+        if (!ok)
+            return false;
+    }
+    return true;
 }
 
 // The ports of a section for its port_subnets, valid ones only, as the
@@ -837,6 +919,8 @@ function nft_add_section_priority_rules(table, section, interface_set, localv4_s
 
     let sets = section_priority_sets(section);
     if (!nft_create_priority_sets(table, sets))
+        return false;
+    if (!nft_create_mac_exclusion_chain(table, section, mark))
         return false;
 
     if (!nft_add_fully_routed_priority_rules(table, section, interface_set, localv4_set, localv6_set, mark, fakeip_range, fakeip6_range))
@@ -1845,6 +1929,17 @@ function signature_add_value(body, key, value) {
     return body + "[" + as_string(key) + "]\n" + as_string(value) + "\n";
 }
 
+// Devices by MAC (core/ip.uc): only when a rule has them, so the signature
+// of every other configuration stays as it was.
+function signature_add_device_macs(body, prefix, section) {
+    for (let key in [ "source_ip_cidr", "excluded_source_ip_cidr" ]) {
+        let macs = rule_conditions.device_values(section, key).macs;
+        if (length(macs) > 0)
+            body = signature_add_value(body, prefix + "." + key + ".mac", join(",", macs));
+    }
+    return body;
+}
+
 function signature_hash(body) {
     let path = trim(command_output_from_args([ "mktemp" ]));
     if (path == "")
@@ -1872,6 +1967,7 @@ function nft_rule_signature_body(body, section) {
     body = signature_add_value(body, "rule." + section_name + ".action", action);
     if (action == "dns") {
         body = signature_add_value(body, "rule." + section_name + ".source_ip_cidr", section_rule_condition_csv(section, "source_ip_cidr", "subnets"));
+        body = signature_add_device_macs(body, "rule." + section_name, section);
         let excluded_sources = section_rule_condition_csv(section, "excluded_source_ip_cidr", "subnets");
         if (excluded_sources != "")
             body = signature_add_value(body, "rule." + section_name + ".excluded_source_ip_cidr", excluded_sources);
@@ -1881,6 +1977,7 @@ function nft_rule_signature_body(body, section) {
     }
     body = signature_add_value(body, "rule." + section_name + ".ip_cidr", section_rule_condition_csv(section, "ip_cidr", "subnets"));
     body = signature_add_value(body, "rule." + section_name + ".source_ip_cidr", section_rule_condition_csv(section, "source_ip_cidr", "subnets"));
+    body = signature_add_device_macs(body, "rule." + section_name, section);
     let excluded_sources = section_rule_condition_csv(section, "excluded_source_ip_cidr", "subnets");
     if (excluded_sources != "")
         body = signature_add_value(body, "rule." + section_name + ".excluded_source_ip_cidr", excluded_sources);
@@ -2100,11 +2197,70 @@ function nft_add_client_dns_intercept_from_uci(table, interface_set, localv4_set
     return true;
 }
 
+function source_aware_dns_values(sections, deferred_sections) {
+    let seen = {};
+    let values = [];
+
+    for (let section in sections) {
+        if (!bool_option(section, "enabled", true) ||
+            deferred_sections[as_string(section[".name"])])
+            continue;
+
+        let action = section_action(section);
+
+        if (connections.has_dns_matchers(section)) {
+            for (let value in [ ...nft_csv_values(section_source_ip_values(section)), ...section_device_macs(section, "source_ip_cidr") ]) {
+                if (!seen[value]) {
+                    seen[value] = true;
+                    push(values, value);
+                }
+            }
+        }
+
+        if (connections.has_dns_matchers(section) || section_has_fully_routed_ips(section)) {
+            for (let value in [ ...nft_csv_values(section_excluded_source_ip_values(section)), ...section_device_macs(section, "excluded_source_ip_cidr") ]) {
+                if (!seen[value]) {
+                    seen[value] = true;
+                    push(values, value);
+                }
+            }
+        }
+
+        if (action == "bypass" || action == "dns") {
+            for (let value in list_option(section, "fully_routed_ips")) {
+                value = trim(as_string(value));
+                if (value != "" && !seen[value]) {
+                    seen[value] = true;
+                    push(values, value);
+                }
+            }
+        }
+    }
+
+    // Addresses as before (ips); MAC addresses apart (macs).
+    return {
+        ips: filter(values, (value) => !core_ip.looks_like_mac(value)),
+        macs: core_ip.split_device_values(values).macs
+    };
+}
+
+// The DNS of devices by MAC to the source-aware inbound, right after the
+// address redirects and before the client DNS intercept, as for addresses:
+// the first redirect of a connection wins.
+function nft_create_source_dns_mac_redirect(table, interface_set, sections) {
+    if (length(source_aware_dns_values(sections, {}).macs) == 0)
+        return true;
+    return nft_create_set(table, DNS_SOURCE_MAC_SET, "{ type ether_addr; }") &&
+        nft_add_rule(table, "dns_redirect", [ "iifname", "@" + as_string(interface_set), "ether", "saddr", "@" + DNS_SOURCE_MAC_SET, "tcp", "dport", "53", "counter", "redirect", "to", ":" + as_string(runtime_constants.SOURCE_DNS_INBOUND_PORT) ]) &&
+        nft_add_rule(table, "dns_redirect", [ "iifname", "@" + as_string(interface_set), "ether", "saddr", "@" + DNS_SOURCE_MAC_SET, "udp", "dport", "53", "counter", "redirect", "to", ":" + as_string(runtime_constants.SOURCE_DNS_INBOUND_PORT) ]);
+}
+
 function nft_create_full_runtime_from_uci(rt_table, table, localv4_set, common_set, port_set, ip_port_set, interface_set, fakeip_mark, outbound_mark, fakeip_range, tproxy_port, zapret_bin, zapret_route_mark_base, zapret_queue_base, zapret_desync_mark, zapret_desync_mark_postnat, zapret2_bin, zapret2_route_mark_base, zapret2_queue_base, zapret2_desync_mark, zapret2_desync_mark_postnat, localv6_set, common6_set, ip_port6_set, fakeip6_range, tproxy6_address) {
     log_debug("Building nftables runtime model");
 
     return ensure_tproxy_route_rule(rt_table, fakeip_mark) &&
         nft_create_runtime_base_from_uci(table, localv4_set, common_set, port_set, ip_port_set, interface_set, fakeip_mark, outbound_mark, fakeip_range, tproxy_port, localv6_set, common6_set, ip_port6_set, fakeip6_range, tproxy6_address) &&
+        nft_create_source_dns_mac_redirect(table, interface_set, uci_sections("section")) &&
         nft_add_client_dns_intercept_from_uci(table, interface_set, localv4_set, localv6_set) &&
         nft_add_section_priority_rules_from_sections(uci_sections("section"), table, interface_set, localv4_set, localv6_set, fakeip_mark, fakeip_range, fakeip6_range) &&
         nft_create_provider_output_rules_from_uci(table, "zapret", zapret_bin, zapret_route_mark_base, zapret_queue_base, zapret_desync_mark, zapret_desync_mark_postnat) &&
@@ -2599,6 +2755,14 @@ function nft_add_section_source_matchers(section, table, chunk_size_text) {
     return nft_add_csv_chunks_to_family_sets(source_values, table, sets.sources, sets.sources6, "ips", "", chunk_size_text);
 }
 
+function nft_add_section_mac_sources(section, table) {
+    let sets = section_priority_sets(section);
+    for (let item in [ [ sets.sources_mac, "source_ip_cidr" ], [ sets.excluded_sources_mac, "excluded_source_ip_cidr" ] ])
+        if (item[0] != null && !nft_add_set_elements(table, item[0], join(", ", section_device_macs(section, item[1]))))
+            return false;
+    return true;
+}
+
 function nft_add_section_excluded_source_matchers(section, table, chunk_size_text) {
     let source_values = section_excluded_source_ip_values(section);
     if (source_values == "")
@@ -2611,7 +2775,7 @@ function nft_add_section_excluded_source_matchers(section, table, chunk_size_tex
 function nft_add_section_fully_routed_sources(section, table, chunk_size_text) {
     let seen = {};
     let values = [];
-    for (let source_ip in list_option(section, "fully_routed_ips")) {
+    for (let source_ip in rule_conditions.device_values(section, "fully_routed_ips").ips) {
         source_ip = as_string(source_ip);
         if (source_ip == "" || seen[source_ip])
             continue;
@@ -2619,58 +2783,22 @@ function nft_add_section_fully_routed_sources(section, table, chunk_size_text) {
         push(values, source_ip);
     }
 
+    let sets = section_priority_sets(section);
+    if (sets.fully_sources_mac != null &&
+        !nft_add_set_elements(table, sets.fully_sources_mac, join(", ", section_device_macs(section, "fully_routed_ips"))))
+        return false;
+
     if (length(values) == 0)
         return true;
 
-    let sets = section_priority_sets(section);
     return nft_add_csv_chunks_to_family_sets(join(",", values), table, sets.fully_sources, sets.fully_sources6, "ips", "", chunk_size_text);
 }
 
-function source_aware_dns_values(sections, deferred_sections) {
-    let seen = {};
-    let values = [];
-
-    for (let section in sections) {
-        if (!bool_option(section, "enabled", true) ||
-            deferred_sections[as_string(section[".name"])])
-            continue;
-
-        let action = section_action(section);
-
-        if (connections.has_dns_matchers(section)) {
-            for (let value in nft_csv_values(section_source_ip_values(section))) {
-                if (!seen[value]) {
-                    seen[value] = true;
-                    push(values, value);
-                }
-            }
-        }
-
-        if (connections.has_dns_matchers(section) || section_has_fully_routed_ips(section)) {
-            for (let value in nft_csv_values(section_excluded_source_ip_values(section))) {
-                if (!seen[value]) {
-                    seen[value] = true;
-                    push(values, value);
-                }
-            }
-        }
-
-        if (action == "bypass" || action == "dns") {
-            for (let value in list_option(section, "fully_routed_ips")) {
-                value = trim(as_string(value));
-                if (value != "" && !seen[value]) {
-                    seen[value] = true;
-                    push(values, value);
-                }
-            }
-        }
-    }
-
-    return values;
-}
-
 function nft_add_source_aware_dns_sources(sections, deferred_sections, table) {
-    let values = source_aware_dns_values(sections, deferred_sections);
+    let sources = source_aware_dns_values(sections, deferred_sections);
+    if (length(sources.macs) > 0 && !nft_add_set_elements(table, DNS_SOURCE_MAC_SET, join(", ", sources.macs)))
+        return false;
+    let values = sources.ips;
     if (length(values) == 0)
         return true;
 
@@ -2698,6 +2826,8 @@ function nft_populate_runtime_set_for_section(section, deferred_sections, table,
     if (section_needs_priority_sets(section) && !nft_add_section_source_matchers(section, table, 5000))
         return false;
     if (section_needs_priority_sets(section) && !nft_add_section_excluded_source_matchers(section, table, 5000))
+        return false;
+    if (section_needs_priority_sets(section) && !nft_add_section_mac_sources(section, table))
         return false;
 
     if (deferred_sections[as_string(section[".name"])])

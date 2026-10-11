@@ -61,6 +61,10 @@ export function undecidedReasonText(reason?: string | null) {
       );
     case 'source_scoped_rule':
       return _('a rule applies to selected devices only; choose a device');
+    case 'source_mac_rule':
+      return _(
+        'a rule applies to devices chosen by MAC address, which this check cannot calculate',
+      );
     default:
       return _('a rule is too complex to calculate');
   }

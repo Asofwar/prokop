@@ -46,7 +46,11 @@ export function getDiagnosticsChecks(
     checks.push(DIAGNOSTICS_CHECKS.BYEDPI);
   }
 
-  checks.push(DIAGNOSTICS_CHECKS.OUTBOUNDS, DIAGNOSTICS_CHECKS.FAKEIP);
+  checks.push(
+    DIAGNOSTICS_CHECKS.OUTBOUNDS,
+    DIAGNOSTICS_CHECKS.FAKEIP,
+    DIAGNOSTICS_CHECKS.ENVIRONMENT,
+  );
 
   return checks.map((code) => createDiagnosticCheck(code, description));
 }
