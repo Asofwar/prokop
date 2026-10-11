@@ -81,6 +81,7 @@ function show_help() {
     print("    check_logs              Show Prokop logs from system journal\n");
     print("    check_sing_box_logs     Show sing-box logs\n");
     print("    check_fakeip            Test sing-box FakeIP DNS\n");
+    print("    check_environment       Check flow offloading, IPv6 and the clock (read-only)\n");
     print("    check_zapret_runtime    Check external zapret provider state\n");
     print("    check_zapret2_runtime   Check external zapret2 provider state\n");
     print("    check_byedpi_runtime    Check external ByeDPI provider state\n");
@@ -189,6 +190,7 @@ function command_spec(command) {
         check_logs: [ "diagnostics/runtime.uc", "check-logs", 0 ],
         check_sing_box_logs: [ "diagnostics/runtime.uc", "check-sing-box-logs", 0 ],
         check_fakeip: [ "diagnostics/runtime.uc", "check-fakeip", 0 ],
+        check_environment: [ "diagnostics/environment.uc", "check", 0 ],
         check_zapret_runtime: [ "diagnostics/runtime.uc", "check-zapret-runtime", 0 ],
         check_zapret2_runtime: [ "diagnostics/runtime.uc", "check-zapret2-runtime", 0 ],
         check_byedpi_runtime: [ "diagnostics/runtime.uc", "check-byedpi-runtime", 0 ],
@@ -315,7 +317,7 @@ const ALLOWED_DURING_FULL_UNINSTALL = [
     "killswitch_status", "show_config", "show_version", "show_sing_box_config", "show_sing_box_version",
     "check_proxy", "check_nft", "check_nft_rules", "check_sing_box", "check_logs", "check_sing_box_logs",
     "check_fakeip", "check_zapret_runtime", "check_zapret2_runtime", "check_byedpi_runtime",
-    "check_dns_available", "get_status", "get_outbound_metadata", "get_subscription_metadata",
+    "check_dns_available", "check_environment", "get_status", "get_outbound_metadata", "get_subscription_metadata",
     "get_sing_box_status", "get_zapret_status", "get_zapret2_status", "get_byedpi_status", "get_system_info",
     "get_ui_capabilities", "get_ui_state", "get_health_status", "get_history", "get_readonly_config_sections",
     "get_dashboard_runtime_metadata", "route_trace", "device_traffic", "connectivity_test", "global_check", "support_report",

@@ -100,6 +100,15 @@ export function checkAdvice(
           'Make sure devices use the router as DNS: turn off secure DNS (DoH, Private DNS) in browsers and phones.',
         ),
       } satisfies CheckAdvice;
+    case DIAGNOSTICS_CHECKS.ENVIRONMENT:
+      return {
+        meaning: _(
+          'A router setting outside Prokop can make its rules or the kill-switch apply only partly, although Prokop itself works.',
+        ),
+        action: _(
+          'Read the rows marked for attention. Prokop changes none of these settings itself.',
+        ),
+      } satisfies CheckAdvice;
     default:
       return {
         meaning: _('Part of Prokop does not work as expected.'),

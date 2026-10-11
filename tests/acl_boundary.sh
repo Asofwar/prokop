@@ -88,6 +88,8 @@ for (const command of [
   RO + ' config_snapshot_list',
   RO + ' config_snapshot_diff 123',
   RO + ' connectivity_test example.org TCP 443',
+  // Environment diagnostics: flags, interface names, clock state only.
+  RO + ' check_environment',
 ]) {
   if (!allowed(command)) throw Error(`read diagnostic missing: ${command}`);
 }

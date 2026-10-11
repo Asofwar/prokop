@@ -42,6 +42,7 @@ export const READONLY_EXEC_PATTERNS = [
   '/usr/libexec/prokop-ro check_zapret2_runtime',
   '/usr/libexec/prokop-ro check_byedpi_runtime',
   '/usr/libexec/prokop-ro check_dns_available',
+  '/usr/libexec/prokop-ro check_environment',
   '/usr/libexec/prokop-ro clash_api get_proxies',
   '/usr/libexec/prokop-ro clash_api get_connections',
   '/usr/libexec/prokop-ro service_action_status *',

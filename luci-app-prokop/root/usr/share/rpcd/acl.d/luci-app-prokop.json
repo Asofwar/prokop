@@ -33,6 +33,7 @@
         "/usr/libexec/prokop-ro check_zapret2_runtime": ["exec"],
         "/usr/libexec/prokop-ro check_byedpi_runtime": ["exec"],
         "/usr/libexec/prokop-ro check_dns_available": ["exec"],
+        "/usr/libexec/prokop-ro check_environment": ["exec"],
         "/usr/libexec/prokop-ro clash_api get_proxies": ["exec"],
         "/usr/libexec/prokop-ro clash_api get_connections": ["exec"],
         "/usr/libexec/prokop-ro service_action_status *": ["exec"],

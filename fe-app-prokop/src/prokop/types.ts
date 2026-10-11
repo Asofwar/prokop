@@ -674,6 +674,7 @@ export namespace Prokop {
     CHECK_DNS_AVAILABLE = 'check_dns_available',
     CHECK_FAKEIP = 'check_fakeip',
     CHECK_NFT_RULES = 'check_nft_rules',
+    CHECK_ENVIRONMENT = 'check_environment',
     CHECK_ZAPRET_RUNTIME = 'check_zapret_runtime',
     CHECK_ZAPRET2_RUNTIME = 'check_zapret2_runtime',
     CHECK_BYEDPI_RUNTIME = 'check_byedpi_runtime',
@@ -1020,6 +1021,36 @@ export namespace Prokop {
     rules_proxy_exist: 0 | 1;
     rules_proxy_counters: 0 | 1;
     rules_other_mark_exist: 0 | 1;
+  }
+
+  // diagnostics/environment.uc check: read-only environment rows.
+  export type EnvironmentRowState =
+    | 'ok'
+    | 'warning'
+    | 'not_checked'
+    | 'unavailable';
+
+  export interface EnvironmentRow {
+    state: EnvironmentRowState;
+    provenance?: 'observed' | 'configured';
+    reason?: string | null;
+  }
+
+  export interface EnvironmentCheckResult {
+    flow_offloading?: EnvironmentRow & {
+      software?: boolean;
+      hardware?: boolean;
+    };
+    ipv6?: EnvironmentRow & {
+      prokop_ipv6?: boolean;
+      global_interfaces?: string[];
+    };
+    clock?: EnvironmentRow & {
+      clock_state?: string;
+      source?: string;
+      stratum?: number;
+      observed_at?: number;
+    };
   }
 
   export interface SingBoxCheckResult {
