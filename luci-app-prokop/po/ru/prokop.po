@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-06 10:21+0000\n"
-"PO-Revision-Date: 2026-10-06 10:21+0000\n"
+"POT-Creation-Date: 2026-10-11 18:05+0000\n"
+"PO-Revision-Date: 2026-10-11 18:05+0000\n"
 "Last-Translator: Asofwar\n"
 "Language-Team: none\n"
 "Language: ru\n"
@@ -763,6 +763,9 @@ msgstr "Перед автоподбором"
 
 msgid "Before restore"
 msgstr "Перед восстановлением"
+
+msgid "Before the real ClientHello sing-box sends a forged one with this domain; the site drops it, a DPI system that lets this domain through lets the connection through. Use a domain that is not blocked, such as a large domestic site. Empty: off."
+msgstr "Перед настоящим ClientHello sing-box отправляет поддельный с этим доменом: сайт его отбрасывает, а система DPI, которая пропускает этот домен, пропускает и соединение. Укажите незаблокированный домен, например крупного российского сайта. Пусто — выключено."
 
 msgid "Best"
 msgstr "Лучшая"
@@ -1610,6 +1613,9 @@ msgstr "dnsmasq всё ещё использует файл серверов kil
 msgid "Do not apply this section to the specified local IP addresses; matching continues with the next section."
 msgstr "Не применять эту секцию к указанным локальным IP-адресам; поиск продолжится в следующей секции."
 
+msgid "Do not fragment"
+msgstr "Не фрагментировать"
+
 msgid "Do not test servers from these countries."
 msgstr "Не тестировать серверы из этих стран."
 
@@ -1739,6 +1745,9 @@ msgstr "DPI"
 msgid "DPI autotune"
 msgstr "Автоподбор DPI"
 
+msgid "DPI bypass by sing-box"
+msgstr "Обход DPI средствами sing-box"
+
 msgid "DPI bypass of the rules using this provider may not work."
 msgstr "Обход DPI в правилах с этим провайдером может не работать."
 
@@ -1856,6 +1865,9 @@ msgstr "Введите доменное имя, например youtube.com."
 msgid "Enter a domain or IP address"
 msgstr "Укажите домен или IP-адрес"
 
+msgid "Enter a domain such as example.com, without a scheme, port or path."
+msgstr "Введите домен вида example.com, без схемы, порта и пути."
+
 msgid "Enter a level name"
 msgstr "Введите название уровня"
 
@@ -1879,6 +1891,9 @@ msgstr "Укажите корректный домен или IP-адрес"
 
 msgid "Enter a whole number of milliseconds from 0 to 60000"
 msgstr "Укажите целое число миллисекунд от 0 до 60000"
+
+msgid "Enter a whole number of ms or s from 1ms to 10s, e.g. 500ms."
+msgstr "Введите целое число ms или s от 1ms до 10s, например 500ms."
 
 msgid "Enter an address"
 msgstr "Укажите адрес"
@@ -2194,6 +2209,9 @@ msgstr "Как часто проверять активные DNS-серверы
 
 msgid "How often to check whether a higher-priority DNS server has recovered."
 msgstr "Как часто проверять, восстановился ли DNS-сервер с более высоким приоритетом."
+
+msgid "How the site drops the forged ClientHello"
+msgstr "Как сайт отбросит поддельный ClientHello"
 
 msgid "HTTP error"
 msgstr "Ошибка HTTP"
@@ -2605,6 +2623,9 @@ msgstr "Обнаружены проблемы"
 
 msgid "It goes directly and is not in a DPI rule. No bypass is configured for it."
 msgstr "Идёт напрямую и не входит в DPI-правило. Обход для неё не настроен."
+
+msgid "It goes through a DPI bypass by sing-box rule; autotune supports Zapret rules only."
+msgstr "Идёт через правило «Обход DPI средствами sing-box»; автоподбор работает только с правилами Zapret."
 
 msgid "It goes through a proxy or VPN rule. DPI autotune does not apply."
 msgstr "Идёт через правило прокси или VPN. Автоподбор DPI не применим."
@@ -3260,6 +3281,9 @@ msgstr "Выключен"
 msgid "Off by default. Devices with their own DNS server (8.8.8.8 in a TV, IoT devices) bypass domain rules and the kill-switch; when on, everything they send to port 53 of an outside server goes to the router's DNS instead. This also catches a VPN whose server uses port 53 and a DNS server in the LAN that asks outside servers itself: add their addresses to the exclusions. DNS to local addresses (Pi-hole), to the router's IPv6 prefixes and DNS over TLS stay untouched"
 msgstr "По умолчанию выключено. Устройства со своим DNS-сервером (8.8.8.8 в телевизоре, IoT) обходят доменные правила и kill-switch; при включении всё, что они отправляют на порт 53 внешнего сервера, уходит на DNS роутера. Под перехват попадают и VPN, чей сервер работает на порту 53, и DNS-сервер в локальной сети, который сам обращается к внешним серверам: добавьте их адреса в исключения. DNS на локальные адреса (Pi-hole), на IPv6-префиксы роутера и DNS over TLS не трогаются"
 
+msgid "Old TCP timestamp"
+msgstr "Устаревшая метка времени TCP"
+
 msgid "Only from the specified countries."
 msgstr "Только из указанных стран."
 
@@ -3424,6 +3448,9 @@ msgstr "Пауза после отката"
 
 msgid "pause after a rollback %s"
 msgstr "пауза после отката %s"
+
+msgid "Pause between TCP segments"
+msgstr "Пауза между TCP-сегментами"
 
 msgid "Pause updates"
 msgstr "Приостановить обновление"
@@ -4502,6 +4529,9 @@ msgstr "Источники, которые не удалось скачать:"
 msgid "Speed"
 msgstr "Скорость"
 
+msgid "Splits the TLS ClientHello of this rule's connections so that a DPI system cannot read the site name. TLS records: the ClientHello is cut into several TLS records, fast, try it first. TCP segments: it is sent in several TCP packets with a pause, slower. Both: records sent as separate segments."
+msgstr "Делит TLS ClientHello соединений этого правила, чтобы система DPI не прочитала имя сайта. TLS-записи: ClientHello режется на несколько TLS-записей — быстро, попробуйте сначала этот способ. TCP-сегменты: отправляется несколькими TCP-пакетами с паузой — медленнее. Оба: записи уходят отдельными сегментами."
+
 msgid "Stability"
 msgstr "Стабильность"
 
@@ -4699,6 +4729,12 @@ msgstr "Цели вне DPI-правил (%d)"
 
 msgid "TB"
 msgstr "ТБ"
+
+msgid "TCP MD5 signature"
+msgstr "Подпись TCP MD5"
+
+msgid "TCP segments"
+msgstr "TCP-сегменты"
 
 msgid "Technical data"
 msgstr "Технические данные"
@@ -5543,8 +5579,23 @@ msgstr "Тайм-аут"
 msgid "tiny"
 msgstr "tiny"
 
+msgid "TLS fragmentation"
+msgstr "Фрагментация TLS"
+
 msgid "TLS or certificate error"
 msgstr "Ошибка TLS или сертификата"
+
+msgid "TLS records"
+msgstr "TLS-записи"
+
+msgid "TLS records and TCP segments"
+msgstr "TLS-записи и TCP-сегменты"
+
+msgid "TLS spoof"
+msgstr "Подмена TLS"
+
+msgid "TLS spoof domain"
+msgstr "Домен для подмены TLS"
 
 msgid "TLS, median"
 msgstr "TLS, медиана"
@@ -5645,6 +5696,9 @@ msgstr "Включить"
 msgid "Turn on automatic mode?"
 msgstr "Включить автоматический режим?"
 
+msgid "Turn on TLS fragmentation or enter a TLS spoof domain, or choose another action."
+msgstr "Включите фрагментацию TLS или укажите домен для подмены TLS либо выберите другое действие."
+
 msgid "turns text mode on"
 msgstr "включает текстовый режим"
 
@@ -5671,6 +5725,9 @@ msgstr "Таймаут недоступности"
 
 msgid "Unavailable: needs sing-box-extended %s or newer, the installed sing-box is %s."
 msgstr "Недоступно: нужен sing-box-extended %s или новее, установлен sing-box %s."
+
+msgid "Unavailable: TLS spoof needs sing-box %s or newer, the installed sing-box is %s."
+msgstr "Недоступно: для подмены TLS нужен sing-box %s или новее, установлен sing-box %s."
 
 msgid "Under observation: %d of %d checks passed"
 msgstr "Под наблюдением: пройдено проверок %d из %d"
@@ -5831,6 +5888,9 @@ msgstr "используется правилом; поле «Сетевой и�
 msgid "used by the rule: text mode is on"
 msgstr "используется правилом: включён текстовый режим"
 
+msgid "Used when sing-box cannot measure the round trip to the site. Empty: 500ms."
+msgstr "Используется, когда sing-box не может измерить задержку до сайта. Пусто — 500ms."
+
 msgid "Used while client DNS is intercepted. DNS from these devices or to these servers is never intercepted: a DNS server in the LAN, the server of a VPN on port 53. An IPv4 or IPv6 address or subnet"
 msgstr "Действует, когда перехват DNS включён. DNS от этих устройств и к этим серверам никогда не перехватывается: DNS-сервер в локальной сети, сервер VPN на порту 53. IPv4- или IPv6-адрес либо подсеть"
 
@@ -5959,6 +6019,18 @@ msgstr "Работает без обхода."
 
 msgid "Write the header as Name: value"
 msgstr "Запишите заголовок в виде Имя: значение"
+
+msgid "Wrong acknowledgment number"
+msgstr "Неверный номер подтверждения"
+
+msgid "Wrong checksum"
+msgstr "Неверная контрольная сумма"
+
+msgid "Wrong sequence number"
+msgstr "Неверный номер последовательности"
+
+msgid "Wrong sequence number suits most sites. Change it only if the bypass does not work."
+msgstr "Неверный номер последовательности подходит большинству сайтов. Меняйте, только если обход не работает."
 
 msgid "YACD Secret Key"
 msgstr "Секретный ключ YACD"

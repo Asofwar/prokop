@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-06 10:21+0000\n"
-"PO-Revision-Date: 2026-10-06 10:21+0000\n"
+"POT-Creation-Date: 2026-10-11 18:05+0000\n"
+"PO-Revision-Date: 2026-10-11 18:05+0000\n"
 "Last-Translator: Asofwar <7397608+Asofwar@users.noreply.github.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -16,11 +16,11 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2405
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3117
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3132
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3330
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3345
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2406
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3118
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3133
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3331
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3346
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:308
 msgid "-- Select --"
 msgstr ""
@@ -53,15 +53,15 @@ msgstr ""
 msgid "%d connections now"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1198
+#: src/prokop/tabs/autotune/model.ts:1202
 msgid "%d d"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:832
+#: src/prokop/tabs/autotune/model.ts:836
 msgid "%d entries without a domain name are skipped"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1197
+#: src/prokop/tabs/autotune/model.ts:1201
 msgid "%d h"
 msgstr ""
 
@@ -69,7 +69,7 @@ msgstr ""
 msgid "%d h ago"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1195
+#: src/prokop/tabs/autotune/model.ts:1199
 msgid "%d min"
 msgstr ""
 
@@ -85,7 +85,7 @@ msgstr ""
 msgid "%d more: refine the search"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:756
+#: src/prokop/tabs/autotune/model.ts:760
 #: src/prokop/tabs/dashboard/initController.ts:1102
 #: src/prokop/tabs/dashboard/overview.ts:383
 #: src/prokop/tabs/dashboard/partials/renderSections.ts:349
@@ -102,11 +102,11 @@ msgstr ""
 msgid "%d of %d"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:479
+#: src/prokop/tabs/autotune/model.ts:483
 msgid "%d of %d checks failed"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:463
+#: src/prokop/tabs/autotune/model.ts:467
 msgid "%d of %d checks passed"
 msgstr ""
 
@@ -126,22 +126,22 @@ msgstr ""
 msgid "%d rules · %d node groups"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:472
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:473
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:179
 msgid "%s (disabled)"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4466
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4541
 msgid "%s (not installed)"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:481
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:482
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:189
 msgid "%s (provider not installed)"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:462
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:489
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:463
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:490
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:169
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:197
 msgid "%s (unavailable)"
@@ -175,11 +175,11 @@ msgstr ""
 msgid "%s has been started"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1524
+#: src/prokop/tabs/autotune/model.ts:1528
 msgid "%s in the rule \"%t\""
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4838
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4913
 msgid "%s is “%s”: sing-box and the firewall read it differently"
 msgstr ""
 
@@ -195,7 +195,7 @@ msgstr ""
 msgid "%s is not installed"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4467
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4542
 msgid "%s is not installed. Install it in Components or choose another action."
 msgstr ""
 
@@ -227,11 +227,11 @@ msgstr ""
 msgid "%s was installed, but Prokop did not start cleanly"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4819
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4894
 msgid "%s: “%s” cannot be written in the current form unchanged"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5156
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5231
 msgid "%s: not moved to the Device filter, the rule has no destination condition and does not use it"
 msgstr ""
 
@@ -267,19 +267,19 @@ msgstr ""
 msgid "%s/s"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9047
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9245
 msgid "+ Add JSON outbound"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3510
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3511
 msgid "+ Add level"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9131
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9329
 msgid "+ Add priority"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9074
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9272
 msgid "+ Add URLTest"
 msgstr ""
 
@@ -299,13 +299,13 @@ msgstr ""
 msgid "3–7 attempts per strategy and target in each check."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:448
+#: src/prokop/tabs/autotune/model.ts:452
 msgid "A check failed and the last one gave no result; one more failure rolls the change back."
 msgstr ""
 
 #: src/prokop/tabs/autotune/initController.ts:255
 #: src/prokop/tabs/autotune/initController.ts:420
-#: src/prokop/tabs/autotune/model.ts:1149
+#: src/prokop/tabs/autotune/model.ts:1153
 msgid "A check is already running."
 msgstr ""
 
@@ -313,7 +313,7 @@ msgstr ""
 msgid "A configuration backup will be saved in /etc/prokop-backups. Older versions may not support all current settings."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1598
+#: src/prokop/tabs/autotune/model.ts:1602
 msgid "A configuration change did not finish and its protection is still active. Restore a snapshot in History and recovery."
 msgstr ""
 
@@ -333,7 +333,7 @@ msgstr ""
 msgid "A configuration restore did not finish. Traffic that needs DPI bypass stays blocked until you restore the last known good snapshot."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2059
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2060
 msgid "A Connection rule needs a connection: add a connection URL, a subscription, a network interface or a JSON outbound, or disable the rule."
 msgstr ""
 
@@ -345,7 +345,7 @@ msgstr ""
 msgid "A domain, or a list of a DPI rule measured through a few of its domains."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1123
+#: src/prokop/tabs/autotune/model.ts:1127
 msgid "a failed change left the DPI guard in place; restart Prokop"
 msgstr ""
 
@@ -381,7 +381,7 @@ msgstr ""
 msgid "A POST to this address, for ntfy, Gotify and similar services. The saved address is never shown on the page"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1129
+#: src/prokop/tabs/autotune/model.ts:1133
 msgid "a previous apply is not resolved"
 msgstr ""
 
@@ -393,7 +393,7 @@ msgstr ""
 msgid "a rule applies to selected devices only; choose a device"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/siteCheck.ts:165
+#: src/prokop/tabs/diagnostic/siteCheck.ts:170
 msgid "A rule blocks this address. This is intended for ads and trackers."
 msgstr ""
 
@@ -417,15 +417,15 @@ msgstr ""
 msgid "A site or service checked through the DPI rule that routes it."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1125
+#: src/prokop/tabs/autotune/model.ts:1129
 msgid "a snapshot operation is in progress"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1145
+#: src/prokop/tabs/autotune/model.ts:1149
 msgid "A strategy is being applied and checked; change the settings when it finishes."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:391
+#: src/prokop/tabs/autotune/model.ts:395
 msgid "A strategy is set for the whole rule, so Prokop does not change it. You can split the targets into separate rules."
 msgstr ""
 
@@ -433,12 +433,12 @@ msgstr ""
 msgid "A subscription fails to update, is about to expire, has expired or runs out of traffic"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:987
+#: src/prokop/tabs/autotune/model.ts:991
 msgid "about %d min"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8599
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8652
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8674
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8727
 msgid "Action"
 msgstr ""
 
@@ -496,11 +496,11 @@ msgstr ""
 msgid "Active: restore not finished"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8504
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8579
 msgid "Add"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8497
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8572
 msgid "Add %s to Built-in rule sets of this rule? When you save the rule, it also matches these lists."
 msgstr ""
 
@@ -520,7 +520,7 @@ msgstr ""
 msgid "Add at least one DNS server"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2849
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2850
 msgid "Add prefix to nodes"
 msgstr ""
 
@@ -529,11 +529,11 @@ msgstr ""
 msgid "Add target"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5151
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5226
 msgid "add the interface item %s"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5146
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5221
 msgid "add the interface item %s with the DNS resolver %s %s"
 msgstr ""
 
@@ -541,23 +541,23 @@ msgstr ""
 msgid "Add the sites that go through your DPI rules, for example youtube.com."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9830
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10028
 msgid "Add URLs or local paths to .lst lists containing domains and subnets."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9851
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10049
 msgid "Add URLs or local paths to .lst lists containing domains. IP entries are ignored."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9805
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10003
 msgid "Add URLs or local paths to .srs / .json lists. Only domain rules are supported."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9770
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9968
 msgid "Add URLs or local paths to .srs / .json lists. Subnets are ignored by default."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8493
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8568
 msgid "Add…"
 msgstr ""
 
@@ -565,19 +565,19 @@ msgstr ""
 msgid "Additional marking rules found"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3047
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3257
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3048
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3258
 msgid "Additionally exclude servers by protocol, transport, and security. Exclude only servers matching the specified parameters."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3030
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3239
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3031
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3240
 msgid "Additionally filter servers by protocol, transport, and security. Add only servers matching the specified parameters."
 msgstr ""
 
 #: src/prokop/tabs/diagnostic/connectivityMatrix.ts:279
 #: src/prokop/tabs/diagnostic/connectivityMatrix.ts:326
-#: src/prokop/tabs/diagnostic/siteCheck.ts:123
+#: src/prokop/tabs/diagnostic/siteCheck.ts:128
 msgid "Address"
 msgstr ""
 
@@ -585,11 +585,11 @@ msgstr ""
 msgid "Address set for checking"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9632
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9830
 msgid "Adds X25519MLKEM768 to the TLS ClientHello of this rule's REALITY servers with the chrome fingerprint. Needed by REALITY servers on Xray-core 26.9.8 and newer (3x-ui 3.8.0 and newer) that answer with their mask site otherwise. Breaks REALITY servers without ML-KEM support: turn it on only for such servers."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8547
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8622
 msgid "Advanced"
 msgstr ""
 
@@ -609,7 +609,7 @@ msgstr ""
 msgid "All check results"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4428
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4501
 #: src/prokop/tabs/monitoring/initController.ts:701
 #: src/prokop/tabs/monitoring/render.ts:90
 msgid "All devices"
@@ -620,7 +620,7 @@ msgstr ""
 msgid "All events"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2302
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2303
 msgid "All except selected"
 msgstr ""
 
@@ -632,31 +632,31 @@ msgstr ""
 msgid "All paths"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2312
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2313
 msgid "All remaining except selected"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2310
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2311
 msgid "All remaining servers"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3213
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3214
 msgid "All remaining servers means every server not already assigned to a higher-priority level."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2301
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2302
 msgid "All servers"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9895
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10093
 msgid "All traffic from these IP addresses will be routed through the section unconditionally, ignoring all other conditions."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4425
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4498
 msgid "All traffic: %d"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6416
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6491
 msgid "Allowed domain prefixes are full:, keyword:, and regex:"
 msgstr ""
 
@@ -664,7 +664,7 @@ msgstr ""
 msgid "Allows access to YACD from the WAN. Make sure to open the appropriate port in your firewall."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3007
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3008
 msgid "Allows limiting the list of servers for URLTest"
 msgstr ""
 
@@ -684,7 +684,7 @@ msgstr ""
 msgid "An interrupted package update is being recovered. Avoid changes until it completes."
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/siteCheck.ts:125
+#: src/prokop/tabs/diagnostic/siteCheck.ts:130
 msgid "An IP address needs no DNS"
 msgstr ""
 
@@ -702,11 +702,11 @@ msgid "Another action of this kind is already running. Try again when it finishe
 msgstr ""
 
 #: src/prokop/tabs/autotune/initController.ts:354
-#: src/prokop/tabs/autotune/model.ts:1338
+#: src/prokop/tabs/autotune/model.ts:1342
 msgid "Another autotune operation is running."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1127
+#: src/prokop/tabs/autotune/model.ts:1131
 msgid "another check is running"
 msgstr ""
 
@@ -714,7 +714,7 @@ msgstr ""
 msgid "Another check was running."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:235
+#: src/prokop/tabs/autotune/model.ts:239
 msgid "Another group was changed in this run; at most one change per run."
 msgstr ""
 
@@ -738,7 +738,7 @@ msgstr ""
 msgid "Another TorrServer runs on this router. Prokop does not start its own TorrServer or change settings while it runs; stop the other one first."
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/siteCheck.ts:140
+#: src/prokop/tabs/diagnostic/siteCheck.ts:145
 msgid "Answer of the router DNS"
 msgstr ""
 
@@ -746,7 +746,7 @@ msgstr ""
 msgid "Any device"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:315
+#: src/prokop/tabs/autotune/model.ts:319
 msgid "Applied and checked, but not confirmed as the working configuration"
 msgstr ""
 
@@ -754,11 +754,11 @@ msgstr ""
 msgid "Applied by reload"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:276
+#: src/prokop/tabs/autotune/model.ts:280
 msgid "Applied, check passed"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1226
+#: src/prokop/tabs/autotune/model.ts:1230
 #: src/prokop/tabs/updates/initController.ts:938
 msgid "Apply"
 msgstr ""
@@ -767,11 +767,11 @@ msgstr ""
 msgid "Apply %s"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1213
+#: src/prokop/tabs/autotune/model.ts:1217
 msgid "Apply %s?"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:334
+#: src/prokop/tabs/autotune/model.ts:338
 msgid "Apply did not finish: configuration edited"
 msgstr ""
 
@@ -779,7 +779,7 @@ msgstr ""
 msgid "Apply recommended settings"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9875
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10073
 msgid "Apply section rules only to the specified local IP addresses"
 msgstr ""
 
@@ -792,7 +792,7 @@ msgid "Applying"
 msgstr ""
 
 #: src/prokop/tabs/autotune/initController.ts:924
-#: src/prokop/tabs/autotune/model.ts:1068
+#: src/prokop/tabs/autotune/model.ts:1072
 msgid "Applying a strategy"
 msgstr ""
 
@@ -809,7 +809,7 @@ msgstr ""
 msgid "Applying the change was not confirmed in time; check the service status."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1470
+#: src/prokop/tabs/autotune/model.ts:1474
 msgid "Applying the new strategy did not finish: its reload did not succeed, and the configuration was changed meanwhile. Prokop kept that change instead of rolling back. Check the rule, or restore the snapshot you need in History and recovery."
 msgstr ""
 
@@ -829,11 +829,11 @@ msgstr ""
 msgid "Armed: DNS currently goes through Prokop"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6447
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6522
 msgid "At least one valid domain must be specified."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6544
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6619
 msgid "At least one valid IP or subnet must be specified."
 msgstr ""
 
@@ -841,16 +841,16 @@ msgstr ""
 msgid "Auto refresh"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2821
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2822
 #: src/prokop/tabs/autotune/model.ts:15
 msgid "Automatic"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:231
+#: src/prokop/tabs/autotune/model.ts:235
 msgid "Automatic applies are disabled by the policy (0 per day)."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:219
+#: src/prokop/tabs/autotune/model.ts:223
 msgid "Automatic apply requires high confidence."
 msgstr ""
 
@@ -870,7 +870,7 @@ msgstr ""
 msgid "Automatic mode checks a changed strategy every 15 minutes for this long and rolls it back after two failures in a row."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1491
+#: src/prokop/tabs/autotune/model.ts:1495
 msgid "Automatic recovery did not finish."
 msgstr ""
 
@@ -894,7 +894,7 @@ msgstr ""
 msgid "Automatically"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2850
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2851
 msgid "Automatically add text to the name of each server from this subscription for convenient filtering."
 msgstr ""
 
@@ -902,7 +902,7 @@ msgstr ""
 msgid "Automatically check installed components for new versions"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3447
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3448
 #: src/prokop/tabs/dashboard/initController.ts:1598
 msgid "Automatically select the fastest node in the current level"
 msgstr ""
@@ -923,7 +923,7 @@ msgstr ""
 msgid "Autotune apply"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:638
+#: src/prokop/tabs/autotune/model.ts:642
 msgid "Autotune cannot change the strategy of this rule."
 msgstr ""
 
@@ -1029,7 +1029,7 @@ msgstr ""
 msgid "B"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6644
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6719
 msgid "Backend validation unavailable: %s. Save again to retry."
 msgstr ""
 
@@ -1037,7 +1037,7 @@ msgstr ""
 msgid "Backing up the configuration"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8543
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8618
 msgid "Basics"
 msgstr ""
 
@@ -1053,8 +1053,12 @@ msgstr ""
 msgid "Before restore"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:902
-#: src/prokop/tabs/autotune/model.ts:1004
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9043
+msgid "Before the real ClientHello sing-box sends a forged one with this domain; the site drops it, a DPI system that lets this domain through lets the connection through. Use a domain that is not blocked, such as a large domestic site. Empty: off."
+msgstr ""
+
+#: src/prokop/tabs/autotune/model.ts:906
+#: src/prokop/tabs/autotune/model.ts:1008
 msgid "Best"
 msgstr ""
 
@@ -1066,13 +1070,13 @@ msgstr ""
 msgid "BitTorrent traffic that Prokop recognises goes directly, past every rule, so a VPN or proxy provider does not block the account for torrents. Warning: it also goes past the kill-switch of a rule, so torrents of a device behind a kill-switch are not protected"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4345
-#: src/prokop/tabs/monitoring/connectionView.ts:120
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4411
+#: src/prokop/tabs/monitoring/connectionView.ts:122
 #: src/prokop/tabs/dashboard/partials/getOutboundFooterLabel.ts:13
 msgid "Block"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9311
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9509
 msgid "Block this section's traffic instead of sending it directly when the VPN, sing-box or Prokop itself is not running. Applies to forwarded client traffic, survives a Prokop stop, firewall reloads and reboots. Earlier Zapret and Bypass sections keep working. For a section with a subscription, changing it restarts sing-box: a section whose subscription could not be loaded is rejected only while it is protected."
 msgstr ""
 
@@ -1119,16 +1123,16 @@ msgstr ""
 msgid "Browser is using FakeIP correctly"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9670
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9690
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9868
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9888
 msgid "Built-in rule sets"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8674
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8749
 msgid "Built-in rule sets #2 are not supported for DNS rules. Remove them on the What tab or choose another action."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8487
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8562
 msgid "Built-in rule sets of the same services: %s. They match more than the removed sets (domains and other addresses of these services), so they were not added."
 msgstr ""
 
@@ -1140,7 +1144,7 @@ msgstr ""
 msgid "Built-in subnet list: %s"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2319
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2320
 msgid "By flag emoji from name"
 msgstr ""
 
@@ -1152,22 +1156,22 @@ msgstr ""
 msgid "ByeDPI checks"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7405
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7480
 msgid "ByeDPI listen address and port are assigned by Prokop and must not be set in the strategy."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7582
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7657
 msgid "ByeDPI option does not accept a compact value: %s"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7511
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7586
 msgid "ByeDPI option does not accept a value: %s"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7503
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7529
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7563
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7572
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7578
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7604
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7638
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7647
 msgid "ByeDPI option requires a value: %s"
 msgstr ""
 
@@ -1195,21 +1199,21 @@ msgstr ""
 msgid "ByeDPI sing-box outbound is not configured"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8870
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8945
 msgid "ByeDPI Strategy"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7608
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7683
 msgid "ByeDPI strategy cannot be empty"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4347
-#: src/prokop/tabs/monitoring/connectionView.ts:116
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4413
+#: src/prokop/tabs/monitoring/connectionView.ts:118
 #: src/prokop/tabs/monitoring/initController.ts:239
 msgid "Bypass"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:624
+#: src/prokop/tabs/autotune/model.ts:628
 msgid "Bypass not needed"
 msgstr ""
 
@@ -1237,9 +1241,9 @@ msgstr ""
 msgid "Calculated result"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:358
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5236
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8502
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:359
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5311
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8577
 #: src/prokop/ui/confirmAction.ts:31
 #: src/prokop/tabs/autotune/dialog.ts:37
 #: src/prokop/tabs/dashboard/initController.ts:1453
@@ -1254,7 +1258,7 @@ msgstr ""
 msgid "Cancelled"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:635
+#: src/prokop/tabs/autotune/model.ts:639
 msgid "Cannot be applied"
 msgstr ""
 
@@ -1268,17 +1272,17 @@ msgstr ""
 msgid "Cannot receive checks result"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3671
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3672
 msgid "Cannot save settings"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10058
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10256
 msgid "Cannot save the rule"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9161
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9233
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9254
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9359
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9431
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9452
 msgid "Cascade connection"
 msgstr ""
 
@@ -1317,7 +1321,7 @@ msgstr ""
 msgid "Check"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1160
+#: src/prokop/tabs/autotune/model.ts:1164
 msgid "Check 1 to 8 domains of the list."
 msgstr ""
 
@@ -1349,20 +1353,20 @@ msgstr ""
 msgid "Check failed"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:322
+#: src/prokop/tabs/autotune/model.ts:326
 msgid "Check failed, not rolled back: configuration edited"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:327
+#: src/prokop/tabs/autotune/model.ts:331
 msgid "Check failed, rollback did not finish: configuration edited"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:286
+#: src/prokop/tabs/autotune/model.ts:290
 msgid "Check failed, rolled back automatically"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2935
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3398
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2936
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3399
 #: src/prokop/tabs/dashboard/initController.ts:1585
 msgid "Check interval"
 msgstr ""
@@ -1383,11 +1387,11 @@ msgstr ""
 msgid "Check the DNS server addresses in Settings or choose another server."
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/siteCheck.ts:183
+#: src/prokop/tabs/diagnostic/siteCheck.ts:188
 msgid "Check the node of the rule in Monitoring → Nodes and groups."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3411
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3412
 msgid "Check timeout after which the server is considered dead"
 msgstr ""
 
@@ -1395,13 +1399,13 @@ msgstr ""
 msgid "Check update"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2961
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3385
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2962
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3386
 #: src/prokop/tabs/dashboard/initController.ts:1583
 msgid "Check URL"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3476
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3477
 msgid "Check with a real download"
 msgstr ""
 
@@ -1409,17 +1413,17 @@ msgstr ""
 msgid "Checked"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:824
+#: src/prokop/tabs/autotune/model.ts:828
 msgid "Checked %d of %d domains"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:996
+#: src/prokop/tabs/autotune/model.ts:1000
 msgid "Checking now"
 msgstr ""
 
 #: src/prokop/tabs/autotune/initController.ts:933
 #: src/prokop/tabs/autotune/initController.ts:1073
-#: src/prokop/tabs/autotune/model.ts:1069
+#: src/prokop/tabs/autotune/model.ts:1073
 msgid "Checking targets"
 msgstr ""
 
@@ -1427,15 +1431,15 @@ msgstr ""
 msgid "Checking that it works"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1237
+#: src/prokop/tabs/autotune/model.ts:1241
 msgid "Checking the configuration before the change"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1241
+#: src/prokop/tabs/autotune/model.ts:1245
 msgid "Checking the real production path"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1246
+#: src/prokop/tabs/autotune/model.ts:1250
 msgid "Checking the recommendation"
 msgstr ""
 
@@ -1460,12 +1464,12 @@ msgstr ""
 #: src/prokop/tabs/dashboard/overview.ts:268
 #: src/prokop/tabs/diagnostic/connectivityMatrix.ts:115
 #: src/prokop/tabs/diagnostic/dpiPlayground.ts:48
-#: src/prokop/tabs/diagnostic/siteCheck.ts:269
+#: src/prokop/tabs/diagnostic/siteCheck.ts:274
 #: src/prokop/tabs/diagnostic/statusLabels.ts:28
 msgid "Checking…"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1588
+#: src/prokop/tabs/autotune/model.ts:1592
 msgid "Checks and changes wait until it is rolled back."
 msgstr ""
 
@@ -1496,7 +1500,7 @@ msgstr ""
 msgid "Checks that the parameters are valid. It does not test site reachability or bypass effectiveness."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1158
+#: src/prokop/tabs/autotune/model.ts:1162
 msgid "Choose a list of a DPI rule."
 msgstr ""
 
@@ -1525,7 +1529,7 @@ msgstr ""
 msgid "Clash API secret cannot be empty"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:368
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:369
 #: src/prokop/tabs/history/initController.ts:439
 msgid "Clear"
 msgstr ""
@@ -1534,17 +1538,17 @@ msgstr ""
 msgid "Clear history?"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:350
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:351
 msgid "Clear the cascade setting of this rule? When you save the rule, %s and %s are removed and its servers connect without a transit rule. Nothing else in the rule changes."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:342
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:343
 #: src/prokop/tabs/history/initController.ts:176
 #: src/prokop/tabs/history/initController.ts:682
 msgid "Clear…"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3738
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3739
 #: src/partials/modal/renderModal.ts:284
 #: src/prokop/tabs/autotune/initController.ts:826
 #: src/prokop/tabs/dashboard/initController.ts:1316
@@ -1567,7 +1571,7 @@ msgstr ""
 msgid "Close all connections?"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/connectionView.ts:205
+#: src/prokop/tabs/monitoring/connectionView.ts:227
 #: src/prokop/tabs/monitoring/initController.ts:1256
 msgid "Close connection"
 msgstr ""
@@ -1619,12 +1623,12 @@ msgstr ""
 msgid "Concurrent edit"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8615
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8690
 msgid "Conditions"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:902
-#: src/prokop/tabs/autotune/model.ts:1004
+#: src/prokop/tabs/autotune/model.ts:906
+#: src/prokop/tabs/autotune/model.ts:1008
 msgid "confidence"
 msgstr ""
 
@@ -1677,7 +1681,7 @@ msgstr ""
 msgid "Configuration snapshots"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5858
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5933
 msgid "Configure User-Agent in the item settings"
 msgstr ""
 
@@ -1701,20 +1705,20 @@ msgstr ""
 msgid "Confirmations"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:604
+#: src/prokop/tabs/autotune/model.ts:608
 msgid "Confirming"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:641
+#: src/prokop/tabs/autotune/model.ts:645
 msgid "Conflict"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9204
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9402
 msgid "Connect through"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4349
-#: src/prokop/tabs/monitoring/connectionView.ts:114
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4415
+#: src/prokop/tabs/monitoring/connectionView.ts:116
 msgid "Connection"
 msgstr ""
 
@@ -1726,7 +1730,7 @@ msgstr ""
 msgid "Connection refused or host unreachable"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8914
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9112
 msgid "Connection URL"
 msgstr ""
 
@@ -1751,15 +1755,15 @@ msgstr ""
 msgid "Connectivity probe failed"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5318
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5393
 msgid "Convert"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5311
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5386
 msgid "Convert the legacy settings of this rule? When you save the rule:"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5297
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5372
 msgid "Convert…"
 msgstr ""
 
@@ -1903,7 +1907,7 @@ msgstr ""
 msgid "could not write {file}"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3477
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3478
 msgid "Count a server as working only when a 32 KB download through it over HTTPS completes, not only when it answers. Finds servers that connect but pass no data. Each check downloads 32 KB; a server that fails is skipped for a minute."
 msgstr ""
 
@@ -1927,27 +1931,27 @@ msgstr ""
 msgid "Create snapshot"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1239
+#: src/prokop/tabs/autotune/model.ts:1243
 msgid "Creating a snapshot and reloading the service"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9223
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9421
 msgid "Current section cannot be used as its own transit section"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2805
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2806
 msgid "Current section cannot download its own subscription"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:780
+#: src/prokop/tabs/autotune/model.ts:784
 msgid "custom list"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9042
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9240
 msgid "Custom outbound configurations in JSON format"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/connectionView.ts:141
+#: src/prokop/tabs/monitoring/connectionView.ts:163
 msgid "custom strategy"
 msgstr ""
 
@@ -1967,7 +1971,7 @@ msgstr ""
 msgid "Default address for checking server availability and latency. URLTest uses its own address."
 msgstr ""
 
-#: src/prokop/tabs/monitoring/connectionView.ts:142
+#: src/prokop/tabs/monitoring/connectionView.ts:164
 msgid "default strategy"
 msgstr ""
 
@@ -2033,13 +2037,13 @@ msgstr ""
 
 #: src/prokop/tabs/autotune/initController.ts:1417
 #: src/prokop/tabs/autotune/initController.ts:1458
-#: src/prokop/tabs/monitoring/connectionView.ts:198
+#: src/prokop/tabs/monitoring/connectionView.ts:220
 #: src/prokop/tabs/diagnostic/partials/renderCheckSection.ts:191
 msgid "Details"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3017
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3226
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3018
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3227
 msgid "Detect server country"
 msgstr ""
 
@@ -2063,11 +2067,11 @@ msgstr ""
 msgid "Device"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9874
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10072
 msgid "Device filter"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7950
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8025
 msgid "Device or IP"
 msgstr ""
 
@@ -2075,7 +2079,7 @@ msgstr ""
 msgid "Device traffic is unavailable"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8627
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8702
 #: src/prokop/tabs/monitoring/render.ts:20
 msgid "Devices"
 msgstr ""
@@ -2109,12 +2113,12 @@ msgstr ""
 msgid "direct"
 msgstr ""
 
-#: src/prokop/tabs/monitoring/connectionView.ts:118
+#: src/prokop/tabs/monitoring/connectionView.ts:120
 #: src/prokop/tabs/dashboard/partials/getOutboundFooterLabel.ts:8
 msgid "Direct"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3203
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3204
 msgid "Direct connection"
 msgstr ""
 
@@ -2160,28 +2164,28 @@ msgid "Disable the QUIC protocol to improve compatibility or fix issues with vid
 msgstr ""
 
 #: src/prokop/ui/status.ts:42
-#: src/prokop/tabs/autotune/model.ts:864
-#: src/prokop/tabs/autotune/model.ts:897
+#: src/prokop/tabs/autotune/model.ts:868
+#: src/prokop/tabs/autotune/model.ts:901
 #: src/prokop/tabs/updates/initController.ts:1401
 msgid "Disabled"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7103
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7178
 msgid "Disabling interception is incompatible with action=zapret2 because Prokop sends matched traffic through NFQUEUE."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8523
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8598
 msgid "Dismiss notice"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2917
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3374
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2918
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3375
 msgid "Display name"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/settings.js:34
-#: src/prokop/tabs/diagnostic/siteCheck.ts:131
-#: src/prokop/tabs/diagnostic/siteCheck.ts:138
+#: src/prokop/tabs/diagnostic/siteCheck.ts:136
+#: src/prokop/tabs/diagnostic/siteCheck.ts:143
 msgid "DNS"
 msgstr ""
 
@@ -2205,12 +2209,12 @@ msgstr ""
 msgid "DNS on router"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2163
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2164
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:405
 msgid "DNS over HTTPS (DoH)"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2164
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2165
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:406
 msgid "DNS over TLS (DoT)"
 msgstr ""
@@ -2219,8 +2223,8 @@ msgstr ""
 msgid "DNS protection"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2884
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8696
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2885
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8771
 msgid "DNS protocol"
 msgstr ""
 
@@ -2228,12 +2232,12 @@ msgstr ""
 msgid "DNS Protocol Type"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2885
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8697
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2886
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8772
 msgid "DNS protocol used by the resolver"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8740
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8815
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:530
 msgid "DNS requests through section"
 msgstr ""
@@ -2242,12 +2246,12 @@ msgstr ""
 msgid "DNS Rewrite TTL"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2894
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8709
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2895
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8784
 msgid "DNS server"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8718
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8793
 #: src/validators/validateDns.ts:8
 msgid "DNS server address cannot be empty"
 msgstr ""
@@ -2256,8 +2260,8 @@ msgstr ""
 msgid "DNS server for checks"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2895
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8710
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2896
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8785
 msgid "DNS server used by the resolver"
 msgstr ""
 
@@ -2269,12 +2273,12 @@ msgstr ""
 msgid "DNS Strategy"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10240
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10438
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:522
 msgid "DNS through proxy"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8728
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8803
 msgid "DNS through section"
 msgstr ""
 
@@ -2298,31 +2302,35 @@ msgstr ""
 msgid "dnsmasq still uses the {product} kill-switch servers file {file}, kept while {product} is installed or active; DNS protection is not attached"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9906
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10104
 msgid "Do not apply this section to the specified local IP addresses; matching continues with the next section."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3090
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8998
+msgid "Do not fragment"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3091
 msgid "Do not test servers from these countries."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3106
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3107
 msgid "Do not test servers whose names match the expression."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3051
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3052
 msgid "Do not test servers with one of the selected protocols."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3057
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3058
 msgid "Do not test servers with one of the selected security types."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3054
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3055
 msgid "Do not test servers with one of the selected transports."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3098
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3099
 msgid "Do not test specified servers."
 msgstr ""
 
@@ -2339,7 +2347,7 @@ msgstr ""
 msgid "Domain and IP list"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9829
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10027
 #: src/prokop/tabs/updates/listsUpdate.ts:98
 msgid "Domain and IP lists"
 msgstr ""
@@ -2352,7 +2360,7 @@ msgstr ""
 msgid "Domain list"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9850
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10048
 msgid "Domain lists"
 msgstr ""
 
@@ -2360,11 +2368,11 @@ msgstr ""
 msgid "Domain or IP address"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2875
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2876
 msgid "Domain Resolver"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9599
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9797
 msgid "Domains"
 msgstr ""
 
@@ -2397,8 +2405,8 @@ msgstr ""
 msgid "Domains to check"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4404
-#: src/prokop/tabs/autotune/model.ts:870
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4477
+#: src/prokop/tabs/autotune/model.ts:874
 msgid "Domains: %d"
 msgstr ""
 
@@ -2426,7 +2434,7 @@ msgstr ""
 msgid "Download components through"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10253
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10451
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:834
 msgid "Download components through a section"
 msgstr ""
@@ -2435,7 +2443,7 @@ msgstr ""
 msgid "Download lists through"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10246
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10444
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:814
 msgid "Download lists through a section"
 msgstr ""
@@ -2444,11 +2452,11 @@ msgstr ""
 msgid "Download remote lists and rule sets via the selected section"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2774
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2775
 msgid "Download subscription through a section"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2775
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2776
 msgid "Download subscriptions via the selected section"
 msgstr ""
 
@@ -2456,15 +2464,15 @@ msgstr ""
 msgid "Download support report"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2783
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2784
 msgid "Download through"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5099
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5174
 msgid "downloaded by the list update; the rule matches the addresses in them"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5093
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5168
 msgid "downloaded by the list update; the rule matches the domains in them"
 msgstr ""
 
@@ -2472,15 +2480,19 @@ msgstr ""
 msgid "Downloading"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4374
-#: src/prokop/tabs/monitoring/connectionView.ts:112
-#: src/prokop/tabs/monitoring/connectionView.ts:135
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4447
+#: src/prokop/tabs/monitoring/connectionView.ts:114
+#: src/prokop/tabs/monitoring/connectionView.ts:139
 msgid "DPI"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/autotune.js:15
 #: src/prokop/tabs/dashboard/overviewCards.ts:277
 msgid "DPI autotune"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4533
+msgid "DPI bypass by sing-box"
 msgstr ""
 
 #: src/prokop/tabs/diagnostic/checkCards.ts:56
@@ -2491,7 +2503,7 @@ msgstr ""
 msgid "DPI guard"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1119
+#: src/prokop/tabs/autotune/model.ts:1123
 msgid "DPI protection is active"
 msgstr ""
 
@@ -2515,7 +2527,7 @@ msgstr ""
 msgid "Duplicate JSON outbound tag"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5888
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5963
 msgid "Duplicate value"
 msgstr ""
 
@@ -2564,7 +2576,7 @@ msgstr ""
 msgid "Empty response"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8549
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8624
 #: src/prokop/tabs/updates/initController.ts:1414
 msgid "Enable"
 msgstr ""
@@ -2577,7 +2589,7 @@ msgstr ""
 msgid "Enable autostart"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2876
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2877
 msgid "Enable built-in DNS resolver for domains handled by this section"
 msgstr ""
 
@@ -2593,11 +2605,11 @@ msgstr ""
 msgid "Enable list updates"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9365
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9563
 msgid "Enable Mixed Proxy"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9451
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9649
 msgid "Enable Mixed Proxy Authentication"
 msgstr ""
 
@@ -2626,27 +2638,31 @@ msgstr ""
 msgid "Enabled"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4072
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4073
 msgid "Enter a complete sing-box outbound object"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2929
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3379
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4027
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4043
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2930
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3380
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4028
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4044
 msgid "Enter a display name"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1151
+#: src/prokop/tabs/autotune/model.ts:1155
 msgid "Enter a domain name, for example youtube.com."
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/siteCheck.ts:265
+#: src/prokop/tabs/diagnostic/siteCheck.ts:270
 msgid "Enter a domain or IP address"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3176
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3197
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9083
+msgid "Enter a domain such as example.com, without a scheme, port or path."
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3177
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3198
 msgid "Enter a level name"
 msgstr ""
 
@@ -2666,16 +2682,20 @@ msgstr ""
 msgid "Enter a strategy"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8721
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8796
 msgid "Enter a valid DNS server address"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/siteCheck.ts:224
+#: src/prokop/tabs/diagnostic/siteCheck.ts:229
 msgid "Enter a valid domain or IP address"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:705
 msgid "Enter a whole number of milliseconds from 0 to 60000"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9035
+msgid "Enter a whole number of ms or s from 1ms to 10s, e.g. 500ms."
 msgstr ""
 
 #: src/prokop/tabs/diagnostic/connectivityMatrix.ts:84
@@ -2686,7 +2706,7 @@ msgstr ""
 msgid "Enter an IP address or subnet, such as 203.0.113.0/24"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8953
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9151
 msgid "Enter the subscription URL"
 msgstr ""
 
@@ -2700,11 +2720,11 @@ msgstr ""
 msgid "Errors: %d"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1644
+#: src/prokop/tabs/autotune/model.ts:1648
 msgid "Every change made since the last known working configuration is undone, your own edits included. The current configuration is kept as a \"Before restore\" snapshot in History and recovery."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4424
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4497
 msgid "Except: %d"
 msgstr ""
 
@@ -2712,22 +2732,22 @@ msgstr ""
 msgid "exceptions"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3046
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3256
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3047
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3257
 msgid "Exclude by proxy parameters"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3105
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3318
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3106
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3319
 msgid "Exclude by regular expression"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3089
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3302
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3090
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3303
 msgid "Exclude countries"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9905
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10103
 msgid "Exclude devices"
 msgstr ""
 
@@ -2739,20 +2759,20 @@ msgstr ""
 msgid "Exclude NTP protocol traffic from the tunnel to prevent it from being routed through the proxy or VPN"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3097
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3310
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3098
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3311
 msgid "Exclude servers"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3264
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3265
 msgid "Exclude servers with one of the selected protocols from this level."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3270
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3271
 msgid "Exclude servers with one of the selected security types from this level."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3267
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3268
 msgid "Exclude servers with one of the selected transports from this level."
 msgstr ""
 
@@ -2760,7 +2780,7 @@ msgstr ""
 msgid "Excluded devices"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9329
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9527
 msgid "Excluded devices resolve these names while Prokop is stopped"
 msgstr ""
 
@@ -2772,19 +2792,19 @@ msgstr ""
 msgid "Expires"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9366
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9564
 msgid "Expose this section as a local HTTP+SOCKS proxy"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6734
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6809
 msgid "External nfqws config files bypass Prokop queue management and explicit validation."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7082
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7157
 msgid "External nfqws2 config files bypass Prokop queue management and explicit validation."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2837
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2838
 msgid "Extra headers for the requests of this subscription, one per line as Name: value. Some panels need a token here."
 msgstr ""
 
@@ -2902,11 +2922,11 @@ msgstr ""
 msgid "Failed to update the package lists. Check the internet connection and try again"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:473
+#: src/prokop/tabs/autotune/model.ts:477
 msgid "Failed too many checks, rolled back"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:472
+#: src/prokop/tabs/autotune/model.ts:476
 msgid "Failed twice in a row, rolled back"
 msgstr ""
 
@@ -2935,7 +2955,7 @@ msgstr ""
 msgid "FakeIP works; public IP comparison is inconclusive"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3458
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3459
 #: src/prokop/tabs/dashboard/initController.ts:1604
 msgid "Faster server search interval"
 msgstr ""
@@ -2956,7 +2976,7 @@ msgstr ""
 msgid "Firewall rules that send traffic to Prokop are missing or not hit, so rules may not apply."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3672
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3673
 msgid "Fix the highlighted fields and save again."
 msgstr ""
 
@@ -2977,7 +2997,7 @@ msgstr ""
 msgid "Following new connections"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/siteCheck.ts:179
+#: src/prokop/tabs/diagnostic/siteCheck.ts:184
 msgid "For a DPI rule this can mean the strategy does not work with your provider."
 msgstr ""
 
@@ -2989,11 +3009,11 @@ msgstr ""
 msgid "For routers with 256 MB of memory or less and an unstable connection: sing-box finds dead client connections with keep-alive probes and ends idle UDP sessions after 60 seconds instead of 5 minutes, so they do not pile up in memory"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8546
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8621
 msgid "For whom"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9894
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10092
 msgid "Forced device routing"
 msgstr ""
 
@@ -3001,7 +3021,7 @@ msgstr ""
 msgid "From configuration"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/siteCheck.ts:149
+#: src/prokop/tabs/diagnostic/siteCheck.ts:154
 msgid "From the router"
 msgstr ""
 
@@ -3010,7 +3030,7 @@ msgstr ""
 msgid "Full removal"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7100
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7175
 msgid "Fuzzing is not supported here because Prokop needs deterministic runtime validation."
 msgstr ""
 
@@ -3030,7 +3050,7 @@ msgstr ""
 msgid "Groups: %d · targets: %d"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4826
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4901
 msgid "has no effect"
 msgstr ""
 
@@ -3059,7 +3079,7 @@ msgstr ""
 msgid "high"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3422
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3423
 #: src/prokop/tabs/dashboard/initController.ts:1590
 msgid "Higher-level check interval"
 msgstr ""
@@ -3112,11 +3132,11 @@ msgstr ""
 msgid "Host"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3423
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3424
 msgid "How often higher priority levels are checked while a lower level is active"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3399
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3400
 msgid "How often the currently selected server is checked"
 msgstr ""
 
@@ -3128,19 +3148,23 @@ msgstr ""
 msgid "How often to check whether a higher-priority DNS server has recovered."
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9092
+msgid "How the site drops the forged ClientHello"
+msgstr ""
+
 #: src/prokop/api.ts:27
 msgid "HTTP error"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2836
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2837
 msgid "HTTP headers"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/siteCheck.ts:151
+#: src/prokop/tabs/diagnostic/siteCheck.ts:156
 msgid "HTTPS request made by the router itself"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2974
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2975
 #: src/prokop/tabs/dashboard/initController.ts:1212
 #: src/prokop/tabs/dashboard/initController.ts:1464
 msgid "Idle timeout"
@@ -3154,44 +3178,44 @@ msgstr ""
 msgid "If the VPN kill-switch is enabled, its sections stay blocked until Prokop is started."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4894
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5073
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4969
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5148
 msgid "ignored: %s is used instead"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4827
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4902
 msgid "ignored: DNS rules match domains and devices only"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5098
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5173
 msgid "ignored: DNS rules match domains only"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5064
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5139
 msgid "ignored: only Connection rules use interfaces"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4885
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4960
 msgid "ignored: text mode reads %s instead"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5047
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5122
 msgid "ignored: the backend does not read it"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5066
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5141
 msgid "ignored: the rule has interface items"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2864
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2865
 msgid "Import subscription URLTest groups"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2865
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2866
 msgid "Import URLTest groups returned by this subscription provider"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:614
+#: src/prokop/tabs/autotune/model.ts:618
 msgid "In automatic mode only scheduled checks count; \"Check now\" does not."
 msgstr ""
 
@@ -3213,27 +3237,27 @@ msgstr ""
 msgid "Inactive"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3029
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3238
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3030
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3239
 msgid "Include by proxy parameters"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3081
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3294
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3082
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3295
 msgid "Include by regular expression"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3065
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3278
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3066
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3279
 msgid "Include countries"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4147
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4148
 msgid "Include IP addresses and subnets"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3073
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3286
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3074
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3287
 msgid "Include servers"
 msgstr ""
 
@@ -3305,19 +3329,19 @@ msgstr ""
 msgid "Interface monitoring for Bad WAN"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2988
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3487
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2989
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3488
 #: src/prokop/tabs/dashboard/initController.ts:1214
 #: src/prokop/tabs/dashboard/initController.ts:1465
 #: src/prokop/tabs/dashboard/initController.ts:1610
 msgid "Interrupt connections"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3488
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3489
 msgid "Interrupt connections when priority failover switches server"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2989
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2990
 msgid "Interrupt connections when URLTest switches the selected server"
 msgstr ""
 
@@ -3330,8 +3354,8 @@ msgstr ""
 msgid "Invalid Bootstrap DNS server port"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8891
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8905
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8966
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8980
 msgid "Invalid ByeDPI strategy"
 msgstr ""
 
@@ -3347,7 +3371,7 @@ msgstr ""
 msgid "Invalid DNS server port"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6396
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6471
 #: src/validators/validateDomain.ts:82
 #: src/validators/validateDomain.ts:100
 #: src/validators/validateDomain.ts:106
@@ -3423,7 +3447,7 @@ msgstr ""
 msgid "Invalid JSON format"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8841
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8916
 msgid "Invalid NFQWS2 strategy"
 msgstr ""
 
@@ -3431,20 +3455,20 @@ msgstr ""
 msgid "Invalid path format. Path must start with \"/\" and contain valid characters"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9402
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9600
 #: src/validators/validateShadowsocksUrl.ts:91
 msgid "Invalid port number. Must be between 1 and 65535"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6560
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6635
 msgid "Invalid port or range. Use 80 or 1000-2000"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5800
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5875
 msgid "Invalid regular expression"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5792
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5867
 msgid "Invalid regular expression: backreferences and lookaround are not supported"
 msgstr ""
 
@@ -3670,11 +3694,11 @@ msgstr ""
 msgid "IP address of the DNS server used to resolve upstream DNS and proxies. Hostnames are not supported for Bootstrap DNS. If multiple servers are selected, a timeout switches to a backup."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9659
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9857
 msgid "IPs"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4407
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4480
 msgid "IPs: %d"
 msgstr ""
 
@@ -3699,11 +3723,15 @@ msgstr ""
 msgid "Issues detected"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:178
+#: src/prokop/tabs/autotune/model.ts:182
 msgid "It goes directly and is not in a DPI rule. No bypass is configured for it."
 msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:174
+msgid "It goes through a DPI bypass by sing-box rule; autotune supports Zapret rules only."
+msgstr ""
+
+#: src/prokop/tabs/autotune/model.ts:178
 msgid "It goes through a proxy or VPN rule. DPI autotune does not apply."
 msgstr ""
 
@@ -3711,19 +3739,19 @@ msgstr ""
 msgid "It goes through a Zapret2 or ByeDPI rule; autotune supports Zapret rules only."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:184
+#: src/prokop/tabs/autotune/model.ts:188
 msgid "It is blocked by a rule."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:182
+#: src/prokop/tabs/autotune/model.ts:186
 msgid "It is excluded from Prokop routing."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:195
+#: src/prokop/tabs/autotune/model.ts:199
 msgid "It is not in a DPI rule."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:187
+#: src/prokop/tabs/autotune/model.ts:191
 msgid "It is not routed by a DPI rule."
 msgstr ""
 
@@ -3735,10 +3763,10 @@ msgstr ""
 msgid "Its measurements are deleted as well. Routing rules are not changed."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:1416
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4071
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4361
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9041
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:1417
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4072
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4429
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9239
 msgid "JSON outbound"
 msgstr ""
 
@@ -3758,7 +3786,7 @@ msgstr ""
 msgid "JSON outbound must contain a non-empty type field"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4095
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4096
 msgid "JSON outbound settings"
 msgstr ""
 
@@ -3778,7 +3806,7 @@ msgstr ""
 msgid "Keep history records"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3497
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3498
 msgid "Keep Priority before latency-sorted servers"
 msgstr ""
 
@@ -3786,7 +3814,7 @@ msgstr ""
 msgid "Keep snapshots"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2998
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2999
 msgid "Keep URLTest before latency-sorted servers"
 msgstr ""
 
@@ -3794,7 +3822,7 @@ msgstr ""
 msgid "keeping the previous protection"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5810
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5885
 msgid "Keyword must not contain spaces or commas"
 msgstr ""
 
@@ -3802,7 +3830,7 @@ msgstr ""
 msgid "Keyword/regex matchers without DNS protection"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9348
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9546
 msgid "Kill-switch status"
 msgstr ""
 
@@ -3827,11 +3855,11 @@ msgstr ""
 msgid "Last check"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1077
+#: src/prokop/tabs/autotune/model.ts:1081
 msgid "Last check completed"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1082
+#: src/prokop/tabs/autotune/model.ts:1086
 msgid "Last check postponed"
 msgstr ""
 
@@ -3900,11 +3928,11 @@ msgstr ""
 msgid "left"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9934
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10132
 msgid "Legacy settings"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:986
+#: src/prokop/tabs/autotune/model.ts:990
 msgid "less than a minute"
 msgstr ""
 
@@ -3912,16 +3940,16 @@ msgstr ""
 msgid "Level"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3192
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3193
 msgid "Level name"
 msgstr ""
 
 #: src/prokop/tabs/autotune/initController.ts:702
-#: src/prokop/tabs/autotune/model.ts:874
+#: src/prokop/tabs/autotune/model.ts:878
 msgid "List"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8294
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8369
 msgid "List must be an HTTP(S) URL or a local .lst path"
 msgstr ""
 
@@ -3957,7 +3985,7 @@ msgstr ""
 msgid "Lists updated: %s"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4393
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4466
 msgid "Lists: %d"
 msgstr ""
 
@@ -4045,11 +4073,11 @@ msgstr ""
 msgid "Manual"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1325
+#: src/prokop/tabs/autotune/model.ts:1329
 msgid "Manual apply is available only in \"Recommendations only\" mode."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:213
+#: src/prokop/tabs/autotune/model.ts:217
 msgid "Manual checks only measure; changes are applied only on schedule."
 msgstr ""
 
@@ -4061,15 +4089,15 @@ msgstr ""
 msgid "Manual snapshots are kept."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:697
+#: src/prokop/tabs/autotune/model.ts:701
 msgid "manually"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9660
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9858
 msgid "Match destination IPs or subnets"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9921
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10119
 msgid "Match destination ports. Use a single port or a range"
 msgstr ""
 
@@ -4093,19 +4121,19 @@ msgstr ""
 msgid "Minimum confidence"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2948
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2949
 msgid "Minimum latency difference in milliseconds that triggers switching to a faster server."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9520
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9718
 msgid "Mixed Proxy Password"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9383
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9581
 msgid "Mixed Proxy Port"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9469
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9667
 msgid "Mixed Proxy Username"
 msgstr ""
 
@@ -4147,17 +4175,17 @@ msgstr ""
 msgid "Multiple sing-box processes were found or their ownership is unclear. Restart is unavailable; traffic routing was not changed. Stop Prokop ends Prokop's traffic interception and stops the sing-box processes that Prokop runs; then start Prokop again. A sing-box of another program is not stopped, and Prokop starts only after it has exited."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2417
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2432
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2418
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2433
 msgid "Must be a number in the range of 0 - 10000"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2918
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3375
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2919
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3376
 msgid "Name displayed on the dashboard"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3193
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3194
 msgid "Name shown in the priority level list"
 msgstr ""
 
@@ -4173,12 +4201,12 @@ msgstr ""
 msgid "Network"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2208
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9000
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2209
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9198
 msgid "Network Interface"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3862
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3863
 msgid "Network interface settings"
 msgstr ""
 
@@ -4214,19 +4242,19 @@ msgstr ""
 msgid "NFQUEUE range overlaps with another rule"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8766
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8841
 msgid "NFQWS Strategy"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6864
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6939
 msgid "NFQWS strategy cannot be empty"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8820
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8895
 msgid "NFQWS2 Strategy"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7241
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7316
 msgid "NFQWS2 strategy cannot be empty"
 msgstr ""
 
@@ -4261,11 +4289,11 @@ msgstr ""
 msgid "No bypass (direct)"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:621
+#: src/prokop/tabs/autotune/model.ts:625
 msgid "No change needed"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:290
+#: src/prokop/tabs/autotune/model.ts:294
 msgid "No change was needed"
 msgstr ""
 
@@ -4303,7 +4331,7 @@ msgstr ""
 
 #: src/prokop/tabs/autotune/initController.ts:1287
 #: src/prokop/tabs/autotune/initController.ts:1393
-#: src/prokop/tabs/autotune/model.ts:644
+#: src/prokop/tabs/autotune/model.ts:648
 msgid "No data"
 msgstr ""
 
@@ -4315,7 +4343,7 @@ msgstr ""
 msgid "No DNS server for measurements: set a plain IPv4 DNS server in Prokop or on the target."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:813
+#: src/prokop/tabs/autotune/model.ts:817
 msgid "No domain of the list has an address at the DNS server."
 msgstr ""
 
@@ -4332,12 +4360,12 @@ msgstr ""
 msgid "No events recorded yet"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5108
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5183
 msgid "no longer supported: the configuration cannot be applied while the rule is enabled"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:399
-#: src/prokop/tabs/autotune/model.ts:599
+#: src/prokop/tabs/autotune/model.ts:403
+#: src/prokop/tabs/autotune/model.ts:603
 msgid "No measurements yet."
 msgstr ""
 
@@ -4358,12 +4386,12 @@ msgstr ""
 msgid "No reload recorded yet"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/siteCheck.ts:185
+#: src/prokop/tabs/diagnostic/siteCheck.ts:190
 msgid "No rule handles it; it may need to be added to a rule."
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/siteCheck.ts:110
-#: src/prokop/tabs/monitoring/connectionView.ts:168
+#: src/prokop/tabs/diagnostic/siteCheck.ts:115
+#: src/prokop/tabs/monitoring/connectionView.ts:190
 msgid "No rule matched"
 msgstr ""
 
@@ -4409,12 +4437,12 @@ msgstr ""
 msgid "No traffic from devices counted yet"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:218
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:219
 msgid "no transit rule is selected"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:905
-#: src/prokop/tabs/autotune/model.ts:1008
+#: src/prokop/tabs/autotune/model.ts:909
+#: src/prokop/tabs/autotune/model.ts:1012
 msgid "No usable result"
 msgstr ""
 
@@ -4443,11 +4471,11 @@ msgstr ""
 msgid "Normal mode"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:294
+#: src/prokop/tabs/autotune/model.ts:298
 msgid "Not applied"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:304
+#: src/prokop/tabs/autotune/model.ts:308
 msgid "Not applied, the previous configuration is kept"
 msgstr ""
 
@@ -4470,9 +4498,9 @@ msgstr ""
 
 #: src/prokop/ui/status.ts:38
 #: src/prokop/tabs/autotune/model.ts:83
-#: src/prokop/tabs/autotune/model.ts:598
-#: src/prokop/tabs/autotune/model.ts:861
-#: src/prokop/tabs/autotune/model.ts:900
+#: src/prokop/tabs/autotune/model.ts:602
+#: src/prokop/tabs/autotune/model.ts:865
+#: src/prokop/tabs/autotune/model.ts:904
 #: src/prokop/tabs/diagnostic/connectivityMatrix.ts:113
 #: src/prokop/tabs/diagnostic/statusLabels.ts:32
 msgid "Not checked"
@@ -4506,7 +4534,7 @@ msgid "Not enough free space for TorrServer: %s KiB free, %s KiB needed"
 msgstr ""
 
 #: src/prokop/tabs/autotune/domainPicker.ts:85
-#: src/prokop/tabs/autotune/model.ts:829
+#: src/prokop/tabs/autotune/model.ts:833
 msgid "not in the list"
 msgstr ""
 
@@ -4534,7 +4562,7 @@ msgstr ""
 msgid "Not needed"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:492
+#: src/prokop/tabs/autotune/model.ts:496
 msgid "Not observed: the change cannot be identified"
 msgstr ""
 
@@ -4542,7 +4570,7 @@ msgstr ""
 msgid "Not recorded yet"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/siteCheck.ts:132
+#: src/prokop/tabs/diagnostic/siteCheck.ts:137
 msgid "Not resolved"
 msgstr ""
 
@@ -4585,7 +4613,7 @@ msgstr ""
 msgid "Nothing found"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:867
+#: src/prokop/tabs/autotune/model.ts:871
 msgid "Nothing to check"
 msgstr ""
 
@@ -4594,15 +4622,15 @@ msgstr ""
 msgid "Nothing to delete: only manual and protected snapshots are left."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1791
-#: src/prokop/tabs/autotune/model.ts:1797
-#: src/prokop/tabs/autotune/model.ts:1806
-#: src/prokop/tabs/autotune/model.ts:1812
-#: src/prokop/tabs/autotune/model.ts:1820
+#: src/prokop/tabs/autotune/model.ts:1795
+#: src/prokop/tabs/autotune/model.ts:1801
+#: src/prokop/tabs/autotune/model.ts:1810
+#: src/prokop/tabs/autotune/model.ts:1816
+#: src/prokop/tabs/autotune/model.ts:1824
 msgid "Nothing was rolled back"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1775
+#: src/prokop/tabs/autotune/model.ts:1779
 msgid "Nothing was rolled back: the router has uncommitted uci changes of Prokop (made with \"uci set\" without a commit). Commit or revert them, then roll back again."
 msgstr ""
 
@@ -4615,7 +4643,7 @@ msgid "Notifications are off: enable them and save the settings"
 msgstr ""
 
 #: src/prokop/tabs/autotune/initController.ts:1158
-#: src/prokop/tabs/autotune/model.ts:1217
+#: src/prokop/tabs/autotune/model.ts:1221
 #: src/prokop/tabs/history/initController.ts:281
 msgid "Now"
 msgstr ""
@@ -4632,35 +4660,35 @@ msgstr ""
 msgid "observation after a change %s"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:461
+#: src/prokop/tabs/autotune/model.ts:465
 msgid "Observation passed"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:549
+#: src/prokop/tabs/autotune/model.ts:553
 msgid "Observation stopped"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:524
+#: src/prokop/tabs/autotune/model.ts:528
 msgid "Observation stopped: automatic mode was turned off"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:530
+#: src/prokop/tabs/autotune/model.ts:534
 msgid "Observation stopped: not enough checks in a day"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:516
+#: src/prokop/tabs/autotune/model.ts:520
 msgid "Observation stopped: the change needs attention after a rollback"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:510
+#: src/prokop/tabs/autotune/model.ts:514
 msgid "Observation stopped: the change was rolled back"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:538
+#: src/prokop/tabs/autotune/model.ts:542
 msgid "Observation stopped: the checks passed, but the configuration was not recorded as the last known working one"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:501
+#: src/prokop/tabs/autotune/model.ts:505
 msgid "Observation stopped: the rule or its strategy was edited"
 msgstr ""
 
@@ -4679,33 +4707,37 @@ msgstr ""
 msgid "Off by default. Devices with their own DNS server (8.8.8.8 in a TV, IoT devices) bypass domain rules and the kill-switch; when on, everything they send to port 53 of an outside server goes to the router's DNS instead. This also catches a VPN whose server uses port 53 and a DNS server in the LAN that asks outside servers itself: add their addresses to the exclusions. DNS to local addresses (Pi-hole), to the router's IPv6 prefixes and DNS over TLS stay untouched"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3279
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9102
+msgid "Old TCP timestamp"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3280
 msgid "Only from the specified countries."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2303
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2311
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2304
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2312
 msgid "Only selected"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2304
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2313
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2305
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2314
 msgid "Only selected except exclusions"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3295
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3296
 msgid "Only servers whose names match the expression."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3246
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3247
 msgid "Only servers with one of the selected protocols."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3250
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3251
 msgid "Only servers with one of the selected security types."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3247
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3248
 msgid "Only servers with one of the selected transports."
 msgstr ""
 
@@ -4717,11 +4749,11 @@ msgstr ""
 msgid "Only the newest %d history records are kept; older ones are deleted."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3287
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3288
 msgid "Only the specified servers."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4423
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4496
 msgid "Only: %d"
 msgstr ""
 
@@ -4743,7 +4775,7 @@ msgstr ""
 msgid "Open LuCI"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4039
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4040
 msgid "Open priority settings and enter a display name"
 msgstr ""
 
@@ -4766,7 +4798,7 @@ msgstr ""
 msgid "Operation timed out"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7754
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7829
 msgid "Option \"%s\" contains an invalid input value."
 msgstr ""
 
@@ -4774,11 +4806,11 @@ msgstr ""
 msgid "Optional IPv4 address. By default the first IPv4 DNS server of Prokop is used."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6942
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7017
 msgid "Optional values must be attached with '=' here; a separate token would be ignored by nfqws."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7319
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7394
 msgid "Optional values must be attached with '=' here; a separate token would be ignored by nfqws2."
 msgstr ""
 
@@ -4795,7 +4827,7 @@ msgid "OS"
 msgstr ""
 
 #: src/prokop/tabs/history/model.ts:351
-#: src/prokop/tabs/monitoring/connectionView.ts:122
+#: src/prokop/tabs/monitoring/connectionView.ts:124
 msgid "Other"
 msgstr ""
 
@@ -4823,7 +4855,7 @@ msgstr ""
 msgid "outbounds must be a non-empty array of strings"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:339
+#: src/prokop/tabs/autotune/model.ts:343
 msgid "Outcome unknown"
 msgstr ""
 
@@ -4869,7 +4901,7 @@ msgstr ""
 msgid "Passed: %d"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9562
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9760
 msgid "Password cannot be empty"
 msgstr ""
 
@@ -4912,6 +4944,10 @@ msgstr ""
 msgid "pause after a rollback %s"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9021
+msgid "Pause between TCP segments"
+msgstr ""
+
 #: src/prokop/tabs/monitoring/initController.ts:882
 #: src/prokop/tabs/monitoring/render.ts:146
 #: src/prokop/tabs/monitoring/render.ts:147
@@ -4926,20 +4962,20 @@ msgstr ""
 msgid "Pending"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3448
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3449
 msgid "Periodically check the current level and switch to a faster server even when the current one works."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2997
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3496
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2998
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3497
 msgid "Pin on dashboard"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1162
+#: src/prokop/tabs/autotune/model.ts:1166
 msgid "Pinned domains must be domain names, at most 8."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:823
+#: src/prokop/tabs/autotune/model.ts:827
 msgid "Pinned domains: %d"
 msgstr ""
 
@@ -4969,38 +5005,38 @@ msgstr ""
 msgid "Port"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9416
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9426
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9439
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9614
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9624
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9637
 msgid "Port %s is already used by %s"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9397
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9595
 msgid "Port cannot be empty"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9384
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9582
 msgid "Port for the local mixed proxy of this section"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6567
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6642
 #: src/prokop/tabs/diagnostic/connectivityMatrix.ts:92
 msgid "Port must be between 1 and 65535"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6571
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6646
 msgid "Port range start must be less than or equal to end"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9920
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10118
 msgid "Ports"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4408
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4481
 msgid "Ports: %d"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9631
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9829
 msgid "Post-quantum REALITY key share"
 msgstr ""
 
@@ -5012,7 +5048,7 @@ msgstr ""
 msgid "Prefer IPv6"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2857
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2858
 msgid "Prefix text"
 msgstr ""
 
@@ -5020,15 +5056,15 @@ msgstr ""
 msgid "Preparing a rollback copy"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1245
+#: src/prokop/tabs/autotune/model.ts:1249
 msgid "Preparing the change"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:969
+#: src/prokop/tabs/autotune/model.ts:973
 msgid "preparing the isolated check"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9125
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9323
 #: src/prokop/tabs/dashboard/partials/renderSections.ts:310
 msgid "Priority"
 msgstr ""
@@ -5043,18 +5079,18 @@ msgstr ""
 msgid "Priority details are unavailable"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3926
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3927
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3928
 msgid "Priority level settings"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3505
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3506
 msgid "Priority levels"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3984
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3989
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3985
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3990
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3991
 msgid "Priority settings"
 msgstr ""
 
@@ -5062,7 +5098,7 @@ msgstr ""
 msgid "Probe tool is missing on the router"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:975
+#: src/prokop/tabs/autotune/model.ts:979
 msgid "probes done, removing the temporary rules"
 msgstr ""
 
@@ -5070,7 +5106,7 @@ msgstr ""
 msgid "Probes per strategy"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:971
+#: src/prokop/tabs/autotune/model.ts:975
 msgid "probes: %d of %d"
 msgstr ""
 
@@ -5102,7 +5138,7 @@ msgstr ""
 msgid "Prokop could not apply the change; see the Prokop log."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:211
+#: src/prokop/tabs/autotune/model.ts:215
 msgid "Prokop does not apply recommendations in this mode."
 msgstr ""
 
@@ -5147,7 +5183,7 @@ msgstr ""
 msgid "Prokop is still starting. Try again when the start finishes."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1131
+#: src/prokop/tabs/autotune/model.ts:1135
 msgid "Prokop is stopped; start it first"
 msgstr ""
 
@@ -5168,19 +5204,19 @@ msgstr ""
 msgid "Prokop kept or restored the previous configuration."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7414
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7489
 msgid "Prokop manages ciadpi pid files itself, so pidfile options are not allowed here."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7411
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7486
 msgid "Prokop manages the ciadpi process lifecycle itself, so daemon mode is not allowed here."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6752
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6827
 msgid "Prokop manages the nfqws process lifecycle itself, so daemon mode is not allowed here."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7106
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7181
 msgid "Prokop manages the nfqws2 process lifecycle itself, so daemon mode is not allowed here."
 msgstr ""
 
@@ -5196,12 +5232,12 @@ msgstr ""
 msgid "Prokop needs attention"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:627
+#: src/prokop/tabs/autotune/model.ts:631
 msgid "Prokop never turns DPI bypass off by itself; remove the targets from the rule manually if you want."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:239
-#: src/prokop/tabs/autotune/model.ts:1309
+#: src/prokop/tabs/autotune/model.ts:243
+#: src/prokop/tabs/autotune/model.ts:1313
 msgid "Prokop never turns DPI bypass off by itself."
 msgstr ""
 
@@ -5209,11 +5245,11 @@ msgstr ""
 msgid "Prokop reloads the configuration. If the reload fails, the previous configuration is restored automatically."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1660
+#: src/prokop/tabs/autotune/model.ts:1664
 msgid "Prokop restores the \"Before autotune\" snapshot, reloads the service and checks that the previous strategy works."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1641
+#: src/prokop/tabs/autotune/model.ts:1645
 msgid "Prokop restores the last known working configuration if the current one differs from it, and reloads the service."
 msgstr ""
 
@@ -5241,7 +5277,7 @@ msgstr ""
 msgid "Prokop sets these TorrServer settings. The others, such as DLNA, the name and the trackers, stay as they are."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2528
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2529
 msgid "Prokop sets this header itself"
 msgstr ""
 
@@ -5273,11 +5309,11 @@ msgstr ""
 msgid "Prokop will change the strategy of existing DPI rules by itself, only after several confirmations in a row, with a production check and automatic rollback."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1219
+#: src/prokop/tabs/autotune/model.ts:1223
 msgid "Prokop will create a configuration snapshot, reload the service and check the new strategy with router requests sent through the queue of this rule. If the check fails, the previous configuration is restored automatically."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1222
+#: src/prokop/tabs/autotune/model.ts:1226
 msgid "Prokop will create a configuration snapshot, reload the service and check the real production path. If the check fails, the previous configuration is restored automatically."
 msgstr ""
 
@@ -5362,7 +5398,7 @@ msgstr ""
 msgid "Protection is active"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2373
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2374
 #: src/prokop/tabs/monitoring/initController.ts:1092
 msgid "Protocol"
 msgstr ""
@@ -5371,7 +5407,7 @@ msgstr ""
 msgid "Provider"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4364
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4432
 msgid "Proxy"
 msgstr ""
 
@@ -5403,7 +5439,7 @@ msgstr ""
 msgid "Received"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:603
+#: src/prokop/tabs/autotune/model.ts:607
 msgid "Recommendation confirmed"
 msgstr ""
 
@@ -5448,7 +5484,7 @@ msgstr ""
 msgid "Refreshing Dashboard…"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6438
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6513
 msgid "Regular expression must not contain spaces or commas"
 msgstr ""
 
@@ -5456,7 +5492,7 @@ msgstr ""
 msgid "Removal did not finish. See the removal log in /tmp/prokop-uninstall.*/output.log."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5377
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5452
 #: src/prokop/tabs/autotune/initController.ts:772
 #: src/prokop/tabs/diagnostic/connectivityMatrix.ts:308
 #: src/prokop/tabs/diagnostic/connectivityMatrix.ts:309
@@ -5467,11 +5503,11 @@ msgstr ""
 msgid "Remove"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5162
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5237
 msgid "remove %s"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5372
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5447
 msgid "Remove %s from this rule? When you save the rule, it matches without them and the configuration can be applied again. Nothing else in the rule changes."
 msgstr ""
 
@@ -5499,11 +5535,11 @@ msgstr ""
 msgid "Remove protection now"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3303
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3304
 msgid "Remove servers from the specified countries from this level."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3319
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3320
 msgid "Remove servers whose names match the expression from this level."
 msgstr ""
 
@@ -5515,11 +5551,11 @@ msgstr ""
 msgid "Remove the kill-switch now? Protected traffic will be able to leave directly until Prokop applies it again on the next successful start or reload."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3311
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3312
 msgid "Remove the specified servers from this level."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5370
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5445
 #: src/prokop/tabs/autotune/initController.ts:1472
 msgid "Remove…"
 msgstr ""
@@ -5537,7 +5573,7 @@ msgstr ""
 msgid "Removing user settings…"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9452
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9650
 msgid "Require a username and password for the local mixed proxy"
 msgstr ""
 
@@ -5546,27 +5582,27 @@ msgstr ""
 msgid "Reset filters"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9573
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9771
 msgid "Resolve domain names before routing so sing-box can use real destination IPs."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9572
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9770
 msgid "Resolve real IP for routing"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6737
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6812
 msgid "Resource selection by hostname inside nfqws is not supported here; sing-box selects resources before NFQUEUE."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7085
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7160
 msgid "Resource selection by hostname inside nfqws2 is not supported here; sing-box selects resources before NFQUEUE."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6740
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6815
 msgid "Resource selection by IP or CIDR inside nfqws is not supported here; sing-box selects resources before NFQUEUE."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7088
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7163
 msgid "Resource selection by IP or CIDR inside nfqws2 is not supported here; sing-box selects resources before NFQUEUE."
 msgstr ""
 
@@ -5713,7 +5749,7 @@ msgstr ""
 msgid "Restoring after the failure"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1243
+#: src/prokop/tabs/autotune/model.ts:1247
 msgid "Restoring the previous configuration"
 msgstr ""
 
@@ -5735,7 +5771,7 @@ msgstr ""
 msgid "Retention limits saved"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9749
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9947
 msgid "Retired rule sets"
 msgstr ""
 
@@ -5755,16 +5791,16 @@ msgstr ""
 msgid "Retry this check"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1650
-#: src/prokop/tabs/autotune/model.ts:1668
+#: src/prokop/tabs/autotune/model.ts:1654
+#: src/prokop/tabs/autotune/model.ts:1672
 msgid "Roll back"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1653
+#: src/prokop/tabs/autotune/model.ts:1657
 msgid "Roll back %s?"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1638
+#: src/prokop/tabs/autotune/model.ts:1642
 msgid "Roll back the last autotune change?"
 msgstr ""
 
@@ -5772,7 +5808,7 @@ msgstr ""
 msgid "Roll back the last change…"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:337
+#: src/prokop/tabs/autotune/model.ts:341
 msgid "Rollback did not finish"
 msgstr ""
 
@@ -5784,7 +5820,7 @@ msgstr ""
 msgid "Rolled back"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:279
+#: src/prokop/tabs/autotune/model.ts:283
 msgid "Rolled back by an administrator"
 msgstr ""
 
@@ -5796,8 +5832,8 @@ msgstr ""
 msgid "Rolling back…"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/siteCheck.ts:81
-#: src/prokop/tabs/diagnostic/siteCheck.ts:106
+#: src/prokop/tabs/diagnostic/siteCheck.ts:86
+#: src/prokop/tabs/diagnostic/siteCheck.ts:111
 #: src/prokop/tabs/monitoring/initController.ts:1190
 msgid "Route"
 msgstr ""
@@ -5806,7 +5842,7 @@ msgstr ""
 msgid "Route main DNS requests through the selected section."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8729
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8804
 msgid "Route requests to this DNS server through another section."
 msgstr ""
 
@@ -5831,7 +5867,7 @@ msgstr ""
 msgid "Router FakeIP check could not be completed"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/siteCheck.ts:305
+#: src/prokop/tabs/diagnostic/siteCheck.ts:310
 msgid "Router kernel route"
 msgstr ""
 
@@ -5847,7 +5883,7 @@ msgstr ""
 msgid "Routing, DNS and DPI bypass rules stop applying"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/siteCheck.ts:89
+#: src/prokop/tabs/diagnostic/siteCheck.ts:94
 msgid "rule"
 msgstr ""
 
@@ -5881,7 +5917,7 @@ msgstr ""
 msgid "Rule “%s”: the subscription settings %s were removed. This version always generates the HWID from the router and hides nodes of imported URLTest groups and cascades."
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/siteCheck.ts:82
+#: src/prokop/tabs/diagnostic/siteCheck.ts:87
 msgid "Rule not calculated"
 msgstr ""
 
@@ -5893,16 +5929,16 @@ msgstr ""
 msgid "Rule set"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8285
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8360
 msgid "Rule set must be an HTTP(S) URL or a local .srs / .json path"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4154
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4155
 msgid "Rule set settings"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9769
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9804
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9967
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10002
 msgid "Rule sets"
 msgstr ""
 
@@ -5959,7 +5995,7 @@ msgstr ""
 msgid "running: traffic goes through the VPN"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3747
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3748
 #: src/prokop/tabs/autotune/initController.ts:562
 #: src/prokop/tabs/autotune/initController.ts:764
 #: src/prokop/tabs/dashboard/initController.ts:1448
@@ -6004,7 +6040,7 @@ msgstr ""
 msgid "Secret of the Clash API controller used by YACD and the Prokop pages. Required: it is generated on installation and protects the controller with or without WAN access."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8639
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8714
 msgid "Section name"
 msgstr ""
 
@@ -6012,11 +6048,11 @@ msgstr ""
 msgid "Sections with the VPN kill-switch are blocked instead of going directly"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2385
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2386
 msgid "Security"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/siteCheck.ts:296
+#: src/prokop/tabs/diagnostic/siteCheck.ts:301
 msgid "See connections to this address"
 msgstr ""
 
@@ -6024,36 +6060,36 @@ msgstr ""
 msgid "Seen in an active connection"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9006
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9204
 msgid "Select a network interface"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9671
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9869
 msgid "Select a predefined domain list"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9691
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9889
 msgid "Select a predefined IP rule set from b4geoip-forkop"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8757
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8832
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:265
 msgid "Select a section"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2802
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2803
 msgid "Select a section for downloading this subscription"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9205
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9403
 msgid "Select a transit section"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2259
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2260
 msgid "Select an existing network interface"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9220
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9418
 msgid "Select an intermediate section"
 msgstr ""
 
@@ -6061,7 +6097,7 @@ msgstr ""
 msgid "Select DNS protocol to use"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9001
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9199
 msgid "Select network interface for VPN connection"
 msgstr ""
 
@@ -6073,7 +6109,7 @@ msgstr ""
 msgid "Select path for sing-box config file. Change this ONLY if you know what you are doing"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3436
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3437
 #: src/prokop/tabs/dashboard/initController.ts:1594
 msgid "Select the fastest node"
 msgstr ""
@@ -6143,7 +6179,7 @@ msgstr ""
 msgid "Sent"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2817
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2818
 msgid "Sent with the requests for this subscription. Leave empty to try compatible client profiles automatically."
 msgstr ""
 
@@ -6159,16 +6195,16 @@ msgstr ""
 msgid "Server closed the connection without a response"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3006
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3212
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3007
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3213
 msgid "Server filtering"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9069
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9267
 msgid "Server group for automatic lowest-latency selection"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9126
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9324
 msgid "Server group for priority failover"
 msgstr ""
 
@@ -6199,12 +6235,12 @@ msgstr ""
 msgid "Service actions"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9674
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9711
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9872
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9909
 msgid "Service list"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:300
+#: src/prokop/tabs/autotune/model.ts:304
 msgid "Service reload failed, previous configuration restored"
 msgstr ""
 
@@ -6216,7 +6252,7 @@ msgstr ""
 msgid "Service start"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5140
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5215
 msgid "set %s: %s"
 msgstr ""
 
@@ -6224,7 +6260,7 @@ msgstr ""
 msgid "Setting"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:1477
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:1478
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/settings.js:18
 msgid "Settings"
 msgstr ""
@@ -6389,7 +6425,7 @@ msgstr ""
 msgid "Some connections or nodes do not respond, so sites of their rules may not open."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9297
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9495
 msgid "Sort by latency"
 msgstr ""
 
@@ -6397,7 +6433,7 @@ msgstr ""
 msgid "Sort connections"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9298
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9496
 msgid "Sorts servers in this section by lowest latency in the dashboard."
 msgstr ""
 
@@ -6416,6 +6452,10 @@ msgstr ""
 #: src/prokop/tabs/monitoring/devicesView.ts:147
 #: src/prokop/tabs/monitoring/devicesView.ts:301
 msgid "Speed"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8993
+msgid "Splits the TLS ClientHello of this rule's connections so that a DPI system cannot read the site name. TLS records: the ClientHello is cut into several TLS records, fast, try it first. TCP segments: it is sent in several TCP packets with a pause, slower. Both: records sent as separate segments."
 msgstr ""
 
 #: src/prokop/tabs/autotune/initController.ts:800
@@ -6492,7 +6532,7 @@ msgstr ""
 msgid "Started"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:981
+#: src/prokop/tabs/autotune/model.ts:985
 msgid "starting"
 msgstr ""
 
@@ -6536,7 +6576,7 @@ msgstr ""
 msgid "Stop"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2975
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2976
 msgid "Stop checking when URLTest group is not used. Use sing-box duration format like 1d, 12h or 30m."
 msgstr ""
 
@@ -6557,7 +6597,7 @@ msgstr ""
 msgid "Stopped by user"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:282
+#: src/prokop/tabs/autotune/model.ts:286
 msgid "Stopped working under observation, rolled back"
 msgstr ""
 
@@ -6574,7 +6614,7 @@ msgstr ""
 msgid "Strategy"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1381
+#: src/prokop/tabs/autotune/model.ts:1385
 msgid "Strategy %s applied and checked."
 msgstr ""
 
@@ -6590,11 +6630,11 @@ msgstr ""
 msgid "Subnet list (text)"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4148
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4149
 msgid "Subnets from the list will be extracted and added to nftables"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2751
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2752
 msgid "Subscription auto update"
 msgstr ""
 
@@ -6607,15 +6647,15 @@ msgstr ""
 msgid "Subscription update failed"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2760
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2761
 msgid "Subscription update interval"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8952
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9150
 msgid "Subscription URL"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3851
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3852
 msgid "Subscription URL settings"
 msgstr ""
 
@@ -6663,7 +6703,7 @@ msgstr ""
 msgid "Table exist"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1047
+#: src/prokop/tabs/autotune/model.ts:1051
 msgid "Target %d of %d"
 msgstr ""
 
@@ -6684,8 +6724,8 @@ msgstr ""
 msgid "Targets"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:387
-#: src/prokop/tabs/autotune/model.ts:1307
+#: src/prokop/tabs/autotune/model.ts:391
+#: src/prokop/tabs/autotune/model.ts:1311
 msgid "Targets of this rule need different strategies."
 msgstr ""
 
@@ -6695,6 +6735,15 @@ msgstr ""
 
 #: src/helpers/prettyBytes.ts:8
 msgid "TB"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9101
+msgid "TCP MD5 signature"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9000
+#: src/prokop/tabs/monitoring/connectionView.ts:150
+msgid "TCP segments"
 msgstr ""
 
 #: src/prokop/tabs/diagnostic/renderDiagnostic.ts:170
@@ -6736,27 +6785,27 @@ msgstr ""
 msgid "Test latency in Monitoring → Nodes and groups, choose a working node or update the subscription."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3074
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3075
 msgid "Test only selected servers."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3034
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3035
 msgid "Test only servers with one of the selected protocols."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3040
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3041
 msgid "Test only servers with one of the selected security types."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3037
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3038
 msgid "Test only servers with one of the selected transports."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3066
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3067
 msgid "Test servers only from the specified countries."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3082
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3083
 msgid "Test servers whose names match the expression."
 msgstr ""
 
@@ -6785,7 +6834,7 @@ msgstr ""
 msgid "The action was not found; it may have finished already."
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/siteCheck.ts:112
+#: src/prokop/tabs/diagnostic/siteCheck.ts:117
 msgid "The address is blocked by a rule"
 msgstr ""
 
@@ -6793,7 +6842,7 @@ msgstr ""
 msgid "the address is local or reserved; Prokop does not intercept it, the connection goes directly"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1099
+#: src/prokop/tabs/autotune/model.ts:1103
 msgid "The autotune state could not be saved. Check the free space on the router."
 msgstr ""
 
@@ -6801,15 +6850,15 @@ msgstr ""
 msgid "The autotune state was damaged and has been reset; automatic changes wait for the pause after a rollback."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:227
+#: src/prokop/tabs/autotune/model.ts:231
 msgid "The autotune state was restored after damage; automatic apply waits for the cooldown."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1329
+#: src/prokop/tabs/autotune/model.ts:1333
 msgid "The autotune state was restored after damage. Run the check again."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:386
+#: src/prokop/tabs/autotune/model.ts:390
 msgid "The best strategy is not stable for every target of the rule."
 msgstr ""
 
@@ -6821,15 +6870,15 @@ msgstr ""
 msgid "The bot may not write to this chat"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8511
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8586
 msgid "The built-in rule sets are added. Save the rule to keep the change."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:328
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:329
 msgid "The cascade setting is cleared. Save the rule to keep the change."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1214
+#: src/prokop/tabs/autotune/model.ts:1218
 msgid "The change affects the whole group:"
 msgstr ""
 
@@ -6841,7 +6890,7 @@ msgstr ""
 msgid "The change is kept in the configuration, but no snapshot of it could be saved."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1173
+#: src/prokop/tabs/autotune/model.ts:1177
 msgid "The change was not saved."
 msgstr ""
 
@@ -6886,7 +6935,7 @@ msgstr ""
 msgid "The check was postponed. See the state above."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:438
+#: src/prokop/tabs/autotune/model.ts:442
 msgid "The checks passed; the configuration is recorded as the last known working one at the next check."
 msgstr ""
 
@@ -6910,7 +6959,7 @@ msgstr ""
 msgid "The Clash API of sing-box is not reachable."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1313
+#: src/prokop/tabs/autotune/model.ts:1317
 msgid "The confidence of the recommendation is below the policy minimum."
 msgstr ""
 
@@ -6918,7 +6967,7 @@ msgstr ""
 msgid "the configuration backup in /etc/prokop-backups"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1712
+#: src/prokop/tabs/autotune/model.ts:1716
 msgid "The configuration before the change is restored."
 msgstr ""
 
@@ -6934,7 +6983,7 @@ msgstr ""
 msgid "The configuration of the snapshot was migrated to Prokop %s."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1747
+#: src/prokop/tabs/autotune/model.ts:1751
 msgid "The configuration was changed after the apply, so nothing was rolled back. Restore a snapshot in History and recovery if needed."
 msgstr ""
 
@@ -6946,28 +6995,28 @@ msgstr ""
 msgid "The connection to the router may drop for a moment while Prokop is installed and restarted; the progress is kept and the page picks it up again."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:622
+#: src/prokop/tabs/autotune/model.ts:626
 msgid "The current strategy is already the best."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:404
+#: src/prokop/tabs/autotune/model.ts:408
 msgid "The current strategy is kept."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:233
+#: src/prokop/tabs/autotune/model.ts:237
 msgid "The daily limit of automatic applies is reached."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1647
+#: src/prokop/tabs/autotune/model.ts:1651
 msgid "The damaged record is kept aside for inspection."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1704
+#: src/prokop/tabs/autotune/model.ts:1708
 msgid "The damaged record is set aside; the configuration already was the last known working one."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6749
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7097
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6824
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7172
 msgid "The desync fwmark is managed by Prokop for loop prevention and must not be overridden here."
 msgstr ""
 
@@ -6976,11 +7025,11 @@ msgstr ""
 msgid "the details are in the system log"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9428
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9626
 msgid "the direct proxy"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1153
+#: src/prokop/tabs/autotune/model.ts:1157
 msgid "The DNS server must be an IPv4 address."
 msgstr ""
 
@@ -7001,7 +7050,7 @@ msgstr ""
 msgid "The DPI guard stays active. Restore the snapshot you need to finish."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:482
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:483
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:190
 msgid "The DPI provider of the selected section is not installed. Install it in Components or choose another section."
 msgstr ""
@@ -7010,7 +7059,7 @@ msgstr ""
 msgid "The DPI rule that routes it could not be identified safely."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5276
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5351
 msgid "The editor has no field for downloaded lists: they cannot be converted and stay as they are."
 msgstr ""
 
@@ -7034,19 +7083,19 @@ msgstr ""
 msgid "the firewall refused the built policy"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2531
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2532
 msgid "The header has no value"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2514
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2515
 msgid "The header is too long"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2517
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2518
 msgid "The header must not contain control characters"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2525
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2526
 msgid "The header name contains characters that are not allowed"
 msgstr ""
 
@@ -7074,7 +7123,7 @@ msgstr ""
 msgid "The kill-switch service could not be started; DNS will not fail over to the standby resolver if sing-box dies"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1605
+#: src/prokop/tabs/autotune/model.ts:1609
 msgid "The last autotune change is not resolved."
 msgstr ""
 
@@ -7082,23 +7131,23 @@ msgstr ""
 msgid "The last autotune change needs attention."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1623
+#: src/prokop/tabs/autotune/model.ts:1627
 msgid "The last change (%s) can be rolled back to the configuration before it."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1545
+#: src/prokop/tabs/autotune/model.ts:1549
 msgid "The last change (%s) failed its check, and the automatic rollback did not finish."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1541
+#: src/prokop/tabs/autotune/model.ts:1545
 msgid "The last change (%s) passed its check, but it could not be recorded as the last known working configuration."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1550
+#: src/prokop/tabs/autotune/model.ts:1554
 msgid "The last change (%s) was not checked to the end."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1615
+#: src/prokop/tabs/autotune/model.ts:1619
 msgid "The last change (%s) was not confirmed by its check, and the configuration was changed since; the rule still uses that strategy. Until you choose another strategy for the rule, turn the rule off or restore a snapshot in History and recovery, Prokop does not record this configuration as the last known working one, and autotune applies nothing."
 msgstr ""
 
@@ -7106,41 +7155,41 @@ msgstr ""
 msgid "The last change was rolled back automatically."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:413
+#: src/prokop/tabs/autotune/model.ts:417
 msgid "the last check could not prove the route through the rule"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:411
+#: src/prokop/tabs/autotune/model.ts:415
 msgid "the last check could not reach the network"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1089
-#: src/prokop/tabs/autotune/model.ts:1090
+#: src/prokop/tabs/autotune/model.ts:1093
+#: src/prokop/tabs/autotune/model.ts:1094
 msgid "The last check failed"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:444
+#: src/prokop/tabs/autotune/model.ts:448
 msgid "The last check failed; one more failure in a row rolls the change back."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:417
+#: src/prokop/tabs/autotune/model.ts:421
 msgid "the last check found Prokop stopped"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:415
+#: src/prokop/tabs/autotune/model.ts:419
 msgid "the last check found the DPI service not ready"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:419
+#: src/prokop/tabs/autotune/model.ts:423
 msgid "the last check gave no result"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:401
+#: src/prokop/tabs/autotune/model.ts:405
 msgid "The last check gave no usable result. The current strategy is kept."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1072
-#: src/prokop/tabs/autotune/model.ts:1079
+#: src/prokop/tabs/autotune/model.ts:1076
+#: src/prokop/tabs/autotune/model.ts:1083
 msgid "The last check was interrupted"
 msgstr ""
 
@@ -7161,11 +7210,11 @@ msgstr ""
 msgid "The last known good snapshot, the one an autotune change can still roll back to, the one of an unapplied change and those an unfinished restore needs are kept."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1763
+#: src/prokop/tabs/autotune/model.ts:1767
 msgid "The last known working configuration is missing; nothing was rolled back. Restore a snapshot in History and recovery first."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1701
+#: src/prokop/tabs/autotune/model.ts:1705
 msgid "The last known working configuration is restored; the damaged record is set aside."
 msgstr ""
 
@@ -7177,11 +7226,11 @@ msgstr ""
 msgid "The latest TorrServer release has no build with a published checksum for %s"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5287
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5362
 msgid "The legacy conditions cannot be converted without changing what the rule matches:"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5357
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5432
 msgid "The legacy settings are converted. Save the rule to keep the change."
 msgstr ""
 
@@ -7193,12 +7242,12 @@ msgstr ""
 msgid "the lines marked \"# prokop-\" in /etc/crontabs/root"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:807
-#: src/prokop/tabs/autotune/model.ts:815
+#: src/prokop/tabs/autotune/model.ts:811
+#: src/prokop/tabs/autotune/model.ts:819
 msgid "The list could not be read."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:809
+#: src/prokop/tabs/autotune/model.ts:813
 msgid "The list has no domain names to check (only keywords, regular expressions or addresses)."
 msgstr ""
 
@@ -7206,7 +7255,7 @@ msgstr ""
 msgid "The list is long: only its first 2000 domains can be chosen."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:803
+#: src/prokop/tabs/autotune/model.ts:807
 msgid "The list is not downloaded on the router; update the lists or save the rule."
 msgstr ""
 
@@ -7218,15 +7267,15 @@ msgstr ""
 msgid "The lists of the last successful update (%s) stay in use."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1155
+#: src/prokop/tabs/autotune/model.ts:1159
 msgid "The maximum number of targets is reached."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9441
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9639
 msgid "the mixed proxy of rule %s"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/siteCheck.ts:161
+#: src/prokop/tabs/diagnostic/siteCheck.ts:166
 msgid "The name does not resolve on the router, so no rule can open it. Check the DNS results above."
 msgstr ""
 
@@ -7234,32 +7283,32 @@ msgstr ""
 msgid "The new limits apply at once."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1454
+#: src/prokop/tabs/autotune/model.ts:1458
 msgid "The new strategy did not pass the check, but the configuration was changed during the check, so Prokop kept that change and did not roll back. The rule may still use the new strategy: check it, or restore the \"Before autotune\" snapshot in History and recovery."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1462
+#: src/prokop/tabs/autotune/model.ts:1466
 msgid "The new strategy did not pass the check. Prokop began to restore the \"Before autotune\" snapshot, but the configuration was changed meanwhile, and Prokop kept that change. It is not known whether Prokop now runs the snapshot or the change: check the rule, or restore the snapshot you need in History and recovery."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1387
+#: src/prokop/tabs/autotune/model.ts:1391
 msgid "The new strategy did not pass the check. Prokop restored the previous configuration automatically."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1432
+#: src/prokop/tabs/autotune/model.ts:1436
 msgid "The new strategy was not applied: the service reload failed and the previous configuration was restored automatically."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1424
+#: src/prokop/tabs/autotune/model.ts:1428
 msgid "The new strategy was not applied: the service was busy and only queued the reload. The previous configuration is kept."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6746
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7094
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6821
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7169
 msgid "The NFQUEUE number is assigned by Prokop for each rule and must not be overridden here."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8525
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8600
 msgid "The notice is dismissed; nothing else in the rule changes. Save the rule to keep the change."
 msgstr ""
 
@@ -7267,7 +7316,7 @@ msgstr ""
 msgid "The package is removed from the router."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:241
+#: src/prokop/tabs/autotune/model.ts:245
 msgid "The previous automatic change is still under observation; the next one waits for it."
 msgstr ""
 
@@ -7279,7 +7328,7 @@ msgstr ""
 msgid "The Prokop configuration could not be read"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9412
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9610
 msgid "the Prokop DNS of devices"
 msgstr ""
 
@@ -7287,32 +7336,32 @@ msgstr ""
 msgid "The Prokop interface is out of date"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9411
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9609
 msgid "the Prokop transparent proxy"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:217
-#: src/prokop/tabs/autotune/model.ts:1303
+#: src/prokop/tabs/autotune/model.ts:221
+#: src/prokop/tabs/autotune/model.ts:1307
 msgid "The recommendation is not confirmed yet."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1372
+#: src/prokop/tabs/autotune/model.ts:1376
 msgid "The recommendation is outdated: the configuration changed after the check. Run the check again."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1290
+#: src/prokop/tabs/autotune/model.ts:1294
 msgid "The recommended strategy is not an HTTPS (TCP/443) strategy."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1577
+#: src/prokop/tabs/autotune/model.ts:1581
 msgid "The record of the last autotune change is damaged, and the last known working configuration is missing. Restore a snapshot in History and recovery: it becomes the last known working one, and the change can then be rolled back here."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1639
+#: src/prokop/tabs/autotune/model.ts:1643
 msgid "The record of the last autotune change is damaged."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1574
+#: src/prokop/tabs/autotune/model.ts:1578
 msgid "The record of the last autotune change is damaged. Checks and changes wait until an administrator rolls it back: Prokop then makes sure the last known working configuration is active."
 msgstr ""
 
@@ -7324,27 +7373,27 @@ msgstr ""
 msgid "The request was refused: invalid input."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:486
+#: src/prokop/tabs/autotune/model.ts:490
 msgid "The rollback after the observation did not finish"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1729
+#: src/prokop/tabs/autotune/model.ts:1733
 msgid "The rollback did not finish: the configuration was changed while the \"Before autotune\" snapshot was being restored, and Prokop kept that change. It is not known whether Prokop now runs the snapshot or the change: check the rule, or restore the snapshot you need in History and recovery."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1737
+#: src/prokop/tabs/autotune/model.ts:1741
 msgid "The rollback did not finish. Open History and recovery."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1823
+#: src/prokop/tabs/autotune/model.ts:1827
 msgid "The rollback failed."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1549
+#: src/prokop/tabs/autotune/model.ts:1553
 msgid "The rollback of the last change (%s) did not finish."
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/siteCheck.ts:227
+#: src/prokop/tabs/diagnostic/siteCheck.ts:232
 msgid "The route check did not complete. Try again."
 msgstr ""
 
@@ -7356,7 +7405,7 @@ msgstr ""
 msgid "the route of an IPv6 address is not calculated"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/siteCheck.ts:170
+#: src/prokop/tabs/diagnostic/siteCheck.ts:175
 msgid "The router could not check whether the site opens. Try the check again."
 msgstr ""
 
@@ -7372,11 +7421,11 @@ msgstr ""
 msgid "The router counts no new addresses: its list of addresses is full. New devices are missing until addresses idle for 7 days leave it."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1680
+#: src/prokop/tabs/autotune/model.ts:1684
 msgid "The router did not report the outcome of the rollback; it may still be running. This page shows it once the rollback ends."
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/siteCheck.ts:133
+#: src/prokop/tabs/diagnostic/siteCheck.ts:138
 msgid "The router DNS returned no address"
 msgstr ""
 
@@ -7392,41 +7441,41 @@ msgstr ""
 msgid "The router rejected this check"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9600
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9798
 msgid "The rule applies to the domain and all its subdomains. Use full:, keyword:, or regex: prefixes for exact match, keyword match, or regular expression."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:221
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:222
 msgid "the rule cannot use itself"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:221
-#: src/prokop/tabs/autotune/model.ts:654
-#: src/prokop/tabs/autotune/model.ts:1321
+#: src/prokop/tabs/autotune/model.ts:225
+#: src/prokop/tabs/autotune/model.ts:658
+#: src/prokop/tabs/autotune/model.ts:1325
 msgid "The rule has a custom strategy; Prokop keeps it."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1288
+#: src/prokop/tabs/autotune/model.ts:1292
 msgid "The rule has no strategy."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:203
+#: src/prokop/tabs/autotune/model.ts:207
 msgid "The rule is limited to devices: the result holds for them. Prokop checks a change with router requests sent through the queue of this rule."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5315
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5390
 msgid "The rule matches the same traffic as before. Closing the window without saving discards the conversion."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1278
+#: src/prokop/tabs/autotune/model.ts:1282
 msgid "The rule strategy handles HTTPS together with other traffic in one profile; Prokop does not split it. Give HTTPS (--filter-tcp=443) its own profile."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1282
+#: src/prokop/tabs/autotune/model.ts:1286
 msgid "The rule strategy has no HTTPS (TCP/443) profile."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1284
+#: src/prokop/tabs/autotune/model.ts:1288
 msgid "The rule strategy writes a filter as two words (--filter-tcp 443); write it as --filter-tcp=443."
 msgstr ""
 
@@ -7434,19 +7483,19 @@ msgstr ""
 msgid "The rule that routes it cannot be determined unambiguously (for example, a remote list comes first)."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10320
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10518
 msgid "The rule was not removed because the page could not be saved: %s"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10295
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10493
 msgid "The rule was not removed. %s"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10106
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10304
 msgid "The rule window was closed before the save finished. Nothing was saved."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:238
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:239
 msgid "the rules connect through each other in a loop"
 msgstr ""
 
@@ -7466,17 +7515,17 @@ msgstr ""
 msgid "The saved password is never shown on the page"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:490
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:491
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:198
 msgid "The selected section cannot be used here. Choose another section."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:473
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:474
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:180
 msgid "The selected section is disabled. Enable it or choose another section."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:463
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:464
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:170
 msgid "The selected section no longer exists. Choose another section."
 msgstr ""
@@ -7497,7 +7546,7 @@ msgstr ""
 msgid "The server's address could not be found through the bootstrap DNS servers"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1133
+#: src/prokop/tabs/autotune/model.ts:1137
 msgid "the service is busy"
 msgstr ""
 
@@ -7513,7 +7562,7 @@ msgstr ""
 msgid "the sing-box configuration is not available; is Prokop running?"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/siteCheck.ts:188
+#: src/prokop/tabs/diagnostic/siteCheck.ts:193
 msgid "The site did not open from the router. The router may take a different path than devices."
 msgstr ""
 
@@ -7521,15 +7570,15 @@ msgstr ""
 msgid "the site has a real address; whether Prokop intercepts it depends on the address lists of the rules"
 msgstr ""
 
-#: src/prokop/tabs/diagnostic/siteCheck.ts:174
+#: src/prokop/tabs/diagnostic/siteCheck.ts:179
 msgid "The site opens from the router. If it does not open on a device, look at its real connections."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1755
+#: src/prokop/tabs/autotune/model.ts:1759
 msgid "The snapshot to return to is missing; nothing was rolled back."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1589
+#: src/prokop/tabs/autotune/model.ts:1593
 msgid "The snapshot to return to is missing: restore a snapshot in History and recovery. Checks and changes wait until then."
 msgstr ""
 
@@ -7545,7 +7594,7 @@ msgstr ""
 msgid "The standby resolver for a dead sing-box blocks the protected names only, not those of the other VPN sections"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1567
+#: src/prokop/tabs/autotune/model.ts:1571
 msgid "The state of the last autotune change could not be read."
 msgstr ""
 
@@ -7553,11 +7602,11 @@ msgstr ""
 msgid "The strategy contains an error"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1440
+#: src/prokop/tabs/autotune/model.ts:1444
 msgid "The strategy could not be applied. The previous configuration is kept."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:609
+#: src/prokop/tabs/autotune/model.ts:613
 msgid "The strategy is changed only after %d checks in a row with the same result."
 msgstr ""
 
@@ -7569,27 +7618,27 @@ msgstr ""
 msgid "The strategy is noticeably faster."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1655
+#: src/prokop/tabs/autotune/model.ts:1659
 msgid "The strategy of the DPI rule \"%s\" returns to the one before autotune."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1214
+#: src/prokop/tabs/autotune/model.ts:1218
 msgid "The strategy of the DPI rule \"%s\" will be changed."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1658
+#: src/prokop/tabs/autotune/model.ts:1662
 msgid "The strategy returns to the one before autotune."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1300
-#: src/prokop/tabs/autotune/model.ts:1333
-#: src/prokop/tabs/autotune/model.ts:1343
+#: src/prokop/tabs/autotune/model.ts:1304
+#: src/prokop/tabs/autotune/model.ts:1337
 #: src/prokop/tabs/autotune/model.ts:1347
-#: src/prokop/tabs/autotune/model.ts:1348
+#: src/prokop/tabs/autotune/model.ts:1351
+#: src/prokop/tabs/autotune/model.ts:1352
 msgid "The strategy was not applied"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1414
+#: src/prokop/tabs/autotune/model.ts:1418
 msgid "The strategy was not applied: the current configuration is not yet the last known working one. Prokop records it once it starts or reloads with it; while a rule still uses a strategy that did not pass its check, it is not recorded."
 msgstr ""
 
@@ -7609,7 +7658,7 @@ msgstr ""
 msgid "The target is unreachable in every way; the problem may not be DPI."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:626
+#: src/prokop/tabs/autotune/model.ts:630
 msgid "The targets work without bypass."
 msgstr ""
 
@@ -7623,31 +7672,31 @@ msgstr ""
 msgid "The TorrServer program was changed outside Prokop; Prokop left it as it is"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:227
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:228
 msgid "the transit rule “%s” is disabled"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:230
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:231
 msgid "the transit rule “%s” is not a Connection rule"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:224
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:225
 msgid "the transit rule “%s” no longer exists"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5384
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5459
 msgid "The unsupported settings are removed. Save the rule to keep the change."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8428
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8503
 msgid "The update removed retired rule sets from Built-in rule sets #2 of this rule: %s. An administrator can review the notice."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8479
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8554
 msgid "The update removed the rule sets %s from Built-in rule sets #2 of this rule: their source no longer publishes them. The rule no longer matches their IP addresses."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1171
+#: src/prokop/tabs/autotune/model.ts:1175
 msgid "The value is outside the allowed range."
 msgstr ""
 
@@ -7671,15 +7720,15 @@ msgstr ""
 msgid "There are unsaved changes of Prokop in this session. Save & Apply or revert them, then restore the snapshot."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1141
+#: src/prokop/tabs/autotune/model.ts:1145
 msgid "There are unsaved configuration changes. Save or reset them in Settings first."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1305
+#: src/prokop/tabs/autotune/model.ts:1309
 msgid "There is no recommendation to apply."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1784
+#: src/prokop/tabs/autotune/model.ts:1788
 msgid "There is nothing to roll back."
 msgstr ""
 
@@ -7699,23 +7748,23 @@ msgstr ""
 msgid "This does not look like a bot token (123456789:ABC…)"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7417
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7492
 msgid "This field must start a working ciadpi strategy; help/version options exit immediately and are not allowed here."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6755
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6830
 msgid "This field must start a working nfqws strategy; --dry-run exits immediately and is not allowed here."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6758
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6833
 msgid "This field must start a working nfqws strategy; --version exits immediately and is not allowed here."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7109
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7184
 msgid "This field must start a working nfqws2 strategy; --dry-run exits immediately and is not allowed here."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7112
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7187
 msgid "This field must start a working nfqws2 strategy; --version exits immediately and is not allowed here."
 msgstr ""
 
@@ -7723,13 +7772,13 @@ msgstr ""
 msgid "This firmware has no kmod-nft-socket package, which direct routing for TorrServer needs"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6927
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7304
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7002
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7379
 msgid "This flag does not accept a value."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6958
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7335
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7033
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7410
 msgid "This option requires a value."
 msgstr ""
 
@@ -7749,35 +7798,35 @@ msgstr ""
 msgid "This Prokop build has no direct routing for TorrServer"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:312
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:313
 msgid "This rule has a cascade setting from an earlier version, which the editor no longer shows: servers of this rule connect through the rule “%s”."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:308
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:309
 msgid "This rule has a cascade setting from an earlier version, which the editor no longer shows. Applying the configuration fails while it is set: %s."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:294
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:295
 msgid "This rule has a hidden cascade setting from an earlier version. An administrator can clear it."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:215
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:216
 msgid "this rule is not a Connection rule"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10257
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:10455
 msgid "This rule is selected in Settings for: %s. Choose another section there first."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:304
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:305
 msgid "This rule keeps a switched-off cascade setting from an earlier version (transit rule “%s”). It has no effect."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5199
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5274
 msgid "This rule keeps settings in a legacy form from an earlier version. An administrator can review and convert them."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5255
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5330
 msgid "This rule keeps settings in a legacy form, from an earlier version, the podkop migration or the command line. The fields show what the rule matches; the legacy options stay as they are until you convert or remove them."
 msgstr ""
 
@@ -7805,20 +7854,20 @@ msgstr ""
 msgid "This snapshot was saved by Prokop %s. Before the restore, its configuration is migrated to the current version %s, as an upgrade migrates it: settings retired since then are updated. The snapshot itself is not changed; the changes listed above compare the snapshot as it was saved."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1395
+#: src/prokop/tabs/autotune/model.ts:1399
 msgid "This strategy is already active; nothing was changed."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1663
+#: src/prokop/tabs/autotune/model.ts:1667
 msgid "This strategy is not applied again during the pause after a rollback."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1311
+#: src/prokop/tabs/autotune/model.ts:1315
 msgid "This strategy is not supported by the installed Zapret."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:223
-#: src/prokop/tabs/autotune/model.ts:1317
+#: src/prokop/tabs/autotune/model.ts:227
+#: src/prokop/tabs/autotune/model.ts:1321
 msgid "This strategy was rolled back recently; it waits for the cooldown."
 msgstr ""
 
@@ -7851,21 +7900,43 @@ msgstr ""
 msgid "tiny"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8992
+msgid "TLS fragmentation"
+msgstr ""
+
 #: src/prokop/tabs/diagnostic/connectivityMatrix.ts:102
 msgid "TLS or certificate error"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8999
+#: src/prokop/tabs/monitoring/connectionView.ts:149
+msgid "TLS records"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9001
+#: src/prokop/tabs/monitoring/connectionView.ts:151
+msgid "TLS records and TCP segments"
+msgstr ""
+
+#: src/prokop/tabs/monitoring/connectionView.ts:152
+msgid "TLS spoof"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9042
+msgid "TLS spoof domain"
 msgstr ""
 
 #: src/prokop/tabs/autotune/initController.ts:801
 msgid "TLS, median"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2947
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2948
 #: src/prokop/tabs/dashboard/initController.ts:1211
 #: src/prokop/tabs/dashboard/initController.ts:1463
 msgid "Tolerance"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3506
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3507
 msgid "Top level has the highest priority; lower levels are used as fallback"
 msgstr ""
 
@@ -7953,7 +8024,7 @@ msgstr ""
 msgid "Traffic"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3204
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3205
 msgid "Traffic for this level goes directly."
 msgstr ""
 
@@ -7967,11 +8038,11 @@ msgstr ""
 msgid "Traffic of the rules does not reach sing-box, so connections through rules fail."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7408
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7483
 msgid "Transparent proxy mode is incompatible with action=byedpi because Prokop connects to ciadpi through SOCKS."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2379
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2380
 msgid "Transport"
 msgstr ""
 
@@ -7995,11 +8066,15 @@ msgstr ""
 msgid "Turn on automatic mode?"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4900
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9010
+msgid "Turn on TLS fragmentation or enter a TLS spoof domain, or choose another action."
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4975
 msgid "turns text mode on"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4849
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4924
 msgid "turns text mode on for domains, IPs and devices"
 msgstr ""
 
@@ -8012,36 +8087,40 @@ msgstr ""
 msgid "UDP (Unprotected DNS)"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:554
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:555
 msgid "Unable to validate the ByeDPI strategy through the backend parser."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:544
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7859
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8793
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:545
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7934
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8868
 msgid "Unable to validate the NFQWS strategy through the backend parser."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:549
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7868
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:550
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7943
 msgid "Unable to validate the NFQWS2 strategy through the backend parser."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3410
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3411
 #: src/prokop/tabs/dashboard/initController.ts:1588
 msgid "Unavailability timeout"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4234
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4235
 msgid "Unavailable: needs sing-box-extended %s or newer, the installed sing-box is %s."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:430
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4277
+msgid "Unavailable: TLS spoof needs sing-box %s or newer, the installed sing-box is %s."
+msgstr ""
+
+#: src/prokop/tabs/autotune/model.ts:434
 msgid "Under observation: %d of %d checks passed"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7549
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7598
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7624
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7673
 msgid "Unexpected ByeDPI strategy argument: %s"
 msgstr ""
 
@@ -8061,8 +8140,8 @@ msgstr ""
 msgid "Unexpected Prokop-managed nfqws2 runtime is running"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6907
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7284
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6982
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7359
 msgid "Unexpected standalone token. Use explicit flags such as --name or --name=value."
 msgstr ""
 
@@ -8092,13 +8171,13 @@ msgstr ""
 msgid "Unknown"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7518
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7540
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7591
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7593
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7615
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7666
 msgid "Unknown ByeDPI option: %s"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:958
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:959
 msgid "Unknown country"
 msgstr ""
 
@@ -8106,15 +8185,15 @@ msgstr ""
 msgid "Unknown error"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6918
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6993
 msgid "Unknown NFQWS flag."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7295
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7370
 msgid "Unknown NFQWS2 flag."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1133
+#: src/prokop/tabs/autotune/model.ts:1137
 msgid "unknown reason"
 msgstr ""
 
@@ -8156,7 +8235,7 @@ msgstr ""
 msgid "Update subscriptions"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2752
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2753
 msgid "Update this subscription automatically"
 msgstr ""
 
@@ -8180,15 +8259,15 @@ msgstr ""
 msgid "URL must use one of the following protocols:"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3386
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3387
 msgid "URL used to check whether a server is alive"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2962
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2963
 msgid "URL used to test server latency"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9068
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9266
 msgid "URLTest"
 msgstr ""
 
@@ -8202,8 +8281,8 @@ msgstr ""
 msgid "URLTest details are unavailable"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3883
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3884
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3885
 msgid "URLTest settings"
 msgstr ""
 
@@ -8227,7 +8306,7 @@ msgstr ""
 msgid "Use an http(s) address without spaces or quotes"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9162
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9360
 msgid "Use another section as an intermediate hop to connect to servers in this section. Does not apply to network interfaces or JSON outbounds."
 msgstr ""
 
@@ -8243,12 +8322,12 @@ msgstr ""
 msgid "Use sing-box duration format like 1d or 12h. Automatic updates run at most once an hour; an update started by hand always runs."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2761
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2936
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3459
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5831
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5838
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5845
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2762
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2937
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3460
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5906
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5913
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5920
 msgid "Use sing-box duration format like 1d, 12h or 30m"
 msgstr ""
 
@@ -8260,35 +8339,39 @@ msgstr ""
 msgid "Use up to 128 characters, without line breaks"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4825
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4900
 msgid "used by the rule"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5018
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5093
 msgid "used by the rule together with %s"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5060
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5135
 msgid "used by the rule; the Network Interface field does not show it"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4883
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4958
 msgid "used by the rule: text mode is on"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9022
+msgid "Used when sing-box cannot measure the round trip to the site. Empty: 500ms."
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:975
 msgid "Used while client DNS is intercepted. DNS from these devices or to these servers is never intercepted: a DNS server in the LAN, the server of a VPN on port 53. An IPv4 or IPv6 address or subnet"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2816
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2817
 msgid "User-Agent"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2825
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2826
 msgid "User-Agent must not contain control characters"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9510
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9708
 msgid "Username cannot be empty"
 msgstr ""
 
@@ -8296,8 +8379,8 @@ msgstr ""
 msgid "Usually harmless. Retry the check later."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6431
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6444
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6506
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6519
 #: src/validators/validateDns.ts:25
 #: src/validators/validateDns.ts:29
 #: src/validators/validateDns.ts:60
@@ -8317,11 +8400,11 @@ msgstr ""
 msgid "Valid"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5884
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5959
 msgid "Validation errors:"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6421
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6496
 msgid "Value cannot be empty"
 msgstr ""
 
@@ -8329,7 +8412,7 @@ msgstr ""
 msgid "Verifying checksums"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2320
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2321
 msgid "Via country.is"
 msgstr ""
 
@@ -8338,21 +8421,21 @@ msgstr ""
 msgid "View logs"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8640
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8715
 msgid "Visible name of this section"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8915
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9113
 msgid "vless://, vmess://, ss://, trojan://, socks4/5://, hy2/hysteria2:// links"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4437
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9310
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4510
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9508
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:538
 msgid "VPN kill-switch"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:998
+#: src/prokop/tabs/autotune/model.ts:1002
 msgid "Waiting"
 msgstr ""
 
@@ -8365,7 +8448,7 @@ msgstr ""
 msgid "Waiting for a successful Prokop start or reload"
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:977
+#: src/prokop/tabs/autotune/model.ts:981
 msgid "waiting for probe connections to close: %d s (up to %d s)"
 msgstr ""
 
@@ -8404,7 +8487,7 @@ msgstr ""
 msgid "Webhook URL"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8545
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8620
 msgid "What"
 msgstr ""
 
@@ -8412,7 +8495,7 @@ msgstr ""
 msgid "What it means"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8653
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8728
 msgid "What Prokop should do when this section matches"
 msgstr ""
 
@@ -8432,11 +8515,11 @@ msgstr ""
 msgid "When a rule has the kill-switch"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3437
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3438
 msgid "When switching to another level, test every server and select the fastest instead of the first working one."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8544
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8619
 msgid "Where to"
 msgstr ""
 
@@ -8444,7 +8527,7 @@ msgstr ""
 msgid "Which domains to check"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9330
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9528
 msgid "While Prokop is stopped, the kill-switch answers this rule's names with NXDOMAIN for every device, the devices excluded from this rule included: DNS is shared by all devices. With this option the excluded devices of this rule resolve its names through a separate resolver of their own; every other device stays blocked and the firewall part of the kill-switch does not change. While Prokop is stopped, all DNS of these devices goes through that resolver, past the router's own DNS settings: host names without the local domain, address overrides, blocking lists and rebind protection of the router do not apply to them. Each group of excluded devices with different blocked names gets its own resolver with a copy of the block list in memory, at most 4; the devices of further groups stay blocked. Applies from the next successful Prokop start or reload."
 msgstr ""
 
@@ -8452,15 +8535,15 @@ msgstr ""
 msgid "While Prokop runs, it turns off the iptables hooks of br_netfilter (net.bridge.bridge-nf-call-iptables and -ip6tables) that are on, for transparent proxying, so iptables rules do not filter bridged traffic. Their current values were not set by Prokop, and stopping it does not change them."
 msgstr ""
 
-#: src/prokop/tabs/autotune/model.ts:1217
+#: src/prokop/tabs/autotune/model.ts:1221
 msgid "Will be"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9283
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9481
 msgid "With another action the rule cannot use its cascade setting: saving the rule removes it, and its servers no longer connect through the rule “%s”."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9286
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9484
 msgid "With another action the rule cannot use its cascade setting: saving the rule removes the switched-off cascade setting."
 msgstr ""
 
@@ -8468,8 +8551,24 @@ msgstr ""
 msgid "Works without bypass."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2521
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2522
 msgid "Write the header as Name: value"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9100
+msgid "Wrong acknowledgment number"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9099
+msgid "Wrong checksum"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9098
+msgid "Wrong sequence number"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9093
+msgid "Wrong sequence number suits most sites. Change it only if the bypass does not work."
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:734
@@ -8496,7 +8595,7 @@ msgstr ""
 msgid "Zapret checks"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6743
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:6818
 msgid "Zapret hostlist templates are not supported here because Prokop does not expand them for per-rule NFQWS strategies."
 msgstr ""
 
@@ -8532,7 +8631,7 @@ msgstr ""
 msgid "Zapret2 checks"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7091
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7166
 msgid "Zapret2 hostlist templates are not supported here because Prokop does not expand them for per-rule NFQWS2 strategies."
 msgstr ""
 
