@@ -38,6 +38,10 @@ const PRIORITY_PROBE_PORT_FIRST = 4580;
 const PRIORITY_PROBE_MAX = 16;
 let priority_probes = [];
 let runtime_supports_dns_response_matching = false;
+// sing-box 1.14 and newer: remote rule sets download through a top-level
+// HTTP client (apply_http_clients) instead of the deprecated
+// download_detour, and the 1.14 DNS and inbound fields are known.
+let runtime_sing_box_1_14 = false;
 let provider_urltest_start_seed = "";
 
 let as_string = common.as_string;
@@ -550,6 +554,16 @@ function base_config(settings, service_address, runtime_context) {
             final: runtime_constants.DNS_SERVER_TAG,
             strategy: option(settings, "dns_strategy", "prefer_ipv4"),
             independent_cache: true,
+            // sing-box 1.14 dns.timeout and dns.optimistic stay unset on
+            // purpose. timeout keeps the 10 s every older core uses: there
+            // is no fallback server inside sing-box to reach sooner (DNS
+            // failover is singbox/dns_failover.uc, by its own probes), so a
+            // shorter one only fails a slow but working upstream (DoH/DoT
+            // through a proxy) earlier. optimistic would answer stale
+            // records while the upstream is down: FakeIP answers and the
+            // failover probes (disable_cache) are never cached, but the
+            // diagnostics that ask the DNS listener (diagnostics/runtime.uc)
+            // and every client would see a dead upstream as working.
             // C9: EDNS Client Subnet, so geo-CDNs answer with a node near
             // the user when DNS leaves through a proxy or a public resolver.
             // Off unless set (config/validator.uc checks the value).
@@ -3224,17 +3238,77 @@ function enabled_sections(deferred_sections) {
     return result;
 }
 
+// B9 on sing-box 1.14 and newer: the low memory mode also caps the UDP NAT
+// sessions of each tproxy inbound. By default sing-box picks 4096 to 16384
+// of them by total memory; past the cap the least recently used session is
+// closed, so a torrent client or a UDP flood cannot grow sing-box until the
+// router runs out of memory. Older cores refuse the field.
+const LOW_MEMORY_UDP_NAT_MAX = 2048;
+
+function apply_low_memory_udp_nat(config) {
+    if (option(runtime_settings(), "tproxy_low_memory", "0") != "1")
+        return;
+    for (let inbound in array_or_empty(config.inbounds))
+        if (type(inbound) == "object" && inbound.type == "tproxy")
+            inbound.udp_nat_max = LOW_MEMORY_UDP_NAT_MAX;
+}
+
 function apply_sing_box_version(config, sing_box_version) {
     let version_parts = match(as_string(sing_box_version), /^v?([0-9]+)\.([0-9]+)\./);
     let extended_parts = match(as_string(sing_box_version), /-extended-([0-9]+)\.([0-9]+)\.([0-9]+)/);
     runtime_extended_version = extended_parts != null
         ? [ int(extended_parts[1]), int(extended_parts[2]), int(extended_parts[3]) ]
         : null;
-    runtime_supports_dns_response_matching = version_parts != null &&
+    runtime_sing_box_1_14 = version_parts != null &&
         (int(version_parts[1]) > 1 || (int(version_parts[1]) == 1 && int(version_parts[2]) >= 14));
-    if (version_parts != null && (int(version_parts[1]) > 1 ||
-        (int(version_parts[1]) == 1 && int(version_parts[2]) >= 14)))
+    runtime_supports_dns_response_matching = runtime_sing_box_1_14;
+    if (runtime_sing_box_1_14) {
         delete config.dns.independent_cache;
+        apply_low_memory_udp_nat(config);
+    }
+}
+
+// The HTTP client a remote rule set without a download proxy uses on
+// sing-box 1.14 and newer, and the suffix of the one per download proxy.
+const DEFAULT_HTTP_CLIENT_TAG = "direct-http";
+const HTTP_CLIENT_TAG_SUFFIX = "-http";
+
+// sing-box 1.14 deprecates the remote rule set download_detour and the
+// implicit default HTTP client (which used the default outbound); 1.16.0
+// removes both, and a configuration with download_detour then fails to
+// start. On 1.14 and newer every remote rule set downloads through a client
+// of top-level http_clients: the one of its download proxy (detour = that
+// outbound, as download_detour was), or the default one, named in
+// route.default_http_client. The default client has no detour: it dials
+// with the route defaults (default_mark, interface, default_domain_resolver)
+// exactly like direct-out, the default outbound (route.final) the implicit
+// client went through. It cannot name direct-out as its detour: sing-box
+// refuses a detour to a direct outbound without dial options when it
+// connects ("detour to an empty direct outbound makes no sense"), a check
+// the old download_detour skipped. Older cores keep download_detour.
+function apply_http_clients(config) {
+    if (!runtime_sing_box_1_14)
+        return;
+    let clients = [ { tag: DEFAULT_HTTP_CLIENT_TAG } ];
+    let client_by_detour = {};
+    for (let rule_set in array_or_empty(config.route && config.route.rule_set)) {
+        if (type(rule_set) != "object" || !("download_detour" in rule_set))
+            continue;
+        let detour = as_string(rule_set.download_detour);
+        delete rule_set.download_detour;
+        if (detour == "")
+            continue;
+        if (client_by_detour[detour] == null) {
+            let tag_name = detour + HTTP_CLIENT_TAG_SUFFIX;
+            for (let n = 1; length(filter(clients, c => c.tag == tag_name)) > 0; n++)
+                tag_name = detour + HTTP_CLIENT_TAG_SUFFIX + "-" + n;
+            client_by_detour[detour] = tag_name;
+            push(clients, { tag: tag_name, detour });
+        }
+        rule_set.http_client = client_by_detour[detour];
+    }
+    config.http_clients = clients;
+    config.route.default_http_client = DEFAULT_HTTP_CLIENT_TAG;
 }
 
 function generate_config(output_path, service_address, mwan3_active, supports_xhttp, deferred_sections, sing_box_version) {
@@ -3275,6 +3349,7 @@ function generate_config(output_path, service_address, mwan3_active, supports_xh
 
     drop_unsupported_xhttp_settings(config);
     assert_unique_outbound_tags(config);
+    apply_http_clients(config);
     strip_internal_fields(config);
     if (!common.write_private_json_file(output_path, config)) {
         warn("failed to write ", output_path, "\n");
@@ -3370,6 +3445,7 @@ function generate_list_bootstrap_config(output_path, service_address, mwan3_acti
 
     drop_unsupported_xhttp_settings(config);
     assert_unique_outbound_tags(config);
+    apply_http_clients(config);
     strip_internal_fields(config);
     if (!common.write_private_json_file(output_path, config)) {
         warn("failed to write ", output_path, "\n");
