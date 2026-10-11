@@ -1711,6 +1711,17 @@ function add_proxy_selector(config, section, selector_tags, urltest_candidate_ta
     if (length(selector_outbounds) == 0)
         runtime_generate_unsupported("configured URLTest and Priority groups produced no usable outbounds");
 
+    // R2 pin_guard (singbox/pin_guard.uc), opt-in per rule: a server chosen
+    // by hand that stops answering gives way to the rule's first URLTest
+    // group. Without a URLTest group there is nothing to fall back to.
+    if (bool_option(section, "pin_guard", false) && length(urltest_tags) > 0 && type(state) == "object")
+        state.pinGuard = {
+            section: section_name,
+            selector: selector_tag,
+            fallback: urltest_tags[0],
+            url: as_string(object_or_empty(object_or_empty(state.urltestGroups)[urltest_tags[0]]).url || "")
+        };
+
     push(config.outbounds, {
         type: "selector",
         tag: selector_tag,

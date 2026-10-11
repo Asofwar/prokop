@@ -151,6 +151,7 @@ export const UCI_SAFE_OPTIONS = new Set([
   'payload_check',
   'pick_fastest',
   'pin_dashboard',
+  'pin_guard',
   'ports',
   'prefix_nodes',
   'priority_groups',

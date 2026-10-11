@@ -45,9 +45,16 @@ type UrlTestCacheGroup = {
   interrupt_exist_connections?: boolean;
 };
 
+type PinGuardEvent = {
+  from: string;
+  to: string;
+  time: number;
+};
+
 type SingBoxRuntimeMetadata = {
   urltestGroups: Record<string, UrlTestCacheGroup>;
   clashControllerHosts: string[];
+  pinGuardEvents: Record<string, PinGuardEvent>;
 };
 
 type PriorityCacheLevel = {
@@ -814,6 +821,53 @@ function getUrlTestGroups(dashboardCache?: DashboardSectionCache) {
   return groups;
 }
 
+// R2: the selectors the pin guard moved off a dead server chosen by hand
+// (singbox/pin_guard.uc pin-guard.json, through get_dashboard_runtime_metadata).
+export function parsePinGuardEvents(
+  value: unknown,
+): Record<string, PinGuardEvent> {
+  const result: Record<string, PinGuardEvent> = {};
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return result;
+  }
+  for (const [selector, event] of Object.entries(
+    value as Record<string, unknown>,
+  )) {
+    if (!event || typeof event !== 'object') {
+      continue;
+    }
+    const { from, to, time } = event as Record<string, unknown>;
+    if (typeof from === 'string' && from && typeof to === 'string' && to) {
+      result[selector] = {
+        from,
+        to,
+        time: typeof time === 'number' && Number.isFinite(time) ? time : 0,
+      };
+    }
+  }
+  return result;
+}
+
+// The switch the pin guard made in this selector, while the selector is
+// still where the guard put it.
+export function getPinGuardSwitch(
+  selector: ClashProxyEntry | undefined,
+  events: Record<string, PinGuardEvent>,
+  outbounds: Prokop.Outbound[],
+): Prokop.PinGuardSwitch | undefined {
+  const event = selector ? events[selector.code] : undefined;
+  if (!selector || !event || selector.value.now !== event.to) {
+    return undefined;
+  }
+  const nameOf = (code: string) =>
+    outbounds.find((outbound) => outbound.code === code)?.displayName || code;
+  return {
+    fromName: nameOf(event.from),
+    toName: nameOf(event.to),
+    time: event.time,
+  };
+}
+
 async function readRuntimeMetadata(): Promise<SingBoxRuntimeMetadata> {
   const response = await ProkopShellMethods.getDashboardRuntimeMetadata();
   return response.success
@@ -825,8 +879,9 @@ async function readRuntimeMetadata(): Promise<SingBoxRuntimeMetadata> {
         clashControllerHosts: parseClashControllerHosts(
           response.data.clashControllerHosts,
         ),
+        pinGuardEvents: parsePinGuardEvents(response.data.pinGuardEvents),
       }
-    : { urltestGroups: {}, clashControllerHosts: [] };
+    : { urltestGroups: {}, clashControllerHosts: [], pinGuardEvents: {} };
 }
 
 function mergeUrlTestGroups(
@@ -1465,6 +1520,11 @@ export async function getDashboardSections(): Promise<IGetDashboardSectionsRespo
             proxyConfigType,
             subscriptionSourceCount,
             subscriptionMetadata,
+            pinGuardSwitch: getPinGuardSwitch(
+              selector,
+              runtimeMetadata.pinGuardEvents,
+              outbounds,
+            ),
             outbounds,
           };
         }

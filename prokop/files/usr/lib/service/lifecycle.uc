@@ -67,6 +67,9 @@ const SUBSCRIPTION_LINKS_DIR = getenv("PROKOP_SUBSCRIPTION_LINKS_DIR") || RUNTIM
 const SUBSCRIPTION_METADATA_DIR = getenv("PROKOP_SUBSCRIPTION_METADATA_DIR") || RUNTIME_STATE_DIR + "/subscription-metadata";
 const OUTBOUND_METADATA_DIR = getenv("PROKOP_OUTBOUND_METADATA_DIR") || RUNTIME_STATE_DIR + "/outbound-metadata";
 const SECTION_CACHE_DIR = getenv("PROKOP_SECTION_CACHE_DIR") || RUNTIME_STATE_DIR + "/section-cache";
+// R2: the selectors the pin guard switched away from a dead server
+// (singbox/pin_guard.uc).
+const PIN_GUARD_EVENTS_FILE = getenv("PROKOP_PIN_GUARD_EVENTS_FILE") || RUNTIME_STATE_DIR + "/pin-guard.json";
 const RULE_CONDITION_CACHE_DIR = getenv("PROKOP_RULE_CONDITION_CACHE_DIR") || RUNTIME_STATE_DIR + "/rule-condition-cache";
 const RUNTIME_CACHE_FORMAT_FILE = getenv("PROKOP_RUNTIME_CACHE_FORMAT_FILE") || RUNTIME_STATE_DIR + "/cache-format";
 const PERSISTENT_SUBSCRIPTION_CACHE_DIR = getenv("PROKOP_PERSISTENT_SUBSCRIPTION_CACHE_DIR") || "/etc/prokop/subscription-cache";
@@ -610,9 +613,13 @@ function capture_selector_state() {
     // to keep on flash, and each switch would be one more flash write
     // (LC-9, optimization 5). Its worker picks again after the start.
     let priority = priority_group_selectors();
+    // A selector the pin guard moved off a dead server keeps the server the
+    // user chose as the saved choice, while it is where the guard put it.
+    let guarded = object_or_empty(read_json_file(PIN_GUARD_EVENTS_FILE));
     let choices = {};
     for (let group, tag in state)
-        if (!priority[group] && match(group, /-out-probe$/) == null)
+        if (!priority[group] && match(group, /-out-probe$/) == null &&
+            as_string(object_or_empty(guarded[group]).to) != tag)
             choices[group] = tag;
     if (length(choices) > 0)
         selector_choices.record_choices(choices);

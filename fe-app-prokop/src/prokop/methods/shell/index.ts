@@ -257,6 +257,7 @@ export const ProkopShellMethods = {
     callBaseMethod<{
       urltestGroups: Record<string, unknown>;
       clashControllerHosts?: unknown;
+      pinGuardEvents?: unknown;
     }>(Prokop.AvailableMethods.GET_DASHBOARD_RUNTIME_METADATA),
   checkSingBox: async () =>
     callBaseMethod<Prokop.SingBoxCheckResult>(

@@ -184,7 +184,7 @@ let uci_safe_options = {
     notify_on_subscription: true, notify_subscription_expire_days: true, notify_via_proxy: true,
     notify_via_proxy_section: true, notify_webhook_format: true, order: true, outbound_detour_enabled: true,
     outbound_detour_section: true, output_network_interface: true, payload_check: true, pick_fastest: true,
-    pin_dashboard: true, ports: true, prefix_nodes: true, priority_groups: true,
+    pin_dashboard: true, pin_guard: true, ports: true, prefix_nodes: true, priority_groups: true,
     proxy_config_type: true, reality_mlkem: true, recovery_check_interval: true, resolve_real_ip_for_routing: true,
     rule: true, secondary_rule_sets: true, section: true, show_dashboard_metadata: true,
     shutdown_correctly: true, sing_box_unprivileged: true, sort_by_latency: true, source_network_interfaces: true,
