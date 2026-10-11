@@ -127,6 +127,7 @@ component_action_status        | job-status    | run
 component_updates_if_due       | rc            | busy is rc 0 (cron); covered: updates_due
 component_update_check_cache   | json          | covered: cli_entrypoint
 check_dns_available            | json          | network probe
+check_environment              | json          | covered: diagnostics_environment
 global_check                   | text          | covered: readonly_secret_masking
 support_report                 | text          | covered: acl_boundary
 validate_nfqws_strategy_json   | json          | run: {valid, message} rc 0 (the verdict is data)
