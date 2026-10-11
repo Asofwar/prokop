@@ -18,7 +18,7 @@ export function getCheckTitle(name: string) {
     case 'FakeIP':
       return _('FakeIP checks');
     case 'Environment':
-      return _('Environment');
+      return _('Environment checks');
     default:
       return name;
   }
