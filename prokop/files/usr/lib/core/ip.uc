@@ -192,6 +192,55 @@ function discord_voice_port_matchers() {
     return { port, port_range };
 }
 
+// A device MAC address as the device filters accept it (Device filter,
+// Forced device routing, Exclude devices): six hex pairs separated by one
+// kind of ':' or '-', any case. The canonical form is lower case with ':',
+// as nft and sing-box print it. A multicast or all-zero address is never a
+// source and is refused (null).
+function normalize_mac(value) {
+    value = lc(trim(as_string(value)));
+    let m = match(value, /^([0-9a-f]{2})([:-])([0-9a-f]{2})([:-])([0-9a-f]{2})([:-])([0-9a-f]{2})([:-])([0-9a-f]{2})([:-])([0-9a-f]{2})$/);
+    if (m == null)
+        return null;
+    for (let i = 4; i <= 10; i += 2)
+        if (m[i] != m[2])
+            return null;
+    let octets = [ m[1], m[3], m[5], m[7], m[9], m[11] ];
+    if ((hex(octets[0]) & 1) == 1 || join("", octets) == "000000000000")
+        return null;
+    return join(":", octets);
+}
+
+// Whether a value is written like a MAC address at all (valid or not).
+function looks_like_mac(value) {
+    return match(lc(trim(as_string(value))), /^[0-9a-f]{2}([:-][0-9a-f]{2}){5}$/) != null;
+}
+
+// The values of a device option split by kind: MAC addresses (canonical,
+// unique), values written like a MAC that are not a usable one, and every
+// other value unchanged (addresses and networks, read as before).
+function split_device_values(values) {
+    let result = { ips: [], macs: [], invalid_macs: [] };
+    let seen = {};
+    for (let value in (type(values) == "array" ? values : [])) {
+        value = trim(as_string(value));
+        if (value == "")
+            continue;
+        if (!looks_like_mac(value)) {
+            push(result.ips, value);
+            continue;
+        }
+        let mac = normalize_mac(value);
+        if (mac == null)
+            push(result.invalid_macs, value);
+        else if (!seen[mac]) {
+            seen[mac] = true;
+            push(result.macs, mac);
+        }
+    }
+    return result;
+}
+
 return {
     valid_ipv4,
     valid_ipv4_cidr,
@@ -207,5 +256,8 @@ return {
     CLOUDFLARE_SHARED_CIDRS,
     is_cloudflare_shared_cidr,
     DISCORD_VOICE_PORTS_NFT,
-    discord_voice_port_matchers
+    discord_voice_port_matchers,
+    normalize_mac,
+    looks_like_mac,
+    split_device_values
 };

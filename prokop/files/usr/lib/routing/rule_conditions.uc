@@ -10,6 +10,7 @@
 // combined text (suffix by default, full:/keyword:/regex: prefixes).
 let common = require("core.common");
 let rule_config = require("config.rule");
+let core_ip = require("core.ip");
 
 let object_or_empty = common.object_or_empty;
 let option = common.option;
@@ -79,4 +80,12 @@ function domain_conditions(section) {
     return result;
 }
 
-return { legacy_condition_values, combined_domain_source_values, domain_conditions };
+// The devices of a device option (source_ip_cidr, excluded_source_ip_cidr,
+// fully_routed_ips): { ips, macs, invalid_macs } (core/ip.uc). ips keeps the
+// values as the option read before MAC addresses were accepted.
+function device_values(section, key) {
+    let values = key == "fully_routed_ips" ? list_option(section, key) : legacy_condition_values(section, key);
+    return core_ip.split_device_values(values);
+}
+
+return { legacy_condition_values, combined_domain_source_values, domain_conditions, device_values };
