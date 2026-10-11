@@ -6,9 +6,13 @@ set -euo pipefail
 # only, and the clock row from core/clock.uc when that module exists. It is
 # read-only and in the read ACL, so its output must not carry addresses.
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB="$ROOT/prokop/files/usr/lib"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
+# A copy of the library without core/clock.uc: the clock row is checked
+# against the stub modules below, never against the host clock.
+LIB="$WORK/lib"
+cp -a "$ROOT/prokop/files/usr/lib" "$LIB"
+rm -f "$LIB/core/clock.uc"
 
 mkdir -p "$WORK/sysctl/conf/all" "$WORK/sysctl/conf/lo" "$WORK/clocklib/core"
 echo 0 >"$WORK/sysctl/conf/all/disable_ipv6"
