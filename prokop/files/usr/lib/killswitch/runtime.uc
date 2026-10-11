@@ -732,7 +732,8 @@ function route_rule_matchers(rule, definitions, memo) {
     return acc;
 }
 
-const SOURCE_RULE_KEYS = [ "source_ip_cidr", "source_port", "source_port_range" ];
+// source_mac_address: devices by MAC (generator.uc checked_device_values).
+const SOURCE_RULE_KEYS = [ "source_ip_cidr", "source_mac_address", "source_port", "source_port_range" ];
 
 // The conditions a rule requires all of: the rule itself or, for a logical
 // "and" rule, its children.
@@ -779,6 +780,12 @@ function rule_excluded_sources(rule) {
             if (condition[key] != null)
                 has_source = true;
         if (!has_source)
+            continue;
+        // Devices excluded by MAC have no address to redirect: they keep the
+        // shared block list (fail closed), the excluded addresses of the same
+        // rule are still exempt.
+        if (condition.source_mac_address != null && condition.source_ip_cidr == null &&
+            length(keys(condition)) == 2)
             continue;
         for (let key in keys(condition))
             if (key != "source_ip_cidr" && key != "invert")

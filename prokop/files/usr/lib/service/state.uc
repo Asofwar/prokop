@@ -8,6 +8,7 @@ let runtime_lock = require("core.runtime_lock");
 let durable = require("core.durable");
 let process_identity = require("core.process_identity");
 let rule_config = require("config.rule");
+let rule_conditions = require("routing.rule_conditions");
 let connections = require("config.connections");
 let zapret_validator = require("providers.zapret.validator");
 let zapret2_validator = require("providers.zapret2.validator");
@@ -1383,6 +1384,17 @@ function download_via_proxy_enabled(settings, purpose) {
     return enabled_option != "" && bool_option(settings, enabled_option, false);
 }
 
+// Devices by MAC (core/ip.uc): only when a rule has them, so the signature
+// of every other configuration stays as it was.
+function signature_add_device_macs(body, prefix, section) {
+    for (let key in [ "source_ip_cidr", "excluded_source_ip_cidr" ]) {
+        let macs = rule_conditions.device_values(section, key).macs;
+        if (length(macs) > 0)
+            body = signature_add_value(body, prefix + "." + key + ".mac", join(",", macs));
+    }
+    return body;
+}
+
 function signature_add_value(body, key, value) {
     return body + "[" + as_string(key) + "]\n" + as_string(value) + "\n";
 }
@@ -1526,6 +1538,7 @@ function nft_runtime_signature_body(settings, sections) {
         body = signature_add_value(body, "rule." + name + ".action", action);
         if (action == "dns") {
             body = signature_add_value(body, "rule." + name + ".source_ip_cidr", section_rule_condition_csv(section, "source_ip_cidr", "subnets"));
+            body = signature_add_device_macs(body, "rule." + name, section);
             let excluded_sources = section_rule_condition_csv(section, "excluded_source_ip_cidr", "subnets");
             if (excluded_sources != "")
                 body = signature_add_value(body, "rule." + name + ".excluded_source_ip_cidr", excluded_sources);
@@ -1535,6 +1548,7 @@ function nft_runtime_signature_body(settings, sections) {
         }
         body = signature_add_value(body, "rule." + name + ".ip_cidr", section_rule_condition_csv(section, "ip_cidr", "subnets"));
         body = signature_add_value(body, "rule." + name + ".source_ip_cidr", section_rule_condition_csv(section, "source_ip_cidr", "subnets"));
+        body = signature_add_device_macs(body, "rule." + name, section);
         let excluded_sources = section_rule_condition_csv(section, "excluded_source_ip_cidr", "subnets");
         if (excluded_sources != "")
             body = signature_add_value(body, "rule." + name + ".excluded_source_ip_cidr", excluded_sources);
@@ -1914,6 +1928,7 @@ function append_sing_box_rule_signature_body(body, section, sections) {
     if (action != "dns")
         body = signature_add_value(body, prefix + ".ip_cidr", section_rule_condition_csv(section, "ip_cidr", "subnets"));
     body = signature_add_value(body, prefix + ".source_ip_cidr", section_rule_condition_csv(section, "source_ip_cidr", "subnets"));
+    body = signature_add_device_macs(body, prefix, section);
     let excluded_sources = section_rule_condition_csv(section, "excluded_source_ip_cidr", "subnets");
     if (excluded_sources != "")
         body = signature_add_value(body, prefix + ".excluded_source_ip_cidr", excluded_sources);
