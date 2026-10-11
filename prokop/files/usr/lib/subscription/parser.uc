@@ -95,6 +95,46 @@ function is_integer_string(value) {
     return true;
 }
 
+// R1 (rock12/FlowGate 448eb451, narrowed by c0d78b83): panels answer an
+// expired or exhausted subscription with pseudo nodes ("Subscription
+// expired", "Traffic is over") whose address is 0.0.0.0 or ::. They are not
+// servers: such a node is dropped and counted (placeholders), so the user
+// sees why. Every all-zero spelling counts; loopback stays, it may be a
+// real local server.
+function is_placeholder_server(host) {
+    host = lc(trim(as_string(host)));
+    if (substr(host, 0, 1) == "[" && substr(host, length(host) - 1) == "]")
+        host = substr(host, 1, length(host) - 2);
+    if (host == "")
+        return false;
+    if (match(host, /^[0-9]+(\.[0-9]+){0,3}$/) != null)
+        return match(host, /[1-9]/) == null;
+    if (index(host, ":") < 0)
+        return false;
+    if (substr(host, 0, 7) == "::ffff:")
+        host = substr(host, 7);
+    return match(host, /^[0:.]+$/) != null;
+}
+
+// Why parse_share_link refused the last link: "placeholder" or "".
+let parse_reject_reason = "";
+// The placeholders of the last normalization that kept no node at all: a
+// subscription that has expired as a whole (subscription/cache.uc says so).
+let last_placeholders_only = 0;
+
+function normalized_placeholders_only() {
+    return last_placeholders_only;
+}
+
+function last_parse_reject_reason() {
+    return parse_reject_reason;
+}
+
+function reject_placeholder() {
+    parse_reject_reason = "placeholder";
+    return null;
+}
+
 function xhttp_value_present(value) {
     return value != null && as_string(value) != "";
 }
@@ -1064,6 +1104,8 @@ function process_shadowsocks(raw) {
         return null;
     let method = substr(userinfo, 0, cred_colon);
     let password = substr(userinfo, cred_colon + 1);
+    if (is_placeholder_server(host_port[0]))
+        return reject_placeholder();
     if (method == "" || method == "ss" || password == "" || host_port[0] == "" || !valid_port(host_port[1]))
         return null;
 
@@ -1153,6 +1195,8 @@ function process_vmess_json(raw, decoded) {
     let server = string_value(vmess.add);
     let port = int(vmess.port || 0);
     let uuid = string_value(vmess.id);
+    if (is_placeholder_server(server))
+        return reject_placeholder();
     if (server == "" || !valid_port(port) || uuid == "")
         return null;
 
@@ -1240,6 +1284,7 @@ function process_vmess(raw) {
 }
 
 function parse_share_link(line) {
+    parse_reject_reason = "";
     if (starts_with(line, "vmess://"))
         return process_vmess(line);
     if (starts_with(line, "ss://"))
@@ -1248,6 +1293,8 @@ function parse_share_link(line) {
     let url = parse_url(line);
     if (!url)
         return null;
+    if (is_placeholder_server(url.host))
+        return reject_placeholder();
 
     if (url.scheme == "vless")
         return process_vless(line, url);
@@ -1649,6 +1696,8 @@ function parse_clash_record(record) {
     let port = int(record.port || 0);
     if (name == "")
         name = server + ":" + as_string(record.port);
+    if (is_placeholder_server(server))
+        return reject_placeholder();
     if (proxy_type == "" || server == "" || !valid_port(port))
         return null;
 
@@ -1758,16 +1807,22 @@ function parse_clash_record(record) {
 function normalize_clash_yaml_data(data, output_file) {
     let outbounds = [];
     let skipped = 0;
+    let placeholders = 0;
 
     for (let record in clash_yaml_records(data)) {
+        parse_reject_reason = "";
         let outbound = parse_clash_record(record);
         if (outbound)
             push(outbounds, outbound);
+        else if (parse_reject_reason == "placeholder")
+            placeholders++;
         else
             skipped++;
     }
 
     if (length(outbounds) == 0) {
+        if (placeholders > 0)
+            last_placeholders_only = placeholders;
         fs.unlink(output_file);
         return false;
     }
@@ -1776,6 +1831,7 @@ function normalize_clash_yaml_data(data, output_file) {
         version: 1,
         format: "clash-yaml",
         skipped: skipped,
+        placeholders: placeholders,
         outbounds: outbounds
     });
 }
@@ -1795,6 +1851,7 @@ function normalize_uri_list_data(data, output_file) {
 
     let added = 0;
     let skipped = 0;
+    let placeholders = 0;
     output.write("{\"version\":1,\"format\":\"uri-list\",\"outbounds\":[");
 
     for (let line in split(data, "\n")) {
@@ -1809,16 +1866,21 @@ function normalize_uri_list_data(data, output_file) {
                 output.write(sprintf("%J", outbound));
                 added++;
             }
+            else if (parse_reject_reason == "placeholder") {
+                placeholders++;
+            }
             else {
                 skipped++;
             }
         }
     }
 
-    output.write("],\"skipped\":" + skipped + "}\n");
+    output.write("],\"skipped\":" + skipped + ",\"placeholders\":" + placeholders + "}\n");
     output.close();
 
     if (added == 0) {
+        if (placeholders > 0)
+            last_placeholders_only = placeholders;
         fs.unlink(output_file);
         return false;
     }
@@ -2179,6 +2241,7 @@ function normalize_uri_list_stream(input, output_file, strip_metadata) {
 
     let added = 0;
     let skipped = 0;
+    let placeholders = 0;
     let line_no = 0;
     output.write("{\"version\":1,\"format\":\"uri-list\",\"outbounds\":[");
 
@@ -2198,16 +2261,21 @@ function normalize_uri_list_stream(input, output_file, strip_metadata) {
                 output.write(sprintf("%J", outbound));
                 added++;
             }
+            else if (parse_reject_reason == "placeholder") {
+                placeholders++;
+            }
             else {
                 skipped++;
             }
         }
     }
 
-    output.write("],\"skipped\":" + skipped + "}\n");
+    output.write("],\"skipped\":" + skipped + ",\"placeholders\":" + placeholders + "}\n");
     output.close();
 
     if (added == 0) {
+        if (placeholders > 0)
+            last_placeholders_only = placeholders;
         fs.unlink(output_file);
         return false;
     }
@@ -3003,6 +3071,78 @@ function normalize_sing_box_json_outbounds(candidates) {
     return outbounds;
 }
 
+// R1 for JSON subscriptions: the placeholder nodes go, and with them what
+// can no longer be built: a node whose detour was dropped, a group left
+// without members. Group member lists lose the dropped tags.
+function drop_placeholder_outbounds(outbounds) {
+    let dropped = {};
+    let placeholders = 0;
+    let skipped = 0;
+    let result = [];
+    for (let outbound in outbounds) {
+        if (type(outbound) == "object" && type(outbound.server) == "string" && is_placeholder_server(outbound.server)) {
+            placeholders++;
+            for (let ref in [ outbound.tag, outbound.remark ])
+                if (as_string(ref) != "")
+                    dropped[as_string(ref)] = true;
+            continue;
+        }
+        push(result, outbound);
+    }
+
+    let changed = placeholders > 0;
+    while (changed) {
+        changed = false;
+        let next = [];
+        for (let outbound in result) {
+            let gone = dropped[as_string(outbound.detour || "")] === true;
+            if (!gone && type(outbound.outbounds) == "array") {
+                let members = filter(outbound.outbounds, (tag) => dropped[as_string(tag)] !== true);
+                if (length(members) != length(outbound.outbounds)) {
+                    outbound.outbounds = members;
+                    if (length(members) == 0)
+                        gone = true;
+                    else if (outbound.default != null && dropped[as_string(outbound.default)])
+                        delete outbound.default;
+                }
+            }
+            if (gone) {
+                skipped++;
+                changed = true;
+                for (let ref in [ outbound.tag, outbound.remark ])
+                    if (as_string(ref) != "")
+                        dropped[as_string(ref)] = true;
+                continue;
+            }
+            push(next, outbound);
+        }
+        result = next;
+    }
+
+    return { outbounds: result, placeholders, skipped };
+}
+
+function write_sing_box_json_outbounds(output_file, outbounds) {
+    let kept = drop_placeholder_outbounds(outbounds);
+    if (length(kept.outbounds) == 0) {
+        if (kept.placeholders > 0)
+            last_placeholders_only = kept.placeholders;
+        fs.unlink(output_file);
+        return false;
+    }
+
+    let result = {
+        version: 1,
+        format: "sing-box-json",
+        outbounds: kept.outbounds
+    };
+    if (kept.skipped > 0)
+        result.skipped = kept.skipped;
+    if (kept.placeholders > 0)
+        result.placeholders = kept.placeholders;
+    return write_json_file(output_file, result);
+}
+
 function normalize_sing_box_json_value(value, output_file) {
     let candidates = [];
     let outbounds = [];
@@ -3012,13 +3152,8 @@ function normalize_sing_box_json_value(value, output_file) {
     else if (type(value) == "array" && length(value) > 0 && is_xray_config(value[0]))
         outbounds = normalize_xray_configs(value);
 
-    if (length(outbounds) > 0) {
-        return write_json_file(output_file, {
-            version: 1,
-            format: "sing-box-json",
-            outbounds: outbounds
-        });
-    }
+    if (length(outbounds) > 0)
+        return write_sing_box_json_outbounds(output_file, outbounds);
 
     if (type(value) == "object" && type(value.outbounds) == "array")
         candidates = value.outbounds;
@@ -3034,11 +3169,7 @@ function normalize_sing_box_json_value(value, output_file) {
         return false;
     }
 
-    return write_json_file(output_file, {
-        version: 1,
-        format: "sing-box-json",
-        outbounds: outbounds
-    });
+    return write_sing_box_json_outbounds(output_file, outbounds);
 }
 
 // U4: a temporary file next to `near`, a file of the caller: the
@@ -3134,19 +3265,26 @@ function try_decode_gzip_content_file(input_file) {
     return true;
 }
 
+function normalized_count(value) {
+    value = as_string(value != null ? value : "0");
+    return match(value, /^[0-9]+$/) == null ? 0 : int(value);
+}
+
 function normalized_skipped_message(path) {
     let value = read_json_file(path);
     if (type(value) != "object")
         return "";
 
-    let skipped = as_string(value.skipped != null ? value.skipped : "0");
-    if (match(skipped, /^[0-9]+$/) == null || int(skipped) <= 0)
-        return "";
-
-    if (as_string(value.format != null ? value.format : "") == "clash-yaml")
-        return "Skipped " + skipped + " invalid or unsupported Clash proxy entries";
-
-    return "Skipped " + skipped + " invalid or unsupported subscription links";
+    let messages = [];
+    let skipped = normalized_count(value.skipped);
+    let placeholders = normalized_count(value.placeholders);
+    if (skipped > 0)
+        push(messages, as_string(value.format != null ? value.format : "") == "clash-yaml"
+            ? "Skipped " + skipped + " invalid or unsupported Clash proxy entries"
+            : "Skipped " + skipped + " invalid or unsupported subscription links");
+    if (placeholders > 0)
+        push(messages, "Skipped " + placeholders + " placeholder entries with address 0.0.0.0 or :: (the provider's notices, such as an expired subscription)");
+    return join("; ", messages);
 }
 
 function extract_ui_metadata_file(headers_file, body_file, output_file) {
@@ -3210,6 +3348,7 @@ function normalize_content_data(data, output_file, depth) {
 }
 
 function normalize_content_file(input_file, output_file) {
+    last_placeholders_only = 0;
     if (file_looks_like_uri_list(input_file))
         return normalize_uri_list_file(input_file, output_file, true);
 
@@ -3296,6 +3435,8 @@ function module_exports() {
         validate_subscription,
         normalize_content_validated,
         normalized_skipped_message,
+        normalized_placeholders_only,
+        last_parse_reject_reason,
         try_decode_gzip_content_file,
         extract_ui_metadata_file,
         runtime_outbounds_equal

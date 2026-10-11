@@ -1948,6 +1948,7 @@ function add_direct_proxy(config, settings, service_address) {
 // reading it and lost '#', '&' and '+' in credentials and paths, and refused
 // Hysteria2 port ranges the UI accepts (SB-2, SB-3).
 let share_link_parser = null;
+const MANUAL_LINK_SCHEMES = [ "vmess", "ss", "vless", "trojan", "hysteria2", "hy2", "socks4", "socks4a", "socks5", "socks5h" ];
 
 // null for a link the parser cannot build an outbound from (an unknown
 // scheme, or a transport sing-box has none of, as kcp or quic): that node
@@ -1960,8 +1961,11 @@ function manual_link_outbound(link, tag_name, section_name) {
     if (type(outbound) != "object") {
         let scheme = url_scheme(link);
         let name = url_fragment(link);
+        let reason = share_link_parser.last_parse_reject_reason();
         warn("skipped manual proxy link ", name != "" ? "'" + name + "' " : "", "of rule '", as_string(section_name), "': ",
-            index([ "vmess", "ss", "vless", "trojan", "hysteria2", "hy2", "socks4", "socks4a", "socks5", "socks5h" ], scheme) < 0
+            reason == "placeholder"
+                ? "its server address is 0.0.0.0 or ::, a placeholder, not a server"
+                : index(MANUAL_LINK_SCHEMES, scheme) < 0
                 ? "its scheme is not supported"
                 : "the " + scheme + " link is invalid or uses a transport sing-box does not have", "\n");
         return null;
