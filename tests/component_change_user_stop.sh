@@ -46,7 +46,7 @@ expect_message() {
 # A start or restart of Prokop after the user's stop (a stop without a
 # source, or the stop that overtook a start).
 started_after_user_stop() {
-    awk '/^stop source=$/ || /^start skipped: the user stopped Prokop$/ { stopped = 1; next }
+    awk '/^stop source=$/ || /^(start|reload) skipped: the user stopped Prokop$/ { stopped = 1; next }
         stopped && /^(start|restart) / { found = 1 }
         END { exit found ? 0 : 1 }' "$UPGRADE_STATE/init.log"
 }
@@ -68,7 +68,7 @@ expect_own_stop_kept() {
 }
 
 expect_user_stop_kept() {
-    grep -Eq '^stop source=$|^start skipped: the user stopped Prokop$' "$UPGRADE_STATE/init.log" ||
+    grep -Eq '^stop source=$|^(start|reload) skipped: the user stopped Prokop$' "$UPGRADE_STATE/init.log" ||
         fail "$1: the user's stop did not happen during the change"
     ! started_after_user_stop || fail "$1: Prokop was started again after the user stopped it"
     ! upgrade_harness_running || fail "$1: Prokop runs after the user stopped it"
@@ -271,30 +271,32 @@ scenario sing-box-failure && fail "$case: the failed change was reported as done
 expect_user_stop_kept "$case"
 [ "$(grep -c '^start-and-wait' "$UPGRADE_STATE/initd.log")" -eq 1 ] || fail "$case: Prokop was started more than once"
 
-# --- Direct Proxy: the user's stop overtakes the restart ---------------------
-# The setting is saved and applies at the next start; the restart with the
-# previous settings would have started Prokop again.
+# --- Direct Proxy: applied by a reload (U2) ---------------------------------
 upgrade_harness_reset opkg
 case="Direct Proxy"
 scenario direct-proxy || fail "$case: the change failed: $(upgrade_harness_message)"
-restarted_after_change 1 || fail "$case: Prokop was not restarted"
+grep -q '^reload direct-proxy ' "$UPGRADE_STATE/init.log" || fail "$case: Prokop was not reloaded"
+! grep -Eq '^(stop|start|restart)( |$)' "$UPGRADE_STATE/init.log" || fail "$case: Prokop was restarted for Direct Proxy"
 upgrade_harness_running || fail "$case: Prokop does not run after the change"
 
-# The restart's own stop fails: the setting is not applied, and the action
-# fails (the previous setting is restored).
+# The reload fails: the setting is not applied, the previous one is
+# reloaded, and the action fails.
 upgrade_harness_reset opkg
-upgrade_harness_flag stop_status 1
-case="Direct Proxy, the restart's stop fails"
+upgrade_harness_flag reload_status 1
+case="Direct Proxy, the reload fails"
 scenario direct-proxy && fail "$case: the change was reported as done"
 expect_message "$case" "Failed to apply Direct Proxy settings"
-expect_own_stop_kept "$case"
+[ "$(grep -c '^reload direct-proxy ' "$UPGRADE_STATE/init.log")" -eq 2 ] || fail "$case: the previous setting was not reloaded"
 
+# The user's stop overtakes the reload: the setting is saved and applies at
+# the next start; nothing starts Prokop again.
 upgrade_harness_reset opkg
-upgrade_harness_flag user_stop_on_start
-case="Direct Proxy, user stop overtakes the restart"
+upgrade_harness_flag user_stop_on_reload
+case="Direct Proxy, user stop overtakes the reload"
 scenario direct-proxy || fail "$case: the change failed: $(upgrade_harness_message)"
 expect_message "$case" "Direct Proxy has been disabled"
 expect_user_stop_kept "$case"
-[ "$(grep -c '^start-and-wait' "$UPGRADE_STATE/initd.log")" -eq 1 ] || fail "$case: Prokop was started more than once"
+[ "$(grep -c '^reload direct-proxy ' "$UPGRADE_STATE/init.log")" -eq 1 ] || fail "$case: Prokop was reloaded again"
+! grep -q '^start-and-wait' "$UPGRADE_STATE/initd.log" || fail "$case: a start was attempted after the user's stop"
 
 printf 'component_change_user_stop: PASS\n'

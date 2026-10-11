@@ -205,6 +205,20 @@ case "$1" in
         "$0" stop || exit
         exec "$0" start
         ;;
+    # A reload (service/initd.uc reload-service): exits with reload_status;
+    # with user_stop_on_reload the user's stop overtakes it, and it answers
+    # "stopped" as initd.uc does for the reasons that ask.
+    reload)
+        if [ -e "$state/flags/user_stop_on_reload" ]; then
+            rm -f "$state/flags/user_stop_on_reload" "$state/running"
+            mkdir -p "$PROKOP_RUNTIME_STATE_DIR"
+            printf 'requested\nby=user\n' >"$request"
+            printf 'reload skipped: the user stopped Prokop\n' >>"$state/init.log"
+            echo stopped
+            exit 0
+        fi
+        exit "$(cat "$state/flags/reload_status" 2>/dev/null || echo 0)"
+        ;;
     start)
         if [ -e "$state/flags/marker_stale" ] && [ -e "$PROKOP_MANAGED_UPGRADE_SING_BOX_MARKER" ]; then
             rm -f "$PROKOP_MANAGED_UPGRADE_SING_BOX_MARKER"
