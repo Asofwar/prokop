@@ -154,7 +154,7 @@ const EntryPoint = view.extend({
                   _("Interface"),
                   _("Route"),
                   _("Reason"),
-                ].map((label) => E("th", {}, label)),
+                ].map((label) => E("th", {}, [label])),
               ),
               ...rows,
             ]),
