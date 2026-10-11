@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-06 10:21+0000\n"
-"PO-Revision-Date: 2026-10-06 10:21+0000\n"
+"POT-Creation-Date: 2026-10-11 18:25+0000\n"
+"PO-Revision-Date: 2026-10-11 18:25+0000\n"
 "Last-Translator: Asofwar\n"
 "Language-Team: none\n"
 "Language: ru\n"
@@ -19,6 +19,12 @@ msgstr ""
 
 msgid "-- Select --"
 msgstr "-- Выберите --"
+
+msgid "… and more changes, %d in total"
+msgstr "… и другие изменения, всего %d"
+
+msgid "(not set)"
+msgstr "(не задано)"
 
 msgid "{count} addresses of excluded devices cannot be read; those devices stay blocked through DNS while Prokop is stopped"
 msgstr "Не удалось прочитать адреса исключённых устройств ({count}); пока Prokop остановлен, эти устройства блокируются через DNS"
@@ -281,6 +287,9 @@ msgstr "POST-запрос на этот адрес, для ntfy, Gotify и по�
 msgid "a previous apply is not resolved"
 msgstr "предыдущее применение не завершено"
 
+msgid "A profile with this name already exists."
+msgstr "Профиль с таким именем уже существует."
+
 msgid "A rolled back strategy is not applied again before this time passes."
 msgstr "Откаченная стратегия не применяется снова, пока не пройдёт это время."
 
@@ -332,6 +341,9 @@ msgstr "Требуется действие"
 msgid "Actions"
 msgstr "Действия"
 
+msgid "Activate profile"
+msgstr "Активировать профиль"
+
 msgid "Active"
 msgstr "Активные"
 
@@ -376,6 +388,9 @@ msgstr "Добавить адрес"
 
 msgid "Add at least one DNS server"
 msgstr "Добавьте хотя бы один DNS-сервер"
+
+msgid "Add domain to pending changes"
+msgstr "Добавить домен в ожидающие изменения"
 
 msgid "Add prefix to nodes"
 msgstr "Добавлять префикс к узлам"
@@ -422,6 +437,9 @@ msgstr "Адрес"
 msgid "Address set for checking"
 msgstr "Набор адресов для проверки"
 
+msgid "Addresses"
+msgstr "Адреса"
+
 msgid "Adds X25519MLKEM768 to the TLS ClientHello of this rule's REALITY servers with the chrome fingerprint. Needed by REALITY servers on Xray-core 26.9.8 and newer (3x-ui 3.8.0 and newer) that answer with their mask site otherwise. Breaks REALITY servers without ML-KEM support: turn it on only for such servers."
 msgstr "Добавляет X25519MLKEM768 в TLS ClientHello REALITY-серверов этого правила с отпечатком chrome. Нужно REALITY-серверам на Xray-core 26.9.8 и новее (3x-ui 3.8.0 и новее), которые без него отвечают маскировочным сайтом. Ломает REALITY-серверы без поддержки ML-KEM: включайте только для таких серверов."
 
@@ -451,6 +469,9 @@ msgstr "Все, кроме выбранных"
 
 msgid "All history records are deleted; the history then shows one record, that it was cleared."
 msgstr "Все записи истории будут удалены; в истории останется одна запись — об очистке."
+
+msgid "All nodes"
+msgstr "Все узлы"
 
 msgid "All paths"
 msgstr "Все пути"
@@ -491,6 +512,9 @@ msgstr "На порту 53 ответил адрес, где нет DNS-серв
 msgid "An administrator can roll it back."
 msgstr "Откатить его может администратор."
 
+msgid "An empty allow list sends everyone directly. An empty bypass list leaves everyone in Prokop. Bypassed clients get real DNS addresses."
+msgstr "Пустой разрешающий список направляет всех напрямую. Пустой список обхода оставляет всех в Prokop. Клиенты в обходе получают реальные DNS-адреса."
+
 msgid "An interrupted package update is being recovered. Avoid changes until it completes."
 msgstr "Восстанавливается прерванное обновление пакетов. Не вносите изменений, пока оно не завершится."
 
@@ -517,6 +541,9 @@ msgstr "Шла другая проверка."
 
 msgid "Another group was changed in this run; at most one change per run."
 msgstr "В этой проверке уже изменена другая группа; не больше одного изменения за проверку."
+
+msgid "Another profile operation is running. Try again in a moment."
+msgstr "Выполняется другая операция с профилями. Повторите через несколько секунд."
 
 msgid "Another snapshot operation is already in progress. Changes were not applied; try again in a moment."
 msgstr "Уже выполняется другая операция со снимками. Изменения не применены, повторите через минуту."
@@ -824,8 +851,14 @@ msgstr "Встроенные наборы правил тех же сервис�
 msgid "Built-in subnet list: %s"
 msgstr "Встроенный список подсетей: %s"
 
+msgid "By country"
+msgstr "По стране"
+
 msgid "By flag emoji from name"
 msgstr "По эмодзи флага из названия"
+
+msgid "By name prefix"
+msgstr "По префиксу имени"
 
 msgid "by the router's usual route"
 msgstr "обычным маршрутом роутера"
@@ -875,6 +908,9 @@ msgstr "Обход"
 msgid "Bypass not needed"
 msgstr "Обход не нужен"
 
+msgid "Bypass Prokop"
+msgstr "Обходить Prokop"
+
 msgid "Cache File Path"
 msgstr "Путь к файлу кэша"
 
@@ -913,6 +949,9 @@ msgstr "Не удалось сохранить правило"
 
 msgid "Cascade connection"
 msgstr "Каскадное подключение"
+
+msgid "Certificate DNS hostname"
+msgstr "DNS-имя сертификата"
 
 msgid "Change in progress"
 msgstr "Изменение выполняется"
@@ -1088,6 +1127,12 @@ msgstr "Очистить настройку каскада этого прави
 msgid "Clear…"
 msgstr "Очистить…"
 
+msgid "Client certificate path"
+msgstr "Путь к клиентскому сертификату"
+
+msgid "Client private key path"
+msgstr "Путь к приватному ключу клиента"
+
 msgid "Close"
 msgstr "Закрыть"
 
@@ -1114,6 +1159,12 @@ msgstr "Закрытые"
 
 msgid "Command failed"
 msgstr "Команда завершилась с ошибкой"
+
+msgid "Compare direct and proxy"
+msgstr "Сравнить прямой путь и прокси"
+
+msgid "Compare profile"
+msgstr "Сравнить профиль"
 
 msgid "Component"
 msgstr "Компонент"
@@ -1157,6 +1208,9 @@ msgstr "Конфигурация успешно применена"
 msgid "Configuration migrated by the update"
 msgstr "Конфигурация перенесена обновлением"
 
+msgid "Configuration profiles"
+msgstr "Профили конфигурации"
+
 msgid "Configuration reload"
 msgstr "Перезагрузка конфигурации"
 
@@ -1196,6 +1250,9 @@ msgstr "Подтверждение %d / %d"
 msgid "Confirmations"
 msgstr "Подтверждений"
 
+msgid "Confirmed by two checks."
+msgstr "Подтверждено двумя проверками."
+
 msgid "Confirming"
 msgstr "Подтверждается"
 
@@ -1232,6 +1289,9 @@ msgstr "соединения на порт DNS обслуживает DNS sing-b
 msgid "Connectivity probe failed"
 msgstr "Проверка соединения не прошла"
 
+msgid "Console IP addresses or subnets"
+msgstr "IP-адреса или подсети консолей"
+
 msgid "Convert"
 msgstr "Конвертировать"
 
@@ -1252,6 +1312,9 @@ msgstr "Копировать адрес"
 
 msgid "Copy details"
 msgstr "Копировать сведения"
+
+msgid "Core version"
+msgstr "Версия ядра"
 
 msgid "Could not adopt {file}"
 msgstr "Не удалось перенять {file}"
@@ -1364,6 +1427,9 @@ msgstr "Текущую секцию нельзя использовать как
 msgid "Current section cannot download its own subscription"
 msgstr "Текущую секцию нельзя выбрать для скачивания её же подписки"
 
+msgid "Custom DNS"
+msgstr "Свой DNS"
+
 msgid "custom list"
 msgstr "свой список"
 
@@ -1385,11 +1451,20 @@ msgstr "Отладка"
 msgid "Default address for checking server availability and latency. URLTest uses its own address."
 msgstr "Адрес по умолчанию для проверки доступности и задержки серверов. Для URLTest используется собственный адрес."
 
+msgid "Default policy"
+msgstr "Политика по умолчанию"
+
 msgid "default strategy"
 msgstr "стандартная стратегия"
 
 msgid "Default strategy"
 msgstr "Стратегия по умолчанию"
+
+msgid "Delay"
+msgstr "Задержка"
+
+msgid "Delay check"
+msgstr "Проверка задержки"
 
 msgid "Delay in milliseconds before reloading Prokop after interface UP"
 msgstr "Задержка в миллисекундах перед перезапуском Prokop после поднятия интерфейса"
@@ -1451,11 +1526,20 @@ msgstr "Фильтр по устройствам"
 msgid "Device or IP"
 msgstr "Устройство или IP"
 
+msgid "Device report unavailable"
+msgstr "Отчёт об устройствах недоступен"
+
+msgid "Device routing"
+msgstr "Маршрутизация устройств"
+
 msgid "Device traffic is unavailable"
 msgstr "Трафик устройств недоступен"
 
 msgid "Devices"
 msgstr "Устройства"
+
+msgid "Devices in the list"
+msgstr "Устройства в списке"
 
 msgid "Devices keep using the router without Prokop"
 msgstr "Устройства продолжат работать через роутер без Prokop"
@@ -1547,8 +1631,14 @@ msgstr "DNS на роутере"
 msgid "DNS over HTTPS (DoH)"
 msgstr "DNS через HTTPS (DoH)"
 
+msgid "DNS over QUIC (DoQ)"
+msgstr "DNS через QUIC (DoQ)"
+
 msgid "DNS over TLS (DoT)"
 msgstr "DNS через TLS (DoT)"
+
+msgid "DNS profile"
+msgstr "Профиль DNS"
 
 msgid "DNS protection"
 msgstr "Защита DNS"
@@ -1631,8 +1721,14 @@ msgstr "Не тестировать указанные серверы."
 msgid "Does not work without bypass; a stable strategy was found."
 msgstr "Без обхода не работает; найдена стабильная стратегия."
 
+msgid "DoH client certificate"
+msgstr "Клиентский сертификат DoH"
+
 msgid "Domain"
 msgstr "Домен"
+
+msgid "Domain added to pending changes. Save & Apply to validate routing and create a rollback snapshot."
+msgstr "Домен добавлен в ожидающие изменения. Сохраните и примените их, чтобы проверить маршрутизацию и создать снимок для отката."
 
 msgid "Domain and IP list"
 msgstr "Список доменов и IP"
@@ -1799,8 +1895,14 @@ msgstr "Прошло:"
 msgid "Empty response"
 msgstr "Пустой ответ"
 
+msgid "Empty uses the latest release. A pinned tag is used for normal extended updates; other core variants are not version-selectable."
+msgstr "Пустое значение означает последний релиз. Закреплённый тег используется для обычных обновлений Extended; выбор версии других вариантов ядра не поддерживается."
+
 msgid "Enable"
 msgstr "Включить"
+
+msgid "Enable and apply the device policy to see routing decisions."
+msgstr "Включите и примените политику устройств, чтобы увидеть решения маршрутизации."
 
 msgid "Enable automatic updates for remote lists and rule sets"
 msgstr "Включить автоматическое обновление удалённых списков и наборов правил"
@@ -1810,6 +1912,9 @@ msgstr "Включить автостарт"
 
 msgid "Enable built-in DNS resolver for domains handled by this section"
 msgstr "Включить встроенный DNS-резолвер для доменов, обрабатываемых этой секцией"
+
+msgid "Enable device policy"
+msgstr "Включить политику устройств"
 
 msgid "Enable direct routing"
 msgstr "Включить прямую маршрутизацию"
@@ -1853,6 +1958,9 @@ msgstr "Введите отображаемое имя"
 msgid "Enter a domain name, for example youtube.com."
 msgstr "Введите доменное имя, например youtube.com."
 
+msgid "Enter a domain observed to fail. A recommendation requires two checks at least two minutes apart: direct transport fails while HTTPS through the chosen proxy succeeds. DNS and certificate errors remain inconclusive."
+msgstr "Укажите домен с наблюдаемой ошибкой. Рекомендация требует двух проверок с интервалом не менее двух минут: прямое соединение не работает, а HTTPS через выбранный прокси работает. Ошибки DNS и сертификатов не подтверждают блокировку."
+
 msgid "Enter a domain or IP address"
 msgstr "Укажите домен или IP-адрес"
 
@@ -1867,6 +1975,9 @@ msgstr "Введите пароль"
 
 msgid "Enter a port"
 msgstr "Укажите порт"
+
+msgid "Enter a profile name of up to 64 characters."
+msgstr "Введите имя профиля длиной до 64 символов."
 
 msgid "Enter a strategy"
 msgstr "Введите стратегию"
@@ -1942,6 +2053,9 @@ msgstr "Исключённые устройства разрешают эти и
 
 msgid "Expecting: %s"
 msgstr "Ожидается: %s"
+
+msgid "Experiments"
+msgstr "Эксперименты"
 
 msgid "Expires"
 msgstr "Истекает"
@@ -2069,6 +2183,9 @@ msgstr "Критическая"
 msgid "file %s of %s"
 msgstr "файл %s из %s"
 
+msgid "Find domains in recent error logs"
+msgstr "Найти домены в недавних ошибках"
+
 msgid "Firewall rules that send traffic to Prokop are missing or not hit, so rules may not apply."
 msgstr "Правила межсетевого экрана, которые направляют трафик в Prokop, отсутствуют или не срабатывают — правила могут не применяться."
 
@@ -2114,6 +2231,9 @@ msgstr "Полное удаление"
 msgid "Fuzzing is not supported here because Prokop needs deterministic runtime validation."
 msgstr "Fuzzing здесь не поддерживается, потому что Prokop нужна предсказуемая runtime-валидация."
 
+msgid "Game console profile"
+msgstr "Профиль игровой консоли"
+
 msgid "GB"
 msgstr "ГБ"
 
@@ -2122,6 +2242,12 @@ msgstr "Получить глобальную проверку"
 
 msgid "Global check"
 msgstr "Глобальная проверка"
+
+msgid "Group"
+msgstr "Группа"
+
+msgid "Group nodes"
+msgstr "Группировка узлов"
 
 msgid "Groups: %d · targets: %d"
 msgstr "Групп: %d · целей: %d"
@@ -2276,6 +2402,9 @@ msgstr "Информация"
 msgid "Install"
 msgstr "Установить"
 
+msgid "Install a core version"
+msgstr "Установить версию ядра"
+
 msgid "Install another build:"
 msgstr "Установить другую сборку:"
 
@@ -2303,11 +2432,17 @@ msgstr "Установлена версия новее релиза"
 msgid "Installing"
 msgstr "Установка"
 
+msgid "Installing…"
+msgstr "Установка…"
+
 msgid "Intercept client DNS"
 msgstr "Перехват DNS клиентов"
 
 msgid "Intercepting client DNS is off by default now: it also caught VPNs and DNS servers in the LAN that use port 53. It was on here and was turned off; turn it on again under Settings > Network if you need it."
 msgstr "Перехват DNS клиентов теперь по умолчанию выключен: он задевал и VPN, и DNS-серверы в локальной сети, работающие на порту 53. Здесь он был включён и выключен обновлением; при необходимости включите его снова в разделе «Настройки» > «Сеть»."
+
+msgid "Interface"
+msgstr "Интерфейс"
 
 msgid "Interface Monitoring"
 msgstr "Мониторинг интерфейса"
@@ -2317,6 +2452,9 @@ msgstr "Задержка при мониторинге интерфейсов"
 
 msgid "Interface monitoring for Bad WAN"
 msgstr "Мониторинг интерфейса для Bad WAN"
+
+msgid "Interfaces"
+msgstr "Интерфейсы"
 
 msgid "Interrupt connections"
 msgstr "Прерывать соединения"
@@ -2417,6 +2555,9 @@ msgstr "Неверное регулярное выражение"
 msgid "Invalid regular expression: backreferences and lookaround are not supported"
 msgstr "Неверное регулярное выражение: обратные ссылки и lookaround не поддерживаются"
 
+msgid "Invalid release tag"
+msgstr "Некорректный тег релиза"
+
 msgid "Invalid Shadowsocks URL: decoded credentials must contain method:password"
 msgstr "Неверный URL Shadowsocks: декодированные данные должны содержать method:password"
 
@@ -2507,6 +2648,9 @@ msgstr "Неверный URL Trojan: ошибка разбора"
 msgid "Invalid URL format"
 msgstr "Неверный формат URL"
 
+msgid "Invalid value"
+msgstr "Некорректное значение"
+
 msgid "Invalid VLESS URL: flow xtls-rprx-vision-udp443 is not supported"
 msgstr "Неверный URL VLESS: flow xtls-rprx-vision-udp443 не поддерживается"
 
@@ -2579,8 +2723,14 @@ msgstr "Неверный URL VMess: должен начинаться с vmess:/
 msgid "Invalid VMess URL: parsing failed"
 msgstr "Некорректный VMess URL: ошибка разбора"
 
+msgid "IP address"
+msgstr "IP-адрес"
+
 msgid "IP address of the DNS server used to resolve upstream DNS and proxies. Hostnames are not supported for Bootstrap DNS. If multiple servers are selected, a timeout switches to a backup."
 msgstr "IP-адрес DNS-сервера для разрешения вышестоящих DNS и прокси. Имена хостов не поддерживаются. Если указано несколько серверов, при тайм-ауте используется резервный."
+
+msgid "IP addresses and subnets"
+msgstr "IP-адреса и подсети"
 
 msgid "IPs"
 msgstr "IP-адреса"
@@ -2789,6 +2939,9 @@ msgstr "Списки обновлены: %s"
 msgid "Lists: %d"
 msgstr "Списки: %d"
 
+msgid "Load compatible releases"
+msgstr "Загрузить совместимые релизы"
+
 msgid "Loading available versions…"
 msgstr "Загрузка доступных версий…"
 
@@ -2807,6 +2960,9 @@ msgstr "Загрузка..."
 msgid "Loading…"
 msgstr "Загрузка…"
 
+msgid "Local ports 4590 and 4591 are in use; the check cannot start."
+msgstr "Локальные порты 4590 и 4591 заняты, проверку запустить нельзя."
+
 msgid "Log Level"
 msgstr "Уровень логов"
 
@@ -2821,6 +2977,12 @@ msgstr "Уменьшить лимиты хранения?"
 
 msgid "LuCI app"
 msgstr "Приложение LuCI"
+
+msgid "MAC address"
+msgstr "MAC-адрес"
+
+msgid "MAC addresses"
+msgstr "MAC-адреса"
 
 msgid "Main DNS"
 msgstr "Основной DNS"
@@ -3002,6 +3164,9 @@ msgstr "Проверка ещё не запускалась"
 msgid "No closed connections"
 msgstr "Нет закрытых соединений"
 
+msgid "No compatible release with a checksum is available from the configured source."
+msgstr "В настроенном источнике нет совместимого релиза с контрольной суммой."
+
 msgid "No compatible releases available"
 msgstr "Нет доступных совместимых версий"
 
@@ -3025,6 +3190,9 @@ msgstr "Для этого имени нет DNS-записей"
 
 msgid "No DNS server for measurements: set a plain IPv4 DNS server in Prokop or on the target."
 msgstr "Нет DNS-сервера для измерений: укажите обычный IPv4 DNS-сервер в настройках Prokop или у цели."
+
+msgid "No domain candidates in recent error logs."
+msgstr "В недавних ошибках не найдено подходящих доменов."
 
 msgid "No domain of the list has an address at the DNS server."
 msgstr "Ни один домен списка не получил адрес от DNS-сервера."
@@ -3098,6 +3266,12 @@ msgstr "не выбрано транзитное правило"
 msgid "No usable result"
 msgstr "Нет пригодного результата"
 
+msgid "Node"
+msgstr "Узел"
+
+msgid "Node health"
+msgstr "Состояние узлов"
+
 msgid "Node list is empty"
 msgstr "Список узлов пуст"
 
@@ -3130,6 +3304,9 @@ msgstr "Недоступно в режиме только для чтения."
 
 msgid "Not available: this firmware has no procd-ujail. Install the procd-ujail package to use it"
 msgstr "Недоступно: в прошивке нет procd-ujail. Чтобы включить, установите пакет procd-ujail"
+
+msgid "Not captured by Prokop"
+msgstr "Не обрабатывается Prokop"
 
 msgid "Not checked"
 msgstr "Не проверено"
@@ -3254,6 +3431,12 @@ msgstr "Наблюдение остановлено: правило или ег�
 msgid "Observed"
 msgstr "Наблюдается"
 
+msgid "Observed devices"
+msgstr "Обнаруженные устройства"
+
+msgid "Observed match"
+msgstr "Наблюдаемое совпадение"
+
 msgid "Off"
 msgstr "Выключен"
 
@@ -3317,11 +3500,17 @@ msgstr "Открыть настройки"
 msgid "Open TorrServer"
 msgstr "Открыть TorrServer"
 
+msgid "Operation failed"
+msgstr "Операция не выполнена"
+
 msgid "Operation timed out"
 msgstr "Время ожидания истекло"
 
 msgid "Option \"%s\" contains an invalid input value."
 msgstr "Параметр \"%s\" содержит некорректное значение."
+
+msgid "Optional features from community forks. Connectivity recommendations need your review before they change routing."
+msgstr "Дополнительные возможности из форков сообщества. Рекомендации по доступности требуют вашей проверки перед изменением маршрутизации."
 
 msgid "Optional IPv4 address. By default the first IPv4 DNS server of Prokop is used."
 msgstr "Необязательный IPv4-адрес. По умолчанию используется первый IPv4 DNS-сервер Prokop."
@@ -3428,6 +3617,9 @@ msgstr "пауза после отката %s"
 msgid "Pause updates"
 msgstr "Приостановить обновление"
 
+msgid "Payload download"
+msgstr "Загрузка данных"
+
 msgid "PB"
 msgstr "ПБ"
 
@@ -3445,6 +3637,9 @@ msgstr "Закреплённые домены — это доменные име
 
 msgid "Pinned domains: %d"
 msgstr "Закреплённых доменов: %d"
+
+msgid "Pinned sing-box-extended version"
+msgstr "Закреплённая версия sing-box-extended"
 
 msgid "Plain DNS is intercepted"
 msgstr "Обычный DNS перехватывается"
@@ -3515,6 +3710,9 @@ msgstr "Детали Priority"
 msgid "Priority details are unavailable"
 msgstr "Детали Priority недоступны"
 
+msgid "Priority health is unavailable or stale. Start a Priority group to collect it."
+msgstr "Данные о состоянии Priority недоступны или устарели. Запустите группу Priority для их сбора."
+
 msgid "Priority level settings"
 msgstr "Настройки уровня приоритета"
 
@@ -3541,6 +3739,21 @@ msgstr "Изоляция procd (ujail): TorrServer видит только св�
 
 msgid "Profile"
 msgstr "Профиль"
+
+msgid "Profile name"
+msgstr "Имя профиля"
+
+msgid "Profile not found."
+msgstr "Профиль не найден."
+
+msgid "Profile storage is unavailable."
+msgstr "Хранилище профилей недоступно."
+
+msgid "Profile value → current value"
+msgstr "Значение профиля → текущее значение"
+
+msgid "Profiles use manual snapshots. Removing a name keeps its snapshot in History."
+msgstr "Профили используют ручные снимки. Удаление имени сохраняет снимок в истории."
 
 msgid "Prokop %s is not published in this release channel, so it cannot be kept for a rollback; the update was refused"
 msgstr "Prokop %s не опубликован в этом канале релизов, поэтому его нельзя сохранить для отката; обновление отменено"
@@ -3773,6 +3986,9 @@ msgstr "Упреждающее чтение 95%, предзагрузка 50%"
 msgid "Ready"
 msgstr "Готов"
 
+msgid "Reason"
+msgstr "Причина"
+
 msgid "Received"
 msgstr "Получено"
 
@@ -3791,6 +4007,9 @@ msgstr "Рекомендовано"
 msgid "Recommended %s settings have been applied"
 msgstr "Рекомендуемые настройки %s применены"
 
+msgid "Reconstructed condition"
+msgstr "Восстановленное условие"
+
 msgid "Recovered"
 msgstr "Восстановлено"
 
@@ -3805,6 +4024,12 @@ msgstr "Состояние восстановления недоступно"
 
 msgid "Refill"
 msgstr "Сброс"
+
+msgid "Refresh health"
+msgstr "Обновить состояние узлов"
+
+msgid "Refresh profiles"
+msgstr "Обновить профили"
 
 msgid "Refreshing Dashboard…"
 msgstr "Обновление дашборда…"
@@ -3829,6 +4054,9 @@ msgstr "Удалить %s?"
 
 msgid "Remove permanently"
 msgstr "Удалить безвозвратно"
+
+msgid "Remove profile name"
+msgstr "Удалить имя профиля"
 
 msgid "Remove Prokop and sing-box with their settings and restore the original device repositories."
 msgstr "Удалить Prokop и sing-box вместе с настройками и восстановить исходные репозитории устройства."
@@ -3868,6 +4096,9 @@ msgstr "Удаление Prokop…"
 
 msgid "Removing user settings…"
 msgstr "Удаление пользовательских настроек…"
+
+msgid "Repeat the check in two minutes to confirm."
+msgstr "Для подтверждения повторите проверку через две минуты."
 
 msgid "Require a username and password for the local mixed proxy"
 msgstr "Требовать логин и пароль для локального смешанного прокси"
@@ -4181,6 +4412,9 @@ msgstr "Сохранить"
 msgid "Save and apply with the kill-switch enabled. It is installed after the next successful Prokop start or reload."
 msgstr "Сохраните и примените настройки с включённым kill-switch. Защита устанавливается после следующего успешного запуска или перезагрузки Prokop."
 
+msgid "Save current configuration"
+msgstr "Сохранить текущую конфигурацию"
+
 msgid "Saved, service stopped"
 msgstr "Сохранено, служба остановлена"
 
@@ -4244,6 +4478,9 @@ msgstr "Выберите существующий сетевой интерфе�
 msgid "Select an intermediate section"
 msgstr "Выберите промежуточную секцию"
 
+msgid "Select an observed domain, then compare paths."
+msgstr "Выберите обнаруженный домен и сравните пути подключения."
+
 msgid "Select DNS protocol to use"
 msgstr "Выберите протокол DNS"
 
@@ -4271,11 +4508,23 @@ msgstr "Выберите сетевой интерфейс, на который 
 msgid "Select the WAN interfaces to be monitored"
 msgstr "Выберите WAN интерфейсы для мониторинга"
 
+msgid "Select which devices use Prokop. Global bypass cannot be combined with a section kill-switch; use section filters for protected devices."
+msgstr "Выберите устройства, использующие Prokop. Глобальный обход несовместим с kill-switch секции; для защищённых устройств используйте фильтры секции."
+
 msgid "Selected"
 msgstr "Выбран"
 
 msgid "Selected %d of %d"
 msgstr "Выбрано %d из %d"
+
+msgid "Selected consoles send TCP through the chosen connection and UDP directly. Real DNS addresses are used. Requires a separate device policy and no section kill-switch; this does not guarantee Open NAT."
+msgstr "Выбранные консоли направляют TCP через указанное подключение, а UDP напрямую. Используются реальные DNS-адреса. Режим применяется отдельно от глобальной политики устройств и несовместим с kill-switch секции; Open NAT не гарантируется."
+
+msgid "Selected node"
+msgstr "Выбран"
+
+msgid "Selection"
+msgstr "Выбор"
 
 msgid "Selector and URLTest outbounds must contain a non-empty outbounds array"
 msgstr "Selector и URLTest outbound должны содержать непустой массив outbounds"
@@ -4427,6 +4676,9 @@ msgstr "Версия Sing-box совместима (новее 1.12.4)"
 msgid "Site, IP, device or rule"
 msgstr "Сайт, IP, устройство или правило"
 
+msgid "Smart Detect"
+msgstr "Smart Detect"
+
 msgid "Snapshot actions"
 msgstr "Действия со снимком"
 
@@ -4474,6 +4726,9 @@ msgstr "Снимков: %d"
 
 msgid "Snapshots: enter a whole number from %d to %d."
 msgstr "Снимки: введите целое число от %d до %d."
+
+msgid "Some addresses through Prokop"
+msgstr "Часть адресов через Prokop"
 
 msgid "Some autotune settings are invalid; safe defaults are used for them."
 msgstr "Часть настроек автоподбора некорректна; для них используются безопасные значения по умолчанию."
@@ -4579,6 +4834,9 @@ msgstr "Состояние недоступно"
 
 msgid "Still enforced until the next successful Prokop start or reload"
 msgstr "Действует до следующего успешного запуска или перезагрузки Prokop"
+
+msgid "Still running; check the component status."
+msgstr "Операция ещё выполняется; проверьте состояние компонента."
 
 msgid "Stop"
 msgstr "Остановить"
@@ -4700,6 +4958,9 @@ msgstr "Цели вне DPI-правил (%d)"
 msgid "TB"
 msgstr "ТБ"
 
+msgid "TCP connection"
+msgstr "Подключение для TCP"
+
 msgid "Technical data"
 msgstr "Технические данные"
 
@@ -4720,6 +4981,9 @@ msgstr "Telegram не принял текст сообщения"
 
 msgid "Telegram refused the request"
 msgstr "Telegram отклонил запрос"
+
+msgid "Temporary storage is unavailable."
+msgstr "Временное хранилище недоступно."
 
 msgid "Test latency"
 msgstr "Тестирование задержки"
@@ -4814,8 +5078,14 @@ msgstr "Изменения сохранены: «Сохранить и прим�
 msgid "The check could not run"
 msgstr "Проверку не удалось выполнить"
 
+msgid "The check could not start."
+msgstr "Проверку не удалось запустить."
+
 msgid "The check did not complete"
 msgstr "Проверка не завершилась"
+
+msgid "The check failed."
+msgstr "Проверка завершилась ошибкой."
 
 msgid "The check gave no usable result."
 msgstr "Проверка не дала пригодного результата."
@@ -4880,6 +5150,9 @@ msgstr "После применения конфигурация менялас�
 msgid "The configured mirror uses http://; programs are installed only from an https:// mirror"
 msgstr "Указанное зеркало использует http://; программы устанавливаются только с зеркала https://"
 
+msgid "The connection section no longer exists"
+msgstr "Секция подключения больше не существует"
+
 msgid "The connection to the router may drop for a moment while Prokop is installed and restarted; the progress is kept and the page picks it up again."
 msgstr "Пока Prokop устанавливается и перезапускается, связь с роутером может ненадолго пропасть: ход обновления сохраняется, и страница подхватит его снова."
 
@@ -4904,11 +5177,20 @@ msgstr "Desync fwmark управляется Prokop для защиты от ц�
 msgid "the details are in the system log"
 msgstr "подробности в системном журнале"
 
+msgid "The direct connection fails while the selected connection works."
+msgstr "Прямое соединение не работает, а через выбранное подключение сайт открывается."
+
+msgid "The direct connection works; no change is recommended."
+msgstr "Прямое соединение работает, изменения не нужны."
+
 msgid "the direct proxy"
 msgstr "прямой прокси"
 
 msgid "The DNS server must be an IPv4 address."
 msgstr "DNS-сервер должен быть IPv4-адресом."
+
+msgid "The domain could not be resolved; the result is inconclusive."
+msgstr "Домен не удалось разрешить, результат неоднозначный."
 
 msgid "The downloaded TorrServer does not match its published checksum; nothing was installed"
 msgstr "Скачанный TorrServer не совпадает с опубликованной контрольной суммой; ничего не установлено"
@@ -4946,6 +5228,9 @@ msgstr "не удалось собрать правила брандмауэра
 msgid "the firewall refused the built policy"
 msgstr "брандмауэр отклонил собранные правила"
 
+msgid "The first bootstrap DNS server must be an IP address."
+msgstr "Первый Bootstrap DNS-сервер должен быть IP-адресом."
+
 msgid "The header has no value"
 msgstr "У заголовка нет значения"
 
@@ -4960,6 +5245,9 @@ msgstr "В имени заголовка недопустимые символы
 
 msgid "The history is being written right now. Nothing was changed; try again in a moment."
 msgstr "Сейчас в историю идёт запись. Ничего не изменено; повторите чуть позже."
+
+msgid "The installed sing-box rejected the check configuration."
+msgstr "Установленный sing-box отклонил конфигурацию проверки."
 
 msgid "The interrupted Prokop update was rolled back; no new update was attempted"
 msgstr "Прерванное обновление Prokop откачено; новое обновление не запускалось"
@@ -5057,6 +5345,9 @@ msgstr "Устаревшие условия нельзя конвертиров�
 msgid "The legacy settings are converted. Save the rule to keep the change."
 msgstr "Устаревшие настройки конвертированы. Сохраните правило, чтобы сохранить изменение."
 
+msgid "The limit of manual snapshots is reached. Delete one in History first."
+msgstr "Достигнут лимит ручных снимков. Сначала удалите один из них в Истории."
+
 msgid "The limits are out of range. Nothing was changed."
 msgstr "Лимиты вне допустимого диапазона. Ничего не изменено."
 
@@ -5111,6 +5402,12 @@ msgstr "Новая стратегия не применена: служба бы
 msgid "The NFQUEUE number is assigned by Prokop for each rule and must not be overridden here."
 msgstr "Номер NFQUEUE назначается Prokop для каждого правила и не должен переопределяться здесь."
 
+msgid "The node did not answer the delay check"
+msgstr "Узел не ответил на проверку задержки"
+
+msgid "The node did not pass the payload download"
+msgstr "Узел не прошёл проверку загрузки данных"
+
 msgid "The notice is dismissed; nothing else in the rule changes. Save the rule to keep the change."
 msgstr "Уведомление скрыто, больше в правиле ничего не меняется. Сохраните правило, чтобы сохранить изменение."
 
@@ -5122,6 +5419,18 @@ msgstr "Предыдущее автоматическое изменение е�
 
 msgid "the previous DNS block list stays in place"
 msgstr "предыдущий список блокировки DNS остаётся"
+
+msgid "The profile list could not be saved; the snapshot is kept in History."
+msgstr "Не удалось сохранить список профилей; снимок сохранён в Истории."
+
+msgid "The profile list could not be saved."
+msgstr "Не удалось сохранить список профилей."
+
+msgid "The profile list is damaged."
+msgstr "Список профилей повреждён."
+
+msgid "The profile matches the current configuration."
+msgstr "Профиль совпадает с текущей конфигурацией."
 
 msgid "The Prokop configuration could not be read"
 msgstr "Не удалось прочитать конфигурацию Prokop"
@@ -5158,6 +5467,9 @@ msgstr "Не удалось подготовить запрос на роуте�
 
 msgid "The request was refused: invalid input."
 msgstr "Запрос отклонён: неверные входные данные."
+
+msgid "The result is inconclusive."
+msgstr "Результат неоднозначный."
 
 msgid "The rollback after the observation did not finish"
 msgstr "Откат после наблюдения не завершён"
@@ -5252,6 +5564,9 @@ msgstr "Окно правила закрыто до завершения сох�
 msgid "the rules connect through each other in a loop"
 msgstr "правила подключаются друг через друга по кругу"
 
+msgid "The running configuration is unavailable. Start Prokop first."
+msgstr "Рабочая конфигурация недоступна. Сначала запустите Prokop."
+
 msgid "The runtime does not match the configuration yet"
 msgstr "Работающий Prokop ещё не соответствует конфигурации"
 
@@ -5263,6 +5578,12 @@ msgstr "Сохранённый интервал %s меньше 1h: обновл
 
 msgid "The saved password is never shown on the page"
 msgstr "Сохранённый пароль на странице не показывается"
+
+msgid "The selected connection cannot be checked separately."
+msgstr "Выбранное подключение нельзя проверить отдельно."
+
+msgid "The selected connection does not work for this domain either; no change is recommended."
+msgstr "Через выбранное подключение домен тоже недоступен, изменения не рекомендуются."
 
 msgid "The selected section cannot be used here. Choose another section."
 msgstr "Выбранную секцию нельзя использовать здесь. Выберите другую секцию."
@@ -5524,6 +5845,9 @@ msgstr "Эту стратегию недавно откатывали; она ж
 
 msgid "This TorrServer was not installed by Prokop; Prokop left it as it is"
 msgstr "Этот TorrServer установлен не через Prokop; Prokop оставил его как есть"
+
+msgid "Through Prokop"
+msgstr "Через Prokop"
 
 msgid "Through rules"
 msgstr "Через правила"
@@ -5795,11 +6119,17 @@ msgstr "От 1 до 64 латинских букв, цифр, точек, деф
 msgid "Use a numeric ID or @channel"
 msgstr "Укажите числовой ID или @канал"
 
+msgid "Use an absolute file path"
+msgstr "Укажите абсолютный путь к файлу"
+
 msgid "Use an http(s) address without spaces or quotes"
 msgstr "Укажите адрес http(s) без пробелов и кавычек"
 
 msgid "Use another section as an intermediate hop to connect to servers in this section. Does not apply to network interfaces or JSON outbounds."
 msgstr "Использовать другую секцию как промежуточный узел подключения к серверам этой секции. Не применяется к сетевым интерфейсам и JSON outbound."
+
+msgid "Use Prokop"
+msgstr "Использовать Prokop"
 
 msgid "Use sing-box duration format like 10s, 1m or 2m30s"
 msgstr "Используйте формат длительности sing-box, например 10s, 1m или 2m30s"
@@ -5954,6 +6284,9 @@ msgstr "С другим действием правило не может исп
 msgid "With another action the rule cannot use its cascade setting: saving the rule removes the switched-off cascade setting."
 msgstr "С другим действием правило не может использовать настройку каскада: при сохранении правила выключенная настройка каскада будет удалена."
 
+msgid "Working…"
+msgstr "Выполняется…"
+
 msgid "Works without bypass."
 msgstr "Работает без обхода."
 
@@ -6028,288 +6361,3 @@ msgstr "sing-box outbound для Zapret2 не настроен"
 
 msgid "ZB"
 msgstr "ЗБ"
-
-msgid "Activate profile"
-msgstr "Активировать профиль"
-
-msgid "Add domain to pending changes"
-msgstr "Добавить домен в ожидающие изменения"
-
-msgid "Addresses"
-msgstr "Адреса"
-
-msgid "All nodes"
-msgstr "Все узлы"
-
-msgid "An empty allow list sends everyone directly. An empty bypass list leaves everyone in Prokop. Bypassed clients get real DNS addresses."
-msgstr "Пустой разрешающий список направляет всех напрямую. Пустой список обхода оставляет всех в Prokop. Клиенты в обходе получают реальные DNS-адреса."
-
-msgid "By country"
-msgstr "По стране"
-
-msgid "By name prefix"
-msgstr "По префиксу имени"
-
-msgid "Bypass Prokop"
-msgstr "Обходить Prokop"
-
-msgid "Certificate DNS hostname"
-msgstr "DNS-имя сертификата"
-
-msgid "Client certificate path"
-msgstr "Путь к клиентскому сертификату"
-
-msgid "Client private key path"
-msgstr "Путь к приватному ключу клиента"
-
-msgid "Compare direct and proxy"
-msgstr "Сравнить прямой путь и прокси"
-
-msgid "Compare profile"
-msgstr "Сравнить профиль"
-
-msgid "Configuration profiles"
-msgstr "Профили конфигурации"
-
-msgid "Connection configuration"
-msgstr "Конфигурация подключения"
-
-msgid "Console IP addresses or subnets"
-msgstr "IP-адреса или подсети консолей"
-
-msgid "Core version"
-msgstr "Версия ядра"
-
-msgid "Custom DNS"
-msgstr "Свой DNS"
-
-msgid "DNS over QUIC (DoQ)"
-msgstr "DNS через QUIC (DoQ)"
-
-msgid "DNS profile"
-msgstr "Профиль DNS"
-
-msgid "Default policy"
-msgstr "Политика по умолчанию"
-
-msgid "Delay"
-msgstr "Задержка"
-
-msgid "Device report unavailable"
-msgstr "Отчёт об устройствах недоступен"
-
-msgid "Device routing"
-msgstr "Маршрутизация устройств"
-
-msgid "Devices in the list"
-msgstr "Устройства в списке"
-
-msgid "DoH client certificate"
-msgstr "Клиентский сертификат DoH"
-
-msgid "Domain added to pending changes. Save & Apply to validate routing and create a rollback snapshot."
-msgstr "Домен добавлен в ожидающие изменения. Сохраните и примените их, чтобы проверить маршрутизацию и создать снимок для отката."
-
-msgid "Empty uses the latest release. A pinned tag is used for normal extended updates; other core variants are not version-selectable."
-msgstr "Пустое значение означает последний релиз. Закреплённый тег используется для обычных обновлений Extended; выбор версии других вариантов ядра не поддерживается."
-
-msgid "Enable and apply the device policy to see routing decisions."
-msgstr "Включите и примените политику устройств, чтобы увидеть решения маршрутизации."
-
-msgid "Enable device policy"
-msgstr "Включить политику устройств"
-
-msgid "Enter a domain observed to fail. A recommendation requires two checks at least two minutes apart: direct transport fails while HTTPS through the chosen proxy succeeds. DNS and certificate errors remain inconclusive."
-msgstr "Укажите домен с наблюдаемой ошибкой. Рекомендация требует двух проверок с интервалом не менее двух минут: прямое соединение не работает, а HTTPS через выбранный прокси работает. Ошибки DNS и сертификатов не подтверждают блокировку."
-
-msgid "Experiments"
-msgstr "Эксперименты"
-
-msgid "Find domains in recent error logs"
-msgstr "Найти домены в недавних ошибках"
-
-msgid "Game console profile"
-msgstr "Профиль игровой консоли"
-
-msgid "Group"
-msgstr "Группа"
-
-msgid "Group nodes"
-msgstr "Группировка узлов"
-
-msgid "HTTP administration"
-msgstr "Администрирование через HTTP"
-
-msgid "HTTPS administration"
-msgstr "Администрирование через HTTPS"
-
-msgid "Handshake"
-msgstr "Соединение"
-
-msgid "IP addresses and subnets"
-msgstr "IP-адреса и подсети"
-
-msgid "Install a core version"
-msgstr "Установить версию ядра"
-
-msgid "Installing…"
-msgstr "Установка…"
-
-msgid "Interface"
-msgstr "Интерфейс"
-
-msgid "Interfaces"
-msgstr "Интерфейсы"
-
-msgid "Invalid release tag"
-msgstr "Некорректный тег релиза"
-
-msgid "Invalid value"
-msgstr "Некорректное значение"
-
-msgid "Load compatible releases"
-msgstr "Загрузить совместимые релизы"
-
-msgid "Local SOCKS port"
-msgstr "Локальный порт SOCKS"
-
-msgid "Local providers"
-msgstr "Локальные провайдеры"
-
-msgid "MAC addresses"
-msgstr "MAC-адреса"
-
-msgid "No compatible release with a checksum is available from the configured source."
-msgstr "В настроенном источнике нет совместимого релиза с контрольной суммой."
-
-msgid "No domain candidates in recent error logs."
-msgstr "В недавних ошибках не найдено подходящих доменов."
-
-msgid "Node"
-msgstr "Узел"
-
-msgid "Node health"
-msgstr "Состояние узлов"
-
-msgid "Observed devices"
-msgstr "Обнаруженные устройства"
-
-msgid "Observed match"
-msgstr "Наблюдаемое совпадение"
-
-msgid "Operation failed"
-msgstr "Операция не выполнена"
-
-msgid "Optional features from community forks. Connectivity recommendations need your review before they change routing."
-msgstr "Дополнительные возможности из форков сообщества. Рекомендации по доступности требуют вашей проверки перед изменением маршрутизации."
-
-msgid "Payload"
-msgstr "Загрузка данных"
-
-msgid "Pinned sing-box-extended version"
-msgstr "Закреплённая версия sing-box-extended"
-
-msgid "Priority health is unavailable or stale. Start a Priority group to collect it."
-msgstr "Данные о состоянии Priority недоступны или устарели. Запустите группу Priority для их сбора."
-
-msgid "Profile name"
-msgstr "Имя профиля"
-
-msgid "Profiles use manual snapshots. Removing a name keeps its snapshot in History."
-msgstr "Профили используют ручные снимки. Удаление имени сохраняет снимок в истории."
-
-msgid "Provider status"
-msgstr "Состояние провайдера"
-
-msgid "Providers"
-msgstr "Провайдеры"
-
-msgid "Reason"
-msgstr "Причина"
-
-msgid "Reconstructed condition"
-msgstr "Восстановленное условие"
-
-msgid "Refresh health"
-msgstr "Обновить состояние узлов"
-
-msgid "Refresh profiles"
-msgstr "Обновить профили"
-
-msgid "Refresh status"
-msgstr "Обновить состояние"
-
-msgid "Refresh support status"
-msgstr "Обновить состояние доступа поддержки"
-
-msgid "Remove profile name"
-msgstr "Удалить имя профиля"
-
-msgid "Run Xray, WDTT (qwdtt) or OlcRTC as a local SOCKS connection. Install the provider binary first. Save & Apply, then start providers; add the displayed socks5 URL to a connection section in Rules. Providers use separate configs and processes."
-msgstr "Запустите Xray, WDTT (qwdtt) или OlcRTC как локальное подключение SOCKS. Сначала установите бинарник провайдера. Сохраните и примените настройки, затем запустите провайдеры и добавьте показанный URL socks5 в секцию подключения в правилах. Провайдеры используют отдельные конфигурации и процессы."
-
-msgid "SSH"
-msgstr "SSH"
-
-msgid "Save current configuration"
-msgstr "Сохранить текущую конфигурацию"
-
-msgid "Select an observed domain, then compare paths."
-msgstr "Выберите обнаруженный домен и сравните пути подключения."
-
-msgid "Select which devices use Prokop. Global bypass cannot be combined with a section kill-switch; use section filters for protected devices."
-msgstr "Выберите устройства, использующие Prokop. Глобальный обход несовместим с kill-switch секции; для защищённых устройств используйте фильтры секции."
-
-msgid "Selected consoles send TCP through the chosen connection and UDP directly. Real DNS addresses are used. Requires a separate device policy and no section kill-switch; this does not guarantee Open NAT."
-msgstr "Выбранные консоли направляют TCP через указанное подключение, а UDP напрямую. Используются реальные DNS-адреса. Режим применяется отдельно от глобальной политики устройств и несовместим с kill-switch секции; Open NAT не гарантируется."
-
-msgid "Selection"
-msgstr "Выбор"
-
-msgid "Smart Detect"
-msgstr "Smart Detect"
-
-msgid "Start for 30 minutes"
-msgstr "Включить на 30 минут"
-
-msgid "Start or update providers"
-msgstr "Запустить или обновить провайдеры"
-
-msgid "Still running; check the component status."
-msgstr "Операция ещё выполняется; проверьте состояние компонента."
-
-msgid "Stop providers"
-msgstr "Остановить провайдеры"
-
-msgid "Stop support access"
-msgstr "Остановить доступ поддержки"
-
-msgid "Support access is stopped"
-msgstr "Доступ поддержки остановлен"
-
-msgid "TCP connection"
-msgstr "Подключение для TCP"
-
-msgid "Temporary support access"
-msgstr "Временный доступ поддержки"
-
-msgid "The connection section no longer exists"
-msgstr "Секция подключения больше не существует"
-
-msgid "Use Prokop"
-msgstr "Использовать Prokop"
-
-msgid "Use a key from your own tailnet with an ephemeral node. One local administration port is available to identities permitted by your tailnet ACL for 30 minutes. Existing SSH or LuCI authentication still applies. The router's existing Tailscale service is independent."
-msgstr "Используйте ключ из собственного tailnet для временного узла. Один локальный порт администрирования доступен в течение 30 минут пользователям, разрешённым ACL вашего tailnet. Аутентификация SSH или LuCI сохраняется. Существующий сервис Tailscale роутера работает независимо."
-
-msgid "Use an absolute file path"
-msgstr "Укажите абсолютный путь к файлу"
-
-msgid "Working…"
-msgstr "Выполняется…"
-
-msgid "Xray: one native outbound JSON object. WDTT: qwdtt://config?peer=host:port&hashes=...&pass=... . OlcRTC: olcrtc://provider?transport@room#64-hex-key . The local SOCKS listener is always 127.0.0.1."
-msgstr "Xray: один native outbound в формате JSON. WDTT: qwdtt://config?peer=host:port&hashes=...&pass=... . OlcRTC: olcrtc://provider?transport@room#64-hex-key . Локальный SOCKS всегда слушает 127.0.0.1."
-
-msgid "Your ephemeral Tailscale auth key"
-msgstr "Ваш ключ Tailscale для временного узла"

@@ -7,7 +7,7 @@ const fs = require('node:fs');
 const source = fs.readFileSync(process.argv[2], 'utf8');
 let response;
 // Evaluate only the trusted repository command helper, not user-supplied code.
-const helper = source.slice(source.indexOf('async function command('), source.indexOf('function button('));
+const helper = source.slice(source.indexOf('function reasonText('), source.indexOf('function button('));
 const command = new Function('fs', '_', helper + '\nreturn command;')(
   { exec: async () => response }, text => text);
 (async () => {
@@ -16,7 +16,12 @@ const command = new Function('fs', '_', helper + '\nreturn command;')(
     await assert.rejects(command(['priority_health']), {message: 'Operation failed'});
   }
   response = {code: 1, stdout: JSON.stringify({success: false, reason: 'profile_not_found'})};
-  await assert.rejects(command(['profile_activate', 'Missing']), {message: 'profile_not_found'});
+  // Reason codes reach the page in words, unknown ones with their code.
+  await assert.rejects(command(['profile_activate', 'Missing']), {message: 'Profile not found.'});
+  response = {code: 1, stdout: JSON.stringify({success: false, reason: 'some_new_reason'})};
+  await assert.rejects(command(['profile_activate', 'Missing']), {message: 'Operation failed (some_new_reason)'});
+  response = {code: 1, stdout: JSON.stringify({status: 'busy', reason: 'snapshot_operation_in_progress', success: false})};
+  await assert.rejects(command(['profile_activate', 'Office']), {message: /Another snapshot operation/});
   response = {code: 0, stdout: JSON.stringify({success: true, available: false})};
   assert.deepEqual(await command(['priority_health']), {success: true, available: false});
   console.log('Experiments error messages preserve the operation failure');

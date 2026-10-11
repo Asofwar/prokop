@@ -438,10 +438,10 @@ function createSettingsContent(sections, capabilities) {
   mtls.depends("dns_mtls_enabled", "1");
   mtls.rmempty = false;
   for (const [key, label] of [
-    ["dns_mtls_client_certificate", "Client certificate path"],
-    ["dns_mtls_client_key", "Client private key path"],
+    ["dns_mtls_client_certificate", _("Client certificate path")],
+    ["dns_mtls_client_key", _("Client private key path")],
   ]) {
-    mtls = sections.dns.option(form.Value, key, _(label));
+    mtls = sections.dns.option(form.Value, key, label);
     mtls.depends("dns_mtls_enabled", "1");
     mtls.rmempty = false;
     mtls.validate = (_id, value) =>

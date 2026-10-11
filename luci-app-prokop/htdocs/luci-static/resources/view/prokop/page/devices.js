@@ -37,21 +37,21 @@ const EntryPoint = view.extend({
     for (const [key, label, validator] of [
       [
         "alice_ips",
-        "IP addresses and subnets",
+        _("IP addresses and subnets"),
         (value) => main.validateSubnet(value).valid,
       ],
       [
         "alice_macs",
-        "MAC addresses",
+        _("MAC addresses"),
         (value) => /^[0-9a-f]{2}(:[0-9a-f]{2}){5}$/i.test(value),
       ],
       [
         "alice_interfaces",
-        "Interfaces",
+        _("Interfaces"),
         (value) => /^[A-Za-z0-9_.@-]+\*?$/.test(value),
       ],
     ]) {
-      o = s.option(form.DynamicList, key, _(label));
+      o = s.option(form.DynamicList, key, label);
       o.depends("alice_mode_enabled", "1");
       o.retain = true;
       o.validate = (_id, value) =>
@@ -91,6 +91,25 @@ const EntryPoint = view.extend({
           if (response.code !== 0)
             throw new Error(response.stderr || _("Device report unavailable"));
           const data = JSON.parse(response.stdout);
+          const statusText = {
+            prokop: _("Through Prokop"),
+            direct: _("Direct"),
+            mixed: _("Some addresses through Prokop"),
+            not_captured: _("Not captured by Prokop"),
+          };
+          const matchLabels = {
+            interface: _("Interface"),
+            mac: _("MAC address"),
+            ip: _("IP address"),
+          };
+          const matchText = (value) => {
+            if (!value) return _("Default policy");
+            const split = String(value).indexOf(":");
+            const kind = String(value).slice(0, split);
+            return matchLabels[kind]
+              ? `${matchLabels[kind]}: ${String(value).slice(split + 1)}`
+              : String(value);
+          };
           if (!data.enabled) {
             result.replaceChildren(
               document.createTextNode(
@@ -115,12 +134,12 @@ const EntryPoint = view.extend({
                 document.createTextNode(String(device.interface || "")),
               ]),
               E("td", {}, [
-                document.createTextNode(String(device.status || "")),
+                document.createTextNode(
+                  statusText[device.status] || String(device.status || ""),
+                ),
               ]),
               E("td", {}, [
-                document.createTextNode(
-                  String(device.matched_by || _("Default policy")),
-                ),
+                document.createTextNode(matchText(device.matched_by)),
               ]),
             ]),
           );
@@ -129,9 +148,13 @@ const EntryPoint = view.extend({
               E(
                 "tr",
                 {},
-                ["Device", "Addresses", "Interface", "Route", "Reason"].map(
-                  (label) => E("th", {}, _(label)),
-                ),
+                [
+                  _("Device"),
+                  _("Addresses"),
+                  _("Interface"),
+                  _("Route"),
+                  _("Reason"),
+                ].map((label) => E("th", {}, label)),
               ),
               ...rows,
             ]),

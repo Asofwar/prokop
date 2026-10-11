@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-06 10:21+0000\n"
-"PO-Revision-Date: 2026-10-06 10:21+0000\n"
+"POT-Creation-Date: 2026-10-11 18:25+0000\n"
+"PO-Revision-Date: 2026-10-11 18:25+0000\n"
 "Last-Translator: Asofwar <7397608+Asofwar@users.noreply.github.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -23,6 +23,14 @@ msgstr ""
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3346
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:308
 msgid "-- Select --"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:324
+msgid "… and more changes, %d in total"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:316
+msgid "(not set)"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:152
@@ -85,6 +93,7 @@ msgstr ""
 msgid "%d more: refine the search"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:143
 #: src/prokop/tabs/autotune/model.ts:756
 #: src/prokop/tabs/dashboard/initController.ts:1102
 #: src/prokop/tabs/dashboard/overview.ts:383
@@ -303,6 +312,7 @@ msgstr ""
 msgid "A check failed and the last one gave no result; one more failure rolls the change back."
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:17
 #: src/prokop/tabs/autotune/initController.ts:255
 #: src/prokop/tabs/autotune/initController.ts:420
 #: src/prokop/tabs/autotune/model.ts:1149
@@ -385,6 +395,10 @@ msgstr ""
 msgid "a previous apply is not resolved"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:44
+msgid "A profile with this name already exists."
+msgstr ""
+
 #: src/prokop/tabs/autotune/initController.ts:545
 msgid "A rolled back strategy is not applied again before this time passes."
 msgstr ""
@@ -458,7 +472,10 @@ msgstr ""
 msgid "Actions"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:73
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:342
+msgid "Activate profile"
+msgstr ""
+
 #: src/prokop/tabs/monitoring/initController.ts:847
 #: src/prokop/tabs/monitoring/initController.ts:1195
 #: src/prokop/tabs/monitoring/render.ts:57
@@ -519,6 +536,10 @@ msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:315
 msgid "Add at least one DNS server"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:251
+msgid "Add domain to pending changes"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2850
@@ -586,6 +607,10 @@ msgstr ""
 msgid "Address set for checking"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:153
+msgid "Addresses"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9641
 msgid "Adds X25519MLKEM768 to the TLS ClientHello of this rule's REALITY servers with the chrome fingerprint. Needed by REALITY servers on Xray-core 26.9.8 and newer (3x-ui 3.8.0 and newer) that answer with their mask site otherwise. Breaks REALITY servers without ML-KEM support: turn it on only for such servers."
 msgstr ""
@@ -627,6 +652,10 @@ msgstr ""
 
 #: src/prokop/tabs/history/initController.ts:431
 msgid "All history records are deleted; the history then shows one record, that it was cleared."
+msgstr ""
+
+#: src/prokop/tabs/dashboard/partials/renderSections.ts:594
+msgid "All nodes"
 msgstr ""
 
 #: src/prokop/tabs/monitoring/initController.ts:739
@@ -681,6 +710,10 @@ msgstr ""
 msgid "An administrator can roll it back."
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:34
+msgid "An empty allow list sends everyone directly. An empty bypass list leaves everyone in Prokop. Bypassed clients get real DNS addresses."
+msgstr ""
+
 #: src/prokop/tabs/dashboard/overview.ts:167
 msgid "An interrupted package update is being recovered. Avoid changes until it completes."
 msgstr ""
@@ -719,10 +752,15 @@ msgstr ""
 msgid "Another group was changed in this run; at most one change per run."
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:39
+msgid "Another profile operation is running. Try again in a moment."
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/configform.js:87
 msgid "Another snapshot operation is already in progress. Changes were not applied; try again in a moment."
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:52
 #: src/prokop/tabs/history/model.ts:482
 msgid "Another snapshot operation is already in progress. Try again in a moment."
 msgstr ""
@@ -1141,8 +1179,16 @@ msgstr ""
 msgid "Built-in subnet list: %s"
 msgstr ""
 
+#: src/prokop/tabs/dashboard/partials/renderSections.ts:598
+msgid "By country"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2320
 msgid "By flag emoji from name"
+msgstr ""
+
+#: src/prokop/tabs/dashboard/partials/renderSections.ts:603
+msgid "By name prefix"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:176
@@ -1214,6 +1260,10 @@ msgstr ""
 msgid "Bypass not needed"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:31
+msgid "Bypass Prokop"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:912
 msgid "Cache File Path"
 msgstr ""
@@ -1281,6 +1331,10 @@ msgstr ""
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9242
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9263
 msgid "Cascade connection"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:436
+msgid "Certificate DNS hostname"
 msgstr ""
 
 #: src/prokop/tabs/dashboard/overview.ts:461
@@ -1414,6 +1468,7 @@ msgstr ""
 msgid "Checked %d of %d domains"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:119
 #: src/prokop/tabs/autotune/model.ts:996
 msgid "Checking now"
 msgstr ""
@@ -1545,6 +1600,14 @@ msgstr ""
 msgid "Clear…"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:441
+msgid "Client certificate path"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:442
+msgid "Client private key path"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3739
 #: src/partials/modal/renderModal.ts:284
 #: src/prokop/tabs/autotune/initController.ts:826
@@ -1592,6 +1655,14 @@ msgstr ""
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/core_versions.js:12
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:55
 msgid "Command failed"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:216
+msgid "Compare direct and proxy"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:312
+msgid "Compare profile"
 msgstr ""
 
 #: src/prokop/tabs/updates/componentActionToast.ts:410
@@ -1652,6 +1723,10 @@ msgstr ""
 msgid "Configuration migrated by the update"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:285
+msgid "Configuration profiles"
+msgstr ""
+
 #: src/prokop/ui/status.ts:129
 msgid "Configuration reload"
 msgstr ""
@@ -1704,6 +1779,10 @@ msgstr ""
 msgid "Confirmations"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:244
+msgid "Confirmed by two checks."
+msgstr ""
+
 #: src/prokop/tabs/autotune/model.ts:604
 msgid "Confirming"
 msgstr ""
@@ -1754,6 +1833,10 @@ msgstr ""
 msgid "Connectivity probe failed"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:68
+msgid "Console IP addresses or subnets"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5319
 msgid "Convert"
 msgstr ""
@@ -1781,6 +1864,10 @@ msgstr ""
 #: src/prokop/tabs/monitoring/initController.ts:1251
 #: src/prokop/tabs/diagnostic/partials/renderCheckSection.ts:156
 msgid "Copy details"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/settings.js:52
+msgid "Core version"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:231
@@ -1942,6 +2029,10 @@ msgstr ""
 msgid "Current section cannot download its own subscription"
 msgstr ""
 
+#: src/prokop/dnsProfiles.ts:122
+msgid "Custom DNS"
+msgstr ""
+
 #: src/prokop/tabs/autotune/model.ts:780
 msgid "custom list"
 msgstr ""
@@ -1970,12 +2061,24 @@ msgstr ""
 msgid "Default address for checking server availability and latency. URLTest uses its own address."
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:106
+msgid "Default policy"
+msgstr ""
+
 #: src/prokop/tabs/monitoring/connectionView.ts:142
 msgid "default strategy"
 msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:43
 msgid "Default strategy"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:161
+msgid "Delay"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:159
+msgid "Delay check"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:716
@@ -2054,6 +2157,7 @@ msgstr ""
 msgid "detour must be a non-empty string"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:152
 #: src/prokop/tabs/diagnostic/initController.ts:797
 #: src/prokop/tabs/diagnostic/renderDiagnostic.ts:83
 #: src/prokop/tabs/monitoring/devicesView.ts:141
@@ -2074,6 +2178,15 @@ msgstr ""
 msgid "Device or IP"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:92
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:165
+msgid "Device report unavailable"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:17
+msgid "Device routing"
+msgstr ""
+
 #: src/prokop/tabs/monitoring/devicesView.ts:183
 msgid "Device traffic is unavailable"
 msgstr ""
@@ -2081,6 +2194,10 @@ msgstr ""
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8628
 #: src/prokop/tabs/monitoring/render.ts:20
 msgid "Devices"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:29
+msgid "Devices in the list"
 msgstr ""
 
 #: src/prokop/tabs/shared/serviceControl.ts:57
@@ -2112,6 +2229,7 @@ msgstr ""
 msgid "direct"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:96
 #: src/prokop/tabs/monitoring/connectionView.ts:118
 #: src/prokop/tabs/dashboard/partials/getOutboundFooterLabel.ts:8
 msgid "Direct"
@@ -2213,9 +2331,19 @@ msgstr ""
 msgid "DNS over HTTPS (DoH)"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2165
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:407
+msgid "DNS over QUIC (DoQ)"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2164
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:406
 msgid "DNS over TLS (DoT)"
+msgstr ""
+
+#: src/prokop/dnsProfiles.ts:120
+#: src/prokop/dnsProfiles.ts:121
+msgid "DNS profile"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:515
@@ -2333,9 +2461,17 @@ msgstr ""
 msgid "Does not work without bypass; a stable strategy was found."
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:429
+msgid "DoH client certificate"
+msgstr ""
+
 #: src/prokop/tabs/autotune/initController.ts:571
 #: src/prokop/tabs/autotune/initController.ts:696
 msgid "Domain"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:263
+msgid "Domain added to pending changes. Save & Apply to validate routing and create a rollback snapshot."
 msgstr ""
 
 #: src/prokop/tabs/updates/listsUpdateStatus.ts:32
@@ -2567,9 +2703,17 @@ msgstr ""
 msgid "Empty response"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/core_versions.js:20
+msgid "Empty uses the latest release. A pinned tag is used for normal extended updates; other core variants are not version-selectable."
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8550
 #: src/prokop/tabs/updates/initController.ts:1414
 msgid "Enable"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:116
+msgid "Enable and apply the device policy to see routing decisions."
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:795
@@ -2582,6 +2726,10 @@ msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2877
 msgid "Enable built-in DNS resolver for domains handled by this section"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:26
+msgid "Enable device policy"
 msgstr ""
 
 #: src/prokop/tabs/updates/initController.ts:1276
@@ -2624,7 +2772,6 @@ msgstr ""
 msgid "Enable YACD WAN Access"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/providers.js:23
 #: src/prokop/tabs/autotune/initController.ts:762
 #: src/prokop/tabs/updates/initController.ts:1400
 msgid "Enabled"
@@ -2643,6 +2790,10 @@ msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:1151
 msgid "Enter a domain name, for example youtube.com."
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:273
+msgid "Enter a domain observed to fail. A recommendation requires two checks at least two minutes apart: direct transport fails while HTTPS through the chosen proxy succeeds. DNS and certificate errors remain inconclusive."
 msgstr ""
 
 #: src/prokop/tabs/diagnostic/siteCheck.ts:265
@@ -2664,6 +2815,10 @@ msgstr ""
 
 #: src/prokop/tabs/diagnostic/connectivityMatrix.ts:89
 msgid "Enter a port"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:43
+msgid "Enter a profile name of up to 64 characters."
 msgstr ""
 
 #: src/prokop/tabs/diagnostic/dpiPlayground.ts:43
@@ -2695,6 +2850,8 @@ msgid "Enter the subscription URL"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:955
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:118
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:136
 #: src/prokop/ui/status.ts:32
 #: src/prokop/tabs/diagnostic/statusLabels.ts:26
 msgid "Error"
@@ -2770,6 +2927,10 @@ msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/configform.js:35
 msgid "Expecting: %s"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:100
+msgid "Experiments"
 msgstr ""
 
 #: src/prokop/tabs/dashboard/partials/renderSections.ts:152
@@ -2956,6 +3117,10 @@ msgstr ""
 msgid "file %s of %s"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:196
+msgid "Find domains in recent error logs"
+msgstr ""
+
 #: src/prokop/tabs/diagnostic/checkCards.ts:44
 msgid "Firewall rules that send traffic to Prokop are missing or not hit, so rules may not apply."
 msgstr ""
@@ -3018,6 +3183,10 @@ msgstr ""
 msgid "Fuzzing is not supported here because Prokop needs deterministic runtime validation."
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:60
+msgid "Game console profile"
+msgstr ""
+
 #: src/helpers/prettyBytes.ts:7
 msgid "GB"
 msgstr ""
@@ -3028,6 +3197,14 @@ msgstr ""
 
 #: src/prokop/tabs/diagnostic/initController.ts:582
 msgid "Global check"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:156
+msgid "Group"
+msgstr ""
+
+#: src/prokop/tabs/dashboard/partials/renderSections.ts:582
+msgid "Group nodes"
 msgstr ""
 
 #: src/prokop/tabs/dashboard/overview.ts:523
@@ -3042,6 +3219,8 @@ msgstr ""
 msgid "Health state unavailable"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:117
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:136
 #: src/prokop/ui/status.ts:28
 #: src/prokop/tabs/diagnostic/statusLabels.ts:22
 msgid "Healthy"
@@ -3252,6 +3431,10 @@ msgstr ""
 msgid "Install"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/core_versions.js:31
+msgid "Install a core version"
+msgstr ""
+
 #: src/prokop/tabs/updates/initController.ts:1779
 msgid "Install another build:"
 msgstr ""
@@ -3290,12 +3473,22 @@ msgstr ""
 msgid "Installing"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/core_versions.js:80
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/core_versions.js:84
+msgid "Installing…"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:990
 msgid "Intercept client DNS"
 msgstr ""
 
 #: src/prokop/tabs/history/model.ts:249
 msgid "Intercepting client DNS is off by default now: it also caught VPNs and DNS servers in the LAN that use port 53. It was on here and was turned off; turn it on again under Settings > Network if you need it."
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:101
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:154
+msgid "Interface"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:683
@@ -3308,6 +3501,10 @@ msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:684
 msgid "Interface monitoring for Bad WAN"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:50
+msgid "Interfaces"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2989
@@ -3453,6 +3650,10 @@ msgstr ""
 msgid "Invalid regular expression: backreferences and lookaround are not supported"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/core_versions.js:27
+msgid "Invalid release tag"
+msgstr ""
+
 #: src/validators/validateShadowsocksUrl.ts:38
 msgid "Invalid Shadowsocks URL: decoded credentials must contain method:password"
 msgstr ""
@@ -3575,6 +3776,11 @@ msgstr ""
 msgid "Invalid URL format"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:58
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:16
+msgid "Invalid value"
+msgstr ""
+
 #: src/validators/validateVlessUrl.ts:116
 msgid "Invalid VLESS URL: flow xtls-rprx-vision-udp443 is not supported"
 msgstr ""
@@ -3671,8 +3877,16 @@ msgstr ""
 msgid "Invalid VMess URL: parsing failed"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:103
+msgid "IP address"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:455
 msgid "IP address of the DNS server used to resolve upstream DNS and proxies. Hostnames are not supported for Bootstrap DNS. If multiple servers are selected, a timeout switches to a backup."
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:40
+msgid "IP addresses and subnets"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9668
@@ -3966,6 +4180,10 @@ msgstr ""
 msgid "Lists: %d"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/core_versions.js:44
+msgid "Load compatible releases"
+msgstr ""
+
 #: src/prokop/tabs/updates/releaseSelector.ts:89
 msgid "Loading available versions…"
 msgstr ""
@@ -4012,6 +4230,10 @@ msgstr ""
 msgid "Loading…"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:18
+msgid "Local ports 4590 and 4591 are in use; the check cannot start."
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:948
 msgid "Log Level"
 msgstr ""
@@ -4030,6 +4252,14 @@ msgstr ""
 
 #: src/prokop/tabs/diagnostic/initController.ts:761
 msgid "LuCI app"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:102
+msgid "MAC address"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:45
+msgid "MAC addresses"
 msgstr ""
 
 #: src/prokop/tabs/diagnostic/checks/runDnsCheck.ts:68
@@ -4288,6 +4518,10 @@ msgstr ""
 msgid "No closed connections"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/core_versions.js:61
+msgid "No compatible release with a checksum is available from the configured source."
+msgstr ""
+
 #: src/prokop/tabs/updates/releaseSelector.ts:119
 msgid "No compatible releases available"
 msgstr ""
@@ -4320,6 +4554,10 @@ msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:144
 msgid "No DNS server for measurements: set a plain IPv4 DNS server in Prokop or on the target."
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:213
+msgid "No domain candidates in recent error logs."
 msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:813
@@ -4425,6 +4663,14 @@ msgstr ""
 msgid "No usable result"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:157
+msgid "Node"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:106
+msgid "Node health"
+msgstr ""
+
 #: src/prokop/tabs/dashboard/initController.ts:1299
 #: src/prokop/tabs/dashboard/initController.ts:1702
 msgid "Node list is empty"
@@ -4475,6 +4721,12 @@ msgstr ""
 msgid "Not available: this firmware has no procd-ujail. Install the procd-ujail package to use it"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:98
+msgid "Not captured by Prokop"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:120
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:138
 #: src/prokop/ui/status.ts:38
 #: src/prokop/tabs/autotune/model.ts:83
 #: src/prokop/tabs/autotune/model.ts:598
@@ -4675,6 +4927,14 @@ msgstr ""
 msgid "Observed"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:85
+msgid "Observed devices"
+msgstr ""
+
+#: src/prokop/tabs/monitoring/initController.ts:1100
+msgid "Observed match"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:333
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:366
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:495
@@ -4767,6 +5027,14 @@ msgstr ""
 msgid "Open TorrServer"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:50
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:51
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:59
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:67
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:71
+msgid "Operation failed"
+msgstr ""
+
 #: src/helpers/withTimeout.ts:7
 #: src/prokop/methods/shell/index.ts:652
 #: src/prokop/methods/shell/index.ts:742
@@ -4775,6 +5043,10 @@ msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:7755
 msgid "Option \"%s\" contains an invalid input value."
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:101
+msgid "Optional features from community forks. Connectivity recommendations need your review before they change routing."
 msgstr ""
 
 #: src/prokop/tabs/autotune/initController.ts:758
@@ -4926,6 +5198,10 @@ msgstr ""
 msgid "Pause updates"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:160
+msgid "Payload download"
+msgstr ""
+
 #: src/helpers/prettyBytes.ts:9
 msgid "PB"
 msgstr ""
@@ -4949,6 +5225,10 @@ msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:823
 msgid "Pinned domains: %d"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/core_versions.js:19
+msgid "Pinned sing-box-extended version"
 msgstr ""
 
 #: src/prokop/tabs/diagnostic/checks/runDnsCheck.ts:87
@@ -5051,6 +5331,10 @@ msgstr ""
 msgid "Priority details are unavailable"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:111
+msgid "Priority health is unavailable or stale. Start a Priority group to collect it."
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3927
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:3928
 msgid "Priority level settings"
@@ -5088,6 +5372,26 @@ msgstr ""
 
 #: src/prokop/tabs/dashboard/partials/renderSections.ts:157
 msgid "Profile"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:289
+msgid "Profile name"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:45
+msgid "Profile not found."
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:38
+msgid "Profile storage is unavailable."
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:335
+msgid "Profile value → current value"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:300
+msgid "Profiles use manual snapshots. Removing a name keeps its snapshot in History."
 msgstr ""
 
 #: src/prokop/tabs/updates/componentActionToast.ts:291
@@ -5375,7 +5679,6 @@ msgstr ""
 msgid "Protocol"
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/providers.js:25
 #: src/prokop/tabs/diagnostic/renderDiagnostic.ts:33
 msgid "Provider"
 msgstr ""
@@ -5405,6 +5708,11 @@ msgstr ""
 msgid "Ready"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:156
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:162
+msgid "Reason"
+msgstr ""
+
 #: src/prokop/tabs/monitoring/devicesView.ts:146
 #: src/prokop/tabs/monitoring/devicesView.ts:300
 #: src/prokop/tabs/monitoring/initController.ts:1130
@@ -5432,6 +5740,10 @@ msgstr ""
 msgid "Recommended %s settings have been applied"
 msgstr ""
 
+#: src/prokop/tabs/monitoring/initController.ts:1101
+msgid "Reconstructed condition"
+msgstr ""
+
 #: src/prokop/ui/status.ts:107
 msgid "Recovered"
 msgstr ""
@@ -5451,6 +5763,14 @@ msgstr ""
 
 #: src/prokop/tabs/dashboard/partials/renderSections.ts:153
 msgid "Refill"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:169
+msgid "Refresh health"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:311
+msgid "Refresh profiles"
 msgstr ""
 
 #: src/prokop/tabs/dashboard/initController.ts:1382
@@ -5490,6 +5810,10 @@ msgstr ""
 
 #: src/prokop/tabs/updates/fullUninstall.ts:21
 msgid "Remove permanently"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:351
+msgid "Remove profile name"
 msgstr ""
 
 #: src/prokop/tabs/updates/fullUninstall.ts:137
@@ -5544,6 +5868,10 @@ msgstr ""
 
 #: src/prokop/tabs/dashboard/initController.ts:1412
 msgid "Removing user settings…"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:245
+msgid "Repeat the check in two minutes to confirm."
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9461
@@ -5805,6 +6133,7 @@ msgstr ""
 msgid "Rolling back…"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:155
 #: src/prokop/tabs/diagnostic/siteCheck.ts:81
 #: src/prokop/tabs/diagnostic/siteCheck.ts:106
 #: src/prokop/tabs/monitoring/initController.ts:1199
@@ -5981,6 +6310,10 @@ msgstr ""
 msgid "Save and apply with the kill-switch enabled. It is installed after the next successful Prokop start or reload."
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:306
+msgid "Save current configuration"
+msgstr ""
+
 #: src/prokop/ui/status.ts:117
 msgid "Saved, service stopped"
 msgstr ""
@@ -6066,6 +6399,10 @@ msgstr ""
 msgid "Select an intermediate section"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:212
+msgid "Select an observed domain, then compare paths."
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:403
 msgid "Select DNS protocol to use"
 msgstr ""
@@ -6103,6 +6440,10 @@ msgstr ""
 msgid "Select the WAN interfaces to be monitored"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:18
+msgid "Select which devices use Prokop. Global bypass cannot be combined with a section kill-switch; use section filters for protected devices."
+msgstr ""
+
 #: src/prokop/tabs/dashboard/initController.ts:1206
 #: src/prokop/tabs/dashboard/initController.ts:1580
 msgid "Selected"
@@ -6110,6 +6451,18 @@ msgstr ""
 
 #: src/prokop/tabs/autotune/domainPicker.ts:102
 msgid "Selected %d of %d"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:62
+msgid "Selected consoles send TCP through the chosen connection and UDP directly. Real DNS addresses are used. Requires a separate device policy and no section kill-switch; this does not guarantee Open NAT."
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:134
+msgid "Selected node"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:158
+msgid "Selection"
 msgstr ""
 
 #: src/validators/validateOutboundJson.ts:85
@@ -6325,6 +6678,10 @@ msgstr ""
 msgid "Site, IP, device or rule"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:173
+msgid "Smart Detect"
+msgstr ""
+
 #: src/prokop/tabs/history/initController.ts:739
 msgid "Snapshot actions"
 msgstr ""
@@ -6388,6 +6745,10 @@ msgstr ""
 
 #: src/prokop/tabs/history/model.ts:924
 msgid "Snapshots: enter a whole number from %d to %d."
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:97
+msgid "Some addresses through Prokop"
 msgstr ""
 
 #: src/prokop/tabs/autotune/initController.ts:984
@@ -6539,6 +6900,10 @@ msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:384
 msgid "Still enforced until the next successful Prokop start or reload"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/core_versions.js:87
+msgid "Still running; check the component status."
 msgstr ""
 
 #: src/prokop/tabs/shared/serviceControl.ts:62
@@ -6706,6 +7071,10 @@ msgstr ""
 msgid "TB"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:73
+msgid "TCP connection"
+msgstr ""
+
 #: src/prokop/tabs/diagnostic/renderDiagnostic.ts:170
 msgid "Technical data"
 msgstr ""
@@ -6733,6 +7102,11 @@ msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:129
 msgid "Telegram refused the request"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:36
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:37
+msgid "Temporary storage is unavailable."
 msgstr ""
 
 #: src/prokop/tabs/dashboard/partials/renderSections.ts:262
@@ -6862,9 +7236,18 @@ msgstr ""
 msgid "The check could not run"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:33
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:34
+msgid "The check could not start."
+msgstr ""
+
 #: src/prokop/tabs/autotune/initController.ts:259
 #: src/prokop/tabs/autotune/initController.ts:269
 msgid "The check did not complete"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:35
+msgid "The check failed."
 msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:148
@@ -6951,6 +7334,10 @@ msgstr ""
 msgid "The configured mirror uses http://; programs are installed only from an https:// mirror"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:254
+msgid "The connection section no longer exists"
+msgstr ""
+
 #: src/prokop/tabs/updates/componentProgress.ts:550
 msgid "The connection to the router may drop for a moment while Prokop is installed and restarted; the progress is kept and the page picks it up again."
 msgstr ""
@@ -6985,12 +7372,24 @@ msgstr ""
 msgid "the details are in the system log"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:224
+msgid "The direct connection fails while the selected connection works."
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:227
+msgid "The direct connection works; no change is recommended."
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9437
 msgid "the direct proxy"
 msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:1153
 msgid "The DNS server must be an IPv4 address."
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:230
+msgid "The domain could not be resolved; the result is inconclusive."
 msgstr ""
 
 #: src/prokop/tabs/updates/componentActionToast.ts:224
@@ -7043,6 +7442,10 @@ msgstr ""
 msgid "the firewall refused the built policy"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:24
+msgid "The first bootstrap DNS server must be an IP address."
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2532
 msgid "The header has no value"
 msgstr ""
@@ -7061,6 +7464,10 @@ msgstr ""
 
 #: src/prokop/tabs/history/model.ts:1075
 msgid "The history is being written right now. Nothing was changed; try again in a moment."
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:30
+msgid "The installed sing-box rejected the check configuration."
 msgstr ""
 
 #: src/prokop/tabs/updates/componentActionToast.ts:56
@@ -7194,6 +7601,10 @@ msgstr ""
 msgid "The legacy settings are converted. Save the rule to keep the change."
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:55
+msgid "The limit of manual snapshots is reached. Delete one in History first."
+msgstr ""
+
 #: src/prokop/tabs/history/model.ts:1019
 msgid "The limits are out of range. Nothing was changed."
 msgstr ""
@@ -7268,6 +7679,14 @@ msgstr ""
 msgid "The NFQUEUE number is assigned by Prokop for each rule and must not be overridden here."
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:123
+msgid "The node did not answer the delay check"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:124
+msgid "The node did not pass the payload download"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:8526
 msgid "The notice is dismissed; nothing else in the rule changes. Save the rule to keep the change."
 msgstr ""
@@ -7282,6 +7701,22 @@ msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:242
 msgid "the previous DNS block list stays in place"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:47
+msgid "The profile list could not be saved; the snapshot is kept in History."
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:46
+msgid "The profile list could not be saved."
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:42
+msgid "The profile list is damaged."
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:336
+msgid "The profile matches the current configuration."
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:221
@@ -7331,6 +7766,11 @@ msgstr ""
 
 #: src/prokop/helpers/actionReason.ts:43
 msgid "The request was refused: invalid input."
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:233
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:239
+msgid "The result is inconclusive."
 msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:486
@@ -7459,6 +7899,10 @@ msgstr ""
 msgid "the rules connect through each other in a loop"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:21
+msgid "The running configuration is unavailable. Start Prokop first."
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/killswitch.js:225
 msgid "The runtime does not match the configuration yet"
 msgstr ""
@@ -7473,6 +7917,14 @@ msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/torrserver.js:62
 msgid "The saved password is never shown on the page"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:27
+msgid "The selected connection cannot be checked separately."
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:234
+msgid "The selected connection does not work for this domain either; no change is recommended."
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:490
@@ -7833,6 +8285,10 @@ msgstr ""
 
 #: src/prokop/tabs/updates/componentActionToast.ts:207
 msgid "This TorrServer was not installed by Prokop; Prokop left it as it is"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:95
+msgid "Through Prokop"
 msgstr ""
 
 #: src/prokop/tabs/monitoring/devicesView.ts:151
@@ -8232,12 +8688,20 @@ msgstr ""
 msgid "Use a numeric ID or @channel"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:448
+msgid "Use an absolute file path"
+msgstr ""
+
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:285
 msgid "Use an http(s) address without spaces or quotes"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:9171
 msgid "Use another section as an intermediate hop to connect to servers in this section. Does not apply to network interfaces or JSON outbounds."
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:30
+msgid "Use Prokop"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:345
@@ -8473,6 +8937,10 @@ msgstr ""
 msgid "With another action the rule cannot use its cascade setting: saving the rule removes the switched-off cascade setting."
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:79
+msgid "Working…"
+msgstr ""
+
 #: src/prokop/tabs/autotune/model.ts:92
 msgid "Works without bypass."
 msgstr ""
@@ -8571,374 +9039,4 @@ msgstr ""
 
 #: src/helpers/prettyBytes.ts:11
 msgid "ZB"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:225
-msgid "Activate profile"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:158
-msgid "Add domain to pending changes"
-msgstr ""
-
-msgid "Addresses"
-msgstr ""
-
-#: src/prokop/tabs/dashboard/partials/renderSections.ts:594
-msgid "All nodes"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:34
-msgid "An empty allow list sends everyone directly. An empty bypass list leaves everyone in Prokop. Bypassed clients get real DNS addresses."
-msgstr ""
-
-#: src/prokop/tabs/dashboard/partials/renderSections.ts:598
-msgid "By country"
-msgstr ""
-
-#: src/prokop/tabs/dashboard/partials/renderSections.ts:603
-msgid "By name prefix"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:31
-msgid "Bypass Prokop"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:436
-msgid "Certificate DNS hostname"
-msgstr ""
-
-msgid "Client certificate path"
-msgstr ""
-
-msgid "Client private key path"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:148
-msgid "Compare direct and proxy"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:219
-msgid "Compare profile"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:192
-msgid "Configuration profiles"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/providers.js:39
-msgid "Connection configuration"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:68
-msgid "Console IP addresses or subnets"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/settings.js:52
-msgid "Core version"
-msgstr ""
-
-#: src/prokop/dnsProfiles.ts:122
-msgid "Custom DNS"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:2165
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:407
-msgid "DNS over QUIC (DoQ)"
-msgstr ""
-
-#: src/prokop/dnsProfiles.ts:120
-#: src/prokop/dnsProfiles.ts:121
-msgid "DNS profile"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:122
-msgid "Default policy"
-msgstr ""
-
-msgid "Delay"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:92
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:142
-msgid "Device report unavailable"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:17
-msgid "Device routing"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:29
-msgid "Devices in the list"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:429
-msgid "DoH client certificate"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:170
-msgid "Domain added to pending changes. Save & Apply to validate routing and create a rollback snapshot."
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/core_versions.js:20
-msgid "Empty uses the latest release. A pinned tag is used for normal extended updates; other core variants are not version-selectable."
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:97
-msgid "Enable and apply the device policy to see routing decisions."
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:26
-msgid "Enable device policy"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:180
-msgid "Enter a domain observed to fail. A recommendation requires two checks at least two minutes apart: direct transport fails while HTTPS through the chosen proxy succeeds. DNS and certificate errors remain inconclusive."
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:50
-msgid "Experiments"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:128
-msgid "Find domains in recent error logs"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:60
-msgid "Game console profile"
-msgstr ""
-
-msgid "Group"
-msgstr ""
-
-#: src/prokop/tabs/dashboard/partials/renderSections.ts:582
-msgid "Group nodes"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:250
-msgid "HTTP administration"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:249
-msgid "HTTPS administration"
-msgstr ""
-
-msgid "Handshake"
-msgstr ""
-
-msgid "IP addresses and subnets"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/core_versions.js:31
-msgid "Install a core version"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/core_versions.js:80
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/core_versions.js:84
-msgid "Installing…"
-msgstr ""
-
-msgid "Interface"
-msgstr ""
-
-msgid "Interfaces"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/core_versions.js:27
-msgid "Invalid release tag"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:58
-msgid "Invalid value"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/core_versions.js:44
-msgid "Load compatible releases"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/providers.js:33
-msgid "Local SOCKS port"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/providers.js:15
-msgid "Local providers"
-msgstr ""
-
-msgid "MAC addresses"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/core_versions.js:61
-msgid "No compatible release with a checksum is available from the configured source."
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:145
-msgid "No domain candidates in recent error logs."
-msgstr ""
-
-msgid "Node"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:56
-msgid "Node health"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:85
-msgid "Observed devices"
-msgstr ""
-
-#: src/prokop/tabs/monitoring/initController.ts:1100
-msgid "Observed match"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:19
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:22
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/providers.js:61
-msgid "Operation failed"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:51
-msgid "Optional features from community forks. Connectivity recommendations need your review before they change routing."
-msgstr ""
-
-msgid "Payload"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/core_versions.js:19
-msgid "Pinned sing-box-extended version"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:61
-msgid "Priority health is unavailable or stale. Start a Priority group to collect it."
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:196
-msgid "Profile name"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:207
-msgid "Profiles use manual snapshots. Removing a name keeps its snapshot in History."
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/providers.js:51
-msgid "Provider status"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/providers.js:20
-msgid "Providers"
-msgstr ""
-
-msgid "Reason"
-msgstr ""
-
-#: src/prokop/tabs/monitoring/initController.ts:1101
-msgid "Reconstructed condition"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:101
-msgid "Refresh health"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:218
-msgid "Refresh profiles"
-msgstr ""
-
-msgid "Refresh status"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:280
-msgid "Refresh support status"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:234
-msgid "Remove profile name"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/providers.js:16
-msgid "Run Xray, WDTT (qwdtt) or OlcRTC as a local SOCKS connection. Install the provider binary first. Save & Apply, then start providers; add the displayed socks5 URL to a connection section in Rules. Providers use separate configs and processes."
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:248
-msgid "SSH"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:213
-msgid "Save current configuration"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:144
-msgid "Select an observed domain, then compare paths."
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:18
-msgid "Select which devices use Prokop. Global bypass cannot be combined with a section kill-switch; use section filters for protected devices."
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:62
-msgid "Selected consoles send TCP through the chosen connection and UDP directly. Real DNS addresses are used. Requires a separate device policy and no section kill-switch; this does not guarantee Open NAT."
-msgstr ""
-
-msgid "Selection"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:105
-msgid "Smart Detect"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:269
-msgid "Start for 30 minutes"
-msgstr ""
-
-msgid "Start or update providers"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/core_versions.js:87
-msgid "Still running; check the component status."
-msgstr ""
-
-msgid "Stop providers"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:276
-msgid "Stop support access"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:257
-msgid "Support access is stopped"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:73
-msgid "TCP connection"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:241
-msgid "Temporary support access"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:161
-msgid "The connection section no longer exists"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/devices.js:30
-msgid "Use Prokop"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:263
-msgid "Use a key from your own tailnet with an ephemeral node. One local administration port is available to identities permitted by your tailnet ACL for 30 minutes. Existing SSH or LuCI authentication still applies. The router's existing Tailscale service is independent."
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:448
-msgid "Use an absolute file path"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:29
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/providers.js:56
-msgid "Working…"
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/providers.js:44
-msgid "Xray: one native outbound JSON object. WDTT: qwdtt://config?peer=host:port&hashes=...&pass=... . OlcRTC: olcrtc://provider?transport@room#64-hex-key . The local SOCKS listener is always 127.0.0.1."
-msgstr ""
-
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/page/experiments.js:245
-msgid "Your ephemeral Tailscale auth key"
 msgstr ""
