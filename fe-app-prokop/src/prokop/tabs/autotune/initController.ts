@@ -55,6 +55,7 @@ import {
   workerView,
   applyRunning,
   stateNotSavedText,
+  clockWarning,
   type ApplyResultView,
   type GroupCard,
   type TargetRow,
@@ -644,6 +645,16 @@ function showTargetEditor(target?: Prokop.AutotuneTarget) {
     placeholder: _('Router DNS'),
     autocomplete: 'off',
   }) as HTMLInputElement;
+  // A large object of the site: the check fetches its first 64 KB, so a
+  // transfer the DPI cuts after 16-20 KB shows (autotune/probe.uc).
+  const largePath = E('input', {
+    class: 'cbi-input-text',
+    type: 'text',
+    name: 'large_path',
+    value: target?.large?.path ?? '',
+    placeholder: '/static/app.js',
+    autocomplete: 'off',
+  }) as HTMLInputElement;
   const enabled = E('input', {
     type: 'checkbox',
     name: 'enabled',
@@ -687,16 +698,37 @@ function showTargetEditor(target?: Prokop.AutotuneTarget) {
                 pins: manual ? picker.selected() : [],
               }
             : undefined,
+          isList
+            ? undefined
+            : {
+                path: largePath.value.trim(),
+                // A size set in the configuration is kept with its path.
+                bytes:
+                  target?.large &&
+                  target.large.path === largePath.value.trim() &&
+                  target.large.min_bytes !== 32768
+                    ? String(target.large.min_bytes)
+                    : '',
+              },
         ),
       _('Target saved'),
     );
   };
 
-  const hostFields = field(
-    _('Domain'),
-    host,
-    _('A site or service checked through the DPI rule that routes it.'),
-  );
+  const hostFields = [
+    ...field(
+      _('Domain'),
+      host,
+      _('A site or service checked through the DPI rule that routes it.'),
+    ),
+    ...field(
+      _('Large file of the site'),
+      largePath,
+      _(
+        'Optional path of a file larger than 32 KB on this site, for example a script or a font. The check downloads its first 64 KB and finds a DPI that cuts transfers after 16-20 KB.',
+      ),
+    ),
+  ];
   const listFields = [
     ...field(
       _('List'),
@@ -945,6 +977,12 @@ function renderState() {
   else facts.push([_('Last check'), _('Not checked yet')]);
   if (policy.mode !== 'off' && status.next_run_at)
     facts.push([_('Next scheduled check'), formatTime(status.next_run_at)]);
+  const clock = clockWarning(status.clock);
+  if (clock)
+    facts.push([
+      _('Router clock'),
+      renderStatus({ label: clock, tone: 'warning' }),
+    ]);
   if (status.recovered_at)
     facts.push([
       _('Warning'),
