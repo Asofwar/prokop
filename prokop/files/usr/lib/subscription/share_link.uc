@@ -386,10 +386,13 @@ function populate_subscription_file(path) {
 
     let stamp = clock();
     let tmp_path = sprintf("%s.%d.%d.tmp", path, stamp[0], stamp[1]);
-    if (fs.writefile(tmp_path, sprintf("%J\n", subscription)) == null)
+    // Created 0600: the copy holds every share link with its credentials,
+    // and is never readable by others, not even until a later chmod (U4).
+    if (!common.write_private_json_file(tmp_path, subscription)) {
+        fs.unlink(tmp_path);
         return false;
+    }
 
-    system("chmod 600 " + shell_quote(tmp_path) + " >/dev/null 2>&1");
     if (!fs.rename(tmp_path, path)) {
         fs.unlink(tmp_path);
         return false;

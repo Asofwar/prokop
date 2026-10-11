@@ -123,9 +123,14 @@ function atomic_write_json_file(path, value) {
         return false;
     // A write that failed half-way leaves no partial copy (UC-159). A full
     // filesystem can take the write and keep none of it: read back first.
+    // Created 0600 (U4): a section cache holds the full share links of its
+    // nodes, and its staging directory is next to a configuration in /tmp.
     let data = sprintf("%J\n", value);
-    if (fs.writefile(tmp_path, data) == null || !fs.chmod(tmp_path, 0600) ||
-        fs.readfile(tmp_path) !== data || !fs.rename(tmp_path, path)) {
+    let fh = fs.open(tmp_path, "w", 0600);
+    let written = fh != null && fs.chmod(tmp_path, 0600) && fh.write(data) != null;
+    if (fh != null && fh.close() === false)
+        written = false;
+    if (!written || fs.readfile(tmp_path) !== data || !fs.rename(tmp_path, path)) {
         fs.unlink(tmp_path);
         return false;
     }

@@ -398,8 +398,32 @@ function validate_subscription(path) {
     return true;
 }
 
+// U4: every file the parser writes holds a subscription body or the
+// outbounds made from it (passwords, UUIDs). It is created 0600 and an
+// existing one is narrowed to 0600 before anything is written, whatever the
+// process umask (as core/common.uc write_private_json_file).
+function open_private_write(path) {
+    let fh = fs.open(path, "w", 0600);
+    if (fh == null)
+        return null;
+    if (!fs.chmod(path, 0600)) {
+        fh.close();
+        return null;
+    }
+    return fh;
+}
+
+function write_private_file(path, data) {
+    let fh = open_private_write(path);
+    if (fh == null)
+        return null;
+    let written = fh.write(as_string(data));
+    let closed = fh.close();
+    return written == null || closed === false ? null : written;
+}
+
 function write_json_file(path, value) {
-    return fs.writefile(path, sprintf("%J", value) + "\n");
+    return write_private_file(path, sprintf("%J", value) + "\n");
 }
 
 function write_json(value) {
@@ -1486,8 +1510,7 @@ function is_clash_proxies_header(line) {
     return text == "proxies:" || match(text, /^proxies:\s*#/);
 }
 
-function clash_yaml_records(input_file) {
-    let data = read_file(input_file);
+function clash_yaml_records(data) {
     if (data == null)
         return [];
 
@@ -1732,11 +1755,11 @@ function parse_clash_record(record) {
     return null;
 }
 
-function normalize_clash_yaml(input_file, output_file) {
+function normalize_clash_yaml_data(data, output_file) {
     let outbounds = [];
     let skipped = 0;
 
-    for (let record in clash_yaml_records(input_file)) {
+    for (let record in clash_yaml_records(data)) {
         let outbound = parse_clash_record(record);
         if (outbound)
             push(outbounds, outbound);
@@ -1757,12 +1780,16 @@ function normalize_clash_yaml(input_file, output_file) {
     });
 }
 
+function normalize_clash_yaml(input_file, output_file) {
+    return normalize_clash_yaml_data(read_file(input_file), output_file);
+}
+
 function normalize_uri_list_data(data, output_file) {
     data = as_string(data);
     if (index(data, "\r") >= 0)
         data = replace(data, /\r/g, "");
 
-    let output = fs.open(output_file, "w");
+    let output = open_private_write(output_file);
     if (!output)
         return false;
 
@@ -2146,7 +2173,7 @@ function is_metadata_preamble_line(line) {
 }
 
 function normalize_uri_list_stream(input, output_file, strip_metadata) {
-    let output = fs.open(output_file, "w");
+    let output = open_private_write(output_file);
     if (!output)
         return false;
 
@@ -3014,9 +3041,13 @@ function normalize_sing_box_json_value(value, output_file) {
     });
 }
 
-function temp_path(prefix) {
+// U4: a temporary file next to `near`, a file of the caller: the
+// subscription caches live in 0700 directories (subscription/cache.uc
+// ensure_private_dir), so the temporary copy of a body is never in the
+// shared /tmp, and it is created 0600 (open_private_write) besides.
+function sibling_temp_path(near, kind) {
     let stamp = clock();
-    return sprintf("/tmp/%s.%d.%d", prefix, stamp[0], stamp[1]);
+    return sprintf("%s.%s.%d.%d", as_string(near), kind, stamp[0], stamp[1]);
 }
 
 function shell_quote(value) {
@@ -3041,7 +3072,7 @@ function gzip_decode_file(input_file, output_file) {
         let pipe = fs.popen(command + " " + shell_quote(input_file) + " 2>/dev/null", "r");
         if (!pipe)
             continue;
-        let output = fs.open(output_file, "w");
+        let output = open_private_write(output_file);
         if (!output) {
             pipe.close();
             return false;
@@ -3082,8 +3113,15 @@ function gzip_decode_file(input_file, output_file) {
 }
 
 function try_decode_gzip_content_file(input_file) {
-    let tmp = temp_path("prokop-subscription-gzip");
-    if (!gzip_decode_file(input_file, tmp)) {
+    let tmp = sibling_temp_path(input_file, "gunzip");
+    let decoded = false;
+    try {
+        decoded = gzip_decode_file(input_file, tmp);
+    }
+    catch (e) {
+        decoded = false;
+    }
+    if (!decoded) {
         fs.unlink(tmp);
         return false;
     }
@@ -3112,7 +3150,7 @@ function normalized_skipped_message(path) {
 }
 
 function extract_ui_metadata_file(headers_file, body_file, output_file) {
-    let tmp = temp_path("prokop-subscription-metadata");
+    let tmp = sibling_temp_path(output_file, "tmp");
     let raw = metadata_body_store_with_base64_fallback(body_file).values;
     let headers = metadata_headers_store(headers_file).values;
     for (let key, value in headers)
@@ -3127,7 +3165,7 @@ function extract_ui_metadata_file(headers_file, body_file, output_file) {
         return false;
     }
 
-    if (!fs.writefile(tmp, sprintf("%J\n", result))) {
+    if (!write_private_file(tmp, sprintf("%J\n", result))) {
         fs.unlink(tmp);
         return false;
     }
@@ -3151,14 +3189,10 @@ function normalize_content_data(data, output_file, depth) {
             return normalize_sing_box_json_value(decoded_json, output_file);
     }
 
-    if (index(data, "proxies:") >= 0 && content_is_clash_yaml(data)) {
-        let tmp = temp_path("prokop-subscription-clash");
-        if (!fs.writefile(tmp, data))
-            return false;
-        let ok = normalize_clash_yaml(tmp, output_file);
-        fs.unlink(tmp);
-        return ok;
-    }
+    // Parsed in memory: the body (passwords, UUIDs) is never copied to a
+    // temporary file (U4).
+    if (index(data, "proxies:") >= 0 && content_is_clash_yaml(data))
+        return normalize_clash_yaml_data(data, output_file);
 
     if (index(data, "://") >= 0) {
         if (normalize_uri_list_data(data, output_file))
@@ -3185,16 +3219,20 @@ function normalize_content_file(input_file, output_file) {
 
 function normalize_content_validated(input_file, output_file) {
     let normalize_input = input_file;
-    let decoded_tmp = temp_path("prokop-subscription-gzip");
-    let decoded = gzip_decode_file(input_file, decoded_tmp);
-    if (decoded)
-        normalize_input = decoded_tmp;
-    else
-        fs.unlink(decoded_tmp);
-
-    let ok = normalize_content_file(normalize_input, output_file);
-    if (decoded)
-        fs.unlink(decoded_tmp);
+    let decoded_tmp = sibling_temp_path(input_file, "gunzip");
+    let decoded = false;
+    let ok = false;
+    // The unpacked body goes on every path, an exception included (U4).
+    try {
+        decoded = gzip_decode_file(input_file, decoded_tmp);
+        if (decoded)
+            normalize_input = decoded_tmp;
+        ok = normalize_content_file(normalize_input, output_file);
+    }
+    catch (e) {
+        ok = false;
+    }
+    fs.unlink(decoded_tmp);
     if (!ok)
         return false;
 
