@@ -24,6 +24,7 @@ const ROUTING_ACTIONS = [
   "zapret",
   "zapret2",
   "byedpi",
+  "singbox_dpi",
 ];
 const CONNECTIONS_BLOCKED_INTERFACES = [
   "br-lan",
@@ -4240,6 +4241,71 @@ function realityMlkemUnavailableReason() {
   return realityMlkemReasonPromise;
 }
 
+// DPI bypass by sing-box (singbox/dpi.uc): TLS fragmentation needs sing-box
+// 1.12, the minimum Prokop runs on; TLS spoof needs 1.14.
+const SINGBOX_DPI_SPOOF_MIN_VERSION = [1, 14];
+let singboxDpiSpoofReasonPromise = null;
+
+function singBoxVersionAtLeast(version, min) {
+  const parts = `${version || ""}`.match(/^v?(\d+)\.(\d+)\./);
+  if (!parts) {
+    return null;
+  }
+  const major = Number(parts[1]);
+  const minor = Number(parts[2]);
+  return major > min[0] || (major === min[0] && minor >= min[1]);
+}
+
+// Why the installed sing-box cannot spoof the TLS ClientHello, or "" when it
+// can or its version is not known (the backend validator then decides).
+function singboxDpiSpoofUnavailableReason() {
+  if (singboxDpiSpoofReasonPromise) {
+    return singboxDpiSpoofReasonPromise;
+  }
+
+  singboxDpiSpoofReasonPromise = Promise.resolve()
+    .then(() => main.ProkopShellMethods.getSystemInfo())
+    .then((result) => {
+      const version =
+        result && result.success && result.data
+          ? `${result.data.sing_box_version || ""}`
+          : "";
+      if (
+        singBoxVersionAtLeast(version, SINGBOX_DPI_SPOOF_MIN_VERSION) !== false
+      ) {
+        return "";
+      }
+      return _(
+        "Unavailable: TLS spoof needs sing-box %s or newer, the installed sing-box is %s.",
+      ).format(SINGBOX_DPI_SPOOF_MIN_VERSION.join(".") + ".0", version);
+    })
+    .catch(() => "");
+  return singboxDpiSpoofReasonPromise;
+}
+
+// singbox/dpi.uc valid_sni(): a host name in lower case with at least two
+// labels and a letter in the last one.
+function isSingboxDpiSpoofDomain(value) {
+  const text = `${value || ""}`;
+  return (
+    text.length >= 3 &&
+    text.length <= 253 &&
+    /^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]([a-z0-9-]{0,61}[a-z0-9])?$/.test(
+      text,
+    )
+  );
+}
+
+// singbox/dpi.uc fallback_delay_ms(): <n>ms or <n>s, 1ms to 10s.
+function isSingboxDpiFallbackDelay(value) {
+  const parts = `${value || ""}`.match(/^(\d{1,5})(ms|s)$/);
+  if (!parts) {
+    return false;
+  }
+  const ms = Number(parts[1]) * (parts[2] === "s" ? 1000 : 1);
+  return ms >= 1 && ms <= 10000;
+}
+
 function ensureActionProvidersAvailabilityLoaded() {
   if (actionProvidersAvailabilityState.loaded) {
     return Promise.resolve(actionProvidersAvailabilityState);
@@ -4358,6 +4424,8 @@ function getActionOptionLabel(action) {
       return "Zapret2";
     case "byedpi":
       return "ByeDPI";
+    case "singbox_dpi":
+      return "sing-box";
     case "outbound":
       return _("JSON outbound");
     case "proxy":
@@ -4371,7 +4439,12 @@ function getActionOptionLabel(action) {
 function getRuleActionDisplayValue(section_id) {
   const action = getRuleResolvedAction(section_id);
 
-  if (action === "zapret" || action === "zapret2" || action === "byedpi") {
+  if (
+    action === "zapret" ||
+    action === "zapret2" ||
+    action === "byedpi" ||
+    action === "singbox_dpi"
+  ) {
     return `${_("DPI")} · ${getActionOptionLabel(action)}`;
   }
 
@@ -4457,6 +4530,8 @@ function populateActionOptionValues(option, section_id) {
   if (isByedpiInstalledForUi()) {
     option.value("byedpi", getActionOptionLabel("byedpi"));
   }
+  // Needs no package: sing-box itself (singbox/dpi.uc).
+  option.value("singbox_dpi", _("DPI bypass by sing-box"));
 
   // A DPI rule whose provider is missing keeps its action (UC-008).
   const configured = section_id ? getRuleConfiguredAction(section_id) : null;
@@ -8915,6 +8990,129 @@ function createSectionContent(section) {
     });
   };
   configureTextareaOption(o, analyzeByedpiStrategy);
+
+  // DPI bypass by sing-box (singbox/dpi.uc): TLS options of this rule's
+  // route rules, on its direct outbound only.
+  // singbox-dpi-form-begin
+  o = section.taboption(
+    "target",
+    form.ListValue,
+    "singbox_dpi_fragment",
+    _("TLS fragmentation"),
+    _(
+      "Splits the TLS ClientHello of this rule's connections so that a DPI system cannot read the site name. TLS records: the ClientHello is cut into several TLS records, fast, try it first. TCP segments: it is sent in several TCP packets with a pause, slower. Both: records sent as separate segments.",
+    ),
+  );
+  o.depends("action", "singbox_dpi");
+  o.value("off", _("Do not fragment"));
+  o.value("record", _("TLS records"));
+  o.value("tcp", _("TCP segments"));
+  o.value("both", _("TLS records and TCP segments"));
+  o.default = "record";
+  o.rmempty = false;
+  o.modalonly = true;
+  o.validate = function (section_id, value) {
+    const spoof = `${
+      this.section.formvalue(section_id, "singbox_dpi_spoof_sni") || ""
+    }`.trim();
+    if ((value || "off") === "off" && !spoof) {
+      return _(
+        "Turn on TLS fragmentation or enter a TLS spoof domain, or choose another action.",
+      );
+    }
+    return true;
+  };
+
+  o = section.taboption(
+    "target",
+    form.Value,
+    "singbox_dpi_fragment_fallback_delay",
+    _("Pause between TCP segments"),
+    _(
+      "Used when sing-box cannot measure the round trip to the site. Empty: 500ms.",
+    ),
+  );
+  o.depends({ action: "singbox_dpi", singbox_dpi_fragment: "tcp" });
+  o.depends({ action: "singbox_dpi", singbox_dpi_fragment: "both" });
+  o.placeholder = "500ms";
+  o.rmempty = true;
+  o.modalonly = true;
+  o.validate = function (_section_id, value) {
+    const text = `${value || ""}`.trim();
+    return !text || isSingboxDpiFallbackDelay(text)
+      ? true
+      : _("Enter a whole number of ms or s from 1ms to 10s, e.g. 500ms.");
+  };
+
+  o = section.taboption(
+    "target",
+    form.Value,
+    "singbox_dpi_spoof_sni",
+    _("TLS spoof domain"),
+    _(
+      "Before the real ClientHello sing-box sends a forged one with this domain; the site drops it, a DPI system that lets this domain through lets the connection through. Use a domain that is not blocked, such as a large domestic site. Empty: off.",
+    ),
+  );
+  o.depends("action", "singbox_dpi");
+  o.placeholder = "example.com";
+  o.rmempty = true;
+  o.modalonly = true;
+  o.load = function (section_id) {
+    const baseDescription = this.singboxDpiBaseDescription || this.description;
+    this.singboxDpiBaseDescription = baseDescription;
+    return singboxDpiSpoofUnavailableReason().then((reason) => {
+      // A domain saved before stays editable so that it can be cleared.
+      const saved = uci.get(UCI_PACKAGE, section_id, "singbox_dpi_spoof_sni");
+      this.readonly = reason && !saved ? true : null;
+      this.singboxDpiUnavailableReason = reason;
+      this.description = reason
+        ? `${baseDescription} ${reason}`
+        : baseDescription;
+      return this.cfgvalue(section_id);
+    });
+  };
+  o.write = function (section_id, value) {
+    uci.set(
+      UCI_PACKAGE,
+      section_id,
+      "singbox_dpi_spoof_sni",
+      `${value || ""}`.trim().toLowerCase(),
+    );
+  };
+  o.validate = function (_section_id, value) {
+    const text = `${value || ""}`.trim().toLowerCase();
+    if (!text) {
+      return true;
+    }
+    if (this.singboxDpiUnavailableReason) {
+      return this.singboxDpiUnavailableReason;
+    }
+    return isSingboxDpiSpoofDomain(text)
+      ? true
+      : _(
+          "Enter a domain such as example.com, without a scheme, port or path.",
+        );
+  };
+
+  o = section.taboption(
+    "target",
+    form.ListValue,
+    "singbox_dpi_spoof_method",
+    _("How the site drops the forged ClientHello"),
+    _(
+      "Wrong sequence number suits most sites. Change it only if the bypass does not work.",
+    ),
+  );
+  o.depends({ action: "singbox_dpi", singbox_dpi_spoof_sni: /\S/ });
+  o.value("wrong-sequence", _("Wrong sequence number"));
+  o.value("wrong-checksum", _("Wrong checksum"));
+  o.value("wrong-ack", _("Wrong acknowledgment number"));
+  o.value("wrong-md5", _("TCP MD5 signature"));
+  o.value("wrong-timestamp", _("Old TCP timestamp"));
+  o.default = "wrong-sequence";
+  o.rmempty = true;
+  o.modalonly = true;
+  // singbox-dpi-form-end
 
   o = section.taboption(
     "target",

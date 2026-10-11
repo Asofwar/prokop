@@ -96,9 +96,17 @@ function load_catalog() {
     return catalog;
 }
 
+// DPI by sing-box itself (singbox/dpi.uc) has no strategy text: its view
+// names the TLS techniques. It is not an autotune provider (is_dpi_action).
+function has_view(action) {
+    return is_dpi_action(action) || as_string(action) == "singbox_dpi";
+}
+
 // section: an object with action and the provider's strategy option.
 function view(section) {
     let provider = as_string(section.action);
+    if (provider == "singbox_dpi")
+        return { dpi_provider: provider, dpi_strategy: require("singbox.dpi").strategy_label(section), dpi_strategy_custom: false };
     let raw = normalize(section[STRATEGY_OPTIONS[provider]]);
     let defaults = {
         zapret: [ constants.ZAPRET_DEFAULT_NFQWS_OPT, constants.ZAPRET_LEGACY_DEFAULT_NFQWS_OPT ],
@@ -125,4 +133,4 @@ function view(section) {
     return { dpi_provider: provider, dpi_strategy: strategy, dpi_strategy_custom: strategy == "" };
 }
 
-return { is_dpi_action, view, profiles, tcp443_scope, tcp443_splice, effective, normalize, words };
+return { is_dpi_action, has_view, view, profiles, tcp443_scope, tcp443_splice, effective, normalize, words };

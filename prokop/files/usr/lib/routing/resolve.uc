@@ -204,8 +204,11 @@ function port_matches(rule, port) {
     }
     return false;
 }
+// The TLS options of a DPI rule by sing-box (singbox/dpi.uc ROUTE_OPTION_KEYS)
+// change how its outbound dials, not which connections the rule takes.
 const RULE_KEYS = [ "action", "outbound", "inbound", "domain", "domain_suffix", "domain_keyword", "domain_regex",
-    "ip_cidr", "rule_set", "source_ip_cidr", "port", "port_range", "network", "protocol" ];
+    "ip_cidr", "rule_set", "source_ip_cidr", "port", "port_range", "network", "protocol",
+    "tls_fragment", "tls_record_fragment", "tls_fragment_fallback_delay", "tls_spoof", "tls_spoof_method" ];
 // Sniffed protocols a TCP connection to a site can never have (disable_quic
 // adds a protocol=quic reject rule in front of every section rule,
 // exclude_bittorrent a protocol=bittorrent route): a site speaks TLS or HTTP.
@@ -643,7 +646,7 @@ function resolve(config, sections, t) {
     result.label = as_string(section.options.label) || section.name;
     result.action = action;
     result.scope = { rule: section.name, matchers: rule_scope(section) };
-    if (dpi_strategy.is_dpi_action(action)) {
+    if (dpi_strategy.has_view(action)) {
         let view = dpi_strategy.view(section.options);
         result.dpi = { provider: view.dpi_provider, strategy: view.dpi_strategy, custom: view.dpi_strategy_custom };
     }

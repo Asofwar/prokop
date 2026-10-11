@@ -1143,7 +1143,8 @@ function migrate_rule(ctx, section, converted_from_rule, constants) {
             delete_subscription_cache(ctx, section_name(section));
     }
     else if (action == "block" ||
-        action == "bypass" || action == "zapret" || action == "zapret2" || action == "byedpi") {
+        action == "bypass" || action == "zapret" || action == "zapret2" || action == "byedpi" ||
+        action == "singbox_dpi") {
         delete_option(ctx, section, "proxy_config_type");
         delete_option(ctx, section, "proxy_string");
         delete_option(ctx, section, "urltest_proxy_links");

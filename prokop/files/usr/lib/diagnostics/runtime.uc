@@ -682,7 +682,7 @@ function get_readonly_config_sections() {
                 if (source[key] != null)
                     item[key] = source[key];
             // DPI rules: provider and strategy name, never the raw options.
-            if (dpi_strategy.is_dpi_action(source.action))
+            if (dpi_strategy.has_view(source.action))
                 for (let key, value in dpi_strategy.view(source))
                     item[key] = value;
             push(result, item);

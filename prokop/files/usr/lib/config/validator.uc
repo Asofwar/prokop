@@ -892,7 +892,7 @@ function rule_action(section) {
 }
 
 function rule_action_supported(action) {
-    return contains([ "connection", "proxy", "outbound", "vpn", "bypass", "block", "dns", "zapret", "zapret2", "byedpi" ], as_string(action));
+    return contains([ "connection", "proxy", "outbound", "vpn", "bypass", "block", "dns", "zapret", "zapret2", "byedpi", "singbox_dpi" ], as_string(action));
 }
 
 function duration_to_seconds_value(value) {
@@ -1639,6 +1639,64 @@ function validate_dns_action(section, sections, context) {
         fail_validation("DNS rule '" + name + "' references detour section '" + target_name + "' with unsupported action '" + rule_action(target) + "'. Select an enabled Connection, VPN, Zapret, Zapret2, or ByeDPI section. Aborted.");
 }
 
+function sing_box_variant_marker(ctx, value) {
+    let path = as_string(ctx.sing_box_variant_state_file);
+    if (path == "")
+        path = "/etc/prokop/sing-box-variant";
+
+    let data = fs.readfile(path);
+    return trim(as_string(data)) == as_string(value);
+}
+
+function sing_box_compressed_marker_set(ctx) {
+    return sing_box_variant_marker(ctx, "extended-compressed");
+}
+
+function sing_box_version_state(ctx) {
+    let path = as_string(ctx.sing_box_version_state_file);
+    if (path == "")
+        path = "/etc/prokop/sing-box-version";
+
+    let data = fs.readfile(path);
+    if (data == null)
+        return "";
+
+    let newline = index(data, "\n");
+    return newline >= 0 ? substr(data, 0, newline) : as_string(data);
+}
+
+// The installed sing-box version, asked once and only when a rule needs it:
+// the version recorded for the compressed binary (it is not run, opt. 14),
+// otherwise "sing-box version", otherwise the package version; "" unknown.
+function context_sing_box_version(context) {
+    if (context.sing_box_version != null)
+        return as_string(context.sing_box_version);
+    let version = "";
+    if (sing_box_compressed_marker_set(context))
+        version = sing_box_version_state(context);
+    else if (command_exists("sing-box"))
+        version = first_line_last_field(bounded_command_output_from_args([ "sing-box", "version" ], 5));
+    if (version == "")
+        version = installed_sing_box_version();
+    context.sing_box_version = version;
+    return version;
+}
+
+// DPI bypass by sing-box itself (singbox/dpi.uc). It is a rule action of its
+// own, so it never meets an external DPI provider on the same rule. Its TLS
+// options go on the rule's route rules only: the mixed proxy inbound of a
+// rule routes past them and is refused rather than silently unprotected.
+function validate_singbox_dpi_rule(section, context) {
+    let name = section_name(section);
+    if (bool_option(section, "mixed_proxy_enabled", false))
+        fail_validation("Rule '" + name + "' (DPI bypass by sing-box) does not support the mixed proxy inbound. Turn the mixed proxy off or choose another action. Aborted.");
+    // Loaded here, as the provider validator modules are: only such a rule
+    // needs it.
+    let error = require("singbox.dpi").validation_error(section, context_sing_box_version(context));
+    if (error != null)
+        fail_validation(error);
+}
+
 function validate_rule(section, sections, context) {
     if (!section_enabled(section))
         return;
@@ -1682,6 +1740,9 @@ function validate_rule(section, sections, context) {
         }
         validate_provider_strategy("byedpi", section, context);
     }
+
+    if (action == "singbox_dpi")
+        validate_singbox_dpi_rule(section, context);
 
     if (connections.is_connections_action(action)) {
 
@@ -1956,7 +2017,7 @@ function report_ignored_legacy_domain_conditions(section) {
 // a rule with nothing else gets no route rule and no nft capture and does
 // nothing. Such a configuration started before, so it is reported, not
 // refused (invariant 17, UC-102).
-const ROUTING_RULE_ACTIONS = [ "connection", "proxy", "outbound", "vpn", "bypass", "block", "zapret", "zapret2", "byedpi" ];
+const ROUTING_RULE_ACTIONS = [ "connection", "proxy", "outbound", "vpn", "bypass", "block", "zapret", "zapret2", "byedpi", "singbox_dpi" ];
 
 function routing_rule_has_conditions(section) {
     let domains = rule_conditions.domain_conditions(section);
@@ -2179,32 +2240,6 @@ function context_from_runtime() {
         byedpi_child_pid_dir: constant_value(constants, "BYEDPI_CHILD_PID_DIR"),
         byedpi_log_dir: constant_value(constants, "BYEDPI_LOG_DIR")
     };
-}
-
-function sing_box_variant_marker(ctx, value) {
-    let path = as_string(ctx.sing_box_variant_state_file);
-    if (path == "")
-        path = "/etc/prokop/sing-box-variant";
-
-    let data = fs.readfile(path);
-    return trim(as_string(data)) == as_string(value);
-}
-
-function sing_box_compressed_marker_set(ctx) {
-    return sing_box_variant_marker(ctx, "extended-compressed");
-}
-
-function sing_box_version_state(ctx) {
-    let path = as_string(ctx.sing_box_version_state_file);
-    if (path == "")
-        path = "/etc/prokop/sing-box-version";
-
-    let data = fs.readfile(path);
-    if (data == null)
-        return "";
-
-    let newline = index(data, "\n");
-    return newline >= 0 ? substr(data, 0, newline) : as_string(data);
 }
 
 // The script of singbox/managed_service.uc, the one every writer installs
@@ -2454,7 +2489,11 @@ function context_from_json(value, defaults) {
         zapret2_route_mark_base: context_override_value(value, defaults, "zapret2_route_mark_base"),
         zapret2_queue_range_size: context_override_value(value, defaults, "zapret2_queue_range_size"),
         nft_fakeip_mark: context_override_value(value, defaults, "nft_fakeip_mark"),
-        nft_outbound_mark: context_override_value(value, defaults, "nft_outbound_mark")
+        nft_outbound_mark: context_override_value(value, defaults, "nft_outbound_mark"),
+        // A fixture names the sing-box version; without it the runtime's.
+        sing_box_version: value.sing_box_version != null ? as_string(value.sing_box_version) : null,
+        sing_box_variant_state_file: defaults.sing_box_variant_state_file,
+        sing_box_version_state_file: defaults.sing_box_version_state_file
     };
 }
 

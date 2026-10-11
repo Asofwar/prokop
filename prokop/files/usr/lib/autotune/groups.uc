@@ -29,6 +29,10 @@ function classify(dns, r) {
                 : { in_group: null, reason: "dpi_identity_unproven", detail: r.section };
         if (r.action == "zapret2" || r.action == "byedpi")
             return { in_group: null, reason: "provider_not_supported", detail: r.section };
+        // DPI by sing-box itself (singbox/dpi.uc): autotune has no isolated
+        // probe path for it.
+        if (r.action == "singbox_dpi")
+            return { in_group: null, reason: "singbox_dpi_not_supported", detail: r.section };
         if (r.action == "connection") return { in_group: null, reason: "routed_through_connection", detail: r.section };
         return { in_group: null, reason: "not_a_dpi_rule", detail: r.section };
     }

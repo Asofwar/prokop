@@ -622,6 +622,7 @@ describe('texts', () => {
       'rule_owner_undecidable',
       'dpi_identity_unproven',
       'provider_not_supported',
+      'singbox_dpi_not_supported',
       'routed_through_connection',
       'no_dpi_rule',
       'bypassed',
