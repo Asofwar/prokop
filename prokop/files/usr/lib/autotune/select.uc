@@ -205,10 +205,20 @@ function policy() {
 }
 
 // Selection from raw probe records: [{ candidate: {id, rank}, probes: [...] }].
+// A certificate that failed its time check (probe.uc clock_problem) means
+// the router clock is wrong, not that a strategy failed or worked: a run
+// that saw one selects nothing.
+function clock_problem(measured) {
+    for (let m in measured) for (let p in m.probes || []) if (p.class == "clock_problem") return true;
+    return false;
+}
+
 function evaluate(measured) {
     let candidates = [];
     for (let m in measured) push(candidates, aggregate(m.candidate, m.probes));
-    let chosen = select(candidates);
+    let chosen = clock_problem(measured) ?
+        { status: "inconclusive", selected: null, reason: "clock_problem", confidence: "low",
+          ranking: map(ranking(candidates), (c) => c.id) } : select(candidates);
     chosen.candidates = sort(candidates, by_simplicity);
     chosen.policy = policy();
     return chosen;

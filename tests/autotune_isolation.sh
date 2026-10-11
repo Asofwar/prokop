@@ -23,17 +23,41 @@ reset_state
 ucode -L "$LIB" "$LIB/autotune/catalog.uc" validate > "$WORK/catalog.json"
 json '
 const ids = r.map((e) => e.id);
-a.deepEqual(ids, ["direct","multisplit","fake","multidisorder","fakedsplit","fake_multisplit","hostfakesplit","fake_multidisorder","udp_fake"]);
+const tier = (p, t) => r.filter((e) => e.provider === p && e.tier === t).map((e) => e.id);
+a.deepEqual(tier("zapret", 1), ["direct","multisplit","fake","multidisorder","fakedsplit","fake_multisplit","hostfakesplit","fake_multidisorder","udp_fake"]);
+a.deepEqual(tier("zapret", 2), ["fake_md5sig","fake_badseq","fake_ts","fake_ttl","multisplit_seqovl","multidisorder_seqovl","syndata_multisplit","fakedsplit_altorder"]);
+// One isolated run holds at most eight DPI candidates.
+for (const p of ["zapret", "zapret2"]) for (const t of [1, 2])
+  a.ok(r.filter((e) => e.provider === p && e.tier === t && e.nfqws_opt && e.protocol === "tcp").length <= 8, p + t);
+a.equal(new Set(ids).size, ids.length);
 for (const e of r) {
   a.ok(e.id && e.protocol && typeof e.rank === "number" && typeof e.nfqws_opt === "string" && typeof e.enabled === "boolean");
-  a.doesNotMatch(e.nfqws_opt, /--qnum|--hostlist|--ipset|--dpi-desync-fwmark|--daemon|<HOSTLIST/);
+  a.doesNotMatch(e.nfqws_opt, /--qnum|--hostlist|--ipset|--dpi-desync-fwmark|--fwmark|--daemon|<HOSTLIST|--wssize|autottl|circular/);
+  if (e.provider === "zapret2") {
+    // No nfqws2 in this environment: every Zapret2 candidate is refused.
+    a.equal(e.state, "unsupported"); a.equal(e.reason, "nfqws2_unavailable");
+    a.match(e.nfqws_opt, /^(--blob=\S+ )?--filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=/);
+    continue;
+  }
   if (e.protocol === "tcp") { a.equal(e.state, "supported", JSON.stringify(e)); a.equal(e.enabled, true); }
   if (e.nfqws_opt) a.match(e.nfqws_opt, e.protocol === "tcp" ? /^--filter-tcp=443 / : /^--filter-udp=443 /);
 }
+a.deepEqual(r.filter((e) => e.ttl_based).map((e) => e.id), ["fake_ttl"]);
 const udp = r.find((e) => e.id === "udp_fake");
 a.equal(udp.state, "unsupported"); a.equal(udp.reason, "quic_probe_unavailable");
 a.ok(r.find((e) => e.id === "direct").rank < r.find((e) => e.id === "fake_multidisorder").rank);
 ' "$WORK/catalog.json"
+# nfqws2 present: the Zapret2 candidates are checked by its own --dry-run,
+# with the isolated path's mark and the provider's Lua libraries.
+cp "$WORK/bin/nfqws" "$WORK/bin/nfqws2"
+printf '#!/bin/sh\nprintf "%%s\\n" "$@" > "%s"\nexec "%s" "$@"\n' "$WORK/log/nfqws2.args" "$WORK/bin/nfqws2" > "$WORK/bin/nfqws2-wrap"
+chmod +x "$WORK/bin/nfqws2-wrap"
+ZAPRET2_NFQWS2_BIN="$WORK/bin/nfqws2-wrap" ucode -L "$LIB" "$LIB/autotune/catalog.uc" validate z2_fake > "$WORK/one.json"
+json 'a.equal(r.state, "supported", JSON.stringify(r)); a.equal(r.provider, "zapret2");' "$WORK/one.json"
+grep -qx -- '--dry-run' "$WORK/log/nfqws2.args" && grep -qx -- '--fwmark=0x40000000' "$WORK/log/nfqws2.args" &&
+  grep -q -- '^--lua-init=@.*/zapret-lib.lua$' "$WORK/log/nfqws2.args" || fail "nfqws2 dry-run arguments: $(cat "$WORK/log/nfqws2.args")"
+NFQWS_STUB_REJECT=lua-desync ZAPRET2_NFQWS2_BIN="$WORK/bin/nfqws2" ucode -L "$LIB" "$LIB/autotune/catalog.uc" validate z2_fake > "$WORK/one.json"
+json 'a.equal(r.state, "unsupported"); a.equal(r.reason, "nfqws2_dry_run_rejected");' "$WORK/one.json"
 ok "catalog valid"
 
 NFQWS_STUB_REJECT=hostfakesplit ucode -L "$LIB" "$LIB/autotune/catalog.uc" validate hostfakesplit > "$WORK/one.json"

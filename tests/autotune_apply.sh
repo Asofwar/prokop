@@ -177,10 +177,10 @@ read -r p < "$STATE/prod.counter"; echo "$((p + bump))" > "$STATE/prod.counter"
 if [ -n "$marked" ]; then read -r v < "$STATE/verify.counter"; echo "$((v + bump))" > "$STATE/verify.counter"; fi
 remote="${PROD_REMOTE:-198.18.0.5}"
 case "$mode" in
-  success) echo "0|51000|$remote|404|0.020|0.110|0.150|0.151|" ;;
-  reset) echo "35|51000|$remote|000|0.020|0.000000|0.000000|0.050|Recv failure: Connection reset by peer"; exit 35 ;;
-  connect_timeout) echo "28|0||000|0.000000|0.000000|0.000000|5.001|Connection timed out after 5001 milliseconds"; exit 28 ;;
-  unreachable) echo "7|0||000|0.000000|0.000000|0.000000|0.004|Failed to connect to x port 443 after 4 ms: No route to host"; exit 7 ;;
+  success) echo "0|51000|$remote|404|0.020|0.110|0.150|0.151|900|" ;;
+  reset) echo "35|51000|$remote|000|0.020|0.000000|0.000000|0.050|0|Recv failure: Connection reset by peer"; exit 35 ;;
+  connect_timeout) echo "28|0||000|0.000000|0.000000|0.000000|5.001|0|Connection timed out after 5001 milliseconds"; exit 28 ;;
+  unreachable) echo "7|0||000|0.000000|0.000000|0.000000|0.004|0|Failed to connect to x port 443 after 4 ms: No route to host"; exit 7 ;;
 esac
 SH
 cat > "$WORK/bin/dig" <<'SH'

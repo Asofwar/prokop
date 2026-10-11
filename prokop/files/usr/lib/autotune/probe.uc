@@ -4,6 +4,20 @@
 // only: timings, exit code, HTTP status and a classified failure. It never
 // stores response bodies, headers, cookies or credentials. The HTTP status is
 // informational; any status proves that TCP, TLS and HTTP transport worked.
+//
+// A probe of a large object (options.min_bytes, a path the target is known
+// to serve with at least that many bytes) also proves the transfer: the DPI
+// of 2025+ cuts connections to foreign hosts after their first 14-34 KB, so
+// a small page ("/", a redirect) hides the cut. It asks for the first
+// PROBE_MAX_BYTES (a range, nothing is stored) and is a success only with
+// min_bytes or more received; a transfer that breaks or stalls below them
+// after the TLS handshake is "transfer_cut" (idea: remittor/zapret-openwrt
+// dwc.sh, MIT; hyperion-cs dpi-checkers "TCP 16-20").
+//
+// Certificate verification failures are told apart: one about the
+// certificate's validity time is a clock problem ("clock_problem", never
+// DPI evidence), any other one a substituted certificate or a provider's
+// stub page ("cert_mismatch").
 let fs = require("fs");
 
 const CURL = getenv("PROKOP_AUTOTUNE_CURL") || "curl";
@@ -18,7 +32,11 @@ const PROBE_MAX_BYTES = "65536";
 // opens the TCP connection and waits this long for a greeting that never
 // comes: nothing is sent to the target.
 const HANDSHAKE_TIME = "3";
-const FIELDS = "%{exitcode}|%{local_port}|%{remote_ip}|%{http_code}|%{time_connect}|%{time_appconnect}|%{time_starttransfer}|%{time_total}|%{errormsg}";
+const FIELDS = "%{exitcode}|%{local_port}|%{remote_ip}|%{http_code}|%{time_connect}|%{time_appconnect}|%{time_starttransfer}|%{time_total}|%{size_download}|%{errormsg}";
+// Bytes a large-object probe must receive by default; a target's own
+// threshold lies between these bounds.
+const DEFAULT_MIN_BYTES = 32768;
+const MIN_BYTES_FLOOR = 20480;
 
 function as_string(value) { return value == null ? "" : "" + value; }
 function quote(value) { return "'" + replace(as_string(value), /'/g, "'\\''") + "'"; }
@@ -126,6 +144,19 @@ function tls_failure_code(code) {
 function transport_failure_code(code) {
     return index([ 8, 16, 18, 52, 55, 56, 92, 95 ], code) >= 0;
 }
+// The certificate of the peer failed verification (60; 51 in older curl).
+function certificate_code(code) {
+    return code == 60 || code == 51;
+}
+// OpenSSL "certificate has expired" / "is not yet valid", mbedTLS
+// BADCERT_EXPIRED / BADCERT_FUTURE, wolfSSL "ASN date error".
+function certificate_time_error(err) {
+    return match(err, /not yet valid|expired|badcert_future|date error|validity/) != null;
+}
+// The local curl cannot do what was asked (a TLS version its library lacks).
+function locally_unsupported(code, err) {
+    return code == 4 || ((code == 1 || code == 35 || code == 59) && match(err, /not (yet )?supported|unsupported/) != null);
+}
 
 // classify({ exit_code, time_connect, time_appconnect, http_code, errormsg })
 // -> { class, connect, tls, http }. Stages: ok | timeout | reset | failed |
@@ -149,6 +180,7 @@ function classify(r) {
         return result;
     }
     if (code == 6) { result.class = "dns_failure"; return result; }
+    if (locally_unsupported(code, err)) { result.class = "local_unsupported"; return result; }
     // 45: no source port of the given range could be bound (TIME_WAIT
     // leftovers, AT-8): nothing reached the target, nothing is known of it.
     if (code == 45) { result.class = "local_port_unavailable"; return result; }
@@ -171,6 +203,12 @@ function classify(r) {
         return result;
     }
     result.connect = "ok";
+    if (certificate_code(code)) {
+        // The server (or whoever answered in its place) sent a certificate.
+        result.tls = "failed";
+        result.class = certificate_time_error(err) ? "clock_problem" : "cert_mismatch";
+        return result;
+    }
     if (!handshaken && (tls_failure_code(code) || transport_failure_code(code))) {
         if (reset) { result.tls = "reset"; result.class = "tcp_reset"; }
         else { result.tls = "failed"; result.class = "tls_failure"; }
@@ -183,6 +221,30 @@ function classify(r) {
         return result;
     }
     return result;
+}
+
+// transfer(record, min_bytes) -> the record of a large-object probe with its
+// cut check: "passed" (min_bytes or more arrived), "unverified" (the answer
+// ended normally but shorter: the object moved or the server ignored the
+// range; nothing is said about a cut) or "cut" (the transfer broke or
+// stalled after the handshake below min_bytes: class transfer_cut).
+function transfer(record, min_bytes) {
+    if (!(min_bytes > 0)) { record.cut_check = "not_checked"; return record; }
+    let size = int(record.size_download);
+    record.min_bytes = min_bytes;
+    if (size >= min_bytes && record.tls == "ok") {
+        record.cut_check = "passed";
+        if (record.class != "success") { record.class = "success"; record.http = "ok"; record.transfer_ended = "after_threshold"; }
+        return record;
+    }
+    if (record.class == "success") { record.cut_check = "unverified"; return record; }
+    if (record.tls == "ok" && record.class == "http_transport_failure") {
+        record.cut_check = "cut";
+        record.class = "transfer_cut";
+        return record;
+    }
+    record.cut_check = "not_reached";
+    return record;
 }
 
 // handshake(record, syn_acks) -> the record with its TCP stage corrected by
@@ -207,7 +269,12 @@ function clean_message(v) {
     return length(v) > 160 ? substr(v, 0, 160) : v;
 }
 
-// probe({ host, ip, port_range, path }) -> sanitized probe record.
+// probe({ host, ip, port_range, path, min_bytes, sni, tls }) -> sanitized
+// probe record.
+// min_bytes: a large-object probe (see above); path names the object.
+// sni (isolated only): connect to ip with this name instead of host (a
+// neutral name: does the address answer TLS at all?).
+// tls: "1.2" (TLS 1.2 at most) or "1.3" (TLS 1.3 only).
 // options.production: a normal request through the production path (system
 // resolver, no pinned address, no dedicated source ports) - used by stage 5
 // to verify an applied strategy; the isolated probe pins ip and ports.
@@ -218,21 +285,29 @@ function probe(options) {
     let host = as_string(options.host), ip = options.production ? "" : as_string(options.ip);
     let path = as_string(options.path || "/");
     let handshake_only = !options.production && !!options.handshake;
-    if (!valid_host(host) || (!options.production && !valid_ipv4(ip)) || match(path, /^\/[A-Za-z0-9._~\/-]*$/) == null)
+    let min_bytes = int(options.min_bytes || 0);
+    let sni = options.production || options.sni == null ? host : as_string(options.sni);
+    let tls = as_string(options.tls);
+    if (!valid_host(host) || (!options.production && !valid_ipv4(ip)) || match(path, /^\/[A-Za-z0-9._~\/-]*$/) == null ||
+        !valid_host(sni) || (min_bytes != 0 && (min_bytes < MIN_BYTES_FLOOR || min_bytes > int(PROBE_MAX_BYTES))) ||
+        index([ "", "1.2", "1.3" ], tls) < 0)
         return { class: "invalid_input" };
     let args = handshake_only
         ? [ CURL, "-s", "-o", "/dev/null", "--ipv4", "--noproxy", "*", "--proto", "=ftp",
             "--connect-timeout", HANDSHAKE_TIME, "--max-time", HANDSHAKE_TIME, "-w", FIELDS ]
         : [ CURL, "-s", "-o", "/dev/null", "--ipv4", "--noproxy", "*", "--proto", "=https",
             "--connect-timeout", CONNECT_TIMEOUT, "--max-time", MAX_TIME, "--max-filesize", PROBE_MAX_BYTES, "-w", FIELDS ];
-    if (!options.production) push(args, "--resolve", host + ":443:" + ip);
+    if (!handshake_only && min_bytes > 0) push(args, "--range", "0-" + (int(PROBE_MAX_BYTES) - 1));
+    if (!handshake_only && tls == "1.2") push(args, "--tls-max", "1.2");
+    if (!handshake_only && tls == "1.3") push(args, "--tlsv1.3");
+    if (!options.production) push(args, "--resolve", sni + ":443:" + ip);
     if (options.port_range && !options.production) push(args, "--local-port", as_string(options.port_range));
-    push(args, handshake_only ? "ftp://" + host + ":443/" : "https://" + host + path);
+    push(args, handshake_only ? "ftp://" + sni + ":443/" : "https://" + sni + path);
     let run = capture(args);
     let line = "";
     for (let l in split(run.output, "\n")) if (trim(l) != "") line = l;
     let f = split(line, "|");
-    let errormsg = length(f) > 8 ? join("|", slice(f, 8)) : "";
+    let errormsg = length(f) > 9 ? join("|", slice(f, 9)) : "";
     let exit_code = match(as_string(f[0]), /^[0-9]+$/) != null ? int(f[0]) : run.status;
     let record = {
         host, resolved_ip: ip == "" ? null : ip, path, production: !!options.production,
@@ -241,13 +316,17 @@ function probe(options) {
         http_status: match(as_string(f[3]), /^[0-9]+$/) != null ? int(f[3]) : 0,
         time_connect_ms: ms(f[4]), time_appconnect_ms: ms(f[5]),
         time_starttransfer_ms: ms(f[6]), time_total_ms: ms(f[7]),
+        size_download: match(as_string(f[8]), /^[0-9]+$/) != null ? int(f[8]) : 0,
         curl_exit_code: exit_code, error: clean_message(errormsg)
     };
+    if (sni != host) record.sni = sni;
+    if (tls != "") record.tls_version = tls;
     let c = classify({ exit_code, time_connect: f[4], time_appconnect: f[5], http_code: f[3], errormsg });
     record.class = c.class;
     record.connect = c.connect;
     record.tls = c.tls;
     record.http = c.http;
+    if (!handshake_only) transfer(record, min_bytes);
     if (handshake_only) {
         // Whatever followed the connection (the timeout waiting for the
         // greeting, a close), it was established.
@@ -260,16 +339,21 @@ function probe(options) {
 }
 
 if (sourcepath(1) != null && sourcepath(1) != "")
-    return { resolve, production_dns, probe, classify, handshake, valid_host, valid_ipv4, public_ipv4 };
+    return { resolve, production_dns, probe, classify, handshake, transfer, valid_host, valid_ipv4, public_ipv4,
+        DEFAULT_MIN_BYTES, MIN_BYTES_FLOOR, PROBE_MAX_BYTES: int(PROBE_MAX_BYTES) };
 
 let mode = ARGV[0] || "";
 if (mode == "resolve")
     print(sprintf("%J\n", resolve(ARGV[1], ARGV[2])));
 else if (mode == "probe")
     print(sprintf("%J\n", probe({ host: ARGV[1], ip: ARGV[2], port_range: ARGV[3], path: ARGV[4] })));
-else if (mode == "classify")
-    print(sprintf("%J\n", classify({ exit_code: ARGV[1], time_connect: ARGV[2], time_appconnect: ARGV[3],
-        http_code: ARGV[4], errormsg: ARGV[5] })));
+else if (mode == "classify") {
+    // classify <exit> <connect> <appconnect> <http> <errormsg> [size min_bytes]
+    let c = classify({ exit_code: ARGV[1], time_connect: ARGV[2], time_appconnect: ARGV[3],
+        http_code: ARGV[4], errormsg: ARGV[5] });
+    if (ARGV[7] != null) c = transfer({ ...c, size_download: int(ARGV[6]) }, int(ARGV[7]));
+    print(sprintf("%J\n", c));
+}
 else {
     warn("Usage: autotune/probe.uc <resolve host resolver|probe host ip [port-range] [path]|classify ...>\n");
     exit(1);
