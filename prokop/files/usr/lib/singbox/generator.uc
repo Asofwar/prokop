@@ -7,6 +7,7 @@ let runtime_constants = require("singbox.constants");
 let runtime_country = require("singbox.country");
 let runtime_dns = require("singbox.dns");
 let runtime_route = require("singbox.route");
+let runtime_dpi = require("singbox.dpi");
 let runtime_rulesets = require("singbox.rulesets");
 let runtime_subscription = require("singbox.subscription");
 let runtime_url = require("core.url");
@@ -38,6 +39,10 @@ const PRIORITY_PROBE_PORT_FIRST = 4580;
 const PRIORITY_PROBE_MAX = 16;
 let priority_probes = [];
 let runtime_supports_dns_response_matching = false;
+// The sing-box version generate_config was given ("" when unknown) and the
+// TLS route options of each singbox_dpi rule (singbox/dpi.uc), by name.
+let runtime_sing_box_version = "";
+let runtime_dpi_route_options = {};
 let provider_urltest_start_seed = "";
 
 let as_string = common.as_string;
@@ -2233,6 +2238,28 @@ function add_zapret2_outbound(config, section, sections) {
     });
 }
 
+// DPI bypass by sing-box (singbox/dpi.uc): a direct outbound of the rule's
+// own; the TLS options go on the rule's route rules
+// (apply_dpi_route_options), so they act on this rule's traffic only.
+function add_singbox_dpi_outbound(config, section) {
+    let result = runtime_dpi.route_options(section, runtime_sing_box_version);
+    for (let message in result.warnings)
+        warn(message, "\n");
+    runtime_dpi_route_options[section[".name"]] = result.options;
+    push(config.outbounds, {
+        type: "direct",
+        tag: outbound_tag(section[".name"])
+    });
+}
+
+function apply_dpi_route_options(route_rule, section) {
+    if (!runtime_dpi.is_action(option(section, "action", "")))
+        return route_rule;
+    for (let key, value in object_or_empty(runtime_dpi_route_options[section[".name"]]))
+        route_rule[key] = value;
+    return route_rule;
+}
+
 function add_byedpi_outbound(config, section, sections) {
     let index = enabled_action_index(sections, section, "byedpi");
     if (index <= 0)
@@ -2891,6 +2918,7 @@ function add_fully_routed_ips_rules(config, section) {
     if (target.outbound)
         route_rule.outbound = target.outbound;
     route_rule.source_ip_cidr = single_or_array(source_ip_cidr);
+    apply_dpi_route_options(route_rule, section);
     push(config.route.rules, exclude_sources_from_route_rule(route_rule, section));
 }
 
@@ -3010,6 +3038,7 @@ function add_combined_route_for_section(config, section) {
     if (length(source_ip_cidr) > 0)
         route_rule.source_ip_cidr = source_ip_cidr;
     add_port_matchers(route_rule, section);
+    apply_dpi_route_options(route_rule, section);
     let has_route_matchers = route_rule.domain != null || route_rule.domain_suffix != null ||
         route_rule.domain_keyword != null || route_rule.domain_regex != null ||
         route_rule.ip_cidr != null || (length(rule_set_tags) == 0 &&
@@ -3033,6 +3062,7 @@ function add_combined_route_for_section(config, section) {
         if (length(source_ip_cidr) > 0)
             rule_set_rule.source_ip_cidr = source_ip_cidr;
         add_port_matchers(rule_set_rule, section);
+        apply_dpi_route_options(rule_set_rule, section);
         push_section_route_rule(config, section, rule_set_rule);
     }
     add_discord_shared_cloudflare_rule(config, section, target, source_ip_cidr);
@@ -3112,6 +3142,8 @@ function add_outbound_for_section(config, section, taken, sections) {
         add_zapret2_outbound(config, section, sections);
     else if (action == "byedpi")
         add_byedpi_outbound(config, section, sections);
+    else if (runtime_dpi.is_action(action))
+        add_singbox_dpi_outbound(config, section);
     else if (action == "bypass") {
         /* route-only action */
     }
@@ -3130,7 +3162,7 @@ function reserve_section_outbound_tags(sections, taken) {
     for (let section in sections) {
         let action = option(section, "action", "");
         if (connections.is_connections_action(action) ||
-            action == "byedpi" || action == "zapret" || action == "zapret2")
+            action == "byedpi" || action == "zapret" || action == "zapret2" || runtime_dpi.is_action(action))
             taken[outbound_tag(section[".name"])] = true;
 
         if (!connections.is_connections_action(action))
@@ -3223,6 +3255,7 @@ function enabled_sections(deferred_sections) {
 function apply_sing_box_version(config, sing_box_version) {
     let version_parts = match(as_string(sing_box_version), /^v?([0-9]+)\.([0-9]+)\./);
     let extended_parts = match(as_string(sing_box_version), /-extended-([0-9]+)\.([0-9]+)\.([0-9]+)/);
+    runtime_sing_box_version = as_string(sing_box_version);
     runtime_extended_version = extended_parts != null
         ? [ int(extended_parts[1]), int(extended_parts[2]), int(extended_parts[3]) ]
         : null;
@@ -3235,6 +3268,7 @@ function apply_sing_box_version(config, sing_box_version) {
 
 function generate_config(output_path, service_address, mwan3_active, supports_xhttp, deferred_sections, sing_box_version) {
     priority_probes = [];
+    runtime_dpi_route_options = {};
     runtime_supports_xhttp = supports_xhttp == null || as_string(supports_xhttp) == ""
         ? true
         : cli_bool(supports_xhttp);

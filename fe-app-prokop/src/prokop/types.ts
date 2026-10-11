@@ -858,7 +858,8 @@ export namespace Prokop {
     | 'block'
     | 'zapret'
     | 'zapret2'
-    | 'byedpi';
+    | 'byedpi'
+    | 'singbox_dpi';
   type LegacyConnectionType = 'proxy' | 'vpn' | 'block' | 'exclusion';
   type ProxyConfigType =
     | 'urltest'

@@ -28,6 +28,14 @@ const rules: Record<string, RouteRule> = {
     dpiStrategy: '',
     dpiCustom: true,
   },
+  'sbdpi-out': {
+    name: 'sbdpi',
+    label: 'Instagram',
+    action: 'singbox_dpi',
+    dpiProvider: 'singbox_dpi',
+    dpiStrategy: 'both+spoof:wrong-ack',
+    dpiCustom: false,
+  },
 };
 const byTag = (tag: string) => rules[tag] || null;
 
@@ -58,6 +66,28 @@ describe('connection path', () => {
     expect(
       pathSummary(connectionPath(['discord-out'], '', byTag)).secondary,
     ).toBe('ByeDPI · custom strategy');
+  });
+
+  it('names the sing-box DPI techniques in words', () => {
+    expect(pathSummary(connectionPath(['sbdpi-out'], '', byTag))).toMatchObject(
+      {
+        kind: 'dpi',
+        primary: 'Instagram',
+        secondary: 'sing-box · TLS records and TCP segments, TLS spoof',
+      },
+    );
+  });
+
+  it('reads the outbound of a route() with route options', () => {
+    expect(
+      routeTagFromRule(
+        'domain_suffix=x => route(sbdpi-out,tls-record-fragment,tls-spoof=vk.com)',
+      ),
+    ).toBe('sbdpi-out');
+    expect(
+      connectionPath([], 'x => route(sbdpi-out,tls-fragment)', byTag).rule
+        ?.name,
+    ).toBe('sbdpi');
   });
 
   it('falls back to the route() of the matched rule', () => {

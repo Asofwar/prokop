@@ -67,7 +67,12 @@ export function undecidedReasonText(reason?: string | null) {
 }
 
 function kindOf(action: string): PathKind {
-  if (action === 'zapret' || action === 'zapret2' || action === 'byedpi')
+  if (
+    action === 'zapret' ||
+    action === 'zapret2' ||
+    action === 'byedpi' ||
+    action === 'singbox_dpi'
+  )
     return 'dpi';
   if (['connection', 'bypass', 'block', 'direct'].includes(action))
     return action as PathKind;

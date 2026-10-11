@@ -170,6 +170,10 @@ export function outsideReasonText(reason: string) {
       return _(
         'It goes through a Zapret2 or ByeDPI rule; autotune supports Zapret rules only.',
       );
+    case 'singbox_dpi_not_supported':
+      return _(
+        'It goes through a DPI bypass by sing-box rule; autotune supports Zapret rules only.',
+      );
     case 'routed_through_connection':
       return _(
         'It goes through a proxy or VPN rule. DPI autotune does not apply.',

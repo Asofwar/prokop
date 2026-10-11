@@ -41,7 +41,8 @@ const BYPASS_TAG = 'bypass-out';
 const DIRECT_TAG = 'direct-out';
 
 export function routeTagFromRule(rule?: string): string {
-  const match = String(rule || '').match(/=>\s*route\(([^)]+)\)/);
+  // route(tag) or, with route options, route(tag,tls-record-fragment,...).
+  const match = String(rule || '').match(/=>\s*route\(([^),]+)[,)]/);
   return String(match?.[1] || '')
     .trim()
     .replace(/^['"]|['"]$/g, '');
@@ -52,6 +53,7 @@ function kindForAction(action: string): PathKind {
     case 'zapret':
     case 'zapret2':
     case 'byedpi':
+    case 'singbox_dpi':
       return 'dpi';
     case 'connection':
     case 'proxy':
@@ -131,13 +133,33 @@ export function dpiProviderLabel(provider?: string) {
       return 'Zapret2';
     case 'byedpi':
       return 'ByeDPI';
+    case 'singbox_dpi':
+      return 'sing-box';
     default:
       return _('DPI');
   }
 }
 
+// DPI by sing-box (singbox/dpi.uc strategy_label): "record", "tcp+spoof:
+// wrong-ack", ... in words, never the raw values.
+function singboxDpiStrategyLabel(strategy: string) {
+  return strategy
+    .split('+')
+    .map((part) => {
+      if (part === 'record') return _('TLS records');
+      if (part === 'tcp') return _('TCP segments');
+      if (part === 'both') return _('TLS records and TCP segments');
+      if (part.startsWith('spoof:')) return _('TLS spoof');
+      return '';
+    })
+    .filter(Boolean)
+    .join(', ');
+}
+
 // '' when the configuration did not say (e.g. an older backend).
 export function dpiStrategyLabel(rule: RouteRule) {
+  if (rule.action === 'singbox_dpi' || rule.dpiProvider === 'singbox_dpi')
+    return singboxDpiStrategyLabel(String(rule.dpiStrategy || ''));
   if (rule.dpiCustom) return _('custom strategy');
   if (rule.dpiStrategy === 'default') return _('default strategy');
   return rule.dpiStrategy || '';

@@ -1899,6 +1899,12 @@ function append_sing_box_rule_signature_body(body, section, sections) {
     else if (action == "zapret" || action == "zapret2") {
         body = signature_add_mixed_proxy_body(body, section, prefix);
     }
+    else if (action == "singbox_dpi") {
+        // The TLS options its route rules carry (singbox/dpi.uc).
+        for (let key in [ "singbox_dpi_fragment", "singbox_dpi_fragment_fallback_delay",
+                "singbox_dpi_spoof_sni", "singbox_dpi_spoof_method" ])
+            body = signature_add_value(body, prefix + "." + key, option(section, key, ""));
+    }
     else if (action == "dns") {
         body = signature_add_value(body, prefix + ".dns_type", option(section, "dns_type", "udp"));
         body = signature_add_value(body, prefix + ".dns_server", option(section, "dns_server", ""));

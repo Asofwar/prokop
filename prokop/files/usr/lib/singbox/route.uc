@@ -68,7 +68,7 @@ function config(settings, runtime) {
 function target(section, outbound_tag_name) {
     let action = option(section, "action", "");
     if (connections.is_connections_action(action) ||
-        action == "byedpi" || action == "zapret" || action == "zapret2")
+        action == "byedpi" || action == "zapret" || action == "zapret2" || action == "singbox_dpi")
         return { action: "route", outbound: outbound_tag_name };
     if (action == "bypass")
         return { action: "route", outbound: runtime_constants.BYPASS_OUTBOUND_TAG };
