@@ -504,7 +504,12 @@ function schedule_start_retry(path, delay_seconds) {
 
     let worker = start_retry_argv(path);
     push(worker, "sh", delay_seconds);
-    let result = command_capture(command_from_args(worker) + " >/dev/null 2>&1 & echo $!");
+    // The retry sleeps up to its delay: it must not keep procd's service
+    // lock (fd 1000) of the init.d action that scheduled it, as no other
+    // background worker of Prokop does (R5). Only when it is open: dash
+    // takes a multi-digit redirection for an argument.
+    let close_procd_lock = fs.stat("/proc/self/fd/1000") != null ? " 1000>&-" : "";
+    let result = command_capture(command_from_args(worker) + " >/dev/null 2>&1" + close_procd_lock + " & echo $!");
     let pid = trim(result.output);
     if (result.status != 0 || !numeric_text(pid))
         return false;
