@@ -26,11 +26,13 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LIB="$ROOT_DIR/prokop/files/usr/lib"
+# shellcheck source=tests/helpers/owned_processes.sh
+. "$ROOT_DIR/tests/helpers/owned_processes.sh"
 W="$(mktemp -d)"
 PIDS=()
 cleanup() {
   local pid
-  for pid in "${PIDS[@]}"; do kill -KILL "$pid" 2>/dev/null || true; done
+  for pid in "${PIDS[@]}"; do owned_kill KILL "$pid" || true; done
   rm -rf "$W"
 }
 trap cleanup EXIT HUP INT TERM
