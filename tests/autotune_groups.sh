@@ -180,8 +180,13 @@ assert.deepEqual([a.inconclusive.status, a.inconclusive.reason], ['inconclusive'
 assert.deepEqual([a.empty.status, a.empty.reason], ['inconclusive', 'no_targets']);
 assert(a.fp_same && a.fp_diff, 'rule fingerprints follow the options, not their order');
 
+const yt_provider = (x) => x.groups.youtube.provider;
 const g = read('groups');
-assert.deepEqual(Object.keys(g.groups), ['youtube', 'kids']);
+assert.deepEqual(Object.keys(g.groups), ['youtube', 'z2', 'kids']);
+// A Zapret2 rule is a group of its own provider: measured with nfqws2, its
+// recommendation shown and never applied (manager.uc applicable).
+assert.deepEqual([g.groups.z2.provider, g.groups.z2.targets, g.groups.z2.custom], ['zapret2', ['lua'], true]);
+assert.equal(yt_provider(g), 'zapret');
 const yt = g.groups.youtube;
 // A rule limited to devices owns its target for those devices; the group says so.
 assert.deepEqual([g.groups.kids.label, g.groups.kids.targets, g.groups.kids.source_scoped], ['Kids tablet', ['scoped'], true]);
@@ -195,7 +200,6 @@ assert.deepEqual(outside, {
   plain: ['no_dpi_rule', null],
   real: ['target_not_fakeip_routed', null],
   nodns: ['target_unresolved', null],
-  lua: ['provider_not_supported', 'z2'],
   lists: ['rule_owner_undecidable', 'undecidable_matcher'],
   off: ['target_disabled', null],
 });

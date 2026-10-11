@@ -16,6 +16,12 @@
 //       option host 'youtube.com'
 //       option enabled '1'
 //       option resolver '192.0.2.53'      # optional, else the router DNS
+//       option large_path '/static/app.js' # optional: an object of the host
+//                                         # larger than large_bytes; every
+//                                         # probe fetches its first 64 KiB
+//                                         # and a transfer the DPI cuts after
+//                                         # 16-20 KB fails (autotune/probe.uc)
+//       option large_bytes '32768'        # 20480..65536, default 32768
 //
 //   config autotune_target '<id>'        # a rule list instead of a host
 //       option rule_set '<sing-box rule set tag>'   # autotune/lists.uc
@@ -91,6 +97,17 @@ function check(key, value) {
     return { error: "unknown_option" };
 }
 
+// The large object of a host target: { path, min_bytes } or { error }; null
+// without one.
+function large_object(path, bytes) {
+    path = as_string(path); bytes = as_string(bytes);
+    if (path == "") return bytes == "" ? null : { error: "large_bytes_without_path" };
+    if (match(path, /^\/[A-Za-z0-9._~\/-]{0,200}$/) == null) return { error: "invalid_large_path" };
+    let n = bytes == "" ? probe_module.DEFAULT_MIN_BYTES : int_value(bytes);
+    if (n == null || n < probe_module.MIN_BYTES_FLOOR || n > int(probe_module.PROBE_MAX_BYTES)) return { error: "invalid_large_bytes" };
+    return { path, min_bytes: n };
+}
+
 function valid_target_id(id) {
     return match(as_string(id), /^[A-Za-z0-9_]{1,32}$/) != null;
 }
@@ -127,6 +144,7 @@ function read(sections) {
         let pins = map(type(s.options.pin) == "array" ? s.options.pin : s.options.pin != null ? [ s.options.pin ] : [], (p) => lc(as_string(p)));
         let enabled = common.section_enabled(s.options);
         let list = rule_set != "";
+        let large = large_object(s.options.large_path, s.options.large_bytes);
         let problem = !valid_target_id(s.name) ? "invalid_target_id"
             : list && host != "" ? "host_and_rule_set"
             : list && !lists_module.valid_tag(rule_set) ? "invalid_rule_set"
@@ -134,9 +152,12 @@ function read(sections) {
             : list && (length(pins) > lists_module.MAX_SAMPLE || length(filter(pins, (p) => !probe_module.valid_host(p))) > 0) ? "invalid_pin"
             : !list && !probe_module.valid_host(host) ? "invalid_host"
             : resolver != "" && !probe_module.valid_ipv4(resolver) ? "invalid_resolver"
+            : list && large != null ? "large_path_needs_host"
+            : large != null && large.error ? large.error
             : length(targets) >= MAX_TARGETS ? "too_many_targets" : null;
         if (problem != null) { push(errors, { target: as_string(s.name), error: problem }); continue; }
         let t = { id: s.name, host: list ? null : host, enabled, resolver: resolver != "" ? resolver : null };
+        if (large != null) t.large = large;
         if (list) { t.rule_set = rule_set; t.sample = sample != "" ? int(sample) : lists_module.DEFAULT_SAMPLE; t.pins = uniq(pins); }
         push(targets, t);
     }
@@ -148,4 +169,5 @@ function confidence_at_least(confidence, minimum) {
     return order[as_string(confidence)] != null && order[as_string(confidence)] >= order[as_string(minimum)];
 }
 
-return { DEFAULTS, LIMITS, MODES, MAX_TARGETS, OBSERVATION_STEP, read, check, duration_seconds, valid_target_id, confidence_at_least };
+return { DEFAULTS, LIMITS, MODES, MAX_TARGETS, OBSERVATION_STEP, read, check, duration_seconds, valid_target_id, confidence_at_least,
+    large_object };

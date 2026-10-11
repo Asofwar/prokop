@@ -78,8 +78,8 @@ node -e 'const f=process.argv[1],s=require(f);s.next_run_at=Math.floor(Date.now(
 rm -f "$PROKOP_AUTOTUNE_STATE_DIR/postponed.json"
 manager if-due >"$WORK/run2.json"
 [ "$(calls)" = 'www.youtube.com i.ytimg.com ' ] || fail "second scheduled run tunes the next group: $(calls)"
-grep -q '^tune www.youtube.com max:5 192.0.2.53$' "$WORK/tune/calls.log" || fail "the policy probe count (an upper bound) and the resolver are passed: $(cat "$WORK/tune/calls.log")"
-grep -q '^tune i.ytimg.com max:5 192.0.2.1$' "$WORK/tune/calls.log" || fail "the first plain IPv4 Prokop DNS server otherwise"
+grep -qx 'tune www.youtube.com max:5 192.0.2.53   diag=1,provider=zapret,tier=1' "$WORK/tune/calls.log" || fail "the policy probe count (an upper bound) and the resolver are passed: $(cat "$WORK/tune/calls.log")"
+grep -qx 'tune i.ytimg.com max:5 192.0.2.1   diag=1,provider=zapret,tier=1' "$WORK/tune/calls.log" || fail "the first plain IPv4 Prokop DNS server otherwise"
 [ "$(json_get "$WORK/run2.json" groups.youtube.result.status)" = '"recommendation"' ] || fail "youtube recommendation"
 [ "$(json_get "$PROKOP_AUTOTUNE_STATE_FILE" groups.youtube.ready)" = 'false' ] || fail "one run is not enough"
 
