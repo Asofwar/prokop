@@ -1773,6 +1773,10 @@ function filter_community_subnet_lists_value(value) {
     return rule_config.filter_community_subnet_lists_value(value);
 }
 
+function signature_add_value(body, key, value) {
+    return body + "[" + as_string(key) + "]\n" + as_string(value) + "\n";
+}
+
 // Devices by MAC (core/ip.uc): only when a rule has them, so the signature
 // of every other configuration stays as it was.
 function signature_add_device_macs(body, prefix, section) {
@@ -1782,10 +1786,6 @@ function signature_add_device_macs(body, prefix, section) {
             body = signature_add_value(body, prefix + "." + key + ".mac", join(",", macs));
     }
     return body;
-}
-
-function signature_add_value(body, key, value) {
-    return body + "[" + as_string(key) + "]\n" + as_string(value) + "\n";
 }
 
 function signature_hash(body) {
