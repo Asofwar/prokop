@@ -20,7 +20,7 @@ fail() {
 }
 
 generate() {
-  local name="$1" settings="$2"
+  local name="$1" settings="$2" version="${3:-1.12.0}"
   cat >"$WORK_DIR/$name.json" <<JSON
 {
   "settings": { ".name": "settings", ".type": "settings", "dns_server": "77.88.8.8"$settings },
@@ -32,7 +32,7 @@ generate() {
 }
 JSON
   ucode -L "$PROKOP_LIB" "$GENERATOR" generate-config-fixture \
-    "$WORK_DIR/$name.json" "$WORK_DIR/$name.config.json" 192.0.2.1 0 1 '' 1.12.0 ||
+    "$WORK_DIR/$name.json" "$WORK_DIR/$name.config.json" 192.0.2.1 0 1 '' "$version" ||
     fail "generator failed for $name"
 }
 
@@ -61,6 +61,30 @@ while read -r tag fast keep interval udp; do
 done < <(tproxy_inbounds on)
 [ "$(tproxy_inbounds on | wc -l)" = "$(tproxy_inbounds default | wc -l)" ] || fail "low memory changed the set of inbounds"
 
+# On sing-box 1.14 and newer the low memory mode also caps the UDP NAT
+# sessions of each tproxy inbound (udp_nat_max); older cores refuse the
+# field, and without the mode sing-box picks the cap by memory.
+udp_nat_max() {
+  ucode -e '
+    let c = json(require("fs").readfile(ARGV[0]));
+    for (let i in c.inbounds)
+      if (i.type == "tproxy")
+        print(i.tag, " ", i.udp_nat_max ?? "-", "\n");
+  ' "$WORK_DIR/$1.config.json"
+}
+generate on14 ', "tproxy_low_memory": "1"' 1.14.2
+generate off14 ', "tproxy_low_memory": "0"' 1.14.2
+while read -r tag max; do
+  [ "$max" = 2048 ] || fail "low memory on 1.14: $tag has udp_nat_max '$max'"
+done < <(udp_nat_max on14)
+[ -n "$(udp_nat_max on14)" ] || fail "no tproxy inbound generated for 1.14"
+while read -r tag max; do
+  [ "$max" = - ] || fail "1.14 without low memory: $tag has udp_nat_max '$max'"
+done < <(udp_nat_max off14)
+while read -r tag max; do
+  [ "$max" = - ] || fail "low memory before 1.14: $tag has udp_nat_max '$max'"
+done < <(udp_nat_max on)
+
 grep -q "^ *option tproxy_low_memory '0'$" "$ROOT_DIR/prokop/files/etc/config/prokop" ||
   fail "the default config does not carry tproxy_low_memory 0"
 
@@ -77,4 +101,14 @@ ucode -e '
   print(sprintf("%J", { inbounds: out }), "\n");
 ' "$WORK_DIR/on.config.json" >"$WORK_DIR/inbounds.json"
 "$SING_BOX" check -c "$WORK_DIR/inbounds.json" || fail "real sing-box refused the low memory inbounds"
+case "$("$SING_BOX" version 2>/dev/null | sed -n '1s/.* version //p')" in
+  1.1[4-9].*|1.[2-9][0-9].*|[2-9].*)
+    ucode -e '
+      let c = json(require("fs").readfile(ARGV[0]));
+      let out = [];
+      for (let i in c.inbounds) if (i.type == "tproxy") push(out, i);
+      print(sprintf("%J", { inbounds: out }), "\n");
+    ' "$WORK_DIR/on14.config.json" >"$WORK_DIR/inbounds14.json"
+    "$SING_BOX" check -c "$WORK_DIR/inbounds14.json" || fail "real sing-box refused udp_nat_max" ;;
+esac
 echo "tproxy_low_memory: OK"
