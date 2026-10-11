@@ -106,8 +106,7 @@
         ],
         "/tmp/run/prokop/ui-state/latency-actions/*": [
           "write"
-        ],
-        "/var/run/prokop-support/authkey": ["write"]
+        ]
       },
       "uci": [
         "prokop"

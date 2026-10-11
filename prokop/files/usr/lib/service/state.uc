@@ -1515,11 +1515,6 @@ function nft_runtime_signature_body(settings, sections) {
         body = signature_add_value(body, "settings.gaming_section", option(settings, "gaming_section", ""));
     }
 
-    let sidecars = uci_core.section_objects(CONFIG_NAME, "sidecar");
-    if (length(sidecars)) {
-        body = signature_add_value(body, "settings.sidecars", sprintf("%J", sidecars));
-        body = signature_add_value(body, "settings.sidecar_uid", require("experiments.sidecar_config").uid());
-    }
     body = signature_add_value(body, "settings.source_network_interfaces", option(settings, "source_network_interfaces", "br-lan"));
     body = signature_add_value(body, "settings.exclude_ntp", bool_option(settings, "exclude_ntp", false) ? "1" : "0");
     body = signature_add_value(body, "settings.intercept_client_dns", connections.client_dns_intercept_enabled(settings, sections) ? "1" : "0");

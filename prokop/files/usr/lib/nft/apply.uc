@@ -1478,10 +1478,6 @@ function nft_create_runtime_base(table, localv4_set, common_set, port_set, ip_po
                 family == "ip" ? fakeip_range : fakeip6_range, "meta", "l4proto", "udp", "return" ])) return false;
     }
 
-    let provider_uid = length(uci_core.section_objects(CONFIG_NAME, "sidecar")) > 0 ? require("experiments.sidecar_config").uid() : "";
-    if (provider_uid != "" && length(uci_core.section_objects(CONFIG_NAME, "sidecar")) > 0 &&
-        !nft_insert_rule(table, "mangle_output", [ "meta", "skuid", provider_uid, "return" ])) return false;
-
     if (arg_bool(exclude_ntp) && !nft_insert_rule(table, "mangle", [ "udp", "dport", "123", "return" ]))
         return false;
 

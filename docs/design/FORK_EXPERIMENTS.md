@@ -1,9 +1,10 @@
 # Эксперименты с идеями из форков
 
 Ветка `feature/fork-ideas` реализует первый вариант всех 13 направлений из
-[обзора форков](FORK_IDEAS_2026-10-08.md). Это ветка для проверки на роутере;
-изменения не включаются в `main` автоматически. Новые режимы обхода, дополнительные
-провайдеры и доступ поддержки включаются явно.
+[обзора форков](FORK_IDEAS_2026-10-08.md). В релиз 2.29.0 входят направления
+из таблицы ниже; локальные провайдеры (Xray, WDTT, OlcRTC) и временный доступ
+поддержки через Tailscale остаются только в этой ветке (см. ниже). Новые
+режимы обхода включаются явно.
 
 | Идея | Где попробовать | Поведение первого варианта |
 | --- | --- | --- |
@@ -17,43 +18,31 @@
 | DoH mTLS | Settings → DNS | Только главный DoH-сервер с совпадающим hostname получает пути сертификата и ключа. Файлы уже должны быть на роутере; приватный ключ не переносится в JSON как содержимое. Другие DNS-серверы сертификат не получают. |
 | Игровая консоль | Device routing → Game console profile | IP/подсети консолей: TCP через выбранную секцию, UDP напрямую, DNS с реальными адресами. Не обещает Open NAT. Глобальная политика устройств и section kill-switch несовместимы с этим режимом и вызывают отказ валидации. |
 | Именованные профили | Experiments → Configuration profiles | Сохраняют текущую **применённую** конфигурацию в ручной снимок. Активация использует существующий guarded restore с проверками конкурентного изменения и откатом. Имя уникально; удаление имени сохраняет снимок в History. Автоматический выбор профиля по WAN — следующий этап. |
-| Xray по секциям | Local providers → Xray | Один native outbound JSON → отдельный loopback SOCKS. Его URL добавляется в обычную connection-секцию Rules. Sing-box продолжает управлять DNS и маршрутизацией. Подписки Xray, преобразование ссылок и отдельная установка Xray здесь не добавлены. |
-| Временная поддержка | Experiments → Temporary support access | Отдельный userspace tailscaled с `state=mem:` и отдельным socket. Ваш ephemeral auth key из вашего tailnet; один TCP-порт 22/80/443 через Tailscale Serve на localhost. Tailnet ACL и существующая аутентификация SSH/LuCI продолжают действовать. Отдельный watchdog завершает сессию через 30 минут; Stop завершает раньше. Ключ потребляется и удаляется, в UCI/argv не попадает. Системный tailscaled не останавливается. |
-| WDTT и OlcRTC | Local providers | qwdtt URI → SOCKS mode qwdtt-client; OlcRTC URI → приватный JSON/YAML-конфиг. Установленные upstream-бинарники запускает отдельный procd-сервис Prokop. RAW-IP/TUN, подписки и расширенные transport payload пока не поддерживаются. |
 
-## Как включить локальный провайдер
+## Что осталось только в `feature/fork-ideas`
 
-1. Установить соответствующий upstream-бинарник: `/usr/bin/xray`,
-   `/usr/bin/qwdtt-client` или `/usr/bin/olcrtc`.
-2. В Local providers добавить запись с уникальным локальным портом ≥1024,
-   типом провайдера и конфигурацией. Включить запись и выполнить Save & Apply.
-3. Нажать Start or update providers, затем Refresh status. В Rules добавить
-   отображаемый `socks5://127.0.0.1:PORT` в connection-секцию.
-4. Stop providers останавливает только сервис `prokop-sidecars`.
+В релиз 2.29.0 входят все направления из таблицы выше. Следующие части
+остаются только в ветке `feature/fork-ideas` и в релиз не включены, потому
+что требуют отдельной проверки на роутере и дополнительного сетевого runtime:
 
-Провайдеры работают от отдельного пользователя `prokop-sidecar`, без доступа
-к административным конфигам. Их сокеты исключаются из output-перехвата по UID.
-Файлы провайдеров приватные; параметры с секретами не передаются через argv
-и не записываются в logread. Prokop не редактирует `/etc/config/qwdtt`,
-`/etc/config/olcrtc`, глобальный Xray-конфиг или upstream init-скрипты.
-Перед заменой проверяются бинарники, занятые порты и native Xray-конфигурация;
-procd управляет только экземплярами своего сервиса и ограничивает respawn.
+- Xray по секциям и локальные провайдеры WDTT (qwdtt) и OlcRTC: страница
+  Local providers, `experiments/sidecars.uc`, `experiments/sidecar_config.uc`,
+  `providers/wdtt`, `providers/olcrtc`, служба `prokop-sidecars`, отдельный
+  пользователь `prokop-sidecar` и исключение его сокетов из output-перехвата
+  по UID.
+- Временный доступ поддержки через Tailscale (`experiments/support.uc`,
+  раздел Experiments → Temporary support access, команды
+  `support_session_*`).
 
-## Ограничения доступа поддержки
-
-Требуется установленный Tailscale с поддержкой auth-key из файла и TCP Serve.
-Ключ должен быть предназначен для ephemeral node; интерфейс не создаёт ключи
-и не изменяет политику вашего tailnet. Это TCP-forward на выбранный локальный
-порт, без Tailscale SSH и без доступа операторов из стороннего tailnet.
-Команда Stop должна использоваться для немедленного завершения. Перезапуск
-Prokop прекращает сессию через обычный stop; перезагрузка уничтожает состояние
-в RAM. Изменение nft-политики во время сессии может потребовать нового подключения.
+Их описание, ограничения и тесты (`sidecar_prepare.sh`,
+`support_session_concurrency.sh`, `support_session_expiry.sh`) находятся в
+той ветке. Раздел UCI `sidecar`, сохранённый сборкой из этой ветки,
+релизом игнорируется.
 
 ## Проверки и границы подтверждения
 
 Автоматические проверки покрывают генерацию DNS и mTLS, nft-политику обхода
-и игр, отказ при kill-switch, native конфиги провайдеров, занятые внутренние
-порты, изоляцию Smart Detect, классификацию ошибок, профильные команды,
+и игр, отказ при kill-switch, изоляцию Smart Detect, классификацию ошибок, профильные команды,
 отсутствующие зависимости, LuCI 24.10/25.12, группировку и причины маршрута.
 Выполняются также существующие backend/frontend проверки и сборка интерфейса.
 
@@ -62,17 +51,13 @@ Prokop прекращает сессию через обычный stop; пер�
 - Frontend: 115 файлов, 1018 тестов; Prettier, ESLint, TypeScript и production build проходят.
 - Полный backend-прогон: 482 проверки; четыре первоначальных сбоя исправлены
   и проверены повторно (состав вкладок и меню, shell inventory, конкурентный apply).
-- Дополнительные проверки гистерезиса, expiry поддержки и порядка первого
-  запуска локальных провайдеров проходят. Expiry удаляет ключ и завершает
-  только собственный процесс, оставляя чужой процесс того же бинарника живым.
+- Дополнительные проверки гистерезиса проходят.
 - Syntax: 119 файлов на двух версиях ucode; shell-проверки проходят.
 - Проверки, которым нужны отсутствующие реальные nft/sing-box, пропускаются
   штатно; это не подтверждение работы на роутере.
 
-Стенд разработки не является OpenWrt-роутером. Реальные соединения WDTT/OlcRTC,
-логин в tailnet и expiry живого tailscaled, работа procd, NAT игровых консолей
+Стенд разработки не является OpenWrt-роутером. NAT игровых консолей
 и сертификатная аутентификация DoH требуют проверки на целевом устройстве.
-Нативные конфиги не доказывают работоспособность конкретного удалённого сервера.
 Начинать проверку следует с резервного снимка и одного тестового устройства.
 
 ## Проверка логики ветки и регрессии
@@ -87,12 +72,12 @@ Prokop прекращает сессию через обычный stop; пер�
 - Обход двухошибочного гистерезиса Priority при совпадающих active/fastest
   таймерах и отказе active во время fastest-only пробы. Новые тесты исполняют
   настоящий fastest selector, а не его заглушку.
-- Гонку Start/Stop поддержки, оставлявшую daemon без session/deadline.
+- (Только `feature/fork-ideas`.) Гонку Start/Stop поддержки, оставлявшую daemon без session/deadline.
   Stop теперь возвращает `support_busy` во время Start: дождаться окончания
   и повторить Stop. Watchdog не ждёт занятого lock, чтобы завершить свой
   daemon по deadline; старт перепроверяет lease и identity после блокирующих
   операций. Разные сессии с одинаковым deadline различаются lifetime token.
-- Коллизию имени провайдера `manifest` с manifest.json: native конфиги теперь
+- (Только `feature/fork-ideas`.) Коллизию имени провайдера `manifest` с manifest.json: native конфиги теперь
   используют `<name>.config.json`. Отклонённая подготовка не снимает traversal
   permission родительского каталога; приватные конфиги/data остаются закрыты.
 - Отправку кешированных FakeIP напрямую при включении bypass/game policy:
@@ -123,10 +108,11 @@ DNS к LAN не означает, что такой резолвер обяза�
 - LuCI harness дополнен глобальным navigator из window.navigator: три
   существующих теста больше не зависят от наличия browser global в Node 18.
 
-Новые тесты: `support_session_concurrency.sh`, `sidecar_prepare.sh`,
-`priority_fastest_hysteresis.sh`, `luci_experiments_errors.sh`,
-`fe-app-prokop/src/prokop/tests/dnsProfiles.test.ts`. Проверки WDTT/OlcRTC,
-живого tailnet, production nft/FakeIP и DoH mTLS на роутере по-прежнему нужны.
+Новые тесты: `priority_fastest_hysteresis.sh`, `luci_experiments_errors.sh`,
+`fe-app-prokop/src/prokop/tests/dnsProfiles.test.ts` (а также
+`support_session_concurrency.sh` и `sidecar_prepare.sh` — только в
+`feature/fork-ideas`). Проверки production nft/FakeIP и DoH mTLS на роутере
+по-прежнему нужны.
 
 ## Источники и атрибуция
 
@@ -139,9 +125,7 @@ DNS к LAN не означает, что такой резолвер обяза�
   [petrouspetr-pixel/trafira, b3832a9](https://github.com/petrouspetr-pixel/trafira/tree/b3832a92df1b411c4bd046d7421758223250cae8).
 - `matchedConditions`, `routeConditions`, `routeReason` и их тесты:
   [Screamshow/forkop, 2fe5ada](https://github.com/Screamshow/forkop/tree/2fe5ada976fafaba55d9789b69d2bfb561297936).
-- Парсеры URI WDTT/OlcRTC:
+- Парсеры URI WDTT/OlcRTC (только `feature/fork-ideas`):
   [win64exe/topkop, 959138d](https://github.com/win64exe/topkop/tree/959138d53b49d129589f591ff87ad2ca39cae906).
 
-Остальные экспериментальные модули написаны для контрактов Prokop. Форматы
-запуска qwdtt/OlcRTC сверены с upstream init-скриптами, а не перенесены вместе
-с управлением глобальными службами донорского проекта.
+Остальные экспериментальные модули написаны для контрактов Prokop.

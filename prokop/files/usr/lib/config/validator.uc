@@ -2097,12 +2097,6 @@ function validate_mixed_proxy_ports(settings, sections) {
 function validate_runtime_config(context) {
     let settings = settings_section();
     let sections = sections_by_type("section");
-    let sidecars = sections_by_type("sidecar");
-    if (length(sidecars)) {
-        let result = require("experiments.sidecar_config").plan(sidecars);
-        if (!result.success) fail_validation(result.reason + ". Aborted.");
-    }
-
 
     validate_runtime_mark_ranges_context(context);
     validate_source_network_interfaces(settings);

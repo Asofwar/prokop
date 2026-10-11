@@ -64,13 +64,6 @@ profile_diff                   | json-success  | fork experiments; covered: fork
 profile_remove                 | json-success  | fork experiments; covered: fork_experiments
 smart_detect_status            | json-success  | fork experiments; covered: fork_experiments
 smart_detect_run               | json-success  | fork experiments; covered: fork_experiments
-sidecars_status                | json-success  | fork experiments; covered: fork_experiments
-sidecars_apply                 | json-success  | fork experiments; covered: fork_experiments
-sidecars_stop                  | json-success  | fork experiments; covered: fork_experiments
-support_session_status         | json-success  | fork experiments; covered: fork_experiments
-support_session_prepare        | json-success  | fork experiments; covered: fork_experiments
-support_session_start          | json-success  | fork experiments; covered: fork_experiments
-support_session_stop           | json-success  | fork experiments; covered: fork_experiments
 start                          | rc            | init.d start; covered: service_start_trap, initd_state, deferred_start_ui_job
 stop                           | rc            | covered: stop_paths_owned, initd_state
 reload                         | rc            | prints "queued"/"stopped" for UI-tracked reloads; covered: ui_reload_queued_job, stopped_reload_job

@@ -238,49 +238,6 @@ const EntryPoint = view.extend({
         status,
       ]);
     });
-    widget(section, "_support", _("Temporary support access"), () => {
-      const key = E("input", {
-        type: "password",
-        autocomplete: "new-password",
-        placeholder: _("Your ephemeral Tailscale auth key"),
-      });
-      const port = E("select", {}, [
-        E("option", { value: "22" }, _("SSH")),
-        E("option", { value: "443" }, _("HTTPS administration")),
-        E("option", { value: "80" }, _("HTTP administration")),
-      ]);
-      const status = E("div");
-      const refresh = async () => {
-        const data = await command(["support_session_status"]);
-        status.textContent = data.active
-          ? `${data.address.join(", ")} · ${data.remaining_seconds}s · TCP ${data.port}`
-          : _("Support access is stopped");
-      };
-      return E("div", {}, [
-        E(
-          "p",
-          {},
-          _(
-            "Use a key from your own tailnet with an ephemeral node. One local administration port is available to identities permitted by your tailnet ACL for 30 minutes. Existing SSH or LuCI authentication still applies. The router's existing Tailscale service is independent.",
-          ),
-        ),
-        key,
-        port,
-        button(_("Start for 30 minutes"), status, async () => {
-          const prepared = await command(["support_session_prepare"]);
-          await fs.write(prepared.path, key.value.trim());
-          key.value = "";
-          await command(["support_session_start", port.value]);
-          await refresh();
-        }),
-        button(_("Stop support access"), status, async () => {
-          await command(["support_session_stop"]);
-          await refresh();
-        }),
-        button(_("Refresh support status"), status, refresh),
-        status,
-      ]);
-    });
     return map.render();
   },
   handleSaveApply: configform.handleSaveApply,

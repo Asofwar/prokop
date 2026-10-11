@@ -15,8 +15,8 @@ const command = new Function('fs', '_', helper + '\nreturn command;')(
     response = {code: 1, stdout};
     await assert.rejects(command(['priority_health']), {message: 'Operation failed'});
   }
-  response = {code: 1, stdout: JSON.stringify({success: false, reason: 'support_busy'})};
-  await assert.rejects(command(['support_session_stop']), {message: 'support_busy'});
+  response = {code: 1, stdout: JSON.stringify({success: false, reason: 'profile_not_found'})};
+  await assert.rejects(command(['profile_activate', 'Missing']), {message: 'profile_not_found'});
   response = {code: 0, stdout: JSON.stringify({success: true, available: false})};
   assert.deepEqual(await command(['priority_health']), {success: true, available: false});
   console.log('Experiments error messages preserve the operation failure');
