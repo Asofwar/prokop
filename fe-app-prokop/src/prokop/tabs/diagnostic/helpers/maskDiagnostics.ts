@@ -163,6 +163,7 @@ export const UCI_SAFE_OPTIONS = new Set([
   'section',
   'show_dashboard_metadata',
   'shutdown_correctly',
+  'sing_box_unprivileged',
   'sort_by_latency',
   'source_network_interfaces',
   'subscription_update_enabled',

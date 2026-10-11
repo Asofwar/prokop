@@ -22,6 +22,10 @@ const MARKER = getenv("SB_MANAGED_SERVICE_MARKER") || "Prokop managed sing-box s
 // after the restart. Shorter than the 15 s a controlled transition waits for
 // sing-box to end (service/state.uc), so a stop still completes in it.
 const TERM_TIMEOUT = "10";
+// sing-box without root (singbox/unprivileged.uc): fixed paths, as the
+// script has no environment of Prokop's.
+const DECISION_FILE = "/var/run/prokop/sing-box-user";
+const CAPABILITIES_FILE = "/etc/capabilities/prokop-sing-box.json";
 
 function text() {
     return "#!/bin/sh /etc/rc.common\n" +
@@ -45,6 +49,17 @@ function text() {
         "    procd_set_param limits nofile=\"1000000 1000000\"\n" +
         "    procd_set_param respawn\n" +
         "    procd_set_param term_timeout " + TERM_TIMEOUT + "\n" +
+        "    # Prokop's decision for this configuration (singbox/unprivileged.uc):\n" +
+        "    # its own user with network capabilities only; root otherwise.\n" +
+        "    local sb_user=\"\"\n" +
+        "    [ -s " + DECISION_FILE + " ] && read -r sb_user <" + DECISION_FILE + "\n" +
+        "    if [ -n \"$sb_user\" ] && [ \"$sb_user\" != root ] && grep -q \"^$sb_user:\" /etc/passwd &&\n" +
+        "        [ -s " + CAPABILITIES_FILE + " ] && [ -x /sbin/ujail ]; then\n" +
+        "        procd_set_param user \"$sb_user\"\n" +
+        "        procd_set_param group \"$sb_user\"\n" +
+        "        procd_set_param capabilities " + CAPABILITIES_FILE + "\n" +
+        "        procd_set_param no_new_privs 1\n" +
+        "    fi\n" +
         "    procd_close_instance\n" +
         "}\n\n" +
         "service_triggers() {\n" +

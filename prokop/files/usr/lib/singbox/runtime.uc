@@ -6,6 +6,7 @@ let common = require("core.common");
 let durable = require("core.durable");
 let runtime_dns = require("singbox.dns");
 let managed_service = require("singbox.managed_service");
+let unprivileged = require("singbox.unprivileged");
 let legacy_forkop = require("core.legacy_forkop");
 let listen_address = require("singbox.listen_address");
 let identity = require("core.process_identity");
@@ -625,6 +626,22 @@ function prepare_subscription_caches(prepared, no_refresh) {
 // start. A sync would flush every filesystem (USB storage included) on
 // each reload, subscription update and DNS-failover switch, and the switch
 // would wait for it while DNS fails.
+// sing-box without root (singbox/unprivileged.uc): decided for every
+// configuration that becomes config.json, since it hands that file and the
+// files it names to sing-box's user. It never refuses a publish: what it
+// cannot hand over leaves sing-box on root.
+function prepare_sing_box_user(config_path) {
+    if (as_string(config_path) != option(uci_settings(), "config_path", ""))
+        return;
+    try {
+        unprivileged.prepare(config_path);
+    }
+    catch (e) {
+        log_message("Cannot decide the sing-box user: " + e.message + "; sing-box runs as root", "error");
+        fs.unlink(unprivileged.DECISION_FILE);
+    }
+}
+
 function publish_config_file(source_path, config_path) {
     let data = fs.readfile(source_path);
     if (data == null) {
@@ -648,6 +665,7 @@ function publish_config_file(source_path, config_path) {
         }
     }
     remove_file(source_path);
+    prepare_sing_box_user(config_path);
     return true;
 }
 
@@ -667,6 +685,8 @@ function save_config_file(temp_file_path, config_path) {
 
     log_message("sing-box configuration is unchanged", "info");
     remove_file(temp_file_path);
+    // The files it names may be new ones (a rule set update) all the same.
+    prepare_sing_box_user(config_path);
     return true;
 }
 
@@ -1540,6 +1560,8 @@ else if (mode == "restore-config-stage")
     exit(restore_config_stage(ARGV[1] || "") ? 0 : 1);
 else if (mode == "discard-config-stage")
     exit(discard_config_stage(ARGV[1] || "") ? 0 : 1);
+else if (mode == "sing-box-user-status")
+    print(sprintf("%J\n", unprivileged.status()));
 else if (mode == "discard-config-backup")
     exit(discard_config_backup(ARGV[1] || "") ? 0 : 1);
 else if (mode == "save-config-file-fixture")

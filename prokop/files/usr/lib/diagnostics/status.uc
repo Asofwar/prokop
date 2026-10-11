@@ -187,7 +187,7 @@ let uci_safe_options = {
     pin_dashboard: true, ports: true, prefix_nodes: true, priority_groups: true,
     proxy_config_type: true, reality_mlkem: true, recovery_check_interval: true, resolve_real_ip_for_routing: true,
     rule: true, secondary_rule_sets: true, section: true, show_dashboard_metadata: true,
-    shutdown_correctly: true, sort_by_latency: true, source_network_interfaces: true,
+    shutdown_correctly: true, sing_box_unprivileged: true, sort_by_latency: true, source_network_interfaces: true,
     subscription_update_enabled: true, subscription_update_interval: true,
     switch_to_faster_same_priority: true, tag: true, tolerance: true,
     torrserver_auth_enabled: true, torrserver_direct_enabled: true, torrserver_jail: true, tproxy_low_memory: true, device_traffic: true, update_interval: true, urltest_check_interval: true,
