@@ -259,7 +259,7 @@ function command_spec(command) {
         autotune_target: [ "autotune/manager.uc", "target", 1 ],
         autotune_groups: [ "autotune/manager.uc", "groups", 0 ],
         autotune_policy_set: [ "autotune/manager.uc", "policy-set", 2 ],
-        autotune_target_set: [ "autotune/manager.uc", "target-set", 7 ],
+        autotune_target_set: [ "autotune/manager.uc", "target-set", 9 ],
         autotune_target_remove: [ "autotune/manager.uc", "target-remove", 1 ],
         autotune_list_domains: [ "autotune/manager.uc", "list-domains", 1 ],
         autotune_run: [ "autotune/manager.uc", "run", 1 ],

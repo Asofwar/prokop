@@ -1,0 +1,31 @@
+#!/bin/sh
+# Marks the router clock as synchronized for this boot (core/clock.uc).
+# busybox ntpd (OpenWrt sysntpd: ntpd -S /usr/sbin/ntpd-hotplug) calls the
+# ntp hotplug scripts with ACTION=stratum|periodic|step|unsync and the
+# stratum in the environment. A stratum below 16 is a synchronized clock.
+# /var/run is tmpfs: the marker is gone after a reboot, when a router
+# without an RTC starts from an old time. "unsync" keeps the marker: the
+# clock was right this boot.
+
+# hotplug-call sources this file in a subshell, with ACTION and stratum set.
+marker="${PROKOP_CLOCK_MARKER:-/var/run/prokop/time-synced}"
+stratum="${stratum:-}"
+
+case "${ACTION:-}" in
+	stratum|periodic|step) ;;
+	*) exit 0 ;;
+esac
+case "$stratum" in
+	''|*[!0-9]*) exit 0 ;;
+esac
+[ "$stratum" -lt 16 ] || exit 0
+
+dir="${marker%/*}"
+mkdir -p "$dir" 2>/dev/null || exit 0
+tmp="$marker.tmp.$$"
+if printf 'stratum=%s\nat=%s\naction=%s\n' "$stratum" "$(date +%s)" "$ACTION" > "$tmp" 2>/dev/null; then
+	mv -f "$tmp" "$marker" 2>/dev/null || rm -f "$tmp"
+else
+	rm -f "$tmp"
+fi
+exit 0

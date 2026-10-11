@@ -177,10 +177,12 @@ read -r p < "$STATE/prod.counter"; echo "$((p + bump))" > "$STATE/prod.counter"
 if [ -n "$marked" ]; then read -r v < "$STATE/verify.counter"; echo "$((v + bump))" > "$STATE/verify.counter"; fi
 remote="${PROD_REMOTE:-198.18.0.5}"
 case "$mode" in
-  success) echo "0|51000|$remote|404|0.020|0.110|0.150|0.151|" ;;
-  reset) echo "35|51000|$remote|000|0.020|0.000000|0.000000|0.050|Recv failure: Connection reset by peer"; exit 35 ;;
-  connect_timeout) echo "28|0||000|0.000000|0.000000|0.000000|5.001|Connection timed out after 5001 milliseconds"; exit 28 ;;
-  unreachable) echo "7|0||000|0.000000|0.000000|0.000000|0.004|Failed to connect to x port 443 after 4 ms: No route to host"; exit 7 ;;
+  success) echo "0|51000|$remote|404|0.020|0.110|0.150|0.151|900|" ;;
+  reset) echo "35|51000|$remote|000|0.020|0.000000|0.000000|0.050|0|Recv failure: Connection reset by peer"; exit 35 ;;
+  connect_timeout) echo "28|0||000|0.000000|0.000000|0.000000|5.001|0|Connection timed out after 5001 milliseconds"; exit 28 ;;
+  unreachable) echo "7|0||000|0.000000|0.000000|0.000000|0.004|0|Failed to connect to x port 443 after 4 ms: No route to host"; exit 7 ;;
+  # The router clock is behind: the certificate is not valid yet.
+  cert_time) echo "60|51000|$remote|000|0.020|0.000000|0.000000|0.070|0|SSL certificate problem: certificate is not yet valid"; exit 60 ;;
 esac
 SH
 cat > "$WORK/bin/dig" <<'SH'
@@ -560,6 +562,20 @@ json 'a.equal(r.status, "rolled_back"); a.equal(r.reason, "verification_failed")
 reset_apply; plan_ready; export PROD_PLAN="success|connect_timeout|reset"; at apply "$WORK/plan.json"
 json 'a.equal(r.status, "rolled_back"); a.equal(r.reason, "verification_failed"); a.equal(r.verification.traffic.network_unavailable, false);' "$WORK/out.json"
 ok "AT-3 verification lost to proven connect failures only -> verification_network_unavailable; a curl timeout blames the candidate"
+# The clock (core/clock.uc): a certificate time error during the verification
+# is the clock's, not the candidate's (rolled back all the same); an
+# unsynchronized clock refuses the apply before any change.
+reset_apply; plan_ready; export PROD_PLAN=cert_time; at apply "$WORK/plan.json"; unset PROD_PLAN
+json 'a.equal(r.status, "rolled_back", JSON.stringify(r).slice(0, 500)); a.equal(r.reason, "verification_clock_problem"); a.equal(r.rollback.status, "success");' "$WORK/out.json"
+[ "$(chash)" = "$PRE_HASH" ] || fail "rollback config hash after a clock problem"
+reset_apply; plan_ready; PROKOP_CLOCK_MARKER="$WORK/no-marker" PROKOP_CLOCK_NOW=1700000000 at apply "$WORK/plan.json"
+json 'a.equal(r.status, "stale"); a.equal(r.reason, "clock_unsynced"); a.equal(r.applied, false);' "$WORK/out.json"
+{ [ "$(chash)" = "$PRE_HASH" ] && [ "$(snaps)" = 1 ] && [ "$(reloads)" = 0 ]; } || fail "an apply on an unsynchronized clock mutated"
+ok "clock: a certificate time error rolls back without blaming the candidate; an unsynchronized clock refuses before any change"
+# Only a zapret strategy is ever written: a Zapret2 candidate is not applicable.
+reset_apply; selection z2_fake; ZAPRET2_NFQWS2_BIN="$ZAPRET_NFQWS_BIN" at plan "$WORK/selection.json"
+json 'a.equal(r.status, "not_applicable", JSON.stringify(r)); a.equal(r.reason, "zapret2_apply_unsupported");' "$WORK/out.json"
+ok "a Zapret2 candidate is never planned"
 # AT-12: one failed request of three is no verdict: three more are made and
 # the six decide (5 of 6 is stable, as the selection judges).
 reset_apply; plan_ready; export PROD_PLAN="success|reset|success|success|success|success"; at apply "$WORK/plan.json"
@@ -1671,6 +1687,17 @@ json 'a.equal(r.status, "inconclusive"); a.equal(r.reason, "service_stopped");' 
 { [ "$(chash)" = "$applied_hash" ] && [ "$(lkg)" = "$applied_lkg" ] && [ "$(reloads)" = "$reloads_before" ]; } || fail "an observation check changed production"
 json 'a.equal(r.phase, "applied");' "$PROKOP_AUTOTUNE_APPLY_STATE"
 ok "25 observation checks: ok, failed only when the rule path is proven, inconclusive otherwise; read-only"
+# No verdict and no last-known-working on an unsynchronized clock; a
+# certificate time error is the clock's, never a failed check.
+PROKOP_CLOCK_MARKER="$WORK/no-marker" PROKOP_CLOCK_NOW=1700000000 at observe "$id"
+json 'a.equal(r.status, "inconclusive"); a.equal(r.reason, "clock_unsynced");' "$WORK/out.json"
+PROKOP_CLOCK_MARKER="$WORK/no-marker" PROKOP_CLOCK_NOW=1700000000 at confirm "$id"
+json 'a.equal(r.status, "inconclusive"); a.equal(r.reason, "clock_unsynced");' "$WORK/out.json"
+[ "$(lkg)" = "$applied_lkg" ] || fail "last-known-working moved on an unsynchronized clock"
+export PROD_PLAN=cert_time; at observe "$id"; unset PROD_PLAN
+json 'a.equal(r.status, "inconclusive", JSON.stringify(r)); a.equal(r.reason, "clock_problem");' "$WORK/out.json"
+json 'a.equal(r.phase, "applied");' "$PROKOP_AUTOTUNE_APPLY_STATE"
+ok "25c observation and confirmation wait for the clock; a certificate time error is no failed check"
 
 # 25a. The rollback of the observed apply: only that apply, back to the
 #      configuration and runtime before it, an automatic rollback in the history.

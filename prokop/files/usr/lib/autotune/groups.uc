@@ -25,10 +25,18 @@ function classify(dns, r) {
     if (r.kind == "rule") {
         if (r.action == "zapret")
             return r.zapret != null
-                ? { in_group: r.section, reason: null, label: r.label, source_scoped: r.source_scope != null }
+                ? { in_group: r.section, reason: null, label: r.label, source_scoped: r.source_scope != null, provider: "zapret" }
                 : { in_group: null, reason: "dpi_identity_unproven", detail: r.section };
-        if (r.action == "zapret2" || r.action == "byedpi")
-            return { in_group: null, reason: "provider_not_supported", detail: r.section };
+        // Zapret2 candidates are measured (nfqws2 in the same isolation) and
+        // recommended; autotune never writes a Zapret2 strategy, so the
+        // group's result is not applicable (autotune/manager.uc applicable).
+        if (r.action == "zapret2")
+            return { in_group: r.section, reason: null, label: r.label, source_scoped: r.source_scope != null, provider: "zapret2" };
+        // ByeDPI's own upstream connections leave the router unmarked from
+        // ordinary ports: no probe of it can be kept apart from production
+        // traffic (nft/apply.uc), so it is never measured.
+        if (r.action == "byedpi")
+            return { in_group: null, reason: "byedpi_isolation_unavailable", detail: r.section };
         // DPI by sing-box itself (singbox/dpi.uc): autotune has no isolated
         // probe path for it.
         if (r.action == "singbox_dpi")
@@ -57,7 +65,11 @@ function stable_for(summary, candidate) {
 // { status: recommendation | no_change | direct_stable | conflict | inconclusive,
 //   candidate, confidence, representative, reason, conflict: [...] }.
 // current: strategy identity of the rule (catalog id, "default" or "").
-function aggregate(members, current) {
+// ttl_based(id): whether a candidate depends on the hop count to the DPI
+// (autotune/catalog.uc): its success on one address says little about the
+// next one, so it is never more than "medium" unless targets with two
+// different addresses agree on it.
+function aggregate(members, current, ttl_based) {
     let result = { status: "inconclusive", candidate: null, confidence: null, representative: null,
         reason: null, conflict: [] };
     let conclusive = filter(members, (m) => m.summary != null && m.summary.status == "selected" && m.summary.selected);
@@ -93,6 +105,11 @@ function aggregate(members, current) {
         return d != 0 ? d : (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
     });
     let lowest = choosing[length(choosing) - 1].summary.confidence;
+    if (type(ttl_based) == "function" && ttl_based(candidate) && confidence_rank(lowest) > confidence_rank("medium")) {
+        let addresses = [];
+        for (let m in choosing) if (m.summary.ip && index(addresses, m.summary.ip) < 0) push(addresses, m.summary.ip);
+        if (length(addresses) < 2) { lowest = "medium"; result.confidence_capped = "ttl_single_address"; }
+    }
     result.candidate = candidate;
     result.confidence = lowest;
     result.representative = choosing[0].id;

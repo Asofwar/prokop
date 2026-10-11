@@ -45,6 +45,7 @@ shell_scripts="$(
 expected_shell_scripts="$(
   printf '%s\n' \
     'luci-app-prokop/root/etc/uci-defaults/50_luci-prokop' \
+    'prokop/files/etc/hotplug.d/ntp/60-prokop-time' \
     'prokop/files/etc/init.d/prokop' \
     'prokop/files/etc/init.d/prokop-dns-failsafe' \
     'prokop/files/etc/init.d/prokop-fw-watch' \

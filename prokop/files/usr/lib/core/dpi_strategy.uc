@@ -120,9 +120,12 @@ function view(section) {
         for (let value in defaults[provider])
             if (value != null && raw == normalize(value))
                 strategy = "default";
-        let known = provider == "zapret" && strategy == "" ? load_catalog() : null;
+        let known = (provider == "zapret" || provider == "zapret2") && strategy == "" ? load_catalog() : null;
         for (let entry in (known ? known.entries() : [])) {
-            if (entry.nfqws_opt == "" || strategy != "") continue;
+            if (entry.nfqws_opt == "" || strategy != "" || entry.provider != provider) continue;
+            // A Zapret2 template is known only word for word: autotune never
+            // writes a Zapret2 strategy.
+            if (provider == "zapret2") { if (raw == normalize(entry.nfqws_opt)) strategy = entry.id; continue; }
             // The template itself, or the provider default whose TCP/443
             // profile autotune replaced by it (autotune/apply.uc).
             let spliced = tcp443_splice(constants.ZAPRET_DEFAULT_NFQWS_OPT, entry.nfqws_opt);

@@ -39,6 +39,9 @@ let probe_module = require("autotune.probe");
 let contract = require("autotune.contract");
 let select_module = require("autotune.select");
 let autotune_lock = require("autotune.lock");
+let blocktype = require("autotune.blocktype");
+let clock_module = require("core.clock");
+let routing = require("routing.resolve");
 
 const LIB_DIR = getenv("PROKOP_LIB") || "/usr/lib/prokop";
 const STATE_DIR = getenv("PROKOP_AUTOTUNE_STATE_DIR") || "/var/run/prokop/autotune";
@@ -68,6 +71,9 @@ const PROD_TABLE = constants.NFT_TABLE_NAME;
 const PROBE_MARK = constants.NFT_OUTBOUND_MARK;
 const DESYNC_MARK = getenv("ZAPRET_DESYNC_MARK") || constants.ZAPRET_DESYNC_MARK;
 const NFQWS = getenv("ZAPRET_NFQWS_BIN") || constants.ZAPRET_NFQWS_BIN;
+// Zapret2 candidates run nfqws2 on the same queues, table and marks.
+const NFQWS2 = getenv("ZAPRET2_NFQWS2_BIN") || constants.ZAPRET2_NFQWS2_BIN;
+const BINARIES = [ NFQWS, NFQWS2 ];
 // nfqws drops privileges to this uid; its injected packets may carry it.
 const NFQWS_UID = 2147483647;
 const PROC_QUEUE = getenv("PROKOP_AUTOTUNE_PROC_QUEUE") || "/proc/net/netfilter/nfnetlink_queue";
@@ -81,6 +87,14 @@ const LISTENER_WAIT = int(getenv("PROKOP_AUTOTUNE_LISTENER_WAIT") || "5");
 const TRACE = getenv("PROKOP_AUTOTUNE_TRACE") == "1";
 const NFQWS_DEBUG = getenv("PROKOP_AUTOTUNE_NFQWS_DEBUG") == "1";
 const MAX_PROBES = 5;
+// The diagnosis slice of a tuning run (autotune/blocktype.uc): the last
+// DIAG_PORTS source ports, one per diagnosis probe, through a direct rule of
+// their own ("direct:diag").
+const DIAG_PORTS = 4;
+const DIAG_ID = "diag";
+// The neutral name of the diagnosis: a common domestic site that a
+// name-based block does not hit; the address is the target's.
+const NEUTRAL_SNI = getenv("PROKOP_AUTOTUNE_NEUTRAL_SNI") || "ya.ru";
 // A tuning run never uses more probe connections than source ports.
 const MAX_TUNE_PROBES_TOTAL = PORT_LAST - PORT_FIRST + 1;
 // Seconds the teardown waits, with the isolation intact, for the probe
@@ -513,26 +527,39 @@ function probe_sockets(ip) {
 
 // ---- process ownership -------------------------------------------------
 
-function nfqws_argv(opt, debug_file, queue) {
-    let argv = [ NFQWS, "--qnum=" + (queue != null ? queue : QUEUE), "--dpi-desync-fwmark=" + DESYNC_MARK ];
+function nfqws_argv(opt, debug_file, queue, provider) {
+    let argv = catalog.argv_prefix(provider || "zapret", queue != null ? queue : QUEUE);
     for (let word in catalog.words(opt)) push(argv, word);
     if (debug_file) push(argv, "--debug=@" + debug_file);
     return argv;
 }
-function signature_prefix(queue) {
-    return [ NFQWS, "--qnum=" + queue, "--dpi-desync-fwmark=" + DESYNC_MARK ];
+// The run signature of a queue for one binary (nfqws or nfqws2).
+function signature_prefix(queue, binary) {
+    return binary == NFQWS2 && NFQWS2 != NFQWS ? [ NFQWS2, "--qnum=" + queue, "--fwmark=" + DESYNC_MARK ]
+        : [ NFQWS, "--qnum=" + queue, "--dpi-desync-fwmark=" + DESYNC_MARK ];
 }
 
 // Terminates a process only while its start time, executable and command line
 // still match the recorded identity.
+// The executable is the recorded command line's own (nfqws or nfqws2).
 function stop_identified(saved, argv, exact) {
-    if (identity.matches_record(saved, NFQWS, argv, exact, true) == "") return "not_ours";
-    identity.signal_record(saved, NFQWS, argv, exact, "TERM");
-    for (let i = 0; i < 3 && identity.matches_record(saved, NFQWS, argv, exact, true) != ""; i++) pause();
-    if (identity.matches_record(saved, NFQWS, argv, exact, true) == "") return "stopped";
-    identity.signal_record(saved, NFQWS, argv, exact, "KILL");
-    for (let i = 0; i < 2 && identity.matches_record(saved, NFQWS, argv, exact, true) != ""; i++) pause();
-    return identity.matches_record(saved, NFQWS, argv, exact, true) == "" ? "killed" : "failed";
+    let bin = as_string(argv[0]);
+    if (index(BINARIES, bin) < 0 || identity.matches_record(saved, bin, argv, exact, true) == "") return "not_ours";
+    identity.signal_record(saved, bin, argv, exact, "TERM");
+    for (let i = 0; i < 3 && identity.matches_record(saved, bin, argv, exact, true) != ""; i++) pause();
+    if (identity.matches_record(saved, bin, argv, exact, true) == "") return "stopped";
+    identity.signal_record(saved, bin, argv, exact, "KILL");
+    for (let i = 0; i < 2 && identity.matches_record(saved, bin, argv, exact, true) != ""; i++) pause();
+    return identity.matches_record(saved, bin, argv, exact, true) == "" ? "killed" : "failed";
+}
+// A pidfile without its recorded command line: the run signature of either
+// binary, whichever the process matches.
+function stop_by_signature(saved, queue) {
+    for (let bin in uniq(BINARIES)) {
+        let outcome = stop_identified(saved, signature_prefix(queue, bin), false);
+        if (outcome != "not_ours") return outcome;
+    }
+    return "not_ours";
 }
 
 // nfqws processes with the signature of a run: the very binary path, a
@@ -545,12 +572,12 @@ function orphans() {
     for (let name in fs.lsdir("/proc") || []) {
         if (match(name, /^[1-9][0-9]*$/) == null || name == owner_pid()) continue;
         let exe = replace(as_string(fs.readlink("/proc/" + name + "/exe")), / \(deleted\)$/, "");
-        if (exe != NFQWS) continue;
+        if (index(BINARIES, exe) < 0) continue;
         let argv = split(as_string(fs.readfile("/proc/" + name + "/cmdline")), "\0");
         let m = match(as_string(argv[1]), /^--qnum=([0-9]+)$/);
         if (m == null || !in_run_range(int(m[1]))) continue;
-        let saved = { pid: name, queue: int(m[1]), ticks: identity.start_ticks(name), prefix: signature_prefix(int(m[1])) };
-        if (saved.ticks != "" && identity.matches_record(saved, NFQWS, saved.prefix, false, true) != "")
+        let saved = { pid: name, queue: int(m[1]), ticks: identity.start_ticks(name), prefix: signature_prefix(int(m[1]), exe) };
+        if (saved.ticks != "" && identity.matches_record(saved, exe, saved.prefix, false, true) != "")
             push(result, saved);
     }
     return result;
@@ -622,11 +649,14 @@ function probe_rule_spec(queue, comment, sport) {
 // the order given, a slice per candidate. A probe of a candidate leaves from
 // its slice, so its packets, and the late ones of its earlier probes, can
 // only take its own rule: no rule is switched between candidates.
-function port_slices(ids) {
-    let size = int((PORT_LAST - PORT_FIRST + 1) / length(ids));
+// reserve: ports kept at the end of the range for the diagnosis slice.
+function port_slices(ids, reserve) {
+    reserve = int(reserve || 0);
+    let size = int((PORT_LAST - PORT_FIRST + 1 - reserve) / length(ids));
     let result = {};
     for (let i = 0; i < length(ids); i++)
         result[ids[i]] = [ PORT_FIRST + i * size, PORT_FIRST + (i + 1) * size - 1 ];
+    if (reserve > 0) result[DIAG_ID] = [ PORT_LAST - reserve + 1, PORT_LAST ];
     return result;
 }
 
@@ -853,7 +883,7 @@ function teardown(active, actions, report) {
         let saved = identity.read_record(entry.pidfile);
         if (saved == null) { push(actions, "pidfile:stale"); continue; }
         let outcome = entry.argv ? stop_identified(saved, entry.argv, true)
-            : stop_identified(saved, signature_prefix(entry.queue), false);
+            : stop_by_signature(saved, entry.queue);
         if (outcome == "failed") ok = false;
         else if (outcome != "not_ours") stopped = true;
         push(actions, "pidfile:" + (outcome == "not_ours" ? "stale" : outcome));
@@ -960,7 +990,7 @@ function start_candidate(entry) {
     let ticks = type(recorded) == "object" ? recorded.ticks : null;
     let listener = null, running = false;
     for (let i = 0; i <= LISTENER_WAIT && listener == null; i++) {
-        running = identity.matches(entry.pidfile, NFQWS, entry.argv, true, true) != "";
+        running = identity.matches(entry.pidfile, entry.argv[0], entry.argv, true, true) != "";
         if (!running && identity.start_ticks(pid) != ticks) return { failure: "nfqws_start_failed" };
         if (running) listener = queue_entry(entry.queue);
         if (listener == null) pause();
@@ -1046,9 +1076,12 @@ function preflight(result, host, resolver, ip, on_dns_failure, wait_ports) {
 // Candidates of a tuning run: the requested catalog ids (all by default),
 // always including the direct control. Unsupported or non-TCP candidates are
 // excluded with their reason; they are never counted as failed connectivity.
-function tune_candidates(list) {
+// provider/tier: the default list is that tier of that provider's catalog
+// (Zapret tier 1 by default); a candidate of another provider is excluded.
+function tune_candidates(list, provider, tier) {
     let ids = [];
-    let requested = list ? split(as_string(list), ",") : map(catalog.entries(), (e) => e.id);
+    provider = provider || "zapret";
+    let requested = list ? split(as_string(list), ",") : catalog.tier_ids(provider, tier || 1);
     for (let id in [ "direct", ...requested ]) {
         id = trim(as_string(id));
         if (id != "" && index(ids, id) < 0) push(ids, id);
@@ -1060,9 +1093,66 @@ function tune_candidates(list) {
         let checked = catalog.validate_entry(entry);
         if (checked.state != "supported") { push(excluded, { id, supported: false, reason: checked.reason }); continue; }
         if (checked.protocol != "tcp") { push(excluded, { id, supported: false, reason: "protocol_unsupported" }); continue; }
+        if (id != "direct" && checked.provider != provider) { push(excluded, { id, supported: false, reason: "provider_mismatch" }); continue; }
         push(candidates, checked);
     }
     return { candidates, excluded };
+}
+
+// The options of a tune after its candidate list and address:
+// "diag=1,path=/x.js,min_bytes=32768,provider=zapret2,tier=2".
+//   diag       take the diagnosis probes (autotune/blocktype.uc) first
+//   path       a large object of the target, min_bytes its threshold
+//              (autotune/probe.uc): every probe of the run fetches it
+//   provider   zapret (nfqws) or zapret2 (nfqws2) candidates
+//   tier       the catalog tier measured when no list is given
+function tune_options(text) {
+    let o = { diag: false, path: null, min_bytes: 0, provider: "zapret", tier: 1, invalid: null };
+    for (let part in split(as_string(text), ",")) {
+        if (part == "") continue;
+        let eq = index(part, "="), key = eq < 0 ? part : substr(part, 0, eq), value = eq < 0 ? "" : substr(part, eq + 1);
+        if (key == "diag") o.diag = value == "1";
+        else if (key == "path" && match(value, /^\/[A-Za-z0-9._~\/-]{0,200}$/) != null) o.path = value;
+        else if (key == "min_bytes" && match(value, /^[0-9]{1,6}$/) != null &&
+            int(value) >= probe_module.MIN_BYTES_FLOOR && int(value) <= probe_module.PROBE_MAX_BYTES) o.min_bytes = int(value);
+        else if (key == "provider" && index(catalog.PROVIDERS, value) >= 0) o.provider = value;
+        else if (key == "tier" && match(value, /^[1-9]$/) != null) o.tier = int(value);
+        else o.invalid = part;
+    }
+    if ((o.path == null) != (o.min_bytes == 0)) o.invalid = "path_and_min_bytes";
+    return o;
+}
+
+// The diagnosis of a tuning run: up to DIAG_PORTS probes of the target's
+// address through the run's own direct diagnosis slice, before any
+// candidate runs. { type, evidence, probes } or { failure }.
+function diagnose(host, ip, ports, opts) {
+    let probes = {}, list = [];
+    let take = (kind, extra) => {
+        let before = probe_counters();
+        if (before == null || before["synack:" + DIAG_ID] == null) return "counters_unavailable";
+        let record = probe_module.probe({ host, ip, port_range: ports, ...extra });
+        let after = probe_counters();
+        if (after == null || after["synack:" + DIAG_ID] == null) return "counters_unavailable";
+        if (record.class == "local_port_unavailable") return "local_port_unavailable";
+        record = probe_module.handshake(record, after["synack:" + DIAG_ID].packets - before["synack:" + DIAG_ID].packets);
+        record.diagnosis = kind;
+        probes[kind] = record;
+        push(list, record);
+        return null;
+    };
+    let large = opts.path != null ? { path: opts.path, min_bytes: opts.min_bytes } : {};
+    let failure = take("real", large);
+    if (failure == null && !interrupted && probes.real.class != "success") failure = take("neutral", { sni: NEUTRAL_SNI });
+    if (failure == null && !interrupted && blocktype.needs_versions(probes.real)) {
+        failure = take("tls12", { tls: "1.2" });
+        if (failure == null && !interrupted) failure = take("tls13", { tls: "1.3" });
+    }
+    if (failure != null) return { failure };
+    let v = blocktype.verdict(probes.real, probes.neutral, probes.tls12, probes.tls13);
+    v.probes = list;
+    v.neutral_sni = NEUTRAL_SNI;
+    return v;
 }
 
 // Stage 4: measure several candidates for one target through the isolated
@@ -1072,19 +1162,28 @@ function tune_candidates(list) {
 // probes: probes per candidate, 3..7. "max:<n>" asks for at most n: the
 // count is lowered until every candidate fits the source ports of one run
 // (the manager's policy does not know how many candidates are supported).
-function tune(host, probes, resolver, list, ip) {
+function tune(host, probes, resolver, list, ip, extra) {
     let result = { status: "failed", reason: null, target: null, selected: null, confidence: null,
         isolation: { table: TABLE, chains: [ MARK_CHAIN + "@" + MARK_PRIORITY, CHAIN + "@" + PRIORITY, REPLY_CHAIN + "@" + REPLY_PRIORITY ],
             queues: null, port_range: PORT_RANGE, probe_mark: PROBE_MARK, desync_mark: DESYNC_MARK },
         contract: null, timeline, schedule: null, candidates: [], excluded: [], pruned: [], probes: [],
         teardown: null, production: null, cleanup: null, applied: false };
+    let opts = tune_options(extra);
+    if (opts.invalid != null) { result.status = "refused"; result.reason = "invalid_options"; result.option = opts.invalid; return result; }
+    result.provider = opts.provider;
+    result.tier = list ? null : opts.tier;
+    if (opts.path != null) result.large_object = { path: opts.path, min_bytes: opts.min_bytes };
+    // No measurement on a clock that is not synchronized: certificates fail
+    // their time check and look like blocking (core/clock.uc).
+    result.clock = clock_module.status();
+    if (result.clock.state == "unsynced") { result.status = "refused"; result.reason = "clock_unsynced"; return result; }
     let at_most = substr(as_string(probes), 0, 4) == "max:";
     probes = int((at_most ? substr(as_string(probes), 4) : probes) || select_module.MIN_PROBES);
     result.probes_requested = probes;
     if (probes < select_module.MIN_PROBES || probes > select_module.MAX_PROBES) {
         result.status = "refused"; result.reason = "invalid_probe_count"; return result;
     }
-    let chosen = tune_candidates(list);
+    let chosen = tune_candidates(list, opts.provider, opts.tier);
     result.excluded = chosen.excluded;
     let supported = chosen.candidates;
     let dpi = filter(supported, (c) => c.nfqws_opt != "");
@@ -1092,7 +1191,8 @@ function tune(host, probes, resolver, list, ip) {
     if (length(dpi) > MAX_QUEUES) { result.status = "refused"; result.reason = "too_many_candidates"; return result; }
     // Every probe of a candidate needs a source port of its slice: a used
     // port stays in TIME_WAIT for the rest of the run.
-    let slice_size = int(MAX_TUNE_PROBES_TOTAL / length(supported));
+    let reserve = opts.diag ? DIAG_PORTS : 0;
+    let slice_size = int((MAX_TUNE_PROBES_TOTAL - reserve) / length(supported));
     if (at_most && probes > slice_size) probes = slice_size;
     if (probes < select_module.MIN_PROBES || probes > slice_size) {
         result.status = "refused"; result.reason = "too_many_probes"; return result;
@@ -1102,7 +1202,7 @@ function tune(host, probes, resolver, list, ip) {
     // One queue per DPI candidate and one port slice per candidate, assigned
     // in the deterministic base order.
     let order = select_module.base_order(supported);
-    let slices = port_slices(order);
+    let slices = port_slices(order, reserve);
     let by_id = {}, entries = [], rules = [], next_queue = QUEUE;
     for (let id in order) {
         let c = null;
@@ -1112,16 +1212,18 @@ function tune(host, probes, resolver, list, ip) {
         if (c.nfqws_opt != "") {
             slot.queue = next_queue++;
             slot.pidfile = pidfile_for(slot.queue);
-            slot.argv = nfqws_argv(c.nfqws_opt, null, slot.queue);
+            slot.argv = nfqws_argv(c.nfqws_opt, null, slot.queue, c.provider);
             push(entries, { queue: slot.queue, pidfile: slot.pidfile, argv: slot.argv });
         }
         slot.comment = (slot.queue == null ? "direct:" : "probe:") + id;
         push(rules, probe_rule_spec(slot.queue, slot.comment, slot.sport));
         by_id[id] = slot;
     }
+    if (opts.diag) push(rules, probe_rule_spec(null, "direct:" + DIAG_ID, slices[DIAG_ID]));
     result.isolation.queues = map(entries, (e) => e.queue);
     result.isolation.port_slices = {};
     for (let id in order) result.isolation.port_slices[id] = by_id[id].ports;
+    if (opts.diag) result.isolation.port_slices[DIAG_ID] = slices[DIAG_ID][0] + "-" + slices[DIAG_ID][1];
     result.schedule = select_module.schedule(order, probes);
     let total_probes = 0;
     for (let r in result.schedule) total_probes += length(r);
@@ -1130,6 +1232,13 @@ function tune(host, probes, resolver, list, ip) {
     let pre = preflight(result, host, resolver, ip, (resolved) => {
         result.status = "inconclusive"; result.reason = "target_unresolved";
         result.target.dns = resolved.reason;
+        // An address no public service has, and not FakeIP (a resolver of
+        // this router): the resolver's answer was replaced.
+        let spoofed = filter(resolved.rejected || [], (a) => !routing.is_fakeip(a));
+        if (resolved.reason == "non_public_answer" && length(spoofed) > 0) {
+            result.reason = "dns_spoofed";
+            result.block = { type: "dns_spoof", evidence: { answers: length(resolved.rejected) } };
+        }
     }, true);
     if (pre == null) return result;
     let target = pre.target, before = pre.before;
@@ -1160,6 +1269,20 @@ function tune(host, probes, resolver, list, ip) {
         }
         result.isolation.rules = probe_rule_handles();
         mark("T1", "temporary nft table created");
+        // The diagnosis, before any candidate process is started: a target
+        // blocked by address is not iterated over strategies.
+        if (opts.diag) {
+            progress("diagnosing", { done: 0, total: total_probes, candidates: length(order) });
+            let d = diagnose(host, target.ip, result.isolation.port_slices[DIAG_ID], opts);
+            if (d.failure) return d.failure;
+            result.block = d;
+            mark("T1d", "diagnosis", { type: d.type });
+            if (d.type == "ip_block") return "ip_blocked";
+            // Certificates fail their time check: nothing measured now says
+            // anything about DPI.
+            if (d.type == "clock_problem") return "clock_problem";
+        }
+        if (interrupted) return "interrupted";
         let pids = {};
         for (let entry in entries) {
             if (interrupted) return "interrupted";
@@ -1213,7 +1336,8 @@ function tune(host, probes, resolver, list, ip) {
                 let queue_before = slot.queue != null ? last_queue["" + slot.queue] : null;
                 if (counters_before[comment] == null || counters_before[synack] == null)
                     return "counters_unavailable";
-                let record = probe_module.probe({ host, ip: target.ip, port_range: slot.ports });
+                let record = probe_module.probe({ host, ip: target.ip, port_range: slot.ports,
+                    ...(opts.path != null ? { path: opts.path, min_bytes: opts.min_bytes } : {}) });
                 let counters_after = probe_counters();
                 if (counters_after == null || counters_after[comment] == null || counters_after[synack] == null)
                     return "counters_unavailable";
@@ -1229,7 +1353,7 @@ function tune(host, probes, resolver, list, ip) {
                 if (slot.queue != null) {
                     let queue_after = queue_entry(slot.queue);
                     last_queue["" + slot.queue] = queue_after;
-                    if (identity.matches(slot.pidfile, NFQWS, slot.argv, true, true) == "") return "nfqws_died";
+                    if (identity.matches(slot.pidfile, slot.argv[0], slot.argv, true, true) == "") return "nfqws_died";
                     record.queued = queue_before && queue_after ? queue_after.id_sequence - queue_before.id_sequence : null;
                     // Fail-open queues accept packets untransformed without a
                     // drop counter: every packet the rule matched must have
@@ -1260,7 +1384,7 @@ function tune(host, probes, resolver, list, ip) {
                 continue;
             // A candidate whose nfqws died after its last probe left its
             // queue unbound: that, not a bypass, is the reason (AT-9).
-            if (identity.matches(slot.pidfile, NFQWS, slot.argv, true, true) == "") return "nfqws_died";
+            if (identity.matches(slot.pidfile, slot.argv[0], slot.argv, true, true) == "") return "nfqws_died";
             let before_q = run_queue_before["" + slot.queue], after_q = queue_entry(slot.queue);
             let matched = run_counters_after[slot.comment].packets - run_counters_before[slot.comment].packets;
             if (before_q == null || after_q == null || after_q.id_sequence - before_q.id_sequence < matched)
@@ -1293,8 +1417,8 @@ function tune(host, probes, resolver, list, ip) {
     if (failure == null && !hold_settled) failure = "isolation_hold_timeout";
     let isolation_ok = torn_down && verified.clean && unchanged && final_counters != null &&
         final_counters.unexpected.packets == 0;
-    if (failure == "target_unreachable" && isolation_ok) {
-        result.status = "inconclusive"; result.reason = "target_unreachable";
+    if ((failure == "target_unreachable" || failure == "ip_blocked" || failure == "clock_problem") && isolation_ok) {
+        result.status = "inconclusive"; result.reason = failure;
     }
     else if (failure != null) { result.status = failure == "interrupted" ? "interrupted" : "failed"; result.reason = failure; }
     else if (!torn_down || !verified.clean) { result.status = "failed"; result.reason = "cleanup_unverified"; }
@@ -1351,7 +1475,7 @@ function run(candidate_id, host, count, resolver, ip, handshake) {
     mark("T0", "pre-state recorded");
     let queue_candidate = checked.nfqws_opt != "";
     let debug_file = NFQWS_DEBUG && queue_candidate ? WORKDIR + "/nfqws.debug" : null;
-    let argv = queue_candidate ? nfqws_argv(checked.nfqws_opt, debug_file, QUEUE) : null;
+    let argv = queue_candidate ? nfqws_argv(checked.nfqws_opt, debug_file, QUEUE, checked.provider) : null;
     let pidfile = pidfile_for(QUEUE);
     let nfqws = queue_candidate ? [ { queue: QUEUE, pidfile, argv } ] : [];
     let body = function() {
@@ -1406,7 +1530,7 @@ function run(candidate_id, host, count, resolver, ip, handshake) {
                 user_dropped: queue_after ? queue_after.user_dropped : null
             };
             mark("T4", "queue " + QUEUE + " received probe", { packets_queued: result.counters.queue.packets_queued });
-            if (identity.matches(pidfile, NFQWS, argv, true, true) == "") return "nfqws_died";
+            if (identity.matches(pidfile, argv[0], argv, true, true) == "") return "nfqws_died";
             // nfqws queues are fail-open: a packet the queue could not take is
             // accepted untransformed without a drop counter. Every packet the
             // probe rule matched must have entered the queue.
@@ -1486,7 +1610,7 @@ if (mode == "run" || mode == "cleanup" || mode == "tune") {
         output = autotune_lock.busy() ? { status: "busy", reason: "autotune_in_progress" } : { status: "failed", reason: "lock_unavailable" };
     else {
         if (mode == "run") output = run(ARGV[1], ARGV[2], ARGV[3], ARGV[4], ARGV[5], ARGV[6]);
-        else if (mode == "tune") output = tune(ARGV[1], ARGV[2], ARGV[3], ARGV[4], ARGV[5]);
+        else if (mode == "tune") output = tune(ARGV[1], ARGV[2], ARGV[3], ARGV[4], ARGV[5], ARGV[6]);
         else output = cleanup();
         autotune_lock.release();
         code = index([ "completed", "clean", "selected", "inconclusive" ], output.status) >= 0 ? 0 : 1;
@@ -1498,7 +1622,7 @@ else if (mode == "status") {
     code = 0;
 }
 else {
-    warn("Usage: autotune/isolation.uc <run <candidate> <host> [count] [resolver] [ip] [handshake]|tune <host> [probes] [resolver] [candidates] [ip]|cleanup|status|model <ip> [direct|tune|tune_rules] [saddr]>\n");
+    warn("Usage: autotune/isolation.uc <run <candidate> <host> [count] [resolver] [ip] [handshake]|tune <host> [probes] [resolver] [candidates] [ip] [options]|cleanup|status|model <ip> [direct|tune|tune_rules] [saddr]>\n");
     exit(1);
 }
 print(sprintf("%J\n", output));

@@ -124,6 +124,24 @@ export function targetReasonText(reason: string | null | undefined) {
       );
     case 'no_stable_candidate':
       return _('No strategy is stable. The current strategy is kept.');
+    // The diagnosis (autotune/blocktype.uc) stopped the check before any
+    // strategy was tried.
+    case 'ip_blocked':
+      return _(
+        'The site address itself is blocked: no DPI bypass strategy can help. Route this site through a connection (proxy or VPN) rule; Prokop changes nothing by itself.',
+      );
+    case 'clock_problem':
+      return _(
+        'Certificates failed the time check: the router clock is wrong. Nothing was measured; check the time synchronization (NTP).',
+      );
+    case 'clock_unsynced':
+      return _(
+        'The router clock is not synchronized by NTP yet; nothing is measured or applied until it is.',
+      );
+    case 'dns_spoofed':
+      return _(
+        'The DNS server returned an address no public site has: the answer is replaced. Use another DNS server for the target.',
+      );
     case 'all_failed':
     case 'target_unreachable':
       return _(
@@ -146,6 +164,53 @@ export function targetReasonText(reason: string | null | undefined) {
       );
     default:
       return reason ? _('The check gave no usable result.') : '';
+  }
+}
+
+// What the diagnosis of a target found (autotune/blocktype.uc); '' when
+// there is nothing to say.
+export function blockTypeText(type: string | null | undefined) {
+  switch (type) {
+    case 'ip_block':
+      return _('Blocked by address');
+    case 'sni_block':
+      return _('Blocked by site name (SNI)');
+    case 'tls_block':
+      return _('The encrypted connection is blocked');
+    case 'tls12_only':
+      return _('Only TLS 1.2 gets through');
+    case 'tls13_only':
+      return _('Only TLS 1.3 gets through');
+    case 'transfer_cut':
+      return _('Transfers are cut after the first 16-20 KB');
+    case 'cert_mismatch':
+      return _('Another certificate answers (a stub page or interception)');
+    case 'clock_problem':
+      return _('The router clock is wrong');
+    case 'dns_spoof':
+      return _('The DNS answer is replaced');
+    default:
+      return '';
+  }
+}
+
+// Why the router clock cannot be trusted (core/clock.uc); null when it is
+// synchronized or nothing can be said against it.
+export function clockWarning(clock: Prokop.AutotuneClock | null | undefined) {
+  if (!clock || clock.state !== 'unsynced') return null;
+  switch (clock.reason) {
+    case 'clock_before_release':
+      return _(
+        'The router clock is behind (earlier than the release of this version). Autotune measures, applies and judges nothing until NTP sets the time.',
+      );
+    case 'ntp_not_confirmed':
+      return _(
+        'NTP has not synchronized the router clock since boot yet. Autotune measures, applies and judges nothing until it does.',
+      );
+    default:
+      return _(
+        'The router clock is not synchronized. Autotune measures, applies and judges nothing until it is.',
+      );
   }
 }
 
@@ -172,7 +237,11 @@ export function outsideReasonText(reason: string) {
       );
     case 'singbox_dpi_not_supported':
       return _(
-        'It goes through a DPI bypass by sing-box rule; autotune supports Zapret rules only.',
+        'It goes through a DPI bypass by sing-box rule. Autotune has no isolated way to measure it, so it does not.',
+      );
+    case 'byedpi_isolation_unavailable':
+      return _(
+        'It goes through a ByeDPI rule. ByeDPI connections cannot be checked apart from your traffic, so autotune does not measure them.',
       );
     case 'routed_through_connection':
       return _(
@@ -284,6 +353,13 @@ export function applyOutcomeView(
       if (reason === 'observation_failed')
         return {
           label: _('Stopped working under observation, rolled back'),
+          tone: 'warning',
+        };
+      if (reason === 'verification_clock_problem')
+        return {
+          label: _(
+            'Check failed because of the router clock, rolled back; the strategy is not blamed',
+          ),
           tone: 'warning',
         };
       return {
@@ -419,6 +495,9 @@ function observationCheckText(reason: string | null) {
       return _('the last check found the DPI service not ready');
     case 'service_stopped':
       return _('the last check found Prokop stopped');
+    case 'clock_unsynced':
+    case 'clock_problem':
+      return _('the last check waited for the router clock');
     default:
       return _('the last check gave no result');
   }
@@ -620,6 +699,12 @@ export function groupCards(
                 ),
               ]
             : []),
+        );
+      if (result.confidence_capped === 'ttl_single_address')
+        explanation.push(
+          _(
+            'The strategy depends on the distance to the DPI and was checked on one address only, so its confidence is at most medium.',
+          ),
         );
     } else if (result.status === 'no_change') {
       badge = { label: _('No change needed'), tone: 'success' };
@@ -909,6 +994,8 @@ function targetRow(
     result = targetReasonText(last.reason) || _('No usable result');
     tone = 'warning';
   }
+  const block = last && target.enabled ? blockTypeText(last.block?.type) : '';
+  if (block) result = `${result} ${_('Diagnosis')}: ${block}.`;
   return {
     id: target.id,
     host: target.host ?? target.id,
@@ -948,6 +1035,8 @@ function phaseShare(tune: Prokop.AutotuneTuneProgress | null | undefined) {
   const total = Number(tune.total) || 0;
   switch (tune.phase) {
     case 'preparing':
+      return 0.03;
+    case 'diagnosing':
       return 0.05;
     case 'measuring':
       return 0.05 + (total ? 0.75 * Math.min(done / total, 1) : 0);
@@ -971,6 +1060,8 @@ function tunePhaseText(tune: Prokop.AutotuneTuneProgress | null | undefined) {
   switch (tune?.phase) {
     case 'preparing':
       return _('preparing the isolated check');
+    case 'diagnosing':
+      return _('finding out how the site is blocked');
     case 'measuring':
       return _('probes: %d of %d')
         .replace('%d', String(tune.done ?? 0))
@@ -1133,6 +1224,8 @@ export function blockerText(reason: string | null | undefined) {
       return _('a previous apply is not resolved');
     case 'service_stopped':
       return _('Prokop is stopped; start it first');
+    case 'clock_unsynced':
+      return _('the router clock is not synchronized by NTP yet');
     default:
       return reason ? _('the service is busy') : _('unknown reason');
   }
@@ -1164,6 +1257,15 @@ export function mutationErrorText(reason: string | undefined) {
       return _('Check 1 to 8 domains of the list.');
     case 'invalid_pin':
       return _('Pinned domains must be domain names, at most 8.');
+    case 'invalid_large_path':
+      return _(
+        'The large file path must start with "/" and contain only letters, digits and . _ ~ / -',
+      );
+    case 'invalid_large_bytes':
+    case 'large_bytes_without_path':
+      return _('The large file size must be from 20480 to 65536 bytes.');
+    case 'large_path_needs_host':
+      return _('A large file can be set for a site target only.');
     // The change is saved; the measurements of the old target are not
     // forgotten.
     case 'state_write_failed':
@@ -1292,6 +1394,10 @@ function strategyShapeText(reason: string) {
       return _('The rule has no strategy.');
     case 'candidate_not_tcp443':
       return _('The recommended strategy is not an HTTPS (TCP/443) strategy.');
+    case 'zapret2_apply_unsupported':
+      return _(
+        'This is a Zapret2 rule: Prokop shows the best strategy but never changes a Zapret2 strategy. Set it in the rule yourself if you want.',
+      );
     default:
       return null;
   }

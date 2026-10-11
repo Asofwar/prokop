@@ -11,8 +11,11 @@
 //   groups          targets classified into DPI groups now (read-only; DNS)
 //   policy-set <option> <value>                     (write)
 //   target-set <id> <host> [enabled] [resolver] [rule_set] [sample] [pins]
+//              [large_path] [large_bytes]
 //                   a host target, or with an empty host a rule-list
-//                   target (autotune/lists.uc); pins: comma-separated (write)
+//                   target (autotune/lists.uc); pins: comma-separated;
+//                   large_path: an object of the host for the 16-20 KB
+//                   cut check (autotune/policy.uc) (write)
 //   target-remove <id>                              (write)
 //   list-domains <rule_set>  the domains of a list a DPI rule uses, for
 //                   choosing pinned domains (read-only)
@@ -47,6 +50,7 @@ let identity = require("core.process_identity");
 let catalog = require("autotune.catalog");
 let lists_module = require("autotune.lists");
 let dpi_strategy = require("core.dpi_strategy");
+let clock_module = require("core.clock");
 
 const LIB_DIR = getenv("PROKOP_LIB") || "/usr/lib/prokop";
 const CONFIG_FILE = getenv("PROKOP_CONFIG_FILE") || "/etc/config/" + (getenv("PROKOP_CONFIG_NAME") || "prokop");
@@ -304,7 +308,8 @@ function status() {
         recovered_at: state.recovered_at,
         state_recovered: state.recovered_from || null,
         observation: state.observation,
-        apply: apply_summary()
+        apply: apply_summary(),
+        clock: clock_module.status()
     };
 }
 
@@ -329,8 +334,11 @@ function target(id) {
 // without exactly one such profile of its own cannot take the candidate.
 // The reason is the one apply.uc plan would give. The raw strategy never
 // leaves this function: group views reach the read-only role.
-function applicable(aggregate, sections, name) {
+function applicable(aggregate, sections, name, provider) {
     if (aggregate.status != "recommendation" || !aggregate.candidate || aggregate.candidate == "direct") return aggregate;
+    // A Zapret2 rule gets its recommendation shown, never applied: apply.uc
+    // edits only the TCP/443 profile of a zapret strategy.
+    if (provider == "zapret2") return { ...aggregate, status: "not_applicable", reason: "zapret2_apply_unsupported" };
     let entry = catalog.find(aggregate.candidate);
     let section = resolver.find_section(sections, name);
     if (entry == null || section == null) return aggregate;
@@ -342,6 +350,12 @@ function applicable(aggregate, sections, name) {
     // answer apply.uc plan gives (AT-5, UC-202).
     if (splice.opt == current) return { ...aggregate, status: "no_change", reason: "candidate_already_active" };
     return aggregate;
+}
+
+// Whether a catalog candidate depends on the hop count to the DPI.
+function ttl_based(id) {
+    let entry = catalog.find(id);
+    return entry != null && entry.ttl_based === true;
 }
 
 function compute_groups(sections, targets, state) {
@@ -359,7 +373,7 @@ function compute_groups(sections, targets, state) {
         let g = groups[c.in_group];
         if (g == null) {
             let section = resolver.find_section(sections, c.in_group);
-            g = groups[c.in_group] = { label: c.label, targets: [], current: r.dpi ? r.dpi.strategy : null,
+            g = groups[c.in_group] = { label: c.label, provider: c.provider || "zapret", targets: [], current: r.dpi ? r.dpi.strategy : null,
                 custom: r.dpi ? r.dpi.custom : null, fingerprint: groups_module.fingerprint(section), result: null,
                 source_scoped: false };
         }
@@ -367,7 +381,7 @@ function compute_groups(sections, targets, state) {
         push(g.targets, t.id);
     }
     for (let name, g in groups)
-        g.result = applicable(groups_module.aggregate(map(g.targets, (id) => ({ id, summary: summary_of(state, filter(targets, (t) => t.id == id)[0]) })), g.current), sections, name);
+        g.result = applicable(groups_module.aggregate(map(g.targets, (id) => ({ id, summary: summary_of(state, filter(targets, (t) => t.id == id)[0]) })), g.current, ttl_based), sections, name, g.provider);
     return { groups, outside };
 }
 
@@ -646,7 +660,7 @@ function forget_target(state, id) {
         if (key == id || substr(key, 0, length(id) + 2) == id + "__") delete state.targets[key];
 }
 
-function target_set(id, host, enabled, resolver_ip, rule_set, sample, pins) {
+function target_set(id, host, enabled, resolver_ip, rule_set, sample, pins, large_path, large_bytes) {
     if (!policy_module.valid_target_id(id)) return { status: "failed", reason: "invalid_target_id" };
     host = lc(as_string(host));
     rule_set = as_string(rule_set);
@@ -661,6 +675,9 @@ function target_set(id, host, enabled, resolver_ip, rule_set, sample, pins) {
             return { status: "failed", reason: "invalid_pin" };
     }
     else if (!probe_module.valid_host(host)) return { status: "failed", reason: "invalid_host" };
+    let large = policy_module.large_object(large_path, large_bytes);
+    if (large != null && list) return { status: "failed", reason: "large_path_needs_host" };
+    if (large != null && large.error) return { status: "failed", reason: large.error };
     enabled = enabled == null || as_string(enabled) == "" ? "1" : as_string(enabled);
     if (index([ "0", "1" ], enabled) < 0) return { status: "failed", reason: "invalid_enabled" };
     resolver_ip = as_string(resolver_ip);
@@ -678,6 +695,11 @@ function target_set(id, host, enabled, resolver_ip, rule_set, sample, pins) {
     if (resolver_ip != "") push(ops, [ "set", path + ".resolver=" + resolver_ip ]);
     else drop("resolver");
     drop("pin");
+    if (large != null) {
+        push(ops, [ "set", path + ".large_path=" + large.path ]);
+        // The default is not written: a later default follows.
+        if (as_string(large_bytes) != "") push(ops, [ "set", path + ".large_bytes=" + large.min_bytes ]); else drop("large_bytes");
+    } else { drop("large_path"); drop("large_bytes"); }
     if (list) {
         drop("host");
         push(ops, [ "set", path + ".rule_set=" + rule_set ]);
@@ -697,7 +719,7 @@ function target_set(id, host, enabled, resolver_ip, rule_set, sample, pins) {
     let output = list ?
         { status: "ok", target: { id, host: null, rule_set, sample: sample != "" ? int(sample) : lists_module.DEFAULT_SAMPLE,
             pins, enabled: enabled == "1", resolver: resolver_ip || null } } :
-        { status: "ok", target: { id, host, enabled: enabled == "1", resolver: resolver_ip || null } };
+        { status: "ok", target: { id, host, enabled: enabled == "1", resolver: resolver_ip || null, ...(large != null ? { large } : {}) } };
     return forgotten ? output : unrecorded(output);
 }
 
@@ -734,6 +756,11 @@ function blocker(for_apply) {
     if (s.service_action) return s.service_action;
     if (s.autotune_lock_held) return "autotune_in_progress";
     if (type(s.state) == "object" && s.resolved === false) return "apply_unresolved";
+    // A clock NTP has not set (core/clock.uc): certificates fail their time
+    // check and look like blocking, an observation would count them as
+    // failures, and a cooldown or a daily limit would be counted from a
+    // wrong time. Nothing is measured, applied or judged until it is set.
+    if (clock_module.status().state == "unsynced") return "clock_unsynced";
     return null;
 }
 
@@ -785,6 +812,9 @@ function observation_tick_locked() {
     };
     // The operator switched autotune away from auto: it no longer acts.
     if (policy.mode != "auto") return finish("ended", "mode_changed");
+    // Neither a verdict nor the deadline is judged on a clock NTP has not
+    // set (a reboot of a router without an RTC starts in the past).
+    if (clock_module.status().state == "unsynced") return { result: "skipped", reason: "clock_unsynced" };
     // A tick further away than one step was set before the clock jumped back.
     let step = policy_module.OBSERVATION_STEP;
     if (at < int(o.next_check_at) && int(o.next_check_at) <= at + step) return { result: "skipped", reason: "not_due" };
@@ -866,12 +896,40 @@ function observation_tick() {
     return output;
 }
 
-function tune_target(t, probes, dns_resolver) {
+// One tuning run of a target (autotune/isolation.uc tune) with the
+// diagnosis first, the candidates of the group's provider and the target's
+// large object, if it has one.
+function tune_once(t, probes, dns_resolver, provider, tier) {
     // The policy value is an upper bound: a run has a fixed number of source
     // ports, shared by every supported candidate (isolation.uc tune).
     fs.unlink(TUNE_PROGRESS);
-    return run_tool("isolation", [ "tune", t.host, "max:" + as_string(probes), dns_resolver ], [ "PROKOP_AUTOTUNE_PROGRESS=" + TUNE_PROGRESS ]) ||
-        { status: "failed", reason: "tune_output_invalid" };
+    let options = [ "diag=1", "provider=" + (provider || "zapret"), "tier=" + tier ];
+    if (type(t.large) == "object") push(options, "path=" + t.large.path, "min_bytes=" + t.large.min_bytes);
+    return run_tool("isolation", [ "tune", t.host, "max:" + as_string(probes), dns_resolver, "", "", join(",", options) ],
+        [ "PROKOP_AUTOTUNE_PROGRESS=" + TUNE_PROGRESS ]) || { status: "failed", reason: "tune_output_invalid" };
+}
+
+// Tier 1 of the catalog first; tier 2 only when tier 1 found no stable
+// candidate for a target the diagnosis does not rule out (blocked by
+// address, unreachable, a clock problem: another strategy cannot help).
+// The worst case is two runs (autotune/catalog.uc). One run is bounded by
+// its 64 probe ports: 4 diagnosis probes and at most 60 candidate probes of
+// at most 10 s each (curl --max-time), after a wait of up to 65 s for
+// TIME_WAIT ports and the start of up to 8 nfqws (5 s each at most), and
+// before the hold of up to 300 s for lingering probe connections: about
+// 17 minutes. A target therefore takes at most about 34 minutes; the usual
+// run (5 probes, nothing lingering) takes 2-5 minutes per tier.
+const TIER2_REASONS = [ "all_failed", "no_stable_candidate" ];
+function tune_target(t, probes, dns_resolver, provider) {
+    let first = tune_once(t, probes, dns_resolver, provider, 1);
+    if (first.status != "inconclusive" || index(TIER2_REASONS, as_string(first.reason)) < 0 ||
+        length(catalog.tier_ids(provider || "zapret", 2)) == 0 || interrupted)
+        return first;
+    let second = tune_once(t, probes, dns_resolver, provider, 2);
+    if (second.status == "selected") return { ...second, tiers: [ 1, 2 ], tier1: { status: first.status, reason: first.reason } };
+    // Nothing either: the first result stands, with what the second said.
+    if (second.status == "busy" || second.status == "interrupted") return second;
+    return { ...first, tiers: [ 1, 2 ], tier2: { status: second.status, reason: second.reason || null } };
 }
 
 // Groups of this run: every group, one named group, or for a scheduled run
@@ -1095,7 +1153,7 @@ function run_locked(scope, trigger) {
                 }
                 let begun = now();
                 set_item(id, { state: "running", started_at: begun });
-                let result = tune_target(t, policy.probes, dns_resolver.ip);
+                let result = tune_target(t, policy.probes, dns_resolver.ip, g.provider);
                 // Neither says anything about the target: nothing is recorded.
                 if (result.status == "busy") { stop = "autotune_in_progress"; break; }
                 if (result.status == "interrupted") { stop = "interrupted"; break; }
@@ -1110,7 +1168,7 @@ function run_locked(scope, trigger) {
             if (stop != null) break;
             // Only what this run measured counts: a cached result never
             // confirms a recommendation a second time.
-            let aggregate = applicable(groups_module.aggregate(map(g.targets, (id) => ({ id, summary: updates.targets[id] || null })), g.current), sections, name);
+            let aggregate = applicable(groups_module.aggregate(map(g.targets, (id) => ({ id, summary: updates.targets[id] || null })), g.current, ttl_based), sections, name, g.provider);
             let observed = hysteresis.observe(local.groups[name], { ...aggregate, fingerprint: g.fingerprint }, policy, now(), trigger);
             let was_ready = type(local.groups[name]) == "object" && local.groups[name].ready === true;
             if (observed.ready && !was_ready) history("autotune_recommendation", "success");
@@ -1498,7 +1556,7 @@ if (mode == "status") output = status();
 else if (mode == "target") output = target(ARGV[1]);
 else if (mode == "groups") output = groups();
 else if (mode == "policy-set") output = policy_set(ARGV[1], ARGV[2]);
-else if (mode == "target-set") output = target_set(ARGV[1], ARGV[2], ARGV[3], ARGV[4], ARGV[5], ARGV[6], ARGV[7]);
+else if (mode == "target-set") output = target_set(ARGV[1], ARGV[2], ARGV[3], ARGV[4], ARGV[5], ARGV[6], ARGV[7], ARGV[8], ARGV[9]);
 else if (mode == "target-remove") output = target_remove(ARGV[1]);
 else if (mode == "list-domains") output = list_domains(ARGV[1]);
 else if (index([ "run", "if-due", "run-job", "apply", "apply-job" ], mode) >= 0) {
@@ -1517,7 +1575,7 @@ else if (mode == "cron-sync") output = cron_sync();
 else if (mode == "cron-remove") output = cron_remove();
 else {
     warn("Usage: autotune/manager.uc <status|target <id>|groups|policy-set <option> <value>|" +
-        "target-set <id> <host> [enabled] [resolver] [rule_set] [sample] [pins]|target-remove <id>|list-domains <rule_set>|run <all|group>|if-due|" +
+        "target-set <id> <host> [enabled] [resolver] [rule_set] [sample] [pins] [large_path] [large_bytes]|target-remove <id>|list-domains <rule_set>|run <all|group>|if-due|" +
         "run-async <all|group>|run-status <job>|apply <group>|apply-async <group>|rollback|cron-sync|cron-remove>\n");
     exit(1);
 }

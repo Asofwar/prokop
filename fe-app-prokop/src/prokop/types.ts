@@ -269,7 +269,24 @@ export namespace Prokop {
     leading?: string | null;
     host?: string | null;
     group?: string | null;
+    // What the diagnosis found (autotune/blocktype.uc): ip_block, sni_block,
+    // tls_block, tls12_only, tls13_only, transfer_cut, cert_mismatch,
+    // clock_problem, dns_spoof, unclear or none.
+    block?: { type: string } | null;
+    provider?: string | null;
+    tier?: number | null;
+    // The run fetched the target's large object (16-20 KB cut check).
+    large_object?: boolean;
     candidates: AutotuneCandidateSummary[];
+  }
+
+  // Whether the router clock is trustworthy (core/clock.uc).
+  export interface AutotuneClock {
+    state: 'synced' | 'unsynced' | 'unknown';
+    source: string;
+    stratum: number | null;
+    observed_at: number | null;
+    reason: string;
   }
 
   // A rule-list target (autotune/lists.uc): the domains measured this time
@@ -297,6 +314,8 @@ export namespace Prokop {
     pins?: string[];
     list?: AutotuneListView | null;
     parent?: string;
+    // An object of the host larger than min_bytes for the cut check.
+    large?: { path: string; min_bytes: number } | null;
   }
 
   // A local list the routing sends to a DPI rule, for the target editor.
@@ -324,6 +343,8 @@ export namespace Prokop {
     representative?: string | null;
     reason: string | null;
     conflict?: { target: string; selected: string }[];
+    // A hop-count dependent candidate measured on one address only.
+    confidence_capped?: string | null;
   }
 
   export interface AutotuneApplyRecord {
@@ -475,6 +496,7 @@ export namespace Prokop {
     observation?: AutotuneObservation | null;
     // The recorded Stage 5 apply; null when none was recorded.
     apply?: AutotuneRecordedApply | null;
+    clock?: AutotuneClock | null;
   }
 
   // What the last Stage 5 apply changed, whether it still waits for a
@@ -513,6 +535,8 @@ export namespace Prokop {
   // Membership calculated from the routing now (DNS lookups on the router).
   export interface AutotuneLiveGroup {
     label: string | null;
+    // zapret or zapret2 (measured and recommended, never applied).
+    provider?: string;
     targets: string[];
     current: string | null;
     custom: boolean | null;

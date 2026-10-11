@@ -394,6 +394,8 @@ export const ProkopShellMethods = {
     enabled: boolean,
     resolver: string,
     list?: { ruleSet: string; sample: string; pins: string[] },
+    // A host target's large object for the 16-20 KB cut check.
+    large?: { path: string; bytes: string },
   ) =>
     callBaseMethod<Prokop.AutotuneMutationResult>(
       Prokop.AvailableMethods.AUTOTUNE_TARGET_SET,
@@ -403,6 +405,7 @@ export const ProkopShellMethods = {
         enabled ? '1' : '0',
         resolver,
         ...(list ? [list.ruleSet, list.sample, list.pins.join(',')] : []),
+        ...(!list && large?.path ? ['', '', '', large.path, large.bytes] : []),
       ],
       '/usr/bin/prokop',
       { allowNonZeroWithStdout: true },

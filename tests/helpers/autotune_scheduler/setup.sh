@@ -44,6 +44,9 @@ export PROKOP_HISTORY_FILE="$WORK/etc/history.jsonl" PROKOP_RUNTIME_STATE_DIR="$
 export PROKOP_CRONTAB_FILE="$WORK/crontab" PROKOP_AUTOTUNE_CRONTAB="$WORK/crontab-cmd"
 export STUB_TUNE_DIR="$WORK/tune" STUB_APPLY_STATUS="$WORK/apply-status.json"
 mkdir -p "$WORK/config" "$WORK/uci-save" "$WORK/tmp" "$WORK/tune" "$PROKOP_RUNTIME_STATE_DIR"
+# A clock NTP synchronized this boot (core/clock.uc), whatever the host runs.
+export PROKOP_CLOCK_MARKER="$WORK/time-synced" PROKOP_CLOCK_PROC="$WORK/clock-proc" PROKOP_CLOCK_SYSTEM_CONFIG="$WORK/clock-system"
+printf 'stratum=2\nat=%s\naction=stratum\n' "$(date +%s)" >"$PROKOP_CLOCK_MARKER"
 # Prokop was started (the scheduled run waits for a start, OBS-4).
 : >"$PROKOP_RUNTIME_STATE_DIR/start.explicit"
 

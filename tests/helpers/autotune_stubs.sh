@@ -39,6 +39,9 @@ export ZAPRET_NFQWS_BIN="$WORK/bin/nfqws"
 export ZAPRET_CHILD_PID_DIR="$WORK/child-pid"
 export NFT_STATE="$WORK/nft" STUB_LOG="$WORK/log"
 export PATH="$WORK/bin:$PATH"
+# A clock NTP synchronized this boot (core/clock.uc), whatever the host runs.
+export PROKOP_CLOCK_MARKER="$WORK/time-synced" PROKOP_CLOCK_PROC="$WORK/clock-proc" PROKOP_CLOCK_SYSTEM_CONFIG="$WORK/clock-system"
+printf 'stratum=2\nat=%s\naction=stratum\n' "$(date +%s)" > "$PROKOP_CLOCK_MARKER"
 PROD_QUEUE_LINE=" 4000  29676     0 2 65531     0     0       51  1"
 export NFQWS_STUB_QUEUE_FILE="$PROKOP_AUTOTUNE_PROC_QUEUE"
 
@@ -108,7 +111,7 @@ echo "nft $*" >> "$STUB_LOG/nft.log"
 # probe_rule LINE: "comment queue first last" of an output probe rule.
 probe_rule() {
   local comment queue sport
-  comment="$(sed -n 's/.* comment "\([a-z_:]*\)".*/\1/p' <<<"$1")"
+  comment="$(sed -n 's/.* comment "\([a-z0-9_:]*\)".*/\1/p' <<<"$1")"
   queue="$(sed -n 's/.* queue num \([0-9]*\) .*/\1/p' <<<"$1")"
   sport="$(sed -n 's/.* tcp sport \([0-9]*\)-\([0-9]*\) .*/\1 \2/p' <<<"$1")"
   echo "$comment ${queue:--} $sport"
@@ -223,6 +226,15 @@ if [ -e "$NFT_STATE/tables/ProkopAutotuneProbe" ]; then
     comment="$c"; queue="$q"; break
   done < "$NFT_STATE/rules"
   key="${comment%%:*}"; [ "$queue" = - ] || key="$queue"
+  # The diagnosis slice of a tuning run: "diag.<kind>" plans first, then
+  # "diag", then the direct plan.
+  if [ "$comment" = direct:diag ]; then
+    url="$(printf '%s\n' "$@" | grep '^https://' | head -n 1)"
+    if printf '%s\n' "$@" | grep -qx -- '--tls-max'; then key=diag.tls12
+    elif printf '%s\n' "$@" | grep -qx -- '--tlsv1.3'; then key=diag.tls13
+    elif [ "${url#https://"${CURL_STUB_NEUTRAL:-ya.ru}"/}" != "$url" ]; then key=diag.neutral
+    else key=diag.real; fi
+  fi
   printf '%s\n' "$ports" >> "$STUB_LOG/curl.ports"
   bump probe_mark 5; bump "$comment" 5
   [ "$queue" = - ] || bump reinjected 3
@@ -266,6 +278,10 @@ fi
 tls=61
 if [ -n "${CURL_STUB_PLAN:-}" ]; then
   spec="$(tr ',' '\n' <<<"$CURL_STUB_PLAN" | sed -n "s/^$key=//p" | head -n 1)"
+  case "$key" in diag.*)
+    [ -n "$spec" ] || spec="$(tr ',' '\n' <<<"$CURL_STUB_PLAN" | sed -n "s/^diag=//p" | head -n 1)"
+    [ -n "$spec" ] || spec="$(tr ',' '\n' <<<"$CURL_STUB_PLAN" | sed -n "s/^direct=//p" | head -n 1)" ;;
+  esac
   if [ -n "$spec" ]; then
     n=$(( $(cat "$STUB_LOG/plan.$key" 2>/dev/null || echo 0) + 1 )); echo "$n" > "$STUB_LOG/plan.$key"
     steps=$(tr '|' '\n' <<<"$spec" | wc -l)
@@ -291,26 +307,34 @@ ms() { printf '0.%03d' "$1"; }
 # (tls_stall included: curl hides that connection, the counter does not).
 if [ "$key" != none ]; then
   case "$mode" in
-    success|moved|forbidden|otherip|tls|tls_timeout|tls_stall|reset|http_transport|empty_reply)
+    success|moved|forbidden|otherip|tls|tls_timeout|tls_stall|reset|http_transport|empty_reply|cut|cert_time|cert_other|big|unsupported)
       case "$comment" in *:*) bump "synack:${comment#*:}" 1 ;; *) bump synack 1 ;; esac ;;
   esac
 fi
 case "$mode" in
-  success) echo "0|61000|$ip|204|0.012|$(ms "$tls")|$(ms $((tls + 29)))|$(ms $((tls + 30)))|" ;;
-  moved) echo "0|61001|$ip|301|0.012|0.061|0.090|0.091|" ;;
-  forbidden) echo "0|61002|$ip|403|0.012|0.061|0.090|0.091|" ;;
-  otherip) echo "0|61000|198.51.100.7|204|0.012|0.061|0.090|0.091|" ;;
-  refused) echo "7|0||000|0.000000|0.000000|0.000000|0.004|Failed to connect to x port 443 after 4 ms: Connection refused"; exit 7 ;;
-  unreachable) echo "7|0||000|0.000000|0.000000|0.000000|0.004|Failed to connect to x port 443 after 4 ms: No route to host"; exit 7 ;;
-  connect_timeout) echo "28|0||000|0.000000|0.000000|0.000000|5.001|Connection timed out after 5001 milliseconds"; exit 28 ;;
-  local_port) echo "45|0||000|0.000000|0.000000|0.000000|0.001|Failed binding local connection end"; exit 45 ;;
+  success) echo "0|61000|$ip|204|0.012|$(ms "$tls")|$(ms $((tls + 29)))|$(ms $((tls + 30)))|${CURL_STUB_SIZE:-1500}|" ;;
+  moved) echo "0|61001|$ip|301|0.012|0.061|0.090|0.091|${CURL_STUB_SIZE:-1500}|" ;;
+  forbidden) echo "0|61002|$ip|403|0.012|0.061|0.090|0.091|${CURL_STUB_SIZE:-1500}|" ;;
+  otherip) echo "0|61000|198.51.100.7|204|0.012|0.061|0.090|0.091|${CURL_STUB_SIZE:-1500}|" ;;
+  refused) echo "7|0||000|0.000000|0.000000|0.000000|0.004|0|Failed to connect to x port 443 after 4 ms: Connection refused"; exit 7 ;;
+  unreachable) echo "7|0||000|0.000000|0.000000|0.000000|0.004|0|Failed to connect to x port 443 after 4 ms: No route to host"; exit 7 ;;
+  connect_timeout) echo "28|0||000|0.000000|0.000000|0.000000|5.001|0|Connection timed out after 5001 milliseconds"; exit 28 ;;
+  local_port) echo "45|0||000|0.000000|0.000000|0.000000|0.001|0|Failed binding local connection end"; exit 45 ;;
   # curl 8.19 on a blackholed ClientHello: the same record as connect_timeout.
-  tls_stall) echo "28|0||000|0.000000|0.000000|0.000000|5.001|Connection timed out after 5001 milliseconds"; exit 28 ;;
-  tls) echo "35|61003|$ip|000|0.012|0.000000|0.000000|0.070|mbedTLS: (-0x7780) SSL - A fatal alert message was received from our peer"; exit 35 ;;
-  tls_timeout) echo "28|61003|$ip|000|0.012|0.000000|0.000000|10.0|Operation timed out after 10000 milliseconds with 0 bytes received"; exit 28 ;;
-  reset) echo "35|61004|$ip|000|0.012|0.000000|0.000000|0.050|Recv failure: Connection reset by peer"; exit 35 ;;
-  http_transport) echo "56|61005|$ip|000|0.012|0.061|0.000000|0.100|Recv failure: Connection reset by peer"; exit 56 ;;
-  empty_reply) echo "52|61006|$ip|000|0.012|0.061|0.000000|0.100|Empty reply from server"; exit 52 ;;
+  tls_stall) echo "28|0||000|0.000000|0.000000|0.000000|5.001|0|Connection timed out after 5001 milliseconds"; exit 28 ;;
+  tls) echo "35|61003|$ip|000|0.012|0.000000|0.000000|0.070|0|mbedTLS: (-0x7780) SSL - A fatal alert message was received from our peer"; exit 35 ;;
+  tls_timeout) echo "28|61003|$ip|000|0.012|0.000000|0.000000|10.0|0|Operation timed out after 10000 milliseconds with 0 bytes received"; exit 28 ;;
+  reset) echo "35|61004|$ip|000|0.012|0.000000|0.000000|0.050|0|Recv failure: Connection reset by peer"; exit 35 ;;
+  http_transport) echo "56|61005|$ip|000|0.012|0.061|0.000000|0.100|0|Recv failure: Connection reset by peer"; exit 56 ;;
+  empty_reply) echo "52|61006|$ip|000|0.012|0.061|0.000000|0.100|0|Empty reply from server"; exit 52 ;;
+  # A transfer the DPI cuts after its first 16 KB: handshake and status, then
+  # a stall until the timeout.
+  cut) echo "28|61007|$ip|206|0.012|0.061|0.090|10.0|16384|Operation timed out after 10000 milliseconds with 16384 bytes received"; exit 28 ;;
+  # A large object read up to the probe's range.
+  big) echo "0|61008|$ip|206|0.012|$(ms "$tls")|$(ms $((tls + 29)))|$(ms $((tls + 60)))|65536|" ;;
+  cert_time) echo "60|61009|$ip|000|0.012|0.000000|0.000000|0.070|0|SSL certificate problem: certificate is not yet valid"; exit 60 ;;
+  cert_other) echo "60|61010|$ip|000|0.012|0.000000|0.000000|0.070|0|SSL: no alternative certificate subject name matches target host name"; exit 60 ;;
+  unsupported) echo "4|0||000|0.000000|0.000000|0.000000|0.001|0|A requested feature, protocol or option was not found built-in"; exit 4 ;;
 esac
 SH
 # ip stand-in: policy rules from the router fixture and the probe route.
@@ -382,7 +406,7 @@ reset_state() {
     CURL_STUB_UNEXPECTED CURL_STUB_PENDING CURL_STUB_SOCKET CURL_STUB_CLOSING NFT_STUB_FAIL_RULESET \
     IP_STUB_RULE_FAIL IP_STUB_ROUTE_LOCAL IP_STUB_ROUTE_DIFFERS NFT_STUB_INTERFACES NFT_STUB_FAIL_REPLACE \
     CURL_STUB_QUEUED CURL_STUB_ROUTE_CHANGE PROKOP_AUTOTUNE_QUIET_TIMEOUT \
-    NFT_STUB_FAIL_PROBE_LISTING CURL_STUB_PLAN
+    NFT_STUB_FAIL_PROBE_LISTING CURL_STUB_PLAN CURL_STUB_SIZE CURL_STUB_NEUTRAL
   rm -f "$WORK/proc_net/ip_tables_names" "$WORK/proc_net/ip6_tables_names" "$STUB_LOG"/* \
     "$NFT_STATE/released" "$NFT_STATE/release.nft" "$NFT_STATE/route.changed" "$NFT_STATE/rules"
   export PROKOP_AUTOTUNE_DRAIN_TIMEOUT=1 PROKOP_AUTOTUNE_HOLD_TIMEOUT=2
@@ -401,7 +425,7 @@ run_probe() { iso run "$1" example.com "${2:-3}" 192.0.2.53; }
 assert_clean() {
   [ ! -e "$NFT_STATE/tables/ProkopAutotuneProbe" ] || fail "$1: temporary table left behind"
   ! grep -qE '^ 46(0[0-7]) ' "$PROKOP_AUTOTUNE_PROC_QUEUE" || fail "$1: a run queue left behind"
-  ! pgrep -f "$WORK/bin/nfqws --qnum" >/dev/null || fail "$1: temporary nfqws left behind"
+  ! pgrep -f "$WORK/bin/nfqws2? --qnum" >/dev/null || fail "$1: temporary nfqws left behind"
   for leftover in active.json work; do
     [ ! -e "$PROKOP_AUTOTUNE_STATE_DIR/$leftover" ] || fail "$1: temporary state $leftover left behind"
   done

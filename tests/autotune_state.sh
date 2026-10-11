@@ -120,7 +120,7 @@ const s = read('state');
 assert.deepEqual(s.empty.targets, {});
 assert.equal(s.empty.version, 1);
 assert.deepEqual(Object.keys(s.summary).sort(),
-  ['at', 'candidates', 'confidence', 'fingerprint', 'group', 'host', 'ip', 'leading', 'reason', 'selected', 'status']);
+  ['at', 'block', 'candidates', 'confidence', 'fingerprint', 'group', 'host', 'ip', 'large_object', 'leading', 'provider', 'reason', 'selected', 'status', 'tier']);
 assert.deepEqual(s.summary.candidates[1], { id: 'multisplit', stability: 'stable', success: 5, attempted: 5,
   success_ratio: 1, median_tls_ms: 180, failure_classes: [] });
 assert.equal(s.invalid, null, 'invalid target ids are refused');

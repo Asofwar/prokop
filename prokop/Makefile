@@ -130,6 +130,8 @@ define Package/prokop/install
 	$(INSTALL_DIR) $(1)/lib/upgrade/keep.d
 	$(INSTALL_DATA) ./files/lib/upgrade/keep.d/prokop-killswitch $(1)/lib/upgrade/keep.d/prokop-killswitch
 	$(INSTALL_DATA) ./files/lib/upgrade/keep.d/prokop-torrserver $(1)/lib/upgrade/keep.d/prokop-torrserver
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/ntp
+	$(INSTALL_DATA) ./files/etc/hotplug.d/ntp/60-prokop-time $(1)/etc/hotplug.d/ntp/60-prokop-time
 	$(INSTALL_DIR) $(1)/usr/share/nftables.d/ruleset-post
 	$(INSTALL_DATA) ./files/usr/share/nftables.d/ruleset-post/90-prokop-killswitch-loader.nft $(1)/usr/share/nftables.d/ruleset-post/90-prokop-killswitch-loader.nft
 

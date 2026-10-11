@@ -114,6 +114,13 @@ function summarize(result, now) {
         confidence: result.confidence || null,
         leading: result.leading || null,
         ip: target.ip || null,
+        // What the diagnosis found (autotune/blocktype.uc), the provider and
+        // catalog tier measured, and whether the run fetched a large object
+        // of the target (the 16-20 KB cut check of autotune/probe.uc).
+        block: type(result.block) == "object" && result.block.type ? { type: as_string(result.block.type) } : null,
+        provider: result.provider || null,
+        tier: type(result.tier) == "int" ? result.tier : null,
+        large_object: type(result.large_object) == "object",
         candidates: map(type(result.candidates) == "array" ? result.candidates : [], (c) => ({
             id: c.id, stability: c.stability, success: c.success, attempted: c.attempted,
             success_ratio: round3(c.success_ratio), median_tls_ms: c.median_tls_ms,
