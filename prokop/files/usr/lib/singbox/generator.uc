@@ -948,7 +948,7 @@ function copy_subscription_outbound(outbound, new_tag) {
         copy.tls = tls;
     }
     copy.tag = new_tag;
-    return apply_certificate_pin(copy, as_string(outbound.remark || outbound.tag || new_tag));
+    return copy;
 }
 
 function string_array_contains(values, needle) {
@@ -1224,7 +1224,8 @@ function add_subscription_source_with_state(config, section, source_index, sourc
             tag_map[as_string(outbound.tag)] = new_tag;
         if (as_string(outbound.remark || "") != "")
             tag_map[as_string(outbound.remark)] = new_tag;
-        push(prepared, copy_subscription_outbound(outbound, new_tag));
+        push(prepared, apply_certificate_pin(copy_subscription_outbound(outbound, new_tag),
+            as_string(outbound.remark || outbound.tag || new_tag)));
         push(display_names, display_name);
         let source_link = as_string(outbound.share_link || "");
         if (!subscription_share_link.is_copyable_link(source_link))

@@ -38,7 +38,10 @@ const out = JSON.parse(fs.readFileSync(process.argv[3], 'utf8'));
 assert.equal(out.config.settings.mirror_base_url, '');
 assert(!JSON.stringify(out.config).includes('infotechtg'), 'no upstream mirror may be written');
 assert(!JSON.stringify(out.config).includes('51343.ru/prokop'), 'former mirror list URLs must be moved');
-assert.deepEqual(out.config.subscription_url, before.subscription_url);
+// An existing subscription keeps every server: the node limit migration
+// writes max_nodes 0 (no limit) and changes nothing else.
+assert.deepEqual(out.config.subscription_url,
+  before.subscription_url.map((item) => ({...item, max_nodes: '0'})));
 assert.deepEqual(out.config.section[0].rule_set_with_subnets,
   ['https://raw.githubusercontent.com/Greeg0ry/b4geoip-forkop/main/srs/valve.srs',
     'https://custom.example/rules.srs', '/etc/prokop/local.srs']);
