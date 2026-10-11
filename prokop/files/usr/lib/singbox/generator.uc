@@ -38,6 +38,9 @@ const PRIORITY_PROBE_PORT_FIRST = 4580;
 const PRIORITY_PROBE_MAX = 16;
 let priority_probes = [];
 let runtime_supports_dns_response_matching = false;
+// source_mac_address (sing-box 1.14). An unknown version keeps it: sing-box
+// check then refuses the configuration of an older core (fail closed).
+let runtime_supports_source_mac = true;
 let provider_urltest_start_seed = "";
 
 let as_string = common.as_string;
@@ -2442,6 +2445,63 @@ function add_domain_ip_list_ruleset(config, section_name, rule_set_tags, dns_que
 let legacy_condition_values = rule_conditions.legacy_condition_values;
 let domain_conditions = rule_conditions.domain_conditions;
 
+// Devices by MAC address (Device filter, Forced device routing, Exclude
+// devices): sing-box 1.14 matches them with source_mac_address, through its
+// neighbor table and the DHCP leases (route.find_neighbor needs no setup on
+// Linux), so a device keeps its rules when DHCP gives it another address.
+// Within one sing-box rule source_ip_cidr and source_mac_address must both
+// match, while the devices of an option are alternatives: a device filter
+// with addresses and MAC addresses is emitted as two sets of rules, the
+// addresses first. Exclusions are an "and" of inverted conditions and need
+// no split.
+let section_source_override = null;
+
+function checked_device_values(section, key) {
+    let devices = rule_conditions.device_values(section, key);
+    if (length(devices.invalid_macs) > 0)
+        runtime_generate_unsupported("Rule '" + as_string(section[".name"]) + "' has an invalid device MAC address '" +
+            devices.invalid_macs[0] + "' in " + key);
+    if (length(devices.macs) > 0 && !runtime_supports_source_mac)
+        runtime_generate_unsupported("Rule '" + as_string(section[".name"]) +
+            "' selects devices by MAC address, which needs sing-box 1.14 or later");
+    return devices;
+}
+
+function source_filter_empty(filter) {
+    return length(filter.ips) == 0 && length(filter.macs) == 0;
+}
+
+function section_source_filter(section) {
+    if (section_source_override != null)
+        return section_source_override;
+    let devices = checked_device_values(section, "source_ip_cidr");
+    return { ips: devices.ips, macs: devices.macs };
+}
+
+function source_filter_variants(section) {
+    let devices = checked_device_values(section, "source_ip_cidr");
+    if (length(devices.ips) > 0 && length(devices.macs) > 0)
+        return [ { ips: devices.ips, macs: [] }, { ips: [], macs: devices.macs } ];
+    return [ { ips: devices.ips, macs: devices.macs } ];
+}
+
+// The rules of fn() once per variant of the section's device filter.
+function for_source_filter_variants(section, fn) {
+    for (let variant in source_filter_variants(section)) {
+        section_source_override = variant;
+        fn(variant);
+    }
+    section_source_override = null;
+}
+
+// A route rule's device filter; the arrays stay arrays, as they always were.
+function set_route_source_filter(rule, filter) {
+    if (length(filter.ips) > 0)
+        rule.source_ip_cidr = filter.ips;
+    if (length(filter.macs) > 0)
+        rule.source_mac_address = filter.macs;
+}
+
 function add_domain_array(rule, key, values) {
     if (length(values) > 0)
         rule[key] = values;
@@ -2471,12 +2531,21 @@ function copy_dns_matchers(matchers) {
 }
 
 function excluded_source_ip_cidr(section) {
-    return legacy_condition_values(section, "excluded_source_ip_cidr");
+    return checked_device_values(section, "excluded_source_ip_cidr").ips;
+}
+
+function excluded_source_devices(section) {
+    return checked_device_values(section, "excluded_source_ip_cidr");
 }
 
 function exclude_sources_from_matchers(matchers, section) {
-    let excluded = excluded_source_ip_cidr(section);
-    if (length(excluded) == 0)
+    let excluded = excluded_source_devices(section);
+    let exclusions = [];
+    if (length(excluded.ips) > 0)
+        push(exclusions, { source_ip_cidr: single_or_array(excluded.ips), invert: true });
+    if (length(excluded.macs) > 0)
+        push(exclusions, { source_mac_address: single_or_array(excluded.macs), invert: true });
+    if (length(exclusions) == 0)
         return matchers;
 
     // Actions belong to the outer rule, never to a nested match condition.
@@ -2489,25 +2558,19 @@ function exclude_sources_from_matchers(matchers, section) {
         else
             conditions[key] = value;
     }
-    let exclusion = {
-        source_ip_cidr: single_or_array(excluded),
-        invert: true
-    };
     // A rule without conditions (the response-matching evaluate step) has
     // nothing to wrap: sing-box rejects an empty nested rule, so the inverted
-    // source matcher becomes the rule itself.
-    if (length(conditions) == 0) {
-        for (let key, value in exclusion)
+    // source matcher becomes the rule itself (both of them, joined, when
+    // addresses and MAC addresses are excluded).
+    if (length(conditions) == 0 && length(exclusions) == 1) {
+        for (let key, value in exclusions[0])
             result[key] = value;
         return result;
     }
     let wrapped = {
         type: "logical",
         mode: "and",
-        rules: [
-            conditions,
-            exclusion
-        ]
+        rules: length(conditions) == 0 ? exclusions : [ conditions, ...exclusions ]
     };
     for (let key, value in wrapped)
         result[key] = value;
@@ -2518,12 +2581,17 @@ function exclude_sources_from_route_rule(rule, section) {
     return exclude_sources_from_matchers(rule, section);
 }
 
-function add_source_dns_matchers(rule, source_ip_cidr) {
-    if (length(source_ip_cidr) == 0)
+// source: addresses (an array) or a device filter { ips, macs }.
+function add_source_dns_matchers(rule, source) {
+    let filter = type(source) == "array" ? { ips: source, macs: [] } : source;
+    if (source_filter_empty(filter))
         return;
 
     rule.inbound = source_dns_inbound_matcher();
-    rule.source_ip_cidr = single_or_array(source_ip_cidr);
+    if (length(filter.ips) > 0)
+        rule.source_ip_cidr = single_or_array(filter.ips);
+    if (length(filter.macs) > 0)
+        rule.source_mac_address = single_or_array(filter.macs);
 }
 
 function add_source_aware_bypass_dns_rules(config, matchers, rewrite_ttl) {
@@ -2574,11 +2642,11 @@ function add_source_aware_bypass_dns_rules(config, matchers, rewrite_ttl) {
 }
 
 function add_section_dns_matcher_rule(config, section, matchers, rewrite_ttl) {
-    let source_ip_cidr = legacy_condition_values(section, "source_ip_cidr");
-    add_source_dns_matchers(matchers, source_ip_cidr);
+    let source_filter = section_source_filter(section);
+    add_source_dns_matchers(matchers, source_filter);
     matchers = exclude_sources_from_matchers(matchers, section);
 
-    if (option(section, "action", "") == "bypass" && length(source_ip_cidr) > 0) {
+    if (option(section, "action", "") == "bypass" && !source_filter_empty(source_filter)) {
         add_source_aware_bypass_dns_rules(config, matchers, rewrite_ttl);
         return;
     }
@@ -2622,7 +2690,7 @@ function add_response_ruleset_dns_rule(config, section, tags, rewrite_ttl, serve
     if (length(tags) == 0)
         return;
 
-    let source_ip_cidr = legacy_condition_values(section, "source_ip_cidr");
+    let source_ip_cidr = section_source_filter(section);
 
     let evaluate = {};
     add_source_dns_matchers(evaluate, source_ip_cidr);
@@ -2653,7 +2721,7 @@ function add_ruleset_dns_query_rule(config, section, tags, rewrite_ttl, server_t
     }
 
     let query = { rule_set: single_or_array(tags), action: "route", server: server_tag, rewrite_ttl };
-    add_source_dns_matchers(query, legacy_condition_values(section, "source_ip_cidr"));
+    add_source_dns_matchers(query, section_source_filter(section));
     push_dns_matcher_rule(config, exclude_sources_from_matchers(query, section));
 }
 
@@ -2677,11 +2745,13 @@ function source_aware_dns_sources(sections) {
     for (let section in sections) {
         let action = option(section, "action", "");
         let candidates = [];
+        // Addresses and MAC addresses (add_source_aware_dns_fallback
+        // splits them).
         if (connections.has_dns_matchers(section))
             for (let value in legacy_condition_values(section, "source_ip_cidr"))
                 push(candidates, value);
         if (connections.has_dns_matchers(section) || length(list_option(section, "fully_routed_ips")) > 0)
-            for (let value in excluded_source_ip_cidr(section))
+            for (let value in legacy_condition_values(section, "excluded_source_ip_cidr"))
                 push(candidates, value);
         if (action == "bypass" || action == "dns")
             for (let value in list_option(section, "fully_routed_ips"))
@@ -2715,13 +2785,18 @@ function add_source_aware_dns_fallback(config, source_ip_cidr) {
     if (length(source_ip_cidr) == 0)
         return;
 
-    let rule = {
-        action: "route",
-        server: runtime_constants.DNSMASQ_DNS_SERVER_TAG,
-        rewrite_ttl: int_option(runtime_settings(), "dns_rewrite_ttl", "60")
-    };
-    add_source_dns_matchers(rule, source_ip_cidr);
-    push_dns_matcher_rule(config, rule);
+    let devices = core_ip.split_device_values(source_ip_cidr);
+    for (let filter in [ { ips: devices.ips, macs: [] }, { ips: [], macs: devices.macs } ]) {
+        if (source_filter_empty(filter))
+            continue;
+        let rule = {
+            action: "route",
+            server: runtime_constants.DNSMASQ_DNS_SERVER_TAG,
+            rewrite_ttl: int_option(runtime_settings(), "dns_rewrite_ttl", "60")
+        };
+        add_source_dns_matchers(rule, filter);
+        push_dns_matcher_rule(config, rule);
+    }
 }
 
 function dns_action_server_tag(section_name) {
@@ -2756,7 +2831,7 @@ function add_dns_action_rules_for_section(config, section) {
     let dns_query_rule_set_tags = [];
     let dns_response_rule_set_tags = [];
     let section_name = section[".name"];
-    let source_ip_cidr = legacy_condition_values(section, "source_ip_cidr");
+    let fully_routed = checked_device_values(section, "fully_routed_ips");
     let fully_routed_ips = list_option(section, "fully_routed_ips");
 
     for (let community in connections.community_lists(section)) {
@@ -2792,38 +2867,43 @@ function add_dns_action_rules_for_section(config, section) {
     let has_inline_domains = length(domain) > 0 || length(domain_suffix) > 0 ||
         length(domain_keyword) > 0 || length(domain_regex) > 0;
 
-    if (length(fully_routed_ips) > 0) {
+    for (let filter in [ { ips: fully_routed.ips, macs: [] }, { ips: [], macs: fully_routed.macs } ]) {
+        if (source_filter_empty(filter))
+            continue;
         let dns_rule = {
             action: "route",
             server: server_tag,
             rewrite_ttl
         };
-        add_source_dns_matchers(dns_rule, fully_routed_ips);
+        add_source_dns_matchers(dns_rule, filter);
         dns_rule = exclude_sources_from_matchers(dns_rule, section);
         push_dns_matcher_rule(config, dns_rule);
     }
-    if (has_inline_domains) {
-        let dns_rule = {
-            action: "route",
-            server: server_tag,
-            rewrite_ttl
-        };
-        add_domain_array(dns_rule, "domain", domain);
-        add_domain_array(dns_rule, "domain_suffix", domain_suffix);
-        add_domain_array(dns_rule, "domain_keyword", domain_keyword);
-        add_domain_array(dns_rule, "domain_regex", domain_regex);
-        add_source_dns_matchers(dns_rule, source_ip_cidr);
-        dns_rule = exclude_sources_from_matchers(dns_rule, section);
-        push_dns_matcher_rule(config, dns_rule);
-    }
-    add_section_ruleset_dns_rules(
-        config,
-        section,
-        dns_query_rule_set_tags,
-        dns_response_rule_set_tags,
-        rewrite_ttl,
-        server_tag
-    );
+    for_source_filter_variants(section, (source_filter) => {
+        if (has_inline_domains) {
+            let dns_rule = {
+                action: "route",
+                server: server_tag,
+                rewrite_ttl
+            };
+            add_domain_array(dns_rule, "domain", domain);
+            add_domain_array(dns_rule, "domain_suffix", domain_suffix);
+            add_domain_array(dns_rule, "domain_keyword", domain_keyword);
+            add_domain_array(dns_rule, "domain_regex", domain_regex);
+            add_source_dns_matchers(dns_rule, source_filter);
+            dns_rule = exclude_sources_from_matchers(dns_rule, section);
+            push_dns_matcher_rule(config, dns_rule);
+        }
+        // Copies: the rule-set helpers may extend the tag lists.
+        add_section_ruleset_dns_rules(
+            config,
+            section,
+            [ ...dns_query_rule_set_tags ],
+            [ ...dns_response_rule_set_tags ],
+            rewrite_ttl,
+            server_tag
+        );
+    });
     if (!has_inline_domains && length(dns_query_rule_set_tags) == 0 &&
         length(dns_response_rule_set_tags) == 0 && length(fully_routed_ips) == 0)
         runtime_generate_unsupported("DNS action '" + section_name + "' has no domain matchers");
@@ -2865,33 +2945,46 @@ function add_port_matchers(rule, section) {
 }
 
 function add_fully_routed_ips_rules(config, section) {
-    let source_ip_cidr = list_option(section, "fully_routed_ips");
-    if (length(source_ip_cidr) == 0)
+    if (length(list_option(section, "fully_routed_ips")) == 0)
         return;
+    let devices = checked_device_values(section, "fully_routed_ips");
+    // Addresses as written (they always were), then MAC addresses.
+    let filters = [];
+    if (length(devices.ips) > 0)
+        push(filters, { ips: devices.ips, macs: [] });
+    if (length(devices.macs) > 0)
+        push(filters, { ips: [], macs: devices.macs });
 
     if (option(section, "action", "") == "bypass") {
-        let dns_matchers = {};
-        add_source_dns_matchers(dns_matchers, source_ip_cidr);
-        dns_matchers = exclude_sources_from_matchers(dns_matchers, section);
-        add_source_aware_bypass_dns_rules(
-            config,
-            dns_matchers,
-            int_option(runtime_settings(), "dns_rewrite_ttl", "60")
-        );
+        for (let filter in filters) {
+            let dns_matchers = {};
+            add_source_dns_matchers(dns_matchers, filter);
+            dns_matchers = exclude_sources_from_matchers(dns_matchers, section);
+            add_source_aware_bypass_dns_rules(
+                config,
+                dns_matchers,
+                int_option(runtime_settings(), "dns_rewrite_ttl", "60")
+            );
+        }
     }
 
     let target = runtime_route.target(section, outbound_tag(section[".name"]));
     if (target.unsupported)
         runtime_generate_unsupported(target.unsupported);
 
-    let route_rule = {
-        action: target.action,
-        inbound: tproxy_inbound_matcher()
-    };
-    if (target.outbound)
-        route_rule.outbound = target.outbound;
-    route_rule.source_ip_cidr = single_or_array(source_ip_cidr);
-    push(config.route.rules, exclude_sources_from_route_rule(route_rule, section));
+    for (let filter in filters) {
+        let route_rule = {
+            action: target.action,
+            inbound: tproxy_inbound_matcher()
+        };
+        if (target.outbound)
+            route_rule.outbound = target.outbound;
+        if (length(filter.ips) > 0)
+            route_rule.source_ip_cidr = single_or_array(filter.ips);
+        else
+            route_rule.source_mac_address = single_or_array(filter.macs);
+        push(config.route.rules, exclude_sources_from_route_rule(route_rule, section));
+    }
 }
 
 function push_section_route_rule(config, section, route_rule) {
@@ -2908,7 +3001,7 @@ function push_section_route_rule(config, section, route_rule) {
 // (nft/apply.uc). sing-box takes that traffic to the rule's target by the
 // same ranges and ports: matched by the rule-set and the rule's own port
 // filter alone, it went out directly (C1).
-function add_discord_shared_cloudflare_rule(config, section, target, source_ip_cidr) {
+function add_discord_shared_cloudflare_rule(config, section, target, source_filter) {
     let discord = false;
     for (let community in connections.community_lists(section))
         if (as_string(community) == "discord")
@@ -2927,8 +3020,7 @@ function add_discord_shared_cloudflare_rule(config, section, target, source_ip_c
     };
     if (target.outbound)
         rule.outbound = target.outbound;
-    if (length(source_ip_cidr) > 0)
-        rule.source_ip_cidr = source_ip_cidr;
+    set_route_source_filter(rule, source_filter);
     push(config.route.rules, exclude_sources_from_route_rule(rule, section));
 }
 
@@ -2939,7 +3031,6 @@ function add_combined_route_for_section(config, section) {
     let domain_keyword = domains.domain_keyword;
     let domain_regex = domains.domain_regex;
     let ip_cidr = legacy_condition_values(section, "ip_cidr");
-    let source_ip_cidr = legacy_condition_values(section, "source_ip_cidr");
     let rule_set_tags = [];
     let dns_query_rule_set_tags = [];
     let dns_response_rule_set_tags = [];
@@ -2995,65 +3086,66 @@ function add_combined_route_for_section(config, section) {
     let target = runtime_route.target(section, outbound_tag(section_name));
     if (target.unsupported)
         runtime_generate_unsupported(target.unsupported);
-    let route_rule = {
-        action: target.action,
-        inbound: tproxy_inbound_matcher()
-    };
-    if (target.outbound)
-        route_rule.outbound = target.outbound;
-    add_domain_array(route_rule, "domain", domain);
-    add_domain_array(route_rule, "domain_suffix", domain_suffix);
-    add_domain_array(route_rule, "domain_keyword", domain_keyword);
-    add_domain_array(route_rule, "domain_regex", domain_regex);
-    if (length(ip_cidr) > 0)
-        route_rule.ip_cidr = ip_cidr;
-    if (length(source_ip_cidr) > 0)
-        route_rule.source_ip_cidr = source_ip_cidr;
-    add_port_matchers(route_rule, section);
-    let has_route_matchers = route_rule.domain != null || route_rule.domain_suffix != null ||
-        route_rule.domain_keyword != null || route_rule.domain_regex != null ||
-        route_rule.ip_cidr != null || (length(rule_set_tags) == 0 &&
-        (route_rule.port != null || route_rule.port_range != null));
-    if (has_route_matchers)
-        push_section_route_rule(config, section, route_rule);
-
-    if (length(rule_set_tags) > 0) {
-        // Since sing-box 1.14 a rule-set containing more than one rule is an
-        // independent matcher.  Combining it with inline domain fields makes
-        // the two matchers an AND expression, while Prokop sections define
-        // inline domains and lists as alternatives.  Keep shared device and
-        // port filters, but emit the rule-set alternative as its own rule.
-        let rule_set_rule = {
+    let rewrite_ttl = int_option(runtime_settings(), "dns_rewrite_ttl", "60");
+    for_source_filter_variants(section, (source_filter) => {
+        let route_rule = {
             action: target.action,
-            inbound: tproxy_inbound_matcher(),
-            rule_set: single_or_array(rule_set_tags)
+            inbound: tproxy_inbound_matcher()
         };
         if (target.outbound)
-            rule_set_rule.outbound = target.outbound;
-        if (length(source_ip_cidr) > 0)
-            rule_set_rule.source_ip_cidr = source_ip_cidr;
-        add_port_matchers(rule_set_rule, section);
-        push_section_route_rule(config, section, rule_set_rule);
-    }
-    add_discord_shared_cloudflare_rule(config, section, target, source_ip_cidr);
+            route_rule.outbound = target.outbound;
+        add_domain_array(route_rule, "domain", domain);
+        add_domain_array(route_rule, "domain_suffix", domain_suffix);
+        add_domain_array(route_rule, "domain_keyword", domain_keyword);
+        add_domain_array(route_rule, "domain_regex", domain_regex);
+        if (length(ip_cidr) > 0)
+            route_rule.ip_cidr = ip_cidr;
+        set_route_source_filter(route_rule, source_filter);
+        add_port_matchers(route_rule, section);
+        let has_route_matchers = route_rule.domain != null || route_rule.domain_suffix != null ||
+            route_rule.domain_keyword != null || route_rule.domain_regex != null ||
+            route_rule.ip_cidr != null || (length(rule_set_tags) == 0 &&
+            (route_rule.port != null || route_rule.port_range != null));
+        if (has_route_matchers)
+            push_section_route_rule(config, section, route_rule);
 
-    let rewrite_ttl = int_option(runtime_settings(), "dns_rewrite_ttl", "60");
-    if (length(domain) > 0 || length(domain_suffix) > 0 || length(domain_keyword) > 0 || length(domain_regex) > 0) {
-        let dns_rule = {};
-        add_domain_array(dns_rule, "domain", domain);
-        add_domain_array(dns_rule, "domain_suffix", domain_suffix);
-        add_domain_array(dns_rule, "domain_keyword", domain_keyword);
-        add_domain_array(dns_rule, "domain_regex", domain_regex);
-        add_section_dns_matcher_rule(config, section, dns_rule, rewrite_ttl);
-    }
-    add_section_ruleset_dns_rules(
-        config,
-        section,
-        dns_query_rule_set_tags,
-        dns_response_rule_set_tags,
-        rewrite_ttl,
-        section_dns_server(section)
-    );
+        if (length(rule_set_tags) > 0) {
+            // Since sing-box 1.14 a rule-set containing more than one rule is an
+            // independent matcher.  Combining it with inline domain fields makes
+            // the two matchers an AND expression, while Prokop sections define
+            // inline domains and lists as alternatives.  Keep shared device and
+            // port filters, but emit the rule-set alternative as its own rule.
+            let rule_set_rule = {
+                action: target.action,
+                inbound: tproxy_inbound_matcher(),
+                rule_set: single_or_array(rule_set_tags)
+            };
+            if (target.outbound)
+                rule_set_rule.outbound = target.outbound;
+            set_route_source_filter(rule_set_rule, source_filter);
+            add_port_matchers(rule_set_rule, section);
+            push_section_route_rule(config, section, rule_set_rule);
+        }
+        add_discord_shared_cloudflare_rule(config, section, target, source_filter);
+
+        if (length(domain) > 0 || length(domain_suffix) > 0 || length(domain_keyword) > 0 || length(domain_regex) > 0) {
+            let dns_rule = {};
+            add_domain_array(dns_rule, "domain", domain);
+            add_domain_array(dns_rule, "domain_suffix", domain_suffix);
+            add_domain_array(dns_rule, "domain_keyword", domain_keyword);
+            add_domain_array(dns_rule, "domain_regex", domain_regex);
+            add_section_dns_matcher_rule(config, section, dns_rule, rewrite_ttl);
+        }
+        // Copies: the rule-set helpers may extend the tag lists.
+        add_section_ruleset_dns_rules(
+            config,
+            section,
+            [ ...dns_query_rule_set_tags ],
+            [ ...dns_response_rule_set_tags ],
+            rewrite_ttl,
+            section_dns_server(section)
+        );
+    });
 }
 
 function unsupported_matcher_key(section) {
@@ -3228,6 +3320,7 @@ function apply_sing_box_version(config, sing_box_version) {
         : null;
     runtime_supports_dns_response_matching = version_parts != null &&
         (int(version_parts[1]) > 1 || (int(version_parts[1]) == 1 && int(version_parts[2]) >= 14));
+    runtime_supports_source_mac = version_parts == null || runtime_supports_dns_response_matching;
     if (version_parts != null && (int(version_parts[1]) > 1 ||
         (int(version_parts[1]) == 1 && int(version_parts[2]) >= 14)))
         delete config.dns.independent_cache;

@@ -52,6 +52,7 @@ export const SING_BOX_MASKED_KEYS = new Set([
   'service_name',
   'short_id',
   'source_ip_cidr',
+  'source_mac_address',
   'torrc',
   'user',
   'username',

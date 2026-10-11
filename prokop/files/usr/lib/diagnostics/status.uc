@@ -896,6 +896,7 @@ let masked_sing_box_keys = {
     service_name: true,
     short_id: true,
     source_ip_cidr: true,
+    source_mac_address: true,
     torrc: true,
     user: true,
     username: true,

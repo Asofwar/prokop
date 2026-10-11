@@ -98,7 +98,7 @@ function resolve_rule_for_section(section, route_rule) {
     }
 
     let resolve_rule = {};
-    for (let key in [ "inbound", "source_ip_cidr", "domain", "domain_suffix", "domain_keyword", "domain_regex", "rule_set", "port", "port_range" ]) {
+    for (let key in [ "inbound", "source_ip_cidr", "source_mac_address", "domain", "domain_suffix", "domain_keyword", "domain_regex", "rule_set", "port", "port_range" ]) {
         if (route_rule[key] != null)
             resolve_rule[key] = route_rule[key];
     }
