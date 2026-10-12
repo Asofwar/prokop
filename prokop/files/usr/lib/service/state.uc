@@ -47,6 +47,11 @@ const SING_BOX_BIN = getenv("PROKOP_SING_BOX_BIN") || "/usr/bin/sing-box";
 // The temporary list sing-box of a cold start (singbox/runtime.uc).
 const LIST_BOOTSTRAP_DIR = getenv("PROKOP_LIST_BOOTSTRAP_DIR") ||
     (getenv("PROKOP_RUNTIME_STATE_DIR") || "/var/run/prokop") + "/list-bootstrap";
+// How many times more a conflict of extra sing-box processes is looked at
+// (sing_box_process_conflict).
+const SING_BOX_CONFLICT_RECHECKS = 3;
+// Smart Detect's probe sing-box (experiments/smart_detect.uc).
+const SMART_DETECT_DIR = getenv("PROKOP_SMART_DETECT_DIR") || "/var/run/prokop/smart-detect";
 // The sing-box configuration Prokop generates when settings.config_path is
 // not set (killswitch/runtime.uc, routing/resolve.uc).
 const DEFAULT_SING_BOX_CONFIG_PATH = "/etc/sing-box/config.json";
@@ -665,12 +670,85 @@ function sing_box_service_running() {
     return pid > 0 && pid_is_sing_box(pid);
 }
 
+// sing-box commands that do their work and exit without opening a
+// listener: Prokop runs them for a moment (check and rule-set in list and
+// subscription updates, version in the requirements check), and so may
+// anything else. None of them is a runtime, whoever started it (F4).
+const SING_BOX_ONE_SHOT_COMMANDS = {
+    check: true, version: true, format: true, "rule-set": true,
+    merge: true, generate: true, help: true, completion: true
+};
+// sing-box's global options that take a value (the next word, unless it is
+// given as --option=value).
+const SING_BOX_VALUE_OPTIONS = {
+    "-c": true, "--config": true, "-C": true, "--config-directory": true,
+    "-D": true, "--directory": true
+};
+
+function sing_box_one_shot_argv(argv) {
+    for (let i = 1; i < length(argv); i++) {
+        let word = as_string(argv[i]);
+        if (SING_BOX_VALUE_OPTIONS[word]) {
+            i++;
+            continue;
+        }
+        if (substr(word, 0, 1) == "-")
+            continue;
+        return SING_BOX_ONE_SHOT_COMMANDS[word] === true;
+    }
+    return false;
+}
+
+function process_argv(pid) {
+    let raw = fs.readfile("/proc/" + as_string(pid) + "/cmdline");
+    if (raw == null)
+        return null;
+    let argv = split(raw, "\0");
+    if (length(argv) > 0 && argv[length(argv) - 1] == "")
+        pop(argv);
+    return argv;
+}
+
+function sing_box_one_shot_process(pid) {
+    let ticks = process_identity.start_ticks(pid);
+    if (ticks == "")
+        return false;
+    let argv = process_argv(pid);
+    // The command line must belong to the process whose start was seen.
+    return argv != null && process_identity.start_ticks(pid) == ticks && sing_box_one_shot_argv(argv);
+}
+
+// Smart Detect's probe (`sing-box run -c <dir>/probe.json`, a few seconds
+// on 127.0.0.1:4590-4591) is Prokop's while its record names the very
+// process with that exact command line and start ticks, as the temporary
+// list sing-box below. The same command line without the record proves
+// nothing.
+function smart_detect_probe_pid() {
+    let saved = process_identity.read_record(SMART_DETECT_DIR + "/probe.pid");
+    if (saved == null || saved.ticks == "")
+        return "";
+    return process_identity.matches_record(saved, "sing-box",
+        [ "sing-box", "run", "-c", SMART_DETECT_DIR + "/probe.json" ], true, true);
+}
+
+// A sing-box that is no competitor of a runtime: a one-shot command, or
+// Smart Detect's recorded probe (probe_pid, read once per scan).
+function sing_box_transient_helper(pid, probe_pid) {
+    return (probe_pid != "" && as_string(pid) == probe_pid) || sing_box_one_shot_process(pid);
+}
+
 // skip_pid: a process not to count (the temporary list sing-box below).
+// Transient helpers (sing_box_transient_helper) are never counted.
 function sing_box_process_count(skip_pid) {
     let count = 0;
+    let probe_pid = null;
     for (let exe_path in fs.glob("/proc/[0-9]*/exe")) {
         let parts = split(as_string(exe_path), "/");
-        if (length(parts) >= 4 && parts[2] != skip_pid && pid_is_sing_box(parts[2]))
+        if (length(parts) < 4 || parts[2] == skip_pid || !pid_is_sing_box(parts[2]))
+            continue;
+        if (probe_pid == null)
+            probe_pid = smart_detect_probe_pid();
+        if (!sing_box_transient_helper(parts[2], probe_pid))
             count++;
     }
     return count;
@@ -736,9 +814,38 @@ function sing_box_deleted_owned_service_runtime() {
 
 // The temporary list sing-box is no competitor of procd's instance; next to
 // that instance it still is one (sing_box_runtime_provenance counts it).
-function sing_box_process_conflict() {
+// "extra" when the only doubt is sing-box processes besides procd's
+// instance (or besides none): procd's PID, when it reports one, names a
+// sing-box whose start ticks held. "other" for any other doubt (procd
+// reports a PID that is no sing-box or that it is replacing).
+function sing_box_process_conflict_observation() {
     let bootstrap = list_bootstrap_process();
-    return sing_box_process_count(bootstrap?.pid) > 0 && !sing_box_single_owned_service_runtime();
+    if (sing_box_process_count(bootstrap?.pid) == 0 || sing_box_single_owned_service_runtime())
+        return "";
+    let pid = sing_box_service_pid_runtime();
+    if (pid <= 0)
+        return "extra";
+    let ticks = process_start_ticks_for_pid(pid);
+    if (ticks == null || !pid_is_sing_box(pid) || sing_box_service_pid_runtime() != pid ||
+        process_start_ticks_for_pid(pid) != ticks)
+        return "other";
+    return "extra";
+}
+
+// rechecks: how many more times (1 s apart; BusyBox sleep takes whole
+// seconds) an "extra" doubt is looked at before it is reported. A sing-box
+// that only ran for a moment (a helper, a probe caught before its record was
+// written) is gone by then; one that stays fails closed as before. Every
+// look is the full proof: nothing is killed and nothing is assumed.
+function sing_box_process_conflict(rechecks) {
+    rechecks = int(rechecks || 0);
+    let observation = sing_box_process_conflict_observation();
+    while (observation == "extra" && rechecks > 0) {
+        command_success_from_args([ "sleep", "1" ]);
+        rechecks--;
+        observation = sing_box_process_conflict_observation();
+    }
+    return observation != "";
 }
 
 function stopped_owned_pid_observation(expected_ticks, current_ticks, owned_identity, process_count, service_pid) {
@@ -1014,16 +1121,6 @@ function managed_upgrade_marker_fresh(path, max_age) {
     return marker != null && now >= int(marker.created_at) && now - int(marker.created_at) <= max_age;
 }
 
-function process_argv(pid) {
-    let raw = fs.readfile("/proc/" + as_string(pid) + "/cmdline");
-    if (raw == null)
-        return null;
-    let argv = split(raw, "\0");
-    if (length(argv) > 0 && argv[length(argv) - 1] == "")
-        pop(argv);
-    return argv;
-}
-
 function prokop_sing_box_config_path() {
     let path = as_string(uci_get(CONFIG_NAME + ".settings.config_path"));
     return path != "" ? path : DEFAULT_SING_BOX_CONFIG_PATH;
@@ -1091,9 +1188,11 @@ function sing_box_service_registered() {
 // runtime.
 function foreign_sing_box_present() {
     let owned = owned_sing_box_processes(prokop_sing_box_config_path());
+    let probe_pid = smart_detect_probe_pid();
     for (let exe_path in fs.glob("/proc/[0-9]*/exe")) {
         let pid = split(as_string(exe_path), "/")[2];
-        if (owned[pid] == null && sing_box_exe_path(fs.readlink(exe_path)))
+        if (owned[pid] == null && sing_box_exe_path(fs.readlink(exe_path)) &&
+            !sing_box_transient_helper(pid, probe_pid))
             return true;
     }
     return false;
@@ -2523,7 +2622,9 @@ else if (mode == "sing-box-current-owned-service-runtime")
 else if (mode == "sing-box-deleted-owned-service-runtime")
     exit(sing_box_deleted_owned_service_runtime() ? 0 : 1);
 else if (mode == "sing-box-process-conflict")
-    exit(sing_box_process_conflict() ? 0 : 1);
+    exit(sing_box_process_conflict(SING_BOX_CONFLICT_RECHECKS) ? 0 : 1);
+else if (mode == "sing-box-one-shot-argv-fixture")
+    exit(sing_box_one_shot_argv(json(ARGV[1])) ? 0 : 1);
 else if (mode == "sing-box-exe-path-fixture")
     exit(sing_box_exe_path(ARGV[1]) ? 0 : 1);
 else if (mode == "sing-box-exe-kind-fixture")
