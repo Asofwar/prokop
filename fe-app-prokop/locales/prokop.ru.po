@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-11 19:37+0000\n"
-"PO-Revision-Date: 2026-10-11 19:37+0000\n"
+"POT-Creation-Date: 2026-10-12 11:42+0000\n"
+"PO-Revision-Date: 2026-10-12 11:42+0000\n"
 "Last-Translator: Asofwar\n"
 "Language-Team: none\n"
 "Language: ru\n"
@@ -4589,6 +4589,9 @@ msgstr "Сохранено, служба остановлена"
 msgid "Saved. Enter a new value to replace it"
 msgstr "Сохранено. Введите новое значение, чтобы заменить"
 
+msgid "Saves router CPU in Zapret and Zapret2 rules: nfqws gets only the first packets of each connection, where the bypass happens, and the rest go out directly. The number of packets is chosen for each rule from its strategy; if a strategy may need later packets, its rule keeps sending all of them. Plain HTTP (port 80) stays fully processed. Turn it off if a site stops opening."
+msgstr "Снижает нагрузку на процессор роутера в правилах Zapret и Zapret2: nfqws получает только первые пакеты каждого соединения, в которых и происходит обход, а остальные уходят без него. Число пакетов подбирается для каждого правила по его стратегии; если стратегии могут понадобиться более поздние пакеты, правило по-прежнему передаёт в nfqws все пакеты. Обычный HTTP (порт 80) обрабатывается полностью. Выключите, если какой-то сайт перестал открываться."
+
 msgid "Saving URLTest settings…"
 msgstr "Сохранение настроек URLTest…"
 
@@ -4699,6 +4702,9 @@ msgstr "Selector и URLTest outbound должны содержать непус�
 
 msgid "Send a message to Telegram or a webhook when Prokop rolls back a change, a connection stops answering, or a subscription fails or ends"
 msgstr "Присылать сообщение в Telegram или на webhook, когда Prokop откатывает изменения, подключение перестаёт отвечать или подписка не обновляется либо заканчивается"
+
+msgid "Send only the first packets of a connection to nfqws"
+msgstr "Передавать в nfqws только первые пакеты соединения"
 
 msgid "Send test"
 msgstr "Отправить тест"

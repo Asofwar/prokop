@@ -3470,7 +3470,7 @@
     "call": "Count traffic per device",
     "key": "Count traffic per device",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:1095"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:1109"
     ]
   },
   {
@@ -3484,7 +3484,7 @@
     "call": "Counts how much each device on the source interfaces sends and receives, for Monitoring > Devices. The counters start from zero when Prokop starts",
     "key": "Counts how much each device on the source interfaces sends and receives, for Monitoring > Devices. The counters start from zero when Prokop starts",
     "places": [
-      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:1096"
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:1110"
     ]
   },
   {
@@ -11111,6 +11111,13 @@
     ]
   },
   {
+    "call": "Saves router CPU in Zapret and Zapret2 rules: nfqws gets only the first packets of each connection, where the bypass happens, and the rest go out directly. The number of packets is chosen for each rule from its strategy; if a strategy may need later packets, its rule keeps sending all of them. Plain HTTP (port 80) stays fully processed. Turn it off if a site stops opening.",
+    "key": "Saves router CPU in Zapret and Zapret2 rules: nfqws gets only the first packets of each connection, where the bypass happens, and the rest go out directly. The number of packets is chosen for each rule from its strategy; if a strategy may need later packets, its rule keeps sending all of them. Plain HTTP (port 80) stays fully processed. Turn it off if a site stops opening.",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:1097"
+    ]
+  },
+  {
     "call": "Saving URLTest settings…",
     "key": "Saving URLTest settings…",
     "places": [
@@ -11370,6 +11377,13 @@
     "key": "Send a message to Telegram or a webhook when Prokop rolls back a change, a connection stops answering, or a subscription fails or ends",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:230"
+    ]
+  },
+  {
+    "call": "Send only the first packets of a connection to nfqws",
+    "key": "Send only the first packets of a connection to nfqws",
+    "places": [
+      "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:1096"
     ]
   },
   {

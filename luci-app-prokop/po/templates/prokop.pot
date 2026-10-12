@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-11 19:37+0000\n"
-"PO-Revision-Date: 2026-10-11 19:37+0000\n"
+"POT-Creation-Date: 2026-10-12 11:42+0000\n"
+"PO-Revision-Date: 2026-10-12 11:42+0000\n"
 "Last-Translator: Asofwar <7397608+Asofwar@users.noreply.github.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -2055,7 +2055,7 @@ msgstr ""
 msgid "Count a server as working only when a 32 KB download through it over HTTPS completes, not only when it answers. Finds servers that connect but pass no data. Each check downloads 32 KB; a server that fails is skipped for a minute."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:1095
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:1109
 msgid "Count traffic per device"
 msgstr ""
 
@@ -2063,7 +2063,7 @@ msgstr ""
 msgid "Counting traffic per device is off: Settings, Network, Count traffic per device."
 msgstr ""
 
-#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:1096
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:1110
 msgid "Counts how much each device on the source interfaces sends and receives, for Monitoring > Devices. The counters start from zero when Prokop starts"
 msgstr ""
 
@@ -6555,6 +6555,10 @@ msgstr ""
 msgid "Saved. Enter a new value to replace it"
 msgstr ""
 
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:1097
+msgid "Saves router CPU in Zapret and Zapret2 rules: nfqws gets only the first packets of each connection, where the bypass happens, and the rest go out directly. The number of packets is chosen for each rule from its strategy; if a strategy may need later packets, its rule keeps sending all of them. Plain HTTP (port 80) stays fully processed. Turn it off if a site stops opening."
+msgstr ""
+
 #: src/prokop/tabs/dashboard/initController.ts:1397
 msgid "Saving URLTest settings…"
 msgstr ""
@@ -6704,6 +6708,10 @@ msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:230
 msgid "Send a message to Telegram or a webhook when Prokop rolls back a change, a connection stops answering, or a subscription fails or ends"
+msgstr ""
+
+#: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/settings.js:1096
+msgid "Send only the first packets of a connection to nfqws"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/notifications.js:418
