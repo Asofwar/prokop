@@ -331,14 +331,18 @@ function queue_entry(number_value) {
     return null;
 }
 // The production queue rule of a zapret rule (TCP): found by meaning.
-function queue_rule_counter(owner) {
+// { packets, limit }: its counter and, when it queues only the first
+// packets of a connection (`ct original packets 1-N`, settings
+// nfqws_first_packets), N; the first such rule is the one nft/apply.uc
+// writes first (the unlimited HTTP keep-alive rule follows it).
+function queue_rule_info(owner) {
     let out = capture([ "nft", "-j", "list", "chain", "inet", PROD_TABLE, "mangle_output" ]);
     let listing = parse_json(out.output);
     if (type(listing) != "object" || type(listing.nftables) != "array") return null;
     for (let item in listing.nftables) {
         let r = item.rule;
         if (type(r) != "object") continue;
-        let mark_ok = false, tcp = false, queue_ok = false, packets = null;
+        let mark_ok = false, tcp = false, queue_ok = false, packets = null, limit = null;
         for (let e in r.expr || []) {
             // The route mark on Prokop's own mark bits (`meta mark & M == V`,
             // nft/apply.uc, UC-104) or, from an older release, exact.
@@ -351,12 +355,22 @@ function queue_rule_counter(owner) {
                 if (left.meta.key == "mark" && int(e.match.right) == owner.mark_value) mark_ok = true;
                 if (left.meta.key == "l4proto" && e.match.right == "tcp") tcp = true;
             }
+            if (type(left) == "object" && type(left.ct) == "object" && left.ct.key == "packets" && left.ct.dir == "original") {
+                let right = e.match.right;
+                limit = type(right) == "object" && type(right.range) == "array" && length(right.range) == 2 && int(right.range[0]) == 1
+                    ? int(right.range[1]) : type(right) == "int" && right == 1 ? 1 : -1;
+            }
             if (type(e.queue) == "object" && int(e.queue.num) == owner.queue) queue_ok = true;
             if (type(e.counter) == "object") packets = int(e.counter.packets);
         }
-        if (mark_ok && tcp && queue_ok) return packets;
+        // A packet match of another form cannot be verified: no rule.
+        if (mark_ok && tcp && queue_ok) return limit == -1 ? null : { packets, limit };
     }
     return null;
+}
+function queue_rule_counter(owner) {
+    let info = queue_rule_info(owner);
+    return info == null ? null : info.packets;
 }
 function uncommitted_changes() {
     let st = fs.stat(UCI_SAVEDIR + "/prokop");
@@ -541,21 +555,30 @@ function verify_ports_free() {
     let range = fields(fs.readfile(PORT_RANGE_FILE));
     return length(range) == 2 && (VERIFY_PORT_LAST < int(range[0]) || VERIFY_PORT_FIRST > int(range[1]));
 }
-function create_verify_table(ip, mark_value) {
+// limit: N of a production queue rule limited to the first N packets of a
+// connection; a counter-only rule then counts the marked packets within it
+// (the same conntrack count: conntrack runs before both chains).
+function verify_table_batch(ip, mark_value, limit) {
+    let tuple = "ip daddr " + ip + " tcp dport 443 tcp sport " + VERIFY_PORT_FIRST + "-" + VERIFY_PORT_LAST + " meta mark 0x00000000";
+    return "create table inet " + VERIFY_TABLE + "\n" +
+        "add chain inet " + VERIFY_TABLE + " premark { type route hook output priority mangle - 2; policy accept; }\n" +
+        (limit != null ? "add rule inet " + VERIFY_TABLE + " premark " + tuple + " ct original packets " +
+            (limit == 1 ? "1" : "1-" + limit) + " counter comment \"rule_mark_queued\"\n" : "") +
+        "add rule inet " + VERIFY_TABLE + " premark " + tuple +
+        " meta mark set " + sprintf("0x%08x", mark_value) + " counter accept comment \"rule_mark\"\n";
+}
+function create_verify_table(ip, mark_value, limit) {
     let pipe = fs.popen("nft -f - >/dev/null 2>&1", "w");
     if (pipe == null) return false;
-    pipe.write("create table inet " + VERIFY_TABLE + "\n" +
-        "add chain inet " + VERIFY_TABLE + " premark { type route hook output priority mangle - 2; policy accept; }\n" +
-        "add rule inet " + VERIFY_TABLE + " premark ip daddr " + ip + " tcp dport 443 tcp sport " + VERIFY_PORT_FIRST + "-" + VERIFY_PORT_LAST +
-        " meta mark 0x00000000 meta mark set " + sprintf("0x%08x", mark_value) + " counter accept comment \"rule_mark\"\n");
+    pipe.write(verify_table_batch(ip, mark_value, limit));
     return pipe.close() == 0 && table_present(VERIFY_TABLE) === true;
 }
-function verify_rule_packets() {
+function verify_rule_packets(comment) {
     let listing = parse_json(capture([ "nft", "-j", "list", "table", "inet", VERIFY_TABLE ]).output);
     if (type(listing) != "object" || type(listing.nftables) != "array") return null;
     for (let item in listing.nftables) {
         let r = item.rule;
-        if (type(r) != "object" || r.comment != "rule_mark") continue;
+        if (type(r) != "object" || r.comment != (comment || "rule_mark")) continue;
         for (let e in r.expr || []) if (type(e.counter) == "object") return int(e.counter.packets);
     }
     return null;
@@ -583,13 +606,17 @@ function marked_traffic(plan, owner, checks, result) {
         verify_ports_free() && remove_verify_table(), "pinned address, rule mark, free probe ports, no leftover table")) {
         result.ok = false; return result;
     }
-    let before_q = queue_entry(plan.owner.queue), before_c = queue_rule_counter(plan.owner);
-    let created = create_verify_table(ip, owner.mark_value);
+    let before_q = queue_entry(plan.owner.queue), before_info = queue_rule_info(plan.owner);
+    let before_c = before_info == null ? null : before_info.packets, limit = before_info == null ? null : before_info.limit;
+    let created = create_verify_table(ip, owner.mark_value, limit);
     let probes = created ? probe_series(() => probe_module.probe({ host: plan.target.host, ip,
         port_range: VERIFY_PORT_FIRST + "-" + VERIFY_PORT_LAST })) || [] : [];
     // The rule counter first, the queue after it: the queue window contains
     // the window of the marked packets.
     let marked = created ? verify_rule_packets() : null;
+    // With a limited queue rule only the first packets of each connection
+    // enter the queue: those are the ones that must arrive.
+    let queued = created ? (limit == null ? marked : verify_rule_packets("rule_mark_queued")) : null;
     let after_q = queue_entry(plan.owner.queue), after_c = queue_rule_counter(plan.owner);
     for (let i = 0; created && i < VERIFY_SETTLE && verify_sockets(ip) > 0; i++) system("sleep 1");
     let removed = remove_verify_table();
@@ -602,6 +629,8 @@ function marked_traffic(plan, owner, checks, result) {
         stability: select_module.stability(successes, length(probes)),
         network_unavailable: network_unavailable(probes, successes),
         marked_packets: marked,
+        queue_limit: limit,
+        queued_marked_packets: queued,
         queue_packets: before_q && after_q ? after_q.id_sequence - before_q.id_sequence : null,
         queue_rule_packets: before_c != null && after_c != null ? after_c - before_c : null
     };
@@ -609,10 +638,13 @@ function marked_traffic(plan, owner, checks, result) {
     check(checks, "verify_path_created", created);
     check(checks, "traffic_transport", t.stability == "stable", sprintf("%d/%d", successes, length(probes)));
     // Every probe connection sends at least one packet with the rule mark,
-    // and every marked packet enters the rule's production queue.
+    // and every marked packet enters the rule's production queue (with a
+    // limited queue rule: every marked packet within the limit, at least the
+    // SYN of each connection).
     check(checks, "traffic_rule_mark", marked != null && marked >= VERIFY_PROBES, as_string(marked) + " marked packets");
-    check(checks, "traffic_dpi_queue", marked != null && t.queue_packets != null && t.queue_packets >= marked &&
-        t.queue_rule_packets != null && t.queue_rule_packets >= marked,
+    check(checks, "traffic_dpi_queue", marked != null && queued != null && queued >= VERIFY_PROBES && queued <= marked &&
+        t.queue_packets != null && t.queue_packets >= queued &&
+        t.queue_rule_packets != null && t.queue_rule_packets >= queued,
         sprintf("queue %s, rule %s packets", as_string(t.queue_packets), as_string(t.queue_rule_packets)));
     check(checks, "verify_path_removed", removed);
     for (let c in checks) if (!c.ok) result.ok = false;

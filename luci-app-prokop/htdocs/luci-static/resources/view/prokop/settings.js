@@ -1087,6 +1087,20 @@ function createSettingsContent(sections, capabilities) {
   o.default = "0";
   o.rmempty = false;
 
+  // DPI rules (zapret, zapret2): nfqws gets only the first packets of a
+  // connection (nft/apply.uc, providers/nfqueue/queue_limit.uc), as many as
+  // the rule's strategy needs; off by default.
+  o = sections.network.option(
+    form.Flag,
+    "nfqws_first_packets",
+    _("Send only the first packets of a connection to nfqws"),
+    _(
+      "Saves router CPU in Zapret and Zapret2 rules: nfqws gets only the first packets of each connection, where the bypass happens, and the rest go out directly. The number of packets is chosen for each rule from its strategy; if a strategy may need later packets, its rule keeps sending all of them. Plain HTTP (port 80) stays fully processed. Turn it off if a site stops opening.",
+    ),
+  );
+  o.default = "0";
+  o.rmempty = false;
+
   // Monitoring > Devices: nft counters per LAN address
   // (diagnostics/traffic.uc), a table of their own that only counts.
   o = sections.network.option(

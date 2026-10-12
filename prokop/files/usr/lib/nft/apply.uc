@@ -12,6 +12,7 @@ let connections = require("config.connections");
 let routing_rulesets = require("routing.rulesets");
 let runtime_constants = require("singbox.constants");
 let provider_marks = require("providers.marks");
+let queue_limit = require("providers.nfqueue.queue_limit");
 let legacy = require("core.legacy_forkop");
 const CONFIG_NAME = getenv("PROKOP_CONFIG_NAME") || "prokop";
 const DNS_SOURCE_SET = "prokop_dns_sources";
@@ -1055,7 +1056,32 @@ function nft_create_runtime_output_rules(table, localv4_set, common_set, port_se
     );
 }
 
-function nft_create_provider_output_rules_from_sections(sections, table, action, provider_bin, route_mark_base, queue_base, desync_mark, desync_mark_postnat) {
+// settings.nfqws_first_packets (providers/nfqueue/queue_limit.uc), off by default.
+function nft_first_packets_enabled(settings) {
+    return queue_limit.enabled_value(option(settings, "nfqws_first_packets", "0"));
+}
+
+// The queue rules of one provider rule: TCP and UDP, each limited to the
+// first packets of a connection when settings.nfqws_first_packets is on and
+// the strategy bounds them (providers/nfqueue/queue_limit.uc), unlimited
+// otherwise. The limited TCP rule comes first, so it is the one the
+// autotune verification reads (autotune/apply.uc queue_rule_counter); the
+// HTTP keep-alive ports follow it unlimited.
+function nft_provider_queue_rules(table, mark_match, queue_number, action, section, first_packets) {
+    let limits = first_packets ? queue_limit.section_limits(action, section) : { tcp: null, udp: null, keepalive_tcp_ports: [] };
+    let queue = [ "counter", "queue", "num", queue_number, "bypass" ];
+    for (let proto in [ "tcp", "udp" ]) {
+        let n = limits[proto];
+        if (!nft_add_rule(table, "mangle_output", [ ...mark_match, "meta", "l4proto", proto, ...(n == null ? [] : queue_limit.match_words(n)), ...queue ]))
+            return false;
+        if (proto == "tcp" && n != null && length(limits.keepalive_tcp_ports) > 0 &&
+            !nft_add_rule(table, "mangle_output", [ ...mark_match, "tcp", "dport", "{ " + join(", ", limits.keepalive_tcp_ports) + " }", ...queue ]))
+            return false;
+    }
+    return true;
+}
+
+function nft_create_provider_output_rules_from_sections(sections, table, action, provider_bin, route_mark_base, queue_base, desync_mark, desync_mark_postnat, first_packets) {
     if (!file_executable(provider_bin))
         return true;
 
@@ -1080,9 +1106,7 @@ function nft_create_provider_output_rules_from_sections(sections, table, action,
             added = true;
         }
 
-        let mark_match = nft_prokop_mark_match_args(mark_hex);
-        if (!nft_add_rule(table, "mangle_output", [ ...mark_match, "meta", "l4proto", "tcp", "counter", "queue", "num", queue_number, "bypass" ]) ||
-            !nft_add_rule(table, "mangle_output", [ ...mark_match, "meta", "l4proto", "udp", "counter", "queue", "num", queue_number, "bypass" ]))
+        if (!nft_provider_queue_rules(table, nft_prokop_mark_match_args(mark_hex), queue_number, action, section, first_packets))
             return false;
     }
 
@@ -1957,7 +1981,7 @@ function signature_hash(body) {
     return length(hash_line) >= 32 ? substr(hash_line, 0, 32) : "";
 }
 
-function nft_rule_signature_body(body, section) {
+function nft_rule_signature_body(body, section, first_packets) {
     let section_name = as_string(section[".name"]);
 
     if (section_name == "" || !bool_option(section, "enabled", true))
@@ -1965,6 +1989,8 @@ function nft_rule_signature_body(body, section) {
 
     let action = option(section, "action", "");
     body = signature_add_value(body, "rule." + section_name + ".action", action);
+    if (first_packets && queue_limit.kind_of(action) != null)
+        body = signature_add_value(body, "rule." + section_name + ".queue_limits", queue_limit.describe(queue_limit.section_limits(action, section)));
     if (action == "dns") {
         body = signature_add_value(body, "rule." + section_name + ".source_ip_cidr", section_rule_condition_csv(section, "source_ip_cidr", "subnets"));
         body = signature_add_device_macs(body, "rule." + section_name, section);
@@ -2010,9 +2036,13 @@ function nft_runtime_signature_from_settings_and_sections(settings, sections) {
     body = signature_add_value(body, "settings.exclude_ntp", bool_option(settings, "exclude_ntp", false) ? "1" : "0");
     body = signature_add_value(body, "settings.intercept_client_dns", connections.client_dns_intercept_enabled(settings, sections) ? "1" : "0");
     body = signature_add_value(body, "settings.intercept_client_dns_exclude", client_dns_intercept_exclusions_value(settings));
+    // As service/state.uc nft_runtime_signature_body: absent while off.
+    let first_packets = nft_first_packets_enabled(settings);
+    if (first_packets)
+        body = signature_add_value(body, "settings.nfqws_first_packets", "1");
 
     for (let section in sections)
-        body = nft_rule_signature_body(body, object_or_empty(section));
+        body = nft_rule_signature_body(body, object_or_empty(section), first_packets);
 
     return signature_hash(body);
 }
@@ -2061,7 +2091,8 @@ function nft_create_provider_output_rules_from_uci(table, action, provider_bin, 
         route_mark_base,
         queue_base,
         desync_mark,
-        desync_mark_postnat
+        desync_mark_postnat,
+        nft_first_packets_enabled(uci_settings())
     );
 }
 
@@ -3165,7 +3196,8 @@ else if (mode == "nft-create-runtime-output-rules")
 else if (mode == "nft-create-provider-output-rules-from-uci")
     exit(nft_create_provider_output_rules_from_uci(ARGV[1], ARGV[2], ARGV[3], ARGV[4], ARGV[5], ARGV[6], ARGV[7]) ? 0 : 1);
 else if (mode == "nft-create-provider-output-rules-fixture")
-    exit(nft_create_provider_output_rules_from_sections(fixture_section_list(object_or_empty(common_read_json_file(ARGV[1])), "section"), ARGV[2], ARGV[3], ARGV[4], ARGV[5], ARGV[6], ARGV[7], ARGV[8]) ? 0 : 1);
+    exit(nft_create_provider_output_rules_from_sections(fixture_section_list(object_or_empty(common_read_json_file(ARGV[1])), "section"), ARGV[2], ARGV[3], ARGV[4], ARGV[5], ARGV[6], ARGV[7], ARGV[8],
+        nft_first_packets_enabled(object_or_empty(object_or_empty(common_read_json_file(ARGV[1])).settings))) ? 0 : 1);
 else if (mode == "nft-add-section-priority-rules-fixture")
     exit(nft_add_section_priority_rules_from_sections(fixture_section_list(object_or_empty(common_read_json_file(ARGV[1])), "section"), ARGV[2], ARGV[3], ARGV[4], ARGV[5], ARGV[6], ARGV[7], ARGV[8]) ? 0 : 1);
 else if (mode == "nft-create-full-runtime-from-uci")
