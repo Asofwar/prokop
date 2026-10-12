@@ -215,6 +215,10 @@ if (mode == "start-managed-sing-box-runtime") {
     }
     exit(0);
 }
+// The subscription update waits for the started sing-box to be ready
+// before its workers; a stop request ends that wait (service/state.uc).
+if (mode == "wait-single-ready-sing-box-runtime")
+    exit(trim(fs.readfile(getenv("SING_BOX_STATE")) ?? "") == "running" && fs.stat(getenv("STOP_MARKER")) == null ? 0 : 1);
 if (mode == "prokop-running" || mode == "prokop-stably-running")
     exit(trim(fs.readfile(getenv("SING_BOX_STATE")) ?? "") == "running" && fs.stat(getenv("NFT_TABLE_FILE")) != null ? 0 : 1);
 if (mode == "sing-box-process-conflict")
