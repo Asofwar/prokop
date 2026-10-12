@@ -340,7 +340,10 @@ chmod 0755 "$WORK_DIR/wait-bin/ubus"
 wait_ready() {
   PATH="$WORK_DIR/wait-bin:$PATH" PROKOP_RUNTIME_STATE_DIR="$WORK_DIR/wait-run" \
     PROKOP_STOP_REQUESTED_FILE="$WORK_DIR/wait-run/stop.requested" \
-    ucode -L "$REAL_LIB" "$STATE_UC" wait-single-ready-sing-box-runtime "$1" >/dev/null 2>&1
+    ucode -L "$REAL_LIB" "$STATE_UC" wait-single-ready-sing-box-runtime "$1" >"$WORK_DIR/wait.out" 2>&1
+  local rc=$?
+  ! grep -q 'error' "$WORK_DIR/wait.out" || fail "the readiness wait failed to run: $(cat "$WORK_DIR/wait.out")"
+  return "$rc"
 }
 started="$(date +%s)"
 if wait_ready 1; then

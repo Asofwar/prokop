@@ -1306,6 +1306,21 @@ function single_ready_sing_box_runtime() {
         sing_box_runtime_ports_ready() && sing_box_clash_api_ready();
 }
 
+function prokop_running(rt_table, nft_table, mark) {
+    return single_ready_sing_box_runtime() &&
+        prokop_runtime_network_configured(rt_table, nft_table, mark);
+}
+
+function prokop_stably_running(rt_table, nft_table, mark, min_age) {
+    return sing_box_current_owned_service_runtime() && sing_box_service_stable(min_age) &&
+        sing_box_runtime_ports_ready() && sing_box_clash_api_ready() &&
+        prokop_runtime_network_configured(rt_table, nft_table, mark);
+}
+
+function stop_requested() {
+    return fs.stat(STOP_REQUESTED_FILE) != null;
+}
+
 // A started sing-box is ready once it is the sole owned procd process and
 // its DNS and TPROXY listeners and the Clash API answer. Work that starts
 // sing-box under reload.lock (a subscription update) starts its workers
@@ -1322,21 +1337,6 @@ function wait_single_ready_sing_box_runtime(timeout) {
         command_success_from_args([ "sleep", "1" ]);
         timeout--;
     }
-}
-
-function prokop_running(rt_table, nft_table, mark) {
-    return single_ready_sing_box_runtime() &&
-        prokop_runtime_network_configured(rt_table, nft_table, mark);
-}
-
-function prokop_stably_running(rt_table, nft_table, mark, min_age) {
-    return sing_box_current_owned_service_runtime() && sing_box_service_stable(min_age) &&
-        sing_box_runtime_ports_ready() && sing_box_clash_api_ready() &&
-        prokop_runtime_network_configured(rt_table, nft_table, mark);
-}
-
-function stop_requested() {
-    return fs.stat(STOP_REQUESTED_FILE) != null;
 }
 
 // Everything the UI state poll needs from this module in one process: the
