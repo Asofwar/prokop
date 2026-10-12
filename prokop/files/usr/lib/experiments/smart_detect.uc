@@ -8,6 +8,8 @@ const LIB = getenv("PROKOP_LIB") || "/usr/lib/prokop";
 const DIR = getenv("PROKOP_SMART_DETECT_DIR") || "/var/run/prokop/smart-detect";
 const CONFIG = getenv("SB_CONFIG") || "/etc/sing-box/config.json";
 const BIN = getenv("SB_BIN") || "/usr/bin/sing-box";
+const PROC = getenv("PROKOP_SMART_DETECT_PROC") || "/proc";
+const PORTS = { "11EE": 4590, "11EF": 4591 };
 function domain(host) {
     if (length(host) > 253 || match(host, /^[a-z0-9.-]+$/) == null || ip.valid_ip(host)) return false;
     let labels = split(host, ".");
@@ -51,9 +53,44 @@ function probe_config(source, target, resolver) {
                 { inbound: "probe-proxy", action: "route", outbound: target } ] }
     };
 }
-function ports_free() {
-    let text = c.capture([ "ss", "-H", "-lnt" ]);
-    return text.code == 0 && match(text.output, /:459[01][ \t]/) == null;
+// TCP listeners on the probe ports from /proc/net/tcp{,6}: `ss` is not part
+// of a stock OpenWrt (iproute2 ships it separately), and a missing tool must
+// not read as busy ports. null when the socket table cannot be read.
+function probe_listeners() {
+    let table = fs.readfile(PROC + "/net/tcp");
+    if (table == null) return null;
+    let found = [];
+    for (let file in [ "tcp", "tcp6" ]) {
+        let text = file == "tcp" ? table : fs.readfile(PROC + "/net/" + file);
+        for (let line in split(c.value(text), "\n")) {
+            let f = split(trim(line), /[ \t]+/);
+            if (length(f) < 10 || f[3] != "0A") continue;
+            let colon = rindex(f[1], ":");
+            let port = colon < 0 ? null : PORTS[uc(substr(f[1], colon + 1))];
+            if (port == null) continue;
+            let address = uc(substr(f[1], 0, colon));
+            // 127.0.0.1 in host byte order of either endianness.
+            push(found, { port, inode: f[9], loopback: address == "0100007F" || address == "7F000001" });
+        }
+    }
+    return found;
+}
+function ports_free(listeners) {
+    return listeners != null && length(listeners) == 0;
+}
+// Both probe ports listen on 127.0.0.1 through sockets of this very process.
+function ports_owned(listeners, pid) {
+    let inodes = {};
+    for (let link in fs.glob(PROC + "/" + pid + "/fd/*")) {
+        let m = match(c.value(fs.readlink(link)), /^socket:\[([0-9]+)\]$/);
+        if (m != null) inodes[m[1]] = true;
+    }
+    let owned = {};
+    for (let l in listeners || []) {
+        if (!l.loopback || !inodes[l.inode]) return false;
+        owned[l.port] = true;
+    }
+    return owned[4590] === true && owned[4591] === true;
 }
 function probe(host, port) {
     return c.capture([ "curl", "--silent", "--output", "/dev/null", "--noproxy", "", "--proxy", "socks5h://127.0.0.1:" + port,
@@ -78,7 +115,9 @@ function run(host, target) {
     let args = [ BIN, "run", "-c", DIR + "/probe.json" ];
     let pidfile = DIR + "/probe.pid";
     function work() {
-        if (!ports_free()) return c.fail("probe_ports_unavailable");
+        let before = probe_listeners();
+        if (before == null) return c.fail("probe_start_failed");
+        if (!ports_free(before)) return c.fail("probe_ports_unavailable");
         let source = c.read(CONFIG, null);
         if (source == null) return c.fail("runtime_config_unavailable");
         let resolver = uci.get("prokop.settings.bootstrap_dns_server") || "77.88.8.8";
@@ -95,9 +134,7 @@ function run(host, target) {
         let ready = false;
         for (let attempt = 0; attempt < 20; attempt++) {
             if (identity.matches(pidfile, BIN, args, true, true) == "") break;
-            let listeners = c.capture([ "ss", "-H", "-lntp" ]);
-            let owned = filter(split(listeners.output, "\n"), (line) => index(line, "pid=" + pid + ",") >= 0);
-            ready = length(filter(owned, (line) => match(line, /127\.0\.0\.1:459[01][ \t]/) != null)) == 2;
+            ready = ports_owned(probe_listeners(), pid);
             if (ready) break;
             system("sleep 0.1");
         }
@@ -130,5 +167,9 @@ let mode = c.value(ARGV[0]);
 if (mode == "status") c.reply({ success: true, recommendations: values(c.read(DIR + "/results.json", {})), candidates: candidates() });
 if (mode == "run") c.reply(run(c.value(ARGV[1]), c.value(ARGV[2])));
 if (mode == "fixture") c.reply({ valid: domain(c.value(ARGV[1])), verdict: verdict(int(ARGV[2]), int(ARGV[3])) });
+if (mode == "fixture-ports") {
+    let listeners = probe_listeners();
+    c.reply({ readable: listeners != null, free: ports_free(listeners), owned: ports_owned(listeners, c.value(ARGV[1])) });
+}
 if (mode == "fixture-config") c.reply(probe_config(c.read(ARGV[1], {}), c.value(ARGV[2]), "77.88.8.8") || c.fail("missing_target"));
 c.reply(c.fail("invalid_action"));

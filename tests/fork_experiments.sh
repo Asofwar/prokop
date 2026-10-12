@@ -75,4 +75,22 @@ const fs=require('fs'),assert=require('node:assert/strict'); const saved=JSON.pa
 assert.equal(saved.success,true);assert.deepEqual(JSON.parse(fs.readFileSync(process.argv[3])).profiles,[{name:'Office',snapshot:saved.snapshot}]);
 assert.equal(fs.statSync(process.argv[4]+'/'+saved.snapshot+'.json').mode&0o777,0o600);
 NODE
+# Smart Detect reads the probe ports from /proc/net/tcp{,6}: no `ss` needed,
+# a TIME_WAIT leftover is no listener, and readiness needs both listeners on
+# 127.0.0.1 owned by the probe process itself.
+PROC="$WORK/proc"
+mkdir -p "$PROC/net" "$PROC/4242/fd"
+ln -s 'socket:[111]' "$PROC/4242/fd/3"; ln -s 'socket:[112]' "$PROC/4242/fd/4"; ln -s /dev/null "$PROC/4242/fd/0"
+TCP_HEAD='  sl  local_address rem_address   st tx_queue rx_queue tr tm->when retrnsmt   uid  timeout inode'
+ports() { PROKOP_SMART_DETECT_PROC="$PROC" ucode -L "$LIB" "$LIB/experiments/smart_detect.uc" fixture-ports 4242 | tr -d '\n '; }
+expect_ports() { local got; got="$(ports)"; [[ "$got" == "$1" ]] || { printf 'smart detect ports: want %s, got %s (%s)\n' "$1" "$got" "$2" >&2; exit 1; }; }
+printf '%s\n   0: 0100007F:11EE 0100007F:A000 06 00000000:00000000 03:00000123 00000000     0        0 0 3 0000000000000000\n   1: 0100007F:0035 00000000:0000 0A 00000000:00000000 00:00000000 00000000     0        0 99 1 0000000000000000 100 0 0 10 0\n' "$TCP_HEAD" >"$PROC/net/tcp"
+printf '%s\n' "$TCP_HEAD" >"$PROC/net/tcp6"
+expect_ports '{"readable":true,"free":true,"owned":false}' 'TIME_WAIT and other listeners do not hold the probe ports'
+printf '%s\n   0: 0100007F:11EE 00000000:0000 0A 00000000:00000000 00:00000000 00000000     0        0 111 1 0000000000000000 100 0 0 10 0\n   1: 0100007F:11EF 00000000:0000 0A 00000000:00000000 00:00000000 00000000     0        0 112 1 0000000000000000 100 0 0 10 0\n' "$TCP_HEAD" >"$PROC/net/tcp"
+expect_ports '{"readable":true,"free":false,"owned":true}' 'both listeners belong to the probe'
+printf '%s\n   0: 00000000000000000000000000000000:11EF 00000000000000000000000000000000:0000 0A 00000000:00000000 00:00000000 00000000     0        0 555 1 0000000000000000 100 0 0 10 0\n' "$TCP_HEAD" >"$PROC/net/tcp6"
+expect_ports '{"readable":true,"free":false,"owned":false}' 'a foreign [::]:4591 listener is not the probe'
+rm "$PROC/net/tcp"
+expect_ports '{"readable":false,"free":false,"owned":false}' 'an unreadable socket table fails closed'
 printf 'fork experiments contracts passed\n'
