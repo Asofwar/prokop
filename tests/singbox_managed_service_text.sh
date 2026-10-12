@@ -99,7 +99,7 @@ for writer in "$@"; do
       ucode -L "$LIB" "$LIB/components/action.uc" install-managed-sing-box-service-fixture
       ;;
     requirements)
-      # Fails later on the missing coreutils-base64; the script is
+      # May fail later on another missing requirement; the script is
       # installed before that.
       PROKOP_UCI_STATE_FILE="$WORK/validator-uci.state" ucode -L "$LIB" "$LIB/config/validator.uc" check-requirements || true
       ;;
