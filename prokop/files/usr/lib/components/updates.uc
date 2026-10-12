@@ -4757,7 +4757,14 @@ function subscription_restore_previous_runtime(backup_path, transition_timeout) 
 
     if (subscription_stop_requested())
         return true;
-    return service_state_success([ "start-managed-sing-box-runtime", transition_timeout ]);
+    if (!service_state_success([ "start-managed-sing-box-runtime", transition_timeout ]))
+        return false;
+    // The restored runtime is what ran before; its workers still wait for it
+    // to be ready, and come back even when it is slow to answer.
+    if (!subscription_stop_requested() &&
+        !service_state_success([ "wait-single-ready-sing-box-runtime", transition_timeout ]))
+        log_message("The restored sing-box runtime is not ready yet; starting its workers anyway", "warn");
+    return true;
 }
 
 function subscription_start_auxiliary_runtimes() {
@@ -4858,6 +4865,23 @@ function subscription_update_common_locked(force, target_section, target_source_
         transition_timeout
     ])) {
         log_message("Failed to start sing-box after subscription update; restoring the previous runtime", "error");
+        let restored = subscription_restore_previous_runtime(backup_config_path, transition_timeout);
+        subscription_discard_config_stage(staged_config_path, backup_config_path);
+        if (restored)
+            subscription_start_auxiliary_runtimes();
+        else
+            log_message("Subscription runtime update rollback failed; sing-box remains stopped", "fatal");
+        return false;
+    }
+    // DNS failover and Priority probe through sing-box: start them once its
+    // listeners and the Clash API answer, not as soon as procd has a process.
+    if (!service_state_success([ "wait-single-ready-sing-box-runtime", transition_timeout ])) {
+        if (subscription_stop_requested()) {
+            subscription_discard_config_stage(staged_config_path, backup_config_path);
+            log_message("Prokop is stopping; the updated subscriptions were saved and the workers stay stopped", "info");
+            return true;
+        }
+        log_message("sing-box did not become ready after subscription update; restoring the previous runtime", "error");
         let restored = subscription_restore_previous_runtime(backup_config_path, transition_timeout);
         subscription_discard_config_stage(staged_config_path, backup_config_path);
         if (restored)
