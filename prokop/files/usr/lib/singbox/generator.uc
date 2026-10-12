@@ -510,6 +510,7 @@ function base_config(settings, service_address, runtime_context) {
         {
             action: "route",
             server: runtime_constants.FAKEIP_DNS_SERVER_TAG,
+            query_type: [ "A", "AAAA" ],
             rewrite_ttl,
             domain: [ runtime_constants.FAKEIP_TEST_DOMAIN, runtime_constants.CHECK_PROXY_IP_DOMAIN ]
         }
@@ -2740,8 +2741,39 @@ function add_domain_array(rule, key, values) {
         rule[key] = values;
 }
 
+// The FakeIP server only synthesises addresses: sing-box answers any other
+// record type with an error the client sees as SERVFAIL. A rule that sends
+// queries to it takes A and AAAA only, so TXT, MX, SRV and the rest of the
+// same domain fall through to the following rules and a real resolver.
+function limit_fakeip_rule_to_addresses(rule) {
+    if (type(rule) != "object" || rule.server != runtime_constants.FAKEIP_DNS_SERVER_TAG)
+        return rule;
+    let address_types = [ "A", "AAAA" ];
+    if (rule.type == "logical" && rule.mode == "and") {
+        rule.rules = [ ...rule.rules, { query_type: address_types } ];
+        return rule;
+    }
+    if (rule.type == "logical") {
+        // Any other logical mode: the whole rule becomes one condition.
+        let condition = {};
+        let result = {};
+        for (let key, value in rule) {
+            if (key == "action" || key == "server" || key == "rewrite_ttl" || key == "strategy")
+                result[key] = value;
+            else
+                condition[key] = value;
+        }
+        result.type = "logical";
+        result.mode = "and";
+        result.rules = [ condition, { query_type: address_types } ];
+        return result;
+    }
+    rule.query_type = address_types;
+    return rule;
+}
+
 function push_dns_matcher_rule(config, rule) {
-    push(config.dns.rules, rule);
+    push(config.dns.rules, limit_fakeip_rule_to_addresses(rule));
 }
 
 function section_dns_server(section) {
