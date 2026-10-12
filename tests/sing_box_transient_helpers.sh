@@ -103,6 +103,7 @@ chmod +x "$WORK_DIR/bin/"*
 mkdir -p "$WORK_DIR/boot-bin" "$WORK_DIR/doubles"
 cp "$(command -v bash)" "$WORK_DIR/boot-bin/sing-box"
 mkfifo "$WORK_DIR/doubles/block"
+# shellcheck disable=SC2016 # the script's own $2
 printf 'case "$2" in *transient.json) sleep 1.5; exit 0 ;; esac\nread -r _ <"%s"\n' "$WORK_DIR/doubles/block" \
   >"$WORK_DIR/doubles/run"
 for command in check version rule-set; do
