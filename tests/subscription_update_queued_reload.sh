@@ -80,6 +80,7 @@ if (mode == "acquire-runtime-dir-lock" ||
     mode == "release-runtime-dir-lock" ||
     mode == "stop-managed-sing-box-runtime" ||
     mode == "start-managed-sing-box-runtime" ||
+    mode == "wait-single-ready-sing-box-runtime" ||
     mode == "run-pending-reload-if-requested" ||
     mode == "runtime-apply-allowed")
     exit(0);

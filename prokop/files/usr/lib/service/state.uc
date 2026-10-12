@@ -1207,6 +1207,24 @@ function single_ready_sing_box_runtime() {
         sing_box_runtime_ports_ready() && sing_box_clash_api_ready();
 }
 
+// A started sing-box is ready once it is the sole owned procd process and
+// its DNS and TPROXY listeners and the Clash API answer. Work that starts
+// sing-box under reload.lock (a subscription update) starts its workers
+// only after that; a stop request ends the wait at once.
+function wait_single_ready_sing_box_runtime(timeout) {
+    timeout = int(timeout || 15);
+    while (true) {
+        if (stop_requested())
+            return false;
+        if (single_ready_sing_box_runtime())
+            return true;
+        if (timeout <= 0)
+            return false;
+        command_success_from_args([ "sleep", "1" ]);
+        timeout--;
+    }
+}
+
 function prokop_running(rt_table, nft_table, mark) {
     return single_ready_sing_box_runtime() &&
         prokop_runtime_network_configured(rt_table, nft_table, mark);
@@ -2460,6 +2478,8 @@ else if (mode == "controlled-replace-managed-sing-box-runtime")
     exit(controlled_replace_managed_sing_box_runtime(ARGV[1]) ? 0 : 1);
 else if (mode == "single-ready-sing-box-runtime")
     exit(single_ready_sing_box_runtime() ? 0 : 1);
+else if (mode == "wait-single-ready-sing-box-runtime")
+    exit(wait_single_ready_sing_box_runtime(ARGV[1]) ? 0 : 1);
 else if (mode == "clear-reload-state")
     clear_reload_state(ARGV[1], ARGV[2]);
 else if (mode == "remove-file")
