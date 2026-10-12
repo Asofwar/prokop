@@ -42,6 +42,8 @@ let autotune_lock = require("autotune.lock");
 let blocktype = require("autotune.blocktype");
 let clock_module = require("core.clock");
 let routing = require("routing.resolve");
+let queue_limit = require("providers.nfqueue.queue_limit");
+let uci_core = require("core.uci");
 
 const LIB_DIR = getenv("PROKOP_LIB") || "/usr/lib/prokop";
 const STATE_DIR = getenv("PROKOP_AUTOTUNE_STATE_DIR") || "/var/run/prokop/autotune";
@@ -640,9 +642,22 @@ function table_target() {
 // A probe rule: a candidate queue, direct (accept with the probe mark) or
 // released (accept, after the candidates stopped).
 // sport: the source ports of the rule ([first, last]), all of them when null.
-function probe_rule_spec(queue, comment, sport) {
-    return queue != null ? { comment: comment || "probe", verdict: "queue", queue, sport }
-        : { comment: comment || "probe", verdict: "accept", queue: null, sport };
+// packets: the candidate's queue takes only the first packets of a
+// connection, as production would (settings.nfqws_first_packets); null for
+// all of them.
+function probe_rule_spec(queue, comment, sport, packets) {
+    return queue != null ? { comment: comment || "probe", verdict: "queue", queue, sport, packets: packets != null ? int(packets) : null }
+        : { comment: comment || "probe", verdict: "accept", queue: null, sport, packets: null };
+}
+
+// N of the TCP queue rule production writes for a candidate's strategy
+// (nft/apply.uc nft_provider_queue_rules, providers/nfqueue/queue_limit.uc):
+// the probe measures what production runs. null: unlimited.
+function candidate_packets(opt, provider) {
+    let setting = uci_core.get((constants.PROKOP_CONFIG_NAME || "prokop") + ".settings.nfqws_first_packets");
+    if (!queue_limit.enabled_value(setting)) return null;
+    let kind = queue_limit.kind_of(provider || "zapret");
+    return kind == null ? null : queue_limit.limits(kind, opt).tcp;
 }
 
 // The fixed source-port slices of a tuning run: the ports split evenly in
@@ -684,9 +699,18 @@ function probe_chains(ip, spec, saddr, layout) {
     let tuple = { daddr: ip, dport: 443, sport: [ PORT_FIRST, PORT_LAST ] };
     let injected = DESYNC_MARK_VALUE | PROBE_MARK_VALUE;
     let probe_rules = [];
-    for (let rule in type(spec) == "array" ? spec : [ spec ])
-        push(probe_rules, { comment: rule.comment, tuple: rule.sport ? { ...tuple, sport: rule.sport } : tuple,
-            mark: PROBE_MARK_VALUE, set_mark: null, verdict: rule.verdict, queue: rule.queue });
+    for (let rule in type(spec) == "array" ? spec : [ spec ]) {
+        let rule_tuple = rule.sport ? { ...tuple, sport: rule.sport } : tuple;
+        push(probe_rules, { comment: rule.comment, tuple: rule_tuple,
+            mark: PROBE_MARK_VALUE, set_mark: null, verdict: rule.verdict, queue: rule.queue, packets: rule.packets });
+        // The packets after the limit leave as production lets them leave
+        // (with the probe mark, past the queue), never into "unexpected".
+        if (rule.verdict == "queue" && rule.packets != null) {
+            let colon = index(rule.comment || "", ":");
+            push(probe_rules, { comment: "unqueued" + (colon < 0 ? "" : substr(rule.comment, colon)), tuple: rule_tuple,
+                mark: PROBE_MARK_VALUE, set_mark: null, verdict: "accept", queue: null, packets: null });
+        }
+    }
     let chains = [
         { name: MARK_CHAIN, type: "route", hook: "output", priority: MARK_PRIORITY, rules: [
             // The probe connection: canonical probe mark, accepted so the
@@ -742,6 +766,7 @@ function render_rule(rule) {
         if (rule.reply.own != null) text += " ct original ip saddr " + rule.reply.own;
     }
     if (rule.mark != null) text += sprintf(" meta mark 0x%08x", rule.mark);
+    if (rule.packets != null) text += " " + join(" ", queue_limit.match_words(rule.packets));
     if (TRACE) text += " meta nftrace set 1";
     if (rule.set_mark != null) text += sprintf(" meta mark set 0x%08x", rule.set_mark);
     if (rule.counter_map != null) {
@@ -1216,7 +1241,8 @@ function tune(host, probes, resolver, list, ip, extra) {
             push(entries, { queue: slot.queue, pidfile: slot.pidfile, argv: slot.argv });
         }
         slot.comment = (slot.queue == null ? "direct:" : "probe:") + id;
-        push(rules, probe_rule_spec(slot.queue, slot.comment, slot.sport));
+        push(rules, probe_rule_spec(slot.queue, slot.comment, slot.sport,
+            slot.queue == null ? null : candidate_packets(c.nfqws_opt, c.provider)));
         by_id[id] = slot;
     }
     if (opts.diag) push(rules, probe_rule_spec(null, "direct:" + DIAG_ID, slices[DIAG_ID]));
@@ -1486,7 +1512,8 @@ function run(candidate_id, host, count, resolver, ip, handshake) {
             return "state_write_failed";
         if (debug_file) { fs.writefile(debug_file, ""); fs.chmod(debug_file, 0666); }
         let batch_file = WORKDIR + "/probe.nft";
-        if (fs.writefile(batch_file, batch(target.ip, probe_rule_spec(queue_candidate ? QUEUE : null), target.route.prefsrc)) == null)
+        if (fs.writefile(batch_file, batch(target.ip, probe_rule_spec(queue_candidate ? QUEUE : null, null, null,
+            queue_candidate ? candidate_packets(checked.nfqws_opt, checked.provider) : null), target.route.prefsrc)) == null)
             return "state_write_failed";
         result.teardown = { quiet_before_creation: production_queues_quiet() };
         // Registering hooks while production packets sit in an NFQUEUE could
@@ -1591,9 +1618,12 @@ if (mode == "model") {
     // "tune_rules": the same with a SYN-ACK rule per slice (the fallback).
     let tuning = ARGV[2] == "tune" || ARGV[2] == "tune_rules";
     let layout = ARGV[2] == "tune_rules" ? "rules" : "map";
+    // PROKOP_AUTOTUNE_MODEL_PACKETS: the candidate queue limited to the
+    // first packets of a connection (settings.nfqws_first_packets).
+    let packets = getenv("PROKOP_AUTOTUNE_MODEL_PACKETS") ? int(getenv("PROKOP_AUTOTUNE_MODEL_PACKETS")) : null;
     let spec = ARGV[2] == "direct" ? probe_rule_spec(null) : tuning
-        ? [ probe_rule_spec(null, "direct:direct", tune_slices.direct), probe_rule_spec(QUEUE, "probe:candidate", tune_slices.candidate) ]
-        : probe_rule_spec(QUEUE);
+        ? [ probe_rule_spec(null, "direct:direct", tune_slices.direct), probe_rule_spec(QUEUE, "probe:candidate", tune_slices.candidate, packets) ]
+        : probe_rule_spec(QUEUE, null, null, packets);
     // The router's address: the given one, else a documentation address.
     let saddr = ARGV[3] || "203.0.113.10";
     print(sprintf("%J\n", { probe_mark: PROBE_MARK_VALUE, desync_mark: DESYNC_MARK_VALUE, queue: QUEUE,

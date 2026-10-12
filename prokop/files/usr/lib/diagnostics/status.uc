@@ -180,7 +180,7 @@ let uci_safe_options = {
     include_subnets: true, include_urltest_groups: true, intercept_client_dns: true, interface: true, interfaces: true,
     interrupt_exist_connections: true, label: true, max_nodes: true, list_update_enabled: true, log_level: true,
     mixed_proxy_auth_enabled: true, mixed_proxy_enabled: true, mixed_proxy_port: true,
-    name: true, node_prefix: true, notify_enabled: true, notify_on_node: true, notify_on_rollback: true,
+    name: true, nfqws_first_packets: true, node_prefix: true, notify_enabled: true, notify_on_node: true, notify_on_rollback: true,
     notify_on_subscription: true, notify_subscription_expire_days: true, notify_via_proxy: true,
     notify_via_proxy_section: true, notify_webhook_format: true, order: true, outbound_detour_enabled: true,
     outbound_detour_section: true, output_network_interface: true, payload_check: true, pick_fastest: true,

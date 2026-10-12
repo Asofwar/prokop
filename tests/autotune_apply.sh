@@ -117,15 +117,26 @@ case "$*" in
   "-f -") cat > "$STATE/verify.nft"
     [ -z "${VERIFY_CREATE_FAIL:-}" ] || exit 1
     grep -q '^create table inet ProkopAutotuneVerify$' "$STATE/verify.nft" || exit 1
-    touch "$NFT_STATE/tables/ProkopAutotuneVerify"; echo 0 > "$STATE/verify.counter"; exit 0 ;;
+    touch "$NFT_STATE/tables/ProkopAutotuneVerify"; echo 0 > "$STATE/verify.counter"; echo 0 > "$STATE/verify.queued"; exit 0 ;;
   "delete table inet ProkopAutotuneVerify") rm -f "$NFT_STATE/tables/ProkopAutotuneVerify"; exit 0 ;;
   "-j list table inet ProkopAutotuneVerify")
     [ -e "$NFT_STATE/tables/ProkopAutotuneVerify" ] || exit 1
     read -r p < "$STATE/verify.counter"
-    printf '{"nftables":[{"rule":{"family":"inet","table":"ProkopAutotuneVerify","chain":"premark","handle":2,"comment":"rule_mark","expr":[{"counter":{"packets":%s,"bytes":0}},{"accept":null}]}}]}\n' "$p"; exit 0 ;;
+    # The counter of the packets within the production limit, when the
+    # batch asked for one (PROD_LIMIT).
+    queued=""
+    if grep -q 'comment "rule_mark_queued"' "$STATE/verify.nft"; then
+      read -r q < "$STATE/verify.queued"
+      queued="$(printf '{"rule":{"family":"inet","table":"ProkopAutotuneVerify","chain":"premark","handle":2,"comment":"rule_mark_queued","expr":[{"counter":{"packets":%s,"bytes":0}}]}},' "$q")"
+    fi
+    printf '{"nftables":[%s{"rule":{"family":"inet","table":"ProkopAutotuneVerify","chain":"premark","handle":3,"comment":"rule_mark","expr":[{"counter":{"packets":%s,"bytes":0}},{"accept":null}]}}]}\n' "$queued" "$p"; exit 0 ;;
   "-j list chain inet ProkopTable mangle_output")
     read -r p < "$STATE/prod.counter"
-    printf '{"nftables":[{"rule":{"family":"inet","table":"ProkopTable","chain":"mangle_output","handle":119,"expr":[{"match":{"op":"==","left":{"&":[{"meta":{"key":"mark"}},4278190335]},"right":16777217}},{"match":{"op":"==","left":{"meta":{"key":"l4proto"}},"right":"tcp"}},{"counter":{"packets":%s,"bytes":0}},{"queue":{"num":4000,"flags":["bypass"]}}]}}]}\n' "$p"; exit 0 ;;
+    # PROD_LIMIT: the queue rule takes the first packets of a connection
+    # (settings nfqws_first_packets, nft/apply.uc).
+    limit=""
+    [ -z "${PROD_LIMIT:-}" ] || limit="$(printf '{"match":{"op":"==","left":{"ct":{"key":"packets","dir":"original"}},"right":{"range":[1,%s]}}},' "$PROD_LIMIT")"
+    printf '{"nftables":[{"rule":{"family":"inet","table":"ProkopTable","chain":"mangle_output","handle":119,"expr":[{"match":{"op":"==","left":{"&":[{"meta":{"key":"mark"}},4278190335]},"right":16777217}},{"match":{"op":"==","left":{"meta":{"key":"l4proto"}},"right":"tcp"}},%s{"counter":{"packets":%s,"bytes":0}},{"queue":{"num":4000,"flags":["bypass"]}}]}}]}\n' "$limit" "$p"; exit 0 ;;
 esac
 exit 1
 SH
@@ -168,13 +179,21 @@ fi
 plan="${PROD_PLAN:-success}"; steps=$(tr '|' '\n' <<<"$plan" | wc -l)
 mode="$(tr '|' '\n' <<<"$plan" | sed -n "$(( (n - 1) % steps + 1 ))p")"
 bump="${PROD_QUEUE_BUMP:-6}"
+# A connection of $bump packets; with PROD_LIMIT only the first ones reach the
+# queue (QUEUE_SHORT: one of them does not).
+qbump="$bump"
+[ -z "${PROD_LIMIT:-}" ] || [ "$bump" -le "$PROD_LIMIT" ] || qbump="$PROD_LIMIT"
+inq="$qbump"; [ -z "${QUEUE_SHORT:-}" ] || inq=$((qbump - 1))
 (
   flock 9
-  awk -v n="$bump" '$1 == 4000 { printf " %d %8d %5d %d %5d %5d %5d %8d  %d\n", $1, $2, $3, $4, $5, $6, $7, $8 + n, $9; next } { print }' \
+  awk -v n="$inq" '$1 == 4000 { printf " %d %8d %5d %d %5d %5d %5d %8d  %d\n", $1, $2, $3, $4, $5, $6, $7, $8 + n, $9; next } { print }' \
     "$PROKOP_AUTOTUNE_PROC_QUEUE" > "$PROKOP_AUTOTUNE_PROC_QUEUE.tmp" && mv "$PROKOP_AUTOTUNE_PROC_QUEUE.tmp" "$PROKOP_AUTOTUNE_PROC_QUEUE"
 ) 9>"$PROKOP_AUTOTUNE_PROC_QUEUE.lock"
-read -r p < "$STATE/prod.counter"; echo "$((p + bump))" > "$STATE/prod.counter"
-if [ -n "$marked" ]; then read -r v < "$STATE/verify.counter"; echo "$((v + bump))" > "$STATE/verify.counter"; fi
+read -r p < "$STATE/prod.counter"; echo "$((p + inq))" > "$STATE/prod.counter"
+if [ -n "$marked" ]; then
+  read -r v < "$STATE/verify.counter"; echo "$((v + bump))" > "$STATE/verify.counter"
+  read -r v < "$STATE/verify.queued"; echo "$((v + qbump))" > "$STATE/verify.queued"
+fi
 remote="${PROD_REMOTE:-198.18.0.5}"
 case "$mode" in
   success) echo "0|51000|$remote|404|0.020|0.110|0.150|0.151|900|" ;;
@@ -1597,6 +1616,25 @@ case "$(dpi_args)" in *multisplit*) ;; *) fail "the candidate was not started fo
 [ "$(lkg)" != "$PRE_LKG" ] || fail "the verified candidate of a device-limited rule was not confirmed"
 no_verify_table "applied"
 ok "device-limited rule: applied and verified with marked requests through its production queue"
+
+# The production queue rule takes only the first packets of a connection
+# (settings nfqws_first_packets): the marked packets within the limit are
+# counted by the verification table itself and must all reach the queue.
+reset_apply; scope_dpi_rule; plan_ready; export PROD_LIMIT=4; at apply "$WORK/plan.json"
+json 'a.equal(r.status, "applied", JSON.stringify(r.verification && r.verification.checks)); const t = r.verification.traffic;
+  a.equal(t.queue_limit, 4); a.equal(t.marked_packets, 18); a.equal(t.queued_marked_packets, 12);
+  a.ok(t.queue_packets >= 12 && t.queue_packets < 18); a.equal(t.queue_rule_packets, 12);
+  a.ok(r.verification.checks.find((c) => c.name === "traffic_dpi_queue").ok);' "$WORK/out.json"
+grep -qx 'add rule inet ProkopAutotuneVerify premark ip daddr 93.184.216.34 tcp dport 443 tcp sport 61000-61063 meta mark 0x00000000 ct original packets 1-4 counter comment "rule_mark_queued"' "$STATE/verify.nft" ||
+  fail "the verification does not count the packets within the production limit: $(cat "$STATE/verify.nft")"
+no_verify_table "limited"
+ok "device-limited rule with a limited queue rule: verified against the packets within the limit"
+
+reset_apply; scope_dpi_rule; plan_ready; export QUEUE_SHORT=1; at apply "$WORK/plan.json"; unset QUEUE_SHORT PROD_LIMIT
+json 'a.equal(r.status, "rolled_back"); a.equal(r.verification.checks.find((c) => c.name === "traffic_dpi_queue").ok, false);' "$WORK/out.json"
+[ "$(chash)" = "$PRE_HASH" ] || fail "a limited queue that missed packets did not restore the configuration"
+no_verify_table "limited short"
+ok "device-limited rule with a limited queue rule: a packet within the limit missing from the queue -> rolled back"
 
 # The mark does not reach the queue (the rule lost its queue rule, say): rolled back.
 reset_apply; scope_dpi_rule; plan_ready; export VERIFY_NO_MARK=1; at apply "$WORK/plan.json"; unset VERIFY_NO_MARK

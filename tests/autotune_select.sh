@@ -201,6 +201,23 @@ grep -qxF "add chain inet ProkopAutotuneProbe replies { type filter hook prerout
   fail "reply chain is not a counting filter chain after conntrack"
 ok "fixed port slices: one rule per candidate, no switching, released together"
 
+# settings.nfqws_first_packets: each candidate's slice queues the first
+# packets of a connection, as many as production would for its strategy
+# (zapret 9, zapret2 20); the control's slice is unchanged.
+printf 'prokop.settings=settings\nprokop.settings.nfqws_first_packets=1\n' >"$WORK/first-packets.uci"
+reset_state; CURL_STUB_PLAN="direct=reset,4600=success:120,4601=success:118" PROKOP_UCI_STATE_FILE="$WORK/first-packets.uci" tune 3 192.0.2.53 multisplit,fake
+json 'a.equal(r.status, "selected", JSON.stringify(r).slice(0, 400)); a.equal(r.selected, "multisplit"); a.equal(r.cleanup.status, "clean");' "$WORK/out.json"
+for rule in "tcp sport 61000-61020 meta mark 0x08000000 counter accept comment \"direct:direct\"" \
+  "tcp sport 61021-61041 meta mark 0x08000000 ct original packets 1-9 counter queue num 4600 comment \"probe:multisplit\"" \
+  "tcp sport 61021-61041 meta mark 0x08000000 counter accept comment \"unqueued:multisplit\"" \
+  "tcp sport 61042-61062 meta mark 0x08000000 ct original packets 1-9 counter queue num 4601 comment \"probe:fake\"" \
+  "tcp sport 61042-61062 meta mark 0x08000000 counter accept comment \"unqueued:fake\""; do
+  grep -qxF "add rule inet ProkopAutotuneProbe output $T $rule" "$NFT_STATE/last.nft" || fail "missing limited slice rule: $rule"
+done
+! grep -q 'unqueued:direct' "$NFT_STATE/last.nft" || fail "the control slice must not be limited"
+assert_clean "tune first packets"
+ok "nfqws_first_packets: candidate slices queue the first packets, the rest pass unqueued"
+
 # A control and a candidate whose ClientHello is blackholed after the TCP
 # handshake: curl says "Connection timed out" with time_connect 0, the
 # SYN-ACK counters of their slices say the server answered. That is DPI

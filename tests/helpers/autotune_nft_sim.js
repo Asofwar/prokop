@@ -96,6 +96,12 @@ class Production {
       if (typeof v !== 'number' || typeof mask !== 'number') throw new Error(`unsupported mask ${JSON.stringify(left)}`);
       return (v & mask) >>> 0;
     }
+    if (left.ct) {
+      // Conntrack packet count of the original direction, this packet
+      // included (pkt.ctPackets, 1 = the first packet of the connection).
+      if (left.ct.key === 'packets' && left.ct.dir === 'original') return pkt.ctPackets || 1;
+      return this.fail(left);
+    }
     if (left.concat) {
       const values = left.concat.map((l) => this.value(l, pkt));
       return values.some((v) => v === undefined) ? undefined : values;
@@ -110,6 +116,7 @@ class Production {
       return (this.sets[right.slice(1)] || []).some((e) => elementMatches(value, e));
     }
     if (right && typeof right === 'object') {
+      if (right.range) return typeof value === 'number' && value >= right.range[0] && value <= right.range[1];
       if (right.set) return right.set.some((e) => elementMatches(value, e));
       if (right.prefix) return elementMatches(value, right);
       throw new Error(`unsupported right-hand side ${JSON.stringify(right)}`);
@@ -189,6 +196,8 @@ function runProbeChain(chain, pkt, path) {
   for (const rule of chain.rules) {
     if (!tupleMatches(rule, pkt)) continue;
     if (rule.mark !== null && rule.mark !== pkt.mark) continue;
+    // ct original packets 1-N: the candidate queue takes the first N.
+    if (rule.packets !== undefined && rule.packets !== null && (pkt.ctPackets || 1) > rule.packets) continue;
     if (rule.set_mark !== null) pkt.mark = rule.set_mark >>> 0;
     path.push({ chain: `ProkopAutotuneProbe/${chain.name}`, comment: rule.comment, action: rule.verdict, mark: pkt.mark });
     if (rule.verdict === null) continue;

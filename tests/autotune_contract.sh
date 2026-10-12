@@ -25,6 +25,10 @@ trap 'rm -rf "$WORK"' EXIT
 
 PROKOP_LIB="$LIB" ucode -L "$LIB" "$LIB/autotune/isolation.uc" model 172.217.20.163 > "$WORK/model.json"
 PROKOP_LIB="$LIB" ucode -L "$LIB" "$LIB/autotune/isolation.uc" model 172.217.20.163 direct > "$WORK/model-direct.json"
+# The candidate queue limited to the first 9 packets of a connection
+# (settings.nfqws_first_packets, providers/nfqueue/queue_limit.uc).
+PROKOP_AUTOTUNE_MODEL_PACKETS=9 PROKOP_LIB="$LIB" ucode -L "$LIB" "$LIB/autotune/isolation.uc" model 172.217.20.163 > "$WORK/model-limited.json"
+PROKOP_AUTOTUNE_MODEL_PACKETS=9 PROKOP_LIB="$LIB" ucode -L "$LIB" "$LIB/autotune/isolation.uc" model 172.217.20.163 tune > "$WORK/model-limited-tune.json"
 
 ROOT="$ROOT" LIB="$LIB" WORK="$WORK" node <<'JS'
 const fs = require('fs');
@@ -162,6 +166,48 @@ assertIsolated(FIXTURE, 'P0');
   ok('unexpected tuple packets dropped; flows outside the tuple untouched');
 }
 ok('P0 real ruleset: contract ok, isolated');
+
+// Queue limited to the first packets of a connection (nfqws_first_packets):
+// in the probe table the packets after the limit leave past the candidate
+// like the unlimited direct control, never into "unexpected"; in production
+// the limited queue rules change nothing for the probe.
+{
+  const LIMITED = JSON.parse(fs.readFileSync(path.join(WORK, 'model-limited.json'), 'utf8'));
+  const TUNE = JSON.parse(fs.readFileSync(path.join(WORK, 'model-limited-tune.json'), 'utf8'));
+  assert.deepEqual(LIMITED.chains[1].rules.map((r) => [r.comment, r.mark, r.verdict, r.packets === undefined ? null : r.packets]), [
+    ['reinjected', DESYNC | PROBE, 'return', null], ['reinjected_bare', DESYNC, 'return', null],
+    ['probe', PROBE, 'queue', 9], ['unqueued', PROBE, 'accept', null], ['unexpected', null, 'drop', null]]);
+  assert.ok(LIMITED.batch.includes(' meta mark 0x08000000 ct original packets 1-9 counter queue num 4600 comment "probe"'), LIMITED.batch);
+  assert.ok(TUNE.batch.includes('ct original packets 1-9 counter queue num 4600 comment "probe:candidate"'), TUNE.batch);
+  assert.ok(TUNE.batch.includes('counter accept comment "unqueued:candidate"'), TUNE.batch);
+  assert.ok(!TUNE.batch.includes('unqueued:direct'), 'the direct control has no limit');
+  const limitedProd = clone(FIXTURE).map((x) => {
+    if (!isRule(x, 'mangle_output') || !x.rule.expr.some((e) => e.queue)) return x;
+    const at = x.rule.expr.findIndex((e) => 'counter' in e);
+    x.rule.expr.splice(at, 0, { match: { op: '==', left: { ct: { key: 'packets', dir: 'original' } }, right: { range: [1, 9] } } });
+    return x;
+  });
+  assert.ok(limitedProd.some((x) => isRule(x, 'mangle_output') && x.rule.expr.some((e) => e.match && e.match.left.ct)), 'fixture has queue rules');
+  assert.equal(contract(limitedProd).ok, true, JSON.stringify(contract(limitedProd).violations));
+  for (const listing of [FIXTURE, limitedProd])
+    for (const n of [1, 9, 10, 500]) {
+      const r = outputPath({ model: LIMITED, production: new Production(listing, SETS), ipRules: IPRULES, pkt: { ...packets.probe, ctPackets: n } });
+      assert.equal(r.dropped, null, `packet ${n} dropped`);
+      assert.equal(r.probeQueue, n <= 9 ? 4600 : null, `packet ${n}: candidate queue`);
+      assert.equal(r.markAfterProbe, PROBE); assert.equal(r.routeMark, PROBE); assert.equal(r.finalMark, PROBE);
+      assert.equal(r.productionQueue, null); assert.equal(r.route, 'main');
+      assert.ok(isBypass(r.productionTerminal.rule), `packet ${n}: production bypass`);
+      if (n > 9) assert.ok(r.path.some((p) => p.comment === 'unqueued'), `packet ${n}: unqueued rule`);
+    }
+  // Production traffic of a zapret rule (its route mark) past the limit is
+  // not queued; within it, it is.
+  const zr = rulesOf(limitedProd, 'mangle_output').find((r) => r.expr.some((e) => e.queue));
+  const zmark = zr.expr.find((e) => e.match && e.match.left.meta && e.match.left.meta.key === 'mark').match.right;
+  const prod = new Production(limitedProd, SETS);
+  const run = (n) => prod.runBase(chainOf(limitedProd, 'ProkopTable', 'mangle_output'), { ...base, daddr: '198.51.100.7', sport: 40000, mark: zmark, ctPackets: n }, []);
+  assert.equal(run(9).verdict, 'queue'); assert.equal(run(10).verdict, 'accept');
+  ok('limited candidate queue: first 9 packets queued, the rest leave unqueued through the bypass; contract ok with limited production rules');
+}
 
 // Permutations of everything after the bypass (production rule order is not
 // part of the contract). For each: whether the legacy design / the model

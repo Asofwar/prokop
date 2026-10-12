@@ -196,7 +196,10 @@ case "$*" in
     : > "$S/rules"; handle=5
     while read -r line; do
       echo "$handle $(probe_rule "$line")" >> "$S/rules"; handle=$((handle + 1))
-    done < <(grep ' output .*meta mark 0x08000000 counter .*comment ' "$2")
+    # A candidate queue limited to the first packets of a connection
+    # (nfqws_first_packets) is the probe rule; the accept of its later
+    # packets ("unqueued") counts nothing the run reads.
+    done < <(grep ' output .*meta mark 0x08000000 \(ct original packets [0-9-]* \)\?counter .*comment ' "$2" | grep -v 'comment "unqueued')
     rm -f "$S/counters/"*
     for c in probe_mark reinjected reinjected_bare unexpected; do echo "0 0" > "$S/counters/$c"; done
     while read -r _ comment _; do echo "0 0" > "$S/counters/$comment"; done < "$S/rules"

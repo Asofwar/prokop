@@ -137,6 +137,7 @@ export const UCI_SAFE_OPTIONS = new Set([
   'mixed_proxy_enabled',
   'mixed_proxy_port',
   'name',
+  'nfqws_first_packets',
   'node_prefix',
   'notify_enabled',
   'notify_on_node',

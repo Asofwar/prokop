@@ -172,6 +172,20 @@ grep -qx 'ip -j route get 93.184.216.34 mark 0 ipproto tcp sport 61000 dport 443
 ! grep -q 'bypass' <<<"$batch" || fail "probe queue must fail closed (no bypass)"
 ok "success record, counters, timeline and request hygiene"
 
+# settings.nfqws_first_packets: the candidate queue takes the first packets of
+# a connection, as many as production would queue for its strategy; the rest
+# leave past the candidate like the control's, never into "unexpected".
+printf 'prokop.settings=settings\nprokop.settings.nfqws_first_packets=1\n' >"$WORK/first-packets.uci"
+reset_state; PROKOP_UCI_STATE_FILE="$WORK/first-packets.uci" run_probe multisplit 3
+json 'a.equal(r.status, "completed", r.reason); a.equal(r.counters.unexpected.packets, 0);' "$WORK/out.json"
+expect_line 7 "add rule inet ProkopAutotuneProbe output $T meta mark 0x08000000 ct original packets 1-9 counter queue num 4600 comment \"probe\""
+expect_line 8 "add rule inet ProkopAutotuneProbe output $T meta mark 0x08000000 counter accept comment \"unqueued\""
+expect_line 9 "add rule inet ProkopAutotuneProbe output $T counter drop comment \"unexpected\""
+grep -qxF "replace rule inet ProkopAutotuneProbe output handle 5 $T meta mark 0x08000000 counter accept comment \"released\"" "$NFT_STATE/release.nft" ||
+  fail "the limited candidate queue is not released to the bypass"
+assert_clean "first packets"
+ok "nfqws_first_packets: the probe queue takes the first 9 packets, the rest pass unqueued"
+
 # Control candidate: marked direct path, no nfqws.
 reset_state; run_probe direct 1
 json 'a.equal(r.status, "completed"); a.equal(r.counters.queue, undefined); a.ok(!r.timeline.some((t) => t.step === "T2"));' "$WORK/out.json"

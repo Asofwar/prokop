@@ -13,6 +13,7 @@ let connections = require("config.connections");
 let zapret_validator = require("providers.zapret.validator");
 let zapret2_validator = require("providers.zapret2.validator");
 let byedpi_validator = require("providers.byedpi.validator");
+let queue_limit = require("providers.nfqueue.queue_limit");
 const CONFIG_NAME = getenv("PROKOP_CONFIG_NAME") || "prokop";
 const LIB_DIR = getenv("PROKOP_LIB") || "/usr/lib/prokop";
 const DEFAULT_PENDING_RELOAD_FILE = getenv("PROKOP_PENDING_RELOAD_FILE") || "/var/run/prokop/reload.pending";
@@ -1684,6 +1685,12 @@ function nft_runtime_signature_body(settings, sections) {
     body = signature_add_value(body, "settings.intercept_client_dns", connections.client_dns_intercept_enabled(settings, sections) ? "1" : "0");
     let dns_excluded = connections.client_dns_intercept_exclusions(settings);
     body = signature_add_value(body, "settings.intercept_client_dns_exclude", join(",", [ ...dns_excluded.v4, ...dns_excluded.v6 ]));
+    // The DPI queue rules take the first packets of a connection, as many
+    // as each rule's strategy needs (nft/apply.uc): a strategy change can
+    // change its rules. Absent while off, as before the option existed.
+    let first_packets = queue_limit.enabled_value(option(settings, "nfqws_first_packets", "0"));
+    if (first_packets)
+        body = signature_add_value(body, "settings.nfqws_first_packets", "1");
 
     for (let section in sections) {
         section = object_or_empty(section);
@@ -1693,6 +1700,8 @@ function nft_runtime_signature_body(settings, sections) {
 
         let action = option(section, "action", "");
         body = signature_add_value(body, "rule." + name + ".action", action);
+        if (first_packets && queue_limit.kind_of(action) != null)
+            body = signature_add_value(body, "rule." + name + ".queue_limits", queue_limit.describe(queue_limit.section_limits(action, section)));
         if (action == "dns") {
             body = signature_add_value(body, "rule." + name + ".source_ip_cidr", section_rule_condition_csv(section, "source_ip_cidr", "subnets"));
             body = signature_add_device_macs(body, "rule." + name, section);
