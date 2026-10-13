@@ -269,6 +269,7 @@ grep -Fq "init" "$WORK/events" && fail "installing the running release must not 
 setting() { node -e 'process.stdout.write(String(JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"))[process.argv[2]]))' "$WORK/ts-settings.json" "$1"; }
 [ "$(setting CacheSize)" = 134217728 ] || fail "a fresh install must size the cache to 128 MiB for 1 GiB of RAM: $(cat "$WORK/ts-settings.json")"
 [ "$(setting ResponsiveMode)" = true ] && [ "$(setting PreloadCache)" = 50 ] || fail "a fresh install must apply the recommended settings: $(cat "$WORK/ts-settings.json")"
+[ "$(setting ConnectionsLimit)" = 50 ] || fail "a fresh install must allow 50 connections per torrent, not TorrServer's 25: $(cat "$WORK/ts-settings.json")"
 # UPnP off: TorrServer must not open the router's WAN through miniupnpd (TS-1).
 [ "$(setting DisableUPNP)" = true ] || fail "the recommended settings must turn UPnP off: $(cat "$WORK/ts-settings.json")"
 [ "$(setting EnableBonjour)" = false ] || fail "the recommended settings must turn Bonjour off: $(cat "$WORK/ts-settings.json")"

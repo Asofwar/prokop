@@ -236,7 +236,9 @@ function memtotal_kib() {
 // Settings that suit a router: the RAM cache sized to the router's memory
 // (an eighth of it to the nearest 16 MiB, 32 to 256 MiB), reading ahead and
 // preloading like TorrServer's own recommendations for weak devices, and
-// the default connection count. UPnP is off: TorrServer runs on the router
+// 50 connections per torrent: with TorrServer's default of 25 a torrent of
+// 169 peers was held at 25 of them and ~160 KB/s (80 gave 4.7-8 MB/s on a
+// GL-MT6000); 50 stays modest for routers with 512 MB. UPnP is off: TorrServer runs on the router
 // itself, and must not open the router's WAN to peers through miniupnpd
 // (TS-1). Bonjour is off too: it announces TorrServer on every address of
 // the router, the WAN one included. What is not listed stays as the user
@@ -250,7 +252,7 @@ function recommended_settings() {
         CacheSize: cache_mib * 1024 * 1024,
         ReaderReadAHead: 95,
         PreloadCache: 50,
-        ConnectionsLimit: 25,
+        ConnectionsLimit: 50,
         TorrentDisconnectTimeout: 30,
         ResponsiveMode: true,
         DisableUPNP: true,

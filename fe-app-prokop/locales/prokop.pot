@@ -304,12 +304,12 @@ msgstr ""
 msgid "1–8 domains, spread evenly over the list; a domain without an address is replaced by the next one."
 msgstr ""
 
-#: src/prokop/tabs/updates/initController.ts:931
-msgid "25 connections per torrent, disconnect after 30 seconds"
-msgstr ""
-
 #: src/prokop/tabs/autotune/initController.ts:553
 msgid "3–7 attempts per strategy and target in each check."
+msgstr ""
+
+#: src/prokop/tabs/updates/initController.ts:931
+msgid "50 connections per torrent, disconnect after 30 seconds"
 msgstr ""
 
 #: src/prokop/tabs/autotune/model.ts:531

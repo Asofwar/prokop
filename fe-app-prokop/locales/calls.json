@@ -492,17 +492,17 @@
     ]
   },
   {
-    "call": "25 connections per torrent, disconnect after 30 seconds",
-    "key": "25 connections per torrent, disconnect after 30 seconds",
-    "places": [
-      "src/prokop/tabs/updates/initController.ts:931"
-    ]
-  },
-  {
     "call": "3–7 attempts per strategy and target in each check.",
     "key": "3–7 attempts per strategy and target in each check.",
     "places": [
       "src/prokop/tabs/autotune/initController.ts:553"
+    ]
+  },
+  {
+    "call": "50 connections per torrent, disconnect after 30 seconds",
+    "key": "50 connections per torrent, disconnect after 30 seconds",
+    "places": [
+      "src/prokop/tabs/updates/initController.ts:931"
     ]
   },
   {
