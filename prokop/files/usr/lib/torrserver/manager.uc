@@ -43,10 +43,16 @@ const SETTINGS_JSON = DATA_DIR + "/settings.json";
 const CONFIG_DB = DATA_DIR + "/config.db";
 const CONFIG_DB_READ_MAX = 16 * 1048576;
 // What Go may use beyond TorrServer's cache before it collects garbage
-// harder (GOMEMLIMIT), and the share of the router's memory it may never
-// pass: past it, no limit is set.
-const MEMLIMIT_HEADROOM_MIB = 64;
-const MEMLIMIT_MAX_SHARE = 0.5;
+// harder (GOMEMLIMIT): at least MEMLIMIT_HEADROOM_MIB, or half the cache
+// when that is more, and the share of the router's memory the limit may
+// never pass: past it, no limit is set. TorrServer keeps well over 100 MiB
+// besides its cache (peer buffers, readahead, the Go runtime): measured on
+// a GL-MT6000 with a 128 MiB cache, RSS 244 MiB. A headroom of 64 MiB put
+// the limit (192 MiB) under that working set: Go then collected garbage
+// without a pause, and TorrServer burned 2-3 of the router's 4 cores (CPU
+// x5-6 against a limit of 384 MiB, with the same RSS and speed).
+const MEMLIMIT_HEADROOM_MIB = 192;
+const MEMLIMIT_MAX_SHARE = 0.75;
 
 function text(value) { return value == null ? "" : "" + value; }
 function quote(value) { return "'" + replace(text(value), /'/g, "'\\''") + "'"; }
@@ -278,16 +284,22 @@ function cache_size() {
     return recommended > fallback ? recommended : fallback;
 }
 
-// GOMEMLIMIT for TorrServer, in MiB: its cache and MEMLIMIT_HEADROOM_MIB.
-// A soft limit: Go collects garbage sooner as the heap nears it and never
-// fails an allocation or stops because of it. Not set (0) when the
-// router's memory is unknown or the limit would pass MEMLIMIT_MAX_SHARE of
-// it: below the heap TorrServer needs, it would only burn CPU.
+// GOMEMLIMIT for TorrServer, in MiB: its cache and its headroom (see
+// MEMLIMIT_HEADROOM_MIB). A soft limit: Go collects garbage sooner as the
+// heap nears it and never fails an allocation or stops because of it, but
+// a limit under the heap TorrServer really keeps makes Go collect without
+// end and only burns CPU. So it is not set at all (0) when the router's
+// memory is unknown or the limit would pass MEMLIMIT_MAX_SHARE of it,
+// rather than set lower than that heap.
 function memlimit_mib() {
     let total_mib = int(memtotal_kib() / 1024);
     if (total_mib <= 0)
         return 0;
-    let mib = int((cache_size() + 1048575) / 1048576) + MEMLIMIT_HEADROOM_MIB;
+    let cache_mib = int((cache_size() + 1048575) / 1048576);
+    let headroom = int(cache_mib / 2);
+    if (headroom < MEMLIMIT_HEADROOM_MIB)
+        headroom = MEMLIMIT_HEADROOM_MIB;
+    let mib = cache_mib + headroom;
     return mib <= total_mib * MEMLIMIT_MAX_SHARE ? mib : 0;
 }
 

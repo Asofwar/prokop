@@ -150,19 +150,37 @@ ok 'requests to the API send the password from a private curl config, never on a
 # --- 3. GOMEMLIMIT ------------------------------------------------------------------
 settings
 rm -f "$DATA/settings.json" "$DATA/config.db"
-# 1 GiB: without settings the recommended 128 MiB cache, + 64.
-[ "$(manager memlimit-mib)" = 192 ] || fail "the limit without settings: $(manager memlimit-mib || true)"
+# 1 GiB: without settings the recommended 128 MiB cache, + 192.
+[ "$(manager memlimit-mib)" = 320 ] || fail "the limit without settings: $(manager memlimit-mib || true)"
 printf '{"BitTorr":{"CacheSize":268435456,"TorrentsSavePath":""}}' >"$DATA/settings.json"
-[ "$(manager memlimit-mib)" = 320 ] || fail "the limit must follow settings.json"
+[ "$(manager memlimit-mib)" = 448 ] || fail "the limit must follow settings.json"
 printf '{"BitTorr":{"CacheSize":0}}' >"$DATA/settings.json"
-[ "$(manager memlimit-mib)" = 128 ] || fail "a cache of 0 is TorrServer's default 64 MiB"
+[ "$(manager memlimit-mib)" = 256 ] || fail "a cache of 0 is TorrServer's default 64 MiB"
+# Caches of 32/64/128/256 MiB on routers of 512 MB and 1 GB: never less
+# than 192 MiB above the cache (64 MiB put the limit under TorrServer's
+# heap: endless GC), and none past three quarters of the memory.
+for row in 1006668:32:224 1006668:64:256 1006668:128:320 1006668:256:448 \
+  1006668:1024:0 495616:32:224 495616:64:256 495616:128:320 495616:256:0; do
+  IFS=: read -r kib cache want <<EOF2
+$row
+EOF2
+  printf 'MemTotal:        %s kB\n' "$kib" >"$WORK/meminfo"
+  printf '{"BitTorr":{"CacheSize":%s}}' "$((cache * 1048576))" >"$DATA/settings.json"
+  got="$(manager memlimit-mib 2>/dev/null)" || got=0
+  [ "$got" = "$want" ] || fail "memlimit-mib for $kib kB and a $cache MiB cache: $got, expected $want"
+done
+printf 'MemTotal:        1006668 kB\n' >"$WORK/meminfo"
+# 512 MB without settings: the recommended 64 MiB cache, a limit still set.
 rm -f "$DATA/settings.json"
+printf 'MemTotal:        495616 kB\n' >"$WORK/meminfo"
+[ "$(manager memlimit-mib)" = 256 ] || fail "512 MB must keep a limit: $(manager memlimit-mib || true)"
+printf 'MemTotal:        1006668 kB\n' >"$WORK/meminfo"
 # A raw bbolt config.db: binary pages, the settings as JSON, an older copy.
 printf 'BOLT\0\0\0{"CacheSize":33554432,"PreloadCache":50}\0\0\x01{"CacheSize":100663296}\0' >"$DATA/config.db"
-[ "$(manager memlimit-mib)" = 160 ] || fail "the largest cache in config.db must count: $(manager memlimit-mib || true)"
-# Past half the router's memory (256 MiB): no limit at all.
+[ "$(manager memlimit-mib)" = 288 ] || fail "the largest cache in config.db must count: $(manager memlimit-mib || true)"
+# Past three quarters of the router's memory (256 MiB): no limit at all.
 printf 'MemTotal:        262144 kB\n' >"$WORK/meminfo"
-manager memlimit-mib >/dev/null && fail "a limit past half the memory must not be set"
+manager memlimit-mib >/dev/null && fail "a limit past the router's share must not be set"
 : >"$WORK/meminfo"
 manager memlimit-mib >/dev/null && fail "without the memory size no limit may be set"
 printf 'MemTotal:        1006668 kB\n' >"$WORK/meminfo"

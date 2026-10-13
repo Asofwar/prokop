@@ -155,8 +155,12 @@ start_service() {
 		return 1
 	fi
 	# A soft limit for Go's heap (torrserver/manager.uc memlimit-mib):
-	# TorrServer's cache and some room. Go collects garbage sooner near it
-	# and never stops TorrServer for it. None when it cannot be told.
+	# TorrServer's cache and at least 192 MiB of room. Go collects garbage
+	# sooner near it and never stops TorrServer for it. The room must cover
+	# what TorrServer keeps besides its cache (over 100 MiB): with only
+	# 64 MiB the limit sat under its heap, Go collected without a pause and
+	# TorrServer took 2-3 of the router's cores. None when it cannot be
+	# told, or when it would pass the share of memory it may take.
 	memlimit="$(torrserver_manager memlimit-mib 2>/dev/null)" || memlimit=""
 	case "$memlimit" in ''|*[!0-9]*) memlimit="" ;; esac
 	procd_open_instance torrserver

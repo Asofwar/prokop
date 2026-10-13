@@ -215,15 +215,15 @@ grep -q -- '--httpauth' "$WORK/procd" && fail "turned off, the password must go"
 # --- 5. GOMEMLIMIT: the cache and some room, a soft limit -------------------------
 reset_router
 run_start
-grep -Fxq "env GODEBUG=madvdontneed=1 HOME=$WORK/opt/torrserver/data GOMEMLIMIT=192MiB" "$WORK/procd" ||
-  fail "GOMEMLIMIT must be the recommended cache and 64 MiB: $(grep '^env' "$WORK/procd")"
+grep -Fxq "env GODEBUG=madvdontneed=1 HOME=$WORK/opt/torrserver/data GOMEMLIMIT=320MiB" "$WORK/procd" ||
+  fail "GOMEMLIMIT must be the recommended cache and 192 MiB: $(grep '^env' "$WORK/procd")"
 printf '{"BitTorr":{"CacheSize":268435456}}' >"$WORK/opt/torrserver/data/settings.json"
 run_start
-grep -q 'GOMEMLIMIT=320MiB$' "$WORK/procd" || fail "GOMEMLIMIT must follow TorrServer's cache: $(grep '^env' "$WORK/procd")"
+grep -q 'GOMEMLIMIT=448MiB$' "$WORK/procd" || fail "GOMEMLIMIT must follow TorrServer's cache: $(grep '^env' "$WORK/procd")"
 printf 'MemTotal:        262144 kB\n' >"$WORK/meminfo"
 run_start
 [ "$START_RC" = 0 ] || fail "a limit that cannot be set must not stop the start"
-grep -q 'GOMEMLIMIT' "$WORK/procd" && fail "no GOMEMLIMIT past half the router's memory"
+grep -q 'GOMEMLIMIT' "$WORK/procd" && fail "no GOMEMLIMIT past the router's share of memory"
 printf 'MemTotal:        1006668 kB\n' >"$WORK/meminfo"
 
 # --- 6. procd's jail, opt-in and fail closed ------------------------------------------
