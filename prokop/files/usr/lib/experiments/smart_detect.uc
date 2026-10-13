@@ -4,6 +4,8 @@ let c = require("experiments.common");
 let ip = require("core.ip");
 let identity = require("core.process_identity");
 let uci = require("core.uci");
+let dns = require("singbox.dns");
+let constants = require("singbox.constants");
 const LIB = getenv("PROKOP_LIB") || "/usr/lib/prokop";
 const DIR = getenv("PROKOP_SMART_DETECT_DIR") || "/var/run/prokop/smart-detect";
 const CONFIG = getenv("SB_CONFIG") || "/etc/sing-box/config.json";
@@ -23,6 +25,18 @@ function verdict(direct, proxy) {
     if (direct == 0) return "direct_works";
     if (index([ 7, 28, 35, 52, 56 ], direct) >= 0) return "candidate";
     return direct == 6 ? "dns_failed" : "inconclusive";
+}
+// The bootstrap DNS the running sing-box uses (after failover), else the
+// active one of the configured list. `uci.get` joins a list into one string,
+// so it never named a single server once two were configured.
+function probe_resolver(source, settings) {
+    let server = null;
+    for (let entry in source?.dns?.servers || [])
+        if (entry?.tag == constants.BOOTSTRAP_DNS_SERVER_TAG) server = entry;
+    if (server?.type != "udp") server = dns.bootstrap_config(settings || {}, null);
+    let port = server?.server_port == null ? 53 : server.server_port;
+    if (!ip.valid_ip(c.value(server?.server)) || type(port) != "int" || port < 1 || port > 65535) return null;
+    return { server: server.server, server_port: port };
 }
 function probe_config(source, target, resolver) {
     let index_by_tag = {}, selected = {}, outbounds = [];
@@ -44,7 +58,7 @@ function probe_config(source, target, resolver) {
     if (!selected["direct-out"]) push(outbounds, { type: "direct", tag: "direct-out" });
     return {
         log: { disabled: true },
-        dns: { servers: [ { type: "udp", tag: "probe-dns", server: resolver } ], final: "probe-dns", strategy: "ipv4_only" },
+        dns: { servers: [ { type: "udp", tag: "probe-dns", server: resolver.server, server_port: resolver.server_port } ], final: "probe-dns", strategy: "ipv4_only" },
         inbounds: [ { type: "socks", tag: "probe-direct", listen: "127.0.0.1", listen_port: 4590 },
             { type: "socks", tag: "probe-proxy", listen: "127.0.0.1", listen_port: 4591 } ],
         outbounds,
@@ -120,9 +134,8 @@ function run(host, target) {
         if (!ports_free(before)) return c.fail("probe_ports_unavailable");
         let source = c.read(CONFIG, null);
         if (source == null) return c.fail("runtime_config_unavailable");
-        let resolver = uci.get("prokop.settings.bootstrap_dns_server") || "77.88.8.8";
-        if (type(resolver) == "array") resolver = resolver[0];
-        if (!ip.valid_ip(resolver)) return c.fail("invalid_bootstrap_resolver");
+        let resolver = probe_resolver(source, uci.get_all("prokop", "settings"));
+        if (resolver == null) return c.fail("invalid_bootstrap_resolver");
         let config = probe_config(source, target, resolver);
         if (config == null || !c.write(DIR + "/probe.json", config, false)) return c.fail("probe_config_failed");
         if (c.capture([ BIN, "check", "-c", DIR + "/probe.json" ]).code != 0) return c.fail("probe_config_unsupported");
@@ -171,5 +184,6 @@ if (mode == "fixture-ports") {
     let listeners = probe_listeners();
     c.reply({ readable: listeners != null, free: ports_free(listeners), owned: ports_owned(listeners, c.value(ARGV[1])) });
 }
-if (mode == "fixture-config") c.reply(probe_config(c.read(ARGV[1], {}), c.value(ARGV[2]), "77.88.8.8") || c.fail("missing_target"));
+if (mode == "fixture-config") c.reply(probe_config(c.read(ARGV[1], {}), c.value(ARGV[2]), { server: "77.88.8.8", server_port: 53 }) || c.fail("missing_target"));
+if (mode == "fixture-resolver") c.reply({ resolver: probe_resolver(c.read(ARGV[1], {}), c.read(ARGV[2], {})) });
 c.reply(c.fail("invalid_action"));

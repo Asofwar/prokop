@@ -47,6 +47,7 @@ assert.equal(probe.outbounds.some(x => x.tag === 'unrelated'), false);
 assert.equal(probe.outbounds.find(x => x.tag === 'node').domain_resolver, 'probe-dns');
 assert.equal(probe.route.default_mark, 0x08000000);
 assert.deepEqual(probe.inbounds.map(x => x.listen), ['127.0.0.1','127.0.0.1']);
+assert.deepEqual(probe.dns.servers, [{type:'udp',tag:'probe-dns',server:'77.88.8.8',server_port:53}]);
 assert.equal(JSON.parse(fs.readFileSync(process.argv[3])).valid, false);
 NODE
 # Stale/missing snapshots and invalid profile names refuse before restore.
@@ -93,4 +94,14 @@ printf '%s\n   0: 00000000000000000000000000000000:11EF 000000000000000000000000
 expect_ports '{"readable":true,"free":false,"owned":false}' 'a foreign [::]:4591 listener is not the probe'
 rm "$PROC/net/tcp"
 expect_ports '{"readable":false,"free":false,"owned":false}' 'an unreadable socket table fails closed'
+# Smart Detect's resolver: the running sing-box's bootstrap DNS, else the
+# active entry of the configured list (several servers, a port).
+export PROKOP_DNS_FAILOVER_STATE_FILE="$WORK/dns-failover.json"
+resolver() { printf '%s' "$1" >"$WORK/rs.json"; printf '%s' "$2" >"$WORK/rset.json"; ucode -L "$LIB" "$LIB/experiments/smart_detect.uc" fixture-resolver "$WORK/rs.json" "$WORK/rset.json" | tr -d '\n '; }
+expect_resolver() { local got; got="$(resolver "$1" "$2")"; [[ "$got" == "$3" ]] || { printf 'smart detect resolver: want %s, got %s (%s)\n' "$3" "$got" "$4" >&2; exit 1; }; }
+expect_resolver '{"dns":{"servers":[{"type":"udp","tag":"bootstrap-dns-server","server":"1.1.1.1","server_port":53}]}}' '{"bootstrap_dns_server":["77.88.8.8","8.8.8.8"]}' '{"resolver":{"server":"1.1.1.1","server_port":53}}' 'running bootstrap DNS wins'
+expect_resolver '{}' '{"bootstrap_dns_server":["77.88.8.8","8.8.8.8"]}' '{"resolver":{"server":"77.88.8.8","server_port":53}}' 'two configured servers are not one address'
+expect_resolver '{}' '{"bootstrap_dns_server":"8.8.8.8:5353"}' '{"resolver":{"server":"8.8.8.8","server_port":5353}}' 'a port is kept'
+expect_resolver '{}' '{}' '{"resolver":{"server":"77.88.8.8","server_port":53}}' 'default bootstrap DNS'
+expect_resolver '{"dns":{"servers":[{"type":"udp","tag":"bootstrap-dns-server","server":"dns.example","server_port":53}]}}' '{}' '{"resolver":null}' 'a hostname is refused'
 printf 'fork experiments contracts passed\n'
