@@ -104,4 +104,20 @@ expect_resolver '{}' '{"bootstrap_dns_server":["77.88.8.8","8.8.8.8"]}' '{"resol
 expect_resolver '{}' '{"bootstrap_dns_server":"8.8.8.8:5353"}' '{"resolver":{"server":"8.8.8.8","server_port":5353}}' 'a port is kept'
 expect_resolver '{}' '{}' '{"resolver":{"server":"77.88.8.8","server_port":53}}' 'default bootstrap DNS'
 expect_resolver '{"dns":{"servers":[{"type":"udp","tag":"bootstrap-dns-server","server":"dns.example","server_port":53}]}}' '{}' '{"resolver":null}' 'a hostname is refused'
+# An outbound without a server of its own (a VPN interface) keeps its own
+# DNS server, cloned with the detour; the bootstrap DNS becomes probe-dns.
+cat >"$WORK/probe-iface.json" <<'JSON'
+{"dns":{"servers":[{"type":"udp","tag":"bootstrap-dns-server","server":"77.88.8.8","server_port":53},{"type":"https","tag":"vpn-1-domain-resolver","server":"dns.example","domain_resolver":"bootstrap-dns-server","detour":"vpn-1-out"},{"type":"fakeip","tag":"fakeip-server"}]},
+ "outbounds":[{"type":"direct","tag":"vpn-1-out","bind_interface":"tun0","domain_resolver":"vpn-1-domain-resolver"},{"type":"selector","tag":"vpn-out","outbounds":["vpn-1-out"]},{"type":"direct","tag":"fake-out","domain_resolver":"fakeip-server"}]}
+JSON
+ucode -L "$LIB" "$LIB/experiments/smart_detect.uc" fixture-config "$WORK/probe-iface.json" vpn-out >"$WORK/probe-iface.out"
+ucode -L "$LIB" "$LIB/experiments/smart_detect.uc" fixture-config "$WORK/probe-iface.json" fake-out >"$WORK/probe-fake.out" || true
+node - "$WORK/probe-iface.out" "$WORK/probe-fake.out" <<'NODE'
+const assert = require('node:assert/strict'); const fs = require('fs');
+const probe = JSON.parse(fs.readFileSync(process.argv[2]));
+assert.deepEqual(probe.dns.servers.map(x => [x.tag, x.domain_resolver, x.detour]),
+  [['probe-dns', undefined, undefined], ['vpn-1-domain-resolver', 'probe-dns', 'vpn-1-out']]);
+assert.equal(probe.outbounds.find(x => x.tag === 'vpn-1-out').domain_resolver, 'vpn-1-domain-resolver');
+assert.equal(JSON.parse(fs.readFileSync(process.argv[3])).reason, 'missing_target');
+NODE
 printf 'fork experiments contracts passed\n'

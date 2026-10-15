@@ -39,9 +39,27 @@ function probe_resolver(source, settings) {
     return { server: server.server, server_port: port };
 }
 function probe_config(source, target, resolver) {
-    let index_by_tag = {}, selected = {}, outbounds = [];
+    let index_by_tag = {}, dns_by_tag = {}, selected = {}, outbounds = [], dns_tags = {}, servers = [];
     for (let out in source.outbounds || []) index_by_tag[out.tag] = out;
-    function add(tag) {
+    for (let server in source.dns?.servers || []) dns_by_tag[server.tag] = server;
+    let add;
+    // A DNS server a cloned outbound or server names: the bootstrap DNS is
+    // the probe resolver; any other one (an interface's own DNS) is cloned
+    // with its detour, as the running sing-box would resolve through it.
+    function resolver_tag(ref) {
+        let tag = type(ref) == "object" ? ref.server : ref;
+        if (tag == null || tag == constants.BOOTSTRAP_DNS_SERVER_TAG) return "probe-dns";
+        let server = dns_by_tag[tag];
+        if (server == null || server.type == "fakeip") return null;
+        if (dns_tags[tag]) return tag;
+        dns_tags[tag] = true;
+        server = json(sprintf("%J", server));
+        if (server.domain_resolver != null && (server.domain_resolver = resolver_tag(server.domain_resolver)) == null) return null;
+        if (server.detour != null && !add(server.detour)) return null;
+        push(servers, server);
+        return tag;
+    }
+    add = function(tag) {
         if (selected[tag]) return true;
         let out = index_by_tag[tag];
         if (out == null) return false;
@@ -51,14 +69,15 @@ function probe_config(source, target, resolver) {
         // Cloned private config. Resolver and mark guarantee a separate path.
         out = json(sprintf("%J", out));
         if (out.server != null) out.domain_resolver = "probe-dns";
+        else if (out.domain_resolver != null && (out.domain_resolver = resolver_tag(out.domain_resolver)) == null) return false;
         push(outbounds, out);
         return true;
-    }
+    };
     if (!add(target)) return null;
     if (!selected["direct-out"]) push(outbounds, { type: "direct", tag: "direct-out" });
     return {
         log: { disabled: true },
-        dns: { servers: [ { type: "udp", tag: "probe-dns", server: resolver.server, server_port: resolver.server_port } ], final: "probe-dns", strategy: "ipv4_only" },
+        dns: { servers: [ { type: "udp", tag: "probe-dns", server: resolver.server, server_port: resolver.server_port }, ...servers ], final: "probe-dns", strategy: "ipv4_only" },
         inbounds: [ { type: "socks", tag: "probe-direct", listen: "127.0.0.1", listen_port: 4590 },
             { type: "socks", tag: "probe-proxy", listen: "127.0.0.1", listen_port: 4591 } ],
         outbounds,
@@ -138,7 +157,9 @@ function run(host, target) {
         if (resolver == null) return c.fail("invalid_bootstrap_resolver");
         let config = probe_config(source, target, resolver);
         if (config == null || !c.write(DIR + "/probe.json", config, false)) return c.fail("probe_config_failed");
-        if (c.capture([ BIN, "check", "-c", DIR + "/probe.json" ]).code != 0) return c.fail("probe_config_unsupported");
+        // The rejection reason stays in RAM (check.log, 0600) for diagnosis.
+        if (system(c.command([ BIN, "check", "-c", DIR + "/probe.json" ]) + " >" + c.quote(DIR + "/check.log") + " 2>&1") != 0)
+            return c.fail("probe_config_unsupported");
         let child = fs.popen(c.command(args) + " >/dev/null 2>&1 & echo $!", "r");
         let pid = child ? trim(child.read("all")) : "";
         if (child) child.close();
