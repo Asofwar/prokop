@@ -231,6 +231,11 @@ for shared_set in prokop_subnets prokop_subnets6 prokop_ports prokop_ip_ports pr
 done
 assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tProkopTable\tproxy\tmeta\tmark\t&\t0x00100000\t==\t0x00100000\tmeta\tl4proto\ttcp\ttproxy\tip\tto\t:1602\tcounter' "runtime proxy tcp rule"
 assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tProkopTable\tproxy\tmeta\tmark\t&\t0x00100000\t==\t0x00100000\tmeta\tl4proto\ttcp\ttproxy\tip6\tto\t[::1]:1602\tcounter' "runtime proxy6 tcp rule"
+# mangle marks a client query to a captured resolver (8.8.8.8) before
+# dns_redirect sends it to the router's :53; TPROXY of that redirected packet
+# left sing-box sockets on 192.168.1.1:53 that swallowed the LAN's DNS.
+[ "$(grep -F $'\tProkopTable\tproxy\t' "$NFT_LOG" | grep -F $'\trule\t' | head -n 1 | cut -f7- | tr '\t' ' ')" = 'ct status dnat return' ] ||
+  fail "proxy must skip redirected (DNAT) packets before any TPROXY rule"
 assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tProkopTable\tmangle_output\tmeta\tmark\t&\t0xff2000ff\t==\t0x00200000\tcounter\treturn' "runtime outbound return on Prokop's mark bits"
 assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tProkopTable\tmangle_output\tip6\tdaddr\t@localv6\tip6\tdaddr\t!=\tfc00::/18\treturn' "runtime output local6 return preserves FakeIP6 capture"
 assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tProkopTable\tmangle_output\tjump\tpriority_output_rules' "runtime priority output jump"
