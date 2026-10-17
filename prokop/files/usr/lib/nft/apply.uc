@@ -1509,7 +1509,10 @@ function nft_create_runtime_base(table, localv4_set, common_set, port_set, ip_po
         !nft_create_chain(table, "mangle_output", "{ type route hook output priority -150; policy accept; }") ||
         !nft_create_priority_chains(table) ||
         (bool_option(settings, "gaming_enabled", false) && !nft_create_chain(table, "game_rules", "")) ||
-        !nft_create_chain(table, "proxy", "{ type filter hook prerouting priority -100; policy accept; }"))
+        // After NAT: every nat chain, dns_redirect (-101) included, runs inside
+        // the conntrack NAT hook at -100, and a filter chain at the same -100
+        // may run before it, still seeing the unrewritten packet.
+        !nft_create_chain(table, "proxy", "{ type filter hook prerouting priority -99; policy accept; }"))
         return false;
 
     if (bool_option(settings, "gaming_enabled", false)) {
@@ -1562,7 +1565,7 @@ function nft_create_runtime_base(table, localv4_set, common_set, port_set, ip_po
         !nft_add_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), "ip6", "daddr", fakeip6_range, "meta", "l4proto", "tcp", "meta", "mark", "set", fakeip_mark, "counter" ]) ||
         !nft_add_rule(table, "mangle", [ "iifname", "@" + as_string(interface_set), "ip6", "daddr", fakeip6_range, "meta", "l4proto", "udp", "meta", "mark", "set", fakeip_mark, "counter" ]) ||
         // mangle (-149) marks the first packet of a flow before dns_redirect
-        // (-101) rewrites it, so a client query to a captured resolver such
+        // rewrites it, so a client query to a captured resolver such
         // as 8.8.8.8 arrives here redirected to the router's own :53 or
         // :1603 and still marked. TPROXY of that packet makes sing-box answer
         // from a transparent socket bound to that local address, which then

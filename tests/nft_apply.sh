@@ -236,6 +236,9 @@ assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tProkopTable\tproxy\tmeta\tmar
 # left sing-box sockets on 192.168.1.1:53 that swallowed the LAN's DNS.
 [ "$(grep -F $'\tProkopTable\tproxy\t' "$NFT_LOG" | grep -F $'\trule\t' | head -n 1 | cut -f7- | tr '\t' ' ')" = 'ct status dnat return' ] ||
   fail "proxy must skip redirected (DNAT) packets before any TPROXY rule"
+# The DNAT check only works after NAT: nat chains run inside the NAT hook at
+# -100, so a filter chain at -100 could still see the query unrewritten.
+assert_contains "$NFT_LOG" $'nft\tadd\tchain\tinet\tProkopTable\tproxy\t{ type filter hook prerouting priority -99; policy accept; }' "runtime proxy chain runs after NAT"
 assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tProkopTable\tmangle_output\tmeta\tmark\t&\t0xff2000ff\t==\t0x00200000\tcounter\treturn' "runtime outbound return on Prokop's mark bits"
 assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tProkopTable\tmangle_output\tip6\tdaddr\t@localv6\tip6\tdaddr\t!=\tfc00::/18\treturn' "runtime output local6 return preserves FakeIP6 capture"
 assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tProkopTable\tmangle_output\tjump\tpriority_output_rules' "runtime priority output jump"
