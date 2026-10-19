@@ -94,7 +94,7 @@ const modes = {
     baseChain(table, 'dns_redirect', 'nat', 'prerouting', -101);
     baseChain(table, 'mangle', 'filter', 'prerouting', -149);
     baseChain(table, 'mangle_output', 'route', 'output', -150);
-    baseChain(table, 'proxy', 'filter', 'prerouting', -100);
+    baseChain(table, 'proxy', 'filter', 'prerouting', -99);
     regularChain(table, 'priority_rules');
     regularChain(table, 'priority_output_rules');
     assert.ok(rulesOf(table, 'mangle').some((r) => jumpsTo(r, 'priority_rules')), 'mangle must jump to priority_rules');
