@@ -1277,14 +1277,19 @@ function buildProxyGroupOutbounds(
     ],
     sortByLatency: shouldSortByLatency(section),
   });
-  const latencyTestCodes = sortedOutbounds
-    .filter(
-      (outbound) =>
-        outbound.runtimeAvailable !== false &&
-        !isSelectorOutbound(outbound) &&
-        !outbound.priorityInfo,
-    )
-    .map((outbound) => outbound.code);
+  // A Priority group is tested through its members: the delay of its
+  // selector only measures the node it uses now.
+  const latencyTestCodes = uniqueCodes(
+    sortedOutbounds.flatMap((outbound) => {
+      if (outbound.runtimeAvailable === false) return [];
+      if (outbound.priorityInfo) {
+        return outbound.priorityInfo.outbounds
+          .filter((member) => proxyByCode.has(member.code))
+          .map((member) => member.code);
+      }
+      return isSelectorOutbound(outbound) ? [] : [outbound.code];
+    }),
+  );
 
   return {
     selector,

@@ -682,6 +682,62 @@ describe('getDashboardSections', () => {
     ]);
   });
 
+  it.each([false, true])(
+    'tests every Priority member on the dashboard (another proxy beside the group: %s)',
+    async (mixed) => {
+      mocks.getConfigSections.mockResolvedValue([
+        proxySection({ urltests: [], urltest_settings: undefined }),
+        priorityGroup('pg_main'),
+      ]);
+      mocks.getClashApiProxies.mockResolvedValue({
+        success: true,
+        data: {
+          proxies: {
+            ...clashProxies,
+            'main-out': proxy('Selector', {
+              name: 'main-out',
+              now: 'main-priority-pg_main-out',
+              all: mixed
+                ? ['main-priority-pg_main-out', 'main-2-out']
+                : ['main-priority-pg_main-out'],
+            }),
+            'main-priority-pg_main-out': proxy('Selector', {
+              name: 'main-priority-pg_main-out',
+              now: 'main-1-out',
+              all: ['main-1-out', 'main-2-out'],
+            }),
+          },
+        },
+      });
+      mocks.fsRead.mockResolvedValue(
+        JSON.stringify({
+          priorityGroups: {
+            'main-priority-pg_main-out': {
+              outbounds: ['main-1-out', 'main-2-out', 'missing-out'],
+              levels: [
+                { id: 'first', order: 0, outbounds: ['main-1-out'] },
+                {
+                  id: 'second',
+                  order: 1,
+                  outbounds: ['main-2-out', 'missing-out'],
+                },
+              ],
+            },
+          },
+        }),
+      );
+
+      const {
+        data: [section],
+      } = await getDashboardSections();
+
+      expect([...(section.latencyTestCodes || [])].sort()).toEqual([
+        'main-1-out',
+        'main-2-out',
+      ]);
+    },
+  );
+
   it('keeps an empty Priority group visible when sing-box skipped the selector', async () => {
     mocks.getConfigSections.mockResolvedValue([
       proxySection({
