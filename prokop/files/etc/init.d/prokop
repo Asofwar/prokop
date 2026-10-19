@@ -167,8 +167,10 @@ restart() {
     # A running Prokop restarts in one transition that keeps dnsmasq
     # forwarding to sing-box (service/initd.uc restart-service), detached
     # from procd's service transaction as start_service's worker is. The
-    # service stays registered, as a start registers it.
-    if initd_ucode restart-applies; then
+    # service stays registered, as a start registers it. A package script's
+    # restart (PKG_ROOT, APK_SCRIPT) stops and starts as before: the upgrade
+    # replaced the files the running Prokop was started from.
+    if [ -z "${PKG_ROOT:-}${APK_SCRIPT:-}" ] && initd_ucode restart-applies; then
         if command -v rc_procd >/dev/null 2>&1; then
             rc_procd true
         fi
