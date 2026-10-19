@@ -154,7 +154,8 @@
     "call": "%d of %d",
     "key": "%d of %d",
     "places": [
-      "src/prokop/tabs/history/initController.ts:524"
+      "src/prokop/tabs/history/initController.ts:524",
+      "src/prokop/tabs/diagnostic/checks/runEnvironmentCheck.ts:125"
     ]
   },
   {
@@ -197,6 +198,13 @@
     "key": "%d rules · %d node groups",
     "places": [
       "src/prokop/tabs/dashboard/overview.ts:353"
+    ]
+  },
+  {
+    "call": "%d, no limit",
+    "key": "%d, no limit",
+    "places": [
+      "src/prokop/tabs/diagnostic/checks/runEnvironmentCheck.ts:124"
     ]
   },
   {
@@ -384,6 +392,13 @@
     "key": "%s: “%s” cannot be written in the current form unchanged",
     "places": [
       "../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4927"
+    ]
+  },
+  {
+    "call": "%s: close to the limit. When it is reached, new connections through sing-box fail. sing-box installed as a package runs with the open file limit of the package init script.",
+    "key": "%s: close to the limit. When it is reached, new connections through sing-box fail. sing-box installed as a package runs with the open file limit of the package init script.",
+    "places": [
+      "src/prokop/tabs/diagnostic/checks/runEnvironmentCheck.ts:133"
     ]
   },
   {
@@ -2637,7 +2652,7 @@
       "src/prokop/tabs/diagnostic/initController.ts:870",
       "src/prokop/tabs/diagnostic/checks/runByedpiCheck.ts:14",
       "src/prokop/tabs/diagnostic/checks/runDnsCheck.ts:15",
-      "src/prokop/tabs/diagnostic/checks/runEnvironmentCheck.ts:129",
+      "src/prokop/tabs/diagnostic/checks/runEnvironmentCheck.ts:160",
       "src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:15",
       "src/prokop/tabs/diagnostic/checks/runNftCheck.ts:13",
       "src/prokop/tabs/diagnostic/checks/runSectionsCheck.ts:35",
@@ -2679,7 +2694,7 @@
     "key": "Checks passed",
     "places": [
       "src/prokop/tabs/diagnostic/checks/getCheckItemsMeta.ts:23",
-      "src/prokop/tabs/diagnostic/checks/runEnvironmentCheck.ts:119",
+      "src/prokop/tabs/diagnostic/checks/runEnvironmentCheck.ts:150",
       "src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:49",
       "src/prokop/tabs/diagnostic/helpers/getMeta.ts:13"
     ]
@@ -6881,7 +6896,7 @@
     "key": "Issues detected",
     "places": [
       "src/prokop/tabs/diagnostic/checks/getCheckItemsMeta.ts:17",
-      "src/prokop/tabs/diagnostic/checks/runEnvironmentCheck.ts:113",
+      "src/prokop/tabs/diagnostic/checks/runEnvironmentCheck.ts:144",
       "src/prokop/tabs/diagnostic/helpers/getMeta.ts:20"
     ]
   },
@@ -8266,8 +8281,8 @@
     "places": [
       "src/prokop/tabs/diagnostic/statusLabels.ts:30",
       "src/prokop/tabs/diagnostic/checks/runEnvironmentCheck.ts:24",
-      "src/prokop/tabs/diagnostic/checks/runEnvironmentCheck.ts:117",
-      "src/prokop/tabs/diagnostic/checks/runEnvironmentCheck.ts:145"
+      "src/prokop/tabs/diagnostic/checks/runEnvironmentCheck.ts:148",
+      "src/prokop/tabs/diagnostic/checks/runEnvironmentCheck.ts:176"
     ]
   },
   {
@@ -11726,6 +11741,13 @@
     "key": "Sing-box listening ports",
     "places": [
       "src/prokop/tabs/diagnostic/checks/runSingBoxCheck.ts:87"
+    ]
+  },
+  {
+    "call": "sing-box open files",
+    "key": "sing-box open files",
+    "places": [
+      "src/prokop/tabs/diagnostic/checks/runEnvironmentCheck.ts:114"
     ]
   },
   {

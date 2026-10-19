@@ -1099,6 +1099,11 @@ export namespace Prokop {
       stratum?: number;
       observed_at?: number;
     };
+    sing_box_files?: EnvironmentRow & {
+      open?: number;
+      soft_limit?: number;
+      hard_limit?: number;
+    };
   }
 
   export interface SingBoxCheckResult {

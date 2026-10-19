@@ -130,6 +130,36 @@ expect clock.reason clock_status_failed
 # The other rows do not depend on the clock module.
 expect flow_offloading.state warning
 
+CASE="sing-box open files"
+PROC="$WORK/proc"
+mkdir -p "$PROC/4242/fd"
+for i in $(seq 1 10); do : >"$PROC/4242/fd/$i"; done
+cat >"$PROC/4242/limits" <<'LIM'
+Limit                     Soft Limit           Hard Limit           Units
+Max processes             3640                 3640                 processes
+Max open files            100                  4096                 files
+LIM
+OUT="$(PROKOP_PROC_DIR="$PROC" PROKOP_ENV_SING_BOX_PID=4242 run)"
+expect sing_box_files.state ok
+expect sing_box_files.provenance observed
+expect sing_box_files.open 10
+expect sing_box_files.soft_limit 100
+expect sing_box_files.hard_limit 4096
+for i in $(seq 11 80); do : >"$PROC/4242/fd/$i"; done
+OUT="$(PROKOP_PROC_DIR="$PROC" PROKOP_ENV_SING_BOX_PID=4242 run)"
+expect sing_box_files.state warning
+expect sing_box_files.open 80
+sed -i 's/^Max open files .*/Max open files            unlimited            unlimited            files/' "$PROC/4242/limits"
+OUT="$(PROKOP_PROC_DIR="$PROC" PROKOP_ENV_SING_BOX_PID=4242 run)"
+expect sing_box_files.state ok
+expect sing_box_files.soft_limit -1
+OUT="$(PROKOP_PROC_DIR="$PROC" PROKOP_ENV_SING_BOX_PID=0 run)"
+expect sing_box_files.state not_checked
+expect sing_box_files.reason sing_box_not_running
+OUT="$(PROKOP_PROC_DIR="$PROC" PROKOP_ENV_SING_BOX_PID=4343 run)"
+expect sing_box_files.state unavailable
+expect sing_box_files.reason process_unreadable
+
 CASE="through the CLI dispatcher"
 grep -q 'check_environment: \[ "diagnostics/environment.uc", "check", 0 \]' "$ROOT/prokop/files/usr/bin/prokop"
 echo "PASS: environment diagnostics"

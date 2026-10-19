@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-12 11:42+0000\n"
-"PO-Revision-Date: 2026-10-12 11:42+0000\n"
+"POT-Creation-Date: 2026-10-19 08:45+0000\n"
+"PO-Revision-Date: 2026-10-19 08:45+0000\n"
 "Last-Translator: Asofwar\n"
 "Language-Team: none\n"
 "Language: ru\n"
@@ -98,6 +98,9 @@ msgstr "Правил: %d"
 msgid "%d rules · %d node groups"
 msgstr "Правил: %d · групп узлов: %d"
 
+msgid "%d, no limit"
+msgstr "%d, без ограничения"
+
 msgid "%s (disabled)"
 msgstr "%s (отключена)"
 
@@ -175,6 +178,9 @@ msgstr "%s установлен, но Prokop запустился с ошибк�
 
 msgid "%s: “%s” cannot be written in the current form unchanged"
 msgstr "%s: «%s» нельзя записать в текущем виде без изменения смысла"
+
+msgid "%s: close to the limit. When it is reached, new connections through sing-box fail. sing-box installed as a package runs with the open file limit of the package init script."
+msgstr "%s: близко к пределу. Когда он будет достигнут, новые соединения через sing-box перестанут открываться. sing-box, установленный пакетом, работает с пределом открытых файлов из init-скрипта пакета."
 
 msgid "%s: not moved to the Device filter, the rule has no destination condition and does not use it"
 msgstr "%s: не переносится в «Фильтр по устройствам» — у правила нет условия назначения, и он не используется"
@@ -4846,6 +4852,9 @@ msgstr "sing-box работает"
 
 msgid "Sing-box listening ports"
 msgstr "Sing-box слушает порты"
+
+msgid "sing-box open files"
+msgstr "Открытые файлы sing-box"
 
 msgid "Sing-box process running"
 msgstr "Процесс sing-box запущен"

@@ -108,6 +108,37 @@ export function clockItem(
   };
 }
 
+export function singBoxFilesItem(
+  row: Prokop.EnvironmentCheckResult['sing_box_files'],
+): IDiagnosticsChecksItem {
+  const key = _('sing-box open files');
+  if (
+    !row ||
+    (row.state !== 'ok' && row.state !== 'warning') ||
+    typeof row.open !== 'number' ||
+    typeof row.soft_limit !== 'number'
+  )
+    return neutral(key, row);
+  const usage =
+    row.soft_limit < 0
+      ? _('%d, no limit').replace('%d', String(row.open))
+      : _('%d of %d')
+          .replace('%d', String(row.open))
+          .replace('%d', String(row.soft_limit));
+  if (row.state === 'warning')
+    return {
+      state: 'warning',
+      key,
+      value: withProvenance(
+        _(
+          '%s: close to the limit. When it is reached, new connections through sing-box fail. sing-box installed as a package runs with the open file limit of the package init script.',
+        ).replace('%s', usage),
+        row,
+      ),
+    };
+  return { state: 'success', key, value: withProvenance(usage, row) };
+}
+
 export function environmentCheckState(items: IDiagnosticsChecksItem[]) {
   if (items.some((item) => item.state === 'warning'))
     return { state: 'warning' as const, description: _('Issues detected') };
@@ -154,6 +185,7 @@ export async function runEnvironmentCheck() {
     flowOffloadingItem(data.flow_offloading),
     ipv6Item(data.ipv6),
     clockItem(data.clock),
+    singBoxFilesItem(data.sing_box_files),
   ];
   const { state, description } = environmentCheckState(items);
   updateCheckStore({ order, code, title, description, state, items });

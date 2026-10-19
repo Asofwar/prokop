@@ -45,6 +45,13 @@ describe('Environment check', () => {
           global_interfaces: ['br-lan'],
         },
         clock: { state: 'ok', provenance: 'observed', stratum: 2 },
+        sing_box_files: {
+          state: 'ok',
+          provenance: 'observed',
+          open: 120,
+          soft_limit: 1000000,
+          hard_limit: 1000000,
+        },
       },
     });
     await runEnvironmentCheck();
@@ -54,7 +61,9 @@ describe('Environment check', () => {
       'success',
       'success',
       'success',
+      'success',
     ]);
+    expect(check.items[3].value).toBe('120 of 1000000 (Observed)');
     expect(check.items[0].value).toBe('Off (From configuration)');
     expect(check.items[1].value).toBe(
       'Global IPv6 on br-lan; Prokop handles IPv6 (Observed)',
@@ -114,5 +123,46 @@ describe('Environment check', () => {
     const check = lastCheck();
     expect(check.state).toBe('unsupported');
     expect(check.items[2].value).toBe('Not checked');
+  });
+
+  it('warns when sing-box is close to its open file limit', async () => {
+    checkEnvironment.mockResolvedValue({
+      success: true,
+      data: {
+        flow_offloading: { state: 'ok', provenance: 'configured' },
+        ipv6: { state: 'ok', provenance: 'observed', global_interfaces: [] },
+        clock: { state: 'ok', provenance: 'observed' },
+        sing_box_files: {
+          state: 'warning',
+          provenance: 'observed',
+          open: 3900,
+          soft_limit: 4096,
+          hard_limit: 4096,
+        },
+      },
+    });
+    await runEnvironmentCheck();
+    const check = lastCheck();
+    expect(check.state).toBe('warning');
+    expect(check.items[3].state).toBe('warning');
+    expect(check.items[3].value).toMatch(/^3900 of 4096: close to the limit/);
+  });
+
+  it('does not check open files while sing-box is not running', async () => {
+    checkEnvironment.mockResolvedValue({
+      success: true,
+      data: {
+        sing_box_files: {
+          state: 'not_checked',
+          provenance: 'observed',
+          reason: 'sing_box_not_running',
+        },
+      },
+    });
+    await runEnvironmentCheck();
+    expect(lastCheck().items[3]).toMatchObject({
+      state: 'neutral',
+      value: 'Not checked',
+    });
   });
 });

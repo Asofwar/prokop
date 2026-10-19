@@ -15,6 +15,11 @@
 //    the kernel's address list ("observed").
 //  * clock: core/clock.uc status() when that module is installed ("observed");
 //    without it the row is "unavailable".
+//  * sing_box_files: open files of the running sing-box against its limit
+//    (/proc/<pid>/fd, /proc/<pid>/limits; "observed"). A sing-box at its
+//    limit fails every new connection. The package variants run with the
+//    limit of their package init script, which sets none (often 4096);
+//    Prokop's own script raises it.
 //
 // Row states: ok, warning, not_checked, unavailable.
 
@@ -26,6 +31,10 @@ let as_string = common.as_string;
 let object_or_empty = common.object_or_empty;
 
 const IF_INET6_FILE = getenv("PROKOP_IF_INET6_FILE") || "/proc/net/if_inet6";
+const LIB_DIR = getenv("PROKOP_LIB") || "/usr/lib/prokop";
+const PROC_DIR = getenv("PROKOP_PROC_DIR") || "/proc";
+// Open files from this share of the limit on: a warning.
+const FILES_WARNING_PERCENT = 80;
 
 function flag(value) {
     value = lc(trim(as_string(value)));
@@ -114,9 +123,57 @@ function clock_row() {
     return row;
 }
 
+function shell_quote(value) {
+    return "'" + replace(as_string(value), "'", "'\\''") + "'";
+}
+
+// The PID of the sing-box that procd runs (its ujail child), as
+// service/state.uc finds it; 0 when none runs.
+function sing_box_pid() {
+    let override = getenv("PROKOP_ENV_SING_BOX_PID");
+    if (override != null)
+        return int(override);
+    let pipe = fs.popen("ubus call service list '{\"name\":\"sing-box\"}' 2>/dev/null | ucode -L " +
+        shell_quote(LIB_DIR) + " " + shell_quote(LIB_DIR + "/service/state.uc") + " sing-box-service-pid 2>/dev/null", "r");
+    if (pipe == null)
+        return 0;
+    let output = pipe.read("all");
+    pipe.close();
+    return int(trim(as_string(output)) || 0);
+}
+
+// "Max open files  <soft>  <hard>  files" of /proc/<pid>/limits; a limit
+// "unlimited" is -1.
+function open_files_limits(text) {
+    for (let line in split(as_string(text), "\n")) {
+        let found = match(line, /^Max open files[ \t]+([0-9]+|unlimited)[ \t]+([0-9]+|unlimited)/);
+        if (found != null)
+            return { soft: found[1] == "unlimited" ? -1 : int(found[1]), hard: found[2] == "unlimited" ? -1 : int(found[2]) };
+    }
+    return null;
+}
+
+function open_files_state(open, soft) {
+    return soft > 0 && open * 100 >= soft * FILES_WARNING_PERCENT ? "warning" : "ok";
+}
+
+function sing_box_files_row() {
+    let pid = sing_box_pid();
+    if (pid <= 0)
+        return { state: "not_checked", provenance: "observed", reason: "sing_box_not_running" };
+    let limits = open_files_limits(fs.readfile(PROC_DIR + "/" + pid + "/limits"));
+    let fds = fs.lsdir(PROC_DIR + "/" + pid + "/fd");
+    if (limits == null || fds == null)
+        return { state: "unavailable", provenance: "observed", reason: "process_unreadable" };
+    let open = length(fds);
+    return { state: open_files_state(open, limits.soft), provenance: "observed", open,
+        soft_limit: limits.soft, hard_limit: limits.hard };
+}
+
 function check() {
     let rows = {};
-    for (let item in [ [ "flow_offloading", flow_offloading_row ], [ "ipv6", ipv6_row ], [ "clock", clock_row ] ]) {
+    for (let item in [ [ "flow_offloading", flow_offloading_row ], [ "ipv6", ipv6_row ], [ "clock", clock_row ],
+        [ "sing_box_files", sing_box_files_row ] ]) {
         try {
             rows[item[0]] = item[1]();
         }
@@ -128,7 +185,7 @@ function check() {
 }
 
 if (sourcepath(1) != null && sourcepath(1) != "")
-    return { check, global_ipv6_interfaces };
+    return { check, global_ipv6_interfaces, open_files_limits, open_files_state };
 
 let mode = ARGV[0] || "";
 if (mode == "check") {

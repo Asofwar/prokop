@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROKOP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-12 11:42+0000\n"
-"PO-Revision-Date: 2026-10-12 11:42+0000\n"
+"POT-Creation-Date: 2026-10-19 08:45+0000\n"
+"PO-Revision-Date: 2026-10-19 08:45+0000\n"
 "Last-Translator: Asofwar <7397608+Asofwar@users.noreply.github.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -108,6 +108,7 @@ msgid "%d node groups"
 msgstr ""
 
 #: src/prokop/tabs/history/initController.ts:524
+#: src/prokop/tabs/diagnostic/checks/runEnvironmentCheck.ts:125
 msgid "%d of %d"
 msgstr ""
 
@@ -133,6 +134,10 @@ msgstr ""
 
 #: src/prokop/tabs/dashboard/overview.ts:353
 msgid "%d rules · %d node groups"
+msgstr ""
+
+#: src/prokop/tabs/diagnostic/checks/runEnvironmentCheck.ts:124
+msgid "%d, no limit"
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:473
@@ -242,6 +247,10 @@ msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:4927
 msgid "%s: “%s” cannot be written in the current form unchanged"
+msgstr ""
+
+#: src/prokop/tabs/diagnostic/checks/runEnvironmentCheck.ts:133
+msgid "%s: close to the limit. When it is reached, new connections through sing-box fail. sing-box installed as a package runs with the open file limit of the package init script."
 msgstr ""
 
 #: ../luci-app-prokop/htdocs/luci-static/resources/view/prokop/section.js:5264
@@ -1558,7 +1567,7 @@ msgstr ""
 #: src/prokop/tabs/diagnostic/initController.ts:870
 #: src/prokop/tabs/diagnostic/checks/runByedpiCheck.ts:14
 #: src/prokop/tabs/diagnostic/checks/runDnsCheck.ts:15
-#: src/prokop/tabs/diagnostic/checks/runEnvironmentCheck.ts:129
+#: src/prokop/tabs/diagnostic/checks/runEnvironmentCheck.ts:160
 #: src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:15
 #: src/prokop/tabs/diagnostic/checks/runNftCheck.ts:13
 #: src/prokop/tabs/diagnostic/checks/runSectionsCheck.ts:35
@@ -1588,7 +1597,7 @@ msgid "Checks failed"
 msgstr ""
 
 #: src/prokop/tabs/diagnostic/checks/getCheckItemsMeta.ts:23
-#: src/prokop/tabs/diagnostic/checks/runEnvironmentCheck.ts:119
+#: src/prokop/tabs/diagnostic/checks/runEnvironmentCheck.ts:150
 #: src/prokop/tabs/diagnostic/checks/runFakeIPCheck.ts:49
 #: src/prokop/tabs/diagnostic/helpers/getMeta.ts:13
 msgid "Checks passed"
@@ -4056,7 +4065,7 @@ msgid "IPv6 routing rule at priority 105"
 msgstr ""
 
 #: src/prokop/tabs/diagnostic/checks/getCheckItemsMeta.ts:17
-#: src/prokop/tabs/diagnostic/checks/runEnvironmentCheck.ts:113
+#: src/prokop/tabs/diagnostic/checks/runEnvironmentCheck.ts:144
 #: src/prokop/tabs/diagnostic/helpers/getMeta.ts:20
 msgid "Issues detected"
 msgstr ""
@@ -4877,8 +4886,8 @@ msgstr ""
 
 #: src/prokop/tabs/diagnostic/statusLabels.ts:30
 #: src/prokop/tabs/diagnostic/checks/runEnvironmentCheck.ts:24
-#: src/prokop/tabs/diagnostic/checks/runEnvironmentCheck.ts:117
-#: src/prokop/tabs/diagnostic/checks/runEnvironmentCheck.ts:145
+#: src/prokop/tabs/diagnostic/checks/runEnvironmentCheck.ts:148
+#: src/prokop/tabs/diagnostic/checks/runEnvironmentCheck.ts:176
 msgid "Not available for checking"
 msgstr ""
 
@@ -6913,6 +6922,10 @@ msgstr ""
 
 #: src/prokop/tabs/diagnostic/checks/runSingBoxCheck.ts:87
 msgid "Sing-box listening ports"
+msgstr ""
+
+#: src/prokop/tabs/diagnostic/checks/runEnvironmentCheck.ts:114
+msgid "sing-box open files"
 msgstr ""
 
 #: src/prokop/tabs/diagnostic/checks/runSingBoxCheck.ts:82
