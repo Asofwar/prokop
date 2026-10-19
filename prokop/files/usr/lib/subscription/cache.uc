@@ -474,6 +474,13 @@ function user_agent_supported(user_agent, default_user_agent) {
     return auto_user_agents[user_agent] == true;
 }
 
+// A cache downloaded with an automatic profile of an earlier Prokop or
+// sing-box version: the profile family is the same, only the version moved.
+function previous_automatic_user_agent(user_agent) {
+    return match(user_agent, /^Happ\/[0-9]+[.][0-9]+[.][0-9]+$/) != null ||
+        match(user_agent, /^sing-box\/[A-Za-z0-9][A-Za-z0-9._+-]*$/) != null;
+}
+
 function user_agent_matches_config(configured_user_agent, cached_user_agent, default_user_agent) {
     configured_user_agent = as_string(configured_user_agent);
     cached_user_agent = as_string(cached_user_agent);
@@ -481,7 +488,10 @@ function user_agent_matches_config(configured_user_agent, cached_user_agent, def
     if (configured_user_agent != "")
         return cached_user_agent == configured_user_agent;
 
-    return user_agent_supported(cached_user_agent, default_user_agent);
+    // An upgrade changes the automatic profiles; it must not make every
+    // subscription cache stale and drop it before the new download.
+    return user_agent_supported(cached_user_agent, default_user_agent) ||
+        previous_automatic_user_agent(cached_user_agent);
 }
 
 let parser_module = null;

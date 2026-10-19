@@ -55,6 +55,19 @@ if cache_ucode user-agent-matches-config "" Mihomo "$default_ua" >/dev/null 2>&1
 fi
 cache_ucode user-agent-matches-config "" Happ/2.8.0 "$default_ua" >/dev/null ||
   fail "legacy Happ compatibility UA should keep existing caches usable"
+cache_ucode user-agent-matches-config "" Happ/1.0.9 "$default_ua" >/dev/null ||
+  fail "automatic UA of an earlier Prokop version should keep the cache usable after an upgrade"
+cache_ucode user-agent-matches-config "" sing-box/1.11.4 "$default_ua" >/dev/null ||
+  fail "automatic UA of an earlier sing-box version should keep the cache usable after a core update"
+if cache_ucode user-agent-matches-config "" "Happ/1.0.9 extra" "$default_ua" >/dev/null 2>&1; then
+  fail "a Happ UA with extra text is not an automatic profile"
+fi
+if cache_ucode user-agent-matches-config "Custom/1.0" Happ/1.0.9 "$default_ua" >/dev/null 2>&1; then
+  fail "configured UA should reject an earlier automatic cached UA"
+fi
+# Earlier automatic profiles keep a cache usable but are never sent again.
+cache_ucode write-user-agent-candidates "$WORK_DIR/old-preferred.txt" "" Happ/1.0.9 "$default_ua"
+assert_file "$WORK_DIR/old-preferred.txt" "$default_candidates"
 if cache_ucode user-agent-matches-config "" "Unknown" "$default_ua" >/dev/null 2>&1; then
   fail "unknown cached UA should not match automatic config"
 fi
