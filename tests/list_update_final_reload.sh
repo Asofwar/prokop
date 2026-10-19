@@ -169,6 +169,11 @@ grep -Fq 'retaining it for a local retry' "$WORK_DIR/log" ||
 pending_reason="$(PROKOP_LIST_UPDATE_RELOAD_FILE="$WORK_DIR/list-update.reload" \
   ucode -L "$PROKOP_LIB" "$LIFECYCLE_UC" reload-reason-fixture pending)"
 [ "$pending_reason" = "list-content" ] || fail "pending reload did not choose local list-content retry"
+# The list sources changed after the failed apply: no generation matches
+# them, a local retry would only fail, and the reload goes as planned.
+changed_reason="$(PROKOP_LIST_UPDATE_RELOAD_FILE="$WORK_DIR/list-update.reload" \
+  ucode -L "$PROKOP_LIB" "$LIFECYCLE_UC" reload-reason-fixture pending 0)"
+[ "$changed_reason" = "pending" ] || fail "a pending generation of earlier list sources forced a local list-content retry"
 grep -Fq 'plan.has_work = 1;' "$LIFECYCLE_UC" ||
   fail "local list-content retry can still be skipped as a no-op"
 grep -Fq 'if (reason == "list-content")' "$LIFECYCLE_UC" ||

@@ -2441,14 +2441,31 @@ function reload_skipped_after_stop(reason) {
     return true;
 }
 
+// A completed list generation whose final runtime apply failed is safe to
+// retry locally: a later generic or pending reload must neither skip it nor
+// start a second network update. That holds while a generation matches the
+// current list sources. After the sources changed no generation does, a
+// local retry could only fail (apply-list-cache), and every reload would
+// abort until the next list update: the reload goes as planned instead, and
+// its changed sources get a list update.
+function pending_list_reload_reason(reason, pending, generation_current) {
+    if (reason == "list-content" || !pending)
+        return reason;
+    return generation_current ? "list-content" : reason;
+}
+
+function list_generation_current() {
+    return module_success(UPDATES_UC, [ "runtime-list-cache-active" ]) ||
+        module_success(UPDATES_UC, [ "list-cache-valid" ]);
+}
+
 function reload(reason) {
     reason = as_string(reason || "");
-    // A completed list generation whose final runtime apply failed is safe to
-    // retry locally. Never let a later generic/pending reload skip that
-    // generation or trigger a second network update.
     if (reason != "list-content" && fs.stat(LIST_UPDATE_RELOAD_FILE) != null) {
-        log_message("A committed list generation is pending runtime apply; performing a local list-content reload", "info");
-        reason = "list-content";
+        reason = pending_list_reload_reason(reason, true, list_generation_current());
+        log_message(reason == "list-content" ?
+            "A committed list generation is pending runtime apply; performing a local list-content reload" :
+            "A list generation is pending runtime apply, but the list sources changed since; the reload prepares the current sources", "info");
     }
     // The plan below compares configurations only. Over a kept guard a DPI
     // restart would fail at the create-only install every time, and any
@@ -2903,10 +2920,9 @@ function reload_tracked(reason) {
     return status;
 }
 
-function reload_reason_fixture(reason) {
-    reason = as_string(reason || "");
-    if (reason != "list-content" && fs.stat(LIST_UPDATE_RELOAD_FILE) != null)
-        reason = "list-content";
+function reload_reason_fixture(reason, generation_current) {
+    reason = pending_list_reload_reason(as_string(reason || ""), fs.stat(LIST_UPDATE_RELOAD_FILE) != null,
+        as_string(generation_current || "1") == "1");
     print(reason, "\n");
 }
 
@@ -3102,7 +3118,7 @@ else if (mode == "stop")
 else if (mode == "reload")
     status = reload_tracked(ARGV[1] || "");
 else if (mode == "reload-reason-fixture") {
-    reload_reason_fixture(ARGV[1] || "");
+    reload_reason_fixture(ARGV[1] || "", ARGV[2]);
     status = 0;
 }
 else if (mode == "dns-failover-apply")
