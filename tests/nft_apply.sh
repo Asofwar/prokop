@@ -243,6 +243,7 @@ assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tProkopTable\tmangle_output\tm
 assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tProkopTable\tmangle_output\tip6\tdaddr\t@localv6\tip6\tdaddr\t!=\tfc00::/18\treturn' "runtime output local6 return preserves FakeIP6 capture"
 assert_contains "$NFT_LOG" $'nft\tadd\trule\tinet\tProkopTable\tmangle_output\tjump\tpriority_output_rules' "runtime priority output jump"
 assert_contains "$NFT_LOG" $'nft\tinsert\trule\tinet\tProkopTable\tmangle\tudp\tdport\t123\treturn' "runtime ntp exclusion"
+assert_contains "$NFT_LOG" $'nft\tinsert\trule\tinet\tProkopTable\tmangle_output\tudp\tdport\t123\treturn' "runtime ntp exclusion for the router itself"
 
 cat >"$WORK_DIR/runtime-base-uci.state" <<'EOF_UCI'
 prokop.settings=settings
@@ -255,6 +256,7 @@ PROKOP_UCI_STATE_FILE="$WORK_DIR/runtime-base-uci.state" \
 assert_contains "$NFT_LOG" $'nft\tadd\telement\tinet\tProkopTable\tprokop_interfaces\t{ "br-lan" }' "runtime base from UCI br-lan interface"
 assert_contains "$NFT_LOG" $'nft\tadd\telement\tinet\tProkopTable\tprokop_interfaces\t{ "tun0" }' "runtime base from UCI tun0 interface"
 assert_contains "$NFT_LOG" $'nft\tinsert\trule\tinet\tProkopTable\tmangle\tudp\tdport\t123\treturn' "runtime base from UCI ntp exclusion"
+assert_contains "$NFT_LOG" $'nft\tinsert\trule\tinet\tProkopTable\tmangle_output\tudp\tdport\t123\treturn' "runtime base from UCI ntp exclusion for the router itself"
 
 : > "$NFT_LOG"
 nft_ucode nft-create-runtime-output-rules ProkopTable localv4 prokop_subnets prokop_ports prokop_ip_ports 0x00100000 198.18.0.0/15

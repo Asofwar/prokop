@@ -1598,7 +1598,11 @@ function nft_create_runtime_base(table, localv4_set, common_set, port_set, ip_po
                 family == "ip" ? fakeip_range : fakeip6_range, "meta", "l4proto", "udp", "return" ])) return false;
     }
 
-    if (arg_bool(exclude_ntp) && !nft_insert_rule(table, "mangle", [ "udp", "dport", "123", "return" ]))
+    // Also the router's own time sync: its NTP server may be in a section's
+    // subnets or match its port-only rules (priority_output_rules).
+    if (arg_bool(exclude_ntp) &&
+        (!nft_insert_rule(table, "mangle", [ "udp", "dport", "123", "return" ]) ||
+        !nft_insert_rule(table, "mangle_output", [ "udp", "dport", "123", "return" ])))
         return false;
 
     return true;
