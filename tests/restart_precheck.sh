@@ -203,6 +203,13 @@ discard_line="$(grep -n "^singbox/runtime.uc discard-config-stage $stage\$" "$EV
   fail "the checked stage was not discarded after the start"
 grep -c "^singbox/runtime.uc discard-config-stage" "$EVENTS" | grep -qx 1 ||
   fail "the checked stage was discarded before the start used it"
+# A restart keeps dnsmasq forwarding to sing-box between its stop and its
+# start: handed to the upstream resolvers meanwhile, clients would cache
+# real addresses that bypass FakeIP.
+first_restore="$(grep -n '^dns/apply.uc restore' "$EVENTS" | head -1 | cut -d: -f1)"
+{ [ -z "$first_restore" ] || [ "$first_restore" -gt "$init_line" ]; } ||
+  fail "a restart handed DNS back to the upstream resolvers between stop and start"
+! has_event '^dns/apply.uc failsafe-restore' || fail "a successful restart rolled DNS back"
 
 # 3b. Running, a valid candidate, a stop that fails: the checked stage goes.
 reset_case
@@ -212,6 +219,8 @@ stage="$(sed -n 's/^singbox\/runtime.uc prepare-config-stage 0 0 1  \(.*\) reusa
 [ -n "$stage" ] || fail "the restart did not check its candidate"
 has_event "^singbox/runtime.uc discard-config-stage $stage\$" || fail "a restart whose stop failed left the checked stage"
 ! has_event '^singbox/runtime.uc init-config' || fail "a restart whose stop failed started"
+# A stop that failed halfway leaves no forwarding to a dead sing-box.
+has_event '^dns/apply.uc failsafe-restore' || fail "a restart whose stop failed did not restore DNS"
 
 # 4. Stopped: nothing to keep, no separate check; the start checks itself.
 reset_case

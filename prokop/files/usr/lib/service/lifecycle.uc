@@ -2961,9 +2961,18 @@ function restart() {
         return status;
 
     let selector_state = capture_selector_state();
-    status = stop_impl(false);
+    // A restart is one runtime transition, as restart_runtime_for_reload:
+    // dnsmasq keeps forwarding to sing-box while the core is down. A client
+    // query then fails and is retried; handed to the upstream resolvers it
+    // would cache real addresses that bypass FakeIP after the start. A
+    // failed restart restores DNS (cleanup_failed_runtime).
+    status = stop_main(false);
     if (status != 0) {
         discard_restart_checked_stage();
+        // 2: ownership changed after the check above and nothing was torn
+        // down; the runtime and its DNS serve on.
+        if (status != 2)
+            cleanup_failed_runtime();
         return status;
     }
 

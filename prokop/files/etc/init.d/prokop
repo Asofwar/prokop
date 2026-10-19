@@ -164,6 +164,21 @@ restart() {
     if initd_ucode restart-blocked; then
         return 1
     fi
+    # A running Prokop restarts in one transition that keeps dnsmasq
+    # forwarding to sing-box (service/initd.uc restart-service), detached
+    # from procd's service transaction as start_service's worker is. The
+    # service stays registered, as a start registers it.
+    if initd_ucode restart-applies; then
+        if command -v rc_procd >/dev/null 2>&1; then
+            rc_procd true
+        fi
+        if [ -e "/proc/$$/fd/1000" ]; then
+            initd_ucode restart-service "$1" </dev/null >/dev/null 2>&1 1000>&- &
+            return 0
+        fi
+        initd_ucode restart-service "$1" "$$"
+        return "$?"
+    fi
     trap '' TERM
     stop "$@"
     trap - TERM

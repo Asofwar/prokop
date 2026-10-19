@@ -963,6 +963,51 @@ function defer_start(reason, stop_request_before) {
     return 1;
 }
 
+// After `prokop start` or `prokop restart` that ran under reload.lock: the
+// lock goes, the waiting caller learns the result, and a failed start is
+// retried unless a stop or its own failure rules that out.
+function start_attempt_finished(reason, owner_pid, status) {
+    // This start served a start deferred meanwhile: its retry ends before
+    // reload.lock is released, or it may take the lock next, still find its
+    // record and start Prokop once more.
+    if (status == 0)
+        drop_start_retry(0);
+    release_runtime_dir_lock(RELOAD_LOCK_DIR, owner_pid);
+    report_start_result(reason, status, stop_requested());
+    if (status == 0) {
+        // A reload requested during the start was queued behind reload.lock.
+        // A service action drains the queue when it finishes; without one,
+        // the start is the last holder and applies it, as a reload does.
+        if (file_exists(PENDING_RELOAD_FILE) && active_service_action_value() == "")
+            run_pending_reload_if_requested(PENDING_RELOAD_FILE, SERVICE_INIT);
+    }
+    else if (stop_requested()) {
+        // The start was abandoned for, or overtaken by, an explicit stop.
+        drop_start_retry(status);
+        command_success_from_args([ "logger", "-t", SERVICE_NAME, "[info] Prokop start did not complete because a stop was requested; no automatic retry" ]);
+    }
+    else if (start_failure_blocks_retry(START_FAILURE_FILE)) {
+        drop_start_retry(status);
+        // A start refused for a guard that a failed transition kept: no
+        // retry succeeds before a restart removes it (service/lifecycle.uc).
+        let failure = as_string(fs.readfile(START_FAILURE_FILE));
+        if (index(failure, "reason=runtime_guard_active") >= 0)
+            command_success_from_args([ "logger", "-t", SERVICE_NAME, "[error] Prokop startup retry suppressed: a failed transition kept its fail-closed guard (runtime_guard_active); restart Prokop to recover" ]);
+        else if (index(failure, "reason=legacy_runtime_active") >= 0)
+            command_success_from_args([ "logger", "-t", SERVICE_NAME, "[error] Prokop startup retry suppressed: " + legacy.PRODUCT + " is still active; run the Prokop installer to migrate: " + INSTALL_COMMAND ]);
+        else
+            command_success_from_args([ "logger", "-t", SERVICE_NAME, "[error] Prokop startup retry suppressed because all rule-set download sources failed; see the fatal startup error in LuCI logs" ]);
+    }
+    else {
+        let attempts = start_retry_attempts(START_RETRY_FILE) + 1;
+        let delay = start_retry_delay(attempts);
+        mark_start_retry(START_RETRY_FILE, as_string(reason) == "triggered" ? "wan_retry_failed" : "start_failed", attempts);
+        schedule_start_retry(START_RETRY_PID_FILE, as_string(delay));
+        command_success_from_args([ "logger", "-t", SERVICE_NAME, "[warn] Prokop start failed; scheduled an automatic retry in " +
+            delay + " s (failed starts in a row: " + attempts + ")" ]);
+    }
+}
+
 // Without an owner (the detached init.d start, whose rc.common shell exits
 // at once) this process owns reload.lock and the UI job: it runs `prokop
 // start` and releases the lock itself, so the owner lives for the whole
@@ -1047,46 +1092,55 @@ function start_service(reason, owner_pid) {
     }
 
     let status = command_status_from_args([ BIN_PATH, "start" ]);
-    // This start served a start deferred meanwhile: its retry ends before
-    // reload.lock is released, or it may take the lock next, still find its
-    // record and start Prokop once more.
-    if (status == 0)
-        drop_start_retry(0);
-    release_runtime_dir_lock(RELOAD_LOCK_DIR, owner_pid);
-    report_start_result(reason, status, stop_requested());
-    if (status == 0) {
-        // A reload requested during the start was queued behind reload.lock.
-        // A service action drains the queue when it finishes; without one,
-        // the start is the last holder and applies it, as a reload does.
-        if (file_exists(PENDING_RELOAD_FILE) && active_service_action_value() == "")
-            run_pending_reload_if_requested(PENDING_RELOAD_FILE, SERVICE_INIT);
-    }
-    else if (stop_requested()) {
-        // The start was abandoned for, or overtaken by, an explicit stop.
-        drop_start_retry(status);
-        command_success_from_args([ "logger", "-t", SERVICE_NAME, "[info] Prokop start did not complete because a stop was requested; no automatic retry" ]);
-    }
-    else if (start_failure_blocks_retry(START_FAILURE_FILE)) {
-        drop_start_retry(status);
-        // A start refused for a guard that a failed transition kept: no
-        // retry succeeds before a restart removes it (service/lifecycle.uc).
-        let failure = as_string(fs.readfile(START_FAILURE_FILE));
-        if (index(failure, "reason=runtime_guard_active") >= 0)
-            command_success_from_args([ "logger", "-t", SERVICE_NAME, "[error] Prokop startup retry suppressed: a failed transition kept its fail-closed guard (runtime_guard_active); restart Prokop to recover" ]);
-        else if (index(failure, "reason=legacy_runtime_active") >= 0)
-            command_success_from_args([ "logger", "-t", SERVICE_NAME, "[error] Prokop startup retry suppressed: " + legacy.PRODUCT + " is still active; run the Prokop installer to migrate: " + INSTALL_COMMAND ]);
-        else
-            command_success_from_args([ "logger", "-t", SERVICE_NAME, "[error] Prokop startup retry suppressed because all rule-set download sources failed; see the fatal startup error in LuCI logs" ]);
-    }
-    else {
-        let attempts = start_retry_attempts(START_RETRY_FILE) + 1;
-        let delay = start_retry_delay(attempts);
-        mark_start_retry(START_RETRY_FILE, as_string(reason) == "triggered" ? "wan_retry_failed" : "start_failed", attempts);
-        schedule_start_retry(START_RETRY_PID_FILE, as_string(delay));
-        command_success_from_args([ "logger", "-t", SERVICE_NAME, "[warn] Prokop start failed; scheduled an automatic retry in " +
-            delay + " s (failed starts in a row: " + attempts + ")" ]);
-    }
+    start_attempt_finished(reason, owner_pid, status);
     finish_external_service_action("start", plan.job_id, status);
+    return status;
+}
+
+// init.d restart of a running Prokop: one runtime transition (`prokop
+// restart`, service/lifecycle.uc restart), not init.d's stop and start.
+// dnsmasq keeps forwarding to sing-box while the core is down, so clients
+// do not cache real addresses that bypass FakeIP after the start, and procd
+// keeps the service registered. A restart refused before its stop keeps the
+// running Prokop. Whether it applies: Prokop runs, the product before the
+// rename does not, and the CLI is there.
+function restart_applies() {
+    return legacy.active_reason() == null && file_executable(BIN_PATH) && runtime_is_running();
+}
+
+function restart_service(reason, owner_pid) {
+    reason = as_string(reason);
+    owner_pid = as_string(owner_pid) || owner_pid_value();
+    let locked = acquire_runtime_dir_lock_wait(RELOAD_LOCK_DIR, owner_pid, START_RUNTIME_LOCK_WAIT_SECONDS);
+    if (locked && !restart_applies()) {
+        release_runtime_dir_lock(RELOAD_LOCK_DIR, owner_pid);
+        locked = false;
+    }
+    if (!locked) {
+        // reload.lock stayed busy, or Prokop went down meanwhile: init.d's
+        // stop and start, as before; the start reports to a waiting caller
+        // and is deferred or retried as any start.
+        command_success_from_args([ SERVICE_INIT, "stop" ]);
+        let args = [ SERVICE_INIT, "start" ];
+        if (reason != "")
+            push(args, reason);
+        return command_status_from_args(args);
+    }
+    // As the start of init.d's restart: an explicit start that ends an
+    // explicit stop.
+    mark_explicit_start();
+    unlink_file(STOP_REQUESTED_FILE);
+    let job_id = begin_external_service_action("restart", "initd", owner_pid);
+    let status = command_status_from_args([ BIN_PATH, "restart" ]);
+    if (status != 0 && runtime_is_running()) {
+        // Refused before its stop: the running Prokop serves on, nothing to
+        // retry.
+        release_runtime_dir_lock(RELOAD_LOCK_DIR, owner_pid);
+        report_start_result(reason, status, false);
+    }
+    else
+        start_attempt_finished(reason, owner_pid, status);
+    finish_external_service_action("restart", job_id, status);
     return status;
 }
 
@@ -1509,6 +1563,10 @@ else if (mode == "start-plan-fixture") {
     };
     start_plan(ARGV[1], ARGV[5] || "0", settings, ARGV[6] == null ? "1" : ARGV[6]);
 }
+else if (mode == "restart-applies")
+    exit(restart_applies() ? 0 : 1);
+else if (mode == "restart-service")
+    exit(restart_service(ARGV[1], ARGV[2]));
 else if (mode == "restart-blocked")
     exit(restart_blocked() ? 0 : 1);
 else if (mode == "stop-plan")
