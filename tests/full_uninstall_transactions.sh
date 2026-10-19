@@ -192,6 +192,8 @@ grep -qx 'subscription secret' "$ROOT/etc/config/prokop" || fail "the configurat
 grep -q 'mirror.51343.ru' "$ROOT/etc/opkg/distfeeds.conf" || fail "the feeds were changed"
 grep -Fq "config/snapshots.uc restore (pid $TXN_PID)" "$ROOT"/tmp/prokop-uninstall.*/output.log ||
   fail "the log does not name the transaction"
-[ ! -e "$ROOT/var/run/prokop/full-uninstall.lock" ] || fail "the removal lock was left behind"
+# The worker writes the failed state before it releases its lock.
+removal_lock_released() { [ ! -e "$ROOT/var/run/prokop/full-uninstall.lock" ]; }
+wait_until 10 removal_lock_released || fail "the removal lock was left behind"
 
 printf 'full_uninstall_transactions: ok\n'
