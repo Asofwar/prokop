@@ -1447,12 +1447,15 @@ function regex_match_set(tags, names, regexes) {
     return object_keys_set(runtime_urltest.regex_matching_tag_array(tags, names, regexes));
 }
 
-function tag_name_filter_matches(tag, names, name_filter, regex_set, metadata) {
+// A previous name of a renamed server (filterNames) selects it only while no
+// candidate carries that name now: a name given to another server selects
+// that server alone.
+function tag_name_filter_matches(tag, names, name_filter, regex_set, metadata, current_names) {
     let name = tag_display_name(tag, names);
     if (array_contains(name_filter, name) || regex_set[tag])
         return true;
     for (let previous_name in array_or_empty(object_or_empty(object_or_empty(metadata).filterNames)[tag]))
-        if (array_contains(name_filter, previous_name))
+        if (!current_names[previous_name] && array_contains(name_filter, previous_name))
             return true;
     return false;
 }
@@ -1527,9 +1530,10 @@ function urltest_matching_candidate_outbounds(urltest_candidate_tags, names, cou
     let base_filter_configured = name_or_country_filter_configured(name_filter, regexes, country_filter);
     let additional_set = object_keys_set(additional_matches);
     let result = [];
+    current_names = object_or_empty(current_names);
 
     for (let tag in array_or_empty(urltest_candidate_tags)) {
-        let base_matches = tag_name_filter_matches(tag, names, name_filter, regex_set, metadata) ||
+        let base_matches = tag_name_filter_matches(tag, names, name_filter, regex_set, metadata, current_names) ||
             tag_country_filter_matches(tag, countries, country_filter);
         let matches = additional_set[tag] || base_matches;
         if (proxy_parameters_enabled && proxy_parameters_operator == "or") {
@@ -1602,6 +1606,9 @@ function filter_candidate_outbounds(filter_mode, urltest_candidate_tags, names, 
         "or",
         exclude_protocols,
         exclude_transports,
+    let current_names = {};
+    for (let tag in array_or_empty(urltest_candidate_tags))
+        current_names[tag_display_name(tag, names)] = true;
         exclude_securities,
         exclude_additional_matches
     );
