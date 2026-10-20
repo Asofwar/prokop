@@ -772,6 +772,76 @@ function drop_unknown_xhttp_fields(options, dropped) {
     }
 }
 
+// The named session ID alphabets of sing-box-extended (and Xray).
+const XHTTP_SESSION_ID_TABLES = {
+    ALPHABET: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    Alphabet: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
+    BASE36: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    Base62: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
+    HEX: "0123456789ABCDEF",
+    alphabet: "abcdefghijklmnopqrstuvwxyz",
+    base36: "0123456789abcdefghijklmnopqrstuvwxyz",
+    hex: "0123456789abcdef",
+    number: "0123456789"
+};
+// The fewest session IDs a table and length must allow (2 << 30).
+const XHTTP_SESSION_ID_MIN_ROOM = 2147483648;
+
+// [ from, to ] of an xHTTP range as sing-box reads it (a number, "from-to"
+// or { from, to }); [ 0, 0 ] when absent or unreadable.
+function xhttp_range_bounds(value) {
+    if (type(value) == "int" || type(value) == "double")
+        return [ int(value), int(value) ];
+    if (type(value) == "object")
+        return [ int(value.from || 0), int(value.to || 0) ];
+    let text = trim(as_string(value));
+    let parts = match(text, /^([0-9]+)(-([0-9]+))?$/);
+    if (parts == null)
+        return [ 0, 0 ];
+    return [ int(parts[1]), int(parts[3] != null ? parts[3] : parts[1]) ];
+}
+
+// Whether a session ID table and length pass the check sing-box-extended
+// 2.7.3 makes on the whole configuration: a length from 1 and room for
+// 2^31 IDs, ASCII only. An older core used such a table with no length as
+// no table at all (a UUID session ID).
+function xhttp_session_id_settings_valid(options) {
+    let table = as_string(options.session_id_table);
+    table = XHTTP_SESSION_ID_TABLES[table] || table;
+    if (match(table, /^[ -~]+$/) == null)
+        return false;
+    let bounds = xhttp_range_bounds(options.session_id_length);
+    if (bounds[0] <= 0 || bounds[1] < bounds[0])
+        return false;
+    let room = 0;
+    for (let n = bounds[0]; n <= bounds[1] && room < XHTTP_SESSION_ID_MIN_ROOM; n++)
+        room += length(table) ** n;
+    return room >= XHTTP_SESSION_ID_MIN_ROOM;
+}
+
+// Settings that every core of sing-box-extended 2.7.3 or newer refuses for
+// the whole configuration, removed from one xHTTP options object (the
+// outbound's transport or its download options).
+function drop_refused_xhttp_settings(options, dropped) {
+    if (type(options) != "object")
+        return;
+    if (exists(options, "session_id_table") && !xhttp_session_id_settings_valid(options)) {
+        delete options.session_id_table;
+        delete options.session_id_length;
+        push(dropped, "session_id_table");
+    }
+    if (options.mode == "stream-one" && exists(options, "download")) {
+        delete options.download;
+        push(dropped, "download");
+    }
+    let xmux = options.xmux;
+    if (type(xmux) == "object" && xhttp_range_bounds(xmux.max_connections)[1] > 0 &&
+        xhttp_range_bounds(xmux.max_concurrency)[1] > 0) {
+        delete xmux.max_connections;
+        push(dropped, "xmux.max_connections");
+    }
+}
+
 // The settings this core does not read are left out of every xHTTP
 // outbound, also its download options, with a warning: the node may then
 // not reach its server, but the configuration stays valid. Its ranges are
@@ -780,6 +850,12 @@ function drop_unsupported_xhttp_settings(config) {
     for (let outbound in array_or_empty(config.outbounds)) {
         if (!outbound_uses_xhttp(outbound))
             continue;
+        let refused = [];
+        drop_refused_xhttp_settings(outbound.transport, refused);
+        drop_refused_xhttp_settings(outbound.transport.download, refused);
+        if (length(refused) > 0)
+            warn("xHTTP settings of outbound '", as_string(outbound.tag), "' that sing-box refuses for the whole configuration were left out: ",
+                join(", ", uniq(refused)), "\n");
         let dropped = [];
         drop_unknown_xhttp_fields(outbound.transport, dropped);
         drop_unknown_xhttp_fields(outbound.transport.download, dropped);
@@ -1454,6 +1530,7 @@ function tag_name_filter_matches(tag, names, name_filter, regex_set, metadata, c
     let name = tag_display_name(tag, names);
     if (array_contains(name_filter, name) || regex_set[tag])
         return true;
+    current_names = object_or_empty(current_names);
     for (let previous_name in array_or_empty(object_or_empty(object_or_empty(metadata).filterNames)[tag]))
         if (!current_names[previous_name] && array_contains(name_filter, previous_name))
             return true;
@@ -1529,8 +1606,10 @@ function urltest_matching_candidate_outbounds(urltest_candidate_tags, names, cou
     let regex_set = regex_match_set(urltest_candidate_tags, names, regexes);
     let base_filter_configured = name_or_country_filter_configured(name_filter, regexes, country_filter);
     let additional_set = object_keys_set(additional_matches);
+    let current_names = {};
+    for (let tag in array_or_empty(urltest_candidate_tags))
+        current_names[tag_display_name(tag, names)] = true;
     let result = [];
-    current_names = object_or_empty(current_names);
 
     for (let tag in array_or_empty(urltest_candidate_tags)) {
         let base_matches = tag_name_filter_matches(tag, names, name_filter, regex_set, metadata, current_names) ||
@@ -1606,9 +1685,6 @@ function filter_candidate_outbounds(filter_mode, urltest_candidate_tags, names, 
         "or",
         exclude_protocols,
         exclude_transports,
-    let current_names = {};
-    for (let tag in array_or_empty(urltest_candidate_tags))
-        current_names[tag_display_name(tag, names)] = true;
         exclude_securities,
         exclude_additional_matches
     );
