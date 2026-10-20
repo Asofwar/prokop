@@ -1953,6 +1953,10 @@ function get_subscription_download_proxy_address(section_name_value, sections, p
     return address;
 }
 
+// An update the schedule started (not the user): it does not reload sing-box
+// for new names alone (download_subscription_into_cache).
+let scheduled_update = false;
+
 function download_subscription_into_cache(section_name_value, subscription_url, subscription_json_path, subscription_url_cache_path, service_proxy_address_value, subscription_user_agent, subscription_hwid, source_index, cache_section, metadata_output_path, sections) {
     ensure_dir(TMP_SUBSCRIPTION_FOLDER);
     let subscription_user_agent_cache_path = source_user_agent_path(TMP_SUBSCRIPTION_FOLDER, cache_section);
@@ -2054,7 +2058,14 @@ function download_subscription_into_cache(section_name_value, subscription_url, 
             return 2;
         }
 
-        if (file_nonempty(subscription_json_path) && parser.runtime_outbounds_equal(normalized_tmpfile, subscription_json_path)) {
+        // A scheduled update also keeps the applied list when only the names
+        // changed: panels write traffic or days left into every name, and a
+        // reload for that drops every proxied connection. A manual update or
+        // the next real change applies the names.
+        let runtime_unchanged = file_nonempty(subscription_json_path) &&
+            (parser.runtime_outbounds_equal(normalized_tmpfile, subscription_json_path) ||
+                (scheduled_update && parser.runtime_outbounds_equal(normalized_tmpfile, subscription_json_path, true)));
+        if (runtime_unchanged) {
             // Keep the already applied representation and outbound order. The
             // refreshed file differs only in metadata ignored by the runtime
             // comparison or in provider ordering, neither of which should
@@ -2573,6 +2584,7 @@ function print_subscription_update_summary(summary) {
 
 function subscription_update_request(force_value, target_section_name, target_source_index) {
     let force = as_string(force_value) == "1";
+    scheduled_update = !force;
     let sections = uci_sections();
     let summary = empty_subscription_update_summary();
 

@@ -501,7 +501,10 @@ function canonical_runtime_value(value) {
     return value;
 }
 
-function runtime_outbounds_signature(path) {
+// without_names: the name of each entry (its tag) is left out, so two lists
+// that differ only in the names a provider writes (traffic or days left)
+// compare equal. A reference to another entry by name still counts.
+function runtime_outbounds_signature(path, without_names) {
     let subscription = read_json_file(path);
     if (type(subscription) != "object" || type(subscription.outbounds) != "array")
         return null;
@@ -512,17 +515,21 @@ function runtime_outbounds_signature(path) {
     // Nested arrays remain order-sensitive because their order may be part of
     // an individual outbound's runtime configuration.
     let result = [];
-    for (let outbound in subscription.outbounds)
-        push(result, sprintf("%J", canonical_runtime_value(outbound)));
+    for (let outbound in subscription.outbounds) {
+        let value = canonical_runtime_value(outbound);
+        if (without_names && type(value) == "object")
+            delete value.tag;
+        push(result, sprintf("%J", value));
+    }
     sort(result, function(a, b) {
         return a < b ? -1 : (a > b ? 1 : 0);
     });
     return result;
 }
 
-function runtime_outbounds_equal(left_path, right_path) {
-    let left = runtime_outbounds_signature(left_path);
-    let right = runtime_outbounds_signature(right_path);
+function runtime_outbounds_equal(left_path, right_path, without_names) {
+    let left = runtime_outbounds_signature(left_path, without_names);
+    let right = runtime_outbounds_signature(right_path, without_names);
 
     if (left == null || right == null)
         return false;
@@ -3666,7 +3673,7 @@ else if (mode == "normalize-content-validated")
 else if (mode == "try-decode-gzip-content")
     ok = try_decode_gzip_content_file(ARGV[1]);
 else if (mode == "runtime-outbounds-equal")
-    ok = runtime_outbounds_equal(ARGV[1], ARGV[2]);
+    ok = runtime_outbounds_equal(ARGV[1], ARGV[2], ARGV[3] == "without-names");
 else if (mode == "normalized-skipped-warning")
     ok = normalized_skipped_warning(ARGV[1]);
 else if (mode == "metadata-headers-json")
