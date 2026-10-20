@@ -322,8 +322,10 @@ function xhttp_extended_value(kind, value, mode) {
         return xhttp_positive_integer_value(value);
     if (kind == "key")
         return match(text, /^[A-Za-z0-9_.-]{1,64}$/) != null ? text : null;
+    // musl's regcomp (OpenWrt) refuses a repeat count above 255: the length
+    // is checked apart from the pattern.
     if (kind == "table")
-        return match(text, /^[!-~]{1,256}$/) != null ? text : null;
+        return length(text) <= 256 && match(text, /^[!-~]+$/) != null ? text : null;
     if (kind == "method") {
         text = uc(text);
         if (match(text, /^[A-Z]{1,16}$/) == null)
