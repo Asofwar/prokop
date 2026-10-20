@@ -45,7 +45,7 @@ function text() {
         "    procd_open_instance\n" +
         "    procd_set_param command \"$PROG\" run -c \"$config_file\" -D \"$working_directory\"\n" +
         "    procd_set_param stderr \"$log_stderr\"\n" +
-        "    procd_set_param limits core=\"unlimited\"\n" +
+        "    procd_set_param limits core=\"0\"\n" +
         "    procd_set_param limits nofile=\"1000000 1000000\"\n" +
         "    procd_set_param respawn\n" +
         "    procd_set_param term_timeout " + TERM_TIMEOUT + "\n" +

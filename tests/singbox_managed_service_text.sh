@@ -56,6 +56,13 @@ term_timeout="$(ucode -L "$LIB" -e 'print(require("singbox.managed_service").tex
   fail "term_timeout $term_timeout is not between procd's 5 s and the 15 s transition wait"
 ok "the managed sing-box init script gives sing-box $term_timeout s to stop"
 
+# OpenWrt writes core dumps to /tmp (kernel.core_pattern), which is RAM: a
+# crash of sing-box, respawned by procd, must not fill it with dumps.
+ucode -L "$LIB" -e 'print(require("singbox.managed_service").text())' |
+  grep -qx '    procd_set_param limits core="0"' ||
+  fail "the managed sing-box init script allows core dumps"
+ok "the managed sing-box init script writes no core dumps"
+
 # ---- 2. every writer writes the same script ---------------------------------------
 
 if ! unshare -rm true 2>/dev/null; then
