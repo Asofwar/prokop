@@ -945,8 +945,14 @@ function nft_add_section_priority_rules(table, section, interface_set, localv4_s
     if (needs_udp_ip_port_rules && !nft_add_subnet_ports(table, sets.udp_subnet_ports, core_ip.DISCORD_VOICE_PORTS_NFT))
         return false;
     let has_port_only_matchers = section_has_nft_port_only_matchers(section);
-    let match_ip4 = [ "ip", "daddr", "@" + as_string(sets.subnets) ];
-    let match_ip6 = [ "ip6", "daddr", "@" + as_string(sets.subnets6) ];
+    // A captured packet gets the mark of the TPROXY local route, which takes
+    // only TCP and UDP: an ICMP echo to a listed subnet would be answered by
+    // the router itself and other protocols lost. They keep the main table.
+    // The kill-switch (its own verdict) still stops every protocol.
+    let capture_l4 = section_priority_action(section) == "capture" && nft_priority_verdict_override == null ?
+        [ "meta", "l4proto", "{ tcp, udp }" ] : [];
+    let match_ip4 = [ "ip", "daddr", "@" + as_string(sets.subnets), ...capture_l4 ];
+    let match_ip6 = [ "ip6", "daddr", "@" + as_string(sets.subnets6), ...capture_l4 ];
     let match_ip_port4_tcp = [ "ip", "daddr", ".", "tcp", "dport", "@" + as_string(sets.ip_ports) ];
     let match_ip_port4_udp = [ "ip", "daddr", ".", "udp", "dport", "@" + as_string(sets.ip_ports) ];
     let match_ip_port6_tcp = [ "ip6", "daddr", ".", "tcp", "dport", "@" + as_string(sets.ip6_ports) ];

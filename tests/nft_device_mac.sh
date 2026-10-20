@@ -62,7 +62,7 @@ has "$NFT_LOG" "nft add set inet ProkopTable prokop_rule_tv_excluded_sources_mac
 has "$NFT_LOG" "nft add chain inet ProkopTable prokop_rule_tv_mac_excl { }" "exclusion chain"
 has "$NFT_LOG" "nft add rule inet ProkopTable prokop_rule_tv_mac_excl ether saddr @prokop_rule_tv_excluded_sources_mac return" "excluded MAC returns"
 has "$NFT_LOG" "nft add rule inet ProkopTable prokop_rule_tv_mac_excl meta mark set 0x00100000 counter accept" "the rest is captured"
-has "$NFT_LOG" "nft add rule inet ProkopTable priority_rules iifname @prokop_interfaces ether saddr @prokop_rule_tv_sources_mac ip daddr != @localv4 ip daddr @prokop_rule_tv_subnets jump prokop_rule_tv_mac_excl" "MAC filter rule"
+has "$NFT_LOG" "nft add rule inet ProkopTable priority_rules iifname @prokop_interfaces ether saddr @prokop_rule_tv_sources_mac ip daddr != @localv4 ip daddr @prokop_rule_tv_subnets meta l4proto { tcp, udp } jump prokop_rule_tv_mac_excl" "MAC filter rule"
 # A MAC-only filter has no address rule, and nothing in output.
 lacks "$NFT_LOG" "ip saddr @prokop_rule_tv_sources " "no address variant without addresses"
 lacks "$NFT_LOG" "priority_output_rules" "router-originated traffic has no MAC"

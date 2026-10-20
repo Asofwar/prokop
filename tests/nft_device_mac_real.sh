@@ -176,12 +176,12 @@ LIVE="$WORK_DIR/mac.nft.live"
   fail "source-aware DNS MAC set: '$(set_elements "$LIVE" prokop_dns_sources_mac)'"
 ok "MAC sets created and filled"
 
-live_has "$LIVE" "iifname @$INTERFACES ip saddr @prokop_rule_tv_sources ip saddr != @prokop_rule_tv_excluded_sources ip daddr != @localv4 ip daddr @prokop_rule_tv_subnets jump prokop_rule_tv_mac_excl" "address variant of the filter"
-live_has "$LIVE" "iifname @$INTERFACES ether saddr @prokop_rule_tv_sources_mac ip saddr != @prokop_rule_tv_excluded_sources ip daddr != @localv4 ip daddr @prokop_rule_tv_subnets jump prokop_rule_tv_mac_excl" "MAC variant of the filter"
+live_has "$LIVE" "iifname @$INTERFACES ip saddr @prokop_rule_tv_sources ip saddr != @prokop_rule_tv_excluded_sources ip daddr != @localv4 ip daddr @prokop_rule_tv_subnets meta l4proto { tcp, udp } jump prokop_rule_tv_mac_excl" "address variant of the filter"
+live_has "$LIVE" "iifname @$INTERFACES ether saddr @prokop_rule_tv_sources_mac ip saddr != @prokop_rule_tv_excluded_sources ip daddr != @localv4 ip daddr @prokop_rule_tv_subnets meta l4proto { tcp, udp } jump prokop_rule_tv_mac_excl" "MAC variant of the filter"
 live_has "$LIVE" "ether saddr @prokop_rule_tv_excluded_sources_mac return" "exclusion chain returns for excluded MACs"
 live_has "$LIVE" "iifname @$INTERFACES ether saddr @prokop_rule_forced_fully_sources_mac ip daddr != @localv4 meta l4proto tcp meta mark set $FAKEIP_MARK counter accept" "forced device by MAC"
 live_has "$LIVE" "iifname @$INTERFACES ether saddr @prokop_dns_sources_mac udp dport 53 counter redirect to :$SOURCE_DNS_PORT" "DNS of MAC devices to the source-aware inbound"
-live_has "$LIVE" "iifname @$INTERFACES ip daddr != @localv4 ip daddr @prokop_rule_allowed_subnets jump prokop_rule_allowed_mac_excl" "MAC-only exclusion without filter"
+live_has "$LIVE" "iifname @$INTERFACES ip daddr != @localv4 ip daddr @prokop_rule_allowed_subnets meta l4proto { tcp, udp } jump prokop_rule_allowed_mac_excl" "MAC-only exclusion without filter"
 # Router-originated traffic has no link layer: no ether match in output, and
 # the address variant there gives the plain verdict.
 awk '/chain priority_output_rules/,/^\t}/' "$LIVE" >"$WORK_DIR/output.rules"
@@ -240,7 +240,7 @@ EOF
 apply_state "$WORK_DIR/ip.uci" "$WORK_DIR/ip.nft"
 live_lacks "$WORK_DIR/ip.nft" "ether" "address-only batch"
 live_lacks "$WORK_DIR/ip.nft" "_mac" "address-only batch"
-live_has "$WORK_DIR/ip.nft.live" "iifname @$INTERFACES ip saddr @prokop_rule_tv_sources ip saddr != @prokop_rule_tv_excluded_sources ip daddr != @localv4 ip daddr @prokop_rule_tv_subnets meta mark set $FAKEIP_MARK counter accept" "address rule as before"
+live_has "$WORK_DIR/ip.nft.live" "iifname @$INTERFACES ip saddr @prokop_rule_tv_sources ip saddr != @prokop_rule_tv_excluded_sources ip daddr != @localv4 ip daddr @prokop_rule_tv_subnets meta l4proto { tcp, udp } meta mark set $FAKEIP_MARK counter accept" "address rule as before"
 PROKOP_UCI_STATE_FILE="$WORK_DIR/ip.uci" nft_uc killswitch-render "$TABLE" ProkopKillswitch "$WORK_DIR/ip-ks.nft" "$FAKEIP_RANGE" "$FAKEIP6_RANGE" >/dev/null ||
   fail "address-only kill-switch render failed"
 live_lacks "$WORK_DIR/ip-ks.nft" "ether" "address-only kill-switch"

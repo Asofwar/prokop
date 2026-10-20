@@ -215,7 +215,7 @@ JSON
 NFT_LOG="$WORK/nft.log" PATH="$WORK/bin:$PATH" PROKOP_NFT_SUBNET_CACHE_DIR="$WORK/nft-cache" \
   ucode -L "$LIB" "$LIB/nft/apply.uc" nft-add-section-priority-rules-fixture "$WORK/nft.json" ProkopTable prokop_interfaces localv4 localv6 0x00100000 ||
   fail "nft priority rules failed"
-grep -Fq $'priority_rules\tiifname\t@prokop_interfaces\tip\tdaddr\t!=\t@localv4\tip\tdaddr\t@prokop_rule_yt_subnets\tmeta\tmark\tset\t0x00100000\tcounter\taccept' "$WORK/nft.log" ||
+grep -Fq $'priority_rules\tiifname\t@prokop_interfaces\tip\tdaddr\t!=\t@localv4\tip\tdaddr\t@prokop_rule_yt_subnets\tmeta\tl4proto\t{ tcp, udp }\tmeta\tmark\tset\t0x00100000\tcounter\taccept' "$WORK/nft.log" ||
   fail "nft does not capture the rule's addresses: $(cat "$WORK/nft.log")"
 
 # --- the site check, the read-only view and autotune -------------------------------
