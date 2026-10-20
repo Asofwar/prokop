@@ -12,6 +12,10 @@ const CONFIG = getenv("SB_CONFIG") || "/etc/sing-box/config.json";
 const BIN = getenv("SB_BIN") || "/usr/bin/sing-box";
 const PROC = getenv("PROKOP_SMART_DETECT_PROC") || "/proc";
 const PORTS = { "11EE": 4590, "11EF": 4591 };
+// A tenth of a second where sleep takes fractions, a second on OpenWrt,
+// whose busybox sleep refuses "0.1".
+function nap() { system("sleep 0.1 2>/dev/null || sleep 1"); }
+
 function domain(host) {
     if (length(host) > 253 || match(host, /^[a-z0-9.-]+$/) == null || ip.valid_ip(host)) return false;
     let labels = split(host, ".");
@@ -165,12 +169,14 @@ function run(host, target) {
         if (child) child.close();
         if (!identity.record(pidfile, pid)) return c.fail("probe_start_failed");
         // Wait for both ports; probes are never sent to an unrelated listener.
+        // OpenWrt's busybox sleep takes whole seconds only: the wait is bounded
+        // by time, not by a count of naps.
         let ready = false;
-        for (let attempt = 0; attempt < 20; attempt++) {
+        for (let deadline = time() + 3; time() <= deadline;) {
             if (identity.matches(pidfile, BIN, args, true, true) == "") break;
             ready = ports_owned(probe_listeners(), pid);
             if (ready) break;
-            system("sleep 0.1");
+            nap();
         }
         if (!ready) return c.fail("probe_not_ready");
         let direct = probe(host, 4590), proxy = probe(host, 4591), result = verdict(direct, proxy);
@@ -190,7 +196,7 @@ function run(host, target) {
     try { result = work(); } catch (e) { result = c.fail("probe_failed"); }
     {
         identity.signal(pidfile, BIN, args, true, "TERM", true);
-        for (let attempt = 0; attempt < 10 && identity.matches(pidfile, BIN, args, true, true) != ""; attempt++) system("sleep 0.1");
+        for (let deadline = time() + 2; time() <= deadline && identity.matches(pidfile, BIN, args, true, true) != "";) nap();
         identity.signal(pidfile, BIN, args, true, "KILL", true);
         fs.unlink(pidfile); fs.unlink(DIR + "/probe.json");
         c.locks.release(DIR + "/lock", c.self());
