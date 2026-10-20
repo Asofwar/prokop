@@ -17,6 +17,12 @@ fail() {
   exit 1
 }
 
+# A DoH address can carry a private token in its path or query: the switch
+# message names the priority and the reason, never the configured server.
+if grep -Eq 'log_message\(.*(values\[|main_servers|bootstrap_servers)' "$FAILOVER"; then
+  fail "a DNS failover log message can disclose the configured server"
+fi
+
 generate() {
   local fixture="$1"
   local output="$2"
